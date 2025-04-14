@@ -85,6 +85,7 @@ nav:
       - Extraction and Verification: package/user-guide/extraction-verification.md
       - Tamper Detection: package/user-guide/tamper-detection.md
       - Streaming Support: package/user-guide/streaming.md
+      - C2PA Relationship: package/user-guide/c2pa-relationship.md
     - API Reference:
       - MetadataEncoder: package/api-reference/metadata-encoder.md
       - StreamingMetadataEncoder: package/api-reference/streaming-metadata-encoder.md

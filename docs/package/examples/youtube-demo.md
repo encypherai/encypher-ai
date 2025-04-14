@@ -20,8 +20,8 @@ The demo covers all key EncypherAI functionalities:
    - Extracting embedded metadata
    - Viewing and interpreting metadata contents
 
-3. **Tamper Detection with HMAC**
-   - How HMAC verification ensures data integrity
+3. **Tamper Detection with Digital Signatures**
+   - How digital signature verification ensures data integrity
    - Demonstration of tampering detection
    - Simulation of different attack vectors
 
@@ -49,17 +49,17 @@ The demo is organized into clear sections with dramatic pauses and visual elemen
 
 ```python
 # Section structure example
-console.rule("3. Tamper Detection with HMAC Verification")
+console.rule("3. Tamper Detection with Digital Signatures")
 console.print()
 
 # Informational panel
 console.print(Panel(
-    "**HMAC Security in EncypherAI**\n\n"
-    "EncypherAI uses HMAC (Hash-based Message Authentication Code) to ensure:\n\n"
+    "**Digital Signature Security in EncypherAI**\n\n"
+    "EncypherAI uses Ed25519 digital signatures to ensure:\n\n"
     "1. **Data Integrity** - Detect if content has been modified\n"
     "2. **Authentication** - Verify the content came from a trusted source\n"
     "3. **Tamper Protection** - Prevent unauthorized manipulation\n\n"
-    "The HMAC is created using the metadata and a secret key, then embedded alongside the metadata.",
+    "The signature is created using the metadata and a private key, then embedded alongside the metadata.",
     title="", border_style="blue", padding=(1, 2)
 ))
 ```
@@ -75,15 +75,24 @@ from rich.table import Table
 import time
 import json
 
-from encypher.core.metadata_encoder import MetadataEncoder
-from encypher.streaming.handlers import StreamingHandler
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from encypher.streaming.handlers import StreamingHandler
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
 
 # Initialize rich console for pretty output
 console = Console()
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="demo-secret-key")
+# Generate key pair for digital signatures
+private_key, public_key = generate_key_pair()
+key_id = "demo-key-1"
+
+# Create a public key resolver
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "demo-key-1":
+        return public_key
+    return None
 
 # Sample text
 text = "This is a sample text that will have metadata embedded within it."
@@ -93,7 +102,8 @@ metadata = {
     "model": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "1.1.0"
+    "version": "2.0.0",
+    "key_id": key_id  # Required for verification
 }
 
 # Display the original text
@@ -107,7 +117,11 @@ console.print(Panel(json.dumps(metadata, indent=2), border_style="blue"))
 # Embed metadata
 console.print("\n[bold]Embedding metadata...[/bold]")
 time.sleep(1)  # Dramatic pause
-encoded_text = encoder.encode_metadata(text, metadata)
+encoded_text = UnicodeMetadata.embed_metadata(
+    text=text,
+    metadata=metadata,
+    private_key=private_key
+)
 
 # Display the encoded text
 console.print("\n[bold]Text with Embedded Metadata:[/bold]")
@@ -116,7 +130,7 @@ console.print(Panel(encoded_text, border_style="yellow"))
 # Extract metadata
 console.print("\n[bold]Extracting metadata...[/bold]")
 time.sleep(1)  # Dramatic pause
-extracted_metadata = encoder.decode_metadata(encoded_text)
+extracted_metadata = UnicodeMetadata.extract_metadata(encoded_text)
 
 # Display extracted metadata
 console.print("\n[bold]Extracted Metadata:[/bold]")
@@ -127,7 +141,7 @@ console.print("\n[bold]Verifying content integrity...[/bold]")
 time.sleep(1)  # Dramatic pause
 is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    hmac_secret_key="demo-secret-key"
+    public_key_resolver=resolve_public_key
 )
 
 if is_valid:
@@ -147,21 +161,21 @@ console.print("\n[bold]Verifying tampered content...[/bold]")
 time.sleep(1)  # Dramatic pause
 is_valid, verified_tampered = UnicodeMetadata.verify_metadata(
     text=tampered_text,
-    hmac_secret_key="demo-secret-key"
+    public_key_resolver=resolve_public_key
 )
 
 if is_valid:
     console.print("\n✅ [bold green]Verification successful![/bold green]")
 else:
     console.print("\n❌ [bold red]Tampering detected![/bold red]")
-    
+
     # Explain what happened
     console.print(Panel(
         "[bold]What happened:[/bold]\n\n"
-        "1. The text was modified after the metadata and HMAC were embedded\n"
-        "2. The HMAC verification failed because:\n"
+        "1. The text was modified after the metadata and digital signature were embedded\n"
+        "2. The signature verification failed because:\n"
         "   - The content no longer matches what was originally signed\n"
-        "   - The attacker doesn't have the secret key to create a valid signature\n\n"
+        "   - The attacker doesn't have the private key to create a valid signature\n\n"
         "This security feature ensures that any modification to the text will be detected,\n"
         "even if the attacker tries to preserve the invisible metadata.",
         title="Tamper Detection Explanation", border_style="red", padding=(1, 2)
@@ -175,11 +189,15 @@ streaming_metadata = {
     "model": "streaming-demo",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "1.1.0"
+    "version": "2.0.0",
+    "key_id": key_id  # Required for verification
 }
 
 # Create a streaming handler
-handler = StreamingHandler(metadata=streaming_metadata)
+handler = StreamingHandler(
+    metadata=streaming_metadata,
+    private_key=private_key
+)
 
 # Simulate streaming chunks
 chunks = [
@@ -199,10 +217,10 @@ full_text = ""
 for i, chunk in enumerate(chunks):
     console.print(f"\nChunk {i+1}: [italic]\"{chunk}\"[/italic]")
     time.sleep(0.5)
-    
+
     processed_chunk = handler.process_chunk(chunk)
     full_text += processed_chunk
-    
+
     console.print(f"Processed {i+1}/{len(chunks)} chunks")
 
 # Finalize the stream
@@ -215,14 +233,14 @@ console.print("\n[bold]Final Text with Embedded Metadata:[/bold]")
 console.print(Panel(full_text, border_style="green"))
 
 # Extract metadata from streaming text
-extracted_streaming = encoder.decode_metadata(full_text)
+extracted_streaming = UnicodeMetadata.extract_metadata(full_text)
 console.print("\n[bold]Extracted Streaming Metadata:[/bold]")
 console.print(Panel(json.dumps(extracted_streaming, indent=2), border_style="blue"))
 
 # Verify streaming text
 is_valid, verified_streaming = UnicodeMetadata.verify_metadata(
     text=full_text,
-    hmac_secret_key="demo-secret-key"
+    public_key_resolver=resolve_public_key
 )
 
 if is_valid:
@@ -245,12 +263,12 @@ The tamper detection section provides a particularly clear example of EncypherAI
 🚨 Tampering detected!
 
      **What happened:**
-                                                                                                                     
-     1. The text was modified after the metadata and HMAC were embedded
-     2. The HMAC verification failed because:
+
+     1. The text was modified after the metadata and digital signature were embedded
+     2. The signature verification failed because:
         - The content no longer matches what was originally signed
-        - The attacker doesn't have the secret key to create a valid signature
-                                                                                                                     
+        - The attacker doesn't have the private key to create a valid signature
+
      This security feature ensures that any modification to the text will be detected,
      even if the attacker tries to preserve the invisible metadata.
 ```
@@ -260,15 +278,18 @@ The tamper detection section provides a particularly clear example of EncypherAI
 You can customize the demo for your own presentations:
 
 ```python
-# Change the secret key used for HMAC verification
-SECRET_KEY = "your-custom-secret-key"
+# Generate key pairs for digital signature verification
+from encypher.core.keys import generate_key_pair
+private_key, public_key = generate_key_pair()
+key_id = "your-custom-key-id"
 
 # Modify the example metadata
 metadata = {
     "model": "your-model-name",
     "organization": "Your Organization",
     "timestamp": int(time.time()),  # Unix timestamp
-    "custom_field": "custom value"
+    "custom_field": "custom value",
+    "key_id": key_id  # Required for verification
 }
 
 # Adjust timing between sections

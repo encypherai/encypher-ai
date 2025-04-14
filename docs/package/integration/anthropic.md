@@ -22,15 +22,25 @@ For standard (non-streaming) responses from Anthropic:
 
 ```python
 import anthropic
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 import json
 
 # Initialize Anthropic client
 client = anthropic.Anthropic(api_key="your-api-key")
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
+# Generate key pair (replace with your actual key management)
+private_key, public_key = generate_key_pair()
+
+# Example public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "anthropic-nonstream-key":
+        return public_key
+    return None
 
 # Create a message
 response = client.messages.create(
@@ -48,13 +58,14 @@ text = response.content[0].text
 metadata = {
     "model": response.model,
     "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "timestamp": time.time(),
     "input_tokens": response.usage.input_tokens,
-    "output_tokens": response.usage.output_tokens
+    "output_tokens": response.usage.output_tokens,
+    "key_id": "anthropic-nonstream-key" # Identifier for the key
 }
 
-# Embed metadata
-encoded_text = encoder.encode_metadata(text, metadata)
+# Embed metadata using UnicodeMetadata
+encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
 
 print("Original response:")
 print(text)
@@ -62,8 +73,11 @@ print("\nResponse with embedded metadata:")
 print(encoded_text)
 
 # Later, extract and verify the metadata
-from encypher.core.unicode_metadata import UnicodeMetadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(encoded_text, hmac_secret_key="your-secret-key")
+# Verify the metadata using the public key resolver
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    encoded_text,
+    public_key_resolver=resolve_public_key
+)
 
 print("\nExtracted metadata:")
 print(json.dumps(verified_metadata, indent=2))
@@ -77,20 +91,37 @@ For streaming responses, use the `StreamingHandler`:
 ```python
 import anthropic
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
+import json
 
 # Initialize Anthropic client
 client = anthropic.Anthropic(api_key="your-api-key")
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "anthropic-stream-key":
+        return public_key
+    return None
 
 # Create metadata
 metadata = {
     "model": "claude-3-opus-20240229",
     "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat()
+    "timestamp": time.time(),
+    "key_id": "anthropic-stream-key"
 }
 
 # Initialize the streaming handler
-handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
+handler = StreamingHandler(
+    metadata=metadata,
+    private_key=private_key # Use the private key
+)
 
 # Create a streaming message
 with client.messages.stream(
@@ -105,21 +136,26 @@ with client.messages.stream(
     for text_delta in stream.text_deltas:
         # Process the chunk
         processed_chunk = handler.process_chunk(chunk=text_delta)
-        
-        # Print and accumulate the processed chunk
-        print(processed_chunk, end="", flush=True)
-        full_response += processed_chunk
 
-# Finalize the stream
+        # Print and accumulate the processed chunk if available
+        if processed_chunk:
+            print(processed_chunk, end="", flush=True)
+            full_response += processed_chunk
+
+# Finalize the stream to process any remaining buffer
 final_chunk = handler.finalize()
 if final_chunk:
+    print(final_chunk, end="", flush=True) # Print the final chunk too
     full_response += final_chunk
 
 print("\n\nStreaming completed!")
 
 # Extract and verify the metadata
-from encypher.core.unicode_metadata import UnicodeMetadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(full_response, hmac_secret_key="your-secret-key")
+# Verify the metadata using the public key resolver
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_response,
+    public_key_resolver=resolve_public_key
+)
 
 print("\nExtracted metadata:")
 print(json.dumps(verified_metadata, indent=2))
@@ -135,11 +171,22 @@ When using Anthropic's tool use feature:
 ```python
 import anthropic
 import json
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 
 # Initialize Anthropic client
 client = anthropic.Anthropic(api_key="your-api-key")
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "anthropic-tool-key":
+        return public_key
+    return None
 
 # Define tools
 tools = [
@@ -188,10 +235,10 @@ if tool_use:
     # Get the tool call
     tool_name = tool_use.name
     tool_input = json.loads(tool_use.input)
-    
+
     print(f"Tool call: {tool_name}")
     print(f"Input: {tool_input}")
-    
+
     # Simulate tool response
     tool_response = {
         "location": tool_input["location"],
@@ -199,7 +246,7 @@ if tool_use:
         "unit": tool_input.get("unit", "fahrenheit"),
         "condition": "sunny"
     }
-    
+
     # Continue the conversation with the tool result
     response = client.messages.create(
         model="claude-3-opus-20240229",
@@ -222,29 +269,53 @@ if tool_use:
             }
         ]
     )
-    
+
     # Get the final response text
-    text = response.content[0].text
+    final_text = ""
+    for item in response.content:
+        if item.type == "text":
+            final_text = item.text
+            break
+
+    # Create metadata
+    metadata = {
+        "model": response.model,
+        "tool_used": tool_name,
+        "timestamp": time.time(),
+        "key_id": "anthropic-tool-key"
+    }
+
+    # Embed metadata
+    encoded_text = UnicodeMetadata.embed_metadata(final_text, metadata, private_key)
+
+    print("\nFinal response with embedded metadata:")
+    print(encoded_text)
+
+    # Verify the metadata
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        encoded_text,
+        public_key_resolver=resolve_public_key
+    )
+    print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+    if is_valid:
+        print(json.dumps(verified_metadata, indent=2))
+
 else:
-    # Get the response text from the first response
-    text = content[0].text
-
-# Create metadata
-metadata = {
-    "model": response.model,
-    "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "tool_use": tool_name if tool_use else None,
-    "input_tokens": response.usage.input_tokens,
-    "output_tokens": response.usage.output_tokens
-}
-
-# Embed metadata
-encoder = MetadataEncoder(secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-encoded_text = encoder.encode_metadata(text, metadata)
-
-print("\nFinal response with embedded metadata:")
-print(encoded_text)
+    # No tool use, process as a regular response
+    text = ""
+    for item in content:
+        if item.type == "text":
+            text = item.text
+            break
+    metadata = {
+        "model": response.model,
+        "timestamp": time.time(),
+        "key_id": "anthropic-tool-key" # Use same key_id
+    }
+    encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
+    print("Response with embedded metadata:")
+    print(encoded_text)
+    # Verification would be the same as above
 ```
 
 ### Custom Metadata Extraction
@@ -257,111 +328,112 @@ def extract_anthropic_metadata(response):
     metadata = {
         "model": response.model,
         "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": time.time(),
     }
-    
+
     # Add usage information if available
     if hasattr(response, "usage"):
         metadata.update({
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens
         })
-    
+
     # Add tool use information if available
     tool_use = None
     for item in response.content:
         if hasattr(item, "type") and item.type == "tool_use":
             tool_use = item
             break
-    
+
     if tool_use:
         metadata.update({
             "tool_use": tool_use.name,
             "tool_input": json.loads(tool_use.input)
         })
-    
+
     return metadata
 ```
 
 ## Web Application Integration
 
-Here's an example of integrating Anthropic and EncypherAI in a Flask web application:
+Here's an example of integrating Anthropic and EncypherAI in a FastAPI web application:
 
 ```python
-from flask import Flask, request, jsonify
-import anthropic
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from fastapi import FastAPI, Request
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
+import asyncio
 
-app = Flask(__name__)
+app = FastAPI()
 
 # Initialize Anthropic client
 client = anthropic.Anthropic(api_key="your-api-key")
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "fastapi-anthropic-key":
+        return public_key
+    return None
 
-@app.route('/generate', methods=['POST'])
-def generate():
+@app.post("/generate-stream")
+async def generate_stream(request: Request):
     # Get request data
-    data = request.json
+    data = await request.json()
     prompt = data.get('prompt', '')
-    
-    # Create a message
-    response = client.messages.create(
-        model="claude-3-opus-20240229",
-        max_tokens=1000,
-        messages=[
-            {"role": "user", "content": prompt}
-        ]
-    )
-    
-    # Get the response text
-    text = response.content[0].text
-    
+
     # Create metadata
     metadata = {
-        "model": response.model,
-        "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "input_tokens": response.usage.input_tokens,
-        "output_tokens": response.usage.output_tokens,
-        "user_id": data.get('user_id', 'anonymous')
+        "model": "claude-3-opus-20240229",
+        "timestamp": time.time(),
+        "user_id": data.get('user_id', 'anonymous'), # Example extra field
+        "key_id": "fastapi-anthropic-key"
     }
-    
-    # Embed metadata
-    encoded_text = encoder.encode_metadata(text, metadata)
-    
-    # Return the response
-    return jsonify({
-        "text": encoded_text,
-        "metadata": metadata
-    })
 
-@app.route('/verify', methods=['POST'])
-def verify():
-    # Get request data
-    data = request.json
-    text = data.get('text', '')
-    
-    # Extract and verify metadata
-    try:
-        from encypher.core.unicode_metadata import UnicodeMetadata
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(text, hmac_secret_key="your-secret-key")
-        
-        return jsonify({
-            "has_metadata": True,
-            "metadata": verified_metadata,
-            "verified": is_valid
-        })
-    except Exception as e:
-        return jsonify({
-            "has_metadata": False,
-            "error": str(e)
-        })
+    # Initialize the streaming handler
+    handler = StreamingHandler(
+        metadata=metadata,
+        private_key=private_key
+    )
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    async def generate():
+        async with client.messages.stream(
+            # ... (model, max_tokens, messages)
+        ) as stream:
+            async for text_delta in stream.text_deltas:
+                processed_chunk = handler.process_chunk(chunk=text_delta)
+                if processed_chunk:
+                    yield processed_chunk
+            # Finalize the stream
+            final_chunk = handler.finalize()
+            if final_chunk:
+                yield final_chunk
+
+    return StreamingResponse(generate(), media_type="text/plain")
+
+# Example Verification Endpoint (add this to your FastAPI app)
+@app.post("/verify-text")
+async def verify_text(request: Request):
+    data = await request.json()
+    text_to_verify = data.get("text")
+
+    if not text_to_verify:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        text_to_verify,
+        public_key_resolver=resolve_public_key
+    )
+
+    return {
+        "is_valid": is_valid,
+        "metadata": verified_metadata
+    }
+
+# Run with: uvicorn your_app_file:app --reload
 ```
 
 ## Streaming in Web Applications
@@ -369,60 +441,64 @@ if __name__ == '__main__':
 For streaming responses in a web application:
 
 ```python
-from flask import Flask, Response, request, stream_with_context
-import anthropic
+from fastapi import FastAPI, Response, Request, stream_with_context
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
+import asyncio
 
-app = Flask(__name__)
+app = FastAPI()
 
-@app.route('/stream', methods=['POST'])
-def stream():
+# Initialize Anthropic client
+client = anthropic.Anthropic(api_key="your-api-key")
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "fastapi-anthropic-key":
+        return public_key
+    return None
+
+@app.post("/generate-stream")
+async def generate_stream(request: Request):
     # Get request data
-    data = request.json
+    data = await request.json()
     prompt = data.get('prompt', '')
-    
+
     # Create metadata
     metadata = {
         "model": "claude-3-opus-20240229",
-        "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "user_id": data.get('user_id', 'anonymous')
+        "timestamp": time.time(),
+        "user_id": data.get('user_id', 'anonymous'), # Example extra field
+        "key_id": "fastapi-anthropic-key"
     }
-    
-    # Initialize Anthropic client
-    client = anthropic.Anthropic(api_key="your-api-key")
-    
-    # Initialize the streaming handler
-    handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-    
-    def generate_stream():
-        # Create a streaming message
-        with client.messages.stream(
-            model="claude-3-opus-20240229",
-            max_tokens=1000,
-            messages=[
-                {"role": "user", "content": prompt}
-            ]
-        ) as stream:
-            # Process each chunk
-            for text_delta in stream.text_deltas:
-                # Process the chunk
-                processed_chunk = handler.process_chunk(chunk=text_delta)
-                
-                # Yield the processed chunk
-                yield processed_chunk
-        
-        # Finalize the stream
-        final_chunk = handler.finalize()
-        if final_chunk:
-            yield final_chunk
-    
-    # Return a streaming response
-    return Response(stream_with_context(generate_stream()), mimetype='text/plain')
 
-if __name__ == '__main__':
-    app.run(debug=True)
+    # Initialize the streaming handler
+    handler = StreamingHandler(
+        metadata=metadata,
+        private_key=private_key
+    )
+
+    async def generate():
+        async with client.messages.stream(
+            # ... (model, max_tokens, messages)
+        ) as stream:
+            async for text_delta in stream.text_deltas:
+                processed_chunk = handler.process_chunk(chunk=text_delta)
+                if processed_chunk:
+                    yield processed_chunk
+            # Finalize the stream
+            final_chunk = handler.finalize()
+            if final_chunk:
+                yield final_chunk
+
+    return StreamingResponse(generate(), media_type="text/plain")
+
+# Run with: uvicorn your_app_file:app --reload
 ```
 
 ## Best Practices

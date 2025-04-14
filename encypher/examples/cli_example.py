@@ -5,21 +5,16 @@ This example demonstrates how to use EncypherAI from the command line
 to encode and decode metadata in text.
 """
 
-import argparse
 import json
 import sys
-import time
 from datetime import datetime
-from typing import Optional, Dict, Any
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.syntax import Syntax
-from rich.table import Table
 
-from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
 from encypher.core.metadata_encoder import MetadataEncoder
-from encypher.config.settings import Settings
+from encypher.core.unicode_metadata import MetadataTarget
 
 
 def count_metadata_occurrences(text):
@@ -33,18 +28,14 @@ def count_metadata_occurrences(text):
         int: Number of metadata occurrences
     """
     # Count zero-width characters which are used for encoding
-    zwc_count = text.count(MetadataEncoder.ZERO_WIDTH_SPACE) + text.count(
-        MetadataEncoder.ZERO_WIDTH_NON_JOINER
-    )
+    zwc_count = text.count(MetadataEncoder.ZERO_WIDTH_SPACE) + text.count(MetadataEncoder.ZERO_WIDTH_NON_JOINER)
 
     # If there are zero-width characters, we have at least one metadata embedding
     # This is a simplified approach - in reality, we'd need to parse the text to find actual metadata blocks
     return 1 if zwc_count > 0 else 0
 
 
-def encode_metadata_with_count(
-    encoder, text, model_id, timestamp, custom_metadata, target
-):
+def encode_metadata_with_count(encoder, text, model_id, timestamp, custom_metadata, target):
     """
     Wrapper around MetadataEncoder.encode_metadata that also returns the count of embeddings.
 
@@ -54,9 +45,7 @@ def encode_metadata_with_count(
     # Create metadata dictionary first
     metadata = {
         "model_id": model_id,
-        "timestamp": (
-            timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp
-        ),
+        "timestamp": (timestamp.isoformat() if isinstance(timestamp, datetime) else timestamp),
     }
 
     # Add custom metadata if provided
@@ -99,9 +88,7 @@ def encode_text(args):
         try:
             custom_metadata = json.loads(args.custom_metadata)
         except json.JSONDecodeError:
-            console.print(
-                "[bold red]Error:[/] Custom metadata must be a valid JSON string"
-            )
+            console.print("[bold red]Error:[/] Custom metadata must be a valid JSON string")
             sys.exit(1)
 
     # Get timestamp
@@ -134,16 +121,12 @@ def encode_text(args):
         if args.output_file:
             with open(args.output_file, "w", encoding="utf-8") as f:
                 f.write(encoded_text)
-            console.print(
-                f"[bold green]Success![/] Encoded text saved to {args.output_file}"
-            )
-            console.print(
-                f"[bold blue]Embedded metadata[/] {embed_count} times in the text"
-            )
+            console.print(f"[bold green]Success![/] Encoded text saved to {args.output_file}")
+            console.print(f"[bold blue]Embedded metadata[/] {embed_count} times in the text")
         else:
             # Create a temporary file to view the encoded text
-            import tempfile
             import os
+            import tempfile
 
             # Show a clean version of the text (original text)
             console.print("[bold green]Original Text:[/]")
@@ -155,9 +138,7 @@ def encode_text(args):
                 f.write(encoded_text)
 
             console.print(f"[bold green]Encoded text saved to:[/] {temp_path}")
-            console.print(
-                f"[bold blue]Embedded metadata[/] {embed_count} times in the text"
-            )
+            console.print(f"[bold blue]Embedded metadata[/] {embed_count} times in the text")
             console.print(
                 "[bold yellow]Note:[/] The encoded text contains invisible Unicode characters that may not display correctly in the terminal."
             )
@@ -223,9 +204,7 @@ def decode_text(args):
         console.print("[bold yellow]No metadata found in the text.[/]")
         return
     else:
-        console.print(
-            f"[bold green]Found metadata[/] {metadata_count} times in the text"
-        )
+        console.print(f"[bold green]Found metadata[/] {metadata_count} times in the text")
 
         # Display metadata in a more readable format
         console.print(
@@ -252,19 +231,11 @@ def main():
     # Encode command
     encode_parser = subparsers.add_parser("encode", help="Encode metadata into text")
     encode_parser.add_argument("--text", help="Text to encode metadata into")
-    encode_parser.add_argument(
-        "--input-file", help="Input file containing text to encode"
-    )
-    encode_parser.add_argument(
-        "--output-file", help="Output file to write encoded text to"
-    )
+    encode_parser.add_argument("--input-file", help="Input file containing text to encode")
+    encode_parser.add_argument("--output-file", help="Output file to write encoded text to")
     encode_parser.add_argument("--model-id", required=True, help="Model ID to embed")
-    encode_parser.add_argument(
-        "--timestamp", type=float, help="Timestamp to embed (defaults to current time)"
-    )
-    encode_parser.add_argument(
-        "--custom-metadata", help="Custom metadata to embed (JSON string)"
-    )
+    encode_parser.add_argument("--timestamp", type=float, help="Timestamp to embed (defaults to current time)")
+    encode_parser.add_argument("--custom-metadata", help="Custom metadata to embed (JSON string)")
     encode_parser.add_argument(
         "--target",
         default="whitespace",
@@ -275,12 +246,8 @@ def main():
     # Decode command
     decode_parser = subparsers.add_parser("decode", help="Decode metadata from text")
     decode_parser.add_argument("--text", help="Text to decode metadata from")
-    decode_parser.add_argument(
-        "--input-file", help="Input file containing text to decode"
-    )
-    decode_parser.add_argument(
-        "--debug", action="store_true", help="Show debug information"
-    )
+    decode_parser.add_argument("--input-file", help="Input file containing text to decode")
+    decode_parser.add_argument("--debug", action="store_true", help="Show debug information")
     decode_parser.add_argument(
         "--show-clean",
         action="store_true",
@@ -288,9 +255,7 @@ def main():
     )
 
     # Decode from temp file command
-    decode_temp_parser = subparsers.add_parser(
-        "decode-temp", help="Decode metadata from the last temp file created"
-    )
+    subparsers.add_parser("decode-temp", help="Decode metadata from the last temp file created")
 
     args = parser.parse_args()
 
@@ -306,9 +271,9 @@ def main():
         decode_text(args)
     elif args.command == "decode-temp":
         # Find the latest temp file with our suffix
-        import tempfile
-        import os
         import glob
+        import os
+        import tempfile
 
         # Get all temp files with our suffix
         temp_dir = tempfile.gettempdir()

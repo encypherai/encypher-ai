@@ -5,26 +5,21 @@ This example demonstrates how to integrate EncypherAI with LiteLLM
 to encode metadata into LLM responses.
 """
 
-import os
 import json
-import time
-import asyncio
+import os
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Union, Any, AsyncGenerator
-from fastapi.responses import HTMLResponse
+from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
-from fastapi import FastAPI, Request, Depends, HTTPException
-from fastapi.responses import StreamingResponse
-from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
 import litellm
-from litellm.utils import ModelResponse, Message
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse, StreamingResponse
+from pydantic import BaseModel, Field
 
-from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
-from encypher.streaming.handlers import StreamingHandler
 from encypher.config.settings import Settings
-
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.streaming.handlers import StreamingHandler
 
 # Initialize settings
 settings = Settings()
@@ -34,12 +29,12 @@ app = FastAPI(
     title="EncypherAI API",
     description="""
     EncypherAI API for encoding metadata in LLM outputs.
-    
+
     This API provides endpoints for:
     - Encoding metadata in LLM responses
     - Streaming support with real-time metadata encoding
     - Support for all major LLM providers through LiteLLM
-    
+
     For more information, visit [EncypherAI Documentation](https://docs.encypherai.com).
     """,
     version="0.1.0",
@@ -80,27 +75,17 @@ async def custom_swagger_ui_html() -> HTMLResponse:
 class ChatMessage(BaseModel):
     """A chat message in the conversation."""
 
-    role: str = Field(
-        description="Message role (system, user, assistant)", example="user"
-    )
-    content: str = Field(
-        description="Message content", example="What is the capital of France?"
-    )
+    role: str = Field(description="Message role (system, user, assistant)", example="user")
+    content: str = Field(description="Message content", example="What is the capital of France?")
 
 
 class ChatRequest(BaseModel):
     """Request model for chat completions."""
 
-    messages: List[ChatMessage] = Field(
-        description="List of chat messages in the conversation"
-    )
+    messages: List[ChatMessage] = Field(description="List of chat messages in the conversation")
     model: str = Field(description="LLM model to use", example="gpt-3.5-turbo")
-    temperature: Optional[float] = Field(
-        0.7, description="Sampling temperature (0.0 to 1.0)", ge=0.0, le=1.0
-    )
-    max_tokens: Optional[int] = Field(
-        None, description="Maximum tokens to generate", gt=0
-    )
+    temperature: Optional[float] = Field(0.7, description="Sampling temperature (0.0 to 1.0)", ge=0.0, le=1.0)
+    max_tokens: Optional[int] = Field(None, description="Maximum tokens to generate", gt=0)
     stream: Optional[bool] = Field(False, description="Whether to stream the response")
     metadata_target: Optional[str] = Field(
         "whitespace",
@@ -138,9 +123,7 @@ async def chat_completions(
     """
     try:
         # Convert messages to LiteLLM format
-        messages = [
-            {"role": msg.role, "content": msg.content} for msg in request.messages
-        ]
+        messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
 
         if request.stream:
             return StreamingResponse(
@@ -174,34 +157,22 @@ async def chat_completions(
         # Encode metadata
         model_id = metadata.get("model_id", "")
         timestamp = metadata.get("timestamp", datetime.now(timezone.utc).isoformat())
-        target = (
-            request.metadata_target
-            if request.metadata_target is not None
-            else "whitespace"
-        )
+        target = request.metadata_target if request.metadata_target is not None else "whitespace"
 
         encoded_content = UnicodeMetadata.embed_metadata(
             text=content,
             model_id=model_id,
             timestamp=timestamp,
             target=target,
-            custom_metadata={
-                k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]
-            },
+            custom_metadata={k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]},
         )
 
-        return ChatResponse(
-            model=request.model, content=encoded_content, metadata=metadata
-        )
+        return ChatResponse(model=request.model, content=encoded_content, metadata=metadata)
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error generating completion: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error generating completion: {str(e)}")
 
 
-async def stream_chat_completion(
-    request: ChatRequest, messages: List[Dict[str, str]]
-) -> AsyncGenerator[str, None]:
+async def stream_chat_completion(request: ChatRequest, messages: List[Dict[str, str]]) -> AsyncGenerator[str, None]:
     """
     Stream a chat completion with metadata encoding.
 
@@ -224,24 +195,12 @@ async def stream_chat_completion(
         handler = StreamingHandler(
             metadata={
                 "model_id": metadata.get("model_id", ""),
-                "timestamp": metadata.get(
-                    "timestamp", datetime.now(timezone.utc).isoformat()
-                ),
-                "request_id": metadata.get(
-                    "request_id", f"req_{int(datetime.now().timestamp())}"
-                ),
+                "timestamp": metadata.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                "request_id": metadata.get("request_id", f"req_{int(datetime.now().timestamp())}"),
                 "session_id": metadata.get("session_id", ""),
             },
-            target=(
-                request.metadata_target
-                if request.metadata_target is not None
-                else "whitespace"
-            ),
-            encode_first_chunk_only=(
-                request.encode_first_chunk_only
-                if request.encode_first_chunk_only is not None
-                else True
-            ),
+            target=(request.metadata_target if request.metadata_target is not None else "whitespace"),
+            encode_first_chunk_only=(request.encode_first_chunk_only if request.encode_first_chunk_only is not None else True),
         )
 
         # Stream completion
@@ -255,11 +214,7 @@ async def stream_chat_completion(
 
         async for chunk in stream:
             # Extract content from chunk
-            if (
-                chunk.choices
-                and chunk.choices[0].delta
-                and chunk.choices[0].delta.content
-            ):
+            if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
 
                 # Process chunk with streaming handler

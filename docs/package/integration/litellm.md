@@ -11,7 +11,7 @@ Before you begin, make sure you have:
 3. EncypherAI installed
 
 ```bash
-uv pip install encypher-ai litellm
+uv pip install encypher-ai litellm cryptography
 ```
 
 ## Basic Integration
@@ -24,8 +24,12 @@ For standard (non-streaming) responses using LiteLLM:
 
 ```python
 import litellm
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 import json
 import os
 
@@ -33,8 +37,12 @@ import os
 os.environ["OPENAI_API_KEY"] = "your-openai-api-key"
 os.environ["ANTHROPIC_API_KEY"] = "your-anthropic-api-key"
 
-# Create a metadata encoder
-encoder = MetadataEncoder(hmac_secret_key="your-secret-key")  # Optional: hmac_secret_key is only needed if you want HMAC verification
+# Generate key pair and resolver (replace with your actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "litellm-key-1":
+        return public_key
+    return None
 
 # Create a completion using OpenAI
 response = litellm.completion(
@@ -52,15 +60,15 @@ text = response.choices[0].message.content
 metadata = {
     "model": response.model,
     "provider": "openai",  # Determined based on the model
-    "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "timestamp": time.time(),
+    "key_id": "litellm-key-1", # Identifier for the key
     "prompt_tokens": response.usage.prompt_tokens,
     "completion_tokens": response.usage.completion_tokens,
     "total_tokens": response.usage.total_tokens
 }
 
 # Embed metadata
-encoded_text = encoder.encode_metadata(text, metadata)
+encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
 
 print("Original response:")
 print(text)
@@ -68,12 +76,13 @@ print("\nResponse with embedded metadata:")
 print(encoded_text)
 
 # Later, extract and verify the metadata
-from encypher.core.unicode_metadata import UnicodeMetadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(encoded_text, hmac_secret_key="your-secret-key")
-extracted_metadata, clean_text = encoder.decode_metadata(encoded_text)
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    encoded_text,
+    public_key_resolver=resolve_public_key
+)
 
 print("\nExtracted metadata:")
-print(json.dumps(extracted_metadata, indent=2))
+print(json.dumps(verified_metadata, indent=2))
 print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
 
@@ -84,27 +93,37 @@ For streaming responses, use the `StreamingHandler` with LiteLLM:
 ```python
 import litellm
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 import os
 
 # Set up your API keys
 os.environ["OPENAI_API_KEY"] = "your-openai-api-key"
 os.environ["ANTHROPIC_API_KEY"] = "your-anthropic-api-key"
 
+# Generate key pair and resolver (replace with your actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "litellm-stream-key":
+        return public_key
+    return None
+
 # Create metadata
 metadata = {
     "model": "gpt-4",
     "provider": "openai",
-    "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat()
+    "timestamp": time.time(),
+    "key_id": "litellm-stream-key"
 }
 
 # Initialize the streaming handler
 handler = StreamingHandler(
     metadata=metadata,
-    target="whitespace",
-    encode_first_chunk_only=True,
-    hmac_secret_key="your-secret-key"  # Optional: Only needed for HMAC verification
+    private_key=private_key # Use the private key
 )
 
 # Create a streaming completion
@@ -122,28 +141,31 @@ full_response = ""
 for chunk in response:
     if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
         content = chunk.choices[0].delta.content
-        
+
         # Process the chunk
         processed_chunk = handler.process_chunk(chunk=content)
-        
-        # Print and accumulate the processed chunk
-        print(processed_chunk, end="", flush=True)
-        full_response += processed_chunk
+
+        # Print and accumulate the processed chunk if available
+        if processed_chunk:
+            print(processed_chunk, end="", flush=True)
+            full_response += processed_chunk
 
 # Finalize the stream
-handler.finalize()
+final_chunk = handler.finalize()
+if final_chunk:
+    print(final_chunk, end="", flush=True)
+    full_response += final_chunk
 
 print("\n\nStreaming completed!")
 
 # Extract and verify the metadata
-from encypher.core import MetadataEncoder
-encoder = MetadataEncoder(hmac_secret_key="your-secret-key")
-from encypher.core.unicode_metadata import UnicodeMetadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(full_response, hmac_secret_key="your-secret-key")
-extracted_metadata, clean_text = encoder.decode_metadata(full_response)
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_response,
+    public_key_resolver=resolve_public_key
+)
 
 print("\nExtracted metadata:")
-print(json.dumps(extracted_metadata, indent=2))
+print(json.dumps(verified_metadata, indent=2))
 print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
 
@@ -155,8 +177,12 @@ LiteLLM makes it easy to switch between different providers:
 
 ```python
 import litellm
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 import json
 import os
 
@@ -164,78 +190,95 @@ import os
 os.environ["OPENAI_API_KEY"] = "your-openai-api-key"
 os.environ["ANTHROPIC_API_KEY"] = "your-anthropic-api-key"
 
-# Create a metadata encoder
-encoder = MetadataEncoder(hmac_secret_key="your-secret-key")  # Optional: hmac_secret_key is only needed if you want HMAC verification
+# Generate key pair and resolver (replace with your actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # Use different keys per provider or a central key
+    if key_id == "litellm-openai-key":
+        return public_key # Same key for demo
+    elif key_id == "litellm-anthropic-key":
+        return public_key # Same key for demo
+    return None
 
 # Function to generate text with metadata using any LLM provider
 def generate_with_metadata(model, prompt, system_prompt=None):
     # Determine provider based on model prefix
     if model.startswith("gpt"):
         provider = "openai"
+        key_id = "litellm-openai-key"
     elif model.startswith("claude"):
         provider = "anthropic"
+        key_id = "litellm-anthropic-key"
     else:
         provider = "unknown"
-    
+        key_id = "litellm-unknown-key" # Might need a default or error
+
     # Create messages
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
-    
+
     # Create a completion
     response = litellm.completion(
         model=model,
         messages=messages
     )
-    
+
     # Get the response text
     text = response.choices[0].message.content
-    
+
     # Create metadata
     metadata = {
         "model": response.model,
         "provider": provider,
-        "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat()
+        "timestamp": time.time(),
+        "key_id": key_id
     }
-    
-    # Add usage information if available
+
+    # Add usage info if available
     if hasattr(response, "usage"):
         metadata.update({
             "prompt_tokens": response.usage.prompt_tokens,
             "completion_tokens": response.usage.completion_tokens,
             "total_tokens": response.usage.total_tokens
         })
-    
+
     # Embed metadata
-    encoded_text = encoder.encode_metadata(text, metadata)
-    
-    return {
-        "text": encoded_text,
-        "metadata": metadata,
-        "original_text": text
-    }
+    encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
+
+    return encoded_text, metadata
 
 # Example usage with different models
-openai_response = generate_with_metadata(
+openai_response, openai_meta = generate_with_metadata(
     model="gpt-4",
     prompt="Write a short paragraph about AI ethics.",
     system_prompt="You are a helpful assistant."
 )
 
-anthropic_response = generate_with_metadata(
+anthropic_response, anthropic_meta = generate_with_metadata(
     model="claude-3-opus-20240229",
     prompt="Write a short paragraph about AI ethics."
 )
 
 print("OpenAI Response:")
-print(openai_response["text"])
-print("\nMetadata:", openai_response["metadata"])
+print(openai_response)
+print("\nMetadata:", openai_meta)
 
 print("\nAnthropic Response:")
-print(anthropic_response["text"])
-print("\nMetadata:", anthropic_response["metadata"])
+print(anthropic_response)
+print("\nMetadata:", anthropic_meta)
+
+# Verify the responses
+print("\nVerifying responses...")
+for i, (encoded, original_meta) in enumerate([openai_response, anthropic_response]):
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        encoded,
+        public_key_resolver=resolve_public_key
+    )
+    print(f"\nResponse {i+1} (Model: {original_meta['model']}):")
+    print(f"  Verified Metadata: {json.dumps(verified_metadata, indent=2)}")
+    print(f"  Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
 
 ### Function Calling with LiteLLM
@@ -245,43 +288,53 @@ Using function calling with LiteLLM and EncypherAI:
 ```python
 import litellm
 import json
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
-import os
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 
-# Set up your API keys
-os.environ["OPENAI_API_KEY"] = "your-openai-api-key"
+# Assume LiteLLM Proxy is running at http://localhost:8000
+litellm.api_base = "http://localhost:8000"
 
-# Define functions
-functions = [
-    {
-        "name": "get_weather",
-        "description": "Get the current weather in a given location",
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "location": {
-                    "type": "string",
-                    "description": "The city and state, e.g. San Francisco, CA"
-                },
-                "unit": {
-                    "type": "string",
-                    "enum": ["celsius", "fahrenheit"]
-                }
-            },
-            "required": ["location"]
-        }
-    }
-]
+# Set a virtual key (used by the proxy to route to the actual key)
+litellm.api_key = "sk-1234" # Example virtual key
 
-# Create a completion with function calling
+# Generate key pair and resolver for proxy interaction
+private_key, public_key = generate_key_pair()
+def resolve_public_key_proxy(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "litellm-proxy-key":
+        return public_key
+    return None
+
+# Create a completion via the proxy
 response = litellm.completion(
-    model="gpt-4",
+    model="gpt-4",  # The model requested via proxy
     messages=[
         {"role": "system", "content": "You are a helpful assistant."},
         {"role": "user", "content": "What's the weather like in San Francisco?"}
     ],
-    functions=functions,
+    functions=[
+        {
+            "name": "get_weather",
+            "description": "Get the current weather in a given location",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "location": {
+                        "type": "string",
+                        "description": "The city and state, e.g. San Francisco, CA"
+                    },
+                    "unit": {
+                        "type": "string",
+                        "enum": ["celsius", "fahrenheit"]
+                    }
+                },
+                "required": ["location"]
+            }
+        }
+    ],
     function_call="auto"
 )
 
@@ -294,10 +347,10 @@ if hasattr(message, "function_call") and message.function_call:
     function_call = message.function_call
     function_name = function_call.name
     function_args = json.loads(function_call.arguments)
-    
+
     print(f"Function call: {function_name}")
     print(f"Arguments: {function_args}")
-    
+
     # Simulate function response
     function_response = {
         "location": function_args["location"],
@@ -305,7 +358,7 @@ if hasattr(message, "function_call") and message.function_call:
         "unit": function_args.get("unit", "fahrenheit"),
         "condition": "sunny"
     }
-    
+
     # Continue the conversation with the function result
     response = litellm.completion(
         model="gpt-4",
@@ -320,7 +373,7 @@ if hasattr(message, "function_call") and message.function_call:
             }
         ]
     )
-    
+
     # Get the final response text
     text = response.choices[0].message.content
 else:
@@ -330,9 +383,9 @@ else:
 # Create metadata
 metadata = {
     "model": response.model,
-    "provider": "openai",
-    "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "provider": "openai", # Provider info might come from proxy response
+    "timestamp": time.time(),
+    "key_id": "litellm-proxy-key",
     "function_call": message.function_call.name if hasattr(message, "function_call") and message.function_call else None
 }
 
@@ -345,11 +398,20 @@ if hasattr(response, "usage"):
     })
 
 # Embed metadata
-encoder = MetadataEncoder(hmac_secret_key="your-secret-key")
-encoded_text = encoder.encode_metadata(text, metadata)
+encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
 
-print("\nFinal response with embedded metadata:")
+print("Response via LiteLLM Proxy with embedded metadata:")
 print(encoded_text)
+
+# Verify the metadata
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    encoded_text,
+    public_key_resolver=resolve_public_key_proxy
+)
+
+print("\nExtracted metadata from proxy response:")
+print(json.dumps(verified_metadata, indent=2))
+print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
 
 ## LiteLLM Proxy Integration
@@ -360,13 +422,20 @@ If you're using LiteLLM as a proxy server, you can integrate EncypherAI on the s
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from litellm.proxy.proxy_server import router as litellm_router
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 import json
 
 app = FastAPI()
 security = HTTPBearer()
-encoder = MetadataEncoder(hmac_secret_key="your-secret-key")
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "litellm-proxy-key":
+        return public_key
+    return None
 
 # Add LiteLLM router
 app.include_router(litellm_router)
@@ -376,26 +445,27 @@ app.include_router(litellm_router)
 async def add_metadata_middleware(request, call_next):
     # Process the request normally
     response = await call_next(request)
-    
+
     # Check if this is a completion response
     if request.url.path == "/v1/chat/completions" and response.status_code == 200:
         # Get the response body
         body = await response.body()
         data = json.loads(body)
-        
+
         # Check if this is a streaming response
         if "choices" in data and len(data["choices"]) > 0:
             # Get the response text
             if "message" in data["choices"][0] and "content" in data["choices"][0]["message"]:
                 text = data["choices"][0]["message"]["content"]
-                
+
                 # Create metadata
                 metadata = {
                     "model": data.get("model", "unknown"),
                     "organization": "YourOrganization",
-                    "timestamp": datetime.now(timezone.utc).isoformat()
+                    "timestamp": time.time(),
+                    "key_id": "litellm-proxy-key"
                 }
-                
+
                 # Add usage information if available
                 if "usage" in data:
                     metadata.update({
@@ -403,20 +473,20 @@ async def add_metadata_middleware(request, call_next):
                         "completion_tokens": data["usage"].get("completion_tokens", 0),
                         "total_tokens": data["usage"].get("total_tokens", 0)
                     })
-                
+
                 # Embed metadata
-                encoded_text = encoder.encode_metadata(text, metadata)
-                
+                encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
+
                 # Update the response
                 data["choices"][0]["message"]["content"] = encoded_text
-                
+
                 # Return the modified response
                 return JSONResponse(
                     content=data,
                     status_code=response.status_code,
                     headers=dict(response.headers)
                 )
-    
+
     return response
 
 # Authentication endpoint
@@ -426,7 +496,7 @@ async def authenticate(credentials: HTTPAuthorizationCredentials = Depends(secur
     token = credentials.credentials
     if token != "your-api-key":
         raise HTTPException(status_code=401, detail="Invalid API key")
-    
+
     return {"authenticated": True}
 
 # Verification endpoint
@@ -434,12 +504,14 @@ async def authenticate(credentials: HTTPAuthorizationCredentials = Depends(secur
 async def verify(request: Request):
     data = await request.json()
     text = data.get("text", "")
-    
+
     # Extract and verify metadata
     try:
-        from encypher.core.unicode_metadata import UnicodeMetadata
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(text, hmac_secret_key="your-secret-key")
-        
+        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+            text,
+            public_key_resolver=resolve_public_key
+        )
+
         return {
             "has_metadata": True,
             "metadata": verified_metadata,
@@ -463,28 +535,40 @@ When using LiteLLM as a client to a proxy server:
 ```python
 import litellm
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
+import os
 
 # Configure LiteLLM to use a proxy
 litellm.api_base = "http://localhost:8000"
-litellm.api_key = "your-api-key"
+litellm.api_key = "sk-1234" # Example virtual key
+
+# Generate key pair and resolver for proxy streaming
+private_key, public_key = generate_key_pair()
+def resolve_public_key_proxy_stream(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "litellm-proxy-stream-key":
+        return public_key
+    return None
 
 # Create metadata
 metadata = {
-    "model": "gpt-4",
-    "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat()
+    "model": "gpt-4", # The model requested via proxy
+    "provider": "openai", # Or determined by proxy
+    "timestamp": time.time(),
+    "key_id": "litellm-proxy-stream-key"
 }
 
 # Initialize the streaming handler
 handler = StreamingHandler(
     metadata=metadata,
-    target="whitespace",
-    encode_first_chunk_only=True,
-    hmac_secret_key="your-secret-key"  # Optional: Only needed for HMAC verification
+    private_key=private_key # Use the private key
 )
 
-# Create a streaming completion
+# Create a streaming completion via the proxy
 response = litellm.completion(
     model="gpt-4",  # This will be routed through the proxy
     messages=[
@@ -499,18 +583,32 @@ full_response = ""
 for chunk in response:
     if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
         content = chunk.choices[0].delta.content
-        
+
         # Process the chunk
         processed_chunk = handler.process_chunk(chunk=content)
-        
-        # Print and accumulate the processed chunk
-        print(processed_chunk, end="", flush=True)
-        full_response += processed_chunk
+
+        # Print and accumulate the processed chunk if available
+        if processed_chunk:
+            print(processed_chunk, end="", flush=True)
+            full_response += processed_chunk
 
 # Finalize the stream
-handler.finalize()
+final_chunk = handler.finalize()
+if final_chunk:
+    print(final_chunk, end="", flush=True)
+    full_response += final_chunk
 
-print("\n\nStreaming completed!")
+print("\n\nStreaming via LiteLLM Proxy completed!")
+
+# Extract and verify the metadata
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_response,
+    public_key_resolver=resolve_public_key_proxy_stream
+)
+
+print("\nExtracted metadata from proxy stream:")
+print(json.dumps(verified_metadata, indent=2))
+print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
 
 ## Best Practices
@@ -577,9 +675,9 @@ except Exception as e:
 
 If metadata extraction fails:
 
-1. Ensure the text hasn't been modified after embedding
-2. Check if the text has enough suitable targets for embedding
-3. Verify you're using the same secret key for embedding and extraction
+1. Ensure the text hasn't been modified after embedding.
+2. Check if the text has enough suitable targets for embedding.
+3. Verify you're using the same secret key for embedding and extraction.
 
 ## Related Documentation
 

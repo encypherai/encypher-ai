@@ -6,15 +6,13 @@ They will be skipped if the API keys are not available.
 """
 
 import os
-import pytest
 from datetime import datetime, timezone
 
 import litellm
-from litellm.utils import ModelResponse
+import pytest
 
-from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
+from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.streaming.handlers import StreamingHandler
-
 
 # Skip all tests if no API keys are available
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -59,9 +57,7 @@ class TestOpenAIIntegration:
             model_id=metadata["model_id"],
             timestamp=metadata["timestamp"],
             target="whitespace",
-            custom_metadata={
-                k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]
-            },
+            custom_metadata={k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]},
         )
 
         # Extract metadata
@@ -87,9 +83,7 @@ class TestOpenAIIntegration:
         }
 
         # Initialize streaming handler
-        handler = StreamingHandler(
-            metadata=metadata, target="whitespace", encode_first_chunk_only=True
-        )
+        handler = StreamingHandler(metadata=metadata, target="whitespace", encode_first_chunk_only=True)
 
         # Generate streaming completion
         messages = [
@@ -97,18 +91,12 @@ class TestOpenAIIntegration:
             {"role": "user", "content": "Write a short paragraph about AI ethics."},
         ]
 
-        stream = litellm.completion(
-            model="gpt-3.5-turbo", messages=messages, stream=True
-        )
+        stream = litellm.completion(model="gpt-3.5-turbo", messages=messages, stream=True)
 
         # Process streaming chunks
         processed_chunks = []
         for chunk in stream:
-            if (
-                chunk.choices
-                and chunk.choices[0].delta
-                and chunk.choices[0].delta.content
-            ):
+            if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
                 processed_chunk = handler.process_chunk(content)
                 processed_chunks.append(processed_chunk)
@@ -140,9 +128,7 @@ class TestAnthropicIntegration:
             {"role": "user", "content": "Write a short paragraph about AI ethics."},
         ]
 
-        response = litellm.completion(
-            model="claude-3-sonnet-20240229", messages=messages
-        )
+        response = litellm.completion(model="claude-3-sonnet-20240229", messages=messages)
 
         # Extract content
         content = response.choices[0].message.content
@@ -165,9 +151,7 @@ class TestAnthropicIntegration:
             model_id=metadata["model_id"],
             timestamp=metadata["timestamp"],
             target="whitespace",
-            custom_metadata={
-                k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]
-            },
+            custom_metadata={k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]},
         )
 
         # Extract metadata

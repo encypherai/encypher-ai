@@ -7,18 +7,17 @@ to create a simple API that encodes metadata into text and decodes it.
 
 import json
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Union, Any, Generator
+from typing import Any, Dict, List, Optional
+
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 from typing_extensions import AsyncGenerator
 
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, StreamingResponse
-from pydantic import BaseModel, Field
-
-from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
-from encypher.core.metadata_encoder import MetadataEncoder
-from encypher.streaming.handlers import StreamingHandler
 from encypher.config.settings import Settings
-
+from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.streaming.handlers import StreamingHandler
 
 # Initialize settings
 settings = Settings()
@@ -38,9 +37,7 @@ encoder = MetadataEncoder(secret_key=settings.get_hmac_secret_key())
 class EncodeRequest(BaseModel):
     text: str = Field(..., description="Text to encode metadata into")
     model_id: Optional[str] = Field(None, description="Model ID to embed")
-    metadata: Optional[Dict[str, Any]] = Field(
-        None, description="Additional metadata to embed"
-    )
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata to embed")
     target: Optional[str] = Field(
         "whitespace",
         description="Where to embed metadata (whitespace, punctuation, first_letter, last_letter, all_characters)",
@@ -58,26 +55,16 @@ class DecodeRequest(BaseModel):
 
 class DecodeResponse(BaseModel):
     original_text: str = Field(..., description="Original text without metadata")
-    metadata: Optional[Dict[str, Any]] = Field(
-        None, description="Extracted metadata or None if not found"
-    )
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Extracted metadata or None if not found")
     is_valid: bool = Field(..., description="Whether the metadata is valid")
 
 
 class StreamRequest(BaseModel):
-    text_chunks: List[str] = Field(
-        ..., description="List of text chunks to simulate streaming"
-    )
+    text_chunks: List[str] = Field(..., description="List of text chunks to simulate streaming")
     model_id: Optional[str] = Field(None, description="Model ID to embed")
-    metadata: Optional[Dict[str, Any]] = Field(
-        None, description="Additional metadata to embed"
-    )
-    metadata_target: Optional[str] = Field(
-        "whitespace", description="Where to embed metadata"
-    )
-    encode_first_chunk_only: Optional[bool] = Field(
-        True, description="Whether to encode metadata only in the first chunk"
-    )
+    metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata to embed")
+    metadata_target: Optional[str] = Field("whitespace", description="Where to embed metadata")
+    encode_first_chunk_only: Optional[bool] = Field(True, description="Whether to encode metadata only in the first chunk")
 
 
 @app.post("/encode", response_model=EncodeResponse)
@@ -101,22 +88,14 @@ async def encode_text(request: EncodeRequest) -> EncodeResponse:
         encoded_text = UnicodeMetadata.embed_metadata(
             text=request.text,
             model_id=model_id if model_id is not None else "",
-            timestamp=(
-                timestamp
-                if timestamp is not None
-                else datetime.now(timezone.utc).isoformat()
-            ),
+            timestamp=(timestamp if timestamp is not None else datetime.now(timezone.utc).isoformat()),
             target=target,
-            custom_metadata={
-                k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]
-            },
+            custom_metadata={k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]},
         )
 
         return EncodeResponse(encoded_text=encoded_text, metadata=metadata)
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error encoding metadata: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error encoding metadata: {str(e)}")
 
 
 @app.post("/decode", response_model=DecodeResponse)
@@ -132,9 +111,7 @@ async def decode_text(request: DecodeRequest) -> DecodeResponse:
         if not metadata.get("model_id") and not metadata.get("timestamp"):
             is_valid, alt_metadata, clean_text = encoder.verify_text(request.text)
             if is_valid and alt_metadata:
-                return DecodeResponse(
-                    original_text=clean_text, metadata=alt_metadata, is_valid=True
-                )
+                return DecodeResponse(original_text=clean_text, metadata=alt_metadata, is_valid=True)
 
         # If we found metadata with UnicodeMetadata
         if metadata.get("model_id") or metadata.get("timestamp"):
@@ -143,16 +120,12 @@ async def decode_text(request: DecodeRequest) -> DecodeResponse:
             # you would need to properly remove the variation selectors
             clean_text = request.text
 
-            return DecodeResponse(
-                original_text=clean_text, metadata=metadata, is_valid=True
-            )
+            return DecodeResponse(original_text=clean_text, metadata=metadata, is_valid=True)
 
         # If no metadata found
         return DecodeResponse(original_text=request.text, metadata=None, is_valid=False)
     except Exception as e:
-        raise HTTPException(
-            status_code=500, detail=f"Error decoding metadata: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Error decoding metadata: {str(e)}")
 
 
 @app.post("/stream")
@@ -170,11 +143,8 @@ async def stream_text(request: StreamRequest) -> StreamingResponse:
         # Create streaming handler with proper type handling
         handler = StreamingHandler(
             metadata=metadata,
-            target=request.metadata_target
-            or "whitespace",  # Default to whitespace if None
-            encode_first_chunk_only=bool(
-                request.encode_first_chunk_only
-            ),  # Convert to bool
+            target=request.metadata_target or "whitespace",  # Default to whitespace if None
+            encode_first_chunk_only=bool(request.encode_first_chunk_only),  # Convert to bool
         )
 
         # Process each chunk
@@ -195,7 +165,8 @@ async def stream_text(request: StreamRequest) -> StreamingResponse:
 
 
 if __name__ == "__main__":
-    import uvicorn
     import asyncio
+
+    import uvicorn
 
     uvicorn.run(app, host="0.0.0.0", port=8000)

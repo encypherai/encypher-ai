@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 """
 EncypherAI YouTube Demo Script
 
@@ -6,21 +7,17 @@ for use in introductory videos and presentations.
 """
 
 import json
+import os
 import time
 from datetime import datetime
-import os
-from typing import Dict, Any, Optional
 
+from rich import box
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.syntax import Syntax
 from rich.table import Table
-from rich.markdown import Markdown
-from rich.layout import Layout
-from rich import box
-from rich.prompt import Prompt
 
-from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.metadata_encoder import MetadataEncoder
 from encypher.streaming.handlers import StreamingHandler
 
@@ -49,8 +46,7 @@ def print_header():
     clear_screen()
     console.print(
         Panel.fit(
-            "[bold blue]EncypherAI Demo[/bold blue]\n"
-            "[italic]Invisible Metadata for AI-Generated Content[/italic]",
+            "[bold blue]EncypherAI Demo[/bold blue]\n" "[italic]Invisible Metadata for AI-Generated Content[/italic]",
             border_style="blue",
             padding=(1, 10),
         )
@@ -141,19 +137,11 @@ def show_byte_comparison(original_text: str, encoded_text: str):
     encoded_length = len(encoded_text)
 
     # Add rows to the table
-    byte_table.add_row(
-        "Original Text", original_sample, original_bytes, str(original_length)
-    )
-    byte_table.add_row(
-        "Encoded Text", encoded_sample, encoded_bytes, str(encoded_length)
-    )
+    byte_table.add_row("Original Text", original_sample, original_bytes, str(original_length))
+    byte_table.add_row("Encoded Text", encoded_sample, encoded_bytes, str(encoded_length))
 
     # Add a row showing just the invisible characters
-    invisible_chars = "".join(
-        c
-        for c in encoded_text
-        if c in [encoder.ZERO_WIDTH_SPACE, encoder.ZERO_WIDTH_NON_JOINER]
-    )
+    invisible_chars = "".join(c for c in encoded_text if c in [encoder.ZERO_WIDTH_SPACE, encoder.ZERO_WIDTH_NON_JOINER])
     invisible_bytes = format_bytes_for_display(invisible_chars)
 
     byte_table.add_row(
@@ -178,7 +166,9 @@ def demo_basic_encoding():
     print_section("1. Basic Metadata Encoding")
 
     # Sample AI-generated text
-    original_text = "The future of artificial intelligence lies not just in its ability to generate content, but in how we can verify and track its origins."
+    original_text = (
+        "The future of artificial intelligence lies not just in its ability to generate content, but in how we can verify and track its origins."
+    )
 
     console.print("Original AI-generated text:")
     console.print(Panel(original_text, border_style="green"))
@@ -224,9 +214,7 @@ def demo_basic_encoding():
             "\n[italic]The metadata is invisibly embedded in the actual text, but we're showing the original text for better terminal display.[/italic]"
         )
     else:
-        console.print(
-            "\n[italic]The metadata is now invisibly embedded in the text![/italic]"
-        )
+        console.print("\n[italic]The metadata is now invisibly embedded in the text![/italic]")
 
     # Show that the text looks the same
     console.print("\n[bold]Visual comparison:[/bold]")
@@ -250,7 +238,7 @@ def demo_metadata_extraction():
     original_text = "Generative AI models can create compelling content, but without proper tracking, attribution becomes challenging."
 
     current_time = datetime.now()
-    readable_time = current_time.strftime("%Y-%m-%d %H:%M:%S")
+    current_time.strftime("%Y-%m-%d %H:%M:%S")
 
     metadata = {
         "model_id": "claude-3-opus",
@@ -288,9 +276,7 @@ def demo_metadata_extraction():
     console.print("\nExtracted metadata:")
 
     # Create a nested table for metadata display
-    metadata_table = Table(
-        show_header=True, header_style="bold magenta", box=box.ROUNDED
-    )
+    metadata_table = Table(show_header=True, header_style="bold magenta", box=box.ROUNDED)
     metadata_table.add_column("Field")
     metadata_table.add_column("Value")
 
@@ -302,9 +288,7 @@ def demo_metadata_extraction():
             elif key == "custom_data" and isinstance(value, dict):
                 # Handle nested custom data
                 nested_value = json.dumps(value, indent=2)
-                metadata_table.add_row(
-                    key, Syntax(nested_value, "json", theme="monokai")
-                )
+                metadata_table.add_row(key, Syntax(nested_value, "json", theme="monokai"))
             else:
                 metadata_table.add_row(key, str(value))
     else:
@@ -328,13 +312,13 @@ def demo_tamper_detection():
         Markdown(
             """
     **HMAC Security in EncypherAI**
-    
+
     EncypherAI uses HMAC (Hash-based Message Authentication Code) to ensure:
-    
+
     1. **Data Integrity** - Detect if content has been modified
     2. **Authentication** - Verify the content came from a trusted source
     3. **Tamper Protection** - Prevent unauthorized manipulation
-    
+
     The HMAC is created using the metadata and a secret key, then embedded alongside the metadata.
     """
         )
@@ -352,9 +336,7 @@ def demo_tamper_detection():
     # Show the secret key being used
     console.print("\n[bold]Secret Key for HMAC Verification:[/bold]")
     console.print(Panel(f"{SECRET_KEY}", border_style="red"))
-    console.print(
-        "[italic]This secret key is used to generate and verify the HMAC signature.[/italic]"
-    )
+    console.print("[italic]This secret key is used to generate and verify the HMAC signature.[/italic]")
 
     # Encode with HMAC
     console.print("\n[bold]Original text:[/bold]")
@@ -380,9 +362,7 @@ def demo_tamper_detection():
 
     if is_valid:
         console.print("\n✅ [bold green]Verification successful![/bold green]")
-        console.print(
-            "[italic]The HMAC signature matches, confirming the content is authentic and unmodified.[/italic]"
-        )
+        console.print("[italic]The HMAC signature matches, confirming the content is authentic and unmodified.[/italic]")
     else:
         console.print("\n❌ [bold red]Verification failed![/bold red]")
 
@@ -415,11 +395,7 @@ def demo_tamper_detection():
     expected_text = original_text
 
     # Check if the visible part of the tampered text matches what we expect
-    visible_tampered = "".join(
-        c
-        for c in tampered_encoded
-        if c not in [encoder.ZERO_WIDTH_SPACE, encoder.ZERO_WIDTH_NON_JOINER]
-    )
+    visible_tampered = "".join(c for c in tampered_encoded if c not in [encoder.ZERO_WIDTH_SPACE, encoder.ZERO_WIDTH_NON_JOINER])
     visible_expected = expected_text
 
     # This will detect tampering because the visible text doesn't match what was originally signed
@@ -431,30 +407,24 @@ def demo_tamper_detection():
             Markdown(
                 """
         **What happened:**
-        
+
         1. The text was modified after the metadata and HMAC were embedded
         2. The HMAC verification failed because:
            - The content no longer matches what was originally signed
            - The attacker doesn't have the secret key to create a valid signature
-        
+
         This security feature ensures that any modification to the text will be detected,
         even if the attacker tries to preserve the invisible metadata.
         """
             )
         )
     else:
-        console.print(
-            "\n[bold yellow]Note: Tampering should have been detected.[/bold yellow]"
-        )
-        console.print(
-            "[italic]In a real-world scenario with proper implementation, this tampering would be detected.[/italic]"
-        )
+        console.print("\n[bold yellow]Note: Tampering should have been detected.[/bold yellow]")
+        console.print("[italic]In a real-world scenario with proper implementation, this tampering would be detected.[/italic]")
 
     # Demonstrate tampering with a different secret key
     console.print("\n[bold red]Demonstrating another attack vector...[/bold red]")
-    console.print(
-        "[italic]An attacker tries to create their own metadata with a different key:[/italic]"
-    )
+    console.print("[italic]An attacker tries to create their own metadata with a different key:[/italic]")
 
     # Create a new encoder with a different key
     attacker_key = "malicious-key"
@@ -469,9 +439,7 @@ def demo_tamper_detection():
 
     # Attacker encodes their own text
     attacker_text = "This content appears legitimate but has fake metadata."
-    encoded_attacker_text = attacker_encoder.encode_metadata(
-        attacker_text, attacker_metadata
-    )
+    encoded_attacker_text = attacker_encoder.encode_metadata(attacker_text, attacker_metadata)
 
     console.print(Panel(encoded_attacker_text, border_style="red"))
 
@@ -479,22 +447,14 @@ def demo_tamper_detection():
     console.print("\n[bold]Verifying with the correct secret key...[/bold]")
     time.sleep(1)
 
-    is_valid, extracted_metadata, clean_text = encoder.verify_text(
-        encoded_attacker_text
-    )
+    is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_attacker_text)
 
     if not is_valid:
         console.print("\n🚨 [bold red]Invalid signature detected![/bold red]")
-        console.print(
-            "[italic]The verification failed because the metadata was signed with a different key.[/italic]"
-        )
-        console.print(
-            "[italic]This prevents attackers from creating fake metadata that appears legitimate.[/italic]"
-        )
+        console.print("[italic]The verification failed because the metadata was signed with a different key.[/italic]")
+        console.print("[italic]This prevents attackers from creating fake metadata that appears legitimate.[/italic]")
     else:
-        console.print(
-            "\n[bold yellow]Note: Invalid signature should have been detected.[/bold yellow]"
-        )
+        console.print("\n[bold yellow]Note: Invalid signature should have been detected.[/bold yellow]")
 
     wait_for_key()
 
@@ -503,9 +463,7 @@ def demo_streaming():
     """Demonstrate streaming support."""
     print_section("4. Streaming Support")
 
-    console.print(
-        "[italic]In this demo, we'll simulate an LLM generating text in streaming mode.[/italic]\n"
-    )
+    console.print("[italic]In this demo, we'll simulate an LLM generating text in streaming mode.[/italic]\n")
 
     # Metadata to embed
     current_time = datetime.now()
@@ -516,9 +474,7 @@ def demo_streaming():
     }
 
     # Initialize streaming handler
-    handler = StreamingHandler(
-        metadata=metadata, target="whitespace", encode_first_chunk_only=True
-    )
+    handler = StreamingHandler(metadata=metadata, target="whitespace", encode_first_chunk_only=True)
 
     # Simulate streaming chunks
     chunks = [
@@ -616,14 +572,10 @@ def demo_streaming():
     encoded_complete_text = encoder.encode_metadata(complete_text, metadata)
 
     # Verify the encoded text
-    is_valid, extracted_metadata, clean_text = encoder.verify_text(
-        encoded_complete_text
-    )
+    is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_complete_text)
 
     if is_valid:
-        console.print(
-            "\n✅ [bold green]Metadata successfully extracted from text![/bold green]"
-        )
+        console.print("\n✅ [bold green]Metadata successfully extracted from text![/bold green]")
 
         # Display extracted metadata
         metadata_table = Table(show_header=True, header_style="bold magenta")
@@ -640,12 +592,8 @@ def demo_streaming():
         console.print(metadata_table)
 
         # Explain streaming metadata limitations
-        console.print(
-            "\n[italic]Note: In streaming mode, metadata is typically embedded only in the first chunk.[/italic]"
-        )
-        console.print(
-            "[italic]This ensures minimal overhead while still providing verification capabilities.[/italic]"
-        )
+        console.print("\n[italic]Note: In streaming mode, metadata is typically embedded only in the first chunk.[/italic]")
+        console.print("[italic]This ensures minimal overhead while still providing verification capabilities.[/italic]")
     else:
         console.print("\n❌ [bold red]Failed to extract metadata![/bold red]")
 
@@ -745,17 +693,17 @@ def main():
         Markdown(
             """
     # Welcome to EncypherAI!
-    
+
     EncypherAI is an open-source Python package that enables invisible metadata embedding in AI-generated text.
-    
+
     In this demo, we'll walk through:
-    
+
     1. Basic metadata encoding
     2. Metadata extraction & verification
     3. Tamper detection
     4. Streaming support
     5. Real-world use cases
-    
+
     Let's get started!
     """
         )
@@ -782,9 +730,7 @@ def main():
     print_header()
     demo_conclusion()
 
-    console.print(
-        "\n[bold green]Thank you for watching the EncypherAI demo![/bold green]"
-    )
+    console.print("\n[bold green]Thank you for watching the EncypherAI demo![/bold green]")
 
 
 if __name__ == "__main__":

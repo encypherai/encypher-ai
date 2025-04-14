@@ -32,6 +32,7 @@ uv pip install -e ".[dev]"
 
 EncypherAI has the following core dependencies:
 
+- `cryptography`: For Ed25519 digital signatures and key management
 - `rich`: For formatted terminal output in demo scripts
 - `requests`: For HTTP client functionality in API examples
 - `python-dotenv`: For environment variable management
@@ -54,6 +55,23 @@ print(encypher.__version__)
 ```
 
 If the installation was successful, this will print the version number of the installed package.
+
+## Key Management
+
+EncypherAI uses Ed25519 digital signatures for secure metadata verification. You can generate key pairs using the built-in functions:
+
+```python
+from encypher.core.keys import generate_key_pair
+
+# Generate a key pair
+private_key, public_key = generate_key_pair()
+
+# Store these securely in your application
+# The private key should be kept secure and used for signing
+# The public key can be distributed for verification
+Alternatively, you can use the provided helper script `encypher/examples/generate_keys.py` to generate your initial key pair and get detailed usage instructions.
+
+For more information on key management, see the [Tamper Detection](../user-guide/tamper-detection.md) guide.
 
 ## Next Steps
 

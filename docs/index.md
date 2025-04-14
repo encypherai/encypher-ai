@@ -16,7 +16,7 @@ This documentation provides comprehensive information about the EncypherAI packa
 | Feature | Description |
 |---------|-------------|
 | 🔍 **Invisible Embedding** | Add metadata without changing visible content |
-| 🔐 **HMAC Verification** | Ensure data integrity and detect tampering |
+| 🔐 **Digital Signature Verification** | Ensure data integrity and detect tampering with Ed25519 signatures |
 | 🌊 **Streaming Support** | Compatible with chunk-by-chunk streaming |
 | 🔄 **Extensible API** | Easily integrate with any LLM provider |
 
@@ -51,8 +51,6 @@ This documentation provides comprehensive information about the EncypherAI packa
 
 ## API Reference
 
-- [MetadataEncoder](package/api-reference/metadata-encoder.md)
-- [StreamingMetadataEncoder](package/api-reference/streaming-metadata-encoder.md)
 - [UnicodeMetadata](package/api-reference/unicode-metadata.md)
 
 ## Contributing

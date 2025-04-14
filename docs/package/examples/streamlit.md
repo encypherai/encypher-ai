@@ -18,9 +18,9 @@ The Streamlit demo showcases all key EncypherAI capabilities:
    - View formatted JSON output
    - Compare original and embedded text
 
-3. **HMAC Verification**
+3. **Digital Signature Verification**
    - Test content integrity verification
-   - Experiment with secret key management
+   - Experiment with key pair management
    - Simulate tampering to see detection in action
 
 4. **Streaming Simulation**
@@ -76,15 +76,15 @@ This tab enables users to:
 - See a formatted JSON representation
 - Verify the content integrity
 
-### HMAC Verification
+### Digital Signature Verification
 
-![HMAC Verification Tab](../../assets/streamlit-verification.png)
+![Digital Signature Verification Tab](../../assets/streamlit-verification.png)
 
 This tab demonstrates security features:
-- Configure secret keys for HMAC verification
+- Generate and manage key pairs for digital signatures
 - Test verification on embedded content
 - Simulate tampering and see detection
-- Understand how HMAC protects content integrity
+- Understand how digital signatures protect content integrity
 
 ### Streaming Demo
 
@@ -105,7 +105,7 @@ examples/
 └── streamlit_app.py       # Main Streamlit application
     ├── basic_embedding()  # Basic embedding tab
     ├── extraction()       # Metadata extraction tab
-    ├── verification()     # HMAC verification tab
+    ├── verification()     # Digital signature verification tab
     └── streaming_demo()   # Streaming simulation tab
 ```
 
@@ -116,7 +116,7 @@ Here's a simplified version of the code that powers the basic embedding tab:
 ```python
 def basic_embedding():
     st.header("Basic Metadata Embedding")
-    
+
     # Text input
     sample_text = st.text_area(
         "Enter text to embed metadata into:",
@@ -125,22 +125,22 @@ def basic_embedding():
               "programmatically.",
         height=150
     )
-    
+
     # Metadata input
     with st.expander("Configure Metadata", expanded=True):
         col1, col2 = st.columns(2)
-        
+
         with col1:
             model = st.text_input("Model Name:", value="gpt-4")
             org = st.text_input("Organization:", value="EncypherAI")
-        
+
         with col2:
             timestamp = st.text_input(
-                "Timestamp:", 
+                "Timestamp:",
                 value=str(int(time.time()))
             )
-            version = st.text_input("Version:", value="1.1.0")
-        
+            version = st.text_input("Version:", value="2.0.0")
+
         # Additional custom fields
         custom_fields = {}
         if st.checkbox("Add custom metadata fields"):
@@ -150,7 +150,23 @@ def basic_embedding():
                 value = c2.text_input(f"Value {i+1}:", key=f"value_{i}")
                 if key and value:
                     custom_fields[key] = value
-    
+
+    # Key Pair for Digital Signatures
+    st.subheader("Digital Signature Keys")
+    private_key_input = st.text_input("Private Key (PEM Format)", type="password", help="Enter the Ed25519 private key in PEM format.")
+    public_key_input = st.text_input("Public Key (PEM Format)", help="Enter the corresponding Ed25519 public key in PEM format.")
+    key_id_input = st.text_input("Key ID", value="streamlit-key-1", help="A unique identifier for this key pair.")
+
+    # Add key_id to metadata
+    metadata = {
+        "model": model,
+        "organization": org,
+        "timestamp": int(timestamp) if timestamp.isdigit() else timestamp,
+        "version": version,
+        **custom_fields,
+        "key_id": key_id_input
+    }
+
     # Target selection
     target_options = {
         "Whitespace": "whitespace",
@@ -159,60 +175,57 @@ def basic_embedding():
         "Last Letter of Words": "last_letter",
         "All Characters": "all_characters"
     }
-    
+
     target = st.selectbox(
         "Where to embed metadata:",
         options=list(target_options.keys()),
         index=0
     )
-    
-    # Create metadata dictionary
-    metadata = {
-        "model": model,
-        "organization": org,
-        "timestamp": int(timestamp) if timestamp.isdigit() else timestamp,
-        "version": version,
-        **custom_fields
-    }
-    
-    # Secret key for HMAC
-    use_custom_key = st.checkbox("Use custom secret key")
-    secret_key = None
-    if use_custom_key:
-        secret_key = st.text_input(
-            "Secret Key (for HMAC verification):",
-            type="password"
-        )
-    
+
     # Embed metadata
     if st.button("Embed Metadata"):
-        from encypher.core.metadata_encoder import MetadataEncoder
-        
-        encoder = MetadataEncoder(secret_key=secret_key)
-        
+        from encypher.core.unicode_metadata import UnicodeMetadata
+        from encypher.core.keys import load_private_key_pem, load_public_key_pem
+
+        try:
+            private_key = load_private_key_pem(private_key_input.encode())
+        except Exception as e:
+            st.error(f"Invalid Private Key: {e}")
+            private_key = None
+
         try:
             with st.spinner("Embedding metadata..."):
-                encoded_text = encoder.encode_metadata(
-                    sample_text,
-                    metadata,
-                    target=target_options[target]
-                )
-            
+                if private_key:
+                    encoded_text = UnicodeMetadata.embed_metadata(
+                        text=sample_text,
+                        metadata=metadata,
+                        private_key=private_key,
+                        target=target_options[target]
+                    )
+                else:
+                    st.warning("Embedding without signature due to invalid private key.")
+                    # Fallback to embedding without signature if desired, or handle error
+                    encoded_text = UnicodeMetadata.embed_metadata(
+                        text=sample_text,
+                        metadata=metadata,
+                        target=target_options[target]
+                    )
+
             # Display results
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 st.subheader("Original Text")
                 st.text_area("", sample_text, height=200, disabled=True)
-            
+
             with col2:
                 st.subheader("Encoded Text")
                 st.text_area("", encoded_text, height=200, disabled=True)
-            
+
             # Metadata display
             st.subheader("Embedded Metadata")
             st.json(metadata)
-            
+
             # Copy button
             st.button(
                 "Copy Encoded Text to Clipboard",
@@ -221,19 +234,19 @@ def basic_embedding():
                     unsafe_allow_html=True
                 )
             )
-            
+
             # Verification status
             from encypher.core.unicode_metadata import UnicodeMetadata
             verified, metadata_dict = UnicodeMetadata.verify_metadata(
                 encoded_text,
-                hmac_secret_key=secret_key if use_custom_key else None
+                public_key_resolver=lambda key_id: load_public_key_pem(public_key_input.encode()) if key_id == key_id_input else None
             )
-            
+
             if verified:
-                st.success("✅ Verification successful: Content integrity confirmed")
+                st.success("✅ Verification successful")
             else:
-                st.error("❌ Verification failed: Content may have been tampered with")
-                
+                st.error("❌ Verification failed")
+
         except Exception as e:
             st.error(f"Error embedding metadata: {str(e)}")
 ```
@@ -265,206 +278,269 @@ st.markdown(
 
 # Create tabs
 tabs = st.tabs([
-    "Basic Embedding", 
-    "Metadata Extraction", 
-    "HMAC Verification", 
+    "Basic Embedding",
+    "Metadata Extraction",
+    "Digital Signature Verification",
     "Streaming Demo"
 ])
 
 # Basic Embedding Tab
 with tabs[0]:
     st.header("Basic Metadata Embedding")
-    
+
     # Text input
     sample_text = st.text_area(
         "Enter text to embed metadata into:",
         value="This is a sample text that will have metadata embedded within it.",
         height=150
     )
-    
+
     # Metadata configuration
     col1, col2 = st.columns(2)
-    
+
     with col1:
-        model = st.text_input("Model:", value="gpt-4")
-        org = st.text_input("Organization:", value="EncypherAI")
-    
+        model_id = st.text_input("Model ID:", value="gpt-4-demo")
+        org = st.text_input("Organization:", value="StreamlitApp")
+        timestamp = st.number_input("Timestamp:", value=int(time.time()))
+        version = st.text_input("Version:", value="2.0.0")
+
     with col2:
-        timestamp = st.text_input("Timestamp:", value=str(int(time.time())))
-        version = st.text_input("Version:", value="1.1.0")
-    
+        key_id_input = st.text_input("Key ID:", value=st.session_state.key_id)
+
+    # Key Pair for Digital Signatures
+    st.subheader("Digital Signature Keys")
+    private_key_input = st.text_input("Private Key (PEM Format)", type="password", help="Enter the Ed25519 private key in PEM format.")
+    public_key_input = st.text_input("Public Key (PEM Format)", help="Enter the corresponding Ed25519 public key in PEM format.")
+
+    # Add key_id to metadata
+    metadata = {
+        "model_id": model_id,
+        "organization": org,
+        "timestamp": int(timestamp),
+        "version": version,
+        "key_id": key_id_input
+    }
+
     # Target selection
     target = st.selectbox(
         "Where to embed metadata:",
         options=["whitespace", "punctuation", "first_letter", "last_letter", "all_characters"],
         index=0
     )
-    
-    # Create metadata
-    metadata = {
-        "model": model,
-        "organization": org,
-        "timestamp": int(timestamp) if timestamp.isdigit() else timestamp,
-        "version": version
-    }
-    
+
     # Embed button
     if st.button("Embed Metadata", key="embed_btn"):
-        encoder = MetadataEncoder()
-        
+        from encypher.core.unicode_metadata import UnicodeMetadata
+        from encypher.core.keys import load_private_key_pem, load_public_key_pem
+
         try:
-            encoded_text = encoder.encode_metadata(sample_text, metadata, target=target)
-            
+            private_key = load_private_key_pem(private_key_input.encode())
+        except Exception as e:
+            st.error(f"Invalid Private Key: {e}")
+            private_key = None
+
+        try:
+            encoded_text = UnicodeMetadata.embed_metadata(
+                text=sample_text,
+                metadata=metadata,
+                private_key=private_key,
+                target=target
+            )
+
             st.subheader("Results")
             st.text_area("Encoded Text:", encoded_text, height=150)
             st.json(metadata)
-            
+
             # Verification
             from encypher.core.unicode_metadata import UnicodeMetadata
             verified, metadata_dict = UnicodeMetadata.verify_metadata(
                 encoded_text,
-                hmac_secret_key=None
+                public_key_resolver=lambda key_id: load_public_key_pem(public_key_input.encode()) if key_id == key_id_input else None
             )
-            
+
             if verified:
                 st.success("✅ Verification successful")
             else:
                 st.error("❌ Verification failed")
-                
+
         except Exception as e:
             st.error(f"Error: {str(e)}")
 
 # Metadata Extraction Tab
 with tabs[1]:
     st.header("Metadata Extraction")
-    
+
     # Text input
     encoded_text = st.text_area(
         "Paste text with embedded metadata:",
         height=150
     )
-    
+
     # Extract button
     if st.button("Extract Metadata", key="extract_btn") and encoded_text:
         from encypher.core.unicode_metadata import UnicodeMetadata
-        extracted = UnicodeMetadata.extract_metadata(encoded_text)
-        
-        # Verify if possible
-        verified, metadata_dict = UnicodeMetadata.verify_metadata(
-            encoded_text,
-            hmac_secret_key=None
-        )
-        
-        # Display results
-        st.subheader("Extracted Metadata")
-        st.json(extracted)
-        
-        if verified:
-            st.success("✅ Content integrity verified")
-        else:
-            st.warning("⚠️ Content may have been tampered with")
-                
+        from encypher.core.keys import load_public_key_pem
+
+        try:
+            # Extract metadata
+            metadata = UnicodeMetadata.extract_metadata(encoded_text)
+
+            if metadata:
+                st.success("Metadata extracted successfully!")
+                st.json(metadata)
+
+                # Verify if requested
+                verify = st.checkbox("Verify metadata")
+                if verify:
+                    public_key_input_verify = st.text_input("Public Key (PEM) for Verification", key="verify_public_key")
+                    key_id_verify = metadata.get("key_id", "unknown")
+
+                    # Create a simple resolver function
+                    def resolve_public_key(key_id):
+                        if key_id == key_id_verify and public_key_input_verify:
+                            try:
+                                return load_public_key_pem(public_key_input_verify.encode())
+                            except Exception as e:
+                                st.error(f"Invalid Public Key for verification: {e}")
+                        return None
+
+                    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+                        text=encoded_text,
+                        public_key_resolver=resolve_public_key
+                    )
+
+                    if is_valid:
+                        st.success("✅ Verification successful!")
+                    else:
+                        st.error("❌ Verification failed!")
+            else:
+                st.warning("No metadata found in the text.")
         except Exception as e:
             st.error(f"Error extracting metadata: {str(e)}")
 
-# HMAC Verification Tab
+# Digital Signature Verification Tab
 with tabs[2]:
-    st.header("HMAC Verification")
-    
-    # Secret key
-    secret_key = st.text_input(
-        "Secret Key (for HMAC verification):",
-        value="my-secret-key",
+    st.header("Digital Signature Verification")
+
+    # Key pair
+    private_key = st.text_input(
+        "Private Key (for digital signature verification):",
+        value="your-private-key",
         type="password"
     )
-    
+    public_key = st.text_input(
+        "Public Key (for digital signature verification):",
+        value="your-public-key",
+        type="password"
+    )
+
     # Text input
     text = st.text_area(
         "Enter text to embed and verify:",
-        value="This text will be protected with HMAC verification.",
+        value="This text will be protected with digital signature verification.",
         height=100
     )
-    
+
     # Create metadata
     metadata = {
         "model": "verification-demo",
         "timestamp": int(time.time()),
-        "version": "1.1.0"
+        "version": "2.0.0",
+        "key_id": st.session_state.key_id,
     }
-    
+
     # Embed and verify
     if st.button("Embed and Verify", key="verify_btn"):
-        encoder = MetadataEncoder(secret_key=secret_key)
-        
+        from encypher.core.unicode_metadata import UnicodeMetadata
+        from encypher.core.keys import load_private_key_pem, load_public_key_pem
+
+        try:
+            private_key = load_private_key_pem(private_key.encode())
+        except Exception as e:
+            st.error(f"Invalid Private Key: {e}")
+            private_key = None
+
         try:
             # Embed metadata
-            encoded_text = encoder.encode_metadata(text, metadata)
-            
+            encoded_text = UnicodeMetadata.embed_metadata(
+                text=text,
+                metadata=metadata,
+                private_key=private_key,
+                target="whitespace"
+            )
+
             # Display original text
             st.subheader("Original Text with Metadata")
             st.text_area("", encoded_text, height=100, disabled=True)
-            
+
             # Simulate tampering
             tampered_text = encoded_text + " This text was added after embedding."
             st.subheader("Tampered Text")
             st.text_area("", tampered_text, height=100, disabled=True)
-            
+
             # Verify both versions
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 st.subheader("Original Verification")
                 from encypher.core.unicode_metadata import UnicodeMetadata
                 verified, metadata_dict = UnicodeMetadata.verify_metadata(
                     encoded_text,
-                    hmac_secret_key=secret_key
+                    public_key_resolver=lambda key_id: load_public_key_pem(public_key.encode()) if key_id == metadata.get("key_id") else None
                 )
                 if verified:
                     st.success("✅ Verification successful")
                 else:
                     st.error("❌ Verification failed")
-            
+
             with col2:
                 st.subheader("Tampered Verification")
                 verified, metadata_dict = UnicodeMetadata.verify_metadata(
                     tampered_text,
-                    hmac_secret_key=secret_key
+                    public_key_resolver=lambda key_id: load_public_key_pem(public_key.encode()) if key_id == metadata.get("key_id") else None
                 )
                 if verified:
                     st.success("✅ Verification successful")
                 else:
                     st.error("❌ Verification failed")
-                    
+
         except Exception as e:
             st.error(f"Error: {str(e)}")
 
 # Streaming Demo Tab
 with tabs[3]:
     st.header("Streaming Demo")
-    
+
     # Streaming parameters
     st.subheader("Configure Streaming")
-    
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
         chunk_size = st.slider("Chunk Size (words):", 1, 10, 3)
         delay = st.slider("Chunk Delay (seconds):", 0.1, 2.0, 0.5)
-    
+
     with col2:
+        model_id = st.text_input("Model ID:", value="gpt-4-stream-demo")
+        org = st.text_input("Organization:", value="StreamlitApp")
+        timestamp = st.number_input("Timestamp:", value=int(time.time()))
+        version = st.text_input("Version:", value="2.0.0")
+        key_id_input = st.text_input("Key ID:", value=st.session_state.key_id, key="stream_key_id")
         metadata = {
-            "model": "streaming-demo",
-            "timestamp": int(time.time()),
-            "version": "1.1.0"
+            "model_id": model_id,
+            "organization": org,
+            "timestamp": int(timestamp),
+            "version": version,
+            "key_id": key_id_input
         }
         st.json(metadata)
-    
+
     # Start streaming
     if st.button("Start Streaming Simulation", key="stream_btn"):
         # Sample text split into words
         text = "The quick brown fox jumps over the lazy dog. This is an example of streaming text generation with embedded metadata."
         words = text.split()
-        
+
         # Create chunks
         chunks = []
         for i in range(0, len(words), chunk_size):
@@ -472,54 +548,62 @@ with tabs[3]:
             if i + chunk_size < len(words):
                 chunk += " "
             chunks.append(chunk)
-        
+
         # Initialize streaming handler
-        handler = StreamingHandler(metadata=metadata)
-        
+        handler = StreamingHandler(
+            metadata=metadata,
+            private_key=private_key,
+            target="whitespace",
+            encode_first_chunk_only=False,
+        )
+
         # Display streaming progress
         st.subheader("Streaming Progress")
         progress_bar = st.progress(0)
-        
+
         # Container for streaming output
         stream_container = st.empty()
         accumulated_text = ""
-        
+
         # Process chunks
         for i, chunk in enumerate(chunks):
             # Process chunk
-            processed_chunk = handler.process_chunk(chunk)
+            processed_chunk = handler.process_chunk(
+                chunk=chunk,
+                private_key=private_key
+            )
             accumulated_text += processed_chunk
-            
+
             # Update display
             stream_container.text_area("", accumulated_text, height=150, disabled=True)
             progress_bar.progress((i + 1) / len(chunks))
-            
+
             # Delay
             time.sleep(delay)
-        
+
         # Finalize
         final_chunk = handler.finalize()
         if final_chunk:
             accumulated_text += final_chunk
             stream_container.text_area("", accumulated_text, height=150, disabled=True)
-        
+
         # Verify the result
         from encypher.core.unicode_metadata import UnicodeMetadata
         try:
             extracted_metadata = UnicodeMetadata.extract_metadata(accumulated_text)
             verified, metadata_dict = UnicodeMetadata.verify_metadata(
                 accumulated_text,
-                hmac_secret_key="your-secret-key"
+                public_key_resolver=lambda key_id: load_public_key_pem(public_key.encode()) if key_id == metadata.get("key_id") else None
             )
-            
+
             st.subheader("Streaming Results")
             st.json(extracted_metadata)
-            
+
             if verified:
                 st.success("✅ Streaming metadata verified successfully")
             else:
                 st.error("❌ Streaming metadata verification failed")
-                
+
         except Exception as e:
             st.error(f"Error extracting metadata: {str(e)}")
 ```

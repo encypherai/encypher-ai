@@ -2,12 +2,9 @@
 Tests for the Settings class.
 """
 
-import os
 import json
+import os
 import tempfile
-from pathlib import Path
-
-import pytest
 
 from encypher.config.settings import Settings
 from encypher.core.unicode_metadata import MetadataTarget
@@ -23,7 +20,6 @@ class TestSettings:
         # Check default values
         assert settings.get("metadata_target") == "whitespace"
         assert settings.get("encode_first_chunk_only") is True
-        assert settings.get("hmac_secret_key") == ""
         assert settings.get("timestamp_format") == "%Y-%m-%dT%H:%M%z"
         assert settings.get("logging_level") == "INFO"
         assert settings.get("report_usage_metrics") is False
@@ -31,13 +27,10 @@ class TestSettings:
     def test_load_from_file(self):
         """Test loading settings from a file."""
         # Create a temporary config file
-        with tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".json", delete=False
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as temp_file:
             config = {
                 "metadata_target": "punctuation",
                 "encode_first_chunk_only": False,
-                "hmac_secret_key": "test-secret",
                 "logging_level": "DEBUG",
             }
             json.dump(config, temp_file)
@@ -50,7 +43,6 @@ class TestSettings:
             # Check values from the file
             assert settings.get("metadata_target") == "punctuation"
             assert settings.get("encode_first_chunk_only") is False
-            assert settings.get("hmac_secret_key") == "test-secret"
             assert settings.get("logging_level") == "DEBUG"
 
             # Check default values for fields not in the file
@@ -65,7 +57,6 @@ class TestSettings:
         # Set environment variables
         monkeypatch.setenv("ENCYPHER_METADATA_TARGET", "first_letter")
         monkeypatch.setenv("ENCYPHER_ENCODE_FIRST_CHUNK_ONLY", "false")
-        monkeypatch.setenv("ENCYPHER_HMAC_SECRET_KEY", "env-secret")
         monkeypatch.setenv("ENCYPHER_LOGGING_LEVEL", "WARNING")
 
         # Load settings
@@ -74,19 +65,15 @@ class TestSettings:
         # Check values from environment variables
         assert settings.get("metadata_target") == "first_letter"
         assert settings.get("encode_first_chunk_only") is False
-        assert settings.get("hmac_secret_key") == "env-secret"
         assert settings.get("logging_level") == "WARNING"
 
     def test_env_overrides_file(self, monkeypatch):
         """Test that environment variables override file settings."""
         # Create a temporary config file
-        with tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".json", delete=False
-        ) as temp_file:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".json", delete=False) as temp_file:
             config = {
                 "metadata_target": "punctuation",
                 "encode_first_chunk_only": False,
-                "hmac_secret_key": "file-secret",
                 "logging_level": "DEBUG",
             }
             json.dump(config, temp_file)
@@ -95,7 +82,6 @@ class TestSettings:
         try:
             # Set environment variables
             monkeypatch.setenv("ENCYPHER_METADATA_TARGET", "first_letter")
-            monkeypatch.setenv("ENCYPHER_HMAC_SECRET_KEY", "env-secret")
 
             # Load settings
             settings = Settings(config_file=temp_file_path)
@@ -103,7 +89,6 @@ class TestSettings:
             # Check that environment variables override file settings
             assert settings.get("metadata_target") == "first_letter"  # From env
             assert settings.get("encode_first_chunk_only") is False  # From file
-            assert settings.get("hmac_secret_key") == "env-secret"  # From env
             assert settings.get("logging_level") == "DEBUG"  # From file
         finally:
             # Clean up the temporary file
@@ -130,14 +115,12 @@ class TestSettings:
 
         # Modify some settings
         settings.config["metadata_target"] = "punctuation"
-        settings.config["hmac_secret_key"] = "test-secret"
 
         # Convert to dictionary
         config_dict = settings.to_dict()
 
         # Check dictionary values
         assert config_dict["metadata_target"] == "punctuation"
-        assert config_dict["hmac_secret_key"] == "test-secret"
         assert config_dict["encode_first_chunk_only"] is True
         assert config_dict["timestamp_format"] == "%Y-%m-%dT%H:%M%z"
         assert config_dict["logging_level"] == "INFO"

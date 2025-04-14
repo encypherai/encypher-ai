@@ -18,8 +18,10 @@ To use EncypherAI in your Python code, import the necessary components:
 
 ```python
 # Import the core modules
-from encypher.core.metadata_encoder import MetadataEncoder
-from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
 
 # For streaming support
 from encypher.streaming.handlers import StreamingHandler
@@ -28,16 +30,23 @@ from encypher.streaming.handlers import StreamingHandler
 import time
 ```
 
-## Creating a Metadata Encoder
+## Generating Key Pairs
 
-The `MetadataEncoder` is the primary class for embedding and extracting metadata:
+EncypherAI uses Ed25519 digital signatures for secure metadata verification. You'll need to generate and manage key pairs:
+
+> **Tip:** You can use the provided helper script `encypher/examples/generate_keys.py` to generate your first key pair and get detailed setup instructions.
 
 ```python
-# Create a metadata encoder with default settings
-encoder = MetadataEncoder()
+# Generate a key pair
+private_key, public_key = generate_key_pair()
+key_id = "example-key-1"  # A unique identifier for this key pair
 
-# Or with a custom secret key for HMAC verification
-encoder_with_key = MetadataEncoder(secret_key="your-secret-key")
+# Create a public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # In a real application, this would look up the key in a secure storage
+    if key_id == "example-key-1":
+        return public_key
+    return None
 ```
 
 ## Embedding Metadata
@@ -53,35 +62,39 @@ metadata = {
     "model_id": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),  # Unix/Epoch timestamp
-    "version": "1.1.0"
+    "version": "2.0.0",
+    "key_id": key_id  # Required for verification
 }
 
 # Embed metadata
-encoded_text = encoder.encode_metadata(text, metadata)
+encoded_text = UnicodeMetadata.embed_metadata(
+    text=text,
+    metadata=metadata,
+    private_key=private_key
+)
 
 print("Original text:")
 print(text)
 print("\nEncoded text (looks identical but contains invisible zero-width characters that encode the metadata):")
 print(encoded_text)
+```
 
 The encoded text will look identical to the original text to human readers, but it contains invisible metadata that can be extracted programmatically.
 
-*Note: For target-based embedding (whitespace, punctuation etc.), use `UnicodeMetadata` instead.*
+*Note: You can specify a target for embedding using the `target` parameter (e.g., "whitespace", "punctuation", "first_letter", "last_letter", "all_characters").*
 
 ## Extracting Metadata
 
 To extract metadata from encoded text (without verification):
 
 ```python
-# Extract metadata using decode_metadata
-# Returns: (metadata_dict | None, clean_text)
-extracted_metadata, clean_text = encoder.decode_metadata(encoded_text)
+# Extract metadata using extract_metadata
+# Returns: metadata_dict or None
+extracted_metadata = UnicodeMetadata.extract_metadata(encoded_text)
 
 if extracted_metadata:
     print("Extracted metadata:")
     print(extracted_metadata)
-    print("Clean text:")
-    print(clean_text)
 else:
     print("No metadata found or failed to decode.")
 ```
@@ -92,31 +105,19 @@ To verify that the text hasn't been tampered with:
 
 ```python
 # Verify the text
-is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_text)
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=encoded_text,
+    public_key_resolver=resolve_public_key
+)
+
 print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 if is_valid:
-    print("Metadata:", extracted_metadata)
-    print("Clean text:", clean_text)
+    print("Verified metadata:", verified_metadata)
 ```
 
-## Combined Extraction and Verification
+This method automatically handles metadata extraction and signature verification, providing a simple boolean result and the extracted metadata if valid.
 
-You can also extract and verify metadata in a single operation using `extract_verified_metadata`:
-
-```python
-# Extract and verify metadata using extract_verified_metadata
-# Returns: (metadata_dict, is_verified)
-# Note: This method requires the encoder to be initialized with the correct secret_key
-extracted_metadata, is_verified = encoder.extract_verified_metadata(encoded_text)
-
-if extracted_metadata:
-    if is_verified:
-        print("✅ Verified metadata:", extracted_metadata)
-    else:
-        print("❌ Metadata found but verification failed:", extracted_metadata)
-else:
-    print("No metadata found.")
-```
+> **Detailed Example:** For a more comprehensive walkthrough covering key generation, basic and manifest formats, and tamper detection, check out the [**v2.0 Demo Jupyter Notebook**](https://colab.research.google.com/drive/1MAlmz2kca7kIHq4MaIuGG3HNIY0cMgzw?usp=sharing).
 
 ## Working with Streaming Content
 
@@ -124,18 +125,34 @@ For content that arrives in chunks (e.g., from an LLM), use the `StreamingHandle
 
 ```python
 from encypher.streaming.handlers import StreamingHandler
+from encypher.core.keys import generate_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
 import time
+
+# Generate key pair
+private_key, public_key = generate_key_pair()
+key_id = "streaming-key-1"
+
+# Create a public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "streaming-key-1":
+        return public_key
+    return None
 
 # Create metadata
 metadata = {
     "model_id": "gpt-4",
     "organization": "EncypherAI",
-    "timestamp": int(time.time())  # Unix/Epoch timestamp
+    "timestamp": int(time.time()),  # Unix/Epoch timestamp
+    "key_id": key_id  # Required for verification
 }
 
 # Initialize the streaming handler
 handler = StreamingHandler(
     metadata=metadata,
+    private_key=private_key,
     encode_first_chunk_only=True
 )
 
@@ -150,7 +167,7 @@ processed_chunks = []
 for chunk in chunks:
     # Process the chunk
     processed_chunk = handler.process_chunk(chunk)
-    
+
     processed_chunks.append(processed_chunk)
     print(f"Processed chunk: {processed_chunk}")
 
@@ -158,11 +175,14 @@ for chunk in chunks:
 full_text = "".join(processed_chunks)
 
 # Verify the text
-is_valid, extracted_metadata, clean_text = encoder.verify_text(full_text)
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=full_text,
+    public_key_resolver=resolve_public_key
+)
+
 print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 if is_valid:
-    print("Metadata:", extracted_metadata)
-    print("Clean text:", clean_text)
+    print("Verified metadata:", verified_metadata)
 ```
 
 ## Integration with OpenAI
@@ -170,20 +190,38 @@ if is_valid:
 ```python
 from openai import OpenAI
 from encypher.streaming.handlers import StreamingHandler
+from encypher.core.keys import generate_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
 import time
 
 # Initialize OpenAI client
 client = OpenAI(api_key="your-api-key")
 
+# Generate key pair
+private_key, public_key = generate_key_pair()
+key_id = "openai-key-1"
+
+# Create a public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "openai-key-1":
+        return public_key
+    return None
+
 # Create metadata
 metadata = {
     "model_id": "gpt-4",
     "organization": "EncypherAI",
-    "timestamp": int(time.time())  # Unix/Epoch timestamp
+    "timestamp": int(time.time()),  # Unix/Epoch timestamp
+    "key_id": key_id  # Required for verification
 }
 
 # Initialize the streaming handler
-handler = StreamingHandler(metadata=metadata)
+handler = StreamingHandler(
+    metadata=metadata,
+    private_key=private_key
+)
 
 # Create a streaming completion
 completion = client.chat.completions.create(
@@ -200,10 +238,10 @@ full_response = ""
 for chunk in completion:
     if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
         content = chunk.choices[0].delta.content
-        
+
         # Process the chunk
         processed_chunk = handler.process_chunk(chunk=content)
-        
+
         # Print and accumulate the processed chunk
         print(processed_chunk, end="", flush=True)
         full_response += processed_chunk
@@ -227,12 +265,16 @@ def create_metadata(model_id="gpt-4", organization="EncypherAI"):
         "model_id": model_id,
         "organization": organization,
         "timestamp": int(time.time()),  # Unix/Epoch timestamp
-        "version": "1.1.0"
+        "version": "2.0.0"
     }
 
 # Use the function
 metadata = create_metadata()
-encoded_text = encoder.encode_metadata(text, metadata)
+encoded_text = UnicodeMetadata.embed_metadata(
+    text=text,
+    metadata=metadata,
+    private_key=private_key
+)
 ```
 
 ### Handling Multiple Texts
@@ -254,26 +296,34 @@ for i, text in enumerate(texts):
         "organization": "EncypherAI",
         "timestamp": int(time.time()),  # Unix/Epoch timestamp
         "text_id": i + 1,
-        "version": "1.1.0"
+        "version": "2.0.0",
+        "key_id": key_id  # Required for verification
     }
-    
+
     # Embed metadata
-    encoded_text = encoder.encode_metadata(text, metadata)
+    encoded_text = UnicodeMetadata.embed_metadata(
+        text=text,
+        metadata=metadata,
+        private_key=private_key
+    )
     encoded_texts.append(encoded_text)
-    
+
     print(f"Text {i+1} encoded with metadata")
 
 # Later, extract and verify metadata
 for i, encoded_text in enumerate(encoded_texts):
-    # Use verify_text for combined extraction and verification
-    is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_text)
+    # Use verify_metadata for combined extraction and verification
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        text=encoded_text,
+        public_key_resolver=resolve_public_key
+    )
     print(f"Text {i+1}:")
     if is_valid:
         print(f"  Verified: ✅")
-        print(f"  Metadata: {extracted_metadata}")
+        print(f"  Metadata: {verified_metadata}")
     else:
         # Check if metadata was present but failed verification, or simply not present
-        metadata_only, _ = encoder.decode_metadata(encoded_text)
+        metadata_only = UnicodeMetadata.extract_metadata(encoded_text)
         if metadata_only:
             print(f"  Verified: ❌ (Verification Failed)")
             print(f"  Metadata: {metadata_only}")
@@ -284,7 +334,7 @@ for i, encoded_text in enumerate(encoded_texts):
 ### Error Handling
 
 ```python
-def safe_process_text(text, encoder):
+def safe_process_text(text, private_key, public_key_resolver):
     """Safely process text, attempting verification."""
     result = {
         "has_metadata": False,
@@ -292,10 +342,13 @@ def safe_process_text(text, encoder):
         "verified": False,
         "error": None
     }
-    
-    # Attempt to verify the text using the encoder's key
+
+    # Attempt to verify the text using the private key
     try:
-        is_valid, metadata, clean_text = encoder.verify_text(text)
+        is_valid, metadata = UnicodeMetadata.verify_metadata(
+            text=text,
+            public_key_resolver=public_key_resolver
+        )
         if metadata: # Metadata was found
             result["has_metadata"] = True
             result["metadata"] = metadata
@@ -304,11 +357,11 @@ def safe_process_text(text, encoder):
     except Exception as e:
         # General error during processing
         result["error"] = str(e)
-    
+
     return result
 
 # Example usage
-result = safe_process_text(encoded_text, encoder)
+result = safe_process_text(encoded_text, private_key, resolve_public_key)
 if result["has_metadata"]:
     if result["verified"]:
         print("✅ Verified metadata:", result["metadata"])

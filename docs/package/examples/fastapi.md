@@ -1,6 +1,6 @@
 # FastAPI Example
 
-This example demonstrates how to build a complete FastAPI application that integrates EncypherAI for metadata embedding and verification. The application provides endpoints for encoding, decoding, and verifying metadata in text.
+This example demonstrates how to build a complete FastAPI application that integrates EncypherAI for metadata embedding and verification using digital signatures. The application provides endpoints for encoding, decoding, and verifying metadata in text.
 
 ## Prerequisites
 
@@ -25,20 +25,74 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any, Optional, List
-from encypher.core.metadata_encoder import MetadataEncoder
-from encypher.core.unicode_metadata import MetadataTarget
+from typing import Dict, Any, Optional, List, Callable
+from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 from encypher.streaming.handlers import StreamingHandler
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
 import time
 import json
 import os
 import secrets
 
+# --- Key Management --- START ---
+# WARNING: DEMONSTRATION ONLY!
+# The following key generation should NOT be done on every application startup in production.
+# Generate a private key ONCE for your application instance and store it securely
+# (e.g., in an environment variable loaded from a .env file, or a secrets manager).
+# Load the persistent private key here instead of generating a new one.
+# Failure to use a persistent key will prevent verification of data signed by previous instances.
+#
+# Example (.env file entry):
+# ENCYPHER_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...your private key PEM data...\n-----END PRIVATE KEY-----"
+#
+# Example loading code (replace generation below):
+# from cryptography.hazmat.primitives import serialization
+# private_pem = os.getenv("ENCYPHER_PRIVATE_KEY")
+# if not private_pem:
+#     raise ValueError("ENCYPHER_PRIVATE_KEY environment variable not set!")
+# private_key = serialization.load_pem_private_key(private_pem.encode(), password=None)
+
+# You can use the provided helper script `encypher/examples/generate_keys.py`
+# to generate your initial key pair and get usage instructions.
+
+# Generate private key (DEMO ONLY - REPLACE WITH LOADING PERSISTENT KEY)
+private_key: PrivateKeyTypes = ed25519.Ed25519PrivateKey.generate()
+public_key: PublicKeyTypes = private_key.public_key()
+
+# Example key ID (could be based on version, environment, etc.)
+EXAMPLE_KEY_ID = "fastapi-example-key-v1"
+
+# Simple public key store (replace with a proper key management system)
+public_key_store: Dict[str, PublicKeyTypes] = {
+    EXAMPLE_KEY_ID: public_key
+}
+
+def public_key_resolver(key_id: str) -> Optional[PublicKeyTypes]:
+    """Simple resolver to get public key by ID."""
+    return public_key_store.get(key_id)
+
+# Serialize keys for potential display/logging (DO NOT expose private key in production logs)
+private_pem = private_key.private_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PrivateFormat.PKCS8,
+    encryption_algorithm=serialization.NoEncryption()
+)
+public_pem = public_key.public_bytes(
+    encoding=serialization.Encoding.PEM,
+    format=serialization.PublicFormat.SubjectPublicKeyInfo
+)
+
+# print(f"Generated Key ID: {EXAMPLE_KEY_ID}")
+# print(f"Public Key (PEM):\n{public_pem.decode()}")
+# --- Key Management --- END ---
+
 # Initialize FastAPI app
 app = FastAPI(
     title="EncypherAI Demo",
-    description="API for embedding and extracting metadata in text",
-    version="1.1.0"
+    description="API for embedding and extracting metadata in text using Digital Signatures",
+    version="2.0.0"
 )
 
 # Add CORS middleware
@@ -50,12 +104,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Get secret key from environment or generate a random one
-SECRET_KEY = os.getenv("ENCYPHER_SECRET_KEY", secrets.token_hex(32))
-
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key=SECRET_KEY)
-
 # Define request and response models
 class EncodeRequest(BaseModel):
     text: str
@@ -65,10 +113,10 @@ class EncodeRequest(BaseModel):
 class VerifyRequest(BaseModel):
     text: str
 
+# Updated MetadataResponse
 class MetadataResponse(BaseModel):
-    has_metadata: bool
     metadata: Optional[Dict[str, Any]] = None
-    verified: Optional[bool] = None
+    verification_status: Literal["verified", "failed", "not_present"]
     error: Optional[str] = None
 
 # Set up templates
@@ -104,7 +152,7 @@ with open("templates/index.html", "w") as f:
 <body>
     <div class="container my-5">
         <h1 class="mb-4">EncypherAI Demo</h1>
-        
+
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="encode-tab" data-bs-toggle="tab" data-bs-target="#encode" type="button" role="tab" aria-controls="encode" aria-selected="true">Encode</button>
@@ -113,7 +161,7 @@ with open("templates/index.html", "w") as f:
                 <button class="nav-link" id="verify-tab" data-bs-toggle="tab" data-bs-target="#verify" type="button" role="tab" aria-controls="verify" aria-selected="false">Verify</button>
             </li>
         </ul>
-        
+
         <div class="tab-content" id="myTabContent">
             <!-- Encode Tab -->
             <div class="tab-pane fade show active" id="encode" role="tabpanel" aria-labelledby="encode-tab">
@@ -130,7 +178,7 @@ with open("templates/index.html", "w") as f:
     "model": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": 1742713200,
-    "version": "1.1.0"
+    "version": "2.0.0"
 }</textarea>
                         </div>
                         <div class="mb-3">
@@ -145,7 +193,7 @@ with open("templates/index.html", "w") as f:
                         </div>
                         <button type="submit" class="btn btn-primary">Encode</button>
                     </form>
-                    
+
                     <div id="encodeResult" class="result-box d-none">
                         <h4>Result</h4>
                         <div class="mb-3">
@@ -163,7 +211,7 @@ with open("templates/index.html", "w") as f:
                     </div>
                 </div>
             </div>
-            
+
             <!-- Verify Tab -->
             <div class="tab-pane fade" id="verify" role="tabpanel" aria-labelledby="verify-tab">
                 <div class="my-4">
@@ -175,7 +223,7 @@ with open("templates/index.html", "w") as f:
                         </div>
                         <button type="submit" class="btn btn-primary">Verify</button>
                     </form>
-                    
+
                     <div id="verifyResult" class="result-box d-none">
                         <h4>Result</h4>
                         <div id="verifyStatus"></div>
@@ -188,16 +236,16 @@ with open("templates/index.html", "w") as f:
             </div>
         </div>
     </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         document.getElementById('encodeForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const text = document.getElementById('text').value;
             const metadata = document.getElementById('metadata').value;
             const target = document.getElementById('target').value;
-            
+
             try {
                 const response = await fetch('/api/encode', {
                     method: 'POST',
@@ -210,23 +258,23 @@ with open("templates/index.html", "w") as f:
                         target: target
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 document.getElementById('originalText').textContent = text;
-                document.getElementById('encodedText').textContent = data.text;
+                document.getElementById('encodedText').textContent = data.encoded_text;
                 document.getElementById('encodedMetadata').textContent = JSON.stringify(data.metadata, null, 2);
                 document.getElementById('encodeResult').classList.remove('d-none');
             } catch (error) {
                 alert('Error: ' + error.message);
             }
         });
-        
+
         document.getElementById('verifyForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             const text = document.getElementById('verifyText').value;
-            
+
             try {
                 const response = await fetch('/api/verify', {
                     method: 'POST',
@@ -237,23 +285,20 @@ with open("templates/index.html", "w") as f:
                         text: text
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 let statusHtml = '';
-                if (data.has_metadata) {
-                    if (data.verified) {
-                        statusHtml = '<div class="alert alert-success">✅ Metadata verified successfully!</div>';
-                    } else {
-                        statusHtml = '<div class="alert alert-warning">⚠️ Metadata found but verification failed. The text may have been tampered with.</div>';
-                    }
-                    document.getElementById('extractedMetadata').textContent = JSON.stringify(data.metadata, null, 2);
+                if (data.verification_status === 'verified') {
+                    statusHtml = '<div class="alert alert-success">✅ Metadata verified successfully!</div>';
+                } else if (data.verification_status === 'failed') {
+                    statusHtml = '<div class="alert alert-warning">⚠️ Metadata found but verification failed. The text may have been tampered with.</div>';
                 } else {
                     statusHtml = '<div class="alert alert-danger">❌ No metadata found or extraction failed: ' + data.error + '</div>';
-                    document.getElementById('extractedMetadata').textContent = 'No metadata found';
                 }
-                
+
                 document.getElementById('verifyStatus').innerHTML = statusHtml;
+                document.getElementById('extractedMetadata').textContent = JSON.stringify(data.metadata, null, 2);
                 document.getElementById('verifyResult').classList.remove('d-none');
             } catch (error) {
                 alert('Error: ' + error.message);
@@ -269,72 +314,73 @@ with open("templates/index.html", "w") as f:
 async def get_index(request: Request):
     return templates.TemplateResponse("index.html", {"request": request})
 
-@app.post("/api/encode")
-async def encode_metadata(request: EncodeRequest):
-    """Embed metadata into text"""
+@app.post("/api/encode", response_model=Dict[str, Any])
+async def encode_text(request: EncodeRequest):
+    """Encode metadata into text using digital signature."""
     try:
-        # Add timestamp if not provided
-        if "timestamp" not in request.metadata:
-            request.metadata["timestamp"] = int(time.time())
-        
-        # Embed metadata
-        encoded_text = encoder.encode_metadata(
+        # Ensure metadata includes the key_id for verification later
+        metadata_to_embed = request.metadata.copy()
+        metadata_to_embed["key_id"] = EXAMPLE_KEY_ID # Use the globally generated key ID
+
+        # Validate target
+        try:
+            target_enum = MetadataTarget(request.target)
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid target: {request.target}")
+
+        encoded_text = UnicodeMetadata.embed_metadata(
             text=request.text,
-            metadata=request.metadata,
-            target=request.target
+            metadata=metadata_to_embed,
+            private_key=private_key, # Use the globally generated private key
+            target=target_enum
         )
-        
         return {
-            "text": encoded_text,
-            "metadata": request.metadata
+            "original_text": request.text,
+            "encoded_text": encoded_text,
+            "metadata": metadata_to_embed
         }
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@app.post("/api/decode", response_model=MetadataResponse)
-async def decode_metadata(request: VerifyRequest):
-    """Extract metadata from text"""
-    result = {
-        "has_metadata": False,
-        "metadata": None,
-        "verified": None,
-        "error": None
-    }
-    
-    try:
-        # Extract metadata
-        metadata = encoder.decode_metadata(request.text)
-        result["has_metadata"] = True
-        result["metadata"] = metadata
-    except Exception as e:
-        result["error"] = str(e)
-    
-    return result
+        raise HTTPException(status_code=500, detail=f"Encoding error: {str(e)}")
 
 @app.post("/api/verify", response_model=MetadataResponse)
 async def verify_text(request: VerifyRequest):
-    """Extract and verify metadata from text"""
-    result = {
-        "has_metadata": False,
-        "metadata": None,
-        "verified": None,
-        "error": None
-    }
-    
+    """Verify text with embedded metadata using digital signature."""
     try:
-        # Extract metadata
-        metadata = encoder.decode_metadata(request.text)
-        result["has_metadata"] = True
-        result["metadata"] = metadata
-        
-        # Verify the text
-        result["verified"] = encoder.verify_text(request.text)
-    except Exception as e:
-        result["error"] = str(e)
-    
-    return result
+        # Verify metadata using the resolver
+        verified_metadata = UnicodeMetadata.verify_metadata(
+            text=request.text,
+            public_key_resolver=public_key_resolver
+        )
 
-# Optional: OpenAI integration endpoint
+        if verified_metadata is not None:
+            # Metadata found and signature verified
+            return MetadataResponse(
+                metadata=verified_metadata,
+                verification_status="verified"
+            )
+        else:
+            # Attempt to extract without verification to see if metadata exists but is invalid
+            extracted_metadata = UnicodeMetadata.extract_metadata(request.text)
+            if extracted_metadata is not None:
+                # Metadata found but signature verification failed
+                return MetadataResponse(
+                    metadata=extracted_metadata,
+                    verification_status="failed",
+                    error="Signature verification failed or public key not found."
+                )
+            else:
+                # No metadata found
+                return MetadataResponse(
+                    verification_status="not_present"
+                )
+
+    except Exception as e:
+        # Include specific error details if possible
+        return MetadataResponse(
+            verification_status="failed",
+            error=f"Verification process error: {str(e)}"
+        )
+
 @app.post("/api/generate")
 async def generate_with_openai(
     prompt: str = Form(...),
@@ -344,7 +390,7 @@ async def generate_with_openai(
     """Generate text with OpenAI and embed metadata"""
     try:
         import openai
-        
+
         # Check if API key is set
         api_key = os.getenv("OPENAI_API_KEY")
         if not api_key:
@@ -352,25 +398,26 @@ async def generate_with_openai(
                 status_code=400,
                 content={"error": "OpenAI API key not set. Set the OPENAI_API_KEY environment variable."}
             )
-        
+
         # Initialize OpenAI client
         client = openai.OpenAI(api_key=api_key)
-        
+
         # Create metadata
         metadata = {
             "model": model,
             "organization": "EncypherAI",
             "timestamp": int(time.time()),
-            "prompt": prompt
+            "prompt": prompt,
+            "version": "2.0.0"
         }
-        
+
         # Handle streaming
         if stream:
             return StreamingResponse(
                 generate_stream(client, model, prompt, metadata),
                 media_type="text/plain"
             )
-        
+
         # Create a completion
         response = client.chat.completions.create(
             model=model,
@@ -379,20 +426,25 @@ async def generate_with_openai(
                 {"role": "user", "content": prompt}
             ]
         )
-        
+
         # Get the response text
         text = response.choices[0].message.content
-        
+
         # Update metadata with usage information
         metadata.update({
             "prompt_tokens": response.usage.prompt_tokens,
             "completion_tokens": response.usage.completion_tokens,
             "total_tokens": response.usage.total_tokens
         })
-        
+
         # Embed metadata
-        encoded_text = encoder.encode_metadata(text, metadata)
-        
+        encoded_text = UnicodeMetadata.embed_metadata(
+            text=text,
+            metadata=metadata,
+            private_key=private_key, # Use the globally generated private key
+            target=MetadataTarget.WHITESPACE # Or get from request if needed
+        )
+
         return {
             "text": encoded_text,
             "metadata": metadata,
@@ -413,8 +465,12 @@ async def generate_stream(client, model, prompt, metadata):
     """Generate a streaming response with OpenAI and embed metadata"""
     try:
         # Initialize the streaming handler
-        handler = StreamingHandler(metadata=metadata)
-        
+        handler = StreamingHandler(
+            metadata=metadata,
+            private_key=private_key, # Use the globally generated private key
+            target=MetadataTarget.WHITESPACE # Or get from request if needed
+        )
+
         # Create a streaming completion
         completion = client.chat.completions.create(
             model=model,
@@ -424,18 +480,18 @@ async def generate_stream(client, model, prompt, metadata):
             ],
             stream=True
         )
-        
+
         # Process each chunk
         for chunk in completion:
             if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
-                
+
                 # Process the chunk
                 processed_chunk = handler.process_chunk(chunk=content)
-                
+
                 # Yield the processed chunk
                 yield processed_chunk
-        
+
         # Finalize the stream
         final_chunk = handler.finalize()
         if final_chunk:
@@ -471,7 +527,6 @@ The application provides:
 
 2. **API Endpoints**:
    - `/api/encode` - Embed metadata into text
-   - `/api/decode` - Extract metadata from text
    - `/api/verify` - Extract and verify metadata from text
    - `/api/generate` - (Optional) Generate text with OpenAI and embed metadata
 
@@ -494,7 +549,7 @@ data = {
         "model": "gpt-4",
         "organization": "EncypherAI",
         "timestamp": int(time.time()),
-        "version": "1.1.0"
+        "version": "2.0.0"
     },
     "target": "whitespace"
 }
@@ -505,7 +560,7 @@ result = response.json()
 
 # Print result
 print("Encoded text:")
-print(result["text"])
+print(result["encoded_text"])
 print("\nMetadata:")
 print(json.dumps(result["metadata"], indent=2))
 ```
@@ -529,12 +584,17 @@ response = requests.post(url, json=data)
 result = response.json()
 
 # Print result
-if result["has_metadata"]:
-    print(f"Verification result: {'✅ Verified' if result['verified'] else '❌ Failed'}")
+if result["verification_status"] == "verified":
+    print("Verification result: ✅ Verified")
     print("\nExtracted metadata:")
     print(json.dumps(result["metadata"], indent=2))
+elif result["verification_status"] == "failed":
+    print("Verification result: ⚠️ Failed")
+    print("\nExtracted metadata:")
+    print(json.dumps(result["metadata"], indent=2))
+    print("\nError:", result["error"])
 else:
-    print(f"No metadata found: {result['error']}")
+    print("No metadata found or extraction failed:", result["error"])
 ```
 
 ## Customization
@@ -563,7 +623,7 @@ async def get_api_key(api_key: str = Security(api_key_header)):
 
 # Protected endpoint
 @app.post("/api/encode", dependencies=[Depends(get_api_key)])
-async def encode_metadata(request: EncodeRequest):
+async def encode_text(request: EncodeRequest):
     # Your implementation here
     pass
 ```
@@ -587,32 +647,32 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.requests_per_minute = requests_per_minute
         self.request_counts = {}
-    
+
     async def dispatch(self, request: Request, call_next):
         # Get client IP
         client_ip = request.client.host
-        
+
         # Get current time
         current_time = time.time()
-        
+
         # Clean up old requests
         self.request_counts = {
             ip: [timestamp for timestamp in timestamps if current_time - timestamp < 60]
             for ip, timestamps in self.request_counts.items()
         }
-        
+
         # Check rate limit
         if client_ip in self.request_counts and len(self.request_counts[client_ip]) >= self.requests_per_minute:
             return JSONResponse(
                 status_code=429,
                 content={"error": "Rate limit exceeded. Try again later."}
             )
-        
+
         # Add request timestamp
         if client_ip not in self.request_counts:
             self.request_counts[client_ip] = []
         self.request_counts[client_ip].append(current_time)
-        
+
         # Process request
         return await call_next(request)
 

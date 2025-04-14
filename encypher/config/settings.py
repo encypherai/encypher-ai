@@ -5,10 +5,10 @@ This module provides a centralized configuration system that supports
 loading from environment variables and configuration files.
 """
 
-import os
 import json
+import os
 from pathlib import Path
-from typing import Dict, Optional, Union, Any
+from typing import Any, Dict, Optional, Union
 
 from encypher.core.unicode_metadata import MetadataTarget
 
@@ -120,9 +120,14 @@ class Settings:
             MetadataTarget enum value
         """
         target_str = self.config.get("metadata_target", "whitespace")
-        try:
-            return MetadataTarget(target_str)
-        except ValueError:
+        # Ensure target_str is a string before calling .upper()
+        if isinstance(target_str, str):
+            try:
+                return MetadataTarget[target_str.upper()]
+            except KeyError:
+                return MetadataTarget.WHITESPACE  # Default if string is invalid enum key
+        else:
+            # Default if the config value wasn't a string
             return MetadataTarget.WHITESPACE
 
     def get_hmac_secret_key(self) -> str:

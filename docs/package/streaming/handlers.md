@@ -11,27 +11,27 @@ The `StreamingHandler` class is the primary interface for handling streaming con
 ```python
 class StreamingHandler:
     def __init__(
-        self, 
-        metadata: Optional[Dict[str, Any]] = None, 
+        self,
+        metadata: Dict[str, Any],
+        private_key: PrivateKeyTypes,
         target: Union[str, MetadataTarget] = "whitespace",
-        secret_key: Optional[str] = None,
-        buffer_size: int = 1024,
-        encode_first_chunk_only: bool = True
+        encode_first_chunk_only: bool = True,
+        min_buffer_size: int = 0
     ):
         """
         Initialize a StreamingHandler for processing streaming content.
-        
+
         Args:
-            metadata: Dictionary containing the metadata to embed. If not provided,
-                     an empty dictionary will be used with only a timestamp.
-            target: Where to embed metadata. Can be a string ("whitespace", "punctuation", 
+            metadata: Dictionary containing the metadata to embed. Must include
+                     a 'key_id' for public key resolution during verification.
+            private_key: The private key (Ed25519PrivateKey) used for signing the metadata.
+            target: Where to embed metadata. Can be a string ("whitespace", "punctuation",
                    "first_letter", "last_letter", "all_characters") or a MetadataTarget enum.
-            secret_key: Optional secret key for HMAC verification. If not provided,
-                        a random key will be generated.
-            buffer_size: Maximum size of the internal buffer for accumulating chunks.
-            encode_first_chunk_only: If True, metadata will only be embedded in the first
-                                    suitable chunk. If False, metadata will be distributed
-                                    across multiple chunks as needed.
+            encode_first_chunk_only: If True (default), metadata is embedded entirely within
+                                    the first suitable chunk(s). If False, metadata can be
+                                    distributed across multiple chunks if needed.
+            min_buffer_size: Minimum number of characters to accumulate before attempting
+                             to embed metadata. Defaults to 0.
         """
 ```
 
@@ -41,34 +41,40 @@ class StreamingHandler:
 
 ```python
 def process_chunk(
-    self, 
-    chunk: str,
-    is_final: bool = False
-) -> str:
+    self,
+    chunk: str
+) -> Optional[str]:
     """
-    Process a chunk of streaming content.
-    
+    Process a chunk of streaming content, embedding metadata if possible.
+
+    Accumulates the chunk in an internal buffer. If the buffer contains enough
+    characters and suitable target locations, and metadata hasn't been fully
+    embedded yet (respecting `encode_first_chunk_only`), it embeds the metadata
+    and returns the processed text from the buffer.
+
     Args:
-        chunk: The text chunk to process
-        is_final: Whether this is the final chunk in the stream
-        
+        chunk: The text chunk to process.
+
     Returns:
-        The processed chunk with metadata embedded (if applicable)
+        The processed text chunk with embedded metadata if embedding occurred,
+        or None if the chunk was just added to the buffer without embedding.
     """
 ```
 
 #### finalize
 
 ```python
-def finalize(self) -> Dict[str, Any]:
+def finalize(self) -> Optional[str]:
     """
-    Finalize the streaming session and return information about the completed stream.
-    
-    This should be called after all chunks have been processed, unless the last chunk
-    was processed with is_final=True.
-    
+    Finalize the streaming session, processing any remaining buffered content.
+
+    This *must* be called after all chunks have been passed to `process_chunk`
+    to ensure any remaining text in the buffer is processed and returned,
+    potentially containing the last part of the embedded metadata.
+
     Returns:
-        A dictionary containing information about the completed stream
+        The remaining processed text from the buffer, potentially containing
+        metadata, or None if the buffer was empty.
     """
 ```
 
@@ -78,7 +84,7 @@ def finalize(self) -> Dict[str, Any]:
 def get_metadata(self) -> Dict[str, Any]:
     """
     Get the current metadata being used by the handler.
-    
+
     Returns:
         The metadata dictionary
     """
@@ -88,12 +94,12 @@ def get_metadata(self) -> Dict[str, Any]:
 
 ```python
 def update_metadata(
-    self, 
+    self,
     metadata: Dict[str, Any]
 ) -> None:
     """
     Update the metadata used by the handler.
-    
+
     Args:
         metadata: New metadata dictionary to use
     """
@@ -103,19 +109,35 @@ def update_metadata(
 
 ```python
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.keys import generate_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
+
+# Generate key pair (replace with your actual key management)
+private_key, public_key = generate_key_pair()
+
+# Example public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "example-key-1":
+        return public_key
+    return None
 
 # Create metadata
 metadata = {
     "model": "gpt-4",
     "organization": "MyCompany",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "version": "1.1.0"
+    "timestamp": time.time(),
+    "version": "2.0.0",
+    "key_id": "example-key-1" # Identifier for the public key
 }
 
 # Initialize the streaming handler
 handler = StreamingHandler(
     metadata=metadata,
+    private_key=private_key,
     target="whitespace",
     encode_first_chunk_only=True
 )
@@ -129,32 +151,37 @@ chunks = [
 
 processed_chunks = []
 for i, chunk in enumerate(chunks):
-    is_final = i == len(chunks) - 1
-    
-    processed_chunk = handler.process_chunk(
-        chunk=chunk,
-        is_final=is_final
-    )
-    
-    processed_chunks.append(processed_chunk)
-    print(f"Processed chunk {i+1}: {processed_chunk}")
+    # Process the chunk
+    processed_chunk = handler.process_chunk(chunk=chunk)
+    if processed_chunk:
+        processed_chunks.append(processed_chunk)
+        print(f"Processed chunk {i+1}: {processed_chunk}")
 
-# If the last chunk wasn't marked as is_final=True, finalize the stream
-if not chunks:  # If no chunks were processed with is_final=True
-    handler.finalize()
+# Finalize the stream to process any remaining buffer
+final_chunk = handler.finalize()
+if final_chunk:
+    processed_chunks.append(final_chunk)
+    print(f"Final chunk: {final_chunk}")
 
 # Combine all processed chunks
 full_text = "".join(processed_chunks)
 
-# Now you can extract and verify the metadata using the standard MetadataEncoder
-from encypher.core import MetadataEncoder
+# Now you can extract and verify the metadata using UnicodeMetadata
+print(f"\nFull text:\n{full_text}")
 
-encoder = MetadataEncoder()
-extracted_metadata = encoder.decode_metadata(full_text)
-verification_result = encoder.verify_text(full_text)
+# Extract metadata (optional, verification does this too)
+extracted_metadata = UnicodeMetadata.extract_metadata(full_text)
+print(f"\nExtracted metadata: {extracted_metadata}")
 
-print(f"Extracted metadata: {extracted_metadata}")
-print(f"Verification result: {verification_result}")
+# Verify the metadata using the public key resolver
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_text,
+    public_key_resolver=resolve_public_key
+)
+
+print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+if is_valid:
+    print(f"Verified metadata: {verified_metadata}")
 ```
 
 ## Streaming with OpenAI
@@ -162,21 +189,36 @@ print(f"Verification result: {verification_result}")
 ```python
 import openai
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.keys import generate_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key="your-api-key")
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "openai-stream-key": return public_key
+    return None
 
 # Create metadata
 metadata = {
     "model": "gpt-4",
     "organization": "MyCompany",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "version": "1.1.0"
+    "timestamp": time.time(),
+    "version": "2.0.0",
+    "key_id": "openai-stream-key"
 }
 
 # Initialize the streaming handler
-handler = StreamingHandler(metadata=metadata)
+handler = StreamingHandler(
+    metadata=metadata,
+    private_key=private_key,
+    target="whitespace"
+)
 
 # Create a streaming completion
 completion = client.chat.completions.create(
@@ -193,18 +235,35 @@ full_response = ""
 for chunk in completion:
     if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
         content = chunk.choices[0].delta.content
-        
+
         # Process the chunk
         processed_chunk = handler.process_chunk(chunk=content)
-        
-        # Print and accumulate the processed chunk
-        print(processed_chunk, end="", flush=True)
-        full_response += processed_chunk
 
-# Finalize the stream
-handler.finalize()
+        # Print and accumulate the processed chunk if available
+        if processed_chunk:
+            print(processed_chunk, end="", flush=True)
+            full_response += processed_chunk
+
+# Finalize the stream to process any remaining buffer
+final_chunk = handler.finalize()
+if final_chunk:
+    print(final_chunk, end="", flush=True)
+    full_response += final_chunk
 
 print("\n\nStreaming completed!")
+
+# Verify the final response
+print("\nVerifying full response...")
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_response,
+    public_key_resolver=resolve_public_key
+)
+
+if is_valid:
+    print("✅ Verification successful!")
+    print(f"Verified metadata: {verified_metadata}")
+else:
+    print("❌ Verification failed!")
 ```
 
 ## Streaming with Anthropic
@@ -212,21 +271,36 @@ print("\n\nStreaming completed!")
 ```python
 import anthropic
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.keys import generate_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 
 # Initialize Anthropic client
 client = anthropic.Anthropic(api_key="your-api-key")
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "anthropic-stream-key": return public_key
+    return None
 
 # Create metadata
 metadata = {
     "model": "claude-3-opus-20240229",
     "organization": "MyCompany",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "version": "1.1.0"
+    "timestamp": time.time(),
+    "version": "2.0.0",
+    "key_id": "anthropic-stream-key"
 }
 
 # Initialize the streaming handler
-handler = StreamingHandler(metadata=metadata)
+handler = StreamingHandler(
+    metadata=metadata,
+    private_key=private_key,
+    target="whitespace"
+)
 
 # Create a streaming completion
 with client.messages.stream(
@@ -240,15 +314,32 @@ with client.messages.stream(
     for text in stream.text_stream:
         # Process the chunk
         processed_chunk = handler.process_chunk(chunk=text)
-        
-        # Print and accumulate the processed chunk
-        print(processed_chunk, end="", flush=True)
-        full_response += processed_chunk
 
-# Finalize the stream
-handler.finalize()
+        # Print and accumulate the processed chunk if available
+        if processed_chunk:
+            print(processed_chunk, end="", flush=True)
+            full_response += processed_chunk
+
+# Finalize the stream to process any remaining buffer
+final_chunk = handler.finalize()
+if final_chunk:
+    print(final_chunk, end="", flush=True)
+    full_response += final_chunk
 
 print("\n\nStreaming completed!")
+
+# Verify the final response
+print("\nVerifying full response...")
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_response,
+    public_key_resolver=resolve_public_key
+)
+
+if is_valid:
+    print("✅ Verification successful!")
+    print(f"Verified metadata: {verified_metadata}")
+else:
+    print("❌ Verification failed!")
 ```
 
 ## LiteLLM Integration
@@ -258,21 +349,37 @@ EncypherAI works seamlessly with [LiteLLM](https://github.com/BerriAI/litellm), 
 ```python
 import litellm
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.keys import generate_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 
 # Configure LiteLLM
 litellm.api_key = "your-api-key"
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # In a real application, this would look up the key in a secure storage
+    if key_id == "litellm-stream-key": return public_key
+    return None
 
 # Create metadata
 metadata = {
     "model": "gpt-4",
     "provider": "openai",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "version": "1.1.0"
+    "timestamp": time.time(),
+    "version": "2.0.0",
+    "key_id": "litellm-stream-key"
 }
 
 # Initialize the streaming handler
-handler = StreamingHandler(metadata=metadata)
+handler = StreamingHandler(
+    metadata=metadata,
+    private_key=private_key,
+    target="whitespace"
+)
 
 # Create a streaming completion
 response = litellm.completion(
@@ -292,15 +399,32 @@ for chunk in response:
         if content:
             # Process the chunk
             processed_chunk = handler.process_chunk(chunk=content)
-            
-            # Print and accumulate the processed chunk
-            print(processed_chunk, end="", flush=True)
-            full_response += processed_chunk
 
-# Finalize the stream
-handler.finalize()
+            # Print and accumulate the processed chunk if available
+            if processed_chunk:
+                print(processed_chunk, end="", flush=True)
+                full_response += processed_chunk
+
+# Finalize the stream to process any remaining buffer
+final_chunk = handler.finalize()
+if final_chunk:
+    print(final_chunk, end="", flush=True)
+    full_response += final_chunk
 
 print("\n\nStreaming completed!")
+
+# Verify the final response
+print("\nVerifying full response...")
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_response,
+    public_key_resolver=resolve_public_key
+)
+
+if is_valid:
+    print("✅ Verification successful!")
+    print(f"Verified metadata: {verified_metadata}")
+else:
+    print("❌ Verification failed!")
 ```
 
 ## Implementation Details
@@ -321,26 +445,35 @@ The handler uses different strategies for embedding metadata depending on the `e
 - When `encode_first_chunk_only=True` (default), it waits for a chunk with suitable targets and embeds all metadata there
 - When `encode_first_chunk_only=False`, it distributes metadata across multiple chunks as needed
 
-### HMAC Verification
+### Digital Signature Verification
 
-The HMAC signature is calculated based on the entire content, not just individual chunks. This ensures that the verification will detect if any part of the content is modified.
+The digital signature is calculated based on the entire metadata, not just individual chunks. This ensures that the verification will detect if any part of the content is modified.
 
 To verify content with embedded metadata from a `StreamingHandler`, use the `UnicodeMetadata.verify_metadata()` method:
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
+
+# Define a public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # In a real application, this would look up the key in a secure storage
+    if key_id == "example-key-1":
+        return public_key  # The public key corresponding to the private key used for signing
+    return None
 
 # After processing all chunks and obtaining the full response
 is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
-    full_response, 
-    hmac_secret_key="your-secret-key"  # Use the same key provided to the StreamingHandler
+    full_response,
+    public_key_resolver=resolve_public_key  # Provide the resolver function
 )
 
 if is_valid:
     print("✅ Verification successful!")
     print(f"Metadata: {verified_metadata}")
 else:
-    print("❌ Verification failed - content may have been tampered with.")
+    print("❌ Verification failed - content may have been tampered with or the key_id is not recognized.")
 ```
 
 ## Advanced Usage: Custom Streaming Handler
@@ -357,30 +490,30 @@ class CustomStreamingHandler(StreamingHandler):
         # Add custom tracking
         self.chunks_processed = 0
         self.total_characters = 0
-        
+
         # Initialize the parent class
         super().__init__(*args, **kwargs)
-    
+
     def process_chunk(self, chunk, is_final=False):
         # Track statistics
         self.chunks_processed += 1
         self.total_characters += len(chunk)
-        
+
         # Add chunk number to metadata
         self.metadata["chunk_number"] = self.chunks_processed
         self.metadata["total_characters"] = self.total_characters
-        
+
         # Use the parent implementation to process the chunk
         return super().process_chunk(chunk, is_final)
-    
+
     def finalize(self):
         # Add final statistics to metadata
         self.metadata["final_chunk_count"] = self.chunks_processed
         self.metadata["final_character_count"] = self.total_characters
-        
+
         # Use the parent implementation to finalize
         return super().finalize()
-    
+
     def get_statistics(self):
         """Custom method to get processing statistics"""
         return {

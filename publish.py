@@ -1,18 +1,17 @@
 #!/usr/bin/env python
 """Script to build and publish the package to PyPI using UV."""
-import os
 import subprocess
 import sys
 
 
-def run_command(command):
+def run_command(command: str) -> subprocess.CompletedProcess:
     """Run a shell command and print output."""
     print(f"Running: {command}")
     result = subprocess.run(command, shell=True, check=True)
     return result
 
 
-def main():
+def main() -> None:
     """Build and publish the package using UV."""
     # Clean previous builds
     run_command("rm -rf dist/ build/ *.egg-info")

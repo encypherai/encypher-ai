@@ -1,19 +1,19 @@
 # EncypherAI Open Source License
 
-EncypherAI Unicode Metadata Encoding Technology  
+EncypherAI Unicode Metadata Encoding Technology
 Copyright (C) 2025 EncypherAI LLC.
 
-This program is free software: you can redistribute it and/or modify  
-it under the terms of the GNU Affero General Public License as published  
-by the Free Software Foundation, either version 3 of the License, or  
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published
+by the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
 
-This program is distributed in the hope that it will be useful,  
-but WITHOUT ANY WARRANTY; without even the implied warranty of  
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the  
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 GNU Affero General Public License for more details.
 
-You should have received a copy of the GNU Affero General Public License  
+You should have received a copy of the GNU Affero General Public License
 along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 ---
@@ -22,7 +22,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 In addition to the open source license above, EncypherAI offers commercial licensing options for organizations that wish to use our technology without the copyleft requirements of the AGPL. For commercial licensing, please contact:
 
-**Email:** contact@encypherai.com  
+**Email:** contact@encypherai.com
 **Website:** [https://www.encypherai.com/licensing](https://www.encypherai.com/licensing)
 
 ---
@@ -57,19 +57,19 @@ The precise terms and conditions for copying, distribution and modification foll
 
 ### TERMS AND CONDITIONS
 
-0. **Definitions.**  
-   *This License* refers to version 3 of the GNU Affero General Public License.  
-   “Copyright” also means copyright-like laws that apply to other kinds of works, such as semiconductor masks.  
-   “The Program” refers to any copyrightable work licensed under this License. Each licensee is addressed as “you”.  
-   “Licensees” and “recipients” may be individuals or organizations.  
-   To “modify” a work means to copy from or adapt all or part of the work in a fashion requiring copyright permission, other than the making of an exact copy. The resulting work is called a “modified version” of the earlier work or a work “based on” the earlier work.  
-   A “covered work” means either the unmodified Program or a work based on the Program.  
-   To “propagate” a work means to do anything with it that, without permission, would make you directly or secondarily liable for infringement under applicable copyright law, except executing it on a computer or modifying a private copy. Propagation includes copying, distribution (with or without modification), making available to the public, and in some countries other activities as well.  
+0. **Definitions.**
+   *This License* refers to version 3 of the GNU Affero General Public License.
+   “Copyright” also means copyright-like laws that apply to other kinds of works, such as semiconductor masks.
+   “The Program” refers to any copyrightable work licensed under this License. Each licensee is addressed as “you”.
+   “Licensees” and “recipients” may be individuals or organizations.
+   To “modify” a work means to copy from or adapt all or part of the work in a fashion requiring copyright permission, other than the making of an exact copy. The resulting work is called a “modified version” of the earlier work or a work “based on” the earlier work.
+   A “covered work” means either the unmodified Program or a work based on the Program.
+   To “propagate” a work means to do anything with it that, without permission, would make you directly or secondarily liable for infringement under applicable copyright law, except executing it on a computer or modifying a private copy. Propagation includes copying, distribution (with or without modification), making available to the public, and in some countries other activities as well.
    To “convey” a work means any kind of propagation that enables other parties to make or receive copies. Mere interaction with a user through a computer network, with no transfer of a copy, is not conveying.
 
    *[The full text of Section 0 continues here.]*
 
-1. **Source Code.**  
+1. **Source Code.**
    Source Code.
 
   The "source code" for a work means the preferred form of the work
@@ -112,7 +112,7 @@ Source.
   The Corresponding Source for a work in source code form is that
 same work.
 
-2. **Basic Permissions.**  
+2. **Basic Permissions.**
   All rights granted under this License are granted for the term of
 copyright on the Program, and are irrevocable provided the stated
 conditions are met.  This License explicitly affirms your unlimited
@@ -136,7 +136,7 @@ your copyrighted material outside their relationship with you.
 the conditions stated below.  Sublicensing is not allowed; section 10
 makes it unnecessary.
 
-3. **Protecting Users' Legal Rights From Anti-Circumvention Law.**  
+3. **Protecting Users' Legal Rights From Anti-Circumvention Law.**
   No covered work shall be deemed part of an effective technological
 measure under any applicable law fulfilling obligations under article
 11 of the WIPO copyright treaty adopted on 20 December 1996, or
@@ -151,7 +151,7 @@ modification of the work as a means of enforcing, against the work's
 users, your or third parties' legal rights to forbid circumvention of
 technological measures.
 
-4. **Conveying Verbatim Copies.**  
+4. **Conveying Verbatim Copies.**
   You may convey verbatim copies of the Program's source code as you
 receive it, in any medium, provided that you conspicuously and
 appropriately publish on each copy an appropriate copyright notice;
@@ -163,7 +163,7 @@ recipients a copy of this License along with the Program.
   You may charge any price or no price for each copy that you convey,
 and you may offer support or warranty protection for a fee.
 
-5. **Conveying Modified Source Versions.**  
+5. **Conveying Modified Source Versions.**
   You may convey a work based on the Program, or the modifications to
 produce it from the Program, in the form of source code under the
 terms of section 4, provided that you also meet all of these conditions:
@@ -199,7 +199,7 @@ beyond what the individual works permit.  Inclusion of a covered work
 in an aggregate does not cause this License to apply to the other
 parts of the aggregate.
 
-6. **Conveying Non-Source Forms.**  
+6. **Conveying Non-Source Forms.**
   You may convey a covered work in object code form under the terms
 of sections 4 and 5, provided that you also convey the
 machine-readable Corresponding Source under the terms of this License,
@@ -296,7 +296,7 @@ documented (and with an implementation available to the public in
 source code form), and must require no special password or key for
 unpacking, reading or copying.
 
-7. **Additional Terms.**  
+7. **Additional Terms.**
   "Additional permissions" are terms that supplement the terms of this
 License by making exceptions from one or more of its conditions.
 Additional permissions that are applicable to the entire Program shall
@@ -359,7 +359,7 @@ where to find the applicable terms.
 form of a separately written license, or stated as exceptions;
 the above requirements apply either way.
 
-8. **Termination.**  
+8. **Termination.**
   You may not propagate or modify a covered work except as expressly
 provided under this License.  Any attempt otherwise to propagate or
 modify it is void, and will automatically terminate your rights under
@@ -386,7 +386,7 @@ this License.  If your rights have been terminated and not permanently
 reinstated, you do not qualify to receive new licenses for the same
 material under section 10.
 
-9. **Acceptance Not Required for Having Copies.**  
+9. **Acceptance Not Required for Having Copies.**
   You are not required to accept this License in order to receive or
 run a copy of the Program.  Ancillary propagation of a covered work
 occurring solely as a consequence of using peer-to-peer transmission
@@ -396,7 +396,7 @@ modify any covered work.  These actions infringe copyright if you do
 not accept this License.  Therefore, by modifying or propagating a
 covered work, you indicate your acceptance of this License to do so.
 
-10. **Automatic Licensing of Downstream Recipients.**  
+10. **Automatic Licensing of Downstream Recipients.**
   Each time you convey a covered work, the recipient automatically
 receives a license from the original licensors, to run, modify and
 propagate that work, subject to this License.  You are not responsible
@@ -420,7 +420,7 @@ rights granted under this License, and you may not initiate litigation
 any patent claim is infringed by making, using, selling, offering for
 sale, or importing the Program or any portion of it.
 
-11. **Patents.**  
+11. **Patents.**
   A "contributor" is a copyright holder who authorizes use under this
 License of the Program or a work on which the Program is based.  The
 work thus licensed is called the contributor's "contributor version".
@@ -488,7 +488,7 @@ or that patent license was granted, prior to 28 March 2007.
 any implied license or other defenses to infringement that may
 otherwise be available to you under applicable patent law.
 
-12. **No Surrender of Others' Freedom.**  
+12. **No Surrender of Others' Freedom.**
   If conditions are imposed on you (whether by court order, agreement or
 otherwise) that contradict the conditions of this License, they do not
 excuse you from the conditions of this License.  If you cannot convey a
@@ -499,7 +499,7 @@ to collect a royalty for further conveying from those to whom you convey
 the Program, the only way you could satisfy both those terms and this
 License would be to refrain entirely from conveying the Program.
 
-13. **Remote Network Interaction; Use with the GNU General Public License.**  
+13. **Remote Network Interaction; Use with the GNU General Public License.**
   Notwithstanding any other provision of this License, if you modify the
 Program, your modified version must prominently offer all users
 interacting with it remotely through a computer network (if your version
@@ -519,7 +519,7 @@ License will continue to apply to the part which is the covered work,
 but the work with which it is combined will remain governed by version
 3 of the GNU General Public License.
 
-14. **Revised Versions of this License.**  
+14. **Revised Versions of this License.**
   The Free Software Foundation may publish revised and/or new versions of
 the GNU Affero General Public License from time to time.  Such new versions
 will be similar in spirit to the present version, but may differ in detail to
@@ -544,7 +544,7 @@ permissions.  However, no additional obligations are imposed on any
 author or copyright holder as a result of your choosing to follow a
 later version.
 
-15. **Disclaimer of Warranty.**  
+15. **Disclaimer of Warranty.**
   THERE IS NO WARRANTY FOR THE PROGRAM, TO THE EXTENT PERMITTED BY
 APPLICABLE LAW.  EXCEPT WHEN OTHERWISE STATED IN WRITING THE COPYRIGHT
 HOLDERS AND/OR OTHER PARTIES PROVIDE THE PROGRAM "AS IS" WITHOUT WARRANTY
@@ -554,7 +554,7 @@ PURPOSE.  THE ENTIRE RISK AS TO THE QUALITY AND PERFORMANCE OF THE PROGRAM
 IS WITH YOU.  SHOULD THE PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF
 ALL NECESSARY SERVICING, REPAIR OR CORRECTION.
 
-16. **Limitation of Liability.**  
+16. **Limitation of Liability.**
   IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
 WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MODIFIES AND/OR CONVEYS
 THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES, INCLUDING ANY
@@ -565,7 +565,7 @@ PARTIES OR A FAILURE OF THE PROGRAM TO OPERATE WITH ANY OTHER PROGRAMS),
 EVEN IF SUCH HOLDER OR OTHER PARTY HAS BEEN ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGES.
 
-17. **Interpretation of Sections 15 and 16.**  
+17. **Interpretation of Sections 15 and 16.**
   If the disclaimer of warranty and limitation of liability provided
 above cannot be given local legal effect according to their terms,
 reviewing courts shall apply local law that most closely approximates

@@ -1,5 +1,7 @@
 # MetadataEncoder
 
+> **DEPRECATED**: The `MetadataEncoder` class is deprecated as of version 1.1.0. Please use the [`UnicodeMetadata`](unicode-metadata.md) class with digital signatures instead, which provides stronger security through Ed25519 signatures rather than HMAC. See the [Tamper Detection](../user-guide/tamper-detection.md) guide for details on the new approach.
+
 The `MetadataEncoder` class is the primary interface for embedding and extracting metadata in text.
 
 ## Class Definition
@@ -9,7 +11,7 @@ class MetadataEncoder:
     def __init__(self, hmac_secret_key: Optional[str] = None):
         """
         Initialize a MetadataEncoder instance.
-        
+
         Args:
             hmac_secret_key: Optional secret key for HMAC verification. If None, HMAC verification is disabled.
         """
@@ -23,11 +25,11 @@ class MetadataEncoder:
 def encode_metadata(self, text: str, metadata: Dict[str, Any]) -> str:
     """
     Embed metadata into the provided text using zero-width characters.
-    
+
     Args:
         text: The text to embed metadata into
         metadata: Dictionary containing metadata to embed
-        
+
     Returns:
         Text with embedded metadata as zero-width characters
     """
@@ -41,10 +43,10 @@ This method encodes the provided metadata and embeds it into the text using zero
 def decode_metadata(self, text: str) -> Tuple[Optional[Dict[str, Any]], str]:
     """
     Extract metadata from text and return the metadata along with the clean text.
-    
+
     Args:
         text: Text potentially containing embedded metadata
-        
+
     Returns:
         Tuple of (metadata, clean_text), where metadata is None if no metadata was found
     """
@@ -58,10 +60,10 @@ Extracts any embedded metadata from the provided text. Returns both the extracte
 def verify_text(self, text: str) -> Tuple[bool, Optional[Dict[str, Any]], str]:
     """
     Verify the integrity of text with embedded metadata using HMAC.
-    
+
     Args:
         text: Text with potentially embedded metadata
-        
+
     Returns:
         Tuple of (is_valid, metadata, clean_text), where:
           - is_valid: True if metadata was found and HMAC verification passed

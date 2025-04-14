@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encypher-ai"
-version = "1.1.0"
-description = "Metadata encoding and extraction for AI-generated content"
+version = "2.0.0"
+description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
 authors = [{name = "EncypherAI Team"}]
 license = "AGPL-3.0"
@@ -18,9 +18,10 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "litellm>=1.30.3",
+    "litellm>=1.43.0",
     "rich",
     "pyyaml",
+    "cryptography",
 ]
 
 [project.optional-dependencies]
@@ -41,13 +42,13 @@ dev = [
 "Bug Tracker" = "https://github.com/encypherai/encypher-ai/issues"
 
 [tool.black]
-line-length = 88
+line-length = 150
 target-version = ["py39", "py310", "py311"]
 include = '\.pyi?$'
 
 [tool.isort]
 profile = "black"
-line_length = 88
+line_length = 150
 multi_line_output = 3
 
 [tool.mypy]
@@ -75,6 +76,9 @@ ignore_errors = true
 testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
+
+[tool.ruff]
+line-length = 150
 
 [tool.setuptools]
 packages = ["encypher"]

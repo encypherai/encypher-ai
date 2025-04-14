@@ -22,15 +22,25 @@ For standard (non-streaming) responses from OpenAI:
 
 ```python
 import openai
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 import json
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key="your-api-key")
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
+# Generate key pair (replace with your actual key management)
+private_key, public_key = generate_key_pair()
+
+# Example public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "openai-nonstream-key":
+        return public_key
+    return None
 
 # Create a completion
 response = client.chat.completions.create(
@@ -48,14 +58,15 @@ text = response.choices[0].message.content
 metadata = {
     "model": response.model,
     "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
+    "timestamp": time.time(),
     "prompt_tokens": response.usage.prompt_tokens,
     "completion_tokens": response.usage.completion_tokens,
-    "total_tokens": response.usage.total_tokens
+    "total_tokens": response.usage.total_tokens,
+    "key_id": "openai-nonstream-key" # Identifier for the key
 }
 
-# Embed metadata
-encoded_text = encoder.encode_metadata(text, metadata)
+# Embed metadata using UnicodeMetadata
+encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
 
 print("Original response:")
 print(text)
@@ -63,8 +74,14 @@ print("\nResponse with embedded metadata:")
 print(encoded_text)
 
 # Later, extract and verify the metadata
-from encypher.core.unicode_metadata import UnicodeMetadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(encoded_text, hmac_secret_key="your-secret-key")  # Pass the same secret_key used during encoding
+# Extract metadata (optional)
+# extracted_metadata = UnicodeMetadata.extract_metadata(encoded_text)
+
+# Verify the metadata using the public key resolver
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    encoded_text,
+    public_key_resolver=resolve_public_key # Pass the resolver function
+)
 
 print("\nExtracted metadata:")
 print(json.dumps(verified_metadata, indent=2))
@@ -78,20 +95,37 @@ For streaming responses, use the `StreamingHandler`:
 ```python
 import openai
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
+import json
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key="your-api-key")
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "openai-stream-key":
+        return public_key
+    return None
 
 # Create metadata
 metadata = {
     "model": "gpt-4",
     "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat()
+    "timestamp": time.time(),
+    "key_id": "openai-stream-key"
 }
 
 # Initialize the streaming handler
-handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
+handler = StreamingHandler(
+    metadata=metadata,
+    private_key=private_key # Use the private key
+)
 
 # Create a streaming completion
 completion = client.chat.completions.create(
@@ -108,22 +142,32 @@ full_response = ""
 for chunk in completion:
     if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
         content = chunk.choices[0].delta.content
-        
+
         # Process the chunk
         processed_chunk = handler.process_chunk(chunk=content)
-        
-        # Print and accumulate the processed chunk
-        print(processed_chunk, end="", flush=True)
-        full_response += processed_chunk
 
-# Finalize the stream
-handler.finalize()
+        # Print and accumulate the processed chunk if available
+        if processed_chunk:
+            print(processed_chunk, end="", flush=True)
+            full_response += processed_chunk
+
+# Finalize the stream to process any remaining buffer
+final_chunk = handler.finalize()
+if final_chunk:
+    print(final_chunk, end="", flush=True)
+    full_response += final_chunk
 
 print("\n\nStreaming completed!")
 
 # Extract and verify the metadata
-from encypher.core.unicode_metadata import UnicodeMetadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(full_response, hmac_secret_key="your-secret-key")  # Pass the same secret_key used during encoding
+# Extract metadata (optional)
+# extracted_metadata = UnicodeMetadata.extract_metadata(full_response)
+
+# Verify the metadata using the public key resolver
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    full_response,
+    public_key_resolver=resolve_public_key # Pass the resolver function
+)
 
 print("\nExtracted metadata:")
 print(json.dumps(verified_metadata, indent=2))
@@ -138,12 +182,23 @@ When using OpenAI's function calling feature:
 
 ```python
 import openai
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 import json
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key="your-api-key")
+
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "openai-func-key":
+        return public_key
+    return None
 
 # Define functions
 functions = [
@@ -190,10 +245,10 @@ if message.tool_calls:
     function_call = message.tool_calls[0].function
     function_name = function_call.name
     function_args = json.loads(function_call.arguments)
-    
+
     print(f"Function call: {function_name}")
     print(f"Arguments: {function_args}")
-    
+
     # Simulate function response
     function_response = {
         "location": function_args["location"],
@@ -201,7 +256,7 @@ if message.tool_calls:
         "unit": function_args.get("unit", "fahrenheit"),
         "condition": "sunny"
     }
-    
+
     # Continue the conversation with the function result
     response = client.chat.completions.create(
         model="gpt-4",
@@ -217,30 +272,45 @@ if message.tool_calls:
             }
         ]
     )
-    
+
     # Get the final response text
-    text = response.choices[0].message.content
+    final_text = response.choices[0].message.content
+
+    # Create metadata
+    metadata = {
+        "model": response.model,
+        "initial_function_call": function_name,
+        "timestamp": time.time(),
+        "key_id": "openai-func-key"
+    }
+
+    # Embed metadata
+    encoded_text = UnicodeMetadata.embed_metadata(final_text, metadata, private_key)
+
+    print("\nFinal response with embedded metadata:")
+    print(encoded_text)
+
+    # Verify the metadata
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        encoded_text,
+        public_key_resolver=resolve_public_key
+    )
+    print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+    if is_valid:
+        print(json.dumps(verified_metadata, indent=2))
+
 else:
-    # Get the response text
+    # No function call, process as a regular response
     text = message.content
-
-# Create metadata
-metadata = {
-    "model": response.model,
-    "organization": "YourOrganization",
-    "timestamp": datetime.now(timezone.utc).isoformat(),
-    "function_call": message.tool_calls[0].function.name if message.tool_calls else None,
-    "prompt_tokens": response.usage.prompt_tokens,
-    "completion_tokens": response.usage.completion_tokens,
-    "total_tokens": response.usage.total_tokens
-}
-
-# Embed metadata
-encoder = MetadataEncoder(secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-encoded_text = encoder.encode_metadata(text, metadata)
-
-print("\nFinal response with embedded metadata:")
-print(encoded_text)
+    metadata = {
+        "model": response.model,
+        "timestamp": time.time(),
+        "key_id": "openai-func-key" # Use the same key_id for consistency
+    }
+    encoded_text = UnicodeMetadata.embed_metadata(text, metadata, private_key)
+    print("Response with embedded metadata:")
+    print(encoded_text)
+    # Verification would be the same as above
 ```
 
 ### Custom Metadata Extraction
@@ -253,9 +323,9 @@ def extract_openai_metadata(response):
     metadata = {
         "model": response.model,
         "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": time.time(),
     }
-    
+
     # Add usage information if available
     if hasattr(response, "usage"):
         metadata.update({
@@ -263,7 +333,7 @@ def extract_openai_metadata(response):
             "completion_tokens": response.usage.completion_tokens,
             "total_tokens": response.usage.total_tokens
         })
-    
+
     # Add function call information if available
     message = response.choices[0].message
     if hasattr(message, "tool_calls") and message.tool_calls:
@@ -272,7 +342,7 @@ def extract_openai_metadata(response):
             "function_call": function_call.name,
             "function_args": json.loads(function_call.arguments)
         })
-    
+
     return metadata
 ```
 
@@ -283,23 +353,34 @@ Here's an example of integrating OpenAI and EncypherAI in a Flask web applicatio
 ```python
 from flask import Flask, request, jsonify
 import openai
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 
 app = Flask(__name__)
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key="your-api-key")
 
+# Generate key pair and resolver (replace with actual key management)
+private_key, public_key = generate_key_pair()
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    if key_id == "fastapi-openai-key":
+        return public_key
+    return None
+
 # Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
+encoder = UnicodeMetadata(private_key=private_key)
 
 @app.route('/generate', methods=['POST'])
 def generate():
     # Get request data
     data = request.json
     prompt = data.get('prompt', '')
-    
+
     # Create a completion
     response = client.chat.completions.create(
         model="gpt-4",
@@ -308,24 +389,24 @@ def generate():
             {"role": "user", "content": prompt}
         ]
     )
-    
+
     # Get the response text
     text = response.choices[0].message.content
-    
+
     # Create metadata
     metadata = {
         "model": response.model,
         "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "timestamp": time.time(),
         "prompt_tokens": response.usage.prompt_tokens,
         "completion_tokens": response.usage.completion_tokens,
         "total_tokens": response.usage.total_tokens,
         "user_id": data.get('user_id', 'anonymous')
     }
-    
+
     # Embed metadata
-    encoded_text = encoder.encode_metadata(text, metadata)
-    
+    encoded_text = encoder.embed_metadata(text, metadata)
+
     # Return the response
     return jsonify({
         "text": encoded_text,
@@ -336,23 +417,20 @@ def generate():
 def verify():
     # Get request data
     data = request.json
-    text = data.get('text', '')
-    
-    # Extract and verify metadata
-    try:
-        from encypher.core.unicode_metadata import UnicodeMetadata
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(text, hmac_secret_key="your-secret-key")  # Pass the same secret_key used during encoding
-        
-        return jsonify({
-            "has_metadata": True,
-            "metadata": verified_metadata,
-            "verified": is_valid
-        })
-    except Exception as e:
-        return jsonify({
-            "has_metadata": False,
-            "error": str(e)
-        })
+    text_to_verify = data.get("text")
+
+    if not text_to_verify:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        text_to_verify,
+        public_key_resolver=resolve_public_key
+    )
+
+    return {
+        "is_valid": is_valid,
+        "metadata": verified_metadata
+    }
 
 if __name__ == '__main__':
     app.run(debug=True)
@@ -366,31 +444,36 @@ For streaming responses in a web application:
 from flask import Flask, Response, request, stream_with_context
 import openai
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+import time
 
 app = Flask(__name__)
 
-@app.route('/stream', methods=['POST'])
-def stream():
+@app.post("/generate-stream")
+def generate_stream(request: Request):
     # Get request data
     data = request.json
     prompt = data.get('prompt', '')
-    
+
     # Create metadata
     metadata = {
         "model": "gpt-4",
-        "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "user_id": data.get('user_id', 'anonymous')
+        "timestamp": time.time(),
+        "user_id": data.get('user_id', 'anonymous'), # Example extra field
+        "key_id": "fastapi-openai-key"
     }
-    
-    # Initialize OpenAI client
-    client = openai.OpenAI(api_key="your-api-key")
-    
+
     # Initialize the streaming handler
-    handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-    
-    def generate_stream():
+    handler = StreamingHandler(
+        metadata=metadata,
+        private_key=private_key
+    )
+
+    async def generate():
         # Create a streaming completion
         completion = client.chat.completions.create(
             model="gpt-4",
@@ -400,26 +483,46 @@ def stream():
             ],
             stream=True
         )
-        
+
         # Process each chunk
         for chunk in completion:
             if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                 content = chunk.choices[0].delta.content
-                
+
                 # Process the chunk
                 processed_chunk = handler.process_chunk(chunk=content)
-                
-                # Yield the processed chunk
-                yield processed_chunk
-        
-        # Finalize the stream
-        handler.finalize()
-    
-    # Return a streaming response
-    return Response(stream_with_context(generate_stream()), mimetype='text/plain')
 
-if __name__ == '__main__':
-    app.run(debug=True)
+                # Yield the processed chunk if available
+                if processed_chunk:
+                    yield processed_chunk
+
+        # Finalize the stream
+        final_chunk = handler.finalize()
+        if final_chunk:
+            yield final_chunk
+
+    return StreamingResponse(generate(), media_type="text/plain")
+
+# Example Verification Endpoint (add this to your FastAPI app)
+@app.post("/verify-text")
+async def verify_text(request: Request):
+    data = await request.json()
+    text_to_verify = data.get("text")
+
+    if not text_to_verify:
+        raise HTTPException(status_code=400, detail="Text is required")
+
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        text_to_verify,
+        public_key_resolver=resolve_public_key
+    )
+
+    return {
+        "is_valid": is_valid,
+        "metadata": verified_metadata
+    }
+
+# Run with: uvicorn your_app_file:app --reload
 ```
 
 ## Best Practices

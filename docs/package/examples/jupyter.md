@@ -17,22 +17,33 @@ Below is a basic example of using EncypherAI in a Jupyter notebook. You can copy
 ```python
 # Import necessary libraries
 import encypher
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional, Dict
 import time
 import json
 
 # Display the version
 print(f"EncypherAI version: {encypher.__version__}")
 
-# Create a metadata encoder
-encoder = MetadataEncoder()
+# Generate a key pair for digital signatures
+private_key, public_key = generate_key_pair()
+key_id = "jupyter-example-key"
+
+# Store public key (in a real application, use a secure database)
+public_keys = {key_id: public_key}
+
+# Create a resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    return public_keys.get(key_id)
 
 # Sample text
 original_text = """
-Artificial intelligence (AI) is intelligence demonstrated by machines, 
-as opposed to natural intelligence displayed by animals including humans. 
-AI research has been defined as the field of study of intelligent agents, 
-which refers to any system that perceives its environment and takes actions 
+Artificial intelligence (AI) is intelligence demonstrated by machines,
+as opposed to natural intelligence displayed by animals including humans.
+AI research has been defined as the field of study of intelligent agents,
+which refers to any system that perceives its environment and takes actions
 that maximize its chance of achieving its goals.
 """
 
@@ -41,7 +52,8 @@ metadata = {
     "model": "example-model",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "1.1.0"
+    "version": "2.0.0",
+    "key_id": key_id  # Required for verification
 }
 
 # Display the metadata
@@ -49,7 +61,12 @@ print("Metadata to embed:")
 print(json.dumps(metadata, indent=2))
 
 # Embed metadata
-encoded_text = encoder.encode_metadata(original_text, metadata)
+encoded_text = UnicodeMetadata.embed_metadata(
+    text=original_text,
+    metadata=metadata,
+    private_key=private_key,
+    target="whitespace"
+)
 
 # Display the original and encoded text
 print("\nOriginal text:")
@@ -59,14 +76,17 @@ print("\nEncoded text (looks identical but contains embedded metadata):")
 print(encoded_text)
 
 # Extract metadata
-extracted_metadata = encoder.decode_metadata(encoded_text)
+extracted_metadata = UnicodeMetadata.extract_metadata(encoded_text)
 
 # Display the extracted metadata
 print("\nExtracted metadata:")
 print(json.dumps(extracted_metadata, indent=2))
 
 # Verify the text hasn't been tampered with
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(encoded_text, hmac_secret_key="your-secret-key")
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=encoded_text,
+    public_key_resolver=resolve_public_key
+)
 
 print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
@@ -78,8 +98,10 @@ This more advanced notebook demonstrates how to visualize the embedded metadata:
 ```python
 # Import necessary libraries
 import encypher
-from encypher.core.metadata_encoder import MetadataEncoder
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional, Dict
 import matplotlib.pyplot as plt
 import numpy as np
 from IPython.display import display, HTML
@@ -87,8 +109,16 @@ import pandas as pd
 import time
 import json
 
-# Create a metadata encoder
-encoder = MetadataEncoder()
+# Generate a key pair for digital signatures
+private_key, public_key = generate_key_pair()
+key_id = "jupyter-viz-key"
+
+# Store public key (in a real application, use a secure database)
+public_keys = {key_id: public_key}
+
+# Create a resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    return public_keys.get(key_id)
 
 # Sample text
 original_text = "This is a sample text that will have metadata embedded within it."
@@ -98,7 +128,8 @@ metadata = {
     "model": "example-model",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "1.1.0"
+    "version": "2.0.0",
+    "key_id": key_id  # Required for verification
 }
 
 # Embed metadata with different targets
@@ -112,9 +143,10 @@ targets = [
 
 encoded_texts = {}
 for target in targets:
-    encoded_texts[target.name] = encoder.encode_metadata(
-        original_text, 
-        metadata, 
+    encoded_texts[target.name] = UnicodeMetadata.embed_metadata(
+        text=original_text,
+        metadata=metadata,
+        private_key=private_key,
         target=target
     )
 
@@ -134,7 +166,7 @@ display(df)
 def visualize_unicode_distribution(text, title):
     # Get the Unicode code points
     code_points = [ord(c) for c in text]
-    
+
     # Create a histogram
     plt.figure(figsize=(12, 6))
     plt.hist(code_points, bins=50, alpha=0.7)
@@ -148,7 +180,7 @@ def visualize_unicode_distribution(text, title):
 # Visualize the original and encoded text
 visualize_unicode_distribution(original_text, 'Unicode Distribution in Original Text')
 visualize_unicode_distribution(
-    encoded_texts[MetadataTarget.WHITESPACE.name], 
+    encoded_texts[MetadataTarget.WHITESPACE.name],
     'Unicode Distribution in Encoded Text (WHITESPACE target)'
 )
 
@@ -175,9 +207,12 @@ for target in targets:
 
 # Extract and verify metadata
 for target in targets:
-    extracted = encoder.decode_metadata(encoded_texts[target.name])
-    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(encoded_texts[target.name], hmac_secret_key="your-secret-key")
-    
+    extracted = UnicodeMetadata.extract_metadata(encoded_texts[target.name])
+    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        text=encoded_texts[target.name],
+        public_key_resolver=resolve_public_key
+    )
+
     print(f"\nTarget: {target.name}")
     print(f"Metadata extracted: {json.dumps(extracted, indent=2)}")
     print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
@@ -191,22 +226,41 @@ This notebook demonstrates how to use EncypherAI with streaming content:
 # Import necessary libraries
 import encypher
 from encypher.streaming.handlers import StreamingHandler
-from encypher.core.metadata_encoder import MetadataEncoder
-from encypher.core.unicode_metadata import MetadataTarget
+from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional, Dict
 import json
 import time
 from IPython.display import clear_output
+
+# Generate a key pair for digital signatures
+private_key, public_key = generate_key_pair()
+key_id = "jupyter-stream-key"
+
+# Store public key (in a real application, use a secure database)
+public_keys = {key_id: public_key}
+
+# Create a resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    return public_keys.get(key_id)
 
 # Create metadata
 metadata = {
     "model": "streaming-example",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "1.1.0"
+    "version": "2.0.0",
+    "key_id": key_id  # Required for verification
 }
 
 # Create a streaming handler
-handler = StreamingHandler(metadata=metadata)
+streaming_handler = StreamingHandler(
+    metadata=metadata,
+    private_key=private_key,
+    target=MetadataTarget.WHITESPACE,
+    encode_first_chunk_only=True
+)
 
 # Simulate a streaming response
 chunks = [
@@ -224,21 +278,21 @@ print("Processing stream...")
 full_text = ""
 for i, chunk in enumerate(chunks):
     # Process the chunk
-    processed_chunk = handler.process_chunk(chunk)
-    
+    processed_chunk = streaming_handler.process_chunk(chunk)
+
     # Accumulate the text
     full_text += processed_chunk
-    
+
     # Display progress
     clear_output(wait=True)
     print(f"Processed {i+1}/{len(chunks)} chunks")
     print(f"Current text: {full_text}")
-    
+
     # Simulate delay
     time.sleep(0.5)
 
 # Finalize the stream
-final_chunk = handler.finalize()
+final_chunk = streaming_handler.finalize()
 if final_chunk:
     full_text += final_chunk
 
@@ -247,84 +301,103 @@ clear_output(wait=True)
 print("Final text with embedded metadata:")
 print(full_text)
 
-# Extract and verify the metadata
-encoder = MetadataEncoder()
-extracted_metadata = encoder.decode_metadata(full_text)
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(full_text, hmac_secret_key="your-secret-key")
+# Verify the complete response
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=full_text,
+    public_key_resolver=resolve_public_key
+)
 
-print("\nExtracted metadata:")
-print(json.dumps(extracted_metadata, indent=2))
 print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+if is_valid:
+    print(f"Verified metadata: {json.dumps(verified_metadata, indent=2)}")
 ```
 
-## Tamper Detection Example
+## Tamper Detection Notebook
 
-This notebook demonstrates how EncypherAI can detect tampering with AI-generated content:
+This notebook demonstrates how EncypherAI can detect tampering:
 
 ```python
 # Import necessary libraries
 import encypher
-from encypher.core.metadata_encoder import MetadataEncoder
-import time
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional, Dict
 import json
+import time
+import pandas as pd
+from IPython.display import display, HTML
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="my-secret-key")
+# Generate a key pair for digital signatures
+private_key, public_key = generate_key_pair()
+key_id = "jupyter-tamper-key"
 
-# Original text
-original_text = "This is an example of AI-generated content that will be protected against tampering."
+# Store public key (in a real application, use a secure database)
+public_keys = {key_id: public_key}
+
+# Create a resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    return public_keys.get(key_id)
+
+# Sample text
+original_text = "This is a sample text that will be used to demonstrate tamper detection."
 
 # Create metadata
 metadata = {
-    "model": "tamper-detection-example",
+    "model": "tamper-detection-demo",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "1.1.0"
+    "version": "2.0.0",
+    "key_id": key_id  # Required for verification
 }
 
 # Embed metadata
-encoded_text = encoder.encode_metadata(original_text, metadata)
-
-print("Original text with embedded metadata:")
-print(encoded_text)
-print("\nMetadata:")
-print(json.dumps(metadata, indent=2))
-
-# Verify the original text
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(encoded_text, hmac_secret_key="my-secret-key")
-print(f"\nVerification result (original): {'✅ Verified' if is_valid else '❌ Failed'}")
+encoded_text = UnicodeMetadata.embed_metadata(
+    text=original_text,
+    metadata=metadata,
+    private_key=private_key
+)
 
 # Create tampered versions
 tampered_versions = {
-    "Addition": encoded_text + " This text was added.",
-    "Deletion": encoded_text[:len(encoded_text)//2],
-    "Modification": encoded_text.replace("AI-generated", "human-written"),
-    "Untampered": encoded_text
+    "Original (No Tampering)": encoded_text,
+    "Content Changed": encoded_text.replace("sample", "modified"),
+    "Metadata Removed": original_text,
+    "Partial Metadata": encoded_text[:len(encoded_text)//2] + original_text[len(original_text)//2:]
 }
 
-# Check each version
-print("\nTamper Detection Results:")
-print("-" * 50)
-
+# Test each version
+results = []
 for name, text in tampered_versions.items():
     # Try to extract metadata
     try:
-        extracted = encoder.decode_metadata(text)
+        extracted = UnicodeMetadata.extract_metadata(text)
         metadata_found = bool(extracted)
     except:
+        extracted = None
         metadata_found = False
-    
+
     # Try to verify
     try:
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(text, hmac_secret_key="my-secret-key")
+        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+            text=text,
+            public_key_resolver=resolve_public_key
+        )
     except:
         is_valid = False
-    
-    # Print results
-    print(f"\n{name}:")
-    print(f"Text: {text[:50]}..." if len(text) > 50 else f"Text: {text}")
-    print(f"Metadata found: {'Yes' if metadata_found else 'No'}")
-    print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+        verified_metadata = None
+
+    results.append({
+        "Version": name,
+        "Metadata Found": "✅ Yes" if metadata_found else "❌ No",
+        "Verification Passed": "✅ Passed" if is_valid else "❌ Failed",
+        "Extracted Metadata": json.dumps(extracted, indent=2) if extracted else "None"
+    })
+
+# Display results
+df = pd.DataFrame(results)
+display(HTML("<h3>Tamper Detection Results</h3>"))
+display(df)
 ```
 
 ## Advanced: Custom Metadata Encoder
@@ -334,44 +407,52 @@ This notebook demonstrates how to create a custom metadata encoder:
 ```python
 # Import necessary libraries
 import encypher
-from encypher.core.metadata_encoder import MetadataEncoder
-from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional, Dict
 import time
 import json
 import hashlib
 
 # Create a custom metadata encoder class
-class CustomMetadataEncoder(MetadataEncoder):
-    def __init__(self, secret_key=None, custom_prefix="custom"):
-        super().__init__(secret_key=secret_key)
+class CustomMetadataEncoder:
+    def __init__(self, private_key, custom_prefix="custom"):
+        self.private_key = private_key
         self.custom_prefix = custom_prefix
-    
+
     def encode_metadata(self, text, metadata, target="whitespace"):
         # Add custom prefix to metadata
         metadata = {f"{self.custom_prefix}_{k}": v for k, v in metadata.items()}
-        
+
         # Add timestamp if not present
         if f"{self.custom_prefix}_timestamp" not in metadata:
             metadata[f"{self.custom_prefix}_timestamp"] = int(time.time())
-        
+
         # Add a hash of the text
         text_hash = hashlib.sha256(text.encode()).hexdigest()
         metadata[f"{self.custom_prefix}_text_hash"] = text_hash
-        
+
         # Use the parent class to encode
-        return super().encode_metadata(text, metadata, target)
-    
+        return UnicodeMetadata.embed_metadata(
+            text=text,
+            metadata=metadata,
+            private_key=self.private_key,
+            target=target
+        )
+
     def decode_metadata(self, text):
         # Extract metadata using parent class
-        metadata = super().decode_metadata(text)
-        
+        metadata = UnicodeMetadata.extract_metadata(text)
+
         # Filter out non-custom fields
-        return {k.replace(f"{self.custom_prefix}_", ""): v 
-                for k, v in metadata.items() 
+        return {k.replace(f"{self.custom_prefix}_", ""): v
+                for k, v in metadata.items()
                 if k.startswith(f"{self.custom_prefix}_")}
 
 # Create an instance of the custom encoder
-custom_encoder = CustomMetadataEncoder(secret_key="my-custom-key", custom_prefix="myapp")
+private_key, _ = generate_key_pair()
+custom_encoder = CustomMetadataEncoder(private_key, custom_prefix="myapp")
 
 # Sample text
 text = "This text will have custom metadata embedded."
@@ -380,7 +461,7 @@ text = "This text will have custom metadata embedded."
 metadata = {
     "model": "custom-example",
     "user_id": "user123",
-    "version": "1.1.0"
+    "version": "2.0.0"
 }
 
 # Embed metadata

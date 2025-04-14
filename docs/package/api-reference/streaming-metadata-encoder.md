@@ -1,5 +1,7 @@
 # StreamingMetadataEncoder
 
+**DEPRECATED**: The `StreamingMetadataEncoder` class is deprecated as of version 1.1.0. Please use the [`StreamingHandler`](../streaming/handlers.md) class with digital signatures instead, which provides stronger security through Ed25519 signatures rather than HMAC. See the [Streaming Support](../user-guide/streaming.md) guide for details on the new approach.
+
 The `StreamingMetadataEncoder` class provides specialized functionality for embedding metadata in streaming content, such as text generated chunk by chunk from an LLM.
 
 ## Overview
@@ -21,18 +23,18 @@ The `StreamingMetadataEncoder` addresses these challenges by:
 ```python
 class StreamingMetadataEncoder:
     def __init__(
-        self, 
+        self,
         secret_key: Optional[str] = None,
         target: Union[str, MetadataTarget] = "whitespace",
         encode_first_chunk_only: bool = True
     ):
         """
         Initialize a StreamingMetadataEncoder for handling streaming content.
-        
+
         Args:
             secret_key: Optional secret key for HMAC verification. If not provided,
                         a random key will be generated.
-            target: Where to embed metadata. Can be a string ("whitespace", "punctuation", 
+            target: Where to embed metadata. Can be a string ("whitespace", "punctuation",
                    "first_letter", "last_letter", "all_characters") or a MetadataTarget enum.
             encode_first_chunk_only: If True, metadata will only be embedded in the first
                                     non-empty chunk that contains suitable targets.
@@ -45,15 +47,15 @@ class StreamingMetadataEncoder:
 
 ```python
 def initialize_stream(
-    self, 
+    self,
     metadata: Dict[str, Any]
 ) -> str:
     """
     Initialize a new streaming session with the provided metadata.
-    
+
     Args:
         metadata: Dictionary containing the metadata to embed
-        
+
     Returns:
         stream_id: A unique identifier for this streaming session
     """
@@ -63,21 +65,21 @@ def initialize_stream(
 
 ```python
 def process_chunk(
-    self, 
-    stream_id: str, 
+    self,
+    stream_id: str,
     chunk: str,
     is_first: bool = False,
     is_last: bool = False
 ) -> str:
     """
     Process a chunk of streaming content.
-    
+
     Args:
         stream_id: The stream ID returned by initialize_stream
         chunk: The text chunk to process
         is_first: Whether this is the first chunk in the stream
         is_last: Whether this is the last chunk in the stream
-        
+
     Returns:
         The processed chunk with metadata embedded (if applicable)
     """
@@ -87,15 +89,15 @@ def process_chunk(
 
 ```python
 def finalize_stream(
-    self, 
+    self,
     stream_id: str
 ) -> Dict[str, Any]:
     """
     Finalize a streaming session.
-    
+
     Args:
         stream_id: The stream ID returned by initialize_stream
-        
+
     Returns:
         A dictionary containing information about the completed stream
     """
@@ -105,15 +107,15 @@ def finalize_stream(
 
 ```python
 def get_stream_info(
-    self, 
+    self,
     stream_id: str
 ) -> Dict[str, Any]:
     """
     Get information about a streaming session.
-    
+
     Args:
         stream_id: The stream ID returned by initialize_stream
-        
+
     Returns:
         A dictionary containing information about the stream
     """
@@ -153,14 +155,14 @@ processed_chunks = []
 for i, chunk in enumerate(chunks):
     is_first = i == 0
     is_last = i == len(chunks) - 1
-    
+
     processed_chunk = encoder.process_chunk(
         stream_id=stream_id,
         chunk=chunk,
         is_first=is_first,
         is_last=is_last
     )
-    
+
     processed_chunks.append(processed_chunk)
     print(f"Processed chunk {i+1}: {processed_chunk}")
 
@@ -222,13 +224,13 @@ full_response = ""
 for chunk in completion:
     if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
         content = chunk.choices[0].delta.content
-        
+
         # Process the chunk
         processed_chunk = encoder.process_chunk(
             stream_id=stream_id,
             chunk=content
         )
-        
+
         # Print and accumulate the processed chunk
         print(processed_chunk, end="", flush=True)
         full_response += processed_chunk
@@ -297,10 +299,10 @@ class StreamingHandler:
     ):
         """
         Initialize a StreamingHandler for handling streaming content.
-        
+
         Args:
             metadata: Dictionary containing the metadata to embed
-            target: Where to embed metadata. Can be a string ("whitespace", "punctuation", 
+            target: Where to embed metadata. Can be a string ("whitespace", "punctuation",
                    "first_letter", "last_letter", "all_characters") or a MetadataTarget enum.
             encode_first_chunk_only: If True, metadata will only be embedded in the first
                                     non-empty chunk that contains suitable targets.
@@ -315,15 +317,15 @@ class StreamingHandler:
 
 ```python
 def process_chunk(
-    self, 
+    self,
     chunk: Union[str, Dict[str, Any]]
 ) -> Union[str, Dict[str, Any]]:
     """
     Process a chunk of streaming content.
-    
+
     Args:
         chunk: The text chunk to process or a dictionary containing a text chunk
-        
+
     Returns:
         The processed chunk with metadata embedded (if applicable)
     """
@@ -335,10 +337,10 @@ def process_chunk(
 def finalize(self) -> Optional[str]:
     """
     Finalize the streaming process.
-    
+
     This method should be called after all chunks have been processed to ensure
     that any remaining buffered content is properly processed.
-    
+
     Returns:
         Any remaining processed content, or None if there is none
     """
@@ -377,7 +379,7 @@ full_text = ""
 for chunk in chunks:
     # Process the chunk
     processed_chunk = handler.process_chunk(chunk=chunk)
-    
+
     # Print and accumulate the processed chunk
     print(processed_chunk, end="", flush=True)
     full_text += processed_chunk

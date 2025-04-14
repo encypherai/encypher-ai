@@ -1,136 +1,191 @@
 # Metadata Extraction and Verification
 
-This guide explains how to extract embedded metadata from text and verify its authenticity using EncypherAI's built-in HMAC verification system.
+This guide explains how to extract embedded metadata from text and verify its authenticity using EncypherAI's digital signature verification system.
 
 ## Basic Extraction
 
 Extracting metadata from text that has been encoded with EncypherAI is straightforward:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
-
-# Create a metadata encoder
-encoder = MetadataEncoder()
+from encypher.core.unicode_metadata import UnicodeMetadata
 
 # Text with embedded metadata
 encoded_text = "This text contains embedded metadata that is invisible to human readers."
 
 # Extract the metadata
 try:
-    is_valid, metadata = encoder.extract_metadata(encoded_text)
-    if is_valid:
-        print("Extracted metadata:", metadata)
+    metadata = UnicodeMetadata.extract_metadata(encoded_text)
+    if metadata:
+        print("Extracted metadata (unverified):", metadata)
     else:
-        print("Metadata extraction failed: Invalid metadata")
+        print("No metadata found or extraction failed")
 except Exception as e:
     print("No metadata found or extraction failed:", str(e))
 ```
 
-The `extract_metadata` method scans the text for a special sequence of Zero-Width Characters (ZWCs) at the beginning of the text that marks the start of the embedded data, reads the header information encoded using ZWCs immediately following the start marker to determine the length of the metadata and HMAC, reads the specified number of ZWC-encoded bytes representing the metadata payload and the HMAC signature, converts the ZWC sequences back into binary data for the metadata (usually JSON) and the HMAC, and returns the extracted metadata as a Python dictionary (after JSON deserialization).
+The `extract_metadata` method scans the text for metadata markers (zero-width characters), extracts the embedded data, decompresses it, and returns the metadata as a Python dictionary. This method does not verify the digital signature of the metadata.
 
 ## Understanding the Extraction Process
 
-When extracting metadata, EncypherAI's `MetadataEncoder` performs the following steps:
+When extracting metadata, EncypherAI's `UnicodeMetadata` performs the following steps:
 
-1. **Locates Data Block**: Identifies a special sequence of Zero-Width Characters (ZWCs) at the beginning of the text that marks the start of the embedded data.
-2. **Reads Header**: Parses header information encoded using ZWCs immediately following the start marker to determine the length of the metadata and HMAC.
-3. **Extracts Content**: Reads the specified number of ZWC-encoded bytes representing the metadata payload and the HMAC signature.
-4. **Decodes**: Converts the ZWC sequences back into binary data for the metadata (usually JSON) and the HMAC.
-5. **Returns Metadata**: Returns the extracted metadata as a Python dictionary (after JSON deserialization).
+1. **Locates Data Block**: Identifies a special sequence of zero-width characters at the beginning of the text that marks the start of the embedded data.
+2. **Extracts Content**: Reads the bytes encoded as variation selectors between the start and end markers.
+3. **Decodes Base64**: Decodes the extracted bytes from Base64.
+4. **Decompresses**: Decompresses the decoded data using zlib.
+5. **Deserializes JSON**: Converts the decompressed data into a Python dictionary.
 
 ![Metadata Extraction Process](../../assets/metadata-extraction-diagram.png)
 
-## HMAC Verification
+## Digital Signature Verification
 
-EncypherAI uses HMAC (Hash-based Message Authentication Code) to ensure data integrity and detect tampering. The verification process is separate from extraction and can be performed using the `verify_text` method:
+EncypherAI uses Ed25519 digital signatures to ensure data integrity, authenticity, and detect tampering. The verification process requires a public key resolver function that can look up the public key corresponding to the `key_id` in the metadata:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
 
-# Create a metadata encoder
-encoder = MetadataEncoder()
+# Define a public key resolver function
+# In a real application, this would look up keys from a secure database
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # Example: Return the public key for the given key_id
+    # This is just a placeholder - implement your actual key lookup logic
+    return public_keys_store.get(key_id)
 
 # Text with embedded metadata
 encoded_text = "This text contains embedded metadata that is invisible to human readers."
 
 # Verify the text
-is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_text)
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=encoded_text,
+    public_key_resolver=resolve_public_key
+)
 print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 
 # Use metadata only if verification succeeds
 if is_valid:
-    print("Extracted metadata:", extracted_metadata)
-    print("Clean text:", clean_text)
+    print("Verified metadata:", verified_metadata)
 else:
     print("Verification failed, metadata may be compromised")
 ```
 
-## Using Custom Secret Keys
+## Key Management
 
-If the metadata was embedded using a custom secret key, you must use the same key for verification:
+For digital signature verification to work, you need to manage your key pairs properly:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional, Dict
 
-# Create a metadata encoder with the same secret key used for embedding
-secret_key = "your-secret-key"
-encoder = MetadataEncoder(secret_key=secret_key)
+# Generate a key pair
+private_key, public_key = generate_key_pair()
+key_id = "example-key-1"
 
-# Verify the text
-is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_text)
-print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+# Store public keys (in a real application, use a secure database)
+public_keys_store: Dict[str, PublicKeyTypes] = {key_id: public_key}
+
+# Create a resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    return public_keys_store.get(key_id)
+
+# When embedding metadata, include the key_id
+metadata = {
+    "model": "gpt-4",
+    "timestamp": int(time.time()),
+    "key_id": key_id,  # Required for verification
+    "custom_field": "example value"
+}
+
+# Embed metadata with digital signature
+encoded_text = UnicodeMetadata.embed_metadata(
+    text="Original text",
+    metadata=metadata,
+    private_key=private_key
+)
+
+# Later, verify using the resolver
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=encoded_text,
+    public_key_resolver=resolve_public_key
+)
 ```
 
-If you use a different secret key, the verification will fail even if the metadata is intact.
+The `key_id` in the metadata is used to look up the corresponding public key through the resolver function. If the key cannot be found or is incorrect, verification will fail.
 
-## Combined Extraction and Verification
+## Extraction Without Verification
 
-For convenience, you can extract and verify metadata in a single operation using the `verify_text` method:
+In some cases, you might want to extract metadata without verifying the signature:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")
-
-# Extract and verify metadata
+# Extract metadata without verification
 try:
-    is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_text)
-    if is_valid:
-        print("✅ Verified metadata:", extracted_metadata)
+    metadata = UnicodeMetadata.extract_metadata(encoded_text)
+    if metadata:
+        print("Extracted metadata (unverified):", metadata)
+        print("⚠️ Note: This metadata has not been verified!")
     else:
-        print("❌ Metadata found but verification failed")
+        print("No metadata found")
 except Exception as e:
     print("No metadata found or extraction failed:", str(e))
 ```
 
-This method returns both the extracted metadata and a boolean indicating whether the verification succeeded.
+This approach is useful for debugging or when you don't need to verify the authenticity of the metadata.
 
 ## Understanding Verification Failures
 
 Verification can fail for several reasons:
 
 1. **Content Modification**: The text has been modified after metadata was embedded
-2. **Incorrect Secret Key**: The wrong secret key is being used for verification
-3. **Metadata Corruption**: The embedded metadata has been corrupted
-4. **Data Block Alteration**: The prepended block containing metadata/HMAC (marked by Zero-Width Characters) has been altered or removed.
+2. **Missing or Invalid Public Key**: The public key corresponding to the key_id cannot be found
+3. **Invalid Signature**: The signature doesn't match the content (tampering detected)
+4. **Missing key_id**: The metadata doesn't contain a key_id field
+5. **Resolver Function Error**: The public key resolver function fails or returns an invalid key
+6. **Data Block Alteration**: The block containing metadata and signature has been altered or removed
 
 ### Example: Detecting Modified Text
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
 
-# Create a metadata encoder
-encoder = MetadataEncoder()
+# Generate a key pair
+private_key, public_key = generate_key_pair()
+key_id = "tamper-detection-key"
 
-# Original text with embedded metadata
-original_encoded_text = "This text contains embedded metadata."
+# Store public key
+public_keys_store = {key_id: public_key}
+
+# Create a resolver function
+def resolve_public_key(key_id):
+    return public_keys_store.get(key_id)
+
+# Create metadata with key_id
+metadata = {
+    "model": "gpt-4",
+    "timestamp": int(time.time()),
+    "key_id": key_id
+}
+
+# Embed metadata with digital signature
+original_encoded_text = UnicodeMetadata.embed_metadata(
+    text="This text contains embedded metadata.",
+    metadata=metadata,
+    private_key=private_key
+)
 
 # Simulate tampering by modifying the text
 tampered_text = original_encoded_text.replace("contains", "has")
 
 # Try to verify the tampered text
-is_valid, extracted_metadata, clean_text = encoder.verify_text(tampered_text)
+is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=tampered_text,
+    public_key_resolver=resolve_public_key
+)
 print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
 
@@ -139,22 +194,40 @@ print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 When working with text that may or may not contain metadata, it's essential to handle potential extraction errors:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional, Dict
 
-# Create a metadata encoder
-encoder = MetadataEncoder()
+# Define a public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # Your key lookup logic here
+    return public_keys_store.get(key_id)
 
 # Function to safely extract metadata
 def safe_extract_metadata(text):
     try:
-        # Try to extract and verify metadata
-        is_valid, extracted_metadata, clean_text = encoder.verify_text(text)
-        
+        # First, try to extract metadata without verification
+        metadata = UnicodeMetadata.extract_metadata(text)
+
+        if not metadata:
+            return {
+                "has_metadata": False,
+                "metadata": None,
+                "verified": False,
+                "error": "No metadata found"
+            }
+
+        # Then try to verify the metadata
+        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+            text=text,
+            public_key_resolver=resolve_public_key
+        )
+
         return {
             "has_metadata": True,
-            "metadata": extracted_metadata,
+            "metadata": verified_metadata if is_valid else metadata,
             "verified": is_valid,
-            "clean_text": clean_text
+            "verification_attempted": True
         }
     except Exception as e:
         # No metadata found or extraction failed
@@ -162,7 +235,7 @@ def safe_extract_metadata(text):
             "has_metadata": False,
             "metadata": None,
             "verified": False,
-            "clean_text": text,
+            "verification_attempted": False,
             "error": str(e)
         }
 
@@ -182,11 +255,15 @@ else:
 For processing multiple texts, you can use a batch approach:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
 import pandas as pd
 
-# Create a metadata encoder
-encoder = MetadataEncoder()
+# Define a public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # Your key lookup logic here
+    return public_keys_store.get(key_id)
 
 # Sample texts
 texts = [
@@ -206,18 +283,27 @@ for i, text in enumerate(texts):
         "metadata": None,
         "error": None
     }
-    
+
     try:
-        # Try to extract and verify metadata
-        is_valid, extracted_metadata, clean_text = encoder.verify_text(text)
-        
-        result["has_metadata"] = True
-        result["verified"] = is_valid
-        result["metadata"] = extracted_metadata
+        # First, try to extract metadata without verification
+        metadata = UnicodeMetadata.extract_metadata(text)
+
+        if not metadata:
+            result["error"] = "No metadata found"
+        else:
+            # Then try to verify the metadata
+            is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+                text=text,
+                public_key_resolver=resolve_public_key
+            )
+
+            result["has_metadata"] = True
+            result["verified"] = is_valid
+            result["metadata"] = verified_metadata if is_valid else metadata
     except Exception as e:
         # No metadata found or extraction failed
         result["error"] = str(e)
-    
+
     results.append(result)
 
 # Convert to DataFrame for easier analysis
@@ -230,9 +316,11 @@ print(df[["text_id", "has_metadata", "verified"]].to_string(index=False))
 In some scenarios, you might want to verify text using a key that's stored externally:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
 import os
-from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from typing import Optional
 
 # Function to get or create a secret key
 def get_secret_key(key_file="secret_key.key"):
@@ -242,7 +330,7 @@ def get_secret_key(key_file="secret_key.key"):
             return f.read()
     else:
         # Generate new key
-        key = Fernet.generate_key()
+        key = generate_key_pair()
         with open(key_file, "wb") as f:
             f.write(key)
         return key
@@ -251,24 +339,27 @@ def get_secret_key(key_file="secret_key.key"):
 secret_key = get_secret_key()
 
 # Create a metadata encoder with the secret key
-encoder = MetadataEncoder(secret_key=secret_key)
+encoder = UnicodeMetadata(private_key=secret_key)
 
 # Verify text
-is_valid, extracted_metadata, clean_text = encoder.verify_text(encoded_text)
+is_valid, verified_metadata = encoder.verify_metadata(
+    text=encoded_text,
+    public_key_resolver=resolve_public_key
+)
 print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 ```
 
 ## Implementation Details
 
-### HMAC Verification Process
+### Digital Signature Verification Process
 
 The verification process involves:
 
-1. Extracting the embedded metadata and HMAC
-2. Recalculating the HMAC using the extracted metadata and the secret key
-3. Comparing the recalculated HMAC with the embedded HMAC
+1. Extracting the embedded metadata and signature
+2. Looking up the public key corresponding to the key_id in the metadata
+3. Verifying the signature using the public key
 
-If they match, the verification succeeds, indicating the content hasn't been tampered with.
+If the signature is valid, the verification succeeds, indicating the content hasn't been tampered with.
 
 ### Metadata Format
 
@@ -277,31 +368,31 @@ The embedded metadata follows this structure:
 1. **Header**: Identifies the metadata format and version
 2. **Metadata Length**: The size of the metadata in bytes
 3. **Metadata Content**: The JSON-serialized metadata
-4. **HMAC**: The cryptographic signature for verification
+4. **Signature**: The digital signature for verification
 
 ### Handling Unicode and Encoding Issues
 
 When working with text from various sources, you might encounter encoding issues:
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
-
-# Create a metadata encoder
-encoder = MetadataEncoder()
+from encypher.core.unicode_metadata import UnicodeMetadata
 
 # Function to safely handle text with potential encoding issues
 def safe_process_text(text):
     # Ensure text is properly encoded as UTF-8
     if isinstance(text, bytes):
         text = text.decode('utf-8', errors='replace')
-    
+
     # Replace any problematic characters
     text = ''.join(c if ord(c) < 65536 else ' ' for c in text)
-    
+
     # Try to extract and verify metadata
     try:
-        is_valid, extracted_metadata, clean_text = encoder.verify_text(text)
-        return extracted_metadata, is_valid
+        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+            text=text,
+            public_key_resolver=resolve_public_key
+        )
+        return verified_metadata, is_valid
     except Exception as e:
         return None, False
 
@@ -311,10 +402,10 @@ metadata, is_valid = safe_process_text(encoded_text)
 
 ## Best Practices
 
-1. **Always verify before trusting**: Use `verify_text` before relying on extracted metadata
+1. **Always verify before trusting**: Use `verify_metadata` before relying on extracted metadata
 2. **Handle extraction errors**: Implement proper error handling for cases where metadata is missing or corrupted
-3. **Use consistent secret keys**: Store and reuse secret keys for verification across systems
-4. **Combine extraction and verification**: Use `verify_text` for a streamlined approach
+3. **Use consistent key management**: Store and reuse secret keys for verification across systems
+4. **Combine extraction and verification**: Use `verify_metadata` for a streamlined approach
 5. **Consider key management**: Implement secure storage for secret keys
 6. **Process in batches**: Use batch processing for efficiency when handling multiple texts
 
@@ -323,24 +414,30 @@ metadata, is_valid = safe_process_text(encoded_text)
 ### Content Authentication
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
 
 def authenticate_content(text, expected_source):
     """Authenticate content based on embedded metadata."""
-    encoder = MetadataEncoder()
-    
+    # Define a public key resolver function
+    def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+        # Your key lookup logic here
+        return public_keys_store.get(key_id)
+
     try:
         # Extract and verify metadata
-        is_valid, extracted_metadata, clean_text = encoder.verify_text(text)
-        
+        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+            text=text,
+            public_key_resolver=resolve_public_key
+        )
+
         if not is_valid:
             return False, "Verification failed, content may be tampered"
-        
+
         # Check source in metadata
-        if extracted_metadata.get("organization") != expected_source:
-            return False, f"Content source mismatch: expected {expected_source}, got {extracted_metadata.get('organization')}"
-        
-        return True, extracted_metadata
+        if verified_metadata.get("organization") != expected_source:
+            return False, f"Content source mismatch: expected {expected_source}, got {verified_metadata.get('organization')}"
+
+        return True, verified_metadata
     except Exception as e:
         return False, f"Authentication failed: {str(e)}"
 
@@ -355,35 +452,41 @@ else:
 ### Timestamp Verification
 
 ```python
-from encypher.core.metadata_encoder import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
 from datetime import datetime, timezone
 import dateutil.parser
 
 def verify_content_age(text, max_age_hours=24):
     """Verify content is not older than specified age."""
-    encoder = MetadataEncoder()
-    
+    # Define a public key resolver function
+    def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+        # Your key lookup logic here
+        return public_keys_store.get(key_id)
+
     try:
         # Extract and verify metadata
-        is_valid, extracted_metadata, clean_text = encoder.verify_text(text)
-        
+        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+            text=text,
+            public_key_resolver=resolve_public_key
+        )
+
         if not is_valid:
             return False, "Verification failed, content may be tampered"
-        
+
         # Check timestamp in metadata
-        if "timestamp" not in extracted_metadata:
+        if "timestamp" not in verified_metadata:
             return False, "No timestamp in metadata"
-        
+
         # Parse timestamp
-        timestamp = dateutil.parser.parse(extracted_metadata["timestamp"])
-        
+        timestamp = dateutil.parser.parse(verified_metadata["timestamp"])
+
         # Calculate age
         now = datetime.now(timezone.utc)
         age_hours = (now - timestamp).total_seconds() / 3600
-        
+
         if age_hours > max_age_hours:
             return False, f"Content too old: {age_hours:.1f} hours (max {max_age_hours})"
-        
+
         return True, f"Content age: {age_hours:.1f} hours"
     except Exception as e:
         return False, f"Verification failed: {str(e)}"
@@ -398,7 +501,7 @@ else:
 
 ## Related Documentation
 
-- [MetadataEncoder API Reference](../api-reference/metadata-encoder.md)
+- [UnicodeMetadata API Reference](../api-reference/unicode-metadata.md)
 - [Metadata Encoding Guide](./metadata-encoding.md)
 - [Streaming Support Guide](./streaming.md)
 - [Jupyter Notebook Examples](../examples/jupyter.md)

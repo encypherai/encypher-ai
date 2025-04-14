@@ -10,10 +10,8 @@ This guide demonstrates how to integrate EncypherAI with Google's Gemini API to 
 
 ## Installation
 
-Install the required packages:
-
 ```bash
-pip install encypher google-generativeai
+pip install encypher-ai google-generativeai
 ```
 
 ## Basic Usage
@@ -24,16 +22,25 @@ pip install encypher google-generativeai
 import os
 import time
 from google import genai
-from encypher.core.metadata_encoder import MetadataEncoder
+from google.genai import types
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 
 # Configure Google Gemini API
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Initialize EncypherAI encoder with your secret key
-hmac_secret_key = os.environ.get("ENCYPHER_SECRET_KEY", "your-secret-key")
-encoder = MetadataEncoder(hmac_secret_key=hmac_secret_key)
-```
+# Generate key pair (replace with your actual key management)
+private_key, public_key = generate_key_pair()
+
+# Example public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # In a real application, you'd fetch the key based on the ID
+    if key_id == "gemini-key-1":
+        return public_key
+    return None
 
 ### Simple Text Generation with Metadata
 
@@ -51,17 +58,18 @@ encoded_text = UnicodeMetadata.embed_metadata(
     text=generated_text,
     model_id="gemini-1.5-flash",
     timestamp=int(time.time()),
+    key_id="gemini-key-1", # Identifier for the key
     custom_metadata={
         "prompt": prompt,
-        "version": "1.1.0"
+        "version": "2.0.0"
     },
-    hmac_secret_key=hmac_secret_key
+    private_key=private_key
 )
 
 # Later, verify and extract the metadata
 is_valid, metadata = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    hmac_secret_key=hmac_secret_key
+    public_key_resolver=resolve_public_key
 )
 
 if is_valid:
@@ -88,14 +96,15 @@ chat = model.start_chat(history=[])
 def process_gemini_response(response_text, prompt):
     return UnicodeMetadata.embed_metadata(
         text=response_text,
+        key_id="gemini-key-1",
         model_id="gemini-1.5-flash",
         timestamp=int(time.time()),
         custom_metadata={
             "prompt": prompt,
             "chat_id": chat.session_id,
-            "version": "1.1.0"
+            "version": "2.0.0"
         },
-        hmac_secret_key=hmac_secret_key
+        private_key=private_key
     )
 
 # Send messages and encode responses
@@ -117,7 +126,7 @@ print(encoded_response2)
 # Verify any response
 is_valid, metadata = UnicodeMetadata.verify_metadata(
     text=encoded_response,
-    hmac_secret_key=hmac_secret_key
+    public_key_resolver=resolve_public_key
 )
 
 if is_valid:
@@ -182,7 +191,7 @@ contents = [
 
 # Send request with function declarations
 response = model.generate_content(
-    config=config, 
+    config=config,
     contents=contents
 )
 
@@ -191,11 +200,11 @@ if hasattr(response.candidates[0].content.parts[0], 'function_call'):
     function_call = response.candidates[0].content.parts[0].function_call
     function_name = function_call.name
     function_args = function_call.args
-    
+
     # Execute the function
     if function_name == "get_weather":
         weather_data = get_weather(**function_args)
-        
+
         # Create a response with the function results
         function_response = [
             types.Content(
@@ -210,55 +219,63 @@ if hasattr(response.candidates[0].content.parts[0], 'function_call'):
                 ],
             )
         ]
-        
+
         # Get model's final response
         contents.extend(function_response)
         final_response = model.generate_content(contents=contents)
         final_text = final_response.text
-        
+
         # Embed metadata in the final response
-        encoded_text = UnicodeMetadata.embed_metadata(
-            text=final_text,
-            model_id="gemini-1.5-flash",
-            timestamp=int(time.time()),
-            custom_metadata={
-                "query": user_query,
+        metadata_to_embed = {
+            "model_id": "gemini-1.5-flash",
+            "timestamp": int(time.time()),
+            "key_id": "gemini-key-1",
+            "custom_metadata": {
+                "prompt": user_query,
                 "function_called": function_name,
                 "function_args": function_args,
                 "function_result": weather_data,
-                "version": "1.1.0"
-            },
-            hmac_secret_key=hmac_secret_key
+                "version": "2.0.0"
+            }
+        }
+
+        # Embed metadata into the final text response
+        encoded_response_text = UnicodeMetadata.embed_metadata(
+            text=final_text,
+            **metadata_to_embed,
+            private_key=private_key
         )
-        
-        print("Encoded response with function call results:")
-        print(encoded_text)
-        
-        # Verify the metadata
+        print(f"\nFinal response with embedded metadata:\n{encoded_response_text}")
+
+        # Verify the response
         is_valid, metadata = UnicodeMetadata.verify_metadata(
-            text=encoded_text,
-            hmac_secret_key=hmac_secret_key
+            text=encoded_response_text,
+            public_key_resolver=resolve_public_key
         )
-        
         if is_valid:
-            print(f"\nVerified metadata: {metadata}")
-        else:
-            print("\nWarning: Metadata verification failed!")
-else:
-    # Direct response without function call
-    encoded_text = UnicodeMetadata.embed_metadata(
-        text=response.text,
-        model_id="gemini-1.5-flash",
-        timestamp=int(time.time()),
-        custom_metadata={
-            "query": user_query,
-            "version": "1.1.0"
-        },
-        hmac_secret_key=hmac_secret_key
-    )
-    
-    print("Encoded direct response:")
-    print(encoded_text)
+            print(f"\nVerified function call response metadata: {metadata}")
+    else:
+        # Handle regular text response
+        encoded_response_text = UnicodeMetadata.embed_metadata(
+            text=response.text,
+            key_id="gemini-key-1",
+            model_id="gemini-1.5-flash",
+            timestamp=int(time.time()),
+            custom_metadata={
+                "prompt": user_query,
+                "version": "2.0.0"
+            },
+            private_key=private_key
+        )
+        print(f"\nRegular response with embedded metadata:\n{encoded_response_text}")
+
+        # Verify the response
+        is_valid, metadata = UnicodeMetadata.verify_metadata(
+            text=encoded_response_text,
+            public_key_resolver=resolve_public_key
+        )
+        if is_valid:
+            print(f"\nVerified regular response metadata: {metadata}")
 ```
 
 ## Multimodal Content
@@ -288,14 +305,15 @@ image_description = response.text
 # Embed metadata into the response
 encoded_text = UnicodeMetadata.embed_metadata(
     text=image_description,
+    key_id="gemini-key-1",
     model_id="gemini-1.5-flash",
     timestamp=int(time.time()),
     custom_metadata={
         "content_type": "image_description",
         "image_filename": "example_image.jpg",
-        "version": "1.1.0"
+        "version": "2.0.0"
     },
-    hmac_secret_key=hmac_secret_key
+    private_key=private_key
 )
 
 print("Encoded image description:")
@@ -304,7 +322,7 @@ print(encoded_text)
 # Verify the metadata
 is_valid, metadata = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    hmac_secret_key=hmac_secret_key
+    public_key_resolver=resolve_public_key
 )
 
 if is_valid:
@@ -318,38 +336,54 @@ else:
 For streaming responses from Gemini, use the StreamingHandler from EncypherAI:
 
 ```python
-from encypher.streaming.handlers import StreamingHandler
+from encypher.streaming import StreamingHandler
 
-# Initialize streaming handler
+# Initialize Gemini model
+model = genai.GenerativeModel('gemini-1.5-flash')
+
+# Create metadata
+metadata = {
+    "model_id": "gemini-1.5-flash",
+    "timestamp": int(time.time()),
+    "key_id": "gemini-key-1",
+    "custom_metadata": {
+        "stream_type": "gemini",
+        "version": "2.0.0"
+    }
+}
+
+# Initialize the streaming handler
 handler = StreamingHandler(
-    metadata={
-        "model_id": "gemini-1.5-flash",
-        "custom_field": "streaming example",
-        "version": "1.1.0"
-    },
-    target="whitespace",
-    hmac_secret_key=hmac_secret_key,
-    encode_first_chunk_only=True  # Only encode the first non-empty chunk
+    metadata=metadata,
+    private_key=private_key # Use the private key
 )
 
-# Generate streaming content from Gemini
-prompt = "Write a short story about a robot learning to paint"
-stream = model.generate_content(prompt, stream=True)
+# Start the streaming generation
+response = model.generate_content(
+    "Write a short story about a time traveler",
+    stream=True
+)
 
-# Process streaming chunks
+# Process the stream with the handler
 full_response = ""
-for chunk in stream:
-    if hasattr(chunk, 'text') and chunk.text:
-        processed_chunk = handler.process_chunk(chunk.text)
-        print(processed_chunk, end="", flush=True)  # Display in real-time
+for chunk in response:
+    processed_chunk = handler.process_chunk(chunk.text)
+    if processed_chunk:
+        print(processed_chunk, end="", flush=True)
         full_response += processed_chunk
 
-print("\n\nStreaming complete!")
+# Finalize the stream to process any remaining buffer
+final_chunk = handler.finalize()
+if final_chunk:
+    print(final_chunk, end="", flush=True)
+    full_response += final_chunk
+
+print("\n\nStreaming completed!")
 
 # Verify the complete response
 is_valid, metadata = UnicodeMetadata.verify_metadata(
-    text=full_response,
-    hmac_secret_key=hmac_secret_key
+    text=full_response, # Verify the assembled text
+    public_key_resolver=resolve_public_key
 )
 
 if is_valid:
@@ -389,14 +423,15 @@ safe_text = response.text
 # Embed metadata including safety information
 encoded_text = UnicodeMetadata.embed_metadata(
     text=safe_text,
+    key_id="gemini-key-1",
     model_id="gemini-1.5-flash",
     timestamp=int(time.time()),
     custom_metadata={
         "prompt": prompt,
         "safety_settings": "medium_and_above_blocked",
-        "version": "1.1.0"
+        "version": "2.0.0"
     },
-    hmac_secret_key=hmac_secret_key
+    private_key=private_key
 )
 
 print("Encoded text with safety settings:")
@@ -430,6 +465,7 @@ generated_text = response.text
 # Embed metadata including generation parameters
 encoded_text = UnicodeMetadata.embed_metadata(
     text=generated_text,
+    key_id="gemini-key-1",
     model_id="gemini-1.5-flash",
     timestamp=int(time.time()),
     custom_metadata={
@@ -438,9 +474,9 @@ encoded_text = UnicodeMetadata.embed_metadata(
         "top_p": 0.8,
         "top_k": 40,
         "max_tokens": 1024,
-        "version": "1.1.0"
+        "version": "2.0.0"
     },
-    hmac_secret_key=hmac_secret_key
+    private_key=private_key
 )
 
 print("Encoded text with generation parameters:")
@@ -457,52 +493,53 @@ import time
 from google import genai
 from google.genai import types
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 
 # Configure API key
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
-# Set HMAC secret key for verification
-hmac_secret_key = os.environ.get("ENCYPHER_SECRET_KEY", "your-secret-key")
+# Generate key pair (replace with your actual key management)
+private_key, public_key = generate_key_pair()
 
-# Configure model with generation parameters
-model = genai.GenerativeModel(
-    'gemini-1.5-flash',
-    generation_config={
-        "temperature": 0.3,
-        "top_p": 0.9,
-        "top_k": 40,
-        "max_output_tokens": 2048,
-    }
-)
+# Example public key resolver function
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    # In a real application, you'd fetch the key based on the ID
+    if key_id == "gemini-key-1":
+        return public_key
+    return None
 
 # Initialize chat session
-chat = model.start_chat(history=[])
+chat = genai.GenerativeModel('gemini-1.5-flash').start_chat(history=[])
 
 # Function to process and encode responses
 def process_gemini_response(response_text, prompt, metadata=None):
     custom_metadata = {
         "prompt": prompt,
         "chat_id": chat.session_id,
-        "version": "1.1.0"
+        "version": "2.0.0"
     }
-    
+
     # Add any additional metadata
     if metadata:
         custom_metadata.update(metadata)
-        
+
     return UnicodeMetadata.embed_metadata(
         text=response_text,
+        key_id="gemini-key-1", # Identifier for the key
         model_id="gemini-1.5-flash",
         timestamp=int(time.time()),
         custom_metadata=custom_metadata,
-        hmac_secret_key=hmac_secret_key
+        private_key=private_key
     )
 
 # Start conversation
 user_message = "I need a 5-day itinerary for visiting Tokyo, Japan"
 response = chat.send_message(user_message)
 encoded_response = process_gemini_response(
-    response.text, 
+    response.text,
     user_message,
     {"content_type": "itinerary", "location": "Tokyo, Japan"}
 )
@@ -514,7 +551,7 @@ print(encoded_response)
 follow_up = "Can you recommend some vegetarian restaurants in Tokyo?"
 response2 = chat.send_message(follow_up)
 encoded_response2 = process_gemini_response(
-    response2.text, 
+    response2.text,
     follow_up,
     {"content_type": "recommendations", "cuisine": "vegetarian"}
 )
@@ -526,9 +563,9 @@ print(encoded_response2)
 for i, text in enumerate([encoded_response, encoded_response2], 1):
     is_valid, metadata = UnicodeMetadata.verify_metadata(
         text=text,
-        hmac_secret_key=hmac_secret_key
+        public_key_resolver=resolve_public_key
     )
-    
+
     if is_valid:
         print(f"\nResponse {i} verified with metadata: {metadata}")
     else:
@@ -542,3 +579,12 @@ This guide demonstrates how to integrate Google's Gemini API with EncypherAI to 
 For more information, refer to:
 - [Google Gemini API Documentation](https://ai.google.dev/gemini-api/docs)
 - [EncypherAI Documentation](https://github.com/encypherai/encypher-ai)
+
+## Troubleshooting
+
+1. **API Key Issues**: Ensure `GEMINI_API_KEY` is set correctly.
+2. **Package Installation**: Make sure `google-generativeai` and `encypher` are installed.
+3. **Verification Failures**:
+   - Check if the text content was modified *after* embedding.
+   - Ensure the `public_key_resolver` correctly retrieves the public key corresponding to the `key_id` used during signing.
+   - Verify that the `private_key` used for signing matches the `public_key` returned by the resolver for the given `key_id`.

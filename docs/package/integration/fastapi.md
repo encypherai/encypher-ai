@@ -11,7 +11,7 @@ Before you begin, make sure you have:
 3. (Optional) An LLM provider API key if you're integrating with an LLM
 
 ```bash
-uv pip install encypher-ai fastapi uvicorn
+uv pip install encypher-ai fastapi uvicorn cryptography
 ```
 
 ## Basic Integration
@@ -26,16 +26,15 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, Optional
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes, PrivateKeyTypes
+import time
 import json
 
 # Initialize FastAPI app
-app = FastAPI(
-    title="EncypherAI API",
-    description="API for embedding and extracting metadata in text",
-    version="1.1.0"
-)
+app = FastAPI()
 
 # Add CORS middleware
 app.add_middleware(
@@ -46,14 +45,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
+# --- Key Management (Replace with your actual key management) ---
+private_key, public_key = generate_key_pair()
+
+# Store public keys (in a real app, this would be a database or secure store)
+public_keys_store: Dict[str, PublicKeyTypes] = {
+    "fastapi-key-1": public_key
+}
+
+def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    """Retrieves the public key based on its ID."""
+    return public_keys_store.get(key_id)
 
 # Define request and response models
 class EncodeRequest(BaseModel):
     text: str
     metadata: Dict[str, Any]
     target: Optional[str] = "whitespace"
+    key_id: str = "fastapi-key-1" # Default key ID
 
 class VerifyRequest(BaseModel):
     text: str
@@ -70,16 +79,16 @@ async def encode_metadata(request: EncodeRequest):
     """Embed metadata into text"""
     try:
         # Add timestamp if not provided
-        if "timestamp" not in request.metadata:
-            request.metadata["timestamp"] = datetime.now(timezone.utc).isoformat()
-        
+        request.metadata["timestamp"] = request.metadata.get("timestamp", time.time())
+        request.metadata["key_id"] = request.metadata.get("key_id", request.key_id) # Ensure key_id is in metadata
+
         # Embed metadata
-        encoded_text = encoder.encode_metadata(
+        encoded_text = UnicodeMetadata.embed_metadata(
             text=request.text,
             metadata=request.metadata,
-            target=request.target
+            private_key=private_key # Use the loaded private key
         )
-        
+
         return {
             "text": encoded_text,
             "metadata": request.metadata
@@ -87,27 +96,7 @@ async def encode_metadata(request: EncodeRequest):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@app.post("/decode", response_model=MetadataResponse)
-async def decode_metadata(request: VerifyRequest):
-    """Extract metadata from text"""
-    result = {
-        "has_metadata": False,
-        "metadata": None,
-        "verified": None,
-        "error": None
-    }
-    
-    try:
-        # Extract metadata
-        metadata = encoder.decode_metadata(request.text)
-        result["has_metadata"] = True
-        result["metadata"] = metadata
-    except Exception as e:
-        result["error"] = str(e)
-    
-    return result
-
-@app.post("/verify", response_model=MetadataResponse)
+@app.post("/verify", response_model=MetadataResponse) # Renamed from extract-verified
 async def verify_text(request: VerifyRequest):
     """Extract and verify metadata from text"""
     result = {
@@ -116,41 +105,23 @@ async def verify_text(request: VerifyRequest):
         "verified": None,
         "error": None
     }
-    
-    try:
-        # Extract metadata
-        metadata = encoder.decode_metadata(request.text)
-        result["has_metadata"] = True
-        result["metadata"] = metadata
-        
-        # Verify the text
-        from encypher.core.unicode_metadata import UnicodeMetadata
-        result["verified"], verified_metadata = UnicodeMetadata.verify_metadata(request.text, hmac_secret_key="your-secret-key")  # Pass the same secret_key used during encoding
-    except Exception as e:
-        result["error"] = str(e)
-    
-    return result
 
-@app.post("/extract-verified", response_model=MetadataResponse)
-async def extract_verified_metadata(request: VerifyRequest):
-    """Extract and verify metadata in a single operation"""
-    result = {
-        "has_metadata": False,
-        "metadata": None,
-        "verified": None,
-        "error": None
-    }
-    
     try:
-        # Extract and verify metadata
-        from encypher.core.unicode_metadata import UnicodeMetadata
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(request.text, hmac_secret_key="your-secret-key")
-        result["has_metadata"] = True
-        result["metadata"] = verified_metadata
-        result["verified"] = is_valid
+        # Extract and verify metadata using the resolver
+        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+            request.text,
+            public_key_resolver=resolve_public_key
+        )
+        # Check if metadata was found (even if invalid)
+        if verified_metadata is not None:
+            result["has_metadata"] = True
+            result["metadata"] = verified_metadata
+            result["verified"] = is_valid
+        else:
+             result["has_metadata"] = False # No metadata marker found
     except Exception as e:
         result["error"] = str(e)
-    
+
     return result
 
 # Run the app
@@ -166,17 +137,25 @@ if __name__ == "__main__":
 To handle streaming content with FastAPI:
 
 ```python
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, Optional, AsyncGenerator
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair # Key management
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+import time
 import json
 import asyncio
 import openai  # Or any other LLM provider
 
 app = FastAPI()
+
+# --- Key Management (Same as above or separate for streaming) ---
+stream_private_key, stream_public_key = generate_key_pair()
+public_keys_store["fastapi-stream-key"] = stream_public_key # Add to store
+# ---------------------------------------------------------------
 
 # Define request model
 class StreamRequest(BaseModel):
@@ -187,19 +166,24 @@ class StreamRequest(BaseModel):
 
 @app.post("/stream")
 async def stream_response(request: StreamRequest):
-    # Create metadata if not provided
-    metadata = request.metadata or {}
-    if "timestamp" not in metadata:
-        metadata["timestamp"] = datetime.now(timezone.utc).isoformat()
-    if "model" not in metadata:
-        metadata["model"] = request.model
-    
-    # Initialize the streaming handler
-    handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-    
     # Initialize OpenAI client
     client = openai.OpenAI(api_key="your-api-key")
-    
+
+    # Create metadata if not provided
+    metadata = request.metadata or {}
+    metadata["timestamp"] = metadata.get("timestamp", time.time())
+    metadata["model"] = metadata.get("model", request.model)
+    metadata["key_id"] = metadata.get("key_id", "fastapi-stream-key") # Use a stream-specific key ID
+
+    # Initialize the streaming handler
+    handler = StreamingHandler(
+        metadata=metadata,
+        private_key=stream_private_key # Use the stream private key
+    )
+
+    # Initialize OpenAI client
+    client = openai.OpenAI(api_key="your-api-key")
+
     async def generate():
         try:
             # Create a streaming completion
@@ -211,27 +195,27 @@ async def stream_response(request: StreamRequest):
                 ],
                 stream=True
             )
-            
+
             # Process each chunk
             for chunk in completion:
                 if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
-                    
+
                     # Process the chunk
                     processed_chunk = handler.process_chunk(chunk=content)
-                    
+
                     # Yield the processed chunk
                     yield processed_chunk
-            
+
             # Finalize the stream
             final_chunk = handler.finalize()
             if final_chunk:
                 yield final_chunk
-                
+
         except Exception as e:
             # Handle errors
             yield f"Error: {str(e)}"
-    
+
     # Return a streaming response
     return StreamingResponse(generate(), media_type="text/plain")
 ```
@@ -245,12 +229,19 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
 from typing import Dict, Any, List, Optional
 from encypher.streaming import StreamingHandler
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair # Key management
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+import time
 import json
 import openai  # Or any other LLM provider
 
 app = FastAPI()
+
+# --- Key Management (Same as above or separate for streaming) ---
+stream_private_key, stream_public_key = generate_key_pair()
+public_keys_store["fastapi-stream-key"] = stream_public_key # Add to store
+# ---------------------------------------------------------------
 
 # HTML for a simple WebSocket client
 html = """
@@ -260,7 +251,7 @@ html = """
         <title>EncypherAI WebSocket Demo</title>
         <script>
             var ws = null;
-            
+
             function connect() {
                 ws = new WebSocket("ws://localhost:8000/ws");
                 ws.onmessage = function(event) {
@@ -276,14 +267,14 @@ html = """
                     document.getElementById('status').textContent = 'Connected';
                 };
             }
-            
+
             function sendMessage() {
                 var input = document.getElementById('messageText');
                 var message = input.value;
                 ws.send(message);
                 input.value = '';
             }
-            
+
             function verifyMetadata() {
                 var text = document.getElementById('messages').innerText;
                 fetch('/verify', {
@@ -306,7 +297,7 @@ html = """
                     }
                 });
             }
-            
+
             window.onload = function() {
                 connect();
             };
@@ -332,29 +323,32 @@ async def get():
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
-    
-    # Create a metadata encoder
-    encoder = MetadataEncoder()
-    
+
+    # Create metadata
+    metadata = {
+        "model": "gpt-4",
+        "organization": "YourOrganization",
+        "timestamp": time.time(),
+        "prompt": ""
+    }
+
+    # Initialize streaming handler
+    handler = StreamingHandler(
+        metadata=metadata,
+        private_key=stream_private_key # Use the stream private key
+    )
+
     try:
         while True:
             # Receive message from client
             prompt = await websocket.receive_text()
-            
-            # Create metadata
-            metadata = {
-                "model": "gpt-4",
-                "organization": "YourOrganization",
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "prompt": prompt
-            }
-            
-            # Initialize the streaming handler
-            handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-            
+
+            # Update metadata with the prompt
+            metadata["prompt"] = prompt
+
             # Initialize OpenAI client
             client = openai.OpenAI(api_key="your-api-key")
-            
+
             # Create a streaming completion
             completion = client.chat.completions.create(
                 model="gpt-4",
@@ -364,23 +358,23 @@ async def websocket_endpoint(websocket: WebSocket):
                 ],
                 stream=True
             )
-            
+
             # Process and send each chunk
             for chunk in completion:
                 if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
                     content = chunk.choices[0].delta.content
-                    
+
                     # Process the chunk
                     processed_chunk = handler.process_chunk(chunk=content)
-                    
+
                     # Send the processed chunk
                     await websocket.send_text(processed_chunk)
-            
+
             # Finalize the stream
             final_chunk = handler.finalize()
             if final_chunk:
                 await websocket.send_text(final_chunk)
-                
+
     except WebSocketDisconnect:
         print("Client disconnected")
 ```
@@ -391,97 +385,79 @@ You can create a middleware to automatically embed metadata in all responses:
 
 ```python
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from typing import Dict, Any, Optional
-from encypher.core import MetadataEncoder
-from datetime import datetime, timezone
-import json
+from fastapi.responses import JSONResponse, Response
+from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_key_pair # Assuming key management is accessible
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
+import time
 
+# Initialize FastAPI app
 app = FastAPI()
 
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+# --- Key Loading/Management ---
+# Load your main private key (e.g., from a file or env var)
+# Example: Load from PEM file
+try:
+    with open("private_key.pem", "rb") as key_file:
+        private_key = serialization.load_pem_private_key(
+            key_file.read(),
+            password=None # Add password if key is encrypted
+        )
+except FileNotFoundError:
+    print("Warning: private_key.pem not found. Using generated key for demo.")
+    private_key, _ = generate_key_pair() # Fallback for demo
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")
+# Load public keys for resolver (e.g., from DB or config file)
+# public_keys_store = load_public_keys_from_db(DB_URL)
+# For demo, we used an in-memory dict initialized earlier
+# ----------------------------
 
-# Middleware to add metadata to responses
-@app.middleware("http")
-async def add_metadata_middleware(request: Request, call_next):
-    # Process the request normally
-    response = await call_next(request)
-    
-    # Check if this is a JSON response
-    if response.headers.get("content-type") == "application/json":
-        # Get the response body
-        body = b""
-        async for chunk in response.body_iterator:
-            body += chunk
-        
-        # Parse the JSON
-        data = json.loads(body)
-        
-        # Check if there's a "text" field to embed metadata in
-        if isinstance(data, dict) and "text" in data and isinstance(data["text"], str):
-            # Create metadata
-            metadata = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
-                "endpoint": request.url.path,
-                "method": request.method,
-                "user_agent": request.headers.get("user-agent", "unknown")
-            }
-            
-            # Add request-specific metadata
-            if hasattr(request.state, "metadata"):
-                metadata.update(request.state.metadata)
-            
-            # Embed metadata
-            data["text"] = encoder.encode_metadata(data["text"], metadata)
-            
-            # Store the metadata
-            data["metadata"] = metadata
-            
-            # Return the modified response
-            return JSONResponse(
-                content=data,
-                status_code=response.status_code,
-                headers=dict(response.headers)
-            )
-    
-    return response
+class MetadataMiddleware(BaseHTTPMiddleware):
+    async def dispatch(
+        self, request: Request, call_next: RequestResponseEndpoint
+    ) -> Response:
+        # Process the request normally
+        response = await call_next(request)
 
-# Endpoint to set request metadata
-@app.middleware("http")
-async def set_request_metadata(request: Request, call_next):
-    # Extract metadata from request headers
-    if "x-metadata" in request.headers:
-        try:
-            metadata = json.loads(request.headers["x-metadata"])
-            request.state.metadata = metadata
-        except:
-            pass
-    
-    return await call_next(request)
+        # Check if this is a JSON response
+        if response.headers.get("content-type") == "application/json":
+            # Get the response body
+            body = await response.body()
+            content = json.loads(body)
 
-# Sample endpoint
-@app.post("/generate")
-async def generate(request: Request):
-    # Get request body
-    body = await request.json()
-    prompt = body.get("prompt", "")
-    
-    # Generate a response (simulated)
-    text = f"This is a response to: {prompt}"
-    
-    # Return the response
-    return {"text": text}
+            # Assuming the response has a 'text' field to embed metadata into
+            if isinstance(content, dict) and 'text' in content:
+                text_to_encode = content['text']
+
+                # Prepare metadata
+                metadata_to_embed = {
+                    "processed_by": "middleware",
+                    "timestamp": time.time(),
+                    "key_id": "middleware-key-1"
+                }
+
+                # Embed metadata using UnicodeMetadata
+                encoded_text = UnicodeMetadata.embed_metadata(
+                    text=text_to_encode,
+                    metadata=metadata_to_embed,
+                    private_key=private_key
+                )
+
+                # Update the response content
+                content['text'] = encoded_text
+
+                # Return the modified response
+                return JSONResponse(
+                    content=content,
+                    status_code=response.status_code,
+                    headers=dict(response.headers)
+                )
+
+        return response
+
+# Add middleware to the app
+app.add_middleware(MetadataMiddleware)
 ```
 
 ## Integration with LLM Providers
@@ -491,22 +467,25 @@ async def generate(request: Request):
 Combining FastAPI, EncypherAI, and OpenAI:
 
 ```python
-from fastapi import FastAPI, HTTPException, Depends, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Dict, Any, List, Optional
-from encypher.core import MetadataEncoder
+from typing import Dict, Any, Optional, AsyncGenerator
+from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
-import json
+from encypher.core.keys import generate_key_pair # Key management
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+import time
 import openai
 
 app = FastAPI()
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")
+# --- Key Management (Load appropriate keys) ---
+private_key = get_private_key_for_user("your-user-id") # Example function
+key_id = f"user-your-user-id-key"
+# ----------------------------------------------
 
-# Define request and response models
+# Define request model
 class GenerateRequest(BaseModel):
     prompt: str
     model: str = "gpt-4"
@@ -514,35 +493,30 @@ class GenerateRequest(BaseModel):
     stream: bool = False
     additional_metadata: Optional[Dict[str, Any]] = None
 
-class GenerateResponse(BaseModel):
-    text: str
-    metadata: Dict[str, Any]
-
-# OpenAI completion endpoint
-@app.post("/generate", response_model=GenerateResponse)
+@app.post("/generate")
 async def generate(request: GenerateRequest):
     # Initialize OpenAI client
     client = openai.OpenAI(api_key="your-api-key")
-    
+
     # Create metadata
     metadata = {
         "model": request.model,
-        "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "prompt": request.prompt
+        "timestamp": time.time(),
+        "key_id": key_id,
+        "user_id": "your-user-id"
     }
-    
+
     # Add additional metadata if provided
     if request.additional_metadata:
         metadata.update(request.additional_metadata)
-    
+
     # Handle streaming requests
     if request.stream:
         return StreamingResponse(
-            generate_stream(client, request, metadata),
+            generate_stream(client, request, metadata, private_key),
             media_type="text/plain"
         )
-    
+
     # Create a completion
     response = client.chat.completions.create(
         model=request.model,
@@ -551,10 +525,10 @@ async def generate(request: GenerateRequest):
             {"role": "user", "content": request.prompt}
         ]
     )
-    
+
     # Get the response text
     text = response.choices[0].message.content
-    
+
     # Update metadata with usage information
     if hasattr(response, "usage"):
         metadata.update({
@@ -562,20 +536,27 @@ async def generate(request: GenerateRequest):
             "completion_tokens": response.usage.completion_tokens,
             "total_tokens": response.usage.total_tokens
         })
-    
+
     # Embed metadata
-    encoded_text = encoder.encode_metadata(text, metadata)
-    
+    encoded_text = UnicodeMetadata.embed_metadata(
+        text=text,
+        metadata=metadata,
+        private_key=private_key
+    )
+
     # Return the response
     return {
         "text": encoded_text,
         "metadata": metadata
     }
 
-async def generate_stream(client, request, metadata):
+async def generate_stream(client, request: GenerateRequest, metadata: Dict[str, Any], private_key: PrivateKeyTypes) -> AsyncGenerator[str, None]:
     # Initialize the streaming handler
-    handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-    
+    handler = StreamingHandler(
+        metadata=metadata,
+        private_key=private_key
+    )
+
     # Create a streaming completion
     completion = client.chat.completions.create(
         model=request.model,
@@ -585,18 +566,18 @@ async def generate_stream(client, request, metadata):
         ],
         stream=True
     )
-    
+
     # Process each chunk
     for chunk in completion:
         if hasattr(chunk.choices[0].delta, 'content') and chunk.choices[0].delta.content:
             content = chunk.choices[0].delta.content
-            
+
             # Process the chunk
             processed_chunk = handler.process_chunk(chunk=content)
-            
+
             # Yield the processed chunk
             yield processed_chunk
-    
+
     # Finalize the stream
     final_chunk = handler.finalize()
     if final_chunk:
@@ -611,16 +592,20 @@ Combining FastAPI, EncypherAI, and Anthropic:
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
-from encypher.core import MetadataEncoder
+from typing import Dict, Any, Optional, AsyncGenerator
+from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.streaming import StreamingHandler
-from datetime import datetime, timezone
+from encypher.core.keys import generate_key_pair # Key management
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+import time
 import anthropic
 
 app = FastAPI()
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key="your-secret-key")
+# --- Key Management (Load appropriate keys) ---
+private_key = get_private_key_for_user("your-user-id") # Example function
+key_id = f"user-your-user-id-key"
+# ----------------------------------------------
 
 # Define request model
 class GenerateRequest(BaseModel):
@@ -633,26 +618,26 @@ class GenerateRequest(BaseModel):
 async def generate(request: GenerateRequest):
     # Initialize Anthropic client
     client = anthropic.Anthropic(api_key="your-api-key")
-    
+
     # Create metadata
     metadata = {
         "model": request.model,
-        "organization": "YourOrganization",
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "prompt": request.prompt
+        "timestamp": time.time(),
+        "key_id": key_id,
+        "user_id": "your-user-id"
     }
-    
+
     # Add additional metadata if provided
     if request.additional_metadata:
         metadata.update(request.additional_metadata)
-    
+
     # Handle streaming requests
     if request.stream:
         return StreamingResponse(
-            generate_stream(client, request, metadata),
+            generate_stream(client, request, metadata, private_key),
             media_type="text/plain"
         )
-    
+
     # Create a message
     response = client.messages.create(
         model=request.model,
@@ -661,30 +646,37 @@ async def generate(request: GenerateRequest):
             {"role": "user", "content": request.prompt}
         ]
     )
-    
+
     # Get the response text
     text = response.content[0].text
-    
+
     # Update metadata with usage information
     if hasattr(response, "usage"):
         metadata.update({
             "input_tokens": response.usage.input_tokens,
             "output_tokens": response.usage.output_tokens
         })
-    
+
     # Embed metadata
-    encoded_text = encoder.encode_metadata(text, metadata)
-    
+    encoded_text = UnicodeMetadata.embed_metadata(
+        text=text,
+        metadata=metadata,
+        private_key=private_key
+    )
+
     # Return the response
     return {
         "text": encoded_text,
         "metadata": metadata
     }
 
-async def generate_stream(client, request, metadata):
+async def generate_stream(client, request: GenerateRequest, metadata: Dict[str, Any], private_key: PrivateKeyTypes) -> AsyncGenerator[str, None]:
     # Initialize the streaming handler
-    handler = StreamingHandler(metadata=metadata, secret_key="your-secret-key")  # Optional: secret_key is only needed if you want HMAC verification
-    
+    handler = StreamingHandler(
+        metadata=metadata,
+        private_key=private_key
+    )
+
     # Create a streaming message
     with client.messages.stream(
         model=request.model,
@@ -697,10 +689,10 @@ async def generate_stream(client, request, metadata):
         for text_delta in stream.text_deltas:
             # Process the chunk
             processed_chunk = handler.process_chunk(chunk=text_delta)
-            
+
             # Yield the processed chunk
             yield processed_chunk
-    
+
     # Finalize the stream
     final_chunk = handler.finalize()
     if final_chunk:
@@ -785,34 +777,34 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self.requests_per_minute = requests_per_minute
         self.window_size = window_size
         self.request_counts: Dict[str, Dict[int, int]] = {}
-    
+
     async def dispatch(self, request: Request, call_next):
         # Get client IP
         client_ip = request.client.host
-        
+
         # Get current time window
         current_window = int(time.time() / self.window_size)
-        
+
         # Initialize or update request count
         if client_ip not in self.request_counts:
             self.request_counts[client_ip] = {}
-        
+
         # Clean up old windows
         self.request_counts[client_ip] = {
             window: count for window, count in self.request_counts[client_ip].items()
             if window >= current_window - 1
         }
-        
+
         # Get current count
         current_count = self.request_counts[client_ip].get(current_window, 0)
-        
+
         # Check if rate limit exceeded
         if current_count >= self.requests_per_minute:
             raise HTTPException(status_code=429, detail="Rate limit exceeded")
-        
+
         # Update count
         self.request_counts[client_ip][current_window] = current_count + 1
-        
+
         # Process the request
         return await call_next(request)
 
@@ -853,6 +845,7 @@ uvicorn>=0.22.0
 encypher-ai>=1.0.0
 python-multipart>=0.0.6
 python-dotenv>=1.0.0
+cryptography>=4.0.0
 ```
 
 ### Environment Variables
@@ -861,7 +854,7 @@ Using environment variables for configuration:
 
 ```python
 from fastapi import FastAPI
-from encypher.core import MetadataEncoder
+from encypher.core.unicode_metadata import UnicodeMetadata
 import os
 from dotenv import load_dotenv
 
@@ -872,17 +865,30 @@ load_dotenv()
 app = FastAPI()
 
 # Get configuration from environment variables
-SECRET_KEY = os.getenv("ENCYPHER_SECRET_KEY", "default-secret-key")
-API_KEY = os.getenv("API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+DB_URL = os.getenv("DATABASE_URL")
+# --- Key Loading/Management ---
+# Load your main private key (e.g., from a file or env var)
+# Example: Load from PEM file
+try:
+    with open("private_key.pem", "rb") as key_file:
+        private_key = serialization.load_pem_private_key(
+            key_file.read(),
+            password=None # Add password if key is encrypted
+        )
+except FileNotFoundError:
+    print("Warning: private_key.pem not found. Using generated key for demo.")
+    private_key, _ = generate_key_pair() # Fallback for demo
 
-# Create a metadata encoder
-encoder = MetadataEncoder(secret_key=SECRET_KEY)
+# Load public keys for resolver (e.g., from DB or config file)
+# public_keys_store = load_public_keys_from_db(DB_URL)
+# For demo, we used an in-memory dict initialized earlier
+# ----------------------------
 ```
 
 ## Best Practices
 
-1. **Secure Key Management**: Store your EncypherAI secret key and API keys securely using environment variables or a secure key management system.
+1. **Secure Key Management**: Store your EncypherAI private key securely using environment variables or a secure key management system.
 
 2. **Input Validation**: Use Pydantic models to validate input data and provide clear error messages.
 
@@ -902,13 +908,18 @@ encoder = MetadataEncoder(secret_key=SECRET_KEY)
 
 ### Common Issues
 
-1. **CORS Errors**: If you encounter CORS errors, ensure that your CORS middleware is properly configured.
+1. **CORS Errors**: Ensure `allow_origins` in `CORSMiddleware` is correctly configured for your frontend URL in production.
 
-2. **Authentication Failures**: Check that your API key validation is working correctly.
+2. **Key Management**: Securely store private keys. Never commit them to version control. Implement a robust `public_key_resolver` that fetches keys from a secure store (like a database or vault) based on `key_id`.
 
-3. **Metadata Extraction Failures**: Ensure that the text hasn't been modified after embedding and that you're using the same secret key for embedding and extraction.
+3. **Verification Failures**:
+   - Check if the text content was modified *after* metadata embedding.
+   - Ensure the `public_key_resolver` correctly retrieves the public key corresponding to the `key_id` used during signing.
+   - Verify that the `private_key` used for signing matches the `public_key` returned by the resolver for the given `key_id`.
 
-4. **Performance Issues**: If your API is slow, consider using asynchronous operations and connection pooling.
+4. **Streaming Issues**: Ensure the `finalize()` method of `StreamingHandler` is called after the loop to process any buffered content. Check for errors in the async generator logic.
+
+5. **Dependencies**: Make sure `cryptography` is installed (`uv pip install cryptography`).
 
 ## Related Documentation
 
