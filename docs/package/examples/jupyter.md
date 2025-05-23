@@ -7,7 +7,7 @@ This page provides examples of using EncypherAI in Jupyter Notebooks, allowing y
 If you don't already have Jupyter installed, you can install it along with EncypherAI:
 
 ```bash
-pip install encypher jupyter
+uv pip install encypher-ai==2.1.0 jupyter
 ```
 
 ## Basic Example Notebook
@@ -52,7 +52,7 @@ metadata = {
     "model": "example-model",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": key_id  # Required for verification
 }
 
@@ -63,8 +63,10 @@ print(json.dumps(metadata, indent=2))
 # Embed metadata
 encoded_text = UnicodeMetadata.embed_metadata(
     text=original_text,
-    metadata=metadata,
+    custom_metadata=metadata,
     private_key=private_key,
+    signer_id=key_id,
+    timestamp=metadata.get("timestamp"),
     target="whitespace"
 )
 
@@ -83,12 +85,20 @@ print("\nExtracted metadata:")
 print(json.dumps(extracted_metadata, indent=2))
 
 # Verify the text hasn't been tampered with
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_resolver=resolve_public_key
+    public_key_provider=resolve_public_key
 )
 
 print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+if is_valid and payload_dict:
+    print(f"Signer ID: {signer_id}")
+    print("Verified metadata (payload):")
+    print(json.dumps(payload_dict, indent=2))
+elif payload_dict: # Metadata found but not valid
+    print(f"Signer ID: {signer_id}")
+    print("Tampered or invalid metadata (payload):")
+    print(json.dumps(payload_dict, indent=2))
 ```
 
 ## Interactive Visualization Notebook
@@ -128,7 +138,7 @@ metadata = {
     "model": "example-model",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": key_id  # Required for verification
 }
 
@@ -145,8 +155,10 @@ encoded_texts = {}
 for target in targets:
     encoded_texts[target.name] = UnicodeMetadata.embed_metadata(
         text=original_text,
-        metadata=metadata,
+        custom_metadata=metadata,
         private_key=private_key,
+        signer_id=key_id,
+        timestamp=metadata.get("timestamp"),
         target=target
     )
 
@@ -208,14 +220,17 @@ for target in targets:
 # Extract and verify metadata
 for target in targets:
     extracted = UnicodeMetadata.extract_metadata(encoded_texts[target.name])
-    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
         text=encoded_texts[target.name],
-        public_key_resolver=resolve_public_key
+        public_key_provider=resolve_public_key
     )
 
     print(f"\nTarget: {target.name}")
-    print(f"Metadata extracted: {json.dumps(extracted, indent=2)}")
+    print(f"Raw extracted metadata: {json.dumps(extracted, indent=2)}") # Clarify this is raw extraction
     print(f"Verification result: {'✅ Verified' if is_valid else '❌ Failed'}")
+    if payload_dict:
+        print(f"Signer ID: {signer_id}")
+        print(f"Verified metadata (payload): {json.dumps(payload_dict, indent=2)}")
 ```
 
 ## Streaming Example Notebook
@@ -250,14 +265,16 @@ metadata = {
     "model": "streaming-example",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": key_id  # Required for verification
 }
 
 # Create a streaming handler
 streaming_handler = StreamingHandler(
-    metadata=metadata,
+    custom_metadata=metadata, # Changed from metadata
     private_key=private_key,
+    signer_id=key_id, # Added signer_id
+    timestamp=metadata.get("timestamp"), # Added timestamp
     target=MetadataTarget.WHITESPACE,
     encode_first_chunk_only=True
 )
@@ -302,14 +319,17 @@ print("Final text with embedded metadata:")
 print(full_text)
 
 # Verify the complete response
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=full_text,
-    public_key_resolver=resolve_public_key
+    public_key_provider=resolve_public_key
 )
 
 print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
-if is_valid:
-    print(f"Verified metadata: {json.dumps(verified_metadata, indent=2)}")
+if payload_dict: # Check if payload_dict is not None
+    print(f"Signer ID: {signer_id}")
+    print(f"Verified metadata (payload): {json.dumps(payload_dict, indent=2)}")
+elif is_valid: # Should not happen if payload is None and is_valid is True, but as a fallback
+    print("Metadata verified but no payload returned.")
 ```
 
 ## Tamper Detection Notebook
@@ -347,15 +367,18 @@ metadata = {
     "model": "tamper-detection-demo",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": key_id  # Required for verification
 }
 
 # Embed metadata
 encoded_text = UnicodeMetadata.embed_metadata(
     text=original_text,
-    metadata=metadata,
-    private_key=private_key
+    custom_metadata=metadata,
+    private_key=private_key,
+    signer_id=key_id,
+    timestamp=metadata.get("timestamp"),
+    target=MetadataTarget.WHITESPACE # Added target for clarity
 )
 
 # Create tampered versions
@@ -379,19 +402,22 @@ for name, text in tampered_versions.items():
 
     # Try to verify
     try:
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        is_valid, signer_id_val, payload_dict_val = UnicodeMetadata.verify_metadata(
             text=text,
-            public_key_resolver=resolve_public_key
+            public_key_provider=resolve_public_key
         )
     except:
         is_valid = False
-        verified_metadata = None
+        signer_id_val = None
+        payload_dict_val = None
 
     results.append({
         "Version": name,
         "Metadata Found": "✅ Yes" if metadata_found else "❌ No",
         "Verification Passed": "✅ Passed" if is_valid else "❌ Failed",
-        "Extracted Metadata": json.dumps(extracted, indent=2) if extracted else "None"
+        "Signer ID (on verify)": signer_id_val if signer_id_val else "N/A",
+        "Extracted Raw Metadata (on extract)": json.dumps(extracted, indent=2) if extracted else "None",
+        "Verified Payload (on verify)": json.dumps(payload_dict_val, indent=2) if payload_dict_val else "None"
     })
 
 # Display results
@@ -436,8 +462,10 @@ class CustomMetadataEncoder:
         # Use the parent class to encode
         return UnicodeMetadata.embed_metadata(
             text=text,
-            metadata=metadata,
+            custom_metadata=metadata,
             private_key=self.private_key,
+            signer_id=None,
+            timestamp=metadata.get(f"{self.custom_prefix}_timestamp"),
             target=target
         )
 
@@ -461,7 +489,7 @@ text = "This text will have custom metadata embedded."
 metadata = {
     "model": "custom-example",
     "user_id": "user123",
-    "version": "2.0.0"
+    "version": "2.1.0"
 }
 
 # Embed metadata

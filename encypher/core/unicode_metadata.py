@@ -588,7 +588,7 @@ class UnicodeMetadata:
         text: str,
         public_key_provider: Callable[[str], Optional[PublicKeyTypes]],
         return_payload_on_failure: bool = False,
-    ) -> Tuple[Union[BasicPayload, ManifestPayload, None], bool, Optional[str]]:
+    ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, None]]:
         """
         Extracts embedded metadata, verifies its signature using a public key,
         and returns the payload, verification status, and signer ID.
@@ -611,10 +611,10 @@ class UnicodeMetadata:
 
         Returns:
             A tuple containing:
-            - The extracted inner payload (Dict[str, Any], basic or manifest) or None
-              if extraction/verification fails (unless return_payload_on_failure is True).
             - Verification status (bool): True if the signature is valid, False otherwise.
             - The signer_id (str) found in the metadata, or None if extraction fails.
+            - The extracted inner payload (Dict[str, Any], basic or manifest) or None
+              if extraction/verification fails (unless return_payload_on_failure is True).
 
         Raises:
             TypeError: If public_key_provider returns an invalid key type.
@@ -627,7 +627,7 @@ class UnicodeMetadata:
         outer_payload = cls._extract_outer_payload(text)
         if outer_payload is None:
             logger.debug("No outer payload found during extraction.")
-            return None, False, None
+            return False, None, None
 
         # 2. Extract Key Components from Outer Payload:
         signer_id = outer_payload["signer_id"]
@@ -650,18 +650,18 @@ class UnicodeMetadata:
                 exc_info=True,
             )
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
 
         if public_key is None:
             # Key not found for this signer
             logger.warning(f"Public key not found for signer_id: '{signer_id}'")
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
         if not (
             isinstance(public_key, ed25519.Ed25519PublicKey)
@@ -676,9 +676,9 @@ class UnicodeMetadata:
             # Provider returned wrong type
             logger.error(f"public_key_provider returned invalid type ({type(public_key)}) for signer_id '{signer_id}'")
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
 
         # 4. Serialize Inner Payload (Canonical):
@@ -691,9 +691,9 @@ class UnicodeMetadata:
                 exc_info=True,
             )
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
 
         # 5. Decode Signature:
@@ -704,9 +704,9 @@ class UnicodeMetadata:
             # Invalid base64 signature string
             logger.warning(f"Failed to decode base64 signature: {e}", exc_info=False)
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
 
         # 6. Verify Signature:
@@ -719,17 +719,17 @@ class UnicodeMetadata:
                 exc_info=True,
             )
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
         except InvalidSignature:
             # Signature verification failed
             logger.warning(f"Signature verification failed for signer_id '{signer_id}': Invalid signature.")
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
         except Exception as e:
             # Other unexpected errors during verification
@@ -740,14 +740,14 @@ class UnicodeMetadata:
         if is_valid:
             logger.info(f"Signature verified successfully for signer_id: '{signer_id}'")
             # Verification successful, return payload, status, and signer_id
-            return inner_payload, True, signer_id
+            return True, signer_id, inner_payload
         else:
             # Verification failed
             logger.warning(f"Signature verification failed for signer_id: '{signer_id}' (reason determined above).")
             return (
-                inner_payload if return_payload_on_failure else None,
                 False,
                 signer_id,
+                inner_payload if return_payload_on_failure else None,
             )
 
     @classmethod
@@ -808,7 +808,7 @@ class UnicodeMetadata:
         text: str,
         public_key_provider: Callable[[str], Optional[PublicKeyTypes]],
         return_payload_on_failure: bool = False,
-    ) -> Tuple[Union[BasicPayload, ManifestPayload, None], bool, Optional[str]]:
+    ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, None]]:
         """
         Verify and extract metadata from text embedded using Unicode variation selectors and a public key.
 
@@ -822,10 +822,10 @@ class UnicodeMetadata:
 
         Returns:
             A tuple containing:
-            - The extracted inner payload (Dict[str, Any], basic or manifest) or None
-              if extraction/verification fails (unless return_payload_on_failure is True).
             - Verification status (bool): True if the signature is valid, False otherwise.
             - The signer_id (str) found in the metadata, or None if extraction fails.
+            - The extracted inner payload (Dict[str, Any], basic or manifest) or None
+              if extraction/verification fails (unless return_payload_on_failure is True).
 
         Raises:
             TypeError: If public_key_provider returns an invalid key type.
@@ -839,7 +839,7 @@ class UnicodeMetadata:
         if not text:
             # Avoid processing empty strings, return None early
             logger.debug("verify_metadata called with empty text, returning None.")
-            return None, False, None
+            return False, None, None
         if not callable(public_key_provider):
             raise TypeError("'public_key_provider' must be a callable function.")
         # --- End Input Validation ---

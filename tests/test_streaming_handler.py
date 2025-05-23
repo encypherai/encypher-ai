@@ -59,7 +59,7 @@ class TestStreamingHandler:
         assert processed_chunk != chunk
 
         # Extract and verify metadata from processed chunk
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(processed_chunk, test_public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(processed_chunk, test_public_key_provider)
 
         # Verify signature and extracted data
         assert is_valid is True
@@ -102,7 +102,7 @@ class TestStreamingHandler:
         assert processed_chunk2 == chunk2
 
         # Verify metadata in the first processed chunk
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(processed_chunk1, test_public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(processed_chunk1, test_public_key_provider)
         assert is_valid is True
         assert extracted_signer_id == "test_signer"
         assert extracted_payload.get("model_id") == metadata["model_id"]
@@ -194,7 +194,7 @@ class TestStreamingHandler:
         assert processed_chunk["model"] == chunk["model"]
 
         # Verify metadata in the processed content
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(processed_content, test_public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(processed_content, test_public_key_provider)
         assert is_valid is True
         assert extracted_signer_id == "test_signer"
         assert extracted_payload.get("model_id") == metadata["model_id"]
@@ -319,7 +319,7 @@ class TestStreamingHandler:
         assert handler.has_encoded is True
 
         # Verify metadata in the processed content
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(processed_chunk4, test_public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(processed_chunk4, test_public_key_provider)
         assert is_valid is True
         assert extracted_signer_id == "test_signer"
         assert extracted_payload.get("model_id") == metadata["model_id"]

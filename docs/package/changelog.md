@@ -2,6 +2,34 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.1.0 (05-23-2025)
+
+### Changed
+- **API Updates for `UnicodeMetadata` class:**
+    - `embed_metadata`:
+        - Now requires `signer_id` as a direct parameter (replacing `key_id` within a `metadata` dictionary).
+        - Accepts other metadata components (`model_id`, `timestamp`, `organization`, `version`, `custom_metadata`, `metadata_format`) as direct parameters. The generic `metadata` dictionary parameter has been removed for clarity and type safety.
+    - `verify_metadata`:
+        - The `public_key_resolver` parameter has been renamed to `public_key_provider` for consistency.
+        - The `public_key_provider` function now receives `signer_id` as its argument.
+        - Returns a tuple: `(is_valid: bool, signer_id: Optional[str], payload: Union[BasicPayload, ManifestPayload, None])`.
+    - `extract_metadata`:
+        - Now consistently returns a `BasicPayload` or `ManifestPayload` object (or `None`), rather than a raw dictionary.
+- **Consistent Terminology:**
+    - Replaced all instances of `key_id` with `signer_id` across the API, internal logic, and documentation to better reflect its purpose.
+- **`StreamingHandler` Update:**
+    - The constructor (`__init__`) now accepts `signer_id` and other metadata components as direct parameters, similar to `embed_metadata`.
+
+### Documentation
+- Updated all relevant documentation files, including:
+    - `quickstart.md`
+    - `basic-usage.md`
+    - `user-guide/extraction-verification.md`
+    - `user-guide/metadata-encoding.md`
+    - `api-reference/unicode-metadata.md`
+- All examples revised to reflect the new API signatures, parameter changes, and the use of `signer_id`.
+- Ensured all code examples are runnable and accurately demonstrate the functionalities of version 2.1.0.
+
 ## 2.0.0 (04-13-2025)
 
 ### Added

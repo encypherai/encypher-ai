@@ -188,18 +188,24 @@ class TestStreamingIntegration:
             processed_text = "".join(processed_chunks)
 
             # Verify and Extract metadata from the combined processed text
-            extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(processed_text, test_public_key_provider)
+            is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(processed_text, test_public_key_provider)
 
             # Check if metadata was extracted and verified correctly
             assert is_valid is True, f"Verification failed for {provider}, target={target.name}, first_only={encode_first_only}"
             assert extracted_signer_id == signer_id, f"Signer ID mismatch for {provider}, target={target.name}, first_only={encode_first_only}"
-            assert extracted_payload is not None
-            assert extracted_payload.get("format") == metadata_format
 
-            # Check that the model_id in the payload matches what we embedded
-            assert (
-                extracted_payload.get("model_id") == metadata["model_id"]
-            ), f"Model ID mismatch for {provider}, target={target.name}, first_only={encode_first_only}"
+            # Check if the extracted payload matches the original metadata (excluding dynamic timestamp if necessary)
+            # Create a copy of the original metadata to avoid modifying it
+            expected_payload = metadata.copy()
+            if "timestamp" in extracted_payload and "timestamp" in expected_payload:
+                extracted_payload.pop("timestamp", None)
+                expected_payload.pop("timestamp", None)
+
+            # Add format and signer_id to expected_payload as they are added by the embedding process
+            expected_payload["format"] = metadata_format
+            expected_payload["signer_id"] = signer_id
+
+            assert extracted_payload == expected_payload, f"Payload mismatch for {provider}, target={target.name}, first_only={encode_first_only}"
 
     @pytest.mark.skip(reason="HMAC functionality removed in favor of signatures.")
     @pytest.mark.parametrize("provider,chunks", STREAMING_CHUNKS.items())

@@ -34,7 +34,7 @@ To run the Streamlit demo:
 
 ```bash
 # Install required dependencies
-pip install encypher streamlit
+pip install encypher-ai==2.1.0 streamlit
 
 # Run the demo app
 streamlit run https://raw.githubusercontent.com/EncypherAI/encypher/main/examples/streamlit_app.py
@@ -133,23 +133,22 @@ def basic_embedding():
         with col1:
             model = st.text_input("Model Name:", value="gpt-4")
             org = st.text_input("Organization:", value="EncypherAI")
-
-        with col2:
             timestamp = st.text_input(
                 "Timestamp:",
                 value=str(int(time.time()))
             )
-            version = st.text_input("Version:", value="2.0.0")
+            version = st.text_input("Version:", value="2.1.0")
 
-        # Additional custom fields
-        custom_fields = {}
-        if st.checkbox("Add custom metadata fields"):
-            for i in range(3):
-                c1, c2 = st.columns(2)
-                key = c1.text_input(f"Key {i+1}:", key=f"key_{i}")
-                value = c2.text_input(f"Value {i+1}:", key=f"value_{i}")
-                if key and value:
-                    custom_fields[key] = value
+        with col2:
+            # Additional custom fields
+            custom_fields = {}
+            if st.checkbox("Add custom metadata fields"):
+                for i in range(3):
+                    c1, c2 = st.columns(2)
+                    key = c1.text_input(f"Key {i+1}:", key=f"key_{i}")
+                    value = c2.text_input(f"Value {i+1}:", key=f"value_{i}")
+                    if key and value:
+                        custom_fields[key] = value
 
     # Key Pair for Digital Signatures
     st.subheader("Digital Signature Keys")
@@ -198,16 +197,20 @@ def basic_embedding():
                 if private_key:
                     encoded_text = UnicodeMetadata.embed_metadata(
                         text=sample_text,
-                        metadata=metadata,
+                        custom_metadata=metadata,
                         private_key=private_key,
+                        signer_id=key_id_input,
+                        timestamp=metadata.get("timestamp"),
                         target=target_options[target]
                     )
                 else:
                     st.warning("Embedding without signature due to invalid private key.")
-                    # Fallback to embedding without signature if desired, or handle error
                     encoded_text = UnicodeMetadata.embed_metadata(
                         text=sample_text,
-                        metadata=metadata,
+                        custom_metadata=metadata,
+                        private_key=None,
+                        signer_id=None,
+                        timestamp=metadata.get("timestamp"),
                         target=target_options[target]
                     )
 
@@ -237,15 +240,18 @@ def basic_embedding():
 
             # Verification status
             from encypher.core.unicode_metadata import UnicodeMetadata
-            verified, metadata_dict = UnicodeMetadata.verify_metadata(
+            is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                 encoded_text,
-                public_key_resolver=lambda key_id: load_public_key_pem(public_key_input.encode()) if key_id == key_id_input else None
+                public_key_provider=lambda key_id: load_public_key_pem(public_key_input.encode()) if key_id == key_id_input else None
             )
 
-            if verified:
-                st.success("✅ Verification successful")
+            if is_valid:
+                st.success(f"✅ Verification successful! Signer ID: {signer_id}")
+                if payload_dict:
+                    st.write("Verified Payload:")
+                    st.json(payload_dict)
             else:
-                st.error("❌ Verification failed")
+                st.error(f"❌ Verification failed. Signer ID (if found): {signer_id}")
 
         except Exception as e:
             st.error(f"Error embedding metadata: {str(e)}")
@@ -259,7 +265,6 @@ Here's a more complete example of a Streamlit app that demonstrates EncypherAI's
 import streamlit as st
 import time
 import json
-from encypher.core.metadata_encoder import MetadataEncoder
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 from encypher.streaming.handlers import StreamingHandler
 
@@ -302,7 +307,7 @@ with tabs[0]:
         model_id = st.text_input("Model ID:", value="gpt-4-demo")
         org = st.text_input("Organization:", value="StreamlitApp")
         timestamp = st.number_input("Timestamp:", value=int(time.time()))
-        version = st.text_input("Version:", value="2.0.0")
+        version = st.text_input("Version:", value="2.1.0")
 
     with col2:
         key_id_input = st.text_input("Key ID:", value=st.session_state.key_id)
@@ -340,10 +345,13 @@ with tabs[0]:
             private_key = None
 
         try:
+            # Embed metadata
             encoded_text = UnicodeMetadata.embed_metadata(
                 text=sample_text,
-                metadata=metadata,
+                custom_metadata=metadata,
                 private_key=private_key,
+                signer_id=key_id_input,
+                timestamp=metadata.get("timestamp"),
                 target=target
             )
 
@@ -352,16 +360,23 @@ with tabs[0]:
             st.json(metadata)
 
             # Verification
-            from encypher.core.unicode_metadata import UnicodeMetadata
-            verified, metadata_dict = UnicodeMetadata.verify_metadata(
+            def resolve_public_key(key_id_to_resolve):
+                if key_id_to_resolve == key_id_input and public_key_input:
+                    try:
+                        return load_public_key_pem(public_key_input.encode())
+                    except Exception as e:
+                        st.error(f"Invalid Public Key for verification: {e}")
+                return None
+
+            is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                 encoded_text,
-                public_key_resolver=lambda key_id: load_public_key_pem(public_key_input.encode()) if key_id == key_id_input else None
+                public_key_provider=resolve_public_key
             )
 
-            if verified:
-                st.success("✅ Verification successful")
+            if is_valid:
+                st.success(f"✅ Verification successful! Signer ID: {signer_id}")
             else:
-                st.error("❌ Verification failed")
+                st.error(f"❌ Verification failed. Signer ID (if found): {signer_id}")
 
         except Exception as e:
             st.error(f"Error: {str(e)}")
@@ -396,23 +411,23 @@ with tabs[1]:
                     key_id_verify = metadata.get("key_id", "unknown")
 
                     # Create a simple resolver function
-                    def resolve_public_key(key_id):
-                        if key_id == key_id_verify and public_key_input_verify:
+                    def resolve_public_key(key_id_to_resolve):
+                        if key_id_to_resolve == key_id_verify and public_key_input_verify:
                             try:
                                 return load_public_key_pem(public_key_input_verify.encode())
                             except Exception as e:
                                 st.error(f"Invalid Public Key for verification: {e}")
                         return None
 
-                    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+                    is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                         text=encoded_text,
-                        public_key_resolver=resolve_public_key
+                        public_key_provider=resolve_public_key
                     )
 
                     if is_valid:
-                        st.success("✅ Verification successful!")
+                        st.success(f"✅ Verification successful! Signer ID: {signer_id}")
                     else:
-                        st.error("❌ Verification failed!")
+                        st.error(f"❌ Verification failed. Signer ID (if found): {signer_id}")
             else:
                 st.warning("No metadata found in the text.")
         except Exception as e:
@@ -445,7 +460,7 @@ with tabs[2]:
     metadata = {
         "model": "verification-demo",
         "timestamp": int(time.time()),
-        "version": "2.0.0",
+        "version": "2.1.0",
         "key_id": st.session_state.key_id,
     }
 
@@ -464,8 +479,10 @@ with tabs[2]:
             # Embed metadata
             encoded_text = UnicodeMetadata.embed_metadata(
                 text=text,
-                metadata=metadata,
+                custom_metadata=metadata,
                 private_key=private_key,
+                signer_id=metadata.get("key_id"),
+                timestamp=metadata.get("timestamp"),
                 target="whitespace"
             )
 
@@ -483,26 +500,33 @@ with tabs[2]:
 
             with col1:
                 st.subheader("Original Verification")
-                from encypher.core.unicode_metadata import UnicodeMetadata
-                verified, metadata_dict = UnicodeMetadata.verify_metadata(
+                def resolve_public_key(key_id_to_resolve):
+                    if key_id_to_resolve == metadata.get("key_id") and public_key:
+                        try:
+                            return load_public_key_pem(public_key.encode())
+                        except Exception as e:
+                            st.error(f"Invalid Public Key for verification: {e}")
+                    return None
+
+                is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                     encoded_text,
-                    public_key_resolver=lambda key_id: load_public_key_pem(public_key.encode()) if key_id == metadata.get("key_id") else None
+                    public_key_provider=resolve_public_key
                 )
-                if verified:
-                    st.success("✅ Verification successful")
+                if is_valid:
+                    st.success(f"✅ Verification successful! Signer ID: {signer_id}")
                 else:
-                    st.error("❌ Verification failed")
+                    st.error(f"❌ Verification failed. Signer ID (if found): {signer_id}")
 
             with col2:
                 st.subheader("Tampered Verification")
-                verified, metadata_dict = UnicodeMetadata.verify_metadata(
+                is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                     tampered_text,
-                    public_key_resolver=lambda key_id: load_public_key_pem(public_key.encode()) if key_id == metadata.get("key_id") else None
+                    public_key_provider=resolve_public_key
                 )
-                if verified:
-                    st.success("✅ Verification successful")
+                if is_valid:
+                    st.success(f"✅ Verification successful! Signer ID: {signer_id}") # Should ideally fail for tampered
                 else:
-                    st.error("❌ Verification failed")
+                    st.error(f"❌ Verification failed. Signer ID (if found): {signer_id}") # Expected path for tampered
 
         except Exception as e:
             st.error(f"Error: {str(e)}")
@@ -524,7 +548,7 @@ with tabs[3]:
         model_id = st.text_input("Model ID:", value="gpt-4-stream-demo")
         org = st.text_input("Organization:", value="StreamlitApp")
         timestamp = st.number_input("Timestamp:", value=int(time.time()))
-        version = st.text_input("Version:", value="2.0.0")
+        version = st.text_input("Version:", value="2.1.0")
         key_id_input = st.text_input("Key ID:", value=st.session_state.key_id, key="stream_key_id")
         metadata = {
             "model_id": model_id,
@@ -551,8 +575,10 @@ with tabs[3]:
 
         # Initialize streaming handler
         handler = StreamingHandler(
-            metadata=metadata,
+            custom_metadata=metadata,
             private_key=private_key,
+            signer_id=metadata.get("key_id"),
+            timestamp=metadata.get("timestamp"),
             target="whitespace",
             encode_first_chunk_only=False,
         )
@@ -591,30 +617,35 @@ with tabs[3]:
         from encypher.core.unicode_metadata import UnicodeMetadata
         try:
             extracted_metadata = UnicodeMetadata.extract_metadata(accumulated_text)
-            verified, metadata_dict = UnicodeMetadata.verify_metadata(
+            def resolve_public_key(key_id_to_resolve):
+                if key_id_to_resolve == metadata.get("key_id") and public_key:
+                    try:
+                        return load_public_key_pem(public_key.encode())
+                    except Exception as e:
+                        st.error(f"Invalid Public Key for verification: {e}")
+                return None
+
+            is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                 accumulated_text,
-                public_key_resolver=lambda key_id: load_public_key_pem(public_key.encode()) if key_id == metadata.get("key_id") else None
+                public_key_provider=resolve_public_key
             )
 
             st.subheader("Streaming Results")
             st.json(extracted_metadata)
 
-            if verified:
-                st.success("✅ Streaming metadata verified successfully")
+            if is_valid:
+                st.success(f"✅ Streaming metadata verified successfully! Signer ID: {signer_id}")
+                if payload_dict:
+                    st.write("Verified Payload from Stream:")
+                    st.json(payload_dict)
             else:
-                st.error("❌ Streaming metadata verification failed")
+                st.error(f"❌ Streaming metadata verification failed. Signer ID (if found): {signer_id}")
 
         except Exception as e:
-            st.error(f"Error extracting metadata: {str(e)}")
-```
+            st.error(f"Error verifying/extracting streaming metadata: {str(e)}")
 
-## Customizing the Demo
+# Ensure st.session_state is initialized for key_id if not already
+if 'key_id' not in st.session_state:
+    st.session_state.key_id = 'streamlit-default-key'
 
-You can customize the Streamlit demo by:
-
-1. **Adding more tabs** for additional functionality
-2. **Integrating with LLM APIs** to generate content in real-time
-3. **Creating visualization components** to better illustrate how metadata is embedded
-4. **Adding file upload/download** capabilities for processing documents
-
-For more information on building Streamlit apps, see the [Streamlit documentation](https://docs.streamlit.io/).
+# This demo provides a comprehensive overview of EncypherAI's features. For more detailed examples and API documentation, refer to the respective sections in this documentation.

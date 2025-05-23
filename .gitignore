@@ -19,6 +19,7 @@ var/
 .installed.cfg
 *.egg
 */node_modules/
+*.lock
 
 # Virtual Environment
 venv/
@@ -74,6 +75,7 @@ coverage/
 # Documentation
 docs/_build/
 site/
+*prd*
 
 # Frontend
 */.next/*
@@ -86,7 +88,6 @@ dmypy.json
 
 # Jupyter Notebook
 .ipynb_checkpoints
-*.ipynb
 
 # Poetry
 poetry.lock

@@ -40,7 +40,7 @@ To run the YouTube demo:
 
 ```bash
 # From your EncypherAI installation directory
-python -m encypher.examples.youtube_demo
+python -m encypher_ai.examples.youtube_demo
 ```
 
 ## Demo Structure
@@ -75,9 +75,9 @@ from rich.table import Table
 import time
 import json
 
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from encypher.streaming.handlers import StreamingHandler
+from encypher_ai.core.unicode_metadata import UnicodeMetadata
+from encypher_ai.core.keys import generate_key_pair
+from encypher_ai.streaming.handlers import StreamingHandler
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from typing import Optional
 
@@ -102,7 +102,7 @@ metadata = {
     "model": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": key_id  # Required for verification
 }
 
@@ -119,8 +119,10 @@ console.print("\n[bold]Embedding metadata...[/bold]")
 time.sleep(1)  # Dramatic pause
 encoded_text = UnicodeMetadata.embed_metadata(
     text=text,
-    metadata=metadata,
-    private_key=private_key
+    custom_metadata=metadata,
+    private_key=private_key,
+    signer_id=key_id,
+    timestamp=metadata.get("timestamp")
 )
 
 # Display the encoded text
@@ -139,15 +141,18 @@ console.print(Panel(json.dumps(extracted_metadata, indent=2), border_style="blue
 # Verify the text
 console.print("\n[bold]Verifying content integrity...[/bold]")
 time.sleep(1)  # Dramatic pause
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_resolver=resolve_public_key
+    public_key_provider=resolve_public_key
 )
 
 if is_valid:
-    console.print("\n✅ [bold green]Verification successful![/bold green]")
+    console.print(f"\n✅ [bold green]Verification successful! Signer ID: {signer_id}[/bold green]")
+    if payload_dict:
+        console.print("[bold]Verified Payload:[/bold]")
+        console.print(Panel(json.dumps(payload_dict, indent=2), border_style="cyan"))
 else:
-    console.print("\n❌ [bold red]Verification failed![/bold red]")
+    console.print(f"\n❌ [bold red]Verification failed! Signer ID (if found): {signer_id}[/bold red]")
 
 # Demonstrate tampering
 console.print("\n\n[bold]Demonstrating Tamper Detection:[/bold]")
@@ -159,15 +164,15 @@ console.print(Panel(tampered_text, border_style="red"))
 # Verify the tampered text
 console.print("\n[bold]Verifying tampered content...[/bold]")
 time.sleep(1)  # Dramatic pause
-is_valid, verified_tampered = UnicodeMetadata.verify_metadata(
+is_valid_tampered, signer_id_tampered, payload_dict_tampered = UnicodeMetadata.verify_metadata(
     text=tampered_text,
-    public_key_resolver=resolve_public_key
+    public_key_provider=resolve_public_key
 )
 
-if is_valid:
-    console.print("\n✅ [bold green]Verification successful![/bold green]")
+if is_valid_tampered:
+    console.print(f"\n✅ [bold green]Verification successful (tampered text)! Signer ID: {signer_id_tampered}[/bold green]") # Should not happen
 else:
-    console.print("\n❌ [bold red]Tampering detected![/bold red]")
+    console.print(f"\n❌ [bold red]Tampering detected! (Verification failed for tampered text) Signer ID (if found): {signer_id_tampered}[/bold red]")
 
     # Explain what happened
     console.print(Panel(
@@ -189,14 +194,16 @@ streaming_metadata = {
     "model": "streaming-demo",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": key_id  # Required for verification
 }
 
 # Create a streaming handler
 handler = StreamingHandler(
-    metadata=streaming_metadata,
-    private_key=private_key
+    custom_metadata=streaming_metadata,
+    private_key=private_key,
+    signer_id=streaming_metadata.get("key_id"),
+    timestamp=streaming_metadata.get("timestamp")
 )
 
 # Simulate streaming chunks
@@ -238,15 +245,18 @@ console.print("\n[bold]Extracted Streaming Metadata:[/bold]")
 console.print(Panel(json.dumps(extracted_streaming, indent=2), border_style="blue"))
 
 # Verify streaming text
-is_valid, verified_streaming = UnicodeMetadata.verify_metadata(
+is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=full_text,
-    public_key_resolver=resolve_public_key
+    public_key_provider=resolve_public_key
 )
 
 if is_valid:
-    console.print("\n✅ [bold green]Streaming verification successful![/bold green]")
+    console.print(f"\n✅ [bold green]Streaming verification successful! Signer ID: {signer_id}[/bold green]")
+    if payload_dict:
+        console.print("[bold]Verified Streaming Payload:[/bold]")
+        console.print(Panel(json.dumps(payload_dict, indent=2), border_style="cyan"))
 else:
-    console.print("\n❌ [bold red]Streaming verification failed![/bold red]")
+    console.print(f"\n❌ [bold red]Streaming verification failed! Signer ID (if found): {signer_id}[/bold red]")
 
 ## Tamper Detection Demonstration
 
@@ -279,7 +289,7 @@ You can customize the demo for your own presentations:
 
 ```python
 # Generate key pairs for digital signature verification
-from encypher.core.keys import generate_key_pair
+from encypher_ai.core.keys import generate_key_pair
 private_key, public_key = generate_key_pair()
 key_id = "your-custom-key-id"
 
@@ -294,8 +304,9 @@ metadata = {
 
 # Adjust timing between sections
 time.sleep(custom_delay)  # Change pause duration
+
 ```
 
 ## Source Code
 
-You can find the full source code for the YouTube demo in the `encypher/examples/youtube_demo.py` file in the EncypherAI repository.
+You can find the full source code for the YouTube demo in the `docs/package/examples/youtube_demo.py` file in the EncypherAI repository.

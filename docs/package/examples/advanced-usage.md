@@ -12,7 +12,7 @@ You can create custom handlers that build upon the `UnicodeMetadata` class to ad
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_key_pair
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, Tuple
 import hashlib
 import time
 import json
@@ -50,9 +50,6 @@ class EnhancedMetadataHandler:
         if "timestamp" not in metadata:
             metadata["timestamp"] = int(time.time())
 
-        # Add key_id for verification
-        metadata["key_id"] = self.key_id
-
         # Add content hash if enabled
         if self.include_hash:
             content_hash = hashlib.sha256(text.encode()).hexdigest()
@@ -61,38 +58,40 @@ class EnhancedMetadataHandler:
         # Use UnicodeMetadata to perform the embedding
         return UnicodeMetadata.embed_metadata(
             text=text,
-            metadata=metadata,
+            custom_metadata=metadata,
             private_key=self.private_key,
+            signer_id=self.key_id,
+            timestamp=metadata.get("timestamp"),
             target=target
         )
 
-    def verify_metadata(self, text: str, verify_hash: bool = True) -> Tuple[bool, Optional[Dict[str, Any]]]:
+    def verify_metadata(self, text: str, verify_hash: bool = True) -> Tuple[bool, Optional[str], Optional[Dict[str, Any]]]:
         """Enhanced verification that also checks content hash."""
         # Standard verification with digital signature
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
             text=text,
-            public_key_resolver=self.resolve_public_key
+            public_key_provider=self.resolve_public_key
         )
 
-        if not is_valid or not verified_metadata:
-            return False, None
+        if not is_valid or not verified_payload_dict:
+            return False, signer_id, None
 
         # Optionally verify content hash
-        if verify_hash and self.include_hash and "content_hash" in verified_metadata:
+        if verify_hash and self.include_hash and verified_payload_dict.get("content_hash"):
             # Extract the original text (without metadata)
             # This is a simplified approach - in practice you'd need to strip the metadata
-            original_text = text  # This is simplified - you'd need proper stripping
+            original_text_for_hash_check = UnicodeMetadata.extract_original_text(text)
 
             # Calculate hash of original text
-            current_hash = hashlib.sha256(original_text.encode()).hexdigest()
+            current_hash = hashlib.sha256(original_text_for_hash_check.encode()).hexdigest()
 
             # Compare with stored hash
-            hash_verification = current_hash == verified_metadata["content_hash"]
+            hash_verification = current_hash == verified_payload_dict.get("content_hash")
 
             # Both verifications must pass
-            return hash_verification, verified_metadata if hash_verification else None
+            return hash_verification, signer_id, verified_payload_dict if hash_verification else None
 
-        return is_valid, verified_metadata
+        return is_valid, signer_id, verified_payload_dict
 
 # Example usage
 handler = EnhancedMetadataHandler()
@@ -100,7 +99,7 @@ text = "This is a sample text for advanced encoding."
 metadata = {
     "model": "gpt-4",
     "organization": "EncypherAI",
-    "version": "2.0.0"
+    "version": "2.1.0"
 }
 
 # Encode with enhanced metadata
@@ -108,10 +107,11 @@ encoded_text = handler.embed_metadata(text, metadata)
 print(f"Encoded text: {encoded_text}")
 
 # Verify with enhanced verification
-is_valid, verified_metadata = handler.verify_metadata(encoded_text)
+is_valid, signer_id, verified_payload = handler.verify_metadata(encoded_text)
 print(f"Verification result: {is_valid}")
-if is_valid:
-    print(f"Verified metadata: {verified_metadata}")
+if is_valid and verified_payload:
+    print(f"Signer ID: {signer_id}")
+    print(f"Verified metadata: {verified_payload}")
 
 ## Batch Processing
 
@@ -157,8 +157,10 @@ def process_batch(texts, metadata_template, private_key=None, key_id="batch-key"
             # Encode metadata
             encoded_text = UnicodeMetadata.embed_metadata(
                 text=text,
-                metadata=metadata,
-                private_key=private_key
+                custom_metadata=metadata,
+                private_key=private_key,
+                signer_id=key_id,
+                timestamp=int(time.time())
             )
             return {
                 "success": True,
@@ -197,7 +199,7 @@ texts = [
 metadata_template = {
     "model": "gpt-4",
     "organization": "EncypherAI",
-    "version": "2.0.0"
+    "version": "2.1.0"
 }
 
 # Process batch
@@ -211,13 +213,13 @@ for result in results:
         print(f"Successfully processed item: {result['metadata']['item_id']}")
 
         # Verify the encoded text
-        is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+        is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
             text=result["encoded_text"],
-            public_key_resolver=resolver
+            public_key_provider=resolver
         )
 
-        if is_valid:
-            print(f"  Verification successful: {verified_metadata['item_id']}")
+        if is_valid and verified_payload_dict:
+            print(f"  Verification successful for signer {signer_id}: {verified_payload_dict.get('item_id')}")
         else:
             print(f"  Verification failed")
     else:
@@ -308,7 +310,7 @@ metadata = {
     "model": "streaming-demo",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": "enhanced-stream-example"  # Required for verification
 }
 
@@ -350,13 +352,14 @@ extracted = UnicodeMetadata.extract_metadata(full_text)
 print(f"Extracted metadata (unverified): {json.dumps(extracted, indent=2)}")
 
 # Verify the metadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
     text=full_text,
-    public_key_resolver=handler.resolve_public_key
+    public_key_provider=handler.resolve_public_key
 )
 
-if is_valid:
-    print(f"Verified metadata: {json.dumps(verified_metadata, indent=2)}")
+if is_valid and verified_payload_dict:
+    print(f"Signer ID: {signer_id}")
+    print(f"Verified metadata: {json.dumps(verified_payload_dict, indent=2)}")
 
 ## Custom Verification Logic
 
@@ -383,48 +386,51 @@ def verify_content_with_custom_logic(text, resolver, expected_organization=None,
         dict: Verification results with detailed information
     """
     # Standard digital signature verification
-    is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
+    is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
         text=text,
-        public_key_resolver=resolver
+        public_key_provider=resolver
     )
 
     # Initialize results
     results = {
         "signature_verified": is_valid,
-        "metadata_present": bool(verified_metadata),
-        "custom_checks": {}
+        "signer_id": signer_id,
+        "metadata_present": bool(verified_payload_dict),
+        "custom_checks": {},
+        "payload": verified_payload_dict
     }
 
     # If metadata is present and verified, perform custom checks
-    if is_valid and verified_metadata:
+    if is_valid and verified_payload_dict:
         # Check organization if specified
         if expected_organization:
-            org_match = verified_metadata.get("organization") == expected_organization
+            org_match = verified_payload_dict.get("organization") == expected_organization
             results["custom_checks"]["organization_match"] = org_match
 
         # Check age if timestamp is present
-        if "timestamp" in verified_metadata:
+        if "timestamp" in verified_payload_dict:
             try:
                 # Get timestamp as int
-                timestamp = verified_metadata["timestamp"]
-                if isinstance(timestamp, str) and timestamp.isdigit():
-                    timestamp = int(timestamp)
-
-                # Calculate age in hours
-                current_time = int(time.time())
-                age_seconds = current_time - timestamp
-                age_hours = age_seconds / 3600
-
-                results["custom_checks"]["age_hours"] = age_hours
-                results["custom_checks"]["age_within_limit"] = age_hours <= max_age_hours
-            except Exception as e:
-                results["custom_checks"]["timestamp_error"] = str(e)
+                timestamp_data = verified_payload_dict.get("timestamp")
+                timestamp = timestamp_data
+                if isinstance(timestamp_data, str) and timestamp_data.isdigit():
+                    timestamp = int(timestamp_data)
+                elif not isinstance(timestamp_data, (int, float)):
+                    # Attempt to parse if it's an ISO string, etc.
+                    # For this example, we'll assume it's already a Unix timestamp or parsable int string
+                    raise ValueError("Timestamp format not directly usable as int/float.")
+                content_age_seconds = time.time() - timestamp
+                age_match = content_age_seconds <= (max_age_hours * 3600)
+                results["custom_checks"]["age_match"] = age_match
+            except (ValueError, TypeError) as e:
+                results["custom_checks"]["age_match"] = False
+                results["custom_checks"]["age_error"] = str(e)
 
     # Overall verification result
     results["verified"] = (
         is_valid and
-        bool(verified_metadata) and
-        all(results["custom_checks"].values())
+        bool(verified_payload_dict) and
+        all(val for key, val in results["custom_checks"].items() if not key.endswith('_error')) # Check only boolean custom checks
     )
 
     return results
@@ -444,15 +450,17 @@ metadata = {
     "model": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.0.0",
+    "version": "2.1.0",
     "key_id": key_id  # Required for verification
 }
 
 # Embed metadata with digital signature
 encoded_text = UnicodeMetadata.embed_metadata(
     text=text,
-    metadata=metadata,
-    private_key=private_key
+    custom_metadata=metadata,
+    private_key=private_key,
+    signer_id=key_id,
+    timestamp=metadata.get("timestamp")
 )
 
 # Verify with custom logic

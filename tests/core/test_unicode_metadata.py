@@ -181,7 +181,7 @@ class TestUnicodeMetadata:
         except Exception as e:
             print(f"Error decoding extracted bytes: {e}")
 
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(embedded_text, public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(embedded_text, public_key_provider)
 
         # Add more debug information
         print(f"Verification result: {is_valid}")
@@ -262,7 +262,7 @@ class TestUnicodeMetadata:
         )
 
         # Verify with wrong key provider
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(
             embedded_text,
             wrong_key_provider,
             return_payload_on_failure=True,  # Return payload even when verification fails
@@ -309,7 +309,7 @@ class TestUnicodeMetadata:
         assert tampered_text != embedded_text
 
         # Verify the tampered text with the original signer's public key
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(
             tampered_text,
             public_key_provider,
             return_payload_on_failure=True,  # Return payload even when verification fails
@@ -342,7 +342,7 @@ class TestUnicodeMetadata:
         )
 
         # Verification should fail because signature doesn't match public key for signer_id
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(encoded_text, public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(encoded_text, public_key_provider)
 
         assert not is_valid
         assert extracted_payload is None
@@ -383,7 +383,7 @@ class TestUnicodeMetadata:
             corrupted_text = encoded_text + chr(UnicodeMetadata.VARIATION_SELECTOR_START)
 
         # Verify the corrupted text
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(corrupted_text, public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(corrupted_text, public_key_provider)
 
         assert not is_valid
         assert extracted_payload is None
@@ -409,7 +409,7 @@ class TestUnicodeMetadata:
         )
 
         # Verification should fail as provider returns None
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(encoded_text, public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(encoded_text, public_key_provider)
 
         assert not is_valid
         assert extracted_payload is None
@@ -434,7 +434,7 @@ class TestUnicodeMetadata:
                 return cast(PublicKeyTypes, private_key)  # Return private key for signer 1
             return None  # Original for others
 
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(encoded_text, wrong_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(encoded_text, wrong_key_provider)
 
         assert not is_valid
         assert extracted_payload is None
@@ -457,7 +457,7 @@ class TestUnicodeMetadata:
         def error_provider(s_id: str) -> Optional[PublicKeyTypes]:
             raise Exception("Mock provider error")
 
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(encoded_text, error_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(encoded_text, error_provider)
 
         assert not is_valid
         assert extracted_payload is None
@@ -543,7 +543,7 @@ class TestUnicodeMetadata:
         )
 
         # Verify the encoded text
-        extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(encoded_text, public_key_provider)
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(encoded_text, public_key_provider)
 
         assert is_valid
         assert extracted_signer_id == signer_id

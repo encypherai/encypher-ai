@@ -11,7 +11,7 @@ Before you begin, make sure you have:
 3. (Optional) An LLM provider API key if you're integrating with an LLM
 
 ```bash
-uv pip install encypher fastapi uvicorn python-multipart
+uv pip install encypher-ai==2.1.0 fastapi uvicorn python-multipart
 ```
 
 ## Complete FastAPI Application
@@ -92,7 +92,7 @@ public_pem = public_key.public_bytes(
 app = FastAPI(
     title="EncypherAI Demo",
     description="API for embedding and extracting metadata in text using Digital Signatures",
-    version="2.0.0"
+    version="2.1.0"
 )
 
 # Add CORS middleware
@@ -115,7 +115,8 @@ class VerifyRequest(BaseModel):
 
 # Updated MetadataResponse
 class MetadataResponse(BaseModel):
-    metadata: Optional[Dict[str, Any]] = None
+    payload: Optional[Dict[str, Any]] = None
+    signer_id: Optional[str] = None
     verification_status: Literal["verified", "failed", "not_present"]
     error: Optional[str] = None
 
@@ -178,7 +179,7 @@ with open("templates/index.html", "w") as f:
     "model": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": 1742713200,
-    "version": "2.0.0"
+    "version": "2.1.0"
 }</textarea>
                         </div>
                         <div class="mb-3">
@@ -290,15 +291,15 @@ with open("templates/index.html", "w") as f:
 
                 let statusHtml = '';
                 if (data.verification_status === 'verified') {
-                    statusHtml = '<div class="alert alert-success">✅ Metadata verified successfully!</div>';
+                    statusHtml = '<div class="alert alert-success">✅ Metadata verified successfully! Signer ID: ' + (data.signer_id || 'N/A') + '</div>';
                 } else if (data.verification_status === 'failed') {
-                    statusHtml = '<div class="alert alert-warning">⚠️ Metadata found but verification failed. The text may have been tampered with.</div>';
+                    statusHtml = '<div class="alert alert-warning">⚠️ Metadata found (Signer ID: ' + (data.signer_id || 'N/A') + ') but verification failed. The text may have been tampered with.</div>';
                 } else {
-                    statusHtml = '<div class="alert alert-danger">❌ No metadata found or extraction failed: ' + data.error + '</div>';
+                    statusHtml = '<div class="alert alert-danger">❌ No metadata found or extraction failed: ' + (data.error || 'Unknown error') + '</div>';
                 }
 
                 document.getElementById('verifyStatus').innerHTML = statusHtml;
-                document.getElementById('extractedMetadata').textContent = JSON.stringify(data.metadata, null, 2);
+                document.getElementById('extractedMetadata').textContent = data.payload ? JSON.stringify(data.payload, null, 2) : 'N/A';
                 document.getElementById('verifyResult').classList.remove('d-none');
             } catch (error) {
                 alert('Error: ' + error.message);
@@ -320,7 +321,8 @@ async def encode_text(request: EncodeRequest):
     try:
         # Ensure metadata includes the key_id for verification later
         metadata_to_embed = request.metadata.copy()
-        metadata_to_embed["key_id"] = EXAMPLE_KEY_ID # Use the globally generated key ID
+        # EXAMPLE_KEY_ID will be passed as signer_id directly
+        # metadata_to_embed["key_id"] = EXAMPLE_KEY_ID
 
         # Validate target
         try:
@@ -330,14 +332,16 @@ async def encode_text(request: EncodeRequest):
 
         encoded_text = UnicodeMetadata.embed_metadata(
             text=request.text,
-            metadata=metadata_to_embed,
+            custom_metadata=metadata_to_embed,  # Changed from metadata
             private_key=private_key, # Use the globally generated private key
+            signer_id=EXAMPLE_KEY_ID, # Added signer_id
+            timestamp=metadata_to_embed.get("timestamp"), # Added timestamp
             target=target_enum
         )
         return {
             "original_text": request.text,
             "encoded_text": encoded_text,
-            "metadata": metadata_to_embed
+            "metadata": metadata_to_embed # This is the input metadata, not the extracted one
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Encoding error: {str(e)}")
@@ -346,32 +350,42 @@ async def encode_text(request: EncodeRequest):
 async def verify_text(request: VerifyRequest):
     """Verify text with embedded metadata using digital signature."""
     try:
-        # Verify metadata using the resolver
-        verified_metadata = UnicodeMetadata.verify_metadata(
+        # Verify metadata using the provider
+        is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
             text=request.text,
-            public_key_resolver=public_key_resolver
+            public_key_provider=public_key_resolver # Changed from public_key_resolver
         )
 
-        if verified_metadata is not None:
+        if is_valid and payload_dict is not None:
             # Metadata found and signature verified
             return MetadataResponse(
-                metadata=verified_metadata,
+                payload=payload_dict,
+                signer_id=signer_id,
                 verification_status="verified"
             )
-        else:
-            # Attempt to extract without verification to see if metadata exists but is invalid
-            extracted_metadata = UnicodeMetadata.extract_metadata(request.text)
-            if extracted_metadata is not None:
-                # Metadata found but signature verification failed
+        elif payload_dict is not None: # Metadata was extracted but signature is invalid
+            return MetadataResponse(
+                payload=payload_dict,
+                signer_id=signer_id, # May still have signer_id from unverified payload
+                verification_status="failed",
+                error="Signature verification failed."
+            )
+        else: # No metadata could be extracted
+            # Attempt to extract without verification to see if metadata exists but is malformed
+            # This step might be redundant if verify_metadata already tries to return payload_on_failure
+            # For simplicity, we'll assume verify_metadata handles this and payload_dict would be non-None if anything was found.
+            extracted_raw_metadata = UnicodeMetadata.extract_metadata(request.text)
+            if extracted_raw_metadata is not None:
                 return MetadataResponse(
-                    metadata=extracted_metadata,
+                    payload=extracted_raw_metadata, # This is unverified payload
                     verification_status="failed",
-                    error="Signature verification failed or public key not found."
+                    error="Metadata found but it is malformed or signature could not be processed."
                 )
             else:
-                # No metadata found
+                # No metadata found at all
                 return MetadataResponse(
-                    verification_status="not_present"
+                    verification_status="not_present",
+                    error="No metadata found in text."
                 )
 
     except Exception as e:
@@ -408,7 +422,7 @@ async def generate_with_openai(
             "organization": "EncypherAI",
             "timestamp": int(time.time()),
             "prompt": prompt,
-            "version": "2.0.0"
+            "version": "2.1.0"
         }
 
         # Handle streaming
@@ -440,8 +454,10 @@ async def generate_with_openai(
         # Embed metadata
         encoded_text = UnicodeMetadata.embed_metadata(
             text=text,
-            metadata=metadata,
+            custom_metadata=metadata, # Changed from metadata
             private_key=private_key, # Use the globally generated private key
+            signer_id=EXAMPLE_KEY_ID, # Added signer_id
+            timestamp=metadata.get("timestamp"), # Added timestamp
             target=MetadataTarget.WHITESPACE # Or get from request if needed
         )
 
@@ -466,8 +482,10 @@ async def generate_stream(client, model, prompt, metadata):
     try:
         # Initialize the streaming handler
         handler = StreamingHandler(
-            metadata=metadata,
+            custom_metadata=metadata, # Changed from metadata
             private_key=private_key, # Use the globally generated private key
+            signer_id=EXAMPLE_KEY_ID, # Added signer_id
+            timestamp=metadata.get("timestamp"), # Added timestamp
             target=MetadataTarget.WHITESPACE # Or get from request if needed
         )
 
@@ -549,7 +567,7 @@ data = {
         "model": "gpt-4",
         "organization": "EncypherAI",
         "timestamp": int(time.time()),
-        "version": "2.0.0"
+        "version": "2.1.0"
     },
     "target": "whitespace"
 }
@@ -586,15 +604,17 @@ result = response.json()
 # Print result
 if result["verification_status"] == "verified":
     print("Verification result: ✅ Verified")
-    print("\nExtracted metadata:")
-    print(json.dumps(result["metadata"], indent=2))
+    print(f"Signer ID: {result.get('signer_id')}")
+    print("\nExtracted metadata (payload):")
+    print(json.dumps(result.get("payload"), indent=2))
 elif result["verification_status"] == "failed":
     print("Verification result: ⚠️ Failed")
-    print("\nExtracted metadata:")
-    print(json.dumps(result["metadata"], indent=2))
-    print("\nError:", result["error"])
+    print(f"Signer ID: {result.get('signer_id')}")
+    print("\nExtracted metadata (payload):")
+    print(json.dumps(result.get("payload"), indent=2))
+    print("\nError:", result.get("error"))
 else:
-    print("No metadata found or extraction failed:", result["error"])
+    print("No metadata found or extraction failed:", result.get("error"))
 ```
 
 ## Customization

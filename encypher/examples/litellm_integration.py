@@ -11,24 +11,31 @@ from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Dict, List, Optional, Union
 
 import litellm
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.responses import HTMLResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
-from encypher.config.settings import Settings
+from encypher.core.keys import generate_ed25519_key_pair, load_ed25519_private_key
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.streaming.handlers import StreamingHandler
 
-# Initialize settings
-settings = Settings()
+# --- Configuration & Global Variables ---
+# For a real application, manage keys securely and load from a proper config system.
+# IMPORTANT: Ensure your LLM provider API keys (e.g., OPENAI_API_KEY) are set in your environment for LiteLLM to work.
+EXAMPLE_LITELLM_KEYS_DIR = os.path.join(os.path.dirname(__file__), "example_litellm_keys")
+EXAMPLE_LITELLM_PRIVATE_KEY_PATH = os.path.join(EXAMPLE_LITELLM_KEYS_DIR, "private_key.pem")
+DEFAULT_LITELLM_SIGNER_ID = "litellm-example-signer"
+
+EXAMPLE_PRIVATE_KEY: Optional[Ed25519PrivateKey] = None
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="EncypherAI API",
+    title="EncypherAI LiteLLM Integration API",
     description="""
-    EncypherAI API for encoding metadata in LLM outputs.
+    EncypherAI API for encoding metadata in LLM outputs using LiteLLM, with Ed25519 digital signatures.
 
     This API provides endpoints for:
     - Encoding metadata in LLM responses
@@ -37,7 +44,7 @@ app = FastAPI(
 
     For more information, visit [EncypherAI Documentation](https://docs.encypherai.com).
     """,
-    version="0.1.0",
+    version="2.1.0",
     docs_url=None,
     redoc_url="/docs",
     openapi_tags=[
@@ -49,21 +56,54 @@ app = FastAPI(
     ],
 )
 
+
+@app.on_event("startup")
+async def startup_event():
+    global EXAMPLE_PRIVATE_KEY
+
+    os.makedirs(EXAMPLE_LITELLM_KEYS_DIR, exist_ok=True)
+
+    if not os.path.exists(EXAMPLE_LITELLM_PRIVATE_KEY_PATH):
+        priv_key, _ = generate_ed25519_key_pair()
+        from cryptography.hazmat.primitives import serialization
+
+        with open(EXAMPLE_LITELLM_PRIVATE_KEY_PATH, "wb") as f:
+            f.write(
+                priv_key.private_bytes(
+                    encoding=serialization.Encoding.PEM, format=serialization.PrivateFormat.PKCS8, encryption_algorithm=serialization.NoEncryption()
+                )
+            )
+        print(f"Generated dummy private key for LiteLLM example at {EXAMPLE_LITELLM_PRIVATE_KEY_PATH}")
+
+    EXAMPLE_PRIVATE_KEY = load_ed25519_private_key(EXAMPLE_LITELLM_PRIVATE_KEY_PATH)
+    if not EXAMPLE_PRIVATE_KEY:
+        raise RuntimeError(f"Failed to load private key from {EXAMPLE_LITELLM_PRIVATE_KEY_PATH}. Please ensure it exists or can be generated.")
+    print("LiteLLM EncypherAI example initialized with an example private key.")
+    print("IMPORTANT: Ensure your LLM provider API keys (e.g., OPENAI_API_KEY) are set in your environment!")
+
+
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # type: ignore
-    allow_credentials=True,  # type: ignore
-    allow_methods=["*"],  # type: ignore
-    allow_headers=["*"],  # type: ignore
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
 # Custom Swagger UI with dark theme
 @app.get("/swagger", include_in_schema=False)
 async def custom_swagger_ui_html() -> HTMLResponse:
+    try:
+        import importlib.metadata
+
+        importlib.metadata.version("encypher")
+    except (ImportError, importlib.metadata.PackageNotFoundError):
+        pass
+
     return get_swagger_ui_html(
-        openapi_url=app.openapi_url or "",  # Ensure it's not None
+        openapi_url=app.openapi_url or "",
         title=app.title + " - Swagger UI",
         swagger_js_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui-bundle.js",
         swagger_css_url="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.9.0/swagger-ui.css",
@@ -87,10 +127,7 @@ class ChatRequest(BaseModel):
     temperature: Optional[float] = Field(0.7, description="Sampling temperature (0.0 to 1.0)", ge=0.0, le=1.0)
     max_tokens: Optional[int] = Field(None, description="Maximum tokens to generate", gt=0)
     stream: Optional[bool] = Field(False, description="Whether to stream the response")
-    metadata_target: Optional[str] = Field(
-        "whitespace",
-        description="Where to embed metadata (whitespace, punctuation, first_letter)",
-    )
+    signer_id: Optional[str] = Field(None, description=f"Signer ID for metadata. If not provided, '{DEFAULT_LITELLM_SIGNER_ID}' will be used.")
     encode_first_chunk_only: Optional[bool] = Field(
         True,
         description="Whether to encode metadata only in the first chunk when streaming",
@@ -102,7 +139,7 @@ class ChatResponse(BaseModel):
 
     model: str = Field(description="Model used for generation", example="gpt-3.5-turbo")
     content: str = Field(description="Generated content with embedded metadata")
-    metadata: Dict[str, Any] = Field(description="Metadata embedded in the response")
+    custom_metadata_embedded: Dict[str, Any] = Field(description="Custom metadata that was embedded in the response")
 
 
 @app.post("/v1/chat/completions", response_model=ChatResponse, tags=["chat"])
@@ -121,17 +158,19 @@ async def chat_completions(
     Raises:
         HTTPException: If there's an error generating the completion
     """
+    if EXAMPLE_PRIVATE_KEY is None:
+        raise HTTPException(status_code=500, detail="Server error: Private key not loaded.")
+
     try:
-        # Convert messages to LiteLLM format
         messages = [{"role": msg.role, "content": msg.content} for msg in request.messages]
+        actual_signer_id = request.signer_id or DEFAULT_LITELLM_SIGNER_ID
 
         if request.stream:
             return StreamingResponse(
-                stream_chat_completion(request, messages),
+                stream_chat_completion(request, messages, actual_signer_id),
                 media_type="text/event-stream",
             )
 
-        # Generate completion
         response = await litellm.acompletion(
             model=request.model,
             messages=messages,
@@ -139,72 +178,75 @@ async def chat_completions(
             max_tokens=request.max_tokens,
         )
 
-        # Extract content
-        content = response.choices[0].message.content
+        content_to_encode = response.choices[0].message.content
 
-        # Prepare metadata
-        metadata = {
-            "model_id": request.model,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "request_id": response.id,
-            "usage": {
+        custom_metadata_payload = {
+            "llm_model_id": request.model,
+            "llm_request_id": response.id,
+            "llm_usage": {
                 "prompt_tokens": response.usage.prompt_tokens,
                 "completion_tokens": response.usage.completion_tokens,
                 "total_tokens": response.usage.total_tokens,
             },
         }
-
-        # Encode metadata
-        model_id = metadata.get("model_id", "")
-        timestamp = metadata.get("timestamp", datetime.now(timezone.utc).isoformat())
-        target = request.metadata_target if request.metadata_target is not None else "whitespace"
+        timestamp_int = int(datetime.now(timezone.utc).timestamp())
 
         encoded_content = UnicodeMetadata.embed_metadata(
-            text=content,
-            model_id=model_id,
-            timestamp=timestamp,
-            target=target,
-            custom_metadata={k: v for k, v in metadata.items() if k not in ["model_id", "timestamp"]},
+            text=content_to_encode,
+            private_key=EXAMPLE_PRIVATE_KEY,
+            signer_id=actual_signer_id,
+            timestamp=timestamp_int,
+            custom_metadata=custom_metadata_payload,
         )
 
-        return ChatResponse(model=request.model, content=encoded_content, metadata=metadata)
+        return ChatResponse(model=request.model, content=encoded_content, custom_metadata_embedded=custom_metadata_payload)
     except Exception as e:
+        print(f"Error in /v1/chat/completions: {e}")
         raise HTTPException(status_code=500, detail=f"Error generating completion: {str(e)}")
 
 
-async def stream_chat_completion(request: ChatRequest, messages: List[Dict[str, str]]) -> AsyncGenerator[str, None]:
+async def stream_chat_completion(request: ChatRequest, messages: List[Dict[str, str]], actual_signer_id: str) -> AsyncGenerator[str, None]:
     """
     Stream a chat completion with metadata encoding.
+    Assumes StreamingHandler is updated to handle private_key, signer_id, and internal timestamping for signatures.
 
     Args:
         request (ChatRequest): The chat completion request parameters
         messages (List[Dict[str, str]]): LiteLLM-formatted messages
+        actual_signer_id (str): The actual signer ID to use
 
     Yields:
         Streaming response chunks with metadata
     """
+    if EXAMPLE_PRIVATE_KEY is None:
+        yield f"data: {json.dumps({'error': 'Server error: Private key not loaded.'})}\n\n"
+        yield f"data: {json.dumps({'done': True})}\n\n"
+        return
+
+    custom_metadata_for_stream = {
+        "llm_model_id": request.model,
+        "stream_session_id": f"stream_{int(datetime.now(timezone.utc).timestamp())}",
+    }
+
     try:
-        # Prepare metadata
-        metadata = {
-            "model_id": request.model,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "request_id": f"req_{int(datetime.now().timestamp())}",
-        }
-
-        # Initialize streaming handler
         handler = StreamingHandler(
-            metadata={
-                "model_id": metadata.get("model_id", ""),
-                "timestamp": metadata.get("timestamp", datetime.now(timezone.utc).isoformat()),
-                "request_id": metadata.get("request_id", f"req_{int(datetime.now().timestamp())}"),
-                "session_id": metadata.get("session_id", ""),
-            },
-            target=(request.metadata_target if request.metadata_target is not None else "whitespace"),
-            encode_first_chunk_only=(request.encode_first_chunk_only if request.encode_first_chunk_only is not None else True),
+            private_key=EXAMPLE_PRIVATE_KEY,
+            signer_id=actual_signer_id,
+            custom_metadata=custom_metadata_for_stream,
         )
+    except TypeError as te:
+        print(f"TypeError initializing StreamingHandler: {te}. This example expects an updated StreamingHandler.")
+        yield f"data: {json.dumps({'error': 'StreamingHandler not compatible with required signature parameters. Needs library update.'})}\n\n"
+        yield f"data: {json.dumps({'done': True})}\n\n"
+        return
+    except Exception as e:
+        print(f"Error initializing StreamingHandler: {e}")
+        yield f"data: {json.dumps({'error': f'Failed to initialize StreamingHandler: {str(e)}'})}\n\n"
+        yield f"data: {json.dumps({'done': True})}\n\n"
+        return
 
-        # Stream completion
-        stream = await litellm.acompletion(
+    try:
+        response_stream = await litellm.acompletion(
             model=request.model,
             messages=messages,
             temperature=request.temperature,
@@ -212,22 +254,19 @@ async def stream_chat_completion(request: ChatRequest, messages: List[Dict[str, 
             stream=True,
         )
 
-        async for chunk in stream:
-            # Extract content from chunk
-            if chunk.choices and chunk.choices[0].delta and chunk.choices[0].delta.content:
-                content = chunk.choices[0].delta.content
-
-                # Process chunk with streaming handler
-                processed_chunk = handler.process_chunk(content)
-
-                # Yield as server-sent event
-                yield f"data: {json.dumps({'content': processed_chunk})}\n\n"
-            elif chunk.choices and chunk.choices[0].finish_reason:
-                # End of stream
-                yield f"data: {json.dumps({'done': True})}\n\n"
+        async for chunk_idx, chunk_data in enumerate(response_stream):
+            content_delta = chunk_data.choices[0].delta.content
+            if content_delta:
+                processed_chunk_content = handler.process_chunk(content_delta)
+                yield f"data: {json.dumps({'model': request.model, 'delta': processed_chunk_content, 'chunk_index': chunk_idx})}\n\n"
     except Exception as e:
-        # Yield error
-        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+        print(f"Error during LiteLLM streaming: {e}")
+        yield f"data: {json.dumps({'error': f'Error during LiteLLM stream: {str(e)}'})}\n\n"
+    finally:
+        final_chunk = handler.finalize_stream()
+        if final_chunk:
+            yield f"data: {json.dumps({'model': request.model, 'delta': final_chunk, 'chunk_index': 'final'})}\n\n"
+        yield f"data: {json.dumps({'done': True, 'final_custom_metadata_info': custom_metadata_for_stream})}\n\n"
 
 
 @app.get("/status", tags=["status"])
@@ -238,13 +277,12 @@ async def get_status() -> Dict[str, Any]:
     Returns:
         dict: Status information including version and health status
     """
-    # Get the package version (fallback to "0.1.0" if not found)
     try:
         import importlib.metadata
 
         version = importlib.metadata.version("encypher")
     except (ImportError, importlib.metadata.PackageNotFoundError):
-        version = "0.1.0"
+        version = "2.1.0"
 
     return {
         "status": "ok",
@@ -256,9 +294,5 @@ async def get_status() -> Dict[str, Any]:
 if __name__ == "__main__":
     import uvicorn
 
-    # Set your API keys here or in environment variables
     os.environ["OPENAI_API_KEY"] = "your-openai-api-key"
-    # os.environ["ANTHROPIC_API_KEY"] = "your-anthropic-api-key"
-    # os.environ["GEMINI_API_KEY"] = "your-gemini-api-key"
-
     uvicorn.run(app, host="0.0.0.0", port=8000)
