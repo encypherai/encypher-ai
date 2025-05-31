@@ -1,0 +1,18 @@
+.git
+.gitignore
+.vscode
+.idea
+*.pyc
+__pycache__/
+.DS_Store
+*.env
+.env.*
+!.env.example
+node_modules
+npm-debug.log
+build
+dist
+*.local
+
+# Windsurf specific
+.windsurf/

@@ -1,0 +1,12 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "encypher-ai>=2.1.0",
+    "fastapi>=0.115.12",
+    "python-dotenv>=1.1.0",
+    "uvicorn[standard]>=0.34.2",
+]
