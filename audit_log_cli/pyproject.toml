@@ -3,5 +3,12 @@ name = "audit-log-cli"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
+
+[project.scripts]
+"audit-log-cli" = "audit_log_cli.app.main:app"
 requires-python = ">=3.9"
-dependencies = []
+dependencies = [
+    "typer[all]>=0.9.0,<0.13.0",
+    "rich>=13.0.0,<14.0.0",
+    "encypher_ai>=0.1.0" # Assuming encypher_ai is an installable package or correctly pathed
+]

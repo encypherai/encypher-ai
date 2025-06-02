@@ -5,8 +5,26 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
+    "asyncpg>=0.30.0",
     "encypher-ai>=2.1.0",
     "fastapi>=0.115.12",
+    "passlib[bcrypt]>=1.7.4",
+    "pydantic[email]>=2.11.5",
     "python-dotenv>=1.1.0",
+    "python-jose[cryptography]>=3.5.0",
+    "python-multipart>=0.0.20",
+    "sqlalchemy>=2.0.41",
     "uvicorn[standard]>=0.34.2",
 ]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
+    "aiosqlite>=0.20.0"
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
