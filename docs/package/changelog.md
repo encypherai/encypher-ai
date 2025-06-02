@@ -2,6 +2,30 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.2.0 (06-02-2025)
+
+### Changed
+- **Core Package Refactoring:**
+  - Split `crypto_utils.py` into three specialized modules:
+    - `keys.py`: Key generation, loading, and saving functions
+    - `payloads.py`: Payload data structures and serialization
+    - `signing.py`: Digital signature operations
+  - Renamed functions for clarity:
+    - `load_private_key` → `load_private_key_from_data`
+    - `load_public_key` → `load_public_key_from_data`
+  - Added backward compatibility layer in `crypto_utils.py` that re-exports all functions and types with deprecation warnings
+
+### Added
+- **Documentation:**
+  - Added a comprehensive [Migration Guide](user-guide/migration-guide.md) to help users transition to the new module structure
+  - Updated example scripts to use the new module imports
+
+### Developer Changes
+- Improved code organization following the Single Responsibility Principle
+- Enhanced type hints and docstrings across all modules
+- Added dedicated test file for signing functionality
+- Ensured all tests pass with the new module structure
+
 ## 2.1.0 (05-23-2025)
 
 ### Changed

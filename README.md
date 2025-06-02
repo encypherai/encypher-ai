@@ -10,7 +10,6 @@
 [![Documentation](https://img.shields.io/badge/docs-docs.encypherai.com-blue)](https://docs.encypherai.com)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![Build Status](https://github.com/encypherai/encypher-ai/actions/workflows/python-package.yml/badge.svg)](https://github.com/encypherai/encypher-ai/actions/workflows/python-package.yml)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/encypherai/encypher-ai)](https://github.com/encypherai/encypher-ai/releases/latest)
 
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
@@ -28,6 +27,7 @@ EncypherAI Core provides tools for invisibly encoding metadata (such as model in
 - **Tamper detection using digital signatures**: Verify text integrity using digital signatures
 - **Streaming support**: Works with both streaming and non-streaming LLM outputs
 - **LLM integrations**: Ready-to-use integrations with OpenAI, Google Gemini, Anthropic Claude, and more
+- **Modular architecture**: Clean separation of key management, payload handling, and signing operations
 
 The encoding is done using Unicode variation selectors, which are designed to specify alternative forms of characters without affecting text appearance or readability.
 
@@ -70,7 +70,7 @@ Try EncypherAI directly in your browser with our interactive Google Colab notebo
 For a local demonstration, check out the detailed Jupyter Notebook example included in the repository:
 [`encypher/examples/encypher_v2_demo.ipynb`](./encypher/examples/encypher_v2_demo.ipynb)
 
-This notebook covers key generation, basic and manifest format usage, and tamper detection using the latest version (v2.1.0+).
+This notebook covers key generation, basic and manifest format usage, and tamper detection using the latest version (v2.2.0+).
 
 ## Installation
 
@@ -120,7 +120,7 @@ current_timestamp = int(time.time())  # Current Unix timestamp (seconds since ep
 custom_payload = {
     "model_id": "gpt-4o-2024-05-13",
     "source_script": "README_quickstart",
-    "user_defined_version": "2.1.0" # Updated version
+    "user_defined_version": "2.2.0" # Updated version
 }
 
 # Embed metadata and sign
@@ -152,49 +152,39 @@ is_valid, extracted_signer_id, verified_payload = UnicodeMetadata.verify_metadat
 print(f"\nSignature valid: {is_valid}")
 if is_valid and verified_payload:
     print(f"Verified Signer ID: {extracted_signer_id}")
-    # Access attributes from the payload object (BasicPayload or ManifestPayload)
     print(f"Verified Timestamp: {verified_payload.timestamp}")
     print(f"Verified Custom Metadata: {verified_payload.custom_metadata}")
     print(f"Verified Format: {verified_payload.format}")
     print(f"Verified EncypherAI Spec Version: {verified_payload.version}")
 else:
     print("Metadata could not be verified or extracted.")
+```
 
-### Streaming Support
+### Streaming Example
 
 ```python
 from encypher.streaming.handlers import StreamingHandler
 from encypher.core.unicode_metadata import UnicodeMetadata # Added for verification
-from encypher.core.keys import generate_ed25519_key_pair # Assuming keys from previous example
+from encypher.core.keys import generate_ed25519_key_pair # Updated to specific key type
 from cryptography.hazmat.primitives.asymmetric.types import Ed25519PublicKey, Ed25519PrivateKey
 from typing import Optional, Dict, Union # Added Union
 import time
 from encypher.core.payloads import BasicPayload, ManifestPayload # For type hinting verified_payload
 
 # --- Assuming key setup from the 'Basic Encoding and Verification' example ---
-# reusing private_key, public_key, signer_id_example, and public_key_provider
-# If running this standalone, you'd need to redefine them, e.g.:
-# private_key_stream, public_key_stream = generate_ed25519_key_pair()
-# signer_id_stream = "readme-stream-signer-002"
-# public_keys_store_stream: Dict[str, Ed25519PublicKey] = { signer_id_stream: public_key_stream }
-# def public_key_provider_stream(signer_id: str) -> Optional[Ed25519PublicKey]:
-#     return public_keys_store_stream.get(signer_id)
-# For this example, we'll assume the previous `private_key`, `signer_id_example`,
-# and `public_key_provider` are in scope.
-# --- End of assumed key setup ---
 
-# Core information and custom payload for streaming
-stream_timestamp = int(time.time()) # Unix timestamp
+# Custom metadata for streaming example
+stream_timestamp = int(time.time())
 stream_custom_payload = {
-    "session_id": "live-readme-stream-002",
-    "content_type": "llm_response_chunked",
-    "user_defined_version": "2.1.0" # Updated version
+    "model_id": "gpt-4o-2024-05-13",
+    "source_script": "README_streaming_example",
+    "user_defined_version": "2.2.0" # Updated version
 }
 
-# Initialize StreamingHandler
+# Create a streaming handler
 handler = StreamingHandler(
-    private_key=private_key,        # From assumed key setup
-    signer_id=signer_id_example,    # From assumed key setup
+    private_key=private_key,
+    signer_id=signer_id_example,
     timestamp=stream_timestamp,
     custom_metadata=stream_custom_payload,
     # metadata_format defaults to "basic"
@@ -242,41 +232,34 @@ if is_stream_valid and stream_payload:
     print(f"Stream Verified EncypherAI Spec Version: {stream_payload.version}")
 else:
     print("Stream metadata could not be verified or extracted.")
+```
 
-## Features
+### Tamper Detection
 
-- **Invisible Encoding**: Embeds metadata without altering the visual appearance of text.
-- **Digital Signatures (Ed25519)**: Ensures data integrity and authenticity using strong cryptography. Metadata is signed with a private key and verified with a public key.
-- **Tamper Detection**: Any modification to the text or metadata will invalidate the signature.
-  ```python
-  # Assume encoded_text is from a trusted source and public_key_provider is defined
-  # encoded_text = "AI-generated text with embedded metadata..."
+EncypherAI's digital signatures enable tamper detection. Any modification to the text after signing will cause verification to fail:
 
-  # If an attacker tampers with 'encoded_text' to create 'tampered_text'
-  # tampered_text = encoded_text.replace("AI", "Artificial") # Example of tampering
+```python
+# Create tampered text by modifying a character in the encoded text
+tampered_text = encoded_text.replace("sample", "simple")
 
-  # Verification will fail for tampered_text:
-  # is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(
-  #    tampered_text, public_key_provider=public_key_provider
-  # )
-  # print(f"Is tampered text valid? {is_valid}") # Expected: False
-  ```
+# Verification will fail for tampered_text:
+# is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(
+#    tampered_text, public_key_provider=public_key_provider
+# )
+# print(f"Is tampered text valid? {is_valid}") # Expected: False
+```
+
+## Key Features
+
+- **Invisible Metadata**: Embed metadata in text without affecting its visible appearance or readability.
+- **Digital Signatures**: Cryptographically sign metadata to ensure authenticity and detect tampering.
 - **Streaming Support**: Process and embed metadata in real-time as text is generated or streamed.
 - **Customizable Metadata**: Embed any JSON-serializable information relevant to your application.
-- **Multiple Encoding Strategies**: Control where and how metadata is embedded (e.g., after the first word, at the end of text, distributed).
-- **Key Management**: Flexible public key resolution allows integration with various key storage and management systems.
-- **C2PA Inspired Manifests**: Supports a structured manifest format for detailed provenance, alongside a simpler basic format.
+- **Modular Architecture**: Clean separation of key management, payload handling, and signing operations.
 
-## Use Cases
-- **AI Content Attribution**: Identify the AI model and parameters used to generate text.
-- **Provenance Tracking**: Trace the origin and history of AI-generated content.
-- **Tamper Detection**: Ensure the integrity of LLM outputs in critical applications.
-- **Content Moderation**: Embed moderation flags or classifications directly within text.
-- **Workflow Automation**: Pass contextual information between stages of an AI pipeline.
+## Command Line Interface
 
-## CLI Usage
-
-The EncypherAI package includes a command-line interface (CLI) example (`encypher/examples/cli_example.py`) that demonstrates core functionalities. You can run it directly using Python.
+EncypherAI includes a command-line interface for quick encoding and decoding tasks.
 
 First, ensure you have generated a key pair. You can use the `generate-keys` command for this:
 
@@ -286,36 +269,21 @@ python -m encypher.examples.cli_example generate-keys --output-dir ./keys --sign
 ```
 This will create `private_key.pem` and `keys/my_signer_id.pem` (if `--output-dir ./keys` was used and `my_signer_id` was the signer ID).
 
-### Encoding Metadata
+### Encoding Text with Metadata
 
-To embed metadata into text:
+To encode text with metadata:
 
 ```bash
-# Encode metadata into a string
+# Basic encoding
 python -m encypher.examples.cli_example encode \
-    --text "This is a sample text generated by an AI model." \
-    --private-key-file ./keys/private_key.pem \
-    --signer-id my_signer_id \
-    --custom-metadata '{"project": "readme_example", "version": "2.1.0"}'
-
-# Encode metadata from an input file and save to an output file
-# (Create input.txt with some text first)
-# echo "Hello from input file." > input.txt
-python -m encypher.examples.cli_example encode \
-    --input-file input.txt \
-    --output-file output_encoded.txt \
-    --private-key-file ./keys/private_key.pem \
-    --signer-id my_signer_id \
-    --model-id "gpt-4o-mini" \
-    --timestamp $(date +%s) # Example for Unix timestamp (bash)
+  --text "This is a sample text generated by an AI model." \
+  --private-key ./keys/private_key.pem \
+  --signer-id my_signer_id
 ```
 
-**Key `encode` arguments:**
-*   `--text` OR `--input-file`: The text to process.
-*   `--private-key-file`: Path to your Ed25519 private key PEM file.
-*   `--signer-id`: The identifier associated with your key pair (used by the verifier to find the public key).
+Additional options:
 *   `--output-file`: Optional. File to save encoded text; otherwise, prints to stdout.
-*   `--custom-metadata`: Optional. A JSON string for your custom data (e.g., `'{"key": "value"}'`).
+*   `--custom-metadata`: Optional. A JSON string for your custom data (e.g., `'{\"key\": \"value\"}'`).
 *   `--timestamp`: Optional. Integer Unix timestamp. Defaults to current time.
 *   `--model-id`: Optional. Convenience for adding a model ID to custom metadata.
 
@@ -324,27 +292,19 @@ python -m encypher.examples.cli_example encode \
 To extract and verify metadata from text:
 
 ```bash
-# Decode metadata from a string (assuming output_encoded.txt contains the output from above)
-# Make sure the public key (e.g., keys/my_signer_id.pem) is in the specified directory.
+# Basic decoding
 python -m encypher.examples.cli_example decode \
-    --text "$(cat output_encoded.txt)" \
-    --public-key-dir ./keys
-
-# Decode metadata from an input file
-python -m encypher.examples.cli_example decode \
-    --input-file output_encoded.txt \
-    --public-key-dir ./keys
+  --text "Text with embedded metadata..." \
+  --public-key-dir ./keys
 ```
 
-**Key `decode` arguments:**
-*   `--text` OR `--input-file`: The encoded text to process.
-*   `--public-key-dir`: Directory containing public key PEM files. The CLI will look for `<signer_id>.pem` in this directory based on the `signer_id` embedded in the text.
+Additional options:
+*   `--output-file`: Optional. File to save decoded metadata; otherwise, prints to stdout.
+*   `--verify`: Optional. Verify the signature (default: True).
 
-For production use, set your key management and public key resolver according to your organization's security policies.
+## Development Setup
 
-## Development
-
-Clone the repository and set up the development environment using `uv`:
+To set up the project for development:
 
 ```bash
 # Install uv (if not already installed)
@@ -353,221 +313,11 @@ pip install uv
 # Install EncypherAI in editable mode for development
 uv pip install -e .
 ```
-Follow these instructions to make the following change to my code document.
 
-Instruction: Update README.md to align with encypher-ai v2.1.0, including package paths, version numbers, import statements, and API usage for UnicodeMetadata.embed_metadata and UnicodeMetadata.verify_metadata.
+## Migration Guide
 
-Code Edit:
-```
-{{ ... }}
-44:
-45: Check our [documentation](https://github.com/encypherai/encypher-ai/tree/main/docs/package/integration) for detailed integration examples and code snippets for each provider.
-{{ ... }}
-61: For a local demonstration, check out the detailed Jupyter Notebook example included in the repository:
-62: [`encypher/examples/encypher_v2_demo.ipynb`](./encypher/examples/encypher_v2_demo.ipynb)
-63:
-64: This notebook covers key generation, basic and manifest format usage, and tamper detection using the latest version (v2.1.0+).
-{{ ... }}
-79:
-80: > **Note:** Digital signatures require managing a private/public key pair. You can use the helper script `encypher/examples/generate_keys.py` to create your first key pair and get setup instructions, or generate keys programmatically as shown below.
-81:
-82: ### Basic Encoding and Verification
-83:
-84: ```python
-85: from encypher.core.unicode_metadata import UnicodeMetadata
-86: from encypher.core.keys import generate_ed25519_key_pair # Updated to specific key type
-87: from cryptography.hazmat.primitives.asymmetric.types import Ed25519PublicKey, Ed25519PrivateKey
-88: from typing import Optional, Dict, Union # Added Union
-89: import time
-90: from encypher.core.payloads import BasicPayload, ManifestPayload # For type hinting verified_payload
-91:
-92: # --- Key Management (Replace with your actual key management) ---
-93: # Generate a new Ed25519 key pair
-94: private_key: Ed25519PrivateKey
-95: public_key: Ed25519PublicKey
-96: private_key, public_key = generate_ed25519_key_pair()
-97: signer_id_example = "readme-signer-001" # Using signer_id
-98:
-99: # Store public keys (e.g., in a database or secure store)
-100: public_keys_store: Dict[str, Ed25519PublicKey] = { signer_id_example: public_key }
-101:
-102: # Create a provider function to look up public keys by ID
-103: def public_key_provider(signer_id: str) -> Optional[Ed25519PublicKey]: # Renamed and uses signer_id
-104:     return public_keys_store.get(signer_id)
-105: # -----------------------------------------------------------------
-106:
-107: # Core information for embedding
-108: current_timestamp = int(time.time())  # Current Unix timestamp (seconds since epoch)
-109:
-110: # Custom metadata payload (user-defined data)
-111: custom_payload = {
-112:     "model_id": "gpt-4o-2024-05-13",
-113:     "source_script": "README_quickstart",
-114:     "user_defined_version": "2.1.0" # Updated version
-115: }
-116:
-117: # Embed metadata and sign
-118: # The 'metadata_format' and 'version' (EncypherAI spec version) parameters for embed_metadata
-119: # default to "basic" and the latest spec version respectively.
-120: encoded_text = UnicodeMetadata.embed_metadata(
-121:     text="This is a sample text generated by an AI model.",
-122:     private_key=private_key,         # Private key for signing
-123:     signer_id=signer_id_example,     # Identifier for the key pair
-124:     timestamp=current_timestamp,     # Integer Unix timestamp
-125:     custom_metadata=custom_payload   # Your arbitrary metadata
-126: )
-127:
-128: # Extract metadata (without verification - returns the raw payload if successful)
-129: # This is useful for quick inspection but does not guarantee authenticity or integrity.
-130: extracted_unverified_payload = UnicodeMetadata.extract_metadata(encoded_text)
-131: print(f"Extracted (unverified) payload: {extracted_unverified_payload}")
-132:
-133: # Verify the signature and extract metadata using the public key provider
-134: # This is the recommended way to get trusted metadata.
-135: is_valid: bool
-136: extracted_signer_id: Optional[str]
-137: verified_payload: Union[BasicPayload, ManifestPayload, None] # Type hint for clarity
-138: is_valid, extracted_signer_id, verified_payload = UnicodeMetadata.verify_metadata(
-139:     text=encoded_text,
-140:     public_key_provider=public_key_provider
-141: )
-142:
-143: print(f"\nSignature valid: {is_valid}")
-144: if is_valid and verified_payload:
-145:     print(f"Verified Signer ID: {extracted_signer_id}")
-146:     # Access attributes from the payload object (BasicPayload or ManifestPayload)
-147:     print(f"Verified Timestamp: {verified_payload.timestamp}")
-148:     print(f"Verified Custom Metadata: {verified_payload.custom_metadata}")
-149:     print(f"Verified Format: {verified_payload.format}")
-150:     print(f"Verified EncypherAI Spec Version: {verified_payload.version}")
-151: else:
-152:     print("Metadata could not be verified or extracted.")
-153: ```
-154:
-155: ### Streaming Support
-156:
-157: ```python
-158: from encypher.streaming.handlers import StreamingHandler
-159: from encypher.core.unicode_metadata import UnicodeMetadata # Added for verification
-160: from encypher.core.keys import generate_ed25519_key_pair # Assuming keys from previous example
-161: from cryptography.hazmat.primitives.asymmetric.types import Ed25519PublicKey, Ed25519PrivateKey
-162: from typing import Optional, Dict, Union # Added Union
-163: import time
-164: from encypher.core.payloads import BasicPayload, ManifestPayload # For type hinting verified_payload
-165:
-166: # --- Assuming key setup from the 'Basic Encoding and Verification' example ---
-167: # reusing private_key, public_key, signer_id_example, and public_key_provider
-168: # If running this standalone, you'd need to redefine them, e.g.:
-169: # private_key_stream, public_key_stream = generate_ed25519_key_pair()
-170: # signer_id_stream = "readme-stream-signer-002"
-171: # public_keys_store_stream: Dict[str, Ed25519PublicKey] = { signer_id_stream: public_key_stream }
-172: # def public_key_provider_stream(signer_id: str) -> Optional[Ed25519PublicKey]:
-173: #     return public_keys_store_stream.get(signer_id)
-174: # For this example, we'll assume the previous `private_key`, `signer_id_example`,
-175: # and `public_key_provider` are in scope.
-176: # --- End of assumed key setup ---
-177:
-178: # Core information and custom payload for streaming
-179: stream_timestamp = int(time.time()) # Unix timestamp
-180: stream_custom_payload = {
-181:     "session_id": "live-readme-stream-002",
-182:     "content_type": "llm_response_chunked",
-183:     "user_defined_version": "2.1.0" # Updated version
-184: }
-185:
-186: # Initialize StreamingHandler
-187: handler = StreamingHandler(
-188:     private_key=private_key,        # From assumed key setup
-189:     signer_id=signer_id_example,    # From assumed key setup
-190:     timestamp=stream_timestamp,
-191:     custom_metadata=stream_custom_payload,
-192:     # metadata_format defaults to "basic"
-193:     # encode_first_chunk_only defaults to True, which is common for streaming
-194: )
-195:
-196: chunks = [
-197:     "This is ",
-198:     "a sample ",
-199:     "text generated ",
-200:     "by an AI model, delivered in chunks."
-201: ]
-202:
-203: full_response_from_stream = ""
-204: print("\nSimulating stream output:")
-205: for chunk in chunks:
-206:     processed_chunk = handler.process_chunk(chunk) # Aligned to process_chunk
-207:     if processed_chunk: # process_chunk might return None if it only buffers
-208:         print(processed_chunk, end="")
-209:         full_response_from_stream += processed_chunk
-210:
-211: # Complete the stream (important for final metadata embedding if not all chunks were processed)
-212: final_chunk = handler.finalize_stream()
-213: if final_chunk:
-214:     print(final_chunk, end="")
-215:     full_response_from_stream += final_chunk
-216: print("\n--- End of Stream ---")
-217:
-218: # Verify the full streamed text
-219: print(f"\nVerifying full streamed text: '{full_response_from_stream[:50]}...' ({len(full_response_from_stream)} chars)")
-220: is_stream_valid: bool
-221: stream_signer_id: Optional[str]
-222: stream_payload: Union[BasicPayload, ManifestPayload, None]
-223: is_stream_valid, stream_signer_id, stream_payload = UnicodeMetadata.verify_metadata(
-224:     text=full_response_from_stream,
-225:     public_key_provider=public_key_provider # Using the provider from basic example
-226: )
-227:
-228: print(f"\nStream signature valid: {is_stream_valid}")
-229: if is_stream_valid and stream_payload:
-230:     print(f"Stream Verified Signer ID: {stream_signer_id}")
-231:     print(f"Stream Verified Timestamp: {stream_payload.timestamp}")
-232:     print(f"Stream Verified Custom Metadata: {stream_payload.custom_metadata}")
-233:     print(f"Stream Verified Format: {stream_payload.format}")
-234:     print(f"Stream Verified EncypherAI Spec Version: {stream_payload.version}")
-235: else:
-236:     print("Stream metadata could not be verified or extracted.")
-237: ```
-{{ ... }}
+If you're upgrading from a previous version, check out our [Migration Guide](https://docs.encypherai.com/package/user-guide/migration-guide/) to learn about the new modular structure introduced in version 2.2.0.
 
-```
+## License
 
-Follow these instructions to make the following change to my code document.
-
-Instruction: Revert import paths and module execution paths from 'encypher_ai' back to 'encypher' in README.md code examples.
-
-Code Edit:
-```
-{{ ... }}
-```python
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_ed25519_key_pair # Updated to specific key type
-{{ ... }}
-from encypher.core.payloads import BasicPayload, ManifestPayload # For type hinting verified_payload
-{{ ... }}
-from encypher.streaming.handlers import StreamingHandler
-from encypher.core.unicode_metadata import UnicodeMetadata # Added for verification
-{{ ... }}
-> **Note:** Digital signatures require managing a private/public key pair. You can use the helper script `encypher/examples/generate_keys.py` to create your first key pair and get setup instructions, or generate keys programmatically as shown below.
-{{ ... }}
-$ python -m encypher.examples.cli_example generate-keys --key-dir ./my_app_keys --signer-id my-app-001
-{{ ... }}
-$ python -m encypher.examples.cli_example encode --text "Hello with metadata!" --private-key ./my_app_keys/my-app-001.pem --signer-id my-app-001 --custom '{"source":"cli_readme_example_v2.1.0"}'
-{{ ... }}
-$ python -m encypher.examples.cli_example decode --text "<encoded_text_from_above>" --public-key-dir ./my_app_keys
-{{ ... }}
-
-```
-
-Follow these instructions to make the following change to my code document.
-
-Instruction: Add GitHub Actions build status and latest release badges.
-
-Code Edit:
-```
-{{ ... }}
-[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![Build Status](https://github.com/encypherai/encypher-ai/actions/workflows/python-package.yml/badge.svg)](https://github.com/encypherai/encypher-ai/actions/workflows/python-package.yml)
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/encypherai/encypher-ai)](https://github.com/encypherai/encypher-ai/releases/latest)
-
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-{{ ... }}
+This project is licensed under the GNU Affero General Public License v3.0 - see the LICENSE file for details.

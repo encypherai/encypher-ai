@@ -99,7 +99,7 @@ text = "This is a sample text for advanced encoding."
 metadata = {
     "model": "gpt-4",
     "organization": "EncypherAI",
-    "version": "2.1.0"
+    "version": "2.2.0"
 }
 
 # Encode with enhanced metadata
@@ -199,7 +199,7 @@ texts = [
 metadata_template = {
     "model": "gpt-4",
     "organization": "EncypherAI",
-    "version": "2.1.0"
+    "version": "2.2.0"
 }
 
 # Process batch
@@ -310,7 +310,7 @@ metadata = {
     "model": "streaming-demo",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.1.0",
+    "version": "2.2.0",
     "key_id": "enhanced-stream-example"  # Required for verification
 }
 
@@ -450,7 +450,7 @@ metadata = {
     "model": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.1.0",
+    "version": "2.2.0",
     "key_id": key_id  # Required for verification
 }
 

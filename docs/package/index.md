@@ -32,6 +32,7 @@ With EncypherAI, you can:
 - [Quick Start Guide](getting-started/quickstart.md)
 - [Examples Overview](examples/index.md)
 - [V2.0 Demo Notebook](examples/encypher_v2_demo.ipynb)
+- [Migration Guide](user-guide/migration-guide.md)
 - [GitHub Repository](https://github.com/encypherai/encypher-ai)
 
 ## Why EncypherAI?

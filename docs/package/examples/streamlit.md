@@ -34,7 +34,7 @@ To run the Streamlit demo:
 
 ```bash
 # Install required dependencies
-pip install encypher-ai==2.1.0 streamlit
+pip install encypher-ai==2.2.0 streamlit
 
 # Run the demo app
 streamlit run https://raw.githubusercontent.com/EncypherAI/encypher/main/examples/streamlit_app.py
@@ -137,7 +137,7 @@ def basic_embedding():
                 "Timestamp:",
                 value=str(int(time.time()))
             )
-            version = st.text_input("Version:", value="2.1.0")
+            version = st.text_input("Version:", value="2.2.0")
 
         with col2:
             # Additional custom fields
@@ -307,7 +307,7 @@ with tabs[0]:
         model_id = st.text_input("Model ID:", value="gpt-4-demo")
         org = st.text_input("Organization:", value="StreamlitApp")
         timestamp = st.number_input("Timestamp:", value=int(time.time()))
-        version = st.text_input("Version:", value="2.1.0")
+        version = st.text_input("Version:", value="2.2.0")
 
     with col2:
         key_id_input = st.text_input("Key ID:", value=st.session_state.key_id)
@@ -460,7 +460,7 @@ with tabs[2]:
     metadata = {
         "model": "verification-demo",
         "timestamp": int(time.time()),
-        "version": "2.1.0",
+        "version": "2.2.0",
         "key_id": st.session_state.key_id,
     }
 
@@ -548,7 +548,7 @@ with tabs[3]:
         model_id = st.text_input("Model ID:", value="gpt-4-stream-demo")
         org = st.text_input("Organization:", value="StreamlitApp")
         timestamp = st.number_input("Timestamp:", value=int(time.time()))
-        version = st.text_input("Version:", value="2.1.0")
+        version = st.text_input("Version:", value="2.2.0")
         key_id_input = st.text_input("Key ID:", value=st.session_state.key_id, key="stream_key_id")
         metadata = {
             "model_id": model_id,

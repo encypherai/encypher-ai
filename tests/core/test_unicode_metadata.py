@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Optional, Tuple, cast
 import pytest
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
 
-from encypher.core.crypto_utils import generate_key_pair  # Needed for manual verification check
+from encypher.core.keys import generate_ed25519_key_pair as generate_key_pair  # Needed for manual verification check
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 
 # --- Test Fixtures ---

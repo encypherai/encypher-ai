@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from encypher.core.crypto_utils import generate_key_pair
+from encypher.core.keys import generate_ed25519_key_pair as generate_key_pair
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 
 

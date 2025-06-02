@@ -32,7 +32,7 @@ def encypher_manifest_to_c2pa_like_dict(manifest: Dict[str, Any]) -> Dict[str, A
 
     Example:
         ```python
-        from encypher.core.crypto_utils import ManifestPayload
+        from encypher.core.payloads import ManifestPayload
         from encypher.interop.c2pa import encypher_manifest_to_c2pa_like_dict
 
         # Original EncypherAI manifest

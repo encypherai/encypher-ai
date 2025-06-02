@@ -1,334 +1,48 @@
-import json
-from typing import Any, Dict, List, Literal, Optional, Tuple, TypedDict, Union, cast
+"""
+Backward compatibility module for crypto_utils.py.
 
-from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+This module re-exports functions and types from the new modular structure
+to maintain backward compatibility with existing code.
 
-from .logging_config import logger
+DEPRECATED: This module is maintained for backward compatibility only.
+New code should import directly from the appropriate modules:
+- encypher.core.keys
+- encypher.core.payloads
+- encypher.core.signing
+"""
 
-# --- TypedDict Definitions for Metadata Payloads ---
+import warnings
 
+# Import from new modules
+from .keys import generate_ed25519_key_pair as generate_key_pair
+from .keys import load_private_key_from_data as load_private_key
+from .keys import load_public_key_from_data as load_public_key
+from .payloads import BasicPayload, ManifestAction, ManifestAiInfo, ManifestPayload, OuterPayload, serialize_payload
+from .signing import sign_payload, verify_signature
 
-class BasicPayload(TypedDict):
-    """Structure for the 'basic' metadata format payload."""
+# Issue deprecation warning
+warnings.warn(
+    "The crypto_utils module is deprecated and will be removed in a future version. "
+    "Please update your imports to use the new module structure: "
+    "encypher.core.keys, encypher.core.payloads, and encypher.core.signing.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
-    model_id: Optional[str]
-    timestamp: Optional[str]  # Recommended: ISO 8601 UTC format string
-    custom_metadata: Dict[str, Any]
-
-
-class ManifestAction(TypedDict):
-    """
-    Structure for an assertion within the 'manifest' payload.
-
-    Conceptually similar to C2PA assertions, these represent
-    operations performed on the content. The naming convention for assertion labels
-    follows C2PA patterns (e.g., "c2pa.created", "c2pa.transcribed") to
-    maintain conceptual alignment with the broader provenance ecosystem.
-    """
-
-    label: str  # e.g., "c2pa.created", "c2pa.transcribed"
-    when: str  # ISO 8601 UTC format string
-    # Add other optional C2PA assertion fields if needed, e.g.:
-    # softwareAgent: Optional[str]
-    # digitalSourceType: Optional[str]
-
-
-class ManifestAiInfo(TypedDict, total=False):
-    """
-    Optional structure for AI-specific info within the 'manifest' payload.
-
-    This represents a custom assertion type focused on AI-specific attributes,
-    similar to how C2PA allows for specialized assertion types. For AI-generated
-    content, this provides critical provenance information about the model used.
-    """
-
-    model_id: str
-    model_version: Optional[str]
-    # Add other relevant AI fields
-
-
-class ManifestPayload(TypedDict):
-    """
-    Structure for the 'manifest' metadata format payload.
-
-    Inspired by the Coalition for Content Provenance and Authenticity (C2PA) manifests,
-    this structure provides a standardized way to embed provenance information
-    directly within text content. While C2PA focuses on rich media file formats,
-    EncypherAI adapts these concepts specifically for plain-text use cases where
-    traditional file embedding methods aren't applicable.
-
-    The manifest includes information about:
-    - The software/tool that generated the claim (claim_generator)
-    - A list of assertions about the content (conceptually similar to C2PA assertions)
-    - AI-specific assertion when relevant (ai_assertion)
-    - Custom claims for extensibility
-    - Timestamp information
-    """
-
-    claim_generator: str
-    assertions: List[ManifestAction]
-    ai_assertion: Optional[ManifestAiInfo]
-    custom_claims: Dict[str, Any]
-    timestamp: Optional[str]  # ISO 8601 UTC format string (Consider if needed alongside assertions' 'when')
-
-
-class OuterPayload(TypedDict):
-    """
-    The complete outer structure embedded into the text.
-
-    This structure wraps either a basic payload or a C2PA-inspired manifest payload,
-    adding cryptographic integrity through digital signatures. Similar to C2PA's
-    approach of ensuring tamper-evidence through cryptographic signing, this
-    structure enables verification of content authenticity and integrity in
-    plain-text environments.
-    """
-
-    format: Literal["basic", "manifest"]
-    signer_id: str
-    payload: Union[BasicPayload, ManifestPayload]  # The signed part
-    signature: str  # Base64 encoded signature string
-
-
-# --- End TypedDict Definitions ---
-
-
-def generate_key_pair() -> Tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
-    """
-    Generates an Ed25519 key pair.
-
-    Returns:
-        Tuple containing the private and public keys.
-    """
-    try:
-        logger.debug("Generating new Ed25519 key pair.")
-        private_key = ed25519.Ed25519PrivateKey.generate()
-        logger.info("Successfully generated Ed25519 private key.")
-        public_key = private_key.public_key()
-        logger.debug("Successfully generated corresponding Ed25519 public key.")
-        return private_key, public_key
-    except Exception as e:
-        logger.error(f"Failed to generate Ed25519 key pair: {e}", exc_info=True)
-        raise
-
-
-def sign_payload(private_key: PrivateKeyTypes, payload_bytes: bytes) -> bytes:
-    """
-    Signs the payload bytes using the private key (Ed25519).
-
-    Args:
-        private_key: The Ed25519 private key object.
-        payload_bytes: The canonical bytes of the payload to sign.
-
-    Returns:
-        The signature bytes.
-
-    Raises:
-        TypeError: If the provided key is not an Ed25519 private key.
-    """
-    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-        logger.error(f"Signing aborted: Incorrect private key type provided " f"({type(private_key)}). Expected Ed25519PrivateKey.")
-        raise TypeError("Signing requires an Ed25519PrivateKey instance.")
-
-    logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes) with Ed25519 key.")
-    try:
-        signature = private_key.sign(payload_bytes)
-        logger.info(f"Successfully signed payload (signature length: {len(signature)} bytes).")
-        return cast(bytes, signature)
-    except Exception as e:
-        logger.error(f"Signing operation failed: {e}", exc_info=True)
-        raise RuntimeError(f"Signing failed: {e}")
-
-
-def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature: bytes) -> bool:
-    """
-    Verifies the signature against the payload using the public key (Ed25519).
-
-    Args:
-        public_key: The Ed25519 public key object.
-        payload_bytes: The canonical bytes of the payload that was signed.
-        signature: The signature bytes to verify.
-
-    Returns:
-        True if the signature is valid, False otherwise.
-
-    Raises:
-        TypeError: If the provided key is not an Ed25519 public key.
-    """
-    if not isinstance(public_key, ed25519.Ed25519PublicKey):
-        logger.error(f"Verification aborted: Incorrect public key type provided " f"({type(public_key)}). Expected Ed25519PublicKey.")
-        raise TypeError("Verification requires an Ed25519PublicKey instance.")
-
-    logger.debug(f"Attempting to verify signature (len={len(signature)}) against payload (len={len(payload_bytes)}) " f"using Ed25519 public key.")
-    try:
-        public_key.verify(signature, payload_bytes)
-        logger.info("Signature verification successful.")
-        return True
-    except InvalidSignature:
-        logger.warning("Signature verification failed: Invalid signature.")
-        return False
-    except Exception as e:
-        logger.error(f"Unexpected error during verification: {e}", exc_info=True)
-        raise RuntimeError(f"Verification process failed unexpectedly: {e}") from e
-
-
-def serialize_payload(payload: Dict[str, Any]) -> bytes:
-    """
-    Serializes the metadata payload dictionary into canonical JSON bytes.
-    Ensures keys are sorted and uses compact separators for consistency.
-
-    Args:
-        payload: The dictionary payload.
-
-    Returns:
-        UTF-8 encoded bytes of the canonical JSON string.
-    """
-    payload_type = type(payload).__name__
-    logger.debug(f"Attempting to serialize payload of type: {payload_type}")
-    try:
-        serialized_data = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    except TypeError as e:
-        logger.error(f"Serialization failed for payload type {payload_type}: {e}", exc_info=True)
-        raise TypeError(f"Payload is not JSON serializable: {e}")
-    except Exception as e:
-        logger.error(
-            f"Unexpected error during serialization of {payload_type}: {e}",
-            exc_info=True,
-        )
-        raise
-
-    logger.debug(f"Successfully serialized {payload_type} payload ({len(serialized_data)} bytes).")
-    return serialized_data
-
-
-def load_private_key(key_data: Union[bytes, str], password: Optional[bytes] = None) -> ed25519.Ed25519PrivateKey:
-    """
-    Loads an Ed25519 private key from PEM-encoded bytes or string,
-    or from raw bytes (32 bytes).
-
-    Args:
-        key_data: PEM string/bytes or raw private key bytes.
-        password: Optional password for encrypted PEM keys.
-
-    Returns:
-        Ed25519 private key object.
-
-    Raises:
-        ValueError: If the key format is invalid or unsupported.
-        TypeError: If key_data has an invalid type.
-    """
-    input_was_string = isinstance(key_data, str)
-    key_data_bytes: bytes
-
-    if input_was_string:
-        logger.debug("Received private key as string, encoding to ASCII for PEM processing.")
-        try:
-            key_data_bytes = key_data.encode("ascii")  # type: ignore
-        except UnicodeEncodeError:
-            logger.error("Failed to encode private key string to ASCII.")
-            raise ValueError("Private key string contains non-ASCII characters, expected PEM format.")
-    elif isinstance(key_data, bytes):
-        key_data_bytes = key_data
-    else:
-        logger.error(f"Invalid type for key_data: {type(key_data)}.")
-        raise TypeError("key_data must be bytes or a PEM string")
-
-    # --- Process key_data_bytes ---
-    logger.debug(f"Processing private key data ({len(key_data_bytes)} bytes).")
-
-    # Check for PEM formats first
-    if b"-----BEGIN PRIVATE KEY-----" in key_data_bytes:  # Unencrypted PKCS8
-        logger.debug("Detected unencrypted PKCS8 PEM format.")
-        try:
-            loaded_key = serialization.load_pem_private_key(
-                key_data_bytes,
-                password=None,  # Explicitly None for unencrypted
-            )
-            if isinstance(loaded_key, ed25519.Ed25519PrivateKey):
-                logger.info("Successfully loaded Ed25519 private key from unencrypted PEM.")
-                return loaded_key
-            else:
-                logger.warning(f"PEM data yielded unexpected key type: {type(loaded_key)}.")
-                raise ValueError("PEM data did not yield an Ed25519 private key")
-        except Exception as e:
-            logger.error(f"Failed to load unencrypted PEM private key: {e}", exc_info=True)
-            raise ValueError(f"Failed to load unencrypted PEM private key: {e}")
-
-    elif b"-----BEGIN ENCRYPTED PRIVATE KEY-----" in key_data_bytes:
-        logger.debug("Detected encrypted PKCS8 PEM format.")
-        if password is None:
-            logger.error("Password required for encrypted private key, but none provided.")
-            raise ValueError("Password required for encrypted private key")
-        try:
-            loaded_key = serialization.load_pem_private_key(
-                key_data_bytes,
-                password=password,
-            )
-            if isinstance(loaded_key, ed25519.Ed25519PrivateKey):
-                logger.info("Successfully loaded Ed25519 private key from encrypted PEM.")
-                return loaded_key
-            else:
-                logger.warning(f"Encrypted PEM data yielded unexpected key type: {type(loaded_key)}.")
-                raise ValueError("Encrypted PEM data did not yield an Ed25519 private key")
-        except Exception as e:
-            logger.error(f"Failed to load encrypted PEM private key: {e}", exc_info=True)
-            raise ValueError(f"Failed to load encrypted PEM private key: {e}")
-
-    # Check for raw bytes (only if input wasn't a string)
-    elif not input_was_string and len(key_data_bytes) == 32:
-        logger.debug("Detected potential raw Ed25519 private key (32 bytes).")
-        try:
-            key = ed25519.Ed25519PrivateKey.from_private_bytes(key_data_bytes)
-            logger.info("Successfully loaded Ed25519 private key from raw bytes.")
-            return key
-        except Exception as e:
-            logger.error(f"Failed to load raw private key bytes: {e}", exc_info=True)
-            raise ValueError(f"Failed to load raw private key bytes: {e}")
-
-    # If none of the above matched
-    logger.error("Private key data does not match expected PEM formats or raw byte length.")
-    if input_was_string:
-        raise ValueError("Invalid PEM format in string key_data")
-    else:  # Input was bytes, but not PEM or correct raw length
-        raise ValueError("Invalid private key byte length or format (expected PEM or 32 raw bytes)")
-
-
-def load_public_key(key_data: Union[bytes, str]) -> ed25519.Ed25519PublicKey:
-    """
-    Loads an Ed25519 public key from PEM-encoded bytes or string,
-    or from raw bytes (32 bytes).
-
-    Args:
-        key_data: PEM string/bytes or raw public key bytes.
-
-    Returns:
-        Ed25519 public key object.
-
-    Raises:
-        ValueError: If the key format is invalid or unsupported.
-        TypeError: If key_data has an invalid type.
-    """
-    if isinstance(key_data, str):
-        key_data = key_data.encode("utf-8")  # Assume PEM if string
-
-    if isinstance(key_data, bytes):
-        if b"-----BEGIN PUBLIC KEY-----" in key_data:  # Check for PEM format (SPKI)
-            try:
-                loaded_key = serialization.load_pem_public_key(key_data)
-                if isinstance(loaded_key, ed25519.Ed25519PublicKey):
-                    return loaded_key
-                else:
-                    raise ValueError("PEM data is not an Ed25519 public key")
-            except Exception as e:
-                raise ValueError(f"Failed to load PEM public key: {e}")
-        elif len(key_data) == 32:  # Ed25519 public key is 32 bytes
-            try:
-                return ed25519.Ed25519PublicKey.from_public_bytes(key_data)
-            except Exception as e:
-                raise ValueError(f"Failed to load raw public key bytes: {e}")
-        else:
-            raise ValueError("Invalid public key byte length or format")
-    else:
-        raise TypeError("key_data must be bytes or a PEM string")
+# Re-export all relevant types and functions for backward compatibility
+__all__ = [
+    # From keys.py
+    "generate_key_pair",
+    "load_private_key",
+    "load_public_key",
+    # From payloads.py
+    "BasicPayload",
+    "ManifestAction",
+    "ManifestAiInfo",
+    "ManifestPayload",
+    "OuterPayload",
+    "serialize_payload",
+    # From signing.py
+    "sign_payload",
+    "verify_signature",
+]

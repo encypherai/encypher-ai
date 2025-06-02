@@ -390,6 +390,3 @@ def test_verify_failure_corrupt_signature(test_keys, basic_payload_data: BasicPa
     retrieved_sig_bytes = base64.urlsafe_b64decode(outer_payload_data["signature"] + "===")
     is_valid = verify_signature(public_key, retrieved_payload_bytes, retrieved_sig_bytes)
     assert is_valid is False
-
-
-# --- Key Loading/Saving Tests --- (If applicable, add tests for load/save functions)
