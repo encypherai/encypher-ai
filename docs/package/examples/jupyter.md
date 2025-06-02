@@ -7,7 +7,7 @@ This page provides examples of using EncypherAI in Jupyter Notebooks, allowing y
 If you don't already have Jupyter installed, you can install it along with EncypherAI:
 
 ```bash
-uv pip install encypher-ai==2.1.0 jupyter
+uv pip install encypher-ai==2.2.0 jupyter
 ```
 
 ## Basic Example Notebook
@@ -52,7 +52,7 @@ metadata = {
     "model": "example-model",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.1.0",
+    "version": "2.2.0",
     "key_id": key_id  # Required for verification
 }
 
@@ -138,7 +138,7 @@ metadata = {
     "model": "example-model",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.1.0",
+    "version": "2.2.0",
     "key_id": key_id  # Required for verification
 }
 
@@ -265,7 +265,7 @@ metadata = {
     "model": "streaming-example",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.1.0",
+    "version": "2.2.0",
     "key_id": key_id  # Required for verification
 }
 
@@ -367,7 +367,7 @@ metadata = {
     "model": "tamper-detection-demo",
     "organization": "EncypherAI",
     "timestamp": int(time.time()),
-    "version": "2.1.0",
+    "version": "2.2.0",
     "key_id": key_id  # Required for verification
 }
 
@@ -489,7 +489,7 @@ text = "This text will have custom metadata embedded."
 metadata = {
     "model": "custom-example",
     "user_id": "user123",
-    "version": "2.1.0"
+    "version": "2.2.0"
 }
 
 # Embed metadata

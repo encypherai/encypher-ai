@@ -40,7 +40,8 @@ from rich.json import JSON
 from rich.panel import Panel
 from rich.syntax import Syntax
 
-from encypher.core.crypto_utils import BasicPayload, ManifestPayload, generate_key_pair
+from encypher.core.keys import generate_ed25519_key_pair as generate_key_pair
+from encypher.core.payloads import BasicPayload, ManifestPayload
 from encypher.core.unicode_metadata import UnicodeMetadata
 
 # --- End imports for self-testing ---
@@ -59,7 +60,7 @@ EXAMPLE_PUBLIC_KEY_PROVIDER: Optional[Callable[[str], Optional[Ed25519PublicKey]
 app = FastAPI(
     title="Encypher FastAPI Example API",
     description="Example API for Encypher metadata encoding with digital signatures",
-    version="2.1.0",
+    version="2.2.0",
 )
 
 console = Console()  # For self-testing output
@@ -193,7 +194,7 @@ async def decode_text(request: DecodeRequest):
     try:
         # Unpacking is (is_valid_bool, signer_id_str, payload_dict_or_model)
         # Runtime observation with local package: payload is a dict -> This comment is outdated.
-        # With v2.1.0, extracted_payload will be a BasicPayload or ManifestPayload object, or None.
+        # With v2.2.0, extracted_payload will be a BasicPayload or ManifestPayload object, or None.
         is_valid: bool
         extracted_signer_id: Optional[str]
         verified_payload_object: Union[BasicPayload, ManifestPayload, None]
@@ -248,7 +249,7 @@ def run_tests(base_url="http://127.0.0.1:8000"):
     session = requests.Session()
     test_text = "This is a test sentence for the FastAPI example self-test!"
     test_signer_id = DEFAULT_SIGNER_ID  # Use the one for which keys are auto-generated
-    test_custom_metadata = {"source": "fastapi_self_test", "version": "2.1.0", "status": "testing"}
+    test_custom_metadata = {"source": "fastapi_self_test", "version": "2.2.0", "status": "testing"}
 
     # --- Encode Test ---
     console.print(Panel("1. Testing /encode Endpoint", style="bold green"))

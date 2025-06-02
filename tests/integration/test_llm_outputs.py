@@ -9,7 +9,7 @@ from typing import Callable, Optional, Tuple
 import pytest
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
 
-from encypher.core.crypto_utils import generate_key_pair  # Import key gen
+from encypher.core.keys import generate_ed25519_key_pair as generate_key_pair  # Import key gen
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 from encypher.streaming.handlers import StreamingHandler
 

@@ -11,7 +11,7 @@ Before you begin, make sure you have:
 3. (Optional) An LLM provider API key if you're integrating with an LLM
 
 ```bash
-uv pip install encypher-ai==2.1.0 fastapi uvicorn python-multipart
+uv pip install encypher-ai==2.2.0 fastapi uvicorn python-multipart
 ```
 
 ## Complete FastAPI Application
@@ -92,7 +92,7 @@ public_pem = public_key.public_bytes(
 app = FastAPI(
     title="EncypherAI Demo",
     description="API for embedding and extracting metadata in text using Digital Signatures",
-    version="2.1.0"
+    version="2.2.0"
 )
 
 # Add CORS middleware
@@ -179,7 +179,7 @@ with open("templates/index.html", "w") as f:
     "model": "gpt-4",
     "organization": "EncypherAI",
     "timestamp": 1742713200,
-    "version": "2.1.0"
+    "version": "2.2.0"
 }</textarea>
                         </div>
                         <div class="mb-3">
@@ -422,7 +422,7 @@ async def generate_with_openai(
             "organization": "EncypherAI",
             "timestamp": int(time.time()),
             "prompt": prompt,
-            "version": "2.1.0"
+            "version": "2.2.0"
         }
 
         # Handle streaming
@@ -567,7 +567,7 @@ data = {
         "model": "gpt-4",
         "organization": "EncypherAI",
         "timestamp": int(time.time()),
-        "version": "2.1.0"
+        "version": "2.2.0"
     },
     "target": "whitespace"
 }

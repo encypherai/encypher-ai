@@ -8,14 +8,14 @@ from typing import Any, Dict, Optional, Tuple, cast
 import pytest
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
 from cryptography.hazmat.primitives.serialization import KeySerializationEncryption
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
 
+from encypher.core.signing import sign_payload, verify_signature
 from encypher.core.keys import generate_ed25519_key_pair as generate_key_pair
 from encypher.core.keys import load_private_key_from_data as load_private_key
 from encypher.core.keys import load_public_key_from_data as load_public_key
 from encypher.core.payloads import BasicPayload, ManifestAction, ManifestAiInfo, ManifestPayload, OuterPayload, serialize_payload
-from encypher.core.signing import sign_payload, verify_signature
 
 # --- Helper functions to replace missing functionality ---
 
@@ -390,6 +390,3 @@ def test_verify_failure_corrupt_signature(test_keys, basic_payload_data: BasicPa
     retrieved_sig_bytes = base64.urlsafe_b64decode(outer_payload_data["signature"] + "===")
     is_valid = verify_signature(public_key, retrieved_payload_bytes, retrieved_sig_bytes)
     assert is_valid is False
-
-
-# --- Key Loading/Saving Tests --- (If applicable, add tests for load/save functions)

@@ -21,8 +21,9 @@ from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, Pub
 from deprecated import deprecated
 
 from .constants import MetadataTarget
-from .crypto_utils import BasicPayload, ManifestPayload, OuterPayload, serialize_payload, sign_payload, verify_signature
 from .logging_config import logger
+from .payloads import BasicPayload, ManifestPayload, OuterPayload, serialize_payload
+from .signing import sign_payload, verify_signature
 
 
 class UnicodeMetadata:
