@@ -4,7 +4,7 @@ Security utilities for authentication and authorization.
 from datetime import datetime, timedelta
 from typing import Any, Union, Optional
 
-from jose import jwt
+from jose import jwt, JWTError
 from passlib.context import CryptContext
 
 from app.core.config import settings
@@ -62,3 +62,23 @@ def get_password_hash(password: str) -> str:
         Hashed password
     """
     return pwd_context.hash(password)
+
+
+def decode_access_token(token: str) -> dict:
+    """
+    Decode and validate a JWT access token.
+    
+    Args:
+        token: JWT token to decode
+        
+    Returns:
+        Decoded token payload
+        
+    Raises:
+        JWTError: If token is invalid or expired
+    """
+    return jwt.decode(
+        token, 
+        settings.SECRET_KEY, 
+        algorithms=[settings.ALGORITHM]
+    )

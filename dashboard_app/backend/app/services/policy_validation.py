@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime
 from sqlalchemy import func, and_, or_, select, delete 
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.utils.caching import cached_async, invalidate_cache
 
 from app.models.policy_validation import PolicySchema, PolicyValidationResult
 from app.schemas.policy_validation import (
@@ -88,8 +89,13 @@ async def create_validation_result(db: AsyncSession, result_in: PolicyValidation
     db.add(result)
     await db.commit()
     await db.refresh(result)
+    
+    # Invalidate stats cache when new data is added
+    invalidate_cache("policy_validation_stats")
+    
     return result
 
+@cached_async(key_prefix="policy_validation_stats", ttl_seconds=300)
 async def get_validation_stats(db: AsyncSession, filters: Optional[PolicyValidationFilters] = None) -> PolicyValidationStats:
     """
     Get validation statistics for dashboard.

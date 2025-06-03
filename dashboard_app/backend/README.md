@@ -8,7 +8,7 @@ This is the FastAPI backend for the EncypherAI Compliance Readiness Dashboard. I
 - **Audit Logs**: Endpoints for retrieving and analyzing audit log data
 - **Policy Validation**: Endpoints for policy schemas and validation results
 - **CLI Integration**: Endpoints for running the audit_log_cli and policy_validator_cli tools
-- **Database**: SQLAlchemy ORM with PostgreSQL database
+- **Database**: Async SQLAlchemy ORM with PostgreSQL or SQLite database
 
 ## Setup
 
@@ -20,12 +20,19 @@ This is the FastAPI backend for the EncypherAI Compliance Readiness Dashboard. I
    source .venv/bin/activate  # Linux/macOS
    .venv\Scripts\activate     # Windows PowerShell
    ```
-4. Install dependencies (including PostgreSQL driver - ensure `psycopg2-binary` or `asyncpg` is in your `pyproject.toml`):
+4. Install dependencies:
    ```bash
    uv pip sync
    ```
-   *Note: If `psycopg2-binary` (for synchronous operations) or `asyncpg` (for asynchronous operations with FastAPI) is not yet in `pyproject.toml`, you'll need to add it: `uv pip install psycopg2-binary` or `uv pip install asyncpg`.*
-5. **Set up PostgreSQL**:
+   *Note: For database drivers, ensure you have the appropriate async driver installed:*
+   - *For SQLite (development): `uv pip install aiosqlite`*
+   - *For PostgreSQL (production): `uv pip install asyncpg`*
+5. **Set up Database**:
+   
+   **For Development (SQLite)**:
+   No additional setup is required as SQLite creates a file-based database.
+   
+   **For Production (PostgreSQL)**:
    Ensure you have a PostgreSQL server running and accessible. You can install it directly or use Docker:
    ```bash
    # Example using Docker:
@@ -37,17 +44,25 @@ This is the FastAPI backend for the EncypherAI Compliance Readiness Dashboard. I
    ```bash
    cp .env.example .env
    ```
-   Edit the `.env` file, ensuring the `DATABASE_URL` points to your PostgreSQL instance and other settings (like `SECRET_KEY`) are correctly configured.
+   Edit the `.env` file to configure your database connection:
+   
+   **For Development (SQLite)**:
+   ```
+   DATABASE_URL=sqlite+aiosqlite:///./encypherai_dashboard.db
+   ```
+   
+   **For Production (PostgreSQL)**:
+   ```
+   DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/appdb_dev
+   ```
+   
+   Also ensure other settings (like `SECRET_KEY`) are correctly configured.
 
 ## Database Initialization
 
-Before running the application for the first time, or if you've made changes to your SQLAlchemy models, you'll need to ensure the database schema is created in your PostgreSQL database. 
+The application uses async SQLAlchemy with either SQLite (for development) or PostgreSQL (for production). The database tables are created automatically when running the initialization script.
 
-If the application uses SQLAlchemy's `create_all` on startup (often in `main.py` or `database.py` for development), tables might be created automatically. 
-
-Alternatively, if you are using a migration tool like Alembic, you would run migration commands here. (Instructions for Alembic would be added if it's implemented).
-
-To initialize the database with sample data (after tables are created), run:
+To initialize the database with sample data, run:
 
 
 ```bash

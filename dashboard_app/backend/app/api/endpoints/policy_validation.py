@@ -99,8 +99,8 @@ async def read_validation_results(
     )
     return await get_validation_results(db, filters=filters, skip=skip, limit=limit) # Anticipating async service
 
-@router.get("/stats", response_model=PolicyValidationStats)
-async def read_validation_stats(
+@router.get("/stats")
+async def read_policy_validation_stats(
     db: AsyncSession = Depends(get_db),
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
@@ -109,7 +109,7 @@ async def read_validation_stats(
     current_user: User = Depends(get_current_user)
 ) -> Any:
     """
-    Get validation statistics for dashboard.
+    Get policy validation statistics for dashboard.
     """
     filters = PolicyValidationFilters(
         start_date=start_date,
@@ -117,7 +117,12 @@ async def read_validation_stats(
         policy_schema_id=policy_schema_id,
         department=department
     )
-    return await get_validation_stats(db, filters=filters) # Anticipating async service
+    # Get the base stats
+    stats = await get_validation_stats(db, filters=filters)
+    
+    # Transform to match frontend expectations
+    from app.utils.stats_transformers import transform_validation_stats
+    return transform_validation_stats(stats, start_date, end_date) # Anticipating async service
 
 @router.get("/results/{result_id}", response_model=PolicyValidationResult)
 async def read_validation_result(

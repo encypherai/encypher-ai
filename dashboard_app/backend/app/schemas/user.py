@@ -1,7 +1,7 @@
 """
 Pydantic schemas for user-related API requests and responses.
 """
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
 
 class UserBase(BaseModel):
@@ -56,3 +56,46 @@ class Token(BaseModel):
 class TokenPayload(BaseModel):
     """Schema for token payload."""
     sub: Optional[int] = None
+
+
+class PasswordResetRequest(BaseModel):
+    """Schema for requesting a password reset."""
+    email: EmailStr
+
+
+class PasswordReset(BaseModel):
+    """Schema for resetting a password."""
+    token: str
+    new_password: str = Field(..., min_length=8)
+    confirm_password: str = Field(..., min_length=8)
+    
+    @validator('confirm_password')
+    def passwords_match(cls, v, values):
+        if 'new_password' in values and v != values['new_password']:
+            raise ValueError('Passwords do not match')
+        return v
+
+
+class TokenRefresh(BaseModel):
+    """Schema for token refresh requests"""
+    token: str
+    remember_me: bool = False
+
+
+class UserProfileUpdate(BaseModel):
+    """Schema for updating user profile information.
+    
+    This schema is specifically for the /profile endpoint where users can update
+    their own profile information, but with more limited fields than the admin UserUpdate.
+    """
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    email: Optional[EmailStr] = None
+    current_password: Optional[str] = None
+    new_password: Optional[str] = Field(None, min_length=8)
+    
+    @validator('new_password')
+    def password_requires_current(cls, v, values):
+        if v is not None and 'current_password' not in values:
+            raise ValueError('Current password is required to set a new password')
+        return v

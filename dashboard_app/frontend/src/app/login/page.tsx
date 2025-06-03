@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
+import Link from 'next/link';
 import { useAuth } from '@/lib/auth';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
@@ -10,6 +11,7 @@ import Button from '@/components/ui/Button';
 interface LoginFormData {
   email: string;
   password: string;
+  rememberMe: boolean;
 }
 
 export default function LoginPage() {
@@ -28,7 +30,7 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       setError(null);
-      await login(data.email, data.password);
+      await login(data.email, data.password, data.rememberMe);
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
@@ -83,11 +85,25 @@ export default function LoginPage() {
               })}
             />
 
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center">
+                <input
+                  id="rememberMe"
+                  type="checkbox"
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  {...register('rememberMe')}
+                />
+                <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+                  Remember me
+                </label>
+              </div>
               <div className="text-sm">
-                <a href="#" className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300">
+                <Link 
+                  href="/forgot-password" 
+                  className="font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
+                >
                   Forgot your password?
-                </a>
+                </Link>
               </div>
             </div>
             

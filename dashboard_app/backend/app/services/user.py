@@ -12,8 +12,9 @@ from pydantic import ValidationError
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import verify_password
+from app.core.security import verify_password, get_password_hash, decode_access_token
 from app.models.user import User
+from app.models.blacklisted_token import BlacklistedToken
 from app.schemas.user import TokenPayload
 
 # OAuth2 password bearer for token authentication
@@ -87,40 +88,40 @@ async def authenticate_user(db: AsyncSession, username: str, password: str) -> O
     return user
 
 async def get_current_user(
-    db: AsyncSession = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
 ) -> User:
     """
-    Get the current authenticated user.
-    
-    Args:
-        db: Database session
-        token: JWT token
-        
-    Returns:
-        User object
-        
-    Raises:
-        HTTPException: If authentication fails
+    Get the current user from the token.
     """
-    try:
-        payload = jwt.decode(
-            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        token_data = TokenPayload(**payload)
-    except (JWTError, ValidationError):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
     
-    user = await get_user(db, token_data.sub)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+    try:
+        # Check if token is blacklisted
+        stmt = select(BlacklistedToken).where(BlacklistedToken.token == token)
+        result = await db.execute(stmt)
+        blacklisted = result.scalars().first()
+        
+        if blacklisted:
+            raise credentials_exception
+        
+        payload = decode_access_token(token)
+        user_id: int = payload.get("sub")
+        if user_id is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    user = await get_user(db, user_id)
+    if user is None:
+        raise credentials_exception
+    
+    # Attach the token to the user object for logout functionality
+    user.token = token
     
     if not user.is_active:
         raise HTTPException(
@@ -182,4 +183,75 @@ async def create_user(db: AsyncSession, username: str, email: str, password: str
     await db.commit()
     await db.refresh(user)
     
+    return user
+
+
+async def get_users(db: AsyncSession, skip: int = 0, limit: int = 100) -> list[User]:
+    """
+    Get a list of users with pagination.
+    
+    Args:
+        db: Database session
+        skip: Number of users to skip
+        limit: Maximum number of users to return
+        
+    Returns:
+        List of User objects
+    """
+    result = await db.execute(select(User).offset(skip).limit(limit))
+    return result.scalars().all()
+
+
+async def get_user_by_id(db: AsyncSession, user_id: int) -> Optional[User]:
+    """
+    Get a user by ID. Alias for get_user for consistent naming.
+    
+    Args:
+        db: Database session
+        user_id: User ID
+        
+    Returns:
+        User object if found, None otherwise
+    """
+    return await get_user(db, user_id)
+
+
+async def update_user(db: AsyncSession, db_user_id: int, user_in: Any) -> User:
+    """
+    Update a user.
+    
+    Args:
+        db: Database session
+        db_user_id: User ID to update
+        user_in: User update data
+        
+    Returns:
+        Updated User object
+        
+    Raises:
+        HTTPException: If user not found
+    """
+    user = await get_user(db, db_user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    # Convert to dict if it's a Pydantic model
+    update_data = user_in if isinstance(user_in, dict) else user_in.dict(exclude_unset=True)
+    
+    # Handle password update separately if it exists
+    if "password" in update_data:
+        hashed_password = get_password_hash(update_data["password"])
+        del update_data["password"]
+        update_data["hashed_password"] = hashed_password
+    
+    # Update user attributes
+    for field, value in update_data.items():
+        if hasattr(user, field) and field != "id":  # Protect the ID field
+            setattr(user, field, value)
+    
+    await db.commit()
+    await db.refresh(user)
     return user

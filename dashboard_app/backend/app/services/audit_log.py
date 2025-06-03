@@ -7,6 +7,7 @@ from typing import List, Optional, Dict, Any, Tuple
 from datetime import datetime
 from sqlalchemy import select, func, update, delete, cast, Integer, and_
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.utils.caching import cached_async, invalidate_cache
 
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log import AuditLogCreate, AuditLogFilters, AuditLogStats
@@ -76,22 +77,20 @@ async def get_audit_log_by_id(db: AsyncSession, audit_log_id: int) -> Optional[A
 
 async def create_audit_log(db: AsyncSession, audit_log_in: AuditLogCreate) -> AuditLog:
     """
-    Create a new audit log.
-    
-    Args:
-        db: Database session
-        audit_log_in: Audit log data
-        
-    Returns:
-        Created audit log
+    Create a new audit log entry.
     """
-    db_audit_log = AuditLog(**audit_log_in.model_dump()) # Use model_dump for Pydantic v2
+    db_audit_log = AuditLog(**audit_log_in.model_dump())
     db.add(db_audit_log)
-    await db.flush()  # Send to DB within current transaction, get ID
+    await db.commit()
     await db.refresh(db_audit_log)  # Refresh to load server-set defaults
+    
+    # Invalidate stats cache when new data is added
+    await invalidate_cache("audit_log_stats")
+    
     return db_audit_log
 
-async def get_audit_log_stats(db: AsyncSession, filters: Optional[AuditLogFilters] = None) -> AuditLogStats:
+@cached_async(key_prefix="audit_log_stats", ttl_seconds=300)
+async def get_audit_log_stats(db: AsyncSession, filters: AuditLogFilters) -> AuditLogStats:
     """
     Get audit log statistics for dashboard.
     

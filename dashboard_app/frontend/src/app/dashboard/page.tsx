@@ -15,6 +15,8 @@ import StatCard from '@/components/ui/StatCard';
 import { auditLogService } from '@/lib/services/audit-logs';
 import { policyValidationService } from '@/lib/services/policy-validation';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
+import CustomTooltip from '@/components/ui/CustomTooltip';
+import { safeTransformTimeSeriesData, safeTransformCategoryData, formatNumber } from '@/lib/utils/chart-helpers';
 
 export default function DashboardPage() {
   const { addNotification } = useNotifications();
@@ -73,34 +75,11 @@ export default function DashboardPage() {
     }
   );
 
-  // Prepare data for charts
-  const auditLogsByDay = auditLogStats?.logs_by_day 
-    ? Object.entries(auditLogStats.logs_by_day).map(([date, count]) => ({
-        date,
-        count,
-      })).sort((a, b) => a.date.localeCompare(b.date))
-    : [];
-
-  const validationsByDay = validationStats?.validations_by_day 
-    ? Object.entries(validationStats.validations_by_day).map(([date, count]) => ({
-        date,
-        count,
-      })).sort((a, b) => a.date.localeCompare(b.date))
-    : [];
-
-  const auditLogsByDepartment = auditLogStats?.logs_by_department 
-    ? Object.entries(auditLogStats.logs_by_department).map(([name, value]) => ({
-        name,
-        value,
-      }))
-    : [];
-
-  const validationsBySchema = validationStats?.validations_by_schema 
-    ? Object.entries(validationStats.validations_by_schema).map(([name, value]) => ({
-        name,
-        value,
-      }))
-    : [];
+  // Prepare data for charts using safe transformation utilities
+  const auditLogsByDay = safeTransformTimeSeriesData(auditLogStats?.logs_by_day);
+  const validationsByDay = safeTransformTimeSeriesData(validationStats?.validations_by_day);
+  const auditLogsByDepartment = safeTransformCategoryData(auditLogStats?.logs_by_department);
+  const validationsBySchema = safeTransformCategoryData(validationStats?.validations_by_schema);
 
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
@@ -163,7 +142,12 @@ export default function DashboardPage() {
                     tick={{ fontSize: 12 }}
                   />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip 
+                    content={<CustomTooltip 
+                      formatter={(value, name) => [formatNumber(value), name]}
+                      labelFormatter={(label) => `Date: ${label}`}
+                    />}
+                  />
                   <Bar dataKey="count" fill="#0ea5e9" name="Logs" />
                 </BarChart>
               </ResponsiveContainer>
@@ -200,7 +184,12 @@ export default function DashboardPage() {
                     tick={{ fontSize: 12 }}
                   />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip 
+                    content={<CustomTooltip 
+                      formatter={(value, name) => [formatNumber(value), name]}
+                      labelFormatter={(label) => `Date: ${label}`}
+                    />}
+                  />
                   <Bar dataKey="count" fill="#10b981" name="Validations" />
                 </BarChart>
               </ResponsiveContainer>
@@ -243,7 +232,12 @@ export default function DashboardPage() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    content={<CustomTooltip 
+                      formatter={(value, name) => [formatNumber(value), name]}
+                      labelFormatter={(label) => `Department: ${label}`}
+                    />}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>
@@ -251,7 +245,7 @@ export default function DashboardPage() {
           )}
         </Card>
         
-        {/* Validations by Policy Schema - Note: The original code had this card outside the main grid, I'm keeping it as is but it might be a layout bug. */}
+        {/* Validations by Policy Schema */}
         <Card title="Validations by Policy Schema">
           {isLoadingValidation ? (
             <div className="h-80 flex items-center justify-center">
@@ -286,7 +280,12 @@ export default function DashboardPage() {
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <Tooltip 
+                    content={<CustomTooltip 
+                      formatter={(value, name) => [formatNumber(value), name]}
+                      labelFormatter={(label) => `Schema: ${label}`}
+                    />}
+                  />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>

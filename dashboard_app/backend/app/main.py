@@ -1,15 +1,15 @@
 import os
-
+import asyncio
+import logging
+from dotenv import load_dotenv
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from app.api.api import api_router
 from app.core.config import settings
-from app.core.database import Base, engine
-from dotenv import load_dotenv
-from fastapi import FastAPI
-from contextlib import asynccontextmanager
-from fastapi.middleware.cors import CORSMiddleware
-
-# Create database tables
-# Base.metadata.create_all(bind=engine) # Replaced by async creation in startup_tasks
+from app.core.database import Base, engine, AsyncSessionLocal
+from app.services.user import create_user, get_user_by_email, get_user_by_username
+from app.utils.caching import cleanup_expired_cache_entries
 
 # Load environment variables from .env file
 load_dotenv()
@@ -21,8 +21,9 @@ async def lifespan(app: FastAPI):
         await conn.run_sync(Base.metadata.create_all)
     print("Database tables created (if they didn't exist).")
 
-    from app.core.database import AsyncSessionLocal
-    from app.services.user import create_user, get_user_by_email
+    # Start cache cleanup task
+    cache_cleanup_task = asyncio.create_task(cleanup_expired_cache_entries())
+    logging.info("Started cache cleanup background task")
 
     admin_email = os.getenv("INITIAL_ADMIN_EMAIL")
     admin_password = os.getenv("INITIAL_ADMIN_PASSWORD")
@@ -30,8 +31,11 @@ async def lifespan(app: FastAPI):
     if admin_email and admin_password:
         async with AsyncSessionLocal() as db:
             try:
-                user = await get_user_by_email(db=db, email=admin_email)
-                if not user:
+                # Check if user exists by email or username
+                user_by_email = await get_user_by_email(db=db, email=admin_email)
+                user_by_username = await get_user_by_username(db=db, username="admin")
+                
+                if not user_by_email and not user_by_username:
                     await create_user(
                         db=db,
                         username="admin",
@@ -40,11 +44,20 @@ async def lifespan(app: FastAPI):
                         full_name="System Administrator",
                         is_superuser=True,
                     )
-                    print(f"Attempted to create initial admin user: {admin_email}")
+                    print(f"Created initial admin user: {admin_email}")
+                else:
+                    print(f"Initial admin user already exists, skipping creation")
             except Exception as e:
                 print(f"Error during initial admin user creation: {e}")
     yield
     # Shutdown: Any cleanup tasks would go here (e.g., closing DB connections if not handled by context managers)
+    cache_cleanup_task.cancel()
+    try:
+        await cache_cleanup_task
+    except asyncio.CancelledError:
+        logging.info("Cache cleanup task cancelled")
+    except Exception as e:
+        logging.error(f"Error cancelling cache cleanup task: {e}")
     print("Application shutdown.")
 
 app = FastAPI(

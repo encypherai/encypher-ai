@@ -1,14 +1,14 @@
 'use client';
 
 import React, { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import DashboardLayout from '@/components/layout/DashboardLayout';
-import DashboardNavigation from '@/components/DashboardNavigation';
+import DashboardLayout from '@/components/layouts/DashboardLayout';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -27,10 +27,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) {
     return null; // Will redirect to login
   }
-
+  
   return (
-    <DashboardLayout>
-      <DashboardNavigation />
+    <DashboardLayout currentPath={pathname}>
       {children}
     </DashboardLayout>
   );

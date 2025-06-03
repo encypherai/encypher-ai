@@ -12,6 +12,12 @@ import ScanTypeChart from '@/components/charts/ScanTypeChart';
 import ScansTimeSeriesChart from '@/components/charts/ScansTimeSeriesChart';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 import cliService from '@/services/cliService';
+import { 
+  AuditLogStatsCard, 
+  PolicyValidationStatsCard,
+  AuditLogTimeSeriesChart,
+  PolicyValidationTimeSeriesChart
+} from '@/components/stats';
 
 // Define the time range type for the time series chart
 type TimeRange = 'day' | 'week' | 'month';
@@ -237,8 +243,8 @@ export default function DashboardOverviewPage() {
         </Button>
       </div>
       
-      {/* Stats summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
         <Card title="Active Scans" className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 flex flex-col">
           <div className="flex flex-col items-center justify-center h-full p-4">
             {isLoadingActiveScans ? (
@@ -254,38 +260,23 @@ export default function DashboardOverviewPage() {
           </div>
         </Card>
         
-        <Card title="Total Scans" className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 flex flex-col">
-          <div className="flex flex-col items-center justify-center h-full p-4">
-            {isLoadingTotalScans ? (
-              <Loading size="md" />
-            ) : totalScansError ? (
-              <span className="text-4xl font-bold text-red-600 dark:text-red-400">?</span>
-            ) : (
-              <span className="text-4xl font-bold text-green-600 dark:text-green-400">
-                {totalScansData?.count || 0}
-              </span>
-            )}
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">All time</p>
-          </div>
-        </Card>
+        <AuditLogStatsCard 
+          title="Total Audit Logs" 
+          statType="total_logs"
+          className="bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+        />
         
-        <Card title="Valid Signatures" className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800 flex flex-col">
-          <div className="flex flex-col items-center justify-center h-full p-4">
-            <span className="text-4xl font-bold text-purple-600 dark:text-purple-400">
-              98%
-            </span>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Last 30 days</p>
-          </div>
-        </Card>
+        <AuditLogStatsCard 
+          title="Verification Rate" 
+          statType="success_rate"
+          className="bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-800"
+        />
         
-        <Card title="Policy Violations" className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800 flex flex-col">
-          <div className="flex flex-col items-center justify-center h-full p-4">
-            <span className="text-4xl font-bold text-amber-600 dark:text-amber-400">
-              3
-            </span>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Last 30 days</p>
-          </div>
-        </Card>
+        <PolicyValidationStatsCard 
+          title="Policy Validation Rate" 
+          statType="valid_rate"
+          className="bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800"
+        />
       </div>
       
       {/* Charts */}
@@ -310,6 +301,17 @@ export default function DashboardOverviewPage() {
           error={timeSeriesError as Error}
           timeRange={timeRange}
           onTimeRangeChange={handleTimeRangeChange}
+        />
+      </div>
+      
+      {/* Stats Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+        <AuditLogTimeSeriesChart 
+          title="Audit Logs Over Time"
+        />
+        
+        <PolicyValidationTimeSeriesChart 
+          title="Policy Validations Over Time"
         />
       </div>
       

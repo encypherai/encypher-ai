@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useQuery } from 'react-query';
 import { useRouter } from 'next/navigation';
 import { 
   ArrowDownTrayIcon,
@@ -14,7 +13,9 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Table from '@/components/ui/Table';
 import Pagination from '@/components/ui/Pagination';
-import { auditLogService, AuditLog, AuditLogFilters } from '@/lib/services/audit-logs';
+import { TableSkeleton } from '@/components/ui/Skeleton';
+import { AuditLog, AuditLogFilters } from '@/lib/services/audit-logs';
+import { useAuditLogs } from '@/lib/hooks/useAuditLogs';
 import { useNotifications } from '@/lib/notifications';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 
@@ -34,27 +35,20 @@ export default function AuditLogsPage() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch audit logs with pagination and filters
+  // Fetch audit logs with pagination and filters using our custom hook
   const { 
     data, 
     isLoading, 
     isError,
     error,
     refetch 
-  } = useQuery<{
-    items: AuditLog[];
-    total: number;
-    page: number;
-    limit: number;
-  }, Error>(
-    ['auditLogs', page, limit, filters],
-    () => auditLogService.getAuditLogs({
+  } = useAuditLogs(
+    {
       ...filters,
       page,
       limit,
-    }),
+    },
     {
-      keepPreviousData: true,
       onError: (err) => {
         addNotification({
           type: 'error',
@@ -98,30 +92,30 @@ export default function AuditLogsPage() {
       
       const headers = [
         'ID',
-        'Timestamp',
-        'User ID',
-        'Action',
-        'Resource Type',
-        'Resource ID',
-        'Details',
-        'Source IP',
-        'Success',
+        'Verification Time',
+        'Source',
+        'Status',
+        'Source Type',
+        'Model ID',
         'Department',
+        'Verified',
+        'Error Message',
+        'Created At',
       ];
       
       const csvContent = [
         headers.join(','),
         ...data.items.map((log) => [
           log.id,
-          log.timestamp,
-          log.user_id,
-          log.action,
-          log.resource_type,
-          log.resource_id,
-          `"${log.details.replace(/"/g, '""')}"`, // Escape quotes
-          log.source_ip,
-          log.success,
-          log.department,
+          log.verification_time,
+          log.source,
+          log.status,
+          log.source_type || '',
+          log.model_id || '',
+          log.department || '',
+          log.is_verified ? 'Yes' : 'No',
+          log.error_message ? `"${log.error_message.replace(/"/g, '""')}"` : '', // Escape quotes
+          log.created_at,
         ].join(',')),
       ].join('\n');
       
@@ -140,18 +134,18 @@ export default function AuditLogsPage() {
   };
 
   const columns = [
-    { header: 'Timestamp', accessor: 'timestamp' },
-    { header: 'User ID', accessor: 'user_id' },
-    { header: 'Action', accessor: 'action' },
-    { header: 'Resource Type', accessor: 'resource_type' },
-    { header: 'Resource ID', accessor: 'resource_id', className: 'max-w-xs truncate' },
+    { header: 'Timestamp', accessor: 'verification_time' },
+    { header: 'User ID', accessor: 'model_id' },
+    { header: 'Action', accessor: 'status' },
+    { header: 'Resource Type', accessor: 'source_type' },
+    { header: 'Resource ID', accessor: 'source', className: 'max-w-xs truncate' },
     { 
       header: 'Success', 
       accessor: (item: AuditLog) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          item.success ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+          item.is_verified ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
         }`}>
-          {item.success ? 'Success' : 'Failed'}
+          {item.is_verified ? 'Success' : 'Failed'}
         </span>
       ) 
     },
@@ -267,26 +261,30 @@ export default function AuditLogsPage() {
             <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">{error?.message}</p>
             <Button onClick={() => refetch()} variant="outline" size="sm">Retry</Button>
           </div>
+        ) : isLoading ? (
+          <div className="p-4">
+            <TableSkeleton rows={limit} columns={columns.length} />
+          </div>
         ) : (
           <>
             <Table
-          columns={[...columns]}
-          data={data?.items || []}
-          keyExtractor={(item) => item.id}
-          isLoading={isLoading}
-          emptyMessage="No audit logs found"
-          onRowClick={handleViewDetails}
-        />
-        
-        {data && (
-          <div className="mt-4">
-            <Pagination
-              currentPage={page}
-              totalPages={Math.ceil((data.total || 0) / limit)}
-              onPageChange={setPage}
+              columns={[...columns]}
+              data={data?.items || []}
+              keyExtractor={(item: AuditLog) => item.id}
+              isLoading={false} /* We're handling loading state separately now */
+              emptyMessage="No audit logs found"
+              onRowClick={handleViewDetails}
             />
-          </div>
-        )}
+            
+            {data && (
+              <div className="mt-4">
+                <Pagination
+                  currentPage={page}
+                  totalPages={Math.ceil((data.total || 0) / limit)}
+                  onPageChange={setPage}
+                />
+              </div>
+            )}
           </>
         )}
       </Card>

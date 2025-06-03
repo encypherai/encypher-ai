@@ -50,17 +50,30 @@ export default function AuditLogDetailsPage({ params }: AuditLogDetailsProps) {
     }
   );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric',
-      second: 'numeric',
-      timeZoneName: 'short',
-    }).format(date);
+  const formatDate = (dateString: string | null | undefined) => {
+    if (!dateString) return 'N/A';
+    
+    try {
+      const date = new Date(dateString);
+      
+      // Check if date is valid
+      if (isNaN(date.getTime())) {
+        return 'Invalid date';
+      }
+      
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: 'numeric',
+        minute: 'numeric',
+        second: 'numeric',
+        timeZoneName: 'short',
+      }).format(date);
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Error formatting date';
+    }
   };
 
   const formatJson = (jsonString: string) => {
@@ -152,15 +165,15 @@ export default function AuditLogDetailsPage({ params }: AuditLogDetailsProps) {
           <Card>
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-xl font-medium text-gray-900 dark:text-white">{auditLog.action}</h2>
+                <h2 className="text-xl font-medium text-gray-900 dark:text-white">{auditLog.status}</h2>
                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  {auditLog.resource_type} - {auditLog.resource_id}
+                  {auditLog.source_type || 'N/A'} - {auditLog.source}
                 </p>
               </div>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                auditLog.success ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+                auditLog.is_verified ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
               }`}>
-                {auditLog.success ? 'Success' : 'Failed'}
+                {auditLog.is_verified ? 'Success' : 'Failed'}
               </span>
             </div>
             
@@ -168,35 +181,35 @@ export default function AuditLogDetailsPage({ params }: AuditLogDetailsProps) {
               <div className="flex items-start">
                 <ClockIcon className="h-5 w-5 text-gray-400 mt-0.5 mr-2" />
                 <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Timestamp</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(auditLog.timestamp)}</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Verification Time</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(auditLog.verification_time)}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <ClockIcon className="h-5 w-5 text-gray-400 mt-0.5 mr-2" />
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Created At</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{formatDate(auditLog.created_at)}</p>
                 </div>
               </div>
               
               <div className="flex items-start">
                 <UserIcon className="h-5 w-5 text-gray-400 mt-0.5 mr-2" />
                 <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">User ID</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{auditLog.user_id}</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Model ID</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{auditLog.model_id || 'N/A'}</p>
                 </div>
               </div>
               
               <div className="flex items-start">
                 <DocumentIcon className="h-5 w-5 text-gray-400 mt-0.5 mr-2" />
                 <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Resource</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Source</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Type: {auditLog.resource_type}<br />
-                    ID: {auditLog.resource_id}
+                    Type: {auditLog.source_type || 'N/A'}<br />
+                    Source: {auditLog.source}
                   </p>
-                </div>
-              </div>
-              
-              <div className="flex items-start">
-                <ServerIcon className="h-5 w-5 text-gray-400 mt-0.5 mr-2" />
-                <div>
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Source IP</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{auditLog.source_ip}</p>
                 </div>
               </div>
               
@@ -204,7 +217,7 @@ export default function AuditLogDetailsPage({ params }: AuditLogDetailsProps) {
                 <BuildingOfficeIcon className="h-5 w-5 text-gray-400 mt-0.5 mr-2" />
                 <div>
                   <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Department</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{auditLog.department}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{auditLog.department || 'N/A'}</p>
                 </div>
               </div>
             </div>
@@ -213,10 +226,10 @@ export default function AuditLogDetailsPage({ params }: AuditLogDetailsProps) {
         
         {/* Details Card */}
         <div className="lg:col-span-1">
-          <Card title="Details">
+          <Card title="Event Data">
             <div className="bg-gray-50 dark:bg-gray-800 rounded-md p-4">
               <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono overflow-auto max-h-96">
-                {formatJson(auditLog.details)}
+                {auditLog.event_data ? formatJson(JSON.stringify(auditLog.event_data)) : 'No event data available'}
               </pre>
             </div>
           </Card>

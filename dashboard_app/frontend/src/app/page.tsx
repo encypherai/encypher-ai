@@ -1,8 +1,7 @@
-export default function HomePage() {
+import LandingPage from '../components/LandingPage';
+
+export default function Home() {
   return (
-    <main>
-      <h1>Welcome to the EncypherAI Dashboard</h1>
-      <p>Content will be here soon.</p>
-    </main>
+    <LandingPage />
   );
 }
