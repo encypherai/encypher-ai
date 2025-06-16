@@ -37,10 +37,14 @@ The encoding is done using Unicode variation selectors, which are designed to sp
 EncypherAI's manifest format is inspired by the [Coalition for Content Provenance and Authenticity (C2PA)](https://c2pa.org/) standard, adapted specifically for plain-text environments. While C2PA focuses on embedding provenance information in rich media file formats, EncypherAI extends these concepts to text-only content where traditional file embedding methods aren't applicable.
 
 Key alignments include:
-- Structured provenance manifests with claim generators and actions.
-- Cryptographic integrity through digital signatures.
-- **CBOR Manifests**: Support for embedding full C2PA-compliant manifests using CBOR for a compact, standards-aligned format.
-- Shared mission of improving content transparency and trust.
+- **Structured provenance manifests** with claim generators and actions
+- **Cryptographic integrity** through digital signatures
+- **Content hash verification** for tamper detection
+- **CBOR Manifests**: Support for embedding full C2PA-compliant manifests using CBOR for a compact, standards-aligned format
+- **Hard binding approach**: Direct embedding of manifests into the content itself
+- **Shared mission** of improving content transparency and trust
+
+Our implementation uses Unicode variation selectors (U+FE00 to U+FE0F) to invisibly embed C2PA manifests directly into text content, enabling provenance tracking and tamper detection without altering the visible appearance of the text.
 
 Learn more about [EncypherAI's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
 
@@ -320,6 +324,98 @@ uv pip install -e .
 
 If you're upgrading from a previous version, check out our [Migration Guide](https://docs.encypherai.com/package/user-guide/migration-guide/) to learn about the new modular structure introduced in version 2.2.0.
 
+## Text Provenance Features
+
+EncypherAI provides comprehensive text provenance capabilities:
+
+### C2PA-Compatible Manifest Embedding
+
+```python
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
+
+# Create a C2PA-like manifest
+c2pa_manifest = {
+    "claim_generator": "EncypherAI Python Package",
+    "assertions": [
+        {
+            "label": "stds.c2pa.content.hash",
+            "data": {
+                "hash": "sha256:1234567890abcdef",
+                "alg": "sha256"
+            }
+        }
+    ],
+    "signature": {
+        "signer_id": "example-signer"
+    }
+}
+
+# Convert to EncypherAI format
+encypher_manifest = c2pa_like_dict_to_encypher_manifest(c2pa_manifest)
+
+# Embed in text
+text_with_metadata = UnicodeMetadata.embed_metadata(
+    text="This is an example article.",
+    metadata=encypher_manifest,
+    metadata_format="cbor_manifest"
+)
+```
+
+### Tamper Detection
+
+EncypherAI provides two complementary tamper detection mechanisms:
+
+1. **Digital Signature Verification**: Ensures the manifest itself hasn't been tampered with
+2. **Content Hash Verification**: Ensures the text content hasn't been modified after signing
+
+```python
+# Extract and verify metadata
+is_verified, signer_id, manifest = UnicodeMetadata.verify_and_extract_metadata(
+    text=text_with_metadata,
+    public_key_provider=lambda kid: public_key if kid == signer_id else None
+)
+
+# Check content hash (simplified example)
+from encypher.interop.c2pa import encypher_manifest_to_c2pa_like_dict
+import hashlib
+
+c2pa_manifest = encypher_manifest_to_c2pa_like_dict(manifest)
+
+# Find stored hash in manifest
+stored_hash = None
+for assertion in c2pa_manifest.get("assertions", []):
+    if assertion.get("label") == "stds.c2pa.content.hash":
+        stored_hash = assertion["data"]["hash"]
+        break
+
+# Calculate current hash
+current_hash = hashlib.sha256(text_with_metadata.encode('utf-8')).hexdigest()
+
+# Compare hashes
+content_integrity_verified = (stored_hash == current_hash)
+```
+
+#### What the Content Hash Covers
+
+The content hash in our implementation covers only the plain text content:
+
+- Extracts all paragraph text from the document (ignoring HTML markup)
+- Computes a SHA-256 hash on the UTF-8 encoded text
+- Calculates the hash before any metadata embedding occurs
+- Does not include the embedded metadata itself (Unicode variation selectors)
+
+#### How Our Embedding Works
+
+Our C2PA-like embedding uses a single-point embedding approach with zero-width characters:
+
+- Metadata is embedded as a sequence of Unicode variation selectors (U+FE00-FE0F, U+E0100-E01EF)
+- All metadata is attached to a single character in the text (typically the first character)
+- The original character is preserved, with variation selectors inserted after it
+- This is a "hard binding" approach as the manifest is embedded directly in the content
+
+For more detailed information, see our [Content Hash and Embedding Technical Guide](https://docs.encypherai.com/package/technical/content-hash-and-embedding/) and [Tamper Detection Guide](https://docs.encypherai.com/package/examples/tamper_detection/).
+
 ## License
 
-This project is licensed under the GNU Affero General Public License v3.0 - see the LICENSE file for details.
+This project is licensed under the GNU Affero General Public License v3.0 - see the LICENSE file for details. Commercial licensing options are also available - see our [Licensing Guide](https://docs.encypherai.com/package/user-guide/licensing/) for details.
