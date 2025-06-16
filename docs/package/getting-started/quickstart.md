@@ -36,7 +36,7 @@ def resolve_public_key(id_val: str) -> Optional[PublicKeyTypes]:
 model_id_val = "gpt-4"
 timestamp_val = int(time.time())  # Unix/Epoch timestamp
 custom_meta = {
-    "version": "2.2.0",
+    "version": "2.3.0",
     "organization": "EncypherAI"
 }
 

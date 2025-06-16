@@ -44,7 +44,7 @@ app = FastAPI(
 
     For more information, visit [EncypherAI Documentation](https://docs.encypherai.com).
     """,
-    version="2.2.0",
+    version="2.3.0",
     docs_url=None,
     redoc_url="/docs",
     openapi_tags=[
@@ -282,7 +282,7 @@ async def get_status() -> Dict[str, Any]:
 
         version = importlib.metadata.version("encypher")
     except (ImportError, importlib.metadata.PackageNotFoundError):
-        version = "2.2.0"
+        version = "2.3.0"
 
     return {
         "status": "ok",

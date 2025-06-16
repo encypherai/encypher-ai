@@ -76,7 +76,7 @@ def print_header():
     clear_screen()
     console.print(
         Panel.fit(
-            "[bold blue]EncypherAI Demo (v2.2.0 Signatures)[/bold blue]\n" "[italic]Invisible Metadata for AI-Generated Content[/italic]",
+            "[bold blue]EncypherAI Demo (v2.3.0 Signatures)[/bold blue]\n" "[italic]Invisible Metadata for AI-Generated Content[/italic]",
             border_style="blue",
             padding=(1, 10),
         )
@@ -589,7 +589,7 @@ def demo_streaming():
         for i, chunk in enumerate(simulated_stream):
             progress.update(task, advance=1, description=f"[cyan]Processing chunk {i+1}/{len(simulated_stream)}[/cyan]")
             console.print(f"   [dim]Original chunk {i+1}:[/dim] [italic]'{chunk}'[/italic]")
-            handler.process_chunk(chunk)  # New method for v2.2.0
+            handler.process_chunk(chunk)  # New method for v2.3.0
             full_original_text += chunk
             time.sleep(0.8)  # Simulate network latency or processing time
 

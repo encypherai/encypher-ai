@@ -166,27 +166,29 @@ class TestUnicodeMetadata:
         assert embedded_text != sample_text
 
         # Add debug information
-        print(f"\nEmbedded text length: {len(embedded_text)}")
-        print(f"Original text length: {len(sample_text)}")
+        # Verify text was embedded successfully
+        assert len(embedded_text) > len(sample_text)
 
         # Extract bytes for debugging
         extracted_bytes = UnicodeMetadata.extract_bytes(embedded_text)
-        print(f"Extracted bytes length: {len(extracted_bytes)}")
+        # Verify bytes were extracted
 
         # Try to decode the extracted bytes
         try:
             outer_data_str = extracted_bytes.decode("utf-8")
             outer_data = json.loads(outer_data_str)
-            print(f"Outer data: {outer_data.keys()}")
+            # Verify outer data structure
+            assert "format" in outer_data
         except Exception as e:
-            print(f"Error decoding extracted bytes: {e}")
+            pytest.fail(f"Error decoding extracted bytes: {e}")
 
         is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(embedded_text, public_key_provider)
 
         # Add more debug information
-        print(f"Verification result: {is_valid}")
-        print(f"Extracted signer ID: {extracted_signer_id}")
-        print(f"Extracted payload: {extracted_payload}")
+        # Verify extraction results
+        assert is_valid
+        assert extracted_signer_id == signer_id
+        assert extracted_payload is not None
 
         assert is_valid is True
         assert extracted_signer_id == signer_id

@@ -10,7 +10,59 @@ The goal is to demonstrate potential interoperability and provide a starting poi
 organizations that need to work with both standards.
 """
 
+import base64
+import logging
 from typing import Any, Dict
+
+import cbor2
+
+# Configure logger
+logger = logging.getLogger(__name__)
+
+
+def _serialize_data_to_cbor_base64(data: Dict[str, Any]) -> str:
+    """Serializes a dictionary to CBOR and then encodes it as a Base64 string."""
+    cbor_data = cbor2.dumps(data)
+    base64_encoded_data = base64.b64encode(cbor_data).decode("utf-8")
+    return base64_encoded_data
+
+
+def _deserialize_data_from_cbor_base64(base64_cbor_str: str) -> Dict[str, Any]:
+    """Decodes a Base64 string and then deserializes it from CBOR to a dictionary."""
+    cbor_data = base64.b64decode(base64_cbor_str)
+    data = cbor2.loads(cbor_data)
+    if not isinstance(data, dict):
+        raise ValueError("Deserialized CBOR data is not a dictionary.")
+    return data
+
+
+def _get_c2pa_assertion_data(assertion_dict: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Helper to construct the 'data' field for a C2PA-like assertion
+    from an EncypherAI assertion dictionary. Handles CBOR decoding if specified.
+    Also handles both nested and flattened assertion data structures.
+    """
+    # Case 1: CBOR encoded data
+    if assertion_dict.get("data_encoding") == "cbor_base64":
+        cbor_b64_str = assertion_dict.get("data")
+        if isinstance(cbor_b64_str, str):
+            try:
+                deserialized_data = _deserialize_data_from_cbor_base64(cbor_b64_str)
+                return deserialized_data
+            except Exception as e:
+                raise ValueError(f"Failed to deserialize CBOR/Base64 data for assertion '{assertion_dict.get('label')}': {e}")
+        else:
+            raise ValueError(f"Assertion '{assertion_dict.get('label')}' has 'data_encoding' as CBOR but 'data' is not a string.")
+
+    # Case 2: Direct nested data field present
+    if "data" in assertion_dict and isinstance(assertion_dict["data"], dict):
+        # If there's a direct 'data' field that's a dict, use it directly
+        # Don't add timestamp to data - it should be at top level only
+        return assertion_dict["data"].copy()
+
+    # Case 3: Default/legacy case - construct data from flattened fields
+    # Exclude timestamp/when from data - it should be at top level only
+    return {k: v for k, v in assertion_dict.items() if k not in ["label", "when", "timestamp", "data", "data_encoding"]}
 
 
 def encypher_manifest_to_c2pa_like_dict(manifest: Dict[str, Any]) -> Dict[str, Any]:
@@ -58,21 +110,36 @@ def encypher_manifest_to_c2pa_like_dict(manifest: Dict[str, Any]) -> Dict[str, A
         "timestamp": manifest.get("timestamp", ""),
     }
 
-    # Map assertions to C2PA assertions
-    assertions = manifest.get("assertions", [])
-    if assertions and isinstance(assertions, list):
+    # Handle both 'assertions' (standard format) and 'actions' (CBOR manifest format)
+    assertions = []
+
+    # Case 1: Standard 'assertions' key (from regular manifest)
+    if "assertions" in manifest and isinstance(manifest["assertions"], list):
+        assertions = manifest["assertions"]
+
+    # Case 2: 'actions' key (from CBOR manifest)
+    elif "actions" in manifest and isinstance(manifest["actions"], list):
+        assertions = manifest["actions"]
+
+    # Process assertions/actions
+    if assertions:
         c2pa_assertions = []
         for assertion in assertions:
             if isinstance(assertion, dict):
                 # Create an assertion object from each assertion
                 c2pa_assertion = {
                     "label": assertion.get("label", ""),  # Use label as C2PA label
-                    "data": {
-                        "timestamp": assertion.get("when", ""),
-                        # Include any other assertion fields
-                        **{k: v for k, v in assertion.items() if k not in ["label", "when"]},
-                    },
+                    "data": _get_c2pa_assertion_data(assertion),
                 }
+
+                # Special handling for c2pa.created assertion - ensure timestamp is included in data
+                if c2pa_assertion["label"] == "c2pa.created":
+                    if "data" not in c2pa_assertion or not isinstance(c2pa_assertion["data"], dict):
+                        c2pa_assertion["data"] = {}
+                    # Add timestamp to the data field if not already present
+                    if "timestamp" not in c2pa_assertion["data"]:
+                        c2pa_assertion["data"]["timestamp"] = manifest.get("timestamp", "")
+
                 c2pa_assertions.append(c2pa_assertion)
         result["assertions"] = c2pa_assertions
 
@@ -93,7 +160,9 @@ def encypher_manifest_to_c2pa_like_dict(manifest: Dict[str, Any]) -> Dict[str, A
     return result
 
 
-def c2pa_like_dict_to_encypher_manifest(data: Dict[str, Any]) -> Dict[str, Any]:
+def c2pa_like_dict_to_encypher_manifest(
+    data: Dict[str, Any], encode_assertion_data_as_cbor: bool = False, use_nested_data: bool = False
+) -> Dict[str, Any]:
     """
     Creates an EncypherAI ManifestPayload from a dictionary structured
     similarly to C2PA assertions. Handles missing fields gracefully.
@@ -165,9 +234,47 @@ def c2pa_like_dict_to_encypher_manifest(data: Dict[str, Any]) -> Dict[str, Any]:
                     "when": assertion_data.get("timestamp", manifest["timestamp"]),
                 }
                 # Include any other data fields
-                for k, v in assertion_data.items():
-                    if k != "timestamp":
-                        assertion[k] = v
+                # If CBOR encoding is requested, the 'data' field itself will be handled.
+                if encode_assertion_data_as_cbor and isinstance(assertion_data, dict) and assertion_data:
+                    try:
+                        assertion["data"] = _serialize_data_to_cbor_base64(assertion_data)
+                        assertion["data_encoding"] = "cbor_base64"
+                    except Exception as e:
+                        # Optionally log an error or handle it if CBOR encoding fails
+                        # For now, falling back to JSON-like data if CBOR fails
+                        # Or, re-raise if strict CBOR encoding is required when flag is true
+                        logger.warning(f"CBOR serialization failed for assertion data: {e}. Storing as JSON.")
+                        # Copy over original data fields if CBOR fails and we fall back
+                        for k, v in assertion_data.items():
+                            if k != "timestamp":  # 'when' is already set from timestamp
+                                assertion[k] = v
+                        if "data" in assertion:
+                            del assertion["data"]  # remove partially set cbor data
+                        if "data_encoding" in assertion:
+                            del assertion["data_encoding"]
+
+                else:
+                    # If not encoding as CBOR (i.e., encode_assertion_data_as_cbor is False):
+                    # We need to decide how to structure the assertion data based on use_nested_data parameter.
+                    if isinstance(assertion_data, dict):
+                        if use_nested_data:
+                            # For 'cbor_manifest' format, keep data nested under 'data' key
+                            assertion["data"] = assertion_data
+                        else:
+                            # For traditional 'manifest' format, flatten data fields into assertion
+                            for k, v in assertion_data.items():
+                                if k != "timestamp":  # 'when' is already set from timestamp
+                                    assertion[k] = v
+                    # If assertion_data is not a dict, no data is added to the assertion
+
+                # Ensure 'data' key exists if not CBOR encoded and original assertion_data was empty but not None
+                # This part is tricky because the original logic copied individual keys.
+                # If not encoding as CBOR and assertion_data was an empty dict,
+                # the loop above wouldn't add a 'data' field.
+                # C2PA assertions typically have a 'data' object, even if empty.
+                # However, EncypherAI assertions might just have flat key-value pairs.
+                # Let's stick to the original logic of copying key-values unless CBOR is used.
+                # If CBOR is used, 'data' will contain the b64 string or be absent if original data was not suitable.
 
                 manifest["assertions"].append(assertion)
 

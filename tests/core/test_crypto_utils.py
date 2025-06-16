@@ -198,7 +198,7 @@ def manifest_payload_data() -> ManifestPayload:
                 when=timestamp,
             )
         ],
-        ai_assertion=ManifestAiInfo(model_id="test_model_manifest_v2.1", model_version="2.2.0"),
+        ai_assertion=ManifestAiInfo(model_id="test_model_manifest_v2.1", model_version="2.3.0"),
         custom_claims={"project_id": "proj-123", "run_type": "test"},
     )
 

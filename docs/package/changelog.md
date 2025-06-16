@@ -2,6 +2,30 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.3.0 (06-15-2025)
+
+### Added
+- **C2PA Interoperability:**
+  - Introduced a new `cbor_manifest` metadata format for embedding full C2PA-compliant manifests serialized using CBOR. This provides a more compact and standards-aligned method for storing complex claim data.
+  - Added `c2pa_like_dict_to_encypher_manifest` and `encypher_manifest_to_c2pa_like_dict` conversion utilities in `encypher.interop.c2pa` to seamlessly translate between Encypher's internal manifest structure and C2PA-like dictionaries.
+  - Implemented conditional logic to handle both nested assertion data (for CBOR) and flattened data structures for standard JSON manifests.
+- **CBOR Support:**
+  - Integrated the `cbor2` library to enable CBOR serialization and deserialization.
+  - Added helper functions for encoding/decoding CBOR payloads, including Base64 wrapping for text-based embedding.
+- **Documentation & Examples:**
+  - Created a new example script `c2pa_text_embedding_demo.py` demonstrating the end-to-end flow of creating, embedding, and verifying a C2PA-like manifest.
+  - Updated `c2pa-relationship.md` to detail the new CBOR-based manifest support and its benefits.
+- **Testing:**
+  - Added comprehensive integration tests for C2PA and CBOR manifest round-trips, ensuring data integrity and successful verification.
+
+### Fixed
+- **Type Hinting:** Resolved all `mypy` static type checking errors in `encypher.core.unicode_metadata`, improving code reliability and maintainability.
+- **Conversion Logic:** Corrected conversion helpers to properly retain top-level `timestamp` and `claim_generator` fields during round-trip conversions.
+
+### Developer Changes
+- Refactored `UnicodeMetadata` to support multiple manifest formats (`manifest` and `cbor_manifest`) in both embedding and extraction workflows.
+
+
 ## 2.2.0 (06-02-2025)
 
 ### Changed

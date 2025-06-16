@@ -23,6 +23,7 @@ EncypherAI Core provides tools for invisibly encoding metadata (such as model in
 
 - **Provenance tracking**: Identify which AI model generated a piece of text
 - **Timestamp verification**: Know when text was generated
+- **C2PA-Compatible Manifests**: Embed manifests inspired by the C2PA standard, with support for CBOR encoding for maximum interoperability.
 - **Custom metadata**: Embed any additional information you need
 - **Tamper detection using digital signatures**: Verify text integrity using digital signatures
 - **Streaming support**: Works with both streaming and non-streaming LLM outputs
@@ -36,9 +37,10 @@ The encoding is done using Unicode variation selectors, which are designed to sp
 EncypherAI's manifest format is inspired by the [Coalition for Content Provenance and Authenticity (C2PA)](https://c2pa.org/) standard, adapted specifically for plain-text environments. While C2PA focuses on embedding provenance information in rich media file formats, EncypherAI extends these concepts to text-only content where traditional file embedding methods aren't applicable.
 
 Key alignments include:
-- Structured provenance manifests with claim generators and actions
-- Cryptographic integrity through digital signatures
-- Shared mission of improving content transparency and trust
+- Structured provenance manifests with claim generators and actions.
+- Cryptographic integrity through digital signatures.
+- **CBOR Manifests**: Support for embedding full C2PA-compliant manifests using CBOR for a compact, standards-aligned format.
+- Shared mission of improving content transparency and trust.
 
 Learn more about [EncypherAI's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
 
@@ -120,7 +122,7 @@ current_timestamp = int(time.time())  # Current Unix timestamp (seconds since ep
 custom_payload = {
     "model_id": "gpt-4o-2024-05-13",
     "source_script": "README_quickstart",
-    "user_defined_version": "2.2.0" # Updated version
+    "user_defined_version": "2.3.0" # Updated version
 }
 
 # Embed metadata and sign
@@ -178,7 +180,7 @@ stream_timestamp = int(time.time())
 stream_custom_payload = {
     "model_id": "gpt-4o-2024-05-13",
     "source_script": "README_streaming_example",
-    "user_defined_version": "2.2.0" # Updated version
+    "user_defined_version": "2.3.0" # Updated version
 }
 
 # Create a streaming handler

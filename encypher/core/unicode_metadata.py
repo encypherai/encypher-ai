@@ -6,6 +6,7 @@ into text using Unicode variation selectors without affecting readability.
 """
 
 import base64
+import binascii
 import hashlib
 import hmac
 import json
@@ -14,6 +15,7 @@ import warnings
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
 
+import cbor2
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, ed25519, rsa, x448, x25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -283,7 +285,7 @@ class UnicodeMetadata:
         text: str,
         private_key: PrivateKeyTypes,
         signer_id: str,
-        metadata_format: Literal["basic", "manifest"] = "basic",
+        metadata_format: Literal["basic", "manifest", "cbor_manifest"] = "basic",
         model_id: Optional[str] = None,
         timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Optional[Union[str, MetadataTarget]] = None,
@@ -377,9 +379,9 @@ class UnicodeMetadata:
             logger.error("'target' must be a string or MetadataTarget enum member.")
             raise TypeError("'target' must be a string or MetadataTarget enum member.")
 
-        if metadata_format not in ("basic", "manifest"):
-            logger.error("metadata_format must be 'basic' or 'manifest'.")
-            raise ValueError("metadata_format must be 'basic' or 'manifest'.")
+        if metadata_format not in ("basic", "manifest", "cbor_manifest"):
+            logger.error("metadata_format must be 'basic', 'manifest', or 'cbor_manifest'.")
+            raise ValueError("metadata_format must be 'basic', 'manifest', or 'cbor_manifest'.")
 
         if model_id is not None and not isinstance(model_id, str):
             logger.error("If provided, 'model_id' must be a string.")
@@ -448,36 +450,84 @@ class UnicodeMetadata:
             # 3. **Crucial Change:** Add the inner manifest dictionary directly
             #    Do NOT serialize the inner manifest separately here.
             payload_data["manifest"] = inner_manifest  # Add the dict, not serialized bytes
-
+        elif metadata_format == "cbor_manifest":
+            logger.debug("Using 'cbor_manifest' metadata format.")
+            # Construct payload_data dictionary similar to 'manifest'
+            iso_timestamp = cls._format_timestamp(timestamp)
+            payload_data = {
+                "signer_id": signer_id,
+                "timestamp": iso_timestamp,
+                "format": "manifest",  # Internally, it's a manifest structure before CBOR encoding
+            }
+            cbor_manifest_dict: Dict[str, Any] = {}
+            if claim_generator:
+                cbor_manifest_dict["claim_generator"] = claim_generator
+            if actions:
+                cbor_manifest_dict["actions"] = actions
+            if ai_info:
+                cbor_manifest_dict["ai_info"] = ai_info
+            if custom_claims:
+                cbor_manifest_dict["custom_claims"] = custom_claims
+            if model_id:
+                if "ai_info" not in cbor_manifest_dict:
+                    cbor_manifest_dict["ai_info"] = {}
+                cbor_manifest_dict["ai_info"]["model_id"] = model_id
+            payload_data["manifest"] = cbor_manifest_dict
+            # The actual CBOR processing will happen during signing/packaging
         else:
             logger.error(f"Unsupported metadata_format: {metadata_format}")
             raise ValueError(f"Unsupported metadata_format: {metadata_format}")
 
         # --- End: Payload Construction ---
 
-        # --- Start: Signing ---
-        try:
-            # Serialize the *complete* payload (basic or manifest) just once
-            # Use dict() to ensure we are working with a copy if needed and handle payload_data type
-            canonical_payload_bytes = serialize_payload(dict(payload_data))
-            signature = sign_payload(private_key, canonical_payload_bytes)
-            # Use URL-safe base64 encoding without padding for embedding
-            signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode("ascii")
-            logger.debug(f"Payload signed successfully. Signature (base64): {signature_b64[:10]}...")
-        except Exception as e:
-            logger.exception("Failed to sign the metadata payload.")
-            # Propagate the error, as signing failure is critical
-            raise RuntimeError(f"Failed to sign metadata payload: {e}") from e
-        # --- End: Signing ---
+        # --- Start: Signing & Packaging Logic based on format ---
+        signature_b64: str
+        payload_for_outer_dict: Union[Dict[str, Any], str]
+        actual_payload_type_for_outer: str
 
-        # --- Start: Combine Payload and Signature for Embedding ---
-        # Combine the payload dictionary, signature, signer_id, and format
-        # into the structure expected by the extractor.
+        if metadata_format == "cbor_manifest":
+            try:
+                # payload_data is the manifest dictionary constructed earlier
+                # 1. Serialize the manifest dictionary to CBOR bytes
+                cbor_manifest_bytes = cbor2.dumps(payload_data)
+                logger.debug(f"CBOR serialized manifest size: {len(cbor_manifest_bytes)} bytes")
+
+                # 2. Sign these raw CBOR bytes
+                # ASSUMPTION: sign_payload will be adapted to handle raw bytes if Union[PrivateKeyTypes, bytes] is passed,
+                # or a new function like sign_raw_payload(private_key, cbor_manifest_bytes) will be used.
+                signature = sign_payload(private_key, cbor_manifest_bytes)
+                signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode("ascii")
+                logger.debug(f"CBOR Manifest signed successfully. Signature (base64): {signature_b64[:10]}...")
+
+                # 3. Base64 encode the CBOR bytes for the 'payload' field in the outer dict
+                payload_for_outer_dict = base64.b64encode(cbor_manifest_bytes).decode("utf-8")
+                actual_payload_type_for_outer = "cbor_manifest"  # This is the new type for the outer package
+            except Exception as e:
+                logger.exception("Failed to process or sign CBOR manifest payload.")
+                raise RuntimeError(f"Failed to process or sign CBOR manifest payload: {e}") from e
+        else:  # For "basic" or "manifest" (JSON-based)
+            try:
+                # Serialize the *complete* payload (basic or manifest dict) to canonical JSON bytes
+                canonical_payload_bytes = serialize_payload(dict(payload_data))
+                signature = sign_payload(private_key, canonical_payload_bytes)
+                signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode("ascii")
+                logger.debug(f"Payload signed successfully. Signature (base64): {signature_b64[:10]}...")
+
+                payload_for_outer_dict = payload_data  # The dictionary itself for JSON-based formats
+                actual_payload_type_for_outer = metadata_format  # "basic" or "manifest"
+            except Exception as e:
+                logger.exception("Failed to sign the metadata payload.")
+                raise RuntimeError(f"Failed to sign metadata payload: {e}") from e
+
+        # --- End: Conditional Signing Logic ---
+
+        # --- Start: Combine Payload and Signature for Embedding (Outer Structure) ---
+        # This outer_payload_to_embed is what gets JSON serialized, then b64 encoded for steganography.
         outer_payload_to_embed = {
-            "payload": payload_data,  # Embed the dictionary structure
+            "payload": payload_for_outer_dict,  # Either dict (for JSON) or b64_str (for CBOR_manifest)
             "signature": signature_b64,
-            "signer_id": signer_id,  # Add signer_id to the top level
-            "format": metadata_format,  # Add format to the top level
+            "signer_id": signer_id,
+            "format": actual_payload_type_for_outer,  # "basic", "manifest", or "cbor_manifest"
         }
 
         # 6. Serialize the Outer Object:
@@ -682,73 +732,89 @@ class UnicodeMetadata:
                 inner_payload if return_payload_on_failure else None,
             )
 
-        # 4. Serialize Inner Payload (Canonical):
-        try:
-            canonical_payload_bytes = serialize_payload(dict(inner_payload))
-        except Exception as e:
-            # Failed to re-serialize the extracted payload
-            logger.error(
-                f"Failed to re-serialize inner payload for verification: {e}",
-                exc_info=True,
-            )
-            return (
-                False,
-                signer_id,
-                inner_payload if return_payload_on_failure else None,
-            )
+        # 4. Determine Payload Bytes for Verification and Actual Inner Payload for Return
+        payload_to_verify_bytes: bytes
+        actual_inner_payload_dict: Optional[Union[BasicPayload, ManifestPayload]] = None
+        payload_format = outer_payload.get("format")
+
+        if payload_format == "cbor_manifest":
+            if not isinstance(inner_payload, str):
+                logger.error(f"CBOR manifest payload expected string, got {type(inner_payload)}.")
+                return False, signer_id, None  # Cannot proceed
+            try:
+                # inner_payload is base64 encoded CBOR string
+                cbor_manifest_bytes = base64.b64decode(inner_payload.encode("utf-8"))
+                payload_to_verify_bytes = cbor_manifest_bytes
+                # Attempt to deserialize for return, this must succeed if we are to return it
+                actual_inner_payload_dict = cbor2.loads(cbor_manifest_bytes)
+
+                # For cbor_manifest format, the test expects the inner manifest dictionary directly
+                # If the deserialized CBOR has a 'manifest' key, return that directly instead of the wrapper
+                if isinstance(actual_inner_payload_dict, dict) and "manifest" in actual_inner_payload_dict:
+                    actual_inner_payload_dict = actual_inner_payload_dict["manifest"]
+            except (binascii.Error, TypeError) as e:
+                logger.error(f"Failed to base64 decode CBOR manifest payload: {e}")
+                return False, signer_id, None  # Payload corrupted, cannot return dict
+            except cbor2.CBORDecodeError as e:
+                logger.error(f"Failed to CBOR deserialize manifest payload: {e}")
+                return False, signer_id, None  # Payload corrupted, cannot return dict
+            except Exception as e:
+                logger.error(f"Unexpected error processing CBOR manifest payload: {e}")
+                return False, signer_id, None
+
+        elif payload_format in ("basic", "manifest"):
+            if not isinstance(inner_payload, dict):
+                logger.error(f"JSON payload ('{payload_format}') expected dict, got {type(inner_payload)}.")
+                return False, signer_id, None  # Cannot proceed
+            try:
+                payload_to_verify_bytes = serialize_payload(dict(inner_payload))
+                # Use the already defined variable from line 737
+                actual_inner_payload_dict = cast(Union[BasicPayload, ManifestPayload], inner_payload)  # Cast to expected type
+            except Exception as e:
+                logger.error(f"Failed to serialize '{payload_format}' payload for verification: {e}")
+                # If serialization fails, we can't verify. Return depends on flag.
+                return False, signer_id, cast(Union[BasicPayload, ManifestPayload], inner_payload) if return_payload_on_failure else None
+        else:
+            logger.error(f"Unknown payload format '{payload_format}' found during verification.")
+            # Try to return inner_payload if flag is set and it's a dict, else None
+            potential_payload = inner_payload if isinstance(inner_payload, dict) else None
+            return False, signer_id, cast(Union[BasicPayload, ManifestPayload, None], potential_payload) if return_payload_on_failure else None
 
         # 5. Decode Signature:
         try:
-            # Add padding if necessary for urlsafe_b64decode
             signature_bytes = base64.urlsafe_b64decode(signature_b64 + "=" * (-len(signature_b64) % 4))
-        except (base64.binascii.Error, TypeError) as e:  # type: ignore [attr-defined]
-            # Invalid base64 signature string
+        except (binascii.Error, TypeError) as e:
             logger.warning(f"Failed to decode base64 signature: {e}", exc_info=False)
             return (
                 False,
                 signer_id,
-                inner_payload if return_payload_on_failure else None,
+                cast(Optional[Union[BasicPayload, ManifestPayload]], actual_inner_payload_dict if return_payload_on_failure else None),
             )
 
         # 6. Verify Signature:
+        is_valid = False  # Default to not valid
         try:
-            is_valid = verify_signature(public_key, canonical_payload_bytes, signature_bytes)
+            is_valid = verify_signature(public_key, payload_to_verify_bytes, signature_bytes)
         except TypeError as e:
-            # E.g., verify_signature raises if key type is wrong (though checked above)
-            logger.error(
-                f"Signature verification failed due to key type mismatch: {e}",
-                exc_info=True,
-            )
-            return (
-                False,
-                signer_id,
-                inner_payload if return_payload_on_failure else None,
-            )
+            logger.error(f"Signature verification failed due to key type mismatch: {e}", exc_info=True)
+            # Fall through to return based on is_valid (False) and return_payload_on_failure
         except InvalidSignature:
-            # Signature verification failed
             logger.warning(f"Signature verification failed for signer_id '{signer_id}': Invalid signature.")
-            return (
-                False,
-                signer_id,
-                inner_payload if return_payload_on_failure else None,
-            )
+            # Fall through to return based on is_valid (False) and return_payload_on_failure
         except Exception as e:
-            # Other unexpected errors during verification
-            is_valid = False  # Treat unexpected verification errors as invalid
             logger.error(f"Unexpected error during signature verification: {e}", exc_info=True)
+            # Fall through to return based on is_valid (False) and return_payload_on_failure
 
         # 7. Return Result:
         if is_valid:
-            logger.info(f"Signature verified successfully for signer_id: '{signer_id}'")
-            # Verification successful, return payload, status, and signer_id
-            return True, signer_id, inner_payload
+            logger.info(f"Signature verified successfully for signer_id: '{signer_id}', format: '{payload_format}'.")
+            return True, signer_id, cast(Union[BasicPayload, ManifestPayload], actual_inner_payload_dict)
         else:
-            # Verification failed
-            logger.warning(f"Signature verification failed for signer_id: '{signer_id}' (reason determined above).")
+            logger.warning(f"Signature verification failed for signer_id: '{signer_id}', format: '{payload_format}'.")
             return (
                 False,
                 signer_id,
-                inner_payload if return_payload_on_failure else None,
+                cast(Optional[Union[BasicPayload, ManifestPayload]], actual_inner_payload_dict if return_payload_on_failure else None),
             )
 
     @classmethod
