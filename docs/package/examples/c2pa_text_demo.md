@@ -89,7 +89,7 @@ The content hash covers the plain text content of the article:
 def create_c2pa_manifest(article_text):
     # Calculate content hash
     content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
-    
+
     # Create C2PA manifest with content hash assertion
     c2pa_manifest = {
         "claim_generator": "EncypherAI/2.3.0",
@@ -116,7 +116,7 @@ def create_c2pa_manifest(article_text):
             }
         ]
     }
-    
+
     return c2pa_manifest
 ```
 
@@ -129,16 +129,16 @@ The demo includes a Streamlit dashboard that displays the article with verificat
 def enhance_html_with_logo_and_popup(html_content, manifest_data):
     """Add EncypherAI logo badge and manifest popup to the HTML content."""
     soup = BeautifulSoup(html_content, 'html.parser')
-    
+
     # Find first paragraph (which contains embedded metadata)
     first_p = soup.select_one('.content-column p')
     if not first_p:
         return html_content
-    
+
     # Create badge container
     badge_container = soup.new_tag('div')
     badge_container['class'] = 'badge-container'
-    
+
     # Create badge image
     badge_img = soup.new_tag('img')
     badge_img['src'] = 'icon-logo-nobg.png'
@@ -146,51 +146,51 @@ def enhance_html_with_logo_and_popup(html_content, manifest_data):
     badge_img['alt'] = 'EncypherAI Verified'
     badge_img['title'] = 'Click to view provenance information'
     badge_img['onclick'] = 'toggleManifestPopup()'
-    
+
     # Add badge to container
     badge_container.append(badge_img)
-    
+
     # Create paragraph wrapper
     paragraph_wrapper = soup.new_tag('div')
     paragraph_wrapper['class'] = 'paragraph-wrapper'
-    
+
     # Move paragraph into wrapper
     first_p_copy = first_p.extract()
     paragraph_wrapper.append(first_p_copy)
-    
+
     # Create column container
     column_container = soup.new_tag('div')
     column_container['class'] = 'column-container'
-    
+
     # Add badge and paragraph to column container
     column_container.append(badge_container)
-    
+
     # Create content column
     content_column = soup.new_tag('div')
     content_column['class'] = 'content-column'
     content_column.append(paragraph_wrapper)
-    
+
     # Add content column to container
     column_container.append(content_column)
-    
+
     # Create blank column
     blank_column = soup.new_tag('div')
     blank_column['class'] = 'blank-column'
     column_container.append(blank_column)
-    
+
     # Add manifest popup
     manifest_popup = create_manifest_popup(soup, manifest_data)
-    
+
     # Insert column container and popup where the paragraph was
     first_p.insert_before(column_container)
     first_p.insert_before(manifest_popup)
-    
+
     # Add verification notice under author line
     add_verification_notice(soup)
-    
+
     # Add required CSS and JavaScript
     add_css_and_js(soup)
-    
+
     return str(soup)
 ```
 
@@ -204,44 +204,44 @@ def test_content_tampering():
     """Test tampering with the article content."""
     print("SCENARIO 1: CONTENT TAMPERING TEST")
     print("==================================")
-    
+
     # Load the encoded article
     with open('encoded_article.html', 'r', encoding='utf-8') as f:
         encoded_html = f.read()
-    
+
     # Extract text content for hashing
     soup = BeautifulSoup(encoded_html, 'html.parser')
     paragraphs = soup.find_all('p')
     article_text = '\n'.join([p.get_text() for p in paragraphs])
-    
+
     print("1. Original content hash calculation:")
     original_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
     print(f"   Original hash: {original_hash[:10]}...{original_hash[-10:]}")
-    
+
     # Tamper with content (change second paragraph)
     print("\n2. Simulating content tampering...")
     second_p = paragraphs[1]
     original_text = second_p.get_text()
     tampered_text = original_text.replace("artificial intelligence", "TAMPERED TEXT")
     second_p.string = tampered_text
-    
+
     # Save tampered article
     with open('tampered_content_article.html', 'w', encoding='utf-8') as f:
         f.write(str(soup))
     print("   Tampered article saved as 'tampered_content_article.html'")
-    
+
     # Calculate new hash
     tampered_paragraphs = soup.find_all('p')
     tampered_article_text = '\n'.join([p.get_text() for p in tampered_paragraphs])
     tampered_hash = hashlib.sha256(tampered_article_text.encode('utf-8')).hexdigest()
-    
+
     print("\n3. New content hash after tampering:")
     print(f"   Tampered hash: {tampered_hash[:10]}...{tampered_hash[-10:]}")
-    
+
     # Verify the tampered article
     print("\n4. Verifying tampered article...")
     verify_result = verify_article('tampered_content_article.html')
-    
+
     print("\n5. Tampering detection result:")
     if verify_result['verified']:
         print("   [FAIL] Signature verification passed (expected)")
@@ -321,7 +321,7 @@ The original `article.html` is a simple HTML article with a title, author, and m
 <body>
     <h1>The Future of AI</h1>
     <div class="author">By Dr. Jane Smith | June 15, 2025</div>
-    
+
     <div class="column-container">
         <div class="badge-container"></div>
         <div class="content-column">
@@ -329,7 +329,7 @@ The original `article.html` is a simple HTML article with a title, author, and m
         </div>
         <div class="blank-column"></div>
     </div>
-    
+
     <!-- More paragraphs in column containers -->
 </body>
 </html>
@@ -412,7 +412,7 @@ You can customize the C2PA manifest by modifying the `create_c2pa_manifest` func
 def create_c2pa_manifest(article_text):
     # Calculate content hash
     content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
-    
+
     # Create C2PA manifest with custom assertions
     c2pa_manifest = {
         "claim_generator": "YourApp/1.0.0",
@@ -435,7 +435,7 @@ def create_c2pa_manifest(article_text):
             }
         ]
     }
-    
+
     return c2pa_manifest
 ```
 
@@ -470,12 +470,12 @@ def add_css_and_js(soup):
     }
     /* Add your custom CSS here */
     """
-    
+
     # Add the CSS to the head
     style_tag = soup.new_tag('style')
     style_tag.string = css
     soup.head.append(style_tag)
-    
+
     # Add JavaScript for popup functionality
     js = """
     function toggleManifestPopup() {
@@ -486,14 +486,14 @@ def add_css_and_js(soup):
             popup.style.display = 'block';
         }
     }
-    
+
     function closeManifestPopup() {
         document.getElementById('manifestPopup').style.display = 'none';
     }
-    
+
     // Add your custom JavaScript here
     """
-    
+
     script_tag = soup.new_tag('script')
     script_tag.string = js
     soup.body.append(script_tag)

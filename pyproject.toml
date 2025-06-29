@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encypher-ai"
-version = "2.3.0"
+version = "2.4.1"
 description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
 authors = [{name = "EncypherAI Team"}]
@@ -24,6 +24,7 @@ dependencies = [
     "cryptography",
     "deprecated",
     "cbor2>=5.6.5",
+    "pycose>=1.1.0",
 ]
 
 [project.optional-dependencies]
@@ -33,6 +34,7 @@ dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "mypy>=1.0.0",
+    "types-requests>=2.31.0",
     "flake8>=6.0.0",
     "ruff>=0.0.270",
     "isort>=5.12.0",

@@ -39,48 +39,6 @@ With EncypherAI, you can:
 
 As AI-generated content becomes more prevalent, establishing provenance and ensuring integrity becomes critical. EncypherAI addresses these needs by providing a simple way to invisibly embed metadata that can later be verified.
 
-```python
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-from typing import Optional, Dict
-import time
-
-# Generate key pair for digital signature
-private_key, public_key = generate_key_pair()
-key_id = "example-key-1"
-
-# Store public keys (in a real system, this would be a secure database)
-public_keys_store = {key_id: public_key}
-
-# Create a resolver function to look up public keys by ID
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
-    return public_keys_store.get(key_id)
-
-# Embed metadata in AI-generated text
-metadata = {
-    "model_id": "gpt-4",
-    "timestamp": int(time.time()),
-    "organization": "EncypherAI",
-    "key_id": key_id  # Required for verification
-}
-text = "This is AI-generated content with invisible metadata."
-encoded_text = UnicodeMetadata.embed_metadata(
-    text=text,
-    metadata=metadata,
-    private_key=private_key
-)
-
-# Later, verify and extract metadata
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
-    text=encoded_text,
-    public_key_resolver=resolve_public_key
-)
-
-if is_valid:
-    print(f"Verified metadata: {verified_metadata}")
-```
-
 ## License
 
 EncypherAI is released under the GNU Affero General Public License v3.0 (AGPL-3.0).

@@ -4,42 +4,42 @@ This guide will help you get started with EncypherAI for embedding and extractin
 
 ## Basic Usage
 
-### 1. Import the Package
+This example demonstrates the fundamental workflow: embedding metadata with a digital signature and then verifying it.
+
+### 1. Imports and Key Setup
+
+First, import the necessary components and set up your cryptographic keys. For this example, we'll generate a key pair on the fly. In a real application, you would load a securely stored private key.
 
 ```python
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core import generate_key_pair, BasicPayload
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-from typing import Optional, Dict, Any
 import time
-```
+from typing import Dict, Optional, Union
 
-### 2. Initialize the Encoder
 
-```python
-# Generate a key pair for digital signatures
-private_key, public_key = generate_key_pair()
-signer_id = "quickstart-key-1"
+from encypher.core.keys import generate_ed25519_key_pair
+from encypher.core.payloads import BasicPayload, ManifestPayload
+from encypher.core.unicode_metadata import UnicodeMetadata
 
-# In a real application, you would store these keys securely
-# Here's a simple example of a public key store and resolver
+# --- Key Management ---
+# In a real application, you would manage keys securely.
+private_key: Ed25519PrivateKey
+public_key: Ed25519PublicKey
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "quickstart-signer-001"
+
+# Create a simple key store and a provider function to look up public keys by ID.
+# This function is passed to the verification method.
 public_keys_store = {signer_id: public_key}
 
-def resolve_public_key(id_val: str) -> Optional[PublicKeyTypes]:
-    return public_keys_store.get(id_val)
+def public_key_resolver(key_id: str):
+    return public_keys_store.get(key_id)
+# --------------------
 ```
 
-### 3. Embed Metadata in Text
+### 2. Embed Metadata
+
+Now, embed the metadata into your text. The `embed_metadata` method signs the payload and invisibly encodes it.
 
 ```python
-# Define your metadata components
-model_id_val = "gpt-4"
-timestamp_val = int(time.time())  # Unix/Epoch timestamp
-custom_meta = {
-    "version": "2.3.0",
-    "organization": "EncypherAI"
-}
-
 # Original AI-generated text
 text = "This is AI-generated content that will contain invisible metadata."
 
@@ -48,168 +48,105 @@ encoded_text = UnicodeMetadata.embed_metadata(
     text=text,
     private_key=private_key,
     signer_id=signer_id,
-    model_id=model_id_val,
-    timestamp=timestamp_val,
-    custom_metadata=custom_meta,
-    metadata_format="basic",
-    target="whitespace"
+    timestamp=int(time.time()),
+    custom_metadata={
+        "model_id": "gpt-4o",
+        "version": "2.3.0",
+        "organization": "EncypherAI"
+    },
+    metadata_format="basic",  # 'basic' is a simple key-value format
+    target="whitespace"       # Embed metadata after whitespace characters
 )
 
-# The encoded_text looks identical to the original text when displayed,
-# but contains invisible zero-width characters that encode the metadata
+# The encoded_text looks identical to the original text when displayed.
+print(f"Original text:  {text}")
+print(f"Encoded text:   {encoded_text}")
+```
 
-# Extract metadata without verification (if you just need the data)
-extracted_payload: Optional[BasicPayload] = UnicodeMetadata.extract_metadata(encoded_text)
-print(f"Extracted metadata (unverified): {extracted_payload}")
+### 3. Extract and Verify Metadata
 
-# Verify the metadata using the public key resolver
-is_valid, returned_signer_id, payload_object = UnicodeMetadata.verify_metadata(
+To ensure the text is authentic and unmodified, use the `verify_metadata` method with your `public_key_provider`.
+
+```python
+# Verify the metadata using the public key provider
+is_valid: bool
+extracted_signer_id: Optional[str]
+verified_payload: Union[BasicPayload, ManifestPayload, None]
+is_valid, extracted_signer_id, verified_payload = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_provider=resolve_public_key
+    public_key_provider=public_key_provider
 )
 
-if is_valid and payload_object:
-    print("Metadata is valid and has not been tampered with.")
-    print(f"Returned Signer ID: {returned_signer_id}")
-    print(f"Verified metadata payload: {payload_object}")
-    # Example: Accessing specific fields from BasicPayload
-    if "custom_metadata" in payload_object:
-        print(f"  Custom Version: {payload_object.get('custom_metadata', {}).get('version')}")
-    print(f"  Timestamp: {payload_object.get('timestamp')}")
+print(f"\nSignature valid: {is_valid}")
+if is_valid and verified_payload:
+    print(f"Verified Signer ID: {extracted_signer_id}")
+    print(f"Verified Timestamp: {verified_payload.timestamp}")
+    print(f"Verified Custom Metadata: {verified_payload.custom_metadata}")
 else:
     print("Metadata validation failed - content may have been tampered with.")
-    if payload_object:
-        print(f"  (Payload on failure: {payload_object})")
+
+# You can also extract the payload without verification, but this is not recommended
+# for security-sensitive applications as it does not guarantee authenticity.
+unverified_payload = UnicodeMetadata.extract_metadata(encoded_text)
+print(f"\nExtracted (unverified) payload: {unverified_payload}")
 ```
 
 ## Streaming Support
 
-EncypherAI also supports streaming responses from LLM providers:
+EncypherAI fully supports streaming, allowing you to process and embed metadata in real-time as text chunks are generated by an LLM.
 
 ```python
 from encypher.streaming.handlers import StreamingHandler
-from encypher.core import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-from typing import Optional, Dict, Any
-import time
 
-# Initialize the streaming handler
-stream_payload_data = {
-    "model_id": "gpt-4-stream",
-    "timestamp": int(time.time()),  # Unix/Epoch timestamp
-    "custom_metadata": {"stream_source": "example_llm"}
-}
+# --- Assuming key setup from the previous example ---
 
+# Create a streaming handler with the same metadata components
 streaming_handler = StreamingHandler(
     private_key=private_key,
     signer_id=signer_id,
-    metadata=stream_payload_data,
-    metadata_format="basic",
-    target="whitespace",
-    encode_first_chunk_only=True
+    timestamp=int(time.time()),
+    custom_metadata={
+        "model_id": "gpt-4o-stream",
+        "source": "quickstart_streaming_example"
+    },
+    # encode_first_chunk_only=True is the default and most common for streaming
 )
 
-# Process chunks as they arrive
-# Example: simulate streaming response chunks
-streaming_response_chunks = ["This is the first chunk ", "of a streamed response, ", "and this is the final part."]
-encoded_chunks = []
-for chunk in streaming_response_chunks:  # From your LLM provider
+# Simulate receiving chunks from an LLM
+streaming_response_chunks = [
+    "This is the first chunk ",
+    "of a streamed response, ",
+    "and this is the final part."
+]
+
+# Process each chunk and build the full response
+full_encoded_response = ""
+print("\nSimulating stream output:")
+for chunk in streaming_response_chunks:
     encoded_chunk = streaming_handler.process_chunk(chunk=chunk)
     if encoded_chunk:  # May be None if buffering
-        encoded_chunks.append(encoded_chunk)
-        # Send to client or process as needed
+        print(encoded_chunk, end="")
+        full_encoded_response += encoded_chunk
 
-# Don't forget to finalize the stream to process any remaining buffer
+# Finalize the stream to process any remaining buffer and embed the metadata
 final_chunk = streaming_handler.finalize_stream()
 if final_chunk:
-    encoded_chunks.append(final_chunk)
+    print(final_chunk, end="")
+    full_encoded_response += final_chunk
+print("\n--- End of Stream ---")
 
-# The complete encoded text with metadata
-complete_encoded_text = "".join(encoded_chunks)
-print(f"\nComplete streamed text: {complete_encoded_text}")
-
-# Verify the complete text
-is_valid, returned_signer_id, payload_object = UnicodeMetadata.verify_metadata(
-    text=complete_encoded_text,
-    public_key_provider=resolve_public_key
+# Verify the complete streamed text
+is_stream_valid, stream_signer_id, stream_payload = UnicodeMetadata.verify_metadata(
+    text=full_encoded_response,
+    public_key_provider=public_key_provider
 )
 
-if is_valid and payload_object:
-    print("Streamed metadata is valid.")
-    print(f"  Returned Signer ID: {returned_signer_id}")
-    print(f"  Verified payload: {payload_object}")
+print(f"\nStreamed text signature valid: {is_stream_valid}")
+if is_stream_valid and stream_payload:
+    print(f"Verified Stream Signer ID: {stream_signer_id}")
+    print(f"Verified Stream Payload: {stream_payload.custom_metadata}")
 else:
     print("Streamed metadata validation failed.")
-    if payload_object:
-        print(f"  (Payload on failure: {payload_object})")
-```
-
-## Integrating with OpenAI
-
-Here's a quick example with OpenAI:
-
-```python
-from openai import OpenAI
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-from typing import Optional, Dict, Any
-import time
-
-# Set up OpenAI client
-# client = OpenAI(api_key="your-openai-api-key") # User needs to fill this
-
-# Generate keys for digital signatures
-private_key_openai, public_key_openai = generate_key_pair()
-signer_id_openai = "openai-example-key"
-
-# Store public key (in a real application, use a secure database)
-public_keys_openai_store = {signer_id_openai: public_key_openai}
-def resolve_public_key_openai(id_val: str) -> Optional[PublicKeyTypes]:
-    return public_keys_openai_store.get(id_val)
-
-# Get response from OpenAI (Example, replace with actual call if running)
-# response = client.chat.completions.create(
-#     model="gpt-4",
-#     messages=[{"role": "user", "content": "Write a short poem about technology."}]
-# )
-# text_openai = response.choices[0].message.content
-text_openai = "A short poem about technology, generated by an AI."
-
-# Add metadata
-openai_model_id = "gpt-4-openai"
-openai_timestamp = int(time.time())
-openai_custom_meta = {
-    "organization": "Your Organization",
-    "usage_info": "example_call"
-}
-
-encoded_text_openai = UnicodeMetadata.embed_metadata(
-    text=text_openai,
-    private_key=private_key_openai,
-    signer_id=signer_id_openai,
-    model_id=openai_model_id,
-    timestamp=openai_timestamp,
-    custom_metadata=openai_custom_meta,
-    metadata_format="basic"
-)
-
-# The encoded_text now contains invisible metadata
-print(f"\nOpenAI example encoded text: {encoded_text_openai}")
-
-# Later, verify the metadata
-is_valid, returned_signer_id, payload_object = UnicodeMetadata.verify_metadata(
-    text=encoded_text_openai,
-    public_key_provider=resolve_public_key_openai
-)
-
-if is_valid and payload_object:
-    print(f"Verified OpenAI response metadata: {payload_object}")
-    print(f"  Signer ID: {returned_signer_id}")
-else:
-    print("OpenAI response metadata validation failed.")
-    if payload_object:
-        print(f"  (Payload on failure: {payload_object})")
 ```
 
 ## Next Steps

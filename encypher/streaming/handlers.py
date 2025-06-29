@@ -5,7 +5,7 @@ This module provides utilities for handling streaming responses from LLMs
 and encoding metadata into the streaming chunks.
 """
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any, Dict, List, Literal, Optional, Union
 
 from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, ed25519, rsa, x448, x25519
@@ -29,42 +29,51 @@ class StreamingHandler:
 
     def __init__(
         self,
-        metadata: Optional[Dict[str, Any]] = None,
+        custom_metadata: Optional[Dict[str, Any]] = None,
+        timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Union[str, MetadataTarget] = "whitespace",
         encode_first_chunk_only: bool = True,
-        # New parameters for signature-based embedding
         private_key: Optional[PrivateKeyTypes] = None,
         signer_id: Optional[str] = None,
-        metadata_format: Literal["basic", "manifest"] = "basic",
-        # Removed hmac_secret_key
+        metadata_format: Literal["basic", "manifest", "c2pa_v2_2"] = "c2pa_v2_2",
+        # For backward compatibility
+        metadata: Optional[Dict[str, Any]] = None,
     ):
         """
         Initialize the streaming handler.
 
         Args:
-            metadata: Dictionary of metadata to encode. Must include keys required
-                      by the chosen `metadata_format`.
+            custom_metadata: Dictionary of custom claims to include in the metadata.
+            timestamp: Timestamp for C2PA embedding. If not provided, a timestamp
+                       will be generated.
             target: Where to embed the metadata (whitespace, punctuation, etc.)
             encode_first_chunk_only: Whether to encode metadata only in the first
-                                     non-empty chunk. Currently, only True is fully
-                                     supported for signature embedding.
+                                     non-empty chunk.
             private_key: The private key for signing the metadata.
+            metadata: (Deprecated) Alternative way to provide custom metadata. Use custom_metadata instead.
             signer_id: An identifier for the signer (associated with the public key).
-            metadata_format: The structure ('basic' or 'manifest') of the metadata payload.
+            metadata_format: The structure of the metadata payload.
+                             'c2pa_v2_2' is the latest C2PA-compliant format.
 
         Raises:
-            ValueError: If `metadata_format` is invalid, or if `metadata` is provided
+            ValueError: If `metadata_format` is invalid, or if `custom_metadata` is provided
                         without `private_key` and `signer_id`.
-            TypeError: If `metadata`, `encode_first_chunk_only`, `private_key`,
-                       or `signer_id` have incorrect types.
+            TypeError: If arguments have incorrect types.
         """
         logger.debug(f"Initializing StreamingHandler with target='{target}', encode_first_chunk_only={encode_first_chunk_only}")
 
         # --- Input Validation ---
-        if metadata_format not in ("basic", "manifest"):
-            raise ValueError("metadata_format must be 'basic' or 'manifest'.")
-        if metadata is not None and not isinstance(metadata, dict):
-            raise TypeError("If provided, 'metadata' must be a dictionary.")
+        if metadata_format not in ("basic", "manifest", "c2pa_v2_2"):
+            raise ValueError("metadata_format must be 'basic', 'manifest', or 'c2pa_v2_2'.")
+
+        # Handle backward compatibility with 'metadata' parameter
+        if metadata is not None:
+            logger.warning("The 'metadata' parameter is deprecated. Use 'custom_metadata' instead.")
+            if custom_metadata is None:  # Only use metadata if custom_metadata is not provided
+                custom_metadata = metadata
+
+        if custom_metadata is not None and not isinstance(custom_metadata, dict):
+            raise TypeError("If provided, 'custom_metadata' must be a dictionary.")
         if not isinstance(encode_first_chunk_only, bool):
             raise TypeError("'encode_first_chunk_only' must be a boolean.")
         if private_key is not None and not (
@@ -77,25 +86,41 @@ class StreamingHandler:
             or isinstance(private_key, x448.X448PrivateKey)
             or isinstance(private_key, ed448.Ed448PrivateKey)
         ):
-            # Note: Using PrivateKeyTypes for broader compatibility if other key types are added later.
-            # If strictly Ed25519, use Ed25519PrivateKey from .keys
             raise TypeError("If provided, 'private_key' must be a valid private key type (e.g., Ed25519PrivateKey).")
         if signer_id is not None and not isinstance(signer_id, str):
             raise TypeError("If provided, 'signer_id' must be a string.")
 
         # Check for key/signer_id presence *if* metadata is intended for embedding
-        if metadata and (not private_key or not signer_id):
+        if (custom_metadata or metadata) and (not private_key or not signer_id):
             raise ValueError("If metadata is provided for embedding, private_key and signer_id must also be provided.")
 
-        self.metadata = metadata or {}
+        # --- Prepare metadata for embedding ---
+        self.metadata: Dict[str, Any] = {}
+
+        # Handle the deprecated 'metadata' parameter
+        if metadata is not None:
+            # Copy all fields from metadata to self.metadata, excluding custom_metadata
+            # to avoid double-wrapping
+            for key, value in metadata.items():
+                if key != "custom_metadata":
+                    self.metadata[key] = value
+                else:
+                    # If metadata contains custom_metadata and no custom_metadata param was provided,
+                    # use the one from metadata
+                    if custom_metadata is None:
+                        custom_metadata = value
+
+        # Add custom_metadata directly to self.metadata
+        if custom_metadata is not None:
+            self.metadata.update(custom_metadata)
+
+        # Add timestamp to the kwargs dict for embed_metadata
+        if "timestamp" not in self.metadata:
+            self.metadata["timestamp"] = timestamp or datetime.now(timezone.utc)
+
         self.private_key = private_key
         self.signer_id = signer_id
         self.metadata_format = metadata_format
-
-        # Ensure we have a timestamp if not provided and using basic format
-        # Manifest format manages its own timestamps within actions/claims
-        if self.metadata_format == "basic" and "timestamp" not in self.metadata:
-            self.metadata["timestamp"] = datetime.now(timezone.utc).isoformat()
 
         # Parse target
         if isinstance(target, str):
@@ -205,13 +230,47 @@ class StreamingHandler:
                 # Embed metadata if signing is enabled and conditions met
                 if self.private_key and self.signer_id and not (self.encode_first_chunk_only and self.has_encoded):
                     final_text = self.accumulated_text
+                    # Extract metadata fields for embed_metadata
+                    target = self.target
+                    timestamp = self.metadata.get("timestamp")
+                    model_id = self.metadata.get("model_id")
+                    claim_generator = self.metadata.get("claim_generator")
+                    actions = self.metadata.get("actions")
+                    ai_info = self.metadata.get("ai_info")
+
+                    # Handle custom_metadata vs custom_claims based on metadata_format
+                    custom_metadata = None
+                    custom_claims = None
+                    if self.metadata_format == "basic":
+                        # For basic format, preserve custom_metadata field name
+                        if "custom_metadata" in self.metadata:
+                            custom_metadata = self.metadata["custom_metadata"]
+                        elif "custom_claims" in self.metadata:
+                            # If only custom_claims is present, map it to custom_metadata for basic format
+                            custom_metadata = self.metadata["custom_claims"]
+                    else:
+                        # For manifest formats, use custom_claims parameter
+                        if "custom_metadata" in self.metadata:
+                            custom_claims = self.metadata["custom_metadata"]
+                        elif "custom_claims" in self.metadata:
+                            custom_claims = self.metadata["custom_claims"]
+
+                    # Call embed_metadata with explicit parameters
                     final_text = UnicodeMetadata.embed_metadata(
-                        final_text,
-                        self.private_key,
-                        self.signer_id,
-                        self.metadata_format,
-                        target=self.target,
-                        **self.metadata,  # Pass the full metadata dict as kwargs
+                        text=final_text,
+                        private_key=self.private_key,
+                        signer_id=self.signer_id,
+                        metadata_format=self.metadata_format,
+                        model_id=model_id,
+                        timestamp=timestamp,
+                        target=target,
+                        custom_metadata=custom_metadata,
+                        claim_generator=claim_generator,
+                        actions=actions,
+                        ai_info=ai_info,
+                        custom_claims=custom_claims,
+                        distribute_across_targets=False,
+                        add_hard_binding=False,  # Disable for streaming
                     )
                     self.has_encoded = True
                     logger.info(f"Successfully encoded metadata into chunk. Encoded: {self.has_encoded}")
@@ -231,13 +290,49 @@ class StreamingHandler:
             # Embed metadata if signing is enabled and conditions met
             if self.private_key and self.signer_id and not (self.encode_first_chunk_only and self.has_encoded):
                 final_text = chunk
+
+                # Extract metadata fields for embed_metadata
+                # Explicitly pass each parameter to satisfy mypy type checking
+                target = self.target
+                timestamp = self.metadata.get("timestamp")
+                model_id = self.metadata.get("model_id")
+                claim_generator = self.metadata.get("claim_generator")
+                actions = self.metadata.get("actions")
+                ai_info = self.metadata.get("ai_info")
+
+                # Handle custom_metadata vs custom_claims based on metadata_format
+                custom_metadata = None
+                custom_claims = None
+                if self.metadata_format == "basic":
+                    # For basic format, preserve custom_metadata field name
+                    if "custom_metadata" in self.metadata:
+                        custom_metadata = self.metadata["custom_metadata"]
+                    elif "custom_claims" in self.metadata:
+                        # If only custom_claims is present, map it to custom_metadata for basic format
+                        custom_metadata = self.metadata["custom_claims"]
+                else:
+                    # For manifest formats, use custom_claims parameter
+                    if "custom_metadata" in self.metadata:
+                        custom_claims = self.metadata["custom_metadata"]
+                    elif "custom_claims" in self.metadata:
+                        custom_claims = self.metadata["custom_claims"]
+
+                # Call embed_metadata with explicit parameters
                 final_text = UnicodeMetadata.embed_metadata(
-                    final_text,
-                    self.private_key,
-                    self.signer_id,
-                    self.metadata_format,
-                    target=self.target,
-                    **self.metadata,  # Pass the full metadata dict as kwargs
+                    text=final_text,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    metadata_format=self.metadata_format,
+                    model_id=model_id,
+                    timestamp=timestamp,
+                    target=target,
+                    custom_metadata=custom_metadata,
+                    claim_generator=claim_generator,
+                    actions=actions,
+                    ai_info=ai_info,
+                    custom_claims=custom_claims,
+                    distribute_across_targets=False,
+                    add_hard_binding=False,  # Disable for streaming
                 )
                 self.has_encoded = True
                 logger.info(f"Successfully encoded metadata into chunk. Encoded: {self.has_encoded}")
@@ -328,7 +423,9 @@ class StreamingHandler:
                     self.signer_id,
                     self.metadata_format,
                     target=self.target,
-                    **self.metadata,  # Pass the full metadata dict as kwargs
+                    add_hard_binding=False,  # Disable for streaming
+                    timestamp=self.metadata.get("timestamp"),
+                    custom_claims=self.metadata.get("custom_claims"),
                 )
                 self.has_encoded = True
                 self.accumulated_text = ""

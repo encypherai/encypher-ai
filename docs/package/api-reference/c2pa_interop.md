@@ -200,17 +200,17 @@ is_verified, extracted_signer_id, extracted_manifest = UnicodeMetadata.verify_an
 if is_verified:
     # Convert back to C2PA format
     c2pa_extracted = encypher_manifest_to_c2pa_like_dict(extracted_manifest)
-    
+
     # Verify content hash
     current_content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
-    
+
     # Find content hash assertion
     stored_hash = None
     for assertion in c2pa_extracted.get("assertions", []):
         if assertion.get("label") == "stds.c2pa.content.hash":
             stored_hash = assertion["data"]["hash"]
             break
-    
+
     if stored_hash == current_content_hash:
         print("Content hash verification successful!")
     else:

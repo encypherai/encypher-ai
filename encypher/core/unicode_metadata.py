@@ -7,25 +7,39 @@ into text using Unicode variation selectors without affecting readability.
 
 import base64
 import binascii
+import copy
 import hashlib
 import hmac
 import json
 import re
+import uuid
 import warnings
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import cbor2
 from cryptography.exceptions import InvalidSignature
-from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, ed25519, rsa, x448, x25519
-from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from deprecated import deprecated
+from pycose.messages import CoseMessage
+
+from encypher import __version__
 
 from .constants import MetadataTarget
 from .logging_config import logger
-from .payloads import BasicPayload, ManifestPayload, OuterPayload, serialize_payload
-from .signing import sign_payload, verify_signature
+from .payloads import (
+    BasicPayload,
+    C2PAAssertion,
+    C2PAPayload,
+    ManifestPayload,
+    OuterPayload,
+    deserialize_c2pa_payload_from_cbor,
+    serialize_c2pa_payload_to_cbor,
+    serialize_payload,
+)
+from .signing import extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
 
 
 class UnicodeMetadata:
@@ -162,6 +176,7 @@ class UnicodeMetadata:
         # Extract bytes from variation selectors
         decoded: List[int] = []
 
+        # First try the standard approach: find variation selectors interleaved in text
         for char in text:
             code_point = ord(char)
             byte = cls.from_variation_selector(code_point)
@@ -177,8 +192,29 @@ class UnicodeMetadata:
 
             decoded.append(byte)
 
+        # If we found bytes using the standard approach, return them
+        if decoded:
+            return bytes(decoded)
+
+        # Fallback approach: Check for variation selectors appended at the end of the text
+        # This handles the fallback embedding strategy where selectors are appended to the end
+        decoded = []
+
+        # Start from the end of the text and collect all consecutive variation selectors
+        for i in range(len(text) - 1, -1, -1):
+            char = text[i]
+            code_point = ord(char)
+            byte = cls.from_variation_selector(code_point)
+
+            # If not a variation selector, stop collecting
+            if byte is None:
+                break
+
+            decoded.insert(0, byte)  # Insert at beginning to maintain order
+
         # Convert bytes back to bytes object
         if decoded:
+            logger.debug(f"Extracted {len(decoded)} bytes from variation selectors at end of text.")
             return bytes(decoded)
         else:
             return b""
@@ -238,6 +274,13 @@ class UnicodeMetadata:
         return dt.strftime("%Y-%m-%dT%H:%M:%SZ")  # Simplified ISO format
 
     @classmethod
+    def _strip_variation_selectors(cls, text: str) -> str:
+        """Removes all Unicode variation selectors from a string."""
+        # This regex matches characters in the VS1-VS16 and VS17-VS256 ranges.
+        pattern = re.compile(r"[\uFE00-\uFE0F\U000E0100-\U000E01EF]")
+        return pattern.sub("", text)
+
+    @classmethod
     def find_targets(
         cls,
         text: str,
@@ -285,7 +328,7 @@ class UnicodeMetadata:
         text: str,
         private_key: PrivateKeyTypes,
         signer_id: str,
-        metadata_format: Literal["basic", "manifest", "cbor_manifest"] = "basic",
+        metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa_v2_2"] = "manifest",
         model_id: Optional[str] = None,
         timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Optional[Union[str, MetadataTarget]] = None,
@@ -295,6 +338,7 @@ class UnicodeMetadata:
         ai_info: Optional[Dict[str, Any]] = None,
         custom_claims: Optional[Dict[str, Any]] = None,
         distribute_across_targets: bool = False,
+        add_hard_binding: bool = True,  # New parameter
     ) -> str:
         """
         Embed metadata into text using Unicode variation selectors, signing with a private key.
@@ -310,7 +354,7 @@ class UnicodeMetadata:
             signer_id: A string identifying the signer/key pair (used for
                        verification lookup).
             metadata_format: The format for the metadata payload ('basic' or 'manifest').
-                             Default is 'basic'. When set to 'manifest', uses a
+                             Default is 'manifest'. When set to 'manifest', uses a
                              C2PA-inspired structured format.
             model_id: Model identifier (used in 'basic' and optionally in
                       'manifest' ai_info).
@@ -333,6 +377,8 @@ class UnicodeMetadata:
                            'manifest' format).
             distribute_across_targets: If True, distribute bits across multiple
                                        targets if needed.
+            add_hard_binding: If True, include the hard binding assertion in the
+                              manifest. Default is True.
 
         Returns:
             The text with embedded metadata and digital signature.
@@ -346,6 +392,28 @@ class UnicodeMetadata:
             f"embed_metadata called with text (type={type(text).__name__}), signer_id='{signer_id}', "
             f"format='{metadata_format}', target='{target}', distribute={distribute_across_targets}"
         )
+
+        if metadata_format == "c2pa_v2_2":
+            # Convert timestamp once for C2PA-specific embedding
+            try:
+                iso_timestamp = cls._format_timestamp(timestamp)
+                if iso_timestamp is None:
+                    raise ValueError("A 'timestamp' must be provided for C2PA embedding.")
+            except (ValueError, TypeError) as e:
+                logger.error(f"Timestamp error: {e}", exc_info=True)
+                raise ValueError(f"Timestamp error: {e}")
+
+            return cls._embed_c2pa_v2_2(
+                text=text,
+                private_key=private_key,
+                signer_id=signer_id,
+                claim_generator=claim_generator,
+                actions=actions,
+                iso_timestamp=iso_timestamp,
+                target=target,
+                distribute_across_targets=distribute_across_targets,
+                add_hard_binding=add_hard_binding,
+            )
         # --- Start: Input Validation ---
         if not isinstance(text, str):
             logger.error("Input validation failed: 'text' is not a string.")
@@ -379,9 +447,9 @@ class UnicodeMetadata:
             logger.error("'target' must be a string or MetadataTarget enum member.")
             raise TypeError("'target' must be a string or MetadataTarget enum member.")
 
-        if metadata_format not in ("basic", "manifest", "cbor_manifest"):
-            logger.error("metadata_format must be 'basic', 'manifest', or 'cbor_manifest'.")
-            raise ValueError("metadata_format must be 'basic', 'manifest', or 'cbor_manifest'.")
+        if metadata_format not in ("basic", "manifest", "cbor_manifest", "c2pa_v2_2"):
+            logger.error("metadata_format must be 'basic', 'manifest', 'cbor_manifest', or 'c2pa_v2_2'.")
+            raise ValueError("metadata_format must be 'basic', 'manifest', 'cbor_manifest', or 'c2pa_v2_2'.")
 
         if model_id is not None and not isinstance(model_id, str):
             logger.error("If provided, 'model_id' must be a string.")
@@ -623,6 +691,470 @@ class UnicodeMetadata:
             return result
 
     @classmethod
+    def _embed_c2pa_v2_2(
+        cls,
+        text: str,
+        private_key: PrivateKeyTypes,
+        signer_id: str,
+        claim_generator: Optional[str],
+        actions: Optional[List[Dict[str, Any]]],
+        iso_timestamp: str,
+        target: Optional[Union[str, MetadataTarget]],
+        distribute_across_targets: bool,
+        add_hard_binding: bool,  # New parameter
+    ) -> str:
+        """
+        Constructs and embeds a C2PA v2.2 compliant manifest.
+
+        This internal method orchestrates the creation of a C2PA manifest, including
+        mandatory assertions, content hashing (hard binding), and a soft binding
+        hash. The resulting manifest is serialized to CBOR, signed, and then
+        embedded into the text using Unicode variation selectors.
+
+        Args:
+            text: The original, clean text content to be watermarked.
+            private_key: The Ed25519 private key for signing the manifest.
+            signer_id: An identifier for the key pair.
+            claim_generator: A string identifying the software agent creating the claim.
+            actions: A list of action dictionaries to include in the manifest.
+            iso_timestamp: The ISO 8601 formatted timestamp for the actions.
+            target: The embedding target strategy.
+            distribute_across_targets: If True, distribute bits across multiple targets.
+            add_hard_binding: If True, include the hard binding assertion in the manifest.
+
+        Returns:
+            The text with the embedded C2PA manifest.
+        """
+        if not isinstance(private_key, ed25519.Ed25519PrivateKey):
+            raise TypeError("For C2PA v2.2 embedding, 'private_key' must be an Ed25519PrivateKey instance.")
+
+        # --- 1. Construct the C2PA Manifest ---
+        c2pa_manifest: C2PAPayload = {
+            "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+            "instance_id": str(uuid.uuid4()),
+            "claim_generator": claim_generator or f"encypher-ai/{__version__}",
+            "assertions": [],
+        }
+
+        # --- 2. Build Mandatory Assertions ---
+        # a) c2pa.actions.v1 assertion
+        actions_data: Dict[str, Any] = {"actions": actions if actions is not None else []}
+        if not any(a.get("label") == "c2pa.created" for a in actions_data["actions"]):
+            actions_data["actions"].insert(
+                0,
+                {
+                    "label": "c2pa.created",
+                    "when": iso_timestamp,
+                    "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+                    "softwareAgent": c2pa_manifest["claim_generator"],
+                },
+            )
+        c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
+
+        # b) c2pa.hash.data.v1 (Hard Binding)
+        if add_hard_binding:
+            clean_text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+            c2pa_manifest["assertions"].append(
+                {"label": "c2pa.hash.data.v1", "data": {"hash": clean_text_hash, "alg": "sha256", "exclusions": []}, "kind": "ContentHash"}
+            )
+
+        # --- 3. Prepare for Soft Binding (Deterministic Hashing) ---
+        # a) Create a temporary manifest copy that includes a placeholder soft binding.
+        manifest_for_hashing = copy.deepcopy(c2pa_manifest)
+
+        # b) Add the placeholder soft binding and watermarked action to the copy.
+        placeholder_soft_binding: "C2PAAssertion" = {
+            "label": "c2pa.soft_binding.v1",
+            "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": ""},
+            "kind": "SoftBinding",
+        }
+        manifest_for_hashing["assertions"].append(placeholder_soft_binding)
+
+        actions_data_copy = next((a["data"] for a in manifest_for_hashing["assertions"] if a["label"] == "c2pa.actions.v1"), None)
+        if actions_data_copy and isinstance(actions_data_copy.get("actions"), list):
+            actions_data_copy["actions"].append(
+                {
+                    "label": "c2pa.watermarked",
+                    "when": iso_timestamp,
+                    "softwareAgent": c2pa_manifest["claim_generator"],
+                    "description": "Text embedded with Unicode variation selectors.",
+                }
+            )
+
+        # c) Serialize the modified manifest and calculate the definitive hash.
+        cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
+        actual_soft_binding_hash = hashlib.sha256(cbor_for_hashing).hexdigest()
+
+        # d) Create the final soft binding assertion with the real hash.
+        final_soft_binding_assertion: "C2PAAssertion" = {
+            "label": "c2pa.soft_binding.v1",
+            "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": actual_soft_binding_hash},
+            "kind": "SoftBinding",
+        }
+        c2pa_manifest["assertions"].append(final_soft_binding_assertion)
+
+        # e) Add the 'watermarked' action to the original manifest.
+        actions_data["actions"].append(
+            {
+                "label": "c2pa.watermarked",
+                "when": iso_timestamp,
+                "softwareAgent": c2pa_manifest["claim_generator"],
+                "description": "Text embedded with Unicode variation selectors.",
+            }
+        )
+
+        # --- 4. Finalize, Serialize, and Sign ---
+        # Re-serialize the final manifest, which now includes the correct soft binding hash.
+        final_cbor_payload_bytes = serialize_c2pa_payload_to_cbor(c2pa_manifest)
+
+        # Sign the final CBOR payload using COSE_Sign1.
+        cose_sign1_bytes = sign_c2pa_cose(private_key, final_cbor_payload_bytes)
+
+        # --- 5. Package and Embed ---
+        # The outer structure contains the signed COSE object.
+        outer_payload_to_embed = {
+            "cose_sign1": base64.b64encode(cose_sign1_bytes).decode("utf-8"),
+            "signer_id": signer_id,
+            "format": "c2pa_v2_2",
+        }
+        outer_bytes = serialize_payload(dict(outer_payload_to_embed))
+        selector_chars = cls._bytes_to_variation_selectors(outer_bytes)
+
+        # --- 6. Find Targets and Embed ---
+        embedding_target = target if target is not None else MetadataTarget.WHITESPACE
+        target_indices = cls.find_targets(text, embedding_target)
+        target_display = embedding_target.value if hasattr(embedding_target, "value") else embedding_target
+
+        if not target_indices:
+            raise ValueError(f"No suitable targets found in text using target '{target_display}'.")
+
+        # Ensure we have the original text in the output
+        logger.debug(f"Embedding {len(selector_chars)} variation selectors into text")
+
+        if distribute_across_targets:
+            if len(target_indices) < len(selector_chars):
+                raise ValueError(f"Not enough targets ({len(target_indices)}) found to distribute {len(selector_chars)} selectors.")
+            result_parts = []
+            last_text_idx = 0
+            for i, target_idx in enumerate(target_indices):
+                if i < len(selector_chars):
+                    result_parts.append(text[last_text_idx : target_idx + 1])  # Include the target character
+                    result_parts.append(selector_chars[i])  # Add the selector after the target
+                    last_text_idx = target_idx + 1
+                else:
+                    break
+            result_parts.append(text[last_text_idx:])  # Add remaining text
+            return "".join(result_parts)
+        else:
+            # Insert all selectors after the first target character
+            # Ensure the original text is preserved by keeping it intact and only adding selectors
+            target_idx = target_indices[0]
+            result = text[: target_idx + 1] + "".join(selector_chars) + text[target_idx + 1 :]
+
+            # Verify the original text is preserved in the result
+            if text not in result:
+                logger.warning("Original text not preserved in embedding result. Adjusting embedding strategy.")
+                # Alternative approach: append selectors at the end of text
+                result = text + "".join(selector_chars)
+
+            return result
+
+    @classmethod
+    def verify_metadata(
+        cls,
+        text: str,
+        public_key_resolver: Callable[[str], Optional[Ed25519PublicKey]],
+        return_payload_on_failure: bool = False,
+        require_hard_binding: bool = True,
+    ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, C2PAPayload, None]]:
+        """
+        Verify and extract metadata from text embedded using Unicode variation selectors and a public key.
+
+        Args:
+            text: Text with embedded metadata
+            public_key_resolver: A callable function that takes a signer_id (str)
+                                 and returns the corresponding Ed25519PublicKey
+                                 object or None if the key is not found.
+            return_payload_on_failure: If True, return the payload even when verification fails.
+            require_hard_binding: If True, require the hard binding assertion in C2PA manifests.
+
+        Returns:
+            A tuple containing:
+            - Verification status (bool): True if the signature is valid, False otherwise.
+            - The signer_id (str) found in the metadata, or None if extraction fails.
+            - The extracted inner payload or None if extraction/verification fails.
+        """
+        logger.debug(f"verify_metadata called for text (len={len(text)}).")
+
+        # --- Input Validation ---
+        if not isinstance(text, str):
+            raise TypeError("Input 'text' must be a string.")
+        if not text:
+            logger.debug("verify_metadata called with empty text, returning None.")
+            return False, None, None
+
+        # 1. Extract Outer Payload:
+        outer_payload = cls._extract_outer_payload(text)
+        if outer_payload is None:
+            logger.debug("No outer payload found during extraction.")
+            return False, None, None
+
+        # 2. Extract Key Components from Outer Payload:
+        payload_format = outer_payload.get("format")
+        signer_id = outer_payload.get("signer_id")
+
+        if not signer_id:
+            logger.warning("No signer_id found in outer payload.")
+            return False, None, None
+
+        # --- Format-Specific Verification Dispatch ---
+        if payload_format == "c2pa_v2_2":
+            clean_text = cls._strip_variation_selectors(text)
+            return cls._verify_c2pa_v2_2(
+                text=clean_text,
+                outer_payload=outer_payload,
+                public_key_resolver=public_key_resolver,
+                return_payload_on_failure=return_payload_on_failure,
+                require_hard_binding=require_hard_binding,
+            )
+
+        # --- Legacy Format Verification ('basic', 'manifest', 'cbor_manifest') ---
+        inner_payload = outer_payload.get("payload")
+        signature_b64 = outer_payload.get("signature")
+
+        # Prepare a payload for return in case of early failure.
+        # It can only be a dict, not a string, to match the function signature.
+        payload_for_early_failure: Optional[Union[BasicPayload, ManifestPayload]] = None
+        if return_payload_on_failure and isinstance(inner_payload, dict):
+            payload_for_early_failure = cast(Union[BasicPayload, ManifestPayload], inner_payload)
+
+        if inner_payload is None or signature_b64 is None:
+            logger.warning("Legacy payload is missing 'payload' or 'signature'.")
+            return False, signer_id, None
+
+        # 3. Look Up Public Key:
+        try:
+            public_key = public_key_resolver(signer_id)
+        except Exception as e:
+            logger.warning(f"public_key_resolver raised an exception for signer_id '{signer_id}': {e}", exc_info=True)
+            return False, signer_id, cast(Union[BasicPayload, ManifestPayload, C2PAPayload, None], payload_for_early_failure)
+
+        if public_key is None:
+            logger.warning(f"Public key not found for signer_id: '{signer_id}'")
+            return False, signer_id, cast(Union[BasicPayload, ManifestPayload, C2PAPayload, None], payload_for_early_failure)
+
+        if not isinstance(public_key, Ed25519PublicKey):
+            logger.error(f"public_key_resolver returned invalid type ({type(public_key)}) for signer_id '{signer_id}'")
+            return False, signer_id, cast(Union[BasicPayload, ManifestPayload, C2PAPayload, None], payload_for_early_failure)
+
+        # 4. Prepare Payload Bytes for Verification
+        payload_to_verify_bytes: bytes
+        actual_inner_payload: Union[Dict[str, Any], None] = None
+
+        if payload_format == "cbor_manifest":
+            if not isinstance(inner_payload, str):
+                logger.error(f"CBOR manifest payload expected string, got {type(inner_payload)}.")
+                return False, signer_id, None
+            try:
+                payload_to_verify_bytes = base64.b64decode(inner_payload.encode("utf-8"))
+                # Load the CBOR data
+                cbor_data = cbor2.loads(payload_to_verify_bytes)
+
+                # For cbor_manifest format, we need to extract the actual manifest data
+                # The structure should match what we created during embed_metadata
+                if isinstance(cbor_data, dict) and "manifest" in cbor_data:
+                    actual_inner_payload = cbor_data["manifest"]
+                else:
+                    # If the structure doesn't match what we expect, use the whole payload
+                    actual_inner_payload = cbor_data
+            except (binascii.Error, cbor2.CBORDecodeError) as e:
+                logger.error(f"Failed to decode CBOR manifest payload: {e}")
+                return False, signer_id, None
+        elif payload_format in ("basic", "manifest"):
+            if not isinstance(inner_payload, dict):
+                logger.error(f"JSON payload ('{payload_format}') expected dict, got {type(inner_payload)}.")
+                return False, signer_id, None
+            try:
+                payload_to_verify_bytes = serialize_payload(dict(inner_payload))
+                # Create a new dict from the TypedDict's items to satisfy mypy's strict checking.
+                # This is more explicit and robust than casting.
+                actual_inner_payload = {k: v for k, v in inner_payload.items()}
+            except Exception as e:
+                logger.error(f"Failed to serialize '{payload_format}' payload for verification: {e}")
+                return False, signer_id, inner_payload if return_payload_on_failure else None
+        else:
+            logger.error(f"Unknown payload format '{payload_format}' found during verification.")
+            # Only return the payload if it's a dict, to match the function signature.
+            payload_to_return = inner_payload if isinstance(inner_payload, dict) else None
+            return (
+                False,
+                signer_id,
+                cast(Union[BasicPayload, ManifestPayload, C2PAPayload, None], payload_to_return) if return_payload_on_failure else None,
+            )
+
+        # 5. Decode and Verify Signature
+        try:
+            signature_bytes = base64.urlsafe_b64decode(signature_b64 + "=" * (-len(signature_b64) % 4))
+            is_valid = verify_signature(public_key, payload_to_verify_bytes, signature_bytes)
+        except (binascii.Error, InvalidSignature, TypeError) as e:
+            logger.warning(f"Signature verification failed for signer_id '{signer_id}': {e}")
+            is_valid = False
+
+        # 6. Return Result
+        if is_valid:
+            logger.info(f"Signature verified successfully for signer_id: '{signer_id}', format: '{payload_format}'.")
+            return True, signer_id, cast(Union[BasicPayload, ManifestPayload, C2PAPayload, None], actual_inner_payload)
+        else:
+            logger.warning(f"Signature verification failed for signer_id: '{signer_id}', format: '{payload_format}'.")
+            return (
+                False,
+                signer_id,
+                cast(Union[BasicPayload, ManifestPayload, C2PAPayload, None], actual_inner_payload) if return_payload_on_failure else None,
+            )
+
+    @classmethod
+    def _verify_c2pa_v2_2(
+        cls,
+        text: str,
+        outer_payload: OuterPayload,
+        public_key_resolver: Callable[[str], Optional[Ed25519PublicKey]],
+        return_payload_on_failure: bool,
+        require_hard_binding: bool,  # New parameter
+    ) -> Tuple[bool, Optional[str], Union[C2PAPayload, None]]:
+        """
+        Verifies a C2PA v2.2 compliant manifest.
+
+        This internal method performs a series of checks to validate the authenticity
+        and integrity of an embedded C2PA manifest, including signature verification,
+        soft binding, and hard binding checks.
+
+        Args:
+            text: The clean text content, stripped of metadata.
+            outer_payload: The deserialized outer payload containing the manifest.
+            public_key_resolver: A function to retrieve the public key for a given signer ID.
+            return_payload_on_failure: Flag to control returning the payload on failure.
+            require_hard_binding: If True, require the hard binding assertion in the manifest.
+
+        Returns:
+            A tuple with verification status, signer ID, and the C2PA payload.
+        """
+        signer_id = outer_payload["signer_id"]
+        cose_sign1_b64 = outer_payload.get("cose_sign1")
+
+        if not cose_sign1_b64 or not isinstance(cose_sign1_b64, str):
+            logger.error("C2PA payload missing 'cose_sign1' field or it has incorrect type.")
+            return False, signer_id, None
+
+        try:
+            cose_sign1_bytes = base64.b64decode(cose_sign1_b64)
+        except (binascii.Error, ValueError, TypeError) as e:
+            logger.error(f"Failed to decode cose_sign1 payload: {e}", exc_info=True)
+            return False, signer_id, None
+
+        # --- 1. Signature Verification using COSE ---
+        public_key = public_key_resolver(signer_id)
+        if not public_key:
+            logger.warning(f"C2PA verification: Public key not found for signer_id: {signer_id}")
+            if return_payload_on_failure:
+                try:
+                    decoded_msg = CoseMessage.decode(cose_sign1_bytes)
+                    if decoded_msg.payload is None:
+                        return False, signer_id, None
+                    unverified_manifest = deserialize_c2pa_payload_from_cbor(bytes(decoded_msg.payload))
+                    return False, signer_id, unverified_manifest
+                except Exception:
+                    return False, signer_id, None
+            return False, signer_id, None
+
+        try:
+            cbor_payload_bytes = verify_c2pa_cose(public_key, cose_sign1_bytes)
+            c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload_bytes)
+        except (InvalidSignature, ValueError) as e:
+            logger.warning(f"C2PA COSE verification failed for signer_id: {signer_id}. Reason: {e}")
+            if return_payload_on_failure:
+                try:
+                    decoded_msg = CoseMessage.decode(cose_sign1_bytes)
+                    if decoded_msg.payload is None:
+                        return False, signer_id, None
+                    unverified_manifest = deserialize_c2pa_payload_from_cbor(bytes(decoded_msg.payload))
+                    return False, signer_id, unverified_manifest
+                except Exception as decode_err:
+                    logger.error(f"Could not decode unverified COSE payload for inspection: {decode_err}")
+                    return False, signer_id, None
+            return False, signer_id, None
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during COSE verification: {e}", exc_info=True)
+            return False, signer_id, None
+
+        # --- 2. Manifest Content Validation ---
+        # a) Check @context URL
+        expected_context = "https://c2pa.org/schemas/v2.2/c2pa.jsonld"
+        if c2pa_manifest.get("@context") != expected_context:
+            logger.warning(f"C2PA verification: Manifest @context mismatch. Expected '{expected_context}', got '{c2pa_manifest.get('@context')}'.")
+            return False, signer_id, c2pa_manifest
+
+        # b) Check for mandatory assertions
+        assertions = c2pa_manifest.get("assertions", [])
+        assertion_labels = {a.get("label") for a in assertions if isinstance(a, dict)}
+        required_assertions = {"c2pa.actions.v1", "c2pa.soft_binding.v1"}
+        if require_hard_binding:
+            required_assertions.add("c2pa.hash.data.v1")
+        if not required_assertions.issubset(assertion_labels):
+            missing = required_assertions - assertion_labels
+            logger.warning(f"C2PA verification: Manifest missing required assertions: {missing}")
+            return False, signer_id, c2pa_manifest
+
+        # --- 3. Soft Binding Verification (Deterministic Hashing) ---
+        soft_binding_assertion = next((a for a in assertions if isinstance(a, dict) and a.get("label") == "c2pa.soft_binding.v1"), None)
+        if soft_binding_assertion is None:
+            logger.warning("C2PA verification: Soft binding assertion not found.")
+            return False, signer_id if signer_id is not None else None, c2pa_manifest
+
+        # a) Extract the expected hash from the received manifest.
+        expected_soft_hash = soft_binding_assertion["data"].get("hash")
+
+        # b) Create a deep copy of the manifest to modify for hash calculation.
+        manifest_for_hashing = copy.deepcopy(c2pa_manifest)
+
+        # c) Find the soft binding assertion in the copy and replace its hash with a placeholder.
+        assertion_to_modify = next(
+            (a for a in manifest_for_hashing.get("assertions", []) if isinstance(a, dict) and a.get("label") == "c2pa.soft_binding.v1"), None
+        )
+        if assertion_to_modify:
+            assertion_to_modify["data"]["hash"] = ""
+
+        # d) Serialize the modified manifest and calculate the hash.
+        cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
+        actual_soft_hash = hashlib.sha256(cbor_for_hashing).hexdigest()
+
+        # e) Compare the calculated hash with the expected hash.
+        if expected_soft_hash != actual_soft_hash:
+            logger.warning(f"C2PA verification: Soft binding hash mismatch. Expected '{expected_soft_hash}', got '{actual_soft_hash}'.")
+            return False, signer_id, c2pa_manifest
+
+        # --- 4. Hard Binding Verification ---
+        if require_hard_binding:
+            hard_binding_assertion = next((a for a in assertions if isinstance(a, dict) and a.get("label") == "c2pa.hash.data.v1"), None)
+            if hard_binding_assertion is None:
+                logger.warning("C2PA verification: Hard binding assertion not found.")
+                return False, signer_id if signer_id is not None else None, c2pa_manifest
+            expected_hard_hash = hard_binding_assertion["data"].get("hash")
+            actual_hard_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+            if expected_hard_hash != actual_hard_hash:
+                logger.warning(
+                    (
+                        f"C2PA verification: Hard binding (content) hash mismatch. "
+                        f"Expected '{expected_hard_hash}', got '{actual_hard_hash}'. Text may have been tampered with."
+                    )
+                )
+                return False, signer_id, c2pa_manifest
+
+        # All checks passed
+        logger.info(f"C2PA manifest for signer '{signer_id}' verified successfully (Signature, Soft Binding, Hard Binding).")
+        return True, signer_id, c2pa_manifest
+
+    @classmethod
     def _bytes_to_variation_selectors(cls, data: bytes) -> List[str]:
         """Convert bytes into a list of Unicode variation selector characters."""
         selectors = [cls.to_variation_selector(byte) for byte in data]
@@ -632,190 +1164,6 @@ class UnicodeMetadata:
             logger.error("Invalid byte value encountered during selector conversion.")
             raise ValueError("Invalid byte value encountered during selector conversion.")
         return valid_selectors
-
-    @classmethod
-    def verify_and_extract_metadata(
-        cls,
-        text: str,
-        public_key_provider: Callable[[str], Optional[PublicKeyTypes]],
-        return_payload_on_failure: bool = False,
-    ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, None]]:
-        """
-        Extracts embedded metadata, verifies its signature using a public key,
-        and returns the payload, verification status, and signer ID.
-
-        This verification process implements a C2PA-inspired approach for content
-        authenticity verification, adapted specifically for plain-text environments.
-        Similar to how C2PA verifies digital signatures in media files to establish
-        provenance and integrity, this method verifies cryptographic signatures
-        embedded directly within text using Unicode variation selectors.
-
-        Args:
-            text: Text potentially containing embedded metadata.
-            public_key_provider: A callable function that takes a signer_id (str)
-                                 and returns the corresponding Ed25519PublicKey
-                                 object or None if the key is not found.
-                                 This resolver pattern enables flexible key management
-                                 similar to C2PA's approach for signature verification.
-            return_payload_on_failure: If True, return the payload even when verification fails.
-                                      If False (default), return None for the payload when verification fails.
-
-        Returns:
-            A tuple containing:
-            - Verification status (bool): True if the signature is valid, False otherwise.
-            - The signer_id (str) found in the metadata, or None if extraction fails.
-            - The extracted inner payload (Dict[str, Any], basic or manifest) or None
-              if extraction/verification fails (unless return_payload_on_failure is True).
-
-        Raises:
-            TypeError: If public_key_provider returns an invalid key type.
-            KeyError: If public_key_provider raises an error (e.g., key not found).
-            InvalidSignature: If the signature verification process itself fails.
-            Exception: Can propagate errors from base64 decoding or payload serialization.
-        """
-        logger.debug(f"verify_and_extract_metadata called for text (len={len(text)}).")
-        # 1. Extract Outer Payload:
-        outer_payload = cls._extract_outer_payload(text)
-        if outer_payload is None:
-            logger.debug("No outer payload found during extraction.")
-            return False, None, None
-
-        # 2. Extract Key Components from Outer Payload:
-        signer_id = outer_payload["signer_id"]
-        inner_payload = outer_payload["payload"]
-        signature_b64 = outer_payload["signature"]
-
-        # Remove modification: The inner_payload should already contain 'format' if it was part of the original signed data.
-        # Adding it here causes a mismatch during verification.
-        # if "format" in outer_payload and "format" not in inner_payload:
-        #     inner_payload["format"] = outer_payload["format"]
-
-        # 3. Look Up Public Key:
-        try:
-            logger.debug(f"Calling public_key_provider for signer_id: '{signer_id}'")
-            public_key = public_key_provider(signer_id)
-        except Exception as e:
-            # Provider function itself might raise an error
-            logger.warning(
-                f"public_key_provider raised an exception for signer_id '{signer_id}': {e}",
-                exc_info=True,
-            )
-            return (
-                False,
-                signer_id,
-                inner_payload if return_payload_on_failure else None,
-            )
-
-        if public_key is None:
-            # Key not found for this signer
-            logger.warning(f"Public key not found for signer_id: '{signer_id}'")
-            return (
-                False,
-                signer_id,
-                inner_payload if return_payload_on_failure else None,
-            )
-        if not (
-            isinstance(public_key, ed25519.Ed25519PublicKey)
-            or isinstance(public_key, rsa.RSAPublicKey)
-            or isinstance(public_key, dsa.DSAPublicKey)
-            or isinstance(public_key, dh.DHPublicKey)
-            or isinstance(public_key, ec.EllipticCurvePublicKey)
-            or isinstance(public_key, x25519.X25519PublicKey)
-            or isinstance(public_key, x448.X448PublicKey)
-            or isinstance(public_key, ed448.Ed448PublicKey)
-        ):
-            # Provider returned wrong type
-            logger.error(f"public_key_provider returned invalid type ({type(public_key)}) for signer_id '{signer_id}'")
-            return (
-                False,
-                signer_id,
-                inner_payload if return_payload_on_failure else None,
-            )
-
-        # 4. Determine Payload Bytes for Verification and Actual Inner Payload for Return
-        payload_to_verify_bytes: bytes
-        actual_inner_payload_dict: Optional[Union[BasicPayload, ManifestPayload]] = None
-        payload_format = outer_payload.get("format")
-
-        if payload_format == "cbor_manifest":
-            if not isinstance(inner_payload, str):
-                logger.error(f"CBOR manifest payload expected string, got {type(inner_payload)}.")
-                return False, signer_id, None  # Cannot proceed
-            try:
-                # inner_payload is base64 encoded CBOR string
-                cbor_manifest_bytes = base64.b64decode(inner_payload.encode("utf-8"))
-                payload_to_verify_bytes = cbor_manifest_bytes
-                # Attempt to deserialize for return, this must succeed if we are to return it
-                actual_inner_payload_dict = cbor2.loads(cbor_manifest_bytes)
-
-                # For cbor_manifest format, the test expects the inner manifest dictionary directly
-                # If the deserialized CBOR has a 'manifest' key, return that directly instead of the wrapper
-                if isinstance(actual_inner_payload_dict, dict) and "manifest" in actual_inner_payload_dict:
-                    actual_inner_payload_dict = actual_inner_payload_dict["manifest"]
-            except (binascii.Error, TypeError) as e:
-                logger.error(f"Failed to base64 decode CBOR manifest payload: {e}")
-                return False, signer_id, None  # Payload corrupted, cannot return dict
-            except cbor2.CBORDecodeError as e:
-                logger.error(f"Failed to CBOR deserialize manifest payload: {e}")
-                return False, signer_id, None  # Payload corrupted, cannot return dict
-            except Exception as e:
-                logger.error(f"Unexpected error processing CBOR manifest payload: {e}")
-                return False, signer_id, None
-
-        elif payload_format in ("basic", "manifest"):
-            if not isinstance(inner_payload, dict):
-                logger.error(f"JSON payload ('{payload_format}') expected dict, got {type(inner_payload)}.")
-                return False, signer_id, None  # Cannot proceed
-            try:
-                payload_to_verify_bytes = serialize_payload(dict(inner_payload))
-                # Use the already defined variable from line 737
-                actual_inner_payload_dict = cast(Union[BasicPayload, ManifestPayload], inner_payload)  # Cast to expected type
-            except Exception as e:
-                logger.error(f"Failed to serialize '{payload_format}' payload for verification: {e}")
-                # If serialization fails, we can't verify. Return depends on flag.
-                return False, signer_id, cast(Union[BasicPayload, ManifestPayload], inner_payload) if return_payload_on_failure else None
-        else:
-            logger.error(f"Unknown payload format '{payload_format}' found during verification.")
-            # Try to return inner_payload if flag is set and it's a dict, else None
-            potential_payload = inner_payload if isinstance(inner_payload, dict) else None
-            return False, signer_id, cast(Union[BasicPayload, ManifestPayload, None], potential_payload) if return_payload_on_failure else None
-
-        # 5. Decode Signature:
-        try:
-            signature_bytes = base64.urlsafe_b64decode(signature_b64 + "=" * (-len(signature_b64) % 4))
-        except (binascii.Error, TypeError) as e:
-            logger.warning(f"Failed to decode base64 signature: {e}", exc_info=False)
-            return (
-                False,
-                signer_id,
-                cast(Optional[Union[BasicPayload, ManifestPayload]], actual_inner_payload_dict if return_payload_on_failure else None),
-            )
-
-        # 6. Verify Signature:
-        is_valid = False  # Default to not valid
-        try:
-            is_valid = verify_signature(public_key, payload_to_verify_bytes, signature_bytes)
-        except TypeError as e:
-            logger.error(f"Signature verification failed due to key type mismatch: {e}", exc_info=True)
-            # Fall through to return based on is_valid (False) and return_payload_on_failure
-        except InvalidSignature:
-            logger.warning(f"Signature verification failed for signer_id '{signer_id}': Invalid signature.")
-            # Fall through to return based on is_valid (False) and return_payload_on_failure
-        except Exception as e:
-            logger.error(f"Unexpected error during signature verification: {e}", exc_info=True)
-            # Fall through to return based on is_valid (False) and return_payload_on_failure
-
-        # 7. Return Result:
-        if is_valid:
-            logger.info(f"Signature verified successfully for signer_id: '{signer_id}', format: '{payload_format}'.")
-            return True, signer_id, cast(Union[BasicPayload, ManifestPayload], actual_inner_payload_dict)
-        else:
-            logger.warning(f"Signature verification failed for signer_id: '{signer_id}', format: '{payload_format}'.")
-            return (
-                False,
-                signer_id,
-                cast(Optional[Union[BasicPayload, ManifestPayload]], actual_inner_payload_dict if return_payload_on_failure else None),
-            )
 
     @classmethod
     def _extract_outer_payload(cls, text: str) -> Optional[OuterPayload]:
@@ -842,8 +1190,6 @@ class UnicodeMetadata:
             return None
 
         logger.debug(f"Extracted {len(outer_bytes)} bytes from variation selectors.")
-        # 2. Optional: Decompress Bytes (if compression was added to embed):
-        #    - Check for marker and decompress if needed. (Skipped for now)
 
         # 3. Deserialize Outer JSON:
         try:
@@ -853,74 +1199,45 @@ class UnicodeMetadata:
                 logger.warning("Decoded outer data is not a dictionary.")
                 return None
 
-            # Minimal validation to check required keys for OuterPayload
-            required_keys = ("payload", "signature", "signer_id", "format")
-            if not all(k in outer_data for k in required_keys):
-                missing_keys = [k for k in required_keys if k not in outer_data]
-                logger.warning(f"Extracted outer data missing required keys: {missing_keys}")
-                return None
+            # Check the format to determine which keys are required
+            payload_format = outer_data.get("format")
+            required_keys: Tuple[str, ...]
+
+            if payload_format == "c2pa_v2_2":
+                required_keys = ("cose_sign1", "signer_id", "format")
+                if not all(k in outer_data for k in required_keys):
+                    missing_keys = [k for k in required_keys if k not in outer_data]
+                    logger.warning(f"Extracted C2PA v2.2 data missing required keys: {missing_keys}")
+                    return None
+
+                try:
+                    cose_sign1_bytes = base64.b64decode(outer_data["cose_sign1"])
+                    cbor_payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
+                    if cbor_payload:
+                        outer_data["payload"] = base64.b64encode(cbor_payload).decode("utf-8")
+                        outer_data["signature"] = "cose_sign1_embedded"
+                    else:
+                        logger.warning("Failed to extract payload from COSE_Sign1 structure")
+                        return None
+                except Exception as e:
+                    logger.warning(f"Error processing COSE_Sign1 data: {e}")
+                    return None
+            else:
+                required_keys = ("payload", "signature", "signer_id", "format")
+                if not all(k in outer_data for k in required_keys):
+                    missing_keys = [k for k in required_keys if k not in outer_data]
+                    logger.warning(f"Extracted outer data missing required keys: {missing_keys}")
+                    return None
 
             logger.debug("Successfully extracted and validated outer payload structure.")
-            # Attempt to cast to TypedDict for structure validation (best effort)
-            # This doesn't deeply validate types within 'payload'
             return cast(OuterPayload, outer_data)
 
         except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as e:
-            logger.warning(f"Failed to decode or parse outer payload JSON: {e}", exc_info=False)  # Less noisy logging
+            logger.warning(f"Failed to decode or parse outer payload JSON: {e}", exc_info=False)
             return None
 
     @classmethod
-    def verify_metadata(
-        cls,
-        text: str,
-        public_key_provider: Callable[[str], Optional[PublicKeyTypes]],
-        return_payload_on_failure: bool = False,
-    ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, None]]:
-        """
-        Verify and extract metadata from text embedded using Unicode variation selectors and a public key.
-
-        Args:
-            text: Text with embedded metadata
-            public_key_provider: A callable function that takes a signer_id (str)
-                                 and returns the corresponding Ed25519PublicKey
-                                 object or None if the key is not found.
-            return_payload_on_failure: If True, return the payload even when verification fails.
-                                      If False (default), return None for the payload when verification fails.
-
-        Returns:
-            A tuple containing:
-            - Verification status (bool): True if the signature is valid, False otherwise.
-            - The signer_id (str) found in the metadata, or None if extraction fails.
-            - The extracted inner payload (Dict[str, Any], basic or manifest) or None
-              if extraction/verification fails (unless return_payload_on_failure is True).
-
-        Raises:
-            TypeError: If public_key_provider returns an invalid key type.
-            KeyError: If public_key_provider raises an error (e.g., key not found).
-            InvalidSignature: If the signature verification process itself fails.
-            Exception: Can propagate errors from base64 decoding or payload serialization.
-        """
-        # --- Input Validation ---
-        if not isinstance(text, str):
-            raise TypeError("Input 'text' must be a string.")
-        if not text:
-            # Avoid processing empty strings, return None early
-            logger.debug("verify_metadata called with empty text, returning None.")
-            return False, None, None
-        if not callable(public_key_provider):
-            raise TypeError("'public_key_provider' must be a callable function.")
-        # --- End Input Validation ---
-
-        # This method now simply calls the main verification method
-        logger.debug("Forwarding call to verify_and_extract_metadata.")
-        return cls.verify_and_extract_metadata(
-            text,
-            public_key_provider,
-            return_payload_on_failure=return_payload_on_failure,
-        )
-
-    @classmethod
-    def extract_metadata(cls, text: str) -> Union[BasicPayload, ManifestPayload, None]:
+    def extract_metadata(cls, text: str) -> Union[BasicPayload, ManifestPayload, C2PAPayload, None]:
         """
         Extracts embedded metadata from text without verifying its signature.
 
@@ -950,9 +1267,21 @@ class UnicodeMetadata:
         outer_payload = cls._extract_outer_payload(text)
 
         if outer_payload and "payload" in outer_payload:
-            # Ensure payload is a dict before returning
-            payload = outer_payload["payload"]
-            return payload if isinstance(payload, dict) else None
+            inner_payload = outer_payload["payload"]
+            payload_format = outer_payload.get("format")
+
+            # For C2PA, the payload is a b64 string. We need to decode it.
+            if payload_format == "c2pa_v2_2":
+                if isinstance(inner_payload, str):
+                    try:
+                        cbor_bytes = base64.b64decode(inner_payload)
+                        return deserialize_c2pa_payload_from_cbor(cbor_bytes)
+                    except (binascii.Error, ValueError, cbor2.CBORDecodeError):
+                        logger.warning("Failed to decode C2PA payload during non-verifying extraction.")
+                        return None
+                return None  # Invalid format for C2PA payload
+
+            return inner_payload if isinstance(inner_payload, dict) else None
         return None
 
     # --- Deprecated Methods ---

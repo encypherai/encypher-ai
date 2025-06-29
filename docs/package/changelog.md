@@ -2,6 +2,42 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.4.0 (06-28-2025)
+
+### Added
+- **C2PA v2.2 Compliance:** Re-architected the core package to be the reference implementation for text-based C2PA v2.2 soft binding. This includes:
+  - **Manifest Structure:** Manifests now conform to the C2PA v2.2 specification, including the official `@context`, a unique `instance_id`, and ISO 8601 formatted timestamps.
+  - **Hard Binding:** Added the mandatory `c2pa.hash.data.v1` assertion, which contains a SHA-256 hash of the clean text content for integrity verification.
+  - **Soft Binding:** Implemented the `c2pa.soft_binding.v1` assertion, formalizing our Unicode Variation Selector method as `encypher.unicode_variation_selector.v1` and linking it to a `c2pa.watermarked` action.
+  - **Advanced Signing:** Integrated COSE (CBOR Object Signing and Encryption) for claims, with support for X.509 certificate validation and RFC 3161 Time-Stamp Authority (TSA) integration.
+- **Conditional Hard Binding Control:**
+  - Introduced `add_hard_binding: bool` to `UnicodeMetadata.embed_metadata` to optionally disable hard binding, which is now the default for streaming.
+  - Added `require_hard_binding: bool` to `UnicodeMetadata.verify_metadata` to allow verification of streamed content where hard binding is intentionally omitted.
+- **New Internal APIs:** Added `_embed_c2pa_compliant` and `_verify_c2pa_compliant` methods to encapsulate C2PA-specific logic, along with new `TypedDict` payload structures for all C2PA assertions.
+
+### Changed
+- **Streaming Verification:** The default behavior for streaming has been updated to disable hard binding. The `StreamingHandler` now implicitly calls `embed_metadata` with `add_hard_binding=False` to prevent false verification failures on partial content.
+- **Claim Generator:** The `claim_generator` field is now dynamically populated with the current package version (e.g., `encypher-ai/2.4.0`), removing the need for manual updates in future releases.
+
+### Fixed
+- **StreamingHandler Initialization**: Fixed a bug in the `StreamingHandler` where custom claims and timestamps were not being correctly passed to the embedding function, causing errors during C2PA manifest creation.
+- **StreamingHandler Metadata Embedding**: Fixed a critical bug in the `StreamingHandler` where user-supplied metadata fields (especially `custom_metadata`) were not being correctly preserved in the embedded payload, causing metadata round-trip verification failures in integration tests.
+- **Gemini Integration Test:** Fully repaired the Gemini integration test to correctly verify both non-streaming (with hard binding) and streaming (without hard binding) metadata, confirming the end-to-end workflow.
+- **Core `UnicodeMetadata` Bugs:**
+  - Restored missing `_bytes_to_variation_selectors` and `_extract_outer_payload` helper methods, resolving `AttributeError` exceptions.
+  - Corrected a critical `IndentationError` in `unicode_metadata.py`.
+- **Type Checking:** Fixed multiple mypy errors in the codebase:
+  - Added proper null checks for COSE message payloads
+  - Fixed RSA signature verification type handling
+  - Added proper type annotations for timestamp requests
+  - Added `types-requests` to development dependencies
+  - Fixed string formatting of binary data
+  - Added explicit string conversion for certificate common names and serial numbers
+
+### Documentation
+- **Comprehensive Streaming Update:** Overhauled all documentation (integration guides, README, user guides) to reflect the new `require_hard_binding=False` parameter for verifying streamed content.
+- **C2PA Specification:** Added a formal algorithm specification document (`docs/c2pa_algorithm_spec.md`) detailing the technical implementation for our C2PA submission.
+
 ## 2.3.0 (06-15-2025)
 
 ### Added
@@ -19,6 +55,7 @@ This document provides a chronological list of notable changes for each version 
   - Added comprehensive integration tests for C2PA and CBOR manifest round-trips, ensuring data integrity and successful verification.
 
 ### Fixed
+- **Documentation:** Corrected all streaming verification examples across integration guides (`OpenAI`, `Anthropic`, `LiteLLM`, `FastAPI`), the `README.md`, and user guides to use `require_hard_binding=False`. This ensures documentation accurately reflects that hard binding is disabled for streamed content.
 - **Type Hinting:** Resolved all `mypy` static type checking errors in `encypher.core.unicode_metadata`, improving code reliability and maintainability.
 - **Conversion Logic:** Corrected conversion helpers to properly retain top-level `timestamp` and `claim_generator` fields during round-trip conversions.
 

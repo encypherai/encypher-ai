@@ -92,7 +92,7 @@ class TestLLMOutputsIntegration:
             assert len(embedded_text) > len(sample_text), f"Encoded text should be longer than original for {provider} with {target.name}"
 
             # Verify and Extract metadata
-            extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_and_extract_metadata(embedded_text, test_public_key_provider)
+            extracted_payload, is_valid, extracted_signer_id = UnicodeMetadata.verify_metadata(embedded_text, test_public_key_provider)
 
             # Verify extracted metadata
             assert is_valid is True, f"Verification failed for {provider} with {target.name}"
@@ -188,7 +188,7 @@ class TestStreamingIntegration:
             processed_text = "".join(processed_chunks)
 
             # Verify and Extract metadata from the combined processed text
-            is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_and_extract_metadata(processed_text, test_public_key_provider)
+            is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_metadata(processed_text, test_public_key_provider)
 
             # Check if metadata was extracted and verified correctly
             assert is_valid is True, f"Verification failed for {provider}, target={target.name}, first_only={encode_first_only}"

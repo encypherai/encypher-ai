@@ -15,16 +15,18 @@ This documentation provides comprehensive information about the EncypherAI packa
 
 | Feature | Description |
 |---------|-------------|
-| 🔍 **Invisible Embedding** | Add metadata without changing visible content |
-| 🔐 **Digital Signature Verification** | Ensure data integrity and detect tampering with Ed25519 signatures |
-| 🌊 **Streaming Support** | Compatible with chunk-by-chunk streaming |
-| 🔄 **Extensible API** | Easily integrate with any LLM provider |
+| 🔍 **Invisible Embedding** | Add metadata without changing visible content. |
+| 🔐 **Digital Signature Verification** | Ensure data integrity and detect tampering with Ed25519 signatures. |
+| 🏛️ **C2PA-Inspired Manifests** | Embed structured, verifiable manifests for text provenance. |
+| 🌊 **Streaming Support** | Compatible with chunk-by-chunk streaming from LLMs. |
+| 🧩 **Modular Architecture** | Clean separation of key management, payload handling, and signing. |
+| 🔄 **Extensible API** | Easily integrate with any LLM provider. |
 
 ## Demo Video
 
 <div align="center">
-  <a href="https://www.youtube.com/watch?v=amE_utPpEy0">
-    <img src="https://img.youtube.com/vi/amE_utPpEy0/0.jpg" alt="EncypherAI Demo Video" width="600"/>
+  <a href="https://www.youtube.com/watch?v=_MNP0nHc77k">
+    <img src="https://img.youtube.com/vi/_MNP0nHc77k/0.jpg" alt="EncypherAI Demo Video" width="600"/>
   </a>
   <p>Watch our demo video to see EncypherAI in action</p>
 </div>
@@ -41,6 +43,8 @@ This documentation provides comprehensive information about the EncypherAI packa
 - [Extraction and Verification](package/user-guide/extraction-verification.md)
 - [Tamper Detection](package/user-guide/tamper-detection.md)
 - [Streaming Support](package/user-guide/streaming.md)
+- [C2PA Relationship](package/user-guide/c2pa-relationship.md)
+- [Migration Guide](package/user-guide/migration-guide.md)
 
 ## Examples
 
@@ -51,7 +55,9 @@ This documentation provides comprehensive information about the EncypherAI packa
 
 ## API Reference
 
-- [UnicodeMetadata](package/api-reference/unicode-metadata.md)
+- [`UnicodeMetadata`](package/api-reference/unicode-metadata.md): Core class for embedding and verification.
+- [`c2pa_interop`](package/api-reference/c2pa_interop.md): Utilities for C2PA compatibility.
+- [Deprecated Classes](package/api-reference/metadata-encoder.md): Info on legacy classes.
 
 ## Contributing
 

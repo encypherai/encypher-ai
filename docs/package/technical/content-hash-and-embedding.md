@@ -63,12 +63,12 @@ Our implementation embeds the entire manifest directly in the content. The conte
 def embed_metadata(text, metadata, metadata_format="json"):
     """
     Embeds metadata into text using Unicode variation selectors.
-    
+
     Args:
         text (str): The text to embed metadata into
         metadata (dict or bytes): The metadata to embed
         metadata_format (str): Format of the metadata ("json" or "cbor_manifest")
-        
+
     Returns:
         str: Text with embedded metadata
     """
@@ -82,11 +82,11 @@ def embed_metadata(text, metadata, metadata_format="json"):
             serialized = metadata  # Already serialized
     else:
         raise ValueError(f"Unsupported metadata format: {metadata_format}")
-    
+
     # Convert to binary and encode using variation selectors
     binary_data = base64.b64encode(serialized).decode("ascii")
     encoded_metadata = _encode_to_variation_selectors(binary_data)
-    
+
     # Find position to insert (typically after first character)
     if len(text) > 0:
         return text[0] + encoded_metadata + text[1:]
@@ -100,11 +100,11 @@ def embed_metadata(text, metadata, metadata_format="json"):
 def extract_metadata(text, metadata_format="json"):
     """
     Extracts metadata from text with embedded Unicode variation selectors.
-    
+
     Args:
         text (str): Text with embedded metadata
         metadata_format (str): Format of the metadata ("json" or "cbor_manifest")
-        
+
     Returns:
         dict or bytes: Extracted metadata
     """
@@ -113,14 +113,14 @@ def extract_metadata(text, metadata_format="json"):
     for char in text:
         if 0xFE00 <= ord(char) <= 0xFE0F or 0xE0100 <= ord(char) <= 0xE01EF:
             encoded_data += char
-    
+
     if not encoded_data:
         return None
-    
+
     # Decode from variation selectors to binary
     binary_data = _decode_from_variation_selectors(encoded_data)
     serialized = base64.b64decode(binary_data)
-    
+
     # Deserialize based on format
     if metadata_format == "json":
         return json.loads(serialized.decode("utf-8"))

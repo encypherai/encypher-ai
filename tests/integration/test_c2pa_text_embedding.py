@@ -67,8 +67,8 @@ class TestC2PATextEmbedding(unittest.TestCase):
                 return public_key
             return None  # Or raise an error, depending on resolver contract
 
-        is_verified, extracted_signer_id, extracted_payload_outer = UnicodeMetadata.verify_and_extract_metadata(
-            text=text_with_embedded_metadata, public_key_provider=public_key_resolver, return_payload_on_failure=True
+        is_verified, extracted_signer_id, extracted_payload_outer = UnicodeMetadata.verify_metadata(
+            text=text_with_embedded_metadata, public_key_resolver=public_key_resolver, return_payload_on_failure=True
         )
 
         self.assertTrue(is_verified, "Signature verification failed.")
@@ -183,8 +183,8 @@ class TestC2PATextEmbedding(unittest.TestCase):
                 return public_key
             return None
 
-        is_verified, extracted_signer_id, extracted_payload_outer = UnicodeMetadata.verify_and_extract_metadata(
-            text=text_with_embedded_metadata, public_key_provider=public_key_resolver, return_payload_on_failure=True
+        is_verified, extracted_signer_id, extracted_payload_outer = UnicodeMetadata.verify_metadata(
+            text=text_with_embedded_metadata, public_key_resolver=public_key_resolver, return_payload_on_failure=True
         )
 
         self.assertTrue(is_verified, "Signature verification failed for CBOR data.")
@@ -208,14 +208,20 @@ class TestC2PATextEmbedding(unittest.TestCase):
         # 7. Verify the round-tripped C2PA-like dictionary matches the original
         # Account for the 'format' field added by encypher_manifest_to_c2pa_like_dict
         comparison_dict = extracted_c2pa_like_dict.copy()
-        if "format" in comparison_dict:
-            del comparison_dict["format"]
+        # Remove fields added by encypher_manifest_to_c2pa_like_dict that aren't in the original
+        for field in ["format", "@context", "instance_id"]:
+            if field in comparison_dict:
+                del comparison_dict[field]
 
         self.assertDictsAlmostEqual(
-            comparison_dict, original_c2pa_like_manifest, "Round-tripped CBOR manifest does not match original (after accounting for 'format' field)."
+            comparison_dict,
+            original_c2pa_like_manifest,
+            "Round-tripped CBOR manifest does not match original " "(after accounting for 'format' field).",
         )
 
     def test_c2pa_full_cbor_manifest_text_embedding_round_trip(self):
+        # Show full diff output
+        self.maxDiff = None
         """Tests the full round-trip of embedding and extracting a C2PA-like manifest using metadata_format='cbor_manifest'."""
         # 1. Define the original C2PA-like manifest
         original_c2pa_like_manifest = {
@@ -275,8 +281,8 @@ class TestC2PATextEmbedding(unittest.TestCase):
                 return public_key
             return None
 
-        is_verified, extracted_signer_id, extracted_manifest_dict = UnicodeMetadata.verify_and_extract_metadata(
-            text=text_with_embedded_metadata, public_key_provider=public_key_resolver, return_payload_on_failure=True
+        is_verified, extracted_signer_id, extracted_manifest_dict = UnicodeMetadata.verify_metadata(
+            text=text_with_embedded_metadata, public_key_resolver=public_key_resolver, return_payload_on_failure=True
         )
 
         # Verification has been completed above
@@ -301,10 +307,10 @@ class TestC2PATextEmbedding(unittest.TestCase):
 
         # 7. Compare the original and extracted C2PA-like dictionaries
         # Normalize for comparison
-        comparison_dict = extracted_c2pa_like_dict.copy()
-        # Remove format field added by encypher_manifest_to_c2pa_like_dict
-        if "format" in comparison_dict:
-            del comparison_dict["format"]
+        comparison_dict = extracted_c2pa_like_dict.copy()  # Remove fields added by encypher_manifest_to_c2pa_like_dict that aren't in the original
+        for field in ["format", "@context", "instance_id"]:
+            if field in comparison_dict:
+                del comparison_dict[field]
 
         # Timestamp might be slightly different due to serialization/deserialization
         comparison_dict["timestamp"] = ""
@@ -313,6 +319,12 @@ class TestC2PATextEmbedding(unittest.TestCase):
 
         # Assertions should match in structure and count
         self.assertEqual(len(comparison_dict.get("assertions", [])), len(original_comparison.get("assertions", [])))
+
+        # Print the dictionaries for debugging
+        print("\nComparison Dict:")
+        print(comparison_dict)
+        print("\nOriginal Comparison:")
+        print(original_comparison)
 
         # Compare the dictionaries
         self.assertDictsAlmostEqual(comparison_dict, original_comparison, "Round-tripped full CBOR manifest does not match original.")
@@ -379,8 +391,8 @@ class TestC2PATextEmbedding(unittest.TestCase):
                 return public_key
             return None
 
-        is_verified, extracted_signer_id, extracted_manifest_dict = UnicodeMetadata.verify_and_extract_metadata(
-            text=text_with_embedded_metadata, public_key_provider=public_key_resolver, return_payload_on_failure=True
+        is_verified, extracted_signer_id, extracted_manifest_dict = UnicodeMetadata.verify_metadata(
+            text=text_with_embedded_metadata, public_key_resolver=public_key_resolver, return_payload_on_failure=True
         )
 
         self.assertTrue(is_verified, "Signature verification failed for single-assertion CBOR manifest.")
@@ -400,10 +412,10 @@ class TestC2PATextEmbedding(unittest.TestCase):
 
         # 7. Compare the original and extracted C2PA-like dictionaries
         # Normalize for comparison
-        comparison_dict = extracted_c2pa_like_dict.copy()
-        # Remove format field added by encypher_manifest_to_c2pa_like_dict
-        if "format" in comparison_dict:
-            del comparison_dict["format"]
+        comparison_dict = extracted_c2pa_like_dict.copy()  # Remove fields added by encypher_manifest_to_c2pa_like_dict that aren't in the original
+        for field in ["format", "@context", "instance_id"]:
+            if field in comparison_dict:
+                del comparison_dict[field]
 
         # Timestamp might be slightly different due to serialization/deserialization
         comparison_dict["timestamp"] = ""

@@ -1,6 +1,36 @@
-# Migration Guide: EncypherAI Core Package Refactoring
+# Migration Guide: EncypherAI Core Package
 
-This guide helps users transition from the previous module structure to the new modular structure introduced in version 2.2.0.
+This guide helps users transition between different versions of the EncypherAI Core package.
+
+## Version 2.4.0 Updates
+
+### StreamingHandler Metadata Embedding Fix
+
+Version 2.4.0 includes a critical fix for the `StreamingHandler` class that resolves issues with metadata embedding and round-trip verification. If you've been experiencing any of the following issues with the StreamingHandler, upgrading to version 2.4.0 will resolve them:
+
+- Custom metadata fields (especially `custom_metadata`) not being preserved in the embedded payload
+- Metadata round-trip verification failures in integration tests
+- Inconsistent handling of `custom_metadata` vs `custom_claims` based on metadata format
+
+#### What Changed
+
+The internal implementation of the `StreamingHandler` has been updated to correctly handle and preserve all user-supplied metadata fields in the embedded payload. This fix ensures that:
+
+1. All metadata fields are properly preserved during embedding
+2. The `custom_metadata` field is correctly handled based on the metadata format
+3. Metadata round-trip verification now works correctly in all cases
+
+#### Migration Steps
+
+No code changes are required when upgrading to version 2.4.0. The fix is internal to the implementation and doesn't affect the public API. Simply upgrade to version 2.4.0 using:
+
+```bash
+uv pip install --upgrade encypher-ai==2.4.0
+```
+
+## Version 2.2.0 Refactoring
+
+This section helps users transition from the previous module structure to the new modular structure introduced in version 2.2.0.
 
 ## Overview of Changes
 

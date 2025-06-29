@@ -47,7 +47,7 @@ with open("keys.json", "w") as f:
 if os.path.exists("keys.json"):
     with open("keys.json", "r") as f:
         keys_dict = json.load(f)
-    
+
     private_key = bytes.fromhex(keys_dict["private_key"])
     public_key = bytes.fromhex(keys_dict["public_key"])
     signer_id = keys_dict["signer_id"]
@@ -61,16 +61,16 @@ Define the text content you want to embed metadata into:
 # Full article text
 article_text = """# Sample Article Title
 
-This is the first paragraph of the sample article. This paragraph will contain 
+This is the first paragraph of the sample article. This paragraph will contain
 the embedded metadata using Unicode variation selectors.
 
-This is the second paragraph with additional content. The content hash will 
+This is the second paragraph with additional content. The content hash will
 cover all paragraphs in the article, ensuring the integrity of the entire text.
 
 ## Subsection
 
-This is a subsection with more content. The embedding process will not affect 
-the visual appearance of the text, even though the metadata is embedded directly 
+This is a subsection with more content. The embedding process will not affect
+the visual appearance of the text, even though the metadata is embedded directly
 within it.
 """
 
@@ -175,17 +175,17 @@ is_verified, extracted_signer_id, extracted_manifest = UnicodeMetadata.verify_an
 if is_verified:
     print(f"✓ Signature verification successful!")
     print(f"✓ Signer ID: {extracted_signer_id}")
-    
+
     # Check for content tampering
     current_content_hash = hashlib.sha256(plain_text.encode("utf-8")).hexdigest()
-    
+
     # Find content hash assertion
     stored_hash = None
     for assertion in extracted_manifest.get("assertions", []):
         if assertion.get("label") == "stds.c2pa.content.hash":
             stored_hash = assertion["data"]["hash"]
             break
-    
+
     if stored_hash == current_content_hash:
         print("✓ Content hash verification successful!")
     else:
@@ -220,14 +220,14 @@ is_verified, extracted_signer_id, extracted_manifest = UnicodeMetadata.verify_an
 if is_verified:
     print("\nTampered Content Test:")
     print(f"✓ Signature verification successful!")
-    
+
     # Find content hash assertion
     stored_hash = None
     for assertion in extracted_manifest.get("assertions", []):
         if assertion.get("label") == "stds.c2pa.content.hash":
             stored_hash = assertion["data"]["hash"]
             break
-    
+
     if stored_hash == tampered_content_hash:
         print("✓ Content hash verification successful (unexpected!)")
     else:
@@ -257,16 +257,16 @@ signer_id = "example-key-001"
 # 2. Prepare article text
 article_text = """# Sample Article Title
 
-This is the first paragraph of the sample article. This paragraph will contain 
+This is the first paragraph of the sample article. This paragraph will contain
 the embedded metadata using Unicode variation selectors.
 
-This is the second paragraph with additional content. The content hash will 
+This is the second paragraph with additional content. The content hash will
 cover all paragraphs in the article, ensuring the integrity of the entire text.
 
 ## Subsection
 
-This is a subsection with more content. The embedding process will not affect 
-the visual appearance of the text, even though the metadata is embedded directly 
+This is a subsection with more content. The embedding process will not affect
+the visual appearance of the text, even though the metadata is embedded directly
 within it.
 """
 
@@ -345,17 +345,17 @@ is_verified, extracted_signer_id, extracted_manifest = UnicodeMetadata.verify_an
 if is_verified:
     print(f"✓ Signature verification successful!")
     print(f"✓ Signer ID: {extracted_signer_id}")
-    
+
     # Check for content tampering
     current_content_hash = hashlib.sha256(plain_text.encode("utf-8")).hexdigest()
-    
+
     # Find content hash assertion
     stored_hash = None
     for assertion in extracted_manifest.get("assertions", []):
         if assertion.get("label") == "stds.c2pa.content.hash":
             stored_hash = assertion["data"]["hash"]
             break
-    
+
     if stored_hash == current_content_hash:
         print("✓ Content hash verification successful!")
     else:
