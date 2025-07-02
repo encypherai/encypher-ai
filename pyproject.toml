@@ -41,6 +41,10 @@ dev = [
     "pre-commit>=3.3.3",
     "types-Deprecated>=1.2.9",
 ]
+pdf = [
+    "reportlab>=4.0.0",
+    "PyMuPDF>=1.26.0",
+]
 
 [project.urls]
 "Homepage" = "https://github.com/encypherai/encypher-ai"
