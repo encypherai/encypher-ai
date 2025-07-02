@@ -242,6 +242,24 @@ else:
     print("Stream metadata could not be verified or extracted.")
 ```
 
+### PDF Generation Example
+
+```python
+from encypher.pdf_generator import EncypherPDF
+
+pdf_path = "document.pdf"
+EncypherPDF.from_text(
+    text="Hello PDF world",
+    output_path=pdf_path,
+    private_key=private_key,
+    signer_id=signer_id_example,
+    timestamp=current_timestamp,
+)
+```
+
+Use `EncypherPDF.verify_pdf(pdf_path, public_key_provider)` to validate the
+embedded manifest.
+
 ## Key Features
 
 - **Invisible Metadata**: Embed metadata in text without affecting its visible appearance or readability.
