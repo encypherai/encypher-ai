@@ -558,6 +558,39 @@ class TestUnicodeMetadata:
         assert manifest_payload.get("ai_info") == manifest_metadata.get("ai_info")
         assert manifest_payload.get("custom_claims") == manifest_metadata.get("custom_claims")
 
+    def test_embed_metadata_omit_keys(self, key_pair_1, sample_text, public_key_provider):
+        private_key, _ = key_pair_1
+        signer_id = "signer_1"
+        metadata = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "custom_metadata": {
+                "user_id": "abc",
+                "session_id": "123",
+                "keep": True,
+            },
+        }
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=sample_text,
+            private_key=private_key,
+            signer_id=signer_id,
+            metadata_format="basic",
+            target=MetadataTarget.PUNCTUATION,
+            omit_keys=["user_id", "session_id"],
+            **metadata,
+        )
+
+        is_valid, extracted_signer_id, payload = UnicodeMetadata.verify_metadata(
+            embedded_text, public_key_provider
+        )
+
+        assert is_valid
+        assert extracted_signer_id == signer_id
+        assert payload is not None
+        custom_meta = payload.get("custom_metadata", {})
+        assert "user_id" not in custom_meta
+        assert "session_id" not in custom_meta
+
     @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible " "with new signature-based method."))
     def test_embed_extract_metadata(self):
         pass

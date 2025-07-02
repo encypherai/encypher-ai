@@ -2,6 +2,11 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.5.0 (Unreleased)
+
+### Added
+- **Metadata Redaction:** `UnicodeMetadata.embed_metadata` and `StreamingHandler` now support an `omit_keys` parameter to remove specified metadata fields before signing. The CLI exposes this via `--omit-keys`.
+
 ## 2.4.0 (06-28-2025)
 
 ### Added

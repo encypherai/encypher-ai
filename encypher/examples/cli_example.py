@@ -145,6 +145,8 @@ def encode_text(args):
     if args.model_id:
         custom_metadata_dict["model_id"] = args.model_id
 
+    omit_keys = args.omit_keys if args.omit_keys else None
+
     try:
         console.print(f"Embedding with signer_id: {signer_id}, timestamp: {timestamp_int}")
         encoded_text = UnicodeMetadata.embed_metadata(
@@ -152,6 +154,7 @@ def encode_text(args):
             private_key=private_key,
             signer_id=signer_id,
             custom_metadata=custom_metadata_dict,
+            omit_keys=omit_keys,
             timestamp=timestamp_int,
         )
 
@@ -265,6 +268,12 @@ def main():
     )
     parser_encode.add_argument(
         "--model-id", type=str, help="Optional. Model ID to include in metadata (convenience, will be part of custom_metadata)."
+    )
+    parser_encode.add_argument(
+        "--omit-keys",
+        nargs="+",
+        default=None,
+        help="Space separated list of metadata keys to omit before signing.",
     )
     parser_encode.set_defaults(func=encode_text)
 

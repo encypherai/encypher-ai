@@ -66,6 +66,37 @@ class TestStreamingHandler:
         assert extracted_signer_id == "test_signer"
         assert extracted_payload is not None
         assert extracted_payload.get("model_id") == metadata["model_id"]
+
+    def test_process_text_chunk_omit_keys(self, test_key_pair, test_public_key_provider):
+        private_key, _ = test_key_pair
+        metadata = {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "custom_metadata": {"user_id": "abc", "session_id": "123", "keep": "ok"},
+        }
+
+        handler = StreamingHandler(
+            metadata=metadata,
+            target=MetadataTarget.WHITESPACE,
+            private_key=private_key,
+            signer_id="test_signer",
+            metadata_format="basic",
+            omit_keys=["user_id", "session_id"],
+        )
+
+        chunk = "This is a test chunk with spaces."
+        processed_chunk = handler.process_chunk(chunk)
+
+        assert processed_chunk != chunk
+
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_metadata(
+            processed_chunk, test_public_key_provider
+        )
+
+        assert is_valid
+        assert extracted_signer_id == "test_signer"
+        custom_meta = extracted_payload.get("custom_metadata", {})
+        assert "user_id" not in custom_meta
+        assert "session_id" not in custom_meta
         assert extracted_payload.get("format") == "basic"
 
     def test_encode_first_chunk_only(self, test_key_pair, test_public_key_provider):

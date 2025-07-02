@@ -280,6 +280,22 @@ class UnicodeMetadata:
         pattern = re.compile(r"[\uFE00-\uFE0F\U000E0100-\U000E01EF]")
         return pattern.sub("", text)
 
+    @staticmethod
+    def _omit_keys_recursive(data: Union[Dict[str, Any], List[Any]], keys: List[str]) -> None:
+        """Recursively remove specified keys from nested dictionaries."""
+        if isinstance(data, dict):
+            for k in list(data.keys()):
+                if k in keys:
+                    data.pop(k, None)
+                else:
+                    v = data[k]
+                    if isinstance(v, (dict, list)):
+                        UnicodeMetadata._omit_keys_recursive(v, keys)
+        elif isinstance(data, list):
+            for item in data:
+                if isinstance(item, (dict, list)):
+                    UnicodeMetadata._omit_keys_recursive(item, keys)
+
     @classmethod
     def find_targets(
         cls,
@@ -337,6 +353,7 @@ class UnicodeMetadata:
         actions: Optional[List[Dict[str, Any]]] = None,
         ai_info: Optional[Dict[str, Any]] = None,
         custom_claims: Optional[Dict[str, Any]] = None,
+        omit_keys: Optional[List[str]] = None,
         distribute_across_targets: bool = False,
         add_hard_binding: bool = True,  # New parameter
     ) -> str:
@@ -375,6 +392,9 @@ class UnicodeMetadata:
                      attributes.
             custom_claims: Dictionary for custom C2PA-like claims (used in
                            'manifest' format).
+            omit_keys: List of metadata keys to omit from the payload prior to
+                        signing. Required fields like 'signer_id' and
+                        'timestamp' cannot be omitted.
             distribute_across_targets: If True, distribute bits across multiple
                                        targets if needed.
             add_hard_binding: If True, include the hard binding assertion in the
@@ -458,6 +478,13 @@ class UnicodeMetadata:
         if not isinstance(distribute_across_targets, bool):
             logger.error("'distribute_across_targets' must be a boolean.")
             raise TypeError("'distribute_across_targets' must be a boolean.")
+
+        if omit_keys is not None:
+            if not isinstance(omit_keys, list) or not all(isinstance(k, str) for k in omit_keys):
+                raise TypeError("'omit_keys' must be a list of strings if provided.")
+            mandatory = {"signer_id", "timestamp", "format"}
+            if any(k in mandatory for k in omit_keys):
+                raise ValueError("Cannot omit required metadata fields: signer_id, timestamp, or format")
 
         # Convert timestamp
         try:
@@ -547,6 +574,11 @@ class UnicodeMetadata:
             raise ValueError(f"Unsupported metadata_format: {metadata_format}")
 
         # --- End: Payload Construction ---
+
+        if omit_keys:
+            cls._omit_keys_recursive(payload_data, omit_keys)
+
+        # --- Start: Signing & Packaging Logic based on format ---
 
         # --- Start: Signing & Packaging Logic based on format ---
         signature_b64: str
