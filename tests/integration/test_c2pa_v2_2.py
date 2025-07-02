@@ -155,11 +155,12 @@ class TestC2PAv2_2Integration(unittest.TestCase):
                 return self.public_key
             return None
 
-        # Verify the tampered text
-        is_verified, _, _ = UnicodeMetadata.verify_metadata(tampered_text, public_key_resolver)
+        # Verify the tampered text with diff report
+        is_verified, _, _, report = UnicodeMetadata.verify_metadata_with_report(tampered_text, public_key_resolver, reference_text=embedded_text)
 
         # Verification should fail due to content hash mismatch
         self.assertFalse(is_verified)
+        self.assertIsNotNone(report)
 
     def test_c2pa_soft_binding(self):
         """Test soft binding functionality for C2PA v2.2."""

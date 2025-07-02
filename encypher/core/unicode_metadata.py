@@ -40,6 +40,7 @@ from .payloads import (
     serialize_payload,
 )
 from .signing import extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
+from encypher.utils.diff_utils import generate_diff_report
 
 
 class UnicodeMetadata:
@@ -1011,6 +1012,49 @@ class UnicodeMetadata:
                 signer_id,
                 cast(Union[BasicPayload, ManifestPayload, C2PAPayload, None], actual_inner_payload) if return_payload_on_failure else None,
             )
+
+    @classmethod
+    def verify_metadata_with_report(
+        cls,
+        text: str,
+        public_key_resolver: Callable[[str], Optional[Ed25519PublicKey]],
+        reference_text: Optional[str] = None,
+        return_payload_on_failure: bool = False,
+        require_hard_binding: bool = True,
+    ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, C2PAPayload, None], Optional[str]]:
+        """Verify metadata and optionally generate a tamper report.
+
+        This method wraps :meth:`verify_metadata` to provide an additional diff
+        summary when verification fails and a reference text is supplied.
+
+        Args:
+            text: The text with embedded metadata to verify.
+            public_key_resolver: Function that returns a public key for a signer ID.
+            reference_text: Optional original text to compare against for diff generation.
+            return_payload_on_failure: Return the payload even when verification fails.
+            require_hard_binding: Require the hard binding assertion when verifying C2PA manifests.
+
+        Returns:
+            A tuple of ``(is_valid, signer_id, payload, report)`` where ``report``
+            contains a human-friendly description of the differences if verification fails
+            and a reference text was provided.
+        """
+        is_valid, signer_id, payload = cls.verify_metadata(
+            text=text,
+            public_key_resolver=public_key_resolver,
+            return_payload_on_failure=return_payload_on_failure,
+            require_hard_binding=require_hard_binding,
+        )
+
+        report: Optional[str] = None
+        if not is_valid and reference_text is not None:
+            try:
+                report = generate_diff_report(reference_text, text)
+            except Exception as e:  # pragma: no cover - diff failures shouldn't crash verification
+                logger.error(f"Failed to generate tamper report: {e}")
+                report = None
+
+        return is_valid, signer_id, payload, report
 
     @classmethod
     def _verify_c2pa_v2_2(

@@ -128,10 +128,45 @@ For C2PA v2.2 manifests, it performs full cryptographic verification, including:
 - `allow_fallback_extraction`: If True, attempts to extract data from the end of the string if standard extraction fails.
 
 **Returns:**
+
 A tuple of `(is_verified, signer_id, payload)`:
 - `is_verified` (`bool`): `True` if the signature and all binding checks (content hash, manifest hash) are valid.
 - `signer_id` (`Optional[str]`): The identifier of the key used for signing.
 - `payload` (`Union[BasicPayload, ManifestPayload, C2PAPayload, None]`): The extracted and verified inner payload, or `None` on failure.
+
+### `UnicodeMetadata.verify_metadata_with_report`
+
+```python
+@classmethod
+def verify_metadata_with_report(
+    cls,
+    text: str,
+    public_key_resolver: Callable[[str], Optional[PublicKeyTypes]],
+    reference_text: Optional[str] = None,
+    return_payload_on_failure: bool = False,
+    require_hard_binding: bool = True,
+) -> Tuple[
+    bool,
+    Optional[str],
+    Union[BasicPayload, ManifestPayload, C2PAPayload, None],
+    Optional[str],
+]:
+```
+
+Extends :meth:`verify_metadata` by optionally returning a short tamper report. If
+verification fails and a `reference_text` is provided, the method compares the
+current text against that reference and returns a human-friendly diff summary.
+
+**Parameters:**
+- `text`: The potentially tampered text.
+- `public_key_resolver`: Function to look up the public key for a given signer ID.
+- `reference_text`: The original text to compare against for diff generation.
+- `return_payload_on_failure`: If `True`, include the payload even when verification fails.
+- `require_hard_binding`: Require the hard-binding assertion for C2PA manifests.
+
+**Returns:**
+A tuple of `(is_verified, signer_id, payload, report)` where `report` contains a
+string summarizing the differences, or `None` if no report could be generated.
 
 ### `UnicodeMetadata.extract_metadata`
 
