@@ -34,7 +34,8 @@ encoded_text = UnicodeMetadata.embed_metadata(
     private_key=private_key,
     signer_id=signer_id,
     timestamp=int(time.time()),
-    custom_metadata={"source": "basic-format-example"}
+    custom_metadata={"source": "basic-format-example"},
+    omit_keys=["user_id"]  # Optionally remove sensitive fields before signing
 )
 
 # --- Verification ---
