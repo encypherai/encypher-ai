@@ -78,6 +78,10 @@ For a local demonstration, check out the detailed Jupyter Notebook example inclu
 
 This notebook covers key generation, basic and manifest format usage, and tamper detection using the latest version (v2.2.0+).
 
+### Browser Extension
+
+The repository also includes a simple Chrome/Firefox browser extension in the `extension` directory. It verifies selected text using a local API built with EncypherAI and displays the result with a small logo icon. The extension is released under the same AGPL license, and a commercial license is available if you plan to distribute a proprietary version.
+
 ## Installation
 
 First, install the uv package manager if you don't have it already:
