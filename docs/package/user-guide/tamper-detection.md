@@ -69,12 +69,14 @@ print(f"\nOriginal text: '{original_text}'")
 print(f"Tampered text: '{tampered_text.strip()}'")
 
 # Verification on the tampered text will fail because the content hash no longer matches.
-is_valid_tampered, _, _ = UnicodeMetadata.verify_metadata(
+is_valid_tampered, _, _, diff_report = UnicodeMetadata.verify_metadata_with_report(
     text=tampered_text,
-    public_key_provider=public_key_provider
+    public_key_provider=public_key_provider,
+    reference_text=encoded_text,
 )
 
 print(f"Verification of tampered text: {'✅ Passed' if is_valid_tampered else '🚨 Failed'}")
+print(f"Tamper report: {diff_report}")
 ```
 
 ### C2PA and Tamper Detection
