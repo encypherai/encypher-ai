@@ -184,9 +184,7 @@ def serialize_jumbf_payload(payload: Dict[str, Any]) -> bytes:
         json_bytes = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         box_length = 8 + len(json_bytes)
         jumbf_bytes = struct.pack(">I4s", box_length, b"jumb") + json_bytes
-        logger.debug(
-            f"Successfully serialized payload to JUMBF bytes, length: {len(jumbf_bytes)} bytes."
-        )
+        logger.debug(f"Successfully serialized payload to JUMBF bytes, length: {len(jumbf_bytes)} bytes.")
         return jumbf_bytes
     except Exception as e:
         logger.error(f"Unexpected error during JUMBF serialization: {e}", exc_info=True)

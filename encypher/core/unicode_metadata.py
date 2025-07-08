@@ -36,9 +36,9 @@ from .payloads import (
     ManifestPayload,
     OuterPayload,
     deserialize_c2pa_payload_from_cbor,
+    deserialize_jumbf_payload,
     serialize_c2pa_payload_to_cbor,
     serialize_jumbf_payload,
-    deserialize_jumbf_payload,
     serialize_payload,
 )
 from .signing import extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
@@ -451,9 +451,7 @@ class UnicodeMetadata:
 
         if metadata_format not in ("basic", "manifest", "cbor_manifest", "c2pa_v2_2", "jumbf"):
             logger.error("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa_v2_2'.")
-            raise ValueError(
-                "metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa_v2_2'."
-            )
+            raise ValueError("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa_v2_2'.")
 
         if model_id is not None and not isinstance(model_id, str):
             logger.error("If provided, 'model_id' must be a string.")
@@ -607,9 +605,7 @@ class UnicodeMetadata:
                 signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode("ascii")
                 payload_for_outer_dict = base64.b64encode(jumbf_bytes).decode("utf-8")
                 actual_payload_type_for_outer = "jumbf"
-                logger.debug(
-                    f"JUMBF payload signed successfully. Signature (base64): {signature_b64[:10]}..."
-                )
+                logger.debug(f"JUMBF payload signed successfully. Signature (base64): {signature_b64[:10]}...")
             except Exception as e:
                 logger.exception("Failed to process or sign JUMBF payload.")
                 raise RuntimeError(f"Failed to process or sign JUMBF payload: {e}") from e
