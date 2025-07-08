@@ -10,6 +10,7 @@ __version__ = "2.3.0"
 
 from encypher.config.settings import Settings
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+from encypher.pdf_generator import EncypherPDF
 from encypher.streaming.handlers import StreamingHandler
 
-__all__ = ["UnicodeMetadata", "MetadataTarget", "Settings", "StreamingHandler"]
+__all__ = ["UnicodeMetadata", "MetadataTarget", "Settings", "StreamingHandler", "EncypherPDF"]

@@ -5,6 +5,11 @@ This document provides a chronological list of notable changes for each version 
 ## 2.4.0 (06-28-2025)
 
 ### Added
+- **Enhanced PDF Generation:**
+  - Added `target` parameter to `EncypherPDF.from_docx` and `EncypherPDF.from_text` methods to control where metadata is embedded (whitespace, first letter, punctuation, or all).
+  - Updated CLI to support the new `--target` parameter for Word to PDF conversion.
+  - Improved parameter naming consistency: renamed `docx_path` to `docx_file` and `output_path` to `output_file` in `from_docx` method.
+
 - **C2PA v2.2 Compliance:** Re-architected the core package to be the reference implementation for text-based C2PA v2.2 soft binding. This includes:
   - **Manifest Structure:** Manifests now conform to the C2PA v2.2 specification, including the official `@context`, a unique `instance_id`, and ISO 8601 formatted timestamps.
   - **Hard Binding:** Added the mandatory `c2pa.hash.data.v1` assertion, which contains a SHA-256 hash of the clean text content for integrity verification.

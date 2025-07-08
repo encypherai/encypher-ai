@@ -18,9 +18,11 @@ from rich.panel import Panel
 from rich.syntax import Syntax
 
 from encypher.core.exceptions import EncypherError, PrivateKeyLoadingError, PublicKeyLoadingError
+from encypher.pdf_generator import ConversionError, EncypherPDF, FontError, ImageError, PDFGenerationError
 from encypher.core.keys import generate_ed25519_key_pair, load_ed25519_private_key, load_ed25519_public_key, save_ed25519_key_pair_to_files
 from encypher.core.payloads import BasicPayload, ManifestPayload
-from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+from encypher.pdf_generator import EncypherPDF, FontError, PDFGenerationError
 
 console = Console()
 
@@ -197,46 +199,128 @@ def decode_text(args):
     public_key_provider = create_public_key_provider(args.public_key_dir)
 
     try:
-        is_valid: bool
-        extracted_signer_id: Optional[str]
-        verified_payload: Union[BasicPayload, ManifestPayload, None]
-        is_valid, extracted_signer_id, verified_payload = UnicodeMetadata.verify_metadata(text=encoded_text, public_key_provider=public_key_provider)
+        is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(text=encoded_text, public_key_resolver=public_key_provider)
 
-        console.print("[bold cyan]--- Verification Result ---[/]")
-        if is_valid and verified_payload:
-            console.print("[bold green]Signature Valid:[/] Yes")
-            console.print(f"[bold green]Signer ID:[/] {extracted_signer_id}")
-            console.print(
-                Panel(
-                    Syntax(json.dumps(verified_payload.to_dict(), indent=2, default=str), "json", theme="monokai"),
-                    title="[bold]Extracted & Verified Payload[/]",
-                    border_style="green",
-                )
-            )
-        else:
-            console.print("[bold red]Signature Valid:[/] No")
-            if extracted_signer_id:
-                console.print(f"[bold yellow]Attempted Signer ID (from unverified header):[/] {extracted_signer_id}")
-            if verified_payload:
+        if is_valid:
+            console.print("[bold green]Success: Signature is valid![/]")
+            console.print(f"  [bold]Signer ID:[/bold] {signer_id}")
+            if payload:
                 console.print(
                     Panel(
-                        Syntax(json.dumps(verified_payload.to_dict(), indent=2, default=str), "json", theme="monokai"),
-                        title="[bold yellow]Extracted Payload (Verification Failed)[/]",
-                        border_style="yellow",
+                        Syntax(json.dumps(payload, indent=2), "json", theme="monokai"),
+                        title="[bold]Verified Payload[/]",
+                        border_style="green",
                     )
                 )
             else:
-                console.print("[bold yellow]No payload extracted or payload was malformed/unverified.[/]")
-        console.print("[bold cyan]--- Original Input Text (for reference) ---[/]")
-        print(encoded_text)
+                console.print("[yellow]No payload was extracted.[/yellow]")
+        else:
+            console.print("[bold red]Failure: Signature is invalid or metadata not found.[/]")
+            if signer_id:
+                console.print(f"  [bold]Signer ID found in text:[/bold] {signer_id} (but verification failed)")
 
     except Exception as e:
         console.print(f"[bold red]Error decoding metadata:[/] {e}")
         sys.exit(1)
 
 
-# --- Main CLI Parsing ---
+def convert_to_pdf(args):
+    """Convert text to PDF with embedded metadata."""
+    try:
+        # Read input text (unless it's a docx)
+        text = None
+        if args.input_file:
+            with open(args.input_file, "r", encoding="utf-8") as f:
+                text = f.read()
+        elif args.text:
+            text = args.text
+        elif not args.docx_file:
+            console.print("[bold red]Error:[/] Either --text, --input-file, or --docx-file must be provided.")
+            sys.exit(1)
 
+        # Load private key
+        private_key = _load_private_key(args.private_key_file)
+        if not private_key:
+            sys.exit(1)
+
+        # Set timestamp
+        timestamp = args.timestamp or int(datetime.now(timezone.utc).timestamp())
+        
+        # Set target for metadata embedding
+        target = None
+        if args.target:
+            if args.target == "whitespace":
+                target = MetadataTarget.WHITESPACE
+            elif args.target == "first_letter":
+                target = MetadataTarget.FIRST_LETTER
+            elif args.target == "punctuation":
+                target = MetadataTarget.PUNCTUATION
+            elif args.target == "all":
+                target = MetadataTarget.ALL
+
+        # Prepare image data if provided
+        images = None
+        if args.image_path:
+            images = [{
+                "path": args.image_path,
+                "x": args.image_x,
+                "y": args.image_y,
+                "width": args.image_width,
+                "height": args.image_height,
+                "preserve_aspect_ratio": not args.no_preserve_aspect_ratio,
+            }]
+
+        # Prepare margins if provided
+        margins = None
+        if any(m != 1.0 for m in [args.margin_left, args.margin_right, args.margin_top, args.margin_bottom]):
+            from reportlab.lib.units import inch
+
+            margins = {
+                "left": args.margin_left * inch,
+                "right": args.margin_right * inch,
+                "top": args.margin_top * inch,
+                "bottom": args.margin_bottom * inch,
+            }
+
+        # Generate the PDF
+        if args.docx_file:
+            output_path = EncypherPDF.from_docx(
+                docx_file=args.docx_file,  # Note: parameter is docx_file, not docx_path
+                output_file=args.output_file,  # Note: parameter is output_file, not output_path
+                private_key=private_key,
+                signer_id=args.signer_id,
+                timestamp=timestamp,
+                target=target,  # Add target parameter
+                metadata_format=args.metadata_format,
+                font_path=args.font_path,
+                font_size=args.font_size,
+                images=images,
+                margins=margins,
+            )
+            console.print(f"[bold green]Success:[/bold green] Word document converted to PDF at {output_path}")
+        else:
+            output_path = EncypherPDF.from_text(
+                text=text,
+                output_file=args.output_file,  # Note: parameter is output_file, not output_path
+                private_key=private_key,
+                signer_id=args.signer_id,
+                timestamp=timestamp,
+                target=target,  # Add target parameter
+                metadata_format=args.metadata_format,
+                font_path=args.font_path,
+                font_size=args.font_size,
+                images=images,
+                margins=margins,
+            )
+            console.print(f"[bold green]Success:[/bold green] PDF created at {output_path}")
+    except (PDFGenerationError, FontError, ImageError, ConversionError) as e:
+        console.print(f"[bold red]Error generating PDF:[/] {e}")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[bold red]An unexpected error occurred:[/] {e}")
+        sys.exit(1)
+
+# --- Main CLI Parsing ---
 
 def main():
     parser = argparse.ArgumentParser(description="EncypherAI CLI - Encode and Decode Unicode Metadata with Digital Signatures.")
@@ -275,6 +359,66 @@ def main():
     group_decode_input.add_argument("--input-file", type=str, help="Path to a UTF-8 text file to decode metadata from.")
     parser_decode.add_argument("--public-key-dir", type=str, required=True, help="Directory containing public key PEM files (e.g., <signer-id>.pem).")
     parser_decode.set_defaults(func=decode_text)
+    
+    # --- Convert to PDF Command ---
+    parser_pdf = subparsers.add_parser("convert-to-pdf", help="Convert a text file or Word document to a PDF with embedded metadata")
+    group_pdf_input = parser_pdf.add_mutually_exclusive_group(required=True)
+    group_pdf_input.add_argument("--text", type=str, help="Text to convert to PDF")
+    group_pdf_input.add_argument("--input-file", type=str, help="Input text file to convert to PDF")
+    group_pdf_input.add_argument("--docx-file", type=str, help="Input Word document (.docx) file to convert to PDF")
+    parser_pdf.add_argument("--output-file", required=True, help="Output PDF file path")
+    parser_pdf.add_argument("--private-key-file", type=str, required=True, help="Path to private key file")
+    parser_pdf.add_argument("--signer-id", type=str, required=True, help="Signer ID for metadata")
+    parser_pdf.add_argument("--timestamp", type=int, help="Timestamp for metadata (default: current time)")
+    parser_pdf.add_argument(
+        "--target",
+        type=str,
+        choices=["whitespace", "first_letter", "punctuation", "all"],
+        default="whitespace",
+        help="Where to embed metadata (default: whitespace)"
+    )
+    parser_pdf.add_argument(
+        "--metadata-format",
+        type=str,
+        choices=["basic", "manifest", "cbor_manifest", "c2pa_v2_2"],
+        default="c2pa_v2_2",
+        help="Metadata format to use (default: c2pa_v2_2)."
+    )
+    parser_pdf.add_argument("--font-path", type=str, help="Path to a TrueType font file")
+    parser_pdf.add_argument("--font-size", type=int, default=12, help="Font size in points (default: 12)")
+    # Margin settings
+    parser_pdf.add_argument(
+        "--margin-left", type=float, default=1.0, help="Left margin in inches (default: 1.0)"
+    )
+    parser_pdf.add_argument(
+        "--margin-right", type=float, default=1.0, help="Right margin in inches (default: 1.0)"
+    )
+    parser_pdf.add_argument(
+        "--margin-top", type=float, default=1.0, help="Top margin in inches (default: 1.0)"
+    )
+    parser_pdf.add_argument(
+        "--margin-bottom", type=float, default=1.0, help="Bottom margin in inches (default: 1.0)"
+    )
+    # Image settings
+    parser_pdf.add_argument(
+        "--image-path", type=str, help="Path to an image file to embed in the PDF"
+    )
+    parser_pdf.add_argument(
+        "--image-x", type=float, default=72, help="X position of the image in points (default: 72)"
+    )
+    parser_pdf.add_argument(
+        "--image-y", type=float, default=400, help="Y position of the image in points (default: 400)"
+    )
+    parser_pdf.add_argument(
+        "--image-width", type=float, help="Width of the image in points"
+    )
+    parser_pdf.add_argument(
+        "--image-height", type=float, help="Height of the image in points"
+    )
+    parser_pdf.add_argument(
+        "--no-preserve-aspect-ratio", action="store_true", help="Do not preserve aspect ratio of the image"
+    )
+    parser_pdf.set_defaults(func=convert_to_pdf)
 
     args = parser.parse_args()
     if hasattr(args, "func"):
