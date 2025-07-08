@@ -193,7 +193,7 @@ handler = StreamingHandler(
     signer_id=signer_id_example,
     timestamp=stream_timestamp,
     custom_metadata=stream_custom_payload,
-    # metadata_format defaults to "basic"
+    # metadata_format defaults to "basic" (also accepts "manifest", "cbor_manifest", or "jumbf")
     # encode_first_chunk_only defaults to True, which is common for streaming
 )
 
@@ -352,7 +352,7 @@ encoded_text_manifest = UnicodeMetadata.embed_metadata(
     private_key=private_key,
     signer_id=signer_id_manifest,
     timestamp=int(time.time()),
-    metadata_format="cbor_manifest",  # Use the CBOR manifest format
+    metadata_format="cbor_manifest",  # Use the CBOR manifest format ("jumbf" is also supported)
     claim_generator="EncypherAI README Example v2.3",
     actions=[
         {

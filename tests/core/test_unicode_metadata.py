@@ -132,7 +132,11 @@ class TestUnicodeMetadata:
 
     @pytest.mark.parametrize(
         "metadata_format, metadata_fixture",
-        [("basic", "basic_metadata"), ("manifest", "manifest_metadata")],
+        [
+            ("basic", "basic_metadata"),
+            ("manifest", "manifest_metadata"),
+            ("jumbf", "manifest_metadata"),
+        ],
     )
     def test_embed_verify_extract_success(
         self,
@@ -196,14 +200,18 @@ class TestUnicodeMetadata:
         # Note: Timestamp formatting might differ slightly if not ISO string initially
         # We compare the core content
         assert extracted_payload is not None
-        assert extracted_payload.get("format") == metadata_format
+        if metadata_format == "jumbf":
+            # JUMBF inner payload uses manifest structure
+            assert extracted_payload.get("format") == "manifest"
+        else:
+            assert extracted_payload.get("format") == metadata_format
 
         # Compare relevant fields based on format
         if metadata_format == "basic":
             assert extracted_payload.get("model_id") == original_payload.get("model_id")
             assert "timestamp" in extracted_payload
             assert extracted_payload.get("custom_metadata") == original_payload.get("custom_metadata")
-        elif metadata_format == "manifest":
+        elif metadata_format in ("manifest", "jumbf"):
             # Access nested manifest fields
             manifest_payload = extracted_payload.get("manifest", {})
             assert manifest_payload.get("claim_generator") == original_payload.get("claim_generator")

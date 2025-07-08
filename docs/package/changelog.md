@@ -2,6 +2,13 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.4.2 (07-08-2025)
+
+### Added
+- **JUMBF Embedding:** Added support for a `jumbf` metadata format which stores
+  the inner payload in a compact binary JUMBF box. The decoder now automatically
+  detects JSON, CBOR, or JUMBF embeddings.
+
 ## 2.4.0 (06-28-2025)
 
 ### Added
