@@ -1,8 +1,8 @@
 """
 Pytest configuration for integration tests.
 """
+
 import os
-import pytest
 
 
 def pytest_ignore_collect(collection_path, config):
@@ -13,5 +13,5 @@ def pytest_ignore_collect(collection_path, config):
     # Skip Gemini integration tests if API key is not set
     if collection_path.name == "test_gemini_integration.py" and not os.getenv("GEMINI_API_KEY"):
         return True
-    
+
     return False
