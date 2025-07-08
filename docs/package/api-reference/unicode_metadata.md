@@ -64,7 +64,7 @@ def embed_metadata(
     text: str,
     private_key: PrivateKeyTypes,
     signer_id: str,
-    metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa_v2_2"] = "basic",
+    metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa"] = "basic",
     c2pa_manifest: Optional[Dict[str, Any]] = None,
     model_id: Optional[str] = None,
     timestamp: Optional[Union[str, datetime, date, int, float]] = None,
@@ -88,8 +88,8 @@ Embeds metadata into text using Unicode variation selectors, signing with a priv
   - `basic`: A simple key-value payload.
   - `manifest`: A legacy C2PA-like manifest.
   - `cbor_manifest`: A CBOR-encoded version of the legacy manifest.
-  - `c2pa_v2_2`: The latest C2PA-compliant format using COSE Sign1.
-- `c2pa_manifest`: A dictionary representing the full C2PA v2.2 manifest. Required when `metadata_format` is `c2pa_v2_2`.
+  - `c2pa`: The C2PA-compliant format using COSE Sign1.
+- `c2pa_manifest`: A dictionary representing the full C2PA manifest. Required when `metadata_format` is `c2pa`.
 - `model_id`: Model identifier (used in 'basic' payload).
 - `timestamp`: Timestamp (datetime, ISO string, int/float epoch).
 - `target`: Where to embed metadata ('whitespace', 'punctuation', etc.).
@@ -237,7 +237,7 @@ embedded_text = UnicodeMetadata.embed_metadata(
     text=clean_text,
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='c2pa_v2_2',
+    metadata_format='c2pa',
     c2pa_manifest=c2pa_manifest,
 )
 

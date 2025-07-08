@@ -7,7 +7,7 @@ Verifying embedded metadata is a critical step to ensure the authenticity and in
 The primary method for verification is `UnicodeMetadata.verify_metadata()`. This method performs a series of checks to validate the embedded data:
 
 1.  **Extraction**: It first extracts the raw byte sequence from the Unicode variation selectors in the text.
-2.  **Format Detection**: It automatically detects the payload format (legacy `basic`/`manifest` or `c2pa_v2_2`).
+2.  **Format Detection**: It automatically detects the payload format (legacy `basic`/`manifest` or `c2pa`).
 3.  **Signature Validation**: It verifies the cryptographic signature using the key provided by the `public_key_provider`.
 4.  **Deep Manifest Validation (for C2PA v2.2)**: If a C2PA v2.2 manifest is detected, it performs additional, deeper validation:
     *   **COSE Signature**: Verifies the COSE_Sign1 structure.

@@ -46,7 +46,7 @@ def test_gemini_non_streaming():
         text=original_text,
         private_key=private_key,
         signer_id=signer_id,
-        metadata_format="c2pa_v2_2",
+        metadata_format="c2pa",
         custom_claims=custom_metadata,
         timestamp=int(time.time()),
     )
@@ -74,7 +74,7 @@ def test_gemini_streaming():
     streaming_handler = StreamingHandler(
         private_key=private_key,
         signer_id=signer_id,
-        metadata_format="c2pa_v2_2",
+        metadata_format="c2pa",
         custom_metadata={"gemini_model": "gemini-1.5-flash", "streaming": "true"},
         timestamp=int(time.time()),
     )

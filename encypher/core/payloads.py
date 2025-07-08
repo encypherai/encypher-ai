@@ -100,7 +100,7 @@ class OuterPayload(TypedDict):
     """
 
     # The format literal is extended to include new formats.
-    format: Literal["basic", "manifest", "cbor_manifest", "c2pa_v2_2", "jumbf"]
+    format: Literal["basic", "manifest", "cbor_manifest", "c2pa", "jumbf"]
     signer_id: str
     # The payload can be a dictionary for JSON-based formats, or a
     # base64-encoded string for binary formats like CBOR.

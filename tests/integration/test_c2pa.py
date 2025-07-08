@@ -1,7 +1,7 @@
 """
-Integration tests for C2PA v2.2 compliance.
+Integration tests for C2PA compliance.
 
-This module tests the end-to-end functionality of C2PA v2.2 compliant
+This module tests the end-to-end functionality of C2PA compliant
 embedding, extraction, and verification.
 """
 
@@ -20,8 +20,8 @@ from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.interop.c2pa import encypher_manifest_to_c2pa_like_dict
 
 
-class TestC2PAv2_2Integration(unittest.TestCase):
-    """Test cases for C2PA v2.2 compliance integration."""
+class TestC2PAIntegration(unittest.TestCase):
+    """Test cases for C2PA compliance integration."""
 
     def setUp(self):
         """Set up test fixtures."""
@@ -31,7 +31,7 @@ class TestC2PAv2_2Integration(unittest.TestCase):
         self.signer_id = "test-signer-id"
 
         # Sample text content
-        self.test_text = "This is a test text for C2PA v2.2 compliance testing."
+        self.test_text = "This is a test text for C2PA compliance testing."
 
         # Sample timestamp for consistent testing
         self.timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -62,14 +62,14 @@ class TestC2PAv2_2Integration(unittest.TestCase):
         """Clean up test fixtures."""
         self.temp_dir.cleanup()
 
-    def test_c2pa_v2_2_embedding_and_extraction(self):
-        """Test embedding and extracting C2PA v2.2 compliant metadata."""
-        # Embed metadata with C2PA v2.2 format
+    def test_c2pa_embedding_and_extraction(self):
+        """Test embedding and extracting C2PA compliant metadata."""
+        # Embed metadata with C2PA format
         embedded_text = UnicodeMetadata.embed_metadata(
             text=self.test_text,
             private_key=self.private_key,
             signer_id=self.signer_id,
-            metadata_format="c2pa_v2_2",
+            metadata_format="c2pa",
             timestamp=self.timestamp,
             actions=self.actions,
             claim_generator="EncypherAI/2.4.0",
@@ -97,14 +97,14 @@ class TestC2PAv2_2Integration(unittest.TestCase):
         self.assertIn("c2pa.hash.data.v1", assertion_labels)
         self.assertIn("c2pa.soft_binding.v1", assertion_labels)
 
-    def test_c2pa_v2_2_verification(self):
-        """Test verification of C2PA v2.2 compliant metadata."""
-        # Embed metadata with C2PA v2.2 format
+    def test_c2pa_verification(self):
+        """Test verification of C2PA compliant metadata."""
+        # Embed metadata with C2PA format
         embedded_text = UnicodeMetadata.embed_metadata(
             text=self.test_text,
             private_key=self.private_key,
             signer_id=self.signer_id,
-            metadata_format="c2pa_v2_2",
+            metadata_format="c2pa",
             timestamp=self.timestamp,
             actions=self.actions,
             claim_generator="EncypherAI/2.4.0",
@@ -133,14 +133,14 @@ class TestC2PAv2_2Integration(unittest.TestCase):
         is_verified, _, _ = UnicodeMetadata.verify_metadata(embedded_text, wrong_key_resolver)
         self.assertFalse(is_verified)
 
-    def test_c2pa_v2_2_tamper_detection(self):
-        """Test tamper detection for C2PA v2.2 compliant metadata."""
-        # Embed metadata with C2PA v2.2 format
+    def test_c2pa_tamper_detection(self):
+        """Test tamper detection for C2PA compliant metadata."""
+        # Embed metadata with C2PA format
         embedded_text = UnicodeMetadata.embed_metadata(
             text=self.test_text,
             private_key=self.private_key,
             signer_id=self.signer_id,
-            metadata_format="c2pa_v2_2",
+            metadata_format="c2pa",
             timestamp=self.timestamp,
             actions=self.actions,
             claim_generator="EncypherAI/2.4.0",
@@ -162,7 +162,7 @@ class TestC2PAv2_2Integration(unittest.TestCase):
         self.assertFalse(is_verified)
 
     def test_c2pa_soft_binding(self):
-        """Test soft binding functionality for C2PA v2.2."""
+        """Test soft binding functionality for C2PA."""
         # Create a manifest with embedded data for soft binding
         embedded_data = "Unicode variation selector soft binding test data"
 

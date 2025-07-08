@@ -35,7 +35,7 @@ class StreamingHandler:
         encode_first_chunk_only: bool = True,
         private_key: Optional[PrivateKeyTypes] = None,
         signer_id: Optional[str] = None,
-        metadata_format: Literal["basic", "manifest", "c2pa_v2_2"] = "c2pa_v2_2",
+        metadata_format: Literal["basic", "manifest", "c2pa"] = "c2pa",
         omit_keys: Optional[List[str]] = None,
         # For backward compatibility
         metadata: Optional[Dict[str, Any]] = None,
@@ -54,7 +54,7 @@ class StreamingHandler:
             metadata: (Deprecated) Alternative way to provide custom metadata. Use custom_metadata instead.
             signer_id: An identifier for the signer (associated with the public key).
             metadata_format: The structure of the metadata payload.
-                             'c2pa_v2_2' is the latest C2PA-compliant format.
+                             'c2pa' is the C2PA-compliant format.
             omit_keys: Optional list of metadata keys to omit from the payload prior to signing.
 
         Raises:
@@ -65,8 +65,8 @@ class StreamingHandler:
         logger.debug(f"Initializing StreamingHandler with target='{target}', encode_first_chunk_only={encode_first_chunk_only}")
 
         # --- Input Validation ---
-        if metadata_format not in ("basic", "manifest", "c2pa_v2_2"):
-            raise ValueError("metadata_format must be 'basic', 'manifest', or 'c2pa_v2_2'.")
+        if metadata_format not in ("basic", "manifest", "c2pa"):
+            raise ValueError("metadata_format must be 'basic', 'manifest', or 'c2pa'.")
 
         # Handle backward compatibility with 'metadata' parameter
         if metadata is not None:

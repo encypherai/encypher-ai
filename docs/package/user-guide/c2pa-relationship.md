@@ -68,7 +68,7 @@ def run_c2pa_text_demo():
     }
 
     # 4. Embed the manifest into the text
-    # The `c2pa_v2_2` format handles all COSE signing and CBOR encoding internally.
+    # The `c2pa` format handles all COSE signing and CBOR encoding internally.
     embedded_text = UnicodeMetadata.embed_metadata(
         text=original_text,
         private_key=private_key,
