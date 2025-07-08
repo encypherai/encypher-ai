@@ -1,4 +1,5 @@
 import json
+import struct
 from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
 
 import cbor2
@@ -99,7 +100,7 @@ class OuterPayload(TypedDict):
     """
 
     # The format literal is extended to include new formats.
-    format: Literal["basic", "manifest", "cbor_manifest", "c2pa_v2_2"]
+    format: Literal["basic", "manifest", "cbor_manifest", "c2pa_v2_2", "jumbf"]
     signer_id: str
     # The payload can be a dictionary for JSON-based formats, or a
     # base64-encoded string for binary formats like CBOR.
@@ -167,3 +168,49 @@ def deserialize_c2pa_payload_from_cbor(cbor_bytes: bytes) -> C2PAPayload:
     except Exception as e:
         logger.error(f"Unexpected error during C2PA CBOR deserialization: {e}", exc_info=True)
         raise RuntimeError(f"Unexpected error deserializing C2PA payload from CBOR: {e}")
+
+
+def serialize_jumbf_payload(payload: Dict[str, Any]) -> bytes:
+    """Serializes a payload dictionary into a minimal JUMBF box.
+
+    The function creates a single JUMBF box with a 4 byte length field and a
+    4 byte box type (``b"jumb"``). The payload is encoded as canonical JSON and
+    stored as the box contents. This is **not** a full implementation of
+    ISO/IEC 19566‑5 but provides a deterministic binary representation suitable
+    for signing and unit tests.
+    """
+    logger.debug("Attempting to serialize payload to JUMBF bytes.")
+    try:
+        json_bytes = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        box_length = 8 + len(json_bytes)
+        jumbf_bytes = struct.pack(">I4s", box_length, b"jumb") + json_bytes
+        logger.debug(f"Successfully serialized payload to JUMBF bytes, length: {len(jumbf_bytes)} bytes.")
+        return jumbf_bytes
+    except Exception as e:
+        logger.error(f"Unexpected error during JUMBF serialization: {e}", exc_info=True)
+        raise RuntimeError(f"Unexpected error serializing payload to JUMBF: {e}")
+
+
+def deserialize_jumbf_payload(jumbf_bytes: bytes) -> Dict[str, Any]:
+    """Deserializes bytes produced by :func:`serialize_jumbf_payload`."""
+    logger.debug(f"Attempting to deserialize {len(jumbf_bytes)} bytes from JUMBF.")
+    try:
+        if len(jumbf_bytes) < 8:
+            raise ValueError("JUMBF data too short.")
+        length, box_type = struct.unpack(">I4s", jumbf_bytes[:8])
+        if box_type != b"jumb":
+            raise ValueError(f"Unexpected JUMBF box type: {box_type!r}")
+        if length != len(jumbf_bytes):
+            raise ValueError("JUMBF length mismatch.")
+        json_bytes = jumbf_bytes[8:]
+        payload = json.loads(json_bytes.decode("utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("Deserialized JUMBF data is not a dictionary.")
+        logger.debug("Successfully deserialized JUMBF bytes to payload dictionary.")
+        return payload
+    except json.JSONDecodeError as e:
+        logger.error(f"JUMBF JSON decoding failed: {e}", exc_info=True)
+        raise ValueError(f"Failed to decode JUMBF bytes: {e}")
+    except Exception as e:
+        logger.error(f"Unexpected error during JUMBF deserialization: {e}", exc_info=True)
+        raise RuntimeError(f"Unexpected error deserializing JUMBF payload: {e}")
