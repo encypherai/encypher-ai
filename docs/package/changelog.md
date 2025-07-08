@@ -1,11 +1,17 @@
 # Changelog
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
-
-## 2.5.0 (Unreleased)
+## 2.6.0 (07-07-2025)
 
 ### Added
 - **Metadata Redaction:** `UnicodeMetadata.embed_metadata` and `StreamingHandler` now support an `omit_keys` parameter to remove specified metadata fields before signing. The CLI exposes this via `--omit-keys`.
+
+## 2.5.0 (07-07-2025)
+
+### Added
+- **JUMBF Embedding:** Added support for a `jumbf` metadata format which stores
+  the inner payload in a compact binary JUMBF box. The decoder now automatically
+  detects JSON, CBOR, or JUMBF embeddings.
 
 ## 2.4.0 (06-28-2025)
 

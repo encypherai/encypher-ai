@@ -36,7 +36,9 @@ from .payloads import (
     ManifestPayload,
     OuterPayload,
     deserialize_c2pa_payload_from_cbor,
+    deserialize_jumbf_payload,
     serialize_c2pa_payload_to_cbor,
+    serialize_jumbf_payload,
     serialize_payload,
 )
 from .signing import extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
@@ -467,9 +469,9 @@ class UnicodeMetadata:
             logger.error("'target' must be a string or MetadataTarget enum member.")
             raise TypeError("'target' must be a string or MetadataTarget enum member.")
 
-        if metadata_format not in ("basic", "manifest", "cbor_manifest", "c2pa_v2_2"):
-            logger.error("metadata_format must be 'basic', 'manifest', 'cbor_manifest', or 'c2pa_v2_2'.")
-            raise ValueError("metadata_format must be 'basic', 'manifest', 'cbor_manifest', or 'c2pa_v2_2'.")
+        if metadata_format not in ("basic", "manifest", "cbor_manifest", "c2pa_v2_2", "jumbf"):
+            logger.error("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa_v2_2'.")
+            raise ValueError("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa_v2_2'.")
 
         if model_id is not None and not isinstance(model_id, str):
             logger.error("If provided, 'model_id' must be a string.")
@@ -569,6 +571,29 @@ class UnicodeMetadata:
                 cbor_manifest_dict["ai_info"]["model_id"] = model_id
             payload_data["manifest"] = cbor_manifest_dict
             # The actual CBOR processing will happen during signing/packaging
+        elif metadata_format == "jumbf":
+            logger.debug("Using 'jumbf' metadata format.")
+            iso_timestamp = cls._format_timestamp(timestamp)
+            payload_data = {
+                "signer_id": signer_id,
+                "timestamp": iso_timestamp,
+                "format": "manifest",
+            }
+            jumbf_manifest_dict: Dict[str, Any] = {}
+            if claim_generator:
+                jumbf_manifest_dict["claim_generator"] = claim_generator
+            if actions:
+                jumbf_manifest_dict["actions"] = actions
+            if ai_info:
+                jumbf_manifest_dict["ai_info"] = ai_info
+            if custom_claims:
+                jumbf_manifest_dict["custom_claims"] = custom_claims
+            if model_id:
+                if "ai_info" not in jumbf_manifest_dict:
+                    jumbf_manifest_dict["ai_info"] = {}
+                jumbf_manifest_dict["ai_info"]["model_id"] = model_id
+            payload_data["manifest"] = jumbf_manifest_dict
+            # JUMBF binary processing will happen during signing/packaging
         else:
             logger.error(f"Unsupported metadata_format: {metadata_format}")
             raise ValueError(f"Unsupported metadata_format: {metadata_format}")
@@ -605,6 +630,17 @@ class UnicodeMetadata:
             except Exception as e:
                 logger.exception("Failed to process or sign CBOR manifest payload.")
                 raise RuntimeError(f"Failed to process or sign CBOR manifest payload: {e}") from e
+        elif metadata_format == "jumbf":
+            try:
+                jumbf_bytes = serialize_jumbf_payload(payload_data)
+                signature = sign_payload(private_key, jumbf_bytes)
+                signature_b64 = base64.urlsafe_b64encode(signature).rstrip(b"=").decode("ascii")
+                payload_for_outer_dict = base64.b64encode(jumbf_bytes).decode("utf-8")
+                actual_payload_type_for_outer = "jumbf"
+                logger.debug(f"JUMBF payload signed successfully. Signature (base64): {signature_b64[:10]}...")
+            except Exception as e:
+                logger.exception("Failed to process or sign JUMBF payload.")
+                raise RuntimeError(f"Failed to process or sign JUMBF payload: {e}") from e
         else:  # For "basic" or "manifest" (JSON-based)
             try:
                 # Serialize the *complete* payload (basic or manifest dict) to canonical JSON bytes
@@ -1001,6 +1037,16 @@ class UnicodeMetadata:
                     actual_inner_payload = cbor_data
             except (binascii.Error, cbor2.CBORDecodeError) as e:
                 logger.error(f"Failed to decode CBOR manifest payload: {e}")
+                return False, signer_id, None
+        elif payload_format == "jumbf":
+            if not isinstance(inner_payload, str):
+                logger.error(f"JUMBF payload expected string, got {type(inner_payload)}.")
+                return False, signer_id, None
+            try:
+                payload_to_verify_bytes = base64.b64decode(inner_payload.encode("utf-8"))
+                actual_inner_payload = deserialize_jumbf_payload(payload_to_verify_bytes)
+            except (binascii.Error, ValueError) as e:
+                logger.error(f"Failed to decode JUMBF payload: {e}")
                 return False, signer_id, None
         elif payload_format in ("basic", "manifest"):
             if not isinstance(inner_payload, dict):

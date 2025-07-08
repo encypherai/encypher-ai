@@ -60,6 +60,8 @@ Our implementation embeds the entire manifest directly in the content. The conte
 ### Embedding Process
 
 ```python
+from encypher.core.payloads import serialize_jumbf_payload, deserialize_jumbf_payload
+
 def embed_metadata(text, metadata, metadata_format="json"):
     """
     Embeds metadata into text using Unicode variation selectors.
@@ -67,7 +69,8 @@ def embed_metadata(text, metadata, metadata_format="json"):
     Args:
         text (str): The text to embed metadata into
         metadata (dict or bytes): The metadata to embed
-        metadata_format (str): Format of the metadata ("json" or "cbor_manifest")
+        metadata_format (str): Format of the metadata
+            ("json", "cbor_manifest", or "jumbf")
 
     Returns:
         str: Text with embedded metadata
@@ -80,6 +83,8 @@ def embed_metadata(text, metadata, metadata_format="json"):
             serialized = cbor2.dumps(metadata)
         else:
             serialized = metadata  # Already serialized
+    elif metadata_format == "jumbf":
+        serialized = serialize_jumbf_payload(metadata)
     else:
         raise ValueError(f"Unsupported metadata format: {metadata_format}")
 
@@ -103,7 +108,7 @@ def extract_metadata(text, metadata_format="json"):
 
     Args:
         text (str): Text with embedded metadata
-        metadata_format (str): Format of the metadata ("json" or "cbor_manifest")
+        metadata_format (str): Format of the metadata ("json", "cbor_manifest", or "jumbf")
 
     Returns:
         dict or bytes: Extracted metadata
@@ -126,6 +131,8 @@ def extract_metadata(text, metadata_format="json"):
         return json.loads(serialized.decode("utf-8"))
     elif metadata_format == "cbor_manifest":
         return cbor2.loads(serialized)
+    elif metadata_format == "jumbf":
+        return deserialize_jumbf_payload(serialized)
     else:
         raise ValueError(f"Unsupported metadata format: {metadata_format}")
 ```
