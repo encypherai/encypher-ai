@@ -36,6 +36,7 @@ class StreamingHandler:
         private_key: Optional[PrivateKeyTypes] = None,
         signer_id: Optional[str] = None,
         metadata_format: Literal["basic", "manifest", "c2pa_v2_2"] = "c2pa_v2_2",
+        omit_keys: Optional[List[str]] = None,
         # For backward compatibility
         metadata: Optional[Dict[str, Any]] = None,
     ):
@@ -54,6 +55,7 @@ class StreamingHandler:
             signer_id: An identifier for the signer (associated with the public key).
             metadata_format: The structure of the metadata payload.
                              'c2pa_v2_2' is the latest C2PA-compliant format.
+            omit_keys: Optional list of metadata keys to omit from the payload prior to signing.
 
         Raises:
             ValueError: If `metadata_format` is invalid, or if `custom_metadata` is provided
@@ -89,6 +91,8 @@ class StreamingHandler:
             raise TypeError("If provided, 'private_key' must be a valid private key type (e.g., Ed25519PrivateKey).")
         if signer_id is not None and not isinstance(signer_id, str):
             raise TypeError("If provided, 'signer_id' must be a string.")
+        if omit_keys is not None and (not isinstance(omit_keys, list) or not all(isinstance(k, str) for k in omit_keys)):
+            raise TypeError("'omit_keys' must be a list of strings if provided")
 
         # Check for key/signer_id presence *if* metadata is intended for embedding
         if (custom_metadata or metadata) and (not private_key or not signer_id):
@@ -121,6 +125,7 @@ class StreamingHandler:
         self.private_key = private_key
         self.signer_id = signer_id
         self.metadata_format = metadata_format
+        self.omit_keys = omit_keys
 
         # Parse target
         if isinstance(target, str):
@@ -269,6 +274,7 @@ class StreamingHandler:
                         actions=actions,
                         ai_info=ai_info,
                         custom_claims=custom_claims,
+                        omit_keys=self.omit_keys,
                         distribute_across_targets=False,
                         add_hard_binding=False,  # Disable for streaming
                     )
@@ -331,6 +337,7 @@ class StreamingHandler:
                     actions=actions,
                     ai_info=ai_info,
                     custom_claims=custom_claims,
+                    omit_keys=self.omit_keys,
                     distribute_across_targets=False,
                     add_hard_binding=False,  # Disable for streaming
                 )
@@ -423,6 +430,7 @@ class StreamingHandler:
                     self.signer_id,
                     self.metadata_format,
                     target=self.target,
+                    omit_keys=self.omit_keys,
                     add_hard_binding=False,  # Disable for streaming
                     timestamp=self.metadata.get("timestamp"),
                     custom_claims=self.metadata.get("custom_claims"),

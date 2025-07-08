@@ -95,6 +95,7 @@ Embeds metadata into text using Unicode variation selectors, signing with a priv
 - `target`: Where to embed metadata ('whitespace', 'punctuation', etc.).
 - `custom_metadata`: Dictionary for custom fields (used in 'basic' payload).
 - `claim_generator`, `actions`, `ai_info`, `custom_claims`: Used for legacy 'manifest' formats.
+- `omit_keys`: List of metadata keys to remove from the payload before signing.
 - `distribute_across_targets`: If True, distribute bits across multiple targets.
 
 **Returns:**
