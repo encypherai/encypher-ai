@@ -137,7 +137,8 @@ encoded_text = UnicodeMetadata.embed_metadata(
     private_key=private_key,         # Private key for signing
     signer_id=signer_id_example,     # Identifier for the key pair
     timestamp=current_timestamp,     # Integer Unix timestamp
-    custom_metadata=custom_payload   # Your arbitrary metadata
+    custom_metadata=custom_payload,  # Your arbitrary metadata
+    omit_keys=["user_id", "session_id"],  # Example of redacting fields
 )
 
 # Extract metadata (without verification - returns the raw payload if successful)
@@ -279,6 +280,7 @@ Additional options:
 *   `--custom-metadata`: Optional. A JSON string for your custom data (e.g., `'{\"key\": \"value\"}'`).
 *   `--timestamp`: Optional. Integer Unix timestamp. Defaults to current time.
 *   `--model-id`: Optional. Convenience for adding a model ID to custom metadata.
+*   `--omit-keys`: Optional. Space separated list of metadata keys to omit before signing.
 
 ### Decoding and Verifying Metadata
 
