@@ -580,9 +580,7 @@ class TestUnicodeMetadata:
             **metadata,
         )
 
-        is_valid, extracted_signer_id, payload = UnicodeMetadata.verify_metadata(
-            embedded_text, public_key_provider
-        )
+        is_valid, extracted_signer_id, payload = UnicodeMetadata.verify_metadata(embedded_text, public_key_provider)
 
         assert is_valid
         assert extracted_signer_id == signer_id

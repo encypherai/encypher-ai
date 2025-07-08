@@ -88,9 +88,7 @@ class TestStreamingHandler:
 
         assert processed_chunk != chunk
 
-        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_metadata(
-            processed_chunk, test_public_key_provider
-        )
+        is_valid, extracted_signer_id, extracted_payload = UnicodeMetadata.verify_metadata(processed_chunk, test_public_key_provider)
 
         assert is_valid
         assert extracted_signer_id == "test_signer"
