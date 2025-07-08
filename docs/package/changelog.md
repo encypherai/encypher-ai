@@ -1,6 +1,13 @@
 # Changelog
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
+
+## 2.7.0 (07-08-2025)
+
+### Modified
+- Changed the public API so that the metadata format uses the generic value "c2pa" instead of the older "c2pa_v2_2". The version of C2PA alignment is now tracked in the README.md.
+- `metadata_format` now expects: `metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa"] = "manifest"`
+
 ## 2.6.0 (07-07-2025)
 
 ### Added

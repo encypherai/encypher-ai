@@ -43,6 +43,7 @@ Key alignments include:
 - **CBOR Manifests**: Support for embedding full C2PA-compliant manifests using CBOR for a compact, standards-aligned format
 - **Hard binding approach**: Direct embedding of manifests into the content itself
 - **Shared mission** of improving content transparency and trust
+- **Spec version**: Currently aligned with the C2PA 2.2 specification
 
 Our implementation uses Unicode variation selectors (U+FE00 to U+FE0F) to invisibly embed C2PA manifests directly into text content, enabling provenance tracking and tamper detection without altering the visible appearance of the text.
 
