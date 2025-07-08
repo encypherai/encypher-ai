@@ -346,7 +346,7 @@ class UnicodeMetadata:
         text: str,
         private_key: PrivateKeyTypes,
         signer_id: str,
-        metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa_v2_2"] = "manifest",
+        metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa"] = "manifest",
         model_id: Optional[str] = None,
         timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Optional[Union[str, MetadataTarget]] = None,
@@ -415,7 +415,7 @@ class UnicodeMetadata:
             f"format='{metadata_format}', target='{target}', distribute={distribute_across_targets}"
         )
 
-        if metadata_format == "c2pa_v2_2":
+        if metadata_format == "c2pa":
             # Convert timestamp once for C2PA-specific embedding
             try:
                 iso_timestamp = cls._format_timestamp(timestamp)
@@ -425,7 +425,7 @@ class UnicodeMetadata:
                 logger.error(f"Timestamp error: {e}", exc_info=True)
                 raise ValueError(f"Timestamp error: {e}")
 
-            return cls._embed_c2pa_v2_2(
+            return cls._embed_c2pa(
                 text=text,
                 private_key=private_key,
                 signer_id=signer_id,
@@ -469,9 +469,9 @@ class UnicodeMetadata:
             logger.error("'target' must be a string or MetadataTarget enum member.")
             raise TypeError("'target' must be a string or MetadataTarget enum member.")
 
-        if metadata_format not in ("basic", "manifest", "cbor_manifest", "c2pa_v2_2", "jumbf"):
-            logger.error("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa_v2_2'.")
-            raise ValueError("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa_v2_2'.")
+        if metadata_format not in ("basic", "manifest", "cbor_manifest", "c2pa", "jumbf"):
+            logger.error("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa'.")
+            raise ValueError("metadata_format must be 'basic', 'manifest', 'cbor_manifest', 'jumbf', or 'c2pa'.")
 
         if model_id is not None and not isinstance(model_id, str):
             logger.error("If provided, 'model_id' must be a string.")
@@ -759,7 +759,7 @@ class UnicodeMetadata:
             return result
 
     @classmethod
-    def _embed_c2pa_v2_2(
+    def _embed_c2pa(
         cls,
         text: str,
         private_key: PrivateKeyTypes,
@@ -772,7 +772,7 @@ class UnicodeMetadata:
         add_hard_binding: bool,  # New parameter
     ) -> str:
         """
-        Constructs and embeds a C2PA v2.2 compliant manifest.
+        Constructs and embeds a C2PA-compliant manifest.
 
         This internal method orchestrates the creation of a C2PA manifest, including
         mandatory assertions, content hashing (hard binding), and a soft binding
@@ -794,7 +794,7 @@ class UnicodeMetadata:
             The text with the embedded C2PA manifest.
         """
         if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-            raise TypeError("For C2PA v2.2 embedding, 'private_key' must be an Ed25519PrivateKey instance.")
+            raise TypeError("For C2PA embedding, 'private_key' must be an Ed25519PrivateKey instance.")
 
         # --- 1. Construct the C2PA Manifest ---
         c2pa_manifest: C2PAPayload = {
@@ -883,7 +883,7 @@ class UnicodeMetadata:
         outer_payload_to_embed = {
             "cose_sign1": base64.b64encode(cose_sign1_bytes).decode("utf-8"),
             "signer_id": signer_id,
-            "format": "c2pa_v2_2",
+            "format": "c2pa",
         }
         outer_bytes = serialize_payload(dict(outer_payload_to_embed))
         selector_chars = cls._bytes_to_variation_selectors(outer_bytes)
@@ -976,9 +976,9 @@ class UnicodeMetadata:
             return False, None, None
 
         # --- Format-Specific Verification Dispatch ---
-        if payload_format == "c2pa_v2_2":
+        if payload_format == "c2pa":
             clean_text = cls._strip_variation_selectors(text)
-            return cls._verify_c2pa_v2_2(
+            return cls._verify_c2pa(
                 text=clean_text,
                 outer_payload=outer_payload,
                 public_key_resolver=public_key_resolver,
@@ -1091,7 +1091,7 @@ class UnicodeMetadata:
             )
 
     @classmethod
-    def _verify_c2pa_v2_2(
+    def _verify_c2pa(
         cls,
         text: str,
         outer_payload: OuterPayload,
@@ -1100,7 +1100,7 @@ class UnicodeMetadata:
         require_hard_binding: bool,  # New parameter
     ) -> Tuple[bool, Optional[str], Union[C2PAPayload, None]]:
         """
-        Verifies a C2PA v2.2 compliant manifest.
+        Verifies a C2PA-compliant manifest.
 
         This internal method performs a series of checks to validate the authenticity
         and integrity of an embedded C2PA manifest, including signature verification,
@@ -1281,11 +1281,11 @@ class UnicodeMetadata:
             payload_format = outer_data.get("format")
             required_keys: Tuple[str, ...]
 
-            if payload_format == "c2pa_v2_2":
+            if payload_format == "c2pa":
                 required_keys = ("cose_sign1", "signer_id", "format")
                 if not all(k in outer_data for k in required_keys):
                     missing_keys = [k for k in required_keys if k not in outer_data]
-                    logger.warning(f"Extracted C2PA v2.2 data missing required keys: {missing_keys}")
+                    logger.warning(f"Extracted C2PA data missing required keys: {missing_keys}")
                     return None
 
                 try:
@@ -1349,7 +1349,7 @@ class UnicodeMetadata:
             payload_format = outer_payload.get("format")
 
             # For C2PA, the payload is a b64 string. We need to decode it.
-            if payload_format == "c2pa_v2_2":
+            if payload_format == "c2pa":
                 if isinstance(inner_payload, str):
                     try:
                         cbor_bytes = base64.b64decode(inner_payload)
