@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encypher-ai"
-version = "2.7.0"
+ version = "2.8.0"
 description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
 authors = [{name = "EncypherAI Team"}]
@@ -49,7 +49,7 @@ dev = [
 [tool.black]
 line-length = 150
 target-version = ["py39", "py310", "py311"]
-include = '\.pyi?$'
+include = '\\.pyi?$'
 
 [tool.isort]
 profile = "black"

@@ -35,7 +35,9 @@ class StreamingMetadataEncoder:
             secret_key: Optional secret key for HMAC verification. If not provided,
                         a random key will be generated.
             target: Where to embed metadata. Can be a string ("whitespace", "punctuation",
-                   "first_letter", "last_letter", "all_characters") or a MetadataTarget enum.
+                   "first_letter", "last_letter", "all_characters", "file_end", "file_end_zwnbsp")
+                   or a MetadataTarget enum. End-of-file targets append selectors at the end of
+                   the content; "file_end_zwnbsp" prefixes a zero-width no-break space (U+FEFF).
             encode_first_chunk_only: If True, metadata will only be embedded in the first
                                     non-empty chunk that contains suitable targets.
         """

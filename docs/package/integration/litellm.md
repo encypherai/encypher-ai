@@ -134,10 +134,11 @@ if verification_result.is_valid:
 ## Best Practices
 
 1.  **Provider-Agnostic Code**: Use LiteLLM to write provider-agnostic code that works with multiple LLM providers.
-2.  **Include Provider Information**: Always include the provider name in the metadata to track which service generated the content.
-3.  **Consistent Metadata**: Maintain a consistent metadata schema across different providers to simplify downstream processing.
-4.  **API Key Management**: Use environment variables or a secure key management system like HashiCorp Vault to store API keys for different providers.
-5.  **Error Handling**: Implement proper error handling for both LiteLLM and EncypherAI operations.
+2.  **Timestamps (optional)**: Timestamps are recommended but optional across all formats (including C2PA). When omitted, C2PA assertions that normally include a `when` field will simply omit it.
+3.  **Include Provider Information**: Always include the provider name in the metadata to track which service generated the content.
+4.  **Consistent Metadata**: Maintain a consistent metadata schema across different providers to simplify downstream processing.
+5.  **API Key Management**: Use environment variables or a secure key management system like HashiCorp Vault to store API keys for different providers.
+6.  **Error Handling**: Implement proper error handling for both LiteLLM and EncypherAI operations.
 
 ## Troubleshooting
 

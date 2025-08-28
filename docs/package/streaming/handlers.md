@@ -26,7 +26,9 @@ class StreamingHandler:
                      a 'key_id' for public key resolution during verification.
             private_key: The private key (Ed25519PrivateKey) used for signing the metadata.
             target: Where to embed metadata. Can be a string ("whitespace", "punctuation",
-                   "first_letter", "last_letter", "all_characters") or a MetadataTarget enum.
+                   "first_letter", "last_letter", "all_characters", "file_end", "file_end_zwnbsp")
+                   or a MetadataTarget enum. End-of-file targets append selectors at the end of
+                   the content; "file_end_zwnbsp" prefixes a zero-width no-break space (U+FEFF).
             encode_first_chunk_only: If True (default), metadata is embedded entirely within
                                     the first suitable chunk(s). If False, metadata can be
                                     distributed across multiple chunks if needed.

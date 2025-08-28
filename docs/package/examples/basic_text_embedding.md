@@ -24,6 +24,43 @@ from datetime import datetime
 import os
 ```
 
+### Embedding without a timestamp (optional)
+
+If you prefer not to include a timestamp, remove it from the manifest and do not pass it to `embed_metadata()`:
+
+```python
+# Create a C2PA manifest WITHOUT a timestamp
+c2pa_manifest_no_time = {
+    "claim_generator": "EncypherAI/2.3.0",
+    "assertions": [
+        {
+            "label": "stds.schema-org.CreativeWork",
+            "data": {
+                "@context": "https://schema.org/",
+                "@type": "CreativeWork",
+                "headline": "Sample Article Title",
+                "author": {"@type": "Person", "name": "John Doe"},
+                "publisher": {"@type": "Organization", "name": "Example Publisher"},
+                "description": "A sample article demonstrating text embedding without a timestamp"
+            }
+        }
+    ]
+}
+
+# Convert to EncypherAI format
+encypher_manifest_no_time = c2pa_like_dict_to_encypher_manifest(c2pa_manifest_no_time)
+
+# Embed without passing a timestamp (it will be omitted in the payload)
+embedded_paragraph_no_time = UnicodeMetadata.embed_metadata(
+    text=first_paragraph,
+    private_key=private_key,
+    signer_id=signer_id,
+    metadata_format='cbor_manifest',
+    claim_generator=encypher_manifest_no_time.get("claim_generator"),
+    actions=encypher_manifest_no_time.get("assertions")
+)
+```
+
 ## Step 2: Generate or Load Keys
 
 You'll need a key pair for signing the metadata. You can either generate a new pair or load an existing one:
@@ -127,6 +164,12 @@ c2pa_manifest = {
 # Convert to EncypherAI format
 encypher_manifest = c2pa_like_dict_to_encypher_manifest(c2pa_manifest)
 ```
+
+> Note: Timestamp optional
+>
+> - The `timestamp` is optional across all metadata formats, including C2PA.
+> - When omitted, C2PA action assertions (e.g., `c2pa.created`, `c2pa.watermarked`) will simply omit their `when` fields.
+> - You can provide a timestamp (recommended) or skip it depending on your needs.
 
 ## Step 6: Embed Metadata into Text
 

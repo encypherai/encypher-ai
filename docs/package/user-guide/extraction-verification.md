@@ -2,6 +2,8 @@
 
 Verifying embedded metadata is a critical step to ensure the authenticity and integrity of text content. The EncypherAI SDK provides a robust verification process that handles both legacy formats and the latest C2PA v2.2 standard.
 
+> Note: The `timestamp` parameter is optional across all formats. Verification succeeds with or without a timestamp. For C2PA, if no timestamp was provided during embedding, action assertions that normally include a `when` field will omit it.
+
 ## The Verification Workflow
 
 The primary method for verification is `UnicodeMetadata.verify_metadata()`. This method performs a series of checks to validate the embedded data:
@@ -50,6 +52,7 @@ def public_key_provider(key_id: str):
 #     text=encoded_text,
 #     public_key_provider=public_key_provider
 # )
+# print(f"Timestamp present: {bool(getattr(payload, 'timestamp', None))}")
 ```
 
 ## Verifying a C2PA v2.2 Manifest

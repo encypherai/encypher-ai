@@ -2,6 +2,8 @@
 
 The EncypherAI SDK provides a robust, C2PA-compliant solution for embedding provenance and authenticity metadata directly into plain text. While the official C2PA standard primarily focuses on container-based media files (like JPEG or MP4), our SDK extends these principles to the text domain, which traditionally lacks a standard embedding mechanism.
 
+> Note: Timestamps are optional in C2PA text embeddings. When omitted, C2PA action assertions that normally include a `when` field (e.g., `c2pa.created`, `c2pa.watermarked`) will simply omit it.
+
 ## Our Approach: C2PA Compliance via Unicode
 
 We enable C2PA compliance for text by using Unicode variation selectors as a **transport layer**. This means:

@@ -53,3 +53,5 @@ class MetadataTarget(Enum):
     FIRST_LETTER = auto()
     LAST_LETTER = auto()
     ALL_CHARACTERS = auto()
+    FILE_END = auto()
+    FILE_END_ZWNBSP = auto()

@@ -220,27 +220,29 @@ class TestUnicodeMetadata:
             assert manifest_payload.get("ai_info") == original_payload.get("ai_info")
             assert manifest_payload.get("custom_claims") == original_payload.get("custom_claims")
 
-    def test_embed_metadata_raises_error_if_timestamp_missing(
-        self,
-        key_pair_1,
-        sample_text,
-    ):
-        """Test ValueError is raised if timestamp is not provided."""
+    def test_embed_metadata_allows_missing_timestamp(self, key_pair_1, sample_text, public_key_provider):
+        """Embedding should succeed without a timestamp (timestamp is optional)."""
         private_key, _ = key_pair_1
         signer_id = "signer_1"
 
-        with pytest.raises(ValueError) as excinfo:
-            UnicodeMetadata.embed_metadata(
-                text=sample_text,
-                private_key=private_key,
-                signer_id=signer_id,
-                metadata_format="basic",  # Can be basic or manifest
-                model_id="test_model",
-                timestamp=None,  # Explicitly missing
-                custom_metadata={"data": "value"},
-            )
-        # Check if the error message is as expected
-        assert "'timestamp' must be provided" in str(excinfo.value)
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=sample_text,
+            private_key=private_key,
+            signer_id=signer_id,
+            metadata_format="basic",
+            model_id="test_model",
+            timestamp=None,  # Explicitly omitted
+            custom_metadata={"data": "value"},
+            target=MetadataTarget.PUNCTUATION,
+        )
+
+        is_valid, extracted_signer_id, payload = UnicodeMetadata.verify_metadata(embedded_text, public_key_provider)
+        assert is_valid is True
+        assert extracted_signer_id == signer_id
+        assert payload is not None
+        # For basic format with no timestamp provided, 'timestamp' should be absent
+        assert payload.get("format") == "basic"
+        assert "timestamp" not in payload
 
     def test_verify_wrong_key(
         self,

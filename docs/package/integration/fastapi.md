@@ -355,20 +355,21 @@ except FileNotFoundError:
 ## Best Practices
 
 1. **Secure Key Management**: Store your EncypherAI private key securely using environment variables or a secure key management system.
+2. **Timestamps (optional)**: Timestamps are recommended but optional across all metadata formats (including C2PA). When a timestamp is omitted, C2PA assertions that normally include a `when` field will simply omit it.
 
-2. **Input Validation**: Use Pydantic models to validate input data and provide clear error messages.
+3. **Input Validation**: Use Pydantic models to validate input data and provide clear error messages.
 
-3. **Error Handling**: Implement proper error handling for both FastAPI and EncypherAI operations.
+4. **Error Handling**: Implement proper error handling for both FastAPI and EncypherAI operations.
 
-4. **Rate Limiting**: Implement rate limiting to prevent abuse of your API.
+5. **Rate Limiting**: Implement rate limiting to prevent abuse of your API.
 
-5. **Authentication**: Implement API key authentication or OAuth2 for secure access to your API.
+6. **Authentication**: Implement API key authentication or OAuth2 for secure access to your API.
 
-6. **CORS Configuration**: Configure CORS properly to allow only trusted domains to access your API.
+7. **CORS Configuration**: Configure CORS properly to allow only trusted domains to access your API.
 
-7. **Logging**: Implement structured logging to track API usage and errors.
+8. **Logging**: Implement structured logging to track API usage and errors.
 
-8. **Documentation**: Use FastAPI's automatic documentation generation to provide clear API documentation.
+9. **Documentation**: Use FastAPI's automatic documentation generation to provide clear API documentation.
 
 ## Troubleshooting
 

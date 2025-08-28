@@ -32,6 +32,8 @@ The module supports several embedding targets:
 | `FIRST_LETTER` | Embeds after the first letter of words | Higher capacity but may affect some text processing |
 | `LAST_LETTER` | Embeds after the last letter of words | Alternative to FIRST_LETTER |
 | `ALL_CHARACTERS` | Embeds after any character | Highest capacity but most intrusive |
+| `FILE_END` | Appends variation selectors at the very end of the text | Useful when you prefer not to alter in-text positions |
+| `FILE_END_ZWNBSP` | Appends a zero-width no-break space (U+FEFF) followed by variation selectors at the end | Improves robustness in some pipelines that trim trailing selectors |
 
 ### Embedding Approaches
 
@@ -91,8 +93,9 @@ Embeds metadata into text using Unicode variation selectors, signing with a priv
   - `c2pa`: The C2PA-compliant format using COSE Sign1.
 - `c2pa_manifest`: A dictionary representing the full C2PA manifest. Required when `metadata_format` is `c2pa`.
 - `model_id`: Model identifier (used in 'basic' payload).
-- `timestamp`: Timestamp (datetime, ISO string, int/float epoch).
-- `target`: Where to embed metadata ('whitespace', 'punctuation', etc.).
+- `timestamp`: Optional timestamp (datetime, ISO string, int/float epoch). When omitted, the outer payload omits `timestamp`, and C2PA action assertions that normally include `when` will omit that field.
+- `target`: Where to embed metadata. Options: `"whitespace"`, `"punctuation"`, `"first_letter"`, `"last_letter"`, `"all_characters"`, `"file_end"`, `"file_end_zwnbsp"`.
+  - `file_end` and `file_end_zwnbsp` append the encoded selectors at the end of the text (the latter prefixes a zero-width no-break space U+FEFF before the selectors).
 - `custom_metadata`: Dictionary for custom fields (used in 'basic' payload).
 - `claim_generator`, `actions`, `ai_info`, `custom_claims`: Used for legacy 'manifest' formats.
 - `omit_keys`: List of metadata keys to remove from the payload before signing.
@@ -248,6 +251,28 @@ is_verified, _, payload = UnicodeMetadata.verify_metadata(
 )
 
 print(f"C2PA Verification: {is_verified}")
+```
+
+### Embedding without a timestamp
+
+You can embed metadata without providing a timestamp. In this case, the payload will not contain a `timestamp`, and C2PA `when` fields will be omitted:
+
+```python
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_ed25519_key_pair
+
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "no-timestamp-key"
+
+clean_text = "This message has no timestamp in its metadata."
+
+embedded_text = UnicodeMetadata.embed_metadata(
+    text=clean_text,
+    private_key=private_key,
+    signer_id=signer_id,
+    metadata_format="basic",  # works with any format, including 'c2pa'
+    model_id="example-model"
+)
 ```
 ```
 

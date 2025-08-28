@@ -4,6 +4,8 @@ The EncypherAI Streamlit demo provides an interactive web-based interface for ex
 
 ![Streamlit Demo Preview](../../assets/streamlit-demo-preview.png)
 
+> Note: Timestamps are optional across all metadata formats, including C2PA. When you omit a timestamp, C2PA action assertions that normally include a `when` field will simply omit it.
+
 ## Features
 
 The Streamlit demo showcases all key EncypherAI capabilities:

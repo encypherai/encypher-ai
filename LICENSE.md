@@ -1,7 +1,7 @@
-# EncypherAI Open Source License
+# Encypher Open Source License
 
-EncypherAI Unicode Metadata Encoding Technology
-Copyright (C) 2025 EncypherAI LLC.
+Encypher Unicode Metadata Encoding Technology
+Copyright (C) 2025 Encypher Corporation
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU Affero General Public License as published
@@ -20,9 +20,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 ## Dual Licensing Notice
 
-In addition to the open source license above, EncypherAI offers commercial licensing options for organizations that wish to use our technology without the copyleft requirements of the AGPL. For commercial licensing, please contact:
+In addition to the open source license above, Encypher offers commercial licensing options for organizations that wish to use our technology without the copyleft requirements of the AGPL. For commercial licensing, please contact:
 
-**Email:** contact@encypherai.com
+**Email:** enterprise@encypherai.com
 **Website:** [https://www.encypherai.com/licensing](https://www.encypherai.com/licensing)
 
 ---

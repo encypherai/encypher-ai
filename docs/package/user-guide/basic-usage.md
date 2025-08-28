@@ -2,6 +2,8 @@
 
 This guide provides a detailed walkthrough of the fundamental concepts in EncypherAI, expanding on the examples from the [Quick Start Guide](../getting-started/quickstart.md). Here, we'll dive deeper into key management, the embedding process, and verification.
 
+> Note: The `timestamp` parameter is optional across all formats (basic, manifest, cbor_manifest, c2pa). If omitted, verification still works. For C2PA, action assertions (e.g., `c2pa.created`, `c2pa.watermarked`) omit the `when` field when no timestamp is supplied.
+
 ## The Core Workflow
 
 The basic workflow in EncypherAI follows three main steps:
@@ -47,7 +49,6 @@ encoded_text = UnicodeMetadata.embed_metadata(
     text=text,
     private_key=private_key,
     signer_id=signer_id,
-    timestamp=int(time.time()),
     custom_metadata={
         "model_id": "gpt-4o",
         "source": "basic-usage-guide"
@@ -79,6 +80,23 @@ if is_valid and verified_payload:
 else:
     print("Metadata validation failed. The content may have been tampered with.")
 
+```
+
+### Embedding without a timestamp
+
+```python
+encoded_text_no_ts = UnicodeMetadata.embed_metadata(
+    text=text,
+    private_key=private_key,
+    signer_id=signer_id,
+    custom_metadata={"model_id": "gpt-4o", "source": "basic-usage-guide"},
+)
+
+is_valid2, _, payload2 = UnicodeMetadata.verify_metadata(
+    text=encoded_text_no_ts,
+    public_key_provider=public_key_provider
+)
+print(f"Valid: {is_valid2}; Timestamp present: {bool(getattr(payload2, 'timestamp', None))}")
 ```
 
 ## What's Next?

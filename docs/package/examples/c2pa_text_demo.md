@@ -1,3 +1,12 @@
+Supported targets:
+
+- `whitespace` — embed after whitespace characters (default)
+- `punctuation` — embed after punctuation marks
+- `first_letter` — embed after the first letter of words
+- `last_letter` — embed after the last letter of words
+- `all_characters` — embed after any character
+- `file_end` — append variation selectors at the very end of the text
+- `file_end_zwnbsp` — append a zero-width no-break space (U+FEFF) followed by the variation selectors at the end; improves robustness in some pipelines that trim trailing selectors
 # Advanced C2PA Text Demo
 
 This guide provides a comprehensive walkthrough of the C2PA text demo located in `demos/c2pa_demo/`. The demo showcases how to embed C2PA manifests into HTML articles and implement a verification UI with visual indicators.
@@ -399,7 +408,8 @@ embedded_text = UnicodeMetadata.embed_metadata(
     private_key=private_key,
     signer_id=signer_id,
     metadata_format='cbor_manifest',
-    target="whitespace",  # Options: "whitespace", "punctuation", "first_letter", etc.
+    target="whitespace",  # Options: "whitespace", "punctuation", "first_letter", "last_letter",
+                           # "all_characters", "file_end", "file_end_zwnbsp"
     # Other parameters...
 )
 ```

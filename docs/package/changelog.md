@@ -2,6 +2,32 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.8.0 (08-27-2025)
+
+### Added
+- **New Embedding Targets:** Added `FILE_END` and `FILE_END_ZWNBSP` to `MetadataTarget` and as string options (`"file_end"`, `"file_end_zwnbsp"`).
+  - `FILE_END`: Appends the variation selectors at the end of the text content.
+  - `FILE_END_ZWNBSP`: Appends a zero-width no-break space (U+FEFF) followed by the variation selectors at the end, improving robustness in pipelines that might trim trailing selectors.
+  - Documentation and examples updated to reference these targets:
+    - `docs/package/api-reference/unicode_metadata.md`
+    - `docs/package/api-reference/streaming-metadata-encoder.md`
+    - `docs/package/streaming/handlers.md`
+    - `docs/package/examples/advanced-usage.md`
+    - `docs/package/examples/c2pa_text_demo.md`
+
+### Changed
+- **Timestamp Optionality:** `UnicodeMetadata.embed_metadata()` now treats `timestamp` as optional across all formats (`basic`, `manifest`, `cbor_manifest`, `c2pa`).
+- **C2PA Assertions:** When no timestamp is provided, C2PA action assertions (e.g., `c2pa.created`, `c2pa.watermarked`) omit the `when` field. Behavior remains unchanged when a valid timestamp is supplied.
+
+### Fixed
+- **Interop Import:** Resolved import/name collision in `encypher.interop.c2pa` by dynamically loading the sibling `c2pa.py` within `encypher/interop/c2pa/__init__.py` and re-exporting:
+  - `encypher_manifest_to_c2pa_like_dict`
+  - `c2pa_like_dict_to_encypher_manifest`
+  - `get_c2pa_manifest_schema`
+
+### Documentation
+- Updated `README.md` to clarify that timestamps are recommended but optional and to show usage with/without a timestamp.
+
 ## 2.7.0 (07-08-2025)
 
 ### Modified

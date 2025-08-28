@@ -2,6 +2,8 @@
 
 This page provides examples of using EncypherAI in Jupyter Notebooks, allowing you to interactively explore and experiment with the library's features.
 
+> Note: Timestamps are optional across all metadata formats, including C2PA. When you omit a timestamp, C2PA action assertions that normally include a `when` field will simply omit it.
+
 ## Getting Started with Jupyter
 
 If you don't already have Jupyter installed, you can install it along with EncypherAI:
