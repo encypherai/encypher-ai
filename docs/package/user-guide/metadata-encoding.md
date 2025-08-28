@@ -4,6 +4,8 @@ EncypherAI supports different formats for encoding metadata, allowing you to cho
 
 The SDK automatically selects the appropriate format based on the parameters you provide to the `embed_metadata` or `StreamingHandler` methods. The two primary formats are the simple `basic` format and the C2PA-compliant `cbor_manifest`.
 
+> Note: The `timestamp` parameter is optional across all formats (basic, manifest, cbor_manifest, c2pa). If omitted, verification still works. For C2PA, action assertions (e.g., `c2pa.created`, `c2pa.watermarked`) omit the `when` field when no timestamp is supplied.
+
 ## The `basic` Format
 
 The `basic` format is a simple, straightforward key-value structure. It is easy to use and human-readable, making it an excellent choice for getting started or for applications that don't require a standardized, extensible schema.
@@ -33,7 +35,6 @@ encoded_text = UnicodeMetadata.embed_metadata(
     text="This text uses the basic metadata format.",
     private_key=private_key,
     signer_id=signer_id,
-    timestamp=int(time.time()),
     custom_metadata={"source": "basic-format-example"},
     omit_keys=["user_id"]  # Optionally remove sensitive fields before signing
 )
@@ -45,7 +46,7 @@ is_valid, _, payload = UnicodeMetadata.verify_metadata(
 
 if is_valid and payload:
     print(f"Successfully verified 'basic' payload:")
-    print(f"- Timestamp: {payload.timestamp}")
+    print(f"- Timestamp present: {bool(getattr(payload, 'timestamp', None))}")
     print(f"- Custom Data: {payload.custom_metadata}")
 ```
 

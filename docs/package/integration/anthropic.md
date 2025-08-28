@@ -139,7 +139,7 @@ if verification_result.is_valid:
 ## Best Practices
 
 1.  **Include Model Information**: Always include the model name and version in the metadata.
-2.  **Add Timestamps**: Include a UTC timestamp to track when the content was generated.
+2.  **Timestamps (optional)**: It's recommended to include a UTC timestamp, but timestamps are optional across all formats (including C2PA). When omitted, C2PA assertions that normally include `when` will simply omit that field.
 3.  **Track Token Usage**: Include token counts to monitor API usage and costs.
 4.  **Use Secure Keys**: Store your Anthropic API key and EncypherAI private keys securely, using environment variables or a dedicated key management system.
 5.  **Handle Errors Gracefully**: Implement proper error handling for both Anthropic API calls and EncypherAI operations.

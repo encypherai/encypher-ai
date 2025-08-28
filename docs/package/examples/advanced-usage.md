@@ -2,6 +2,12 @@
 
 This guide provides advanced examples for using the EncypherAI package in various scenarios.
 
+> Note: Timestamp optional
+>
+> - The `timestamp` field is optional across all metadata formats (including C2PA).
+> - If omitted, C2PA assertions that normally include `when` will simply omit that field.
+> - Provide a timestamp when you need time-bound auditing; otherwise you can skip it.
+
 ## Custom Metadata Handling
 
 ### Creating a Custom Metadata Handler
@@ -46,10 +52,6 @@ class EnhancedMetadataHandler:
 
     def embed_metadata(self, text: str, metadata: Dict[str, Any], target: str = "whitespace") -> str:
         """Embed metadata with additional content hash."""
-        # Add timestamp if not present
-        if "timestamp" not in metadata:
-            metadata["timestamp"] = int(time.time())
-
         # Add content hash if enabled
         if self.include_hash:
             content_hash = hashlib.sha256(text.encode()).hexdigest()
@@ -61,6 +63,7 @@ class EnhancedMetadataHandler:
             custom_metadata=metadata,
             private_key=self.private_key,
             signer_id=self.key_id,
+            # timestamp is optional; passing None will omit it
             timestamp=metadata.get("timestamp"),
             target=target
         )
@@ -92,6 +95,12 @@ class EnhancedMetadataHandler:
             return hash_verification, signer_id, verified_payload_dict if hash_verification else None
 
         return is_valid, signer_id, verified_payload_dict
+
+# Target options
+# Supported targets include: "whitespace", "punctuation", "first_letter", "last_letter",
+# "all_characters", "file_end", and "file_end_zwnbsp". End-of-file targets append selectors at
+# the end of the text; "file_end_zwnbsp" prefixes a zero-width no-break space (U+FEFF) before the
+# selectors for improved robustness in some pipelines.
 
 # Example usage
 handler = EnhancedMetadataHandler()
@@ -150,7 +159,6 @@ def process_batch(texts, metadata_template, private_key=None, key_id="batch-key"
         # Create a copy of the template and add item-specific fields
         metadata = metadata_template.copy()
         metadata["item_id"] = item.get("id", f"item_{len(results)}")
-        metadata["timestamp"] = int(time.time())
         metadata["key_id"] = key_id  # Required for verification
 
         try:
@@ -160,7 +168,8 @@ def process_batch(texts, metadata_template, private_key=None, key_id="batch-key"
                 custom_metadata=metadata,
                 private_key=private_key,
                 signer_id=key_id,
-                timestamp=int(time.time())
+                # timestamp optional; omit to skip
+                timestamp=metadata.get("timestamp")
             )
             return {
                 "success": True,

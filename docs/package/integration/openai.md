@@ -10,6 +10,12 @@ Before you begin, ensure you have an OpenAI API key and have installed the requi
 uv pip install encypher-ai openai
 ```
 
+## Best Practices
+
+1.  **Include Model Information**: Record the model name/version in `custom_metadata` for traceability.
+2.  **Timestamps (optional)**: Timestamps are recommended but optional across all formats (including C2PA). When omitted, C2PA assertions that normally include a `when` field will simply omit it.
+3.  **Secure Keys**: Manage private keys securely and use a `public_key_provider` that resolves `signer_id` to public keys.
+
 ## Non-Streaming Example
 
 This example demonstrates how to sign and verify a standard, non-streaming response from the OpenAI API.

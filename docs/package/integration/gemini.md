@@ -130,7 +130,7 @@ if verification_result.is_valid:
 ## Best Practices
 
 1.  **Include Model Information**: Always include the model name and other relevant details in the metadata.
-2.  **Add Timestamps**: Include a UTC timestamp to track when the content was generated.
+2.  **Timestamps (optional)**: It's recommended to include a UTC timestamp, but timestamps are optional across all formats (including C2PA). When omitted, C2PA assertions that normally include `when` will simply omit that field.
 3.  **Use Secure Keys**: Store your Gemini API key and EncypherAI private keys securely, using environment variables or a dedicated key management system.
 
 ## Troubleshooting

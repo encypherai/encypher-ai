@@ -2,6 +2,8 @@
 
 The EncypherAI YouTube demo script is a comprehensive, visually engaging demonstration of EncypherAI's core functionality. This interactive demo is designed for creating introductory videos about the project, showcasing all major features with rich visual elements.
 
+> Note: Timestamps are optional across all metadata formats, including C2PA. When you omit a timestamp, C2PA action assertions that normally include a `when` field will simply omit it.
+
 ## Overview
 
 The demo script (`youtube_demo.py`) provides a step-by-step walkthrough of EncypherAI's capabilities with colorful terminal output, visual comparisons, and detailed explanations.

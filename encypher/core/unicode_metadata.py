@@ -357,70 +357,12 @@ class UnicodeMetadata:
         custom_claims: Optional[Dict[str, Any]] = None,
         omit_keys: Optional[List[str]] = None,
         distribute_across_targets: bool = False,
-        add_hard_binding: bool = True,  # New parameter
+        add_hard_binding: bool = True,
     ) -> str:
-        """
-        Embed metadata into text using Unicode variation selectors, signing with a private key.
-
-        When using 'manifest' format, this method implements a C2PA-inspired approach for
-        content provenance and authenticity, adapted specifically for plain-text environments
-        where traditional file-based embedding methods aren't applicable. The manifest structure
-        parallels C2PA's concepts of assertions, claim generators, and cryptographic integrity.
-
-        Args:
-            text: The text to embed metadata into.
-            private_key: The Ed25519 private key object for signing.
-            signer_id: A string identifying the signer/key pair (used for
-                       verification lookup).
-            metadata_format: The format for the metadata payload ('basic' or 'manifest').
-                             Default is 'manifest'. When set to 'manifest', uses a
-                             C2PA-inspired structured format.
-            model_id: Model identifier (used in 'basic' and optionally in
-                      'manifest' ai_info).
-            timestamp: Timestamp (datetime, ISO string, int/float epoch). Stored as
-                       ISO 8601 UTC string.
-                       **This field is mandatory.**
-            target: Where to embed metadata ('whitespace', 'punctuation', etc.,
-                    or MetadataTarget enum).
-            custom_metadata: Dictionary for custom fields (used in 'basic' payload).
-            claim_generator: Claim generator string (used in 'manifest' format).
-                             Similar to C2PA's concept of identifying the
-                             software/tool that generated the claim.
-            actions: List of action dictionaries (used in 'manifest' format).
-                     Conceptually similar to C2PA assertions about operations
-                     performed on the content.
-            ai_info: Dictionary with AI-specific info (used in 'manifest' format).
-                     Represents a custom assertion type focused on AI-specific
-                     attributes.
-            custom_claims: Dictionary for custom C2PA-like claims (used in
-                           'manifest' format).
-            omit_keys: List of metadata keys to omit from the payload prior to
-                        signing. Required fields like 'signer_id' and
-                        'timestamp' cannot be omitted.
-            distribute_across_targets: If True, distribute bits across multiple
-                                       targets if needed.
-            add_hard_binding: If True, include the hard binding assertion in the
-                              manifest. Default is True.
-
-        Returns:
-            The text with embedded metadata and digital signature.
-
-        Raises:
-            ValueError: If 'timestamp' is not provided, if the target is invalid,
-                        if not enough embedding locations are found, or if the
-                        metadata + signature is too large.
-        """
-        logger.debug(
-            f"embed_metadata called with text (type={type(text).__name__}), signer_id='{signer_id}', "
-            f"format='{metadata_format}', target='{target}', distribute={distribute_across_targets}"
-        )
-
         if metadata_format == "c2pa":
-            # Convert timestamp once for C2PA-specific embedding
+            # Convert timestamp once for C2PA-specific embedding (optional)
             try:
                 iso_timestamp = cls._format_timestamp(timestamp)
-                if iso_timestamp is None:
-                    raise ValueError("A 'timestamp' must be provided for C2PA embedding.")
             except (ValueError, TypeError) as e:
                 logger.error(f"Timestamp error: {e}", exc_info=True)
                 raise ValueError(f"Timestamp error: {e}")
@@ -449,9 +391,7 @@ class UnicodeMetadata:
             logger.error("Input validation failed: 'signer_id' is not a non-empty string.")
             raise ValueError("A non-empty string 'signer_id' must be provided.")
 
-        if timestamp is None:
-            logger.error("Input validation failed: 'timestamp' is not provided.")
-            raise ValueError("A 'timestamp' must be provided for metadata embedding.")
+        # Timestamp is optional across all formats; when provided it will be normalized.
 
         # Validate target
         if target is None:
@@ -484,9 +424,10 @@ class UnicodeMetadata:
         if omit_keys is not None:
             if not isinstance(omit_keys, list) or not all(isinstance(k, str) for k in omit_keys):
                 raise TypeError("'omit_keys' must be a list of strings if provided.")
-            mandatory = {"signer_id", "timestamp", "format"}
+            # Only signer_id and format remain mandatory; timestamp may be omitted.
+            mandatory = {"signer_id", "format"}
             if any(k in mandatory for k in omit_keys):
-                raise ValueError("Cannot omit required metadata fields: signer_id, timestamp, or format")
+                raise ValueError("Cannot omit required metadata fields: signer_id or format")
 
         # Convert timestamp
         try:
@@ -501,9 +442,10 @@ class UnicodeMetadata:
             logger.debug("Using 'basic' metadata format.")
             payload_data = {
                 "signer_id": signer_id,
-                "timestamp": iso_timestamp,
                 "format": metadata_format,  # Explicitly include format
             }
+            if iso_timestamp is not None:
+                payload_data["timestamp"] = iso_timestamp
             if model_id:
                 payload_data["model_id"] = model_id
             if custom_metadata:
@@ -524,9 +466,10 @@ class UnicodeMetadata:
             # 1. Construct the main payload structure
             payload_data = {
                 "signer_id": signer_id,
-                "timestamp": iso_timestamp,
                 "format": metadata_format,  # Keep format for clarity
             }
+            if iso_timestamp is not None:
+                payload_data["timestamp"] = iso_timestamp
 
             # 2. Construct the inner manifest dictionary
             inner_manifest: Dict[str, Any] = {}
@@ -553,9 +496,10 @@ class UnicodeMetadata:
             iso_timestamp = cls._format_timestamp(timestamp)
             payload_data = {
                 "signer_id": signer_id,
-                "timestamp": iso_timestamp,
                 "format": "manifest",  # Internally, it's a manifest structure before CBOR encoding
             }
+            if iso_timestamp is not None:
+                payload_data["timestamp"] = iso_timestamp
             cbor_manifest_dict: Dict[str, Any] = {}
             if claim_generator:
                 cbor_manifest_dict["claim_generator"] = claim_generator
@@ -576,9 +520,10 @@ class UnicodeMetadata:
             iso_timestamp = cls._format_timestamp(timestamp)
             payload_data = {
                 "signer_id": signer_id,
-                "timestamp": iso_timestamp,
                 "format": "manifest",
             }
+            if iso_timestamp is not None:
+                payload_data["timestamp"] = iso_timestamp
             jumbf_manifest_dict: Dict[str, Any] = {}
             if claim_generator:
                 jumbf_manifest_dict["claim_generator"] = claim_generator
@@ -687,9 +632,15 @@ class UnicodeMetadata:
             # Nothing to embed, return original text
             return text
 
-        # 9. Find Embedding Targets:
-        # Use the existing find_targets, but ensure target is passed correctly
+        # 9. Handle special end-of-file targets first
         embedding_target = target if target is not None else MetadataTarget.WHITESPACE
+        if embedding_target == MetadataTarget.FILE_END or embedding_target == MetadataTarget.FILE_END_ZWNBSP:
+            prefix = "\ufeff" if embedding_target == MetadataTarget.FILE_END_ZWNBSP else ""
+            embedded_text = text + prefix + "".join(selector_chars)
+            logger.info("Successfully embedded metadata at file end for signer '%s'.", signer_id)
+            return embedded_text
+
+        # Otherwise use position-based targets
         try:
             # find_targets now returns list of indices
             target_indices = cls.find_targets(text, embedding_target)
@@ -711,7 +662,7 @@ class UnicodeMetadata:
             raise ValueError(err_msg)
 
         if distribute_across_targets:
-            # Original approach: distribute across multiple targets
+            # Distribute selectors across multiple targets
             if len(target_indices) < len(selector_chars):
                 err_msg = (
                     f"Not enough targets ({len(target_indices)}) found in text "
@@ -721,42 +672,48 @@ class UnicodeMetadata:
                 logger.error(err_msg)
                 raise ValueError(err_msg)
 
-            # Build the result string with interleaved selectors
-            result_parts = []
+            result_parts: list[str] = []
             last_text_idx = 0
             selector_idx = 0
 
-            # Sort targets by index to process text sequentially
-            target_indices.sort()
-
-            for target_idx in target_indices:
+            for target_idx in sorted(target_indices):
+                # Append text before the target character
+                result_parts.append(text[last_text_idx:target_idx])
+                # Append the target character itself
+                result_parts.append(text[target_idx])
                 if selector_idx < len(selector_chars):
-                    # Add text segment before the target insertion point
-                    result_parts.append(text[last_text_idx:target_idx])
-                    # Add the target character followed by the variation selector
-                    result_parts.append(text[target_idx])
+                    # Append one selector after the target character
                     result_parts.append(selector_chars[selector_idx])
-                    # Update indices
-                    last_text_idx = target_idx + 1  # Skip the original character at target_idx
                     selector_idx += 1
-                else:
-                    # Once all data is embedded, stop processing targets
+                last_text_idx = target_idx + 1
+                if selector_idx >= len(selector_chars):
                     break
 
-            # Add any remaining text after the last embedding point
+            # Append any remaining text after the final target processed
             result_parts.append(text[last_text_idx:])
-            result = "".join(result_parts)
-            logger.info(f"Successfully embedded metadata (distributed) for signer '{signer_id}'.")
-            return result
+            embedded_text = "".join(result_parts)
+            logger.info("Successfully embedded metadata (distributed) for signer '%s'.", signer_id)
+            return embedded_text
         else:
-            # New default approach: embed all metadata after the first target
+            # Embed the entire selector block after the first available target character
             target_idx = target_indices[0]
+            embedded_text = text[: target_idx + 1] + "".join(selector_chars) + text[target_idx + 1 :]
+            logger.info("Successfully embedded metadata (single-point) for signer '%s'.", signer_id)
+            return embedded_text
 
-            # Build the result string with all selectors after the first target character
-            # Keep the target character and add all selectors immediately after it
-            result = text[: target_idx + 1] + "".join(selector_chars) + text[target_idx + 1 :]
-            logger.info(f"Successfully embedded metadata (single-point) for signer '{signer_id}'.")
-            return result
+    @staticmethod
+    def _compute_text_hash(text: str, algorithm: str = "sha256") -> str:
+        """Compute hex digest of *text* using *algorithm* after NFC normalization."""
+        import hashlib
+        import unicodedata
+
+        normalized = unicodedata.normalize("NFC", text)
+        try:
+            h = hashlib.new(algorithm.replace("-", ""))
+        except ValueError:
+            raise ValueError(f"Unsupported hash algorithm '{algorithm}' for C2PA")
+        h.update(normalized.encode("utf-8"))
+        return h.hexdigest()
 
     @classmethod
     def _embed_c2pa(
@@ -766,7 +723,7 @@ class UnicodeMetadata:
         signer_id: str,
         claim_generator: Optional[str],
         actions: Optional[List[Dict[str, Any]]],
-        iso_timestamp: str,
+        iso_timestamp: Optional[str],
         target: Optional[Union[str, MetadataTarget]],
         distribute_across_targets: bool,
         add_hard_binding: bool,  # New parameter
@@ -804,19 +761,21 @@ class UnicodeMetadata:
             "assertions": [],
         }
 
-        # --- 2. Build Mandatory Assertions ---
+        # 0. Compute text hash (hard-binding) before wrapper is attached
+        cls._compute_text_hash(text, algorithm="sha256")
+
+        # 1. Build mandatory C2PA manifest skeleton
         # a) c2pa.actions.v1 assertion
         actions_data: Dict[str, Any] = {"actions": actions if actions is not None else []}
         if not any(a.get("label") == "c2pa.created" for a in actions_data["actions"]):
-            actions_data["actions"].insert(
-                0,
-                {
-                    "label": "c2pa.created",
-                    "when": iso_timestamp,
-                    "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
-                    "softwareAgent": c2pa_manifest["claim_generator"],
-                },
-            )
+            created_action = {
+                "label": "c2pa.created",
+                "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
+                "softwareAgent": c2pa_manifest["claim_generator"],
+            }
+            if iso_timestamp is not None:
+                created_action["when"] = iso_timestamp
+            actions_data["actions"].insert(0, created_action)
         c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
 
         # b) c2pa.hash.data.v1 (Hard Binding)
@@ -840,14 +799,14 @@ class UnicodeMetadata:
 
         actions_data_copy = next((a["data"] for a in manifest_for_hashing["assertions"] if a["label"] == "c2pa.actions.v1"), None)
         if actions_data_copy and isinstance(actions_data_copy.get("actions"), list):
-            actions_data_copy["actions"].append(
-                {
-                    "label": "c2pa.watermarked",
-                    "when": iso_timestamp,
-                    "softwareAgent": c2pa_manifest["claim_generator"],
-                    "description": "Text embedded with Unicode variation selectors.",
-                }
-            )
+            wm_action_copy = {
+                "label": "c2pa.watermarked",
+                "softwareAgent": c2pa_manifest["claim_generator"],
+                "description": "Text embedded with Unicode variation selectors.",
+            }
+            if iso_timestamp is not None:
+                wm_action_copy["when"] = iso_timestamp
+            actions_data_copy["actions"].append(wm_action_copy)
 
         # c) Serialize the modified manifest and calculate the definitive hash.
         cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
@@ -862,14 +821,14 @@ class UnicodeMetadata:
         c2pa_manifest["assertions"].append(final_soft_binding_assertion)
 
         # e) Add the 'watermarked' action to the original manifest.
-        actions_data["actions"].append(
-            {
-                "label": "c2pa.watermarked",
-                "when": iso_timestamp,
-                "softwareAgent": c2pa_manifest["claim_generator"],
-                "description": "Text embedded with Unicode variation selectors.",
-            }
-        )
+        wm_action = {
+            "label": "c2pa.watermarked",
+            "softwareAgent": c2pa_manifest["claim_generator"],
+            "description": "Text embedded with Unicode variation selectors.",
+        }
+        if iso_timestamp is not None:
+            wm_action["when"] = iso_timestamp
+        actions_data["actions"].append(wm_action)
 
         # --- 4. Finalize, Serialize, and Sign ---
         # Re-serialize the final manifest, which now includes the correct soft binding hash.
