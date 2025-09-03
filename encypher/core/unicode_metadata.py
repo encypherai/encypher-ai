@@ -9,11 +9,9 @@ import base64
 import binascii
 import copy
 import hashlib
-import hmac
 import json
 import re
 import uuid
-import warnings
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
 
@@ -22,7 +20,6 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
-from deprecated import deprecated
 from pycose.messages import CoseMessage
 
 from encypher import __version__
@@ -215,9 +212,7 @@ class UnicodeMetadata:
         MIN_TRAILING_RUN = 16  # conservative lower bound; actual payloads are much larger
 
         if run_len >= MIN_TRAILING_RUN:
-            decoded_trailing: List[int] = [
-                cls.from_variation_selector(ord(ch)) or 0 for ch in text[run_start : end_idx + 1]
-            ]
+            decoded_trailing: List[int] = [cls.from_variation_selector(ord(ch)) or 0 for ch in text[run_start : end_idx + 1]]
             logger.debug(
                 f"Extracted {len(decoded_trailing)} bytes from variation selectors at end of text (run_start={run_start}, end_idx={end_idx})."
             )
@@ -1339,9 +1334,7 @@ class UnicodeMetadata:
             return None
 
     @classmethod
-    def extract_metadata(
-        cls, text: str
-    ) -> Optional[Union[BasicPayload, ManifestPayload, C2PAPayload]]:
+    def extract_metadata(cls, text: str) -> Optional[Union[BasicPayload, ManifestPayload, C2PAPayload]]:
         """Extract embedded metadata without verifying signature.
 
         Returns the inner payload for legacy formats, or the decoded C2PA manifest

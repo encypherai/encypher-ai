@@ -56,7 +56,7 @@ Encypher seamlessly integrates with popular LLM providers:
 - **OpenAI**: GPT-3.5, GPT-4o, and other OpenAI models
 - **Google Gemini**: Gemini 2.0 Flash, Pro, and other Gemini models
 - **Anthropic Claude**: Claude 3 Opus, Sonnet, Haiku, and other Claude models
-- **LiteLLM**: For unified access to multiple LLM providers 
+- **LiteLLM**: For unified access to multiple LLM providers
 
 Check our [documentation](https://docs.encypherai.com/package/integration/) for detailed integration examples and code snippets for each provider.
 
