@@ -2,6 +2,21 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## 2.8.1 (2025-01-03)
+
+### Fixed
+- Fixed critical `IndentationError` in `unicode_metadata.py` that prevented test collection and metadata extraction
+- Fixed missing `custom_metadata` in manifest and cbor_manifest formats during embedding
+- Fixed `custom_metadata` extraction by implementing proper payload flattening for manifest formats
+- Enhanced metadata extraction robustness with improved BOM handling and variation selector filtering
+- Fixed integration test collection issues with diagnostic artifacts
+- Improved FILE_END metadata extraction with better trailing marker detection
+
+### Changed
+- Split integration tests into separate success and tamper detection test suites for clearer test results
+- Enhanced test coverage with comprehensive FILE_END embedding scenarios (32 test cases)
+- Improved error handling and logging in metadata extraction pipeline
+
 ## 2.8.0 (08-27-2025)
 
 ### Added
