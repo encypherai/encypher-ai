@@ -32,3 +32,12 @@ repos:
     hooks:
     -   id: mypy
         additional_dependencies: [types-requests, types-PyYAML, types-Deprecated] # Added types-Deprecated
+
+-   repo: local
+    hooks:
+    -   id: pytest
+        name: pytest (quick)
+        entry: pytest -q
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
