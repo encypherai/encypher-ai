@@ -9,11 +9,9 @@ import base64
 import binascii
 import copy
 import hashlib
-import hmac
 import json
 import re
 import uuid
-import warnings
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
 
@@ -22,7 +20,6 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
-from deprecated import deprecated
 from pycose.messages import CoseMessage
 
 from encypher import __version__
@@ -215,9 +212,7 @@ class UnicodeMetadata:
         MIN_TRAILING_RUN = 16  # conservative lower bound; actual payloads are much larger
 
         if run_len >= MIN_TRAILING_RUN:
-            decoded_trailing: List[int] = [
-                cls.from_variation_selector(ord(ch)) or 0 for ch in text[run_start : end_idx + 1]
-            ]
+            decoded_trailing: List[int] = [cls.from_variation_selector(ord(ch)) or 0 for ch in text[run_start : end_idx + 1]]
             logger.debug(
                 f"Extracted {len(decoded_trailing)} bytes from variation selectors at end of text (run_start={run_start}, end_idx={end_idx})."
             )
@@ -1278,7 +1273,7 @@ class UnicodeMetadata:
 
             payload_format = outer_data.get("format")
             if payload_format == "c2pa":
-                required_keys = ("cose_sign1", "signer_id", "format")
+                required_keys: tuple[str, ...] = ("cose_sign1", "signer_id", "format")
                 if not all(k in outer_data for k in required_keys):
                     missing_keys = [k for k in required_keys if k not in outer_data]
                     logger.warning("Extracted C2PA data missing required keys: %s", missing_keys)
@@ -1339,9 +1334,7 @@ class UnicodeMetadata:
             return None
 
     @classmethod
-    def extract_metadata(
-        cls, text: str
-    ) -> Optional[Union[BasicPayload, ManifestPayload, C2PAPayload]]:
+    def extract_metadata(cls, text: str) -> Optional[Union[BasicPayload, ManifestPayload, C2PAPayload]]:
         """Extract embedded metadata without verifying signature.
 
         Returns the inner payload for legacy formats, or the decoded C2PA manifest
@@ -1380,8 +1373,8 @@ class UnicodeMetadata:
                         manifest_data = result.pop("manifest", {})
                         if isinstance(manifest_data, dict):
                             result.update(manifest_data)
-                        return result
-                    return decoded_payload
+                        return cast(Union[BasicPayload, ManifestPayload, C2PAPayload], result)
+                    return cast(Union[BasicPayload, ManifestPayload, C2PAPayload], decoded_payload)
                 except (binascii.Error, ValueError, cbor2.CBORDecodeError) as e:
                     logger.warning(f"Failed to decode CBOR manifest payload during non-verifying extraction: {e}")
                     return None
@@ -1395,6 +1388,6 @@ class UnicodeMetadata:
                 manifest_data = result.pop("manifest", {})
                 if isinstance(manifest_data, dict):
                     result.update(manifest_data)
-                return result
-            return inner_payload
+                return cast(Union[BasicPayload, ManifestPayload, C2PAPayload], result)
+            return cast(Union[BasicPayload, ManifestPayload, C2PAPayload], inner_payload)
         return None

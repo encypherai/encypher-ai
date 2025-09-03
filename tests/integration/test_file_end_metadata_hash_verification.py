@@ -1,13 +1,13 @@
 import hashlib
 import unicodedata
-from typing import Dict, Optional
+from typing import Any, Dict, Literal, Optional, cast
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
+from encypher.core.constants import MetadataTarget
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.constants import MetadataTarget
 
 # Zero-width characters to strip during normalization
 ZERO_WIDTH_CODEPOINTS = {0x200B, 0x200C, 0x200D, 0x2060, 0xFEFF}
@@ -67,14 +67,14 @@ def _tail_marker_count(s: str) -> int:
     return count
 
 
-@pytest.mark.parametrize("metadata_format", ["cbor_manifest", "manifest"]) 
+@pytest.mark.parametrize("metadata_format", ["cbor_manifest", "manifest"])
 @pytest.mark.parametrize("bom", [True, False])
-@pytest.mark.parametrize("newline", ["LF", "CRLF"]) 
+@pytest.mark.parametrize("newline", ["LF", "CRLF"])
 @pytest.mark.parametrize("inject_markers", [True, False])
-def test_extract_and_verify_file_end_success(metadata_format: str, bom: bool, newline: str, inject_markers: bool):
+def test_extract_and_verify_file_end_success(metadata_format: Literal["cbor_manifest", "manifest"], bom: bool, newline: str, inject_markers: bool):
     """Test successful metadata extraction and verification for FILE_END embedding."""
     # 1) Build base text (~2–3KB)
-    base = ("# Title\n\nThis is a paragraph with emojis 😊🚀 and mixed scripts مرحبا שלום end.\n" * 40)
+    base = "# Title\n\nThis is a paragraph with emojis 😊🚀 and mixed scripts مرحبا שלום end.\n" * 40
     text = ("\ufeff" + base) if bom else base
     text = text.replace("\n", "\r\n") if newline == "CRLF" else text
     if inject_markers:
@@ -106,19 +106,19 @@ def test_extract_and_verify_file_end_success(metadata_format: str, bom: bool, ne
     assert len(instances) >= 1, _diag_msg(encoded, metadata_format, bom, newline, inject_markers, "No instances extracted")
     meta = instances[-1]
     assert isinstance(meta, dict), _diag_msg(encoded, metadata_format, bom, newline, inject_markers, f"Instance not a dict payload: {type(meta)}")
-
-    embedded_hash = (meta.get("custom_metadata", {}) or {}).get("hash") or meta.get("hash")
+    meta_dict: Dict[str, Any] = cast(Dict[str, Any], meta)
+    custom_md = meta_dict.get("custom_metadata")
+    if not isinstance(custom_md, dict):
+        custom_md = {}
+    embedded_hash = custom_md.get("hash") or meta_dict.get("hash")
     assert embedded_hash == expected_sha, _diag_msg(
-        encoded,
-        metadata_format,
-        bom,
-        newline,
-        inject_markers,
-        f"Embedded hash mismatch: {embedded_hash} != {expected_sha}"
+        encoded, metadata_format, bom, newline, inject_markers, f"Embedded hash mismatch: {embedded_hash} != {expected_sha}"
     )
 
-    found_signer = meta.get("signer_id") or meta.get("key_id")
-    assert found_signer == signer_id, _diag_msg(encoded, metadata_format, bom, newline, inject_markers, f"signer mismatch: {found_signer} != {signer_id}")
+    found_signer = meta_dict.get("signer_id") or meta_dict.get("key_id")
+    assert found_signer == signer_id, _diag_msg(
+        encoded, metadata_format, bom, newline, inject_markers, f"signer mismatch: {found_signer} != {signer_id}"
+    )
 
     # 5) Verify
     def resolver(sid: str) -> Optional[Ed25519PublicKey]:
@@ -131,7 +131,9 @@ def test_extract_and_verify_file_end_success(metadata_format: str, bom: bool, ne
             encoded, metadata_format, bom, newline, inject_markers, f"verify tuple invalid: valid={is_valid}, signer={verified_signer}"
         )
     elif isinstance(vr, dict):
-        assert vr.get("signature_valid", True) is True, _diag_msg(encoded, metadata_format, bom, newline, inject_markers, "verify dict indicates failure")
+        assert vr.get("signature_valid", True) is True, _diag_msg(
+            encoded, metadata_format, bom, newline, inject_markers, "verify dict indicates failure"
+        )
     else:
         pytest.fail(_diag_msg(encoded, metadata_format, bom, newline, inject_markers, f"Unexpected verify result type: {type(vr)}"))
 
@@ -140,14 +142,14 @@ def test_extract_and_verify_file_end_success(metadata_format: str, bom: bool, ne
     assert extracted_again == extracted, _diag_msg(encoded, metadata_format, bom, newline, inject_markers, "extract_metadata not idempotent")
 
 
-@pytest.mark.parametrize("metadata_format", ["cbor_manifest", "manifest"]) 
+@pytest.mark.parametrize("metadata_format", ["cbor_manifest", "manifest"])
 @pytest.mark.parametrize("bom", [True, False])
-@pytest.mark.parametrize("newline", ["LF", "CRLF"]) 
+@pytest.mark.parametrize("newline", ["LF", "CRLF"])
 @pytest.mark.parametrize("inject_markers", [True, False])
-def test_tamper_detection_file_end(metadata_format: str, bom: bool, newline: str, inject_markers: bool):
+def test_tamper_detection_file_end(metadata_format: Literal["cbor_manifest", "manifest"], bom: bool, newline: str, inject_markers: bool):
     """Test tamper detection for FILE_END embedding - expected to fail due to no hard-binding."""
     # 1) Build base text (~2–3KB)
-    base = ("# Title\n\nThis is a paragraph with emojis 😊🚀 and mixed scripts مرحبا שלום end.\n" * 40)
+    base = "# Title\n\nThis is a paragraph with emojis 😊🚀 and mixed scripts مرحبا שלום end.\n" * 40
     text = ("\ufeff" + base) if bom else base
     text = text.replace("\n", "\r\n") if newline == "CRLF" else text
     if inject_markers:
@@ -175,7 +177,9 @@ def test_tamper_detection_file_end(metadata_format: str, bom: bool, newline: str
     tampered = encoded.replace("paragraph", "paraGRAPH", 1)
     tam_norm = normalize_text_backend_equivalent(tampered)
     tam_sha = sha256_hex_of_utf8(tam_norm)
-    assert tam_sha != expected_sha, _diag_msg(encoded, metadata_format, bom, newline, inject_markers, "Tampered normalized hash unexpectedly equals embedded hash")
+    assert tam_sha != expected_sha, _diag_msg(
+        encoded, metadata_format, bom, newline, inject_markers, "Tampered normalized hash unexpectedly equals embedded hash"
+    )
 
     # lib semantics: for non-C2PA formats, signature may not be bound to content
     def resolver(sid: str) -> Optional[Ed25519PublicKey]:
@@ -213,9 +217,9 @@ def _diag_msg(
     try:
         extracted = UnicodeMetadata.extract_metadata(text=encoded_text)
         if isinstance(extracted, list):
-            payload = extracted[-1] if extracted else {}
+            payload: Dict[str, Any] = extracted[-1] if extracted else {}  # type: ignore[assignment]
         else:
-            payload = extracted or {}
+            payload = extracted or {}  # type: ignore[assignment]
         if isinstance(payload, dict):
             for k in payload.keys():
                 keys_snapshot[str(k)] = True
