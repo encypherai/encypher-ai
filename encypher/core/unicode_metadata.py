@@ -175,51 +175,76 @@ class UnicodeMetadata:
         Returns:
             Bytes extracted from variation selectors
         """
-        # Extract bytes from variation selectors
-        decoded: List[int] = []
+        # Strategy: Prefer a contiguous trailing block (FILE_END embedding),
+        # then fall back to interleaved scanning only if none found.
+        # This avoids accidentally capturing short VS runs inside the text
+        # (e.g., emoji presentation selectors) that are not metadata.
 
-        # First try the standard approach: find variation selectors interleaved in text
+        # 1) Check for variation selectors appended at the very end of the text.
+        #    Skip ignorable trailing markers such as whitespace/newlines, BOM, and zero-width marks
+        #    that tests may inject after the metadata block.
+        def _is_ignorable_trailing(ch: str) -> bool:
+            # Common ignorable characters that may appear after the selector block at EOF
+            # - Whitespace and newlines (including CRLF components)
+            # - BOM (\ufeff) if FILE_END_ZWNBSP was used
+            # - Zero-width characters sometimes used as markers
+            ignorable_codepoints = {
+                "\ufeff",  # BOM
+                "\u200b",  # ZWSP
+                "\u200c",  # ZWNJ
+                "\u200d",  # ZWJ
+                "\u2060",  # Word Joiner
+                "\u202f",  # Narrow no-break space
+            }
+            return ch.isspace() or ch in ignorable_codepoints
+
+        # Find the final contiguous run of variation selectors at the end,
+        # skipping ignorable trailing markers first. Require a minimum length
+        # to avoid picking up stray single VS-16 inserted as noise.
+        end_idx = len(text) - 1
+        while end_idx >= 0 and _is_ignorable_trailing(text[end_idx]):
+            end_idx -= 1
+
+        # Walk backward to detect the run of variation selectors
+        run_start = end_idx
+        while run_start >= 0 and cls.from_variation_selector(ord(text[run_start])) is not None:
+            run_start -= 1
+        run_start += 1  # move to first VS of the run
+
+        run_len = (end_idx - run_start + 1) if end_idx >= run_start else 0
+        MIN_TRAILING_RUN = 16  # conservative lower bound; actual payloads are much larger
+
+        if run_len >= MIN_TRAILING_RUN:
+            decoded_trailing: List[int] = [
+                cls.from_variation_selector(ord(ch)) or 0 for ch in text[run_start : end_idx + 1]
+            ]
+            logger.debug(
+                f"Extracted {len(decoded_trailing)} bytes from variation selectors at end of text (run_start={run_start}, end_idx={end_idx})."
+            )
+            return bytes(decoded_trailing)
+
+        # 2) If no trailing block is found, attempt interleaved extraction as a fallback.
+        #    This is less reliable but may succeed for ALL_CHARACTERS target.
+        decoded_interleaved: List[int] = []
         for char in text:
             code_point = ord(char)
             byte = cls.from_variation_selector(code_point)
 
             # If we've found a non-variation selector after we've started
             # collecting bytes, we're done
-            if byte is None and len(decoded) > 0:
+            if byte is None and len(decoded_interleaved) > 0:
                 break
             # If it's not a variation selector and we haven't started collecting
             # bytes yet, it's probably the base character (emoji), so skip it
             elif byte is None:
                 continue
 
-            decoded.append(byte)
+            decoded_interleaved.append(byte)
 
-        # If we found bytes using the standard approach, return them
-        if decoded:
-            return bytes(decoded)
+        if decoded_interleaved:
+            return bytes(decoded_interleaved)
 
-        # Fallback approach: Check for variation selectors appended at the end of the text
-        # This handles the fallback embedding strategy where selectors are appended to the end
-        decoded = []
-
-        # Start from the end of the text and collect all consecutive variation selectors
-        for i in range(len(text) - 1, -1, -1):
-            char = text[i]
-            code_point = ord(char)
-            byte = cls.from_variation_selector(code_point)
-
-            # If not a variation selector, stop collecting
-            if byte is None:
-                break
-
-            decoded.insert(0, byte)  # Insert at beginning to maintain order
-
-        # Convert bytes back to bytes object
-        if decoded:
-            logger.debug(f"Extracted {len(decoded)} bytes from variation selectors at end of text.")
-            return bytes(decoded)
-        else:
-            return b""
+        return b""
 
     @classmethod
     def _format_timestamp(cls, ts: Optional[Union[str, datetime, date, int, float]]) -> Optional[str]:
@@ -481,6 +506,8 @@ class UnicodeMetadata:
                 inner_manifest["ai_info"] = ai_info
             if custom_claims:
                 inner_manifest["custom_claims"] = custom_claims
+            if custom_metadata:
+                inner_manifest["custom_metadata"] = custom_metadata
             if model_id:  # Optionally include model_id within manifest
                 # Decide where it fits best, e.g., under ai_info or top-level
                 if "ai_info" not in inner_manifest:
@@ -509,6 +536,8 @@ class UnicodeMetadata:
                 cbor_manifest_dict["ai_info"] = ai_info
             if custom_claims:
                 cbor_manifest_dict["custom_claims"] = custom_claims
+            if custom_metadata:
+                cbor_manifest_dict["custom_metadata"] = custom_metadata
             if model_id:
                 if "ai_info" not in cbor_manifest_dict:
                     cbor_manifest_dict["ai_info"] = {}
@@ -1226,27 +1255,34 @@ class UnicodeMetadata:
             logger.debug("No variation selector bytes found in text.")
             return None
 
-        logger.debug(f"Extracted {len(outer_bytes)} bytes from variation selectors.")
+        logger.debug(
+            "Extracted %d bytes from variation selectors. head_hex=%s tail_hex=%s",
+            len(outer_bytes),
+            outer_bytes[:32].hex(),
+            outer_bytes[-32:].hex() if len(outer_bytes) >= 32 else outer_bytes.hex(),
+        )
 
-        # 3. Deserialize Outer JSON:
+        # 2. Deserialize Outer JSON with diagnostics
         try:
             outer_data_str = outer_bytes.decode("utf-8")
+            # Some environments may prepend BOM. Strip it to avoid JSON parse errors at col 1.
+            if outer_data_str.startswith("\ufeff"):
+                outer_data_str = outer_data_str.lstrip("\ufeff")
+            preview = outer_data_str[:120].encode("unicode_escape").decode("ascii")
+            logger.debug("Outer JSON decode preview (first 120 chars, escaped): %s", preview)
+
             outer_data = json.loads(outer_data_str)
             if not isinstance(outer_data, dict):
                 logger.warning("Decoded outer data is not a dictionary.")
                 return None
 
-            # Check the format to determine which keys are required
             payload_format = outer_data.get("format")
-            required_keys: Tuple[str, ...]
-
             if payload_format == "c2pa":
                 required_keys = ("cose_sign1", "signer_id", "format")
                 if not all(k in outer_data for k in required_keys):
                     missing_keys = [k for k in required_keys if k not in outer_data]
-                    logger.warning(f"Extracted C2PA data missing required keys: {missing_keys}")
+                    logger.warning("Extracted C2PA data missing required keys: %s", missing_keys)
                     return None
-
                 try:
                     cose_sign1_bytes = base64.b64decode(outer_data["cose_sign1"])
                     cbor_payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
@@ -1257,164 +1293,108 @@ class UnicodeMetadata:
                         logger.warning("Failed to extract payload from COSE_Sign1 structure")
                         return None
                 except Exception as e:
-                    logger.warning(f"Error processing COSE_Sign1 data: {e}")
+                    logger.warning("Error processing COSE_Sign1 data: %s", e)
                     return None
             else:
                 required_keys = ("payload", "signature", "signer_id", "format")
                 if not all(k in outer_data for k in required_keys):
                     missing_keys = [k for k in required_keys if k not in outer_data]
-                    logger.warning(f"Extracted outer data missing required keys: {missing_keys}")
+                    logger.warning("Extracted outer data missing required keys: %s", missing_keys)
                     return None
 
             logger.debug("Successfully extracted and validated outer payload structure.")
             return cast(OuterPayload, outer_data)
 
         except (UnicodeDecodeError, json.JSONDecodeError, TypeError) as e:
-            logger.warning(f"Failed to decode or parse outer payload JSON: {e}", exc_info=False)
+            # Fallback: trim to outermost JSON braces and retry
+            try:
+                s = outer_bytes.decode("utf-8")
+            except UnicodeDecodeError:
+                logger.warning("Failed to decode or parse outer payload JSON: %s", e, exc_info=False)
+                return None
+            start = s.find("{")
+            end = s.rfind("}")
+            if start != -1 and end != -1 and start < end:
+                candidate = s[start : end + 1]
+                if candidate.startswith("\ufeff"):
+                    candidate = candidate.lstrip("\ufeff")
+                cand_preview = candidate[:120].encode("unicode_escape").decode("ascii")
+                logger.debug("Attempting JSON parse of trimmed candidate (escaped preview): %s", cand_preview)
+                try:
+                    outer_data = json.loads(candidate)
+                    if isinstance(outer_data, dict):
+                        payload_format = outer_data.get("format")
+                        required_keys = (
+                            ("cose_sign1", "signer_id", "format") if payload_format == "c2pa" else ("payload", "signature", "signer_id", "format")
+                        )
+                        if all(k in outer_data for k in required_keys):
+                            logger.debug("Fallback trimmed JSON parse succeeded.")
+                            return cast(OuterPayload, outer_data)
+                        logger.warning("Trimmed JSON missing required keys: %s", [k for k in required_keys if k not in outer_data])
+                    else:
+                        logger.warning("Trimmed JSON candidate is not a dict.")
+                except json.JSONDecodeError as e2:
+                    logger.warning("Fallback trimmed JSON parse failed: %s", e2, exc_info=False)
+            logger.warning("Failed to decode or parse outer payload JSON: %s", e, exc_info=False)
             return None
 
     @classmethod
-    def extract_metadata(cls, text: str) -> Union[BasicPayload, ManifestPayload, C2PAPayload, None]:
+    def extract_metadata(
+        cls, text: str
+    ) -> Optional[Union[BasicPayload, ManifestPayload, C2PAPayload]]:
+        """Extract embedded metadata without verifying signature.
+
+        Returns the inner payload for legacy formats, or the decoded C2PA manifest
+        for 'c2pa' format. Returns None if extraction fails.
         """
-        Extracts embedded metadata from text without verifying its signature.
-
-        Finds the metadata markers, extracts the embedded bytes, decodes the
-        outer JSON structure, and returns the inner 'payload' dictionary.
-
-        Similar to how C2PA allows for inspection of manifest contents separate
-        from verification, this method enables access to the embedded provenance
-        information without cryptographic validation. This is useful for debugging,
-        analysis, or when working with content where verification isn't the primary goal.
-        When using the 'manifest' format, the extracted payload will contain C2PA-inspired
-        structured provenance information.
-
-        Args:
-            text: The text containing potentially embedded metadata.
-
-        Returns:
-            The extracted inner metadata dictionary if found and successfully parsed,
-            otherwise None.
-        """
-        # --- Input Validation ---
         if not isinstance(text, str):
             raise TypeError("Input 'text' must be a string.")
-        # --- End Input Validation ---
-        logger.debug(f"extract_metadata called for text (len={len(text)}).")
+        logger.debug("extract_metadata called for text (len=%d).", len(text))
 
         outer_payload = cls._extract_outer_payload(text)
+        if not outer_payload or "payload" not in outer_payload:
+            return None
 
-        if outer_payload and "payload" in outer_payload:
-            inner_payload = outer_payload["payload"]
-            payload_format = outer_payload.get("format")
+        inner_payload = outer_payload["payload"]
+        payload_format = outer_payload.get("format")
 
-            # For C2PA, the payload is a b64 string. We need to decode it.
-            if payload_format == "c2pa":
-                if isinstance(inner_payload, str):
-                    try:
-                        cbor_bytes = base64.b64decode(inner_payload)
-                        return deserialize_c2pa_payload_from_cbor(cbor_bytes)
-                    except (binascii.Error, ValueError, cbor2.CBORDecodeError):
-                        logger.warning("Failed to decode C2PA payload during non-verifying extraction.")
-                        return None
-                return None  # Invalid format for C2PA payload
+        if payload_format == "c2pa":
+            if isinstance(inner_payload, str):
+                try:
+                    cbor_bytes = base64.b64decode(inner_payload)
+                    return deserialize_c2pa_payload_from_cbor(cbor_bytes)
+                except (binascii.Error, ValueError, cbor2.CBORDecodeError):
+                    logger.warning("Failed to decode C2PA payload during non-verifying extraction.")
+                    return None
+            return None
 
-            return inner_payload if isinstance(inner_payload, dict) else None
+        if payload_format == "cbor_manifest":
+            if isinstance(inner_payload, str):
+                try:
+                    cbor_bytes = base64.b64decode(inner_payload)
+                    # The decoded bytes represent the CBOR-encoded manifest dict
+                    decoded_payload = cbor2.loads(cbor_bytes)
+                    # For cbor_manifest, merge the manifest contents with the top-level payload
+                    if isinstance(decoded_payload, dict) and "manifest" in decoded_payload:
+                        result = dict(decoded_payload)
+                        manifest_data = result.pop("manifest", {})
+                        if isinstance(manifest_data, dict):
+                            result.update(manifest_data)
+                        return result
+                    return decoded_payload
+                except (binascii.Error, ValueError, cbor2.CBORDecodeError) as e:
+                    logger.warning(f"Failed to decode CBOR manifest payload during non-verifying extraction: {e}")
+                    return None
+            return None
+
+        # For "basic" and "manifest" formats, the inner_payload is already a dict
+        if isinstance(inner_payload, dict):
+            # For manifest format, merge the manifest contents with the top-level payload
+            if payload_format == "manifest" and "manifest" in inner_payload:
+                result = dict(inner_payload)
+                manifest_data = result.pop("manifest", {})
+                if isinstance(manifest_data, dict):
+                    result.update(manifest_data)
+                return result
+            return inner_payload
         return None
-
-    # --- Deprecated Methods ---
-
-    @classmethod
-    @deprecated(
-        version="1.1.0",
-        reason="HMAC verification is deprecated. Use Ed25519 digital signatures via the primary verify_metadata method.",
-    )
-    def _verify_metadata_hmac_deprecated(cls, text: str, hmac_secret_key: str) -> Tuple[Dict[str, Any], bool]:  # Renamed method
-        """
-        Verify and extract metadata from text embedded using Unicode variation selectors and an HMAC secret key.
-
-        Args:
-            text: Text with embedded metadata
-            hmac_secret_key: HMAC secret key for verification
-
-        Returns:
-            A tuple containing:
-            - The extracted inner payload (Dict[str, Any], basic or manifest) or empty dict if extraction fails.
-            - Verification status (bool): True if the signature is valid, False otherwise.
-        """
-        # --- Start: Input Validation ---
-        if not isinstance(text, str):
-            raise TypeError("Input 'text' must be a string.")
-        if not isinstance(hmac_secret_key, str):
-            raise TypeError("Input 'hmac_secret_key' must be a string.")
-        # --- End Input Validation ---
-
-        warnings.warn(
-            "verify_metadata with HMAC is deprecated. Use Ed25519 signatures.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        logger.warning("Deprecated HMAC verify_metadata called.")
-
-        # 1. Extract Bytes:
-        outer_bytes = cls.extract_bytes(text)
-        if not outer_bytes:
-            return {}, False
-
-        # 2. Optional: Decompress Bytes (if compression was added to embed):
-        #    - Check for marker and decompress if needed. (Skipped for now)
-
-        # 3. Deserialize Outer JSON:
-        try:
-            outer_data = json.loads(outer_bytes.decode("utf-8"))
-
-            # Minimal validation
-            if not isinstance(outer_data, dict) or "payload" not in outer_data or "signature" not in outer_data:
-                logger.warning("Deprecated HMAC: Extracted outer data missing required keys.")
-                return {}, False
-
-            inner_payload = outer_data.get("payload", {})
-            signature = outer_data.get("signature", "")
-
-            # Ensure payload is dict for serialization
-            if not isinstance(inner_payload, dict):
-                logger.warning("Deprecated HMAC: Extracted inner payload is not a dictionary.")
-                return {}, False
-
-            # 3. Re-serialize Payload for Verification:
-            try:
-                canonical_payload_bytes = json.dumps(inner_payload, separators=(",", ":")).encode("utf-8")
-            except Exception as e:
-                # Failed to re-serialize the extracted payload
-                logger.error(
-                    f"Failed to re-serialize inner payload for verification: {e}",
-                    exc_info=True,
-                )
-                return {}, False
-
-            # Generate expected HMAC signature
-            hmac_obj = hmac.new(
-                hmac_secret_key.encode("utf-8"),
-                canonical_payload_bytes,
-                hashlib.sha256,
-            )
-            expected_signature = hmac_obj.hexdigest()
-
-            # 5. Compare Signatures:
-            is_valid = hmac.compare_digest(expected_signature, signature)
-
-            if is_valid:
-                logger.info("Deprecated HMAC: Verification successful.")
-                return inner_payload, True
-            else:
-                logger.warning("Deprecated HMAC: Verification failed.")
-                return inner_payload, False  # Return payload even on failure
-
-        except (UnicodeDecodeError, json.JSONDecodeError) as e:
-            logger.error(f"Deprecated HMAC: Error decoding/parsing metadata: {e}", exc_info=True)
-            return {}, False  # Return empty dict and False on error
-        except Exception as e:
-            logger.error(
-                f"Deprecated HMAC: Unexpected error during verification: {e}",
-                exc_info=True,
-            )
-            return {}, False
