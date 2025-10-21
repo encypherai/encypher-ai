@@ -1,0 +1,7 @@
+# Railway deployment configuration
+
+# Web server (FastAPI application)
+web: uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 4
+
+# Background worker (certificate monitoring - to be implemented)
+# worker: python scripts/certificate_monitor.py
