@@ -1,14 +1,39 @@
 [project]
 name = "audit-log-cli"
 version = "0.1.0"
-description = "Add your description here"
+description = "Commercial CLI tool for auditing and verifying EncypherAI metadata"
 readme = "README.md"
-
-[project.scripts]
-"audit-log-cli" = "audit_log_cli.app.main:app"
 requires-python = ">=3.9"
 dependencies = [
-    "typer[all]>=0.9.0,<0.13.0",
-    "rich>=13.0.0,<14.0.0",
-    "encypher_ai>=0.1.0" # Assuming encypher_ai is an installable package or correctly pathed
+    "typer>=0.16.0",
+    "rich>=13.0.0",
+    "encypher-ai>=2.2.0,<3.0.0",
+    "encypher_commercial_shared",
+]
+
+[project.scripts]
+audit-log-cli = "audit_log_cli.app.main:app"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "isort>=5.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.0.200",
+    "typer-cli>=0.0.13"
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-cov>=6.1.1",
 ]

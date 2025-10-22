@@ -2,7 +2,7 @@
 
 __version__ = "0.1.0"
 
-# Example: You can import key functions/classes here to make them available
-# from .utils import common_function
+# Import and expose the high-level API
+from .high_level import EncypherAI, VerificationResult
 
-print("EncypherAI Commercial Shared Library Initialized")
+__all__ = ["EncypherAI", "VerificationResult"]
