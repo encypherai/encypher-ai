@@ -1,0 +1,100 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+*/node_modules/
+*.lock
+.windsurf/
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv/
+.env/
+.python-version
+
+# Flask
+instance/
+.webassets-cache
+
+# Database
+*.db
+*.sqlite3
+*/migrations/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.bak
+
+# Logs
+logs/
+*.log
+log/
+
+# OS specific
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.temp
+
+# Testing
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage/
+
+# Documentation
+docs/_build/
+site/
+*prd*
+
+# Frontend
+*/.next/*
+*/node_modules/*
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Poetry
+poetry.lock
+
+# Ruff
+.ruff_cache/
+
+# Pytype
+.pytype/
