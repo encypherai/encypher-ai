@@ -2,6 +2,22 @@
 
 This document provides a chronological list of notable changes for each version of EncypherAI.
 
+## Unreleased
+
+### Added
+- Introduced a shared `text_hashing` helper in `encypher.interop.c2pa` that performs NFC normalisation, exclusion filtering, and SHA-256 hashing so embedding and verification reuse the exact same pipeline.
+- Documented the end-of-text `C2PATextManifestWrapper` flow, including the FEFF prefix, contiguous variation selector block, and wrapper exclusion handling mandated by the latest C2PA text embedding proposal.
+
+### Changed
+- Updated the C2PA embedding path to always append a single FEFF-prefixed wrapper containing a JUMBF manifest store encoded with the `magic | version | length | payload` layout.
+- Refactored hard-binding exclusion tracking to record `{start, length}` byte ranges derived from the NFC-normalised text and to stabilise those offsets prior to signing.
+
+### Fixed
+- Ensured validators normalise text, remove wrapper exclusions, and recompute the content hash using the shared helper, eliminating discrepancies between embedding and verification.
+
+### Documentation
+- Refreshed C2PA API references, tutorials, and provenance guides to explain the FEFF-prefixed wrapper workflow, normalised hashing routine, and the new helper utilities.
+
 ## 2.8.1 (2025-01-03)
 
 ### Fixed

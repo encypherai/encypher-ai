@@ -1,234 +1,146 @@
 # C2PA Interoperability Module
 
-The `c2pa` module provides utilities for interoperability between EncypherAI's metadata formats and the C2PA (Coalition for Content Provenance and Authenticity) standard. This enables text content to benefit from the same provenance and verification capabilities that C2PA provides for images and videos.
+The ``encypher.interop.c2pa`` package groups the helpers that make EncypherAI's
+text pipeline interoperable with the Coalition for Content Provenance and
+Authenticity (C2PA) specification. These utilities are shared between the core
+``UnicodeMetadata`` implementation, integration tests, and third-party
+integrations that want to reason about manifests at a lower level.
 
-## Overview
+The module focuses on three areas:
 
-C2PA is an open technical standard for providing provenance and verifiability for digital content. While C2PA was initially designed for media files like images and videos, EncypherAI extends these principles to text content through our Unicode variation selector embedding technique.
+1. Building and decoding the FEFF-prefixed ``C2PATextManifestWrapper`` that
+   carries a complete C2PA manifest store inside a Unicode text asset.
+2. Normalising text and calculating the SHA-256 content hash with the exact same
+   procedure during embedding and verification.
+3. Converting manifests between EncypherAI's convenience shape and the canonical
+   C2PA structure when interoperability with external tooling is required.
 
-Our implementation:
-- Creates C2PA-compliant manifests for text content
-- Embeds these manifests directly into the text using Unicode variation selectors
-- Provides verification and tamper detection capabilities
-- Maintains compatibility with C2PA concepts and structures
-
-## Hard Binding Implementation
-
-Our approach to C2PA for text is classified as a **hard binding** technique:
-
-- The manifest is embedded directly within the text content itself
-- The embedding uses invisible Unicode variation selectors
-- The binding is inseparable from the content
-
-This differs from soft binding approaches where the manifest exists separately from the content with only a reference included in the content.
-
-## Content Hash Coverage
-
-A critical component of our C2PA implementation is the content hash assertion:
-
-- The hash covers the plain text content only (not HTML markup or other formatting)
-- SHA-256 is used as the hashing algorithm via our shared `compute_normalized_hash` helper
-- The helper normalises to NFC and is used during embedding and verification alike
-- This creates a cryptographic fingerprint of the original content
-
-This content hash enables tamper detection - if the text is modified after embedding, the current hash will no longer match the stored hash.
-
-## API Reference
-
-### `c2pa_like_dict_to_encypher_manifest`
+## Text Wrapper Helpers
 
 ```python
-def c2pa_like_dict_to_encypher_manifest(
-    c2pa_like_dict: Dict[str, Any]
-) -> Dict[str, Any]:
+from encypher.interop.c2pa import encode_wrapper, find_and_decode
 ```
 
-Converts a C2PA-like dictionary to EncypherAI's internal manifest format for embedding.
+### ``encode_wrapper(manifest_bytes: bytes) -> str``
 
-**Parameters:**
-- `c2pa_like_dict`: A dictionary following the C2PA manifest structure
+- Packs the ``magic | version | manifestLength`` header defined by the
+  ``C2PATextManifestWrapper`` proposal.
+- Converts every byte of the header and manifest store into a Unicode variation
+  selector (0–15 → ``U+FE00``–``U+FE0F``; 16–255 → ``U+E0100``–``U+E01EF``).
+- Prefixes the selector block with ``U+FEFF`` and returns the resulting string so
+  it can be appended to the visible text content.
 
-**Returns:**
-- A dictionary in EncypherAI's internal manifest format ready for embedding
+### ``find_and_decode(text: str) -> Tuple[Optional[bytes], str, Optional[Tuple[int, int]]]``
 
-### `encypher_manifest_to_c2pa_like_dict`
+- Scans ``text`` for a ``U+FEFF`` marker followed by a contiguous run of
+  variation selectors.
+- Verifies the ``C2PATXT\0`` magic value, version number, and manifest length
+  before returning the decoded JUMBF bytes.
+- Normalises the remaining text to NFC and returns both the clean string and the
+  wrapper span (start/end indices) so callers can exclude the wrapper bytes when
+  recomputing hashes.
+
+These helpers are used internally by ``UnicodeMetadata`` to append the wrapper at
+embedding time and to detect tampering during verification.
+
+## Normalisation and Hashing Helpers
 
 ```python
-def encypher_manifest_to_c2pa_like_dict(
-    encypher_manifest: Dict[str, Any]
-) -> Dict[str, Any]:
+from encypher.interop.c2pa import compute_normalized_hash, normalize_text
 ```
 
-Converts an EncypherAI internal manifest back to a C2PA-like dictionary structure.
+### ``normalize_text(text: str) -> str``
 
-**Parameters:**
-- `encypher_manifest`: A dictionary in EncypherAI's internal manifest format
+Returns the NFC-normalised form of ``text``. Normalisation occurs before any
+byte offsets are calculated to guarantee that exclusion ranges match the C2PA
+specification.
 
-**Returns:**
-- A dictionary following the C2PA manifest structure
+### ``compute_normalized_hash(text: str, exclusions: Sequence[Tuple[int, int]] | None = None, *, algorithm: str = "sha256")``
 
-## C2PA Manifest Structure
+- Normalises ``text`` to NFC and encodes it as UTF-8 bytes.
+- Removes the byte ranges specified by ``exclusions`` (each expressed as
+  ``(start, length)`` offsets into the normalised byte array).
+- Computes a SHA-256 digest of the filtered bytes and returns a
+  ``NormalizedHashResult`` object containing the normalised text, raw bytes, and
+  digest.
 
-A C2PA-like manifest for text content typically includes:
+Embedding and verification both call this helper so that the hash recorded in
+``c2pa.hash.data.v1`` matches the value recomputed by validators.
 
-```json
-{
-  "claim_generator": "EncypherAI/2.3.0",
-  "timestamp": "2025-06-16T15:00:00Z",
-  "assertions": [
-    {
-      "label": "stds.schema-org.CreativeWork",
-      "data": {
-        "@context": "https://schema.org/",
-        "@type": "CreativeWork",
-        "headline": "Article Title",
-        "author": {"@type": "Person", "name": "Author Name"},
-        "publisher": {"@type": "Organization", "name": "Publisher Name"},
-        "datePublished": "2025-06-15",
-        "description": "Article description"
-      }
-    },
-    {
-      "label": "stds.c2pa.content.hash",
-      "data": {
-        "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-        "alg": "sha256"
-      },
-      "kind": "ContentHash"
-    }
-  ]
-}
+## Manifest Conversion Helpers
+
+```python
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    encypher_manifest_to_c2pa_like_dict,
+    get_c2pa_manifest_schema,
+)
 ```
 
-## Example Usage
+These functions convert between the convenience dictionaries exposed by the
+EncypherAI SDK and schema-compliant C2PA manifests. They are useful when you need
+full control over the actions and assertions that will be embedded inside the
+text manifest store.
 
-### Creating and Embedding a C2PA Manifest
+## End-to-End Example
+
+The snippet below demonstrates how the helpers combine with
+``UnicodeMetadata`` to embed a manifest and verify it later.
 
 ```python
 from datetime import datetime
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import (
-    c2pa_like_dict_to_encypher_manifest,
-    compute_normalized_hash,
-)
+from encypher.interop.c2pa import compute_normalized_hash
 
-# Generate keys
+# Prepare signer credentials
 private_key, public_key = generate_ed25519_key_pair()
-signer_id = "example-key-001"
+signer_id = "example-signer"
 
-# Article text
-article_text = """This is the full article text.
-It contains multiple paragraphs.
-All of this text will be hashed for the content hash assertion."""
+text = "Breaking news: invisible provenance ships today."
 
-# Calculate content hash using the shared helper
-content_hash = compute_normalized_hash(article_text).hexdigest
-
-# Create C2PA manifest
-c2pa_manifest = {
-    "claim_generator": "EncypherAI/2.3.0",
-    "timestamp": datetime.now().isoformat(),
-    "assertions": [
-        {
-            "label": "stds.schema-org.CreativeWork",
-            "data": {
-                "@context": "https://schema.org/",
-                "@type": "CreativeWork",
-                "headline": "Example Article",
-                "author": {"@type": "Person", "name": "John Doe"},
-                "publisher": {"@type": "Organization", "name": "Example Publisher"},
-                "datePublished": "2025-06-15",
-                "description": "An example article for C2PA demonstration"
-            }
-        },
-        {
-            "label": "stds.c2pa.content.hash",
-            "data": {
-                "hash": content_hash,
-                "alg": "sha256"
-            },
-            "kind": "ContentHash"
-        }
-    ]
-}
-
-# Convert to EncypherAI format
-encypher_manifest = c2pa_like_dict_to_encypher_manifest(c2pa_manifest)
-
-# Extract first paragraph for embedding
-first_paragraph = article_text.split('\n')[0]
-
-# Embed into first paragraph
-embedded_paragraph = UnicodeMetadata.embed_metadata(
-    text=first_paragraph,
+# Embed a C2PA manifest – the wrapper is appended as FEFF + variation selectors.
+embedded = UnicodeMetadata.embed_metadata(
+    text=text,
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='cbor_manifest',
-    claim_generator=encypher_manifest.get("claim_generator"),
-    actions=encypher_manifest.get("assertions"),
-    ai_info=encypher_manifest.get("ai_assertion", {}),
-    custom_claims=encypher_manifest.get("custom_claims", {}),
-    timestamp=encypher_manifest.get("timestamp")
+    metadata_format="c2pa",
+    actions=[{"label": "c2pa.created", "when": datetime.now().isoformat()}],
 )
+assert embedded.startswith(text)
+assert embedded != text  # invisible wrapper appended
 
-# Replace first paragraph in article
-embedded_article = article_text.replace(first_paragraph, embedded_paragraph)
+# Copy/paste operations preserve the wrapper, so validators can recover it.
+def resolver(requested_signer_id: str):
+    return public_key if requested_signer_id == signer_id else None
+
+verified, recovered_signer, manifest = UnicodeMetadata.verify_metadata(
+    text=embedded,
+    public_key_resolver=resolver,
+)
+assert verified and recovered_signer == signer_id
+
+# The manifest records a hard-binding hash computed with the shared helper.
+content_hash_assertion = next(
+    assertion
+    for assertion in manifest["assertions"]
+    if assertion["label"] == "c2pa.hash.data.v1"
+)
+exclusions = [
+    (item["start"], item["length"])
+    for item in content_hash_assertion["data"].get("exclusions", [])
+]
+hash_result = compute_normalized_hash(embedded, exclusions)
+print(hash_result.hexdigest)
 ```
 
-### Verifying and Extracting a C2PA Manifest
+During verification the library:
 
-```python
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import (
-    encypher_manifest_to_c2pa_like_dict,
-    compute_normalized_hash,
-)
+1. Calls ``find_and_decode`` to locate the FEFF-prefixed wrapper and recover the
+   JUMBF manifest store.
+2. Verifies the COSE ``Sign1`` signature and actions.
+3. Uses ``compute_normalized_hash`` with the recorded exclusions to recompute the
+   hard-binding digest.
 
-# Define key provider function
-def key_provider(kid):
-    if kid == signer_id:
-        return public_key
-    return None
-
-# Extract first paragraph (which contains the embedded metadata)
-first_paragraph = embedded_article.split('\n')[0]
-
-# Verify and extract metadata
-is_verified, extracted_signer_id, extracted_manifest = UnicodeMetadata.verify_and_extract_metadata(
-    text=first_paragraph,
-    public_key_provider=key_provider,
-    return_payload_on_failure=True
-)
-
-if is_verified:
-    # Convert back to C2PA format
-    c2pa_extracted = encypher_manifest_to_c2pa_like_dict(extracted_manifest)
-
-    # Verify content hash
-    current_content_hash = compute_normalized_hash(article_text).hexdigest
-
-    # Find content hash assertion
-    stored_hash = None
-    for assertion in c2pa_extracted.get("assertions", []):
-        if assertion.get("label") == "stds.c2pa.content.hash":
-            stored_hash = assertion["data"]["hash"]
-            break
-
-    if stored_hash == current_content_hash:
-        print("Content hash verification successful!")
-    else:
-        print("Content hash verification failed - content may have been tampered with.")
-else:
-    print("Signature verification failed!")
-```
-
-## Tamper Detection
-
-Our C2PA implementation enables two types of tamper detection:
-
-1. **Content Tampering**: If the text content is modified after embedding, the current hash will no longer match the stored hash in the manifest.
-
-2. **Metadata Tampering**: If the embedded manifest itself is modified, the digital signature verification will fail.
-
-These mechanisms ensure the integrity and authenticity of both the content and its provenance information.
+Any mismatch in the wrapper structure, manifest signature, or content hash causes
+verification to fail, surfacing provenance tampering to downstream consumers.

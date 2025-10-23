@@ -127,10 +127,7 @@ A robust verification process should:
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair
-from encypher.interop.c2pa import (
-    c2pa_like_dict_to_encypher_manifest,
-    compute_normalized_hash,
-)
+from encypher.interop.c2pa import compute_normalized_hash
 from datetime import datetime
 
 # 1. Generate keys (or load existing keys)
@@ -142,99 +139,74 @@ article_text = """This is the full article text.
 It contains multiple paragraphs.
 All of this text will be hashed for the content hash assertion."""
 
-# 3. Calculate content hash
-content_hash = compute_normalized_hash(article_text).hexdigest
 
-# 4. Create C2PA manifest
-c2pa_manifest = {
-    "claim_generator": "EncypherAI/2.3.0",
-    "timestamp": datetime.now().isoformat(),
-    "assertions": [
-        {
-            "label": "stds.schema-org.CreativeWork",
-            "data": {
-                "@context": "https://schema.org/",
-                "@type": "CreativeWork",
-                "headline": "Example Article",
-                "author": {"@type": "Person", "name": "John Doe"},
-                "publisher": {"@type": "Organization", "name": "Example Publisher"},
-                "datePublished": "2025-06-15"
-            }
-        },
-        {
-            "label": "stds.c2pa.content.hash",
-            "data": {
-                "hash": content_hash,
-                "alg": "sha256"
-            },
-            "kind": "ContentHash"
-        }
-    ]
-}
+# 3. (Optional) Inspect the baseline hash before embedding
+baseline_hash = compute_normalized_hash(article_text).hexdigest
+print("Baseline NFC hash:", baseline_hash)
 
-# 5. Convert to EncypherAI format
-encypher_manifest = c2pa_like_dict_to_encypher_manifest(c2pa_manifest)
+# 4. Define optional action entries that will appear in c2pa.actions.v1
+custom_actions = [
+    {
+        "label": "c2pa.created",
+        "softwareAgent": "EncypherAI/guide",
+        "when": datetime.now().isoformat(),
+    }
+]
 
-# 6. Extract first paragraph for embedding
-first_paragraph = article_text.split('\n')[0]
+# 5. Embed the manifest as a FEFF-prefixed wrapper at the end of the article
+custom_actions = [
+    {
+        "label": "c2pa.created",
+        "softwareAgent": "EncypherAI/guide",
+        "when": datetime.now().isoformat(),
+    }
+]
 
-# 7. Embed into first paragraph
-embedded_paragraph = UnicodeMetadata.embed_metadata(
-    text=first_paragraph,
+embedded_article = UnicodeMetadata.embed_metadata(
+    text=article_text,
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='cbor_manifest',
-    claim_generator=encypher_manifest.get("claim_generator"),
-    actions=encypher_manifest.get("assertions"),
-    timestamp=encypher_manifest.get("timestamp")
+    metadata_format="c2pa",
+    claim_generator="EncypherAI/guide",
+    actions=custom_actions,
+    add_hard_binding=True,
 )
-
-# 8. Replace first paragraph in article
-embedded_article = article_text.replace(first_paragraph, embedded_paragraph)
 ```
 
 ### Verification Example
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import (
-    encypher_manifest_to_c2pa_like_dict,
-    compute_normalized_hash,
-)
+from encypher.interop.c2pa import compute_normalized_hash
 
-# Define key provider function
-def key_provider(kid):
-    if kid == signer_id:
+
+def key_provider(requested_signer_id: str):
+    if requested_signer_id == signer_id:
         return public_key
     return None
 
-# Extract first paragraph (which contains the embedded metadata)
-first_paragraph = embedded_article.split('\n')[0]
 
-# Verify and extract metadata
-is_verified, extracted_signer_id, extracted_manifest = UnicodeMetadata.verify_and_extract_metadata(
-    text=first_paragraph,
-    public_key_provider=key_provider
+is_verified, extracted_signer_id, manifest = UnicodeMetadata.verify_metadata(
+    text=embedded_article,
+    public_key_resolver=key_provider,
 )
 
-if is_verified:
-    # Convert back to C2PA format
-    c2pa_extracted = encypher_manifest_to_c2pa_like_dict(extracted_manifest)
-
-    # Verify content hash
-    current_content_hash = compute_normalized_hash(article_text).hexdigest
-
-    # Find content hash assertion
-    stored_hash = None
-    for assertion in c2pa_extracted.get("assertions", []):
-        if assertion.get("label") == "stds.c2pa.content.hash":
-            stored_hash = assertion["data"]["hash"]
-            break
-
-    if stored_hash == current_content_hash:
+if is_verified and manifest is not None:
+    # Locate the hard-binding assertion
+    content_hash_assertion = next(
+        assertion
+        for assertion in manifest.get("assertions", [])
+        if assertion.get("label") == "c2pa.hash.data.v1"
+    )
+    exclusions = [
+        (item["start"], item["length"])
+        for item in content_hash_assertion["data"].get("exclusions", [])
+    ]
+    current_hash = compute_normalized_hash(embedded_article, exclusions).hexdigest
+    if current_hash == content_hash_assertion["data"]["hash"]:
         print("Content hash verification successful!")
     else:
-        print("Content hash verification failed - content may have been tampered with.")
+        print("Content hash verification failed – content may have been tampered with.")
 else:
     print("Signature verification failed!")
 ```
