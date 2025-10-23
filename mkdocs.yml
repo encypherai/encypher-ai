@@ -1,0 +1,108 @@
+site_name: EncypherAI Documentation
+site_url: https://docs.encypherai.com
+repo_url: https://github.com/encypherai/encypher-ai
+repo_name: encypherai/encypher-ai
+edit_uri: blob/main/docs/
+site_description: Documentation for the EncypherAI package - Invisible metadata embedding for AI-generated text
+site_author: EncypherAI Team
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    # Dark mode as default
+    - scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+      primary: "#2a87c4"
+      accent: "#b7d5ed"
+    # Light mode as secondary option
+    - scheme: default
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+      primary: "#1b2f50"
+      accent: "#2a87c4"
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.copy
+  icon:
+    repo: fontawesome/brands/github
+  logo: assets/horizontal-logo.png
+  favicon: assets/favicon-nobg.ico
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - admonition
+  - pymdownx.details
+  - tables
+  - footnotes
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          selection:
+            docstring_style: google
+          rendering:
+            show_source: true
+
+extra_css:
+  - stylesheets/extra.css
+
+nav:
+  - Home: index.md
+  - Package Documentation:
+    - Overview: package/index.md
+    - Getting Started:
+      - Installation: package/getting-started/installation.md
+      - Quick Start: package/getting-started/quickstart.md
+    - User Guide:
+      - Basic Usage: package/user-guide/basic-usage.md
+      - Metadata Encoding: package/user-guide/metadata-encoding.md
+      - Extraction and Verification: package/user-guide/extraction-verification.md
+      - Tamper Detection: package/user-guide/tamper-detection.md
+      - Streaming Support: package/user-guide/streaming.md
+      - C2PA Relationship: package/user-guide/c2pa-relationship.md
+    - API Reference:
+      - MetadataEncoder: package/api-reference/metadata-encoder.md
+      - StreamingMetadataEncoder: package/api-reference/streaming-metadata-encoder.md
+      - UnicodeMetadata: package/api-reference/unicode-metadata.md
+    - Integration Guides:
+      - OpenAI Integration: package/integration/openai.md
+      - Anthropic Integration: package/integration/anthropic.md
+      - LiteLLM Integration: package/integration/litellm.md
+      - FastAPI Integration: package/integration/fastapi.md
+    - Examples:
+      - Jupyter Notebook: package/examples/jupyter.md
+      - YouTube Demo: package/examples/youtube-demo.md
+      - FastAPI Example: package/examples/fastapi.md
+      - Advanced Usage: package/examples/advanced-usage.md
+      - Streamlit: package/examples/streamlit.md
+    - Streaming:
+      - Handlers: package/streaming/handlers.md
+  - Contributing: package/contributing.md
+  - Licensing: package/licensing.md
+  - Changelog: package/changelog.md

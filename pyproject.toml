@@ -1,0 +1,89 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "encypher-ai"
+ version = "2.9.0"
+description = "Embed invisible metadata in AI-generated text using zero-width characters."
+readme = "README.md"
+authors = [{name = "EncypherAI Team"}]
+license = "AGPL-3.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "litellm>=1.43.0",
+    "rich",
+    "pyyaml",
+    "cryptography",
+    "deprecated",
+    "cbor2>=5.6.5",
+    "pycose>=1.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.3.0",
+    "black[jupyter]>=24.3.0",
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.0.0",
+    "types-requests>=2.31.0",
+    "flake8>=6.0.0",
+    "ruff>=0.0.270",
+    "isort>=5.12.0",
+    "pre-commit>=3.3.3",
+    "types-Deprecated>=1.2.9",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/encypherai/encypher-ai"
+"Bug Tracker" = "https://github.com/encypherai/encypher-ai/issues"
+
+[tool.black]
+line-length = 150
+target-version = ["py39", "py310", "py311"]
+include = '\\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 150
+multi_line_output = 3
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["encypher.examples.*"]
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+ignore_missing_imports = true
+ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+
+[tool.ruff]
+line-length = 150
+
+[tool.setuptools]
+packages = ["encypher"]
