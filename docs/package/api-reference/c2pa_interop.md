@@ -27,8 +27,8 @@ This differs from soft binding approaches where the manifest exists separately f
 A critical component of our C2PA implementation is the content hash assertion:
 
 - The hash covers the plain text content only (not HTML markup or other formatting)
-- SHA-256 is used as the hashing algorithm
-- The hash is computed before embedding the metadata
+- SHA-256 is used as the hashing algorithm via our shared `compute_normalized_hash` helper
+- The helper normalises to NFC and is used during embedding and verification alike
 - This creates a cryptographic fingerprint of the original content
 
 This content hash enables tamper detection - if the text is modified after embedding, the current hash will no longer match the stored hash.
@@ -105,11 +105,13 @@ A C2PA-like manifest for text content typically includes:
 ### Creating and Embedding a C2PA Manifest
 
 ```python
-import hashlib
 from datetime import datetime
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    compute_normalized_hash,
+)
 
 # Generate keys
 private_key, public_key = generate_ed25519_key_pair()
@@ -120,8 +122,8 @@ article_text = """This is the full article text.
 It contains multiple paragraphs.
 All of this text will be hashed for the content hash assertion."""
 
-# Calculate content hash
-content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+# Calculate content hash using the shared helper
+content_hash = compute_normalized_hash(article_text).hexdigest
 
 # Create C2PA manifest
 c2pa_manifest = {
@@ -178,8 +180,10 @@ embedded_article = article_text.replace(first_paragraph, embedded_paragraph)
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import encypher_manifest_to_c2pa_like_dict
-import hashlib
+from encypher.interop.c2pa import (
+    encypher_manifest_to_c2pa_like_dict,
+    compute_normalized_hash,
+)
 
 # Define key provider function
 def key_provider(kid):
@@ -202,7 +206,7 @@ if is_verified:
     c2pa_extracted = encypher_manifest_to_c2pa_like_dict(extracted_manifest)
 
     # Verify content hash
-    current_content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+    current_content_hash = compute_normalized_hash(article_text).hexdigest
 
     # Find content hash assertion
     stored_hash = None

@@ -18,4 +18,11 @@ from ..c2pa_core import (
 )  # noqa: F401
 
 # Text manifest wrapper utilities (public re-exports)
-from .text_wrapper import ALGORITHM_IDS, MAGIC, VERSION, encode_wrapper, find_and_decode  # noqa: F401
+from .text_wrapper import MAGIC, VERSION, encode_wrapper, find_and_decode  # noqa: F401
+
+# Normalisation + hashing helpers
+from .text_hashing import (  # noqa: F401
+    NormalizedHashResult,
+    compute_normalized_hash,
+    normalize_text,
+)

@@ -54,19 +54,23 @@ Before running the demo:
 
 ### Embedding Process
 
-The embedding process uses BeautifulSoup for robust HTML parsing and embeds the C2PA manifest into the first paragraph of the article:
+The embedding process uses BeautifulSoup for robust HTML parsing and appends the C2PA wrapper to the first paragraph of the article:
 
 ```python
 # From embed_manifest_improved.py
 from bs4 import BeautifulSoup
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    compute_normalized_hash,
+    normalize_text,
+)
 
 # Parse HTML
-soup = BeautifulSoup(html_content, 'html.parser')
+soup = BeautifulSoup(html_content, "html.parser")
 
 # Find first paragraph within content column
-first_p = soup.select_one('.content-column p')
+first_p = soup.select_one(".content-column p")
 
 # Create C2PA manifest
 c2pa_manifest = create_c2pa_manifest(article_text)
@@ -74,15 +78,16 @@ c2pa_manifest = create_c2pa_manifest(article_text)
 # Convert to EncypherAI format
 encypher_manifest = c2pa_like_dict_to_encypher_manifest(c2pa_manifest)
 
-# Embed metadata into paragraph text
+# Embed metadata into paragraph text (wrapper appended to the end)
+paragraph_text = normalize_text(first_p.get_text())
 embedded_text = UnicodeMetadata.embed_metadata(
-    text=first_p.get_text(),
+    text=paragraph_text,
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='cbor_manifest',
+    metadata_format="c2pa",
     claim_generator=encypher_manifest.get("claim_generator"),
     actions=encypher_manifest.get("assertions"),
-    timestamp=encypher_manifest.get("timestamp")
+    timestamp=encypher_manifest.get("timestamp"),
 )
 
 # Replace paragraph text with embedded text
@@ -96,8 +101,8 @@ The content hash covers the plain text content of the article:
 ```python
 # From embed_manifest_improved.py
 def create_c2pa_manifest(article_text):
-    # Calculate content hash
-    content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+    hash_result = compute_normalized_hash(article_text)
+    content_hash = hash_result.hexdigest
 
     # Create C2PA manifest with content hash assertion
     c2pa_manifest = {
@@ -116,10 +121,11 @@ def create_c2pa_manifest(article_text):
                 }
             },
             {
-                "label": "stds.c2pa.content.hash",
+                "label": "c2pa.hash.data.v1",
                 "data": {
                     "hash": content_hash,
-                    "alg": "sha256"
+                    "alg": "sha256",
+                    "exclusions": []
                 },
                 "kind": "ContentHash"
             }
@@ -224,7 +230,7 @@ def test_content_tampering():
     article_text = '\n'.join([p.get_text() for p in paragraphs])
 
     print("1. Original content hash calculation:")
-    original_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+    original_hash = compute_normalized_hash(article_text).hexdigest
     print(f"   Original hash: {original_hash[:10]}...{original_hash[-10:]}")
 
     # Tamper with content (change second paragraph)
@@ -242,7 +248,7 @@ def test_content_tampering():
     # Calculate new hash
     tampered_paragraphs = soup.find_all('p')
     tampered_article_text = '\n'.join([p.get_text() for p in tampered_paragraphs])
-    tampered_hash = hashlib.sha256(tampered_article_text.encode('utf-8')).hexdigest()
+    tampered_hash = compute_normalized_hash(tampered_article_text).hexdigest
 
     print("\n3. New content hash after tampering:")
     print(f"   Tampered hash: {tampered_hash[:10]}...{tampered_hash[-10:]}")
@@ -346,27 +352,27 @@ The original `article.html` is a simple HTML article with a title, author, and m
 
 ### Step 2: Embed the C2PA Manifest
 
-Running `embed_manifest_improved.py` embeds a C2PA manifest into the first paragraph of the article:
+Running `embed_manifest_improved.py` appends a C2PA text wrapper to the article:
 
-1. The script extracts the text content of the article
-2. Calculates a SHA-256 hash of the content
-3. Creates a C2PA manifest with the content hash and metadata
-4. Embeds the manifest into the first paragraph using Unicode variation selectors
-5. Saves the result as `encoded_article.html`
+1. The script extracts and normalises the text content of the article.
+2. Calculates a SHA-256 hash of the normalised content.
+3. Creates a C2PA manifest with the content hash and metadata (including the wrapper exclusion offsets).
+4. Packages the manifest store into a JUMBF box and encodes it as a FEFF-prefixed block of variation selectors.
+5. Appends the wrapper block to the end of the visible text and saves the result as `encoded_article.html`.
 
 ### Step 3: View the Encoded Article
 
-The encoded article looks visually identical to the original, but the first paragraph now contains invisible Unicode variation selectors that encode the C2PA manifest.
+The encoded article looks visually identical to the original, but it now terminates with an invisible block of Unicode variation selectors that contains the C2PA manifest.
 
 ### Step 4: Verify the Encoded Article
 
 Running `temp_verify.py` verifies the embedded metadata and content hash:
 
-1. Extracts the embedded metadata from the first paragraph
-2. Verifies the digital signature using the public key
-3. Extracts the stored content hash from the manifest
-4. Calculates the current content hash
-5. Compares the stored and current hashes
+1. Locates the FEFF-prefixed wrapper at the end of the text and decodes the JUMBF manifest store.
+2. Verifies the COSE signature using the public key.
+3. Reads the recorded exclusion offsets and removes the wrapper bytes from the normalised text.
+4. Calculates the current content hash.
+5. Compares the stored and current hashes.
 
 If the verification is successful, you'll see:
 
@@ -421,7 +427,7 @@ You can customize the C2PA manifest by modifying the `create_c2pa_manifest` func
 ```python
 def create_c2pa_manifest(article_text):
     # Calculate content hash
-    content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+    content_hash = compute_normalized_hash(article_text).hexdigest
 
     # Create C2PA manifest with custom assertions
     c2pa_manifest = {

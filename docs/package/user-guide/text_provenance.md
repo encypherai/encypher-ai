@@ -37,9 +37,13 @@ Our approach uses Unicode variation selectors (ranges U+FE00-FE0F and U+E0100-E0
 - The embedded data travels with the text as part of the content itself
 - The visual appearance of the text remains unchanged
 
+When you embed a full C2PA manifest (`metadata_format="c2pa"`), the bytes follow the `C2PATextManifestWrapper` layout. The
+wrapper is prefixed with `U+FEFF`, contains a JUMBF manifest store, and is appended to the end of the text as a contiguous run
+of variation selectors.
+
 ### Single-Point Embedding
 
-The default embedding strategy places all metadata after a single target character (typically the first whitespace or the first letter):
+For legacy formats, the default embedding strategy places all metadata after a single target character (typically the first whitespace or the first letter):
 
 ```
 Original: This is example text.
@@ -48,14 +52,16 @@ Embedded: This⁠︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ is example tex
 
 The variation selectors (represented by ⁠︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ above, though invisible in actual use) are attached to the first character, encoding the entire manifest.
 
+When using the C2PA format we instead append the FEFF-prefixed wrapper to the end of the text so validators can easily locate it and remove the wrapper before hashing.
+
 ### Content Hash Coverage
 
 A critical component of our implementation is the content hash assertion:
 
-- The hash covers the plain text content (all paragraphs concatenated)
-- It does not include HTML markup or the variation selectors themselves
-- SHA-256 is used as the hashing algorithm
-- The hash is computed before embedding the metadata
+- The text is normalised to NFC before hashing.
+- The hash covers the plain text content (all paragraphs concatenated) with the wrapper bytes excluded.
+- SHA-256 is used as the hashing algorithm.
+- The hash is computed before embedding the metadata, and the wrapper byte range is recorded in the manifest `exclusions` list.
 
 This content hash enables tamper detection - if the text is modified after embedding, the current hash will no longer match the stored hash.
 
@@ -121,8 +127,10 @@ A robust verification process should:
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
-import hashlib
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    compute_normalized_hash,
+)
 from datetime import datetime
 
 # 1. Generate keys (or load existing keys)
@@ -135,7 +143,7 @@ It contains multiple paragraphs.
 All of this text will be hashed for the content hash assertion."""
 
 # 3. Calculate content hash
-content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+content_hash = compute_normalized_hash(article_text).hexdigest
 
 # 4. Create C2PA manifest
 c2pa_manifest = {
@@ -189,8 +197,10 @@ embedded_article = article_text.replace(first_paragraph, embedded_paragraph)
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import encypher_manifest_to_c2pa_like_dict
-import hashlib
+from encypher.interop.c2pa import (
+    encypher_manifest_to_c2pa_like_dict,
+    compute_normalized_hash,
+)
 
 # Define key provider function
 def key_provider(kid):
@@ -212,7 +222,7 @@ if is_verified:
     c2pa_extracted = encypher_manifest_to_c2pa_like_dict(extracted_manifest)
 
     # Verify content hash
-    current_content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+    current_content_hash = compute_normalized_hash(article_text).hexdigest
 
     # Find content hash assertion
     stored_hash = None

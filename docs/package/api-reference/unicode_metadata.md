@@ -21,9 +21,20 @@ Unicode variation selectors (ranges U+FE00-FE0F and U+E0100-E01EF) are special c
 - These selectors are invisible when rendered in text
 - The encoded data travels with the content as part of the text itself
 
+### C2PA Text Wrapper
+
+When `metadata_format="c2pa"`, the module emits a `C2PATextManifestWrapper` as defined by the latest text-embedding
+specification. The wrapper:
+
+- Is prefixed with a single Zero-Width No-Break Space (`U+FEFF`).
+- Stores the manifest inside a JUMBF container following the `magic | version | length | payload` layout.
+- Appears as a single block of variation selectors appended to the end of the visible text.
+
+This behaviour is specific to the C2PA format—legacy formats continue to use the legacy targets described below.
+
 ### Embedding Targets
 
-The module supports several embedding targets:
+The module supports several embedding targets for legacy formats (`basic`, `manifest`, and `cbor_manifest`):
 
 | Target | Description | Use Case |
 |--------|-------------|----------|
@@ -35,23 +46,31 @@ The module supports several embedding targets:
 | `FILE_END` | Appends variation selectors at the very end of the text | Useful when you prefer not to alter in-text positions |
 | `FILE_END_ZWNBSP` | Appends a zero-width no-break space (U+FEFF) followed by variation selectors at the end | Improves robustness in some pipelines that trim trailing selectors |
 
+> **Note:** C2PA manifests always use the wrapper block described above and ignore the legacy target configuration.
+
 ### Embedding Approaches
 
-The module supports two embedding approaches:
+The module supports two embedding approaches for legacy formats:
 
 1. **Single-Point Embedding** (default): All metadata is embedded after a single target character (typically the first whitespace)
 2. **Distributed Embedding**: Metadata is distributed across multiple target characters throughout the text
 
-Single-point embedding is generally recommended as it minimizes the impact on text processing and is easier to manage.
+Single-point embedding is generally recommended as it minimizes the impact on text processing and is easier to manage. When
+embedding C2PA manifests we always append a single wrapper block instead of inserting selectors inside the visible content.
 
 ## Content Hash Coverage
 
-When using the C2PA manifest format, a content hash assertion is included in the manifest:
+When using the C2PA manifest format, a content hash assertion (`c2pa.hash.data.v1`) is included in the manifest:
 
-- The hash covers the plain text content only (not HTML markup or other formatting)
-- SHA-256 is used as the hashing algorithm
-- The hash is computed before embedding the metadata
-- This creates a cryptographic fingerprint of the original content
+- The text is normalised to NFC before hashing.
+- SHA-256 is used as the hashing algorithm.
+- The hash is computed on the UTF-8 bytes of the normalised text **after removing the wrapper span** recorded in the
+  `exclusions` list.
+- Exclusions are expressed as byte offsets `{ "start": <offset>, "length": <byte_count> }` so validators can strip the same
+  region before recomputing the digest.
+
+This creates a cryptographic fingerprint of the original, human-visible content while keeping the wrapper bytes outside the hash
+coverage.
 
 This content hash enables tamper detection - if the text is modified after embedding, the current hash will no longer match the stored hash.
 
@@ -96,6 +115,7 @@ Embeds metadata into text using Unicode variation selectors, signing with a priv
 - `timestamp`: Optional timestamp (datetime, ISO string, int/float epoch). When omitted, the outer payload omits `timestamp`, and C2PA action assertions that normally include `when` will omit that field.
 - `target`: Where to embed metadata. Options: `"whitespace"`, `"punctuation"`, `"first_letter"`, `"last_letter"`, `"all_characters"`, `"file_end"`, `"file_end_zwnbsp"`.
   - `file_end` and `file_end_zwnbsp` append the encoded selectors at the end of the text (the latter prefixes a zero-width no-break space U+FEFF before the selectors).
+  - This parameter is ignored when `metadata_format="c2pa"`; C2PA manifests always append a wrapper block at end-of-file.
 - `custom_metadata`: Dictionary for custom fields (used in 'basic' payload).
 - `claim_generator`, `actions`, `ai_info`, `custom_claims`: Used for legacy 'manifest' formats.
 - `omit_keys`: List of metadata keys to remove from the payload before signing.
@@ -201,7 +221,7 @@ This example demonstrates embedding a full C2PA v2.2 manifest.
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair
-import hashlib
+from encypher.interop.c2pa import compute_normalized_hash
 
 # 1. Generate keys
 private_key, public_key = generate_ed25519_key_pair()
@@ -209,7 +229,8 @@ signer_id = "example-c2pa-key-001"
 
 # 2. Define the text content and create its hash
 clean_text = "This is the article content that we want to protect."
-clean_text_hash = hashlib.sha256(clean_text.encode('utf-8')).hexdigest()
+hash_result = compute_normalized_hash(clean_text)
+clean_text_hash = hash_result.hexdigest
 
 # 3. Create the C2PA manifest
 c2pa_manifest = {
@@ -251,6 +272,17 @@ is_verified, _, payload = UnicodeMetadata.verify_metadata(
 )
 
 print(f"C2PA Verification: {is_verified}")
+
+# The manifest now contains a c2pa.hash.data.v1 assertion similar to:
+# {
+#     "label": "c2pa.hash.data.v1",
+#     "data": {
+#         "hash": clean_text_hash,
+#         "alg": "sha256",
+#         "exclusions": [{"start": len(hash_result.normalized_bytes), "length": len((embedded_text[len(clean_text):]).encode('utf-8'))}]
+#     }
+# }
+# Validators remove the recorded exclusion span before recomputing the hash.
 ```
 
 ### Embedding without a timestamp

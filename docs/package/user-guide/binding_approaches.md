@@ -145,7 +145,7 @@ Our implementation embeds a complete C2PA manifest directly into the text, inclu
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair
-import hashlib
+from encypher.interop.c2pa import compute_normalized_hash
 
 # Generate keys
 private_key, public_key = generate_ed25519_key_pair()
@@ -159,7 +159,7 @@ metadata = {
     "author": "John Doe",
     "publisher": "Example Publisher",
     "timestamp": "2025-06-16T15:00:00Z",
-    "content_hash": hashlib.sha256(text.encode('utf-8')).hexdigest()
+    "content_hash": compute_normalized_hash(text).hexdigest
 }
 
 # Embed metadata (hard binding)

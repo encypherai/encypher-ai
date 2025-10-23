@@ -1,8 +1,14 @@
+import struct
+import unicodedata
 import unittest
 
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest, encypher_manifest_to_c2pa_like_dict
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    encypher_manifest_to_c2pa_like_dict,
+)
+from encypher.interop.c2pa.text_wrapper import find_and_decode
 
 
 class TestC2PATextEmbedding(unittest.TestCase):
@@ -427,6 +433,55 @@ class TestC2PATextEmbedding(unittest.TestCase):
 
         # Compare the dictionaries (excluding timestamp)
         self.assertEqual(comparison_dict, original_comparison, "Round-trip conversion with single-assertion CBOR manifest does not match original.")
+
+    def test_c2pa_text_wrapper_appended_with_feff(self):
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-wrapper-key"
+        sample_text = "Café document for wrapper"
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=sample_text,
+            private_key=private_key,
+            signer_id=key_id,
+            metadata_format="c2pa",
+            claim_generator="EncypherAI/WrapperTest/1.0",
+        )
+
+        self.assertNotEqual(embedded_text, sample_text)
+
+        manifest_bytes, clean_text, span = find_and_decode(embedded_text)
+        self.assertIsNotNone(manifest_bytes)
+        self.assertEqual(clean_text, unicodedata.normalize("NFC", sample_text))
+        self.assertIsNotNone(span)
+        self.assertEqual(span[1], len(embedded_text))
+
+        wrapper_segment = embedded_text[span[0] : span[1]]
+        self.assertTrue(wrapper_segment.startswith("﻿"))
+
+        self.assertGreaterEqual(len(manifest_bytes), 8)
+        length, box_type = struct.unpack(">I4s", manifest_bytes[:8])
+        self.assertEqual(box_type, b"jumb")
+        self.assertEqual(length, len(manifest_bytes))
+
+        def resolver(kid: str):
+            return public_key if kid == key_id else None
+
+        verified, extracted_signer, manifest = UnicodeMetadata.verify_metadata(
+            text=embedded_text,
+            public_key_resolver=resolver,
+            return_payload_on_failure=True,
+        )
+
+        self.assertTrue(verified)
+        self.assertEqual(extracted_signer, key_id)
+        self.assertIsNotNone(manifest)
+
+        hard_binding = next((a for a in manifest["assertions"] if a.get("label") == "c2pa.hash.data.v1"), None)
+        self.assertIsNotNone(hard_binding)
+        exclusions = hard_binding["data"].get("exclusions")
+        expected_start = len(unicodedata.normalize("NFC", sample_text).encode("utf-8"))
+        expected_length = len(wrapper_segment.encode("utf-8"))
+        self.assertEqual(exclusions, [{"start": expected_start, "length": expected_length}])
 
 
 if __name__ == "__main__":

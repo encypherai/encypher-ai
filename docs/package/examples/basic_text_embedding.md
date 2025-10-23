@@ -17,8 +17,10 @@ First, import the necessary modules:
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair, load_ed25519_key_pair
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
-import hashlib
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    compute_normalized_hash,
+)
 import json
 from datetime import datetime
 import os
@@ -122,7 +124,7 @@ Calculate a hash of the full content to enable tamper detection:
 ```python
 # Calculate content hash (using plain text without formatting)
 plain_text = "\n".join([line.strip() for line in article_text.split("\n")])
-content_hash = hashlib.sha256(plain_text.encode("utf-8")).hexdigest()
+content_hash = compute_normalized_hash(plain_text).hexdigest
 ```
 
 ## Step 5: Create C2PA Manifest
@@ -220,7 +222,7 @@ if is_verified:
     print(f"✓ Signer ID: {extracted_signer_id}")
 
     # Check for content tampering
-    current_content_hash = hashlib.sha256(plain_text.encode("utf-8")).hexdigest()
+    current_content_hash = compute_normalized_hash(plain_text).hexdigest
 
     # Find content hash assertion
     stored_hash = None
@@ -249,7 +251,7 @@ tampered_article = embedded_article.replace("sample article", "modified article"
 
 # Calculate new content hash
 tampered_plain_text = "\n".join([line.strip() for line in tampered_article.split("\n")])
-tampered_content_hash = hashlib.sha256(tampered_plain_text.encode("utf-8")).hexdigest()
+tampered_content_hash = compute_normalized_hash(tampered_plain_text).hexdigest
 
 # Extract the first paragraph (which contains the embedded metadata)
 tampered_first_paragraph = tampered_article.split("\n\n")[1]
@@ -289,8 +291,10 @@ Here's the complete code for the basic text embedding workflow:
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
-import hashlib
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    compute_normalized_hash,
+)
 from datetime import datetime
 
 # 1. Generate keys
@@ -318,7 +322,7 @@ first_paragraph = article_text.split("\n\n")[1]
 
 # 3. Calculate content hash
 plain_text = "\n".join([line.strip() for line in article_text.split("\n")])
-content_hash = hashlib.sha256(plain_text.encode("utf-8")).hexdigest()
+content_hash = compute_normalized_hash(plain_text).hexdigest
 
 # 4. Create C2PA manifest
 c2pa_manifest = {
@@ -390,7 +394,7 @@ if is_verified:
     print(f"✓ Signer ID: {extracted_signer_id}")
 
     # Check for content tampering
-    current_content_hash = hashlib.sha256(plain_text.encode("utf-8")).hexdigest()
+    current_content_hash = compute_normalized_hash(plain_text).hexdigest
 
     # Find content hash assertion
     stored_hash = None
