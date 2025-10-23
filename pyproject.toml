@@ -3,8 +3,14 @@ name = "encypherai-commercial-monorepo"
 version = "0.1.0"
 description = "Root project file for EncypherAI commercial tools. This primarily serves as a marker for UV and may contain shared development dependencies."
 requires-python = ">=3.9"
+dependencies = [
+    "encypher-ai",
+]
 
 [tool.uv]
 
 [tool.uv.workspace]
 members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "shared_commercial_libs", "enterprise_api"]
+
+[tool.uv.sources]
+encypher-ai = { path = "./encypher-ai", editable = true }

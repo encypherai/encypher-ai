@@ -4,9 +4,6 @@ version = "1.0.0-preview"
 description = "Enterprise API for C2PA-compliant content signing and verification"
 requires-python = ">=3.9"
 dependencies = [
-    # NOTE: Using preview version of encypher-ai with C2PA support
-    # Will be replaced with public package after C2PA spec publication
-    "encypher-ai>=2.9.0",
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
     "sqlalchemy>=2.0.0",
@@ -20,6 +17,7 @@ dependencies = [
     "jinja2>=3.1.2",
     "python-multipart>=0.0.6",
     "python-dotenv>=1.0.0",
+    "encypher-ai",
 ]
 
 [project.optional-dependencies]
@@ -47,3 +45,9 @@ target-version = ['py39']
 [tool.ruff]
 line-length = 100
 target-version = "py39"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv.sources]
+encypher-ai = { path = "../encypher-ai", editable = true }

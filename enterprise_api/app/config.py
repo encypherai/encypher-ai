@@ -23,7 +23,9 @@ class Settings(BaseSettings):
 
     # SSL.com
     ssl_com_api_key: str
+    ssl_com_account_key: Optional[str] = None
     ssl_com_api_url: str = "https://api.ssl.com/v1"
+    ssl_com_product_id: Optional[str] = None
 
     # API
     api_base_url: str = "https://api.encypherai.com"

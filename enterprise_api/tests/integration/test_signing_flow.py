@@ -2,14 +2,34 @@
 Integration tests for signing workflow.
 """
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from app.main import app
+from app.database import get_db
+
+
+@pytest.fixture(autouse=True)
+def override_db_dependency():
+    class _FakeResult:
+        def fetchone(self):
+            return None
+
+    class _FakeSession:
+        async def execute(self, *args, **kwargs):
+            return _FakeResult()
+
+    async def _override_get_db():
+        yield _FakeSession()
+
+    app.dependency_overrides[get_db] = _override_get_db
+    yield
+    app.dependency_overrides.pop(get_db, None)
 
 
 @pytest.mark.asyncio
 async def test_health_check():
     """Test health check endpoint."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get("/health")
         assert response.status_code == 200
         data = response.json()
@@ -19,7 +39,8 @@ async def test_health_check():
 @pytest.mark.asyncio
 async def test_root_endpoint():
     """Test root endpoint."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.get("/")
         assert response.status_code == 200
         data = response.json()
@@ -29,7 +50,8 @@ async def test_root_endpoint():
 @pytest.mark.asyncio
 async def test_sign_without_auth():
     """Test signing endpoint without authentication."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
             "/api/v1/sign",
             json={
@@ -44,7 +66,8 @@ async def test_sign_without_auth():
 @pytest.mark.asyncio
 async def test_verify_endpoint():
     """Test verification endpoint (public, no auth required)."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
             "/api/v1/verify",
             json={
@@ -61,7 +84,8 @@ async def test_verify_endpoint():
 @pytest.mark.asyncio
 async def test_lookup_endpoint():
     """Test lookup endpoint (public, no auth required)."""
-    async with AsyncClient(app=app, base_url="http://test") as client:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         response = await client.post(
             "/api/v1/lookup",
             json={

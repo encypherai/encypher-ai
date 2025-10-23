@@ -145,7 +145,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.on_event("startup")
 async def startup_event():
     """Run on application startup."""
-    logger.info("=€ Encypher Enterprise API starting up...")
+    logger.info("Encypher Enterprise API starting up...")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Not configured'}")
     logger.info(f"SSL.com API: {settings.ssl_com_api_url}")

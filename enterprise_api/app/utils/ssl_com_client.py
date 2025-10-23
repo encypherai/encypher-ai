@@ -18,16 +18,23 @@ class SSLComClient:
 
     def __init__(self):
         """Initialize SSL.com API client."""
-        self.api_key = settings.ssl_com_api_key
-        self.base_url = settings.ssl_com_api_url
+        self.api_key = settings.ssl_com_api_key  # maps to SWS secret_key
+        self.account_key = getattr(settings, "ssl_com_account_key", None)
+        self.base_url = settings.ssl_com_api_url.rstrip("/")
         self.client = httpx.AsyncClient(timeout=30.0)
+
+    def _is_sws(self) -> bool:
+        """Detect if configured to use SWS endpoints (sws-test or production SWS)."""
+        u = self.base_url.lower()
+        return ("sws" in u) or ("sslpki" in u)
 
     async def create_code_signing_order(
         self,
         organization: str,
         country: str,
         email: str,
-        validity_years: int = 2
+        validity_years: int = 2,
+        product_id: str = "106"
     ) -> Dict:
         """
         Create SSL.com code signing certificate order.
@@ -44,24 +51,57 @@ class SSLComClient:
         Raises:
             httpx.HTTPStatusError: If API request fails
         """
-        response = await self.client.post(
-            f"{self.base_url}/orders",
-            json={
-                "product": "CODE_SIGNING_CERTIFICATE",
-                "product_subtype": "C2PA_SIGNING",
+        if self._is_sws():
+            if not self.account_key:
+                raise ValueError("SSL_COM_ACCOUNT_KEY is required for SWS API calls")
+            # SWS: POST /certificates with account_key and secret_key in body
+            sws_product = getattr(settings, "ssl_com_product_id", None) or product_id
+            payload = {
+                "account_key": self.account_key,
+                "secret_key": self.api_key,
+                "product": sws_product,
+                # Approximate mapping of our inputs to SWS fields
+                "period": str(365 * max(1, int(validity_years))),
                 "organization_name": organization,
-                "country": country,
+                "country_name": country,
                 "email": email,
-                "validity_period_years": validity_years,
-                "csr_generation": "automatic"  # SSL.com generates keypair
-            },
-            headers={
-                "Authorization": f"Bearer {self.api_key}",
-                "Content-Type": "application/json"
+                # CSR is typically required for server certs; for workflows that do not
+                # supply a CSR via API, the order will remain pending until completed via portal.
             }
-        )
+            response = await self.client.post(
+                f"{self.base_url}/certificates",
+                json=payload,
+                headers={"Content-Type": "application/json"},
+            )
+        else:
+            # Legacy (Bearer) flow
+            response = await self.client.post(
+                f"{self.base_url}/orders",
+                json={
+                    "product": "CODE_SIGNING_CERTIFICATE",
+                    "product_subtype": "C2PA_SIGNING",
+                    "organization_name": organization,
+                    "country": country,
+                    "email": email,
+                    "validity_period_years": validity_years,
+                    "csr_generation": "automatic",
+                },
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                },
+            )
         response.raise_for_status()
-        return response.json()
+        data = response.json()
+        # Normalize SWS response keys to expected fields
+        if self._is_sws():
+            # SWS returns 'ref' as the order reference and may include 'validation_url'
+            return {
+                "order_id": data.get("ref") or data.get("order_id"),
+                "validation_url": data.get("validation_url"),
+                **data,
+            }
+        return data
 
     async def get_order_status(self, order_id: str) -> Dict:
         """
@@ -76,10 +116,21 @@ class SSLComClient:
         Raises:
             httpx.HTTPStatusError: If API request fails
         """
-        response = await self.client.get(
-            f"{self.base_url}/orders/{order_id}",
-            headers={"Authorization": f"Bearer {self.api_key}"}
-        )
+        if self._is_sws():
+            if not self.account_key:
+                raise ValueError("SSL_COM_ACCOUNT_KEY is required for SWS API calls")
+            response = await self.client.get(
+                f"{self.base_url}/certificate/{order_id}",
+                params={
+                    "account_key": self.account_key,
+                    "secret_key": self.api_key,
+                },
+            )
+        else:
+            response = await self.client.get(
+                f"{self.base_url}/orders/{order_id}",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+            )
         response.raise_for_status()
         return response.json()
 
@@ -99,10 +150,23 @@ class SSLComClient:
         Raises:
             httpx.HTTPStatusError: If API request fails
         """
-        response = await self.client.get(
-            f"{self.base_url}/orders/{order_id}/certificate",
-            headers={"Authorization": f"Bearer {self.api_key}"}
-        )
+        if self._is_sws():
+            if not self.account_key:
+                raise ValueError("SSL_COM_ACCOUNT_KEY is required for SWS API calls")
+            response = await self.client.get(
+                f"{self.base_url}/certificate/{order_id}",
+                params={
+                    "account_key": self.account_key,
+                    "secret_key": self.api_key,
+                    "response_type": "individually",
+                    "response_encoding": "base64",
+                },
+            )
+        else:
+            response = await self.client.get(
+                f"{self.base_url}/orders/{order_id}/certificate",
+                headers={"Authorization": f"Bearer {self.api_key}"},
+            )
         response.raise_for_status()
         return response.json()
 
