@@ -151,3 +151,16 @@ out/
 
 # uv lock file
 uv.lock
+
+# Encypher python package
+encypher-ai/.git_bak/
+encypher-ai/.venv/
+encypher-ai/dist/
+encypher-ai/build/
+encypher-ai/*.egg-info/
+encypher-ai/.pytest_cache/
+encypher-ai/.ruff_cache/
+encypher-ai/.mypy_cache/
+encypher-ai/site/
+encypher-ai/.env
+encypher-ai/.coverage
