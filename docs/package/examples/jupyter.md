@@ -441,7 +441,7 @@ from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from typing import Optional, Dict
 import time
 import json
-import hashlib
+from encypher.interop.c2pa import compute_normalized_hash
 
 # Create a custom metadata encoder class
 class CustomMetadataEncoder:
@@ -458,7 +458,7 @@ class CustomMetadataEncoder:
             metadata[f"{self.custom_prefix}_timestamp"] = int(time.time())
 
         # Add a hash of the text
-        text_hash = hashlib.sha256(text.encode()).hexdigest()
+        text_hash = compute_normalized_hash(text).hexdigest
         metadata[f"{self.custom_prefix}_text_hash"] = text_hash
 
         # Use the parent class to encode

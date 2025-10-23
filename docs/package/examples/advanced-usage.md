@@ -19,7 +19,7 @@ from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_key_pair
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from typing import Optional, Dict, Any, Tuple
-import hashlib
+from encypher.interop.c2pa import compute_normalized_hash
 import time
 import json
 
@@ -54,7 +54,7 @@ class EnhancedMetadataHandler:
         """Embed metadata with additional content hash."""
         # Add content hash if enabled
         if self.include_hash:
-            content_hash = hashlib.sha256(text.encode()).hexdigest()
+            content_hash = compute_normalized_hash(text).hexdigest
             metadata["content_hash"] = content_hash
 
         # Use UnicodeMetadata to perform the embedding
@@ -86,7 +86,7 @@ class EnhancedMetadataHandler:
             original_text_for_hash_check = UnicodeMetadata.extract_original_text(text)
 
             # Calculate hash of original text
-            current_hash = hashlib.sha256(original_text_for_hash_check.encode()).hexdigest()
+            current_hash = compute_normalized_hash(original_text_for_hash_check).hexdigest
 
             # Compare with stored hash
             hash_verification = current_hash == verified_payload_dict.get("content_hash")

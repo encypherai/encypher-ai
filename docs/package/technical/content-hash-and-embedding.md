@@ -1,163 +1,125 @@
 # Content Hash Coverage and Embedding Technical Details
 
-This document provides a detailed technical explanation of how EncypherAI's C2PA text embedding approach works, specifically focusing on content hash coverage and the embedding mechanism.
+This document explains how EncypherAI embeds Coalition for Content Provenance and Authenticity (C2PA) manifests inside plain
+text while respecting the updated `C2PATextManifestWrapper` specification. It focuses on two critical implementation details:
 
-## What the Content Hash Covers
+1. **How we compute and record the hard-binding content hash**
+2. **How the manifest store is wrapped, encoded as Unicode variation selectors, and appended to the text**
 
-The content hash in our implementation covers the plain text content of the article - specifically:
+The goal is to make the manifest portable with the text itself—copy and paste operations keep the provenance intact—while
+remaining fully compatible with the C2PA validation model.
 
-### Text Extraction Process
+## Content Hash Normalisation and Exclusions
 
-1. The code extracts all paragraph text from the article
-   - It looks for paragraphs in content columns first, then falls back to direct paragraph search
-   - All paragraph texts are joined with double newlines (`"\n\n"`)
-   - This extracted plain text is saved to `clean_text_for_hashing.txt` as a reference
+C2PA requires producers and consumers to normalise text to Unicode Normalisation Form C (NFC) before hashing. To guarantee that
+every code path performs the exact same sequence of operations we rely on the shared helper `compute_normalized_hash()` from
+`encypher.interop.c2pa.text_hashing`.
 
-### Hash Generation
+Our embedding pipeline follows these rules:
 
-1. A SHA-256 hash is calculated on this extracted text
-2. The hash is computed on the UTF-8 encoded version of the text
-3. This happens before any metadata embedding occurs
+1. **Normalise and hash via the helper**: `compute_normalized_hash(original_text)` returns the NFC-normalised string,
+   its UTF-8 bytes, and the SHA-256 digest used for the `c2pa.hash.data.v1` assertion.
+2. **Append the wrapper** (described later) to the end of the original text. The wrapper occupies a contiguous range of bytes
+   that do not belong to the visible content.
+3. **Record exclusion offsets** for the wrapper. Offsets are expressed as byte positions within the NFC-normalised text, using
+   the structure `{"start": <byte_offset>, "length": <byte_count>}`. This exclusion list is stored in the `c2pa.hash.data.v1`
+   assertion so that validators know which bytes to ignore before hashing.
 
-### Hash Usage
+During verification we repeat the same procedure:
 
-1. The hash is included in the manifest as a `stds.c2pa.content.hash` assertion
-2. This assertion includes both the hash value and the algorithm used (sha256)
+- Detect the wrapper span and pass the full text plus the exclusion tuple to `compute_normalized_hash()`.
+- Apply the exclusion offsets from the manifest and ensure they match the detected wrapper span.
+- Compare the calculated hash against the manifest assertion. Any mismatch triggers tamper detection.
 
-### Important Distinction
+This guarantees that copy/paste operations (which keep the wrapper) and validators (which must remove it before hashing) remain
+synchronised.
 
-- The hash covers only the plain text content, not the HTML markup
-- The hash does not include the embedded metadata itself (the Unicode variation selectors)
-- This creates a "snapshot" of the original content at the time of signing
+## `C2PATextManifestWrapper` Layout
 
-This approach allows for tamper detection - if the text content is modified after embedding, the hash of the current content will no longer match the hash stored in the embedded manifest.
+All manifests embedded in unstructured text conform to the binary layout mandated by the specification:
 
-## How Our C2PA-like Embedding Actually Works
-
-### Single-Point Embedding with Zero-Width Characters
-
-1. The metadata (manifest) is embedded as a sequence of Unicode variation selectors
-2. These are zero-width, non-printing characters (code points in ranges U+FE00-FE0F and U+E0100-E01EF)
-3. All metadata is attached to a single character in the text (by default, the first whitespace)
-4. The original character is preserved, and the variation selectors are inserted immediately after it
-
-### This is Still Hard Binding Because
-
-- The manifest is directly embedded within the content itself
-- The manifest travels with the content as part of the same file
-- The binding is inseparable from the content
-
-### Not a Hybrid Approach Because
-
-In a true hybrid approach, you would have:
-1. A manifest stored separately from the content (soft binding component)
-2. A small reference embedded in the content pointing to the external manifest (hard binding component)
-
-Our implementation embeds the entire manifest directly in the content. The content hash we include is just an assertion within the hard-bound manifest.
-
-## Implementation Details
-
-### Embedding Process
-
-```python
-from encypher.core.payloads import serialize_jumbf_payload, deserialize_jumbf_payload
-
-def embed_metadata(text, metadata, metadata_format="json"):
-    """
-    Embeds metadata into text using Unicode variation selectors.
-
-    Args:
-        text (str): The text to embed metadata into
-        metadata (dict or bytes): The metadata to embed
-        metadata_format (str): Format of the metadata
-            ("json", "cbor_manifest", or "jumbf")
-
-    Returns:
-        str: Text with embedded metadata
-    """
-    # Serialize metadata based on format
-    if metadata_format == "json":
-        serialized = json.dumps(metadata).encode("utf-8")
-    elif metadata_format == "cbor_manifest":
-        if isinstance(metadata, dict):
-            serialized = cbor2.dumps(metadata)
-        else:
-            serialized = metadata  # Already serialized
-    elif metadata_format == "jumbf":
-        serialized = serialize_jumbf_payload(metadata)
-    else:
-        raise ValueError(f"Unsupported metadata format: {metadata_format}")
-
-    # Convert to binary and encode using variation selectors
-    binary_data = base64.b64encode(serialized).decode("ascii")
-    encoded_metadata = _encode_to_variation_selectors(binary_data)
-
-    # Find position to insert (typically after first character)
-    if len(text) > 0:
-        return text[0] + encoded_metadata + text[1:]
-    else:
-        return encoded_metadata
+```text
+aligned(8) class C2PATextManifestWrapper {
+    unsigned int(64) magic = 0x4332504154585400;  // "C2PATXT\0"
+    unsigned int(8)  version = 1;
+    unsigned int(32) manifestLength;
+    unsigned int(8)  jumbfContainer[manifestLength];
+}
 ```
 
-### Extraction Process
+Key points:
+
+- The wrapper is **prefixed with a single U+FEFF** (Zero-Width No-Break Space). This marker makes it easy for validators to
+  locate the wrapper even if other variation selectors appear in the text for unrelated reasons.
+- `manifestLength` records the size of the embedded C2PA manifest store.
+- `jumbfContainer` carries the manifest store encoded as a JUMBF box. We serialise the store with canonical JSON ordering to
+  obtain deterministic bytes before signing.
+
+## Variation Selector Encoding
+
+Every byte of the header and manifest store is converted to an invisible Unicode variation selector so that the wrapper travels
+with the text:
+
+- Bytes 0–15 map to `U+FE00`–`U+FE0F`.
+- Bytes 16–255 map to `U+E0100`–`U+E01EF`.
+
+Decoding performs the inverse mapping and rejects any code points outside these ranges, ensuring corrupted wrappers are detected.
+
+## Embedding Workflow
+
+The high-level embedding steps executed by `UnicodeMetadata._embed_c2pa` are:
+
+1. **Build the manifest**: Construct the C2PA manifest with mandatory assertions (actions, optional AI metadata, etc.). If a
+   hard binding is requested we insert a `c2pa.hash.data.v1` assertion whose `exclusions` list initially matches the last
+   computed offsets.
+2. **Sign the manifest**: Serialise the manifest to CBOR, produce a COSE `Sign1` structure with the Ed25519 private key, and
+   package the result inside a minimal JUMBF box.
+3. **Encode the wrapper**: Pack the `magic`, `version`, and `manifestLength` fields with the JUMBF bytes, convert them to
+   variation selectors, and prefix the block with U+FEFF.
+4. **Append the block**: Place the wrapper after the visible text as a single contiguous run. The plain text itself is not
+   otherwise modified; the wrapper is the only addition.
+5. **Stabilise exclusion offsets**: Because the wrapper length depends on the manifest, we recompute the exclusion list until it
+   stabilises (usually immediately). The final manifest is re-signed once the offsets are correct.
+
+The resulting string looks like `visible_text + "\uFEFF" + <variation selectors>`. When rendered, the wrapper is invisible but it
+remains part of the Unicode stream.
+
+### Example
 
 ```python
-def extract_metadata(text, metadata_format="json"):
-    """
-    Extracts metadata from text with embedded Unicode variation selectors.
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_ed25519_key_pair
 
-    Args:
-        text (str): Text with embedded metadata
-        metadata_format (str): Format of the metadata ("json", "cbor_manifest", or "jumbf")
-
-    Returns:
-        dict or bytes: Extracted metadata
-    """
-    # Extract variation selectors
-    encoded_data = ""
-    for char in text:
-        if 0xFE00 <= ord(char) <= 0xFE0F or 0xE0100 <= ord(char) <= 0xE01EF:
-            encoded_data += char
-
-    if not encoded_data:
-        return None
-
-    # Decode from variation selectors to binary
-    binary_data = _decode_from_variation_selectors(encoded_data)
-    serialized = base64.b64decode(binary_data)
-
-    # Deserialize based on format
-    if metadata_format == "json":
-        return json.loads(serialized.decode("utf-8"))
-    elif metadata_format == "cbor_manifest":
-        return cbor2.loads(serialized)
-    elif metadata_format == "jumbf":
-        return deserialize_jumbf_payload(serialized)
-    else:
-        raise ValueError(f"Unsupported metadata format: {metadata_format}")
+text = "Provenance-enabled article"
+private_key, _ = generate_ed25519_key_pair()
+wrapper_ready_text = UnicodeMetadata.embed_metadata(
+    text=text,
+    private_key=private_key,
+    signer_id="demo-signer",
+    metadata_format="c2pa",
+)
+assert wrapper_ready_text.endswith("\ufeff") is False  # The FEFF is followed by variation selectors
 ```
 
-## Verification Process
+## Extraction and Verification Workflow
 
-The verification process involves two key steps:
+Validators follow the inverse process:
 
-1. **Signature Verification**: Ensures the manifest itself hasn't been tampered with
-   - Extracts the embedded metadata using Unicode variation selectors
-   - Verifies the digital signature using the provided public key
-   - If the signature is invalid, verification fails immediately
+1. **Locate the wrapper** by scanning for U+FEFF followed by a contiguous run of variation selectors.
+2. **Decode the header**, verify the `C2PATXT\0` magic value, check the version, and ensure the manifest length matches the
+   decoded byte count.
+3. **Recover the JUMBF manifest store** and feed it into the COSE verification flow.
+4. **Normalise and hash the visible text**, excluding the byte range recorded in the manifest, and compare the digest against the
+   stored `c2pa.hash.data.v1` assertion.
 
-2. **Content Hash Verification**: Ensures the text content hasn't been modified
-   - Extracts the stored content hash from the manifest
-   - Calculates a fresh hash of the current content using the same algorithm
-   - Compares the stored hash with the freshly calculated hash
-   - If they don't match, the content has been tampered with
+If multiple wrappers appear the verifier rejects the content with the `manifest.text.multipleWrappers` failure code. If decoding
+fails part-way through the block we emit `manifest.text.corruptedWrapper`.
 
-This two-step verification process provides comprehensive tamper detection for both the manifest and the content it describes.
+## Advantages of the Updated Flow
 
-## Advantages of This Approach
-
-1. **Invisibility**: The embedding doesn't visibly alter the text appearance
-2. **Portability**: The metadata travels with the content
-3. **Robustness**: Works across different text formats and platforms
-4. **Standards Alignment**: Compatible with C2PA concepts and structures
-5. **Tamper Detection**: Provides comprehensive verification of both metadata and content integrity
+- **Specification alignment**: The wrapper structure, FEFF prefix, and exclusion handling match the proposed C2PA text
+  embedding rules.
+- **Copy/paste resilience**: The wrapper stays attached to the text while remaining invisible to readers.
+- **Deterministic hashing**: NFC normalisation and explicit exclusion offsets guarantee that hard-binding hashes are stable
+  across producers and consumers.
+- **Interoperability**: By serialising a complete manifest store in JUMBF we are compatible with the broader C2PA ecosystem.

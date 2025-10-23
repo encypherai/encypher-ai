@@ -28,9 +28,9 @@ Our implementation fully supports the core security features of the C2PA standar
 This self-contained example demonstrates the end-to-end workflow: creating a manifest, embedding it, and verifying it.
 
 ```python
-import hashlib
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.interop.c2pa import compute_normalized_hash
 
 def run_c2pa_text_demo():
     """Demonstrates embedding and verifying a C2PA manifest in text."""
@@ -44,6 +44,8 @@ def run_c2pa_text_demo():
 
     # 3. Create a C2PA manifest dictionary
     # This includes a hard-binding content hash to protect against tampering.
+    hash_result = compute_normalized_hash(original_text)
+
     c2pa_manifest = {
         "claim_generator": "EncypherAI-SDK/1.1.0",
         "assertions": [
@@ -61,7 +63,7 @@ def run_c2pa_text_demo():
             {
                 "label": "c2pa.hash.data.v1",
                 "data": {
-                    "hash": hashlib.sha256(original_text.encode("utf-8")).hexdigest(),
+                    "hash": hash_result.hexdigest,
                     "alg": "sha256",
                 },
                 "kind": "ContentHash",

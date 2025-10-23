@@ -11,6 +11,7 @@ import copy
 import hashlib
 import json
 import re
+import unicodedata
 import uuid
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
@@ -21,6 +22,9 @@ from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 from pycose.messages import CoseMessage
+
+from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
+from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode
 
 from encypher import __version__
 
@@ -777,139 +781,130 @@ class UnicodeMetadata:
         if not isinstance(private_key, ed25519.Ed25519PrivateKey):
             raise TypeError("For C2PA embedding, 'private_key' must be an Ed25519PrivateKey instance.")
 
-        # --- 1. Construct the C2PA Manifest ---
-        c2pa_manifest: C2PAPayload = {
-            "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
-            "instance_id": str(uuid.uuid4()),
-            "claim_generator": claim_generator or f"encypher-ai/{__version__}",
-            "assertions": [],
-        }
+        base_hash_result = compute_normalized_hash(text)
+        content_hash = base_hash_result.hexdigest
 
-        # 0. Compute text hash (hard-binding) before wrapper is attached
-        cls._compute_text_hash(text, algorithm="sha256")
+        current_exclusions: List[Dict[str, int]] = []
 
-        # 1. Build mandatory C2PA manifest skeleton
-        # a) c2pa.actions.v1 assertion
-        actions_data: Dict[str, Any] = {"actions": actions if actions is not None else []}
-        if not any(a.get("label") == "c2pa.created" for a in actions_data["actions"]):
-            created_action = {
+        base_actions: List[Dict[str, Any]] = copy.deepcopy(actions) if actions else []
+        claim_gen = claim_generator or f"encypher-ai/{__version__}"
+        instance_id = str(uuid.uuid4())
+
+        if not any(a.get("label") == "c2pa.created" for a in base_actions):
+            created_action: Dict[str, Any] = {
                 "label": "c2pa.created",
                 "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
-                "softwareAgent": c2pa_manifest["claim_generator"],
+                "softwareAgent": claim_gen,
             }
             if iso_timestamp is not None:
                 created_action["when"] = iso_timestamp
-            actions_data["actions"].insert(0, created_action)
-        c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
+            base_actions.insert(0, created_action)
 
-        # b) c2pa.hash.data.v1 (Hard Binding)
-        if add_hard_binding:
-            clean_text_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
-            c2pa_manifest["assertions"].append(
-                {"label": "c2pa.hash.data.v1", "data": {"hash": clean_text_hash, "alg": "sha256", "exclusions": []}, "kind": "ContentHash"}
-            )
-
-        # --- 3. Prepare for Soft Binding (Deterministic Hashing) ---
-        # a) Create a temporary manifest copy that includes a placeholder soft binding.
-        manifest_for_hashing = copy.deepcopy(c2pa_manifest)
-
-        # b) Add the placeholder soft binding and watermarked action to the copy.
-        placeholder_soft_binding: "C2PAAssertion" = {
-            "label": "c2pa.soft_binding.v1",
-            "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": ""},
-            "kind": "SoftBinding",
-        }
-        manifest_for_hashing["assertions"].append(placeholder_soft_binding)
-
-        actions_data_copy = next((a["data"] for a in manifest_for_hashing["assertions"] if a["label"] == "c2pa.actions.v1"), None)
-        if actions_data_copy and isinstance(actions_data_copy.get("actions"), list):
-            wm_action_copy = {
-                "label": "c2pa.watermarked",
-                "softwareAgent": c2pa_manifest["claim_generator"],
-                "description": "Text embedded with Unicode variation selectors.",
-            }
-            if iso_timestamp is not None:
-                wm_action_copy["when"] = iso_timestamp
-            actions_data_copy["actions"].append(wm_action_copy)
-
-        # c) Serialize the modified manifest and calculate the definitive hash.
-        cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
-        actual_soft_binding_hash = hashlib.sha256(cbor_for_hashing).hexdigest()
-
-        # d) Create the final soft binding assertion with the real hash.
-        final_soft_binding_assertion: "C2PAAssertion" = {
-            "label": "c2pa.soft_binding.v1",
-            "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": actual_soft_binding_hash},
-            "kind": "SoftBinding",
-        }
-        c2pa_manifest["assertions"].append(final_soft_binding_assertion)
-
-        # e) Add the 'watermarked' action to the original manifest.
-        wm_action = {
+        wm_action: Dict[str, Any] = {
             "label": "c2pa.watermarked",
-            "softwareAgent": c2pa_manifest["claim_generator"],
+            "softwareAgent": claim_gen,
             "description": "Text embedded with Unicode variation selectors.",
         }
         if iso_timestamp is not None:
             wm_action["when"] = iso_timestamp
-        actions_data["actions"].append(wm_action)
 
-        # --- 4. Finalize, Serialize, and Sign ---
-        # Re-serialize the final manifest, which now includes the correct soft binding hash.
-        final_cbor_payload_bytes = serialize_c2pa_payload_to_cbor(c2pa_manifest)
+        wrapper_text = ""
+        cose_sign1_bytes: Optional[bytes] = None
 
-        # Sign the final CBOR payload using COSE_Sign1.
-        cose_sign1_bytes = sign_c2pa_cose(private_key, final_cbor_payload_bytes)
+        MAX_ITERATIONS = 6
+        for _ in range(MAX_ITERATIONS):
+            c2pa_manifest: C2PAPayload = {
+                "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+                "instance_id": instance_id,
+                "claim_generator": claim_gen,
+                "assertions": [],
+            }
 
-        # --- 5. Package and Embed ---
-        # The outer structure contains the signed COSE object.
-        outer_payload_to_embed = {
-            "cose_sign1": base64.b64encode(cose_sign1_bytes).decode("utf-8"),
-            "signer_id": signer_id,
-            "format": "c2pa",
-        }
-        outer_bytes = serialize_payload(dict(outer_payload_to_embed))
-        selector_chars = cls._bytes_to_variation_selectors(outer_bytes)
+            actions_data: Dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
+            c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
 
-        # --- 6. Find Targets and Embed ---
-        embedding_target = target if target is not None else MetadataTarget.WHITESPACE
-        target_indices = cls.find_targets(text, embedding_target)
-        target_display = embedding_target.value if hasattr(embedding_target, "value") else embedding_target
+            if add_hard_binding:
+                hard_binding_data = {
+                    "hash": content_hash,
+                    "alg": "sha256",
+                    "exclusions": copy.deepcopy(current_exclusions),
+                }
+                c2pa_manifest["assertions"].append(
+                    {"label": "c2pa.hash.data.v1", "data": hard_binding_data, "kind": "ContentHash"}
+                )
 
-        if not target_indices:
-            raise ValueError(f"No suitable targets found in text using target '{target_display}'.")
+            manifest_for_hashing = copy.deepcopy(c2pa_manifest)
+            placeholder_soft_binding: C2PAAssertion = {
+                "label": "c2pa.soft_binding.v1",
+                "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": ""},
+                "kind": "SoftBinding",
+            }
+            manifest_for_hashing["assertions"].append(placeholder_soft_binding)
 
-        # Ensure we have the original text in the output
-        logger.debug(f"Embedding {len(selector_chars)} variation selectors into text")
+            actions_data_copy = next(
+                (a["data"] for a in manifest_for_hashing["assertions"] if a.get("label") == "c2pa.actions.v1"),
+                None,
+            )
+            if actions_data_copy and isinstance(actions_data_copy.get("actions"), list):
+                actions_data_copy["actions"].append(copy.deepcopy(wm_action))
 
-        if distribute_across_targets:
-            if len(target_indices) < len(selector_chars):
-                raise ValueError(f"Not enough targets ({len(target_indices)}) found to distribute {len(selector_chars)} selectors.")
-            result_parts = []
-            last_text_idx = 0
-            for i, target_idx in enumerate(target_indices):
-                if i < len(selector_chars):
-                    result_parts.append(text[last_text_idx : target_idx + 1])  # Include the target character
-                    result_parts.append(selector_chars[i])  # Add the selector after the target
-                    last_text_idx = target_idx + 1
-                else:
-                    break
-            result_parts.append(text[last_text_idx:])  # Add remaining text
-            return "".join(result_parts)
+            cbor_for_hashing = serialize_c2pa_payload_to_cbor(manifest_for_hashing)
+            actual_soft_binding_hash = hashlib.sha256(cbor_for_hashing).hexdigest()
+
+            final_soft_binding_assertion: C2PAAssertion = {
+                "label": "c2pa.soft_binding.v1",
+                "data": {"alg": "encypher.unicode_variation_selector.v1", "hash": actual_soft_binding_hash},
+                "kind": "SoftBinding",
+            }
+            c2pa_manifest["assertions"].append(final_soft_binding_assertion)
+            actions_data["actions"].append(copy.deepcopy(wm_action))
+
+            final_cbor_payload_bytes = serialize_c2pa_payload_to_cbor(c2pa_manifest)
+            cose_sign1_bytes = sign_c2pa_cose(private_key, final_cbor_payload_bytes)
+
+            jumbf_payload = {
+                "format": "c2pa",
+                "signer_id": signer_id,
+                "cose_sign1": base64.b64encode(cose_sign1_bytes).decode("utf-8"),
+            }
+            jumbf_bytes = serialize_jumbf_payload(jumbf_payload)
+            wrapper_text = encode_wrapper(jumbf_bytes)
+
+            final_text = text + wrapper_text
+
+            exclusion_tuples: List[Tuple[int, int]] = []
+            new_exclusions: List[Dict[str, int]] = []
+
+            if add_hard_binding:
+                wrapper_length_bytes = len(wrapper_text.encode("utf-8"))
+                normalized_final_text = normalize_text(final_text)
+                wrapper_index = normalized_final_text.rfind(wrapper_text)
+                if wrapper_index < 0:
+                    raise RuntimeError("Failed to locate C2PA wrapper inside normalized text")
+                exclusion_start = len(normalized_final_text[:wrapper_index].encode("utf-8"))
+                exclusion_tuples = [(exclusion_start, wrapper_length_bytes)]
+                new_exclusions = [{"start": exclusion_start, "length": wrapper_length_bytes}]
+
+            hash_result = compute_normalized_hash(final_text, exclusion_tuples)
+            actual_hash = hash_result.hexdigest
+
+            if add_hard_binding:
+                if actual_hash != content_hash:
+                    content_hash = actual_hash
+                    current_exclusions = new_exclusions
+                    continue
+                if new_exclusions != current_exclusions:
+                    current_exclusions = new_exclusions
+                    continue
+            break
         else:
-            # Insert all selectors after the first target character
-            # Ensure the original text is preserved by keeping it intact and only adding selectors
-            target_idx = target_indices[0]
-            result = text[: target_idx + 1] + "".join(selector_chars) + text[target_idx + 1 :]
+            raise RuntimeError("Failed to stabilise C2PA wrapper exclusion offsets")
 
-            # Verify the original text is preserved in the result
-            if text not in result:
-                logger.warning("Original text not preserved in embedding result. Adjusting embedding strategy.")
-                # Alternative approach: append selectors at the end of text
-                result = text + "".join(selector_chars)
+        if not wrapper_text:
+            raise RuntimeError("Failed to produce C2PA wrapper text")
 
-            return result
-
+        logger.info("Successfully embedded C2PA manifest for signer '%s'.", signer_id)
+        return text + wrapper_text
     @classmethod
     def verify_metadata(
         cls,
@@ -960,13 +955,33 @@ class UnicodeMetadata:
 
         # --- Format-Specific Verification Dispatch ---
         if payload_format == "c2pa":
-            clean_text = cls._strip_variation_selectors(text)
+            try:
+                manifest_bytes, clean_text, span = find_and_decode(text)
+            except ValueError as err:
+                logger.warning(f"Failed to decode C2PA wrapper during verification: {err}")
+                return False, signer_id, None
+
+            if manifest_bytes is None or span is None:
+                logger.warning("C2PA format indicated but no text wrapper found.")
+                return False, signer_id, None
+
+            wrapper_segment = text[span[0] : span[1]]
+            normalized_full_text = unicodedata.normalize("NFC", text)
+            normalized_index = normalized_full_text.rfind(wrapper_segment)
+            if normalized_index < 0:
+                logger.warning("Unable to locate wrapper segment in normalized text during verification.")
+                return False, signer_id, None
+
+            exclusion_start = len(normalized_full_text[:normalized_index].encode("utf-8"))
+            exclusion_length = len(wrapper_segment.encode("utf-8"))
+
             return cls._verify_c2pa(
-                text=clean_text,
+                original_text=text,
                 outer_payload=outer_payload,
                 public_key_resolver=public_key_resolver,
                 return_payload_on_failure=return_payload_on_failure,
                 require_hard_binding=require_hard_binding,
+                wrapper_exclusion=(exclusion_start, exclusion_length),
             )
 
         # --- Legacy Format Verification ('basic', 'manifest', 'cbor_manifest') ---
@@ -1076,11 +1091,12 @@ class UnicodeMetadata:
     @classmethod
     def _verify_c2pa(
         cls,
-        text: str,
+        original_text: str,
         outer_payload: OuterPayload,
         public_key_resolver: Callable[[str], Optional[Ed25519PublicKey]],
         return_payload_on_failure: bool,
         require_hard_binding: bool,  # New parameter
+        wrapper_exclusion: Optional[Tuple[int, int]],
     ) -> Tuple[bool, Optional[str], Union[C2PAPayload, None]]:
         """
         Verifies a C2PA-compliant manifest.
@@ -1090,7 +1106,7 @@ class UnicodeMetadata:
         soft binding, and hard binding checks.
 
         Args:
-            text: The clean text content, stripped of metadata.
+            original_text: The full text asset (including the wrapper) provided for verification.
             outer_payload: The deserialized outer payload containing the manifest.
             public_key_resolver: A function to retrieve the public key for a given signer ID.
             return_payload_on_failure: Flag to control returning the payload on failure.
@@ -1200,7 +1216,39 @@ class UnicodeMetadata:
                 logger.warning("C2PA verification: Hard binding assertion not found.")
                 return False, signer_id if signer_id is not None else None, c2pa_manifest
             expected_hard_hash = hard_binding_assertion["data"].get("hash")
-            actual_hard_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+            exclusions_data = hard_binding_assertion["data"].get("exclusions")
+            expected_exclusion: Optional[Tuple[int, int]] = None
+            if isinstance(exclusions_data, list) and exclusions_data:
+                first = exclusions_data[0]
+                if isinstance(first, dict):
+                    start_val = first.get("start")
+                    length_val = first.get("length")
+                elif isinstance(first, (list, tuple)) and len(first) >= 2:
+                    start_val, length_val = first[0], first[1]
+                else:
+                    start_val = length_val = None
+                if start_val is not None and length_val is not None:
+                    try:
+                        expected_exclusion = (int(start_val), int(length_val))
+                    except (TypeError, ValueError):
+                        expected_exclusion = None
+
+            if wrapper_exclusion is not None:
+                if expected_exclusion != wrapper_exclusion:
+                    logger.warning(
+                        "C2PA verification: Hard binding exclusion range mismatch. Expected %s, got %s.",
+                        expected_exclusion,
+                        wrapper_exclusion,
+                    )
+                    return False, signer_id, c2pa_manifest
+            elif expected_exclusion:
+                logger.warning("C2PA verification: Manifest recorded exclusions but none were detected in text.")
+                return False, signer_id, c2pa_manifest
+
+            exclusion_ranges = [wrapper_exclusion] if wrapper_exclusion is not None else []
+            hard_hash_result = compute_normalized_hash(original_text, exclusion_ranges)
+            actual_hard_hash = hard_hash_result.hexdigest
 
             if expected_hard_hash != actual_hard_hash:
                 logger.warning(
@@ -1243,7 +1291,41 @@ class UnicodeMetadata:
         Raises:
             (Indirectly via called methods) UnicodeDecodeError, json.JSONDecodeError, TypeError
         """
-        # 1. Extract Bytes:
+        # 0. Prefer C2PA text wrappers (FEFF-prefixed contiguous blocks)
+        try:
+            manifest_bytes, _clean_text, _span = find_and_decode(text)
+        except ValueError as err:
+            logger.warning(f"Failed to decode C2PA text wrapper: {err}")
+            return None
+
+        if manifest_bytes is not None:
+            logger.debug("Detected C2PA text wrapper – attempting JUMBF decode.")
+            try:
+                manifest_store = deserialize_jumbf_payload(manifest_bytes)
+            except Exception as exc:
+                logger.warning(f"Failed to deserialize JUMBF payload from text wrapper: {exc}")
+                return None
+
+            if not isinstance(manifest_store, dict):
+                logger.warning("Decoded JUMBF manifest store is not a dictionary.")
+                return None
+
+            signer_id = manifest_store.get("signer_id")
+            cose_sign1 = manifest_store.get("cose_sign1")
+            if not signer_id or not isinstance(cose_sign1, str):
+                logger.warning("C2PA manifest store missing signer_id or cose_sign1.")
+                return None
+
+            outer_payload: OuterPayload = {
+                "format": "c2pa",
+                "signer_id": signer_id,
+                "payload": base64.b64encode(manifest_bytes).decode("utf-8"),
+                "signature": "c2pa_manifest_store",
+            }
+            outer_payload["cose_sign1"] = cose_sign1
+            return outer_payload
+
+        # 1. Extract Bytes for legacy/other formats:
         logger.debug("Attempting to extract bytes from text.")
         outer_bytes = cls.extract_bytes(text)
         if not outer_bytes:
@@ -1352,12 +1434,29 @@ class UnicodeMetadata:
         payload_format = outer_payload.get("format")
 
         if payload_format == "c2pa":
+            cose_sign1_b64 = outer_payload.get("cose_sign1")
+            try:
+                if isinstance(cose_sign1_b64, str):
+                    cose_sign1_bytes = base64.b64decode(cose_sign1_b64)
+                    cbor_bytes = extract_payload_from_cose_sign1(cose_sign1_bytes)
+                    if cbor_bytes is not None:
+                        return deserialize_c2pa_payload_from_cbor(cbor_bytes)
+            except (binascii.Error, ValueError, cbor2.CBORDecodeError) as exc:
+                logger.warning(f"Failed to decode COSE payload during C2PA extraction: {exc}")
+                return None
+
             if isinstance(inner_payload, str):
                 try:
-                    cbor_bytes = base64.b64decode(inner_payload)
-                    return deserialize_c2pa_payload_from_cbor(cbor_bytes)
-                except (binascii.Error, ValueError, cbor2.CBORDecodeError):
-                    logger.warning("Failed to decode C2PA payload during non-verifying extraction.")
+                    manifest_store_bytes = base64.b64decode(inner_payload)
+                    manifest_store = deserialize_jumbf_payload(manifest_store_bytes)
+                    cose_embedded = manifest_store.get("cose_sign1") if isinstance(manifest_store, dict) else None
+                    if isinstance(cose_embedded, str):
+                        cose_sign1_bytes = base64.b64decode(cose_embedded)
+                        cbor_bytes = extract_payload_from_cose_sign1(cose_sign1_bytes)
+                        if cbor_bytes is not None:
+                            return deserialize_c2pa_payload_from_cbor(cbor_bytes)
+                except (binascii.Error, ValueError, cbor2.CBORDecodeError) as exc:
+                    logger.warning(f"Failed to decode C2PA manifest store during extraction: {exc}")
                     return None
             return None
 
