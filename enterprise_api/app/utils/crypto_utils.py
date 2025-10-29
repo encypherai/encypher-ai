@@ -9,7 +9,9 @@ from cryptography.hazmat.backends import default_backend
 from app.config import settings
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
-from typing import Optional
+from typing import Optional, cast
+
+_DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
 
 
 async def load_organization_private_key(
@@ -133,3 +135,24 @@ def deserialize_public_key(public_key_bytes: bytes) -> ed25519.Ed25519PublicKey:
         Ed25519PublicKey: Deserialized public key
     """
     return ed25519.Ed25519PublicKey.from_public_bytes(public_key_bytes)
+
+
+def get_demo_private_key() -> ed25519.Ed25519PrivateKey:
+    """
+    Return the demo private key for sandbox signing flows.
+
+    Uses configured hex value if provided, otherwise generates
+    an ephemeral key for the process lifetime.
+    """
+    global _DEMO_PRIVATE_KEY
+    if _DEMO_PRIVATE_KEY is not None:
+        return _DEMO_PRIVATE_KEY
+
+    if settings.demo_private_key_bytes:
+        _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.from_private_bytes(
+            cast(bytes, settings.demo_private_key_bytes)
+        )
+        return _DEMO_PRIVATE_KEY
+
+    _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.generate()
+    return _DEMO_PRIVATE_KEY

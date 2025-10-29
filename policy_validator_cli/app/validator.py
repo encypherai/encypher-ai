@@ -1,7 +1,30 @@
 # validator.py
 
 from typing import Dict, Any, List, Tuple
-from encypher_ai import EncypherAI, VerificationResult # Assuming encypher_ai is installed
+
+try:
+    from encypher_ai import EncypherAI, VerificationResult  # type: ignore[import-not-found]
+except ImportError:  # pragma: no cover - fallback when encypher_ai is unavailable
+    from dataclasses import dataclass
+    from enum import Enum
+    from typing import Any, Dict
+
+    class VerificationStatus(Enum):
+        UNKNOWN = "UNKNOWN"
+
+    @dataclass
+    class VerificationResult:
+        status: VerificationStatus
+        is_verified: bool
+        metadata: Dict[str, Any]
+
+    class EncypherAI:
+        def verify_from_text(self, text: str) -> VerificationResult:
+            return VerificationResult(
+                status=VerificationStatus.UNKNOWN,
+                is_verified=False,
+                metadata={},
+            )
 
 class MetadataValidationError(Exception):
     """Custom exception for metadata validation errors against a policy."""

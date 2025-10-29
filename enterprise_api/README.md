@@ -10,12 +10,24 @@
 The Encypher Enterprise API provides a complete infrastructure for organizations (publishers, legal/finance firms, AI labs, enterprises) to sign content with C2PA manifests, verify signatures, and track sentence-level provenance.
 
 **Key Features:**
-- ✅ **C2PA 2.2 Compliance**: Industry-standard signatures using Ed25519 + C2PA manifests
-- ✅ **Sentence-Level Tracking**: Granular provenance for individual sentences
-- ✅ **SSL.com Integration**: Automated certificate provisioning from trusted CA
-- ✅ **Court-Admissible Evidence**: Tamper-proof signatures for legal use
-- ✅ **Fast Verification**: <100ms response times for verification
-- ✅ **Independent Verification**: Public endpoints for anyone to verify content
+- **C2PA 2.2 compliance** via Ed25519 signatures and manifest stores
+- **Sentence-level tracking** for paragraph and sentence provenance
+- **SSL.com integration** with automated certificate lifecycle management
+- **Court-admissible evidence** through tamper-evident manifests
+- **Fast verification** (<100 ms typical) with public verification endpoints
+- **Independent verification** for auditors, regulators, and readers
+
+
+## C2PA Text Manifest Compliance
+
+Our basic text signing flow implements the `C2PATextManifestWrapper` defined in [docs/c2pa/Manifests_Text.adoc](../docs/c2pa/Manifests_Text.adoc). In practice this means:
+
+- We wrap each manifest store with the literal `C2PATXT\0` header and encode bytes strictly as Unicode variation selectors.
+- A single zero-width no-break space (U+FEFF) prefixes one contiguous wrapper that is appended to the end of the visible text.
+- Hashes comply with the `c2pa.hash.data` assertion: text is NFC-normalised, wrapper bytes are excluded, and byte offsets are recorded in the manifest.
+- Verification rejects malformed or duplicate wrappers, returning the `manifest.text.corruptedWrapper` and `manifest.text.multipleWrappers` statuses from the spec.
+
+This keeps the “basic” tier interoperable with any validator that implements the C2PA unstructured text guidance.
 
 ## Architecture
 
@@ -42,6 +54,38 @@ The Encypher Enterprise API provides a complete infrastructure for organizations
 ```
 
 ## Quick Start
+
+### Option A: Integrate with the Python SDK
+
+If you need to call the Enterprise API from Python, start with the SDK published in this repository.
+
+```bash
+pip install encypher-enterprise
+```
+
+Then configure your API key and make your first signing request:
+
+```python
+import os
+from encypher_enterprise import EncypherClient
+
+os.environ["ENCYPHER_API_KEY"] = "encypher_live_xxx"
+
+client = EncypherClient(
+    api_key=os.environ["ENCYPHER_API_KEY"],
+    base_url="https://api.encypherai.com",
+)
+
+result = client.sign(
+    text="Breaking news: Scientists confirm a new exoplanet.",
+    title="Exoplanet discovery",
+)
+
+print(result.document_id)
+print(result.verification_url)
+```
+
+More SDK examples, streaming helpers, and integration adapters live in `enterprise_sdk/README.md`. The SDK roadmap is tracked in `enterprise_sdk/SDK_WBS.md`.
 
 ### Prerequisites
 
@@ -256,7 +300,7 @@ curl -X POST https://api.encypherai.com/api/v1/verify \
 ### Production Launch (After C2PA Spec Publication)
 - [ ] Publish encypher-ai v2.9.0 to PyPI
 - [ ] Switch to production SSL.com API
-- [ ] Add webhook support
+- [x] Webhook management APIs (event delivery rolling out Q4 2025)
 - [ ] Public verification UI
 - [ ] Customer dashboard
 

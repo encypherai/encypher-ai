@@ -163,6 +163,7 @@ enterprise_api/
    ```bash
    # Install the preview version with C2PA support
    uv pip install -e /path/to/encypher-ai-preview
+   uv pip install -e ../encypher-ai
    ```
 
 2. **Set Up Local Development Environment**
@@ -185,7 +186,7 @@ enterprise_api/
 4. **Test Locally**
    ```bash
    # Run the API
-   uvicorn app.main:app --reload
+   uv run uvicorn app.main:app --reload
 
    # In another terminal, test endpoints
    curl http://localhost:8000/health
@@ -193,7 +194,7 @@ enterprise_api/
 
 5. **Run Tests**
    ```bash
-   pytest tests/
+   uv sync --extra dev; uv run pytest tests/
    ```
 
 ### Preview Phase (Week 6)

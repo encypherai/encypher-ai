@@ -8,7 +8,7 @@ readme = "README.md"
 "audit-log-cli" = "audit_log_cli.app.main:app"
 requires-python = ">=3.9"
 dependencies = [
-    "typer[all]>=0.9.0,<0.13.0",
+    "typer>=0.12.0,<1.0.0",
     "rich>=13.0.0,<14.0.0",
     "encypher_ai>=0.1.0" # Assuming encypher_ai is an installable package or correctly pathed
 ]

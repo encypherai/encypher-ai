@@ -2,7 +2,7 @@
 Asynchronous client for Encypher Enterprise API.
 """
 import httpx
-from typing import Optional
+from typing import Optional, Dict, Any
 from .models import SignRequest, SignResponse, VerifyResponse, LookupResponse, StatsResponse
 from .exceptions import (
     AuthenticationError,
@@ -28,7 +28,8 @@ class AsyncEncypherClient:
         api_key: str,
         base_url: str = "https://api.encypherai.com",
         timeout: float = 30.0,
-        max_retries: int = 3
+        max_retries: int = 3,
+        transport: Optional[httpx.BaseTransport] = None,
     ):
         """
         Initialize the async Encypher client.
@@ -43,7 +44,8 @@ class AsyncEncypherClient:
         self.base_url = base_url.rstrip("/")
         self.client = httpx.AsyncClient(
             timeout=timeout,
-            headers={"Authorization": f"Bearer {api_key}"}
+            headers={"Authorization": f"Bearer {api_key}"},
+            transport=transport,
         )
         self.max_retries = max_retries
 
@@ -52,7 +54,8 @@ class AsyncEncypherClient:
         text: str,
         title: Optional[str] = None,
         url: Optional[str] = None,
-        document_type: str = "article"
+        document_type: str = "article",
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> SignResponse:
         """
         Async sign content with C2PA manifest.
@@ -62,6 +65,7 @@ class AsyncEncypherClient:
             title: Optional document title
             url: Optional document URL
             document_type: Document type
+            metadata: Optional metadata dict to include with the signing request
 
         Returns:
             SignResponse with signed text
@@ -73,7 +77,8 @@ class AsyncEncypherClient:
             text=text,
             document_title=title,
             document_url=url,
-            document_type=document_type
+            document_type=document_type,
+            custom_metadata=metadata
         )
 
         try:

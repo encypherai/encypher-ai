@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import time
 import logging
+from contextlib import asynccontextmanager
 
 from app.config import settings
 from app.routers import signing, verification, lookup, onboarding
@@ -19,6 +20,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan handler replacing deprecated on_event startup/shutdown."""
+    logger.info("Encypher Enterprise API starting up...")
+    logger.info(f"Environment: {settings.environment}")
+    logger.info(
+        f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Not configured'}"
+    )
+    logger.info(f"SSL.com API: {settings.ssl_com_api_url}")
+    try:
+        yield
+    finally:
+        logger.info("=K Encypher Enterprise API shutting down...")
+
 # Create FastAPI app
 app = FastAPI(
     title="Encypher Enterprise API",
@@ -27,6 +42,7 @@ app = FastAPI(
     docs_url="/docs" if not settings.is_production else None,
     redoc_url="/redoc" if not settings.is_production else None,
     openapi_url="/openapi.json" if not settings.is_production else None,
+    lifespan=lifespan,
 )
 
 # CORS middleware (configure allowed origins)
@@ -141,18 +157,4 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
-# Startup event
-@app.on_event("startup")
-async def startup_event():
-    """Run on application startup."""
-    logger.info("Encypher Enterprise API starting up...")
-    logger.info(f"Environment: {settings.environment}")
-    logger.info(f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Not configured'}")
-    logger.info(f"SSL.com API: {settings.ssl_com_api_url}")
-
-
-# Shutdown event
-@app.on_event("shutdown")
-async def shutdown_event():
-    """Run on application shutdown."""
-    logger.info("=K Encypher Enterprise API shutting down...")
+ 

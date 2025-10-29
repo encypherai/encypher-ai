@@ -47,13 +47,41 @@ async def verify_content(
     """
     logger.info(f"Verification request for {len(request.text)} characters")
 
-    # Define public key resolver for encypher-ai
-    async def resolve_public_key(signer_id: str):
-        """
-        Query database for organization's certificate and extract public key.
+    cert_result = await db.execute(
+        text("SELECT organization_id, certificate_pem FROM organizations")
+    )
+    try:
+        cert_rows = cert_result.fetchall()
+    except AttributeError:
+        single_row = (
+            cert_result.fetchone()
+            if hasattr(cert_result, "fetchone")
+            else None
+        )
+        cert_rows = [single_row] if single_row else []
 
-        This function is called by UnicodeMetadata.verify_metadata() to
-        resolve the public key for the given signer ID.
+    cert_map = {}
+    for row in cert_rows:
+        if not row:
+            continue
+        mapping = getattr(row, "_mapping", None)
+        organization_id = (
+            mapping["organization_id"]
+            if mapping and "organization_id" in mapping
+            else row[0]
+        )
+        certificate_pem = (
+            mapping["certificate_pem"]
+            if mapping and "certificate_pem" in mapping
+            else row[1]
+        )
+        if certificate_pem:
+            cert_map[organization_id] = certificate_pem
+
+    # Define public key resolver for encypher-ai
+    def resolve_public_key(signer_id: str):
+        """
+        Resolve the public key for a signer from the cached certificate map.
 
         Args:
             signer_id: Organization ID from the C2PA manifest
@@ -62,21 +90,12 @@ async def verify_content(
             Ed25519PublicKey or None if not found
         """
         logger.debug(f"Resolving public key for signer: {signer_id}")
-
-        result = await db.execute(
-            text("SELECT certificate_pem FROM organizations WHERE organization_id = :signer_id"),
-            {"signer_id": signer_id}
-        )
-        row = result.fetchone()
-
-        if not row or not row[0]:
+        cert_pem = cert_map.get(signer_id)
+        if not cert_pem:
             logger.warning(f"No certificate found for signer: {signer_id}")
             return None
 
-        cert_pem = row[0]
-
         try:
-            # Extract public key from certificate
             public_key = extract_public_key_from_certificate(cert_pem)
             logger.debug(f"Successfully extracted public key for signer: {signer_id}")
             return public_key
@@ -115,7 +134,14 @@ async def verify_content(
             {"signer_id": signer_id}
         )
         org_row = org_result.fetchone()
-        org_name = org_row[0] if org_row else "Unknown"
+        if org_row:
+            mapping = getattr(org_row, "_mapping", None)
+            if mapping and "organization_name" in mapping:
+                org_name = mapping["organization_name"]
+            else:
+                org_name = org_row[0]
+        else:
+            org_name = "Unknown"
     else:
         org_name = "Unknown"
 

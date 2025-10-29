@@ -15,12 +15,13 @@ This documentation provides comprehensive information about the EncypherAI packa
 
 | Feature | Description |
 |---------|-------------|
-| 🔍 **Invisible Embedding** | Add metadata without changing visible content. |
-| 🔐 **Digital Signature Verification** | Ensure data integrity and detect tampering with Ed25519 signatures. |
-| 🏛️ **C2PA-Inspired Manifests** | Embed structured, verifiable manifests for text provenance. |
-| 🌊 **Streaming Support** | Compatible with chunk-by-chunk streaming from LLMs. |
-| 🧩 **Modular Architecture** | Clean separation of key management, payload handling, and signing. |
-| 🔄 **Extensible API** | Easily integrate with any LLM provider. |
+| **Invisible Embedding** | Add metadata without changing visible content. |
+| **Digital Signature Verification** | Ensure data integrity and detect tampering with Ed25519 signatures. |
+| **C2PA-Inspired Manifests** | Embed structured, verifiable manifests for text provenance. |
+| **Streaming Support** | Compatible with chunk-by-chunk streaming from LLMs. |
+| **Modular Architecture** | Clean separation of key management, payload handling, and signing. |
+| **Extensible API** | Easily integrate with any LLM provider. |
+
 
 ## Demo Video
 
@@ -52,6 +53,12 @@ This documentation provides comprehensive information about the EncypherAI packa
 - [YouTube Demo](package/examples/youtube-demo.md)
 - [FastAPI Integration](package/examples/fastapi.md)
 - [Streamlit Demo](package/examples/streamlit.md)
+
+## Enterprise SDK
+
+- [Enterprise SDK Overview](package/sdk/index.md)
+- Enterprise API reference: `enterprise_api/docs/API.md`
+- Source code: `enterprise_sdk/` within the commercial repository
 
 ## API Reference
 

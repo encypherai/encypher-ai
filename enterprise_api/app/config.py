@@ -2,7 +2,7 @@
 Configuration module for Encypher Enterprise API.
 Uses Pydantic Settings for environment variable management.
 """
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from typing import Optional
 
@@ -37,10 +37,17 @@ class Settings(BaseSettings):
     marketing_domain: str = "encypher.ai"
     infrastructure_domain: str = "encypherai.com"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
+    # Demo / sandbox API key support
+    demo_api_key: Optional[str] = None
+    demo_organization_id: str = "org_demo"
+    demo_organization_name: str = "Encypher Demo Organization"
+    demo_private_key_hex: Optional[str] = None
+
+    model_config: SettingsConfigDict = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
 
     @property
     def key_encryption_key_bytes(self) -> bytes:
@@ -66,6 +73,13 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.environment == "production"
+
+    @property
+    def demo_private_key_bytes(self) -> Optional[bytes]:
+        """Return demo private key bytes if configured."""
+        if not self.demo_private_key_hex:
+            return None
+        return bytes.fromhex(self.demo_private_key_hex)
 
 
 @lru_cache()

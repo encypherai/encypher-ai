@@ -14,7 +14,8 @@ import {
   ArrowRightOnRectangleIcon,
   Bars3Icon,
   XMarkIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  DocumentCheckIcon
 } from '@heroicons/react/24/outline';
 
 interface NavItem {
@@ -47,6 +48,7 @@ export default function DashboardNavigation() {
         { name: 'Create Schema', href: '/dashboard/policy-validation/schemas/new', icon: ShieldCheckIcon },
       ]
     },
+    { name: 'Directory Signing', href: '/dashboard/signing', icon: DocumentCheckIcon },
     { name: 'CLI Integration', href: '/dashboard/cli-integration', icon: CommandLineIcon },
     { name: 'Profile', href: '/dashboard/profile', icon: UserIcon },
     { name: 'Settings', href: '/dashboard/settings', icon: Cog6ToothIcon },

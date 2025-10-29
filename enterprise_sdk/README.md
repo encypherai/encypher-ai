@@ -10,11 +10,11 @@
 
 The Encypher Enterprise SDK provides a simple Python interface to the Encypher Enterprise API, enabling:
 
-- ✅ **C2PA Content Signing** - Sign text with industry-standard C2PA manifests
-- ✅ **Streaming Support** - Real-time signing for LLM chat completions
-- ✅ **Async Operations** - Full async/await support for high-performance applications
-- ✅ **Framework Integrations** - Easy integration with LangChain, OpenAI, and more
-- ✅ **CLI Tool** - Command-line interface for quick testing and automation
+- **C2PA content signing** - Sign text with industry-standard C2PA manifests
+- **Streaming support** - Real-time signing for LLM chat completions
+- **Async operations** - Full async/await support for high-performance applications
+- **Framework integrations** - Ready-made adapters for LangChain, OpenAI, and LiteLLM
+- **CLI tooling** - Command-line interface for quick testing and automation
 
 ## Installation
 
@@ -39,13 +39,11 @@ pip install encypher-enterprise[openai]
 ```python
 from encypher_enterprise import EncypherClient
 
-# Initialize client
 client = EncypherClient(api_key="encypher_your_api_key")
 
-# Sign content
 result = client.sign(
     text="Breaking news: Scientists discover new exoplanet.",
-    title="New Exoplanet Discovered"
+    title="New Exoplanet Discovered",
 )
 
 print(f"Signed! Document ID: {result.document_id}")
@@ -56,26 +54,109 @@ print(f"Signed text: {result.signed_text}")
 ### Verification
 
 ```python
-# Verify signed content
 verification = client.verify(result.signed_text)
 
 if verification.is_valid:
-    print(f"✅ Valid signature from {verification.organization_name}")
+    print(f"[OK] Valid signature from {verification.organization_name}")
     print(f"Signed at: {verification.signature_timestamp}")
 else:
-    print(f"❌ Invalid signature (tampered: {verification.tampered})")
+    print(f"[ERR] Invalid signature (tampered: {verification.tampered})")
 ```
 
 ### Sentence Lookup
 
 ```python
-# Look up sentence provenance
 provenance = client.lookup("Breaking news: Scientists discover new exoplanet.")
 
 if provenance.found:
     print(f"Found in: {provenance.document_title}")
     print(f"Published by: {provenance.organization_name}")
     print(f"Date: {provenance.publication_date}")
+```
+
+## Framework Integrations
+
+Install optional extras to plug signing into your favorite orchestration stack:
+
+```bash
+pip install encypher-enterprise[all]           # Everything
+pip install encypher-enterprise[langchain]     # LangChain helpers
+pip install encypher-enterprise[openai]        # OpenAI client wrappers
+pip install encypher-enterprise[litellm]       # LiteLLM integration
+```
+
+### LangChain
+
+```python
+from encypher_enterprise import EncypherClient
+from encypher_enterprise.integrations.langchain import apply_signing
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+
+prompt = ChatPromptTemplate.from_messages([
+    ("system", "You are a provenance assistant."),
+    ("human", "{question}"),
+])
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
+chain = prompt | llm
+
+with EncypherClient(api_key="encypher_live_xxx") as client:
+    signed_chain = apply_signing(chain, client, document_title="LangChain Demo")
+    result = signed_chain.invoke({"question": "Why use C2PA?"})
+    print(result["signed_text"])
+```
+
+### OpenAI
+
+```python
+from encypher_enterprise import EncypherClient
+from encypher_enterprise.integrations.openai import chat_completion_with_signing
+
+with EncypherClient(api_key="encypher_live_xxx") as client:
+    signed = chat_completion_with_signing(
+        client,
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You track provenance."},
+            {"role": "user", "content": "Summarize C2PA."},
+        ],
+        document_title="OpenAI Demo",
+    )
+    print(signed.signed_text)
+```
+
+### LiteLLM
+
+```python
+from encypher_enterprise import EncypherClient
+from encypher_enterprise.integrations.litellm import completion_with_signing
+
+with EncypherClient(api_key="encypher_live_xxx") as client:
+    signed = completion_with_signing(
+        client,
+        model="gpt-4o-mini",
+        messages=[
+            {"role": "system", "content": "You track provenance."},
+            {"role": "user", "content": "Give me two reasons to sign content."},
+        ],
+        document_title="LiteLLM Demo",
+    )
+    print(signed.signed_text)
+```
+
+See `examples/` for runnable scripts covering each adapter, including streaming usage.
+
+## Command-Line Interface
+
+The SDK ships with a `encypher` CLI that mirrors the Enterprise API onboarding flow. The tool reads `ENCYPHER_API_KEY` from your environment and loads a local `.env` file when present.
+
+```bash
+pip install encypher-enterprise
+export ENCYPHER_API_KEY=encypher_live_xxx
+encypher sign --text "Hello world" --title "CLI Demo"
+encypher verify --file signed.txt
+encypher lookup "Hello world"
+encypher stats
 ```
 
 ## Streaming Support
@@ -379,13 +460,14 @@ class LookupResponse:
 
 ## Examples
 
-See the `examples/` directory for more examples:
+See the `examples/` directory for runnable scripts:
 
 - `basic_signing.py` - Basic signing and verification
 - `streaming_chat.py` - Real-time LLM streaming
-- `langchain_example.py` - LangChain integration
-- `batch_processing.py` - Batch processing multiple documents
 - `async_example.py` - Async operations
+- `langchain_integration.py` - LangChain pipeline adapter
+- `openai_integration.py` - OpenAI helper usage
+- `litellm_integration.py` - LiteLLM helper usage
 
 ## Development
 
@@ -467,4 +549,4 @@ Copyright (c) 2025 EncypherAI. All rights reserved.
 
 ---
 
-**Built with ❤️ by the EncypherAI team**
+**Built with care by the EncypherAI team**

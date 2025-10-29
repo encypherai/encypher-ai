@@ -12,6 +12,10 @@ class SignRequest(BaseModel):
     document_title: Optional[str] = Field(None, description="Optional document title")
     document_url: Optional[str] = Field(None, description="Optional document URL")
     document_type: str = Field(default="article", description="Document type")
+    custom_metadata: Optional[Dict[str, Any]] = Field(
+        default=None,
+        description="Optional metadata payload to persist alongside the manifest",
+    )
 
 
 class SignResponse(BaseModel):

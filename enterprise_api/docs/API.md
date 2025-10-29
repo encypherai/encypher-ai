@@ -13,6 +13,43 @@ The Encypher Enterprise API provides C2PA-compliant content signing and verifica
 - **Sentence Lookup**: Track individual sentence provenance
 - **Certificate Management**: Automated SSL.com certificate provisioning
 
+## SDK Integration
+
+Python teams can call the Enterprise API through the official SDK that ships with this repository.
+
+```bash
+pip install encypher-enterprise
+```
+
+```python
+from encypher_enterprise import EncypherClient
+
+client = EncypherClient(
+    api_key="encypher_live_xxx",
+    base_url="https://api.encypherai.com",
+)
+
+sign_response = client.sign(
+    text="Example article content",
+    title="SDK quick start",
+)
+
+verify_response = client.verify(sign_response.signed_text)
+```
+
+See `enterprise_sdk/README.md` for streaming, async, and framework integrations, and track upcoming milestones in `enterprise_sdk/SDK_WBS.md`.
+
+## C2PA Text Embedding Compliance
+
+The `POST /api/v1/sign` endpoint produces text that follows the [`C2PATextManifestWrapper`](../../docs/c2pa/Manifests_Text.adoc) guidance. Key guarantees:
+
+- Each response appends a single zero-width no-break space (U+FEFF) followed by one contiguous block of variation selectors encoding the manifest store.
+- The wrapper header contains the literal `C2PATXT\0` magic value, wrapper version `1`, and the manifest length before the JUMBF payload.
+- Text is NFC-normalised prior to hashing and the wrapper byte-range is recorded in the `c2pa.hash.data` assertion `exclusions`, enabling deterministic validation.
+- Verification (`POST /api/v1/verify`) rejects malformed wrappers and multiple wrappers, returning the spec-aligned `manifest.text.corruptedWrapper` or `manifest.text.multipleWrappers` statuses.
+
+These behaviours allow any downstream validator that implements the C2PA unstructured text spec to parse and trust our basic embedding format.
+
 ## Authentication
 
 All authenticated endpoints require an API key in the Authorization header:
@@ -24,6 +61,7 @@ Authorization: Bearer encypher_<your_api_key>
 **Getting an API Key:**
 - Preview phase: Contact sales@encypherai.com for beta access
 - Production: Sign up at https://dashboard.encypherai.com
+- Local development: set `DEMO_API_KEY` in `.env` to enable a sandbox key that bypasses database lookups
 
 ## Rate Limiting
 
@@ -297,12 +335,84 @@ All errors follow this format:
 
 ---
 
-## Webhooks (Coming Soon)
+## Webhooks
 
-Future versions will support webhooks for:
-- Certificate issuance notifications
-- Quota warning notifications
-- Tamper detection alerts
+Webhook delivery is rolling out in stages during the preview window. The management APIs are available now; event delivery will begin once the preview webhook worker is enabled (target: Q4 2025).
+
+### Supported Events
+- `certificate.issued` - SSL.com certificate issued/renewed
+- `quota.warning` - monthly usage exceeds configurable thresholds
+- `verification.tamper_detected` - a signed asset fails validation
+
+### POST /api/v1/webhooks
+Register a webhook endpoint for your organization.
+
+**Authentication:** Required - `can_sign` or `can_verify`
+
+**Request**
+```json
+{
+  "url": "https://example.com/webhooks/encypher",
+  "description": "Primary monitoring hook",
+  "events": ["certificate.issued", "verification.tamper_detected"],
+  "secret": "optional-shared-secret"
+}
+```
+
+**Response**
+```json
+{
+  "success": true,
+  "webhook_id": "wh_01HX...",
+  "status": "pending",
+  "events": ["certificate.issued", "verification.tamper_detected"],
+  "url": "https://example.com/webhooks/encypher"
+}
+```
+
+> **Note:** While in preview the endpoint returns `status: "pending"`. Events are queued but not delivered until the webhook worker is enabled.
+
+### GET /api/v1/webhooks
+List registered webhooks.
+
+```json
+{
+  "success": true,
+  "webhooks": [
+    {
+      "webhook_id": "wh_01HX...",
+      "url": "https://example.com/webhooks/encypher",
+      "events": ["certificate.issued"],
+      "status": "pending",
+      "created_at": "2025-02-12T18:44:00Z"
+    }
+  ]
+}
+```
+
+### DELETE /api/v1/webhooks/{webhook_id}
+Remove a webhook registration. Returns `{ "success": true }` on success.
+
+### Delivery Format
+Delivered events POST a JSON body with HMAC-SHA256 authentication if a secret is supplied:
+
+```json
+{
+  "id": "evt_01HX...",
+  "type": "verification.tamper_detected",
+  "created_at": "2025-02-13T09:30:00Z",
+  "data": {
+    "document_id": "doc_abc123",
+    "signer_id": "org_123",
+    "verification_summary": {
+      "is_valid": false,
+      "failure_reason": "manifest.text.corruptedWrapper"
+    }
+  }
+}
+```
+
+Preview deliveries are synchronous and retried up to three times. Production delivery will move to an asynchronous worker with exponential backoff and dead-letter queues.
 
 ---
 
