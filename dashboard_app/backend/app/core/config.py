@@ -28,6 +28,11 @@ class Settings(BaseModel):
         "http://localhost:8000",  # FastAPI backend
         "http://localhost",
     ]
+
+    # Enterprise API integration
+    ENTERPRISE_API_BASE_URL: str = os.getenv("ENTERPRISE_API_BASE_URL", "http://localhost:9000/api/v1")
+    ENTERPRISE_API_KEY: Optional[str] = os.getenv("ENTERPRISE_API_KEY")
+    ENTERPRISE_API_TIMEOUT: float = float(os.getenv("ENTERPRISE_API_TIMEOUT", "30"))
     
     # Email settings
     EMAILS_FROM_EMAIL: str = os.getenv("EMAILS_FROM_EMAIL", "noreply@encypherai.com")

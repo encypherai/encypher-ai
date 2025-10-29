@@ -1,0 +1,66 @@
+[project]
+name = "encypher-enterprise-api"
+version = "1.0.0-preview"
+description = "Enterprise API for C2PA-compliant content signing and verification"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "sqlalchemy>=2.0.0",
+    "asyncpg>=0.29.0",
+    "aiosqlite>=0.20.0",
+    "psycopg2-binary>=2.9.9",
+    "python-jose[cryptography]>=3.3.0",
+    "pydantic>=2.4.0",
+    "pydantic-settings>=2.0.0",
+    "cryptography>=41.0.0",
+    "httpx>=0.25.0",
+    "jinja2>=3.1.2",
+    "python-multipart>=0.0.6",
+    "python-dotenv>=1.0.0",
+    "encypher-ai",
+    "spacy>=3.8.7",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "faker>=19.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+markers = [
+    "real_db: marks tests that require a live PostgreSQL database",
+]
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.black]
+line-length = 100
+target-version = ['py39']
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[tool.uv.sources]
+encypher-ai = { path = "../encypher-ai", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.1.1",
+]

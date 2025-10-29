@@ -4,6 +4,7 @@ version = "0.1.0"
 description = "Root project file for EncypherAI commercial tools. This primarily serves as a marker for UV and may contain shared development dependencies."
 requires-python = ">=3.9"
 dependencies = [
+    "encypher-ai",
     "comtypes>=1.4.11",
     "docx2txt>=0.9",
     "fpdf>=1.7.2",
@@ -18,6 +19,16 @@ dependencies = [
 [tool.uv]
 
 [tool.uv.workspace]
+members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "shared_commercial_libs", "enterprise_api"]
+
+[tool.uv.sources]
+encypher-ai = { path = "./encypher-ai", editable = true }
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "real_db: marks tests that require a live database"
+]
 members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "shared_commercial_libs"]
 
 [tool.uv.sources]

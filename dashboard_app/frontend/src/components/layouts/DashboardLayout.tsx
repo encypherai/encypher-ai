@@ -63,6 +63,9 @@ export default function DashboardLayout({ children, currentPath }: DashboardLayo
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: <HomeIcon className="h-5 w-5" /> },
     { name: 'Reports', href: '/dashboard/reports', icon: <ChartBarIcon className="h-5 w-5" /> },
+    { name: 'Signing', href: '/dashboard/signing', icon: <DocumentTextIcon className="h-5 w-5" /> },
+    { name: 'Scanning', href: '/dashboard/signing/scan', icon: <DocumentTextIcon className="h-5 w-5" /> },
+    { name: 'Demo', href: '/dashboard/demo', icon: <DocumentTextIcon className="h-5 w-5" /> },
     { name: 'Audit Logs', href: '/dashboard/audit-logs', icon: <DocumentTextIcon className="h-5 w-5" /> },
     { name: 'Settings', href: '/dashboard/settings', icon: <CogIcon className="h-5 w-5" /> },
     { name: 'Profile', href: '/dashboard/profile', icon: <UserIcon className="h-5 w-5" /> },

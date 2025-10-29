@@ -1,0 +1,16 @@
+include LICENSE.md
+include README.md
+include CONTRIBUTING.md
+include CODE_OF_CONDUCT.md
+include pyproject.toml
+include pytest.ini
+
+recursive-include encypher *.py
+recursive-include examples *.py
+recursive-include tests *.py
+
+recursive-exclude * __pycache__
+recursive-exclude * *.py[cod]
+recursive-exclude * .git
+recursive-exclude * .env*
+recursive-exclude * *.egg-info
