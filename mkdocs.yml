@@ -76,6 +76,7 @@ nav:
   - Home: index.md
   - Package Documentation:
     - Overview: package/index.md
+    - Enterprise SDK: package/sdk/index.md
     - Getting Started:
       - Installation: package/getting-started/installation.md
       - Quick Start: package/getting-started/quickstart.md
