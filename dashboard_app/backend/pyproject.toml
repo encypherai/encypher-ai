@@ -10,9 +10,11 @@ dependencies = [
     "fastapi>=0.115.12",
     "passlib[bcrypt]>=1.7.4",
     "pydantic[email]>=2.11.5",
+    "python-docx>=1.1.2",
     "python-dotenv>=1.1.0",
     "python-jose[cryptography]>=3.5.0",
     "python-multipart>=0.0.20",
+    "reportlab>=4.4.1",
     "sqlalchemy>=2.0.41",
     "uvicorn[standard]>=0.34.2",
 ]

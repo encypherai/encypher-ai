@@ -1,0 +1,5 @@
+This 󠅫󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅠󠅑󠅩󠅜󠅟󠅑󠅔󠄒󠄪󠅫󠄒󠅓󠅥󠅣󠅤󠅟󠅝󠅏󠅝󠅕󠅤󠅑󠅔󠅑󠅤󠅑󠄒󠄪󠅫󠄒󠅔󠅟󠅓󠅥󠅝󠅕󠅞󠅤󠅏󠅙󠅔󠄒󠄪󠄒󠅔󠅟󠅓󠄝󠅟󠅢󠅙󠅗󠅙󠅞󠅑󠅜󠄝󠄡󠄢󠄣󠄒󠄜󠄒󠅕󠅨󠅑󠅝󠅠󠅜󠅕󠄒󠄪󠄒󠅤󠅑󠅝󠅠󠅕󠅢󠅕󠅔󠄒󠄜󠄒󠅠󠅥󠅢󠅠󠅟󠅣󠅕󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠅙󠅞󠅗󠄒󠄜󠄒󠅦󠅕󠅢󠅣󠅙󠅟󠅞󠄒󠄪󠄒󠄡󠄞󠄠󠄞󠄠󠄒󠅭󠄜󠄒󠅖󠅟󠅢󠅝󠅑󠅤󠄒󠄪󠄒󠅒󠅑󠅣󠅙󠅓󠄒󠄜󠄒󠅝󠅟󠅔󠅕󠅜󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅝󠅟󠅔󠅕󠅜󠄝󠄤󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠄜󠄒󠅤󠅙󠅝󠅕󠅣󠅤󠅑󠅝󠅠󠄒󠄪󠄒󠄢󠄠󠄢󠄥󠄝󠄠󠄦󠄝󠄠󠄣󠅄󠄢󠄠󠄪󠄡󠄠󠄪󠄤󠄠󠅊󠄒󠅭󠄜󠄒󠅣󠅙󠅗󠅞󠅑󠅤󠅥󠅢󠅕󠄒󠄪󠄒󠄸󠅒󠅣󠄸󠅠󠄼󠅃󠄼󠄱󠅊󠄩󠅈󠅁󠄳󠄥󠄼󠅅󠅓󠄱󠅆󠅡󠅉󠅜󠅖󠅉󠅛󠄣󠅓󠄨󠄝󠄠󠅕󠅢󠅃󠅗󠅙󠅀󠅊󠄴󠅑󠄶󠅜󠅠󠅦󠄠󠄵󠅚󠄢󠅕󠄶󠅗󠄺󠅠󠅥󠅙󠅚󠄴󠅅󠄺󠅈󠄵󠄼󠄻󠅉󠅖󠅊󠅉󠄦󠄦󠅂󠅇󠅓󠅜󠅅󠅪󠅣󠄡󠄸󠄩󠄨󠅜󠅗󠅆󠅒󠄲󠅧󠄒󠄜󠄒󠅣󠅙󠅗󠅞󠅕󠅢󠅏󠅙󠅔󠄒󠄪󠄒󠅤󠅕󠅣󠅤󠄝󠅣󠅙󠅗󠅞󠅕󠅢󠄒󠅭is an example file with tampered EncypherAI metadata.
+The metadata was originally valid, but the content has been modified [THIS TEXT WAS MODIFIED AFTER SIGNING]
+after the metadata was embedded.
+
+This file should fail verification when scanned by the audit-log-cli tool.
