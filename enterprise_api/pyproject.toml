@@ -19,6 +19,7 @@ dependencies = [
     "python-multipart>=0.0.6",
     "python-dotenv>=1.0.0",
     "encypher-ai",
+    "spacy>=3.8.7",
 ]
 
 [project.optional-dependencies]
@@ -56,3 +57,10 @@ packages = ["app"]
 
 [tool.uv.sources]
 encypher-ai = { path = "../encypher-ai", editable = true }
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.5",
+    "pytest-asyncio>=1.0.0",
+    "pytest-cov>=6.1.1",
+]

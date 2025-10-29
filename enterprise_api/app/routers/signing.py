@@ -210,7 +210,10 @@ async def sign_content(
             )
 
     # 9. Generate verification URL
-    if is_demo_org:
+    if settings.is_development:
+        # In development, use localhost for verification
+        verification_url = f"http://localhost:9000/api/v1/verify/{document_id}"
+    elif is_demo_org:
         verification_url = f"https://verify.{settings.infrastructure_domain}/demo/{document_id}"
     else:
         verification_url = f"https://verify.{settings.infrastructure_domain}/{document_id}"

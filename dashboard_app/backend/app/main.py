@@ -5,14 +5,15 @@ from dotenv import load_dotenv
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+# Load environment variables from .env file BEFORE importing settings
+load_dotenv()
+
 from app.api.api import api_router
 from app.core.config import settings
 from app.core.database import Base, engine, AsyncSessionLocal
 from app.services.user import create_user, get_user_by_email, get_user_by_username
 from app.utils.caching import cleanup_expired_cache_entries
-
-# Load environment variables from .env file
-load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

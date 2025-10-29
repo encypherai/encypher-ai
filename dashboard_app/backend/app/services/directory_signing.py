@@ -7,7 +7,7 @@ import fnmatch
 import hashlib
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, Iterable, List, Optional
 
 import httpx
 

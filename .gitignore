@@ -164,3 +164,9 @@ encypher-ai/.mypy_cache/
 encypher-ai/site/
 encypher-ai/.env
 encypher-ai/.coverage
+
+# Demo Files
+dashboard_app/backend/demo_corpus/
+
+# local-only files
+docs/patent_ideas/

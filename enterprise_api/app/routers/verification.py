@@ -23,6 +23,155 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
+@router.get("/verify/{document_id}")
+async def verify_by_document_id(
+    document_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Verify a document by its ID (for clickable verification links).
+    
+    This endpoint retrieves the signed text from the database and verifies it.
+    Returns HTML page with verification results for browser display.
+    
+    Args:
+        document_id: Document ID to verify
+        db: Database session
+        
+    Returns:
+        HTML page with verification results
+    """
+    from fastapi.responses import HTMLResponse
+    
+    # Retrieve document from database
+    result = await db.execute(
+        text("SELECT signed_text, title, organization_id FROM documents WHERE document_id = :doc_id"),
+        {"doc_id": document_id}
+    )
+    row = result.fetchone()
+    
+    if not row:
+        return HTMLResponse(
+            content=f"""
+            <html>
+                <head><title>Document Not Found</title></head>
+                <body style="font-family: sans-serif; padding: 40px; max-width: 800px; margin: 0 auto;">
+                    <h1>Document Not Found in Database</h1>
+                    <p><strong>Document ID:</strong> {document_id}</p>
+                    
+                    <div style="background: #fff3cd; padding: 20px; border-radius: 8px; border-left: 4px solid #ffc107; margin: 20px 0;">
+                        <h3 style="margin-top: 0;">Demo Organization Note</h3>
+                        <p>This document was signed using a demo API key. Demo documents are not stored in the database for verification.</p>
+                        <p>To verify this document:</p>
+                        <ol>
+                            <li>Copy the signed text from the file</li>
+                            <li>Use the POST <code>/api/v1/verify</code> endpoint with the signed text in the request body</li>
+                            <li>Or use the Enterprise SDK's verify method</li>
+                        </ol>
+                    </div>
+                    
+                    <h3>Alternative: Verify via API</h3>
+                    <p>Use this curl command to verify the signed content:</p>
+                    <pre style="background: #f5f5f5; padding: 15px; border-radius: 4px; overflow-x: auto;">curl -X POST http://localhost:9000/api/v1/verify \\
+  -H "Content-Type: application/json" \\
+  -d '{{"text": "YOUR_SIGNED_TEXT_HERE"}}'</pre>
+                    
+                    <p style="margin-top: 40px; color: #666; font-size: 14px;">
+                        For production use with persistent verification, use a non-demo API key.
+                    </p>
+                </body>
+            </html>
+            """,
+            status_code=404
+        )
+    
+    mapping = getattr(row, "_mapping", None)
+    signed_text = mapping["signed_text"] if mapping else row[0]
+    title = mapping["title"] if mapping else row[1]
+    org_id = mapping["organization_id"] if mapping else row[2]
+    
+    # Verify the signed text using the existing verify logic
+    # Get certificate for public key resolution
+    cert_result = await db.execute(
+        text("SELECT organization_id, certificate_pem FROM organizations")
+    )
+    cert_rows = cert_result.fetchall() if hasattr(cert_result, "fetchall") else [cert_result.fetchone()] if hasattr(cert_result, "fetchone") else []
+    
+    cert_map = {}
+    for cert_row in cert_rows:
+        if not cert_row:
+            continue
+        cert_mapping = getattr(cert_row, "_mapping", None)
+        cert_org_id = cert_mapping["organization_id"] if cert_mapping else cert_row[0]
+        certificate_pem = cert_mapping["certificate_pem"] if cert_mapping else cert_row[1]
+        if certificate_pem:
+            cert_map[cert_org_id] = certificate_pem
+    
+    def resolve_public_key(signer_id: str):
+        cert_pem = cert_map.get(signer_id)
+        if not cert_pem:
+            return None
+        try:
+            return extract_public_key_from_certificate(cert_pem)
+        except Exception:
+            return None
+    
+    try:
+        is_valid, signer_id, manifest = UnicodeMetadata.verify_metadata(
+            text=signed_text,
+            public_key_resolver=resolve_public_key
+        )
+    except Exception as e:
+        is_valid = False
+        manifest = {}
+    
+    # Get organization name
+    org_result = await db.execute(
+        text("SELECT organization_name FROM organizations WHERE organization_id = :org_id"),
+        {"org_id": org_id}
+    )
+    org_row = org_result.fetchone()
+    org_mapping = getattr(org_row, "_mapping", None) if org_row else None
+    org_name = org_mapping["organization_name"] if org_mapping else (org_row[0] if org_row else "Unknown")
+    
+    # Return HTML verification page
+    status_color = "green" if is_valid else "red"
+    status_text = "✓ Valid" if is_valid else "✗ Invalid"
+    
+    return HTMLResponse(content=f"""
+    <html>
+        <head>
+            <title>Verification Result - {title or document_id}</title>
+            <style>
+                body {{ font-family: sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }}
+                .status {{ font-size: 24px; font-weight: bold; color: {status_color}; margin: 20px 0; }}
+                .info {{ background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; }}
+                .label {{ font-weight: bold; }}
+                pre {{ background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto; }}
+            </style>
+        </head>
+        <body>
+            <h1>Content Verification</h1>
+            <div class="status">{status_text}</div>
+            
+            <div class="info">
+                <p><span class="label">Document ID:</span> {document_id}</p>
+                <p><span class="label">Title:</span> {title or "Untitled"}</p>
+                <p><span class="label">Organization:</span> {org_name}</p>
+                <p><span class="label">Signer ID:</span> {signer_id or "Unknown"}</p>
+            </div>
+            
+            <h2>Manifest Details</h2>
+            <pre>{str(manifest)}</pre>
+            
+            <p style="margin-top: 40px; color: #666; font-size: 14px;">
+                Verified by EncypherAI Enterprise API
+            </p>
+        </body>
+    </html>
+    """)
+
+
 @router.post("/verify", response_model=VerifyResponse)
 async def verify_content(
     request: VerifyRequest,

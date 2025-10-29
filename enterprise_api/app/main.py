@@ -9,9 +9,14 @@ from fastapi.responses import JSONResponse
 import time
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
+
+from sqlalchemy import text
 
 from app.config import settings
 from app.routers import signing, verification, lookup, onboarding
+from app.api.v1.api import api_router as api_v1_router
+from app.database import engine
 
 # Configure logging
 logging.basicConfig(
@@ -29,10 +34,32 @@ async def lifespan(app: FastAPI):
         f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Not configured'}"
     )
     logger.info(f"SSL.com API: {settings.ssl_com_api_url}")
+    
+    # Initialize database schema on startup
+    try:
+        logger.info("Initializing database schema...")
+        # Look for schema file in scripts directory
+        schema_file = Path(__file__).parent.parent / "scripts" / "init_db.sql"
+        if schema_file.exists():
+            async with engine.begin() as conn:
+                schema_sql = schema_file.read_text()
+                # Split by semicolon and execute each statement
+                for statement in schema_sql.split(';'):
+                    statement = statement.strip()
+                    if statement:
+                        await conn.execute(text(statement))
+            logger.info("Database schema initialized successfully")
+        else:
+            logger.warning(f"Schema file not found at {schema_file}")
+            logger.info("Skipping schema initialization - database may already be initialized")
+    except Exception as e:
+        logger.error(f"Failed to initialize database schema: {e}", exc_info=True)
+        logger.info("Continuing startup - database may already be initialized")
+    
     try:
         yield
     finally:
-        logger.info("=K Encypher Enterprise API shutting down...")
+        logger.info("Encypher Enterprise API shutting down...")
 
 # Create FastAPI app
 app = FastAPI(
@@ -127,6 +154,9 @@ app.include_router(signing.router, prefix="/api/v1", tags=["Signing"])
 app.include_router(verification.router, prefix="/api/v1", tags=["Verification"])
 app.include_router(lookup.router, prefix="/api/v1", tags=["Lookup"])
 app.include_router(onboarding.router, prefix="/api/v1/onboarding", tags=["Onboarding"])
+
+# Include v1 API router (Merkle tree endpoints)
+app.include_router(api_v1_router, prefix="/api/v1")
 
 
 # Global exception handler
