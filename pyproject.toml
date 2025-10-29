@@ -14,3 +14,9 @@ members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "sh
 
 [tool.uv.sources]
 encypher-ai = { path = "./encypher-ai", editable = true }
+
+[tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
+markers = [
+    "real_db: marks tests that require a live database"
+]
