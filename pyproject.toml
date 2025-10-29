@@ -5,6 +5,15 @@ description = "Root project file for EncypherAI commercial tools. This primarily
 requires-python = ">=3.9"
 dependencies = [
     "encypher-ai",
+    "comtypes>=1.4.11",
+    "docx2txt>=0.9",
+    "fpdf>=1.7.2",
+    "pdfminer-six>=20250506",
+    "pikepdf>=9.8.1",
+    "pypdf2>=3.0.1",
+    "python-docx>=1.1.2",
+    "pywin32>=310",
+    "reportlab>=4.4.1",
 ]
 
 [tool.uv]
@@ -20,3 +29,7 @@ asyncio_default_fixture_loop_scope = "function"
 markers = [
     "real_db: marks tests that require a live database"
 ]
+members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "shared_commercial_libs"]
+
+[tool.uv.sources]
+"encypher_commercial_shared" = { workspace = true }
