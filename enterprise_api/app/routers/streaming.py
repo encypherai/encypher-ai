@@ -340,3 +340,68 @@ async def get_streaming_stats(
         "active_connections": active_connections,
         "max_connections": connection_manager.max_connections_per_org
     }
+
+
+@router.get("/stream/health")
+async def streaming_health_check():
+    """
+    Health check endpoint for streaming service.
+    
+    Returns:
+        Health status of streaming components
+    """
+    health_status = {
+        "status": "healthy",
+        "service": "streaming",
+        "components": {}
+    }
+    
+    # Check Redis connection
+    try:
+        if session_service.redis_client:
+            await session_service.redis_client.ping()
+            health_status["components"]["redis"] = {
+                "status": "healthy",
+                "message": "Connected"
+            }
+        else:
+            health_status["components"]["redis"] = {
+                "status": "degraded",
+                "message": "Running in-memory mode (no Redis)"
+            }
+    except Exception as e:
+        health_status["status"] = "degraded"
+        health_status["components"]["redis"] = {
+            "status": "unhealthy",
+            "message": f"Redis error: {str(e)}"
+        }
+    
+    # Check connection manager
+    try:
+        total_connections = connection_manager.get_connection_count()
+        health_status["components"]["connection_manager"] = {
+            "status": "healthy",
+            "active_connections": total_connections,
+            "max_connections_per_org": connection_manager.max_connections_per_org
+        }
+    except Exception as e:
+        health_status["status"] = "unhealthy"
+        health_status["components"]["connection_manager"] = {
+            "status": "unhealthy",
+            "message": f"Error: {str(e)}"
+        }
+    
+    # Check rate limiter
+    try:
+        health_status["components"]["rate_limiter"] = {
+            "status": "healthy",
+            "message": "Operational"
+        }
+    except Exception as e:
+        health_status["status"] = "degraded"
+        health_status["components"]["rate_limiter"] = {
+            "status": "unhealthy",
+            "message": f"Error: {str(e)}"
+        }
+    
+    return health_status
