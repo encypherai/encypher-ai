@@ -103,6 +103,87 @@ cd services/user-service && uv run python -m app.main
 - Docker containerization
 - Health check endpoints
 
+---
+
+## 🏛️ Architecture Decision: Microservices vs Enterprise API
+
+### Why Two Separate Systems?
+
+We maintain **two distinct architectures** for different use cases and customer tiers:
+
+#### 🔧 **Microservices** (Core Platform)
+**Purpose:** Foundation services for all tiers (Free, Professional, Enterprise)
+
+**Features Included:**
+- ✅ **Basic Document Signing** - Ed25519 signatures with C2PA manifests
+- ✅ **Standard Verification** - Signature validation and tampering detection
+- ✅ **Authentication & Authorization** - JWT, OAuth, session management
+- ✅ **API Key Management** - Generation, rotation, permissions
+- ✅ **User & Team Management** - Profiles, organizations, preferences
+- ✅ **Usage Analytics** - Metrics, statistics, reporting
+- ✅ **Billing & Subscriptions** - Payment processing, invoicing
+- ✅ **Notifications** - Email, SMS, webhooks
+
+**Best For:**
+- Standard content authentication
+- High-volume basic signing operations
+- Multi-tenant SaaS platform
+- Free and Professional tier customers
+
+#### 🚀 **Enterprise API** (Advanced Features)
+**Purpose:** Premium enterprise-only capabilities
+
+**Features Included:**
+- 🔒 **Merkle Tree Encoding** - Hierarchical content authentication
+- 🔒 **Source Attribution** - Track content origins and modifications
+- 🔒 **Plagiarism Detection** - Advanced content similarity analysis
+- 🔒 **Batch Operations** - High-volume processing with queuing
+- 🔒 **Advanced Analytics** - Deep insights and forensic analysis
+- 🔒 **Custom Integrations** - Framework wrappers and CI/CD tools
+
+**Best For:**
+- Enterprise customers with complex requirements
+- Content provenance tracking
+- Legal and compliance use cases
+- High-security applications
+
+### 🎯 Architectural Benefits
+
+| Benefit | Description |
+|---------|-------------|
+| **Clear Licensing** | Easy to enforce enterprise-only features |
+| **Independent Scaling** | Scale basic and advanced features separately |
+| **Security** | Enterprise algorithms protected from basic tier |
+| **Simplicity** | Core services stay lean and fast |
+| **Flexibility** | Deploy services independently based on needs |
+
+### 🔄 Integration Pattern
+
+```
+┌─────────────────┐
+│  Client Apps    │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+┌───▼──┐  ┌──▼────────┐
+│ Core │  │ Enterprise│
+│ μSvcs│  │    API    │
+└──────┘  └───────────┘
+    │          │
+    └────┬─────┘
+         │
+    ┌────▼────┐
+    │ Storage │
+    └─────────┘
+```
+
+**Customers choose based on their tier:**
+- **Free/Pro:** Use microservices directly
+- **Enterprise:** Use Enterprise API (which can leverage microservices for auth/billing)
+
+---
+
 ### 🔌 Integrations
 
 | Directory | Integration | Description |
@@ -129,29 +210,40 @@ cd services/user-service && uv run python -m app.main
 
 ## 🏗️ Product Tiers & Licensing
 
+> **Architecture Note:** Free/Pro tiers use **Microservices**, Enterprise tier adds **Enterprise API**. [See Architecture Decision](#️-architecture-decision-microservices-vs-enterprise-api)
+
 ### Free Tier
+**Uses:** Core Microservices
 - ✅ Audit Log CLI (basic reporting)
-- ✅ C2PA-compliant signing & verification
+- ✅ C2PA-compliant signing & verification (via Encoding/Verification Services)
 - ✅ Public verification pages
 - ✅ 1,000 API requests/month
+- ✅ Basic authentication & API keys
 
 ### Professional Tier
+**Uses:** Core Microservices + Advanced Features
 - ✅ All Free features
 - ✅ Policy Validator CLI
 - ✅ Sentence-level lookup
 - ✅ Custom metadata schemas
 - ✅ 10,000 API requests/month
+- ✅ Team management
+- ✅ Usage analytics dashboard
 
 ### Enterprise Tier
+**Uses:** Core Microservices + Enterprise API
 - ✅ All Professional features
-- ✅ Enterprise API (self-hosted or managed)
-- ✅ Enterprise SDK (batch operations, CI/CD)
+- ✅ **Enterprise API** (self-hosted or managed)
+  - 🔒 Merkle tree encoding
+  - 🔒 Source attribution & plagiarism detection
+  - 🔒 Batch operations with queuing
+  - 🔒 Advanced forensic analysis
+- ✅ Enterprise SDK (Python, CI/CD integration)
 - ✅ Compliance Dashboard
-- ✅ Merkle tree encoding
-- ✅ Source attribution & plagiarism detection
 - ✅ WordPress integration
 - ✅ Unlimited API requests
 - ✅ SLA guarantee (99.9%)
+- ✅ Dedicated support
 
 ---
 
