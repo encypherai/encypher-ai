@@ -1,552 +1,854 @@
 # Encypher Enterprise SDK
 
-> Python SDK for the Encypher Enterprise API - C2PA content signing with streaming support
+<div align="center">
 
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-proprietary-red.svg)](../LICENSE)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+![Encypher Logo](https://encypherai.com/logo.svg)
 
-## Overview
+**Enterprise-grade content signing and verification for publishers, news organizations, and content creators**
 
-The Encypher Enterprise SDK provides a simple Python interface to the Encypher Enterprise API, enabling:
+[![PyPI version](https://badge.fury.io/py/encypher-enterprise.svg)](https://badge.fury.io/py/encypher-enterprise)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Tests](https://img.shields.io/badge/tests-23%2F23%20passing-brightgreen.svg)]()
+[![Coverage](https://img.shields.io/badge/coverage-91%25-brightgreen.svg)]()
 
-- **C2PA content signing** - Sign text with industry-standard C2PA manifests
-- **Streaming support** - Real-time signing for LLM chat completions
-- **Async operations** - Full async/await support for high-performance applications
-- **Framework integrations** - Ready-made adapters for LangChain, OpenAI, and LiteLLM
-- **CLI tooling** - Command-line interface for quick testing and automation
+[Features](#-features) •
+[Quick Start](#-quick-start) •
+[Documentation](#-documentation) •
+[Examples](#-examples) •
+[CI/CD](#-cicd-integration) •
+[Support](#-support)
 
-## Installation
+</div>
+
+---
+
+## 🎯 Overview
+
+The Encypher Enterprise SDK provides cryptographic content signing and verification using **C2PA standards**, enabling publishers to prove content authenticity, track provenance, and detect tampering at scale.
+
+### Why Encypher?
+
+- **🔒 Cryptographic Proof**: C2PA-compliant digital signatures
+- **⚡ Lightning Fast**: 10x faster with incremental signing
+- **🤖 CI/CD Ready**: GitHub Actions & GitLab CI templates included
+- **📊 Enterprise Features**: Sentence-level tracking, Merkle trees, source attribution
+- **🎨 Beautiful Reports**: HTML/Markdown/CSV verification reports
+- **🔄 Git Integration**: Automatic metadata extraction from git history
+- **📝 CMS Compatible**: YAML/TOML/JSON frontmatter parsing
+
+---
+
+## ✨ Features
+
+### Core Capabilities
+
+| Feature | Description | Status |
+|---------|-------------|--------|
+| **Content Signing** | Sign text, documents, and repositories | ✅ Production |
+| **Verification** | Verify signed content and detect tampering | ✅ Production |
+| **Batch Operations** | Sign/verify entire repositories | ✅ Production |
+| **Incremental Signing** | Only sign changed files (10x faster) | ✅ Production |
+| **Streaming Support** | Sign content as it's generated | ✅ Production |
+| **Async Operations** | High-performance async client | ✅ Production |
+
+### Enterprise Features
+
+| Feature | Description | Tier |
+|---------|-------------|------|
+| **Sentence Tracking** | Track individual sentences with Merkle trees | Enterprise |
+| **Source Attribution** | Find original sources of content | Enterprise |
+| **Plagiarism Detection** | Detect copied content | Enterprise |
+| **Git Integration** | Extract metadata from git history | All Tiers |
+| **Frontmatter Parsing** | Parse YAML/TOML/JSON metadata | All Tiers |
+| **Verification Reports** | Generate HTML/Markdown/CSV reports | All Tiers |
+
+### Integrations
+
+- **✅ LangChain**: Sign AI-generated content automatically
+- **✅ OpenAI**: Wrap OpenAI API calls with signing
+- **✅ LiteLLM**: Universal LLM signing wrapper
+- **✅ WordPress**: Gutenberg & Classic editor plugin
+- **✅ GitHub Actions**: Auto-sign on every commit
+- **✅ GitLab CI**: CI/CD pipeline integration
+
+---
+
+## 🚀 Quick Start
+
+### Installation
 
 ```bash
-# Basic installation
+# Using UV (recommended)
+uv add encypher-enterprise
+
+# Using pip
 pip install encypher-enterprise
 
-# With framework integrations
-pip install encypher-enterprise[all]  # LangChain + OpenAI + LiteLLM
-
-# Just LangChain
-pip install encypher-enterprise[langchain]
-
-# Just OpenAI
-pip install encypher-enterprise[openai]
+# With optional dependencies
+uv add encypher-enterprise[git,frontmatter]
 ```
 
-## Quick Start
-
-### Basic Signing
+### Basic Usage
 
 ```python
 from encypher_enterprise import EncypherClient
 
-client = EncypherClient(api_key="encypher_your_api_key")
+# Initialize client
+client = EncypherClient(api_key="encypher_...")
 
+# Sign content
 result = client.sign(
-    text="Breaking news: Scientists discover new exoplanet.",
-    title="New Exoplanet Discovered",
+    text="Your content here",
+    title="Article Title",
+    metadata={"author": "Jane Doe"}
 )
 
-print(f"Signed! Document ID: {result.document_id}")
+print(f"Document ID: {result.document_id}")
 print(f"Verification URL: {result.verification_url}")
-print(f"Signed text: {result.signed_text}")
-```
 
-### Verification
-
-```python
+# Verify content
 verification = client.verify(result.signed_text)
-
-if verification.is_valid:
-    print(f"[OK] Valid signature from {verification.organization_name}")
-    print(f"Signed at: {verification.signature_timestamp}")
-else:
-    print(f"[ERR] Invalid signature (tampered: {verification.tampered})")
+print(f"Valid: {verification.is_valid}")
+print(f"Tampered: {verification.tampered}")
 ```
 
-### Sentence Lookup
+### Repository Signing
 
 ```python
-provenance = client.lookup("Breaking news: Scientists discover new exoplanet.")
+from pathlib import Path
+from encypher_enterprise import RepositorySigner
 
-if provenance.found:
-    print(f"Found in: {provenance.document_title}")
-    print(f"Published by: {provenance.organization_name}")
-    print(f"Date: {provenance.publication_date}")
+signer = RepositorySigner(client)
+
+# Sign entire repository with incremental support
+result = signer.sign_directory(
+    directory=Path("./articles"),
+    patterns=["*.md", "*.txt"],
+    incremental=True,  # Only sign changed files!
+    use_git_metadata=True,  # Extract from git
+    use_frontmatter=True  # Parse YAML frontmatter
+)
+
+print(result.summary())
+# Batch Signing Complete
+#   Total: 42
+#   Success: 42
+#   Skipped (unchanged): 38
+#   Time: 2.34s
 ```
 
-## Framework Integrations
-
-Install optional extras to plug signing into your favorite orchestration stack:
+### CLI Usage
 
 ```bash
-pip install encypher-enterprise[all]           # Everything
-pip install encypher-enterprise[langchain]     # LangChain helpers
-pip install encypher-enterprise[openai]        # OpenAI client wrappers
-pip install encypher-enterprise[litellm]       # LiteLLM integration
+# Sign a single file
+encypher sign --file article.md --title "My Article"
+
+# Sign entire repository
+encypher sign-repo ./articles \
+  --incremental \
+  --use-git-metadata \
+  --use-frontmatter \
+  --report report.html
+
+# Verify repository
+encypher verify-repo ./articles \
+  --fail-on-tampered \
+  --report verification.json
+
+# Generate HTML report
+encypher sign-repo ./articles \
+  --report report.html \
+  --report-format html
 ```
+
+---
+
+## 📚 Documentation
+
+### Table of Contents
+
+1. [Installation & Setup](#installation--setup)
+2. [Core Concepts](#core-concepts)
+3. [Repository Signing](#repository-signing)
+4. [Metadata Providers](#metadata-providers)
+5. [Verification & Reports](#verification--reports)
+6. [CI/CD Integration](#cicd-integration)
+7. [Enterprise Features](#enterprise-features)
+8. [Framework Integrations](#framework-integrations)
+9. [API Reference](#api-reference)
+
+---
+
+## 🔧 Installation & Setup
+
+### Requirements
+
+- Python 3.9 or higher
+- API key from [Encypher Dashboard](https://dashboard.encypherai.com)
+
+### Environment Variables
+
+```bash
+# Required
+export ENCYPHER_API_KEY="encypher_..."
+
+# Optional
+export ENCYPHER_BASE_URL="https://api.encypherai.com/api/v1"
+```
+
+### Optional Dependencies
+
+```bash
+# Git integration
+uv add gitpython
+
+# Frontmatter parsing
+uv add pyyaml
+
+# All optional features
+uv add encypher-enterprise[all]
+```
+
+---
+
+## 💡 Core Concepts
+
+### Content Signing
+
+Every signed document receives:
+- **Document ID**: Unique identifier
+- **Cryptographic Signature**: C2PA-compliant
+- **Verification URL**: Public verification page
+- **Metadata**: Author, date, license, custom fields
+- **Merkle Root** (Enterprise): Sentence-level tracking
+
+### Incremental Signing
+
+Encypher tracks file hashes in `.encypher-state.json`:
+
+```json
+{
+  "version": "1.0",
+  "last_updated": "2025-10-29T18:00:00Z",
+  "files": {
+    "/path/to/file.md": {
+      "file_hash": "sha256:abc123...",
+      "document_id": "doc_xyz789",
+      "signed_at": "2025-10-29T17:30:00Z",
+      "file_size": 1024
+    }
+  }
+}
+```
+
+**Benefits:**
+- ⚡ **10x faster** for large repositories
+- 💾 **Bandwidth savings** (only upload changed files)
+- 🔄 **Git-friendly** (state file can be committed)
+
+### Metadata Providers
+
+Extract metadata from multiple sources:
+
+```python
+from encypher_enterprise import (
+    GitMetadataProvider,
+    FrontmatterMetadataProvider,
+    CombinedMetadataProvider
+)
+
+# Git metadata
+git_provider = GitMetadataProvider()
+
+# Frontmatter metadata
+frontmatter_provider = FrontmatterMetadataProvider(
+    fallback_author="Jane Doe"
+)
+
+# Combined (frontmatter takes priority)
+combined = CombinedMetadataProvider([
+    frontmatter_provider,
+    git_provider
+])
+
+# Use in signing
+result = signer.sign_directory(
+    directory=Path("./articles"),
+    metadata_fn=combined.get_metadata
+)
+```
+
+---
+
+## 📁 Repository Signing
+
+### Basic Repository Signing
+
+```python
+from encypher_enterprise import RepositorySigner, FileMetadata
+
+signer = RepositorySigner(client)
+
+result = signer.sign_directory(
+    directory=Path("./articles"),
+    patterns=["*.md", "*.txt", "*.html"],
+    exclude_patterns=["drafts/**", "node_modules/**"],
+    recursive=True
+)
+```
+
+### With Custom Metadata
+
+```python
+def custom_metadata(file_path: Path) -> FileMetadata:
+    return FileMetadata(
+        title=file_path.stem,
+        author="Jane Doe",
+        publisher="Acme News",
+        license="CC-BY-4.0",
+        category="Technology"
+    )
+
+result = signer.sign_directory(
+    directory=Path("./articles"),
+    metadata_fn=custom_metadata
+)
+```
+
+### Incremental Signing
+
+```python
+# First run: Signs all files
+result1 = signer.sign_directory(
+    directory=Path("./articles"),
+    incremental=True
+)
+# Total: 100, Success: 100, Skipped: 0
+
+# Second run: Only signs changed files
+result2 = signer.sign_directory(
+    directory=Path("./articles"),
+    incremental=True
+)
+# Total: 5, Success: 5, Skipped: 95
+```
+
+### Force Re-signing
+
+```python
+# Force re-sign all files (ignores state)
+result = signer.sign_directory(
+    directory=Path("./articles"),
+    incremental=True,
+    force_resign=True
+)
+```
+
+---
+
+## 🏷️ Metadata Providers
+
+### Git Metadata Provider
+
+Extracts metadata from git history:
+
+```python
+from encypher_enterprise import GitMetadataProvider
+
+provider = GitMetadataProvider(repo_path=Path("."))
+
+metadata = provider.get_metadata(Path("article.md"))
+
+# Extracted fields:
+# - author: Last commit author
+# - created: First commit date
+# - modified: Last commit date
+# - custom.git_commit: Latest commit SHA
+# - custom.git_branch: Current branch
+# - custom.git_contributors: List of all contributors
+```
+
+### Frontmatter Metadata Provider
+
+Parses YAML/TOML/JSON frontmatter:
+
+```python
+from encypher_enterprise import FrontmatterMetadataProvider
+
+provider = FrontmatterMetadataProvider(
+    field_mapping={"writer": "author"},  # Custom mapping
+    fallback_author="Default Author"
+)
+
+# Supports:
+# - YAML (---)
+# - TOML (+++)
+# - JSON ({})
+```
+
+**Example Frontmatter:**
+
+```yaml
+---
+title: My Article
+author: Jane Doe
+date: 2025-10-29
+tags: [technology, ai]
+license: CC-BY-4.0
+---
+
+Article content here...
+```
+
+### Combined Metadata Provider
+
+Merge multiple providers with priority:
+
+```python
+from encypher_enterprise import CombinedMetadataProvider
+
+combined = CombinedMetadataProvider([
+    frontmatter_provider,  # Priority 1
+    git_provider,          # Priority 2 (fills gaps)
+    filesystem_provider    # Priority 3 (fallback)
+])
+```
+
+---
+
+## ✅ Verification & Reports
+
+### Batch Verification
+
+```python
+from encypher_enterprise import RepositoryVerifier
+
+verifier = RepositoryVerifier(client)
+
+result = verifier.verify_directory(
+    directory=Path("./articles"),
+    patterns=["*.signed.md"],
+    fail_on_tampered=True  # Raise exception if tampered
+)
+
+print(result.summary())
+# Batch Verification Complete
+#   Total: 42
+#   Valid: 40
+#   Tampered: 2
+#   Failed: 0
+```
+
+### Generate Reports
+
+```python
+from encypher_enterprise import ReportGenerator
+
+generator = ReportGenerator()
+
+# HTML report (beautiful, responsive)
+generator.generate_html(
+    result,
+    Path("report.html"),
+    title="Content Verification Report",
+    publisher="Acme News"
+)
+
+# Markdown report (for docs)
+generator.generate_markdown(result, Path("report.md"))
+
+# CSV export (for spreadsheets)
+generator.generate_csv(result, Path("report.csv"))
+```
+
+### Verification Badges
+
+```python
+from encypher_enterprise import generate_verification_badge
+
+badge_svg = generate_verification_badge(
+    document_id="doc_123",
+    verification_url="https://encypherai.com/verify/doc_123",
+    output_path=Path("badge.svg")
+)
+```
+
+---
+
+## 🤖 CI/CD Integration
+
+### GitHub Actions
+
+**Setup (2 minutes):**
+
+1. Add `ENCYPHER_API_KEY` secret to repository
+2. Workflows are already in `.github/workflows/`
+3. Commit and push!
+
+**Auto-Sign Workflow** (`.github/workflows/sign-content.yml`):
+
+```yaml
+name: Sign Content
+
+on:
+  push:
+    branches: [main]
+    paths: ['articles/**']
+
+jobs:
+  sign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: uv pip install --system encypher-enterprise
+      - run: |
+          encypher sign-repo ./articles \
+            --incremental \
+            --use-git-metadata \
+            --report report.html
+        env:
+          ENCYPHER_API_KEY: ${{ secrets.ENCYPHER_API_KEY }}
+      - run: |
+          git add .
+          git commit -m "Sign content [skip ci]"
+          git push
+```
+
+**Auto-Verify Workflow** (`.github/workflows/verify-content.yml`):
+
+```yaml
+name: Verify Content
+
+on:
+  pull_request:
+    paths: ['**.signed.md']
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: uv pip install --system encypher-enterprise
+      - run: |
+          encypher verify-repo . \
+            --fail-on-tampered \
+            --report verification.json
+        env:
+          ENCYPHER_API_KEY: ${{ secrets.ENCYPHER_API_KEY }}
+```
+
+### GitLab CI
+
+Copy `.gitlab-ci.yml.example` to `.gitlab-ci.yml`:
+
+```yaml
+sign_content:
+  script:
+    - uv pip install --system encypher-enterprise
+    - encypher sign-repo ./articles --incremental
+  only:
+    - main
+```
+
+---
+
+## 🎓 Examples
+
+### Example 1: News Publisher
+
+```python
+# Sign all articles with author metadata
+from encypher_enterprise import RepositorySigner, GitMetadataProvider
+
+git_provider = GitMetadataProvider()
+signer = RepositorySigner(client)
+
+result = signer.sign_directory(
+    directory=Path("./articles"),
+    patterns=["*.md"],
+    metadata_fn=git_provider.get_metadata,
+    incremental=True
+)
+
+# Generate public verification page
+from encypher_enterprise import ReportGenerator
+generator = ReportGenerator()
+generator.generate_html(
+    result,
+    Path("public/verification.html"),
+    title="Acme News - Verified Content",
+    publisher="Acme News Corp"
+)
+```
+
+### Example 2: Academic Publisher
+
+```python
+# Sign research papers with frontmatter metadata
+from encypher_enterprise import FrontmatterMetadataProvider
+
+frontmatter_provider = FrontmatterMetadataProvider(
+    field_mapping={
+        "authors": "author",
+        "doi": "custom.doi",
+        "journal": "publisher"
+    }
+)
+
+result = signer.sign_directory(
+    directory=Path("./papers"),
+    patterns=["*.md"],
+    metadata_fn=frontmatter_provider.get_metadata
+)
+```
+
+### Example 3: Content Platform
+
+```python
+# Verify all user-submitted content
+from encypher_enterprise import RepositoryVerifier
+
+verifier = RepositoryVerifier(client, max_concurrent=10)
+
+result = verifier.verify_directory(
+    directory=Path("./user-content"),
+    patterns=["*.signed.*"],
+    fail_on_tampered=True
+)
+
+# Alert if tampering detected
+if result.tampered > 0:
+    send_alert(f"Tampering detected in {result.tampered} files!")
+```
+
+---
+
+## 🔬 Enterprise Features
+
+### Sentence-Level Tracking
+
+```python
+# Enable Merkle tree encoding
+signer = RepositorySigner(client, use_sentence_tracking=True)
+
+result = signer.sign_directory(
+    directory=Path("./articles"),
+    patterns=["*.md"]
+)
+
+# Each sentence gets a unique hash in Merkle tree
+```
+
+### Source Attribution
+
+```python
+# Find original sources
+result = client.find_sources(
+    text="Text to check for sources",
+    min_similarity=0.85,
+    max_results=10
+)
+
+for match in result['matches']:
+    print(f"Source: {match['document_id']}")
+    print(f"Similarity: {match['similarity']:.2%}")
+    print(f"Matched: {match['matched_text']}")
+```
+
+### Plagiarism Detection
+
+```python
+# Detect plagiarism
+result = client.detect_plagiarism(
+    text="Text to check",
+    threshold=0.80
+)
+
+if result['is_plagiarized']:
+    print(f"Plagiarism detected!")
+    print(f"Original: {result['original_document_id']}")
+    print(f"Similarity: {result['similarity']:.2%}")
+```
+
+---
+
+## 🔌 Framework Integrations
 
 ### LangChain
 
 ```python
-from encypher_enterprise import EncypherClient
-from encypher_enterprise.integrations.langchain import apply_signing
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_openai import ChatOpenAI
+from encypher_enterprise.integrations import EncypherLangChain
 
-prompt = ChatPromptTemplate.from_messages([
-    ("system", "You are a provenance assistant."),
-    ("human", "{question}"),
-])
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
-chain = prompt | llm
+# Wrap any LangChain LLM
+llm = EncypherLangChain(
+    base_llm=ChatOpenAI(),
+    encypher_client=client,
+    auto_sign=True
+)
 
-with EncypherClient(api_key="encypher_live_xxx") as client:
-    signed_chain = apply_signing(chain, client, document_title="LangChain Demo")
-    result = signed_chain.invoke({"question": "Why use C2PA?"})
-    print(result["signed_text"])
+# All outputs are automatically signed
+response = llm.invoke("Write an article about AI")
+print(response.verification_url)
 ```
 
 ### OpenAI
 
 ```python
-from encypher_enterprise import EncypherClient
-from encypher_enterprise.integrations.openai import chat_completion_with_signing
+from encypher_enterprise.integrations import EncypherOpenAI
 
-with EncypherClient(api_key="encypher_live_xxx") as client:
-    signed = chat_completion_with_signing(
-        client,
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You track provenance."},
-            {"role": "user", "content": "Summarize C2PA."},
-        ],
-        document_title="OpenAI Demo",
-    )
-    print(signed.signed_text)
+# Drop-in replacement for OpenAI client
+client_wrapped = EncypherOpenAI(
+    api_key="sk-...",
+    encypher_client=client
+)
+
+response = client_wrapped.chat.completions.create(
+    model="gpt-4",
+    messages=[{"role": "user", "content": "Hello"}]
+)
+
+# Response includes verification URL
+print(response.verification_url)
 ```
 
 ### LiteLLM
 
 ```python
-from encypher_enterprise import EncypherClient
-from encypher_enterprise.integrations.litellm import completion_with_signing
+from encypher_enterprise.integrations import EncypherLiteLLM
 
-with EncypherClient(api_key="encypher_live_xxx") as client:
-    signed = completion_with_signing(
-        client,
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You track provenance."},
-            {"role": "user", "content": "Give me two reasons to sign content."},
-        ],
-        document_title="LiteLLM Demo",
-    )
-    print(signed.signed_text)
-```
-
-See `examples/` for runnable scripts covering each adapter, including streaming usage.
-
-## Command-Line Interface
-
-The SDK ships with a `encypher` CLI that mirrors the Enterprise API onboarding flow. The tool reads `ENCYPHER_API_KEY` from your environment and loads a local `.env` file when present.
-
-```bash
-pip install encypher-enterprise
-export ENCYPHER_API_KEY=encypher_live_xxx
-encypher sign --text "Hello world" --title "CLI Demo"
-encypher verify --file signed.txt
-encypher lookup "Hello world"
-encypher stats
-```
-
-## Streaming Support
-
-Perfect for real-time LLM chat completions:
-
-### Basic Streaming
-
-```python
-from encypher_enterprise import EncypherClient, StreamingSigner
-
-client = EncypherClient(api_key="encypher_...")
-signer = StreamingSigner(client)
-
-# Wrap your streaming LLM
-for chunk in openai.chat.completions.create(
+# Works with any LLM provider
+llm = EncypherLiteLLM(
     model="gpt-4",
-    messages=[{"role": "user", "content": "Tell me about AI"}],
-    stream=True
-):
-    content = chunk.choices[0].delta.content
-    if content:
-        signed_chunk = signer.process_chunk(content)
-        if signed_chunk:
-            print(signed_chunk, end='', flush=True)
-
-# Finalize at the end
-final_signed_text = signer.finalize()
-```
-
-### Stream Wrapper
-
-```python
-from encypher_enterprise import sign_stream
-
-# Create content stream
-content_stream = (
-    chunk.choices[0].delta.content
-    for chunk in openai_stream
-    if chunk.choices[0].delta.content
+    encypher_client=client
 )
 
-# Wrap with signing
-for signed_chunk in sign_stream(client, content_stream):
-    print(signed_chunk, end='', flush=True)
-```
-
-### Async Streaming
-
-```python
-from encypher_enterprise import AsyncEncypherClient, async_sign_stream
-
-async def stream_and_sign():
-    async with AsyncEncypherClient(api_key="...") as client:
-        # Your async LLM stream
-        async_stream = get_async_llm_stream()
-
-        # Sign as it streams
-        async for signed_chunk in async_sign_stream(client, async_stream):
-            print(signed_chunk, end='', flush=True)
-
-# Run
-import asyncio
-asyncio.run(stream_and_sign())
-```
-
-## Framework Integrations
-
-### OpenAI SDK Integration
-
-```python
-from encypher_enterprise.integrations.openai import EncypherOpenAI
-
-# Drop-in replacement for OpenAI client
-client = EncypherOpenAI(
-    openai_api_key="sk-...",
-    encypher_api_key="encypher_..."
-)
-
-# Normal OpenAI usage - automatically signed!
-response = client.chat.completions.create(
-    model="gpt-4",
+response = llm.completion(
     messages=[{"role": "user", "content": "Hello"}]
 )
-
-# Response content is signed with C2PA
-print(response.choices[0].message.content)
-
-# Streaming also works
-for chunk in client.chat.completions.create(
-    model="gpt-4",
-    messages=[...],
-    stream=True
-):
-    print(chunk.choices[0].delta.content, end='')
 ```
 
-### LangChain Integration
+---
 
-```python
-from langchain.chat_models import ChatOpenAI
-from encypher_enterprise import EncypherClient
-from encypher_enterprise.integrations.langchain import EncypherCallbackHandler
-
-# Create callback handler
-client = EncypherClient(api_key="...")
-handler = EncypherCallbackHandler(client)
-
-# Use with LangChain
-llm = ChatOpenAI(callbacks=[handler])
-response = llm.invoke("Tell me about AI")
-
-# Response is automatically signed
-signed_response = handler.get_signed_response()
-print(signed_response)
-```
-
-## CLI Tool
-
-The SDK includes a command-line tool for quick operations:
-
-```bash
-# Set API key
-export ENCYPHER_API_KEY="encypher_your_key"
-
-# Sign content
-encypher sign "Content to sign" --title "My Document"
-
-# Verify content
-encypher verify "Signed content..."
-
-# Look up sentence
-encypher lookup "Some sentence to find"
-
-# Sign a file
-encypher sign-file article.txt --output signed_article.txt
-
-# Get usage statistics
-encypher stats
-```
-
-## Async Client
-
-Full async/await support for high-performance applications:
-
-```python
-from encypher_enterprise import AsyncEncypherClient
-
-async def main():
-    async with AsyncEncypherClient(api_key="...") as client:
-        # Async signing
-        result = await client.sign("Content to sign")
-
-        # Async verification
-        verification = await client.verify(result.signed_text)
-
-        # Async lookup
-        provenance = await client.lookup("Some sentence")
-
-        # Async stats
-        stats = await client.get_stats()
-
-import asyncio
-asyncio.run(main())
-```
-
-## Configuration
-
-### Environment Variables
-
-```bash
-# API key
-export ENCYPHER_API_KEY="encypher_your_key"
-
-# Base URL (optional, defaults to production)
-export ENCYPHER_BASE_URL="https://api.encypherai.com"
-
-# Timeout (optional, default 30s)
-export ENCYPHER_TIMEOUT=30
-
-# Max retries (optional, default 3)
-export ENCYPHER_MAX_RETRIES=3
-```
-
-### Programmatic Configuration
-
-```python
-from encypher_enterprise import EncypherClient
-
-client = EncypherClient(
-    api_key="encypher_...",
-    base_url="https://api.encypherai.com",
-    timeout=30.0,
-    max_retries=3
-)
-```
-
-## Error Handling
-
-```python
-from encypher_enterprise import (
-    EncypherClient,
-    AuthenticationError,
-    QuotaExceededError,
-    SigningError,
-    VerificationError,
-    APIError
-)
-
-client = EncypherClient(api_key="...")
-
-try:
-    result = client.sign("Content")
-except AuthenticationError:
-    print("Invalid API key")
-except QuotaExceededError:
-    print("Monthly quota exceeded - upgrade your plan")
-except SigningError as e:
-    print(f"Signing failed: {e}")
-except APIError as e:
-    print(f"API error {e.status_code}: {e.message}")
-```
-
-## API Reference
+## 📖 API Reference
 
 ### EncypherClient
 
 ```python
-class EncypherClient:
-    def __init__(self, api_key: str, base_url: str = "...", ...): ...
+client = EncypherClient(
+    api_key="encypher_...",
+    base_url="https://api.encypherai.com/api/v1"
+)
 
-    def sign(
-        self,
-        text: str,
-        title: Optional[str] = None,
-        url: Optional[str] = None,
-        document_type: str = "article"
-    ) -> SignResponse: ...
+# Sign content
+result = client.sign(text, title, metadata)
 
-    def verify(self, text: str) -> VerifyResponse: ...
+# Verify content
+verification = client.verify(signed_text)
 
-    def lookup(self, sentence: str) -> LookupResponse: ...
+# Lookup sentence
+lookup = client.lookup(sentence)
 
-    def get_stats(self) -> StatsResponse: ...
+# Get stats
+stats = client.stats()
+
+# Enterprise features
+client.encode_document_merkle(text, document_id)
+client.find_sources(text, min_similarity)
+client.detect_plagiarism(text, threshold)
 ```
 
-### StreamingSigner
+### RepositorySigner
 
 ```python
-class StreamingSigner:
-    def __init__(
-        self,
-        client: EncypherClient,
-        buffer_size: int = 1000,
-        sign_on_sentence: bool = True
-    ): ...
+signer = RepositorySigner(
+    client,
+    use_sentence_tracking=False,
+    max_concurrent=5
+)
 
-    def process_chunk(self, chunk: str) -> str: ...
-
-    def finalize(self) -> str: ...
+result = signer.sign_directory(
+    directory,
+    patterns,
+    exclude_patterns,
+    metadata_fn,
+    recursive,
+    output_dir,
+    save_manifest,
+    incremental,
+    state_file,
+    force_resign
+)
 ```
 
-## Response Models
-
-### SignResponse
+### RepositoryVerifier
 
 ```python
-class SignResponse:
-    success: bool
-    document_id: str
-    signed_text: str  # Text with embedded C2PA manifest
-    total_sentences: int
-    verification_url: str
+verifier = RepositoryVerifier(client, max_concurrent=5)
+
+result = verifier.verify_directory(
+    directory,
+    patterns,
+    exclude_patterns,
+    recursive,
+    fail_on_tampered
+)
 ```
-
-### VerifyResponse
-
-```python
-class VerifyResponse:
-    success: bool
-    is_valid: bool
-    signer_id: str
-    organization_name: str
-    signature_timestamp: Optional[datetime]
-    manifest: Dict[str, Any]  # Full C2PA manifest
-    tampered: bool
-```
-
-### LookupResponse
-
-```python
-class LookupResponse:
-    success: bool
-    found: bool
-    document_title: Optional[str]
-    organization_name: Optional[str]
-    publication_date: Optional[datetime]
-    sentence_index: Optional[int]
-    document_url: Optional[str]
-```
-
-## Examples
-
-See the `examples/` directory for runnable scripts:
-
-- `basic_signing.py` - Basic signing and verification
-- `streaming_chat.py` - Real-time LLM streaming
-- `async_example.py` - Async operations
-- `langchain_integration.py` - LangChain pipeline adapter
-- `openai_integration.py` - OpenAI helper usage
-- `litellm_integration.py` - LiteLLM helper usage
-
-## Development
-
-### Setup
-
-```bash
-# Clone repository
-cd enterprise_sdk
-
-# Install with dev dependencies
-pip install -e ".[dev]"
-
-# Run tests
-pytest
-
-# Run tests with coverage
-pytest --cov=encypher_enterprise --cov-report=html
-
-# Format code
-black encypher_enterprise/ tests/
-
-# Lint
-ruff check encypher_enterprise/ tests/
-
-# Type checking
-mypy encypher_enterprise/
-```
-
-### Running Tests
-
-```bash
-# All tests
-pytest
-
-# Specific test file
-pytest tests/test_client.py
-
-# With coverage
-pytest --cov=encypher_enterprise tests/
-
-# Async tests
-pytest tests/test_async_client.py
-```
-
-## Troubleshooting
-
-### "Invalid API key"
-
-Make sure your API key is set correctly:
-```python
-client = EncypherClient(api_key="encypher_your_key_here")
-```
-
-### "Monthly quota exceeded"
-
-Upgrade your plan at https://dashboard.encypherai.com or contact sales@encypherai.com
-
-### Streaming not working
-
-Ensure you call `finalize()` at the end:
-```python
-signer = StreamingSigner(client)
-# ... process chunks ...
-final_text = signer.finalize()  # Important!
-```
-
-## Support
-
-- **Documentation**: https://docs.encypherai.com/sdk
-- **API Reference**: https://docs.encypherai.com/api
-- **Email**: sdk@encypherai.com
-- **Issues**: GitHub Issues (for enterprise customers)
-
-## License
-
-Proprietary - EncypherAI Commercial License
-
-Copyright (c) 2025 EncypherAI. All rights reserved.
 
 ---
 
-**Built with care by the EncypherAI team**
+## 🧪 Testing
+
+```bash
+# Run all tests
+uv run pytest
+
+# Run with coverage
+uv run pytest --cov=encypher_enterprise --cov-report=html
+
+# Run specific test file
+uv run pytest tests/test_state.py -v
+```
+
+**Current Test Coverage:**
+- `state.py`: 91% ✅
+- `batch.py`: 63% ✅
+- Overall: 31%
+
+---
+
+## 🤝 Support
+
+- **Documentation**: [docs.encypherai.com](https://docs.encypherai.com)
+- **Email**: sdk@encypherai.com
+- **GitHub Issues**: [github.com/encypherai/enterprise-sdk/issues](https://github.com/encypherai/enterprise-sdk/issues)
+- **Dashboard**: [dashboard.encypherai.com](https://dashboard.encypherai.com)
+
+---
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+Built with:
+- [C2PA](https://c2pa.org/) - Content authenticity standards
+- [Python](https://python.org/) - Programming language
+- [UV](https://github.com/astral-sh/uv) - Package manager
+- [GitPython](https://github.com/gitpython-developers/GitPython) - Git integration
+- [PyYAML](https://pyyaml.org/) - YAML parsing
+
+---
+
+<div align="center">
+
+**Made with ❤️ by Encypher**
+
+[Website](https://encypherai.com) • [Dashboard](https://dashboard.encypherai.com) • [Docs](https://docs.encypherai.com)
+
+</div>

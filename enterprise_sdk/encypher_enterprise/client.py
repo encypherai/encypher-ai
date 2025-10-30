@@ -149,6 +149,111 @@ class EncypherClient:
             return StatsResponse(**response.json())
         except httpx.HTTPStatusError as e:
             self._raise_api_error(e.response)
+    
+    def encode_document_merkle(
+        self,
+        text: str,
+        document_id: str,
+        segmentation_levels: Optional[list] = None
+    ) -> Dict[str, Any]:
+        """
+        Encode document into Merkle trees for attribution tracking (Enterprise tier).
+        
+        Args:
+            text: Document text to encode
+            document_id: Unique document identifier
+            segmentation_levels: Levels to segment at (default: ["sentence", "paragraph"])
+        
+        Returns:
+            Dict with Merkle root hashes and metadata
+        
+        Raises:
+            APIError: If encoding fails or feature not available
+        """
+        if segmentation_levels is None:
+            segmentation_levels = ["sentence", "paragraph"]
+        
+        try:
+            response = self.client.post(
+                f"{self.base_url}/api/v1/enterprise/merkle/encode",
+                json={
+                    "document_id": document_id,
+                    "text": text,
+                    "segmentation_levels": segmentation_levels
+                }
+            )
+            self._handle_errors(response)
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
+    
+    def find_sources(
+        self,
+        text: str,
+        min_similarity: float = 0.8,
+        max_results: int = 10
+    ) -> Dict[str, Any]:
+        """
+        Find source documents for given text (Enterprise tier).
+        
+        Args:
+            text: Text to find sources for
+            min_similarity: Minimum similarity threshold (0.0-1.0)
+            max_results: Maximum number of results
+        
+        Returns:
+            Dict with source matches and attribution data
+        
+        Raises:
+            APIError: If attribution fails or feature not available
+        """
+        try:
+            response = self.client.post(
+                f"{self.base_url}/api/v1/enterprise/merkle/attribute",
+                json={
+                    "text": text,
+                    "min_similarity": min_similarity,
+                    "max_results": max_results
+                }
+            )
+            self._handle_errors(response)
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
+    
+    def detect_plagiarism(
+        self,
+        text: str,
+        document_id: str,
+        threshold: float = 0.85
+    ) -> Dict[str, Any]:
+        """
+        Detect plagiarism in document (Enterprise tier).
+        
+        Args:
+            text: Document text to check
+            document_id: Unique document identifier
+            threshold: Similarity threshold for plagiarism (0.0-1.0)
+        
+        Returns:
+            Dict with plagiarism detection results and heat map
+        
+        Raises:
+            APIError: If detection fails or feature not available
+        """
+        try:
+            response = self.client.post(
+                f"{self.base_url}/api/v1/enterprise/merkle/detect-plagiarism",
+                json={
+                    "document_id": document_id,
+                    "text": text,
+                    "threshold": threshold
+                }
+            )
+            self._handle_errors(response)
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
 
     def _handle_errors(self, response: httpx.Response) -> None:
         """Handle HTTP errors."""

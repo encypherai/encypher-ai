@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: encypher-postgres
+    environment:
+      POSTGRES_USER: encypher
+      POSTGRES_PASSWORD: encypher_dev_password
+      POSTGRES_DB: encypher
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U encypher"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: encypher-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+      dockerfile: Dockerfile
+    container_name: encypher-auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: dev-secret-key-change-in-production
+      LOG_LEVEL: DEBUG
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./auth-service/app:/app/app
+    restart: unless-stopped
+
+  # Key Service (coming soon)
+  # key-service:
+  #   build:
+  #     context: ./key-service
+  #     dockerfile: Dockerfile
+  #   container_name: encypher-key-service
+  #   ports:
+  #     - "8003:8003"
+  #   environment:
+  #     DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+  #     REDIS_URL: redis://redis:6379/1
+  #     AUTH_SERVICE_URL: http://auth-service:8001
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - auth-service
+
+volumes:
+  postgres_data:
+  redis_data:

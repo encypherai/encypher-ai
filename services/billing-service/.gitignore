@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+uv.lock
+.env
+.env.local
+*.log
+*.db
+.pytest_cache/
+.coverage
+.DS_Store
+Thumbs.db
