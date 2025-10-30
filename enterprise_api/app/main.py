@@ -14,9 +14,10 @@ from pathlib import Path
 from sqlalchemy import text
 
 from app.config import settings
-from app.routers import signing, verification, lookup, onboarding
+from app.routers import signing, verification, lookup, onboarding, streaming
 from app.api.v1.api import api_router as api_v1_router
 from app.database import engine
+from app.services.session_service import session_service
 
 # Configure logging
 logging.basicConfig(
@@ -34,6 +35,12 @@ async def lifespan(app: FastAPI):
         f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Not configured'}"
     )
     logger.info(f"SSL.com API: {settings.ssl_com_api_url}")
+    
+    # Initialize Redis connection for session management
+    try:
+        await session_service.connect()
+    except Exception as e:
+        logger.warning(f"Failed to connect to Redis: {e}. Running without session persistence.")
     
     # Initialize database schema on startup
     try:
@@ -60,6 +67,11 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         logger.info("Encypher Enterprise API shutting down...")
+        # Cleanup Redis connection
+        try:
+            await session_service.disconnect()
+        except Exception as e:
+            logger.error(f"Error disconnecting from Redis: {e}")
 
 # Create FastAPI app
 app = FastAPI(
@@ -154,6 +166,7 @@ app.include_router(signing.router, prefix="/api/v1", tags=["Signing"])
 app.include_router(verification.router, prefix="/api/v1", tags=["Verification"])
 app.include_router(lookup.router, prefix="/api/v1", tags=["Lookup"])
 app.include_router(onboarding.router, prefix="/api/v1/onboarding", tags=["Onboarding"])
+app.include_router(streaming.router, prefix="/api/v1", tags=["Streaming"])
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")
