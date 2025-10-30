@@ -1,0 +1,331 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # DATABASES
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: encypher-postgres
+    environment:
+      POSTGRES_DB: encypher
+      POSTGRES_USER: encypher
+      POSTGRES_PASSWORD: encypher_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U encypher"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: encypher-redis-cache
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-celery:
+    image: redis:7-alpine
+    container_name: encypher-redis-celery
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ============================================
+  # MONITORING INFRASTRUCTURE
+  # ============================================
+  prometheus:
+    build: ./infrastructure/prometheus
+    container_name: encypher-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+      - ./infrastructure/prometheus/prometheus-local.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      - auth-service
+      - user-service
+      - key-service
+      - encoding-service
+      - verification-service
+      - analytics-service
+      - billing-service
+      - notification-service
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: encypher-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_INSTALL_PLUGINS: redis-datasource
+      GF_SERVER_ROOT_URL: http://localhost:3000
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./infrastructure/grafana/datasources:/etc/grafana/provisioning/datasources
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: encypher-jaeger
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"  # UI
+      - "14268:14268"  # Collector
+      - "14250:14250"
+      - "9411:9411"
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: ":9411"
+
+  # ============================================
+  # MICROSERVICES
+  # ============================================
+  auth-service:
+    build: ./services/auth-service
+    container_name: encypher-auth-service
+    ports:
+      - "8001:8001"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      SECRET_KEY: dev_secret_key_change_in_production
+      JWT_SECRET_KEY: dev_jwt_secret_key_change_in_production
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      SERVICE_NAME: auth-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8001
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  user-service:
+    build: ./services/user-service
+    container_name: encypher-user-service
+    ports:
+      - "8002:8002"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      SERVICE_NAME: user-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8002
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  key-service:
+    build: ./services/key-service
+    container_name: encypher-key-service
+    ports:
+      - "8003:8003"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      SERVICE_NAME: key-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8003
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  encoding-service:
+    build: ./services/encoding-service
+    container_name: encypher-encoding-service
+    ports:
+      - "8004:8004"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      REDIS_CELERY_URL: redis://redis-celery:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      KEY_SERVICE_URL: http://key-service:8003
+      SERVICE_NAME: encoding-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8004
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      redis-celery:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      key-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  verification-service:
+    build: ./services/verification-service
+    container_name: encypher-verification-service
+    ports:
+      - "8005:8005"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      SERVICE_NAME: verification-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8005
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: "*"  # Public service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  analytics-service:
+    build: ./services/analytics-service
+    container_name: encypher-analytics-service
+    ports:
+      - "8006:8006"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      SERVICE_NAME: analytics-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8006
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  billing-service:
+    build: ./services/billing-service
+    container_name: encypher-billing-service
+    ports:
+      - "8007:8007"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      SERVICE_NAME: billing-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8007
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8007/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  notification-service:
+    build: ./services/notification-service
+    container_name: encypher-notification-service
+    ports:
+      - "8008:8008"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis-cache:6379
+      SERVICE_NAME: notification-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8008
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    name: encypher-network

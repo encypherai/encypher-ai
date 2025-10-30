@@ -16,6 +16,10 @@ dependencies = [
     "httpx>=0.25.0",
     "python-dotenv>=1.0.0",
     "cryptography>=41.0.0",
+    "prometheus-client>=0.23.1",
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    "structlog>=25.5.0",
+    "python-json-logger>=4.0.0",
 ]
 
 [project.optional-dependencies]

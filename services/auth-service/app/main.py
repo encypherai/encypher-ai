@@ -1,22 +1,20 @@
 """
 Auth Service - Main Application
 """
-import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from .core.config import settings
+from .core.logging_config import setup_logging
 from .api.v1.endpoints import router as v1_router
 from .db.models import Base
 from .db.session import engine
+from .monitoring.metrics import setup_metrics
+from .middleware.logging import RequestLoggingMiddleware
 
-# Configure logging
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+# Configure structured logging
+logger = setup_logging(settings.LOG_LEVEL)
 
 
 @asynccontextmanager
@@ -50,6 +48,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add request logging middleware
+app.add_middleware(RequestLoggingMiddleware)
+
+# Set up Prometheus metrics
+setup_metrics(app)
 
 # Include routers
 app.include_router(v1_router, prefix="/api/v1/auth", tags=["authentication"])

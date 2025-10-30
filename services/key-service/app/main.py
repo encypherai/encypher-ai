@@ -1,15 +1,17 @@
 """
 Key Service - Main Application
 """
-import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from .core.config import settings
+from .core.logging_config import setup_logging
 from .api.v1.endpoints import router as v1_router
 from .db.models import Base
 from .db.session import engine
+from .monitoring.metrics import setup_metrics
+from .middleware.logging import RequestLoggingMiddleware
 
 # Configure logging
 logging.basicConfig(

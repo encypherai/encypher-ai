@@ -1,0 +1,70 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'encypher-local'
+    environment: 'development'
+
+# Scrape configurations for all microservices (local docker-compose)
+scrape_configs:
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'key-service'
+    static_configs:
+      - targets: ['key-service:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'encoding-service'
+    static_configs:
+      - targets: ['encoding-service:8004']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'verification-service'
+    static_configs:
+      - targets: ['verification-service:8005']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['analytics-service:8006']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'billing-service'
+    static_configs:
+      - targets: ['billing-service:8007']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service:8008']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+# Alerting rules
+rule_files:
+  - 'alerts.yml'
+
+# Alertmanager configuration (optional)
+# alerting:
+#   alertmanagers:
+#     - static_configs:
+#         - targets: ['alertmanager:9093']

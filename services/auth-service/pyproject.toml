@@ -18,6 +18,14 @@ dependencies = [
     "redis>=5.0.0",
     "httpx>=0.25.0",
     "python-dotenv>=1.0.0",
+    "prometheus-client>=0.23.1",
+    "prometheus-fastapi-instrumentator>=7.1.0",
+    "structlog>=25.5.0",
+    "python-json-logger>=4.0.0",
+    "aiocache>=0.12.3",
+    "aioredis>=2.0.1",
+    "pybreaker>=1.4.1",
+    "tenacity>=9.1.2",
 ]
 
 [project.optional-dependencies]
@@ -50,3 +58,12 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "faker>=37.12.0",
+    "httpx>=0.28.1",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pytest-cov>=7.0.0",
+]

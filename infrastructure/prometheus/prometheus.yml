@@ -1,0 +1,68 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'encypher-production'
+    environment: 'production'
+
+# Scrape configurations for all microservices
+scrape_configs:
+  - job_name: 'auth-service'
+    static_configs:
+      - targets: ['auth-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'user-service'
+    static_configs:
+      - targets: ['user-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'key-service'
+    static_configs:
+      - targets: ['key-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'encoding-service'
+    static_configs:
+      - targets: ['encoding-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'verification-service'
+    static_configs:
+      - targets: ['verification-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'analytics-service'
+    static_configs:
+      - targets: ['analytics-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'billing-service'
+    static_configs:
+      - targets: ['billing-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  - job_name: 'notification-service'
+    static_configs:
+      - targets: ['notification-service-production.up.railway.app:443']
+    scheme: https
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+# Alerting rules
+rule_files:
+  - 'alerts.yml'
