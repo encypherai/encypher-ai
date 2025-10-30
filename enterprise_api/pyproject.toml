@@ -24,6 +24,7 @@ dependencies = [
     "redis>=7.0.1",
     "aioredis>=2.0.1",
     "sse-starlette>=3.0.3",
+    "kafka-python>=2.2.15",
 ]
 
 [project.optional-dependencies]

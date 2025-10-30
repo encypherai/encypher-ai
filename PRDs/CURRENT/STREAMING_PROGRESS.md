@@ -96,34 +96,43 @@
 
 ---
 
-## Phase 2: Kafka Integration ⏳
+## Phase 2: Kafka Integration ✅
 
 **Goal:** Full Kafka producer/consumer integration  
 **Timeline:** Week 3  
-**Status:** Not Started
+**Status:** Complete
 
-### Task 2.1: Kafka Producer ⏳
+### Task 2.1: Kafka Producer ✅
 
-- [ ] Add kafka-python dependency
-- [ ] Create `app/integrations/kafka_producer.py`
-- [ ] Implement producer configuration endpoint
-- [ ] Add message serialization
-- [ ] Implement error handling and retries
+- [x] Add kafka-python dependency
+- [x] Create `app/integrations/kafka_producer.py`
+- [x] Implement producer configuration endpoint
+- [x] Add message serialization
+- [x] Implement error handling and retries
+- [x] Producer registry per organization
+- [x] Metrics support
 
-### Task 2.2: Kafka Consumer ⏳
+### Task 2.2: Kafka Consumer ✅
 
-- [ ] Create `app/integrations/kafka_consumer.py`
-- [ ] Implement consumer subscription
-- [ ] Add consumer group management
-- [ ] Implement callback mechanism
-- [ ] Add offset management
+- [x] Create `app/integrations/kafka_consumer.py`
+- [x] Implement consumer subscription
+- [x] Add consumer group management
+- [x] Implement callback mechanism
+- [x] Add offset management
+- [x] Consumer registry per organization
+- [x] Async message processing
 
-### Task 2.3: Kafka Endpoints ⏳
+### Task 2.3: Kafka Endpoints ✅
 
-- [ ] Create `app/routers/kafka.py`
-- [ ] POST `/api/v1/kafka/producer/configure`
-- [ ] POST `/api/v1/kafka/consumer/subscribe`
-- [ ] GET `/api/v1/kafka/stats`
+- [x] Create `app/routers/kafka.py`
+- [x] POST `/api/v1/kafka/producer/configure`
+- [x] POST `/api/v1/kafka/producer/send`
+- [x] DELETE `/api/v1/kafka/producer`
+- [x] POST `/api/v1/kafka/consumer/subscribe`
+- [x] DELETE `/api/v1/kafka/consumer`
+- [x] GET `/api/v1/kafka/producer/status`
+- [x] GET `/api/v1/kafka/consumer/status`
+- [x] GET `/api/v1/kafka/health`
 
 ---
 
