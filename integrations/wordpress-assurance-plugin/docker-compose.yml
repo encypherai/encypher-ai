@@ -33,7 +33,7 @@ services:
       SSL_COM_ACCOUNT_KEY: placeholder-account
       SSL_COM_API_URL: https://sws-test.sslpki.com/
       DEMO_API_KEY: demo-local-key
-      DEMO_PRIVATE_KEY_HEX: 0000000000000000000000000000000000000000000000000000000000000000
+      DEMO_PRIVATE_KEY_HEX: "0000000000000000000000000000000000000000000000000000000000000000"
       DEMO_ORGANIZATION_ID: org_demo
       DEMO_ORGANIZATION_NAME: Encypher Demo Organization
     volumes:
@@ -44,7 +44,7 @@ services:
 
   wp-db:
     image: mysql:8.0
-    command: --default-authentication-plugin=mysql_native_password --mysql-native-password=ON
+    command: --default-authentication-plugin=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: rootpassword
       MYSQL_DATABASE: wordpress

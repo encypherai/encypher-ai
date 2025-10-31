@@ -20,7 +20,8 @@ class Verification
     public function register_hooks(): void
     {
         add_action('wp_enqueue_scripts', [$this, 'enqueue_frontend_assets']);
-        add_filter('the_content', [$this, 'append_verification_badge'], 20);
+        // Disabled: The floating badge provides better UX
+        // add_filter('the_content', [$this, 'append_verification_badge'], 20);
     }
 
     public function enqueue_frontend_assets(): void

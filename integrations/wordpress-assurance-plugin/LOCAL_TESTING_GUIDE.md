@@ -65,7 +65,7 @@ DATABASE_URL=postgresql://postgres:postgres@localhost:5432/encypher_dev
 REDIS_URL=redis://localhost:6379/0
 
 # API Keys (for testing)
-DEMO_API_KEY=demo-local-test-key-12345
+DEMO_API_KEY=demo-local-key
 
 # CORS (allow WordPress localhost)
 CORS_ORIGINS=http://localhost:8080,http://localhost:3000
@@ -130,7 +130,7 @@ Expected response:
 ```powershell
 # Test embedding endpoint
 curl -X POST http://localhost:8000/api/v1/enterprise/embeddings/encode-with-embeddings `
-  -H "Authorization: Bearer demo-local-test-key-12345" `
+  -H "Authorization: Bearer demo-local-key" `
   -H "Content-Type: application/json" `
   -d '{
     "text": "This is a test blog post about AI and content authentication.",
@@ -264,9 +264,9 @@ The plugin is already mounted in the container. Just activate it.
 
 1. Go to: **Settings → Encypher C2PA**
 2. Configure:
-   - **API Base URL:** `http://host.docker.internal:8000/api/v1`
+   - **API Base URL:** `http://host.docker.internal:8000/api/v1` or `http://enterprise-api:8000/api/v1`
      - (Use `http://localhost:8000/api/v1` if not using Docker)
-   - **API Key:** `demo-local-test-key-12345`
+   - **API Key:** `demo-local-key`
    - **Auto-mark on publish:** ✓ Enabled
    - **Auto-mark on update:** ✓ Enabled
    - **Metadata format:** C2PA

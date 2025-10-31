@@ -13,6 +13,7 @@ import logging
 from typing import List, Dict, Any, Optional, Tuple
 from uuid import UUID
 from dataclasses import dataclass
+from datetime import datetime
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -20,8 +21,8 @@ from sqlalchemy import select
 # Import from free encypher-ai package (foundation)
 try:
     from encypher.core.unicode_metadata import UnicodeMetadata
-    from encypher.core.keys import load_private_key_from_pem
-    from cryptography.hazmat.primitives.asymmetric.types import Ed25519PrivateKey
+    from encypher.core.keys import load_private_key_from_data
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 except ImportError:
     raise ImportError(
         "encypher-ai package not found. "
@@ -193,8 +194,11 @@ class EmbeddingService:
                 raise ValueError(f"Embedding failed for segment {idx}: {e}")
             
             # Create ContentReference object for database storage (enterprise feature)
+            # Generate unique ref_id using timestamp + index to avoid collisions
+            ref_id = int(time.time() * 1000) + idx  # Millisecond timestamp + index
+            
             reference = ContentReference(
-                ref_id=idx,  # Use leaf_index as ref_id for simplicity
+                ref_id=ref_id,  # Use unique timestamp-based ID
                 merkle_root_id=merkle_root_id,
                 leaf_hash=leaf_hash,
                 leaf_index=idx,
@@ -224,10 +228,25 @@ class EmbeddingService:
                 text_content=segment,
                 embedded_text=embedded_text,
                 document_id=document_id,
-                ref_id=idx
+                ref_id=ref_id  # Use the same unique ref_id
             ))
         
-        # Bulk insert all references (enterprise feature: database tracking)
+        # Delete old content references for this document (if re-signing)
+        from sqlalchemy import delete
+        from app.models.content_reference import ContentReference as ContentReferenceModel
+        
+        delete_stmt = delete(ContentReferenceModel).where(
+            ContentReferenceModel.document_id == document_id,
+            ContentReferenceModel.organization_id == organization_id
+        )
+        result = await db.execute(delete_stmt)
+        await db.commit()  # Commit the delete before inserting
+        
+        logger.info(
+            f"Deleted {result.rowcount} old content references for document {document_id}"
+        )
+        
+        # Bulk insert all new references (enterprise feature: database tracking)
         db.add_all(references_to_insert)
         await db.commit()
         

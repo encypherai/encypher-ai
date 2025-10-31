@@ -15,8 +15,9 @@ class Admin
         add_action('admin_menu', [$this, 'register_settings_page']);
         add_action('admin_init', [$this, 'register_settings']);
         add_action('enqueue_block_editor_assets', [$this, 'enqueue_block_editor_assets']);
-        add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
-        add_action('add_meta_boxes', [$this, 'register_classic_meta_box']);
+        // Classic editor meta box disabled - using Gutenberg sidebar instead
+        // add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
+        // add_action('add_meta_boxes', [$this, 'register_classic_meta_box']);
         
         // Auto-mark on publish/update hooks
         add_action('publish_post', [$this, 'auto_mark_on_publish'], 10, 2);
@@ -307,14 +308,18 @@ class Admin
 
     public function register_classic_meta_box(): void
     {
-        add_meta_box(
-            'encypher-assurance-meta-box',
-            __('Encypher Assurance', 'encypher-assurance'),
-            [$this, 'render_classic_meta_box'],
-            ['post', 'page'],
-            'side',
-            'high'
-        );
+        // Classic meta box disabled - using Gutenberg sidebar panel instead
+        return;
+        
+        // Old code kept for reference
+        // add_meta_box(
+        //     'encypher-assurance-meta-box',
+        //     __('Encypher Assurance', 'encypher-assurance'),
+        //     [$this, 'render_classic_meta_box'],
+        //     ['post', 'page'],
+        //     'side',
+        //     'high'
+        // );
     }
 
     public function render_classic_meta_box($post): void
