@@ -9,6 +9,7 @@ require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-rest.php';
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-verification.php';
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-bulk.php';
+require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-frontend.php';
 
 /**
  * Main plugin bootstrap class.
@@ -21,6 +22,7 @@ class Plugin
     private Rest $rest;
     private Verification $verification;
     private Bulk $bulk;
+    private Frontend $frontend;
 
     private function __construct()
     {
@@ -28,6 +30,7 @@ class Plugin
         $this->rest = new Rest();
         $this->verification = new Verification($this->rest);
         $this->bulk = new Bulk();
+        $this->frontend = new Frontend();
 
         register_activation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'activate']);
         register_deactivation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'deactivate']);
@@ -73,5 +76,6 @@ class Plugin
         $this->rest->register_hooks();
         $this->verification->register_hooks();
         $this->bulk->register_hooks();
+        $this->frontend->register_hooks();
     }
 }

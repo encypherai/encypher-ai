@@ -136,6 +136,32 @@ class Admin
             'encypher_assurance_c2pa_section'
         );
 
+        // Display Settings Section
+        add_settings_section(
+            'encypher_assurance_display_section',
+            __('Display Settings', 'encypher-assurance'),
+            function () {
+                echo '<p>' . esc_html__('Configure how C2PA badges appear on your site.', 'encypher-assurance') . '</p>';
+            },
+            'encypher-assurance-settings'
+        );
+
+        add_settings_field(
+            'encypher_assurance_show_badge',
+            __('Show C2PA badge', 'encypher-assurance'),
+            [$this, 'render_show_badge_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_display_section'
+        );
+
+        add_settings_field(
+            'encypher_assurance_badge_position',
+            __('Badge position', 'encypher-assurance'),
+            [$this, 'render_badge_position_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_display_section'
+        );
+
         // Tier Settings Section
         add_settings_section(
             'encypher_assurance_tier_section',
@@ -168,6 +194,8 @@ class Admin
         $sanitized['add_hard_binding'] = isset($settings['add_hard_binding']) ? (bool) $settings['add_hard_binding'] : true;
         $sanitized['tier'] = isset($settings['tier']) && in_array($settings['tier'], ['free', 'pro', 'enterprise'], true) ? $settings['tier'] : 'free';
         $sanitized['post_types'] = isset($settings['post_types']) && is_array($settings['post_types']) ? array_map('sanitize_text_field', $settings['post_types']) : ['post', 'page'];
+        $sanitized['show_badge'] = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : false;
+        $sanitized['badge_position'] = isset($settings['badge_position']) && in_array($settings['badge_position'], ['top', 'bottom', 'floating'], true) ? $settings['badge_position'] : 'bottom';
         return $sanitized;
     }
 
@@ -581,6 +609,39 @@ class Admin
             
             <input type="hidden" name="encypher_assurance_settings[tier]" value="<?php echo esc_attr($tier); ?>" />
         </div>
+        <?php
+    }
+
+    /**
+     * Render show badge field.
+     */
+    public function render_show_badge_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $checked = isset($options['show_badge']) ? (bool) $options['show_badge'] : false;
+        ?>
+        <label>
+            <input type="checkbox" name="encypher_assurance_settings[show_badge]" value="1" <?php checked($checked); ?> />
+            <?php esc_html_e('Display C2PA badge on marked posts', 'encypher-assurance'); ?>
+        </label>
+        <p class="description"><?php esc_html_e('Shows a badge indicating the post is C2PA protected. Helps readers verify authenticity.', 'encypher-assurance'); ?></p>
+        <?php
+    }
+
+    /**
+     * Render badge position field.
+     */
+    public function render_badge_position_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $value = isset($options['badge_position']) ? $options['badge_position'] : 'bottom';
+        ?>
+        <select name="encypher_assurance_settings[badge_position]">
+            <option value="top" <?php selected($value, 'top'); ?>><?php esc_html_e('Top of post', 'encypher-assurance'); ?></option>
+            <option value="bottom" <?php selected($value, 'bottom'); ?>><?php esc_html_e('Bottom of post', 'encypher-assurance'); ?></option>
+            <option value="floating" <?php selected($value, 'floating'); ?>><?php esc_html_e('Floating (bottom-right)', 'encypher-assurance'); ?></option>
+        </select>
+        <p class="description"><?php esc_html_e('Choose where the C2PA badge appears on posts.', 'encypher-assurance'); ?></p>
         <?php
     }
 }
