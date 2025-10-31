@@ -194,8 +194,8 @@ class Admin
         $sanitized['add_hard_binding'] = isset($settings['add_hard_binding']) ? (bool) $settings['add_hard_binding'] : true;
         $sanitized['tier'] = isset($settings['tier']) && in_array($settings['tier'], ['free', 'pro', 'enterprise'], true) ? $settings['tier'] : 'free';
         $sanitized['post_types'] = isset($settings['post_types']) && is_array($settings['post_types']) ? array_map('sanitize_text_field', $settings['post_types']) : ['post', 'page'];
-        $sanitized['show_badge'] = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : false;
-        $sanitized['badge_position'] = isset($settings['badge_position']) && in_array($settings['badge_position'], ['top', 'bottom', 'floating'], true) ? $settings['badge_position'] : 'bottom';
+        $sanitized['show_badge'] = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : true; // Default ON
+        $sanitized['badge_position'] = isset($settings['badge_position']) && in_array($settings['badge_position'], ['top', 'bottom', 'bottom-right'], true) ? $settings['badge_position'] : 'bottom-right';
         return $sanitized;
     }
 
@@ -634,14 +634,32 @@ class Admin
     public function render_badge_position_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $value = isset($options['badge_position']) ? $options['badge_position'] : 'bottom';
-        ?>
-        <select name="encypher_assurance_settings[badge_position]">
-            <option value="top" <?php selected($value, 'top'); ?>><?php esc_html_e('Top of post', 'encypher-assurance'); ?></option>
-            <option value="bottom" <?php selected($value, 'bottom'); ?>><?php esc_html_e('Bottom of post', 'encypher-assurance'); ?></option>
-            <option value="floating" <?php selected($value, 'floating'); ?>><?php esc_html_e('Floating (bottom-right)', 'encypher-assurance'); ?></option>
-        </select>
-        <p class="description"><?php esc_html_e('Choose where the C2PA badge appears on posts.', 'encypher-assurance'); ?></p>
-        <?php
+        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $value = isset($options['badge_position']) ? $options['badge_position'] : 'bottom-right';
+        
+        // Free tier: always bottom-right
+        if ('free' === $tier) {
+            ?>
+            <p>
+                <strong><?php esc_html_e('Bottom-right corner (floating)', 'encypher-assurance'); ?></strong>
+                <input type="hidden" name="encypher_assurance_settings[badge_position]" value="bottom-right" />
+            </p>
+            <p class="description">
+                <?php esc_html_e('Free tier displays the badge in the bottom-right corner.', 'encypher-assurance'); ?>
+                <a href="https://encypherai.com/pricing" target="_blank"><?php esc_html_e('Upgrade to Pro', 'encypher-assurance'); ?></a>
+                <?php esc_html_e('for customizable positioning.', 'encypher-assurance'); ?>
+            </p>
+            <?php
+        } else {
+            // Pro/Enterprise: customizable
+            ?>
+            <select name="encypher_assurance_settings[badge_position]">
+                <option value="bottom-right" <?php selected($value, 'bottom-right'); ?>><?php esc_html_e('Bottom-right corner (floating)', 'encypher-assurance'); ?></option>
+                <option value="top" <?php selected($value, 'top'); ?>><?php esc_html_e('Top of post', 'encypher-assurance'); ?></option>
+                <option value="bottom" <?php selected($value, 'bottom'); ?>><?php esc_html_e('Bottom of post', 'encypher-assurance'); ?></option>
+            </select>
+            <p class="description"><?php esc_html_e('Choose where the C2PA badge appears on posts.', 'encypher-assurance'); ?></p>
+            <?php
+        }
     }
 }
