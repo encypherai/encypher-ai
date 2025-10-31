@@ -31,6 +31,20 @@ async def load_organization_private_key(
     Raises:
         ValueError: If no private key found for organization
     """
+    # Handle demo organization with environment-provided key
+    global _DEMO_PRIVATE_KEY
+    if organization_id == settings.demo_organization_id and settings.demo_private_key_bytes:
+        if _DEMO_PRIVATE_KEY is None:
+            # Generate a demo private key from the configured bytes
+            # If all zeros, generate a new one for this session
+            if settings.demo_private_key_bytes == b'\x00' * 32:
+                _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.generate()
+            else:
+                _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.from_private_bytes(
+                    settings.demo_private_key_bytes
+                )
+        return _DEMO_PRIVATE_KEY
+    
     result = await db.execute(
         text("SELECT private_key_encrypted FROM organizations WHERE organization_id = :org_id"),
         {"org_id": organization_id}
@@ -52,6 +66,38 @@ async def load_organization_private_key(
 
     # Load Ed25519 private key
     return ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
+
+
+async def load_organization_public_key(
+    organization_id: str,
+    db: AsyncSession
+) -> ed25519.Ed25519PublicKey:
+    """
+    Load organization's public key from database.
+
+    Args:
+        organization_id: The organization's unique identifier
+        db: Database session
+
+    Returns:
+        Ed25519PublicKey: Public key
+
+    Raises:
+        ValueError: If no public key found for organization
+    """
+    result = await db.execute(
+        text("SELECT public_key FROM organizations WHERE organization_id = :org_id"),
+        {"org_id": organization_id}
+    )
+    row = result.fetchone()
+
+    if not row or not row[0]:
+        raise ValueError(f"No public key found for organization {organization_id}")
+
+    public_key_bytes = bytes(row[0])
+
+    # Load Ed25519 public key from raw bytes
+    return ed25519.Ed25519PublicKey.from_public_bytes(public_key_bytes)
 
 
 def generate_ed25519_keypair() -> tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
@@ -92,6 +138,34 @@ def encrypt_private_key(private_key: ed25519.Ed25519PrivateKey) -> bytes:
     )
 
     return encrypted
+
+
+def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
+    """
+    Decrypt private key from encrypted storage.
+
+    Args:
+        encrypted_key: Encrypted private key bytes
+
+    Returns:
+        Ed25519PrivateKey: Decrypted private key
+
+    Raises:
+        ValueError: If decryption fails
+    """
+    try:
+        # Decrypt using AES-GCM
+        aesgcm = AESGCM(settings.key_encryption_key_bytes)
+        private_key_bytes = aesgcm.decrypt(
+            settings.encryption_nonce_bytes,
+            encrypted_key,
+            None
+        )
+
+        # Load Ed25519 private key
+        return ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
+    except Exception as e:
+        raise ValueError(f"Failed to decrypt private key: {str(e)}")
 
 
 def extract_public_key_from_certificate(cert_pem: str) -> ed25519.Ed25519PublicKey:

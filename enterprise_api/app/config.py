@@ -82,7 +82,11 @@ class Settings(BaseSettings):
         """Return demo private key bytes if configured."""
         if not self.demo_private_key_hex:
             return None
-        return bytes.fromhex(self.demo_private_key_hex)
+        # Strip whitespace and validate hex string
+        hex_str = self.demo_private_key_hex.strip()
+        if not hex_str:
+            return None
+        return bytes.fromhex(hex_str)
 
 
 @lru_cache()

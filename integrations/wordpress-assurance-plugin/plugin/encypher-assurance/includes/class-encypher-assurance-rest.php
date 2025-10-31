@@ -201,24 +201,27 @@ class Rest
             return new WP_Error('invalid_response', __('Unexpected response from Enterprise API.', 'encypher-assurance'), ['status' => 502]);
         }
 
-        // Verify the embedded content has C2PA embeddings
+        // Verify the embedded content has exactly ONE C2PA wrapper (spec compliant)
         $final_check = $this->detect_c2pa_embeddings($embedded_content);
-        if ($final_check['count'] < 1) {
+        if ($final_check['count'] !== 1) {
             error_log(sprintf(
-                'Encypher: No C2PA embeddings found in post %d after signing',
+                'Encypher: C2PA compliance violation! Expected 1 wrapper, found %d in post %d',
+                $final_check['count'],
                 $post_id
             ));
             return new WP_Error(
-                'c2pa_embedding_failed',
-                __('C2PA embedding failed: No embeddings found after signing. Please contact support.', 'encypher-assurance'),
+                'c2pa_compliance_violation',
+                sprintf(
+                    __('C2PA compliance check failed: Expected 1 wrapper, found %d. Please contact support.', 'encypher-assurance'),
+                    $final_check['count']
+                ),
                 ['status' => 500]
             );
         }
         
         error_log(sprintf(
-            'Encypher: Post %d successfully signed with %d C2PA embedding(s)',
-            $post_id,
-            $final_check['count']
+            'Encypher: Post %d successfully signed with C2PA wrapper (spec compliant)',
+            $post_id
         ));
 
         $document_id = isset($response['document_id']) ? sanitize_text_field((string) $response['document_id']) : '';

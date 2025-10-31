@@ -181,17 +181,17 @@ _encypher_revision_timestamp     DATETIME
 
 ---
 
-## 2. C2PA Spec Compliance: Document-Level Wrapper
+## 2. ~~C2PA Spec Compliance: Document-Level Wrapper~~ ✅ IMPLEMENTED
 
 ### Overview
-Update Enterprise API to add ONE final `C2PATextManifestWrapper` at the end of the document, in addition to sentence-level embeddings.
+~~Update~~ **COMPLETED**: Enterprise API now creates ONE `C2PATextManifestWrapper` for the entire document (C2PA spec compliant).
 
-### Current Implementation (Non-Compliant)
-- Creates one `C2PATextManifestWrapper` per sentence
-- Violates C2PA spec: "Quantity: Zero or one"
-- Will trigger `manifest.text.multipleWrappers` error in standard validators
+### ~~Current~~ Previous Implementation (Non-Compliant)
+- ~~Creates~~ **FIXED**: Was creating one `C2PATextManifestWrapper` per sentence
+- ~~Violates~~ **FIXED**: Was violating C2PA spec: "Quantity: Zero or one"
+- ~~Will trigger~~ **FIXED**: Would have triggered `manifest.text.multipleWrappers` error
 
-### Required Implementation (Spec-Compliant)
+### ~~Required~~ Implemented Solution (Spec-Compliant)
 ```
 Sentence 1 text [invisible proprietary embedding]
 Sentence 2 text [invisible proprietary embedding]  
@@ -261,11 +261,25 @@ final_document = UnicodeMetadata.embed_metadata(
    - Update detection to recognize both formats
    - Validate final C2PA wrapper only
 
+### Implementation Summary
+**Date**: October 31, 2025  
+**Files Modified**:
+- `enterprise_api/app/services/embedding_service.py` - Fixed to create ONE wrapper
+- `integrations/wordpress-assurance-plugin/plugin/encypher-assurance/includes/class-encypher-assurance-rest.php` - Restored strict compliance check
+
+**Key Changes**:
+1. Removed per-sentence `embed_metadata()` calls
+2. Join all segments into full document
+3. Call `embed_metadata()` once for entire document
+4. All segments reference the same embedded document with ONE wrapper
+5. WordPress plugin validates exactly 1 wrapper (spec requirement)
+
 ### Reference
 See `docs/c2pa/Manifests_Text.adoc` lines 24, 92, 132
 
-### Priority
-**High** - Required for C2PA spec compliance and interoperability
+### ~~Priority~~ Status
+~~**High** - Required for C2PA spec compliance and interoperability~~  
+**✅ COMPLETED** - Now fully C2PA spec compliant
 
 ---
 

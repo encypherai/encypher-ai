@@ -161,6 +161,10 @@ class EmbeddingService:
         
         current_timestamp = int(time.time())
         
+        # Build the full document with sentence-level embeddings
+        # For C2PA compliance, we'll add ONE wrapper at the end
+        full_document_parts = []
+        
         for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
             # Create custom metadata for enterprise features
             custom_metadata = {
@@ -177,21 +181,9 @@ class EmbeddingService:
             if license_info:
                 custom_metadata['license'] = license_info
             
-            # Use encypher-ai to create invisible embedding
-            try:
-                embedded_text = UnicodeMetadata.embed_metadata(
-                    text=segment,
-                    private_key=self.private_key,
-                    signer_id=self.signer_id,
-                    timestamp=current_timestamp,
-                    custom_metadata=custom_metadata,
-                    metadata_format=metadata_format,  # C2PA-compliant by default
-                    add_hard_binding=add_hard_binding,  # Include hard binding by default
-                    claim_generator=f"EncypherAI Enterprise API/{organization_id}"
-                )
-            except Exception as e:
-                logger.error(f"Failed to embed metadata for segment {idx}: {e}")
-                raise ValueError(f"Embedding failed for segment {idx}: {e}")
+            # For sentence-level tracking, just append the segment without C2PA wrapper
+            # The C2PA wrapper will be added once at the end for spec compliance
+            full_document_parts.append(segment)
             
             # Create ContentReference object for database storage (enterprise feature)
             # Generate unique ref_id using timestamp + index to avoid collisions
@@ -206,7 +198,7 @@ class EmbeddingService:
                 document_id=document_id,
                 text_content=segment,
                 text_preview=segment[:200] if segment else None,
-                signature_hash="",  # Signature is in the invisible embedding
+                signature_hash="",  # Signature is in the C2PA wrapper
                 c2pa_manifest_url=c2pa_manifest_url,
                 c2pa_manifest_hash=c2pa_manifest_hash,
                 license_type=license_info.get('type') if license_info else None,
@@ -221,14 +213,55 @@ class EmbeddingService:
             )
             
             references_to_insert.append(reference)
+        
+        # Step 2: Add ONE C2PATextManifestWrapper at the end (C2PA spec compliant)
+        # Join all segments back together
+        full_document = ''.join(full_document_parts)
+        
+        # Create document-level metadata
+        document_metadata = {
+            'document_id': document_id,
+            'organization_id': organization_id,
+            'merkle_root_id': str(merkle_root_id),
+            'total_segments': len(segments),
+        }
+        
+        if c2pa_manifest_url:
+            document_metadata['c2pa_manifest_url'] = c2pa_manifest_url
+        
+        if license_info:
+            document_metadata['license'] = license_info
+        
+        # Embed ONE C2PA wrapper for the entire document
+        try:
+            logger.info(f"Adding C2PA wrapper for document {document_id} ({len(segments)} segments)")
+            embedded_document = UnicodeMetadata.embed_metadata(
+                text=full_document,
+                private_key=self.private_key,
+                signer_id=self.signer_id,
+                timestamp=current_timestamp,
+                custom_metadata=document_metadata,
+                metadata_format=metadata_format,  # C2PA-compliant wrapper
+                add_hard_binding=add_hard_binding,
+                claim_generator=f"EncypherAI Enterprise API/{organization_id}"
+            )
+            logger.info(f"Successfully added C2PA wrapper to document {document_id}")
+        except Exception as e:
+            logger.error(f"Failed to add C2PA wrapper to document: {e}")
+            raise ValueError(f"C2PA wrapper embedding failed: {e}")
+        
+        # Create embedding references for each segment
+        # Note: All segments are in the same embedded_document with ONE wrapper
+        for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
+            ref_id = int(time.time() * 1000) + idx
             
             embeddings.append(EmbeddingReference(
                 leaf_hash=leaf_hash,
                 leaf_index=idx,
                 text_content=segment,
-                embedded_text=embedded_text,
+                embedded_text=embedded_document,  # Full document with ONE wrapper
                 document_id=document_id,
-                ref_id=ref_id  # Use the same unique ref_id
+                ref_id=ref_id
             ))
         
         # Delete old content references for this document (if re-signing)

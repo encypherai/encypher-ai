@@ -23,7 +23,8 @@ COPY encypher-ai /app/encypher-ai
 COPY enterprise_api /app/enterprise_api
 
 RUN pip install --no-cache-dir -e /app/encypher-ai && \
-    pip install --no-cache-dir -e /app/enterprise_api
+    pip install --no-cache-dir -e /app/enterprise_api && \
+    python -m spacy download en_core_web_sm
 
 WORKDIR /app/enterprise_api
 

@@ -512,7 +512,7 @@ async def extract_and_verify_embedding(
         # Extract and verify using encypher-ai
         is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(
             text=extract_request.text,
-            public_key_provider=public_key_provider
+            public_key_resolver=public_key_provider
         )
         
         if not is_valid or not payload:

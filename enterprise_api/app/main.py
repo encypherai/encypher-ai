@@ -63,6 +63,36 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to initialize database schema: {e}", exc_info=True)
         logger.info("Continuing startup - database may already be initialized")
     
+    # Create demo organization if configured and doesn't exist
+    if settings.demo_api_key and settings.demo_organization_id:
+        try:
+            async with engine.begin() as conn:
+                # Check if demo org exists
+                result = await conn.execute(
+                    text("SELECT organization_id FROM organizations WHERE organization_id = :org_id"),
+                    {"org_id": settings.demo_organization_id}
+                )
+                if not result.fetchone():
+                    # Create demo organization
+                    await conn.execute(
+                        text("""
+                            INSERT INTO organizations (
+                                organization_id, organization_name, organization_type, 
+                                email, tier, monthly_quota
+                            ) VALUES (
+                                :org_id, :org_name, 'demo', 
+                                'demo@encypher.local', 'demo', 10000
+                            )
+                        """),
+                        {
+                            "org_id": settings.demo_organization_id,
+                            "org_name": settings.demo_organization_name
+                        }
+                    )
+                    logger.info(f"Created demo organization: {settings.demo_organization_id}")
+        except Exception as e:
+            logger.error(f"Failed to create demo organization: {e}", exc_info=True)
+    
     try:
         yield
     finally:
