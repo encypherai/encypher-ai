@@ -25,6 +25,7 @@ dependencies = [
     "aioredis>=2.0.1",
     "sse-starlette>=3.0.3",
     "kafka-python>=2.2.15",
+    "beautifulsoup4>=4.14.2",
 ]
 
 [project.optional-dependencies]
