@@ -103,10 +103,20 @@ class EmbeddingService:
         c2pa_manifest_url: Optional[str] = None,
         c2pa_manifest_hash: Optional[str] = None,
         license_info: Optional[Dict[str, str]] = None,
-        expires_at: Optional[Any] = None
+        expires_at: Optional[datetime] = None,
+        metadata_format: str = "c2pa",  # C2PA-compliant by default
+        add_hard_binding: bool = True  # Include hard binding by default
     ) -> List[EmbeddingReference]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
+        
+        **C2PA Compliance:**
+        By default, embeds full C2PA-compliant manifests as per the Manifests_Text.adoc
+        specification. Each embedding includes:
+        - C2PA manifest with assertions (actions, hash.data, soft_binding)
+        - Hard binding via c2pa.hash.data assertion (optional, enabled by default)
+        - Unicode variation selector encoding (U+FE00-FE0F, U+E0100-E01EF)
+        - C2PATextManifestWrapper structure
         
         Enterprise features:
         - Stores Merkle tree references in database
@@ -125,9 +135,11 @@ class EmbeddingService:
             c2pa_manifest_hash: Optional C2PA manifest hash
             license_info: Optional license information dict
             expires_at: Optional expiration datetime
+            metadata_format: Format for embeddings ("c2pa" by default, "basic" for minimal)
+            add_hard_binding: Include c2pa.hash.data assertion (True by default)
         
         Returns:
-            List of EmbeddingReference objects with invisible embeddings
+            List of EmbeddingReference objects with invisible C2PA-compliant embeddings
         
         Raises:
             ValueError: If segments and leaf_hashes lengths don't match
@@ -172,7 +184,9 @@ class EmbeddingService:
                     signer_id=self.signer_id,
                     timestamp=current_timestamp,
                     custom_metadata=custom_metadata,
-                    metadata_format="basic"  # Use basic format for per-sentence embeddings
+                    metadata_format=metadata_format,  # C2PA-compliant by default
+                    add_hard_binding=add_hard_binding,  # Include hard binding by default
+                    claim_generator=f"EncypherAI Enterprise API/{organization_id}"
                 )
             except Exception as e:
                 logger.error(f"Failed to embed metadata for segment {idx}: {e}")
