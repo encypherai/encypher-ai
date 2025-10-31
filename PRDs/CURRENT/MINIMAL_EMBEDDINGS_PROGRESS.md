@@ -126,11 +126,33 @@
 
 ---
 
+### ✅ Production Hardening (COMPLETE)
+**Duration:** ~30 minutes  
+**Commits:**
+- `6e79ed1` - feat: implement rate limiting for public verification API
+
+**Completed Tasks:**
+- [x] Public API rate limiting (in-memory, sliding window)
+- [x] IP-based rate limiting (1000 req/hour for verify, 100 req/hour for batch)
+- [x] Rate limiter unit tests (14 tests, 100% passing)
+- [x] Retry-After headers for rate limit responses
+- [x] Violation tracking for potential blocking
+
+**Key Features Implemented:**
+- Sliding window rate limiting algorithm
+- Separate limits per endpoint type
+- IP extraction from X-Forwarded-For and X-Real-IP headers
+- Automatic cleanup of old entries
+- Statistics and monitoring support
+- FastAPI middleware integration
+
+---
+
 ## Technical Debt & TODOs
 
 ### High Priority
 1. **Authentication:** Add organization authentication to enterprise endpoints
-2. **Rate Limiting:** Implement Redis-based rate limiting for public API
+2. ~~**Rate Limiting:** Implement Redis-based rate limiting for public API~~ ✅ COMPLETE (in-memory, upgrade to Redis later)
 3. **Secret Key Management:** Move to AWS Secrets Manager (currently env var)
 4. **C2PA Verification:** Actually verify C2PA manifests (currently just returns URL)
 5. **Organization Mapping:** Map organization_id to human-readable names
