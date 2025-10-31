@@ -8,7 +8,7 @@ import logging
 from datetime import datetime
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -28,6 +28,7 @@ from app.schemas.embeddings import (
 from app.services.embedding_service import EmbeddingService, embedding_service
 from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
+from app.middleware.public_rate_limiter import public_rate_limiter
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +78,7 @@ router = APIRouter(prefix="/public", tags=["Public - Verification"])
 )
 async def verify_embedding(
     ref_id: str,
+    request: Request,
     signature: str = Query(..., description="HMAC signature (8+ hex characters)"),
     db: AsyncSession = Depends(get_db)
 ) -> VerifyEmbeddingResponse:
@@ -94,6 +96,9 @@ async def verify_embedding(
     Raises:
         HTTPException: If verification fails or reference not found
     """
+    # Rate limiting check
+    await public_rate_limiter(request, endpoint_type="verify_single")
+    
     try:
         logger.info(f"Public verification request for ref_id: {ref_id}")
         
@@ -236,14 +241,16 @@ async def verify_embedding(
     }
 )
 async def batch_verify_embeddings(
-    request: BatchVerifyRequest,
+    batch_request: BatchVerifyRequest,
+    request: Request,
     db: AsyncSession = Depends(get_db)
 ) -> BatchVerifyResponse:
     """
     Verify multiple embeddings in batch.
     
     Args:
-        request: Batch verification request
+        batch_request: Batch verification request
+        request: FastAPI request
         db: Database session
     
     Returns:
@@ -252,21 +259,24 @@ async def batch_verify_embeddings(
     Raises:
         HTTPException: If request is invalid
     """
+    # Rate limiting check
+    await public_rate_limiter(request, endpoint_type="verify_batch")
+    
     try:
         # Validate batch size
-        if len(request.references) > 50:
+        if len(batch_request.references) > 50:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Maximum 50 embeddings per batch request"
             )
         
-        logger.info(f"Batch verification request for {len(request.references)} embeddings")
+        logger.info(f"Batch verification request for {len(batch_request.references)} embeddings")
         
         results = []
         valid_count = 0
         invalid_count = 0
         
-        for ref_req in request.references:
+        for ref_req in batch_request.references:
             try:
                 # Verify each embedding
                 reference = await embedding_service.verify_embedding(
@@ -306,7 +316,7 @@ async def batch_verify_embeddings(
         
         return BatchVerifyResponse(
             results=results,
-            total=len(request.references),
+            total=len(batch_request.references),
             valid_count=valid_count,
             invalid_count=invalid_count
         )
