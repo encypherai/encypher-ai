@@ -127,14 +127,19 @@
 ---
 
 ### ✅ Production Hardening (COMPLETE)
-**Duration:** ~30 minutes  
+**Duration:** ~1 hour  
 **Commits:**
 - `6e79ed1` - feat: implement rate limiting for public verification API
+- `3d44793` - feat: implement API key authentication for enterprise endpoints
 
 **Completed Tasks:**
 - [x] Public API rate limiting (in-memory, sliding window)
 - [x] IP-based rate limiting (1000 req/hour for verify, 100 req/hour for batch)
 - [x] Rate limiter unit tests (14 tests, 100% passing)
+- [x] API key authentication for enterprise endpoints
+- [x] Tier-based permission checks (Professional/Enterprise for embeddings)
+- [x] Quota enforcement and tracking
+- [x] Authentication unit tests (15 tests, 100% passing)
 - [x] Retry-After headers for rate limit responses
 - [x] Violation tracking for potential blocking
 
@@ -145,17 +150,22 @@
 - Automatic cleanup of old entries
 - Statistics and monitoring support
 - FastAPI middleware integration
+- API key authentication with Bearer token support
+- Organization tier validation
+- Permission-based access control (can_sign, can_verify)
+- Monthly quota tracking and enforcement
+- API key expiration and revocation checks
 
 ---
 
 ## Technical Debt & TODOs
 
 ### High Priority
-1. **Authentication:** Add organization authentication to enterprise endpoints
+1. ~~**Authentication:** Add organization authentication to enterprise endpoints~~ ✅ COMPLETE
 2. ~~**Rate Limiting:** Implement Redis-based rate limiting for public API~~ ✅ COMPLETE (in-memory, upgrade to Redis later)
 3. **Secret Key Management:** Move to AWS Secrets Manager (currently env var)
 4. **C2PA Verification:** Actually verify C2PA manifests (currently just returns URL)
-5. **Organization Mapping:** Map organization_id to human-readable names
+5. ~~**Organization Mapping:** Map organization_id to human-readable names~~ ✅ COMPLETE (included in auth)
 
 ### Medium Priority
 6. **Embedding Expiration:** Implement cleanup job for expired embeddings
