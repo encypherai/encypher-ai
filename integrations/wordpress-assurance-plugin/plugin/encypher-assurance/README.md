@@ -91,6 +91,50 @@ You can also manually mark posts using the editor panel:
 3. Click **Sign Content**
 4. Wait for confirmation
 
+### Bulk Archive Marking
+
+Mark existing WordPress archives programmatically:
+
+1. Go to **Tools → Encypher C2PA**
+2. Select post types to mark (Posts, Pages, etc.)
+3. Choose filters:
+   - Date range (all time, last month, 3/6/12 months, custom)
+   - Status (unmarked only, all posts)
+   - Batch size (1-50 posts per batch)
+4. Review total count
+5. Click **Start Bulk Marking**
+6. Monitor progress with real-time updates
+7. Pause/resume or cancel as needed
+
+**Features:**
+- Real-time progress tracking
+- Error handling with detailed logs
+- Pause/resume capability
+- Free tier: 100 posts per operation
+- Pro tier: Unlimited marking
+
+### Frontend Badge
+
+Optional C2PA badge on marked posts:
+
+1. Go to **Settings → Encypher C2PA**
+2. Enable **Show C2PA badge**
+3. Choose badge position:
+   - Top of post
+   - Bottom of post (default)
+   - Floating (bottom-right corner)
+4. Badge displays:
+   - C2PA protection status
+   - Verification link
+   - Marked date
+   - Powered by Encypher
+
+**Customization:**
+- Brand colors (Deep Navy, Azure Blue)
+- Responsive design
+- Print-friendly styles
+- Accessible markup
+
 ### Status Indicators
 
 The plugin shows the current C2PA status:
