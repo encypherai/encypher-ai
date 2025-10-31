@@ -272,10 +272,42 @@ The Enterprise API adds these features on top of `encypher-ai`:
    - Detect plagiarism
    - Monitor unauthorized use
 
+### 5. `verify.py` - Public Verification API
+
+**Before:**
+- `/verify/{ref_id}` - Verified visible embeddings with HMAC signatures
+- Required `ref_id` and `signature` parameters
+
+**After:**
+- ✅ Old endpoints still work (backward compatibility)
+- ✅ **NEW:** `/extract-and-verify` - Extracts invisible embeddings from text
+- Uses `encypher-ai` to extract and verify
+- Returns full enterprise metadata
+
+**Key Changes:**
+```python
+# NEW: Extract and verify invisible embedding
+@router.post("/extract-and-verify")
+async def extract_and_verify_embedding(
+    extract_request: ExtractAndVerifyRequest,
+    ...
+):
+    # Use encypher-ai to extract invisible embedding
+    is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(
+        text=extract_request.text,
+        public_key_provider=public_key_provider
+    )
+    
+    # Look up enterprise metadata in database
+    # Return full verification result
+```
+
 ## Commits
 
 1. `docs: update embeddings documentation to reflect invisible Unicode technique`
 2. `feat: refactor embeddings to use encypher-ai invisible Unicode technique`
+3. `docs: deprecate HTML embedder and add refactoring summary`
+4. `feat: add public extract-and-verify endpoint for invisible embeddings`
 
 ## References
 
