@@ -4,9 +4,15 @@ This directory contains examples demonstrating how to use the EncypherAI commerc
 
 ## Contents
 
+### Audit & Verification
 - `sample_with_metadata.txt`: A sample text file with a representation of what EncypherAI metadata might look like
 - `run_audit_example.ps1`: PowerShell script to demonstrate running the audit_log_cli on the sample file
 - `trusted_signers/`: Directory created by the example script to store trusted signer public keys
+
+### Minimal Signed Embeddings (NEW)
+- `web_scraper_encypher.py`: Complete web scraper for detecting Encypher embeddings
+- `scrapy_encypher_middleware.py`: Scrapy middleware for automatic embedding detection
+- See also: `../docs/PARTNER_INTEGRATION_GUIDE.md` for comprehensive integration guide
 
 ## Running the Examples
 
