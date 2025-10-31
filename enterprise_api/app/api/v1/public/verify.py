@@ -30,6 +30,7 @@ from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
 from app.middleware.public_rate_limiter import public_rate_limiter
 from app.middleware.api_key_auth import get_api_key_from_header, authenticate_api_key
+from app.utils.c2pa_verifier import c2pa_verifier
 
 logger = logging.getLogger(__name__)
 
@@ -187,13 +188,17 @@ async def verify_embedding(
             proof_url=f"/api/v1/public/proof/{ref_id}"
         )
         
-        # C2PA info (if available)
+        # C2PA info (if available) - Now with actual verification!
         c2pa_info = None
         if reference.c2pa_manifest_url:
+            # Verify the C2PA manifest
+            c2pa_result = c2pa_verifier.verify_manifest_url(reference.c2pa_manifest_url)
+            
             c2pa_info = C2PAInfo(
                 manifest_url=reference.c2pa_manifest_url,
-                manifest_hash=reference.c2pa_manifest_hash,
-                verified=True  # TODO: Actually verify manifest
+                manifest_hash=reference.c2pa_manifest_hash or c2pa_result.manifest_hash,
+                verified=c2pa_result.valid,
+                verification_details=c2pa_result.to_dict() if c2pa_result else None
             )
         
         # Licensing info (if available)

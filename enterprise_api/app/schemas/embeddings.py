@@ -155,10 +155,14 @@ class MerkleProofInfo(BaseModel):
 
 
 class C2PAInfo(BaseModel):
-    """C2PA manifest information."""
+    """C2PA manifest information with verification details."""
     manifest_url: str = Field(..., description="C2PA manifest URL")
     manifest_hash: Optional[str] = Field(None, description="Manifest hash")
     verified: bool = Field(..., description="Whether manifest is verified")
+    verification_details: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Detailed verification results (assertions, signatures, errors)"
+    )
 
 
 class LicensingInfo(BaseModel):
