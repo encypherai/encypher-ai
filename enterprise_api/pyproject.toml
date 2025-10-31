@@ -20,6 +20,11 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "encypher-ai",
     "spacy>=3.8.7",
+    "websockets>=15.0.1",
+    "redis>=7.0.1",
+    "aioredis>=2.0.1",
+    "sse-starlette>=3.0.3",
+    "kafka-python>=2.2.15",
 ]
 
 [project.optional-dependencies]
@@ -63,4 +68,5 @@ dev = [
     "pytest>=8.3.5",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.1.1",
+    "websockets>=15.0.1",
 ]

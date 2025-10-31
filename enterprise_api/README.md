@@ -55,6 +55,16 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `POST /api/v1/enterprise/merkle/attribute` | Find source documents | Enterprise |
 | `POST /api/v1/enterprise/merkle/detect-plagiarism` | Detect plagiarism | Enterprise |
 
+### Streaming Endpoints (NEW)
+
+| Endpoint | Description | Tier |
+|----------|-------------|------|
+| `WS /api/v1/stream/sign` | Real-time WebSocket signing | Professional+ |
+| `WS /api/v1/stream/chat` | Chat application wrapper | Professional+ |
+| `GET /api/v1/stream/events` | Server-Sent Events (SSE) | Professional+ |
+| `POST /api/v1/stream/session/create` | Create streaming session | Professional+ |
+| `POST /api/v1/stream/session/{id}/close` | Close streaming session | Professional+ |
+
 ### Features by Tier
 
 #### Basic Tier
