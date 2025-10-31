@@ -91,13 +91,18 @@ class EncodeWithEmbeddingsRequest(BaseModel):
 
 
 class EmbeddingInfo(BaseModel):
-    """Information about a single embedding."""
+    """
+    Information about a single invisible embedding.
+    
+    Uses encypher-ai package for invisible Unicode variation selector embeddings.
+    No visible ref_id, signature, or embedding string - all embedded invisibly.
+    """
     leaf_index: int = Field(..., description="Position in document (0-indexed)")
-    text: Optional[str] = Field(None, description="Text content (if include_text=true)")
-    ref_id: str = Field(..., description="Reference ID (8 hex characters)")
-    signature: str = Field(..., description="HMAC signature (8 hex characters)")
-    embedding: str = Field(..., description="Compact embedding string (e.g., 'ency:v1/a3f9c2e1/8k3mP9xQ')")
-    verification_url: str = Field(..., description="Public verification URL")
+    text: Optional[str] = Field(None, description="Text with invisible embedding (if include_text=true)")
+    ref_id: Optional[str] = Field(None, description="Deprecated: No visible ref_id with invisible embeddings")
+    signature: Optional[str] = Field(None, description="Deprecated: No visible signature with invisible embeddings")
+    embedding: Optional[str] = Field(None, description="Deprecated: No visible embedding string with invisible embeddings")
+    verification_url: Optional[str] = Field(None, description="Deprecated: Verification by extracting from text")
     leaf_hash: str = Field(..., description="SHA-256 hash of text segment")
 
 
