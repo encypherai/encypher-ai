@@ -2,10 +2,10 @@
 API endpoints for minimal signed embeddings.
 
 Enterprise tier endpoints for creating and managing content embeddings.
+Built on top of the free encypher-ai package with enterprise features.
 """
 import time
 import logging
-import os
 from typing import Optional, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -23,14 +23,11 @@ from app.services.embedding_service import EmbeddingService
 from app.services.merkle_service import MerkleService
 from app.models.merkle import MerkleRoot
 from app.middleware.api_key_auth import require_embedding_permission
+from app.utils.crypto_utils import load_organization_private_key
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/enterprise/embeddings", tags=["Enterprise - Embeddings"])
-
-# Initialize embedding service with secret key from environment
-SECRET_KEY = os.getenv('EMBEDDING_SECRET_KEY', 'default_secret_key_change_in_production_32bytes!!').encode()
-embedding_service = EmbeddingService(SECRET_KEY)
 
 
 # ============================================================================
@@ -79,14 +76,21 @@ async def encode_with_embeddings(
     organization: Dict = Depends(require_embedding_permission)
 ) -> EncodeWithEmbeddingsResponse:
     """
-    Encode a document with minimal signed embeddings.
+    Encode a document with invisible signed embeddings using encypher-ai.
+    
+    Enterprise features:
+    - Merkle tree integration for hierarchical authentication
+    - Database storage for content tracking
+    - Per-sentence invisible embeddings
+    - Public verification API
     
     Args:
         request: Document encoding request with embedding options
         db: Database session
+        organization: Authenticated organization
     
     Returns:
-        EncodeWithEmbeddingsResponse with Merkle tree and embeddings
+        EncodeWithEmbeddingsResponse with Merkle tree and invisible embeddings
     
     Raises:
         HTTPException: If encoding fails
@@ -98,10 +102,29 @@ async def encode_with_embeddings(
     
     try:
         logger.info(
-            f"Encoding document {request.document_id} with embeddings "
+            f"Encoding document {request.document_id} with invisible embeddings "
             f"for org {organization_id} ({organization['organization_name']}) "
-            f"at {request.segmentation_level} level"
+            f"at {request.segmentation_level} level using encypher-ai"
         )
+        
+        # Load organization's private key for signing
+        try:
+            private_key = await load_organization_private_key(organization_id, db)
+            signer_id = f"org_{organization_id}"
+        except ValueError as e:
+            logger.error(f"Failed to load private key for org {organization_id}: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail={
+                    "code": "NO_PRIVATE_KEY",
+                    "message": "Organization has no private key configured. "
+                    "Please complete certificate onboarding first.",
+                    "details": str(e),
+                },
+            )
+        
+        # Initialize embedding service with organization's key
+        embedding_service = EmbeddingService(private_key, signer_id)
         
         # Step 1: Build Merkle tree (existing functionality)
         merkle_roots = await MerkleService.encode_document(
@@ -151,33 +174,24 @@ async def encode_with_embeddings(
         for emb in embeddings:
             info = EmbeddingInfo(
                 leaf_index=emb.leaf_index,
-                text=emb.text_content if request.embedding_options.include_text else None,
-                ref_id=format(emb.ref_id, '08x'),
-                signature=emb.signature[:8],
-                embedding=emb.to_compact_string(),
-                verification_url=emb.to_url(),
+                text=emb.embedded_text if request.embedding_options.include_text else None,
+                ref_id=None,  # No visible ref_id with invisible embeddings
+                signature=None,  # No visible signature with invisible embeddings
+                embedding=None,  # No visible embedding string
+                verification_url=None,  # Verification is done by extracting from text
                 leaf_hash=emb.leaf_hash
             )
             embedding_infos.append(info)
         
-        # Step 5: Optionally inject embeddings into content
-        embedded_content = None
-        if request.embedding_options.format and request.embedding_options.format != 'json':
-            # Import embedding utilities
-            if request.embedding_options.format == 'html':
-                from app.utils.embeddings.html_embedder import HTMLEmbedder
-                embedded_content = HTMLEmbedder.embed_in_paragraphs(
-                    html=request.text,  # Assume text is HTML
-                    embeddings=embeddings,
-                    method=request.embedding_options.method
-                )
-            # TODO: Add other formats (markdown, pdf, plain)
+        # Step 5: Combine all embedded segments into full document
+        # Each segment already has invisible embedding from encypher-ai
+        embedded_content = "\n".join(emb.embedded_text for emb in embeddings)
         
         processing_time_ms = (time.time() - start_time) * 1000
         
         logger.info(
             f"Successfully encoded document {request.document_id} with "
-            f"{len(embeddings)} embeddings in {processing_time_ms:.2f}ms"
+            f"{len(embeddings)} invisible embeddings in {processing_time_ms:.2f}ms"
         )
         
         return EncodeWithEmbeddingsResponse(
@@ -194,7 +208,7 @@ async def encode_with_embeddings(
                 'total_sentences': len(segments),
                 'embeddings_created': len(embeddings),
                 'processing_time_ms': round(processing_time_ms, 2),
-                'average_embedding_size': 28,  # Compact format
+                'uses_invisible_embeddings': True,
                 'segmentation_level': request.segmentation_level
             }
         )

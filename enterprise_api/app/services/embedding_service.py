@@ -1,13 +1,14 @@
 """
 Service for creating and verifying minimal signed embeddings.
 
-Generates compact 64-bit reference IDs and HMAC signatures for portable
-content authentication.
+Enterprise layer built on top of the free encypher-ai package.
+Uses invisible Unicode variation selector embeddings with enterprise features:
+- Merkle tree integration for hierarchical authentication
+- Database storage for content references
+- Batch operations and analytics
+- Public verification API
 """
-import hmac
-import hashlib
 import time
-import random
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 from uuid import UUID
@@ -15,6 +16,17 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+
+# Import from free encypher-ai package (foundation)
+try:
+    from encypher.core.unicode_metadata import UnicodeMetadata
+    from encypher.core.keys import load_private_key_from_pem
+    from cryptography.hazmat.primitives.asymmetric.types import Ed25519PrivateKey
+except ImportError:
+    raise ImportError(
+        "encypher-ai package not found. "
+        "Please install: pip install encypher-ai"
+    )
 
 from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
@@ -24,68 +36,61 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class EmbeddingReference:
-    """Minimal signed embedding reference."""
-    ref_id: int
-    signature: str
+    """
+    Minimal signed embedding reference with invisible Unicode embedding.
+    
+    Uses encypher-ai package for invisible embedding, with enterprise features:
+    - Merkle tree integration (leaf_hash, leaf_index)
+    - Database persistence (ContentReference model)
+    - Verification tracking
+    """
     leaf_hash: str
     leaf_index: int
     text_content: str
+    embedded_text: str  # Text with invisible Unicode embedding
     document_id: str
-    
-    def to_compact_string(self, version: str = "v1") -> str:
-        """Generate compact embedding string."""
-        ref_hex = format(self.ref_id, '08x')  # 8 hex chars
-        sig_short = self.signature[:8]  # First 8 chars
-        return f"ency:{version}/{ref_hex}/{sig_short}"
-    
-    def to_url(self, base_url: str = "https://verify.encypher.ai") -> str:
-        """Generate verification URL."""
-        ref_hex = format(self.ref_id, '08x')
-        return f"{base_url}/{ref_hex}"
+    ref_id: Optional[int] = None  # Database ID (optional, set after DB insert)
     
     def to_dict(self) -> dict:
         """Serialize to dictionary."""
         return {
-            'ref_id': format(self.ref_id, '08x'),
-            'signature': self.signature[:8],
-            'leaf_hash': self.leaf_hash,
             'leaf_index': self.leaf_index,
+            'leaf_hash': self.leaf_hash,
             'text_content': self.text_content,
+            'embedded_text': self.embedded_text,
             'document_id': self.document_id,
-            'embedding': self.to_compact_string(),
-            'verification_url': self.to_url()
+            'has_invisible_embedding': True
         }
 
 
 class EmbeddingService:
     """
-    Service for creating and verifying minimal signed embeddings.
+    Enterprise embedding service built on encypher-ai package.
     
-    Generates 64-bit reference IDs with the following structure:
-    - Timestamp component (2 bytes): Seconds since 2025-01-01
-    - Sequence number (2 bytes): Monotonic counter
-    - Random component (2 bytes): Entropy
-    - Checksum (2 bytes): XOR of above components
+    Provides enterprise features on top of the free open-source foundation:
+    - Invisible Unicode variation selector embeddings (from encypher-ai)
+    - Merkle tree integration for hierarchical authentication
+    - Database storage for content references
+    - Batch operations and analytics
+    - Public verification API
     
-    Signatures are HMAC-SHA256 truncated to 8 bytes for compactness.
+    The encypher-ai package handles:
+    - Digital signatures (Ed25519)
+    - Invisible Unicode embedding
+    - Content hash verification
+    - Tamper detection
     """
     
-    # Epoch for timestamp component (2025-01-01 00:00:00 UTC)
-    EPOCH_2025 = 1735689600
-    
-    def __init__(self, secret_key: bytes):
+    def __init__(self, private_key: Ed25519PrivateKey, signer_id: str):
         """
         Initialize embedding service.
         
         Args:
-            secret_key: Secret key for HMAC signatures (32+ bytes recommended)
+            private_key: Ed25519 private key for signing (from encypher-ai)
+            signer_id: Identifier for the signing key
         """
-        if len(secret_key) < 16:
-            raise ValueError("Secret key must be at least 16 bytes")
-        
-        self.secret_key = secret_key
-        self._sequence = 0
-        self._last_timestamp = 0
+        self.private_key = private_key
+        self.signer_id = signer_id
     
     async def create_embeddings(
         self,
@@ -98,10 +103,26 @@ class EmbeddingService:
         c2pa_manifest_url: Optional[str] = None,
         c2pa_manifest_hash: Optional[str] = None,
         license_info: Optional[Dict[str, str]] = None,
-        expires_at: Optional[Any] = None
+        expires_at: Optional[datetime] = None,
+        metadata_format: str = "c2pa",  # C2PA-compliant by default
+        add_hard_binding: bool = True  # Include hard binding by default
     ) -> List[EmbeddingReference]:
         """
-        Create minimal signed embeddings for all segments.
+        Create invisible signed embeddings for all segments using encypher-ai.
+        
+        **C2PA Compliance:**
+        By default, embeds full C2PA-compliant manifests as per the Manifests_Text.adoc
+        specification. Each embedding includes:
+        - C2PA manifest with assertions (actions, hash.data, soft_binding)
+        - Hard binding via c2pa.hash.data assertion (optional, enabled by default)
+        - Unicode variation selector encoding (U+FE00-FE0F, U+E0100-E01EF)
+        - C2PATextManifestWrapper structure
+        
+        Enterprise features:
+        - Stores Merkle tree references in database
+        - Links embeddings to organization and document
+        - Tracks C2PA manifests and licensing
+        - Provides expiration management
         
         Args:
             db: Database session
@@ -114,9 +135,11 @@ class EmbeddingService:
             c2pa_manifest_hash: Optional C2PA manifest hash
             license_info: Optional license information dict
             expires_at: Optional expiration datetime
+            metadata_format: Format for embeddings ("c2pa" by default, "basic" for minimal)
+            add_hard_binding: Include c2pa.hash.data assertion (True by default)
         
         Returns:
-            List of EmbeddingReference objects
+            List of EmbeddingReference objects with invisible C2PA-compliant embeddings
         
         Raises:
             ValueError: If segments and leaf_hashes lengths don't match
@@ -131,20 +154,47 @@ class EmbeddingService:
         references_to_insert = []
         
         logger.info(
-            f"Creating {len(segments)} embeddings for document {document_id} "
-            f"in organization {organization_id}"
+            f"Creating {len(segments)} invisible embeddings for document {document_id} "
+            f"in organization {organization_id} using encypher-ai"
         )
         
+        current_timestamp = int(time.time())
+        
         for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
-            # Generate unique ref_id
-            ref_id = self._generate_ref_id()
+            # Create custom metadata for enterprise features
+            custom_metadata = {
+                'document_id': document_id,
+                'organization_id': organization_id,
+                'merkle_root_id': str(merkle_root_id),
+                'leaf_hash': leaf_hash,
+                'leaf_index': idx,
+            }
             
-            # Generate signature
-            signature = self._generate_signature(ref_id)
+            if c2pa_manifest_url:
+                custom_metadata['c2pa_manifest_url'] = c2pa_manifest_url
             
-            # Create ContentReference object
+            if license_info:
+                custom_metadata['license'] = license_info
+            
+            # Use encypher-ai to create invisible embedding
+            try:
+                embedded_text = UnicodeMetadata.embed_metadata(
+                    text=segment,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    timestamp=current_timestamp,
+                    custom_metadata=custom_metadata,
+                    metadata_format=metadata_format,  # C2PA-compliant by default
+                    add_hard_binding=add_hard_binding,  # Include hard binding by default
+                    claim_generator=f"EncypherAI Enterprise API/{organization_id}"
+                )
+            except Exception as e:
+                logger.error(f"Failed to embed metadata for segment {idx}: {e}")
+                raise ValueError(f"Embedding failed for segment {idx}: {e}")
+            
+            # Create ContentReference object for database storage (enterprise feature)
             reference = ContentReference(
-                ref_id=ref_id,
+                ref_id=idx,  # Use leaf_index as ref_id for simplicity
                 merkle_root_id=merkle_root_id,
                 leaf_hash=leaf_hash,
                 leaf_index=idx,
@@ -152,7 +202,7 @@ class EmbeddingService:
                 document_id=document_id,
                 text_content=segment,
                 text_preview=segment[:200] if segment else None,
-                signature_hash=signature,
+                signature_hash="",  # Signature is in the invisible embedding
                 c2pa_manifest_url=c2pa_manifest_url,
                 c2pa_manifest_hash=c2pa_manifest_hash,
                 license_type=license_info.get('type') if license_info else None,
@@ -160,153 +210,117 @@ class EmbeddingService:
                 expires_at=expires_at,
                 embedding_metadata={
                     'version': 'v1',
-                    'created_by': 'embedding_service'
+                    'created_by': 'embedding_service',
+                    'uses_encypher_ai': True,
+                    'signer_id': self.signer_id
                 }
             )
             
             references_to_insert.append(reference)
             
             embeddings.append(EmbeddingReference(
-                ref_id=ref_id,
-                signature=signature,
                 leaf_hash=leaf_hash,
                 leaf_index=idx,
                 text_content=segment,
-                document_id=document_id
+                embedded_text=embedded_text,
+                document_id=document_id,
+                ref_id=idx
             ))
         
-        # Bulk insert all references
+        # Bulk insert all references (enterprise feature: database tracking)
         db.add_all(references_to_insert)
         await db.commit()
         
         logger.info(
-            f"Successfully created {len(embeddings)} embeddings for document {document_id}"
+            f"Successfully created {len(embeddings)} invisible embeddings for document {document_id}"
         )
         
         return embeddings
     
-    def _generate_ref_id(self) -> int:
-        """
-        Generate unique 64-bit reference ID.
-        
-        Format: TTTTTTTT SSSSSSSS RRRRRRRR CCCCCCCC
-        - T (2 bytes): Timestamp component
-        - S (2 bytes): Sequence number
-        - R (2 bytes): Random component
-        - C (2 bytes): Checksum
-        
-        Returns:
-            64-bit integer
-        """
-        # Timestamp component (2 bytes) - seconds since 2025-01-01
-        current_time = int(time.time())
-        timestamp = current_time - self.EPOCH_2025
-        timestamp_component = timestamp & 0xFFFF  # Last 2 bytes
-        
-        # Sequence number (2 bytes) - monotonic counter
-        # Reset if timestamp changed
-        if timestamp != self._last_timestamp:
-            self._sequence = 0
-            self._last_timestamp = timestamp
-        else:
-            self._sequence = (self._sequence + 1) & 0xFFFF
-        
-        # Random component (2 bytes) - entropy
-        random_component = random.randint(0, 0xFFFF)
-        
-        # Combine components
-        ref_id = (timestamp_component << 48) | (self._sequence << 32) | (random_component << 16)
-        
-        # Checksum (2 bytes) - XOR of all components
-        checksum = (timestamp_component ^ self._sequence ^ random_component) & 0xFFFF
-        ref_id |= checksum
-        
-        return ref_id
-    
-    def _generate_signature(self, ref_id: int) -> str:
-        """
-        Generate HMAC-SHA256 signature for ref_id.
-        
-        Args:
-            ref_id: 64-bit reference ID
-        
-        Returns:
-            Hex-encoded signature (16 characters = 8 bytes)
-        """
-        # Convert ref_id to bytes (big-endian)
-        ref_bytes = ref_id.to_bytes(8, byteorder='big')
-        
-        # Generate HMAC-SHA256
-        hmac_full = hmac.new(self.secret_key, ref_bytes, hashlib.sha256).digest()
-        
-        # Truncate to first 8 bytes for compactness
-        signature_bytes = hmac_full[:8]
-        
-        # Encode as hex
-        return signature_bytes.hex()
-    
-    def verify_signature(self, ref_id: int, signature: str) -> bool:
-        """
-        Verify signature matches ref_id.
-        
-        Args:
-            ref_id: 64-bit reference ID
-            signature: Hex-encoded signature to verify
-        
-        Returns:
-            True if signature is valid, False otherwise
-        """
-        expected = self._generate_signature(ref_id)
-        
-        # Use constant-time comparison to prevent timing attacks
-        return hmac.compare_digest(expected, signature)
-    
-    async def verify_embedding(
+    async def verify_and_extract_embedding(
         self,
         db: AsyncSession,
-        ref_id_hex: str,
-        signature_hex: str
-    ) -> Optional[ContentReference]:
+        text: str,
+        public_key_provider
+    ) -> Optional[Tuple[ContentReference, Dict[str, Any]]]:
         """
-        Verify an embedding and return the content reference.
+        Extract and verify invisible embedding from text using encypher-ai.
+        
+        Enterprise features:
+        - Looks up Merkle tree reference in database
+        - Checks expiration
+        - Returns enterprise metadata (organization, document, etc.)
         
         Args:
             db: Database session
-            ref_id_hex: Hex-encoded reference ID (8 characters)
-            signature_hex: Hex-encoded signature (8+ characters)
+            text: Text with invisible embedding
+            public_key_provider: Function to get public key by signer_id
         
         Returns:
-            ContentReference if valid, None otherwise
+            Tuple of (ContentReference, verified_metadata) if valid, None otherwise
         """
         try:
-            # Parse ref_id from hex
-            ref_id = int(ref_id_hex, 16)
-        except ValueError:
-            logger.warning(f"Invalid ref_id hex: {ref_id_hex}")
+            # Use encypher-ai to verify and extract metadata
+            is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(
+                text=text,
+                public_key_provider=public_key_provider
+            )
+            
+            if not is_valid or not payload:
+                logger.warning("Invalid or missing embedding in text")
+                return None
+            
+            # Extract enterprise metadata from custom_metadata
+            custom_metadata = payload.custom_metadata or {}
+            document_id = custom_metadata.get('document_id')
+            organization_id = custom_metadata.get('organization_id')
+            leaf_index = custom_metadata.get('leaf_index')
+            
+            if not all([document_id, organization_id, leaf_index is not None]):
+                logger.warning("Missing enterprise metadata in embedding")
+                return None
+            
+            # Look up ContentReference in database (enterprise feature)
+            result = await db.execute(
+                select(ContentReference).where(
+                    ContentReference.document_id == document_id,
+                    ContentReference.organization_id == organization_id,
+                    ContentReference.leaf_index == leaf_index
+                )
+            )
+            reference = result.scalar_one_or_none()
+            
+            if not reference:
+                logger.warning(
+                    f"Reference not found in database: doc={document_id}, "
+                    f"org={organization_id}, leaf={leaf_index}"
+                )
+                return None
+            
+            # Check expiration (enterprise feature)
+            if reference.expires_at and reference.expires_at < time.time():
+                logger.warning(f"Reference expired: {document_id}")
+                return None
+            
+            logger.info(
+                f"Successfully verified invisible embedding: doc={document_id}, "
+                f"leaf={leaf_index}"
+            )
+            
+            # Return reference and verified metadata
+            verified_metadata = {
+                'signer_id': signer_id,
+                'timestamp': payload.timestamp,
+                'custom_metadata': custom_metadata,
+                'format': payload.format,
+                'version': payload.version
+            }
+            
+            return reference, verified_metadata
+            
+        except Exception as e:
+            logger.error(f"Error verifying embedding: {e}", exc_info=True)
             return None
-        
-        # Verify signature
-        if not self.verify_signature(ref_id, signature_hex[:16]):
-            logger.warning(f"Invalid signature for ref_id: {ref_id_hex}")
-            return None
-        
-        # Lookup in database
-        result = await db.execute(
-            select(ContentReference).where(ContentReference.ref_id == ref_id)
-        )
-        reference = result.scalar_one_or_none()
-        
-        if not reference:
-            logger.warning(f"Reference not found: {ref_id_hex}")
-            return None
-        
-        # Check expiration
-        if reference.expires_at and reference.expires_at < time.time():
-            logger.warning(f"Reference expired: {ref_id_hex}")
-            return None
-        
-        logger.info(f"Successfully verified embedding: {ref_id_hex}")
-        return reference
     
     async def get_reference_by_id(
         self,
@@ -356,37 +370,3 @@ class EmbeddingService:
         
         result = await db.execute(query)
         return list(result.scalars().all())
-    
-    def parse_embedding(self, embedding_str: str) -> Optional[Tuple[str, str, str]]:
-        """
-        Parse embedding string into components.
-        
-        Args:
-            embedding_str: Embedding string like "ency:v1/a3f9c2e1/8k3mP9xQ"
-        
-        Returns:
-            Tuple of (version, ref_id_hex, signature_hex) or None if invalid
-        """
-        try:
-            if not embedding_str.startswith('ency:'):
-                return None
-            
-            parts = embedding_str[5:].split('/')  # Remove 'ency:' prefix
-            
-            if len(parts) != 3:
-                return None
-            
-            version, ref_id_hex, signature_hex = parts
-            
-            # Validate format
-            if len(ref_id_hex) != 8:
-                return None
-            
-            if len(signature_hex) < 8:
-                return None
-            
-            return version, ref_id_hex, signature_hex
-            
-        except Exception as e:
-            logger.warning(f"Failed to parse embedding: {embedding_str}, error: {e}")
-            return None

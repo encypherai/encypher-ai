@@ -5,6 +5,8 @@
 **Status**: ✅ 100% Complete (8/8 services)  
 **Last Updated**: October 30, 2025
 
+> **Note:** This document covers the **Core Microservices** only. For Enterprise-exclusive features like Merkle trees, minimal signed embeddings, source attribution, and plagiarism detection, see the [Enterprise API README](../enterprise_api/README.md).
+
 ---
 
 ## 📊 Quick Overview

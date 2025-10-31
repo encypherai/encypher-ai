@@ -54,6 +54,9 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `POST /api/v1/enterprise/merkle/encode` | Encode document into Merkle tree | Enterprise |
 | `POST /api/v1/enterprise/merkle/attribute` | Find source documents | Enterprise |
 | `POST /api/v1/enterprise/merkle/detect-plagiarism` | Detect plagiarism | Enterprise |
+| `POST /api/v1/enterprise/embeddings/encode-with-embeddings` | Create portable signed embeddings | Professional+ |
+| `GET /api/v1/public/verify/{ref_id}` | Verify embedding (public, no auth) | Public |
+| `POST /api/v1/public/verify/batch` | Batch verify embeddings (public) | Public |
 
 ### Streaming Endpoints (NEW)
 
@@ -76,6 +79,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 #### Professional Tier
 - ✅ All Basic features
 - ✅ Sentence-level lookup
+- ✅ Invisible signed embeddings (Unicode variation selectors)
 - ✅ Custom metadata
 - ✅ 10,000 requests/month
 - ✅ Priority support
@@ -83,6 +87,8 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 #### Enterprise Tier
 - ✅ All Professional features
 - ✅ Merkle tree encoding
+- ✅ Public embedding extraction & verification API (no auth required)
+- ✅ Partner integration tools (extraction libraries, web scraping)
 - ✅ Source attribution
 - ✅ Plagiarism detection
 - ✅ Unlimited requests
@@ -437,6 +443,101 @@ Detect if content is plagiarized from signed documents.
   ]
 }
 ```
+
+---
+
+### Minimal Signed Embeddings (Professional+)
+
+Invisibly embed cryptographically signed references directly into content using Unicode variation selectors. The embeddings are completely invisible to readers but can be extracted and verified by third parties without requiring API keys.
+
+**Endpoint:** `POST /api/v1/enterprise/embeddings/encode-with-embeddings`
+
+**Request:**
+
+```json
+{
+  "document_id": "article_001",
+  "text": "Full article text...",
+  "segmentation_level": "sentence",
+  "c2pa_manifest_url": "https://...",
+  "license": {
+    "type": "All Rights Reserved",
+    "contact_email": "licensing@example.com"
+  }
+}
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "document_id": "article_001",
+  "merkle_tree": {
+    "root_hash": "abc123...",
+    "total_leaves": 42,
+    "tree_depth": 6
+  },
+  "embeddings": [
+    {
+      "leaf_index": 0,
+      "text": "Sentence one.",
+      "ref_id": "a3f9c2e1",
+      "leaf_hash": "def456...",
+      "embedded_text": "Sentence one."
+    }
+  ],
+  "embedded_content": "Full article text with invisible embeddings...",
+  "statistics": {
+    "total_sentences": 42,
+    "embeddings_created": 42,
+    "processing_time_ms": 234.56
+  }
+}
+```
+
+**How It Works:**
+
+The embedding uses **Unicode variation selectors (U+FE00-FE0F)** attached to characters in the text. These selectors are:
+- **Completely invisible** - Rendering engines ignore them and display only the base character
+- **Standards-compliant** - Using Unicode variation selectors as designed
+- **Portable** - Preserved during copy/paste operations
+- **Distributed** - Spread across multiple characters for resilience
+
+Example (conceptual - actual variation selectors are invisible):
+```
+"Hello world" → "H[VS]e[VS]l[VS]l[VS]o[VS] w[VS]o[VS]r[VS]l[VS]d"
+```
+
+**Public Verification (No Auth Required):**
+
+Extract embeddings from content and verify them:
+
+```bash
+# Extract and verify embeddings from text
+curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Content with invisible embeddings..."
+  }'
+```
+
+**Key Features:**
+- ✅ **Invisible**: Zero visible footprint - readers see only the original text
+- ✅ **Portable**: Travels with content when copied/scraped across the web
+- ✅ **Verifiable**: Public API for third-party verification (no auth required)
+- ✅ **Secure**: Cryptographic signatures prevent forgery
+- ✅ **Resilient**: Distributed embedding survives partial text extraction
+- ✅ **Standards-compliant**: Uses Unicode variation selectors as designed
+
+**Use Cases:**
+- Invisible content tracking across the web
+- Partner integration (web scrapers, content monitors)
+- Portable proof of origin that travels with text
+- Legal evidence embedded directly in content
+- AI-generated content authentication
+
+**Documentation:** See [README_EMBEDDINGS.md](./app/services/README_EMBEDDINGS.md) for complete details.
 
 ---
 
