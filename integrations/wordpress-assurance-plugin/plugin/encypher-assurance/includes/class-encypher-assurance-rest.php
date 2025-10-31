@@ -90,53 +90,70 @@ class Rest
             $metadata = [];
         }
 
+        // Get settings for C2PA configuration
+        $settings = get_option('encypher_assurance_settings', []);
+        $metadata_format = $settings['metadata_format'] ?? 'c2pa';
+        $add_hard_binding = $settings['add_hard_binding'] ?? true;
+        
+        // Determine action type (c2pa.created or c2pa.edited)
+        $action_type = get_post_meta($post_id, '_encypher_action_type', true);
+        if (!$action_type) {
+            $is_marked = get_post_meta($post_id, '_encypher_marked', true);
+            $action_type = $is_marked ? 'c2pa.edited' : 'c2pa.created';
+        }
+        
+        // Build Enterprise API payload for /enterprise/embeddings/encode-with-embeddings
         $payload = [
             'text' => $post->post_content,
+            'document_id' => 'wp_post_' . $post_id,
+            'segmentation_level' => 'sentence',
+            'doc_metadata' => [
+                'title' => $post->post_title,
+                'author' => get_the_author_meta('display_name', $post->post_author),
+                'published_at' => $post->post_date,
+                'url' => get_permalink($post),
+                'wordpress_post_id' => $post_id,
+                'wordpress_post_type' => $post->post_type,
+                'action' => $action_type,
+            ],
+            'embedding_options' => [
+                'metadata_format' => $metadata_format,
+                'add_hard_binding' => $add_hard_binding,
+                'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_ASSURANCE_VERSION,
+            ],
         ];
-
-        $document_title = isset($metadata['document_title']) ? sanitize_text_field((string) $metadata['document_title']) : $post->post_title;
-        if ($document_title) {
-            $payload['document_title'] = $document_title;
+        
+        // Add license info if available
+        if (isset($metadata['license_type'])) {
+            $payload['license_info'] = [
+                'type' => sanitize_text_field($metadata['license_type']),
+                'url' => isset($metadata['license_url']) ? esc_url_raw($metadata['license_url']) : '',
+            ];
         }
 
-        $fallback_url = get_permalink($post);
-        $document_url = null;
-        if (isset($metadata['document_url'])) {
-            $document_url = esc_url_raw((string) $metadata['document_url']);
-        } elseif (isset($metadata['canonical_url'])) {
-            $document_url = esc_url_raw((string) $metadata['canonical_url']);
-        } elseif ($fallback_url) {
-            $document_url = esc_url_raw($fallback_url);
-        }
-        if ($document_url) {
-            $payload['document_url'] = $document_url;
-        }
-
-        $allowed_types = ['article', 'legal_brief', 'contract', 'ai_output'];
-        $document_type = $metadata['document_type'] ?? ($metadata['documentType'] ?? null);
-        if (! is_string($document_type) || ! in_array($document_type, $allowed_types, true)) {
-            $document_type = 'article';
-        }
-        $payload['document_type'] = $document_type;
-
-        $response = $this->call_backend('/sign', $payload, true);
+        $response = $this->call_backend('/enterprise/embeddings/encode-with-embeddings', $payload, true);
         if (is_wp_error($response)) {
             return $response;
         }
 
-        $signed_text = $response['signed_text'] ?? null;
-        if (! is_string($signed_text) || '' === $signed_text) {
-            return new WP_Error('invalid_response', __('Unexpected response from signing endpoint.', 'encypher-assurance'), ['status' => 502]);
+        // Extract embedded content from Enterprise API response
+        $embedded_content = $response['embedded_content'] ?? null;
+        if (! is_string($embedded_content) || '' === $embedded_content) {
+            return new WP_Error('invalid_response', __('Unexpected response from Enterprise API.', 'encypher-assurance'), ['status' => 502]);
         }
 
         $document_id = isset($response['document_id']) ? sanitize_text_field((string) $response['document_id']) : '';
-        $verification_url = isset($response['verification_url']) ? esc_url_raw((string) $response['verification_url']) : '';
-        $total_sentences = isset($response['total_sentences']) ? (int) $response['total_sentences'] : 0;
+        $merkle_tree = $response['merkle_tree'] ?? [];
+        $statistics = $response['statistics'] ?? [];
+        $total_sentences = isset($statistics['total_sentences']) ? (int) $statistics['total_sentences'] : 0;
+        
+        // Generate verification URL (will be implemented with public verification API)
+        $verification_url = 'https://verify.encypherai.com/' . urlencode($document_id);
 
         $this->is_signing = true;
         $updated = wp_update_post([
             'ID' => $post_id,
-            'post_content' => $signed_text,
+            'post_content' => $embedded_content,
         ], true);
         $this->is_signing = false;
 
@@ -144,21 +161,36 @@ class Rest
             return $updated;
         }
 
-        update_post_meta($post_id, '_encypher_assurance_cached_content_hash', md5((string) $signed_text));
-        update_post_meta($post_id, '_encypher_assurance_status', 'signed');
-        update_post_meta($post_id, '_encypher_assurance_signature', $document_id);
+        // Store metadata about the C2PA marking
+        update_post_meta($post_id, '_encypher_assurance_cached_content_hash', md5((string) $embedded_content));
+        update_post_meta($post_id, '_encypher_assurance_status', 'c2pa_protected');
         update_post_meta($post_id, '_encypher_assurance_document_id', $document_id);
         update_post_meta($post_id, '_encypher_assurance_verification_url', $verification_url);
         update_post_meta($post_id, '_encypher_assurance_total_sentences', $total_sentences);
         update_post_meta($post_id, '_encypher_assurance_last_signed', current_time('mysql'));
+        update_post_meta($post_id, '_encypher_marked', true);
+        update_post_meta($post_id, '_encypher_marked_date', current_time('mysql'));
+        update_post_meta($post_id, '_encypher_manifest_id', $document_id);
+        
+        // Store Merkle tree info
+        if (!empty($merkle_tree)) {
+            update_post_meta($post_id, '_encypher_merkle_root_hash', $merkle_tree['root_hash'] ?? '');
+            update_post_meta($post_id, '_encypher_merkle_total_leaves', $merkle_tree['total_leaves'] ?? 0);
+        }
+        
+        // Clear any pending marking flags
+        delete_post_meta($post_id, '_encypher_needs_marking');
+        delete_post_meta($post_id, '_encypher_action_type');
         delete_post_meta($post_id, '_encypher_assurance_verification');
 
         return new WP_REST_Response([
-            'status' => 'signed',
+            'status' => 'c2pa_protected',
             'document_id' => $document_id,
             'verification_url' => $verification_url,
-            'signed_text' => $signed_text,
+            'embedded_content' => $embedded_content,
             'total_sentences' => $total_sentences,
+            'merkle_tree' => $merkle_tree,
+            'statistics' => $statistics,
         ]);
     }
 
@@ -192,17 +224,27 @@ class Rest
             return new WP_Error('invalid_post', __('Invalid post.', 'encypher-assurance'), ['status' => 400]);
         }
 
+        // Use public verification API endpoint (no auth required)
         $payload = [
             'text' => $post->post_content,
         ];
 
-        $response = $this->call_backend('/verify', $payload, false);
+        $response = $this->call_backend('/public/extract-and-verify', $payload, false);
         if (is_wp_error($response)) {
             return $response;
         }
 
+        // Store verification result
         update_post_meta($post_id, '_encypher_assurance_verification', $response);
-        update_post_meta($post_id, '_encypher_assurance_status', $this->derive_status_from_verification($response));
+        
+        // Update status based on verification
+        $status = 'not_signed';
+        if (!empty($response['valid'])) {
+            $status = 'c2pa_verified';
+        } elseif (!empty($response['error'])) {
+            $status = 'verification_failed';
+        }
+        update_post_meta($post_id, '_encypher_assurance_status', $status);
 
         return new WP_REST_Response($response);
     }
