@@ -29,6 +29,7 @@ from app.services.embedding_service import EmbeddingService, embedding_service
 from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
 from app.middleware.public_rate_limiter import public_rate_limiter
+from app.middleware.api_key_auth import get_api_key_from_header, authenticate_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -80,15 +81,21 @@ async def verify_embedding(
     ref_id: str,
     request: Request,
     signature: str = Query(..., description="HMAC signature (8+ hex characters)"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    api_key: Optional[str] = Depends(get_api_key_from_header)
 ) -> VerifyEmbeddingResponse:
     """
     Verify an embedding and return associated metadata.
+    
+    This endpoint supports both authenticated and unauthenticated access:
+    - **Unauthenticated:** Rate limited to 1000 requests/hour per IP
+    - **Authenticated:** Higher limits based on organization tier, usage tracked
     
     Args:
         ref_id: Reference ID (8 hex characters)
         signature: HMAC signature (8+ hex characters)
         db: Database session
+        api_key: Optional API key for authenticated access
     
     Returns:
         VerifyEmbeddingResponse with verification result and metadata
@@ -96,8 +103,19 @@ async def verify_embedding(
     Raises:
         HTTPException: If verification fails or reference not found
     """
-    # Rate limiting check
-    await public_rate_limiter(request, endpoint_type="verify_single")
+    # Optional authentication - if API key provided, authenticate and track usage
+    organization = None
+    if api_key:
+        try:
+            organization = await authenticate_api_key(api_key=api_key, db=db)
+            logger.info(f"Authenticated verification request from org {organization['organization_id']}")
+        except HTTPException as e:
+            # Log but don't fail - fall back to unauthenticated access
+            logger.warning(f"Authentication failed, falling back to public access: {e.detail}")
+    
+    # Rate limiting check (only for unauthenticated requests)
+    if not organization:
+        await public_rate_limiter(request, endpoint_type="verify_single")
     
     try:
         logger.info(f"Public verification request for ref_id: {ref_id}")
@@ -243,15 +261,21 @@ async def verify_embedding(
 async def batch_verify_embeddings(
     batch_request: BatchVerifyRequest,
     request: Request,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    api_key: Optional[str] = Depends(get_api_key_from_header)
 ) -> BatchVerifyResponse:
     """
     Verify multiple embeddings in batch.
+    
+    This endpoint supports both authenticated and unauthenticated access:
+    - **Unauthenticated:** Rate limited to 100 requests/hour per IP
+    - **Authenticated:** Higher limits based on organization tier, usage tracked
     
     Args:
         batch_request: Batch verification request
         request: FastAPI request
         db: Database session
+        api_key: Optional API key for authenticated access
     
     Returns:
         BatchVerifyResponse with results for all embeddings
@@ -259,8 +283,19 @@ async def batch_verify_embeddings(
     Raises:
         HTTPException: If request is invalid
     """
-    # Rate limiting check
-    await public_rate_limiter(request, endpoint_type="verify_batch")
+    # Optional authentication - if API key provided, authenticate and track usage
+    organization = None
+    if api_key:
+        try:
+            organization = await authenticate_api_key(api_key=api_key, db=db)
+            logger.info(f"Authenticated batch verification from org {organization['organization_id']}")
+        except HTTPException as e:
+            # Log but don't fail - fall back to unauthenticated access
+            logger.warning(f"Authentication failed, falling back to public access: {e.detail}")
+    
+    # Rate limiting check (only for unauthenticated requests)
+    if not organization:
+        await public_rate_limiter(request, endpoint_type="verify_batch")
     
     try:
         # Validate batch size
