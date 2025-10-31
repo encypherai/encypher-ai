@@ -85,6 +85,74 @@ class Admin
             'encypher-assurance-settings',
             'encypher_assurance_main_section'
         );
+
+        // C2PA Settings Section
+        add_settings_section(
+            'encypher_assurance_c2pa_section',
+            __('C2PA Settings', 'encypher-assurance'),
+            function () {
+                echo '<p>' . esc_html__('Configure C2PA-compliant text authentication options.', 'encypher-assurance') . '</p>';
+            },
+            'encypher-assurance-settings'
+        );
+
+        add_settings_field(
+            'encypher_assurance_auto_mark_on_publish',
+            __('Auto-mark on publish', 'encypher-assurance'),
+            [$this, 'render_auto_mark_on_publish_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_c2pa_section'
+        );
+
+        add_settings_field(
+            'encypher_assurance_auto_mark_on_update',
+            __('Auto-mark on update', 'encypher-assurance'),
+            [$this, 'render_auto_mark_on_update_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_c2pa_section'
+        );
+
+        add_settings_field(
+            'encypher_assurance_metadata_format',
+            __('Metadata format', 'encypher-assurance'),
+            [$this, 'render_metadata_format_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_c2pa_section'
+        );
+
+        add_settings_field(
+            'encypher_assurance_add_hard_binding',
+            __('Hard binding', 'encypher-assurance'),
+            [$this, 'render_add_hard_binding_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_c2pa_section'
+        );
+
+        add_settings_field(
+            'encypher_assurance_post_types',
+            __('Post types to auto-mark', 'encypher-assurance'),
+            [$this, 'render_post_types_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_c2pa_section'
+        );
+
+        // Tier Settings Section
+        add_settings_section(
+            'encypher_assurance_tier_section',
+            __('Tier & Subscription', 'encypher-assurance'),
+            function () {
+                echo '<p>' . esc_html__('Your current subscription tier and upgrade options.', 'encypher-assurance') . '</p>';
+            },
+            'encypher-assurance-settings'
+        );
+
+        add_settings_field(
+            'encypher_assurance_tier',
+            __('Current tier', 'encypher-assurance'),
+            [$this, 'render_tier_field'],
+            'encypher-assurance-settings',
+            'encypher_assurance_tier_section'
+        );
     }
 
     public function sanitize_settings(array $settings): array
@@ -353,5 +421,166 @@ class Admin
             $post_id,
             $action
         ));
+    }
+
+    /**
+     * Render auto-mark on publish field.
+     */
+    public function render_auto_mark_on_publish_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $checked = isset($options['auto_mark_on_publish']) ? (bool) $options['auto_mark_on_publish'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="encypher_assurance_settings[auto_mark_on_publish]" value="1" <?php checked($checked); ?> />
+            <?php esc_html_e('Automatically embed C2PA manifests when publishing new posts', 'encypher-assurance'); ?>
+        </label>
+        <p class="description"><?php esc_html_e('Recommended for all users. Ensures every published post has cryptographic proof of origin.', 'encypher-assurance'); ?></p>
+        <?php
+    }
+
+    /**
+     * Render auto-mark on update field.
+     */
+    public function render_auto_mark_on_update_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $checked = isset($options['auto_mark_on_update']) ? (bool) $options['auto_mark_on_update'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="encypher_assurance_settings[auto_mark_on_update]" value="1" <?php checked($checked); ?> />
+            <?php esc_html_e('Re-sign manifests when content is updated', 'encypher-assurance'); ?>
+        </label>
+        <p class="description"><?php esc_html_e('Preserves provenance chain through ingredient references. Uses c2pa.edited action.', 'encypher-assurance'); ?></p>
+        <?php
+    }
+
+    /**
+     * Render metadata format field.
+     */
+    public function render_metadata_format_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $value = isset($options['metadata_format']) ? $options['metadata_format'] : 'c2pa';
+        ?>
+        <select name="encypher_assurance_settings[metadata_format]">
+            <option value="c2pa" <?php selected($value, 'c2pa'); ?>><?php esc_html_e('C2PA (Recommended)', 'encypher-assurance'); ?></option>
+            <option value="basic" <?php selected($value, 'basic'); ?>><?php esc_html_e('Basic (Minimal)', 'encypher-assurance'); ?></option>
+        </select>
+        <p class="description">
+            <?php esc_html_e('C2PA format includes full manifest with assertions. Basic format is minimal for testing.', 'encypher-assurance'); ?>
+            <a href="https://c2pa.org" target="_blank"><?php esc_html_e('Learn about C2PA', 'encypher-assurance'); ?></a>
+        </p>
+        <?php
+    }
+
+    /**
+     * Render hard binding field.
+     */
+    public function render_add_hard_binding_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $checked = isset($options['add_hard_binding']) ? (bool) $options['add_hard_binding'] : true;
+        ?>
+        <label>
+            <input type="checkbox" name="encypher_assurance_settings[add_hard_binding]" value="1" <?php checked($checked); ?> />
+            <?php esc_html_e('Include c2pa.hash.data assertion', 'encypher-assurance'); ?>
+        </label>
+        <p class="description"><?php esc_html_e('Provides content hash for tamper detection. Recommended for maximum security.', 'encypher-assurance'); ?></p>
+        <?php
+    }
+
+    /**
+     * Render post types field.
+     */
+    public function render_post_types_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $selected_types = isset($options['post_types']) ? (array) $options['post_types'] : ['post', 'page'];
+        $post_types = get_post_types(['public' => true], 'objects');
+        ?>
+        <fieldset>
+            <?php foreach ($post_types as $post_type): ?>
+                <label style="display:block; margin-bottom:5px;">
+                    <input type="checkbox" 
+                           name="encypher_assurance_settings[post_types][]" 
+                           value="<?php echo esc_attr($post_type->name); ?>"
+                           <?php checked(in_array($post_type->name, $selected_types, true)); ?> />
+                    <?php echo esc_html($post_type->label); ?>
+                </label>
+            <?php endforeach; ?>
+        </fieldset>
+        <p class="description"><?php esc_html_e('Select which post types should be automatically marked with C2PA manifests.', 'encypher-assurance'); ?></p>
+        <?php
+    }
+
+    /**
+     * Render tier field.
+     */
+    public function render_tier_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        
+        $tier_names = [
+            'free' => __('Free', 'encypher-assurance'),
+            'pro' => __('Pro', 'encypher-assurance'),
+            'enterprise' => __('Enterprise', 'encypher-assurance'),
+        ];
+        
+        $tier_features = [
+            'free' => [
+                __('Auto-mark on publish', 'encypher-assurance'),
+                __('Manual marking', 'encypher-assurance'),
+                __('Bulk mark up to 100 posts', 'encypher-assurance'),
+                __('Shared Encypher signature', 'encypher-assurance'),
+            ],
+            'pro' => [
+                __('All Free features', 'encypher-assurance'),
+                __('Custom signature (your organization)', 'encypher-assurance'),
+                __('Unlimited bulk marking', 'encypher-assurance'),
+                __('Advanced analytics', 'encypher-assurance'),
+                __('Priority support', 'encypher-assurance'),
+            ],
+            'enterprise' => [
+                __('All Pro features', 'encypher-assurance'),
+                __('Multi-site support', 'encypher-assurance'),
+                __('Advanced key management', 'encypher-assurance'),
+                __('Custom integrations', 'encypher-assurance'),
+                __('SLA and dedicated support', 'encypher-assurance'),
+            ],
+        ];
+        ?>
+        <div class="encypher-tier-display">
+            <p style="font-size:18px; font-weight:bold; color:#1B2F50;">
+                <?php echo esc_html($tier_names[$tier]); ?>
+            </p>
+            
+            <div style="background:#f0f6fc; padding:15px; border-left:4px solid #2A87C4; margin:10px 0;">
+                <strong><?php esc_html_e('Features:', 'encypher-assurance'); ?></strong>
+                <ul style="margin:10px 0;">
+                    <?php foreach ($tier_features[$tier] as $feature): ?>
+                        <li><?php echo esc_html($feature); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            
+            <?php if ('free' === $tier): ?>
+                <p>
+                    <a href="https://encypherai.com/pricing" class="button button-primary" target="_blank">
+                        <?php esc_html_e('Upgrade to Pro - $99/month', 'encypher-assurance'); ?>
+                    </a>
+                </p>
+            <?php elseif ('pro' === $tier): ?>
+                <p>
+                    <a href="https://encypherai.com/enterprise" class="button button-primary" target="_blank">
+                        <?php esc_html_e('Upgrade to Enterprise', 'encypher-assurance'); ?>
+                    </a>
+                </p>
+            <?php endif; ?>
+            
+            <input type="hidden" name="encypher_assurance_settings[tier]" value="<?php echo esc_attr($tier); ?>" />
+        </div>
+        <?php
     }
 }
