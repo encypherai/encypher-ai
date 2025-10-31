@@ -8,6 +8,7 @@ if (! defined('ABSPATH')) {
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-admin.php';
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-rest.php';
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-verification.php';
+require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-assurance-bulk.php';
 
 /**
  * Main plugin bootstrap class.
@@ -19,12 +20,14 @@ class Plugin
     private Admin $admin;
     private Rest $rest;
     private Verification $verification;
+    private Bulk $bulk;
 
     private function __construct()
     {
         $this->admin = new Admin();
         $this->rest = new Rest();
         $this->verification = new Verification($this->rest);
+        $this->bulk = new Bulk();
 
         register_activation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'activate']);
         register_deactivation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'deactivate']);
@@ -69,5 +72,6 @@ class Plugin
         $this->admin->register_hooks();
         $this->rest->register_hooks();
         $this->verification->register_hooks();
+        $this->bulk->register_hooks();
     }
 }

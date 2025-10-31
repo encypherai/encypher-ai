@@ -1,0 +1,155 @@
+/**
+ * Bulk marking interface styles for Encypher C2PA WordPress plugin.
+ */
+
+.encypher-bulk-mark-page {
+    max-width: 900px;
+}
+
+.encypher-bulk-intro {
+    margin: 20px 0;
+    padding: 15px;
+    background: #f0f6fc;
+    border-left: 4px solid #1B2F50;
+}
+
+.encypher-bulk-form {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.encypher-bulk-summary {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+}
+
+.encypher-bulk-summary h3 {
+    margin-top: 0;
+}
+
+.encypher-bulk-summary #encypher-total-count {
+    font-size: 24px;
+    font-weight: bold;
+    color: #2A87C4;
+}
+
+.encypher-tier-limit {
+    color: #d63638;
+}
+
+.encypher-bulk-progress {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.encypher-progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #f0f0f0;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.encypher-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #1B2F50 0%, #2A87C4 100%);
+    transition: width 0.3s ease;
+}
+
+.encypher-progress-text {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    color: #1B2F50;
+}
+
+.encypher-progress-status,
+.encypher-progress-current-post {
+    font-size: 14px;
+    margin: 10px 0;
+}
+
+.encypher-progress-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin: 20px 0;
+    padding: 15px;
+    background: #f9f9f9;
+    border: 1px solid #ddd;
+}
+
+.encypher-progress-stats p {
+    margin: 0;
+}
+
+.encypher-progress-actions {
+    margin-top: 20px;
+}
+
+.encypher-progress-actions .button {
+    margin-right: 10px;
+}
+
+.encypher-error-log {
+    margin-top: 20px;
+    padding: 15px;
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 4px;
+}
+
+.encypher-error-log h3 {
+    margin-top: 0;
+    color: #856404;
+}
+
+.encypher-error-log ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.encypher-error-log li {
+    margin: 5px 0;
+    color: #856404;
+}
+
+.encypher-bulk-complete {
+    background: #fff;
+    padding: 20px;
+    border: 1px solid #ccd0d4;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+}
+
+.encypher-bulk-complete .notice {
+    margin: 20px 0;
+}
+
+.encypher-bulk-complete #encypher-final-success-count,
+.encypher-bulk-complete #encypher-final-error-count {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.encypher-bulk-complete #encypher-final-success-count {
+    color: #00a32a;
+}
+
+.encypher-bulk-complete #encypher-final-error-count {
+    color: #d63638;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .encypher-progress-stats {
+        grid-template-columns: 1fr;
+    }
+}
