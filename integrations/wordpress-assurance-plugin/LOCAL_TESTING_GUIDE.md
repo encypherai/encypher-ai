@@ -88,11 +88,12 @@ uv add fastapi uvicorn pydantic sqlalchemy redis cryptography
 ### Step 4: Start the Enterprise API
 
 ```powershell
-# Run with UV
-uv run uvicorn enterprise_api.main:app --reload --host 0.0.0.0 --port 8000
+# Run with UV (from enterprise_api directory)
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
-# Or if you have a start script
-uv run python -m enterprise_api.main
+# Or from parent directory
+cd c:\Users\eriks\encypherai-commercial
+uv run --directory enterprise_api uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 **Expected Output:**
@@ -560,7 +561,7 @@ AND meta_key LIKE '_encypher%';
 **Restart API:**
 ```powershell
 cd c:\Users\eriks\encypherai-commercial\enterprise_api
-uv run uvicorn enterprise_api.main:app --reload --host 0.0.0.0 --port 8000
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ### Test 8: Settings Changes
@@ -775,7 +776,7 @@ Write-Host "Starting local test environment..." -ForegroundColor Green
 
 # Start Enterprise API
 Write-Host "`n1. Starting Enterprise API..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd c:\Users\eriks\encypherai-commercial\enterprise_api; uv run uvicorn enterprise_api.main:app --reload --host 0.0.0.0 --port 8000"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd c:\Users\eriks\encypherai-commercial\enterprise_api; uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000"
 
 # Wait for API to start
 Write-Host "Waiting for API to start..." -ForegroundColor Yellow
