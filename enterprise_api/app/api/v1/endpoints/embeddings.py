@@ -6,7 +6,7 @@ Enterprise tier endpoints for creating and managing content embeddings.
 import time
 import logging
 import os
-from typing import Optional
+from typing import Optional, Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -22,6 +22,7 @@ from app.schemas.embeddings import (
 from app.services.embedding_service import EmbeddingService
 from app.services.merkle_service import MerkleService
 from app.models.merkle import MerkleRoot
+from app.middleware.api_key_auth import require_embedding_permission
 
 logger = logging.getLogger(__name__)
 
@@ -75,8 +76,7 @@ embedding_service = EmbeddingService(SECRET_KEY)
 async def encode_with_embeddings(
     request: EncodeWithEmbeddingsRequest,
     db: AsyncSession = Depends(get_db),
-    # TODO: Add authentication dependency
-    # current_org: Organization = Depends(get_current_organization)
+    organization: Dict = Depends(require_embedding_permission)
 ) -> EncodeWithEmbeddingsResponse:
     """
     Encode a document with minimal signed embeddings.
@@ -93,21 +93,15 @@ async def encode_with_embeddings(
     """
     start_time = time.time()
     
-    # TODO: Replace with actual organization from auth
-    organization_id = "org_demo"
+    # Get organization ID from authenticated organization
+    organization_id = organization["organization_id"]
     
     try:
         logger.info(
             f"Encoding document {request.document_id} with embeddings "
-            f"for org {organization_id} at {request.segmentation_level} level"
+            f"for org {organization_id} ({organization['organization_name']}) "
+            f"at {request.segmentation_level} level"
         )
-        
-        # TODO: Check organization tier and quota
-        # if not current_org.embeddings_enabled:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="Embedding features not enabled for this organization"
-        #     )
         
         # Step 1: Build Merkle tree (existing functionality)
         merkle_roots = await MerkleService.encode_document(
