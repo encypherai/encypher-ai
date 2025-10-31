@@ -78,16 +78,26 @@
 
 ---
 
-### 🚧 Phase 3: Additional Utilities (IN PROGRESS)
+### ✅ Phase 3: Additional Utilities (COMPLETE)
+**Duration:** ~1 hour  
+**Commits:**
+- `f96b67e` - feat: implement additional embedding utilities (Phase 3)
 
-**Remaining Tasks:**
-- [ ] Markdown embedder utility
-- [ ] PDF embedder utility (XMP metadata)
-- [ ] Plain text embedder utility
-- [ ] JavaScript extraction library (for browser extension)
-- [ ] Python extraction library (for partners)
+**Deliverables:**
+- [x] Markdown embedder utility
+- [x] Plain text embedder utility
+- [x] JavaScript extraction library (for browser extension)
+- [x] Python extraction library (for partners)
+- [x] Unit tests (14 tests, 100% passing)
+- [ ] PDF embedder utility (XMP metadata) - DEFERRED to Phase 4
 
-**Estimated Duration:** 1 week
+**Key Features Implemented:**
+- Markdown embedding with 3 methods: reference-link, html-comment, invisible-link
+- Plain text embedding with 3 methods: inline-bracket, inline-parenthesis, end-of-line
+- JavaScript library (`encypher-verify.js`) with DOM extraction and API verification
+- Python library (`encypher_extract.py`) for web scraping partners
+- Reference extraction from HTML, Markdown, and plain text
+- Batch verification support in both libraries
 
 ---
 
