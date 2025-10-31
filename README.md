@@ -135,6 +135,7 @@ We maintain **two distinct architectures** for different use cases and customer 
 
 **Features Included:**
 - 🔒 **Merkle Tree Encoding** - Hierarchical content authentication
+- 🔒 **Minimal Signed Embeddings** - Invisible Unicode-based content authentication with public verification
 - 🔒 **Source Attribution** - Track content origins and modifications
 - 🔒 **Plagiarism Detection** - Advanced content similarity analysis
 - 🔒 **Batch Operations** - High-volume processing with queuing
@@ -225,6 +226,7 @@ We maintain **two distinct architectures** for different use cases and customer 
 - ✅ All Free features
 - ✅ Policy Validator CLI
 - ✅ Sentence-level lookup
+- ✅ Invisible signed embeddings (Unicode variation selectors)
 - ✅ Custom metadata schemas
 - ✅ 10,000 API requests/month
 - ✅ Team management
@@ -235,12 +237,14 @@ We maintain **two distinct architectures** for different use cases and customer 
 - ✅ All Professional features
 - ✅ **Enterprise API** (self-hosted or managed)
   - 🔒 Merkle tree encoding
+  - 🔒 Invisible signed embeddings with public verification API
   - 🔒 Source attribution & plagiarism detection
   - 🔒 Batch operations with queuing
   - 🔒 Advanced forensic analysis
 - ✅ Enterprise SDK (Python, CI/CD integration)
 - ✅ Compliance Dashboard
 - ✅ WordPress integration
+- ✅ Partner integration tools (web scraping, content monitoring)
 - ✅ Unlimited API requests
 - ✅ SLA guarantee (99.9%)
 - ✅ Dedicated support
