@@ -136,32 +136,37 @@
 
 ---
 
-## Phase 3: Chat Application Wrappers ⏳
+## Phase 3: Chat Application Wrappers ✅
 
 **Goal:** Easy integration with popular LLM frameworks  
 **Timeline:** Week 4  
-**Status:** Not Started
+**Status:** Complete
 
-### Task 3.1: OpenAI-Compatible Endpoint ⏳
+### Task 3.1: OpenAI-Compatible Endpoint ✅
 
-- [ ] Create `app/routers/chat.py`
-- [ ] Implement OpenAI-compatible streaming
-- [ ] Add conversation tracking
-- [ ] Implement SSE response format
+- [x] Create `app/routers/chat.py`
+- [x] Implement OpenAI-compatible streaming endpoint
+- [x] Add conversation tracking
+- [x] Implement SSE response format
+- [x] Mock LLM response generation
+- [x] Chunk-based streaming
+- [x] Health check endpoint
 
-### Task 3.2: LangChain Integration ⏳
+### Task 3.2: LangChain Integration ✅
 
-- [ ] Create `enterprise_sdk/encypher_enterprise/integrations/langchain.py`
-- [ ] Implement EncypherStreamingHandler
-- [ ] Add streaming callbacks
-- [ ] Create example: `examples/langchain_streaming.py`
+- [x] Verify `enterprise_sdk/encypher_enterprise/integrations/langchain.py` (already exists)
+- [x] EncypherStreamingHandler implemented
+- [x] Streaming callbacks implemented
+- [x] `apply_signing()` helper function
+- [x] `make_streaming_callback()` function
 
-### Task 3.3: LlamaIndex Integration ⏳
+### Task 3.3: LlamaIndex Integration ✅
 
-- [ ] Create `enterprise_sdk/encypher_enterprise/integrations/llamaindex.py`
-- [ ] Implement LlamaIndex callback handler
-- [ ] Add node-level signing
-- [ ] Create example: `examples/llamaindex_streaming.py`
+- [x] Create `enterprise_sdk/encypher_enterprise/integrations/llamaindex.py`
+- [x] Implement `EncypherCallbackHandler`
+- [x] Implement `EncypherStreamingCallbackHandler`
+- [x] Add query response signing
+- [x] Helper function `sign_query_response()`
 
 ---
 

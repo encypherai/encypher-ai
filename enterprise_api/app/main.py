@@ -14,7 +14,7 @@ from pathlib import Path
 from sqlalchemy import text
 
 from app.config import settings
-from app.routers import signing, verification, lookup, onboarding, streaming, kafka
+from app.routers import signing, verification, lookup, onboarding, streaming, kafka, chat
 from app.api.v1.api import api_router as api_v1_router
 from app.database import engine
 from app.services.session_service import session_service
@@ -168,6 +168,7 @@ app.include_router(lookup.router, prefix="/api/v1", tags=["Lookup"])
 app.include_router(onboarding.router, prefix="/api/v1/onboarding", tags=["Onboarding"])
 app.include_router(streaming.router, prefix="/api/v1", tags=["Streaming"])
 app.include_router(kafka.router, prefix="/api/v1", tags=["Kafka"])
+app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")
