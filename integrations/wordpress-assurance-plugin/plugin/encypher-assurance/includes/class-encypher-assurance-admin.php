@@ -17,6 +17,11 @@ class Admin
         add_action('enqueue_block_editor_assets', [$this, 'enqueue_block_editor_assets']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
         add_action('add_meta_boxes', [$this, 'register_classic_meta_box']);
+        
+        // Auto-mark on publish/update hooks
+        add_action('publish_post', [$this, 'auto_mark_on_publish'], 10, 2);
+        add_action('publish_page', [$this, 'auto_mark_on_publish'], 10, 2);
+        add_action('post_updated', [$this, 'auto_mark_on_update'], 10, 3);
     }
 
     public function register_settings_page(): void
@@ -39,6 +44,12 @@ class Admin
                 'api_base_url' => 'https://api.encypherai.com/api/v1',
                 'api_key' => '',
                 'auto_verify' => true,
+                'auto_mark_on_publish' => true,
+                'auto_mark_on_update' => true,
+                'metadata_format' => 'c2pa',
+                'add_hard_binding' => true,
+                'tier' => 'free',
+                'post_types' => ['post', 'page'],
             ],
         ]);
 
@@ -83,6 +94,12 @@ class Admin
         $sanitized['api_base_url'] = rtrim($sanitized['api_base_url'], '/');
         $sanitized['api_key'] = isset($settings['api_key']) ? sanitize_text_field($settings['api_key']) : '';
         $sanitized['auto_verify'] = isset($settings['auto_verify']) ? (bool) $settings['auto_verify'] : false;
+        $sanitized['auto_mark_on_publish'] = isset($settings['auto_mark_on_publish']) ? (bool) $settings['auto_mark_on_publish'] : true;
+        $sanitized['auto_mark_on_update'] = isset($settings['auto_mark_on_update']) ? (bool) $settings['auto_mark_on_update'] : true;
+        $sanitized['metadata_format'] = isset($settings['metadata_format']) && in_array($settings['metadata_format'], ['basic', 'c2pa'], true) ? $settings['metadata_format'] : 'c2pa';
+        $sanitized['add_hard_binding'] = isset($settings['add_hard_binding']) ? (bool) $settings['add_hard_binding'] : true;
+        $sanitized['tier'] = isset($settings['tier']) && in_array($settings['tier'], ['free', 'pro', 'enterprise'], true) ? $settings['tier'] : 'free';
+        $sanitized['post_types'] = isset($settings['post_types']) && is_array($settings['post_types']) ? array_map('sanitize_text_field', $settings['post_types']) : ['post', 'page'];
         return $sanitized;
     }
 
@@ -238,5 +255,103 @@ class Admin
             <p class="status-message" aria-live="polite"></p>
         </div>
         <?php
+    }
+
+    /**
+     * Auto-mark content when publishing a post.
+     * 
+     * @param int $post_id Post ID
+     * @param \WP_Post $post Post object
+     */
+    public function auto_mark_on_publish(int $post_id, $post): void
+    {
+        // Check if auto-mark is enabled
+        $settings = get_option('encypher_assurance_settings', []);
+        if (empty($settings['auto_mark_on_publish'])) {
+            return;
+        }
+
+        // Check if post type is enabled
+        if (!in_array($post->post_type, $settings['post_types'] ?? ['post', 'page'], true)) {
+            return;
+        }
+
+        // Check per-post override
+        if (get_post_meta($post_id, '_encypher_skip_marking', true)) {
+            return;
+        }
+
+        // Check if already marked (avoid double-marking on publish)
+        if (get_post_meta($post_id, '_encypher_marked', true)) {
+            return;
+        }
+
+        // Mark the content
+        $this->mark_post_content($post_id, $post, 'c2pa.created');
+    }
+
+    /**
+     * Auto-mark content when updating a post.
+     * 
+     * @param int $post_id Post ID
+     * @param \WP_Post $post_after Post object after update
+     * @param \WP_Post $post_before Post object before update
+     */
+    public function auto_mark_on_update(int $post_id, $post_after, $post_before): void
+    {
+        // Only process published posts
+        if ($post_after->post_status !== 'publish') {
+            return;
+        }
+
+        // Check if auto-mark on update is enabled
+        $settings = get_option('encypher_assurance_settings', []);
+        if (empty($settings['auto_mark_on_update'])) {
+            return;
+        }
+
+        // Check if post type is enabled
+        if (!in_array($post_after->post_type, $settings['post_types'] ?? ['post', 'page'], true)) {
+            return;
+        }
+
+        // Check per-post override
+        if (get_post_meta($post_id, '_encypher_skip_marking', true)) {
+            return;
+        }
+
+        // Check if content changed
+        if ($post_after->post_content === $post_before->post_content) {
+            return;
+        }
+
+        // Check if already marked
+        $is_marked = get_post_meta($post_id, '_encypher_marked', true);
+        
+        // Re-mark with edit action
+        $action = $is_marked ? 'c2pa.edited' : 'c2pa.created';
+        $this->mark_post_content($post_id, $post_after, $action);
+    }
+
+    /**
+     * Mark post content with C2PA manifest.
+     * 
+     * @param int $post_id Post ID
+     * @param \WP_Post $post Post object
+     * @param string $action C2PA action type (c2pa.created or c2pa.edited)
+     */
+    private function mark_post_content(int $post_id, $post, string $action): void
+    {
+        // This will be implemented to call the REST API endpoint
+        // For now, we'll set a flag to indicate marking is needed
+        update_post_meta($post_id, '_encypher_needs_marking', true);
+        update_post_meta($post_id, '_encypher_action_type', $action);
+        
+        // Log for debugging
+        error_log(sprintf(
+            'Encypher: Post %d needs marking with action %s',
+            $post_id,
+            $action
+        ));
     }
 }
