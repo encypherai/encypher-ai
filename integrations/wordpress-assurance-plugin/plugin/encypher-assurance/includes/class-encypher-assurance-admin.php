@@ -14,6 +14,7 @@ class Admin
     {
         add_action('admin_menu', [$this, 'register_settings_page']);
         add_action('admin_init', [$this, 'register_settings']);
+        add_action('admin_enqueue_scripts', [$this, 'enqueue_settings_page_assets']);
         add_action('enqueue_block_editor_assets', [$this, 'enqueue_block_editor_assets']);
         // Classic editor meta box disabled - using Gutenberg sidebar instead
         // add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
@@ -220,6 +221,29 @@ class Admin
         <?php
     }
 
+    public function enqueue_settings_page_assets(string $hook_suffix): void
+    {
+        // Only load on our settings page
+        if ('settings_page_encypher-assurance-settings' !== $hook_suffix) {
+            return;
+        }
+
+        wp_enqueue_style(
+            'encypher-assurance-settings',
+            ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/css/settings-page.css',
+            [],
+            ENCYPHER_ASSURANCE_VERSION
+        );
+
+        wp_enqueue_script(
+            'encypher-assurance-settings',
+            ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/js/settings-page.js',
+            ['jquery'],
+            ENCYPHER_ASSURANCE_VERSION,
+            true
+        );
+    }
+
     public function render_api_base_url_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
@@ -227,6 +251,9 @@ class Admin
         ?>
         <input type="url" class="regular-text" name="encypher_assurance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="https://api.encypherai.com/api/v1" required />
         <p class="description"><?php esc_html_e('Base URL for the Encypher Enterprise API (override this only when pointing at a self-hosted instance).', 'encypher-assurance'); ?></p>
+        <div id="connection-status"></div>
+        <button type="button" id="test-connection-btn" class="button"><?php esc_html_e('Test Connection', 'encypher-assurance'); ?></button>
+        <div id="test-connection-result"></div>
         <?php
     }
 
