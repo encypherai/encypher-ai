@@ -25,35 +25,34 @@
 
         async checkConnection() {
             const $status = $('#connection-status');
-            let apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
-            const apiKey = $('input[name="encypher_assurance_settings[api_key]"]').val();
+            const apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
 
             if (!apiUrl) {
                 $status.html('<span class="status-indicator status-unknown">⚪</span> <span>No API URL configured</span>');
                 return;
             }
 
-            // Convert Docker internal URLs to localhost for browser access
-            apiUrl = this.convertToLocalhostUrl(apiUrl);
-
-            $status.html('<span class="status-indicator status-checking">🔄</span> <span>Checking connection...</span>');
+            $status.html('<span class="status-indicator status-checking">🔄</span> <span>Checking...</span>');
 
             try {
-                const response = await fetch(apiUrl.replace(/\/+$/, '') + '/health', {
-                    method: 'GET',
-                    headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}
+                // Use server-side check via WordPress REST API
+                const response = await fetch(wpApiSettings.root + 'encypher-assurance/v1/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': wpApiSettings.nonce
+                    }
                 });
 
-                if (response.ok) {
-                    $status.html('<span class="status-indicator status-connected">✅</span> <span class="status-text-success">Connected to Enterprise API</span>');
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    $status.html('<span class="status-indicator status-connected">✅</span> <span class="status-text-success">Connected</span>');
                 } else {
-                    $status.html(`<span class="status-indicator status-error">❌</span> <span class="status-text-error">Connection failed (${response.status})</span>`);
+                    $status.html('<span class="status-indicator status-error">❌</span> <span class="status-text-error">Not connected</span>');
                 }
             } catch (error) {
-                const errorMsg = error.message.includes('ERR_NAME_NOT_RESOLVED') 
-                    ? 'Cannot resolve hostname - use localhost:9000 for local testing'
-                    : 'Cannot reach API - check URL and network';
-                $status.html(`<span class="status-indicator status-error">❌</span> <span class="status-text-error">${errorMsg}</span>`);
+                $status.html('<span class="status-indicator status-error">❌</span> <span class="status-text-error">Check failed</span>');
             }
         },
 

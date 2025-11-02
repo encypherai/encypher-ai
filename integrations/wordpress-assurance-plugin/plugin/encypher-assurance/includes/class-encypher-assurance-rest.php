@@ -750,8 +750,11 @@ class Rest
             );
         }
 
-        // Test health endpoint
-        $health_url = rtrim($api_base_url, '/') . '/health';
+        // Test health endpoint (at root, not under /api/v1)
+        // Remove /api/v1 suffix if present to get base URL
+        $base_url = preg_replace('#/api/v1/?$#', '', rtrim($api_base_url, '/'));
+        $health_url = $base_url . '/health';
+        
         $health_response = wp_remote_get($health_url, [
             'timeout' => 10,
             'headers' => $api_key ? ['Authorization' => 'Bearer ' . $api_key] : [],
