@@ -25,13 +25,16 @@
 
         async checkConnection() {
             const $status = $('#connection-status');
-            const apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
+            let apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
             const apiKey = $('input[name="encypher_assurance_settings[api_key]"]').val();
 
             if (!apiUrl) {
                 $status.html('<span class="status-indicator status-unknown">⚪</span> <span>No API URL configured</span>');
                 return;
             }
+
+            // Convert Docker internal URLs to localhost for browser access
+            apiUrl = this.convertToLocalhostUrl(apiUrl);
 
             $status.html('<span class="status-indicator status-checking">🔄</span> <span>Checking connection...</span>');
 
@@ -47,14 +50,26 @@
                     $status.html(`<span class="status-indicator status-error">❌</span> <span class="status-text-error">Connection failed (${response.status})</span>`);
                 }
             } catch (error) {
-                $status.html('<span class="status-indicator status-error">❌</span> <span class="status-text-error">Cannot reach API</span>');
+                const errorMsg = error.message.includes('ERR_NAME_NOT_RESOLVED') 
+                    ? 'Cannot resolve hostname - use localhost:9000 for local testing'
+                    : 'Cannot reach API - check URL and network';
+                $status.html(`<span class="status-indicator status-error">❌</span> <span class="status-text-error">${errorMsg}</span>`);
             }
+        },
+
+        convertToLocalhostUrl(url) {
+            // Convert Docker internal URLs to localhost for browser testing
+            // enterprise-api:8000 -> localhost:9000 (mapped port)
+            if (url.includes('enterprise-api:8000')) {
+                return url.replace('enterprise-api:8000', 'localhost:9000');
+            }
+            return url;
         },
 
         async testConnection() {
             const $btn = $('#test-connection-btn');
             const $result = $('#test-connection-result');
-            const apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
+            let apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
             const apiKey = $('input[name="encypher_assurance_settings[api_key]"]').val();
 
             if (!apiUrl) {
@@ -62,8 +77,19 @@
                 return;
             }
 
+            // Show original URL vs converted URL if different
+            const originalUrl = apiUrl;
+            apiUrl = this.convertToLocalhostUrl(apiUrl);
+            const urlConverted = originalUrl !== apiUrl;
+
             $btn.prop('disabled', true).text('Testing...');
-            $result.html('<div class="notice notice-info"><p>Testing connection...</p></div>');
+            
+            let infoMsg = '<div class="notice notice-info"><p>Testing connection...';
+            if (urlConverted) {
+                infoMsg += `<br><small>Note: Converting ${originalUrl} to ${apiUrl} for browser access</small>`;
+            }
+            infoMsg += '</p></div>';
+            $result.html(infoMsg);
 
             try {
                 // Test health endpoint

@@ -249,8 +249,12 @@ class Admin
         $options = get_option('encypher_assurance_settings', []);
         $value = isset($options['api_base_url']) ? esc_url($options['api_base_url']) : '';
         ?>
-        <input type="url" class="regular-text" name="encypher_assurance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="https://api.encypherai.com/api/v1" required />
-        <p class="description"><?php esc_html_e('Base URL for the Encypher Enterprise API (override this only when pointing at a self-hosted instance).', 'encypher-assurance'); ?></p>
+        <input type="url" class="regular-text" name="encypher_assurance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="http://localhost:9000/api/v1" required />
+        <p class="description">
+            <?php esc_html_e('Base URL for the Encypher Enterprise API.', 'encypher-assurance'); ?><br>
+            <strong><?php esc_html_e('Local testing:', 'encypher-assurance'); ?></strong> <?php esc_html_e('Use http://localhost:9000/api/v1', 'encypher-assurance'); ?><br>
+            <strong><?php esc_html_e('Production:', 'encypher-assurance'); ?></strong> <?php esc_html_e('Use https://api.encypherai.com/api/v1', 'encypher-assurance'); ?>
+        </p>
         <div id="connection-status"></div>
         <button type="button" id="test-connection-btn" class="button"><?php esc_html_e('Test Connection', 'encypher-assurance'); ?></button>
         <div id="test-connection-result"></div>
