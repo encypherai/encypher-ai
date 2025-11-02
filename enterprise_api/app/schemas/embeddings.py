@@ -84,7 +84,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     
     @validator('segmentation_level')
     def validate_segmentation_level(cls, v):
-        allowed = ['word', 'sentence', 'paragraph', 'section']
+        allowed = ['document', 'word', 'sentence', 'paragraph', 'section']
         if v not in allowed:
             raise ValueError(f"Segmentation level must be one of: {', '.join(allowed)}")
         return v
