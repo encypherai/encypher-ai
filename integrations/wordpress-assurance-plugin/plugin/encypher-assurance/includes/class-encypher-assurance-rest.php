@@ -492,12 +492,12 @@ class Rest
             return;
         }
 
-        // Check if auto-signing is enabled
+        // Check if auto-signing on update is enabled
         $settings = get_option('encypher_assurance_settings', []);
-        $auto_sign = isset($settings['auto_sign_on_publish']) ? (bool) $settings['auto_sign_on_publish'] : true;
+        $auto_sign_on_update = isset($settings['auto_mark_on_update']) ? (bool) $settings['auto_mark_on_update'] : true;
         
-        if (!$auto_sign) {
-            error_log('Encypher: Auto-signing is disabled in settings');
+        if (!$auto_sign_on_update) {
+            error_log('Encypher: Auto-signing on update is disabled in settings');
             return;
         }
 
