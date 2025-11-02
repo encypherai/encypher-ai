@@ -55,7 +55,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     text: str = Field(..., description="Full document text to encode")
     segmentation_level: str = Field(
         default="sentence",
-        description="Segmentation level: word, sentence, paragraph, section"
+        description="Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word"
     )
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
