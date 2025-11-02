@@ -514,17 +514,18 @@ class Rest
         }
 
         // Post is already signed - check if content changed
-        $previous_hash = get_post_meta($post_id, '_encypher_assurance_cached_content_hash', true);
-        $current_hash = md5($post->post_content);
+        // Compare the content before and after the update
+        $before_hash = md5($post_before->post_content);
+        $after_hash = md5($post->post_content);
         
         error_log(sprintf(
-            'Encypher: Post %d hash check - previous: %s, current: %s',
+            'Encypher: Post %d hash check - before: %s, after: %s',
             $post_id,
-            $previous_hash ? substr($previous_hash, 0, 8) : 'none',
-            substr($current_hash, 0, 8)
+            substr($before_hash, 0, 8),
+            substr($after_hash, 0, 8)
         ));
         
-        if ($previous_hash && $previous_hash !== $current_hash) {
+        if ($before_hash !== $after_hash) {
             // Content changed - re-sign with c2pa.edited action
             error_log(sprintf(
                 'Encypher: Content changed for post %d, triggering re-sign with c2pa.edited',
