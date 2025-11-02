@@ -717,7 +717,13 @@ class Rest
                 } elseif (isset($decoded['message'])) {
                     $message = (string) $decoded['message'];
                 } elseif (isset($decoded['detail'])) {
-                    $message = (string) $decoded['detail'];
+                    // FastAPI validation errors return detail as array
+                    if (is_array($decoded['detail'])) {
+                        $message = wp_json_encode($decoded['detail'], JSON_PRETTY_PRINT);
+                        error_log('Encypher: Validation error details: ' . $message);
+                    } else {
+                        $message = (string) $decoded['detail'];
+                    }
                 }
                 if (isset($decoded['error']['code'])) {
                     $code = (string) $decoded['error']['code'];
