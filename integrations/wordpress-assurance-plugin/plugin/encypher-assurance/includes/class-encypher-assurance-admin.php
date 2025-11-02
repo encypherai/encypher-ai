@@ -242,6 +242,15 @@ class Admin
             ENCYPHER_ASSURANCE_VERSION,
             true
         );
+
+        wp_localize_script(
+            'encypher-assurance-settings',
+            'wpApiSettings',
+            [
+                'root' => esc_url_raw(rest_url()),
+                'nonce' => wp_create_nonce('wp_rest'),
+            ]
+        );
     }
 
     public function render_api_base_url_field(): void

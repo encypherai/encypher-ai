@@ -69,73 +69,44 @@
         async testConnection() {
             const $btn = $('#test-connection-btn');
             const $result = $('#test-connection-result');
-            let apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
-            const apiKey = $('input[name="encypher_assurance_settings[api_key]"]').val();
-
-            if (!apiUrl) {
-                $result.html('<div class="notice notice-error"><p>Please enter an API URL first.</p></div>');
-                return;
-            }
-
-            // Show original URL vs converted URL if different
-            const originalUrl = apiUrl;
-            apiUrl = this.convertToLocalhostUrl(apiUrl);
-            const urlConverted = originalUrl !== apiUrl;
 
             $btn.prop('disabled', true).text('Testing...');
-            
-            let infoMsg = '<div class="notice notice-info"><p>Testing connection...';
-            if (urlConverted) {
-                infoMsg += `<br><small>Note: Converting ${originalUrl} to ${apiUrl} for browser access</small>`;
-            }
-            infoMsg += '</p></div>';
-            $result.html(infoMsg);
+            $result.html('<div class="notice notice-info"><p>Testing connection via WordPress server...</p></div>');
 
             try {
-                // Test health endpoint
-                const healthResponse = await fetch(apiUrl.replace(/\/+$/, '') + '/health', {
-                    method: 'GET',
-                    headers: apiKey ? { 'Authorization': `Bearer ${apiKey}` } : {}
+                // Use WordPress REST API endpoint (server-side test)
+                const response = await fetch(wpApiSettings.root + 'encypher-assurance/v1/test-connection', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-WP-Nonce': wpApiSettings.nonce
+                    }
                 });
 
-                if (!healthResponse.ok) {
-                    throw new Error(`Health check failed: ${healthResponse.status}`);
-                }
+                const data = await response.json();
 
-                const healthData = await healthResponse.json();
-
-                // If API key provided, test authentication
-                let authStatus = 'Not tested (no API key provided)';
-                let orgInfo = null;
-
-                if (apiKey) {
-                    try {
-                        const authResponse = await fetch(apiUrl.replace(/\/+$/, '') + '/auth/verify', {
-                            method: 'GET',
-                            headers: { 'Authorization': `Bearer ${apiKey}` }
-                        });
-
-                        if (authResponse.ok) {
-                            const authData = await authResponse.json();
-                            authStatus = '✅ Authenticated';
-                            orgInfo = authData.organization || null;
-                        } else {
-                            authStatus = `❌ Authentication failed (${authResponse.status})`;
-                        }
-                    } catch (authError) {
-                        authStatus = `❌ Authentication error: ${authError.message}`;
-                    }
+                if (!response.ok || !data.success) {
+                    throw new Error(data.message || 'Connection test failed');
                 }
 
                 // Build success message
                 let message = '<div class="notice notice-success"><p><strong>✅ Connection successful!</strong></p>';
                 message += '<ul style="margin-left: 20px;">';
-                message += `<li><strong>API Status:</strong> ${healthData.status || 'OK'}</li>`;
-                message += `<li><strong>Authentication:</strong> ${authStatus}</li>`;
+                message += `<li><strong>API URL:</strong> ${data.api_url}</li>`;
+                message += `<li><strong>API Status:</strong> ${data.health?.status || 'OK'}</li>`;
                 
-                if (orgInfo) {
-                    message += `<li><strong>Organization:</strong> ${orgInfo.name || orgInfo.organization_id}</li>`;
-                    message += `<li><strong>Tier:</strong> ${orgInfo.tier || 'Unknown'}</li>`;
+                if (data.authenticated) {
+                    message += `<li><strong>Authentication:</strong> ✅ Authenticated</li>`;
+                    if (data.organization) {
+                        message += `<li><strong>Organization:</strong> ${data.organization.name || data.organization.organization_id}</li>`;
+                        if (data.organization.tier) {
+                            message += `<li><strong>Tier:</strong> ${data.organization.tier}</li>`;
+                        }
+                    }
+                } else if (data.auth_error) {
+                    message += `<li><strong>Authentication:</strong> ❌ ${data.auth_error}</li>`;
+                } else {
+                    message += `<li><strong>Authentication:</strong> ${data.auth_note || 'Not tested'}</li>`;
                 }
                 
                 message += '</ul></div>';

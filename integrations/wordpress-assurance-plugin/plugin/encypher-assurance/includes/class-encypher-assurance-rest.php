@@ -78,6 +78,14 @@ class Rest
             ],
             'callback' => [$this, 'handle_provenance_request'],
         ]);
+
+        register_rest_route('encypher-assurance/v1', '/test-connection', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'permission_callback' => function() {
+                return current_user_can('manage_options');
+            },
+            'callback' => [$this, 'handle_test_connection_request'],
+        ]);
     }
 
     public function can_edit_post(WP_REST_Request $request): bool
@@ -720,5 +728,98 @@ class Rest
         }
 
         return is_array($decoded) ? $decoded : [];
+    }
+
+    /**
+     * Handle connection test request (server-side).
+     * 
+     * @param WP_REST_Request $request
+     * @return WP_REST_Response|WP_Error
+     */
+    public function handle_test_connection_request(WP_REST_Request $request)
+    {
+        $settings = get_option('encypher_assurance_settings', []);
+        $api_base_url = isset($settings['api_base_url']) ? $settings['api_base_url'] : '';
+        $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
+
+        if (empty($api_base_url)) {
+            return new WP_Error(
+                'no_api_url',
+                __('No API URL configured', 'encypher-assurance'),
+                ['status' => 400]
+            );
+        }
+
+        // Test health endpoint
+        $health_url = rtrim($api_base_url, '/') . '/health';
+        $health_response = wp_remote_get($health_url, [
+            'timeout' => 10,
+            'headers' => $api_key ? ['Authorization' => 'Bearer ' . $api_key] : [],
+        ]);
+
+        if (is_wp_error($health_response)) {
+            return new WP_Error(
+                'connection_failed',
+                sprintf(
+                    __('Connection failed: %s', 'encypher-assurance'),
+                    $health_response->get_error_message()
+                ),
+                ['status' => 500]
+            );
+        }
+
+        $status_code = wp_remote_retrieve_response_code($health_response);
+        $body = wp_remote_retrieve_body($health_response);
+
+        if ($status_code !== 200) {
+            return new WP_Error(
+                'health_check_failed',
+                sprintf(
+                    __('Health check failed with status %d', 'encypher-assurance'),
+                    $status_code
+                ),
+                ['status' => $status_code]
+            );
+        }
+
+        $health_data = json_decode($body, true);
+
+        // Build response
+        $result = [
+            'success' => true,
+            'status' => 'connected',
+            'api_url' => $api_base_url,
+            'health' => $health_data,
+        ];
+
+        // If API key provided, test authentication
+        if (!empty($api_key)) {
+            $auth_url = rtrim($api_base_url, '/') . '/auth/verify';
+            $auth_response = wp_remote_get($auth_url, [
+                'timeout' => 10,
+                'headers' => ['Authorization' => 'Bearer ' . $api_key],
+            ]);
+
+            if (!is_wp_error($auth_response)) {
+                $auth_status = wp_remote_retrieve_response_code($auth_response);
+                if ($auth_status === 200) {
+                    $auth_body = wp_remote_retrieve_body($auth_response);
+                    $auth_data = json_decode($auth_body, true);
+                    $result['authenticated'] = true;
+                    $result['organization'] = $auth_data['organization'] ?? null;
+                } else {
+                    $result['authenticated'] = false;
+                    $result['auth_error'] = sprintf('Authentication failed (%d)', $auth_status);
+                }
+            } else {
+                $result['authenticated'] = false;
+                $result['auth_error'] = $auth_response->get_error_message();
+            }
+        } else {
+            $result['authenticated'] = false;
+            $result['auth_note'] = 'No API key provided';
+        }
+
+        return new WP_REST_Response($result);
     }
 }
