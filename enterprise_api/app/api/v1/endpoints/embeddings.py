@@ -130,8 +130,9 @@ async def encode_with_embeddings(
         # Just create ONE C2PA wrapper for the entire document
         if request.segmentation_level == 'document':
             logger.info(f"Document-level signing (free tier) - no segmentation")
+            from app.utils.merkle import compute_hash
             segments = [request.text]  # Single segment = entire document
-            leaf_hashes = []  # No hashes needed for free tier
+            leaf_hashes = [compute_hash(request.text)]  # Single hash for entire document
             merkle_root_id = None  # No Merkle tree for free tier
             merkle_root = None
         else:

@@ -32,11 +32,11 @@ class ContentReference(Base):
     # Primary identifier (64-bit integer for compact embeddings)
     ref_id = Column(BigInteger, primary_key=True)
     
-    # Link to Merkle tree system
+    # Link to Merkle tree system (nullable for free tier - no Merkle tree)
     merkle_root_id = Column(
         PGUUID(as_uuid=True),
         ForeignKey("merkle_roots.root_id", ondelete="CASCADE"),
-        nullable=False,
+        nullable=True,  # Free tier has no Merkle tree
         index=True
     )
     leaf_hash = Column(String(64), nullable=False, index=True)
