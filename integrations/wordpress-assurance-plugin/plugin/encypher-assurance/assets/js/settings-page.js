@@ -93,19 +93,17 @@
                 message += '<ul style="margin-left: 20px;">';
                 message += `<li><strong>API URL:</strong> ${data.api_url}</li>`;
                 message += `<li><strong>API Status:</strong> ${data.health?.status || 'OK'}</li>`;
+                message += `<li><strong>API Key:</strong> ${data.api_key_configured ? '✅ Configured' : '⚠️ Not configured (using demo mode)'}</li>`;
                 
-                if (data.authenticated) {
-                    message += `<li><strong>Authentication:</strong> ✅ Authenticated</li>`;
-                    if (data.organization) {
-                        message += `<li><strong>Organization:</strong> ${data.organization.name || data.organization.organization_id}</li>`;
-                        if (data.organization.tier) {
-                            message += `<li><strong>Tier:</strong> ${data.organization.tier}</li>`;
-                        }
+                if (data.auth_note) {
+                    message += `<li><strong>Note:</strong> ${data.auth_note}</li>`;
+                }
+                
+                if (data.organization) {
+                    message += `<li><strong>Organization:</strong> ${data.organization.name || data.organization.organization_id}</li>`;
+                    if (data.organization.tier) {
+                        message += `<li><strong>Tier:</strong> ${data.organization.tier}</li>`;
                     }
-                } else if (data.auth_error) {
-                    message += `<li><strong>Authentication:</strong> ❌ ${data.auth_error}</li>`;
-                } else {
-                    message += `<li><strong>Authentication:</strong> ${data.auth_note || 'Not tested'}</li>`;
                 }
                 
                 message += '</ul></div>';

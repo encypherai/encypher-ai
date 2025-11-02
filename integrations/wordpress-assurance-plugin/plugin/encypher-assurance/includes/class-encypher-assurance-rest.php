@@ -795,32 +795,27 @@ class Rest
             'health' => $health_data,
         ];
 
-        // If API key provided, test authentication
+        // Check if API key is configured
         if (!empty($api_key)) {
-            $auth_url = rtrim($api_base_url, '/') . '/auth/verify';
-            $auth_response = wp_remote_get($auth_url, [
-                'timeout' => 10,
-                'headers' => ['Authorization' => 'Bearer ' . $api_key],
-            ]);
-
-            if (!is_wp_error($auth_response)) {
-                $auth_status = wp_remote_retrieve_response_code($auth_response);
-                if ($auth_status === 200) {
-                    $auth_body = wp_remote_retrieve_body($auth_response);
-                    $auth_data = json_decode($auth_body, true);
-                    $result['authenticated'] = true;
-                    $result['organization'] = $auth_data['organization'] ?? null;
-                } else {
-                    $result['authenticated'] = false;
-                    $result['auth_error'] = sprintf('Authentication failed (%d)', $auth_status);
-                }
-            } else {
-                $result['authenticated'] = false;
-                $result['auth_error'] = $auth_response->get_error_message();
+            $result['api_key_configured'] = true;
+            $result['auth_note'] = 'API key configured (will be validated during signing)';
+            
+            // Check if it's the demo key
+            if ($api_key === 'demo-local-key') {
+                $result['organization'] = [
+                    'organization_id' => 'org_demo',
+                    'name' => 'Demo Organization',
+                    'tier' => 'free'
+                ];
             }
         } else {
-            $result['authenticated'] = false;
-            $result['auth_note'] = 'No API key provided';
+            $result['api_key_configured'] = false;
+            $result['auth_note'] = 'No API key configured - using demo mode';
+            $result['organization'] = [
+                'organization_id' => 'org_demo',
+                'name' => 'Demo Organization',
+                'tier' => 'free'
+            ];
         }
 
         return new WP_REST_Response($result);
