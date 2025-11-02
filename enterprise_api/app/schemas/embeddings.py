@@ -117,7 +117,7 @@ class EncodeWithEmbeddingsResponse(BaseModel):
     """Response from encoding document with embeddings."""
     success: bool = Field(True, description="Whether encoding succeeded")
     document_id: str = Field(..., description="Document identifier")
-    merkle_tree: MerkleTreeInfo = Field(..., description="Merkle tree information")
+    merkle_tree: Optional[MerkleTreeInfo] = Field(None, description="Merkle tree information (None for free tier)")
     embeddings: List[EmbeddingInfo] = Field(..., description="List of generated embeddings")
     embedded_content: Optional[str] = Field(
         None,

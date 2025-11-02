@@ -126,27 +126,38 @@ async def encode_with_embeddings(
         # Initialize embedding service with organization's key
         embedding_service = EmbeddingService(private_key, signer_id)
         
-        # Step 1: Build Merkle tree (existing functionality)
-        merkle_roots = await MerkleService.encode_document(
-            db=db,
-            organization_id=organization_id,
-            document_id=request.document_id,
-            text=request.text,
-            segmentation_levels=[request.segmentation_level],
-            metadata=request.metadata,
-            include_words=False
-        )
-        
-        merkle_root = merkle_roots[request.segmentation_level]
-        
-        # Step 2: Get segments and hashes
-        from app.utils.segmentation import HierarchicalSegmenter
-        segmenter = HierarchicalSegmenter(request.text, include_words=False)
-        segments = segmenter.get_segments(request.segmentation_level)
-        
-        # Compute leaf hashes
-        from app.utils.merkle import compute_hash
-        leaf_hashes = [compute_hash(segment) for segment in segments]
+        # Free tier (document-level): Skip Merkle tree and segmentation
+        # Just create ONE C2PA wrapper for the entire document
+        if request.segmentation_level == 'document':
+            logger.info(f"Document-level signing (free tier) - no segmentation")
+            segments = [request.text]  # Single segment = entire document
+            leaf_hashes = []  # No hashes needed for free tier
+            merkle_root_id = None  # No Merkle tree for free tier
+            merkle_root = None
+        else:
+            # Enterprise tier: Build Merkle tree and segment
+            logger.info(f"Enterprise tier - building Merkle tree at {request.segmentation_level} level")
+            merkle_roots = await MerkleService.encode_document(
+                db=db,
+                organization_id=organization_id,
+                document_id=request.document_id,
+                text=request.text,
+                segmentation_levels=[request.segmentation_level],
+                metadata=request.metadata,
+                include_words=False
+            )
+            
+            merkle_root = merkle_roots[request.segmentation_level]
+            merkle_root_id = merkle_root.root_id
+            
+            # Get segments and hashes
+            from app.utils.segmentation import HierarchicalSegmenter
+            segmenter = HierarchicalSegmenter(request.text, include_words=False)
+            segments = segmenter.get_segments(request.segmentation_level)
+            
+            # Compute leaf hashes
+            from app.utils.merkle import compute_hash
+            leaf_hashes = [compute_hash(segment) for segment in segments]
         
         # Step 3: Generate minimal signed embeddings
         license_info = None
@@ -160,7 +171,7 @@ async def encode_with_embeddings(
             db=db,
             organization_id=organization_id,
             document_id=request.document_id,
-            merkle_root_id=merkle_root.root_id,
+            merkle_root_id=merkle_root_id,  # None for free tier
             segments=segments,
             leaf_hashes=leaf_hashes,
             c2pa_manifest_url=request.c2pa_manifest_url,
@@ -194,14 +205,19 @@ async def encode_with_embeddings(
             f"{len(embeddings)} invisible embeddings in {processing_time_ms:.2f}ms"
         )
         
-        return EncodeWithEmbeddingsResponse(
-            success=True,
-            document_id=request.document_id,
-            merkle_tree=MerkleTreeInfo(
+        # Build Merkle tree info (None for free tier)
+        merkle_tree_info = None
+        if merkle_root:
+            merkle_tree_info = MerkleTreeInfo(
                 root_hash=merkle_root.root_hash,
                 total_leaves=merkle_root.total_leaves,
                 tree_depth=merkle_root.tree_depth
-            ),
+            )
+        
+        return EncodeWithEmbeddingsResponse(
+            success=True,
+            document_id=request.document_id,
+            merkle_tree=merkle_tree_info,
             embeddings=embedding_infos,
             embedded_content=embedded_content,
             statistics={
@@ -209,7 +225,8 @@ async def encode_with_embeddings(
                 'embeddings_created': len(embeddings),
                 'processing_time_ms': round(processing_time_ms, 2),
                 'uses_invisible_embeddings': True,
-                'segmentation_level': request.segmentation_level
+                'segmentation_level': request.segmentation_level,
+                'tier': 'free' if request.segmentation_level == 'document' else 'enterprise'
             }
         )
         

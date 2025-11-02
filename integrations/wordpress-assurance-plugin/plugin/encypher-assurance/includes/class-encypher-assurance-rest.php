@@ -169,19 +169,25 @@ class Rest
             $action_type = $is_marked ? 'c2pa.edited' : 'c2pa.created';
         }
         
+        // Get tier from settings (default to free)
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        
         // Build Enterprise API payload for /enterprise/embeddings/encode-with-embeddings
         $payload = [
             'text' => $clean_content,
             'document_id' => 'wp_post_' . $post_id,
-            'segmentation_level' => 'sentence',
-            'doc_metadata' => [
+            'organization_id' => 'org_demo',  // TODO: Get from settings
+            'action' => $action_type,
+            // Free tier: document-level only (no segmentation, one C2PA wrapper)
+            // Pro/Enterprise: sentence-level segmentation + one C2PA wrapper
+            'segmentation_level' => ($tier === 'free') ? 'document' : 'sentence',
+            'metadata' => [
                 'title' => $post->post_title,
                 'author' => get_the_author_meta('display_name', $post->post_author),
                 'published_at' => $post->post_date,
                 'url' => get_permalink($post),
                 'wordpress_post_id' => $post_id,
-                'wordpress_post_type' => $post->post_type,
-                'action' => $action_type,
+                'tier' => $tier,
             ],
             'embedding_options' => [
                 'metadata_format' => $metadata_format,
@@ -515,7 +521,9 @@ class Rest
 
         // Post is already signed - check if content changed
         // Compare the content before and after the update
-        $before_hash = md5($post_before->post_content);
+        // Note: $post_before might be false if this is the first save
+        $before_content = ($post_before && is_object($post_before)) ? $post_before->post_content : '';
+        $before_hash = md5($before_content);
         $after_hash = md5($post->post_content);
         
         error_log(sprintf(
