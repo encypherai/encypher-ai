@@ -55,6 +55,11 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `POST /api/v1/enterprise/merkle/attribute` | Find source documents | Enterprise |
 | `POST /api/v1/enterprise/merkle/detect-plagiarism` | Detect plagiarism | Enterprise |
 | `POST /api/v1/enterprise/embeddings/encode-with-embeddings` | Create portable signed embeddings with C2PA provenance chain | Professional+ |
+| `POST /api/v1/enterprise/c2pa/schemas` | Register custom C2PA assertion schema | Enterprise |
+| `GET /api/v1/enterprise/c2pa/schemas` | List custom schemas | Enterprise |
+| `POST /api/v1/enterprise/c2pa/validate` | Validate assertion before embedding | Enterprise |
+| `POST /api/v1/enterprise/c2pa/templates` | Create assertion template | Enterprise |
+| `GET /api/v1/enterprise/c2pa/templates` | List assertion templates | Enterprise |
 | `GET /api/v1/public/verify/{ref_id}` | Verify embedding (public, no auth) | Public |
 | `POST /api/v1/public/verify/batch` | Batch verify embeddings (public) | Public |
 | `POST /api/v1/public/extract-and-verify` | Extract and verify C2PA manifest with full provenance chain | Public |
@@ -89,6 +94,9 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ All Professional features
 - ✅ Merkle tree encoding
 - ✅ **C2PA Provenance Chain**: Full edit history with ingredient references
+- ✅ **Custom C2PA Assertions**: Define and validate custom assertion types
+- ✅ **Assertion Templates**: Pre-built templates for news, legal, academic, publisher use cases
+- ✅ **Schema Registry**: Register and manage custom assertion schemas with JSON Schema validation
 - ✅ Public embedding extraction & verification API (no auth required)
 - ✅ Partner integration tools (extraction libraries, web scraping)
 - ✅ Source attribution
@@ -718,6 +726,7 @@ curl -X POST https://api-staging.encypherai.com/api/v1/sign \
 
 - **API Docs**: [docs.encypherai.com/api](https://docs.encypherai.com/api)
 - **SDK Docs**: [docs.encypherai.com/sdk](https://docs.encypherai.com/sdk)
+- **C2PA Custom Assertions API**: [docs/api/C2PA_CUSTOM_ASSERTIONS_API.md](../docs/api/C2PA_CUSTOM_ASSERTIONS_API.md) ⭐ **NEW**
 - **C2PA Provenance Chain**: [docs/c2pa/C2PA_PROVENANCE_CHAIN.md](../docs/c2pa/C2PA_PROVENANCE_CHAIN.md)
 - **C2PA Implementation**: [docs/c2pa/C2PA Implimentation Guidance.md](../docs/c2pa/C2PA%20Implimentation%20Guidance.md)
 - **C2PA Spec**: [docs/c2pa/Manifests_Text.adoc](../docs/c2pa/Manifests_Text.adoc)
