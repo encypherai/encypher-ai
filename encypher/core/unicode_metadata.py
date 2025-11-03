@@ -380,6 +380,7 @@ class UnicodeMetadata:
         ingredients: Optional[List[Dict[str, Any]]] = None,
         ai_info: Optional[Dict[str, Any]] = None,
         custom_claims: Optional[Dict[str, Any]] = None,
+        custom_assertions: Optional[List[Dict[str, Any]]] = None,
         omit_keys: Optional[List[str]] = None,
         distribute_across_targets: bool = False,
         add_hard_binding: bool = True,
@@ -403,6 +404,7 @@ class UnicodeMetadata:
                 target=target,
                 distribute_across_targets=distribute_across_targets,
                 add_hard_binding=add_hard_binding,
+                custom_assertions=custom_assertions,
             )
         # --- Start: Input Validation ---
         if not isinstance(text, str):
@@ -758,6 +760,7 @@ class UnicodeMetadata:
         target: Optional[Union[str, MetadataTarget]],
         distribute_across_targets: bool,
         add_hard_binding: bool,
+        custom_assertions: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
         """
         Constructs and embeds a C2PA-compliant manifest.
@@ -773,10 +776,12 @@ class UnicodeMetadata:
             signer_id: An identifier for the key pair.
             claim_generator: A string identifying the software agent creating the claim.
             actions: A list of action dictionaries to include in the manifest.
+            ingredients: A list of ingredient dictionaries for provenance chain.
             iso_timestamp: The ISO 8601 formatted timestamp for the actions.
             target: The embedding target strategy.
             distribute_across_targets: If True, distribute bits across multiple targets.
             add_hard_binding: If True, include the hard binding assertion in the manifest.
+            custom_assertions: Optional list of custom C2PA assertions to include.
 
         Returns:
             The text with the embedded C2PA manifest.
@@ -837,6 +842,29 @@ class UnicodeMetadata:
 
             actions_data: Dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
             c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
+
+            # Add custom assertions if provided
+            if custom_assertions:
+                for custom_assertion in custom_assertions:
+                    label = custom_assertion.get("label")
+                    data = custom_assertion.get("data", {})
+                    if label:
+                        # Determine kind based on label
+                        kind = "CustomAssertion"
+                        if "location" in label:
+                            kind = "Location"
+                        elif "training-mining" in label:
+                            kind = "TrainingMining"
+                        elif "claim_review" in label:
+                            kind = "ClaimReview"
+                        elif "thumbnail" in label:
+                            kind = "Thumbnail"
+                        
+                        c2pa_manifest["assertions"].append({
+                            "label": label,
+                            "data": data,
+                            "kind": kind
+                        })
 
             if add_hard_binding:
                 hard_binding_data = {
