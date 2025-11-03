@@ -377,6 +377,7 @@ class UnicodeMetadata:
         custom_metadata: Optional[Dict[str, Any]] = None,
         claim_generator: Optional[str] = None,
         actions: Optional[List[Dict[str, Any]]] = None,
+        ingredients: Optional[List[Dict[str, Any]]] = None,
         ai_info: Optional[Dict[str, Any]] = None,
         custom_claims: Optional[Dict[str, Any]] = None,
         omit_keys: Optional[List[str]] = None,
@@ -397,6 +398,7 @@ class UnicodeMetadata:
                 signer_id=signer_id,
                 claim_generator=claim_generator,
                 actions=actions,
+                ingredients=ingredients,
                 iso_timestamp=iso_timestamp,
                 target=target,
                 distribute_across_targets=distribute_across_targets,
@@ -751,10 +753,11 @@ class UnicodeMetadata:
         signer_id: str,
         claim_generator: Optional[str],
         actions: Optional[List[Dict[str, Any]]],
+        ingredients: Optional[List[Dict[str, Any]]],
         iso_timestamp: Optional[str],
         target: Optional[Union[str, MetadataTarget]],
         distribute_across_targets: bool,
-        add_hard_binding: bool,  # New parameter
+        add_hard_binding: bool,
     ) -> str:
         """
         Constructs and embeds a C2PA-compliant manifest.
@@ -790,23 +793,31 @@ class UnicodeMetadata:
         claim_gen = claim_generator or f"encypher-ai/{__version__}"
         instance_id = str(uuid.uuid4())
 
-        if not any(a.get("label") == "c2pa.created" for a in base_actions):
+        # Only add c2pa.created if no creation or edit action exists
+        has_creation_or_edit_action = any(
+            a.get("label") in ["c2pa.created", "c2pa.edited"] 
+            for a in base_actions
+        )
+        
+        if not has_creation_or_edit_action:
+            # Build created action with consistent field ordering: label, when, softwareAgent, then other fields
             created_action: Dict[str, Any] = {
                 "label": "c2pa.created",
-                "digitalSourceType": "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia",
-                "softwareAgent": claim_gen,
             }
             if iso_timestamp is not None:
                 created_action["when"] = iso_timestamp
+            created_action["softwareAgent"] = claim_gen
+            created_action["digitalSourceType"] = "http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia"
             base_actions.insert(0, created_action)
 
+        # Build watermarked action with consistent field ordering
         wm_action: Dict[str, Any] = {
             "label": "c2pa.watermarked",
-            "softwareAgent": claim_gen,
-            "description": "Text embedded with Unicode variation selectors.",
         }
         if iso_timestamp is not None:
             wm_action["when"] = iso_timestamp
+        wm_action["softwareAgent"] = claim_gen
+        wm_action["description"] = "Text embedded with Unicode variation selectors."
 
         wrapper_text = ""
         cose_sign1_bytes: Optional[bytes] = None
@@ -819,6 +830,10 @@ class UnicodeMetadata:
                 "claim_generator": claim_gen,
                 "assertions": [],
             }
+            
+            # Add ingredients for provenance chain (if provided)
+            if ingredients:
+                c2pa_manifest["ingredients"] = ingredients
 
             actions_data: Dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
             c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
