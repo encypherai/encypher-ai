@@ -341,3 +341,64 @@ async def get_template(
         raise HTTPException(status_code=404, detail="Template not found")
     
     return C2PATemplateResponse(**template.to_dict())
+
+
+@router.put("/templates/{template_id}", response_model=C2PATemplateResponse)
+async def update_template(
+    template_id: UUID,
+    template_update: C2PATemplateUpdate,
+    organization_id: str = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db)
+):
+    """Update an assertion template."""
+    stmt = select(C2PAAssertionTemplate).where(
+        C2PAAssertionTemplate.id == template_id,
+        C2PAAssertionTemplate.organization_id == organization_id
+    )
+    result = await db.execute(stmt)
+    template = result.scalar_one_or_none()
+    
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found or not owned by organization")
+    
+    # Update fields
+    if template_update.name is not None:
+        template.name = template_update.name
+    if template_update.description is not None:
+        template.description = template_update.description
+    if template_update.assertions is not None:
+        template.assertions = template_update.assertions
+    if template_update.category is not None:
+        template.category = template_update.category
+    if template_update.is_public is not None:
+        template.is_public = template_update.is_public
+    
+    await db.commit()
+    await db.refresh(template)
+    
+    logger.info(f"Updated C2PA template {template_id} for org {organization_id}")
+    
+    return C2PATemplateResponse(**template.to_dict())
+
+
+@router.delete("/templates/{template_id}", status_code=204)
+async def delete_template(
+    template_id: UUID,
+    organization_id: str = Depends(get_current_organization),
+    db: AsyncSession = Depends(get_db)
+):
+    """Delete an assertion template."""
+    stmt = select(C2PAAssertionTemplate).where(
+        C2PAAssertionTemplate.id == template_id,
+        C2PAAssertionTemplate.organization_id == organization_id
+    )
+    result = await db.execute(stmt)
+    template = result.scalar_one_or_none()
+    
+    if not template:
+        raise HTTPException(status_code=404, detail="Template not found or not owned by organization")
+    
+    await db.delete(template)
+    await db.commit()
+    
+    logger.info(f"Deleted C2PA template {template_id} for org {organization_id}")
