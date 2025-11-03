@@ -1,0 +1,420 @@
+# Encypher C2PA - Text Authentication for WordPress
+
+**Version:** 1.0.0  
+**Requires WordPress:** 6.0+  
+**Requires PHP:** 7.4+  
+**License:** GPL-2.0-or-later
+
+C2PA-compliant text authentication for WordPress. Embed cryptographic proof of origin into your blog posts and pages. Built on standards we're developing with Google, BBC, OpenAI, Adobe, and Microsoft.
+
+---
+
+## Features
+
+### Core Features
+- ✅ **C2PA-Compliant:** Full adherence to C2PA Manifests_Text.adoc specification
+- ✅ **Auto-Mark on Publish:** Automatically embed C2PA manifests when publishing posts
+- ✅ **Auto-Mark on Update:** Re-sign manifests when content is updated
+- ✅ **Manual Marking:** Mark individual posts with a button in the editor
+- ✅ **Gutenberg Integration:** Sidebar panel in block editor
+- ✅ **Classic Editor Support:** Meta box for classic editor users
+- ✅ **Public Verification:** Verification links for readers to check authenticity
+
+### C2PA Compliance
+- **C2PATextManifestWrapper:** Full manifest structure with magic number, version, JUMBF container
+- **Unicode Variation Selectors:** Invisible embedding using U+FE00-FE0F and U+E0100-U+E01EF
+- **Hard Binding:** c2pa.hash.data assertion with SHA-256 (enabled by default)
+- **Soft Binding:** c2pa.soft_binding assertion for tamper detection
+- **Proper Actions:** c2pa.created for new posts, c2pa.edited for updates
+- **Provenance Chain:** Ingredient references for updated content
+
+### Multi-Tier Support
+- **Free Tier:** Encypher-provided shared signature
+- **Pro Tier:** Bring your own key or purchase through Encypher
+- **Enterprise Tier:** Advanced key management, multi-site support
+
+---
+
+## Installation
+
+### From WordPress Admin
+1. Download the plugin ZIP file
+2. Go to **Plugins → Add New → Upload Plugin**
+3. Upload the ZIP file and click **Install Now**
+4. Click **Activate Plugin**
+
+### Manual Installation
+1. Upload the `encypher-provenance` folder to `/wp-content/plugins/`
+2. Activate the plugin through the **Plugins** menu in WordPress
+
+### Configuration
+1. Go to **Settings → Encypher C2PA**
+2. Configure your settings:
+   - **API Base URL:** `https://api.encypherai.com/api/v1` (default)
+   - **API Key:** Get your free key from [dashboard.encypherai.com](https://dashboard.encypherai.com)
+   - **Auto-mark on publish:** Enable to automatically mark new posts (recommended)
+   - **Auto-mark on update:** Enable to re-sign when content changes (recommended)
+   - **Metadata Format:** C2PA (default) or Basic
+   - **Hard Binding:** Enable for c2pa.hash.data assertion (recommended)
+
+---
+
+## Usage
+
+### Auto-Mark on Publish (Recommended)
+
+The plugin automatically embeds C2PA manifests when you publish or update posts:
+
+1. **Write your post** as usual in WordPress
+2. **Click Publish** - the plugin automatically embeds the C2PA manifest
+3. **Done!** Your content now has cryptographic proof of origin
+
+**What happens:**
+- New posts get `c2pa.created` action
+- Updated posts get `c2pa.edited` action with ingredient reference
+- Invisible Unicode embeddings are added to your content
+- Provenance chain is preserved through updates
+
+### Manual Marking
+
+You can also manually mark posts using the editor panel:
+
+**Gutenberg (Block Editor):**
+1. Open a post in the editor
+2. Look for the **Encypher C2PA** panel in the sidebar
+3. Click **Mark with C2PA**
+4. Wait for confirmation
+
+**Classic Editor:**
+1. Open a post in the editor
+2. Look for the **Encypher C2PA** meta box
+3. Click **Sign Content**
+4. Wait for confirmation
+
+### Bulk Archive Marking
+
+Mark existing WordPress archives programmatically:
+
+1. Go to **Tools → Encypher C2PA**
+2. Select post types to mark (Posts, Pages, etc.)
+3. Choose filters:
+   - Date range (all time, last month, 3/6/12 months, custom)
+   - Status (unmarked only, all posts)
+   - Batch size (1-50 posts per batch)
+4. Review total count
+5. Click **Start Bulk Marking**
+6. Monitor progress with real-time updates
+7. Pause/resume or cancel as needed
+
+**Features:**
+- Real-time progress tracking
+- Error handling with detailed logs
+- Pause/resume capability
+- Free tier: 100 posts per operation
+- Pro tier: Unlimited marking
+
+### Frontend Badge
+
+Optional C2PA badge on marked posts:
+
+1. Go to **Settings → Encypher C2PA**
+2. Enable **Show C2PA badge**
+3. Choose badge position:
+   - Top of post
+   - Bottom of post (default)
+   - Floating (bottom-right corner)
+4. Badge displays:
+   - C2PA protection status
+   - Verification link
+   - Marked date
+   - Powered by Encypher
+
+**Customization:**
+- Brand colors (Deep Navy, Azure Blue)
+- Responsive design
+- Print-friendly styles
+- Accessible markup
+
+### Status Indicators
+
+The plugin shows the current C2PA status:
+- ✅ **C2PA Protected:** Content is marked and up-to-date
+- ⚠️ **Outdated:** Content changed since last marking (re-mark recommended)
+- ❌ **Failed:** Marking failed (check API key and try again)
+- ⏳ **Processing:** Marking in progress
+
+### Per-Post Control
+
+You can override auto-marking for specific posts:
+- Add custom field `_encypher_skip_marking` with value `1`
+- The plugin will skip auto-marking for that post
+
+---
+
+## Settings
+
+### General Settings
+
+**Auto-mark on publish** (default: ON)
+- Automatically embed C2PA manifests when publishing new posts
+- Recommended for all users
+
+**Auto-mark on update** (default: ON)
+- Re-sign manifests when content is updated
+- Preserves provenance chain through ingredient references
+
+**Post types to auto-mark**
+- Select which post types should be auto-marked
+- Default: Posts and Pages
+
+### C2PA Settings
+
+**Metadata Format** (default: C2PA)
+- **C2PA:** Full C2PA-compliant manifests (recommended)
+- **Basic:** Minimal metadata for testing
+
+**Hard Binding** (default: ON)
+- Include c2pa.hash.data assertion
+- Provides content hash for tamper detection
+- Recommended for maximum security
+
+### API Configuration
+
+**API Base URL**
+- Default: `https://api.encypherai.com/api/v1`
+- Only change if using self-hosted Enterprise API
+
+**API Key**
+- Get your free key from [dashboard.encypherai.com](https://dashboard.encypherai.com)
+- Required for all tiers
+
+---
+
+## Tier Comparison
+
+### Free Tier
+**Perfect for:** Individual bloggers, small publishers  
+**Features:**
+- ✅ Auto-mark on publish
+- ✅ Manual mark button
+- ✅ C2PA-compliant manifests
+- ✅ Public verification links
+- ✅ Gutenberg & Classic Editor support
+
+**Limitations:**
+- Shared Encypher signature
+- Community support
+
+**Price:** Free forever
+
+### Pro Tier
+**Perfect for:** Professional publishers, media organizations  
+**Features:**
+- ✅ All Free features
+- ✅ Custom signature (your organization)
+- ✅ Bring your own key (BYOK)
+- ✅ Or purchase signature through Encypher
+- ✅ Advanced analytics
+- ✅ Priority support
+
+**Price:** $99/month or $999/year
+
+### Enterprise Tier
+**Perfect for:** Large publishers, enterprise organizations  
+**Features:**
+- ✅ All Pro features
+- ✅ Multi-site support
+- ✅ Advanced key management
+- ✅ HSM integration
+- ✅ Custom integrations
+- ✅ SLA and dedicated support
+
+**Price:** Custom (contact sales)
+
+---
+
+## Technical Details
+
+### C2PA Compliance
+
+The plugin implements the full C2PA specification for text:
+
+**C2PATextManifestWrapper Structure:**
+```
+Magic: C2PATXT\0 (0x4332504154585400)
+Version: 1
+Manifest Length: [calculated]
+JUMBF Container: [full C2PA manifest]
+```
+
+**Unicode Encoding:**
+- Bytes 0-15: U+FE00 to U+FE0F (VS1-VS16)
+- Bytes 16-255: U+E0100 to U+E01EF (VS17-VS256)
+- Prefix: U+FEFF (Zero-Width No-Break Space)
+
+**Required Assertions:**
+- `c2pa.actions.v1`: Creation/edit actions
+- `c2pa.hash.data.v1`: Hard binding (optional, default ON)
+- `c2pa.soft_binding.v1`: Soft binding
+
+**Actions:**
+- `c2pa.created`: New posts with digitalSourceType
+- `c2pa.edited`: Updated posts with ingredient reference
+
+### API Integration
+
+The plugin communicates with the Encypher Enterprise API:
+
+**Endpoint:** `https://api.encypherai.com/api/v1/wordpress/embed`
+
+**Request:**
+```json
+{
+  "content": "Blog post text...",
+  "metadata": {
+    "post_id": 123,
+    "post_title": "My Blog Post",
+    "post_author": "John Doe",
+    "post_url": "https://example.com/my-post",
+    "action": "c2pa.created"
+  },
+  "options": {
+    "metadata_format": "c2pa",
+    "add_hard_binding": true,
+    "claim_generator": "WordPress/Encypher Plugin v1.0"
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "marked_content": "Blog post text with invisible C2PA manifest...",
+  "manifest_id": "uuid-here",
+  "verification_url": "https://verify.encypherai.com/uuid-here"
+}
+```
+
+### Database Schema
+
+The plugin stores metadata in WordPress post meta:
+
+```
+_encypher_marked           // boolean: true if marked
+_encypher_marked_date      // datetime: when marked
+_encypher_manifest_id      // string: manifest UUID
+_encypher_content_hash     // string: SHA-256 of content
+_encypher_skip_marking     // boolean: user override to skip
+_encypher_verification_url // string: public verification URL
+_encypher_action_type      // string: c2pa.created or c2pa.edited
+```
+
+---
+
+## Troubleshooting
+
+### Plugin not marking content
+
+**Check:**
+1. Is auto-mark enabled in settings?
+2. Is the API key configured correctly?
+3. Is the post type enabled for auto-marking?
+4. Check the post meta for `_encypher_skip_marking`
+
+**Debug:**
+- Enable WordPress debug logging
+- Check PHP error logs
+- Look for "Encypher:" messages
+
+### API connection errors
+
+**Check:**
+1. Is the API base URL correct?
+2. Is the API key valid?
+3. Is your server able to make outbound HTTPS requests?
+4. Check firewall settings
+
+**Test:**
+- Try manual marking from the editor
+- Check network tab in browser dev tools
+- Contact support if issues persist
+
+### Content not displaying correctly
+
+**Check:**
+1. Are you using a caching plugin? Clear cache
+2. Is the content being modified by another plugin?
+3. Check for JavaScript errors in browser console
+
+---
+
+## Support
+
+### Free Tier
+- Documentation: [encypherai.com/docs](https://encypherai.com/docs)
+- Community Forum: [community.encypherai.com](https://community.encypherai.com)
+
+### Pro Tier
+- Email Support: support@encypherai.com
+- Response Time: 24-48 hours
+
+### Enterprise Tier
+- Dedicated Support: enterprise@encypherai.com
+- SLA: Custom
+- Phone Support: Available
+
+---
+
+## Privacy & Security
+
+### Data Collection
+The plugin sends the following data to the Encypher API:
+- Post content (for embedding)
+- Post title
+- Post author name
+- Post URL
+- Post ID
+
+**No personal information** is embedded in the C2PA manifest unless you explicitly include it in your post content.
+
+### Security
+- API keys are stored encrypted in WordPress database
+- All API communication uses HTTPS
+- No credentials are logged
+- Private keys (Pro/Enterprise) are never transmitted
+
+---
+
+## Changelog
+
+### 1.0.0 (2025-10-31)
+- Initial release
+- C2PA-compliant text authentication
+- Auto-mark on publish/update
+- Manual marking in Gutenberg and Classic Editor
+- Multi-tier support (Free, Pro, Enterprise)
+- Public verification links
+
+---
+
+## Credits
+
+**Developed by:** Encypher Corporation  
+**Website:** [encypherai.com](https://encypherai.com)  
+**Standards:** Co-Chair of C2PA Text Provenance Task Force  
+**License:** GPL-2.0-or-later
+
+Built on standards we're developing with Google, BBC, OpenAI, Adobe, and Microsoft.
+
+---
+
+## License
+
+This plugin is licensed under the GPL-2.0-or-later license.
+
+Copyright (C) 2025 Encypher Corporation
+
+This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.

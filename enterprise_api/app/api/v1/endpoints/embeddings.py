@@ -110,7 +110,8 @@ async def encode_with_embeddings(
         # Load organization's private key for signing
         try:
             private_key = await load_organization_private_key(organization_id, db)
-            signer_id = f"org_{organization_id}"
+            # organization_id already has "org_" prefix (e.g., "org_demo")
+            signer_id = organization_id
         except ValueError as e:
             logger.error(f"Failed to load private key for org {organization_id}: {e}")
             raise HTTPException(
@@ -178,7 +179,9 @@ async def encode_with_embeddings(
             c2pa_manifest_url=request.c2pa_manifest_url,
             c2pa_manifest_hash=request.c2pa_manifest_hash,
             license_info=license_info,
-            expires_at=request.expires_at
+            expires_at=request.expires_at,
+            action=request.action,
+            previous_instance_id=request.previous_instance_id
         )
         
         # Step 4: Convert embeddings to response format
@@ -199,6 +202,17 @@ async def encode_with_embeddings(
         # Each segment already has invisible embedding from encypher-ai
         embedded_content = "\n".join(emb.embedded_text for emb in embeddings)
         
+        # Extract instance_id from the embedded C2PA manifest
+        instance_id = None
+        try:
+            from encypher.core.unicode_metadata import UnicodeMetadata
+            extracted = UnicodeMetadata.extract_metadata(embedded_content)
+            if extracted and 'instance_id' in extracted:
+                instance_id = extracted['instance_id']
+                logger.info(f"Extracted instance_id from manifest: {instance_id}")
+        except Exception as e:
+            logger.warning(f"Could not extract instance_id from manifest: {e}")
+        
         processing_time_ms = (time.time() - start_time) * 1000
         
         logger.info(
@@ -215,6 +229,13 @@ async def encode_with_embeddings(
                 tree_depth=merkle_root.tree_depth
             )
         
+        # Build metadata response
+        response_metadata = {
+            'instance_id': instance_id,
+            'action': request.action,
+            'previous_instance_id': request.previous_instance_id
+        }
+        
         return EncodeWithEmbeddingsResponse(
             success=True,
             document_id=request.document_id,
@@ -228,7 +249,8 @@ async def encode_with_embeddings(
                 'uses_invisible_embeddings': True,
                 'segmentation_level': request.segmentation_level,
                 'tier': 'free' if request.segmentation_level == 'document' else 'enterprise'
-            }
+            },
+            metadata=response_metadata
         )
         
     except ValueError as e:

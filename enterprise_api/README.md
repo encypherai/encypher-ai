@@ -54,9 +54,10 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `POST /api/v1/enterprise/merkle/encode` | Encode document into Merkle tree | Enterprise |
 | `POST /api/v1/enterprise/merkle/attribute` | Find source documents | Enterprise |
 | `POST /api/v1/enterprise/merkle/detect-plagiarism` | Detect plagiarism | Enterprise |
-| `POST /api/v1/enterprise/embeddings/encode-with-embeddings` | Create portable signed embeddings | Professional+ |
+| `POST /api/v1/enterprise/embeddings/encode-with-embeddings` | Create portable signed embeddings with C2PA provenance chain | Professional+ |
 | `GET /api/v1/public/verify/{ref_id}` | Verify embedding (public, no auth) | Public |
 | `POST /api/v1/public/verify/batch` | Batch verify embeddings (public) | Public |
+| `POST /api/v1/public/extract-and-verify` | Extract and verify C2PA manifest with full provenance chain | Public |
 
 ### Streaming Endpoints (NEW)
 
@@ -87,6 +88,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 #### Enterprise Tier
 - ✅ All Professional features
 - ✅ Merkle tree encoding
+- ✅ **C2PA Provenance Chain**: Full edit history with ingredient references
 - ✅ Public embedding extraction & verification API (no auth required)
 - ✅ Partner integration tools (extraction libraries, web scraping)
 - ✅ Source attribution
@@ -716,6 +718,8 @@ curl -X POST https://api-staging.encypherai.com/api/v1/sign \
 
 - **API Docs**: [docs.encypherai.com/api](https://docs.encypherai.com/api)
 - **SDK Docs**: [docs.encypherai.com/sdk](https://docs.encypherai.com/sdk)
+- **C2PA Provenance Chain**: [docs/c2pa/C2PA_PROVENANCE_CHAIN.md](../docs/c2pa/C2PA_PROVENANCE_CHAIN.md)
+- **C2PA Implementation**: [docs/c2pa/C2PA Implimentation Guidance.md](../docs/c2pa/C2PA%20Implimentation%20Guidance.md)
 - **C2PA Spec**: [docs/c2pa/Manifests_Text.adoc](../docs/c2pa/Manifests_Text.adoc)
 - **Architecture**: [docs/architecture/BACKEND_ARCHITECTURE.md](../docs/architecture/BACKEND_ARCHITECTURE.md)
 

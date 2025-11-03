@@ -85,6 +85,14 @@ async def load_organization_public_key(
     Raises:
         ValueError: If no public key found for organization
     """
+    # Handle demo organization - derive public key from private key
+    global _DEMO_PRIVATE_KEY
+    if organization_id == settings.demo_organization_id:
+        # Load the private key first (which handles demo org)
+        private_key = await load_organization_private_key(organization_id, db)
+        # Derive public key from private key
+        return private_key.public_key()
+    
     result = await db.execute(
         text("SELECT public_key FROM organizations WHERE organization_id = :org_id"),
         {"org_id": organization_id}

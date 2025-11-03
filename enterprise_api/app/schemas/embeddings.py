@@ -57,6 +57,14 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         default="sentence",
         description="Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word"
     )
+    action: str = Field(
+        default="c2pa.created",
+        description="C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)"
+    )
+    previous_instance_id: Optional[str] = Field(
+        None,
+        description="Previous manifest instance_id for edit provenance chain (required if action=c2pa.edited)"
+    )
     metadata: Optional[Dict[str, Any]] = Field(
         default=None,
         description="Optional document metadata (title, author, etc.)"
@@ -124,6 +132,7 @@ class EncodeWithEmbeddingsResponse(BaseModel):
         description="Content with embeddings injected (if format specified)"
     )
     statistics: Dict[str, Any] = Field(..., description="Processing statistics")
+    metadata: Optional[Dict[str, Any]] = Field(None, description="C2PA manifest metadata including instance_id")
 
 
 # ============================================================================

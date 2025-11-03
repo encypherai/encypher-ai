@@ -106,7 +106,9 @@ class EmbeddingService:
         license_info: Optional[Dict[str, str]] = None,
         expires_at: Optional[datetime] = None,
         metadata_format: str = "c2pa",  # C2PA-compliant by default
-        add_hard_binding: bool = True  # Include hard binding by default
+        add_hard_binding: bool = True,  # Include hard binding by default
+        action: str = "c2pa.created",  # C2PA action type
+        previous_instance_id: Optional[str] = None  # Previous manifest for edit provenance
     ) -> List[EmbeddingReference]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
@@ -159,7 +161,9 @@ class EmbeddingService:
             f"in organization {organization_id} using encypher-ai"
         )
         
-        current_timestamp = int(time.time())
+        # Use ISO 8601 format with Z suffix for C2PA compliance
+        from datetime import datetime, timezone
+        current_timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         
         # Build the full document with sentence-level embeddings
         # For C2PA compliance, we'll add ONE wrapper at the end
@@ -232,9 +236,49 @@ class EmbeddingService:
         if license_info:
             document_metadata['license'] = license_info
         
+        # Build C2PA actions list
+        c2pa_actions = [
+            {
+                "label": action,  # "c2pa.created" or "c2pa.edited"
+                "when": current_timestamp,
+                "softwareAgent": f"EncypherAI Enterprise API/{organization_id}"
+            }
+        ]
+        
+        # Fetch previous manifest for ingredient reference
+        c2pa_ingredients = None
+        if action == "c2pa.edited" and previous_instance_id:
+            logger.info(f"Fetching previous manifest for ingredient reference: {previous_instance_id}")
+            try:
+                from sqlalchemy import select
+                from app.models.content_reference import ContentReference as ContentReferenceModel
+                
+                # Fetch previous manifest by instance_id
+                stmt = select(ContentReferenceModel).where(
+                    ContentReferenceModel.instance_id == previous_instance_id,
+                    ContentReferenceModel.organization_id == organization_id
+                ).limit(1)
+                result = await db.execute(stmt)
+                previous_ref = result.scalar_one_or_none()
+                
+                if previous_ref and previous_ref.manifest_data:
+                    logger.info(f"Found previous manifest for instance_id: {previous_instance_id}")
+                    # Build C2PA ingredient structure
+                    c2pa_ingredients = [{
+                        "title": "Previous version",
+                        "instance_id": previous_instance_id,
+                        "relationship": "parentOf",
+                        "c2pa_manifest": previous_ref.manifest_data
+                    }]
+                    document_metadata['previous_instance_id'] = previous_instance_id
+                else:
+                    logger.warning(f"Previous manifest not found for instance_id: {previous_instance_id}")
+            except Exception as e:
+                logger.error(f"Error fetching previous manifest: {e}")
+        
         # Embed ONE C2PA wrapper for the entire document
         try:
-            logger.info(f"Adding C2PA wrapper for document {document_id} ({len(segments)} segments)")
+            logger.info(f"Adding C2PA wrapper for document {document_id} ({len(segments)} segments) with action {action}")
             embedded_document = UnicodeMetadata.embed_metadata(
                 text=full_document,
                 private_key=self.private_key,
@@ -243,12 +287,32 @@ class EmbeddingService:
                 custom_metadata=document_metadata,
                 metadata_format=metadata_format,  # C2PA-compliant wrapper
                 add_hard_binding=add_hard_binding,
-                claim_generator=f"EncypherAI Enterprise API/{organization_id}"
+                claim_generator=f"EncypherAI Enterprise API/{organization_id}",
+                actions=c2pa_actions,  # Pass C2PA actions
+                ingredients=c2pa_ingredients  # Pass ingredient references
             )
             logger.info(f"Successfully added C2PA wrapper to document {document_id}")
         except Exception as e:
             logger.error(f"Failed to add C2PA wrapper to document: {e}")
             raise ValueError(f"C2PA wrapper embedding failed: {e}")
+        
+        # Extract the C2PA manifest from embedded document for storage
+        extracted_manifest = None
+        extracted_instance_id = None
+        try:
+            extracted = UnicodeMetadata.extract_metadata(embedded_document)
+            if extracted:
+                extracted_instance_id = extracted.get('instance_id')
+                extracted_manifest = extracted
+                logger.info(f"Extracted manifest with instance_id: {extracted_instance_id}")
+        except Exception as e:
+            logger.warning(f"Could not extract manifest for storage: {e}")
+        
+        # Update references with manifest data
+        for ref in references_to_insert:
+            ref.instance_id = extracted_instance_id
+            ref.previous_instance_id = previous_instance_id
+            ref.manifest_data = extracted_manifest
         
         # Create embedding references for each segment
         # Note: All segments are in the same embedded_document with ONE wrapper

@@ -61,6 +61,11 @@ class ContentReference(Base):
     license_type = Column(String(100), nullable=True)
     license_url = Column(String(500), nullable=True)
     
+    # C2PA Provenance Chain
+    instance_id = Column(String(255), nullable=True, index=True)  # C2PA manifest instance_id
+    previous_instance_id = Column(String(255), nullable=True, index=True)  # Previous version for edit chain
+    manifest_data = Column(JSON, nullable=True)  # Full C2PA manifest for ingredient references
+    
     # Verification data
     signature_hash = Column(String(64), nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, index=True)

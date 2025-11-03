@@ -1,0 +1,197 @@
+/**
+ * Settings page styles for Encypher Provenance plugin.
+ */
+
+/* Connection Status Indicator */
+#connection-status {
+    margin: 10px 0;
+    padding: 10px 15px;
+    background: #f0f0f1;
+    border-left: 4px solid #72aee6;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+#connection-status .status-indicator {
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+#connection-status .status-text-success {
+    color: #00a32a;
+    font-weight: 600;
+}
+
+#connection-status .status-text-error {
+    color: #d63638;
+    font-weight: 600;
+}
+
+#connection-status .status-checking {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Test Connection Button */
+#test-connection-btn {
+    margin-top: 10px;
+}
+
+#test-connection-result {
+    margin-top: 15px;
+}
+
+#test-connection-result .notice {
+    margin: 0;
+}
+
+#test-connection-result ul {
+    list-style-type: disc;
+}
+
+/* Settings Sections */
+.encypher-settings-section {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.encypher-settings-section h2 {
+    margin-top: 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+/* Tier Badge */
+.tier-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 10px;
+}
+
+.tier-badge.tier-free {
+    background: #f0f0f1;
+    color: #50575e;
+}
+
+.tier-badge.tier-pro {
+    background: #2271b1;
+    color: #fff;
+}
+
+.tier-badge.tier-enterprise {
+    background: #00a32a;
+    color: #fff;
+}
+
+/* Feature List */
+.feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0;
+}
+
+.feature-list li {
+    padding: 8px 0;
+    padding-left: 30px;
+    position: relative;
+}
+
+.feature-list li:before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: #00a32a;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.feature-list li.feature-disabled:before {
+    content: "✗";
+    color: #d63638;
+}
+
+/* Help Text */
+.encypher-help-text {
+    background: #f0f6fc;
+    border-left: 4px solid #2271b1;
+    padding: 12px 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+}
+
+.encypher-help-text p {
+    margin: 0;
+}
+
+.encypher-help-text a {
+    color: #2271b1;
+    text-decoration: none;
+}
+
+.encypher-help-text a:hover {
+    text-decoration: underline;
+}
+
+/* API Key Field */
+.api-key-field-wrapper {
+    position: relative;
+}
+
+.api-key-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #2271b1;
+    font-size: 14px;
+}
+
+/* Stats Dashboard */
+.encypher-stats-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 20px 0;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 4px;
+    padding: 15px;
+    text-align: center;
+}
+
+.stat-card .stat-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #2271b1;
+    display: block;
+    margin: 10px 0;
+}
+
+.stat-card .stat-label {
+    font-size: 14px;
+    color: #50575e;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+    .encypher-stats-dashboard {
+        grid-template-columns: 1fr;
+    }
+}
