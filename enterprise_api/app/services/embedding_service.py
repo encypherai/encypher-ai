@@ -108,7 +108,8 @@ class EmbeddingService:
         metadata_format: str = "c2pa",  # C2PA-compliant by default
         add_hard_binding: bool = True,  # Include hard binding by default
         action: str = "c2pa.created",  # C2PA action type
-        previous_instance_id: Optional[str] = None  # Previous manifest for edit provenance
+        previous_instance_id: Optional[str] = None,  # Previous manifest for edit provenance
+        custom_assertions: Optional[List[Dict[str, Any]]] = None  # Custom C2PA assertions
     ) -> List[EmbeddingReference]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
@@ -289,7 +290,8 @@ class EmbeddingService:
                 add_hard_binding=add_hard_binding,
                 claim_generator=f"EncypherAI Enterprise API/{organization_id}",
                 actions=c2pa_actions,  # Pass C2PA actions
-                ingredients=c2pa_ingredients  # Pass ingredient references
+                ingredients=c2pa_ingredients,  # Pass ingredient references
+                custom_assertions=custom_assertions  # Pass custom assertions
             )
             logger.info(f"Successfully added C2PA wrapper to document {document_id}")
         except Exception as e:
