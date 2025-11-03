@@ -77,6 +77,14 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         None,
         description="Optional C2PA manifest hash"
     )
+    custom_assertions: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Custom C2PA assertions to include in manifest"
+    )
+    validate_assertions: bool = Field(
+        True,
+        description="Whether to validate custom assertions against registered schemas"
+    )
     license: Optional[LicenseInfo] = Field(
         None,
         description="Optional license information"
