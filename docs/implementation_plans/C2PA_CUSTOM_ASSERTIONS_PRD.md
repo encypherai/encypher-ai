@@ -203,11 +203,11 @@ Extend the Enterprise API to support all C2PA 2.2 standard actions and enable cu
 - [x] 8.5 Add foreign key constraints
 
 ### 9.0 API Documentation
-- [ ] 9.1 OpenAPI/Swagger specs for new endpoints
-- [ ] 9.2 Example requests/responses
-- [ ] 9.3 Schema registration guide
-- [ ] 9.4 Custom assertion guide
-- [ ] 9.5 Template usage guide
+- [x] 9.1 OpenAPI/Swagger specs for new endpoints
+- [x] 9.2 Example requests/responses
+- [x] 9.3 Schema registration guide
+- [x] 9.4 Custom assertion guide
+- [x] 9.5 Template usage guide
 
 ### 10.0 Testing
 - [x] 10.1 Unit tests for validation service
@@ -224,15 +224,16 @@ Extend the Enterprise API to support all C2PA 2.2 standard actions and enable cu
 - [ ] 11.5 Validation feedback
 
 ### 12.0 Documentation & Examples
-- [ ] 12.1 Update Enterprise API README
-- [ ] 12.2 Create custom assertions guide
-- [ ] 12.3 Industry-specific examples
+- [x] 12.1 Update Enterprise API README
+- [ ] 12.2 Create example scripts
+- [ ] 12.3 Integration guides
+- [ ] 12.4 Migration guide from standard assertions
   - [ ] 12.3.1 News organization example
   - [ ] 12.3.2 Legal firm example
   - [ ] 12.3.3 Publisher example
   - [ ] 12.3.4 Academic example
 - [ ] 12.4 Video tutorials
-- [ ] 12.5 Migration guide for existing customers
+- [ ] 12.5 Industry-specific examples
 
 ---
 
