@@ -6,6 +6,7 @@ Combines all v1 endpoints into a single router.
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import merkle, provisioning, embeddings
+from app.api.v1.enterprise import c2pa
 from app.api.v1.public import verify
 
 api_router = APIRouter()
@@ -18,6 +19,9 @@ api_router.include_router(provisioning.router)
 
 # Include embedding endpoints (enterprise)
 api_router.include_router(embeddings.router)
+
+# Include C2PA custom assertions endpoints (enterprise)
+api_router.include_router(c2pa.router, prefix="/enterprise/c2pa", tags=["C2PA Custom Assertions"])
 
 # Include public verification endpoints (no auth)
 api_router.include_router(verify.router)

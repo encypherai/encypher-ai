@@ -108,7 +108,9 @@ class EmbeddingService:
         metadata_format: str = "c2pa",  # C2PA-compliant by default
         add_hard_binding: bool = True,  # Include hard binding by default
         action: str = "c2pa.created",  # C2PA action type
-        previous_instance_id: Optional[str] = None  # Previous manifest for edit provenance
+        previous_instance_id: Optional[str] = None,  # Previous manifest for edit provenance
+        custom_assertions: Optional[List[Dict[str, Any]]] = None,  # Custom C2PA assertions
+        digital_source_type: Optional[str] = None  # IPTC digital source type
     ) -> List[EmbeddingReference]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
@@ -237,13 +239,17 @@ class EmbeddingService:
             document_metadata['license'] = license_info
         
         # Build C2PA actions list
-        c2pa_actions = [
-            {
-                "label": action,  # "c2pa.created" or "c2pa.edited"
-                "when": current_timestamp,
-                "softwareAgent": f"EncypherAI Enterprise API/{organization_id}"
-            }
-        ]
+        action_data = {
+            "label": action,  # "c2pa.created" or "c2pa.edited"
+            "when": current_timestamp,
+            "softwareAgent": f"EncypherAI Enterprise API/{organization_id}"
+        }
+        
+        # Add digitalSourceType if provided (C2PA 2.2 compliance)
+        if digital_source_type:
+            action_data["digitalSourceType"] = digital_source_type
+        
+        c2pa_actions = [action_data]
         
         # Fetch previous manifest for ingredient reference
         c2pa_ingredients = None
@@ -289,7 +295,8 @@ class EmbeddingService:
                 add_hard_binding=add_hard_binding,
                 claim_generator=f"EncypherAI Enterprise API/{organization_id}",
                 actions=c2pa_actions,  # Pass C2PA actions
-                ingredients=c2pa_ingredients  # Pass ingredient references
+                ingredients=c2pa_ingredients,  # Pass ingredient references
+                custom_assertions=custom_assertions  # Pass custom assertions
             )
             logger.info(f"Successfully added C2PA wrapper to document {document_id}")
         except Exception as e:

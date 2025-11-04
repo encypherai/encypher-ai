@@ -77,6 +77,18 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         None,
         description="Optional C2PA manifest hash"
     )
+    custom_assertions: Optional[List[Dict[str, Any]]] = Field(
+        None,
+        description="Custom C2PA assertions to include in manifest"
+    )
+    validate_assertions: bool = Field(
+        True,
+        description="Whether to validate custom assertions against registered schemas"
+    )
+    digital_source_type: Optional[str] = Field(
+        None,
+        description="IPTC digital source type URI (e.g., 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' for AI-generated content)"
+    )
     license: Optional[LicenseInfo] = Field(
         None,
         description="Optional license information"

@@ -124,6 +124,51 @@ async def encode_with_embeddings(
                 },
             )
         
+        # Validate custom assertions if provided
+        validated_assertions = None
+        if request.custom_assertions and request.validate_assertions:
+            from app.services.c2pa_validator import validator
+            from app.models.c2pa_schema import C2PASchema
+            from sqlalchemy import select
+            
+            # Fetch registered schemas for this organization
+            registered_schemas = {}
+            for assertion in request.custom_assertions:
+                label = assertion.get('label')
+                if label:
+                    stmt = select(C2PASchema).where(
+                        C2PASchema.label == label,
+                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public == True))
+                    ).order_by(C2PASchema.created_at.desc())
+                    result = await db.execute(stmt)
+                    schema_model = result.scalar_one_or_none()
+                    if schema_model:
+                        registered_schemas[label] = schema_model.schema
+            
+            # Validate all assertions
+            all_valid, validation_results = validator.validate_custom_assertions(
+                request.custom_assertions,
+                registered_schemas
+            )
+            
+            if not all_valid:
+                logger.warning(f"Custom assertion validation failed for document {request.document_id}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "INVALID_ASSERTIONS",
+                        "message": "One or more custom assertions failed validation",
+                        "validation_results": validation_results
+                    }
+                )
+            
+            validated_assertions = request.custom_assertions
+            logger.info(f"Validated {len(validated_assertions)} custom assertions for document {request.document_id}")
+        elif request.custom_assertions:
+            # Use assertions without validation
+            validated_assertions = request.custom_assertions
+            logger.info(f"Using {len(validated_assertions)} custom assertions without validation")
+        
         # Initialize embedding service with organization's key
         embedding_service = EmbeddingService(private_key, signer_id)
         
@@ -181,7 +226,9 @@ async def encode_with_embeddings(
             license_info=license_info,
             expires_at=request.expires_at,
             action=request.action,
-            previous_instance_id=request.previous_instance_id
+            previous_instance_id=request.previous_instance_id,
+            custom_assertions=validated_assertions,  # Pass validated custom assertions
+            digital_source_type=request.digital_source_type  # Pass digital source type
         )
         
         # Step 4: Convert embeddings to response format
