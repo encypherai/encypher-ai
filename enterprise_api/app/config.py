@@ -33,6 +33,10 @@ class Settings(BaseSettings):
     # API
     api_base_url: str = "https://api.encypherai.com"
 
+    # Service URLs
+    coalition_service_url: str = "http://localhost:8009"
+    auth_service_url: str = "http://localhost:8001"
+
     # Rate limiting
     rate_limit_per_minute: int = 60
 

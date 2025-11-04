@@ -3,7 +3,7 @@ Coalition Service API Endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 import structlog
 
@@ -348,15 +348,41 @@ async def index_content(content: CoalitionContentCreate, db: Session = Depends(g
 async def get_content_pool(
     limit: int = 100,
     offset: int = 0,
+    content_type: Optional[str] = None,
+    min_word_count: Optional[int] = None,
+    member_id: Optional[UUID] = None,
     db: Session = Depends(get_db)
 ):
     """
-    Get aggregated content pool (Admin only)
+    Get aggregated content pool with filtering (Admin only)
+
+    Filters:
+    - content_type: Filter by content type (article, blog, social_post)
+    - min_word_count: Minimum word count
+    - member_id: Filter by specific member
     """
     try:
-        content_query = db.query(CoalitionContent).offset(offset).limit(limit).all()
+        from sqlalchemy import and_
 
-        total_count = db.query(CoalitionContent).count()
+        # Build query with filters
+        query = db.query(CoalitionContent)
+
+        filters = []
+        if content_type:
+            filters.append(CoalitionContent.content_type == content_type)
+        if min_word_count:
+            filters.append(CoalitionContent.word_count >= min_word_count)
+        if member_id:
+            filters.append(CoalitionContent.member_id == member_id)
+
+        if filters:
+            query = query.filter(and_(*filters))
+
+        # Get total count with filters
+        total_count = query.count()
+
+        # Get paginated results
+        content_query = query.order_by(CoalitionContent.indexed_at.desc()).offset(offset).limit(limit).all()
 
         return SuccessResponse(
             success=True,
@@ -364,15 +390,23 @@ async def get_content_pool(
                 "total_count": total_count,
                 "limit": limit,
                 "offset": offset,
+                "filters": {
+                    "content_type": content_type,
+                    "min_word_count": min_word_count,
+                    "member_id": str(member_id) if member_id else None,
+                },
                 "content": [
                     {
                         "id": str(c.id),
                         "member_id": str(c.member_id),
                         "document_id": str(c.document_id),
+                        "content_hash": c.content_hash,
                         "content_type": c.content_type,
                         "word_count": c.word_count,
                         "signed_at": c.signed_at.isoformat(),
                         "verification_count": c.verification_count,
+                        "last_verified_at": c.last_verified_at.isoformat() if c.last_verified_at else None,
+                        "indexed_at": c.indexed_at.isoformat(),
                     }
                     for c in content_query
                 ],
@@ -383,4 +417,61 @@ async def get_content_pool(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get content pool: {str(e)}",
+        )
+
+
+@router.get("/content-pool/stats", response_model=SuccessResponse)
+async def get_content_pool_stats(db: Session = Depends(get_db)):
+    """
+    Get content pool statistics (Admin only)
+    """
+    try:
+        from sqlalchemy import func
+
+        # Overall stats
+        total_content = db.query(func.count(CoalitionContent.id)).scalar()
+        total_words = db.query(func.sum(CoalitionContent.word_count)).scalar() or 0
+        total_verifications = db.query(func.sum(CoalitionContent.verification_count)).scalar() or 0
+
+        # By content type
+        type_stats = db.query(
+            CoalitionContent.content_type,
+            func.count(CoalitionContent.id).label("count"),
+            func.sum(CoalitionContent.word_count).label("total_words"),
+        ).group_by(CoalitionContent.content_type).all()
+
+        # Recent activity
+        from datetime import datetime, timedelta
+        last_24h = datetime.utcnow() - timedelta(hours=24)
+        recent_content = db.query(func.count(CoalitionContent.id)).filter(
+            CoalitionContent.indexed_at >= last_24h
+        ).scalar()
+
+        return SuccessResponse(
+            success=True,
+            data={
+                "overall": {
+                    "total_content": total_content or 0,
+                    "total_words": int(total_words),
+                    "total_verifications": int(total_verifications),
+                    "avg_word_count": int(total_words / total_content) if total_content > 0 else 0,
+                },
+                "by_type": [
+                    {
+                        "content_type": t.content_type or "unknown",
+                        "count": t.count,
+                        "total_words": int(t.total_words or 0),
+                    }
+                    for t in type_stats
+                ],
+                "recent_activity": {
+                    "last_24_hours": recent_content or 0,
+                },
+            },
+        )
+    except Exception as e:
+        logger.error("get_content_pool_stats_failed", error=str(e))
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get content pool stats: {str(e)}",
         )
