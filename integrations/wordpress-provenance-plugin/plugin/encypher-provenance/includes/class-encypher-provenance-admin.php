@@ -181,6 +181,24 @@ class Admin
             'encypher-provenance-settings',
             'encypher_assurance_tier_section'
         );
+
+        // Coalition Settings Section
+        add_settings_section(
+            'encypher_assurance_coalition_section',
+            __('Coalition Membership', 'encypher-provenance'),
+            function () {
+                echo '<p>' . esc_html__('Participate in the Encypher Coalition to earn revenue from AI company licensing deals.', 'encypher-provenance') . '</p>';
+            },
+            'encypher-provenance-settings'
+        );
+
+        add_settings_field(
+            'encypher_assurance_coalition_enabled',
+            __('Coalition Status', 'encypher-provenance'),
+            [$this, 'render_coalition_enabled_field'],
+            'encypher-provenance-settings',
+            'encypher_assurance_coalition_section'
+        );
     }
 
     public function sanitize_settings(array $settings): array
@@ -197,13 +215,15 @@ class Admin
         $sanitized['tier'] = isset($settings['tier']) && in_array($settings['tier'], ['free', 'pro', 'enterprise'], true) ? $settings['tier'] : 'free';
         $sanitized['post_types'] = isset($settings['post_types']) && is_array($settings['post_types']) ? array_map('sanitize_text_field', $settings['post_types']) : ['post', 'page'];
         
-        // Free tier: badge must always be shown
+        // Free tier: badge must always be shown, coalition always enabled
         if ($sanitized['tier'] === 'free') {
             $sanitized['show_badge'] = true;
             $sanitized['badge_position'] = 'bottom-right';
+            $sanitized['coalition_enabled'] = true; // Always enabled for free tier
         } else {
             $sanitized['show_badge'] = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : true;
             $sanitized['badge_position'] = isset($settings['badge_position']) && in_array($settings['badge_position'], ['top', 'bottom', 'bottom-right'], true) ? $settings['badge_position'] : 'bottom-right';
+            $sanitized['coalition_enabled'] = isset($settings['coalition_enabled']) ? (bool) $settings['coalition_enabled'] : true; // Optional for pro/enterprise
         }
         
         return $sanitized;
@@ -740,6 +760,77 @@ class Admin
                 <option value="bottom" <?php selected($value, 'bottom'); ?>><?php esc_html_e('Bottom of post', 'encypher-provenance'); ?></option>
             </select>
             <p class="description"><?php esc_html_e('Choose where the C2PA badge appears on posts.', 'encypher-provenance'); ?></p>
+            <?php
+        }
+    }
+
+    /**
+     * Render coalition enabled field.
+     */
+    public function render_coalition_enabled_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $enabled = isset($options['coalition_enabled']) ? (bool) $options['coalition_enabled'] : true;
+        
+        // Free tier: always enabled, cannot be disabled
+        if ('free' === $tier) {
+            ?>
+            <div style="background:#e7f5fe; padding:15px; border-left:4px solid #2271b1; margin:10px 0;">
+                <p style="margin:0 0 10px 0;">
+                    <strong style="color:#2271b1;">✓ <?php esc_html_e('Active Coalition Member', 'encypher-provenance'); ?></strong>
+                </p>
+                <p style="margin:0; font-size:13px;">
+                    <?php esc_html_e('Coalition membership is required for free tier users. Your content is pooled with other members for bulk licensing to AI companies.', 'encypher-provenance'); ?>
+                </p>
+                <p style="margin:10px 0 0 0; font-size:13px;">
+                    <strong><?php esc_html_e('Your Revenue Split:', 'encypher-provenance'); ?></strong> 65% to you, 35% to Encypher<br>
+                    <strong><?php esc_html_e('Payout Threshold:', 'encypher-provenance'); ?></strong> $50 minimum
+                </p>
+                <p style="margin:10px 0 0 0;">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-coalition')); ?>" class="button button-secondary">
+                        <?php esc_html_e('View Coalition Dashboard', 'encypher-provenance'); ?>
+                    </a>
+                    <a href="https://encypherai.com/coalition" class="button button-link" target="_blank">
+                        <?php esc_html_e('Learn More', 'encypher-provenance'); ?>
+                    </a>
+                </p>
+            </div>
+            <input type="hidden" name="encypher_assurance_settings[coalition_enabled]" value="1" />
+            <?php
+        } else {
+            // Pro/Enterprise: optional but recommended
+            ?>
+            <label>
+                <input type="checkbox" name="encypher_assurance_settings[coalition_enabled]" value="1" <?php checked($enabled, true); ?> />
+                <?php esc_html_e('Participate in Encypher Coalition', 'encypher-provenance'); ?>
+            </label>
+            <div style="background:#f0f6fc; padding:15px; border-left:4px solid #2271b1; margin:10px 0;">
+                <p style="margin:0 0 10px 0; font-size:13px;">
+                    <?php esc_html_e('Coalition membership allows you to earn revenue from AI company licensing deals. Your content is pooled with other members for bulk licensing.', 'encypher-provenance'); ?>
+                </p>
+                <p style="margin:0; font-size:13px;">
+                    <strong><?php esc_html_e('Your Revenue Split:', 'encypher-provenance'); ?></strong>
+                    <?php if ('pro' === $tier): ?>
+                        70% to you, 30% to Encypher
+                    <?php else: ?>
+                        75% to you, 25% to Encypher
+                    <?php endif; ?>
+                    <br>
+                    <strong><?php esc_html_e('Payout Threshold:', 'encypher-provenance'); ?></strong>
+                    <?php if ('pro' === $tier): ?>
+                        $10 minimum
+                    <?php else: ?>
+                        <?php esc_html_e('No minimum (monthly automatic payout)', 'encypher-provenance'); ?>
+                    <?php endif; ?>
+                </p>
+                <p style="margin:10px 0 0 0;">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-coalition')); ?>" class="button button-secondary">
+                        <?php esc_html_e('View Coalition Dashboard', 'encypher-provenance'); ?>
+                    </a>
+                    <a href="https://encypherai.com/coalition" target="_blank"><?php esc_html_e('Learn more about the coalition →', 'encypher-provenance'); ?></a>
+                </p>
+            </div>
             <?php
         }
     }
