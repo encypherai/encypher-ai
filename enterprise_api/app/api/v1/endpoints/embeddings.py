@@ -227,7 +227,8 @@ async def encode_with_embeddings(
             expires_at=request.expires_at,
             action=request.action,
             previous_instance_id=request.previous_instance_id,
-            custom_assertions=validated_assertions  # Pass validated custom assertions
+            custom_assertions=validated_assertions,  # Pass validated custom assertions
+            digital_source_type=request.digital_source_type  # Pass digital source type
         )
         
         # Step 4: Convert embeddings to response format
