@@ -1,0 +1,260 @@
+/**
+ * Encypher Coalition Widget Styles
+ * Styles for coalition stats widget and dashboard
+ */
+
+/* Widget Container */
+.encypher-coalition-stats {
+    padding: 12px;
+}
+
+/* Stats Grid */
+.coalition-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+@media (max-width: 782px) {
+    .coalition-stat-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.stat-item {
+    background: #f0f0f1;
+    padding: 16px 12px;
+    border-radius: 4px;
+    text-align: center;
+    transition: background 0.2s ease;
+}
+
+.stat-item:hover {
+    background: #e8e8e9;
+}
+
+.stat-label {
+    display: block;
+    font-size: 11px;
+    color: #646970;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.stat-value {
+    display: block;
+    font-size: 28px;
+    font-weight: 600;
+    color: #1d2327;
+    line-height: 1.2;
+}
+
+/* Coalition Info */
+.coalition-info {
+    background: #e7f5fe;
+    padding: 12px 16px;
+    border-radius: 4px;
+    border-left: 4px solid #2271b1;
+    margin-bottom: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.coalition-info p {
+    margin: 8px 0;
+}
+
+.coalition-info strong {
+    color: #1d2327;
+}
+
+.coalition-members {
+    color: #646970;
+    font-size: 12px;
+}
+
+/* Tier Badge */
+.tier-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-left: 8px;
+}
+
+.tier-badge.tier-free {
+    background: #f0f0f1;
+    color: #646970;
+}
+
+.tier-badge.tier-pro {
+    background: #2271b1;
+    color: #fff;
+}
+
+.tier-badge.tier-enterprise {
+    background: #d63638;
+    color: #fff;
+}
+
+/* Pro Upgrade CTA */
+.coalition-upgrade-cta {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+}
+
+.coalition-upgrade-cta h4 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #fff;
+}
+
+.coalition-upgrade-cta p {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    opacity: 0.95;
+}
+
+.upgrade-benefits {
+    list-style: none;
+    margin: 12px 0;
+    padding: 0;
+}
+
+.upgrade-benefits li {
+    padding: 4px 0;
+    font-size: 13px;
+    opacity: 0.9;
+}
+
+.coalition-upgrade-cta .button-primary {
+    background: #fff;
+    color: #667eea;
+    border-color: #fff;
+    font-weight: 600;
+    margin-top: 8px;
+}
+
+.coalition-upgrade-cta .button-primary:hover {
+    background: #f0f0f1;
+    color: #667eea;
+    border-color: #f0f0f1;
+}
+
+/* Action Buttons */
+.coalition-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.coalition-actions .button {
+    flex: 1;
+    min-width: 140px;
+    text-align: center;
+    justify-content: center;
+}
+
+/* Error State */
+.encypher-coalition-error {
+    background: #fcf0f1;
+    border-left: 4px solid #d63638;
+    padding: 12px 16px;
+    border-radius: 4px;
+}
+
+.encypher-coalition-error p {
+    margin: 0 0 12px 0;
+    color: #50575e;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.encypher-coalition-error .dashicons {
+    color: #d63638;
+}
+
+/* Full Coalition Page */
+.encypher-coalition-page {
+    max-width: 1200px;
+    margin: 20px 0;
+}
+
+.coalition-page-header {
+    background: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+}
+
+.coalition-page-header h1 {
+    margin: 0 0 8px 0;
+    font-size: 24px;
+}
+
+.coalition-page-header p {
+    margin: 0;
+    color: #646970;
+    font-size: 14px;
+}
+
+/* Revenue Chart Section */
+.coalition-revenue-section {
+    background: #fff;
+    padding: 24px;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+}
+
+.coalition-revenue-section h2 {
+    margin: 0 0 16px 0;
+    font-size: 18px;
+}
+
+/* Content Performance Table */
+.coalition-content-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.coalition-content-table th {
+    text-align: left;
+    padding: 12px;
+    background: #f0f0f1;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1d2327;
+}
+
+.coalition-content-table td {
+    padding: 12px;
+    border-bottom: 1px solid #f0f0f1;
+    font-size: 13px;
+}
+
+.coalition-content-table tr:hover {
+    background: #f9f9f9;
+}
+
+/* Loading State */
+.coalition-loading {
+    text-align: center;
+    padding: 40px;
+    color: #646970;
+}
+
+.coalition-loading .spinner {
+    float: none;
+    margin: 0 auto 16px;
+}

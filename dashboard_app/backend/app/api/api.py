@@ -3,7 +3,7 @@ API router for the EncypherAI Dashboard Backend.
 """
 from fastapi import APIRouter
 
-from app.api.endpoints import auth, audit_logs, policy_validation, cli, users, signing, scanning, demo
+from app.api.endpoints import auth, audit_logs, policy_validation, cli, users, signing, scanning, demo, coalition
 
 api_router = APIRouter()
 
@@ -16,3 +16,4 @@ api_router.include_router(cli.router, prefix="/cli", tags=["cli integration"])
 api_router.include_router(signing.router, prefix="/signing", tags=["signing"])
 api_router.include_router(scanning.router, prefix="/scanning", tags=["scanning"])
 api_router.include_router(demo.router, prefix="/demo", tags=["demo"])
+api_router.include_router(coalition.router, prefix="/coalition", tags=["coalition"])

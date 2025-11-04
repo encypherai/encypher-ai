@@ -10,6 +10,7 @@ require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-verification.php';
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-bulk.php';
 require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-frontend.php';
+require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-coalition.php';
 
 /**
  * Main plugin bootstrap class.
@@ -23,6 +24,7 @@ class Plugin
     private Verification $verification;
     private Bulk $bulk;
     private Frontend $frontend;
+    private Coalition $coalition;
 
     private function __construct()
     {
@@ -31,6 +33,7 @@ class Plugin
         $this->verification = new Verification($this->rest);
         $this->bulk = new Bulk();
         $this->frontend = new Frontend();
+        $this->coalition = new Coalition();
 
         register_activation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'activate']);
         register_deactivation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'deactivate']);
@@ -90,6 +93,7 @@ class Plugin
         $this->verification->register_hooks();
         $this->bulk->register_hooks();
         $this->frontend->register_hooks();
+        $this->coalition->register_hooks();
     }
     
     public function add_rewrite_rules(): void
