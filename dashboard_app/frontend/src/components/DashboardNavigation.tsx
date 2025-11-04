@@ -4,10 +4,10 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
-import { 
-  HomeIcon, 
-  ClipboardDocumentListIcon, 
-  ShieldCheckIcon, 
+import {
+  HomeIcon,
+  ClipboardDocumentListIcon,
+  ShieldCheckIcon,
   CommandLineIcon,
   UserIcon,
   Cog6ToothIcon,
@@ -15,7 +15,8 @@ import {
   Bars3Icon,
   XMarkIcon,
   ChevronDownIcon,
-  DocumentCheckIcon
+  DocumentCheckIcon,
+  UsersIcon
 } from '@heroicons/react/24/outline';
 
 interface NavItem {
@@ -33,9 +34,10 @@ export default function DashboardNavigation() {
   
   const navigation: NavItem[] = [
     { name: 'Dashboard', href: '/dashboard/overview', icon: HomeIcon },
-    { 
-      name: 'Audit Logs', 
-      href: '/dashboard/audit-logs', 
+    { name: 'Coalition', href: '/dashboard/coalition', icon: UsersIcon },
+    {
+      name: 'Audit Logs',
+      href: '/dashboard/audit-logs',
       icon: ClipboardDocumentListIcon,
     },
     { 
