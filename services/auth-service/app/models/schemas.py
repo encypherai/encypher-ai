@@ -16,6 +16,7 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     """Schema for user creation"""
     password: str = Field(..., min_length=8)
+    tier: Optional[str] = Field(default="free", pattern="^(free|pro|enterprise)$")
 
 
 class UserLogin(BaseModel):
@@ -30,7 +31,8 @@ class UserResponse(UserBase):
     created_at: datetime
     is_active: bool = True
     is_verified: bool = False
-    
+    tier: str = "free"
+
     class Config:
         from_attributes = True
 

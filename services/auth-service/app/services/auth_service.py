@@ -35,12 +35,13 @@ class AuthService:
             email=user_data.email,
             name=user_data.name,
             hashed_password=hashed_password,
+            tier=user_data.tier or "free",
         )
-        
+
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        
+
         return db_user
     
     @staticmethod

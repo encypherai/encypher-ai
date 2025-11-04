@@ -15,8 +15,13 @@ from ...models.schemas import (
     MessageResponse,
 )
 from ...services.auth_service import AuthService
+from ...utils.coalition_client import CoalitionClient
+from ...core.config import settings
 
 router = APIRouter()
+
+# Initialize coalition client
+coalition_client = CoalitionClient(settings.COALITION_SERVICE_URL)
 
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -26,13 +31,33 @@ async def signup(
 ):
     """
     Create a new user account
-    
+
     - **email**: User's email address
     - **password**: User's password (min 8 characters)
     - **name**: User's full name (optional)
+    - **tier**: User tier (free, pro, enterprise) - defaults to free
     """
     try:
         user = AuthService.create_user(db, user_data)
+
+        # Auto-enroll in coalition if free tier
+        if user.tier == "free":
+            # Run coalition enrollment asynchronously (don't block on failure)
+            try:
+                await coalition_client.auto_enroll_member(
+                    user_id=user.id,
+                    tier=user.tier,
+                )
+            except Exception as e:
+                # Log error but don't fail signup
+                import structlog
+                logger = structlog.get_logger()
+                logger.warning(
+                    "coalition_enrollment_failed_but_user_created",
+                    user_id=user.id,
+                    error=str(e),
+                )
+
         return user
     except ValueError as e:
         raise HTTPException(
