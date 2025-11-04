@@ -4,12 +4,29 @@ C2PA Schema Model
 Stores custom C2PA assertion schemas for validation.
 """
 from datetime import datetime
-from sqlalchemy import Column, String, Text, Boolean, TIMESTAMP, Index
+from sqlalchemy import Column, String, Text, Boolean, TIMESTAMP, Index, JSON
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.sql import func
+from sqlalchemy.types import TypeDecorator
 import uuid
 
 from app.database import Base
+
+
+# Database-agnostic JSON type
+class JSONType(TypeDecorator):
+    """
+    JSON type that uses JSONB for PostgreSQL and JSON for other databases.
+    """
+    impl = JSON
+    cache_ok = True
+    
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(JSONB())
+        else:
+            return dialect.type_descriptor(JSON())
+
 
 
 class C2PASchema(Base):
@@ -21,11 +38,11 @@ class C2PASchema(Base):
     """
     __tablename__ = "c2pa_schemas"
     
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     namespace = Column(String(255), nullable=False, index=True)
     label = Column(String(255), nullable=False, index=True)
     version = Column(String(50), nullable=False)
-    schema = Column(JSONB, nullable=False)
+    schema = Column(JSONType, nullable=False)
     description = Column(Text, nullable=True)
     organization_id = Column(String(255), nullable=True, index=True)
     is_public = Column(Boolean, default=False, nullable=False, index=True)

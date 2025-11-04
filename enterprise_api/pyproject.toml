@@ -28,6 +28,8 @@ dependencies = [
     "beautifulsoup4>=4.14.2",
     "email-validator>=2.2.0",
     "jsonschema>=4.24.0",
+    "mako>=1.3.10",
+    "alembic>=1.16.5",
 ]
 
 [project.optional-dependencies]
@@ -68,6 +70,7 @@ encypher-ai = { path = "../encypher-ai", editable = true }
 
 [dependency-groups]
 dev = [
+    "aiosqlite>=0.21.0",
     "pytest>=8.3.5",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.1.1",
