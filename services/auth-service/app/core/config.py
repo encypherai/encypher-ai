@@ -37,7 +37,7 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_SECRET: str = ""
     
     # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com"
     
     # API Gateway
     API_GATEWAY_URL: str = "http://localhost:8000"

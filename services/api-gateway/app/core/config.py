@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: str = (
-        "http://localhost:3000,https://encypherai.com,https://www.encypherai.com"
+        "http://localhost:3000,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com"
     )
 
     # Downstream services

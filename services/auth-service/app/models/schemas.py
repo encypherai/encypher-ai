@@ -72,6 +72,13 @@ class OAuthCallback(BaseModel):
     state: Optional[str] = None
 
 
+class OAuthExchangeRequest(BaseModel):
+    """Request body for OAuth token exchange from frontend"""
+    provider: str = Field(..., pattern="^(google|github)$")
+    id_token: Optional[str] = None  # For Google
+    access_token: Optional[str] = None  # For Google/GitHub
+
+
 # Password Reset Schemas
 class PasswordResetRequest(BaseModel):
     """Password reset request schema"""

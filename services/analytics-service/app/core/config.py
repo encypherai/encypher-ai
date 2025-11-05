@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     
     AUTH_SERVICE_URL: str = "http://localhost:8001"
     
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com"
     API_GATEWAY_URL: str = "http://localhost:8000"
     CONSUL_HOST: str = "localhost"
     CONSUL_PORT: int = 8500
