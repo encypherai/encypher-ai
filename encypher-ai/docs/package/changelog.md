@@ -7,16 +7,22 @@ This document provides a chronological list of notable changes for each version 
 ### Added
 - Introduced a shared `text_hashing` helper in `encypher.interop.c2pa` that performs NFC normalisation, exclusion filtering, and SHA-256 hashing so embedding and verification reuse the exact same pipeline.
 - Documented the end-of-text `C2PATextManifestWrapper` flow, including the FEFF prefix, contiguous variation selector block, and wrapper exclusion handling mandated by the latest C2PA text embedding proposal.
+ - Implemented native COSE_Sign1 EdDSA (Ed25519) signing/verification using `cbor2` + `cryptography` (no external COSE runtime required).
 
 ### Changed
 - Updated the C2PA embedding path to always append a single FEFF-prefixed wrapper containing a JUMBF manifest store encoded with the `magic | version | length | payload` layout.
 - Refactored hard-binding exclusion tracking to record `{start, length}` byte ranges derived from the NFC-normalised text and to stabilise those offsets prior to signing.
+ - Removed `pycose` usage and replaced with a minimal COSE_Sign1 EdDSA implementation (Ed25519). Behaviour is unchanged for EdDSA-based claims; X.509 x5chain handling preserved.
 
 ### Fixed
 - Ensured validators normalise text, remove wrapper exclusions, and recompute the content hash using the shared helper, eliminating discrepancies between embedding and verification.
 
 ### Documentation
 - Refreshed C2PA API references, tutorials, and provenance guides to explain the FEFF-prefixed wrapper workflow, normalised hashing routine, and the new helper utilities.
+ - Noted release plan: 3.0 will target C2PA 2.3 alignment and include the native COSE path.
+
+### Security
+- Dependency hygiene: Eliminated transitive `python-ecdsa` (GHSA-wj6h-64fc-37mp) by removing `pycose` and using a native COSE EdDSA implementation.
 
 ## 2.8.1 (2025-01-03)
 
