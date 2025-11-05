@@ -32,8 +32,8 @@ class UsageMetric(Base):
     response_time_ms = Column(Integer, nullable=True)
     status_code = Column(Integer, nullable=True)
     
-    # Metadata
-    metadata = Column(JSON, nullable=True)
+    # Metadata (renamed to avoid SQLAlchemy reserved attribute name)
+    meta = Column(JSON, nullable=True)
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
@@ -68,8 +68,8 @@ class AggregatedMetric(Base):
     success_count = Column(Integer, nullable=False, default=0)
     error_count = Column(Integer, nullable=False, default=0)
     
-    # Metadata
-    metadata = Column(JSON, nullable=True)
+    # Metadata (renamed to avoid SQLAlchemy reserved attribute name)
+    meta = Column(JSON, nullable=True)
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
