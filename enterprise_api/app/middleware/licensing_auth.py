@@ -14,6 +14,7 @@ from app.utils.api_key import is_valid_api_key_format
 
 
 security = HTTPBearer()
+optional_security = HTTPBearer(auto_error=False)
 
 
 async def verify_licensing_api_key(
@@ -73,7 +74,7 @@ async def verify_licensing_api_key(
 
 
 async def get_optional_licensing_api_key(
-    credentials: HTTPAuthorizationCredentials = Security(security, auto_error=False),
+    credentials: HTTPAuthorizationCredentials = Security(optional_security),
     db: AsyncSession = Depends(get_db)
 ) -> AICompany | None:
     """

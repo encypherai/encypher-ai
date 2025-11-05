@@ -79,7 +79,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             // PRIMARY: Columbia Blue with white text - HIGH CONTRAST for CTAs
             'bg-columbia-blue text-white hover:bg-columbia-blue/90 active:bg-columbia-blue/80': 
               variant === 'primary',
-            'focus-visible:ring-columbia-blue': variant === 'primary',
+            'focus-visible:ring-columbia-blue': variant === 'primary' || variant === 'outline',
             
             // SECONDARY: Light background
             'bg-secondary text-secondary-foreground hover:bg-secondary/80': 
@@ -90,7 +90,6 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
             'border-2 border-columbia-blue text-columbia-blue bg-transparent': 
               variant === 'outline',
             'hover:bg-columbia-blue hover:text-white': variant === 'outline',
-            'focus-visible:ring-columbia-blue': variant === 'outline',
             
             // GHOST: Transparent background
             'text-delft-blue hover:bg-muted': variant === 'ghost',

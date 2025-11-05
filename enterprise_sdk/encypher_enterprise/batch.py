@@ -263,12 +263,12 @@ class RepositorySigner:
         if self._is_async:
             return asyncio.run(self._sign_directory_async(
                 directory, patterns, exclude_patterns, metadata_fn,
-                recursive, output_dir, save_manifest, incremental, state_file, force_resign
+                recursive, output_dir, save_manifest, incremental, state_file, force_resign, track_versions
             ))
         else:
             return self._sign_directory_sync(
                 directory, patterns, exclude_patterns, metadata_fn,
-                recursive, output_dir, save_manifest, incremental, state_file, force_resign
+                recursive, output_dir, save_manifest, incremental, state_file, force_resign, track_versions
             )
     
     def _sign_directory_sync(
@@ -282,7 +282,8 @@ class RepositorySigner:
         save_manifest: bool,
         incremental: bool,
         state_file: Optional[Path],
-        force_resign: bool
+        force_resign: bool,
+        track_versions: bool
     ) -> BatchSigningResult:
         """Synchronous directory signing."""
         import time
@@ -349,7 +350,8 @@ class RepositorySigner:
         save_manifest: bool,
         incremental: bool,
         state_file: Optional[Path],
-        force_resign: bool
+        force_resign: bool,
+        track_versions: bool
     ) -> BatchSigningResult:
         """Asynchronous directory signing with concurrency control."""
         import time

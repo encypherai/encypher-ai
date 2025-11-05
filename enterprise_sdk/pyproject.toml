@@ -31,6 +31,10 @@ dependencies = [
     "pypdf2>=3.0.1",
     "python-docx>=1.2.0",
     "pillow>=11.3.0",
+    "redis>=7.0.1",
+    "kafka-python>=2.2.15",
+    "email-validator>=2.3.0",
+    "bcrypt>=5.0.0",
 ]
 
 [project.optional-dependencies]
@@ -77,3 +81,8 @@ python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[dependency-groups]
+dev = [
+    "pip-audit>=2.9.0",
+]
