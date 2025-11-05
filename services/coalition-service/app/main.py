@@ -1,7 +1,7 @@
 """
-Auth Service - Main Application
+Coalition Service - Main Application
 """
-from fastapi import FastAPI, Response
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -25,17 +25,17 @@ async def lifespan(app: FastAPI):
     logger.info(f"Creating database tables...")
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created")
-    
+
     yield
-    
+
     # Shutdown
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
 # Create FastAPI app
 app = FastAPI(
-    title="Encypher Auth Service",
-    description="Authentication and authorization microservice",
+    title="Encypher Coalition Service",
+    description="Coalition infrastructure and auto-onboarding microservice",
     version="1.0.0",
     lifespan=lifespan,
 )
@@ -56,18 +56,7 @@ app.add_middleware(RequestLoggingMiddleware)
 setup_metrics(app)
 
 # Include routers
-app.include_router(v1_router, prefix="/api/v1/auth", tags=["authentication"])
-
-# Fallback metrics endpoint (in case instrumentator isn't exposing it)
-try:
-    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-
-    @app.get("/metrics")
-    async def metrics_fallback():
-        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
-except Exception:
-    # If prometheus_client is unavailable, skip fallback
-    pass
+app.include_router(v1_router, prefix="/api/v1/coalition", tags=["coalition"])
 
 
 @app.get("/")
@@ -91,7 +80,7 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.SERVICE_HOST,

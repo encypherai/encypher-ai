@@ -1,7 +1,7 @@
 [project]
-name = "encypher-auth-service"
+name = "encypher-coalition-service"
 version = "1.0.0"
-description = "Authentication microservice for Encypher platform"
+description = "Coalition infrastructure microservice for Encypher platform"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -9,9 +9,6 @@ dependencies = [
     "uvicorn[standard]>=0.24.0",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
-    "python-jose[cryptography]>=3.3.0",
-    "passlib[bcrypt]>=1.7.4",
-    "python-multipart>=0.0.6",
     "sqlalchemy>=2.0.0",
     "psycopg2-binary>=2.9.9",
     "alembic>=1.13.0",
@@ -26,8 +23,6 @@ dependencies = [
     "aioredis>=2.0.1",
     "pybreaker>=1.4.1",
     "tenacity>=9.1.2",
-    "email-validator>=2.3.0",
-    "bcrypt==3.2.2",
 ]
 
 [project.optional-dependencies]

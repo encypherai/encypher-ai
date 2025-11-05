@@ -15,8 +15,13 @@ from ...models.schemas import (
     MessageResponse,
 )
 from ...services.auth_service import AuthService
+from ...utils.coalition_client import CoalitionClient
+from ...core.config import settings
 
 router = APIRouter()
+
+# Initialize coalition client
+coalition_client = CoalitionClient(settings.COALITION_SERVICE_URL)
 
 
 @router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -26,15 +31,39 @@ async def signup(
 ):
     """
     Create a new user account
-    
+
     - **email**: User's email address
     - **password**: User's password (min 8 characters)
     - **name**: User's full name (optional)
+    - **tier**: User tier (free, pro, enterprise) - defaults to free
     """
     try:
         user = AuthService.create_user(db, user_data)
+
+        # Auto-enroll in coalition if free tier
+        if user.tier == "free":
+            # Run coalition enrollment asynchronously (don't block on failure)
+            try:
+                await coalition_client.auto_enroll_member(
+                    user_id=user.id,
+                    tier=user.tier,
+                )
+            except Exception as e:
+                # Log error but don't fail signup
+                import structlog
+                logger = structlog.get_logger()
+                logger.warning(
+                    "coalition_enrollment_failed_but_user_created",
+                    user_id=user.id,
+                    error=str(e),
+                )
+
         return user
     except ValueError as e:
+        # Idempotent fallback: if a ValueError occurred, try returning existing user by email
+        existing = AuthService.get_user_by_email(db, user_data.email)
+        if existing:
+            return existing
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
@@ -112,23 +141,56 @@ async def refresh_token(
 
 @router.post("/logout", response_model=MessageResponse)
 async def logout(
-    request: RefreshTokenRequest,
+    request: Optional[RefreshTokenRequest] = None,
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
     """
-    Logout user by revoking refresh token
+    Logout user by revoking tokens.
     
-    - **refresh_token**: Refresh token to revoke
+    Provide either:
+    - refresh_token in the request body, or
+    - Authorization: Bearer <access_token> header
     """
-    success = AuthService.revoke_refresh_token(db, request.refresh_token)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Refresh token not found",
-        )
-    
-    return {"message": "Successfully logged out"}
+    # Case 1: explicit refresh token in body
+    if request and getattr(request, "refresh_token", None):
+        success = AuthService.revoke_refresh_token(db, request.refresh_token)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Refresh token not found",
+            )
+        return {"message": "Successfully logged out"}
+
+    # Case 2: Authorization header with access token – revoke all user's refresh tokens
+    if authorization:
+        try:
+            scheme, token = authorization.split()
+            if scheme.lower() != "bearer":
+                raise ValueError()
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        payload = AuthService.verify_access_token(token)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        AuthService.revoke_all_refresh_tokens_for_user(db, payload["sub"])
+        return {"message": "Successfully logged out"}
+
+    # Neither provided
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Must provide refresh_token in body or Authorization header",
+    )
 
 
 @router.post("/verify", response_model=UserResponse)

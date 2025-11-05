@@ -8,7 +8,8 @@ Authentication and authorization microservice for the Encypher platform.
 - ✅ JWT-based authentication
 - ✅ Refresh token management
 - ✅ OAuth integration (Google, GitHub)
-- ✅ Password hashing with bcrypt
+- ✅ Password hashing with bcrypt_sha256 (passlib)
+- ✅ Prometheus metrics exposed at `/metrics`
 - ✅ Token verification for other services
 - ✅ Session management
 - ✅ Health check endpoints
@@ -20,7 +21,7 @@ Authentication and authorization microservice for the Encypher platform.
 - **Cache:** Redis
 - **Package Manager:** UV
 - **Authentication:** JWT (python-jose)
-- **Password Hashing:** bcrypt (passlib)
+- **Password Hashing:** bcrypt_sha256 (passlib)
 
 ## Setup
 
@@ -80,8 +81,10 @@ The service will be available at `http://localhost:8001`
 - Returns: New access token
 
 **POST /api/v1/auth/logout**
-- Revoke refresh token
-- Body: `{ "refresh_token": "..." }`
+- Revoke tokens
+- Provide either:
+  - Body: `{ "refresh_token": "..." }` (revokes that token), or
+  - Header: `Authorization: Bearer <access_token>` (revokes all refresh tokens for the user)
 - Returns: Success message
 
 **POST /api/v1/auth/verify**
@@ -201,7 +204,7 @@ async def verify_token(token: str):
 ## Monitoring
 
 - Health check: `/health`
-- Prometheus metrics: Port 9001 (if enabled)
+- Prometheus metrics: `/metrics` (same service port)
 - Logs: Structured JSON logs to stdout
 
 ## License

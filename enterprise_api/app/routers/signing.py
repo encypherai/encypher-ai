@@ -30,9 +30,13 @@ from app.utils.sentence_parser import (
     compute_text_hash,
     parse_sentences,
 )
+from app.utils.coalition_client import CoalitionClient
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Initialize coalition client
+coalition_client = CoalitionClient(settings.coalition_service_url)
 
 
 @router.post("/sign", response_model=SignResponse)
@@ -197,6 +201,59 @@ async def sign_content(
                 f"for organization {organization['organization_id']}"
             )
 
+            # 9. Coalition content indexing (non-blocking)
+            try:
+                # Look up organization's user_id
+                org_result = await db.execute(
+                    text("SELECT user_id FROM organizations WHERE organization_id = :org_id"),
+                    {"org_id": organization["organization_id"]},
+                )
+                org_row = org_result.fetchone()
+
+                if org_row and org_row.user_id:
+                    # Check if user is a coalition member
+                    member = await coalition_client.get_member_by_user_id(str(org_row.user_id))
+
+                    if member and member.get("status") == "active":
+                        # Calculate word count
+                        word_count = len(request.text.split())
+
+                        # Index content in coalition
+                        indexed = await coalition_client.index_content(
+                            member_id=member.get("member_id"),
+                            document_id=document_id,
+                            content_hash=text_hash,
+                            content_type=request.document_type,
+                            word_count=word_count,
+                            signed_at=current_time,
+                        )
+
+                        if indexed:
+                            logger.info(
+                                f"Document {document_id} indexed in coalition for "
+                                f"member {member.get('member_id')}"
+                            )
+                        else:
+                            logger.warning(
+                                f"Failed to index document {document_id} in coalition"
+                            )
+                    else:
+                        logger.debug(
+                            f"User {org_row.user_id} is not an active coalition member, "
+                            f"skipping content indexing"
+                        )
+                else:
+                    logger.debug(
+                        f"Organization {organization['organization_id']} has no user_id, "
+                        f"skipping coalition indexing"
+                    )
+            except Exception as coalition_error:
+                # Don't fail the signing request if coalition indexing fails
+                logger.warning(
+                    f"Coalition indexing failed for document {document_id}: {coalition_error}",
+                    exc_info=True,
+                )
+
         except Exception as e:
             await db.rollback()
             logger.error(f"Database error while storing document: {e}", exc_info=True)
@@ -209,7 +266,7 @@ async def sign_content(
                 },
             )
 
-    # 9. Generate verification URL
+    # 10. Generate verification URL
     if settings.is_development:
         # In development, use localhost for verification
         verification_url = f"http://localhost:9000/api/v1/verify/{document_id}"
