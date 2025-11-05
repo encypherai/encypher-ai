@@ -56,6 +56,55 @@ services:
       - ./auth-service/app:/app/app
     restart: unless-stopped
 
+  # Analytics Service
+  analytics-service:
+    build:
+      context: ./analytics-service
+      dockerfile: Dockerfile
+    container_name: encypher-analytics-service
+    ports:
+      - "8006:8006"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis:6379/4
+      AUTH_SERVICE_URL: http://auth-service:8001
+      LOG_LEVEL: DEBUG
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    volumes:
+      - ./analytics-service/app:/app/app
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: encypher-api-gateway
+    ports:
+      - "8000:8000"
+    environment:
+      GATEWAY_PORT: 8000
+      LOG_LEVEL: DEBUG
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      AUTH_SERVICE_URL: http://auth-service:8001
+      ANALYTICS_SERVICE_URL: http://analytics-service:8006
+      ENTERPRISE_API_URL: http://host.docker.internal:9000
+    depends_on:
+      auth-service:
+        condition: service_started
+      analytics-service:
+        condition: service_started
+    volumes:
+      - ./api-gateway/app:/app/app
+    restart: unless-stopped
+
   # Key Service (coming soon)
   # key-service:
   #   build:
