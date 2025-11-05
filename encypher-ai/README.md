@@ -43,11 +43,17 @@ Key alignments include:
 - **CBOR Manifests**: Support for embedding full C2PA-compliant manifests using CBOR for a compact, standards-aligned format
 - **Hard binding approach**: Direct embedding of manifests into the content itself
 - **Shared mission** of improving content transparency and trust
-- **Spec version**: Currently aligned with the C2PA 2.2 specification
+- **Spec version**: Currently aligned with the C2PA 2.2 specification; upcoming v3.0 will target C2PA 2.3 alignment
 
 Our implementation uses Unicode variation selectors (U+FE00 to U+FE0F) to invisibly embed C2PA manifests directly into text content, enabling provenance tracking and tamper detection without altering the visible appearance of the text.
 
 Learn more about [EncypherAI's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
+
+### Cryptography and COSE
+
+- Native COSE_Sign1 EdDSA (Ed25519) implementation using `cbor2` + `cryptography`.
+- No runtime dependency on external COSE libraries; `pycose` has been removed.
+- Security hygiene: removes the transitive `python-ecdsa` dependency (GHSA-wj6h-64fc-37mp) from the dependency graph.
 
 ## LLM Integrations
 
