@@ -21,7 +21,6 @@ from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
-from pycose.messages import CoseMessage
 
 from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
 from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode
@@ -1177,10 +1176,10 @@ class UnicodeMetadata:
             logger.warning(f"C2PA verification: Public key not found for signer_id: {signer_id}")
             if return_payload_on_failure:
                 try:
-                    decoded_msg = CoseMessage.decode(cose_sign1_bytes)
-                    if decoded_msg.payload is None:
+                    payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
+                    if payload is None:
                         return False, signer_id, None
-                    unverified_manifest = deserialize_c2pa_payload_from_cbor(bytes(decoded_msg.payload))
+                    unverified_manifest = deserialize_c2pa_payload_from_cbor(payload)
                     return False, signer_id, unverified_manifest
                 except Exception:
                     return False, signer_id, None
@@ -1193,13 +1192,12 @@ class UnicodeMetadata:
             logger.warning(f"C2PA COSE verification failed for signer_id: {signer_id}. Reason: {e}")
             if return_payload_on_failure:
                 try:
-                    decoded_msg = CoseMessage.decode(cose_sign1_bytes)
-                    if decoded_msg.payload is None:
+                    payload = extract_payload_from_cose_sign1(cose_sign1_bytes)
+                    if payload is None:
                         return False, signer_id, None
-                    unverified_manifest = deserialize_c2pa_payload_from_cbor(bytes(decoded_msg.payload))
+                    unverified_manifest = deserialize_c2pa_payload_from_cbor(payload)
                     return False, signer_id, unverified_manifest
-                except Exception as decode_err:
-                    logger.error(f"Could not decode unverified COSE payload for inspection: {decode_err}")
+                except Exception:
                     return False, signer_id, None
             return False, signer_id, None
         except Exception as e:
