@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
-    """Verify user token with auth service"""
+    """Verify user token with auth service and return user dict from Standard Response Format."""
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -34,7 +34,17 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
                 )
-            return response.json()
+            payload = response.json()
+            # Expect { success: bool, data: { user fields }, error: null }
+            if isinstance(payload, dict) and payload.get("success") and isinstance(payload.get("data"), dict):
+                return payload["data"]
+            # Fallback for legacy direct user payloads
+            if isinstance(payload, dict) and "id" in payload:
+                return payload
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Invalid response from auth service",
+            )
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

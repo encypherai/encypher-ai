@@ -17,6 +17,7 @@ from ...models.schemas import (
 from ...services.auth_service import AuthService
 from ...utils.coalition_client import CoalitionClient
 from ...core.config import settings
+from ...deps.rate_limit import rate_limiter
 
 router = APIRouter()
 
@@ -24,10 +25,12 @@ router = APIRouter()
 coalition_client = CoalitionClient(settings.COALITION_SERVICE_URL)
 
 
-@router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+# Standard Response Format used; returning UserResponse inside data
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(
     user_data: UserCreate,
     db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("auth_signup", limit=5, window_sec=60)),
 ):
     """
     Create a new user account
@@ -58,24 +61,27 @@ async def signup(
                     error=str(e),
                 )
 
-        return user
+        # Wrap in standard response format
+        return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
     except ValueError as e:
         # Idempotent fallback: if a ValueError occurred, try returning existing user by email
         existing = AuthService.get_user_by_email(db, user_data.email)
         if existing:
-            return existing
+            return {"success": True, "data": UserResponse.model_validate(existing).model_dump(), "error": None}
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
 
 
-@router.post("/login", response_model=Token)
+# Standard Response Format; includes tokens and user
+@router.post("/login")
 async def login(
     credentials: UserLogin,
     user_agent: Optional[str] = Header(None),
     x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("auth_login", limit=5, window_sec=60)),
 ):
     """
     Authenticate user and return access and refresh tokens
@@ -105,13 +111,18 @@ async def login(
     )
     
     return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
+        "success": True,
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
     }
 
 
-@router.post("/refresh", response_model=Token)
+@router.post("/refresh")
 async def refresh_token(
     request: RefreshTokenRequest,
     db: Session = Depends(get_db),
@@ -133,13 +144,18 @@ async def refresh_token(
     new_access_token, user = result
     
     return {
-        "access_token": new_access_token,
-        "refresh_token": request.refresh_token,  # Keep the same refresh token
-        "token_type": "bearer",
+        "success": True,
+        "data": {
+            "access_token": new_access_token,
+            "refresh_token": request.refresh_token,
+            "token_type": "bearer",
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
     }
 
 
-@router.post("/logout", response_model=MessageResponse)
+@router.post("/logout")
 async def logout(
     request: Optional[RefreshTokenRequest] = None,
     authorization: Optional[str] = Header(None),
@@ -160,7 +176,7 @@ async def logout(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Refresh token not found",
             )
-        return {"message": "Successfully logged out"}
+        return {"success": True, "data": {"message": "Successfully logged out"}, "error": None}
 
     # Case 2: Authorization header with access token – revoke all user's refresh tokens
     if authorization:
@@ -184,7 +200,7 @@ async def logout(
             )
 
         AuthService.revoke_all_refresh_tokens_for_user(db, payload["sub"])
-        return {"message": "Successfully logged out"}
+        return {"success": True, "data": {"message": "Successfully logged out"}, "error": None}
 
     # Neither provided
     raise HTTPException(
@@ -193,7 +209,7 @@ async def logout(
     )
 
 
-@router.post("/verify", response_model=UserResponse)
+@router.post("/verify")
 async def verify_token(
     authorization: str = Header(...),
     db: Session = Depends(get_db),
@@ -236,7 +252,7 @@ async def verify_token(
             detail="User not found",
         )
     
-    return user
+    return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
 
 
 @router.get("/health")
