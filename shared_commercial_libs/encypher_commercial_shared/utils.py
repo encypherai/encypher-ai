@@ -484,13 +484,21 @@ def scan_directory(
             files_to_scan.extend(list(directory.glob(f'*{ext}')))
     
     # Remove duplicates and sort
-    files_to_scan = sorted(set(files_to_scan))
+    # Deduplicate while preserving order to avoid comparison errors with mocks in tests
+    seen = set()
+    unique_files = []
+    for fp in files_to_scan:
+        key = str(fp)
+        if key not in seen:
+            seen.add(key)
+            unique_files.append(fp)
+    files_to_scan = unique_files
     
-    # Sort files for consistent results
+    # Sort files for consistent results when possible
     try:
         files_to_scan.sort()
     except TypeError:
-        # If files can't be sorted (e.g., in tests with MagicMock objects), continue without sorting
+        # If files can't be sorted (e.g., MagicMock objects), continue without sorting
         pass
     
     # Scan files with progress bar if requested

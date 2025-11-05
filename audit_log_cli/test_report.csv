@@ -1,6 +1,3 @@
-File,Verified,Has Metadata,Signer ID,Timestamp,Model ID,Format
-tests\example_files\example1_valid.txt,True,True,test-signer,,test-model-1,basic
-tests\example_files\example2_unknown_signer.txt,True,True,unknown-signer,,test-model-2,basic
-tests\example_files\example3_no_metadata.txt,False,False,,,,
-tests\example_files\example4_original.txt,True,True,test-signer,,test-model-4,basic
-tests\example_files\example4_sophisticated_tamper.txt,False,True,test-signer,,test-model-4,basic
+File,Verified,Has Metadata,Signer ID,Timestamp,Model ID,Format,Verification Details
+file1.txt,True,True,test-signer,,,,
+file2.txt,False,True,unknown-signer,,,,

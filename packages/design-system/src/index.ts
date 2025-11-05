@@ -3,9 +3,7 @@
  * Unified component library for all Encypher properties
  */
 
-// Styles
-export * from './styles/theme.css';
-export * from './styles/globals.css';
+// Styles: Import global CSS in the consuming app's entry point (e.g., app/layout.tsx)
 
 // Utils
 export { cn } from './utils/cn';

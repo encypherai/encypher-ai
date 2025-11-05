@@ -4,6 +4,10 @@ import os
 import sys
 from pathlib import Path
 from typing import List, Optional, Dict, Any, Union
+from rich.console import Console
+import csv
+from rich.logging import RichHandler
+from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
 
 # Import from our shared commercial library instead of directly from EncypherAI
 from encypher_commercial_shared import EncypherAI, VerificationResult
@@ -43,6 +47,7 @@ except ImportError:  # pragma: no cover - fallback for local development
 
 log = logging.getLogger("audit-log-cli")
 app = typer.Typer(add_completion=False)
+console = Console()
 
 
 @app.callback()
@@ -50,13 +55,7 @@ def main() -> None:
     """Audit Log CLI root."""
 
 
-@app.command("generate-report")
-from rich.console import Console
-from rich.logging import RichHandler
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
-
-app = typer.Typer()
-console = Console()
+## removed stray decorator and duplicate app/console definitions
 
 # Configure logging
 logging.basicConfig(
@@ -88,24 +87,26 @@ def generate_report(
         "-o",
         help="Path to save the generated CSV report.",
     ),
-) -> None:
-    """Usage: main.py generate-report
-
-    trusted_signers_dir: str = typer.Option(
+    trusted_signers_dir: Optional[str] = typer.Option(
         None,
         "--trusted-signers",
         help="Directory containing trusted signer public keys (.pem files)",
     ),
     verify_content_integrity: bool = typer.Option(
-        False, "--verify-content-integrity", help="Check for content tampering after metadata was embedded"
+        False,
+        "--verify-content-integrity",
+        help="Check for content tampering after metadata was embedded",
     ),
     verbose: bool = typer.Option(
-        False, "--verbose", "-v", help="Enable verbose output"
+        False,
+        "--verbose",
+        "-v",
+        help="Enable verbose output",
     ),
-):
+) -> None:
     """
     Generates an audit report for EncypherAI metadata.
-    
+
     This command scans files or processes text input to verify EncypherAI metadata
     and generates a CSV report with the results.
     """
