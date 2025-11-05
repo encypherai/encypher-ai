@@ -16,7 +16,7 @@ Microservice providing JWT-based authentication, OAuth integration, and session 
 - **Cache**: Redis (session management)
 - **Package Manager**: UV
 - **Authentication**: JWT (python-jose)
-- **Password Hashing**: bcrypt (passlib)
+- **Password Hashing**: bcrypt_sha256 (passlib)
 - **OAuth**: Google, GitHub integration
 
 ### Service Information
@@ -352,7 +352,7 @@ CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
 ## Security Considerations
 
 ### Password Security
-- **Hashing**: bcrypt with cost factor 12
+- **Hashing**: bcrypt_sha256 with cost factor ≥ 12
 - **Minimum Length**: 8 characters
 - **Complexity**: Enforced (uppercase, lowercase, number, special char)
 - **Storage**: Never store plaintext passwords

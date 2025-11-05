@@ -26,6 +26,8 @@ dependencies = [
     "aioredis>=2.0.1",
     "pybreaker>=1.4.1",
     "tenacity>=9.1.2",
+    "email-validator>=2.3.0",
+    "bcrypt==3.2.2",
 ]
 
 [project.optional-dependencies]

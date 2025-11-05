@@ -60,6 +60,10 @@ async def signup(
 
         return user
     except ValueError as e:
+        # Idempotent fallback: if a ValueError occurred, try returning existing user by email
+        existing = AuthService.get_user_by_email(db, user_data.email)
+        if existing:
+            return existing
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
@@ -137,23 +141,56 @@ async def refresh_token(
 
 @router.post("/logout", response_model=MessageResponse)
 async def logout(
-    request: RefreshTokenRequest,
+    request: Optional[RefreshTokenRequest] = None,
+    authorization: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
     """
-    Logout user by revoking refresh token
+    Logout user by revoking tokens.
     
-    - **refresh_token**: Refresh token to revoke
+    Provide either:
+    - refresh_token in the request body, or
+    - Authorization: Bearer <access_token> header
     """
-    success = AuthService.revoke_refresh_token(db, request.refresh_token)
-    
-    if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Refresh token not found",
-        )
-    
-    return {"message": "Successfully logged out"}
+    # Case 1: explicit refresh token in body
+    if request and getattr(request, "refresh_token", None):
+        success = AuthService.revoke_refresh_token(db, request.refresh_token)
+        if not success:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Refresh token not found",
+            )
+        return {"message": "Successfully logged out"}
+
+    # Case 2: Authorization header with access token – revoke all user's refresh tokens
+    if authorization:
+        try:
+            scheme, token = authorization.split()
+            if scheme.lower() != "bearer":
+                raise ValueError()
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid authentication credentials",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        payload = AuthService.verify_access_token(token)
+        if not payload:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        AuthService.revoke_all_refresh_tokens_for_user(db, payload["sub"])
+        return {"message": "Successfully logged out"}
+
+    # Neither provided
+    raise HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail="Must provide refresh_token in body or Authorization header",
+    )
 
 
 @router.post("/verify", response_model=UserResponse)

@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_
 
 from ..db.models import User, RefreshToken, PasswordResetToken
+from sqlalchemy.exc import IntegrityError
 from ..models.schemas import UserCreate, UserLogin
 from ..core.security import (
     verify_password,
@@ -24,11 +25,11 @@ class AuthService:
     @staticmethod
     def create_user(db: Session, user_data: UserCreate) -> User:
         """Create a new user"""
-        # Check if user already exists
-        existing_user = db.query(User).filter(User.email == user_data.email).first()
-        if existing_user:
-            raise ValueError("User with this email already exists")
-        
+        # Idempotent: if user already exists, return it
+        existing = db.query(User).filter(User.email == user_data.email).first()
+        if existing:
+            return existing
+
         # Create new user
         hashed_password = get_password_hash(user_data.password)
         db_user = User(
@@ -39,10 +40,16 @@ class AuthService:
         )
 
         db.add(db_user)
-        db.commit()
-        db.refresh(db_user)
-
-        return db_user
+        try:
+            db.commit()
+            db.refresh(db_user)
+            return db_user
+        except IntegrityError:
+            db.rollback()
+            existing_user = db.query(User).filter(User.email == user_data.email).first()
+            if existing_user:
+                return existing_user
+            raise ValueError("User with this email already exists")
     
     @staticmethod
     def authenticate_user(db: Session, credentials: UserLogin) -> Optional[User]:
@@ -154,6 +161,21 @@ class AuthService:
         db.commit()
         
         return True
+    
+    @staticmethod
+    def revoke_all_refresh_tokens_for_user(db: Session, user_id: str) -> int:
+        """Revoke all active refresh tokens for a user. Returns number revoked."""
+        tokens = db.query(RefreshToken).filter(
+            RefreshToken.user_id == user_id,
+            RefreshToken.revoked == False,
+        ).all()
+        count = 0
+        for t in tokens:
+            t.revoked = True
+            t.revoked_at = datetime.utcnow()
+            count += 1
+        db.commit()
+        return count
     
     @staticmethod
     def get_user_by_id(db: Session, user_id: str) -> Optional[User]:

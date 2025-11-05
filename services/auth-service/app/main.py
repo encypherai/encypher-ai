@@ -1,7 +1,7 @@
 """
 Auth Service - Main Application
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
@@ -57,6 +57,17 @@ setup_metrics(app)
 
 # Include routers
 app.include_router(v1_router, prefix="/api/v1/auth", tags=["authentication"])
+
+# Fallback metrics endpoint (in case instrumentator isn't exposing it)
+try:
+    from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+
+    @app.get("/metrics")
+    async def metrics_fallback():
+        return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+except Exception:
+    # If prometheus_client is unavailable, skip fallback
+    pass
 
 
 @app.get("/")
