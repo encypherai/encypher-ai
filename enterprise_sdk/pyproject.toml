@@ -85,4 +85,5 @@ disallow_untyped_defs = true
 [dependency-groups]
 dev = [
     "pip-audit>=2.9.0",
+    "pipdeptree>=2.28.0",
 ]

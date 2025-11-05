@@ -20,7 +20,7 @@ Authentication and authorization microservice for the Encypher platform.
 - **Database:** PostgreSQL
 - **Cache:** Redis
 - **Package Manager:** UV
-- **Authentication:** JWT (python-jose)
+- **Authentication:** JWT (PyJWT)
 - **Password Hashing:** bcrypt_sha256 (passlib)
 
 ## Setup
