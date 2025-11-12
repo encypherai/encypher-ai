@@ -191,3 +191,55 @@ class AuthService:
     def verify_access_token(token: str) -> Optional[dict]:
         """Verify an access token and return payload"""
         return verify_token(token, token_type="access")
+
+    @staticmethod
+    def upsert_oauth_user(
+        db: Session,
+        *,
+        provider: str,
+        provider_id: str,
+        email: Optional[str],
+        name: Optional[str] = None,
+    ) -> User:
+        """Create or update a user from an OAuth provider."""
+        # Try match by provider id first
+        user = (
+            db.query(User)
+            .filter(User.oauth_provider == provider, User.oauth_id == provider_id)
+            .first()
+        )
+        if user:
+            # Update basic profile fields if provided
+            if email and not user.email:
+                user.email = email
+            if name and not user.name:
+                user.name = name
+            db.commit()
+            db.refresh(user)
+            return user
+
+        # Fallback: match by email if exists
+        if email:
+            user = db.query(User).filter(User.email == email).first()
+            if user:
+                user.oauth_provider = provider
+                user.oauth_id = provider_id
+                if name and not user.name:
+                    user.name = name
+                db.commit()
+                db.refresh(user)
+                return user
+
+        # Create new OAuth user
+        user = User(
+            email=email or f"{provider}_{provider_id}@users.void",
+            name=name,
+            hashed_password=None,
+            oauth_provider=provider,
+            oauth_id=provider_id,
+            is_active=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+        return user

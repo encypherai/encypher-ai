@@ -1,5 +1,5 @@
 """API endpoints for Analytics Service v1"""
-from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Query, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -14,6 +14,7 @@ from ...models.schemas import (
     TimeSeriesData,
     AnalyticsReport,
     MessageResponse,
+    PageviewEvent,
 )
 from ...services.analytics_service import AnalyticsService
 from ...core.config import settings
@@ -22,7 +23,7 @@ router = APIRouter()
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
-    """Verify user token with auth service"""
+    """Verify user token with auth service and return user dict from Standard Response Format."""
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -34,7 +35,17 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
                 )
-            return response.json()
+            payload = response.json()
+            # Expect { success: bool, data: { user fields }, error: null }
+            if isinstance(payload, dict) and payload.get("success") and isinstance(payload.get("data"), dict):
+                return payload["data"]
+            # Fallback for legacy direct user payloads
+            if isinstance(payload, dict) and "id" in payload:
+                return payload
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Invalid response from auth service",
+            )
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -199,6 +210,61 @@ async def get_analytics_report(
         service_metrics=[ServiceMetrics(**m) for m in service_metrics],
         time_series=[TimeSeriesData(**ts) for ts in time_series],
     )
+
+
+# --- Public Anonymous Pageview Endpoint ---
+_rl_store = {}
+
+
+def _rate_limit(ip: str, route: str, limit: int = 60, window_sec: int = 60):
+    import time
+    now = time.time()
+    key = (ip, route)
+    timestamps = _rl_store.get(key, [])
+    cutoff = now - window_sec
+    timestamps = [t for t in timestamps if t >= cutoff]
+    if len(timestamps) >= limit:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Rate limit exceeded")
+    timestamps.append(now)
+    _rl_store[key] = timestamps
+
+
+@router.post("/pageview", status_code=status.HTTP_202_ACCEPTED)
+async def record_pageview(event: PageviewEvent, request: Request, db: Session = Depends(get_db)):
+    """Record anonymous pageview with basic rate limiting."""
+    # Determine client IP
+    ip = request.headers.get("x-forwarded-for")
+    if ip:
+        ip = ip.split(",")[0].strip()
+    else:
+        ip = request.client.host if request.client else "unknown"
+    _rate_limit(ip, "analytics_pageview", limit=60, window_sec=60)
+
+    try:
+        # Persist minimal event as a metric for aggregation
+        AnalyticsService.record_metric(
+            db=db,
+            user_id="anonymous",
+            metric_data=MetricCreate(
+                metric_type="pageview",
+                service_name="website",
+                endpoint=event.path,
+                count=1,
+                value=None,
+                response_time_ms=None,
+                status_code=200,
+                metadata={
+                    "site_id": event.site_id,
+                    "referrer": event.referrer,
+                    "user_agent": event.user_agent,
+                    "ip": ip,
+                },
+            ),
+            organization_id=None,
+        )
+        return {"success": True, "data": {"message": "accepted"}, "error": None}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to record pageview: {str(e)}")
 
 
 @router.get("/health")

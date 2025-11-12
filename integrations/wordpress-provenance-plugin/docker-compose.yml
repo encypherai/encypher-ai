@@ -42,7 +42,7 @@ services:
       - ../../enterprise_api:/app/enterprise_api
       - ../../encypher-ai:/app/encypher-ai
     ports:
-      - "8000:8000"
+      - "8001:8000"
 
   wp-db:
     image: mysql:8.0

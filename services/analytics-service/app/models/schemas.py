@@ -70,3 +70,11 @@ class AnalyticsReport(BaseModel):
 class MessageResponse(BaseModel):
     """Generic message response"""
     message: str
+
+
+class PageviewEvent(BaseModel):
+    """Schema for anonymous pageview events"""
+    site_id: str = Field(..., min_length=1, max_length=100)
+    path: str = Field(..., min_length=1, max_length=2048)
+    referrer: Optional[str] = Field(default=None, max_length=2048)
+    user_agent: Optional[str] = Field(default=None, max_length=512)

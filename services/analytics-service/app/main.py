@@ -10,6 +10,7 @@ from .db.models import Base
 from .db.session import engine
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
+import logging
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),

@@ -1,6 +1,6 @@
 """Analytics service business logic"""
 from datetime import datetime, timedelta
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
@@ -31,7 +31,7 @@ class AnalyticsService:
             value=metric_data.value,
             response_time_ms=metric_data.response_time_ms,
             status_code=metric_data.status_code,
-            metadata=metric_data.metadata,
+            meta=metric_data.metadata,
             date=now.strftime("%Y-%m-%d"),
             hour=now.hour,
         )

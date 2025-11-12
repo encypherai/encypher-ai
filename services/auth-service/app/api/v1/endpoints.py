@@ -2,6 +2,7 @@
 API endpoints for Auth Service v1
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Header
+import httpx
 from sqlalchemy.orm import Session
 from typing import Optional
 
@@ -13,10 +14,12 @@ from ...models.schemas import (
     Token,
     RefreshTokenRequest,
     MessageResponse,
+    OAuthExchangeRequest,
 )
 from ...services.auth_service import AuthService
 from ...utils.coalition_client import CoalitionClient
 from ...core.config import settings
+from ...deps.rate_limit import rate_limiter
 
 router = APIRouter()
 
@@ -24,10 +27,12 @@ router = APIRouter()
 coalition_client = CoalitionClient(settings.COALITION_SERVICE_URL)
 
 
-@router.post("/signup", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
+# Standard Response Format used; returning UserResponse inside data
+@router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(
     user_data: UserCreate,
     db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("auth_signup", limit=5, window_sec=60)),
 ):
     """
     Create a new user account
@@ -58,24 +63,27 @@ async def signup(
                     error=str(e),
                 )
 
-        return user
+        # Wrap in standard response format
+        return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
     except ValueError as e:
         # Idempotent fallback: if a ValueError occurred, try returning existing user by email
         existing = AuthService.get_user_by_email(db, user_data.email)
         if existing:
-            return existing
+            return {"success": True, "data": UserResponse.model_validate(existing).model_dump(), "error": None}
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
         )
 
 
-@router.post("/login", response_model=Token)
+# Standard Response Format; includes tokens and user
+@router.post("/login")
 async def login(
     credentials: UserLogin,
     user_agent: Optional[str] = Header(None),
     x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("auth_login", limit=5, window_sec=60)),
 ):
     """
     Authenticate user and return access and refresh tokens
@@ -105,13 +113,18 @@ async def login(
     )
     
     return {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
-        "token_type": "bearer",
+        "success": True,
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
     }
 
 
-@router.post("/refresh", response_model=Token)
+@router.post("/refresh")
 async def refresh_token(
     request: RefreshTokenRequest,
     db: Session = Depends(get_db),
@@ -133,13 +146,113 @@ async def refresh_token(
     new_access_token, user = result
     
     return {
-        "access_token": new_access_token,
-        "refresh_token": request.refresh_token,  # Keep the same refresh token
-        "token_type": "bearer",
+        "success": True,
+        "data": {
+            "access_token": new_access_token,
+            "refresh_token": request.refresh_token,
+            "token_type": "bearer",
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
     }
 
 
-@router.post("/logout", response_model=MessageResponse)
+@router.post("/oauth/exchange")
+async def oauth_exchange(
+    payload: OAuthExchangeRequest,
+    user_agent: Optional[str] = Header(None),
+    x_forwarded_for: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("auth_oauth_exchange", limit=10, window_sec=60)),
+):
+    """Exchange provider tokens for backend session tokens (Google/GitHub)."""
+    provider = payload.provider.lower()
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        if provider == "google":
+            # Prefer id_token validation
+            if payload.id_token:
+                # Validate id_token with Google tokeninfo
+                resp = await client.get(
+                    "https://oauth2.googleapis.com/tokeninfo",
+                    params={"id_token": payload.id_token},
+                )
+                if resp.status_code != 200:
+                    raise HTTPException(status_code=401, detail="Invalid Google id_token")
+                data = resp.json()
+                provider_id = data.get("sub")
+                email = data.get("email")
+                name = data.get("name")
+            elif payload.access_token:
+                # Fetch userinfo with access_token
+                resp = await client.get(
+                    "https://www.googleapis.com/oauth2/v2/userinfo",
+                    headers={"Authorization": f"Bearer {payload.access_token}"},
+                )
+                if resp.status_code != 200:
+                    raise HTTPException(status_code=401, detail="Invalid Google access_token")
+                info = resp.json()
+                provider_id = str(info.get("id"))
+                email = info.get("email")
+                name = info.get("name")
+            else:
+                raise HTTPException(status_code=400, detail="Google requires id_token or access_token")
+        elif provider == "github":
+            if not payload.access_token:
+                raise HTTPException(status_code=400, detail="GitHub requires access_token")
+            # Get GitHub user
+            resp = await client.get(
+                "https://api.github.com/user",
+                headers={"Authorization": f"Bearer {payload.access_token}", "Accept": "application/vnd.github+json"},
+            )
+            if resp.status_code != 200:
+                raise HTTPException(status_code=401, detail="Invalid GitHub access_token")
+            info = resp.json()
+            provider_id = str(info.get("id"))
+            name = info.get("name") or info.get("login")
+            email = info.get("email")
+            if not email:
+                # Fallback to primary email
+                emails = await client.get(
+                    "https://api.github.com/user/emails",
+                    headers={"Authorization": f"Bearer {payload.access_token}", "Accept": "application/vnd.github+json"},
+                )
+                if emails.status_code == 200:
+                    items = emails.json()
+                    primary = next((e for e in items if e.get("primary")), None)
+                    email = (primary or (items[0] if items else {})).get("email")
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported provider")
+
+    # Upsert user and issue tokens
+    user = AuthService.upsert_oauth_user(
+        db,
+        provider=provider,
+        provider_id=provider_id,
+        email=email,
+        name=name,
+    )
+    access_token, refresh_token = AuthService.create_tokens(user)
+    AuthService.store_refresh_token(
+        db,
+        user.id,
+        refresh_token,
+        user_agent=user_agent,
+        ip_address=x_forwarded_for,
+    )
+    return {
+        "success": True,
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
+    }
+
+
+@router.post("/logout")
 async def logout(
     request: Optional[RefreshTokenRequest] = None,
     authorization: Optional[str] = Header(None),
@@ -160,7 +273,7 @@ async def logout(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Refresh token not found",
             )
-        return {"message": "Successfully logged out"}
+        return {"success": True, "data": {"message": "Successfully logged out"}, "error": None}
 
     # Case 2: Authorization header with access token – revoke all user's refresh tokens
     if authorization:
@@ -184,7 +297,7 @@ async def logout(
             )
 
         AuthService.revoke_all_refresh_tokens_for_user(db, payload["sub"])
-        return {"message": "Successfully logged out"}
+        return {"success": True, "data": {"message": "Successfully logged out"}, "error": None}
 
     # Neither provided
     raise HTTPException(
@@ -193,7 +306,7 @@ async def logout(
     )
 
 
-@router.post("/verify", response_model=UserResponse)
+@router.post("/verify")
 async def verify_token(
     authorization: str = Header(...),
     db: Session = Depends(get_db),
@@ -236,7 +349,7 @@ async def verify_token(
             detail="User not found",
         )
     
-    return user
+    return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
 
 
 @router.get("/health")
