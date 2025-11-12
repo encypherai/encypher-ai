@@ -147,16 +147,25 @@ Verify C2PA manifest in signed content.
 ```json
 {
   "success": true,
-  "is_valid": true,
-  "signer_id": "org_123",
-  "organization_name": "Example Publisher",
-  "signature_timestamp": "2025-01-15T10:30:00Z",
-  "manifest": {
-    "version": "1.0",
-    "signer": "org_123",
-    "timestamp": "2025-01-15T10:30:00Z"
+  "data": {
+    "valid": true,
+    "tampered": false,
+    "reason_code": "OK",
+    "signer_id": "org_123",
+    "signer_name": "Example Publisher",
+    "timestamp": "2025-01-15T10:30:00Z",
+    "details": {
+      "manifest": {
+        "version": "1.0",
+        "signer": "org_123",
+        "timestamp": "2025-01-15T10:30:00Z"
+      },
+      "duration_ms": 35,
+      "payload_bytes": 4800
+    }
   },
-  "tampered": false
+  "error": null,
+  "correlation_id": "req-123"
 }
 ```
 
@@ -164,12 +173,19 @@ Verify C2PA manifest in signed content.
 ```json
 {
   "success": true,
-  "is_valid": false,
-  "signer_id": "unknown",
-  "organization_name": "Unknown",
-  "signature_timestamp": null,
-  "manifest": {},
-  "tampered": true
+  "data": {
+    "valid": false,
+    "tampered": true,
+    "reason_code": "SIGNATURE_INVALID",
+    "signer_id": "org_123",
+    "signer_name": "Example Publisher",
+    "details": {
+      "manifest": {},
+      "exception": "hash mismatch"
+    }
+  },
+  "error": null,
+  "correlation_id": "req-456"
 }
 ```
 

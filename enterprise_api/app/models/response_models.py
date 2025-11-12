@@ -30,28 +30,59 @@ class SignResponse(BaseModel):
     }
 
 
-class VerifyResponse(BaseModel):
-    """Response model for verification operation."""
+class ErrorDetail(BaseModel):
+    """Standard API error object."""
 
-    success: bool = Field(..., description="Whether the operation was successful")
-    is_valid: bool = Field(..., description="Whether the signature is valid")
-    signer_id: str = Field(..., description="Organization ID of the signer")
-    organization_name: str = Field(..., description="Name of the signing organization")
-    signature_timestamp: Optional[datetime] = Field(None, description="When the content was signed")
-    manifest: Dict[str, Any] = Field(..., description="Full C2PA manifest details")
-    tampered: bool = Field(..., description="Whether the content has been tampered with")
+    code: str = Field(..., description="Stable machine-readable error code")
+    message: str = Field(..., description="Human readable error description")
+    hint: Optional[str] = Field(None, description="Optional remediation hint")
+
+
+class VerifyVerdict(BaseModel):
+    """Detailed verification verdict data."""
+
+    valid: bool = Field(..., description="Whether the signature is valid")
+    tampered: bool = Field(..., description="Whether the payload was tampered")
+    reason_code: str = Field(..., description="Reason code describing the verdict")
+    signer_id: Optional[str] = Field(None, description="Resolved signer/organization ID")
+    signer_name: Optional[str] = Field(None, description="Human readable signer name")
+    timestamp: Optional[datetime] = Field(None, description="Signature timestamp, if present")
+    details: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Structured details (manifest, benchmarking stats, etc.)",
+    )
+
+
+class VerifyResponse(BaseModel):
+    """Envelope returned by the verification endpoint."""
+
+    success: bool = Field(..., description="Indicates if the request was processed successfully")
+    data: Optional[VerifyVerdict] = Field(
+        None,
+        description="Verification verdict payload when success is true",
+    )
+    error: Optional[ErrorDetail] = Field(
+        None,
+        description="Error payload when success is false",
+    )
+    correlation_id: str = Field(..., description="Request correlation identifier for tracing")
 
     model_config = {
         "json_schema_extra": {
             "examples": [
                 {
                     "success": True,
-                    "is_valid": True,
-                    "signer_id": "org_123",
-                    "organization_name": "Example Publisher",
-                    "signature_timestamp": "2025-01-15T10:30:00Z",
-                    "manifest": {"version": "1.0", "signer": "org_123"},
-                    "tampered": False
+                    "correlation_id": "req-123",
+                    "data": {
+                        "valid": True,
+                        "tampered": False,
+                        "reason_code": "OK",
+                        "signer_id": "org_demo",
+                        "signer_name": "Demo Org",
+                        "timestamp": "2025-01-15T10:30:00Z",
+                        "details": {"manifest": {"document_id": "doc-1"}},
+                    },
+                    "error": None,
                 }
             ]
         }

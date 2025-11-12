@@ -255,47 +255,104 @@ data: {"document_id":"doc-1","embedded_content":"...","statistics":{"ms":1240}}
 
 ## Task List
 
-- [ ] 1.0 Verification Endpoint Fix (cert lookup, structured verdicts)
-  - [ ] 1.1 Model & repo changes for `organizations` (cert chain, status)
-  - [ ] 1.2 Service: certificate resolution by signer_id
-  - [ ] 1.3 Controller: error mapping, size/time limits
-  - [ ] 1.4 Tests: valid, tampered, no-cert, malformed
+### 1.0 Verification Endpoint Fix (Week 1)
+- [x] **1.1 Extend `organizations` model**  
+  - **Description**: Add `cert_chain_pem`, `status`, `rotated_at` columns plus Alembic migration + seed updates. Document new fields in component README and agents.md.  
+  - **Owner**: Backend API + Database  
+  - **Dependencies**: Access to prod/staging DBs; seed scripts (`seed_c2pa_data.py`).  
+  - **Acceptance**: Migration applies cleanly; sample orgs show populated chains; rollback script validated.
+- [x] **1.2 Certificate resolution service**  
+  - **Description**: Implement caching layer (Redis-backed) that resolves signer_id → certificate chain with rotation awareness and trust anchor validation.  
+  - **Owner**: Backend API Services  
+  - **Acceptance**: Cache hit rate telemetry emitted; stale certificates evicted; unit tests cover active/revoked states.
+- [x] **1.3 Controller hardening**  
+  - **Description**: Update `/verify` controller for structured verdicts, body size enforcement (2 MB), timeout guard, correlation IDs, and rate limiting middleware hook.  
+  - **Owner**: Backend API Controllers  
+  - **Acceptance**: Endpoint returns new schema; 400/422/429 handling confirmed via integration tests.
+- [x] **1.4 Verification test suite**  
+  - **Description**: Add golden sample tests (valid/tampered/missing signer/malformed) plus fuzz harness; integrate into CI.  
+  - **Owner**: QA + Backend  
+  - **Acceptance**: `uv run pytest tests/test_c2pa_api.py -m verify` passes locally and in CI with ≥90% coverage for module.
 
-- [ ] 2.0 Batch Endpoints
-  - [ ] 2.1 `POST /batch/sign` (idempotency, concurrency, limits)
-  - [ ] 2.2 `POST /batch/verify` (partial failures)
-  - [ ] 2.3 DB: `batch_requests` table + indexes
-  - [ ] 2.4 Tests: mixed outcomes, idempotency, limits
+### 2.0 Batch Endpoints (Week 2)
+- [ ] **2.1 `POST /batch/sign` implementation**  
+  - **Description**: Shared request schema, bounded concurrency worker pool, idempotency (Redis + `batch_requests`), per-item metrics.  
+  - **Acceptance**: Handles up to 100 docs, enforces payload limits, stores runs for 30 days.
+- [ ] **2.2 `POST /batch/verify` implementation**  
+  - **Description**: Reuse batch infrastructure for verification; support partial successes and consolidated failure summary.  
+  - **Acceptance**: Mixed payload test returns accurate statuses; tampered docs flagged without aborting batch.
+- [ ] **2.3 Persistence layer**  
+  - **Description**: Create `batch_requests` + `batch_items` tables, indexes, ORM models, admin cleanup job.  
+  - **Acceptance**: Alembic migration + rollback succeed; retention job documented.
+- [ ] **2.4 Batch testing & benchmarks**  
+  - **Description**: Add pytest coverage for idempotency/limits; run k6 benchmark to verify ≥100 docs/sec throughput with 8 workers.  
+  - **Acceptance**: Benchmark report stored in `docs/perf/batch-sign.md`; throttling proves stable under load.
 
-- [ ] 3.0 Streaming Signing (SSE)
-  - [ ] 3.1 Controller emitting events: start/progress/final/error
-  - [ ] 3.2 Idempotency via `run_id`; heartbeat; retry support
-  - [ ] 3.3 Tests: long content, disconnects, retries
+### 3.0 Streaming Signing (SSE) (Week 3)
+- [ ] **3.1 SSE controller**  
+  - **Description**: Implement `/stream/sign` SSE endpoint with events (`start`, `progress`, `partial`, `final`, `error`) and JSON schema validation.  
+  - **Acceptance**: Reference client receives ordered events; connection upgrade documented.
+- [ ] **3.2 Run state + recovery**  
+  - **Description**: Persist run state in Redis with `run_id`, heartbeat, reconnect instructions, and expiration policy.  
+  - **Acceptance**: Disconnect/reconnect test resumes progress; heartbeat missed alerts emitted.
+- [ ] **3.3 Streaming QA**  
+  - **Description**: Automated tests for long content, simulated network drops, retry semantics; soak test 2h.  
+  - **Acceptance**: Failures captured with actionable logs; soak metrics appended to release artifacts.
 
-- [ ] 4.0 OpenAPI & Postman
-  - [ ] 4.1 Complete spec with schemas/examples
-  - [ ] 4.2 Publish Swagger UI + JSON
-  - [ ] 4.3 Postman collection + environments
+### 4.0 OpenAPI & Postman (Weeks 1-2)
+- [ ] **4.1 Complete OpenAPI 3.1 spec**  
+  - **Description**: Document new schemas, error objects, SSE endpoint notes; add CI check to fail on drift.  
+  - **Acceptance**: `uv run scripts/validate_openapi.py` passes; spec published at `/docs/openapi.json`.
+- [ ] **4.2 Swagger UI + JSON publishing**  
+  - **Description**: Enable Swagger UI in staging, protect prod with basic auth; ensure versioned spec downloadable.  
+  - **Acceptance**: QA confirms accessibility; cache headers set.
+- [ ] **4.3 Postman assets**  
+  - **Description**: Create Postman collection/env templates with working examples; include batch + streaming flows.  
+  - **Acceptance**: Collection imported in QA workspace and succeeds against staging.
 
-- [ ] 5.0 Error Model & Rate Limiting
-  - [ ] 5.1 Standardized error codes & mapping
-  - [ ] 5.2 Rate limits + quotas + headers
-  - [ ] 5.3 Correlation IDs in responses/logs
+### 5.0 Error Model & Rate Limiting (Weeks 1-2)
+- [ ] **5.1 Canonical error catalog**  
+  - **Description**: Define error codes/messages/hints; update middleware to return structured responses.  
+  - **Acceptance**: Error reference doc merged; endpoints emit codes in logs + responses.
+- [ ] **5.2 Rate limiting + quotas**  
+  - **Description**: Implement Redis sliding window per plan, expose headers (`x-ratelimit-*`), add admin overrides.  
+  - **Acceptance**: Load tests trigger 429 with Retry-After; metrics show per-plan usage.
+- [ ] **5.3 Correlation IDs & logging**  
+  - **Description**: Generate/request `x-request-id`, propagate through logs/traces, ensure sampling & PII redaction.  
+  - **Acceptance**: Log audit verifies fields present; tracing UI links request to downstream spans.
 
-- [ ] 6.0 Observability & Ops
-  - [ ] 6.1 Metrics and health endpoints
-  - [ ] 6.2 Dashboards and alerts
-  - [ ] 6.3 Log redaction and sampling
+### 6.0 Observability & Ops (Weeks 2-3)
+- [ ] **6.1 Metrics + health checks**  
+  - **Description**: Add Prometheus metrics (duration, batch size, verdict counts) and `/healthz` `/readyz` endpoints.  
+  - **Acceptance**: Metrics scraped in staging; health checks wired into Kubernetes probes.
+- [ ] **6.2 Dashboards & alerts**  
+  - **Description**: Grafana dashboards for latency, error %, queue depth; alerts for p95>120ms, error>2%, heartbeat loss.  
+  - **Acceptance**: Dashboards reviewed with SRE; alert runbooks documented.
+- [ ] **6.3 Log governance**  
+  - **Description**: Ensure log redaction, sampling for verbose endpoints, and retention compliance (90 days).  
+  - **Acceptance**: Security review sign-off; log pipeline tests confirm redaction rules.
 
-- [ ] 7.0 Performance & Security
-  - [ ] 7.1 Benchmarks (C2PA 10K; embeddings 5K rerun)
-  - [ ] 7.2 Load tests: 1k concurrent; soak 24h
-  - [ ] 7.3 Security tests: OWASP Top 10; dependency scan
+### 7.0 Performance & Security (Weeks 3-4)
+- [ ] **7.1 Benchmarks**  
+  - **Description**: Re-run 5K embeddings benchmark + new 10K C2PA batch; compare to targets and archive results.  
+  - **Acceptance**: Report shows throughput/latency meeting KPIs; regressions flagged/resolved.
+- [ ] **7.2 Load + soak tests**  
+  - **Description**: k6 scenarios for single, batch, streaming with 1k concurrent users; 24h soak on staging.  
+  - **Acceptance**: No critical errors during soak; resource utilization within plan.
+- [ ] **7.3 Security validation**  
+  - **Description**: OWASP Top 10 testing, dependency scans (`uv pip audit`), auth/rate-limit bypass attempts, secrets review.  
+  - **Acceptance**: 0 critical findings; medium issues remediated or waived with approval.
 
-- [ ] 8.0 Docs & Handoffs
-  - [ ] 8.1 README, examples (curl, Python, JS)
-  - [ ] 8.2 Error & rate limit reference
-  - [ ] 8.3 SDK/WordPress handoff notes
+### 8.0 Documentation & Handoffs (Week 4)
+- [ ] **8.1 Developer docs & examples**  
+  - **Description**: Update Enterprise API README, QUICK_START, MICROSERVICES_FEATURES, component agents; add curl, Python (uv), JS samples.  
+  - **Acceptance**: Docs PR approved by DevRel; links verified.
+- [ ] **8.2 Error & rate limit reference**  
+  - **Description**: Publish dedicated doc section + Postman markdown summarizing error codes and headers.  
+  - **Acceptance**: Reference linked from README + SDK docs.
+- [ ] **8.3 SDK/WordPress handoff**  
+  - **Description**: Conduct walkthrough, deliver OpenAPI + changelog + sample scripts; capture integration feedback.  
+  - **Acceptance**: SDK + WordPress teams acknowledge receipt; follow-up issues logged if any.
 
 ---
 

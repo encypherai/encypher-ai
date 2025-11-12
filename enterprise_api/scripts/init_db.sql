@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS organizations (
     -- Certificate management (SSL.com)
     certificate_pem TEXT,
     certificate_chain TEXT,
+    certificate_status VARCHAR(32) DEFAULT 'active',
+    certificate_rotated_at TIMESTAMP,
     private_key_encrypted BYTEA, -- AES-256 encrypted (for Encypher-managed keys)
     certificate_expiry TIMESTAMP,
     ssl_order_id VARCHAR(100),

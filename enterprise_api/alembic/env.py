@@ -14,6 +14,7 @@ settings = get_settings()
 # Import all models to ensure they're registered with Base
 from app.models.c2pa_schema import C2PASchema
 from app.models.c2pa_template import C2PAAssertionTemplate
+from app.models.organization import Organization
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

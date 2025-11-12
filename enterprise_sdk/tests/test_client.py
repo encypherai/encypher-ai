@@ -4,7 +4,14 @@ import pytest
 
 from encypher_enterprise import EncypherClient
 from encypher_enterprise.exceptions import AuthenticationError
-from encypher_enterprise.models import SignResponse, VerifyResponse, LookupResponse, StatsResponse, UsageStats
+from encypher_enterprise.models import (
+    SignResponse,
+    VerifyResponse,
+    VerifyVerdict,
+    LookupResponse,
+    StatsResponse,
+    UsageStats,
+)
 
 
 def _setup_mock_client(monkeypatch, handler) -> EncypherClient:
@@ -59,12 +66,16 @@ def test_verify_success(monkeypatch):
         assert request.url.path == "/api/v1/verify"
         payload = VerifyResponse(
             success=True,
-            is_valid=True,
-            signer_id="org_1",
-            organization_name="Encypher",
-            signature_timestamp=None,
-            manifest={"data": "value"},
-            tampered=False,
+            correlation_id="req-123",
+            data=VerifyVerdict(
+                valid=True,
+                tampered=False,
+                reason_code="OK",
+                signer_id="org_1",
+                signer_name="Encypher",
+                timestamp=None,
+                details={"manifest": {"data": "value"}},
+            ),
         )
         return httpx.Response(200, json=payload.model_dump())
 
@@ -72,8 +83,10 @@ def test_verify_success(monkeypatch):
     result = client.verify("signed content")
     client.close()
 
-    assert result.is_valid is True
-    assert result.manifest == {"data": "value"}
+    assert result.data is not None
+    assert result.data.valid is True
+    assert result.data.details["manifest"] == {"data": "value"}
+    assert result.correlation_id == "req-123"
 
 
 def test_lookup_success(monkeypatch):
