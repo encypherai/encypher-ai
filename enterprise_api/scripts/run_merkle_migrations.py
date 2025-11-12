@@ -22,6 +22,7 @@ MIGRATIONS = [
     "008_create_merkle_proof_cache.sql",
     "009_create_attribution_reports.sql",
     "010_alter_organizations_for_tiers.sql",
+    "011_create_content_references.sql",
 ]
 
 
