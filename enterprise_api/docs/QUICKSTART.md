@@ -68,12 +68,21 @@ Expected response:
 ```json
 {
   "success": true,
-  "is_valid": true,
-  "signer_id": "your_org_id",
-  "organization_name": "Your Organization",
-  "signature_timestamp": "2025-01-15T10:30:00Z",
-  "manifest": {...},
-  "tampered": false
+  "data": {
+    "valid": true,
+    "tampered": false,
+    "reason_code": "OK",
+    "signer_id": "your_org_id",
+    "signer_name": "Your Organization",
+    "timestamp": "2025-01-15T10:30:00Z",
+    "details": {
+      "manifest": { "...": "..." },
+      "duration_ms": 35,
+      "payload_bytes": 4872
+    }
+  },
+  "error": null,
+  "correlation_id": "req-123"
 }
 ```
 
@@ -93,9 +102,19 @@ Expected response:
 ```json
 {
   "success": true,
-  "is_valid": false,
-  "tampered": true,
-  ...
+  "data": {
+    "valid": false,
+    "tampered": true,
+    "reason_code": "SIGNATURE_INVALID",
+    "signer_id": "your_org_id",
+    "signer_name": "Your Organization",
+    "details": {
+      "manifest": {},
+      "exception": "hash mismatch"
+    }
+  },
+  "error": null,
+  "correlation_id": "req-456"
 }
 ```
 
@@ -205,7 +224,8 @@ response = requests.post(
     json={"text": signed_text}
 )
 verification = response.json()
-print(f"Valid: {verification['is_valid']}")
+verdict = verification["data"]
+print(f"Valid: {verdict['valid']} (correlation_id={verification['correlation_id']})")
 ```
 
 ### JavaScript (Node.js)
@@ -239,7 +259,7 @@ async function verifyContent(text) {
   console.log('Signed:', signed.document_id);
 
   const verified = await verifyContent(signed.signed_text);
-  console.log('Valid:', verified.is_valid);
+  console.log('Valid:', verified.data.valid);
 })();
 ```
 

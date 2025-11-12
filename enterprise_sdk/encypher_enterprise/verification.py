@@ -269,16 +269,19 @@ class RepositoryVerifier:
             
             # Verify
             verification = self.client.verify(signed_content)
+            verdict = verification.data
+            if verdict is None:
+                raise ValueError(verification.error.message if verification.error else "Verification failed")
             
             processing_time = time.time() - start_time
             
             return VerificationResult(
                 file_path=file_path,
-                is_valid=verification.is_valid,
-                tampered=verification.tampered,
-                organization_name=verification.organization_name,
-                document_title=verification.document_title,
-                publication_date=verification.publication_date,
+                is_valid=verdict.valid,
+                tampered=verdict.tampered,
+                organization_name=verdict.signer_name,
+                document_title=None,
+                publication_date=None,
                 processing_time=processing_time
             )
         
@@ -302,16 +305,19 @@ class RepositoryVerifier:
             
             # Verify
             verification = await self.client.verify(signed_content)
+            verdict = verification.data
+            if verdict is None:
+                raise ValueError(verification.error.message if verification.error else "Verification failed")
             
             processing_time = time.time() - start_time
             
             return VerificationResult(
                 file_path=file_path,
-                is_valid=verification.is_valid,
-                tampered=verification.tampered,
-                organization_name=verification.organization_name,
-                document_title=verification.document_title,
-                publication_date=verification.publication_date,
+                is_valid=verdict.valid,
+                tampered=verdict.tampered,
+                organization_name=verdict.signer_name,
+                document_title=None,
+                publication_date=None,
                 processing_time=processing_time
             )
         

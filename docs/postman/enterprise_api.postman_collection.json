@@ -1,0 +1,89 @@
+{
+  "info": {
+    "_postman_id": "f67d92e2-00c1-4b0a-8d8d-b33f2d8a6a12",
+    "name": "Encypher Enterprise API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Batch + streaming endpoints for signing and verification."
+  },
+  "item": [
+    {
+      "name": "Batch Sign",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/batch/sign",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "batch", "sign"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mode\": \"c2pa\",\n  \"segmentation_level\": \"sentence\",\n  \"idempotency_key\": \"{{$guid}}\",\n  \"items\": [\n    {\"document_id\": \"doc-1\", \"text\": \"First article\"},\n    {\"document_id\": \"doc-2\", \"text\": \"Second article\"}\n  ]\n}\n"
+        }
+      }
+    },
+    {
+      "name": "Batch Verify",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/batch/verify",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "batch", "verify"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"mode\": \"c2pa\",\n  \"segmentation_level\": \"sentence\",\n  \"idempotency_key\": \"{{$guid}}\",\n  \"items\": [\n    {\"document_id\": \"doc-1\", \"text\": \"Signed payload\"}\n  ]\n}\n"
+        }
+      }
+    },
+    {
+      "name": "Streaming Sign (SSE)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{apiKey}}"
+          },
+          {
+            "key": "Accept",
+            "value": "text/event-stream"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/stream/sign",
+          "host": ["{{baseUrl}}"],
+          "path": ["stream", "sign"]
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"document_id\": \"doc-stream-1\",\n  \"text\": \"This is streamed content\",\n  \"document_title\": \"Streaming Demo\"\n}\n"
+        }
+      }
+    }
+  ]
+}

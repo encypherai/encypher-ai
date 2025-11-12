@@ -3,21 +3,24 @@ Encypher Enterprise API - Main Application
 
 FastAPI application for C2PA-compliant content signing and verification.
 """
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 import time
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
+from uuid import uuid4
 
 from sqlalchemy import text
 
 from app.config import settings
-from app.routers import signing, verification, lookup, onboarding, streaming, kafka, chat, licensing
+from app.routers import batch, chat, kafka, licensing, lookup, onboarding, signing, streaming, verification
 from app.api.v1.api import api_router as api_v1_router
 from app.database import engine
+from app.observability.metrics import render_prometheus
 from app.services.session_service import session_service
+from sqlalchemy import text
 
 # Configure logging
 logging.basicConfig(
@@ -173,6 +176,34 @@ async def health_check():
     }
 
 
+@app.get("/readyz", tags=["Health"])
+async def readiness_check():
+    """Lightweight readiness probe."""
+
+    db_status = "ok"
+    try:
+        async with engine.begin() as conn:
+            await conn.execute(text("SELECT 1"))
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Readiness DB probe failed: %s", exc)
+        db_status = "error"
+    redis_status = "ok" if session_service.redis_client else "degraded"
+    status_text = "ready" if db_status == "ok" else "degraded"
+    return {
+        "status": status_text,
+        "database": db_status,
+        "redis": redis_status,
+        "version": "1.0.0-preview",
+    }
+
+
+@app.get("/metrics", include_in_schema=False)
+async def metrics():
+    """Prometheus-compatible metrics endpoint."""
+
+    return PlainTextResponse(render_prometheus(), media_type="text/plain; version=0.0.4")
+
+
 # Root endpoint
 @app.get("/", tags=["Info"])
 async def root():
@@ -200,6 +231,7 @@ app.include_router(streaming.router, prefix="/api/v1", tags=["Streaming"])
 app.include_router(kafka.router, prefix="/api/v1", tags=["Kafka"])
 app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
 app.include_router(licensing.router, prefix="/api/v1", tags=["Licensing"])
+app.include_router(batch.router)
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")
@@ -219,17 +251,40 @@ async def global_exception_handler(request: Request, exc: Exception):
         JSONResponse with error details
     """
     logger.error(f"Unhandled exception: {exc}", exc_info=True)
-
+    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
     return JSONResponse(
         status_code=500,
         content={
             "success": False,
             "error": {
-                "code": "INTERNAL_ERROR",
+                "code": "E_INTERNAL",
                 "message": "An unexpected error occurred",
                 "details": str(exc) if settings.is_development else None
-            }
-        }
+            },
+            "correlation_id": correlation_id,
+        },
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """Return standardized error payloads for HTTP exceptions."""
+
+    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    detail = exc.detail if isinstance(exc.detail, dict) else {"message": exc.detail}
+    payload = {
+        "success": False,
+        "error": {
+            "code": detail.get("code", "E_HTTP"),
+            "message": detail.get("message", "Request failed"),
+            "hint": detail.get("hint"),
+        },
+        "correlation_id": correlation_id,
+    }
+    return JSONResponse(
+        status_code=exc.status_code,
+        content=payload,
+        headers=exc.headers,
     )
 
 

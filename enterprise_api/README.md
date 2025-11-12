@@ -60,6 +60,10 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `POST /api/v1/enterprise/c2pa/validate` | Validate assertion before embedding | Enterprise |
 | `POST /api/v1/enterprise/c2pa/templates` | Create assertion template | Enterprise |
 | `GET /api/v1/enterprise/c2pa/templates` | List assertion templates | Enterprise |
+| `POST /api/v1/batch/sign` | Batch sign up to 100 documents with idempotency support | Enterprise |
+| `POST /api/v1/batch/verify` | Batch verify signed content with consolidated results | Enterprise |
+| `POST /api/v1/stream/sign` | SSE endpoint streaming signing progress and final payloads | Enterprise |
+| `GET /api/v1/stream/runs/{run_id}` | Retrieve persisted streaming run state for retries | Enterprise |
 | `GET /api/v1/public/verify/{ref_id}` | Verify embedding (public, no auth) | Public |
 | `POST /api/v1/public/verify/batch` | Batch verify embeddings (public) | Public |
 | `POST /api/v1/public/extract-and-verify` | Extract and verify C2PA manifest with full provenance chain | Public |
@@ -210,7 +214,7 @@ Verify signed content and detect tampering.
 
 ```json
 {
-  "signed_text": "Your content here\u{FEFF}C2PATXT..."
+  "text": "Your content here\uFEFFC2PATXT..."
 }
 ```
 
@@ -219,27 +223,30 @@ Verify signed content and detect tampering.
 ```json
 {
   "success": true,
-  "is_valid": true,
-  "tampered": false,
-  "document_id": "doc_abc123xyz",
-  "organization_name": "Acme News",
-  "document_title": "Article Title",
-  "publication_date": "2025-10-29T18:00:00Z",
-  "verification_details": {
-    "signature_valid": true,
-    "manifest_valid": true,
-    "hash_match": true,
-    "wrapper_valid": true
+  "data": {
+    "valid": true,
+    "tampered": false,
+    "reason_code": "OK",
+    "signer_id": "org_demo",
+    "signer_name": "Demo Publisher",
+    "timestamp": "2025-11-11T22:11:12Z",
+    "details": {
+      "manifest": {
+        "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+        "instance_id": "37fb375f-d294-4fcb-992d-e1be5a57b92a",
+        "claim_generator": "encypher-ai/2.4.2",
+        "assertions": [
+          {"label": "c2pa.actions.v1", "kind": "Actions"},
+          {"label": "c2pa.hash.data.v1", "kind": "ContentHash"}
+        ]
+      },
+      "duration_ms": 41,
+      "payload_bytes": 4988,
+      "certificate_status": "active"
+    }
   },
-  "metadata": {
-    "author": "Jane Doe",
-    "publisher": "Acme News",
-    "license": "CC-BY-4.0"
-  },
-  "manifest": {
-    "version": "2.2",
-    "claim_generator": "Encypher Enterprise API v1.0"
-  }
+  "error": null,
+  "correlation_id": "req-7f2c9c3f190141a3b5b7b1a5e3d98d61"
 }
 ```
 
@@ -248,20 +255,22 @@ Verify signed content and detect tampering.
 ```json
 {
   "success": true,
-  "is_valid": false,
-  "tampered": true,
-  "document_id": "doc_abc123xyz",
-  "verification_details": {
-    "signature_valid": true,
-    "manifest_valid": true,
-    "hash_match": false,
-    "wrapper_valid": true
+  "data": {
+    "valid": false,
+    "tampered": true,
+    "reason_code": "SIGNATURE_INVALID",
+    "signer_id": "org_demo",
+    "signer_name": "Demo Publisher",
+    "details": {
+      "manifest": {},
+      "duration_ms": 18,
+      "payload_bytes": 4996,
+      "missing_signers": [],
+      "exception": "wrapper hash mismatch"
+    }
   },
-  "tampering_detected": {
-    "reason": "Content hash mismatch",
-    "expected_hash": "sha256:abc...",
-    "actual_hash": "sha256:xyz..."
-  }
+  "error": null,
+  "correlation_id": "req-0c2ec4c3f7104d6c87bbac44dc9d986a"
 }
 ```
 

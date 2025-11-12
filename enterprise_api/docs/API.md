@@ -147,16 +147,25 @@ Verify C2PA manifest in signed content.
 ```json
 {
   "success": true,
-  "is_valid": true,
-  "signer_id": "org_123",
-  "organization_name": "Example Publisher",
-  "signature_timestamp": "2025-01-15T10:30:00Z",
-  "manifest": {
-    "version": "1.0",
-    "signer": "org_123",
-    "timestamp": "2025-01-15T10:30:00Z"
+  "data": {
+    "valid": true,
+    "tampered": false,
+    "reason_code": "OK",
+    "signer_id": "org_123",
+    "signer_name": "Example Publisher",
+    "timestamp": "2025-01-15T10:30:00Z",
+    "details": {
+      "manifest": {
+        "version": "1.0",
+        "signer": "org_123",
+        "timestamp": "2025-01-15T10:30:00Z"
+      },
+      "duration_ms": 35,
+      "payload_bytes": 4800
+    }
   },
-  "tampered": false
+  "error": null,
+  "correlation_id": "req-123"
 }
 ```
 
@@ -164,12 +173,19 @@ Verify C2PA manifest in signed content.
 ```json
 {
   "success": true,
-  "is_valid": false,
-  "signer_id": "unknown",
-  "organization_name": "Unknown",
-  "signature_timestamp": null,
-  "manifest": {},
-  "tampered": true
+  "data": {
+    "valid": false,
+    "tampered": true,
+    "reason_code": "SIGNATURE_INVALID",
+    "signer_id": "org_123",
+    "signer_name": "Example Publisher",
+    "details": {
+      "manifest": {},
+      "exception": "hash mismatch"
+    }
+  },
+  "error": null,
+  "correlation_id": "req-456"
 }
 ```
 
@@ -413,6 +429,24 @@ Delivered events POST a JSON body with HMAC-SHA256 authentication if a secret is
 ```
 
 Preview deliveries are synchronous and retried up to three times. Production delivery will move to an asynchronous worker with exponential backoff and dead-letter queues.
+
+---
+
+## Batch Operations
+
+- `POST /api/v1/batch/sign`  
+  Body: `mode`, `segmentation_level`, `items[]`, `idempotency_key`. Returns per-item results plus a batch summary object. Retries with the same idempotency key reuse the stored run and prevent duplicate writes.
+
+- `POST /api/v1/batch/verify`  
+  Identical request schema, but returns `verdict` objects for each document. Tampered documents show `status: "error"` while valid documents continue.
+
+## Streaming Signing (SSE)
+
+- `POST /api/v1/stream/sign`  
+  Streams `start`, `progress`, `partial`, and `final` events via Server-Sent Events. The final event includes the signed text, verification URL, and runtime statistics. Provide an optional `run_id` to make retries idempotent.
+
+- `GET /stream/runs/{run_id}`  
+  Returns the most recent persisted state for a streaming run, enabling clients to resume after reconnects.
 
 ---
 

@@ -39,6 +39,8 @@ class Settings(BaseSettings):
 
     # Rate limiting
     rate_limit_per_minute: int = 60
+    batch_worker_limit: int = 8
+    batch_max_items: int = 100
 
     # Domains
     marketing_domain: str = "encypher.ai"

@@ -106,8 +106,11 @@ async def test_verify_endpoint():
         # Should return 200 even for invalid content
         assert response.status_code == 200
         data = response.json()
-        assert "is_valid" in data
-        assert data["is_valid"] is False  # No manifest, so invalid
+        assert data["success"] is True
+        assert data["error"] is None
+        assert data["data"]["valid"] is False  # No manifest, so invalid
+        assert data["data"]["reason_code"] in {"SIGNATURE_INVALID", "SIGNER_UNKNOWN"}
+        assert isinstance(data["correlation_id"], str) and data["correlation_id"]
 
 
 @pytest.mark.asyncio
@@ -152,14 +155,29 @@ def _load_init_statements(*, use_sqlite: bool) -> list[str]:
         return statements
 
     sqlite_statements: list[str] = []
+    uuid_default = "lower(hex(randomblob(16)))"
     for stmt in statements:
         sqlite_stmt = stmt
         sqlite_stmt = sqlite_stmt.replace("BYTEA", "BLOB")
+        sqlite_stmt = sqlite_stmt.replace("UUID", "TEXT")
+        sqlite_stmt = sqlite_stmt.replace("JSONB", "TEXT")
         sqlite_stmt = sqlite_stmt.replace(
             "SERIAL PRIMARY KEY", "INTEGER PRIMARY KEY AUTOINCREMENT"
         )
+        sqlite_stmt = sqlite_stmt.replace(
+            "DEFAULT gen_random_uuid()", f"DEFAULT {uuid_default}"
+        )
+        sqlite_stmt = sqlite_stmt.replace("DEFAULT lower(hex(randomblob(16)))", "")
         sqlite_stmt = sqlite_stmt.replace("DEFAULT NOW()", "DEFAULT CURRENT_TIMESTAMP")
         sqlite_stmt = sqlite_stmt.replace("NOW()", "CURRENT_TIMESTAMP")
+        sqlite_stmt = sqlite_stmt.replace(
+            "CURRENT_TIMESTAMP + INTERVAL '24 hours'", "CURRENT_TIMESTAMP"
+        )
+        sqlite_stmt = sqlite_stmt.replace("CHECK (tree_depth >= 0)", "")
+        sqlite_stmt = sqlite_stmt.replace("CHECK (total_leaves > 0)", "")
+        sqlite_stmt = sqlite_stmt.replace(
+            "CHECK (segmentation_level IN ('sentence', 'paragraph', 'section'))", ""
+        )
         sqlite_statements.append(sqlite_stmt)
 
     return sqlite_statements
@@ -429,12 +447,13 @@ async def _perform_sign_verify_lookup(
             json={"text": signed_text},
         )
         assert verify_response.status_code == 200
-        verify_data = verify_response.json()
-        assert verify_data["success"] is True
-        assert verify_data["is_valid"] is True
-        assert verify_data["tampered"] is False
-        assert verify_data["signer_id"] == organization["organization_id"]
-        assert verify_data["organization_name"] == organization_name
+        verify_payload = verify_response.json()
+        assert verify_payload["success"] is True
+        verdict = verify_payload["data"]
+        assert verdict["valid"] is True
+        assert verdict["tampered"] is False
+        assert verdict["signer_id"] == organization["organization_id"]
+        assert verdict["signer_name"] == organization_name
 
         lookup_response = await client.post(
             "/api/v1/lookup",
@@ -665,11 +684,11 @@ async def test_streaming_text_verification(real_db_session_factory):
         verify_data = verify_response.json()
 
     assert verify_data["success"] is True
-    assert verify_data["signer_id"] == organization["organization_id"]
-    assert verify_data["organization_name"] == organization["organization_name"]
-    assert isinstance(verify_data["manifest"], dict)
-    assert verify_data["manifest"]
-    manifest = verify_data["manifest"]
+    verdict = verify_data["data"]
+    assert verdict["signer_id"] == organization["organization_id"]
+    assert verdict["signer_name"] == organization["organization_name"]
+    manifest = verdict["details"]["manifest"]
+    assert isinstance(manifest, dict) and manifest
     assert manifest.get("claim_generator") == "encypher-ai/2.4.2"
     assertion_labels = {
         assertion.get("label")
@@ -678,5 +697,5 @@ async def test_streaming_text_verification(real_db_session_factory):
     }
     assert "c2pa.actions.v1" in assertion_labels
     assert "c2pa.soft_binding.v1" in assertion_labels
-    assert verify_data["is_valid"] is False
-    assert verify_data["tampered"] is True
+    assert verdict["valid"] is False
+    assert verdict["tampered"] is True

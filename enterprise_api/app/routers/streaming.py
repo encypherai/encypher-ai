@@ -3,25 +3,142 @@ Streaming API Router - WebSocket and SSE Endpoints.
 
 Provides real-time streaming endpoints for content signing.
 """
-import logging
 import json
+import logging
+import time
 from typing import Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, HTTPException, Query
+from uuid import uuid4
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, WebSocket, WebSocketDisconnect, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.websocket_manager import connection_manager
-from app.services.streaming_service import streaming_service
-from app.services.session_service import session_service
 from app.database import get_db
-from app.dependencies import get_current_organization
-from app.models.organization import Organization
-from app.middleware.websocket_auth import authenticate_websocket, require_streaming_permission
+from app.dependencies import get_current_organization, require_sign_permission
+from app.middleware.api_rate_limiter import api_rate_limiter
 from app.middleware.rate_limiter import streaming_rate_limiter
+from app.middleware.websocket_auth import authenticate_websocket, require_streaming_permission
+from app.models.organization import Organization
+from app.models.request_models import SignRequest
+from app.observability.metrics import increment
+from app.schemas.streaming import StreamSignRequest
+from app.services.session_service import session_service
+from app.services.signing_executor import execute_signing
+from app.services.streaming_service import streaming_service
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+def _sse_event(event: str, payload: dict) -> str:
+    """Format SSE event."""
+
+    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
+
+
+@router.post("/stream/sign", response_class=StreamingResponse)
+async def stream_signing(
+    stream_request: StreamSignRequest,
+    request: Request,
+    organization: dict = Depends(require_sign_permission),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Stream signing progress via SSE."""
+
+    correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
+    run_id = stream_request.run_id or f"run_{uuid4().hex}"
+    document_id = stream_request.document_id or f"doc_{uuid4().hex[:16]}"
+
+    async def event_stream():
+        start_payload = {
+            "run_id": run_id,
+            "document_id": document_id,
+            "status": "start",
+            "pct": 0,
+            "correlation_id": correlation_id,
+        }
+        await session_service.save_stream_state(run_id, start_payload)
+        yield _sse_event("start", start_payload)
+        try:
+            progress_payload = {
+                "run_id": run_id,
+                "document_id": document_id,
+                "status": "progress",
+                "pct": 10,
+            }
+            await session_service.save_stream_state(run_id, progress_payload)
+            yield _sse_event("progress", progress_payload)
+
+            sign_request = SignRequest(
+                text=stream_request.text,
+                document_id=document_id,
+                document_title=stream_request.document_title,
+                document_type=stream_request.document_type,
+            )
+            start_time = time.perf_counter()
+            response = await execute_signing(
+                request=sign_request,
+                organization=organization,
+                db=db,
+                document_id=document_id,
+            )
+            duration_ms = int((time.perf_counter() - start_time) * 1000)
+            partial_payload = {
+                "run_id": run_id,
+                "document_id": response.document_id,
+                "status": "partial",
+                "pct": 90,
+                "preview": response.signed_text[:512],
+            }
+            await session_service.save_stream_state(run_id, partial_payload)
+            yield _sse_event("partial", partial_payload)
+
+            final_payload = {
+                "run_id": run_id,
+                "document_id": response.document_id,
+                "status": "final",
+                "pct": 100,
+                "signed_text": response.signed_text,
+                "verification_url": response.verification_url,
+                "duration_ms": duration_ms,
+            }
+            await session_service.save_stream_state(run_id, final_payload)
+            yield _sse_event("final", final_payload)
+        except HTTPException as exc:
+            detail = exc.detail if isinstance(exc.detail, dict) else {"message": exc.detail}
+            error_payload = {
+                "run_id": run_id,
+                "document_id": document_id,
+                "status": "error",
+                "code": detail.get("code", "E_STREAM_SIGN"),
+                "message": detail.get("message", "Streaming signing failed"),
+            }
+            await session_service.save_stream_state(run_id, error_payload)
+            yield _sse_event("error", error_payload)
+
+    allowed, retry_after, remaining, limit = api_rate_limiter.check(
+        organization_id=organization["organization_id"],
+        scope="stream_sign",
+    )
+    if not allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={"code": "E_RATE_STREAM", "message": "Streaming rate limit exceeded"},
+            headers={"Retry-After": str(retry_after or 1)},
+        )
+
+    increment("stream_sign_requests")
+
+    headers = {
+        "Cache-Control": "no-cache",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no",
+        "X-RateLimit-Remaining": str(remaining),
+        "X-RateLimit-Limit": str(limit),
+    }
+    return StreamingResponse(event_stream(), media_type="text/event-stream", headers=headers)
 
 
 @router.post("/stream/session/create")
@@ -405,3 +522,13 @@ async def streaming_health_check():
         }
     
     return health_status
+
+
+@router.get("/stream/runs/{run_id}")
+async def get_stream_run(run_id: str):
+    """Return persisted streaming run state."""
+
+    state = await session_service.get_stream_state(run_id)
+    if not state:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return {"run_id": run_id, "state": state}
