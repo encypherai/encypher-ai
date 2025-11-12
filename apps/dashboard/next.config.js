@@ -4,11 +4,18 @@ const nextConfig = {
   transpilePackages: ['@encypher/design-system'],
   
   // Optimize for production
-  swcMinify: true,
+  
   
   // Image optimization
   images: {
-    domains: ['dashboard.encypherai.com', 'api.encypherai.com'],
+    remotePatterns: [
+      { protocol: 'https', hostname: 'dashboard.encypherai.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'api.encypherai.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'encypherai.com', pathname: '/**' },
+      { protocol: 'https', hostname: 'www.encypherai.com', pathname: '/**' },
+      { protocol: 'http', hostname: 'localhost', pathname: '/**' },
+      { protocol: 'http', hostname: '127.0.0.1', pathname: '/**' },
+    ],
     formats: ['image/avif', 'image/webp'],
   },
   

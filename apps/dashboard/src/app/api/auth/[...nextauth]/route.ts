@@ -18,8 +18,8 @@ const handler = NextAuth({
         }
 
         try {
-          // Call your backend API
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+          // Call API Gateway auth login (SRF)
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -30,13 +30,14 @@ const handler = NextAuth({
 
           const data = await res.json();
 
-          if (res.ok && data.user) {
+          if (res.ok && data.success && data.data?.user && data.data?.access_token) {
+            const user = data.data.user;
             return {
-              id: data.user.id,
-              email: data.user.email,
-              name: data.user.name,
-              accessToken: data.accessToken,
-            };
+              id: String(user.id),
+              email: user.email,
+              name: user.name,
+              accessToken: data.data.access_token,
+            } as any;
           }
           
           return null;
@@ -76,6 +77,9 @@ const handler = NextAuth({
       if (user) {
         token.id = user.id as string | undefined;
         token.email = (user.email ?? undefined) as string | undefined;
+        // propagate access token if present from credentials
+        // @ts-ignore
+        if (user.accessToken) token.accessToken = user.accessToken as string;
       }
       return token;
     },
@@ -83,12 +87,47 @@ const handler = NextAuth({
       if (session.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
+        // expose accessToken in session for API calls if needed
+        // @ts-ignore
+        session.user.accessToken = token.accessToken as string | undefined;
       }
       return session;
     },
   },
   session: {
     strategy: 'jwt',
+  },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token-dashboard',
+      options: {
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
+      options: {
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.csrf-token' : 'next-auth.csrf-token',
+      options: {
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
   },
   secret: process.env.NEXTAUTH_SECRET,
 });
