@@ -182,6 +182,43 @@ curl http://localhost:9000/health
 # {"status":"healthy","service":"enterprise-api"}
 ```
 
+### Verify Provenance with the SDK CLI
+
+```bash
+# 1. Jump into the SDK package
+cd ../enterprise_sdk
+uv sync
+
+# 2. Export an API key (or use ENCYPHER_API_KEY env var)
+export ENCYPHER_API_KEY="encypher_live_..."
+
+# 3. Verify an embedded snippet
+uv run encypher verify-sentence --file ../examples/signed_snippet.txt
+
+# 4. Inspect a Merkle tree + proof
+uv run encypher merkle-tree root_123
+uv run encypher merkle-proof root_123 --leaf-index 5
+
+# 5. Stream signing progress from the API
+uv run encypher stream-sign --file ../examples/live_article.txt --document-title "Town Hall"
+
+# 6. Encode invisibly at sentence-level (Python REPL)
+python - <<'PY'
+from encypher_enterprise import EncypherClient
+client = EncypherClient(api_key="encypher_live_...")
+
+response = client.sign_with_embeddings(
+    text="Breaking news paragraph. Second sentence.",
+    document_id="article_demo_01",
+    segmentation_level="sentence",
+    metadata={"title": "Breaking News", "author": "Jane Reporter"},
+)
+
+print("Merkle root:", response.merkle_tree.root_hash)
+print("Embedded preview:", response.embedded_content[:120])
+PY
+```
+
 ---
 
 ## 🔧 Path 4: Microservices (20 minutes)

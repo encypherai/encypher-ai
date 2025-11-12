@@ -221,6 +221,7 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose |
 |----------|---------|
 | [PRDs/CURRENT/](./PRDs/CURRENT/) | Active PRDs |
+| [PRDs/CURRENT/PRD_Python_SDK_WBS.md](./PRDs/CURRENT/PRD_Python_SDK_WBS.md) | Python SDK production readiness WBS |
 | [docs/PRD.md](./docs/PRD.md) | Main product requirements |
 
 #### C2PA Reference

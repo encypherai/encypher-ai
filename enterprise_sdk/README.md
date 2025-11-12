@@ -72,6 +72,62 @@ The Encypher Enterprise SDK provides cryptographic content signing and verificat
 - **✅ GitHub Actions**: Auto-sign on every commit
 - **✅ GitLab CI**: CI/CD pipeline integration
 
+### Enhanced Embeddings (Enterprise)
+
+Use the Enterprise API’s invisible embedding endpoint to attach C2PA manifests, Merkle metadata, and portable provenance to any article.
+
+```python
+from encypher_enterprise import EncypherClient, EmbeddingOptions
+
+client = EncypherClient(api_key="encypher_live_...")
+
+response = client.sign_with_embeddings(
+    text="Breaking news article with multiple sentences...",
+    document_id="article_2025_11_12",
+    segmentation_level="sentence",
+    metadata={"title": "Breaking News", "author": "Jane Doe"},
+    embedding_options=EmbeddingOptions(format="markdown", include_text=False),
+)
+
+print(response.merkle_tree.root_hash)
+print(response.embedded_content[:200])
+```
+
+> Need full control? Build an `EncodeWithEmbeddingsRequest` and pass it via `client.sign_with_embeddings(request=request)`.
+
+### Sentence-Level Verification (Enterprise)
+
+Verify a single embedded paragraph or sentence through the public extract-and-verify endpoint.
+
+```python
+verification = client.verify_sentence(signed_paragraph)
+
+print("Valid:", verification.valid)
+if verification.document:
+    print("Document:", verification.document.document_id)
+if verification.merkle_proof:
+    print("Merkle root:", verification.merkle_proof.root_hash)
+```
+
+### Merkle Retrieval & Proofs
+
+```python
+tree = client.get_merkle_tree(root_id="root_123")
+print("Leaves:", tree.leaf_count)
+
+proof = client.get_merkle_proof(root_id="root_123", leaf_index=42)
+print("Verified:", proof.verified)
+```
+
+### Streaming over SSE
+
+```python
+for event in client.stream_sign(
+    "Live content stream...", document_title="Keynote", document_type="article"
+):
+    print(f"[{event.event}]", event.data)
+```
+
 ---
 
 ## 🚀 Quick Start
@@ -111,6 +167,21 @@ print(f"Verification URL: {result.verification_url}")
 verification = client.verify(result.signed_text)
 print(f"Valid: {verification.is_valid}")
 print(f"Tampered: {verification.tampered}")
+```
+
+### Sentence Verification
+
+```python
+verification = client.verify_sentence(signed_sentence)
+print("Valid:", verification.valid)
+print("Leaf index:", verification.content.leaf_index if verification.content else "-")
+```
+
+### Streaming from the API
+
+```python
+for event in client.stream_sign("Streaming response...", document_title="Live Demo"):
+    print(f"[{event.event}] {event.data}")
 ```
 
 ### Repository Signing
@@ -160,6 +231,16 @@ encypher verify-repo ./articles \
 encypher sign-repo ./articles \
   --report report.html \
   --report-format html
+
+# Sentence verification with invisible embeddings
+encypher verify-sentence --file signed_snippet.txt
+
+# Inspect Merkle storage
+encypher merkle-tree ROOT_ID
+encypher merkle-proof ROOT_ID --leaf-index 42
+
+# Stream signing events via SSE
+encypher stream-sign --file live.txt --document-title "Keynote"
 ```
 
 ---
@@ -758,6 +839,11 @@ stats = client.stats()
 client.encode_document_merkle(text, document_id)
 client.find_sources(text, min_similarity)
 client.detect_plagiarism(text, threshold)
+client.sign_with_embeddings(text="...", document_id="doc_123")
+client.get_merkle_tree(root_id="root_123")
+client.get_merkle_proof(root_id="root_123", leaf_index=5)
+client.verify_sentence(text_with_embeddings)
+client.stream_sign("Streaming text...")
 ```
 
 ### RepositorySigner

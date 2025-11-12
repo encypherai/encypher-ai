@@ -2,8 +2,23 @@
 Synchronous client for Encypher Enterprise API.
 """
 import httpx
-from typing import Optional, Dict, Any
-from .models import SignRequest, SignResponse, VerifyResponse, LookupResponse, StatsResponse
+from datetime import datetime
+from typing import Optional, Dict, Any, List, Iterator
+from .models import (
+    SignRequest,
+    SignResponse,
+    VerifyResponse,
+    LookupResponse,
+    StatsResponse,
+    EncodeWithEmbeddingsRequest,
+    EncodeWithEmbeddingsResponse,
+    EmbeddingOptions,
+    LicenseInfo,
+    MerkleTreeDetails,
+    MerkleProof,
+    ExtractAndVerifyResponse,
+    StreamEvent,
+)
 from .exceptions import (
     AuthenticationError,
     QuotaExceededError,
@@ -11,6 +26,7 @@ from .exceptions import (
     VerificationError,
     APIError
 )
+from ._sse import iter_sse_events
 
 
 class EncypherClient:
@@ -186,6 +202,79 @@ class EncypherClient:
             return response.json()
         except httpx.HTTPStatusError as e:
             self._raise_api_error(e.response)
+
+    def sign_with_embeddings(
+        self,
+        *,
+        text: Optional[str] = None,
+        document_id: Optional[str] = None,
+        segmentation_level: str = "sentence",
+        action: str = "c2pa.created",
+        previous_instance_id: Optional[str] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+        c2pa_manifest_url: Optional[str] = None,
+        c2pa_manifest_hash: Optional[str] = None,
+        custom_assertions: Optional[List[Dict[str, Any]]] = None,
+        validate_assertions: bool = True,
+        digital_source_type: Optional[str] = None,
+        license: Optional[LicenseInfo] = None,
+        embedding_options: Optional[EmbeddingOptions] = None,
+        expires_at: Optional[datetime] = None,
+        request: Optional[EncodeWithEmbeddingsRequest] = None,
+    ) -> EncodeWithEmbeddingsResponse:
+        """
+        Sign content with invisible embeddings + Merkle metadata (enterprise endpoint).
+
+        Provide either an `EncodeWithEmbeddingsRequest` via `request` or individual keyword arguments.
+        """
+        if request and any(
+            value is not None
+            for value in (
+                text,
+                document_id,
+                metadata,
+                previous_instance_id,
+                c2pa_manifest_url,
+                c2pa_manifest_hash,
+                custom_assertions,
+                digital_source_type,
+                license,
+                embedding_options,
+                expires_at,
+            )
+        ):
+            raise ValueError("Provide either `request` or keyword arguments, not both.")
+
+        payload_model = request
+        if payload_model is None:
+            if text is None or document_id is None:
+                raise ValueError("`text` and `document_id` are required when request is not provided.")
+            payload_model = EncodeWithEmbeddingsRequest(
+                text=text,
+                document_id=document_id,
+                segmentation_level=segmentation_level,
+                action=action,
+                previous_instance_id=previous_instance_id,
+                metadata=metadata,
+                c2pa_manifest_url=c2pa_manifest_url,
+                c2pa_manifest_hash=c2pa_manifest_hash,
+                custom_assertions=custom_assertions,
+                validate_assertions=validate_assertions,
+                digital_source_type=digital_source_type,
+                license=license,
+                embedding_options=embedding_options or EmbeddingOptions(),
+                expires_at=expires_at,
+            )
+
+        try:
+            response = self.client.post(
+                f"{self.base_url}/api/v1/enterprise/embeddings/encode-with-embeddings",
+                json=payload_model.model_dump(exclude_none=True)
+            )
+            self._handle_errors(response)
+            return EncodeWithEmbeddingsResponse(**response.json())
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
     
     def find_sources(
         self,
@@ -250,6 +339,106 @@ class EncypherClient:
                     "threshold": threshold
                 }
             )
+            self._handle_errors(response)
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
+
+    def get_merkle_tree(self, root_id: str) -> MerkleTreeDetails:
+        """
+        Retrieve the stored Merkle tree for a given root identifier.
+        """
+        try:
+            response = self.client.get(
+                f"{self.base_url}/api/v1/enterprise/merkle/tree/{root_id}"
+            )
+            self._handle_errors(response)
+            return MerkleTreeDetails(**response.json())
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
+
+    def get_merkle_proof(
+        self,
+        root_id: str,
+        *,
+        leaf_index: Optional[int] = None,
+        leaf_hash: Optional[str] = None,
+    ) -> MerkleProof:
+        """
+        Retrieve a Merkle proof for a specific leaf in a stored tree.
+        """
+        if leaf_index is None and leaf_hash is None:
+            raise ValueError("Provide either leaf_index or leaf_hash.")
+
+        params: Dict[str, Any] = {}
+        if leaf_index is not None:
+            params["leaf_index"] = leaf_index
+        if leaf_hash is not None:
+            params["leaf_hash"] = leaf_hash
+
+        try:
+            response = self.client.get(
+                f"{self.base_url}/api/v1/enterprise/merkle/tree/{root_id}/proof",
+                params=params or None,
+            )
+            self._handle_errors(response)
+            return MerkleProof(**response.json())
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
+
+    def verify_sentence(self, text: str) -> ExtractAndVerifyResponse:
+        """
+        Verify text containing invisible embeddings via the public extract endpoint.
+        """
+        try:
+            response = self.client.post(
+                f"{self.base_url}/api/v1/public/extract-and-verify",
+                json={"text": text},
+            )
+            self._handle_errors(response)
+            return ExtractAndVerifyResponse(**response.json())
+        except httpx.HTTPStatusError as e:
+            self._raise_api_error(e.response)
+
+    def stream_sign(
+        self,
+        text: str,
+        *,
+        document_title: Optional[str] = None,
+        document_type: str = "article",
+        document_id: Optional[str] = None,
+        run_id: Optional[str] = None,
+    ) -> Iterator[StreamEvent]:
+        """
+        Stream signing progress/events from the Enterprise API via SSE.
+        """
+        payload = {
+            "text": text,
+            "document_title": document_title,
+            "document_type": document_type,
+            "document_id": document_id,
+            "run_id": run_id,
+        }
+        body = {k: v for k, v in payload.items() if v is not None}
+
+        headers = {"Accept": "text/event-stream"}
+        with self.client.stream(
+            "POST",
+            f"{self.base_url}/api/v1/stream/sign",
+            json=body,
+            headers=headers,
+        ) as response:
+            if response.status_code >= 400:
+                response.raise_for_status()
+            for event in iter_sse_events(response.iter_lines()):
+                yield event
+
+    def get_stream_run(self, run_id: str) -> Dict[str, Any]:
+        """
+        Retrieve the persisted state for a streaming run (for resume/backoff flows).
+        """
+        try:
+            response = self.client.get(f"{self.base_url}/api/v1/stream/runs/{run_id}")
             self._handle_errors(response)
             return response.json()
         except httpx.HTTPStatusError as e:

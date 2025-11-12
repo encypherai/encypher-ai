@@ -151,6 +151,53 @@ def sign_command(
     console.print(table)
 
 
+@cli.command("stream-sign")
+@click.option("--text", help="Text to stream through the signing endpoint.")
+@click.option("--file", type=click.Path(path_type=Path), help="File containing text to stream.")
+@click.option("--document-title", help="Optional document title metadata.")
+@click.option(
+    "--document-type",
+    default="article",
+    show_default=True,
+    help="Document type metadata for streaming request.",
+)
+@click.option("--document-id", help="Optional document identifier.")
+@click.option("--run-id", help="Provide to resume/associate with an existing stream run.")
+@click.pass_context
+def stream_sign_command(
+    ctx: click.Context,
+    text: Optional[str],
+    file: Optional[Path],
+    document_title: Optional[str],
+    document_type: str,
+    document_id: Optional[str],
+    run_id: Optional[str],
+) -> None:
+    """
+    Call the Enterprise SSE endpoint and stream signing progress events.
+    """
+    client: EncypherClient = ctx.obj["client"]
+    content = _read_text(text, file)
+
+    try:
+        for event in client.stream_sign(
+            content,
+            document_title=document_title,
+            document_type=document_type,
+            document_id=document_id,
+            run_id=run_id,
+        ):
+            console.print(
+                Text(
+                    f"[{event.event}] {json.dumps(event.data)}",
+                    style="cyan" if event.event != "error" else "red",
+                )
+            )
+    except EncypherError as exc:
+        console.print(Text(f"Streaming sign failed: {exc}", style="red"))
+        ctx.exit(1)
+
+
 @cli.command("verify")
 @click.option("--text", help="Signed text to verify.")
 @click.option("--file", type=click.Path(path_type=Path), help="Path to file containing signed text.")
@@ -178,6 +225,44 @@ def verify_command(ctx: click.Context, text: Optional[str], file: Optional[Path]
         manifest_json = json.dumps(result.manifest, indent=2)
         console.print(Text("\nManifest", style="bold"))
         console.print(manifest_json)
+
+
+@cli.command("verify-sentence")
+@click.option("--text", help="Text containing invisible embeddings to verify.")
+@click.option("--file", type=click.Path(path_type=Path), help="File containing embedded text.")
+@click.pass_context
+def verify_sentence_command(ctx: click.Context, text: Optional[str], file: Optional[Path]) -> None:
+    """
+    Verify a single embedded sentence/segment using the public extract endpoint.
+    """
+    client: EncypherClient = ctx.obj["client"]
+    content = _read_text(text, file)
+
+    try:
+        result = client.verify_sentence(content)
+    except EncypherError as exc:
+        console.print(Text(f"Sentence verification failed: {exc}", style="red"))
+        ctx.exit(1)
+
+    table = Table(title="Sentence Verification", box=None)
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("Valid", "Yes" if result.valid else "No")
+
+    if result.document:
+        table.add_row("Document ID", result.document.document_id)
+        if result.document.title:
+            table.add_row("Title", result.document.title)
+        table.add_row("Organization", result.document.organization)
+
+    if result.content:
+        table.add_row("Leaf Index", str(result.content.leaf_index))
+        table.add_row("Leaf Hash", result.content.leaf_hash[:16] + "…")
+
+    if result.merkle_proof:
+        table.add_row("Merkle Root", result.merkle_proof.root_hash[:16] + "…")
+
+    console.print(table)
 
 
 @cli.command("lookup")
@@ -518,6 +603,83 @@ def merkle_encode_command(
         )
     
     console.print(table)
+
+
+@cli.command("merkle-tree")
+@click.argument("root_id")
+@click.pass_context
+def merkle_tree_command(ctx: click.Context, root_id: str) -> None:
+    """
+    Retrieve a stored Merkle tree by root ID.
+    """
+    client: EncypherClient = ctx.obj["client"]
+    try:
+        tree = client.get_merkle_tree(root_id)
+    except EncypherError as exc:
+        console.print(Text(f"Failed to retrieve Merkle tree: {exc}", style="red"))
+        ctx.exit(1)
+
+    table = Table(title="Merkle Tree", box=None)
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("Root Hash", tree.root_hash)
+    table.add_row("Tree Depth", str(tree.tree_depth or "-"))
+    table.add_row("Leaf Count", str(tree.leaf_count or "-"))
+    if tree.metadata:
+        table.add_row("Metadata Keys", ", ".join(tree.metadata.keys()))
+    console.print(table)
+
+    leaves = [node for node in tree.nodes if node.is_leaf][:5]
+    if leaves:
+        leaf_table = Table(title="First Leaves", box=None)
+        leaf_table.add_column("Leaf Index", style="cyan")
+        leaf_table.add_column("Hash", style="white")
+        for leaf in leaves:
+            idx = leaf.leaf_index if leaf.leaf_index is not None else "-"
+            leaf_table.add_row(str(idx), leaf.hash[:32] + "…")
+        console.print(leaf_table)
+
+
+@cli.command("merkle-proof")
+@click.argument("root_id")
+@click.option("--leaf-index", type=int, help="Leaf index to prove.")
+@click.option("--leaf-hash", help="Leaf hash to prove.")
+@click.pass_context
+def merkle_proof_command(
+    ctx: click.Context,
+    root_id: str,
+    leaf_index: Optional[int],
+    leaf_hash: Optional[str],
+) -> None:
+    """
+    Retrieve a Merkle proof for a specific leaf.
+    """
+    client: EncypherClient = ctx.obj["client"]
+    try:
+        proof = client.get_merkle_proof(root_id, leaf_index=leaf_index, leaf_hash=leaf_hash)
+    except EncypherError as exc:
+        console.print(Text(f"Failed to retrieve Merkle proof: {exc}", style="red"))
+        ctx.exit(1)
+
+    table = Table(title="Merkle Proof", box=None)
+    table.add_column("Field", style="cyan")
+    table.add_column("Value", style="white")
+    table.add_row("Root Hash", proof.root_hash)
+    if proof.leaf_index is not None:
+        table.add_row("Leaf Index", str(proof.leaf_index))
+    if proof.target_hash:
+        table.add_row("Target Hash", proof.target_hash)
+    table.add_row("Verified", "Yes" if proof.verified else "No")
+    console.print(table)
+
+    if proof.proof_path:
+        path_table = Table(title="Proof Path", box=None)
+        path_table.add_column("#", style="cyan")
+        path_table.add_column("Position", style="white")
+        path_table.add_column("Hash", style="white")
+        for idx, step in enumerate(proof.proof_path, start=1):
+            path_table.add_row(str(idx), step.position or "-", step.hash[:32] + "…")
+        console.print(path_table)
 
 
 @cli.command("find-sources")

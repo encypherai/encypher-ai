@@ -83,24 +83,24 @@ Comprehensive checklist to ensure the Enterprise API, SDKs, and integrations are
 - [x] Basic verification (`client.verify()`)
 - [x] Batch operations
 - [x] Async client
-- [ ] **Enhanced embeddings** - `client.sign_with_embeddings()`
-- [ ] **Merkle tree retrieval** - `client.get_merkle_tree()`
-- [ ] **Sentence-level verification** - `client.verify_sentence()`
-- [ ] **Streaming support** - `client.stream_sign()`
+- [x] **Enhanced embeddings** - `client.sign_with_embeddings()`
+- [x] **Merkle tree retrieval** - `client.get_merkle_tree()`
+- [x] **Sentence-level verification** - `client.verify_sentence()`
+- [x] **Streaming support** - `client.stream_sign()`
 
 #### Testing
 - [x] 23/23 tests passing (91% coverage)
-- [ ] **Enhanced embeddings tests** - New feature tests
-- [ ] **Merkle tree tests** - Tree retrieval and validation
-- [ ] **Sentence verification tests** - Per-sentence validation
+- [x] **Enhanced embeddings tests** - New feature tests
+- [x] **Merkle tree tests** - Tree retrieval and validation
+- [x] **Sentence verification tests** - Per-sentence validation
 - [ ] **Error handling tests** - All error scenarios
 - [ ] **Integration tests** - Against live API
 
 #### Documentation
 - [x] README with examples
-- [ ] **API reference** - All methods documented
-- [ ] **Enhanced embeddings guide** - How to use new features
-- [ ] **Merkle tree guide** - Understanding and using trees
+- [x] **API reference** - All methods documented
+- [x] **Enhanced embeddings guide** - How to use new features
+- [x] **Merkle tree guide** - Understanding and using trees
 - [ ] **Migration guide** - Upgrading from old SDK
 - [ ] **Examples directory** - Real-world use cases
 
