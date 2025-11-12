@@ -16,6 +16,8 @@ def segment_sentences(text: str, min_length: int = 3) -> List[str]:
     - Abbreviations (Dr., Mr., etc.)
     - Decimal numbers (3.14)
     - Ellipsis (...)
+    - Wiki markup ([[links]], {{templates}}, == headings ==)
+    - Markdown formatting (# headings, [links], **bold**)
     
     Args:
         text: Input text to segment
@@ -50,24 +52,36 @@ def segment_sentences(text: str, min_length: int = 3) -> List[str]:
             abbrev_map[placeholder] = abbrev
             protected_text = protected_text.replace(abbrev, placeholder)
     
-    # Split on sentence terminators followed by whitespace and capital letter
-    # or end of string
-    pattern = r'(?<=[.!?])\s+(?=[A-Z])'
+    # Enhanced pattern that handles:
+    # 1. Standard: sentence terminator + whitespace + capital letter
+    # 2. Wiki headings: sentence terminator + whitespace + == or ===
+    # 3. Markdown headings: sentence terminator + whitespace + # or ##
+    # 4. Wiki markup: sentence terminator + whitespace + [[ or {{
+    # 5. Newlines: sentence terminator + newline(s) + any content
+    pattern = r'(?<=[.!?])\s+(?=[A-Z]|==|===|#|##|\[\[|\{\{)'
     segments = re.split(pattern, protected_text)
     
-    # Also handle end of string
-    if not segments:
-        segments = [protected_text]
+    # Also split on sentence terminators followed by newlines (even without capital letter)
+    # This handles cases like "sentence.\n\nNew paragraph" or "sentence.\n== Heading =="
+    final_segments = []
+    for segment in segments:
+        # Split on sentence terminator + newline(s) + non-whitespace
+        sub_pattern = r'(?<=[.!?])\n+(?=\S)'
+        sub_segments = re.split(sub_pattern, segment)
+        final_segments.extend(sub_segments)
+    
+    if not final_segments:
+        final_segments = [protected_text]
     
     # Restore abbreviations
-    for i, segment in enumerate(segments):
+    for i, segment in enumerate(final_segments):
         for placeholder, abbrev in abbrev_map.items():
             segment = segment.replace(placeholder, abbrev)
-        segments[i] = segment
+        final_segments[i] = segment
     
     # Clean and filter
     sentences = []
-    for segment in segments:
+    for segment in final_segments:
         segment = segment.strip()
         if segment and len(segment) >= min_length:
             sentences.append(segment)

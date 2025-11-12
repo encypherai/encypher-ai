@@ -214,7 +214,8 @@ async def encode_with_embeddings(
                 'url': request.license.url
             }
         
-        embeddings = await embedding_service.create_embeddings(
+        # Returns: (embeddings_list, full_document_with_c2pa_wrapper)
+        embeddings, embedded_content = await embedding_service.create_embeddings(
             db=db,
             organization_id=organization_id,
             document_id=request.document_id,
@@ -245,9 +246,8 @@ async def encode_with_embeddings(
             )
             embedding_infos.append(info)
         
-        # Step 5: Combine all embedded segments into full document
-        # Each segment already has invisible embedding from encypher-ai
-        embedded_content = "\n".join(emb.embedded_text for emb in embeddings)
+        # Step 5: embedded_content already contains the full document
+        # with minimal embeddings per sentence + ONE C2PA wrapper at the end
         
         # Extract instance_id from the embedded C2PA manifest
         instance_id = None
