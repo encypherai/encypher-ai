@@ -54,6 +54,16 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# SQLite databases (all variants)
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+*.db
+*.db-shm
+*.db-wal
+local-dev.sqlite*
+
 # Flask stuff:
 instance/
 .webassets-cache
@@ -170,3 +180,18 @@ dashboard_app/backend/demo_corpus/
 
 # local-only files
 docs/patent_ideas/
+
+# Large dataset downloads and outputs (local only)
+datasets/
+outputs/
+tools/.cache/
+*.bz2
+
+# Benchmark and test artifacts
+*.bench.example
+test_*.txt
+*_test.txt
+enterprise_api/scripts/.env.bench*
+
+# Duplicate middleware files
+apps/dashboard/middleware.ts
