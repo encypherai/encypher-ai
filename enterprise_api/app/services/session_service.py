@@ -7,7 +7,7 @@ import json
 import logging
 import uuid
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional, Any
+from typing import Any, Dict, Optional
 import redis.asyncio as redis
 
 from app.config import settings
@@ -36,7 +36,10 @@ class SessionService:
         self.redis_url = redis_url or getattr(settings, 'redis_url', 'redis://localhost:6379/0')
         self.redis_client: Optional[redis.Redis] = None
         self.session_prefix = "encypher:session:"
+        self.stream_prefix = "encypher:stream:run:"
         self.default_ttl = 3600  # 1 hour default TTL
+        self.stream_ttl = 3600
+        self._stream_cache: Dict[str, Dict[str, Any]] = {}
         
         logger.info(f"SessionService initialized with Redis URL: {self.redis_url}")
     
@@ -348,6 +351,53 @@ class SessionService:
         # Redis automatically handles expiration via TTL
         # This method is here for API compatibility
         return 0
+
+    def _stream_key(self, run_id: str) -> str:
+        return f"{self.stream_prefix}{run_id}"
+
+    async def save_stream_state(
+        self,
+        run_id: str,
+        state: Dict[str, Any],
+        ttl_seconds: Optional[int] = None,
+    ) -> None:
+        """Persist streaming run state."""
+
+        state = dict(state)
+        state["updated_at"] = datetime.now(timezone.utc).isoformat()
+        if self.redis_client:
+            try:
+                await self.redis_client.setex(
+                    self._stream_key(run_id),
+                    ttl_seconds or self.stream_ttl,
+                    json.dumps(state),
+                )
+                return
+            except Exception as exc:  # pragma: no cover - redis errors
+                logger.warning("Failed to store stream state: %s", exc)
+        self._stream_cache[run_id] = state
+
+    async def get_stream_state(self, run_id: str) -> Optional[Dict[str, Any]]:
+        """Retrieve streaming run state."""
+
+        if self.redis_client:
+            try:
+                value = await self.redis_client.get(self._stream_key(run_id))
+                if value:
+                    return json.loads(value)
+            except Exception as exc:  # pragma: no cover
+                logger.warning("Failed to read stream state: %s", exc)
+        return self._stream_cache.get(run_id)
+
+    async def delete_stream_state(self, run_id: str) -> None:
+        """Delete run state once delivery completes."""
+
+        if self.redis_client:
+            try:
+                await self.redis_client.delete(self._stream_key(run_id))
+            except Exception:  # pragma: no cover
+                logger.debug("Failed to delete stream state for %s", run_id)
+        self._stream_cache.pop(run_id, None)
 
 
 # Global session service instance

@@ -12,6 +12,7 @@ from app.config import get_settings
 settings = get_settings()
 
 # Import all models to ensure they're registered with Base
+from app.models.batch import BatchItem, BatchRequest
 from app.models.c2pa_schema import C2PASchema
 from app.models.c2pa_template import C2PAAssertionTemplate
 from app.models.organization import Organization

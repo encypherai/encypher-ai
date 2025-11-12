@@ -3,6 +3,10 @@
 ## Overview
 Production-ready FastAPI service providing C2PA-compliant content signing and verification with enterprise features including Merkle trees, source attribution, and plagiarism detection.
 
+### November 2025 Updates
+- Added `/api/v1/batch/sign` + `/api/v1/batch/verify` with Postgres-backed persistence, Redis idempotency, and pytest coverage in `tests/test_batch_service.py`.
+- Added SSE streaming signing (`/stream/sign`) with resumable run state via `GET /stream/runs/{run_id}`.
+- New docs: `docs/perf/batch-sign.md`, `docs/api/ERROR_CODES.md`, and Postman assets under `docs/postman/`.
 ## Current Status
 ✅ **Production Ready** - Fully functional with comprehensive features
 ✅ **Well Documented** - Extensive README with API reference

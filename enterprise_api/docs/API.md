@@ -432,6 +432,24 @@ Preview deliveries are synchronous and retried up to three times. Production del
 
 ---
 
+## Batch Operations
+
+- `POST /api/v1/batch/sign`  
+  Body: `mode`, `segmentation_level`, `items[]`, `idempotency_key`. Returns per-item results plus a batch summary object. Retries with the same idempotency key reuse the stored run and prevent duplicate writes.
+
+- `POST /api/v1/batch/verify`  
+  Identical request schema, but returns `verdict` objects for each document. Tampered documents show `status: "error"` while valid documents continue.
+
+## Streaming Signing (SSE)
+
+- `POST /api/v1/stream/sign`  
+  Streams `start`, `progress`, `partial`, and `final` events via Server-Sent Events. The final event includes the signed text, verification URL, and runtime statistics. Provide an optional `run_id` to make retries idempotent.
+
+- `GET /stream/runs/{run_id}`  
+  Returns the most recent persisted state for a streaming run, enabling clients to resume after reconnects.
+
+---
+
 ## Support
 
 - **Documentation:** https://docs.encypherai.com

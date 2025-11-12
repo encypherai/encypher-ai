@@ -286,3 +286,53 @@ CREATE TABLE IF NOT EXISTS attribution_reports (
 CREATE INDEX IF NOT EXISTS idx_attribution_reports_org_timestamp ON attribution_reports(organization_id, scan_timestamp DESC);
 CREATE INDEX IF NOT EXISTS idx_attribution_reports_target_doc ON attribution_reports(target_document_id) WHERE target_document_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_attribution_reports_scan_timestamp ON attribution_reports(scan_timestamp DESC);
+
+-- Batch processing tables for bulk signing / verification
+CREATE TABLE IF NOT EXISTS batch_requests (
+    id VARCHAR(36) PRIMARY KEY,
+    organization_id VARCHAR(255) NOT NULL,
+    api_key VARCHAR(64) NOT NULL,
+    request_type VARCHAR(16) NOT NULL,
+    mode VARCHAR(32) NOT NULL,
+    segmentation_level VARCHAR(32),
+    idempotency_key VARCHAR(128) NOT NULL,
+    payload_hash VARCHAR(64) NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'pending',
+    item_count INTEGER NOT NULL,
+    success_count INTEGER NOT NULL DEFAULT 0,
+    failure_count INTEGER NOT NULL DEFAULT 0,
+    error_code VARCHAR(64),
+    error_message TEXT,
+    request_metadata JSON,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    started_at TIMESTAMP NULL,
+    completed_at TIMESTAMP NULL,
+    expires_at TIMESTAMP NOT NULL,
+    UNIQUE (organization_id, idempotency_key)
+);
+
+CREATE INDEX IF NOT EXISTS ix_batch_requests_org_status
+    ON batch_requests (organization_id, status);
+CREATE INDEX IF NOT EXISTS ix_batch_requests_expires_at
+    ON batch_requests (expires_at);
+
+CREATE TABLE IF NOT EXISTS batch_items (
+    id VARCHAR(36) PRIMARY KEY,
+    batch_request_id VARCHAR(36) NOT NULL REFERENCES batch_requests(id) ON DELETE CASCADE,
+    document_id VARCHAR(255) NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'pending',
+    mode VARCHAR(32) NOT NULL,
+    duration_ms INTEGER,
+    error_code VARCHAR(64),
+    error_message TEXT,
+    statistics JSON,
+    result_payload JSON,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS ix_batch_items_batch_request_id
+    ON batch_items (batch_request_id);
+CREATE INDEX IF NOT EXISTS ix_batch_items_document_status
+    ON batch_items (document_id, status);

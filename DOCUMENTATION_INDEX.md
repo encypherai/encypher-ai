@@ -31,6 +31,7 @@ Use this index to jump directly to the documentation you need.
 | [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) | This file - navigation guide | Everyone |
 | [CHANGELOG.md](./CHANGELOG.md) | Version history and changes | Developers |
 | [LICENSE](./LICENSE) | Proprietary license information | Legal, Management |
+| [docs/api/ERROR_CODES.md](./docs/api/ERROR_CODES.md) | Canonical API error codes and descriptions | Developers, Support |
 
 ---
 
@@ -105,6 +106,7 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/docs/API.md](./enterprise_api/docs/API.md) | Detailed API documentation |
 | [enterprise_api/docs/DEPLOYMENT.md](./enterprise_api/docs/DEPLOYMENT.md) | Deployment guide |
 | [enterprise_api/docs/QUICKSTART.md](./enterprise_api/docs/QUICKSTART.md) | Quick start guide |
+| [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
 **Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection  
 **Status**: ✅ Production Ready  
@@ -487,3 +489,4 @@ All other components are production-ready.
 **Last Updated**: October 30, 2025  
 **Maintained By**: Development Team  
 **Next Review**: January 30, 2026 (or after major changes)
+\n### Observability Docs\n\n| Document | Purpose |\n|----------|---------|\n| [docs/observability/ALERTS.md](./docs/observability/ALERTS.md) | Alert thresholds, runbooks |\n

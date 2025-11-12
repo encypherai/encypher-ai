@@ -60,6 +60,10 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `POST /api/v1/enterprise/c2pa/validate` | Validate assertion before embedding | Enterprise |
 | `POST /api/v1/enterprise/c2pa/templates` | Create assertion template | Enterprise |
 | `GET /api/v1/enterprise/c2pa/templates` | List assertion templates | Enterprise |
+| `POST /api/v1/batch/sign` | Batch sign up to 100 documents with idempotency support | Enterprise |
+| `POST /api/v1/batch/verify` | Batch verify signed content with consolidated results | Enterprise |
+| `POST /api/v1/stream/sign` | SSE endpoint streaming signing progress and final payloads | Enterprise |
+| `GET /api/v1/stream/runs/{run_id}` | Retrieve persisted streaming run state for retries | Enterprise |
 | `GET /api/v1/public/verify/{ref_id}` | Verify embedding (public, no auth) | Public |
 | `POST /api/v1/public/verify/batch` | Batch verify embeddings (public) | Public |
 | `POST /api/v1/public/extract-and-verify` | Extract and verify C2PA manifest with full provenance chain | Public |

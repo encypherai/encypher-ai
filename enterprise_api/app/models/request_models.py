@@ -14,6 +14,12 @@ class SignRequest(BaseModel):
         min_length=1,
         max_length=1000000
     )
+    document_id: Optional[str] = Field(
+        None,
+        description="Optional custom document identifier",
+        min_length=1,
+        max_length=255,
+    )
     document_title: Optional[str] = Field(
         None,
         max_length=500,
