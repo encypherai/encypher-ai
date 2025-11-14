@@ -7,6 +7,9 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 
+const API_BASE =
+  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+
 export default function SignupPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
@@ -37,7 +40,7 @@ export default function SignupPage() {
 
     try {
       // Call API Gateway signup (SRF)
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/signup`, {
+      const res = await fetch(`${API_BASE}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

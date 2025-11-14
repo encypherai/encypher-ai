@@ -153,29 +153,31 @@ class Frontend
      * @param string $size Badge size: 'small' or 'large'
      * @return string Badge HTML
      */
+
     private function get_badge_html(int $post_id, string $size = 'large'): string
     {
+        $settings = get_option('encypher_assurance_settings', []);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         $icon_url = ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/images/encypher-icon.png';
         $status = get_post_meta($post_id, '_encypher_assurance_status', true);
         $document_id = get_post_meta($post_id, '_encypher_assurance_document_id', true);
-        
-        // Determine if content has been verified yet
         $last_verified = get_post_meta($post_id, '_encypher_assurance_last_verified', true);
-        $is_verified = !empty($last_verified);
-        
+        $is_verified = ! empty($last_verified);
+
         $status_class = 'protected';
-        $status_text = __('Click to Verify Content', 'encypher-provenance');
+        $status_text = __('Click to verify content', 'encypher-provenance');
         $title_text = __('Click to verify content authenticity', 'encypher-provenance');
         $text_color = '#666';
-        
+
         if ($is_verified) {
             $status_class = 'verified';
-            $status_text = __('Verified', 'encypher-provenance');
+            $status_text = ('enterprise' === $tier)
+                ? __('Enterprise verified', 'encypher-provenance')
+                : __('Verified', 'encypher-provenance');
             $title_text = __('Click to view verification details', 'encypher-provenance');
             $text_color = '#2e7d32';
         }
 
-        // Size-specific styling
         if ('small' === $size) {
             $icon_size = '18px';
             $padding = '4px 10px';
@@ -190,19 +192,28 @@ class Frontend
             $show_doc_id = $is_verified && $document_id;
         }
 
+        $tier_pill = '';
+        if (in_array($tier, ['pro', 'enterprise'], true) && $is_verified) {
+            $tier_pill = '<span class="badge-tier">' . esc_html(ucfirst($tier)) . '</span>';
+        }
+
         ob_start();
         ?>
-        <button type="button" 
-                class="encypher-c2pa-badge encypher-c2pa-badge-<?php echo esc_attr($status_class); ?>" 
+        <button type="button"
+                class="encypher-c2pa-badge encypher-c2pa-badge-<?php echo esc_attr($status_class); ?> encypher-tier-<?php echo esc_attr($tier); ?>"
                 data-post-id="<?php echo esc_attr($post_id); ?>"
+                data-tier="<?php echo esc_attr($tier); ?>"
                 aria-label="<?php echo esc_attr($title_text); ?>"
                 title="<?php echo esc_attr($title_text); ?>"
                 style="display: inline-flex; align-items: center; gap: <?php echo esc_attr($gap); ?>; padding: <?php echo esc_attr($padding); ?>; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: <?php echo esc_attr($font_size); ?>; font-weight: 500; color: #333; transition: all 0.2s ease; vertical-align: middle;">
-            <img src="<?php echo esc_url($icon_url); ?>" 
-                 alt="<?php esc_attr_e('Encypher', 'encypher-provenance'); ?>" 
+            <img src="<?php echo esc_url($icon_url); ?>"
+                 alt="<?php esc_attr_e('Encypher', 'encypher-provenance'); ?>"
                  style="width: <?php echo esc_attr($icon_size); ?>; height: <?php echo esc_attr($icon_size); ?>; display: block;" />
-            <span style="color: <?php echo esc_attr($text_color); ?>;"><?php if ($is_verified): ?>✓ <?php endif; ?><?php echo esc_html($status_text); ?></span>
-            <?php if ($show_doc_id): ?>
+            <span style="color: <?php echo esc_attr($text_color); ?>;"><?php echo esc_html($status_text); ?></span>
+            <?php if ($tier_pill) : ?>
+                <?php echo $tier_pill; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+            <?php endif; ?>
+            <?php if ($show_doc_id) : ?>
                 <span style="font-size: 11px; color: #666; font-weight: normal;">(<?php echo esc_html(substr($document_id, 0, 12)); ?>...)</span>
             <?php endif; ?>
         </button>
@@ -361,8 +372,23 @@ class Frontend
                 }
                 
                 html += '</div>';
-                
-                // Expandable details section (open by default)
+
+        if (data.content) {
+            html += '<div class="merkle-proof-row" style="margin: 10px 0; font-size: 13px;">';
+            html += '<strong><?php esc_html_e('Sentence leaf:', 'encypher-provenance'); ?></strong> #' + data.content.leaf_index + ' &middot; ' + (data.content.text_preview ? escapeHtml(data.content.text_preview) : 'N/A');
+            html += '</div>';
+        }
+
+        if (data.merkle_proof) {
+            html += '<div class="merkle-proof-row" style="margin: 10px 0; font-size: 13px;">';
+            html += '<strong><?php esc_html_e('Merkle root:', 'encypher-provenance'); ?></strong> ' + escapeHtml(data.merkle_proof.root_hash || 'N/A');
+            if (data.merkle_proof.verified) {
+                html += ' &middot; <?php esc_html_e('Proof verified', 'encypher-provenance'); ?>';
+            }
+            html += '</div>';
+        }
+
+        // Expandable details section (open by default)
                 html += '<details open style="margin: 15px 0;">';
                 html += '<summary style="cursor: pointer; padding: 10px; background: #e9ecef; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Full C2PA Manifest', 'encypher-provenance'); ?></summary>';
                 html += '<div style="padding: 15px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px;">';

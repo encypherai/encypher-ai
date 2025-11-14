@@ -99,6 +99,25 @@ A WordPress plugin that embeds invisible C2PA-compliant cryptographic watermarks
 
 **Pricing:** Custom (contact sales)
 
+### Tier Alignment & Account Flow
+
+| Capability | Free (auto embeddings only) | Pro – $99/mo | Enterprise – Contract |
+|------------|-----------------------------|--------------|------------------------|
+| Auto-sign on publish/update | ✅ | ✅ | ✅ |
+| Manual + bulk signing | Manual + 100 post batches | Unlimited bulk queues | Unlimited + workflow automation |
+| Invisible enhanced embeddings | ✅ (Encypher shared signer) | ✅ (BYOK or managed key) | ✅ (multi-key, HSM-backed) |
+| Bring Your Own Signature | ❌ | ✅ | ✅ (advanced rotation + audit) |
+| Enterprise-only UX (Merkle modal, sentence verifier, verification badge) | Badge only | Badge + sentence verifier + Merkle preview | Full visualization + heatmaps |
+| Dashboard access | ✅ – “Get API key” onboarding | ✅ – billing, usage, BYOK wizard | ✅ – org admin, SSO, seat control |
+| Analytics | Basic coverage stats | Advanced dashboards + exports | Custom analytics + SLA reporting |
+| Support | Community forum | Email (24–48h) | Dedicated TAM + SLA |
+
+**Dashboard Requirements**
+- Every user must authenticate via [dashboard.encypherai.com](https://dashboard.encypherai.com) to obtain API keys, manage billing, and configure BYOK profiles.
+- Plugin settings include contextual actions: “Get API Key”, “Manage Account & Billing”, and (enterprise) “Contact Customer Success”.
+- Tokens returned by the dashboard carry a `tier` claim that the plugin uses to toggle UI controls and enforce limits (e.g., bulk batch size, sentence highlighting panel).
+- If an account downgrades, the plugin gracefully reverts to Free limits but keeps previously signed content intact (read-only mode).
+
 ---
 
 ## Core Features
@@ -418,11 +437,12 @@ Intelligently handle C2PA manifests when content is updated.
 - ✅ WordPress + Enterprise API integration
 - ✅ Auto-signing hooks (transition_post_status, save_post)
 
-### 🚧 In Progress / Next Steps
-- ⏳ Frontend badge styling improvements
-- ⏳ Verification API public endpoint
-- ⏳ Bulk signing interface
-- ⏳ Settings page enhancements
+### Status / Next Steps
+- [x] Frontend badge styling improvements (tier-aware UI + upgrade callouts)
+- [x] Settings page enhancements (dashboard stats caching, BYOK gating)
+- [x] Verification API public endpoint
+- [x] Admin console (dashboard user/permission management)
+- [ ] Bulk signing interface
 
 ### 📋 Future Features
 See `FUTURE_FEATURES.md` for detailed roadmap including:

@@ -79,3 +79,90 @@
 .encypher-provenance-classic .verification-link {
     margin-top: 8px;
 }
+
+.encypher-upgrade-callout {
+    border: 1px dashed #f0ad4e;
+    background: #fffdf5;
+    padding: 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: #5c3d00;
+}
+
+.encypher-upgrade-callout .button {
+    margin-top: 8px;
+    width: 100%;
+}
+
+.encypher-section-title {
+    margin: 16px 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: #555d66;
+}
+
+.encypher-sentence-verification {
+    margin-top: 12px;
+}
+
+.encypher-sentence-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.sentence-chip {
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 10px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.sentence-chip .sentence-index {
+    font-size: 11px;
+    font-weight: 600;
+    color: #555d66;
+    text-transform: uppercase;
+}
+
+.sentence-chip .sentence-preview {
+    font-size: 12px;
+    color: #1e1e1e;
+}
+
+.encypher-merkle-card {
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+    padding: 12px;
+    background: #f8f9fa;
+    margin-top: 12px;
+}
+
+.encypher-merkle-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 8px;
+}
+
+.encypher-merkle-list li {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.encypher-merkle-list .label {
+    color: #555d66;
+}
+
+.encypher-merkle-list .value {
+    font-family: monospace;
+    color: #1e1e1e;
+}

@@ -25,6 +25,39 @@ class Rest
         add_action('save_post', [$this, 'auto_sign_on_update'], 30, 3); // Higher priority to run after mark_post_needs_verification
     }
 
+    public function handle_public_extract_request(WP_REST_Request $request)
+    {
+        $text = $request->get_param('text');
+        if (! is_string($text) || '' === trim($text)) {
+            return new WP_Error('invalid_text', __('A text payload containing the embedded manifesto is required.', 'encypher-provenance'), ['status' => 400]);
+        }
+
+        // Enforce a hard limit to prevent abuse (default 200k chars)
+        $max_length = apply_filters('encypher_public_extract_max_length', 200000);
+        if ($max_length && strlen($text) > $max_length) {
+            return new WP_Error(
+                'text_too_large',
+                sprintf(
+                    /* translators: %d: max characters */
+                    __('Text exceeds the maximum length of %d characters.', 'encypher-provenance'),
+                    $max_length
+                ),
+                ['status' => 413]
+            );
+        }
+
+        $payload = [
+            'text' => $text,
+        ];
+
+        $response = $this->call_backend('/public/extract-and-verify', $payload, false);
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        return new WP_REST_Response($response);
+    }
+
     public function register_routes(): void
     {
         register_rest_route('encypher-provenance/v1', '/sign', [
@@ -81,6 +114,18 @@ class Rest
                 ],
             ],
             'callback' => [$this, 'handle_provenance_request'],
+        ]);
+
+        register_rest_route('encypher-provenance/v1', '/extract', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'permission_callback' => '__return_true', // Public endpoint
+            'args' => [
+                'text' => [
+                    'required' => true,
+                    'type' => 'string',
+                ],
+            ],
+            'callback' => [$this, 'handle_public_extract_request'],
         ]);
 
         register_rest_route('encypher-provenance/v1', '/test-connection', [
@@ -201,11 +246,22 @@ class Rest
         // Get tier from settings (default to free)
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         
+        $organization_id = ! empty($settings['organization_id']) ? sanitize_text_field((string) $settings['organization_id']) : 'org_demo';
+        $organization_name = ! empty($settings['organization_name']) ? sanitize_text_field((string) $settings['organization_name']) : '';
+        $signing_mode = isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed';
+        if ($tier === 'free') {
+            $signing_mode = 'managed';
+        }
+        $signing_profile_id = '';
+        if ('byok' === $signing_mode && ! empty($settings['signing_profile_id'])) {
+            $signing_profile_id = sanitize_text_field((string) $settings['signing_profile_id']);
+        }
+        
         // Build Enterprise API payload for /enterprise/embeddings/encode-with-embeddings
         $payload = [
             'text' => $clean_content,
             'document_id' => 'wp_post_' . $post_id,
-            'organization_id' => 'org_demo',  // TODO: Get from settings
+            'organization_id' => $organization_id,
             'action' => $action_type,
             'previous_instance_id' => $previous_instance_id,
             // Free tier: document-level only (no segmentation, one C2PA wrapper)
@@ -218,6 +274,7 @@ class Rest
                 'url' => get_permalink($post),
                 'wordpress_post_id' => $post_id,
                 'tier' => $tier,
+                'organization_name' => $organization_name,
             ],
             'embedding_options' => [
                 'metadata_format' => $metadata_format,
@@ -225,6 +282,11 @@ class Rest
                 'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_ASSURANCE_VERSION,
             ],
         ];
+        
+        if ($signing_profile_id) {
+            $payload['signing_profile_id'] = $signing_profile_id;
+        }
+        $payload['metadata']['signing_mode'] = $signing_mode;
         
         // Add license info if available
         if (isset($metadata['license_type'])) {
@@ -311,6 +373,12 @@ class Rest
         update_post_meta($post_id, '_encypher_assurance_last_signed', current_time('mysql'));
         update_post_meta($post_id, '_encypher_manifest_id', $document_id);
         update_post_meta($post_id, '_encypher_marked_date', current_time('mysql'));
+        update_post_meta($post_id, '_encypher_assurance_signing_mode', $signing_mode);
+        if ($signing_profile_id) {
+            update_post_meta($post_id, '_encypher_assurance_signing_profile_id', $signing_profile_id);
+        } else {
+            delete_post_meta($post_id, '_encypher_assurance_signing_profile_id');
+        }
         
         // Store new instance_id for next edit's provenance chain
         if ($new_instance_id) {
@@ -330,6 +398,11 @@ class Rest
             update_post_meta($post_id, '_encypher_merkle_root_hash', $merkle_tree['root_hash'] ?? '');
             update_post_meta($post_id, '_encypher_merkle_total_leaves', $merkle_tree['total_leaves'] ?? 0);
         }
+        $this->persist_merkle_snapshot($post_id, is_array($merkle_tree) ? $merkle_tree : []);
+        $this->persist_sentence_segments(
+            $post_id,
+            isset($response['embeddings']) && is_array($response['embeddings']) ? $response['embeddings'] : []
+        );
         
         // Clear any pending marking flags
         delete_post_meta($post_id, '_encypher_needs_marking');
@@ -358,6 +431,9 @@ class Rest
         $last_signed = get_post_meta($post_id, '_encypher_assurance_last_signed', true);
         $merkle_root_hash = get_post_meta($post_id, '_encypher_merkle_root_hash', true);
         $verification = get_post_meta($post_id, '_encypher_assurance_verification', true);
+        $sentences = $this->get_sentence_segments_payload($post_id);
+        $merkle_snapshot = $this->get_merkle_snapshot($post_id);
+        $settings = get_option('encypher_assurance_settings', []);
 
         // Generate verification URL using instance_id if available, otherwise document_id
         $verification_id = $instance_id ?: $document_id;
@@ -373,6 +449,11 @@ class Rest
             'last_signed' => $last_signed,
             'merkle_root_hash' => $merkle_root_hash,
             'verification' => $verification,
+            'sentences' => $sentences['items'],
+            'sentences_total' => $sentences['total'],
+            'merkle' => $merkle_snapshot,
+            'tier' => isset($settings['tier']) ? $settings['tier'] : 'free',
+            'signing_mode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
         ]);
     }
 
@@ -486,6 +567,8 @@ class Rest
         $merkle_root = get_post_meta($post_id, '_encypher_merkle_root_hash', true);
         $merkle_leaves = get_post_meta($post_id, '_encypher_merkle_total_leaves', true);
         $verification = get_post_meta($post_id, '_encypher_assurance_verification', true);
+        $sentences = $this->get_sentence_segments_payload($post_id);
+        $merkle_snapshot = $this->get_merkle_snapshot($post_id);
 
         // Build provenance report
         $report = [
@@ -507,8 +590,10 @@ class Rest
             'merkle_tree' => [
                 'root_hash' => $merkle_root,
                 'total_leaves' => $merkle_leaves,
+                'tree_depth' => $merkle_snapshot['tree_depth'],
             ],
             'verification' => $verification ?: null,
+            'sentences' => $sentences,
         ];
 
         return new WP_REST_Response($report);
@@ -787,6 +872,108 @@ class Rest
         return $text;
     }
 
+    private function persist_sentence_segments(int $post_id, array $embeddings): void
+    {
+        if (empty($embeddings) || !is_array($embeddings)) {
+            delete_post_meta($post_id, '_encypher_assurance_sentence_segments');
+            return;
+        }
+
+        $normalized = [];
+        foreach ($embeddings as $segment) {
+            if (!is_array($segment) || !isset($segment['leaf_index'])) {
+                continue;
+            }
+
+            $preview = '';
+            if (isset($segment['text'])) {
+                $preview = wp_strip_all_tags((string) $segment['text']);
+            }
+            $snippet = function_exists('mb_substr') ? mb_substr($preview, 0, 160) : substr($preview, 0, 160);
+            $char_count = function_exists('mb_strlen') ? mb_strlen($preview) : strlen($preview);
+
+            $normalized[] = [
+                'leaf_index' => (int) $segment['leaf_index'],
+                'preview' => $snippet,
+                'characters' => $char_count,
+                'ref_id' => isset($segment['ref_id']) ? sanitize_text_field((string) $segment['ref_id']) : '',
+                'verification_url' => isset($segment['verification_url']) ? esc_url_raw((string) $segment['verification_url']) : '',
+            ];
+        }
+
+        if (!empty($normalized)) {
+            update_post_meta($post_id, '_encypher_assurance_sentence_segments', $normalized);
+        } else {
+            delete_post_meta($post_id, '_encypher_assurance_sentence_segments');
+        }
+    }
+
+    private function get_sentence_segments_payload(int $post_id): array
+    {
+        $segments = get_post_meta($post_id, '_encypher_assurance_sentence_segments', true);
+        if (!is_array($segments)) {
+            return [
+                'items' => [],
+                'total' => 0,
+            ];
+        }
+
+        $items = [];
+        foreach ($segments as $segment) {
+            if (!is_array($segment) || !isset($segment['leaf_index'])) {
+                continue;
+            }
+            $preview = isset($segment['preview']) ? $segment['preview'] : '';
+            $char_count = isset($segment['characters']) ? (int) $segment['characters'] : (function_exists('mb_strlen') ? mb_strlen($preview) : strlen($preview));
+            $items[] = [
+                'leaf_index' => (int) $segment['leaf_index'],
+                'preview' => $preview,
+                'characters' => $char_count,
+                'verification_url' => isset($segment['verification_url']) ? $segment['verification_url'] : '',
+                'ref_id' => isset($segment['ref_id']) ? $segment['ref_id'] : '',
+            ];
+        }
+
+        return [
+            'items' => array_slice($items, 0, 50),
+            'total' => count($items),
+        ];
+    }
+
+    private function persist_merkle_snapshot(int $post_id, array $merkle_tree): void
+    {
+        if (empty($merkle_tree)) {
+            delete_post_meta($post_id, '_encypher_merkle_snapshot');
+            return;
+        }
+
+        $snapshot = [
+            'root_hash' => isset($merkle_tree['root_hash']) ? sanitize_text_field((string) $merkle_tree['root_hash']) : '',
+            'total_leaves' => isset($merkle_tree['total_leaves']) ? (int) $merkle_tree['total_leaves'] : 0,
+            'tree_depth' => isset($merkle_tree['tree_depth']) ? (int) $merkle_tree['tree_depth'] : null,
+        ];
+
+        update_post_meta($post_id, '_encypher_merkle_snapshot', $snapshot);
+    }
+
+    private function get_merkle_snapshot(int $post_id): array
+    {
+        $snapshot = get_post_meta($post_id, '_encypher_merkle_snapshot', true);
+        if (!is_array($snapshot)) {
+            return [
+                'root_hash' => '',
+                'total_leaves' => 0,
+                'tree_depth' => null,
+            ];
+        }
+
+        return [
+            'root_hash' => isset($snapshot['root_hash']) ? $snapshot['root_hash'] : '',
+            'total_leaves' => isset($snapshot['total_leaves']) ? (int) $snapshot['total_leaves'] : 0,
+            'tree_depth' => $snapshot['tree_depth'] ?? null,
+        ];
+    }
+
     /**
      * Perform HTTP request to backend and decode JSON response.
      */
@@ -939,29 +1126,90 @@ class Rest
             'health' => $health_data,
         ];
 
+        $result['organization'] = [
+            'organization_id' => 'org_demo',
+            'name' => 'Demo Organization',
+            'tier' => 'free'
+        ];
+
         // Check if API key is configured
         if (!empty($api_key)) {
             $result['api_key_configured'] = true;
             $result['auth_note'] = 'API key configured (will be validated during signing)';
             
-            // Check if it's the demo key
             if ($api_key === 'demo-local-key') {
                 $result['organization'] = [
                     'organization_id' => 'org_demo',
                     'name' => 'Demo Organization',
                     'tier' => 'free'
                 ];
+            } else {
+                $account = $this->fetch_remote_account($api_base_url, $api_key);
+                if (! is_wp_error($account)) {
+                    $result['organization'] = [
+                        'organization_id' => $account['organization_id'] ?: 'org_unknown',
+                        'name' => $account['organization_name'] ?: ($account['organization_id'] ?: __('Your organization', 'encypher-provenance')),
+                        'tier' => $account['tier'],
+                    ];
+                }
             }
         } else {
             $result['api_key_configured'] = false;
             $result['auth_note'] = 'No API key configured - using demo mode';
-            $result['organization'] = [
-                'organization_id' => 'org_demo',
-                'name' => 'Demo Organization',
-                'tier' => 'free'
-            ];
         }
 
         return new WP_REST_Response($result);
+    }
+
+    private function fetch_remote_account(string $api_base_url, string $api_key)
+    {
+        $base = rtrim((string) $api_base_url, '/');
+        if ('' === $base || '' === trim($api_key)) {
+            return new \WP_Error('invalid_configuration', __('Missing API base URL or API key.', 'encypher-provenance'));
+        }
+
+        $stats_url = $base . '/stats';
+        $cache_key = 'encypher_account_' . md5(strtolower($base) . '|' . substr(hash('sha256', $api_key), 0, 16));
+        $cached = get_site_transient($cache_key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $response = wp_remote_get($stats_url, [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code >= 400) {
+            return new \WP_Error('stats_http_error', sprintf(__('Stats request failed with status %d.', 'encypher-provenance'), $status_code));
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (! is_array($body)) {
+            return new \WP_Error('stats_parse_error', __('Unable to parse stats response.', 'encypher-provenance'));
+        }
+
+        $tier = $body['tier'] ?? ($body['organization']['tier'] ?? 'free');
+        if (! in_array($tier, ['free', 'pro', 'enterprise'], true)) {
+            $tier = 'free';
+        }
+
+        $account = [
+            'tier' => $tier,
+            'organization_id' => isset($body['organization_id']) ? sanitize_text_field((string) $body['organization_id']) : sanitize_text_field((string) ($body['organization']['organization_id'] ?? '')),
+            'organization_name' => isset($body['organization_name']) ? sanitize_text_field((string) $body['organization_name']) : sanitize_text_field((string) ($body['organization']['organization_name'] ?? '')),
+        ];
+
+        set_site_transient($cache_key, $account, 15 * MINUTE_IN_SECONDS);
+
+        return $account;
     }
 }

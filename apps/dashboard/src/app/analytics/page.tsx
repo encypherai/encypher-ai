@@ -3,9 +3,12 @@
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@encypher/design-system';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('30d');
+  const { data: session } = useSession();
+  const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
 
   // Mock data - replace with actual API calls
   const stats = {
@@ -63,8 +66,20 @@ export default function AnalyticsPage() {
                   Settings
                 </Button>
               </Link>
+              <Link href="/billing">
+                <Button variant="ghost" size="sm">
+                  Billing
+                </Button>
+              </Link>
+              {isAdmin && (
+                <Link href="/admin">
+                  <Button variant="ghost" size="sm">
+                    Admin
+                  </Button>
+                </Link>
+              )}
               <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">
-                U
+                {session?.user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
               </div>
             </div>
           </div>

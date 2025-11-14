@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import '@encypher/design-system/styles';
 import './globals.css';
+import Providers from '../components/providers';
 
 export const metadata: Metadata = {
   title: 'Dashboard - Encypher',
@@ -19,7 +20,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased bg-background">
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

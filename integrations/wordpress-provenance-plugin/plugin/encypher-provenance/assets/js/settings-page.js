@@ -8,6 +8,7 @@
     const EncypherSettings = {
         init() {
             this.bindEvents();
+            this.applyTierConstraints();
             this.checkConnection();
         },
 
@@ -20,6 +21,10 @@
             // Auto-test connection when API settings change
             $('input[name="encypher_assurance_settings[api_base_url]"], input[name="encypher_assurance_settings[api_key]"]').on('change', () => {
                 this.checkConnection();
+            });
+
+            $('#encypher-signing-mode').on('change', (event) => {
+                this.toggleSigningProfileField(event.target.value);
             });
         },
 
@@ -125,6 +130,72 @@
             } finally {
                 $btn.prop('disabled', false).text('Test Connection');
             }
+        },
+
+        applyTierConstraints() {
+            const data = this.getData();
+            const tier = data.tier || 'free';
+            const $modeSelect = $('#encypher-signing-mode');
+
+            if (!$modeSelect.length) {
+                return;
+            }
+
+            if (tier === 'free') {
+                $modeSelect.prop('disabled', true);
+                this.toggleSigningProfileField('managed');
+                if (data.strings && data.strings.byokDisabled) {
+                    this.renderInlineNotice($modeSelect, data.strings.byokDisabled, 'notice-warning');
+                }
+                return;
+            }
+
+            this.toggleSigningProfileField($modeSelect.val());
+        },
+
+        toggleSigningProfileField(mode) {
+            const $profileField = $('#encypher-signing-profile-id');
+            if (!$profileField.length) {
+                return;
+            }
+
+            if (!$profileField.data('placeholder')) {
+                $profileField.data('placeholder', $profileField.attr('placeholder'));
+            }
+
+            if (mode === 'byok') {
+                $profileField.prop('disabled', false);
+            } else {
+                $profileField.prop('disabled', true);
+            }
+        },
+
+        renderInlineNotice($sourceEl, message, noticeClass = 'notice-info') {
+            if (!$sourceEl || !$sourceEl.length || !message) {
+                return;
+            }
+
+            const $container = $sourceEl.closest('td');
+            if (!$container.length) {
+                return;
+            }
+
+            const $existing = $container.find('.encypher-inline-notice');
+            if ($existing.length) {
+                $existing.find('p').text(message);
+                return;
+            }
+
+            const $notice = $('<div/>', {
+                class: `notice ${noticeClass} encypher-inline-notice`,
+                style: 'margin-top:8px;',
+            }).append($('<p/>').text(message));
+
+            $container.append($notice);
+        },
+
+        getData() {
+            return window.EncypherSettingsData || {};
         }
     };
 

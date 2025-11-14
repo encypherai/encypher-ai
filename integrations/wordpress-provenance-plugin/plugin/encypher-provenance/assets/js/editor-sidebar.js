@@ -18,6 +18,28 @@
         const [showManifest, setShowManifest] = useState(false);
         const [manifestData, setManifestData] = useState(null);
         const [verifying, setVerifying] = useState(false);
+        const [sentenceSegments, setSentenceSegments] = useState([]);
+        const [sentencesTotal, setSentencesTotal] = useState(0);
+        const [merkleSummary, setMerkleSummary] = useState(null);
+        const [showAllSentences, setShowAllSentences] = useState(false);
+        const [copyingRoot, setCopyingRoot] = useState(false);
+        const tier = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.tier) ? EncypherAssuranceConfig.tier : 'free';
+        const upgradeUrl = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.upgradeUrl) ? EncypherAssuranceConfig.upgradeUrl : 'https://dashboard.encypherai.com/billing';
+
+        const renderUpgradeCallout = (message) => {
+            return wp.element.createElement(
+                'div',
+                { className: 'encypher-upgrade-callout' },
+                wp.element.createElement('p', null, message),
+                upgradeUrl
+                    ? wp.element.createElement(
+                          'a',
+                          { href: upgradeUrl, className: 'button button-primary', target: '_blank', rel: 'noopener noreferrer' },
+                          'Upgrade to Encypher Pro'
+                      )
+                    : null
+            );
+        };
 
         const fetchStatus = () => {
             if (!postId) {
@@ -38,6 +60,10 @@
                     setTotalSentences(typeof response.total_sentences === 'number' ? response.total_sentences : null);
                     setLastSigned(response.last_signed || '');
                     setMerkleRoot(response.merkle_root_hash || '');
+                    setSentenceSegments(Array.isArray(response.sentences) ? response.sentences : []);
+                    setSentencesTotal(typeof response.sentences_total === 'number' ? response.sentences_total : 0);
+                    setMerkleSummary(response.merkle || null);
+                    setShowAllSentences(false);
                 })
                 .catch((error) => {
                     setStatus('error');
@@ -50,6 +76,12 @@
 
         const fetchManifest = () => {
             if (!postId || !isSigned) {
+                return;
+            }
+            if (tier === 'free') {
+                if (upgradeUrl) {
+                    window.open(upgradeUrl, '_blank', 'noopener,noreferrer');
+                }
                 return;
             }
             setVerifying(true);
@@ -113,6 +145,16 @@
             }
 
             const items = [];
+            const canViewManifest = tier !== 'free';
+            const pushUpgradeItem = (message, key) => {
+                items.push(
+                    wp.element.createElement(
+                        'li',
+                        { key, style: { marginTop: '12px' } },
+                        renderUpgradeCallout(message)
+                    )
+                );
+            };
 
             if (lastSigned) {
                 items.push(
@@ -126,7 +168,7 @@
                 );
             }
 
-            if (typeof totalSentences === 'number') {
+            if (typeof totalSentences === 'number' && canViewManifest) {
                 items.push(
                     wp.element.createElement(
                         'li',
@@ -136,6 +178,8 @@
                         totalSentences
                     )
                 );
+            } else if (tier === 'free') {
+                pushUpgradeItem('Unlock sentence-level analytics with Encypher Pro.', 'upgrade-sentences');
             }
 
             if (documentId) {
@@ -150,7 +194,7 @@
                 );
             }
 
-            if (merkleRoot) {
+            if (merkleRoot && canViewManifest) {
                 items.push(
                     wp.element.createElement(
                         'li',
@@ -162,7 +206,7 @@
                 );
             }
 
-            if (isSigned) {
+            if (isSigned && canViewManifest) {
                 items.push(
                     wp.element.createElement(
                         'li',
@@ -175,17 +219,19 @@
                                 disabled: verifying,
                                 style: { width: '100%' }
                             },
-                            verifying ? 'Loading...' : '📋 View C2PA Manifest'
+                            verifying ? 'Loading...' : '?? View C2PA Manifest'
                         )
                     )
                 );
+            } else if (isSigned && !canViewManifest) {
+                pushUpgradeItem('Upgrade to view the underlying C2PA manifest.', 'upgrade-manifest');
             }
 
             return wp.element.createElement('ul', { className: 'verification-meta', style: { listStyle: 'none', padding: 0, marginTop: '12px' } }, items);
         };
 
         const renderManifestViewer = () => {
-            if (!showManifest || !manifestData) {
+            if (!showManifest || !manifestData || tier === 'free') {
                 return null;
             }
 
@@ -237,6 +283,141 @@
             );
         };
 
+        const renderSentenceVerification = () => {
+            if (!isSigned) {
+                return null;
+            }
+
+            if (tier === 'free') {
+                return renderUpgradeCallout('Unlock sentence-level verification with Encypher Pro.');
+            }
+
+            if (!sentenceSegments.length) {
+                return wp.element.createElement(
+                    Notice,
+                    { status: 'info', isDismissible: false, style: { marginTop: '12px' } },
+                    'Sentence-level markers will appear after the next successful signing.'
+                );
+            }
+
+            const visibleSegments = showAllSentences ? sentenceSegments : sentenceSegments.slice(0, 3);
+
+            return wp.element.createElement(
+                'div',
+                { className: 'encypher-sentence-verification' },
+                wp.element.createElement('h4', { className: 'encypher-section-title' }, 'Sentence verification'),
+                wp.element.createElement(
+                    'ul',
+                    { className: 'encypher-sentence-list' },
+                    visibleSegments.map((segment, index) =>
+                        wp.element.createElement(
+                            'li',
+                            { key: `sentence-${segment.leaf_index}-${index}`, className: 'sentence-chip' },
+                            wp.element.createElement(
+                                'span',
+                                { className: 'sentence-index' },
+                                `#${typeof segment.leaf_index === 'number' ? segment.leaf_index : index + 1}`
+                            ),
+                            wp.element.createElement(
+                                'span',
+                                { className: 'sentence-preview' },
+                                segment.preview ? segment.preview : 'Text preview unavailable'
+                            ),
+                            segment.verification_url
+                                ? wp.element.createElement(
+                                      Button,
+                                      {
+                                          isSmall: true,
+                                          onClick: () => window.open(segment.verification_url, '_blank', 'noopener,noreferrer'),
+                                      },
+                                      'Open verifier'
+                                  )
+                                : null
+                        )
+                    )
+                ),
+                sentencesTotal > 3
+                    ? wp.element.createElement(
+                          Button,
+                          {
+                              isSmall: true,
+                              variant: 'link',
+                              onClick: () => setShowAllSentences(!showAllSentences),
+                          },
+                          showAllSentences ? 'Show fewer sentences' : `Show ${sentencesTotal - visibleSegments.length} more`
+                      )
+                    : null
+            );
+        };
+
+        const renderMerkleSummary = () => {
+            if (!isSigned) {
+                return null;
+            }
+
+            if (!merkleSummary || !merkleSummary.root_hash) {
+                if (tier === 'free') {
+                    return null;
+                }
+                return wp.element.createElement(
+                    Notice,
+                    { status: 'info', isDismissible: false, style: { marginTop: '12px' } },
+                    'Merkle proofs will be generated the next time this post is signed.'
+                );
+            }
+
+            const rows = [
+                { label: 'Root hash', value: merkleSummary.root_hash ? `${merkleSummary.root_hash.substring(0, 24)}…` : '—' },
+                { label: 'Leaves', value: typeof merkleSummary.total_leaves === 'number' ? merkleSummary.total_leaves : 0 },
+                {
+                    label: 'Tree depth',
+                    value: typeof merkleSummary.tree_depth === 'number' ? merkleSummary.tree_depth : '—',
+                },
+            ];
+
+            const handleCopy = () => {
+                if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+                    navigator.clipboard
+                        .writeText(merkleSummary.root_hash)
+                        .then(() => {
+                            setCopyingRoot(true);
+                            setTimeout(() => setCopyingRoot(false), 1500);
+                        })
+                        .catch(() => setCopyingRoot(false));
+                } else {
+                    window.prompt('Copy Merkle root', merkleSummary.root_hash);
+                }
+            };
+
+            return wp.element.createElement(
+                'div',
+                { className: 'encypher-merkle-card' },
+                wp.element.createElement('h4', { className: 'encypher-section-title' }, 'Merkle snapshot'),
+                wp.element.createElement(
+                    'ul',
+                    { className: 'encypher-merkle-list' },
+                    rows.map((row) =>
+                        wp.element.createElement(
+                            'li',
+                            { key: row.label },
+                            wp.element.createElement('span', { className: 'label' }, row.label),
+                            wp.element.createElement('span', { className: 'value' }, row.value)
+                        )
+                    )
+                ),
+                wp.element.createElement(
+                    Button,
+                    {
+                        isSecondary: true,
+                        isSmall: true,
+                        disabled: copyingRoot,
+                        onClick: handleCopy,
+                    },
+                    copyingRoot ? 'Copied!' : 'Copy root hash'
+                )
+            );
+        };
+
         return wp.element.createElement(
             PluginDocumentSettingPanel,
             {
@@ -255,6 +436,8 @@
                 ),
                 renderMeta(),
                 renderManifestViewer(),
+                renderSentenceVerification(),
+                renderMerkleSummary(),
                 !isSigned && isDraft && wp.element.createElement(
                     'p',
                     { style: { fontSize: '12px', color: '#666', fontStyle: 'italic', marginTop: '12px' } },

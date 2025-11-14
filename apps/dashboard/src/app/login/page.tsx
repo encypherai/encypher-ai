@@ -3,6 +3,9 @@
 import { Input } from '@encypher/design-system';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
+
+const API_BASE =
+  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import MetadataBackground from '../../components/hero/MetadataBackground';
@@ -24,6 +27,7 @@ export default function LoginPage() {
         email,
         password,
         redirect: false,
+        callbackUrl: '/',
       });
 
       if (result?.error) {

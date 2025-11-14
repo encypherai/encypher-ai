@@ -42,6 +42,28 @@
     outline-offset: 2px;
 }
 
+.encypher-c2pa-badge .badge-tier {
+    background: #2A87C4;
+    color: #fff;
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.encypher-c2pa-badge.encypher-tier-enterprise .badge-tier {
+    background: #00a32a;
+}
+
+.encypher-c2pa-badge.encypher-tier-pro {
+    border-color: #2A87C4;
+}
+
+.encypher-c2pa-badge.encypher-tier-enterprise {
+    border-color: #00a32a;
+}
+
 .encypher-c2pa-badge-icon {
     width: 48px;
     height: 48px;

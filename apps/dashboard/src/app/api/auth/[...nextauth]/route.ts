@@ -3,6 +3,9 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 
+const API_BASE =
+  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+
 const handler = NextAuth({
   providers: [
     // Email/Password Authentication
@@ -19,7 +22,7 @@ const handler = NextAuth({
 
         try {
           // Call API Gateway auth login (SRF)
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/auth/login`, {
+          const res = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -37,6 +40,8 @@ const handler = NextAuth({
               email: user.email,
               name: user.name,
               accessToken: data.data.access_token,
+              role: user.role ?? user.account_type ?? user.permission ?? 'member',
+              tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
             } as any;
           }
           
@@ -77,9 +82,13 @@ const handler = NextAuth({
       if (user) {
         token.id = user.id as string | undefined;
         token.email = (user.email ?? undefined) as string | undefined;
-        // propagate access token if present from credentials
+        // propagate access token and role metadata if present from credentials
         // @ts-ignore
         if (user.accessToken) token.accessToken = user.accessToken as string;
+        // @ts-ignore
+        if (user.role) token.role = user.role as string;
+        // @ts-ignore
+        if (user.tier) token.tier = user.tier as string;
       }
       return token;
     },
@@ -90,6 +99,10 @@ const handler = NextAuth({
         // expose accessToken in session for API calls if needed
         // @ts-ignore
         session.user.accessToken = token.accessToken as string | undefined;
+        // @ts-ignore
+        session.user.role = token.role as string | undefined;
+        // @ts-ignore
+        session.user.tier = token.tier as string | undefined;
       }
       return session;
     },

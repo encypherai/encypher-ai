@@ -1,46 +1,169 @@
 'use client';
 
-import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@encypher/design-system';
-import { useState } from 'react';
+import {
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  Input,
+} from '@encypher/design-system';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
+import apiClient from '../../lib/api';
+
+type Profile = {
+  name: string;
+  email: string;
+  company?: string;
+  phone?: string;
+  jobTitle?: string;
+  notifications?: {
+    emailAlerts: boolean;
+    usageAlerts: boolean;
+    securityAlerts: boolean;
+    marketingEmails: boolean;
+  };
+};
+
+const defaultNotifications = {
+  emailAlerts: true,
+  usageAlerts: true,
+  securityAlerts: true,
+  marketingEmails: false,
+};
+
+const normalizeProfile = (raw: any): Profile => ({
+  name: raw?.name ?? '',
+  email: raw?.email ?? '',
+  company: raw?.company ?? raw?.organization ?? '',
+  phone: raw?.phone ?? '',
+  jobTitle: raw?.job_title ?? raw?.role ?? '',
+  notifications: {
+    emailAlerts: raw?.notifications?.emailAlerts ?? raw?.notifications?.email_alerts ?? true,
+    usageAlerts: raw?.notifications?.usageAlerts ?? raw?.notifications?.usage_alerts ?? true,
+    securityAlerts:
+      raw?.notifications?.securityAlerts ?? raw?.notifications?.security_alerts ?? true,
+    marketingEmails:
+      raw?.notifications?.marketingEmails ?? raw?.notifications?.marketing_emails ?? false,
+  },
+});
 
 export default function SettingsPage() {
-  const [activeTab, setActiveTab] = useState('profile');
-  
-  const [profile, setProfile] = useState({
-    name: 'John Doe',
-    email: 'john@example.com',
-    company: 'Acme Inc.',
-    phone: '+1 (555) 123-4567',
+  const { data: session, status } = useSession();
+  const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+  const [profile, setProfile] = useState<Profile>({
+    name: '',
+    email: '',
+    company: '',
+    phone: '',
+    jobTitle: '',
+    notifications: defaultNotifications,
   });
 
-  const [notifications, setNotifications] = useState({
-    emailAlerts: true,
-    usageAlerts: true,
-    securityAlerts: true,
-    marketingEmails: false,
+  const profileQuery = useQuery({
+    queryKey: ['profile'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in to manage settings.');
+      const response = await apiClient.getProfile(accessToken);
+      return normalizeProfile(response?.data ?? response);
+    },
+    enabled: Boolean(accessToken),
+    refetchOnWindowFocus: false,
   });
+
+  useEffect(() => {
+    if (profileQuery.data) {
+      setProfile(profileQuery.data);
+    }
+  }, [profileQuery.data]);
+
+  const updateProfileMutation = useMutation({
+    mutationFn: async (changes: Profile) => {
+      if (!accessToken) throw new Error('You must be signed in to update your profile.');
+      await apiClient.updateProfile(accessToken, {
+        name: changes.name,
+        company: changes.company,
+        phone: changes.phone,
+        job_title: changes.jobTitle,
+        notifications: changes.notifications,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Profile updated.');
+      profileQuery.refetch();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to update profile.');
+    },
+  });
+
+  const headerActions = useMemo(
+    () => (
+      <div className="flex items-center space-x-4">
+        <Link href="/">
+          <Button variant="ghost" size="sm">
+            Dashboard
+          </Button>
+        </Link>
+        <Link href="/api-keys">
+          <Button variant="ghost" size="sm">
+            API Keys
+          </Button>
+        </Link>
+        <Link href="/analytics">
+          <Button variant="ghost" size="sm">
+            Analytics
+          </Button>
+        </Link>
+        {isAdmin && (
+          <Link href="/admin">
+            <Button variant="ghost" size="sm">
+              Admin
+            </Button>
+          </Link>
+        )}
+        <Link href="/billing">
+          <Button variant="ghost" size="sm">
+            Billing
+          </Button>
+        </Link>
+        <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">
+          {session?.user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
+        </div>
+      </div>
+    ),
+    [session?.user?.name, isAdmin],
+  );
+
+  const isLoading = status === 'loading' || profileQuery.isLoading;
+
+  const handleProfileSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateProfileMutation.mutate(profile);
+  };
+
+  const handleNotificationsSave = () => {
+    updateProfileMutation.mutate(profile);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/">
-                <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
-              </Link>
-              <h1 className="text-xl font-bold text-delft-blue">Encypher Dashboard</h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Link href="/"><Button variant="ghost" size="sm">Dashboard</Button></Link>
-              <Link href="/api-keys"><Button variant="ghost" size="sm">API Keys</Button></Link>
-              <Link href="/analytics"><Button variant="ghost" size="sm">Analytics</Button></Link>
-              <Link href="/billing"><Button variant="ghost" size="sm">Billing</Button></Link>
-              <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">U</div>
-            </div>
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link href="/">
+              <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
+            </Link>
+            <h1 className="text-xl font-bold text-delft-blue">Encypher Dashboard</h1>
           </div>
+          {headerActions}
         </div>
       </header>
 
@@ -58,7 +181,7 @@ export default function SettingsPage() {
                   {['profile', 'security', 'notifications'].map((tab) => (
                     <button
                       key={tab}
-                      onClick={() => setActiveTab(tab)}
+                      onClick={() => setActiveTab(tab as typeof activeTab)}
                       className={`w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         activeTab === tab ? 'bg-columbia-blue text-white' : 'text-muted-foreground hover:bg-muted'
                       }`}
@@ -71,7 +194,7 @@ export default function SettingsPage() {
             </Card>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-3 space-y-6">
             {activeTab === 'profile' && (
               <Card>
                 <CardHeader>
@@ -79,19 +202,51 @@ export default function SettingsPage() {
                   <CardDescription>Update your personal information</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-2">Full Name</label>
-                        <Input value={profile.name} onChange={(e) => setProfile({ ...profile, name: e.target.value })} />
+                  {isLoading ? (
+                    <div className="text-muted-foreground">Loading profile…</div>
+                  ) : (
+                    <form className="space-y-4" onSubmit={handleProfileSave}>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Full Name</label>
+                          <Input
+                            value={profile.name}
+                            onChange={(e) => setProfile((prev) => ({ ...prev, name: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Email</label>
+                          <Input type="email" value={profile.email} disabled />
+                        </div>
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Company</label>
+                          <Input
+                            value={profile.company ?? ''}
+                            onChange={(e) => setProfile((prev) => ({ ...prev, company: e.target.value }))}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium mb-2">Phone</label>
+                          <Input
+                            value={profile.phone ?? ''}
+                            onChange={(e) => setProfile((prev) => ({ ...prev, phone: e.target.value }))}
+                          />
+                        </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-2">Email</label>
-                        <Input type="email" value={profile.email} onChange={(e) => setProfile({ ...profile, email: e.target.value })} />
+                        <label className="block text-sm font-medium mb-2">Job Title</label>
+                        <Input
+                          value={profile.jobTitle ?? ''}
+                          onChange={(e) => setProfile((prev) => ({ ...prev, jobTitle: e.target.value }))}
+                        />
                       </div>
-                    </div>
-                    <Button variant="primary">Save Changes</Button>
-                  </form>
+                      <Button type="submit" variant="primary" disabled={updateProfileMutation.isPending}>
+                        {updateProfileMutation.isPending ? 'Saving…' : 'Save changes'}
+                      </Button>
+                    </form>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -99,21 +254,19 @@ export default function SettingsPage() {
             {activeTab === 'security' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Change Password</CardTitle>
+                  <CardTitle>Change password</CardTitle>
                   <CardDescription>Update your password</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <form className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2">Current Password</label>
-                      <Input type="password" placeholder="••••••••" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">New Password</label>
-                      <Input type="password" placeholder="••••••••" />
-                    </div>
-                    <Button variant="primary">Update Password</Button>
-                  </form>
+                  <p className="text-sm text-muted-foreground">
+                    Password changes are managed via the Encypher API. Use the “Forgot password” link on the login
+                    screen to reset your credentials securely.
+                  </p>
+                  <div className="mt-4">
+                    <Link href="/forgot-password">
+                      <Button variant="primary">Reset password</Button>
+                    </Link>
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -121,25 +274,51 @@ export default function SettingsPage() {
             {activeTab === 'notifications' && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Notification Preferences</CardTitle>
+                  <CardTitle>Notification preferences</CardTitle>
                   <CardDescription>Choose what notifications you want to receive</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    {Object.entries(notifications).map(([key, value]) => (
-                      <div key={key} className="flex items-center justify-between p-4 border border-border rounded-lg">
-                        <div className="font-medium">{key}</div>
-                        <input
-                          type="checkbox"
-                          checked={value}
-                          onChange={(e) => setNotifications({ ...notifications, [key]: e.target.checked })}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-6">
-                    <Button variant="primary">Save Preferences</Button>
-                  </div>
+                  {isLoading ? (
+                    <div className="text-muted-foreground">Loading preferences…</div>
+                  ) : (
+                    <div className="space-y-4">
+                      {Object.entries(profile.notifications ?? defaultNotifications).map(([key, value]) => (
+                        <div
+                          key={key}
+                          className="flex items-center justify-between p-4 border border-border rounded-lg"
+                        >
+                          <div>
+                            <div className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</div>
+                            <p className="text-sm text-muted-foreground">
+                              {key === 'marketingEmails'
+                                ? 'Product updates and marketing insights'
+                                : 'Critical account and usage alerts'}
+                            </p>
+                          </div>
+                          <input
+                            type="checkbox"
+                            checked={Boolean(value)}
+                            onChange={(e) =>
+                              setProfile((prev) => ({
+                                ...prev,
+                                notifications: {
+                                  ...(prev.notifications ?? defaultNotifications),
+                                  [key]: e.target.checked,
+                                },
+                              }))
+                            }
+                          />
+                        </div>
+                      ))}
+                      <Button
+                        variant="primary"
+                        onClick={handleNotificationsSave}
+                        disabled={updateProfileMutation.isPending}
+                      >
+                        {updateProfileMutation.isPending ? 'Saving…' : 'Save preferences'}
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}

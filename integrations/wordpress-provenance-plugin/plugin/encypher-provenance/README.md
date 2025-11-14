@@ -12,13 +12,15 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 ## Features
 
 ### Core Features
-- ✅ **C2PA-Compliant:** Full adherence to C2PA Manifests_Text.adoc specification
-- ✅ **Auto-Mark on Publish:** Automatically embed C2PA manifests when publishing posts
-- ✅ **Auto-Mark on Update:** Re-sign manifests when content is updated
-- ✅ **Manual Marking:** Mark individual posts with a button in the editor
-- ✅ **Gutenberg Integration:** Sidebar panel in block editor
-- ✅ **Classic Editor Support:** Meta box for classic editor users
-- ✅ **Public Verification:** Verification links for readers to check authenticity
+- ? **C2PA-Compliant:** Full adherence to C2PA Manifests_Text.adoc specification
+- ? **Auto-Mark on Publish:** Automatically embed C2PA manifests when publishing posts
+- ? **Auto-Mark on Update:** Re-sign manifests when content is updated
+- ? **Manual Marking:** Mark individual posts with a button in the editor
+- ? **Gutenberg Integration:** Sidebar panel in block editor
+- ? **Classic Editor Support:** Meta box for classic editor users
+- ? **Public Verification:** Verification links for readers to check authenticity
+- ? **Sentence & Merkle Insights:** Pro/Enterprise tiers expose per-sentence verifier chips, upgrade prompts, and Merkle snapshot cards directly in Gutenberg.
+- ? **Analytics Dashboard:** Built-in dashboard widget and Tools ? Encypher Analytics summarize coverage, sentence-level adoption, and recent signing activity.
 
 ### C2PA Compliance
 - **C2PATextManifestWrapper:** Full manifest structure with magic number, version, JUMBF container
@@ -32,6 +34,34 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 - **Free Tier:** Encypher-provided shared signature
 - **Pro Tier:** Bring your own key or purchase through Encypher
 - **Enterprise Tier:** Advanced key management, multi-site support
+
+### Plans & Capabilities
+
+| Feature | Free (auto embeddings only) | Pro – $99/mo | Enterprise – Contract |
+|---------|-----------------------------|--------------|------------------------|
+| Auto-sign on publish/update | ✅ | ✅ | ✅ |
+| Manual marking | ✅ | ✅ | ✅ |
+| Bulk signing | 100 posts/batch | Unlimited | Unlimited + automation APIs |
+| Invisible enhanced embeddings | ✅ (shared signer) | ✅ (BYOK or managed key) | ✅ (multi-key/HSM) |
+| Bring Your Own Signature | ❌ | ✅ | ✅ (advanced rotation) |
+| Verification badge | ✅ | ✅ | ✅ (custom styles) |
+| Merkle + sentence visualization | Badge only | Sidebar sentence verifier + Merkle snapshot | Full visualization suite + downstream proofs |
+| Dashboard access | API key & usage | Billing, BYOK wizard, analytics | Org admin, SSO, SLA dashboards |
+| Support | Community forum | Email (24–48h) | Dedicated TAM + SLA |
+
+### Dashboard & Account Management
+
+All users authenticate via [dashboard.encypherai.com](https://dashboard.encypherai.com) to:
+- Create a workspace and retrieve API keys (Free tier)
+- Upgrade to Pro ($99/mo) for BYOK, partial Enterprise features, and billing management
+- Provision enterprise licenses, seats, and SLA contacts
+
+The plugin settings page surfaces direct links:
+- **Get API Key / Manage Account** – opens the dashboard to copy keys or update billing
+- **Bring Your Own Key** – launches the dashboard wizard to upload a public key and obtain a signing profile ID
+- **Enterprise Support** – pre-filled contact form to reach your CSM
+
+Tokens issued by the dashboard contain a `tier` claim that the plugin reads to automatically enable or limit functionality (e.g., bulk batch size, visualization controls). If billing lapses, the plugin gracefully reverts to Free limits but preserves previously signed manifests.
 
 ---
 
@@ -49,11 +79,12 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 
 ### Configuration
 1. Go to **Settings → Encypher C2PA**
-2. Configure your settings:
+2. Click **Get API Key / Manage Account** to open [dashboard.encypherai.com](https://dashboard.encypherai.com) and either create a free workspace or sign in to your Pro/Enterprise account
+3. Configure your settings:
    - **API Base URL:** `https://api.encypherai.com/api/v1` (default)
    - **API Key:** Get your free key from [dashboard.encypherai.com](https://dashboard.encypherai.com)
-   - **Auto-mark on publish:** Enable to automatically mark new posts (recommended)
-   - **Auto-mark on update:** Enable to re-sign when content changes (recommended)
+   - **Bring Your Own Signature (Pro/Enterprise):** Paste the Signing Profile ID generated in the dashboard BYOK wizard
+   - **Auto-mark on publish/update:** Enable to automatically mark content (recommended)
    - **Metadata Format:** C2PA (default) or Basic
    - **Hard Binding:** Enable for c2pa.hash.data assertion (recommended)
 
@@ -70,10 +101,37 @@ The plugin automatically embeds C2PA manifests when you publish or update posts:
 3. **Done!** Your content now has cryptographic proof of origin
 
 **What happens:**
-- New posts get `c2pa.created` action
-- Updated posts get `c2pa.edited` action with ingredient reference
-- Invisible Unicode embeddings are added to your content
-- Provenance chain is preserved through updates
+- New posts get `c2pa.created` actions
+- Updated posts get `c2pa.edited` actions with the previous instance captured as an ingredient
+- Invisible Unicode embeddings are added to the content body
+- Merkle trees and sentence metadata are stored for later inspection
+
+### Verification Sidebar (Gutenberg)
+
+- The **Encypher Provenance** panel summarizes signing status, document ID, and verification URLs.
+- **Pro/Enterprise** tiers unlock sentence-level verifier chips (linking to `POST /api/v1/public/extract-and-verify` results) plus a Merkle snapshot card with one-click copy buttons.
+- Free tier users see inline upgrade prompts instead of the advanced UI.
+- The manifest viewer streams the exact JSON wrapper so editors can inspect every assertion without leaving WordPress.
+
+### Public Extract & Verify Endpoint
+
+The plugin now exposes a public REST endpoint for third-party verification without a WordPress login:
+
+```
+POST /wp-json/encypher-provenance/v1/extract
+{
+  "text": "C2PA-protected content…"
+}
+```
+
+The route proxies to Encypher's `POST /api/v1/public/extract-and-verify` so publishers can embed interactive checkers or build custom workflows around invisible embeddings.
+
+### Analytics & Dashboard Coverage
+
+- WordPress Dashboard now includes an **Encypher Provenance Coverage** widget showing signed counts, coverage percentage, and quick access links.
+- Tools ? **Encypher Analytics** provides a detailed view with sentence-level adoption, tampering alerts, and the five most recently signed posts.
+- Editors can use the analytics page during audits to prove that enterprise tiers are meeting their provenance SLAs.
+
 
 ### Manual Marking
 

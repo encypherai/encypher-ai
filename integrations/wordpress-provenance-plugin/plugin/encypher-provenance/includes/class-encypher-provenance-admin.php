@@ -10,12 +10,15 @@ if (! defined('ABSPATH')) {
  */
 class Admin
 {
+    private const ACCOUNT_CACHE_TTL = 900; // 15 minutes
     public function register_hooks(): void
     {
         add_action('admin_menu', [$this, 'register_settings_page']);
+        add_action('admin_menu', [$this, 'register_analytics_page']);
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_settings_page_assets']);
         add_action('enqueue_block_editor_assets', [$this, 'enqueue_block_editor_assets']);
+        add_action('wp_dashboard_setup', [$this, 'register_dashboard_widget']);
         // Classic editor meta box disabled - using Gutenberg sidebar instead
         // add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
         // add_action('add_meta_boxes', [$this, 'register_classic_meta_box']);
@@ -24,6 +27,27 @@ class Admin
         add_action('publish_post', [$this, 'auto_mark_on_publish'], 10, 2);
         add_action('publish_page', [$this, 'auto_mark_on_publish'], 10, 2);
         add_action('post_updated', [$this, 'auto_mark_on_update'], 10, 3);
+    }
+
+    public function register_dashboard_widget(): void
+    {
+        wp_add_dashboard_widget(
+            'encypher_provenance_stats',
+            __('Encypher Provenance Coverage', 'encypher-provenance'),
+            [$this, 'render_dashboard_widget']
+        );
+    }
+
+    public function register_analytics_page(): void
+    {
+        add_submenu_page(
+            'tools.php',
+            __('Encypher Analytics', 'encypher-provenance'),
+            __('Encypher Analytics', 'encypher-provenance'),
+            'manage_options',
+            'encypher-analytics',
+            [$this, 'render_analytics_page']
+        );
     }
 
     public function register_settings_page(): void
@@ -51,6 +75,10 @@ class Admin
                 'metadata_format' => 'c2pa',
                 'add_hard_binding' => true,
                 'tier' => 'free',
+                'signing_mode' => 'managed',
+                'signing_profile_id' => '',
+                'organization_id' => '',
+                'organization_name' => '',
                 'post_types' => ['post', 'page'],
             ],
         ]);
@@ -86,6 +114,32 @@ class Admin
             [$this, 'render_auto_verify_field'],
             'encypher-provenance-settings',
             'encypher_assurance_main_section'
+        );
+
+        // Signature Management Section
+        add_settings_section(
+            'encypher_assurance_signature_section',
+            __('Signature Management', 'encypher-provenance'),
+            function () {
+                echo '<p>' . esc_html__('Manage how your content is signed. Free workspaces use Encypher-managed certificates. Pro and Enterprise can bring their own signing profiles.', 'encypher-provenance') . '</p>';
+            },
+            'encypher-provenance-settings'
+        );
+
+        add_settings_field(
+            'encypher_assurance_signing_mode',
+            __('Signature mode', 'encypher-provenance'),
+            [$this, 'render_signing_mode_field'],
+            'encypher-provenance-settings',
+            'encypher_assurance_signature_section'
+        );
+
+        add_settings_field(
+            'encypher_assurance_signing_profile_id',
+            __('Signing profile ID', 'encypher-provenance'),
+            [$this, 'render_signing_profile_id_field'],
+            'encypher-provenance-settings',
+            'encypher_assurance_signature_section'
         );
 
         // C2PA Settings Section
@@ -204,6 +258,7 @@ class Admin
     public function sanitize_settings(array $settings): array
     {
         $sanitized = [];
+        $current_settings = get_option('encypher_assurance_settings', []);
         $sanitized['api_base_url'] = isset($settings['api_base_url']) ? esc_url_raw(trim($settings['api_base_url'])) : 'https://api.encypherai.com/api/v1';
         $sanitized['api_base_url'] = rtrim($sanitized['api_base_url'], '/');
         $sanitized['api_key'] = isset($settings['api_key']) ? sanitize_text_field($settings['api_key']) : '';
@@ -212,8 +267,74 @@ class Admin
         $sanitized['auto_mark_on_update'] = isset($settings['auto_mark_on_update']) ? (bool) $settings['auto_mark_on_update'] : true;
         $sanitized['metadata_format'] = isset($settings['metadata_format']) && in_array($settings['metadata_format'], ['basic', 'c2pa'], true) ? $settings['metadata_format'] : 'c2pa';
         $sanitized['add_hard_binding'] = isset($settings['add_hard_binding']) ? (bool) $settings['add_hard_binding'] : true;
-        $sanitized['tier'] = isset($settings['tier']) && in_array($settings['tier'], ['free', 'pro', 'enterprise'], true) ? $settings['tier'] : 'free';
         $sanitized['post_types'] = isset($settings['post_types']) && is_array($settings['post_types']) ? array_map('sanitize_text_field', $settings['post_types']) : ['post', 'page'];
+
+        $account = null;
+        $previous_tier = isset($current_settings['tier']) ? $current_settings['tier'] : 'free';
+        $previous_org_id = isset($current_settings['organization_id']) ? $current_settings['organization_id'] : '';
+        $previous_org_name = isset($current_settings['organization_name']) ? $current_settings['organization_name'] : '';
+        if (!empty($sanitized['api_key'])) {
+            $account = $this->resolve_remote_account($sanitized['api_base_url'], $sanitized['api_key'], $current_settings);
+            if (is_wp_error($account)) {
+                add_settings_error(
+                    'encypher_assurance_settings',
+                    'tier_lookup_failed',
+                    sprintf(
+                        /* translators: %s: error message */
+                        __('Unable to determine current subscription tier: %s', 'encypher-provenance'),
+                        $account->get_error_message()
+                    ),
+                    'error'
+                );
+                $account = null;
+            }
+        }
+
+        if (is_array($account)) {
+            $sanitized['tier'] = $account['tier'];
+            $sanitized['organization_id'] = $account['organization_id'];
+            $sanitized['organization_name'] = $account['organization_name'];
+        } elseif (!empty($sanitized['api_key']) && $previous_tier !== 'free') {
+            // Keep last-known tier if dashboard lookup failed but we have a previous subscription
+            $sanitized['tier'] = $previous_tier;
+            $sanitized['organization_id'] = $previous_org_id;
+            $sanitized['organization_name'] = $previous_org_name;
+            add_settings_error(
+                'encypher_assurance_settings',
+                'tier_last_known',
+                __('Using last known subscription details until the dashboard becomes reachable.', 'encypher-provenance'),
+                'warning'
+            );
+        } else {
+            $sanitized['tier'] = 'free';
+            $sanitized['organization_id'] = '';
+            $sanitized['organization_name'] = '';
+        }
+
+        $requested_mode = isset($settings['signing_mode']) && in_array($settings['signing_mode'], ['managed', 'byok'], true) ? $settings['signing_mode'] : 'managed';
+        if ('free' === $sanitized['tier']) {
+            $sanitized['signing_mode'] = 'managed';
+            $sanitized['signing_profile_id'] = '';
+        } else {
+            $sanitized['signing_mode'] = $requested_mode;
+            if ('byok' === $sanitized['signing_mode']) {
+                $profile_id = isset($settings['signing_profile_id']) ? sanitize_text_field((string) $settings['signing_profile_id']) : '';
+                if ($profile_id) {
+                    $sanitized['signing_profile_id'] = $profile_id;
+                } else {
+                    add_settings_error(
+                        'encypher_assurance_settings',
+                        'missing_signing_profile',
+                        __('Please enter the Signing Profile ID from the Encypher dashboard when BYOK mode is enabled.', 'encypher-provenance'),
+                        'error'
+                    );
+                    $sanitized['signing_mode'] = 'managed';
+                    $sanitized['signing_profile_id'] = '';
+                }
+            } else {
+                $sanitized['signing_profile_id'] = '';
+            }
+        }
         
         // Free tier: badge must always be shown, coalition always enabled
         if ($sanitized['tier'] === 'free') {
@@ -227,6 +348,74 @@ class Admin
         }
         
         return $sanitized;
+    }
+
+    private function resolve_remote_account(string $api_base_url, string $api_key, array $fallback = [])
+    {
+        $base = rtrim((string) $api_base_url, '/');
+        if ('' === $base || '' === trim($api_key)) {
+            return [
+                'tier' => 'free',
+                'organization_id' => '',
+                'organization_name' => '',
+            ];
+        }
+
+        $cache_key = $this->build_account_cache_key($base, $api_key);
+        $cached = get_site_transient($cache_key);
+        if (is_array($cached)) {
+            return $cached;
+        }
+
+        $stats_url = $base . '/stats';
+        $response = wp_remote_get($stats_url, [
+            'timeout' => 15,
+            'headers' => [
+                'Accept' => 'application/json',
+                'Authorization' => 'Bearer ' . sanitize_text_field($api_key),
+            ],
+        ]);
+
+        if (is_wp_error($response)) {
+            return $response;
+        }
+
+        $status_code = wp_remote_retrieve_response_code($response);
+        if ($status_code >= 400) {
+            return new \WP_Error(
+                'tier_http_error',
+                sprintf(
+                    /* translators: %d: HTTP status code */
+                    __('Tier lookup failed with status %d.', 'encypher-provenance'),
+                    $status_code
+                )
+            );
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        if (! is_array($body)) {
+            return new \WP_Error('tier_parse_error', __('Received an unexpected response while determining subscription tier.', 'encypher-provenance'));
+        }
+
+        $tier = $body['tier'] ?? ($body['organization']['tier'] ?? 'free');
+        if (! in_array($tier, ['free', 'pro', 'enterprise'], true)) {
+            $tier = 'free';
+        }
+
+        $account = [
+            'tier' => $tier,
+            'organization_id' => isset($body['organization_id']) ? sanitize_text_field((string) $body['organization_id']) : sanitize_text_field((string) ($body['organization']['organization_id'] ?? '')),
+            'organization_name' => isset($body['organization_name']) ? sanitize_text_field((string) $body['organization_name']) : sanitize_text_field((string) ($body['organization']['organization_name'] ?? '')),
+        ];
+
+        set_site_transient($cache_key, $account, self::ACCOUNT_CACHE_TTL);
+
+        return $account;
+    }
+
+    private function build_account_cache_key(string $api_base_url, string $api_key): string
+    {
+        return 'encypher_account_' . md5(strtolower($api_base_url) . '|' . substr(hash('sha256', $api_key), 0, 16));
     }
 
     public function render_settings_page(): void
@@ -279,6 +468,26 @@ class Admin
                 'nonce' => wp_create_nonce('wp_rest'),
             ]
         );
+
+        $options = get_option('encypher_assurance_settings', []);
+        wp_localize_script(
+            'encypher-provenance-settings',
+            'EncypherSettingsData',
+            [
+                'tier' => isset($options['tier']) ? $options['tier'] : 'free',
+                'signingMode' => isset($options['signing_mode']) ? $options['signing_mode'] : 'managed',
+                'byokEnabled' => isset($options['signing_mode']) && 'byok' === $options['signing_mode'],
+                'dashboardUrls' => [
+                    'billing' => 'https://dashboard.encypherai.com/billing',
+                    'apiKey' => 'https://dashboard.encypherai.com/register',
+                    'byok' => 'https://dashboard.encypherai.com/signing-profiles',
+                ],
+                'strings' => [
+                    'byokDisabled' => __('BYOK is only available on Pro or Enterprise tiers.', 'encypher-provenance'),
+                    'tierDowngraded' => __('Your workspace tier no longer supports custom signing profiles. We reset BYOK to Encypher-managed certificates.', 'encypher-provenance'),
+                ],
+            ]
+        );
     }
 
     public function render_api_base_url_field(): void
@@ -286,7 +495,7 @@ class Admin
         $options = get_option('encypher_assurance_settings', []);
         $value = isset($options['api_base_url']) ? esc_url($options['api_base_url']) : '';
         ?>
-        <input type="url" class="regular-text" name="encypher_assurance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="http://localhost:9000/api/v1" required />
+        <input type="url" id="api_base_url" class="regular-text" name="encypher_assurance_settings[api_base_url]" value="<?php echo esc_attr($value); ?>" placeholder="http://localhost:9000/api/v1" required />
         <p class="description">
             <?php esc_html_e('Base URL for the Encypher Enterprise API.', 'encypher-provenance'); ?><br>
             <strong><?php esc_html_e('Local testing:', 'encypher-provenance'); ?></strong> <?php esc_html_e('Use http://localhost:9000/api/v1', 'encypher-provenance'); ?><br>
@@ -303,8 +512,17 @@ class Admin
         $options = get_option('encypher_assurance_settings', []);
         $value = isset($options['api_key']) ? $options['api_key'] : '';
         ?>
-        <input type="password" class="regular-text" name="encypher_assurance_settings[api_key]" value="<?php echo esc_attr($value); ?>" autocomplete="off" />
-        <p class="description"><?php esc_html_e('Enterprise API keys authenticate requests using the Authorization Bearer scheme. Generate a free key from the Encypher dashboard.', 'encypher-provenance'); ?></p>
+        <input type="password" id="api_key" class="regular-text" name="encypher_assurance_settings[api_key]" value="<?php echo esc_attr($value); ?>" autocomplete="off" />
+        <p class="description">
+            <?php esc_html_e('Enterprise API keys authenticate requests using the Authorization Bearer scheme.', 'encypher-provenance'); ?>
+            <br>
+            <a class="button button-secondary" href="https://dashboard.encypherai.com/register" target="_blank" rel="noopener noreferrer">
+                <?php esc_html_e('Get API Key', 'encypher-provenance'); ?>
+            </a>
+            <a class="button button-link" style="margin-left:8px;" href="https://dashboard.encypherai.com/billing" target="_blank" rel="noopener noreferrer">
+                <?php esc_html_e('Manage Account & Billing', 'encypher-provenance'); ?>
+            </a>
+        </p>
         <?php
     }
 
@@ -317,6 +535,73 @@ class Admin
             <input type="checkbox" name="encypher_assurance_settings[auto_verify]" value="1" <?php checked($checked); ?> />
             <?php esc_html_e('Verify signed content when rendering posts/pages.', 'encypher-provenance'); ?>
         </label>
+        <?php
+    }
+
+    public function render_signing_mode_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $value = isset($options['signing_mode']) ? $options['signing_mode'] : 'managed';
+
+        if ('free' === $tier) {
+            ?>
+            <p class="description">
+                <?php esc_html_e('Free workspaces use Encypher-managed certificates. Upgrade to Pro for Bring Your Own Key support.', 'encypher-provenance'); ?>
+            </p>
+            <input type="hidden" name="encypher_assurance_settings[signing_mode]" value="managed" />
+            <?php
+            return;
+        }
+        ?>
+        <select id="encypher-signing-mode" name="encypher_assurance_settings[signing_mode]">
+            <option value="managed" <?php selected('managed', $value); ?>>
+                <?php esc_html_e('Managed certificate (recommended)', 'encypher-provenance'); ?>
+            </option>
+            <option value="byok" <?php selected('byok', $value); ?>>
+                <?php esc_html_e('Bring Your Own Key (BYOK)', 'encypher-provenance'); ?>
+            </option>
+        </select>
+        <p class="description">
+            <?php esc_html_e('BYOK lets you sign posts with your own Ed25519 key pair registered in the Encypher dashboard.', 'encypher-provenance'); ?>
+        </p>
+        <?php
+    }
+
+    public function render_signing_profile_id_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $mode = isset($options['signing_mode']) ? $options['signing_mode'] : 'managed';
+        $value = isset($options['signing_profile_id']) ? $options['signing_profile_id'] : '';
+
+        if ('free' === $tier) {
+            ?>
+            <p class="description">
+                <?php esc_html_e('Upgrade to Pro to configure custom signing profiles from your Encypher dashboard.', 'encypher-provenance'); ?>
+            </p>
+            <input type="hidden" name="encypher_assurance_settings[signing_profile_id]" value="" />
+            <?php
+            return;
+        }
+
+        $readonly = ('byok' !== $mode);
+        ?>
+        <input
+            id="encypher-signing-profile-id"
+            type="text"
+            class="regular-text"
+            name="encypher_assurance_settings[signing_profile_id]"
+            value="<?php echo esc_attr($value); ?>"
+            <?php disabled($readonly); ?>
+            placeholder="prof_1234abcd"
+        />
+        <p class="description">
+            <?php esc_html_e('Paste the Signing Profile ID generated in the Encypher dashboard BYOK wizard.', 'encypher-provenance'); ?>
+            <?php if ($readonly) : ?>
+                <br><em><?php esc_html_e('Enable BYOK mode above to edit this value.', 'encypher-provenance'); ?></em>
+            <?php endif; ?>
+        </p>
         <?php
     }
 
@@ -339,6 +624,11 @@ class Admin
                 'restUrl' => esc_url_raw(rest_url('encypher-provenance/v1/')),
                 'nonce' => wp_create_nonce('wp_rest'),
                 'autoVerify' => ! empty($settings['auto_verify']),
+                'tier' => isset($settings['tier']) ? $settings['tier'] : 'free',
+                'signingMode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
+                'byokEnabled' => isset($settings['signing_mode']) && 'byok' === $settings['signing_mode'],
+                'upgradeUrl' => 'https://dashboard.encypherai.com/billing',
+                'manageAccountUrl' => 'https://dashboard.encypherai.com/settings',
             ]
         );
 
@@ -833,5 +1123,203 @@ class Admin
             </div>
             <?php
         }
+    }
+
+    public function render_dashboard_widget(): void
+    {
+        if (! current_user_can('manage_options')) {
+            esc_html_e('You do not have permission to view these statistics.', 'encypher-provenance');
+            return;
+        }
+
+        $stats = $this->gather_analytics_stats();
+        ?>
+        <div class="encypher-dashboard-widget">
+            <ul style="margin:0;padding:0;list-style:none;display:flex;gap:12px;flex-wrap:wrap;">
+                <li style="flex:1;min-width:140px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px;padding:12px;">
+                    <strong style="display:block;font-size:22px;"><?php echo esc_html($stats['signed_posts']); ?></strong>
+                    <span><?php esc_html_e('Signed posts', 'encypher-provenance'); ?></span>
+                </li>
+                <li style="flex:1;min-width:140px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px;padding:12px;">
+                    <strong style="display:block;font-size:22px;"><?php echo esc_html($stats['coverage']); ?>%</strong>
+                    <span><?php esc_html_e('Coverage', 'encypher-provenance'); ?></span>
+                </li>
+                <li style="flex:1;min-width:140px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px;padding:12px;">
+                    <strong style="display:block;font-size:22px;"><?php echo esc_html($stats['sentence_posts']); ?></strong>
+                    <span><?php esc_html_e('Sentence-level posts', 'encypher-provenance'); ?></span>
+                </li>
+            </ul>
+            <p style="margin-top:12px;">
+                <a href="<?php echo esc_url(admin_url('tools.php?page=encypher-analytics')); ?>" class="button button-small">
+                    <?php esc_html_e('Open analytics', 'encypher-provenance'); ?>
+                </a>
+            </p>
+        </div>
+        <?php
+    }
+
+    public function render_analytics_page(): void
+    {
+        if (! current_user_can('manage_options')) {
+            return;
+        }
+
+        $stats = $this->gather_analytics_stats(true);
+        ?>
+        <div class="wrap encypher-analytics-page">
+            <h1><?php esc_html_e('Encypher Analytics', 'encypher-provenance'); ?></h1>
+            <p class="description">
+                <?php esc_html_e('Track how much of your WordPress library is protected with Encypher provenance markers.', 'encypher-provenance'); ?>
+            </p>
+
+            <div class="encypher-analytics-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:20px;">
+                <div class="analytics-card">
+                    <strong><?php echo esc_html($stats['total_posts']); ?></strong>
+                    <span><?php esc_html_e('Published posts', 'encypher-provenance'); ?></span>
+                </div>
+                <div class="analytics-card">
+                    <strong><?php echo esc_html($stats['signed_posts']); ?></strong>
+                    <span><?php esc_html_e('Signed posts', 'encypher-provenance'); ?></span>
+                </div>
+                <div class="analytics-card">
+                    <strong><?php echo esc_html($stats['coverage']); ?>%</strong>
+                    <span><?php esc_html_e('Coverage', 'encypher-provenance'); ?></span>
+                </div>
+                <div class="analytics-card">
+                    <strong><?php echo esc_html($stats['sentence_posts']); ?></strong>
+                    <span><?php esc_html_e('Sentence-level posts', 'encypher-provenance'); ?></span>
+                </div>
+                <div class="analytics-card">
+                    <strong><?php echo esc_html($stats['tampered_posts']); ?></strong>
+                    <span><?php esc_html_e('Tampering alerts', 'encypher-provenance'); ?></span>
+                </div>
+            </div>
+
+            <h2 style="margin-top:32px;"><?php esc_html_e('Recent activity', 'encypher-provenance'); ?></h2>
+            <table class="widefat striped">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e('Post', 'encypher-provenance'); ?></th>
+                        <th><?php esc_html_e('Last signed', 'encypher-provenance'); ?></th>
+                        <th><?php esc_html_e('Status', 'encypher-provenance'); ?></th>
+                        <th><?php esc_html_e('Sentences', 'encypher-provenance'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($stats['recent_posts'])) : ?>
+                        <tr><td colspan="4"><?php esc_html_e('No signing activity yet.', 'encypher-provenance'); ?></td></tr>
+                    <?php else : ?>
+                        <?php foreach ($stats['recent_posts'] as $recent) : ?>
+                            <tr>
+                                <td>
+                                    <a href="<?php echo esc_url(get_edit_post_link($recent['ID'])); ?>">
+                                        <?php echo esc_html($recent['title']); ?>
+                                    </a>
+                                </td>
+                                <td><?php echo esc_html($recent['last_signed']); ?></td>
+                                <td><?php echo esc_html($recent['status']); ?></td>
+                                <td><?php echo esc_html($recent['sentences']); ?></td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+
+            <p style="margin-top:24px;">
+                <?php esc_html_e('Workspace tier:', 'encypher-provenance'); ?>
+                <strong><?php echo esc_html(ucfirst($stats['tier'])); ?></strong>
+            </p>
+        </div>
+        <style>
+            .encypher-analytics-page .analytics-card {
+                background: #fff;
+                border: 1px solid #dcdcde;
+                border-radius: 4px;
+                padding: 16px;
+                text-align: center;
+            }
+            .encypher-analytics-page .analytics-card strong {
+                display: block;
+                font-size: 28px;
+                color: #1d2327;
+            }
+            .encypher-analytics-page .analytics-card span {
+                color: #50575e;
+            }
+        </style>
+        <?php
+    }
+
+    private function gather_analytics_stats(bool $with_recent = false): array
+    {
+        global $wpdb;
+
+        $counts = wp_count_posts();
+        $total_posts = isset($counts->publish) ? (int) $counts->publish : 0;
+
+        $signed_posts = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+                '_encypher_marked',
+                '1'
+            )
+        );
+
+        $sentence_posts = (int) $wpdb->get_var(
+            "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta}
+             WHERE meta_key = '_encypher_assurance_total_sentences' AND CAST(meta_value AS UNSIGNED) > 0"
+        );
+
+        $tampered_posts = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+                '_encypher_assurance_status',
+                'tampered'
+            )
+        );
+
+        $coverage = $total_posts > 0 ? round(($signed_posts / $total_posts) * 100) : 0;
+
+        $recent_posts = [];
+        if ($with_recent) {
+            $recent_rows = $wpdb->get_results(
+                "SELECT post_id, meta_value FROM {$wpdb->postmeta}
+                 WHERE meta_key = '_encypher_assurance_last_signed'
+                 ORDER BY meta_value DESC LIMIT 5"
+            );
+
+            foreach ((array) $recent_rows as $row) {
+                $post = get_post($row->post_id);
+                if (! $post) {
+                    continue;
+                }
+                $recent_posts[] = [
+                    'ID' => $post->ID,
+                    'title' => get_the_title($post),
+                    'last_signed' => $row->meta_value,
+                    'status' => get_post_meta($post->ID, '_encypher_assurance_status', true) ?: __('Unknown', 'encypher-provenance'),
+                    'sentences' => (int) get_post_meta($post->ID, '_encypher_assurance_total_sentences', true),
+                ];
+            }
+        }
+
+        $settings = get_option('encypher_assurance_settings', []);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+
+        $stats = [
+            'total_posts' => $total_posts,
+            'signed_posts' => $signed_posts,
+            'sentence_posts' => $sentence_posts,
+            'tampered_posts' => $tampered_posts,
+            'coverage' => $coverage,
+            'tier' => $tier,
+            'recent_posts' => [],
+        ];
+
+        if ($with_recent) {
+            $stats['recent_posts'] = $recent_posts;
+        }
+
+        return $stats;
     }
 }
