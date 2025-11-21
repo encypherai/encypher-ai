@@ -59,14 +59,6 @@ def live_api_server():
         
     finally:
         print("Stopping API Server...")
-        
-        # Print tail of logs for debugging
-        try:
-            with open("api_server.log", "r") as f:
-                print(f"[Server Log Tail]\n{f.read()[-5000:]}")
-        except:
-            pass
-            
         if sys.platform == "win32":
             subprocess.call(["taskkill", "/F", "/T", "/PID", str(process.pid)])
         else:
