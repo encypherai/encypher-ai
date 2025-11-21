@@ -8,14 +8,15 @@ CREATE TABLE IF NOT EXISTS organizations (
     organization_type VARCHAR(50) NOT NULL, -- 'publisher', 'legal_finance', 'ai_lab', 'enterprise'
     email VARCHAR(255) NOT NULL UNIQUE,
     tier VARCHAR(50) NOT NULL DEFAULT 'free', -- 'free', 'business', 'enterprise'
+    user_id VARCHAR(100), -- For Coalition integration
 
     -- Certificate management (SSL.com)
     certificate_pem TEXT,
     certificate_chain TEXT,
     certificate_status VARCHAR(32) DEFAULT 'active',
-    certificate_rotated_at TIMESTAMP,
+    certificate_rotated_at TIMESTAMPTZ,
     private_key_encrypted BYTEA, -- AES-256 encrypted (for Encypher-managed keys)
-    certificate_expiry TIMESTAMP,
+    certificate_expiry TIMESTAMPTZ,
     ssl_order_id VARCHAR(100),
 
     -- Usage tracking
@@ -25,8 +26,8 @@ CREATE TABLE IF NOT EXISTS organizations (
     api_calls_this_month INTEGER DEFAULT 0,
 
     -- Metadata
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_org_type ON organizations(organization_type);
@@ -48,8 +49,8 @@ CREATE TABLE IF NOT EXISTS documents (
     text_hash VARCHAR(64) NOT NULL, -- SHA-256 of original text (for tamper detection)
 
     -- Metadata
-    publication_date TIMESTAMP NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
+    publication_date TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
 
     FOREIGN KEY (organization_id) REFERENCES organizations(organization_id) ON DELETE CASCADE
 );
@@ -73,7 +74,7 @@ CREATE TABLE IF NOT EXISTS sentence_records (
     embedded_in_manifest BOOLEAN DEFAULT TRUE,
 
     -- Metadata
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
 
     FOREIGN KEY (document_id) REFERENCES documents(document_id) ON DELETE CASCADE,
     FOREIGN KEY (organization_id) REFERENCES organizations(organization_id) ON DELETE CASCADE
@@ -95,9 +96,9 @@ CREATE TABLE IF NOT EXISTS api_keys (
     can_lookup BOOLEAN DEFAULT TRUE,
 
     -- Lifecycle
-    created_at TIMESTAMP DEFAULT NOW(),
-    last_used_at TIMESTAMP,
-    expires_at TIMESTAMP,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    last_used_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
     revoked BOOLEAN DEFAULT FALSE,
 
     FOREIGN KEY (organization_id) REFERENCES organizations(organization_id) ON DELETE CASCADE
@@ -117,14 +118,14 @@ CREATE TABLE IF NOT EXISTS certificate_lifecycle (
     validation_url TEXT,
 
     -- Lifecycle dates
-    ordered_at TIMESTAMP,
-    issued_at TIMESTAMP,
-    expires_at TIMESTAMP,
-    renewal_initiated_at TIMESTAMP,
+    ordered_at TIMESTAMPTZ,
+    issued_at TIMESTAMPTZ,
+    expires_at TIMESTAMPTZ,
+    renewal_initiated_at TIMESTAMPTZ,
 
     -- Metadata
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
 
     FOREIGN KEY (organization_id) REFERENCES organizations(organization_id) ON DELETE CASCADE
 );
@@ -148,7 +149,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     api_key_used VARCHAR(64),
 
     -- Metadata
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
 
     FOREIGN KEY (organization_id) REFERENCES organizations(organization_id) ON DELETE SET NULL
 );
@@ -166,7 +167,7 @@ CREATE TABLE IF NOT EXISTS merkle_roots (
     tree_depth INTEGER NOT NULL CHECK (tree_depth >= 0),
     total_leaves INTEGER NOT NULL CHECK (total_leaves > 0),
     segmentation_level VARCHAR(50) NOT NULL CHECK (segmentation_level IN ('sentence', 'paragraph', 'section')),
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     metadata JSONB DEFAULT '{}',
     
     CONSTRAINT fk_merkle_roots_organization 
@@ -221,8 +222,8 @@ CREATE TABLE IF NOT EXISTS content_references (
     license_type VARCHAR(100),
     license_url VARCHAR(500),
     signature_hash VARCHAR(64) NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMPTZ,
     embedding_metadata JSONB DEFAULT '{}',
     
     CONSTRAINT chk_leaf_index_positive CHECK (leaf_index >= 0),
@@ -250,8 +251,8 @@ CREATE TABLE IF NOT EXISTS merkle_proof_cache (
     root_id UUID NOT NULL,
     proof_path JSONB NOT NULL,
     position_bits BYTEA NOT NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours'),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMPTZ NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL '24 hours'),
     
     CONSTRAINT fk_merkle_proof_cache_root 
         FOREIGN KEY (root_id) 
@@ -268,7 +269,7 @@ CREATE TABLE IF NOT EXISTS attribution_reports (
     organization_id VARCHAR(255) NOT NULL,
     target_document_id VARCHAR(255),
     target_text_hash VARCHAR(64),
-    scan_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    scan_timestamp TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     total_segments INTEGER NOT NULL CHECK (total_segments >= 0),
     matched_segments INTEGER NOT NULL CHECK (matched_segments >= 0),
     source_documents JSONB NOT NULL DEFAULT '[]',
@@ -304,11 +305,11 @@ CREATE TABLE IF NOT EXISTS batch_requests (
     error_code VARCHAR(64),
     error_message TEXT,
     request_metadata JSON,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    started_at TIMESTAMP NULL,
-    completed_at TIMESTAMP NULL,
-    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    started_at TIMESTAMPTZ NULL,
+    completed_at TIMESTAMPTZ NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
     UNIQUE (organization_id, idempotency_key)
 );
 
@@ -328,8 +329,8 @@ CREATE TABLE IF NOT EXISTS batch_items (
     error_message TEXT,
     statistics JSON,
     result_payload JSON,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS ix_batch_items_batch_request_id

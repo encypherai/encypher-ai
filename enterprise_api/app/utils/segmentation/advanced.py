@@ -7,6 +7,7 @@ Requires: spacy and a language model (e.g., en_core_web_sm)
 Install with: uv add spacy
 Then: python -m spacy download en_core_web_sm
 """
+from functools import lru_cache
 from typing import List, Optional
 import logging
 
@@ -19,6 +20,27 @@ try:
 except ImportError:
     SPACY_AVAILABLE = False
     logger.warning("spaCy not available. Advanced segmentation disabled. Install with: uv add spacy")
+
+
+@lru_cache(maxsize=4)
+def get_spacy_model(model_name: str):
+    """
+    Get cached spaCy model to avoid reloading.
+    """
+    if not SPACY_AVAILABLE:
+        raise ImportError(
+            "spaCy is required for advanced segmentation. "
+            "Install with: uv add spacy && python -m spacy download en_core_web_sm"
+        )
+    
+    try:
+        logger.info(f"Loading spaCy model: {model_name}")
+        return spacy.load(model_name)
+    except OSError:
+        raise OSError(
+            f"spaCy model '{model_name}' not found. "
+            f"Download with: python -m spacy download {model_name}"
+        )
 
 
 class AdvancedSegmenter:
@@ -43,20 +65,8 @@ class AdvancedSegmenter:
             ImportError: If spaCy is not installed
             OSError: If spaCy model is not downloaded
         """
-        if not SPACY_AVAILABLE:
-            raise ImportError(
-                "spaCy is required for advanced segmentation. "
-                "Install with: uv add spacy && python -m spacy download en_core_web_sm"
-            )
-        
-        try:
-            self.nlp = spacy.load(model_name)
-            logger.info(f"Loaded spaCy model: {model_name}")
-        except OSError:
-            raise OSError(
-                f"spaCy model '{model_name}' not found. "
-                f"Download with: python -m spacy download {model_name}"
-            )
+        self.nlp = get_spacy_model(model_name)
+
     
     def segment_sentences(self, text: str) -> List[str]:
         """

@@ -21,9 +21,9 @@ def _correlation_id(request: Request) -> str:
 async def batch_sign(
     batch_request: BatchSignRequest,
     request: Request,
+    response: Response,
     organization: dict = Depends(require_sign_permission),
     db: AsyncSession = Depends(get_db),
-    response: Response,
 ) -> BatchResponseEnvelope:
     """Sign multiple documents in a single request."""
 
@@ -53,9 +53,9 @@ async def batch_sign(
 async def batch_verify(
     batch_request: BatchVerifyRequest,
     request: Request,
+    response: Response,
     organization: dict = Depends(require_verify_permission),
     db: AsyncSession = Depends(get_db),
-    response: Response,
 ) -> BatchResponseEnvelope:
     """Verify multiple documents in a single request."""
 

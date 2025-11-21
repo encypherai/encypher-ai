@@ -15,7 +15,7 @@ from uuid import uuid4
 from sqlalchemy import text
 
 from app.config import settings
-from app.routers import batch, chat, kafka, licensing, lookup, onboarding, signing, streaming, verification
+from app.routers import batch, chat, licensing, lookup, onboarding, signing, streaming, verification
 from app.api.v1.api import api_router as api_v1_router
 from app.database import engine
 from app.observability.metrics import render_prometheus
@@ -228,7 +228,6 @@ app.include_router(verification.router, prefix="/api/v1", tags=["Verification"])
 app.include_router(lookup.router, prefix="/api/v1", tags=["Lookup"])
 app.include_router(onboarding.router, prefix="/api/v1/onboarding", tags=["Onboarding"])
 app.include_router(streaming.router, prefix="/api/v1", tags=["Streaming"])
-app.include_router(kafka.router, prefix="/api/v1", tags=["Kafka"])
 app.include_router(chat.router, prefix="/api/v1", tags=["Chat"])
 app.include_router(licensing.router, prefix="/api/v1", tags=["Licensing"])
 app.include_router(batch.router)

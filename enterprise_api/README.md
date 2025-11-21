@@ -586,6 +586,12 @@ curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
 └─────────────────────────────────────────┘
                 ↓
 ┌─────────────────────────────────────────┐
+│ Key Service (Internal)                  │
+│ - Validates API Keys                    │
+│ - Manages quotas & permissions          │
+└─────────────────────────────────────────┘
+                ↓
+┌─────────────────────────────────────────┐
 │ encypher-ai Core Library (v2.9.0)     │
 │ - C2PA manifest generation             │
 │ - Unicode metadata embedding           │

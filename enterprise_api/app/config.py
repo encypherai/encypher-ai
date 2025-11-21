@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     # Service URLs
     coalition_service_url: str = "http://localhost:8009"
     auth_service_url: str = "http://localhost:8001"
+    key_service_url: str = "http://localhost:8003"
 
     # Rate limiting
     rate_limit_per_minute: int = 60

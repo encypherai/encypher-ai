@@ -130,9 +130,20 @@ async def execute_signing(
             },
         )
 
+        sentence_records = []
         for idx, sentence in enumerate(sentences):
             sentence_id = f"sent_{uuid.uuid4().hex[:20]}"
             sentence_hash = compute_sentence_hash(sentence)
+            sentence_records.append({
+                "sent_id": sentence_id,
+                "doc_id": document_id,
+                "org_id": organization["organization_id"],
+                "text": sentence,
+                "hash": sentence_hash,
+                "idx": idx,
+            })
+
+        if sentence_records:
             await db.execute(
                 text(
                     """
@@ -143,14 +154,7 @@ async def execute_signing(
                     VALUES (:sent_id, :doc_id, :org_id, :text, :hash, :idx, TRUE)
                     """
                 ),
-                {
-                    "sent_id": sentence_id,
-                    "doc_id": document_id,
-                    "org_id": organization["organization_id"],
-                    "text": sentence,
-                    "hash": sentence_hash,
-                    "idx": idx,
-                },
+                sentence_records
             )
 
         await db.execute(

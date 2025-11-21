@@ -16,9 +16,9 @@ router = APIRouter()
 @router.post("/sign", response_model=SignResponse)
 async def sign_content(
     request: SignRequest,
+    response: Response,
     organization: dict = Depends(require_sign_permission),
     db: AsyncSession = Depends(get_db),
-    response: Response,
 ) -> SignResponse:
     """Sign content with a C2PA manifest."""
 

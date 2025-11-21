@@ -24,7 +24,6 @@ dependencies = [
     "redis>=7.0.1",
     "aioredis>=2.0.1",
     "sse-starlette>=3.0.3",
-    "kafka-python>=2.2.15",
     "beautifulsoup4>=4.14.2",
     "email-validator>=2.2.0",
     "jsonschema>=4.24.0",
@@ -75,6 +74,8 @@ encypher-ai = { path = "../encypher-ai", editable = true }
 [dependency-groups]
 dev = [
     "aiosqlite>=0.21.0",
+    "docker>=7.1.0",
+    "numpy>=2.0.2",
     "pip-audit>=2.9.0",
     "pipdeptree>=2.28.0",
     "pytest>=8.3.5",
