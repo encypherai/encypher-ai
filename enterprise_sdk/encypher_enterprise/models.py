@@ -9,13 +9,12 @@ from datetime import datetime
 class SignRequest(BaseModel):
     """Request model for signing content."""
     text: str = Field(..., description="Content to sign")
+    document_id: Optional[str] = Field(None, description="Optional custom document identifier")
     document_title: Optional[str] = Field(None, description="Optional document title")
     document_url: Optional[str] = Field(None, description="Optional document URL")
     document_type: str = Field(default="article", description="Document type")
-    custom_metadata: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Optional metadata payload to persist alongside the manifest",
-    )
+    claim_generator: Optional[str] = Field(None, description="Optional claim generator identifier")
+    actions: Optional[List[Dict[str, Any]]] = Field(None, description="Optional list of C2PA actions")
 
 
 class SignResponse(BaseModel):

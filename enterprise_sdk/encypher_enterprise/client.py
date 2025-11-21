@@ -71,7 +71,9 @@ class EncypherClient:
         title: Optional[str] = None,
         url: Optional[str] = None,
         document_type: str = "article",
-        metadata: Optional[Dict[str, Any]] = None,
+        document_id: Optional[str] = None,
+        claim_generator: Optional[str] = None,
+        actions: Optional[List[Dict[str, Any]]] = None,
     ) -> SignResponse:
         """
         Sign content with C2PA manifest.
@@ -81,7 +83,9 @@ class EncypherClient:
             title: Optional document title
             url: Optional document URL
             document_type: Document type (article, legal_brief, contract, ai_output)
-            metadata: Optional metadata dict to include with the signing request
+            document_id: Optional custom document identifier
+            claim_generator: Optional custom claim generator string
+            actions: Optional list of C2PA action assertions
 
         Returns:
             SignResponse with signed text and metadata
@@ -96,7 +100,9 @@ class EncypherClient:
             document_title=title,
             document_url=url,
             document_type=document_type,
-            custom_metadata=metadata
+            document_id=document_id,
+            claim_generator=claim_generator,
+            actions=actions
         )
 
         try:

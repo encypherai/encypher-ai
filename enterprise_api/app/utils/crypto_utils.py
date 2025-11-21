@@ -31,19 +31,10 @@ async def load_organization_private_key(
     Raises:
         ValueError: If no private key found for organization
     """
-    # Handle demo organization with environment-provided key
+    # Handle demo organization - derive private key
     global _DEMO_PRIVATE_KEY
-    if organization_id == settings.demo_organization_id and settings.demo_private_key_bytes:
-        if _DEMO_PRIVATE_KEY is None:
-            # Generate a demo private key from the configured bytes
-            # If all zeros, generate a new one for this session
-            if settings.demo_private_key_bytes == b'\x00' * 32:
-                _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.generate()
-            else:
-                _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.from_private_bytes(
-                    settings.demo_private_key_bytes
-                )
-        return _DEMO_PRIVATE_KEY
+    if organization_id == settings.demo_organization_id:
+        return get_demo_private_key()
     
     result = await db.execute(
         text("SELECT private_key_encrypted FROM organizations WHERE organization_id = :org_id"),
@@ -89,8 +80,9 @@ async def load_organization_public_key(
     global _DEMO_PRIVATE_KEY
     if organization_id == settings.demo_organization_id:
         # Load the private key first (which handles demo org)
-        private_key = await load_organization_private_key(organization_id, db)
-        # Derive public key from private key
+        # Use the synchronous helper if we are in a sync context or just call the helper
+        # Actually, get_demo_private_key is synchronous.
+        private_key = get_demo_private_key()
         return private_key.public_key()
     
     result = await db.execute(

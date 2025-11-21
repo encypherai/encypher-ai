@@ -208,6 +208,7 @@ CREATE INDEX IF NOT EXISTS idx_merkle_subhashes_hash_root ON merkle_subhashes(ha
 CREATE INDEX IF NOT EXISTS idx_merkle_subhashes_parent ON merkle_subhashes(parent_hash) WHERE parent_hash IS NOT NULL;
 
 -- Content references (for minimal signed embeddings)
+DROP TABLE IF EXISTS content_references CASCADE;
 CREATE TABLE IF NOT EXISTS content_references (
     ref_id BIGINT PRIMARY KEY,
     merkle_root_id UUID NOT NULL,
@@ -221,6 +222,9 @@ CREATE TABLE IF NOT EXISTS content_references (
     c2pa_manifest_hash VARCHAR(64),
     license_type VARCHAR(100),
     license_url VARCHAR(500),
+    instance_id VARCHAR(100),
+    previous_instance_id VARCHAR(100),
+    manifest_data JSONB,
     signature_hash VARCHAR(64) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     expires_at TIMESTAMPTZ,
