@@ -13,13 +13,20 @@
     - [ ] 2.0.3 Implement Enterprise Embeddings flow (Verified logic manually, integration test harness issue pending)
     - [ ] 2.0.4 Implement Streaming flow (Pending test harness fix)
 
-- [ ] 3.0 Developer Experience & Polish
-    - [ ] 3.0.1 Verify README Quick Start examples
-    - [ ] 3.0.2 Ensure CLI commands (`encypher sign`) work with local config
+- [x] 3.0 Developer Experience & Polish
+    - [x] 3.0.1 Verify README Quick Start examples
+    - [x] 3.0.2 Ensure CLI commands (`encypher sign`) work with local config
 
 ## Notes
 - **Context**: `enterprise_api` passed load tests with Docker/Postgres. We can reuse this running instance for SDK integration tests.
 - **Constraint**: SDK must handle `TIMESTAMPTZ` formats returned by the API (fixed in previous phase).
 
-## Current Goal
-- Begin Phase 1.0: Audit SDK vs API Contract.
+## Status
+- **Completed**:
+    - Load test fixes (sync DB init, demo seeding).
+    - DB Schema updates (TIMESTAMPTZ, user_id, missing columns).
+    - SDK Contract Audit (SignRequest).
+    - Sign/Verify Integration Tests (Dockerized env).
+    - Developer Experience review.
+- **Pending**:
+    - Debugging integration test harness for Embeddings/Streaming flows (core logic verified).

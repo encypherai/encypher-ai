@@ -901,7 +901,7 @@ uv run pytest tests/test_state.py -v
 **Current Test Coverage:**
 - `state.py`: 91% ✅
 - `batch.py`: 63% ✅
-- Overall: 31%
+- Overall: ~30% (Integration tests expanding)
 
 ---
 
