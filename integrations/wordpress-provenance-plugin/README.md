@@ -47,6 +47,22 @@ Both endpoints and their request/response shapes are described in detail in the 
 ✅ **Copy Button**: Export full JSON manifest with one click  
 ✅ **No Double-Signing**: Smart caching prevents unnecessary re-signing
 
+## Features & Tiers
+
+The plugin adapts its capabilities based on your Encypher workspace tier:
+
+| Feature | Free | Pro ($99/mo) | Enterprise |
+|---------|------|--------------|------------|
+| **Signature** | Shared (Managed) | Custom (BYOK) | Custom (HSM Option) |
+| **Granularity** | Document-level | Sentence-level | Sentence-level |
+| **Bulk Marking** | 100 posts / batch | Unlimited | Unlimited |
+| **Coalition** | Required | Optional | Optional |
+| **Support** | Community | Priority | Dedicated SLA |
+
+*   **Free Tier**: Perfect for personal blogs. Uses a shared Encypher key and standard document-level signing.
+*   **Pro Tier**: For professional publishers. Connect your own signing key (BYOK), enable sentence-level attribution (Merkle trees), and process large archives.
+*   **Enterprise Tier**: For large organizations. High-volume API limits, HSM-backed keys, and multi-site support.
+
 ## New User Onboarding (Free API Key Flow)
 
 1. Visit `https://dashboard.encypherai.com/signup` and create a free Encypher account. The starter tier issues a sandbox key suitable for testing the plugin.
@@ -72,11 +88,11 @@ A `docker-compose.yml` is provided so you can run WordPress, MySQL, PostgreSQL, 
 
 1. Build and start the stack:
    ```bash
-   cd integrations/wordpress-assurance-plugin
+   cd integrations/wordpress-provenance-plugin
    docker compose up --build
    ```
    - WordPress: `http://localhost:8080`
-   - Enterprise API: `http://localhost:8000`
+   - Enterprise API: `http://localhost:8001`
 2. Install WordPress (first run only):
    ```bash
    docker compose run --rm wp-cli core install \
