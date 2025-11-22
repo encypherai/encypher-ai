@@ -9,7 +9,7 @@ management for C2PA v2.2 compliance.
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional, Set, cast
+from typing import List, Optional, Set, Union, Protocol, cast
 
 import requests
 import cbor2
@@ -24,6 +24,15 @@ ALG_EDDSA = -8
 X5CHAIN_HEADER = 33
 
 from .logging_config import logger
+
+
+class Signer(Protocol):
+    """Protocol for abstract signing implementations (e.g., AWS KMS, Azure Key Vault)."""
+    def sign(self, data: bytes) -> bytes:
+        ...
+
+
+SigningKey = Union[ed25519.Ed25519PrivateKey, Signer]
 
 
 def _encode_protected(headers: dict) -> bytes:
@@ -54,25 +63,35 @@ def _parse_sign1(cose_bytes: bytes):
     return bytes(protected_bstr), unprotected, None if payload is None else bytes(payload), bytes(signature)
 
 
-def sign_payload(private_key: PrivateKeyTypes, payload_bytes: bytes) -> bytes:
+def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
     """
-    Signs the payload bytes using the private key (Ed25519).
+    Signs the payload bytes using the private key (Ed25519 or Signer).
 
     Args:
-        private_key: The Ed25519 private key object.
+        private_key: The Ed25519 private key object or Signer implementation.
         payload_bytes: The canonical bytes of the payload to sign.
 
     Returns:
         The signature bytes.
 
     Raises:
-        TypeError: If the provided key is not an Ed25519 private key.
+        TypeError: If the provided key is invalid.
     """
-    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-        logger.error(f"Signing aborted: Incorrect private key type provided " f"({type(private_key)}). Expected Ed25519PrivateKey.")
-        raise TypeError("Signing requires an Ed25519PrivateKey instance.")
+    logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes).")
+    
+    if hasattr(private_key, "sign") and callable(private_key.sign):
+        try:
+            signature = private_key.sign(payload_bytes)
+            logger.info(f"Successfully signed payload (signature length: {len(signature)} bytes).")
+            return cast(bytes, signature)
+        except Exception as e:
+            logger.error(f"Signing operation failed: {e}", exc_info=True)
+            raise RuntimeError(f"Signing failed: {e}")
 
-    logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes) with Ed25519 key.")
+    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
+        logger.error(f"Signing aborted: Incorrect private key type provided " f"({type(private_key)}). Expected Ed25519PrivateKey or Signer.")
+        raise TypeError("Signing requires an Ed25519PrivateKey instance or Signer implementation.")
+
     try:
         signature = private_key.sign(payload_bytes)
         logger.info(f"Successfully signed payload (signature length: {len(signature)} bytes).")
@@ -115,7 +134,7 @@ def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature
 
 
 def sign_c2pa_cose(
-    private_key: ed25519.Ed25519PrivateKey,
+    private_key: SigningKey,
     payload_bytes: bytes,
     timestamp_authority_url: Optional[str] = None,
     certificates: Optional[List[Certificate]] = None,
@@ -129,7 +148,7 @@ def sign_c2pa_cose(
     an RFC 3161 Time-Stamp Authority and a certificate chain.
 
     Args:
-        private_key: The Ed25519 private key for signing.
+        private_key: The Ed25519 private key or Signer for signing.
         payload_bytes: The CBOR-encoded C2PA manifest to be signed.
         timestamp_authority_url: Optional URL of an RFC 3161 Time-Stamp Authority.
         certificates: Optional list of X.509 certificates to include in the signature.
@@ -153,8 +172,14 @@ def sign_c2pa_cose(
 
         protected_bstr = _encode_protected(protected_header)
         to_sign = _sig_structure(protected_bstr, payload_bytes)
-        signature = private_key.sign(to_sign)
-        encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, signature)
+        
+        # Use the generalized signing logic
+        if hasattr(private_key, "sign") and callable(private_key.sign):
+            signature = private_key.sign(to_sign)
+        else:
+            signature = private_key.sign(to_sign)
+            
+        encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, cast(bytes, signature))
 
         # If timestamp authority URL is provided, request a timestamp
         if timestamp_authority_url:
