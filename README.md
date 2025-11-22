@@ -189,7 +189,7 @@ We maintain **two distinct architectures** for different use cases and customer 
 
 | Directory | Integration | Description |
 |-----------|-------------|-------------|
-| [`integrations/wordpress-assurance-plugin/`](./integrations/wordpress-assurance-plugin/) | **WordPress Plugin** | Gutenberg & Classic editor integration with Enterprise API |
+| [`integrations/wordpress-provenance-plugin/`](./integrations/wordpress-provenance-plugin/) | **WordPress Plugin** | Gutenberg & Classic editor integration with Enterprise API |
 
 ### 📦 Shared Libraries & Packages
 
