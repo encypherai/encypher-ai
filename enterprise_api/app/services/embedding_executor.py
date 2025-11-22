@@ -257,30 +257,9 @@ async def encode_document_with_embeddings(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
-    except BaseException as e:
-        import sys
-        import os
-        # Write to file bypassing stdout
-        try:
-            dump_path = r"C:\Users\eriks\encypherai-commercial\enterprise_sdk\embedding_error.log"
-            with open(dump_path, "w") as f:
-                f.write(f"ERROR TYPE: {type(e)}\n")
-                f.write(f"ERROR STR: {str(e)}\n")
-                f.write(f"ERROR REPR: {repr(e)}\n")
-                import traceback
-                traceback.print_exc(file=f)
-        except:
-            pass
-            
-        print(f"DEBUG: Error encoding document: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc(file=sys.stderr)
+    except Exception as e:
         logger.error(f"Error encoding document with embeddings: {e}", exc_info=True)
-        
-        if isinstance(e, HTTPException):
-            raise e
-            
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to encode document with embeddings: {repr(e)}"
+            detail="Failed to encode document with embeddings"
         )

@@ -115,34 +115,19 @@ def main():
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
         
-        debug_sql_path = os.path.join(root_dir, "..", "enterprise_sdk", "sql_debug.log")
-        with open(debug_sql_path, "w") as log:
-            try:
-                with open(os.path.join(root_dir, "scripts", "init_db.sql"), "r") as f:
-                    for stmt in f.read().split(';'):
-                        if stmt.strip():
-                            log.write(f"Executing: {stmt[:50]}...\n")
-                            cur.execute(stmt)
-                
-                with open(os.path.join(root_dir, "scripts", "seed_load_test_data.sql"), "r") as f:
-                     for stmt in f.read().split(';'):
-                        if stmt.strip():
-                            log.write(f"Executing seed: {stmt[:50]}...\n")
-                            cur.execute(stmt)
-                
-                # Verify columns
-                cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name = 'content_references'")
-                cols = [r[0] for r in cur.fetchall()]
-                log.write(f"Columns in content_references: {cols}\n")
-                
-            except Exception as e:
-                log.write(f"SQL ERROR: {e}\n")
-                print(f"SQL ERROR: {e}")
-                raise
+        with open(os.path.join(root_dir, "scripts", "init_db.sql"), "r") as f:
+            for stmt in f.read().split(';'):
+                if stmt.strip():
+                    cur.execute(stmt)
+        
+        with open(os.path.join(root_dir, "scripts", "seed_load_test_data.sql"), "r") as f:
+             for stmt in f.read().split(';'):
+                if stmt.strip():
+                    cur.execute(stmt)
         
         cur.close()
         conn.close()
-
+        
         # Start Server
         print(f"Starting Server on {server_port}...")
         env = os.environ.copy()
@@ -167,14 +152,9 @@ def main():
         # Thread to read/print output
         import threading
         def stream_output():
-            # Hardcoded debug dump
-            dump_path = os.path.join(root_dir, "..", "enterprise_sdk", "server_debug_dump.txt")
-            with open(dump_path, "w") as f:
-                for line in proc.stdout:
-                    print(line, end='')
-                    sys.stdout.flush()
-                    f.write(line)
-                    f.flush()
+            for line in proc.stdout:
+                print(line, end='')
+                sys.stdout.flush()
         
         t = threading.Thread(target=stream_output, daemon=True)
         t.start()

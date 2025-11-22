@@ -104,20 +104,14 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     revoked_signers: Set[str] = set()
 
     def resolve_public_key(signer_id: str):
-        import sys
-        # print(f"DEBUG: Resolving key for signer: '{signer_id}'", file=sys.stderr)
-        
         from app.config import settings
         from app.utils.crypto_utils import get_demo_private_key
         
-        # Normalize comparison just in case
-        if signer_id == settings.demo_organization_id or signer_id == "org_demo":
-            # print("DEBUG: Using demo key", file=sys.stderr)
+        if signer_id == settings.demo_organization_id:
             return get_demo_private_key().public_key()
 
         cert = certificate_resolver.get(signer_id)
         if not cert:
-            logger.warning(f"Certificate not found for {signer_id}")
             missing_signers.add(signer_id)
             return None
         if not cert.is_active():
