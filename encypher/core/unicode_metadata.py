@@ -41,7 +41,7 @@ from .payloads import (
     serialize_jumbf_payload,
     serialize_payload,
 )
-from .signing import extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
+from .signing import extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature, SigningKey, Signer
 
 
 class UnicodeMetadata:
@@ -367,7 +367,7 @@ class UnicodeMetadata:
     def embed_metadata(
         cls,
         text: str,
-        private_key: PrivateKeyTypes,
+        private_key: SigningKey,
         signer_id: str,
         metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa"] = "manifest",
         model_id: Optional[str] = None,
@@ -409,10 +409,14 @@ class UnicodeMetadata:
         if not isinstance(text, str):
             logger.error("Input validation failed: 'text' is not a string.")
             raise TypeError("Input text must be a string")
-        if not isinstance(private_key, Ed25519PrivateKey):
+        
+        # Validate private key: accept either Ed25519PrivateKey OR a custom Signer (has .sign method)
+        is_signer = hasattr(private_key, "sign") and callable(private_key.sign)
+        if not isinstance(private_key, Ed25519PrivateKey) and not is_signer:
             # Note: PrivateKeyTypes is broader, but we specifically need Ed25519 here for signing.
-            logger.error("Input validation failed: 'private_key' is not an Ed25519PrivateKey instance.")
-            raise TypeError("Input 'private_key' must be an Ed25519PrivateKey instance.")
+            logger.error("Input validation failed: 'private_key' is not an Ed25519PrivateKey instance or Signer.")
+            raise TypeError("Input 'private_key' must be an Ed25519PrivateKey instance or Signer implementation.")
+        
         if not signer_id or not isinstance(signer_id, str):
             # Enhanced to check type as well
             logger.error("Input validation failed: 'signer_id' is not a non-empty string.")
