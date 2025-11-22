@@ -158,6 +158,13 @@ class Frontend
     {
         $settings = get_option('encypher_assurance_settings', []);
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        $show_branding = isset($settings['show_branding']) ? (bool) $settings['show_branding'] : true;
+        
+        // Force branding on Free tier (double check)
+        if ('free' === $tier) {
+            $show_branding = true;
+        }
+
         $icon_url = ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/images/encypher-icon.png';
         $status = get_post_meta($post_id, '_encypher_assurance_status', true);
         $document_id = get_post_meta($post_id, '_encypher_assurance_document_id', true);
@@ -206,9 +213,20 @@ class Frontend
                 aria-label="<?php echo esc_attr($title_text); ?>"
                 title="<?php echo esc_attr($title_text); ?>"
                 style="display: inline-flex; align-items: center; gap: <?php echo esc_attr($gap); ?>; padding: <?php echo esc_attr($padding); ?>; background: #fff; border: 1px solid #ddd; border-radius: 6px; cursor: pointer; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; font-size: <?php echo esc_attr($font_size); ?>; font-weight: 500; color: #333; transition: all 0.2s ease; vertical-align: middle;">
-            <img src="<?php echo esc_url($icon_url); ?>"
-                 alt="<?php esc_attr_e('Encypher', 'encypher-provenance'); ?>"
-                 style="width: <?php echo esc_attr($icon_size); ?>; height: <?php echo esc_attr($icon_size); ?>; display: block;" />
+            <?php if ($show_branding) : ?>
+                <img src="<?php echo esc_url($icon_url); ?>"
+                     alt="<?php esc_attr_e('Encypher', 'encypher-provenance'); ?>"
+                     style="width: <?php echo esc_attr($icon_size); ?>; height: <?php echo esc_attr($icon_size); ?>; display: block;" />
+            <?php else : ?>
+                <!-- Generic Shield Icon (Whitelabel) -->
+                <svg width="<?php echo esc_attr($icon_size); ?>" height="<?php echo esc_attr($icon_size); ?>" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block;">
+                    <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" stroke="<?php echo esc_attr($text_color); ?>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <?php if ($is_verified) : ?>
+                        <path d="M9 12L11 14L15 10" stroke="<?php echo esc_attr($text_color); ?>" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <?php endif; ?>
+                </svg>
+            <?php endif; ?>
+            
             <span style="color: <?php echo esc_attr($text_color); ?>;"><?php echo esc_html($status_text); ?></span>
             <?php if ($tier_pill) : ?>
                 <?php echo $tier_pill; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>

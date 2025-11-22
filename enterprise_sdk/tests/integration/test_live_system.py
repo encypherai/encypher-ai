@@ -24,7 +24,6 @@ def test_live_sign_sync(live_api_server):
     # We assert that the SDK correctly parses this state.
     assert verify_resp.data.signer_id == "org_demo"
 
-@pytest.mark.xfail(reason="Flaky 500 error in CI environment (verified manually via debug script)")
 def test_enterprise_embeddings(live_api_server):
     """Test enterprise invisible embeddings flow."""
     client = EncypherClient(api_key="demo-key-load-test", base_url=live_api_server)
@@ -42,11 +41,11 @@ def test_enterprise_embeddings(live_api_server):
     
     assert response.success, f"Embed failed: {response.model_dump_json(indent=2)}"
     assert response.document_id == doc_id
-    assert response.text_with_embeddings != text # Should differ due to invisible chars
-    assert len(response.text_with_embeddings) > len(text)
+    assert response.embedded_content != text # Should differ due to invisible chars
+    assert len(response.embedded_content) > len(text)
     
     # 2. Verify the text with embeddings (extract-and-verify)
-    verify_resp = client.verify_sentence(response.text_with_embeddings)
+    verify_resp = client.verify_sentence(response.embedded_content)
     
     assert verify_resp.valid, f"Verify embeddings failed: {verify_resp.error}"
     # Note: In test env with demo key, verification might succeed if my server fix worked,
@@ -62,7 +61,9 @@ def test_enterprise_embeddings(live_api_server):
          # If it fails due to untrusted root, we accept it as per previous test
          assert "Certificate not found" in str(verify_resp.error) or "CERT_NOT_FOUND" in str(verify_resp.error) or "Unknown signer" in str(verify_resp.error)
     else:
-        assert verify_resp.signer_id == "org_demo"
+        # ExtractAndVerifyResponse does not have signer_id property
+        # It is in document.organization
+        assert verify_resp.document.organization == "org_demo"
         # Check metadata
         assert verify_resp.metadata
         # Custom metadata might be deeply nested or not present if not indexed in DB?

@@ -24,6 +24,15 @@ CREATE TABLE IF NOT EXISTS organizations (
     documents_signed INTEGER DEFAULT 0,
     sentences_signed INTEGER DEFAULT 0,
     api_calls_this_month INTEGER DEFAULT 0,
+    
+    -- Feature flags
+    merkle_enabled BOOLEAN DEFAULT FALSE,
+    advanced_analytics_enabled BOOLEAN DEFAULT FALSE,
+    bulk_operations_enabled BOOLEAN DEFAULT FALSE,
+
+    -- AWS KMS Support
+    kms_key_id VARCHAR(255),
+    kms_region VARCHAR(50),
 
     -- Metadata
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -211,7 +220,7 @@ CREATE INDEX IF NOT EXISTS idx_merkle_subhashes_parent ON merkle_subhashes(paren
 DROP TABLE IF EXISTS content_references CASCADE;
 CREATE TABLE IF NOT EXISTS content_references (
     ref_id BIGINT PRIMARY KEY,
-    merkle_root_id UUID NOT NULL,
+    merkle_root_id UUID, -- Nullable for free tier
     leaf_hash VARCHAR(64) NOT NULL,
     leaf_index INTEGER NOT NULL,
     organization_id VARCHAR(255) NOT NULL,

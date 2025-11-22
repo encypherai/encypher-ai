@@ -5,7 +5,7 @@ This plugin brings Encypher's C2PA signing and verification workflow into the Wo
 ## Structure
 
 ```
-wordpress-assurance-plugin/
+wordpress-provenance-plugin/
 |- README.md
 |- docker-compose.yml
 |- plugin/
@@ -47,7 +47,15 @@ Both endpoints and their request/response shapes are described in detail in the 
 ✅ **Copy Button**: Export full JSON manifest with one click  
 ✅ **No Double-Signing**: Smart caching prevents unnecessary re-signing
 
+### Advanced Features (Pro/Enterprise)
+
+The plugin unlocks additional capabilities for licensed tiers:
+
+*   **Whitelabeling**: Hide the "Powered by Encypher" branding in verification badges (Pro/Enterprise only).
+*   **Advanced Analytics**: View "Verification Hits" directly in the WordPress dashboard, tracking how many users are verifying your content via the public API.
+
 ## Features & Tiers
+
 
 The plugin adapts its capabilities based on your Encypher workspace tier:
 

@@ -459,22 +459,37 @@ class EncypherClient:
         """Raise appropriate exception based on response."""
         try:
             error_data = response.json()
-            error_msg = error_data.get("error", {}).get("message", "Unknown error")
-            error_code = error_data.get("error", {}).get("code", "UNKNOWN")
-        except:
+            # Standard error format
+            error_detail = error_data.get("detail")
+            if isinstance(error_detail, dict):
+                error_msg = error_detail.get("message", "Unknown error")
+                error_code = error_detail.get("code", "UNKNOWN")
+                details = error_detail.get("details") or error_detail
+            elif isinstance(error_detail, str):
+                # Simple detail string
+                error_msg = error_detail
+                error_code = "UNKNOWN"
+                details = error_detail
+            else:
+                # Fallback
+                error_msg = error_data.get("error", {}).get("message", "Unknown error")
+                error_code = error_data.get("error", {}).get("code", "UNKNOWN")
+                details = error_data
+        except Exception:
             error_msg = response.text
             error_code = "UNKNOWN"
+            details = response.text
 
         if response.status_code == 401:
-            raise AuthenticationError(error_msg)
+            raise AuthenticationError(f"{error_msg} (Detail: {details})")
         elif response.status_code == 429:
-            raise QuotaExceededError(error_msg)
+            raise QuotaExceededError(f"{error_msg} (Detail: {details})")
         elif "sign" in response.url.path.lower():
-            raise SigningError(error_msg)
+            raise SigningError(f"{error_msg} (Detail: {details})")
         elif "verify" in response.url.path.lower():
-            raise VerificationError(error_msg)
+            raise VerificationError(f"{error_msg} (Detail: {details})")
         else:
-            raise APIError(response.status_code, error_msg, {"code": error_code})
+            raise APIError(response.status_code, error_msg, {"code": error_code, "detail": details})
 
     def close(self) -> None:
         """Close the HTTP client."""

@@ -10,4 +10,4 @@ sys.path.insert(0, root_dir)
 if __name__ == "__main__":
     # Env vars should be passed by caller
     from app.main import app
-    uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("PORT", 8000)), log_level="error")
+    uvicorn.run(app, host="127.0.0.1", port=int(os.environ.get("PORT", 8000)), log_level="info")

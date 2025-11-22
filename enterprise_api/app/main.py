@@ -270,14 +270,23 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     """Return standardized error payloads for HTTP exceptions."""
 
     correlation_id = request.headers.get("x-request-id") or f"req-{uuid4().hex}"
-    detail = exc.detail if isinstance(exc.detail, dict) else {"message": exc.detail}
+    detail = exc.detail
+    if isinstance(detail, dict):
+        # Preserve full detail dictionary
+        error_payload = detail
+        if "code" not in error_payload:
+            error_payload["code"] = "E_HTTP"
+        if "message" not in error_payload:
+            error_payload["message"] = "Request failed"
+    else:
+        error_payload = {
+            "code": "E_HTTP",
+            "message": str(detail)
+        }
+
     payload = {
         "success": False,
-        "error": {
-            "code": detail.get("code", "E_HTTP"),
-            "message": detail.get("message", "Request failed"),
-            "hint": detail.get("hint"),
-        },
+        "error": error_payload,
         "correlation_id": correlation_id,
     }
     return JSONResponse(

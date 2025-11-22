@@ -34,13 +34,18 @@ The plugin codebase (`encypher-provenance`) implements distinct features for Fre
 *   **Coalition:** Optional.
 
 ### 3. Enterprise Tier
-*   **Target:** Large media conglomerates, agencies.
-*   **Features:** Inherits all Pro features (BYOK, Sentence-level).
-*   **Differentiation:** Handled primarily via the **Enterprise API Backend**:
-    *   Higher rate limits.
-    *   HSM-backed signing profiles (configured in Encypher Dashboard).
-    *   SLA & Dedicated Support.
-*   **Plugin Logic:** Treats 'enterprise' same as 'pro' for feature flags (unlocks all capabilities).
+*   **Target:** Large media conglomerates, agencies, high-volume publishers.
+*   **Features:**
+    *   **Everything in Pro:** BYOK, Sentence-level Merkle trees, Unlimited bulk marking.
+    *   **HSM-Backed Keys:** Option to use Hardware Security Modules for signing keys (FIPS 140-2 Level 3), critical for legal non-repudiation.
+    *   **Multi-Site Support:** License covers entire WP Multisite networks.
+    *   **Dedicated Support:** 24/7 SLA.
+*   **Differentiation Strategy:**
+    *   The plugin treats 'enterprise' technically similar to 'pro' to ensure feature parity, but the **value proposition** shifts to compliance, scale, and security assurance provided by the backend infrastructure.
+    *   **Future Differentiation Opportunities:**
+        *   *Whitelabeling:* Remove "Powered by Encypher" from frontend badges.
+        *   *Advanced Analytics:* Real-time dashboard of verification hits in WP Admin.
+        *   *SSO Integration:* Enforce specific signing profiles per user role.
 
 ---
 

@@ -182,6 +182,8 @@ class EmbeddingService:
             minimal_metadata = {
                 'leaf_hash': leaf_hash,
                 'leaf_index': idx,
+                'document_id': document_id,
+                'organization_id': organization_id
             }
             segment_embeddings.append((segment, minimal_metadata))
             
@@ -295,6 +297,19 @@ class EmbeddingService:
             except Exception as e:
                 logger.error(f"Error fetching previous manifest: {e}")
         
+        # Convert document_metadata to a custom assertion for C2PA compliance
+        # encypher-ai embed_metadata drops custom_metadata when format is "c2pa",
+        # so we must pass it as an assertion.
+        encypher_metadata_assertion = {
+            "label": "org.encypher.metadata",
+            "data": document_metadata
+        }
+        
+        # Create a new list for assertions to avoid modifying the input list if it's reused
+        final_custom_assertions = [encypher_metadata_assertion]
+        if custom_assertions:
+            final_custom_assertions.extend(custom_assertions)
+        
         # Embed ONE C2PA wrapper for the entire document
         try:
             logger.info(f"Adding C2PA wrapper for document {document_id} ({len(segments)} segments) with action {action}")
@@ -303,13 +318,13 @@ class EmbeddingService:
                 private_key=self.private_key,
                 signer_id=self.signer_id,
                 timestamp=current_timestamp,
-                custom_metadata=document_metadata,
+                custom_metadata=document_metadata, # Still pass it, though likely ignored by _embed_c2pa
                 metadata_format=metadata_format,  # C2PA-compliant wrapper
                 add_hard_binding=add_hard_binding,
                 claim_generator=f"EncypherAI Enterprise API/{organization_id}",
                 actions=c2pa_actions,  # Pass C2PA actions
                 ingredients=c2pa_ingredients,  # Pass ingredient references
-                custom_assertions=custom_assertions  # Pass custom assertions
+                custom_assertions=final_custom_assertions  # Pass custom assertions including metadata
             )
             logger.info(f"Successfully added C2PA wrapper to document {document_id}")
         except Exception as e:

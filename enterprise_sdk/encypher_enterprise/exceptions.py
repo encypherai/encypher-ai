@@ -53,7 +53,8 @@ class APIError(EncypherError):
         self.status_code = status_code
         self.message = message
         self.details = details or {}
-        super().__init__(f"HTTP {status_code}: {message}")
+        detail_str = str(self.details.get("detail", "")) or str(self.details)
+        super().__init__(f"HTTP {status_code}: {message} | Detail: {detail_str}")
 
 
 class ConfigurationError(EncypherError):

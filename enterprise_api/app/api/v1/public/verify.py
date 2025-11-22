@@ -563,40 +563,71 @@ async def extract_and_verify_embedding(
                 error="No valid invisible embedding found in text"
             )
         
+        logger.info(f"Payload content: {payload}")
+
         # Extract enterprise metadata from custom_metadata
-        # payload is the C2PA manifest dict, custom_metadata is in assertions
+        # payload is the C2PA manifest dict
+        # Try to find document_id and organization_id from assertions or payload
         custom_metadata = {}
-        for assertion in payload.get('assertions', []):
+        document_id = None
+        organization_id = signer_id if signer_id.startswith("org_") else None
+        leaf_index = None
+
+        # Check if payload itself has the metadata (from legacy/basic format)
+        if payload.get('custom_metadata'):
+             custom_metadata = payload.get('custom_metadata')
+             document_id = custom_metadata.get('document_id')
+             # Override org_id if present in metadata
+             if custom_metadata.get('organization_id'):
+                 organization_id = custom_metadata.get('organization_id')
+             leaf_index = custom_metadata.get('leaf_index')
+        
+        # Also check assertions for C2PA format
+        assertions = payload.get('assertions', [])
+        for assertion in assertions:
+            # Check for custom metadata assertion
+            if assertion.get('label') == 'org.encypher.metadata':
+                data = assertion.get('data', {})
+                custom_metadata.update(data)
+                if data.get('document_id'):
+                    document_id = data.get('document_id')
+                if data.get('organization_id'):
+                    organization_id = data.get('organization_id')
+            
+            # Also check actions for implicit metadata if needed
             if assertion.get('label') == 'c2pa.actions.v1':
-                # Custom metadata might be in actions or elsewhere
-                # For now, extract from the manifest structure
-                pass
+                pass 
         
-        # For free tier, we don't have enterprise metadata in the manifest
-        # The document_id, organization_id are in the claim_generator
-        # Let's just return success for now
-        logger.info(f"C2PA verification successful for signer: {signer_id}")
+        logger.info(f"C2PA verification successful for signer: {signer_id}. DocID: {document_id}")
         
-        return ExtractAndVerifyResponse(
-            valid=True,
-            verified_at=datetime.utcnow(),
-            signer_id=signer_id,
-            metadata={
-                'claim_generator': payload.get('claim_generator'),
-                'instance_id': payload.get('instance_id'),
-                'assertions': payload.get('assertions', [])
-            }
-        )
-        
-        # Look up ContentReference in database (enterprise feature)
-        result = await db.execute(
-            select(ContentReference).where(
+        reference = None
+        # Look up ContentReference in database (enterprise feature) if we have enough info
+        if document_id and organization_id:
+            # If leaf_index is missing (full doc), maybe we look for the first one or just by doc_id?
+            # For extract-and-verify of a full document, we might not have a specific leaf_index.
+            # But ContentReference is per-leaf.
+            # If we verified the WHOLE document, we verified the Merkle Root (implicitly).
+            # But we don't have a "DocumentReference" table, only "ContentReference".
+            # We can try to find ANY reference for this document to validate it exists.
+            
+            query = select(ContentReference).where(
                 ContentReference.document_id == document_id,
-                ContentReference.organization_id == organization_id,
-                ContentReference.leaf_index == leaf_index
+                ContentReference.organization_id == organization_id
             )
-        )
-        reference = result.scalar_one_or_none()
+            if leaf_index is not None:
+                query = query.where(ContentReference.leaf_index == leaf_index)
+            else:
+                # Just get the first one to validate existence
+                query = query.limit(1)
+                
+            result = await db.execute(query)
+            reference = result.scalar_one_or_none()
+        
+        if not reference and document_id:
+             logger.warning(
+                f"Reference not found in database: doc={document_id}, "
+                f"org={organization_id}, leaf={leaf_index}"
+            )
         
         if not reference:
             logger.warning(
@@ -608,8 +639,10 @@ async def extract_and_verify_embedding(
                 verified_at=datetime.utcnow(),
                 metadata={
                     'signer_id': signer_id,
-                    'timestamp': payload.timestamp,
-                    'custom_metadata': custom_metadata
+                    'timestamp': payload.get('timestamp'),
+                    'custom_metadata': custom_metadata,
+                    'format': payload.get('format'),
+                    'version': payload.get('version')
                 },
                 error="Valid embedding but not found in enterprise database"
             )
@@ -689,10 +722,10 @@ async def extract_and_verify_embedding(
             licensing=licensing_info,
             metadata={
                 'signer_id': signer_id,
-                'timestamp': payload.timestamp,
+                'timestamp': payload.get('timestamp'),
                 'custom_metadata': custom_metadata,
-                'format': payload.format,
-                'version': payload.version
+                'format': payload.get('format'),
+                'version': payload.get('version')
             }
         )
         

@@ -11,41 +11,60 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from typing import Optional, cast
 
+from encypher.core.signing import Signer, SigningKey
+from app.utils.aws_signer import AWSSigner
+
 _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
 
 
 async def load_organization_private_key(
     organization_id: str,
     db: AsyncSession
-) -> ed25519.Ed25519PrivateKey:
+) -> SigningKey:
     """
-    Load and decrypt organization's private key from database.
+    Load signing key (private key or KMS signer) for organization.
 
     Args:
         organization_id: The organization's unique identifier
         db: Database session
 
     Returns:
-        Ed25519PrivateKey: Decrypted private key
+        SigningKey: Ed25519PrivateKey or Signer implementation
 
     Raises:
-        ValueError: If no private key found for organization
+        ValueError: If no valid signing configuration found
     """
     # Handle demo organization - derive private key
     global _DEMO_PRIVATE_KEY
     if organization_id == settings.demo_organization_id:
         return get_demo_private_key()
     
-    result = await db.execute(
-        text("SELECT private_key_encrypted FROM organizations WHERE organization_id = :org_id"),
-        {"org_id": organization_id}
-    )
-    row = result.fetchone()
+    # Fetch potentially needed columns: encrypted key and KMS key ID
+    try:
+        result = await db.execute(
+            text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE organization_id = :org_id"),
+            {"org_id": organization_id}
+        )
+        row = result.fetchone()
+    except Exception as e:
+        # Fallback or handle error
+        raise ValueError(f"Database error loading key for {organization_id}: {e}")
 
-    if not row or not row[0]:
+    if not row:
+        raise ValueError(f"Organization {organization_id} not found")
+
+    # AWS KMS Logic
+    kms_key_id = row.kms_key_id
+    if kms_key_id:
+        kms_region = row.kms_region or "us-east-1"  # Default to us-east-1 if not specified
+        return AWSSigner(key_id=kms_key_id, region_name=kms_region)
+
+    encrypted_key = row.private_key_encrypted
+
+    if not encrypted_key:
+        # If no local key, maybe check for KMS config from settings or another source?
+        # For scaffolding, we raise error if local key missing AND no KMS logic active.
         raise ValueError(f"No private key found for organization {organization_id}")
-
-    encrypted_key = row[0]
 
     # Decrypt using AES-GCM
     aesgcm = AESGCM(settings.key_encryption_key_bytes)

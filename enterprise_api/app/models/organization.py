@@ -74,6 +74,10 @@ class Organization(Base):
     )
     certificate_rotated_at = Column(TIMESTAMP(timezone=True), nullable=True)
     certificate_expiry = Column(TIMESTAMP(timezone=True), nullable=True)
+    
+    # AWS KMS Support (Enterprise Tier)
+    kms_key_id = Column(String(255), nullable=True)
+    kms_region = Column(String(50), nullable=True)
 
     # Feature flags
     merkle_enabled = Column(Boolean, default=False)

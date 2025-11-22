@@ -46,9 +46,7 @@ async def get_db():
         try:
             yield session
             # Auto-commit at end of request (batches all flush() operations)
-            # Only commit if there are pending changes
-            if session.new or session.dirty or session.deleted:
-                await session.commit()
+            await session.commit()
         except Exception:
             # Rollback on error
             await session.rollback()
