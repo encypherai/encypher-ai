@@ -1,175 +1,254 @@
-import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@encypher/design-system';
+"use client";
+
+import React from "react";
 import Link from 'next/link';
-import { Navigation } from '@/components/Navigation';
+import { Button } from '@/components/ui/button';
+import Image from 'next/image';
+import { ArrowRight, FileText, Zap, Shield, TrendingUp, Users, CheckCircle2 } from 'lucide-react';
+import MetadataBackground from '@/components/hero/MetadataBackground';
+import StandardsCompliance from '@/components/solutions/standards-compliance';
+import AISummary from '@/components/seo/AISummary';
+import Script from 'next/script';
+import { faqSchema } from '@/lib/seo';
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen">
-      <Navigation />
+    <>
+      <AISummary
+        title="Encypher – Content Intelligence Infrastructure"
+        whatWeDo="Authors of the C2PA text standard; we provide sentence-level content authentication and licensing infrastructure."
+        whoItsFor="Publishers needing court-admissible proof and AI labs needing performance intelligence and compliance."
+        keyDifferentiator="Cryptographic proof with 100% accuracy at sentence-level vs. probabilistic AI detection."
+        primaryValue="Transform litigation into licensing and turn R&D guesswork into data-driven optimization."
+      />
+      <Script id="schema-faq-home" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-delft-blue to-blue-ncs text-white py-20 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-6">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-              Cryptographic Content
-              <br />
-              <span className="text-columbia-blue">Authentication</span>
+      <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden" style={{ minHeight: '100vh' }}>
+        <MetadataBackground />
+        
+        <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 lg:py-28 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
+            <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 text-shadow-md leading-tight px-2" style={{ minHeight: '3rem' }}>
+              Turn Content Intelligence Into Market Advantage
             </h1>
-            
-            <p className="text-xl md:text-2xl text-columbia-blue/90 max-w-3xl mx-auto">
-              Enterprise-grade content verification powered by cryptographic signatures.
-              Protect your content, prove authenticity, build trust.
+            <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2" style={{ minHeight: '4rem' }}>
+              AI Labs: See how your models perform in the wild.<br />
+              Publishers: Transform content theft into revenue.<br />
+              Cryptographic proof, not guesswork.
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-8">
-              {/* High-contrast CTA - Columbia Blue */}
-              <Link href="/signup">
-                <Button variant="primary" size="xl">
-                  Get Started Free
-                </Button>
-              </Link>
-              
-              <Link href="/demo">
-                <Button variant="outline" size="xl" className="border-white text-white hover:bg-white hover:text-delft-blue">
-                  View Demo
-                </Button>
-              </Link>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center items-center px-2">
+              <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Link href="/solutions/ai-companies">
+                  <span className="flex items-center justify-center">
+                    For AI Companies <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </span>
+                </Link>
+              </Button>
+              <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Link href="/solutions/publishers">
+                  <span className="flex items-center justify-center">
+                    For Publishers <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </span>
+                </Link>
+              </Button>
             </div>
             
-            <p className="text-sm text-columbia-blue/70 pt-4">
-              Free tier: 1,000 signatures/month • No credit card required
-            </p>
+            {/* Standards Authority */}
+            <div className="mt-8 sm:mt-12 md:mt-16 text-center">
+              <h3 className="text-xs sm:text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 sm:mb-6 text-shadow-sm px-2">
+                From the Authors of the C2PA Text Standard
+              </h3>
+              <div className="flex justify-center items-center gap-6 sm:gap-8 md:gap-12 flex-wrap">
+                <div className="relative h-8 w-28 sm:h-10 sm:w-32 md:h-12 md:w-36 flex-shrink-0">
+                  <Image
+                    src="/c2pa-hero.svg"
+                    alt="C2PA Logo"
+                    fill
+                    sizes="(max-width: 640px) 112px, (max-width: 768px) 128px, 144px"
+                    style={{objectFit: "contain"}}
+                    priority
+                  />
+                </div>
+                <div className="relative h-8 w-28 sm:h-10 sm:w-32 md:h-12 md:w-36 flex-shrink-0">
+                  <Image
+                    src="/CAI_Lockup_RGB_Black.svg"
+                    alt="Content Authenticity Initiative Logo"
+                    fill
+                    sizes="(max-width: 640px) 112px, (max-width: 768px) 128px, 144px"
+                    style={{objectFit: "contain"}}
+                    priority
+                  />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4 bg-white">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-delft-blue mb-4">
-              Why Encypher?
+      {/* Infrastructure for Two Markets */}
+      <section id="value-prop" className="py-20 w-full bg-muted/40 border-y border-border">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Infrastructure for the AI Content Economy
             </h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Built for publishers, newsrooms, and content creators who demand authenticity
+            <p className="text-lg text-muted-foreground mt-4 max-w-3xl mx-auto">
+              Two markets. One infrastructure. Sentence-level tracking enables both litigation evidence and performance intelligence.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card variant="elevated" padding="lg">
-              <CardHeader>
-                <div className="w-12 h-12 bg-columbia-blue rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                <CardTitle>Cryptographic Security</CardTitle>
-                <CardDescription>
-                  Military-grade cryptographic signatures ensure your content cannot be tampered with
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card variant="elevated" padding="lg">
-              <CardHeader>
-                <div className="w-12 h-12 bg-blue-ncs rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <CardTitle>Lightning Fast</CardTitle>
-                <CardDescription>
-                  Sign and verify content in milliseconds. Built for scale with enterprise performance
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card variant="elevated" padding="lg">
-              <CardHeader>
-                <div className="w-12 h-12 bg-rosy-brown rounded-lg flex items-center justify-center mb-4">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <CardTitle>Easy Integration</CardTitle>
-                <CardDescription>
-                  Python SDK, REST API, and CLI tools. Integrate in minutes, not weeks
-                </CardDescription>
-              </CardHeader>
-            </Card>
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto">
+            {/* For Publishers */}
+            <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border">
+              <div className="flex items-center gap-4 mb-4">
+                <FileText className="h-8 w-8 text-primary" />
+                <h3 className="text-2xl font-semibold">For Publishers</h3>
+              </div>
+              <h4 className="text-xl font-bold mb-3">From Litigation Costs to Licensing Revenue</h4>
+              <p className="text-muted-foreground mb-4">
+                Court-admissible evidence with 100% accuracy. Track which sentences were used, where, and when. Transform $14M in legal costs into $20M+ in licensing revenue.
+              </p>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Sentence-level tracking proves exact usage</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Mathematical certainty vs. 26% accuracy detection</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Success-based model: we only win when you win</span>
+                </li>
+              </ul>
+              <Button asChild className="w-full mt-6 shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Link href="/publisher-demo">
+                  See Publisher Demo <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+
+            {/* For AI Companies */}
+            <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border">
+              <div className="flex items-center gap-4 mb-4">
+                <Zap className="h-8 w-8 text-primary" />
+                <h3 className="text-2xl font-semibold">For AI Labs</h3>
+              </div>
+              <h4 className="text-xl font-bold mb-3">See Which Parameters Drive Viral Content</h4>
+              <p className="text-muted-foreground mb-4">
+                Track every output. Optimize every parameter. One integration covers the entire publisher ecosystem. Performance intelligence + compliance infrastructure.
+              </p>
+              <ul className="space-y-2">
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Real-world performance data on every output</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Publisher compatibility through enhanced C2PA</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">End $2.7B in blind R&D spending</span>
+                </li>
+              </ul>
+              <Button asChild className="w-full mt-6 shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Link href="/ai-demo">
+                  See AI Lab Demo <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-br from-columbia-blue to-blue-ncs text-white">
-        <div className="container mx-auto max-w-4xl text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Ready to Protect Your Content?
-          </h2>
-          <p className="text-xl mb-8 text-white/90">
-            Join thousands of publishers using Encypher to authenticate their content
+      {/* Why Encypher - Replaces "Key Features" */}
+      <section className="py-20 w-full bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">Why Encypher</h2>
+          <p className="text-lg text-center text-muted-foreground mb-12 max-w-3xl mx-auto">
+            We authored the standard. We built the infrastructure. We enable the economy.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button variant="primary" size="xl" className="bg-white text-blue-ncs hover:bg-white/90">
-                Start Free Trial
-              </Button>
-            </Link>
-            
-            <Link href="/pricing">
-              <Button variant="outline" size="xl" className="border-white text-white hover:bg-white hover:text-blue-ncs">
-                View Pricing
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="bg-delft-blue text-white py-12 px-4">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="font-bold text-lg mb-4">Encypher</h3>
-              <p className="text-columbia-blue/70 text-sm">
-                Cryptographic content authentication for the modern web
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Shield className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Standards Authority</h3>
+              <p className="text-muted-foreground">
+                Authored the C2PA text authentication standard. When the industry needed a solution, we wrote it.
               </p>
             </div>
             
-            <div>
-              <h4 className="font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-sm text-columbia-blue/70">
-                <li><Link href="/features" className="hover:text-columbia-blue">Features</Link></li>
-                <li><Link href="/pricing" className="hover:text-columbia-blue">Pricing</Link></li>
-                <li><Link href="/docs" className="hover:text-columbia-blue">Documentation</Link></li>
-              </ul>
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <TrendingUp className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Proprietary Technology Moat</h3>
+              <p className="text-muted-foreground">
+                Sentence-level tracking is exclusive to Encypher. Competitors can't replicate what took us 18+ months to perfect.
+              </p>
             </div>
             
-            <div>
-              <h4 className="font-semibold mb-4">Company</h4>
-              <ul className="space-y-2 text-sm text-columbia-blue/70">
-                <li><Link href="/about" className="hover:text-columbia-blue">About</Link></li>
-                <li><Link href="/blog" className="hover:text-columbia-blue">Blog</Link></li>
-                <li><Link href="/contact" className="hover:text-columbia-blue">Contact</Link></li>
-              </ul>
+            <div className="text-center">
+              <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+                <Users className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3">Network Effects</h3>
+              <p className="text-muted-foreground">
+                Every publisher who joins strengthens the coalition. Every AI lab who implements validates the standard.
+              </p>
             </div>
-            
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-columbia-blue/70">
-                <li><Link href="/privacy" className="hover:text-columbia-blue">Privacy</Link></li>
-                <li><Link href="/terms" className="hover:text-columbia-blue">Terms</Link></li>
-              </ul>
-            </div>
-          </div>
-          
-          <div className="border-t border-columbia-blue/20 mt-8 pt-8 text-center text-sm text-columbia-blue/70">
-            <p>&copy; 2025 Encypher. All rights reserved.</p>
           </div>
         </div>
-      </footer>
-    </main>
+      </section>
+
+      {/* Standards & Compliance Section */}
+      <StandardsCompliance />
+
+      {/* Final CTA */}
+      <section className="py-20 w-full bg-background border-t border-border">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6">
+            Ready to Turn Intelligence Into Advantage?
+          </h2>
+          <p className="text-lg mb-8 max-w-2xl mx-auto text-muted-foreground">
+            See how sentence-level tracking transforms your position in the AI content economy.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+            <Button asChild size="lg" className="w-full sm:w-auto shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+              <Link href="/solutions/publishers">
+                For Publishers <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild size="lg" className="w-full sm:w-auto shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+              <Link href="/solutions/ai-companies">
+                For AI Labs <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
+          
+          {/* Developer CTA - Secondary */}
+          <div className="mt-8 pt-8 border-t border-border/50">
+            <p className="text-sm text-muted-foreground mb-3">
+              Developers: Try our open-source implementation
+            </p>
+            <Button asChild variant="ghost" size="sm">
+              <a
+                href="https://github.com/encypherai/encypher-ai"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View on GitHub <ArrowRight className="inline ml-2 h-3.5 w-3.5" />
+              </a>
+            </Button>
+          </div>
+        </div>
+      </section>
+    </>
   );
 }

@@ -1,0 +1,68 @@
+[tool.poetry]
+name = "web-service"
+version = "0.1.0"
+description = "Marketing website backend service for EncypherAI"
+authors = ["EncypherAI Team <team@encypherai.com>"]
+license = "Proprietary"
+readme = "README.md"
+packages = [{include = "app"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+fastapi = "^0.100.0"
+pydantic = "^2.0.0"
+uvicorn = {extras = ["standard"], version = "^0.21.1"}
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = "^1.7.4"
+python-multipart = "^0.0.6"
+email-validator = "^2.0.0"
+sqlalchemy = "^2.0.9"
+python-dotenv = "^1.0.0"
+alembic = "^1.10.3"
+psycopg2-binary = "^2.9.6"
+python-slugify = "^8.0.1"
+pydantic-settings = "^2.0.3"
+uvloop = "^0.17.0"
+httpx = "^0.24.0"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.3.1"
+pytest-cov = "^4.0.0"
+pytest-asyncio = "^0.20.3"
+black = "^23.3.0"
+isort = "^5.12.0"
+mypy = "^1.2.0"
+flake8 = "^6.0.0"
+pre-commit = "^3.2.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+include = '\.pyi?$'
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = "-v -s"
+
+[alembic]
+script_location = "alembic"
+sqlalchemy.url = "postgresql+psycopg2://postgres:postgres@localhost:5432/web_service"
+
+[alembic.script]
+version_locations = "alembic/versions"
+
+[alembic.script.revisions]
+revision_environment = true
+
+[alembic.script.revisions.legacy_impl]
+revision_environment = false

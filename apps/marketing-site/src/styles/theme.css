@@ -1,0 +1,71 @@
+:root {
+  --delft-blue: #1b2f50;
+  --blue-ncs: #2a87c4;
+  --columbia-blue: #b7d5ed;
+  --white: #ffffff;
+  --rosy-brown: #ba8790;
+}
+
+/* Light mode */
+.light {
+  --background: var(--white);
+  --foreground: var(--delft-blue);
+  
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  
+  --popover: var(--white);
+  --popover-foreground: var(--delft-blue);
+  
+  --card: var(--white);
+  --card-foreground: var(--delft-blue);
+  
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  
+  --primary: var(--blue-ncs);
+  --primary-foreground: var(--white);
+  
+  --secondary: #f1f5f9;
+  --secondary-foreground: var(--delft-blue);
+  
+  --accent: var(--columbia-blue);
+  --accent-foreground: var(--delft-blue);
+  
+  --destructive: #ef4444;
+  --destructive-foreground: var(--white);
+  
+  --ring: var(--blue-ncs);
+}
+
+/* Dark mode */
+.dark {
+  --background: var(--delft-blue);
+  --foreground: var(--white);
+  
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  
+  --popover: #1e293b;
+  --popover-foreground: var(--white);
+  
+  --card: #1e293b;
+  --card-foreground: var(--white);
+  
+  --border: #334155;
+  --input: #334155;
+  
+  --primary: var(--columbia-blue);
+  --primary-foreground: var(--delft-blue);
+  
+  --secondary: #334155;
+  --secondary-foreground: var(--white);
+  
+  --accent: var(--blue-ncs);
+  --accent-foreground: var(--white);
+  
+  --destructive: #ef4444;
+  --destructive-foreground: var(--white);
+  
+  --ring: var(--columbia-blue);
+}

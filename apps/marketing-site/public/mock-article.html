@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mathematical Certainty in the Age of AI - The Encypher Times</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Georgia', 'Times New Roman', serif;
+      background: #ffffff;
+      color: #1a1a1a;
+      line-height: 1.7;
+      padding: 0;
+      max-width: 100%;
+      overflow: hidden;
+    }
+
+    .sample-banner {
+      background: linear-gradient(135deg, #1B2F50 0%, #152640 100%);
+      color: white;
+      text-align: center;
+      padding: 0.625rem 1rem;
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(27, 47, 80, 0.3);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .article-container {
+      max-width: 650px;
+      margin: 0 auto;
+      padding: 1rem;
+      overflow: hidden;
+      height: calc(100vh - 2rem);
+      position: relative;
+    }
+    
+    .article-container::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      background: linear-gradient(to bottom, transparent, rgba(255, 255, 255, 0.95));
+      pointer-events: none;
+    }
+    
+    @media (min-width: 640px) {
+      .article-container {
+        padding: 2rem;
+      }
+    }
+
+    .header {
+      border-bottom: 3px solid #000;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+    
+    @media (max-width: 768px) {
+      .header {
+        padding-bottom: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+    }
+
+    .publication-name {
+      font-family: 'UnifrakturCook', 'Playfair Display', 'Georgia', serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 0.375rem;
+      letter-spacing: 1px;
+      line-height: 1.2;
+    }
+    
+    @media (min-width: 640px) {
+      .publication-name {
+        font-size: 2.5rem;
+        letter-spacing: 2px;
+      }
+    }
+
+    .tagline {
+      font-family: 'Playfair Display', 'Georgia', serif;
+      text-align: center;
+      font-size: 0.7rem;
+      font-style: italic;
+      color: #666;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+    
+    @media (min-width: 640px) {
+      .tagline {
+        font-size: 0.75rem;
+        letter-spacing: 1px;
+      }
+    }
+
+    .c2pa-badge {
+      display: none;
+      align-items: center;
+      gap: 0.625rem;
+      animation: fadeInScale 0.5s ease-out;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(27, 47, 80, 0.03);
+    }
+
+    .c2pa-badge.visible {
+      display: inline-flex;
+    }
+
+    .encypher-seal {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+
+    .verified-text {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1B2F50;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+    
+    @media (min-width: 640px) {
+      .encypher-seal {
+        width: 48px;
+        height: 48px;
+      }
+      
+      .verified-text {
+        font-size: 1.05rem;
+      }
+    }
+    
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .meta-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.125rem;
+    }
+
+    @keyframes fadeInScale {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .article-meta {
+      margin-bottom: 1.25rem;
+    }
+    
+    @media (max-width: 768px) {
+      .article-meta {
+        margin-bottom: 0.875rem;
+      }
+    }
+
+    .article-title {
+      font-size: 2rem;
+      font-weight: bold;
+      line-height: 1.25;
+      margin-bottom: 0.75rem;
+      color: #000;
+    }
+    
+    @media (max-width: 768px) {
+      .article-title {
+        font-size: 1.35rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.3;
+      }
+    }
+
+    .article-subtitle {
+      font-size: 1.25rem;
+      color: #555;
+      line-height: 1.4;
+      margin-bottom: 1.5rem;
+      font-weight: normal;
+    }
+    
+    @media (max-width: 768px) {
+      .article-subtitle {
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+        line-height: 1.4;
+      }
+    }
+
+    .byline {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 0.8rem;
+      color: #666;
+      margin-bottom: 0.25rem;
+    }
+    
+    @media (max-width: 768px) {
+      .byline {
+        font-size: 0.7rem;
+        margin-bottom: 0.2rem;
+      }
+    }
+
+    .date-reading-time {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 0.7rem;
+      color: #999;
+    }
+    
+    @media (max-width: 768px) {
+      .date-reading-time {
+        font-size: 0.625rem;
+      }
+    }
+
+    .article-body {
+      font-size: 1rem;
+      line-height: 1.7;
+    }
+
+    .article-body p {
+      margin-bottom: 1.25rem;
+    }
+
+    .article-body p.highlight {
+      background: rgba(255, 235, 59, 0.3);
+      padding: 0.25rem;
+      border-radius: 2px;
+      transition: background 0.3s ease;
+    }
+
+    .article-body h2 {
+      font-size: 1.75rem;
+      font-weight: bold;
+      margin: 2rem 0 1rem 0;
+      color: #000;
+    }
+
+    .scanner-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(0, 102, 255, 0.3) 25%, 
+        rgba(0, 102, 255, 0.8) 50%, 
+        rgba(0, 102, 255, 0.3) 75%, 
+        transparent 100%);
+      box-shadow: 0 0 20px rgba(0, 102, 255, 0.6);
+      display: none;
+      z-index: 1000;
+    }
+
+    .scanner-overlay.active {
+      display: block;
+      animation: scanDown 2s ease-in-out forwards;
+    }
+
+    @keyframes scanDown {
+      from {
+        top: 0;
+      }
+      to {
+        top: 100%;
+      }
+    }
+
+    .about-author {
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid #ddd;
+      font-size: 0.875rem;
+      color: #666;
+      font-family: 'Inter', -apple-system, sans-serif;
+    }
+
+    .about-author strong {
+      color: #000;
+    }
+
+    @media (max-width: 768px) {
+      .article-body {
+        font-size: 0.9rem;
+        line-height: 1.65;
+      }
+      
+      .article-body p {
+        margin-bottom: 0.875rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scanner-overlay" id="scanner"></div>
+  
+  <div class="sample-banner">
+    SAMPLE ARTICLE
+  </div>
+  
+  <div class="article-container">
+    <header class="header">
+      <h1 class="publication-name">The Encypher Times</h1>
+      <p class="tagline">Your Cryptographically Verified News</p>
+    </header>
+
+    <article>
+      <div class="article-meta">
+        <h1 class="article-title">A New Foundation for Innovation and Trust</h1>
+        <div class="meta-row">
+          <div class="meta-info">
+            <p class="byline">By Erik Svilich, CEO of Encypher</p>
+            <p class="date-reading-time"><script>document.write(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }))</script> • 7 min read</p>
+          </div>
+          <div class="c2pa-badge" id="c2paBadge">
+            <img src="/encypher_icon_nobg_color.png" alt="Encypher Seal" class="encypher-seal">
+            <span class="verified-text">Verified</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="article-body">
+        <p id="targetParagraph">
+          The creative and media industries are facing an existential crisis. Their business models, already strained by two decades of digital disruption, are now threatened by the exponential rise of generative AI. The very content that forms the bedrock of their value is being ingested by AI models at an unprecedented scale, often without attribution, consent, or compensation. The referral traffic that once formed the basis of digital publishing is poised to disappear, replaced by AI-generated summaries that capture value without creating it.
+        </p>
+
+        <p>
+          The current response has been a predictable and costly rush to the courtroom. Publishers are spending hundreds of millions in legal fees to prove that their content was used, armed with statistical "AI detection" tools that are, at best, 26% accurate. This is not a winning strategy; it is a race to the bottom. You cannot build a licensing agreement, a legal precedent, or a sustainable business model on a statistical guess. The "we didn't know" defense from AI companies remains frustratingly effective precisely because publishers lack the technical tools to prove otherwise.
+        </p>
+
+        <h2>From Unwinnable Lawsuits to Inevitable Revenue</h2>
+
+        <p>
+          The problem is not legal; it is infrastructural. The internet was built without a native mechanism for asserting ownership or provenance of content. We have a chance to build the next layer of the internet—the layer for AI—correctly. The solution is not to block innovation, but to build a new foundation of trust based on mathematical certainty.
+        </p>
+
+        <p>
+          Imagine a world where every piece of content—every article, every image, every sentence—carries with it a persistent, cryptographically verifiable record of its origin and licensing terms. This is not a fantasy; it is the reality we are building. By embedding this proof directly into the content itself, we move from a defensive posture of "proving usage" to an offensive one of "proving notice." The burden of proof shifts. The conversation changes from "if" to "how much."
+        </p>
+
+        <h2>The New Content Economy</h2>
+
+        <p>
+          This new infrastructure, built on open standards like C2PA which we helped author, creates a transparent and equitable ecosystem for creators, publishers, and AI developers alike. For publishers, it transforms an unwinnable legal battle into a predictable, scalable licensing revenue stream. For AI companies, it provides a clear, technical path to resolving litigation and, more importantly, unlocks a new dimension of performance analytics by understanding which content truly drives value and engagement.
+        </p>
+
+        <p>
+          Innovation does not have to come at the expense of intellectual property. By establishing a shared infrastructure of trust, we can foster a new generation of AI that is not only more powerful but also more responsible. This is about more than just protecting existing business models; it's about creating the technical foundation for a new, trillion-dollar content economy where value flows back to its creators. The standard is being set. The infrastructure is being built. The future of media and AI depends on it.
+        </p>
+
+      </div>
+
+      <div class="about-author">
+        <strong>About the Author:</strong> Erik Svilich is the CEO of Encypher, the company that authored the C2PA text standard and provides the core infrastructure for AI content authentication and licensing.
+      </div>
+    </article>
+  </div>
+
+  <script>
+    // Listen for messages from parent window
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'highlightParagraph') {
+        const paragraph = document.getElementById('targetParagraph');
+        if (paragraph) {
+          paragraph.classList.add('highlight');
+        }
+      }
+
+      if (event.data.type === 'removeHighlight') {
+        const paragraph = document.getElementById('targetParagraph');
+        if (paragraph) {
+          paragraph.classList.remove('highlight');
+        }
+      }
+
+      if (event.data.type === 'startScan') {
+        const scanner = document.getElementById('scanner');
+        if (scanner) {
+          scanner.classList.add('active');
+          setTimeout(() => {
+            scanner.classList.remove('active');
+            // Show C2PA badge after scan
+            const badge = document.getElementById('c2paBadge');
+            if (badge) {
+              badge.classList.add('visible');
+            }
+          }, 2000);
+        }
+      }
+
+      if (event.data.type === 'showC2PABadge') {
+        const badge = document.getElementById('c2paBadge');
+        if (badge) {
+          badge.classList.add('visible');
+        }
+      }
+    });
+
+    // Notify parent that iframe is loaded
+    window.parent.postMessage({ type: 'iframeLoaded' }, '*');
+  </script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+@keyframes scrollRtoL {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-1800px); /* Move through one set of logos */
+    }
+  }
+  
+  @keyframes scrollLtoR {
+    from {
+      transform: translateX(-1800px); /* Start one set back */
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+  
+  .logoSlider {
+    width: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+  
+  .sliderTrack {
+    display: flex;
+    align-items: center;
+    width: 5400px; /* Width for tripled content */
+  }
+  
+  .scrollRtoL {
+    animation: scrollRtoL 60s linear infinite;
+  }
+  
+  .scrollLtoR {
+    animation: scrollLtoR 60s linear infinite;
+  }
+  
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 40px; /* 2.5rem */
+    flex-shrink: 0;
+    opacity: 0.6;
+  }

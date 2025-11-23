@@ -46,6 +46,43 @@
 - **New Feature**: Added AWS KMS support for Enterprise tier (Legal Non-Repudiation).
 - **New Feature**: Added Plugin Whitelabeling and Advanced Analytics (Mocked) for Pro/Enterprise tiers.
 
+## 7.0 Marketing Site Backend Migration
+
+### 7.1 Architecture & Planning
+- [x] 7.1.1 Define `web-service` schema for sales/contact forms and analytics
+- [x] 7.1.2 Set up new PostgreSQL database for marketing data
+- [x] 7.1.3 Design API contracts for web-service endpoints
+- [x] 7.1.4 Plan data migration from legacy backend
+
+### 7.2 Web-Service Implementation
+- [x] 7.2.1 Initialize new FastAPI service in `services/web-service`
+- [x] 7.2.2 Implement database models for demo requests and analytics events
+- [x] 7.2.3 Create API endpoints for contact forms and demo requests
+- [x] 7.2.4 Implement analytics event tracking endpoints
+- [x] 7.2.5 Add email notification system for new leads
+- [x] 7.2.6 Set up database migrations with Alembic
+
+### 7.3 Frontend Integration
+- [x] 7.3.1 Update frontend API client to use new web-service endpoints
+- [x] 7.3.2 Implement error handling and loading states
+- [x] 7.3.3 Add analytics event tracking to key user interactions
+- [x] 7.3.4 Update environment configuration
+
+### 7.4 Testing & Deployment
+- [x] 7.4.1 Write unit and integration tests
+- [x] 7.4.2 Set up Local Development Environment (Docker + Scripts)
+- [x] 7.4.3 Verify Encode/Decode Tool functionality (Local + Enterprise API)
+- [ ] 7.4.4 Set up CI/CD pipeline for web-service
+- [ ] 7.4.5 Deploy to staging environment
+- [ ] 7.4.6 Perform end-to-end testing (Automated)
+- [ ] 7.4.7 Deploy to production with feature flags
+
+### 7.5 Post-Migration
+- [ ] 7.5.1 Monitor system performance
+- [ ] 7.5.2 Verify data consistency
+- [ ] 7.5.3 Update documentation
+- [ ] 7.5.4 Decommission legacy backend endpoints
+
 ## Status
 - **Completed**:
     - Load test fixes (sync DB init, demo seeding).
@@ -56,5 +93,16 @@
     - WordPress Tier Audit & HSM Infrastructure Implementation.
     - Plugin Whitelabeling & Analytics differentiation.
     - **Final Integration Testing (Embeddings & Streaming).**
+    - **Marketing Site Backend Migration (7.0)**:
+        - Architecture & Planning (7.1)
+        - Web-Service Implementation (7.2)
+        - Frontend Integration (7.3)
+        - Local Dev Environment Setup (7.4.2)
+        - **Encode/Decode Tool Integration (Enterprise API Proxy)**
+        - **Tamper Detection UI Features**
+        - **Analytics Integration Fix (Shared DB Migration)**
+- **In Progress**:
+    - Marketing Site CI/CD & Deployment (7.4.4+)
 - **Pending**:
-    - None. Feature complete.
+    - Production Deployment
+

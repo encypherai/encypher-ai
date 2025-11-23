@@ -202,12 +202,15 @@ async def encode_document_with_embeddings(
         
         # Extract instance_id from the embedded C2PA manifest
         instance_id = None
+        extracted_manifest = None
         try:
             from encypher.core.unicode_metadata import UnicodeMetadata
             extracted = UnicodeMetadata.extract_metadata(embedded_content)
-            if extracted and 'instance_id' in extracted:
-                instance_id = extracted['instance_id']
-                logger.info(f"Extracted instance_id from manifest: {instance_id}")
+            if extracted:
+                extracted_manifest = extracted
+                if 'instance_id' in extracted:
+                    instance_id = extracted['instance_id']
+                    logger.info(f"Extracted instance_id from manifest: {instance_id}")
         except Exception as e:
             logger.warning(f"Could not extract instance_id from manifest: {e}")
         
@@ -228,11 +231,14 @@ async def encode_document_with_embeddings(
             )
         
         # Build metadata response
-        response_metadata = {
-            'instance_id': instance_id,
-            'action': request.action,
-            'previous_instance_id': request.previous_instance_id
-        }
+        if extracted_manifest:
+            response_metadata = extracted_manifest
+        else:
+            response_metadata = {
+                'instance_id': instance_id,
+                'action': request.action,
+                'previous_instance_id': request.previous_instance_id
+            }
         
         return EncodeWithEmbeddingsResponse(
             success=True,
