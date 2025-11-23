@@ -19,9 +19,7 @@ classifiers = [
 requires-python = ">=3.9"
 dependencies = [
     "rich",
-    "pyyaml",
     "cryptography",
-    "deprecated",
     "cbor2>=5.6.5",
     "c2pa-text>=0.1.0",
     "requests",

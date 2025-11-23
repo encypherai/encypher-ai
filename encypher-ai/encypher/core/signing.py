@@ -20,11 +20,11 @@ from cryptography.hazmat.primitives.asymmetric import ed25519, padding, rsa
 from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from cryptography.x509 import Certificate, NameOID
 
+from .logging_config import logger
+
 ALG_HEADER = 1
 ALG_EDDSA = -8
 X5CHAIN_HEADER = 33
-
-from .logging_config import logger
 
 
 class Signer(Protocol):
@@ -87,7 +87,7 @@ def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
             return cast(bytes, signature)
         except Exception as e:
             logger.error(f"Signing operation failed: {e}", exc_info=True)
-            raise RuntimeError(f"Signing failed: {e}")
+            raise RuntimeError(f"Signing failed: {e}") from e
 
     if not isinstance(private_key, ed25519.Ed25519PrivateKey):
         logger.error(f"Signing aborted: Incorrect private key type provided ({type(private_key)}). Expected Ed25519PrivateKey or Signer.")
@@ -99,7 +99,7 @@ def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
         return cast(bytes, signature)
     except Exception as e:
         logger.error(f"Signing operation failed: {e}", exc_info=True)
-        raise RuntimeError(f"Signing failed: {e}")
+        raise RuntimeError(f"Signing failed: {e}") from e
 
 
 def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature: bytes) -> bool:
@@ -190,7 +190,7 @@ def sign_c2pa_cose(
         return bytes(encoded_cose)
     except Exception as e:
         logger.error(f"COSE signing operation failed: {e}", exc_info=True)
-        raise RuntimeError(f"COSE signing failed: {e}")
+        raise RuntimeError(f"COSE signing failed: {e}") from e
 
 
 def add_timestamp_to_cose(cose_bytes: bytes, tsa_url: str) -> bytes:
@@ -309,7 +309,7 @@ def request_timestamp(timestamp_request: bytes, tsa_url: str) -> bytes:
         return bytes(response.content)
     except requests.RequestException as e:
         logger.error(f"Timestamp request failed: {e}", exc_info=True)
-        raise RuntimeError(f"Timestamp request failed: {e}")
+        raise RuntimeError(f"Timestamp request failed: {e}") from e
 
 
 def extract_payload_from_cose_sign1(cose_bytes: bytes) -> Optional[bytes]:
@@ -371,7 +371,7 @@ def verify_c2pa_cose(public_key: ed25519.Ed25519PublicKey, cose_bytes: bytes) ->
         logger.info("COSE_Sign1 signature verification successful.")
         return bytes(payload)
     except InvalidSignature:
-        raise InvalidSignature("COSE signature verification failed.")
+        raise InvalidSignature("COSE signature verification failed.") from None
 
 
 # --- X.509 Certificate Validation for C2PA ---
@@ -530,9 +530,9 @@ def validate_certificate_chain(cert_chain: list[Certificate], trust_store: Trust
                 raise CertificateValidationError(f"Unsupported public key type: {type(issuer_public_key)}")
 
         except InvalidSignature:
-            raise CertificateValidationError(f"Invalid signature on certificate: {subject.subject}")
+            raise CertificateValidationError(f"Invalid signature on certificate: {subject.subject}") from None
         except Exception as e:
-            raise CertificateValidationError(f"Certificate validation error: {e}")
+            raise CertificateValidationError(f"Certificate validation error: {e}") from e
 
     return True
 

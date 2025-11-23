@@ -129,13 +129,13 @@ def serialize_payload(payload: dict[str, Any]) -> bytes:
         return serialized_data
     except TypeError as e:
         logger.error(f"Serialization failed for payload type {payload_type} due to non-serializable content: {e}", exc_info=True)
-        raise TypeError(f"Payload of type {payload_type} is not JSON serializable: {e}")
+        raise TypeError(f"Payload of type {payload_type} is not JSON serializable: {e}") from e
     except Exception as e:
         logger.error(
             f"Unexpected error during serialization of {payload_type}: {e}",
             exc_info=True,
         )
-        raise RuntimeError(f"Unexpected error serializing payload of type {payload_type}: {e}")
+        raise RuntimeError(f"Unexpected error serializing payload of type {payload_type}: {e}") from e
 
 
 # New serialization functions for C2PA
@@ -148,7 +148,7 @@ def serialize_c2pa_payload_to_cbor(payload: C2PAPayload) -> bytes:
         return bytes(cbor_bytes)
     except Exception as e:
         logger.error(f"Unexpected error during C2PA CBOR serialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error serializing C2PA payload to CBOR: {e}")
+        raise RuntimeError(f"Unexpected error serializing C2PA payload to CBOR: {e}") from e
 
 
 def deserialize_c2pa_payload_from_cbor(cbor_bytes: bytes) -> C2PAPayload:
@@ -164,10 +164,10 @@ def deserialize_c2pa_payload_from_cbor(cbor_bytes: bytes) -> C2PAPayload:
         return cast(C2PAPayload, payload)  # Ensure type safety with explicit cast
     except cbor2.CBORDecodeError as e:
         logger.error(f"CBOR decoding failed: {e}", exc_info=True)
-        raise ValueError(f"Failed to decode CBOR bytes: {e}")
+        raise ValueError(f"Failed to decode CBOR bytes: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error during C2PA CBOR deserialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error deserializing C2PA payload from CBOR: {e}")
+        raise RuntimeError(f"Unexpected error deserializing C2PA payload from CBOR: {e}") from e
 
 
 def serialize_jumbf_payload(payload: dict[str, Any]) -> bytes:
@@ -188,7 +188,7 @@ def serialize_jumbf_payload(payload: dict[str, Any]) -> bytes:
         return jumbf_bytes
     except Exception as e:
         logger.error(f"Unexpected error during JUMBF serialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error serializing payload to JUMBF: {e}")
+        raise RuntimeError(f"Unexpected error serializing payload to JUMBF: {e}") from e
 
 
 def deserialize_jumbf_payload(jumbf_bytes: bytes) -> dict[str, Any]:
@@ -210,7 +210,7 @@ def deserialize_jumbf_payload(jumbf_bytes: bytes) -> dict[str, Any]:
         return payload
     except json.JSONDecodeError as e:
         logger.error(f"JUMBF JSON decoding failed: {e}", exc_info=True)
-        raise ValueError(f"Failed to decode JUMBF bytes: {e}")
+        raise ValueError(f"Failed to decode JUMBF bytes: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error during JUMBF deserialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error deserializing JUMBF payload: {e}")
+        raise RuntimeError(f"Unexpected error deserializing JUMBF payload: {e}") from e

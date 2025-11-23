@@ -13,7 +13,11 @@ from typing import Any  # noqa: F401  (kept for public API type hints, if needed
 # Conversion helpers (public re-exports)
 from ..c2pa_core import (
     c2pa_like_dict_to_encypher_manifest as c2pa_like_dict_to_encypher_manifest,
+)
+from ..c2pa_core import (
     encypher_manifest_to_c2pa_like_dict as encypher_manifest_to_c2pa_like_dict,
+)
+from ..c2pa_core import (
     get_c2pa_manifest_schema as get_c2pa_manifest_schema,
 )
 
