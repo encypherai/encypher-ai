@@ -1,12 +1,40 @@
 # EncypherAI Commercial - Root Agent Development Guide
 
+<!-- AI_INSTRUCTIONS_START -->
+## 🤖 AI Agent Protocols (READ FIRST)
+
+### 🧠 Critical Directives
+1. **Role**: You are a Senior Python/React Engineer. You favor robustness over speed.
+2. **Package Management**: **UV ONLY**. Never use `pip`. If you see `pip` in a command, correct it to `uv`.
+3. **Context**: You are working in `c:\Users\eriks\encypherai-commercial`. Always use this absolute path prefix.
+4. **Broken Reference Check**: The file `project_structure_rules.md` referenced in global memories does not exist; use this file (`agents.md`) as the source of truth.
+
+### 🛠️ Tool Usage Rules
+1. **Search First**: Before asking the user where something is, use `find_by_name` or `grep_search`.
+2. **Read Before Edit**: You MUST call `read_file` on a file before calling `edit` or `write_to_file`. Never edit based on memory or search snippets alone.
+3. **Grepping**: When searching for code references, always use `grep_search` with `CaseSensitive: false` initially to avoid missing matches.
+4. **File Paths**: Always use **absolute paths** (e.g., `c:\Users\eriks\encypherai-commercial\...`) in tool calls.
+
+### 📋 Task Planning Strategy
+- **Manifesto**: You must maintain a `plan.md` or `PRD.md` file.
+- **Rule**: Before writing any code, you must read the active plan.
+- **Rule**: If you complete a step, you MUST check it off in `plan.md` using the `edit` tool immediately.
+
+### ✅ Verification Protocol
+After editing a file, you MUST:
+1. **Syntactic Check**: Run the linter (`uv run ruff check .`) to ensure no syntax errors were introduced.
+2. **Semantic Check**: Read the file again to verify indentation and logic flow.
+3. **Test**: Run the relevant test immediately (`uv run pytest tests/path/to/test.py`). Do not wait for the user to ask.
+
+### 🗺️ Codebase Map (for Agents)
+- **Business Logic**: `services/*/app/services/` (Do not put business logic in API routes)
+- **API Routes**: `services/*/app/api/` (Keep these thin)
+- **Shared Utils**: `shared_commercial_libs/` (Check here before writing new utils)
+- **Database Models**: `services/*/app/models/`
+<!-- AI_INSTRUCTIONS_END -->
+
 ## Overview
 This is the **root-level development guide** for the entire encypherai-commercial repository. All developers working on this codebase should read this file first.
-
-## Repository Status
-✅ **Production Ready** - Multiple production-grade components  
-✅ **Well Documented** - Comprehensive documentation suite  
-✅ **Active Development** - Ongoing feature development
 
 ---
 

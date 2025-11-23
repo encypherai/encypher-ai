@@ -649,13 +649,12 @@ Our implementation follows **C2PA 2.2 Text Manifest Specification**:
 
 ### Benchmarks
 
-| Operation | Avg Latency | P95 Latency | P99 Latency |
-|-----------|-------------|-------------|-------------|
-| Sign (1KB) | 45ms | 78ms | 120ms |
-| Sign (10KB) | 67ms | 105ms | 150ms |
-| Verify | 23ms | 45ms | 67ms |
-| Lookup | 34ms | 56ms | 89ms |
-| Merkle Encode | 123ms | 200ms | 300ms |
+See [BENCHMARK_BASELINE.md](BENCHMARK_BASELINE.md) for detailed analysis of the latest run (Nov 2025).
+
+| Operation | Avg Latency | Throughput | Bottleneck |
+|-----------|-------------|------------|------------|
+| Sign (C2PA) | 3.61ms | ~277 req/s | CPU |
+| Merkle Encode | 108ms | ~9 req/s | Database I/O |
 
 ### Scalability
 
@@ -713,18 +712,14 @@ Our implementation follows **C2PA 2.2 Text Manifest Specification**:
 - **PHP**: [encypher-php](https://github.com/community/encypher-php)
 - **.NET**: [Encypher.NET](https://github.com/community/encypher-dotnet)
 
----
-
 ## 🧪 Testing
 
 ### Test Environment
-
 Base URL: `https://api-staging.encypherai.com/api/v1`
 
 Test API keys available in dashboard (no charges applied).
 
 ### Example Test Request
-
 ```bash
 curl -X POST https://api-staging.encypherai.com/api/v1/sign \
   -H "Authorization: Bearer encypher_test_..." \
@@ -734,6 +729,9 @@ curl -X POST https://api-staging.encypherai.com/api/v1/sign \
     "title": "Test"
   }'
 ```
+
+### Benchmarking & Load Testing
+For detailed instructions on running local benchmarks and load tests, please refer to the [Scripts Documentation](scripts/README.md).
 
 ---
 

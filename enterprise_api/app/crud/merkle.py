@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
-from sqlalchemy import select, and_, delete
+from sqlalchemy import select, and_, delete, insert
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -202,6 +202,7 @@ async def bulk_create_merkle_subhashes(
 ) -> int:
     """
     Bulk insert multiple subhashes for performance.
+    Uses SQLAlchemy Core insert() for maximum speed (bypassing ORM).
     
     Args:
         db: Database session
@@ -213,11 +214,18 @@ async def bulk_create_merkle_subhashes(
     if not subhashes:
         return 0
     
-    # Create instances
-    instances = [MerkleSubhash(**data) for data in subhashes]
-    db.add_all(instances)
+    # Chunk size for optimal bulk insert
+    CHUNK_SIZE = 2000
+    total_inserted = 0
+    
+    for i in range(0, len(subhashes), CHUNK_SIZE):
+        chunk = subhashes[i:i + CHUNK_SIZE]
+        stmt = insert(MerkleSubhash).values(chunk)
+        await db.execute(stmt)
+        total_inserted += len(chunk)
+    
     await db.commit()
-    return len(instances)
+    return total_inserted
 
 
 async def find_subhashes_by_hash(
