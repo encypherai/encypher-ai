@@ -1,0 +1,160 @@
+<div align="center">
+  <a href="https://encypherai.com">
+    <img src="https://encypherai.com/assets/logo.png" alt="Encypher AI Logo" width="200">
+  </a>
+
+  # c2pa-text
+
+  **The Official Reference Implementation for C2PA Text Embedding**
+
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![C2PA Compliant](https://img.shields.io/badge/C2PA-Compliant-blue)](https://c2pa.org)
+  [![Python](https://img.shields.io/pypi/v/c2pa-text?color=3776AB&logo=python&logoColor=white)](https://pypi.org/project/c2pa-text/)
+  [![NPM](https://img.shields.io/npm/v/c2pa-text?color=CB3837&logo=npm&logoColor=white)](https://www.npmjs.com/package/c2pa-text)
+  [![Rust](https://img.shields.io/crates/v/c2pa-text?color=dea584&logo=rust&logoColor=white)](https://crates.io/crates/c2pa-text)
+  [![Go](https://img.shields.io/badge/Go-Reference-00ADD8?logo=go&logoColor=white)](https://pkg.go.dev/github.com/encypherai/c2pa-text/go)
+</div>
+
+---
+
+This library allows you to embed and extract [C2PA](https://c2pa.org) manifests in unstructured text (UTF-8) using invisible Unicode Variation Selectors. It is compliant with the `Manifests_Text.adoc` specification.
+
+## Overview
+
+C2PA manifests are typically embedded in binary files (JPEG, PNG, MP4). For plain text, this library implements a standard wrapper structure (`C2PATextManifestWrapper`) that encodes the binary C2PA Manifest Store (JUMBF) into invisible characters that persist through copy-paste operations.
+
+This repository contains implementations for:
+- **Python**: For backend services and data processing.
+- **TypeScript**: For browser extensions, web apps, and Node.js.
+- **Rust**: For high-performance CLI tools and Wasm.
+- **Go**: For backend microservices.
+
+## Specification
+
+The wrapper structure is defined as:
+
+```
+Container Type: C2PATextManifestWrapper
+Magic: "C2PATXT\0" (0x4332504154585400)
+Version: 1
+Encoding: Unicode Variation Selectors (U+FE00..U+FE0F, U+E0100..U+E01EF)
+Placement: End of text, prefixed with ZWNBSP (U+FEFF)
+```
+
+## Maintenance & Support
+
+This library is the official reference implementation maintained by **Encypher** (encypherai.com), authors of the C2PA Text Specification and active contributors to the C2PA standard.
+
+While this library is free and permissively licensed (MIT), Encypher offers an **Enterprise API** for:
+- Managing cryptographic keys at scale (HSM)
+- Analytics and tracking for embedded content
+- Automated verification and revocation
+- Content production workflows
+
+[Learn more about Encypher Enterprise](https://encypherai.com)
+
+## Installation
+
+### Python
+```bash
+pip install c2pa-text
+```
+
+### TypeScript / JavaScript
+```bash
+npm install c2pa-text
+```
+
+### Rust
+```bash
+cargo add c2pa-text
+```
+
+### Go
+```bash
+go get github.com/encypherai/c2pa-text/go
+```
+
+## Generating Manifests
+
+This library handles the **embedding layer** (text steganography). To generate the valid C2PA JUMBF manifest bytes (`manifest_bytes`), you have two options:
+
+### 1. Use Encypher API (Recommended)
+The [Encypher Enterprise API](https://encypherai.com) automatically handles key management, signing, and manifest generation. It returns the fully signed JUMBF bytes or the final watermarked text directly.
+
+### 2. Use C2PA Tooling
+You can generate raw JUMBF manifests using standard C2PA tools (like `c2pa-rs` or `c2patool`) and pass the binary output to this library.
+
+## Usage (Python)
+
+```python
+from c2pa_text import embed_manifest, extract_manifest
+
+# 1. You have a binary C2PA manifest (JUMBF)
+manifest_bytes = b"..." 
+
+# 2. Embed it into text
+text = "Hello World"
+watermarked_text = embed_manifest(text, manifest_bytes)
+
+# 3. Extract it back
+extracted_bytes, clean_text = extract_manifest(watermarked_text)
+```
+
+## Usage (TypeScript)
+
+```typescript
+import { embedManifest, extractManifest } from 'c2pa-text';
+
+// 1. You have a binary C2PA manifest (JUMBF) as a Uint8Array
+const manifestBytes = new Uint8Array([/* ... */]);
+
+// 2. Embed it into text
+const text = "Hello World";
+const watermarkedText = embedManifest(text, manifestBytes);
+
+// 3. Extract it back
+const result = extractManifest(watermarkedText);
+if (result) {
+  console.log(result.manifest);   // Uint8Array
+  console.log(result.cleanText);  // "Hello World"
+}
+```
+
+## Usage (Rust)
+
+```rust
+use c2pa_text::{embed_manifest, extract_manifest};
+
+// 1. Binary manifest
+let manifest_bytes = b"...";
+
+// 2. Embed
+let text = "Hello World";
+let watermarked = embed_manifest(text, manifest_bytes);
+
+// 3. Extract
+if let Ok((Some(bytes), clean_text)) = extract_manifest(&watermarked) {
+    println!("Extracted {} bytes", bytes.len());
+}
+```
+
+## Usage (Go)
+
+```go
+import "github.com/encypherai/c2pa-text/go/c2pa_text"
+
+// 1. Binary manifest
+manifestBytes := []byte("...")
+
+// 2. Embed
+text := "Hello World"
+watermarked := c2pa_text.EmbedManifest(text, manifestBytes)
+
+// 3. Extract
+extractedBytes, cleanText, err := c2pa_text.ExtractManifest(watermarked)
+```
+
+## License
+
+MIT

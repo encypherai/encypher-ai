@@ -524,9 +524,18 @@ async def extract_and_verify_embedding(
             # Load the public key for this signer
             # Note: signer_id format is "org_<org_id>" (e.g., "org_demo")
             if signer_id.startswith("org_"):
-                # Pass the full signer_id (with org_ prefix) to load function
-                # The load function will handle demo org vs database lookup
-                public_key = await load_organization_public_key(signer_id, db)
+                try:
+                    # TRUST ANCHOR CHECK:
+                    # We look up the public key in our database to verify the signer's identity.
+                    # This implements the "Trust" part of the verification.
+                    public_key = await load_organization_public_key(signer_id, db)
+                except ValueError:
+                    # Signer is unknown to our Trust Anchor
+                    logger.warning(f"Signer ID {signer_id} not found in Trust Anchor database")
+                    return ExtractAndVerifyResponse(
+                        valid=False,
+                        error=f"Unknown Signer: Identity {signer_id} is not recognized by this Trust Anchor."
+                    )
             else:
                 logger.warning(f"Unknown signer_id format: {signer_id}")
                 return ExtractAndVerifyResponse(
@@ -544,6 +553,7 @@ async def extract_and_verify_embedding(
                 return None
             
             # Now verify with the resolver (synchronous call)
+            # This implements the "Integrity" part of the verification using the trusted key.
             is_valid, verified_signer_id, payload = UnicodeMetadata.verify_metadata(
                 text=extract_request.text,
                 public_key_resolver=sync_public_key_resolver
