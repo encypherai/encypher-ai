@@ -102,10 +102,18 @@ pub fn embed_manifest(text: &str, manifest_bytes: &[u8]) -> String {
     format!("{}{}", normalized, wrapper)
 }
 
+/// Result of extracting a manifest
+#[derive(Debug)]
+pub struct ExtractionResult {
+    pub manifest: Option<Vec<u8>>,
+    pub clean_text: String,
+    pub offset: Option<usize>, // Byte offset of the wrapper start
+    pub length: Option<usize>, // Byte length of the wrapper
+}
+
 /// Extract a C2PA manifest from text.
-/// Returns (manifest_bytes, clean_text).
-/// If no wrapper found, returns (None, normalized_text).
-pub fn extract_manifest(text: &str) -> Result<(Option<Vec<u8>>, String), Error> {
+/// Returns ExtractionResult.
+pub fn extract_manifest(text: &str) -> Result<ExtractionResult, Error> {
     // Simple scan for ZWNBSP
     let mut wrapper_start = None;
     let mut wrapper_end = None;
@@ -122,8 +130,7 @@ pub fn extract_manifest(text: &str) -> Result<(Option<Vec<u8>>, String), Error> 
             let start_idx = idx;
             let mut current_bytes = Vec::new();
             let mut j = i + 1;
-            let mut valid_seq = true;
-
+            
             while j < chars.len() {
                 let (_, vc) = chars[j];
                 if let Some(b) = vs_to_byte(vc) {
@@ -178,9 +185,19 @@ pub fn extract_manifest(text: &str) -> Result<(Option<Vec<u8>>, String), Error> 
     if let (Some(start), Some(end)) = (wrapper_start, wrapper_end) {
         let pre = &text[..start];
         let post = &text[end..];
-        let clean = format!("{}{}", pre, post).nfc().collect();
-        Ok((Some(decoded_bytes), clean))
+        let clean: String = format!("{}{}", pre, post).nfc().collect();
+        Ok(ExtractionResult {
+            manifest: Some(decoded_bytes),
+            clean_text: clean,
+            offset: Some(start),
+            length: Some(end - start),
+        })
     } else {
-        Ok((None, text.nfc().collect()))
+        Ok(ExtractionResult {
+            manifest: None,
+            clean_text: text.nfc().collect(),
+            offset: None,
+            length: None,
+        })
     }
 }

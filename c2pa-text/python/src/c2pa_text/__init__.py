@@ -86,59 +86,77 @@ def embed_manifest(text: str, manifest_bytes: bytes) -> str:
     return normalized_text + wrapper
 
 
-def extract_manifest(text: str) -> Tuple[Optional[bytes], str]:
+def find_wrapper_info(text: str) -> Optional[Tuple[bytes, int, int]]:
     """
-    Extract a C2PA manifest from text.
-
-    Searches for the standard C2PA wrapper, decodes it, and returns the manifest
-    and the clean text (NFC normalized).
-
+    Locate and decode the C2PA wrapper in the text.
+    
     Args:
-        text: The text containing the embedding.
-
+        text: The text to search.
+        
     Returns:
-        Tuple(manifest_bytes, clean_text).
-        manifest_bytes is None if no valid wrapper is found.
+        Tuple(manifest_bytes, start_index, end_index) or None if not found/valid.
+        start_index and end_index allow extracting or excluding the wrapper.
     """
     # Search for first wrapper
     m = _WRAPPER_RE.search(text)
     if not m:
-        return None, unicodedata.normalize("NFC", text)
+        return None
 
     # Ensure there is no second wrapper occurrence (spec requirement)
     second = _WRAPPER_RE.search(text, pos=m.end())
     if second:
         raise ValueError("Multiple C2PA text wrappers detected – must embed exactly one per asset")
-
+        
     seq = m.group(1)
     try:
         raw = decode_wrapper_sequence(seq)
     except ValueError:
         # Invalid VS sequence
-        return None, unicodedata.normalize("NFC", text)
+        return None
 
     if len(raw) < _HEADER_SIZE:
         # Too short
-        return None, unicodedata.normalize("NFC", text)
-
+        return None
+        
     magic, version, length = _HEADER_STRUCT.unpack(raw[:_HEADER_SIZE])
-
+    
     if magic != MAGIC:
         # Wrong magic
-        return None, unicodedata.normalize("NFC", text)
-
+        return None
+        
     if version != VERSION:
         # Unsupported version
-        return None, unicodedata.normalize("NFC", text)
-
+        return None
+        
     if len(raw) < _HEADER_SIZE + length:
         # Truncated
-        return None, unicodedata.normalize("NFC", text)
-
+        return None
+        
     manifest_bytes = raw[_HEADER_SIZE : _HEADER_SIZE + length]
+    return manifest_bytes, m.start(), m.end()
 
+
+def extract_manifest(text: str) -> Tuple[Optional[bytes], str]:
+    """
+    Extract a C2PA manifest from text.
+    
+    Searches for the standard C2PA wrapper, decodes it, and returns the manifest
+    and the clean text (NFC normalized).
+    
+    Args:
+        text: The text containing the embedding.
+        
+    Returns:
+        Tuple(manifest_bytes, clean_text).
+        manifest_bytes is None if no valid wrapper is found.
+    """
+    info = find_wrapper_info(text)
+    if not info:
+        return None, unicodedata.normalize("NFC", text)
+        
+    manifest_bytes, start, end = info
+    
     # Remove wrapper from text
-    start, end = m.span()
     clean_text = text[:start] + text[end:]
-
+    
     return manifest_bytes, unicodedata.normalize("NFC", clean_text)

@@ -82,17 +82,15 @@ export function embedManifest(text: string, manifestBytes: Uint8Array): string {
  * Extract a C2PA manifest from text.
  * Returns null if no valid wrapper is found.
  */
-export function extractManifest(text: string): { manifest: Uint8Array, cleanText: string } | null {
+export function extractManifest(text: string): { manifest: Uint8Array, cleanText: string, offset: number, length: number } | null {
   // Simple regex scan is tricky with JS regex for surrogate pairs (VS_SUP).
   // We'll iterate manually or use a pattern.
   // Pattern: ZWNBSP + (VS chars)+
-  // Note: JS regex 'u' flag handles unicode ranges.
   
   const vsPattern = /^\ufeff([\ufe00-\ufe0f\udb40\udd00-\udb40\uddef]+)/u;
   
   // Find wrapper. We look for ZWNBSP followed by VS chars.
   // Since it can be anywhere (but usually end), we search.
-  // Optimization: Check end first?
   
   // Let's scan for ZWNBSP
   let matchIndex = -1;
@@ -105,7 +103,6 @@ export function extractManifest(text: string): { manifest: Uint8Array, cleanText
       // Potential start. Check subsequent chars.
       const potentialBytes: number[] = [];
       let j = i + 1;
-      let isValidSequence = true;
       
       while (j < text.length) {
         const code = text.codePointAt(j);
@@ -134,9 +131,6 @@ export function extractManifest(text: string): { manifest: Uint8Array, cleanText
             // Check Length
             const len = (potentialBytes[9] << 24) | (potentialBytes[10] << 16) | (potentialBytes[11] << 8) | potentialBytes[12];
             
-            // The total sequence length must match HEADER_SIZE + len
-            // Actually, the standard says "at least". But our encoder produces exact.
-            // We should accept exact match.
             if (potentialBytes.length >= HEADER_SIZE + len) {
                 // Found it!
                 matchIndex = i;
@@ -145,8 +139,6 @@ export function extractManifest(text: string): { manifest: Uint8Array, cleanText
                 decodedBytes = potentialBytes.slice(HEADER_SIZE, HEADER_SIZE + len);
                 
                 // Check for second occurrence (spec req)
-                // This simple implementation just finds the first valid one.
-                // A full implementation should scan the rest.
                 break; 
             }
         }
@@ -165,5 +157,5 @@ export function extractManifest(text: string): { manifest: Uint8Array, cleanText
   const post = text.substring(matchIndex + matchLength);
   const cleanText = (pre + post).normalize('NFC');
   
-  return { manifest, cleanText };
+  return { manifest, cleanText, offset: matchIndex, length: matchLength };
 }

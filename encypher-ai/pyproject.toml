@@ -18,42 +18,32 @@ classifiers = [
 ]
 requires-python = ">=3.9"
 dependencies = [
-    "litellm>=1.43.0",
     "rich",
     "pyyaml",
     "cryptography",
     "deprecated",
     "cbor2>=5.6.5",
+    "c2pa-text>=0.1.0",
+    "requests",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "black>=24.3.0",
-    "black[jupyter]>=24.3.0",
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
     "mypy>=1.0.0",
     "types-requests>=2.31.0",
-    "flake8>=6.0.0",
     "ruff>=0.0.270",
-    "isort>=5.12.0",
     "pre-commit>=3.3.3",
     "types-Deprecated>=1.2.9",
+    "litellm>=1.43.0",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/encypherai/encypher-ai"
 "Bug Tracker" = "https://github.com/encypherai/encypher-ai/issues"
-
-[tool.black]
-line-length = 150
-target-version = ["py39", "py310", "py311"]
-include = '\\.pyi?$'
-
-[tool.isort]
-profile = "black"
-line_length = 150
-multi_line_output = 3
 
 [tool.mypy]
 python_version = "3.9"
@@ -83,6 +73,25 @@ python_classes = "Test*"
 
 [tool.ruff]
 line-length = 150
+target-version = "py39"
+
+[tool.ruff.lint]
+select = [
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "F",  # pyflakes
+    "I",  # isort
+    "B",  # flake8-bugbear
+    "C4", # flake8-comprehensions
+    "UP", # pyupgrade
+]
+ignore = []
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
 
 [tool.setuptools]
 packages = ["encypher"]

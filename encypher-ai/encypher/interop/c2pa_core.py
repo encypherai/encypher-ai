@@ -12,7 +12,7 @@ organizations that need to work with both standards.
 
 import base64
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
 import cbor2
 
@@ -22,14 +22,14 @@ from encypher import __version__
 logger = logging.getLogger(__name__)
 
 
-def _serialize_data_to_cbor_base64(data: Dict[str, Any]) -> str:
+def _serialize_data_to_cbor_base64(data: dict[str, Any]) -> str:
     """Serializes a dictionary to CBOR and then encodes it as a Base64 string."""
     cbor_data = cbor2.dumps(data)
     base64_encoded_data = base64.b64encode(cbor_data).decode("utf-8")
     return base64_encoded_data
 
 
-def _deserialize_data_from_cbor_base64(base64_cbor_str: str) -> Dict[str, Any]:
+def _deserialize_data_from_cbor_base64(base64_cbor_str: str) -> dict[str, Any]:
     """Decodes a Base64 string and then deserializes it from CBOR to a dictionary."""
     cbor_data = base64.b64decode(base64_cbor_str)
     data = cbor2.loads(cbor_data)
@@ -38,7 +38,7 @@ def _deserialize_data_from_cbor_base64(base64_cbor_str: str) -> Dict[str, Any]:
     return data
 
 
-def _get_c2pa_assertion_data(assertion_dict: Dict[str, Any]) -> Dict[str, Any]:
+def _get_c2pa_assertion_data(assertion_dict: dict[str, Any]) -> dict[str, Any]:
     """
     Helper to construct the 'data' field for a C2PA-like assertion
     from an EncypherAI assertion dictionary. Handles CBOR decoding if specified.
@@ -68,13 +68,13 @@ def _get_c2pa_assertion_data(assertion_dict: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def encypher_manifest_to_c2pa_like_dict(
-    manifest: Dict[str, Any],
+    manifest: dict[str, Any],
     content_text: Optional[str] = None,
     embedded_data: Optional[str] = None,
     add_actions_assertion: bool = False,
     add_context: bool = True,
     add_instance_id: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Converts an EncypherAI ManifestPayload to a dictionary using field names
     aligned with C2PA v2.2 assertion structures.
@@ -263,8 +263,8 @@ def encypher_manifest_to_c2pa_like_dict(
 
 
 def c2pa_like_dict_to_encypher_manifest(
-    data: Dict[str, Any], encode_assertion_data_as_cbor: bool = False, use_nested_data: bool = False
-) -> Dict[str, Any]:
+    data: dict[str, Any], encode_assertion_data_as_cbor: bool = False, use_nested_data: bool = False
+) -> dict[str, Any]:
     """
     Creates an EncypherAI ManifestPayload from a dictionary structured
     similarly to C2PA assertions. Handles missing fields gracefully.
@@ -388,7 +388,7 @@ def c2pa_like_dict_to_encypher_manifest(
     return manifest
 
 
-def get_c2pa_manifest_schema() -> Dict[str, Any]:
+def get_c2pa_manifest_schema() -> dict[str, Any]:
     """
     Returns a JSON Schema representation of the C2PA v2.2 structure used by this module.
 

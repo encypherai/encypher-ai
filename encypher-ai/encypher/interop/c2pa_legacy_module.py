@@ -10,10 +10,10 @@ The goal is to demonstrate potential interoperability and provide a starting poi
 organizations that need to work with both standards.
 """
 
-from typing import Any, Dict
+from typing import Any
 
 
-def encypher_manifest_to_c2pa_like_dict(manifest: Dict[str, Any]) -> Dict[str, Any]:
+def encypher_manifest_to_c2pa_like_dict(manifest: dict[str, Any]) -> dict[str, Any]:
     """
     Converts an EncypherAI ManifestPayload to a dictionary using field names
     conceptually aligned with C2PA assertion structures.
@@ -93,7 +93,7 @@ def encypher_manifest_to_c2pa_like_dict(manifest: Dict[str, Any]) -> Dict[str, A
     return result
 
 
-def c2pa_like_dict_to_encypher_manifest(data: Dict[str, Any]) -> Dict[str, Any]:
+def c2pa_like_dict_to_encypher_manifest(data: dict[str, Any]) -> dict[str, Any]:
     """
     Creates an EncypherAI ManifestPayload from a dictionary structured
     similarly to C2PA assertions. Handles missing fields gracefully.
@@ -179,7 +179,7 @@ def c2pa_like_dict_to_encypher_manifest(data: Dict[str, Any]) -> Dict[str, Any]:
     return manifest
 
 
-def get_c2pa_manifest_schema() -> Dict[str, Any]:
+def get_c2pa_manifest_schema() -> dict[str, Any]:
     """
     Returns a JSON Schema representation of the C2PA-like structure used by this module.
 

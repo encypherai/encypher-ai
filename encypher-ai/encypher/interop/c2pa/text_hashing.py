@@ -8,10 +8,10 @@ and hash algorithms remain perfectly aligned.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
-from typing import List, Sequence, Tuple
 import unicodedata
+from collections.abc import Sequence
+from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
@@ -49,8 +49,8 @@ def normalize_text(text: str) -> str:
     return unicodedata.normalize("NFC", text)
 
 
-def _coerce_ranges(exclusions: Sequence[Tuple[int, int]]) -> List[Tuple[int, int]]:
-    coerced: List[Tuple[int, int]] = []
+def _coerce_ranges(exclusions: Sequence[tuple[int, int]]) -> list[tuple[int, int]]:
+    coerced: list[tuple[int, int]] = []
     for start, length in exclusions:
         coerced_start = int(start)
         coerced_length = int(length)
@@ -60,7 +60,7 @@ def _coerce_ranges(exclusions: Sequence[Tuple[int, int]]) -> List[Tuple[int, int
     return sorted(coerced, key=lambda item: item[0])
 
 
-def _apply_exclusions(normalized_bytes: bytes, exclusions: Sequence[Tuple[int, int]]) -> bytes:
+def _apply_exclusions(normalized_bytes: bytes, exclusions: Sequence[tuple[int, int]]) -> bytes:
     if not exclusions:
         return normalized_bytes
 
@@ -80,7 +80,7 @@ def _apply_exclusions(normalized_bytes: bytes, exclusions: Sequence[Tuple[int, i
 
 def compute_normalized_hash(
     text: str,
-    exclusions: Sequence[Tuple[int, int]] | None = None,
+    exclusions: Sequence[tuple[int, int]] | None = None,
     *,
     algorithm: str = "sha256",
 ) -> NormalizedHashResult:

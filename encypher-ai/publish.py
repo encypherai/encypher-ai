@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Script to build and publish the package to PyPI using UV."""
+
 import subprocess
 import sys
 

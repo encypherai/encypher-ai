@@ -25,7 +25,7 @@ import os
 import sys
 import time
 from datetime import datetime, timezone
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Optional, Union
 
 import requests
 
@@ -125,14 +125,14 @@ async def health_check():
 class EncodeRequest(BaseModel):
     text: str = Field(..., description="Text to encode metadata into")
     signer_id: Optional[str] = Field(None, description=f"Signer ID. If not provided, '{DEFAULT_SIGNER_ID}' will be used.")
-    custom_metadata: Optional[Dict[str, Any]] = Field(None, description="Custom JSON metadata to embed")
+    custom_metadata: Optional[dict[str, Any]] = Field(None, description="Custom JSON metadata to embed")
 
 
 class EncodeResponse(BaseModel):
     encoded_text: str = Field(..., description="Text with encoded metadata")
     signer_id_used: str = Field(..., description="The signer_id that was used for embedding")
     timestamp_used: int = Field(..., description="The Unix timestamp that was used for embedding")
-    embedded_custom_metadata: Optional[Dict[str, Any]] = Field(None, description="The custom metadata that was embedded")
+    embedded_custom_metadata: Optional[dict[str, Any]] = Field(None, description="The custom metadata that was embedded")
 
 
 class DecodeRequest(BaseModel):
@@ -142,15 +142,15 @@ class DecodeRequest(BaseModel):
 class DecodeResponse(BaseModel):
     is_valid: bool = Field(..., description="Whether the signature is valid")
     signer_id: Optional[str] = Field(None, description="Extracted signer ID, if signature is valid or metadata is present")
-    payload: Optional[Dict[str, Any]] = Field(None, description="Extracted payload, if signature is valid or metadata is present")
+    payload: Optional[dict[str, Any]] = Field(None, description="Extracted payload, if signature is valid or metadata is present")
     original_text: Optional[str] = Field(None, description="Original text without metadata")
     error_message: Optional[str] = Field(None, description="Error message if decoding fails")
 
 
 class StreamRequest(BaseModel):
-    text_chunks: List[str] = Field(..., description="List of text chunks to simulate streaming")
+    text_chunks: list[str] = Field(..., description="List of text chunks to simulate streaming")
     signer_id: Optional[str] = Field(None, description=f"Signer ID. If not provided, '{DEFAULT_SIGNER_ID}' will be used.")
-    custom_metadata: Optional[Dict[str, Any]] = Field(None, description="Custom JSON metadata to embed in the stream")
+    custom_metadata: Optional[dict[str, Any]] = Field(None, description="Custom JSON metadata to embed in the stream")
     encode_first_chunk_only: Optional[bool] = Field(True, description="Whether to encode metadata only in the first chunk")
 
 
@@ -210,7 +210,7 @@ async def decode_text(request: DecodeRequest):
             f"[ FastAPI Server DEBUG ] verified_payload_object: {verified_payload_object!r} (type: {type(verified_payload_object)})", style="yellow"
         )
 
-        payload_as_dict: Optional[Dict[str, Any]] = None
+        payload_as_dict: Optional[dict[str, Any]] = None
         if verified_payload_object:
             payload_as_dict = verified_payload_object
 

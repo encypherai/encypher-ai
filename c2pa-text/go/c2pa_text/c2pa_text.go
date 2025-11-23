@@ -94,9 +94,9 @@ func EmbedManifest(text string, manifestBytes []byte) string {
 }
 
 // ExtractManifest extracts a C2PA manifest from text.
-// Returns manifest bytes and clean (NFC normalized) text.
-// If no wrapper found, returns nil and normalized text.
-func ExtractManifest(text string) ([]byte, string, error) {
+// Returns manifest bytes, clean text, offset, length, and error.
+// offset and length are byte indices/lengths relative to the original text.
+func ExtractManifest(text string) ([]byte, string, int, int, error) {
 	// We need to scan by rune
 	runes := []rune(text)
 	
@@ -136,7 +136,7 @@ func ExtractManifest(text string) ([]byte, string, error) {
 						
 						if len(currentBytes) >= HeaderSize+int(length) {
 							if wrapperStart != -1 {
-								return nil, norm.NFC.String(text), ErrMultipleWrappers
+								return nil, norm.NFC.String(text), -1, -1, ErrMultipleWrappers
 							}
 							
 							wrapperStart = startIdx
@@ -155,9 +155,14 @@ func ExtractManifest(text string) ([]byte, string, error) {
 	}
 
 	if wrapperStart != -1 {
+		// Convert rune indices to byte indices
+		preRunes := runes[:wrapperStart]
+		wrapperRunes := runes[wrapperStart:wrapperEnd]
+		
+		startByte := len(string(preRunes))
+		lengthByte := len(string(wrapperRunes))
+
 		// Reconstruct string without wrapper
-		// Note: string slicing in Go is by byte, but we have rune indices
-		// Easier to rebuild from rune slice
 		pre := string(runes[:wrapperStart])
 		post := string(runes[wrapperEnd:])
 		clean := norm.NFC.String(pre + post)
@@ -166,8 +171,8 @@ func ExtractManifest(text string) ([]byte, string, error) {
 		outBytes := make([]byte, len(decodedBytes))
 		copy(outBytes, decodedBytes)
 		
-		return outBytes, clean, nil
+		return outBytes, clean, startByte, lengthByte, nil
 	}
 
-	return nil, norm.NFC.String(text), nil
+	return nil, norm.NFC.String(text), -1, -1, nil
 }
