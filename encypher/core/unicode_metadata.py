@@ -275,14 +275,14 @@ class UnicodeMetadata:
                 dt = datetime.fromtimestamp(ts, tz=timezone.utc)
             except (OSError, ValueError):
                 # Handle potential errors like invalid timestamp value
-                raise ValueError(f"Invalid timestamp value: {ts}")
+                raise ValueError(f"Invalid timestamp value: {ts}") from None
         elif isinstance(ts, str):
             try:
                 # Attempt to parse ISO 8601 format
                 dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
             except ValueError:
                 # If parsing fails, raise error - we need a consistent format
-                raise ValueError(f"Invalid timestamp string format: {ts}. Use ISO 8601.")
+                raise ValueError(f"Invalid timestamp string format: {ts}. Use ISO 8601.") from None
         else:
             raise TypeError(f"Unsupported timestamp type: {type(ts)}")
 
@@ -349,7 +349,7 @@ class UnicodeMetadata:
                 target_enum = MetadataTarget(target.lower())  # Convert string to enum
             except ValueError:
                 valid_targets = [t.name for t in MetadataTarget]
-                raise ValueError(f"Invalid target: {target}. Must be one of {valid_targets}.")
+                raise ValueError(f"Invalid target: {target}. Must be one of {valid_targets}.") from None
         else:
             raise TypeError("'target' must be a string or MetadataTarget enum member.")
 
@@ -389,7 +389,7 @@ class UnicodeMetadata:
                 iso_timestamp = cls._format_timestamp(timestamp)
             except (ValueError, TypeError) as e:
                 logger.error(f"Timestamp error: {e}", exc_info=True)
-                raise ValueError(f"Timestamp error: {e}")
+                raise ValueError(f"Timestamp error: {e}") from e
 
             return cls._embed_c2pa(
                 text=text,
@@ -434,7 +434,7 @@ class UnicodeMetadata:
             except ValueError:
                 valid_targets = [t.name for t in MetadataTarget]
                 logger.error(f"Invalid target: {target}. Must be one of {valid_targets}.")
-                raise ValueError(f"Invalid target: {target}. Must be one of {valid_targets}.")
+                raise ValueError(f"Invalid target: {target}. Must be one of {valid_targets}.") from None
         else:
             logger.error("'target' must be a string or MetadataTarget enum member.")
             raise TypeError("'target' must be a string or MetadataTarget enum member.")
@@ -464,7 +464,7 @@ class UnicodeMetadata:
             iso_timestamp = cls._format_timestamp(timestamp)
         except (ValueError, TypeError) as e:
             logger.error(f"Timestamp error: {e}", exc_info=True)
-            raise ValueError(f"Timestamp error: {e}")
+            raise ValueError(f"Timestamp error: {e}") from e
 
         payload_data: dict[str, Any]  # Use Dict[str, Any] for flexible construction
 
@@ -650,7 +650,7 @@ class UnicodeMetadata:
             outer_bytes = serialize_payload(dict(outer_payload_to_embed))
         except Exception as e:
             logger.error(f"Failed to serialize outer payload: {e}", exc_info=True)
-            raise RuntimeError(f"Failed to serialize outer payload: {e}")
+            raise RuntimeError(f"Failed to serialize outer payload: {e}") from e
 
         logger.debug(f"Serialized outer payload size: {len(outer_bytes)} bytes")
 
@@ -660,7 +660,7 @@ class UnicodeMetadata:
         except ValueError as e:
             # Handle potential errors from the helper
             logger.error(f"Failed to convert metadata bytes to selectors: {e}", exc_info=True)
-            raise RuntimeError(f"Failed to convert metadata bytes to selectors: {e}")
+            raise RuntimeError(f"Failed to convert metadata bytes to selectors: {e}") from e
 
         if not selector_chars:
             # Nothing to embed, return original text
@@ -681,7 +681,7 @@ class UnicodeMetadata:
         except ValueError as e:
             # Propagate errors from find_targets (e.g., invalid target string)
             logger.error(f"Failed to find embedding targets: {e}", exc_info=True)
-            raise ValueError(f"Failed to find embedding targets: {e}")
+            raise ValueError(f"Failed to find embedding targets: {e}") from e
 
         target_display = embedding_target.value if hasattr(embedding_target, "value") else embedding_target
         logger.debug(f"Found {len(target_indices)} potential embedding targets using '{target_display}'.")
@@ -745,7 +745,7 @@ class UnicodeMetadata:
         try:
             h = hashlib.new(algorithm.replace("-", ""))
         except ValueError:
-            raise ValueError(f"Unsupported hash algorithm '{algorithm}' for C2PA")
+            raise ValueError(f"Unsupported hash algorithm '{algorithm}' for C2PA") from None
         h.update(normalized.encode("utf-8"))
         return h.hexdigest()
 

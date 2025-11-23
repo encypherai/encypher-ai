@@ -203,7 +203,7 @@ async def chat_completions(
         return ChatResponse(model=request.model, content=encoded_content, custom_metadata_embedded=custom_metadata_payload)
     except Exception as e:
         print(f"Error in /v1/chat/completions: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating completion: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating completion: {str(e)}") from e
 
 
 async def stream_chat_completion(request: ChatRequest, messages: list[dict[str, str]], actual_signer_id: str) -> AsyncGenerator[str, None]:

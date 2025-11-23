@@ -185,7 +185,7 @@ async def encode_text(request: EncodeRequest):
         )
     except Exception as e:
         console.print(f"[ FastAPI Server ] Error during encoding: {e}", style="red")
-        raise HTTPException(status_code=500, detail=f"Error encoding metadata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error encoding metadata: {str(e)}") from e
 
 
 @app.post("/decode", response_model=DecodeResponse)
@@ -233,7 +233,7 @@ async def decode_text(request: DecodeRequest):
 
     except Exception as e:
         console.print(f"[ FastAPI Server ] Error during decoding: {e}", style="red")
-        raise HTTPException(status_code=500, detail=f"Error decoding metadata: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error decoding metadata: {str(e)}") from e
 
 
 # --- Self-testing logic ---
