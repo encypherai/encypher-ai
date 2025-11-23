@@ -5,12 +5,23 @@ from __future__ import annotations
 import re
 import struct
 import unicodedata
-from typing import Optional, Tuple
+
+try:
+    import c2pa_text
+
+    HAS_C2PA_TEXT = True
+except ImportError:
+    HAS_C2PA_TEXT = False
 
 # ---------------------- Constants -------------------------------------------
 
-MAGIC = b"C2PATXT\0"  # 8-byte magic sequence
-VERSION = 1  # Current wrapper version we emit / accept
+if HAS_C2PA_TEXT:
+    MAGIC = c2pa_text.MAGIC
+    VERSION = c2pa_text.VERSION
+else:
+    MAGIC = b"C2PATXT\0"  # 8-byte magic sequence
+    VERSION = 1  # Current wrapper version we emit / accept
+
 _HEADER_STRUCT = struct.Struct("!8sBI")
 _HEADER_SIZE = _HEADER_STRUCT.size
 
@@ -27,7 +38,7 @@ def _byte_to_vs(byte: int) -> str:
     raise ValueError("byte out of range 0-255")
 
 
-def _vs_to_byte(codepoint: int) -> Optional[int]:
+def _vs_to_byte(codepoint: int) -> int | None:
     if 0xFE00 <= codepoint <= 0xFE0F:
         return codepoint - 0xFE00
     if 0xE0100 <= codepoint <= 0xE01EF:
@@ -36,6 +47,9 @@ def _vs_to_byte(codepoint: int) -> Optional[int]:
 
 
 def encode_wrapper(manifest_bytes: bytes) -> str:
+    if HAS_C2PA_TEXT:
+        return c2pa_text.encode_wrapper(manifest_bytes)
+
     header = _HEADER_STRUCT.pack(MAGIC, VERSION, len(manifest_bytes))
     payload = header + manifest_bytes
     vs = [_byte_to_vs(b) for b in payload]
@@ -65,7 +79,7 @@ def attach_wrapper_to_text(text: str, manifest_bytes: bytes, alg: str = "sha256"
     return text + wrapper if at_end else wrapper + text
 
 
-def extract_from_text(text: str) -> Tuple[Optional[bytes], str, Optional[Tuple[int, int]]]:
+def extract_from_text(text: str) -> tuple[bytes | None, str, tuple[int, int] | None]:
     """Extract wrapper from text.
 
     Returns ``(manifest_bytes, clean_text, span)`` where ``clean_text`` is NFC
@@ -81,7 +95,16 @@ def _normalize(text: str) -> str:
     return unicodedata.normalize("NFC", text)
 
 
-def find_and_decode(text: str) -> Tuple[Optional[bytes], str, Optional[Tuple[int, int]]]:
+def find_and_decode(text: str) -> tuple[bytes | None, str, tuple[int, int] | None]:
+    if HAS_C2PA_TEXT and hasattr(c2pa_text, "find_wrapper_info"):
+        info = c2pa_text.find_wrapper_info(text)
+        if info:
+            manifest_bytes, start, end = info
+            # Reconstruct clean text as per legacy behavior (NFC)
+            clean_text = _normalize(text[:start] + text[end:])
+            return manifest_bytes, clean_text, (start, end)
+        return None, _normalize(text), None
+
     # Search for first wrapper
     m = _WRAPPER_RE.search(text)
     if not m:

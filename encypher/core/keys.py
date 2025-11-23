@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -7,7 +7,7 @@ from .exceptions import EncypherError, PrivateKeyLoadingError, PublicKeyLoadingE
 from .logging_config import logger
 
 
-def generate_ed25519_key_pair() -> Tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
+def generate_ed25519_key_pair() -> tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
     """
     Generates an Ed25519 key pair.
 
@@ -91,7 +91,7 @@ def save_ed25519_key_pair_to_files(
                 )
             )
         logger.info(f"Private key successfully saved to {private_key_path}.")
-    except IOError as e:
+    except OSError as e:
         logger.error(f"Failed to write private key to {private_key_path}: {e}", exc_info=True)
         raise EncypherError(f"Could not write private key to file: {e}")
 
@@ -105,7 +105,7 @@ def save_ed25519_key_pair_to_files(
                 )
             )
         logger.info(f"Public key successfully saved to {public_key_path}.")
-    except IOError as e:
+    except OSError as e:
         logger.error(f"Failed to write public key to {public_key_path}: {e}", exc_info=True)
         raise EncypherError(f"Could not write public key to file: {e}")
 
