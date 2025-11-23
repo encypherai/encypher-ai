@@ -8,7 +8,7 @@ from dataclasses import dataclass, field
 
 from .sentence import segment_sentences
 from .paragraph import segment_paragraphs
-from .section import segment_sections, segment_sections_with_titles
+from .section import segment_sections
 from .word import segment_words_simple
 
 # Import default segmenter (spaCy-based with Unicode normalization)

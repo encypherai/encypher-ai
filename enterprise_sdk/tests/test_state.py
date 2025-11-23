@@ -4,11 +4,10 @@ Tests for state management (incremental signing).
 import json
 import tempfile
 from pathlib import Path
-from datetime import datetime
 
 import pytest
 
-from encypher_enterprise.state import StateManager, FileState
+from encypher_enterprise.state import StateManager
 
 
 @pytest.fixture

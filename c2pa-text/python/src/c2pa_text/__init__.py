@@ -106,7 +106,7 @@ def find_wrapper_info(text: str) -> Optional[Tuple[bytes, int, int]]:
     second = _WRAPPER_RE.search(text, pos=m.end())
     if second:
         raise ValueError("Multiple C2PA text wrappers detected – must embed exactly one per asset")
-        
+
     seq = m.group(1)
     try:
         raw = decode_wrapper_sequence(seq)
@@ -117,21 +117,21 @@ def find_wrapper_info(text: str) -> Optional[Tuple[bytes, int, int]]:
     if len(raw) < _HEADER_SIZE:
         # Too short
         return None
-        
+
     magic, version, length = _HEADER_STRUCT.unpack(raw[:_HEADER_SIZE])
-    
+
     if magic != MAGIC:
         # Wrong magic
         return None
-        
+
     if version != VERSION:
         # Unsupported version
         return None
-        
+
     if len(raw) < _HEADER_SIZE + length:
         # Truncated
         return None
-        
+
     manifest_bytes = raw[_HEADER_SIZE : _HEADER_SIZE + length]
     return manifest_bytes, m.start(), m.end()
 
@@ -153,10 +153,10 @@ def extract_manifest(text: str) -> Tuple[Optional[bytes], str]:
     info = find_wrapper_info(text)
     if not info:
         return None, unicodedata.normalize("NFC", text)
-        
+
     manifest_bytes, start, end = info
-    
+
     # Remove wrapper from text
     clean_text = text[:start] + text[end:]
-    
+
     return manifest_bytes, unicodedata.normalize("NFC", clean_text)

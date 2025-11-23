@@ -3,7 +3,6 @@ API Gateway - Minimal FastAPI gateway that proxies selected routes to downstream
 """
 from contextlib import asynccontextmanager
 import uuid
-import logging
 from typing import Dict, Iterable, Tuple
 
 import httpx

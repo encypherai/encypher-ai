@@ -20,12 +20,12 @@ print(f"Original lines: {len(original_text.splitlines())}")
 segmenter = SegmentationService()
 segments = segmenter.segment_text(original_text, level='sentence')
 
-print(f"\nSegmentation Results:")
+print("\nSegmentation Results:")
 print(f"  - Total segments: {len(segments)}")
-print(f"  - Segmentation level: sentence")
+print("  - Segmentation level: sentence")
 
 # Show first 10 segments
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("FIRST 10 SEGMENTS")
 print("=" * 80)
 
@@ -34,7 +34,7 @@ for i, segment in enumerate(segments[:10]):
     print(f"    Text: {segment[:100]}{'...' if len(segment) > 100 else ''}")
 
 # Show segments around line 8 from the image
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("SEGMENTS 5-10 (around the visible area in image)")
 print("=" * 80)
 
@@ -44,7 +44,7 @@ for i in range(5, min(10, len(segments))):
     print(f"    → {len(segment)} chars")
 
 # Check if segmentation matches expected sentence boundaries
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("SEGMENTATION QUALITY CHECK")
 print("=" * 80)
 
@@ -56,7 +56,7 @@ print(f"  - Segments ending with sentence punctuation: {proper_sentences}/{len(s
 short_segments = [s for s in segments if len(s.strip()) < 20]
 print(f"  - Very short segments (<20 chars): {len(short_segments)}")
 if short_segments:
-    print(f"    Examples:")
+    print("    Examples:")
     for s in short_segments[:3]:
         print(f"      - '{s.strip()}'")
 
@@ -64,7 +64,7 @@ if short_segments:
 long_segments = [s for s in segments if len(s.strip()) > 200]
 print(f"  - Very long segments (>200 chars): {len(long_segments)}")
 if long_segments:
-    print(f"    Examples:")
+    print("    Examples:")
     for s in long_segments[:3]:
         print(f"      - {s.strip()[:100]}...")
 

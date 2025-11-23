@@ -4,12 +4,11 @@ SQLAlchemy models for Merkle tree tables.
 These models map to the database tables created by migrations 006-009.
 """
 from datetime import datetime
-from typing import Optional
-from uuid import UUID, uuid4
+from uuid import uuid4
 
 from sqlalchemy import (
     Column, String, Integer, TIMESTAMP, ForeignKey, 
-    CheckConstraint, Index, JSON, LargeBinary, Boolean
+    CheckConstraint, Index, JSON, LargeBinary
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship

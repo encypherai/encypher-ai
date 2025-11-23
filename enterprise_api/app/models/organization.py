@@ -5,7 +5,6 @@ Keeps track of usage quotas, feature flags, and signing certificate state.
 """
 from enum import Enum
 from datetime import datetime
-from typing import Optional
 
 from sqlalchemy import (
     Column,

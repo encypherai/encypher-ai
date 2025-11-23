@@ -5,7 +5,7 @@ from typing import List
 import httpx
 
 from ...db.session import get_db
-from ...models.schemas import ProfileUpdate, ProfileResponse, TeamCreate, TeamResponse, MessageResponse
+from ...models.schemas import ProfileUpdate, ProfileResponse, TeamCreate, TeamResponse
 from ...services.user_service import UserService
 from ...core.config import settings
 

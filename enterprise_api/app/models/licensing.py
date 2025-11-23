@@ -8,8 +8,8 @@ from enum import Enum
 from datetime import datetime, date
 from decimal import Decimal
 from sqlalchemy import (
-    Column, String, Integer, Boolean, TIMESTAMP, Enum as SQLEnum,
-    DECIMAL, DATE, ForeignKey, ARRAY, Text
+    Column, String, Integer, TIMESTAMP, Enum as SQLEnum,
+    DECIMAL, DATE, ForeignKey, ARRAY
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship

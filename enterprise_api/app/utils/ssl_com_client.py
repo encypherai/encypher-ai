@@ -2,7 +2,7 @@
 SSL.com API client for certificate provisioning.
 """
 import httpx
-from typing import Dict, Optional
+from typing import Dict
 from app.config import settings
 
 

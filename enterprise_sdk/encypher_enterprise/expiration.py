@@ -3,7 +3,6 @@ Signature expiration tracking and renewal management.
 
 Monitors certificate expiration and handles signature renewal.
 """
-from pathlib import Path
 from typing import Optional, List, Dict, Callable
 from dataclasses import dataclass
 from datetime import datetime, timedelta

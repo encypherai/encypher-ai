@@ -2,7 +2,6 @@
 Script to create example files with EncypherAI metadata for testing purposes.
 """
 
-import os
 import sys
 from pathlib import Path
 

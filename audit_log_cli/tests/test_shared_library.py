@@ -5,8 +5,6 @@ This script shows how to use the EncypherAI high-level API from the
 encypher_commercial_shared library for metadata verification.
 """
 
-import os
-import sys
 from pathlib import Path
 
 # Import from the shared commercial library

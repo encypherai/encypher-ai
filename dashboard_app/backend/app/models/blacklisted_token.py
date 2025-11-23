@@ -1,7 +1,6 @@
 """
 Blacklisted token model for token revocation.
 """
-from datetime import datetime
 from sqlalchemy import Column, Integer, String, DateTime, func
 
 from app.core.database import Base

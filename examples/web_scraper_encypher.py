@@ -22,7 +22,7 @@ from bs4 import BeautifulSoup
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'enterprise_api', 'app', 'utils', 'embeddings'))
-from encypher_extract import EncypherExtractor, EmbeddingReference
+from encypher_extract import EncypherExtractor
 
 # Configure logging
 logging.basicConfig(

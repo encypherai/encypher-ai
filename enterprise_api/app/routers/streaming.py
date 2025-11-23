@@ -417,7 +417,7 @@ async def sse_events_endpoint(
         import asyncio
         while True:
             # Send heartbeat
-            yield f":heartbeat\n\n"
+            yield ":heartbeat\n\n"
             await asyncio.sleep(15)
             
             # TODO: Implement actual event streaming

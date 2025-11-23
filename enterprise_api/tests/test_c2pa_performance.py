@@ -3,7 +3,6 @@ Performance and load tests for C2PA custom assertions.
 """
 import asyncio
 import time
-from typing import List
 
 import pytest
 from httpx import AsyncClient
@@ -212,7 +211,7 @@ class TestC2PAAPILoadTests:
         # Check all succeeded
         success_count = sum(1 for r in results if r == 201)
         
-        print(f"\nConcurrent schema creation:")
+        print("\nConcurrent schema creation:")
         print(f"  Total requests: {num_requests}")
         print(f"  Successful: {success_count}")
         print(f"  Total time: {total_time:.2f}s")
@@ -250,7 +249,7 @@ class TestC2PAAPILoadTests:
         
         success_count = sum(1 for r in results if r == 200)
         
-        print(f"\nConcurrent validation requests:")
+        print("\nConcurrent validation requests:")
         print(f"  Total requests: {num_requests}")
         print(f"  Successful: {success_count}")
         print(f"  Total time: {total_time:.2f}s")
@@ -420,7 +419,7 @@ class TestC2PAStressTests:
         successes = sum(1 for r in responses if not isinstance(r, Exception) and r.status_code == 200)
         errors = num_requests - successes
         
-        print(f"\nRapid fire test:")
+        print("\nRapid fire test:")
         print(f"  Total requests: {num_requests}")
         print(f"  Successful: {successes}")
         print(f"  Errors: {errors}")

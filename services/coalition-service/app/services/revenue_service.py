@@ -14,9 +14,7 @@ from ..db.models import (
     ContentAccessLog,
     RevenueDistribution,
     MemberRevenue,
-    CoalitionMember,
     CoalitionContent,
-    CoalitionSettings,
 )
 
 logger = structlog.get_logger()

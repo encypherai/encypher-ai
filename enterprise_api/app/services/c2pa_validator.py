@@ -6,7 +6,7 @@ Validates C2PA assertions against registered schemas.
 import logging
 from typing import Dict, Any, List, Optional, Tuple
 import jsonschema
-from jsonschema import Draft7Validator, validators
+from jsonschema import Draft7Validator
 
 logger = logging.getLogger(__name__)
 

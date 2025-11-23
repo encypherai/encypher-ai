@@ -35,7 +35,7 @@ async def test_login(username, password):
             if response.status_code == 200:
                 data = response.json()
                 token = data.get("access_token")
-                print(f"Login successful! Token received.")
+                print("Login successful! Token received.")
                 
                 # Test the /auth/me endpoint with the token
                 me_response = await client.get(
@@ -45,7 +45,7 @@ async def test_login(username, password):
                 
                 if me_response.status_code == 200:
                     user_data = me_response.json()
-                    print(f"User profile retrieved successfully:")
+                    print("User profile retrieved successfully:")
                     print(json.dumps(user_data, indent=2))
                     return True
                 else:

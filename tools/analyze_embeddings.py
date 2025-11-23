@@ -2,7 +2,6 @@
 import asyncio
 from pathlib import Path
 import httpx
-import json
 
 async def analyze():
     # Read the original article
@@ -41,19 +40,19 @@ async def analyze():
     merkle_tree = response.get('merkle_tree', {})
     embeddings = response.get('embeddings', [])
     
-    print(f"✓ API call successful")
-    print(f"\nSegmentation:")
+    print("✓ API call successful")
+    print("\nSegmentation:")
     print(f"  - Total sentences: {stats.get('total_sentences', 0)}")
     print(f"  - Embeddings created: {stats.get('embeddings_created', 0)}")
     print(f"  - Segmentation level: {stats.get('segmentation_level', 'N/A')}")
     print(f"  - Processing time: {stats.get('processing_time_ms', 0):.2f} ms")
-    print(f"\nMerkle Tree:")
+    print("\nMerkle Tree:")
     print(f"  - Root ID: {merkle_tree.get('root_id', 'N/A')}")
     print(f"  - Root hash: {merkle_tree.get('root_hash', 'N/A')[:32]}...")
     print(f"  - Tree depth: {merkle_tree.get('depth', 0)}")
     print(f"  - Leaf count: {merkle_tree.get('leaf_count', 0)}")
     
-    print(f"\nEmbedded Content:")
+    print("\nEmbedded Content:")
     print(f"  - Size: {len(embedded_content)} chars")
     print(f"  - Size increase: {((len(embedded_content) - len(original_text)) / len(original_text) * 100):.1f}%")
     
@@ -76,8 +75,8 @@ async def analyze():
         
         extracted = UnicodeMetadata.extract_metadata(embedded_content)
         if extracted:
-            print(f"✓ Successfully extracted C2PA metadata")
-            print(f"\nExtracted Metadata:")
+            print("✓ Successfully extracted C2PA metadata")
+            print("\nExtracted Metadata:")
             print(f"  - Instance ID: {extracted.get('instance_id', 'N/A')}")
             print(f"  - Signer ID: {extracted.get('signer_id', 'N/A')}")
             print(f"  - Timestamp: {extracted.get('timestamp', 'N/A')}")
@@ -102,8 +101,8 @@ async def analyze():
             r = await client.get(tree_url)
             if r.status_code == 200:
                 tree_data = r.json()
-                print(f"✓ Merkle tree retrieved from database")
-                print(f"\nTree Info:")
+                print("✓ Merkle tree retrieved from database")
+                print("\nTree Info:")
                 print(f"  - Root ID: {merkle_root_id}")
                 print(f"  - Root hash: {tree_data.get('root_hash', 'N/A')[:32]}...")
                 print(f"  - Total nodes: {len(tree_data.get('nodes', []))}")
@@ -128,7 +127,7 @@ async def analyze():
     
     if embeddings:
         print(f"✓ {len(embeddings)} embeddings in response")
-        print(f"\nFirst 5 embeddings:")
+        print("\nFirst 5 embeddings:")
         for i, emb in enumerate(embeddings[:5]):
             print(f"  [{i}] Leaf index: {emb.get('leaf_index', 'N/A')} | Hash: {emb.get('leaf_hash', 'N/A')[:16]}...")
             print(f"      Text preview: {emb.get('text_content', '')[:50]}...")

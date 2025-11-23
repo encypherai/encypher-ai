@@ -1,17 +1,12 @@
 """
 Dependencies for FastAPI endpoints (authentication, rate limiting, etc.).
 """
-from datetime import datetime
 from typing import Dict
 
 from fastapi import BackgroundTasks, Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import get_db
-from app.services.stat_service import stat_service
 from app.services.key_service_client import key_service_client
 
 security = HTTPBearer()

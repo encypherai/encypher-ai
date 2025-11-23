@@ -1,10 +1,10 @@
 """Analytics service business logic"""
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 
-from ..db.models import UsageMetric, AggregatedMetric
+from ..db.models import UsageMetric
 from ..models.schemas import MetricCreate
 
 

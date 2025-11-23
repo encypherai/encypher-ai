@@ -10,7 +10,7 @@ import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request, Body
+from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, Field
@@ -28,7 +28,6 @@ from app.schemas.embeddings import (
     BatchVerifyResult,
     ErrorResponse
 )
-from app.services.embedding_service import EmbeddingService
 from app.models.content_reference import ContentReference
 from app.models.merkle import MerkleRoot
 from app.middleware.public_rate_limiter import public_rate_limiter

@@ -3,13 +3,12 @@ Script to create example files with EncypherAI metadata for the dashboard app.
 Includes text files, PDFs, and other document types with various metadata attributes.
 """
 
-import os
 import sys
 import json
 import base64
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional
 import random
 
 # Add the parent directory to the path so we can import the shared library
@@ -168,7 +167,7 @@ try:
     ):
         """Create a Word document with embedded EncypherAI metadata."""
         if not DOCX_AVAILABLE:
-            console.print(f"[yellow]Skipping DOCX creation - docx library not available[/yellow]")
+            console.print("[yellow]Skipping DOCX creation - docx library not available[/yellow]")
             return None
         
         # Create the Word document
@@ -680,7 +679,7 @@ uv run -- python -m app.main --target examples/files --trusted-signers examples/
 Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 """)
     
-    console.print(f"[bold green]Successfully created all example files![/bold green]")
+    console.print("[bold green]Successfully created all example files![/bold green]")
     console.print("\nTo use these files with the audit-log-cli tool, run:")
     console.print("uv run -- python -m app.main --target dashboard_app/examples/files --trusted-signers dashboard_app/examples/files/keys --output dashboard_example_report.csv")
 

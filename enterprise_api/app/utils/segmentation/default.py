@@ -11,7 +11,7 @@ Normalization is only applied to hash computation for matching.
 """
 import unicodedata
 import logging
-from typing import List, Optional
+from typing import List
 
 logger = logging.getLogger(__name__)
 

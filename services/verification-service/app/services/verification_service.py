@@ -6,7 +6,7 @@ from sqlalchemy import func
 import httpx
 
 from ..db.models import VerificationResult, VerificationLog
-from ..models.schemas import SignatureVerify, DocumentVerify, TamperCheck
+from ..models.schemas import SignatureVerify, DocumentVerify
 from ..core.crypto import verify_signature, verify_content_hash, check_tampering
 from ..core.config import settings
 

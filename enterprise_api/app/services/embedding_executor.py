@@ -6,7 +6,7 @@ Built on top of the free encypher-ai package with enterprise features.
 """
 import logging
 import time
-from typing import Dict, Optional
+from typing import Dict
 
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,7 +19,6 @@ from app.schemas.embeddings import (
 )
 from app.services.embedding_service import EmbeddingService
 from app.services.merkle_service import MerkleService
-from app.models.merkle import MerkleRoot
 from app.utils.crypto_utils import load_organization_private_key
 
 logger = logging.getLogger(__name__)
@@ -126,7 +125,7 @@ async def encode_document_with_embeddings(
         # Free tier (document-level): Skip Merkle tree and segmentation
         # Just create ONE C2PA wrapper for the entire document
         if request.segmentation_level == 'document':
-            logger.info(f"Document-level signing (free tier) - no segmentation")
+            logger.info("Document-level signing (free tier) - no segmentation")
             from app.utils.merkle import compute_hash
             segments = [request.text]  # Single segment = entire document
             leaf_hashes = [compute_hash(request.text)]  # Single hash for entire document

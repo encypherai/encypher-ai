@@ -6,9 +6,8 @@ EncypherAI package across all commercial tools. It builds on top of the
 core EncypherAI functionality while adding commercial-specific features.
 """
 
-from dataclasses import dataclass
 from datetime import datetime
-from typing import Dict, List, Optional, Any, Union, Tuple, Callable
+from typing import Dict, Optional, Any, Union
 
 from pydantic import BaseModel
 from rich.console import Console
@@ -143,7 +142,7 @@ class EncypherAI:
                     
                     if self.verbose:
                         console.print(f"Loaded trusted signer {signer_id}")
-                except NameError as e:
+                except NameError:
                     # Handle specific case of function not found - this is likely due to a module import issue
                     # but we can still proceed with verification
                     if self.verbose:

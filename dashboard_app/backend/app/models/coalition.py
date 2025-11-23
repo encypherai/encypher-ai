@@ -1,9 +1,8 @@
 """
 Coalition models for tracking members, content, and revenue.
 """
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, DateTime, Text, Index
+from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Text, Index
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 

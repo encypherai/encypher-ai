@@ -1,5 +1,5 @@
 """SQLAlchemy database models for Billing Service"""
-from sqlalchemy import Column, String, Integer, DateTime, JSON, Float, Boolean
+from sqlalchemy import Column, String, DateTime, JSON, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import uuid

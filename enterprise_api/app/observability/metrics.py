@@ -1,6 +1,5 @@
 """Minimal in-memory metrics collectors for the Enterprise API."""
 from collections import Counter
-from typing import Dict
 
 _counters: Counter[str] = Counter()
 

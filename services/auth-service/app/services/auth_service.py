@@ -4,9 +4,8 @@ Authentication service business logic
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
-from ..db.models import User, RefreshToken, PasswordResetToken
+from ..db.models import User, RefreshToken
 from sqlalchemy.exc import IntegrityError
 from ..models.schemas import UserCreate, UserLogin
 from ..core.security import (

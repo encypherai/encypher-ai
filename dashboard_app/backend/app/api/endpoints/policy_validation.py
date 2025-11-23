@@ -4,7 +4,7 @@ API endpoints for policy validation.
 from typing import Any, List, Optional
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, File, UploadFile
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -14,7 +14,6 @@ from app.schemas.policy_validation import (
     PolicySchemaCreate,
     PolicyValidationResult,
     PolicyValidationResultCreate,
-    PolicyValidationStats,
     PolicyValidationFilters
 )
 from app.services.user import get_current_user

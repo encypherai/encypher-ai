@@ -20,7 +20,6 @@ from app.api.v1.api import api_router as api_v1_router
 from app.database import engine
 from app.observability.metrics import render_prometheus
 from app.services.session_service import session_service
-from sqlalchemy import text
 
 # Configure logging
 logging.basicConfig(

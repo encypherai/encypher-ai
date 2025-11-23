@@ -1,19 +1,15 @@
 import pytest
-import httpx
 import asyncio
 import time
 import docker
-import os
 import socket
 import numpy as np
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy import text
-from unittest.mock import MagicMock, patch, AsyncMock
+from unittest.mock import patch, AsyncMock
 
 # Import app components
 from app.main import app
-from app.config import settings
-from app.database import get_db, Base
 
 # Check if docker is available
 try:
@@ -151,8 +147,8 @@ class TestLoadDocker:
                 avg = np.mean(latencies)
                 p99 = np.percentile(latencies, 99)
                 
-                print(f"\nLoad Test Results:")
-                print(f"Total Requests: 50")
+                print("\nLoad Test Results:")
+                print("Total Requests: 50")
                 print(f"Total Time: {total_time:.2f}s")
                 print(f"Avg Latency: {avg:.2f}ms")
                 print(f"P95 Latency: {p95:.2f}ms")

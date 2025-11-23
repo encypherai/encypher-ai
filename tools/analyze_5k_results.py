@@ -18,7 +18,7 @@ print("=" * 80)
 original_count = len([f for f in original_files if f.exists()])
 embedded_count = len([f for f in embedded_files if f.exists()])
 
-print(f"\nFiles Processed:")
+print("\nFiles Processed:")
 print(f"  - Original files: {original_count:,}")
 print(f"  - Embedded files created: {embedded_count:,}")
 print(f"  - Success rate: {(embedded_count/original_count*100):.2f}%")
@@ -36,25 +36,25 @@ for orig, emb in zip(original_files[:1000], embedded_files[:1000]):  # Sample 10
         embedded_sizes.append(emb_size)
         size_increases.append((emb_size - orig_size) / orig_size * 100)
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("FILE SIZE ANALYSIS (1000 file sample)")
 print("=" * 80)
 
-print(f"\nOriginal Files:")
+print("\nOriginal Files:")
 print(f"  - Average size: {statistics.mean(original_sizes):,.0f} bytes")
 print(f"  - Median size: {statistics.median(original_sizes):,.0f} bytes")
 print(f"  - Min size: {min(original_sizes):,} bytes")
 print(f"  - Max size: {max(original_sizes):,} bytes")
 print(f"  - Total size: {sum(original_sizes):,.0f} bytes ({sum(original_sizes)/1024/1024:.2f} MB)")
 
-print(f"\nEmbedded Files:")
+print("\nEmbedded Files:")
 print(f"  - Average size: {statistics.mean(embedded_sizes):,.0f} bytes")
 print(f"  - Median size: {statistics.median(embedded_sizes):,.0f} bytes")
 print(f"  - Min size: {min(embedded_sizes):,} bytes")
 print(f"  - Max size: {max(embedded_sizes):,} bytes")
 print(f"  - Total size: {sum(embedded_sizes):,.0f} bytes ({sum(embedded_sizes)/1024/1024:.2f} MB)")
 
-print(f"\nSize Increase:")
+print("\nSize Increase:")
 print(f"  - Average increase: {statistics.mean(size_increases):.1f}%")
 print(f"  - Median increase: {statistics.median(size_increases):.1f}%")
 print(f"  - Min increase: {min(size_increases):.1f}%")
@@ -65,7 +65,7 @@ total_orig_size = sum(original_sizes) * 5
 total_emb_size = sum(embedded_sizes) * 5
 overhead = total_emb_size - total_orig_size
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("EXTRAPOLATED 5K RESULTS")
 print("=" * 80)
 print(f"  - Original total: ~{total_orig_size/1024/1024:.2f} MB")
@@ -74,32 +74,32 @@ print(f"  - Overhead: ~{overhead/1024/1024:.2f} MB")
 print(f"  - Average increase: {statistics.mean(size_increases):.1f}%")
 
 # Performance metrics from benchmark output
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("PERFORMANCE METRICS")
 print("=" * 80)
-print(f"  - Total files: 5,000")
-print(f"  - Total time: 588.85 seconds (9:48)")
-print(f"  - Average per file: 117.77 ms")
-print(f"  - Median per file: 48.15 ms")
-print(f"  - P95 per file: 465.77 ms")
+print("  - Total files: 5,000")
+print("  - Total time: 588.85 seconds (9:48)")
+print("  - Average per file: 117.77 ms")
+print("  - Median per file: 48.15 ms")
+print("  - P95 per file: 465.77 ms")
 print(f"  - Throughput: {5000/588.85:.1f} files/second")
-print(f"  - Concurrency: 8 workers")
+print("  - Concurrency: 8 workers")
 
 # Calculate sentences per second (estimate based on article_0 having 124 sentences)
 avg_sentences_per_article = 124  # From our earlier analysis
 total_sentences = 5000 * avg_sentences_per_article
 sentences_per_second = total_sentences / 588.85
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("SEGMENTATION & EMBEDDING STATS")
 print("=" * 80)
 print(f"  - Estimated total sentences: ~{total_sentences:,}")
 print(f"  - Sentences per second: ~{sentences_per_second:.1f}")
 print(f"  - Average sentences per file: ~{avg_sentences_per_article}")
-print(f"  - Enhanced segmentation: ✓ (Wiki markup + Markdown)")
+print("  - Enhanced segmentation: ✓ (Wiki markup + Markdown)")
 
 # Check a few embedded files for quality
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("QUALITY CHECK (first 5 embedded files)")
 print("=" * 80)
 
@@ -114,7 +114,7 @@ for i, emb_file in enumerate(embedded_files[:5]):
         print(f"  - Invisible chars: {invisible_count:,}")
         print(f"  - Has C2PA wrapper: {has_c2pa}")
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("SUMMARY")
 print("=" * 80)
 print("✓ Successfully processed 5,000 Wikipedia articles")

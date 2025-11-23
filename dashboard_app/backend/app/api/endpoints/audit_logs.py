@@ -1,7 +1,7 @@
 """
 API endpoints for audit logs.
 """
-from typing import Any, List, Optional
+from typing import Any, Optional
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status, File, UploadFile
@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.user import User
-from app.schemas.audit_log import AuditLog, AuditLogCreate, AuditLogStats, AuditLogFilters, AuditLogPage
+from app.schemas.audit_log import AuditLog, AuditLogCreate, AuditLogFilters, AuditLogPage
 from app.services.user import get_current_user  # Corrected import
 from app.services.audit_log import (
     get_audit_logs,

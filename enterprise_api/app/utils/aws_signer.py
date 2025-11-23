@@ -4,7 +4,6 @@ AWS KMS Signer Implementation.
 Adapts AWS KMS to the Encypher Signer protocol.
 """
 import logging
-import base64
 from typing import Optional
 
 import boto3

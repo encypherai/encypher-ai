@@ -22,7 +22,7 @@ def add_logging_to_service(service_name):
     service_path = Path(f"services/{service_name}")
     
     # 1. Add dependencies
-    print(f"  Adding dependencies...")
+    print("  Adding dependencies...")
     os.system(f"cd {service_path} && uv add structlog python-json-logger")
     
     # 2. Copy middleware directory from auth-service
@@ -30,14 +30,14 @@ def add_logging_to_service(service_name):
     dst_middleware = service_path / "app" / "middleware"
     
     if not dst_middleware.exists():
-        print(f"  Copying middleware...")
+        print("  Copying middleware...")
         shutil.copytree(src_middleware, dst_middleware)
     
     # 3. Copy logging_config from auth-service
     src_logging_config = Path("services/auth-service/app/core/logging_config.py")
     dst_logging_config = service_path / "app" / "core" / "logging_config.py"
     
-    print(f"  Copying logging config...")
+    print("  Copying logging config...")
     shutil.copy2(src_logging_config, dst_logging_config)
     
     # 4. Update main.py

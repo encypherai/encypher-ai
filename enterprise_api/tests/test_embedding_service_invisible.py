@@ -4,10 +4,8 @@ Unit tests for refactored EmbeddingService with invisible Unicode embeddings.
 Tests the new encypher-ai integration for invisible embeddings.
 """
 import pytest
-import asyncio
-from datetime import datetime, timedelta
 from uuid import uuid4
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from app.services.embedding_service import EmbeddingService, EmbeddingReference
 

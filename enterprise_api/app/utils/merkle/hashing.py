@@ -4,7 +4,6 @@ Hashing utilities for Merkle trees.
 Provides SHA-256 hashing for text segments and hash combining for tree construction.
 """
 import hashlib
-from typing import Optional
 
 
 def compute_hash(data: str, encoding: str = 'utf-8') -> str:

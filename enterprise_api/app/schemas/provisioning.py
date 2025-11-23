@@ -5,7 +5,6 @@ Supports provisioning from external services (API, SDK, WordPress plugin, etc.)
 """
 from datetime import datetime
 from typing import Optional, Dict, Any
-from uuid import UUID
 
 from pydantic import BaseModel, Field, EmailStr, validator
 

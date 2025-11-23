@@ -1,7 +1,6 @@
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timedelta, timezone
-import json
+from datetime import datetime, timedelta
 
 from app.services.audit_log import (
     create_audit_log,
@@ -12,13 +11,10 @@ from app.services.audit_log import (
 )
 from app.schemas.audit_log import AuditLogCreate, AuditLogFilters
 from app.models.audit_log import AuditLog
-import io
 import csv
 import tempfile
 import os
-import json # For creating test data with JSON strings
 from sqlalchemy import select
-from pathlib import Path # For tempfile
 
 pytestmark = pytest.mark.asyncio
 

@@ -2,7 +2,7 @@
 Streaming support for real-time LLM content signing.
 """
 import re
-from typing import Iterator, AsyncIterator, Optional, List
+from typing import Iterator, AsyncIterator, List
 from .client import EncypherClient
 from .async_client import AsyncEncypherClient
 from .exceptions import StreamingError

@@ -4,8 +4,6 @@ SQLAlchemy model for content_references table.
 Stores minimal signed embeddings that link text segments to Merkle trees.
 """
 from datetime import datetime
-from typing import Optional
-from uuid import UUID
 
 from sqlalchemy import (
     Column, BigInteger, String, Integer, TIMESTAMP, ForeignKey,

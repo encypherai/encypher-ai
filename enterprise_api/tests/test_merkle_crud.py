@@ -4,8 +4,7 @@ Unit tests for Merkle CRUD operations.
 These tests use an in-memory SQLite database for fast execution.
 """
 import pytest
-from datetime import datetime, timedelta
-from uuid import uuid4
+from datetime import datetime
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -14,7 +13,6 @@ from sqlalchemy import Column, String
 
 from app.database import Base
 from app.crud import merkle as merkle_crud
-from app.models.merkle import MerkleRoot, MerkleSubhash, MerkleProofCache, AttributionReport
 
 
 # Mock Organization model for testing

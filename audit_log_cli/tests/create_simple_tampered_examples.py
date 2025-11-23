@@ -231,7 +231,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
             doc_tampered.save(str(tampered_docx_path))
             
             console.print(f"[green]Created tampered DOCX with embedded metadata: {tampered_docx_path}[/green]")
-            console.print(f"[green]DOCX files created with simulated copy-paste to preserve Unicode metadata[/green]")
+            console.print("[green]DOCX files created with simulated copy-paste to preserve Unicode metadata[/green]")
             
             # Now save the DOCX files as PDFs
             try:
@@ -344,7 +344,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
                 
                 c.save()
                 console.print(f"[green]Created tampered PDF with embedded metadata: {tampered_pdf_path}[/green]")
-                console.print(f"[green]PDFs created with simulated copy-paste to preserve Unicode metadata[/green]")
+                console.print("[green]PDFs created with simulated copy-paste to preserve Unicode metadata[/green]")
                 
             except ImportError:
                 console.print("[yellow]ReportLab not installed, skipping PDF example creation[/yellow]")
@@ -433,7 +433,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
             doc_tampered.save(str(tampered_docx_path))
             
             console.print(f"[green]Created tampered DOCX with embedded metadata: {tampered_docx_path}[/green]")
-            console.print(f"[green]DOCX files created with simulated copy-paste to preserve Unicode metadata[/green]")
+            console.print("[green]DOCX files created with simulated copy-paste to preserve Unicode metadata[/green]")
             
             # Create PDFs directly using a more reliable method for Unicode preservation
             try:
@@ -464,7 +464,6 @@ This file should pass verification when scanned by the audit-log-cli tool.
                         except ImportError:
                             console.print("[yellow]ReportLab not found, installing...[/yellow]")
                             subprocess.check_call([sys.executable, "-m", "uv", "add", "reportlab"])
-                            import reportlab
                         
                         # Make sure pikepdf is installed
                         try:
@@ -511,7 +510,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
                             if os.path.exists(dejavu_path):
                                 pdfmetrics.registerFont(TTFont('DejaVuSans', dejavu_path))
                                 font_name = 'DejaVuSans'
-                                console.print(f"[green]Using embedded DejaVu Sans font for Unicode support[/green]")
+                                console.print("[green]Using embedded DejaVu Sans font for Unicode support[/green]")
                             else:
                                 # Try Arial Unicode MS as fallback
                                 arial_unicode_paths = [
@@ -651,7 +650,6 @@ This file should pass verification when scanned by the audit-log-cli tool.
                         except ImportError:
                             console.print("[yellow]ReportLab not found, installing...[/yellow]")
                             subprocess.check_call([sys.executable, "-m", "uv", "add", "reportlab"])
-                            import reportlab
                         
                         # Make sure pikepdf is installed
                         try:

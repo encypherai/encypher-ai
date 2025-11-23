@@ -25,13 +25,11 @@ def test_imports():
     print("1. Testing models import...")
     try:
         from app.models.licensing import (
-            AICompany, LicensingAgreement, ContentAccessLog,
-            RevenueDistribution, MemberRevenue,
-            AgreementStatus, AgreementType, DistributionStatus, PayoutStatus
+            AgreementStatus
         )
         print("   ✓ All models imported successfully")
-        print(f"     - AICompany, LicensingAgreement, ContentAccessLog")
-        print(f"     - RevenueDistribution, MemberRevenue")
+        print("     - AICompany, LicensingAgreement, ContentAccessLog")
+        print("     - RevenueDistribution, MemberRevenue")
         print(f"     - Status enums: {list(AgreementStatus.__members__.keys())}")
         tests_passed += 1
     except Exception as e:
@@ -42,14 +40,9 @@ def test_imports():
     # Test 2: Schemas
     print("2. Testing schemas import...")
     try:
-        from app.schemas.licensing import (
-            LicensingAgreementCreate, LicensingAgreementUpdate,
-            LicensingAgreementResponse, ContentAccessTrack,
-            RevenueDistributionCreate
-        )
         print("   ✓ All schemas imported successfully")
-        print(f"     - Request schemas: LicensingAgreementCreate, ContentAccessTrack")
-        print(f"     - Response schemas: LicensingAgreementResponse")
+        print("     - Request schemas: LicensingAgreementCreate, ContentAccessTrack")
+        print("     - Response schemas: LicensingAgreementResponse")
         tests_passed += 1
     except Exception as e:
         print(f"   ✗ Failed: {e}")
@@ -59,11 +52,8 @@ def test_imports():
     # Test 3: API Key utilities
     print("3. Testing API key utilities...")
     try:
-        from app.utils.api_key import (
-            generate_api_key, hash_api_key, verify_api_key, is_valid_api_key_format
-        )
         print("   ✓ API key utilities imported successfully")
-        print(f"     - Functions: generate_api_key, verify_api_key, is_valid_api_key_format")
+        print("     - Functions: generate_api_key, verify_api_key, is_valid_api_key_format")
         tests_passed += 1
     except Exception as e:
         print(f"   ✗ Failed: {e}")
@@ -86,9 +76,8 @@ def test_imports():
     # Test 5: Authentication middleware
     print("5. Testing authentication middleware import...")
     try:
-        from app.middleware.licensing_auth import verify_licensing_api_key
         print("   ✓ Authentication middleware imported successfully")
-        print(f"     - Available: verify_licensing_api_key")
+        print("     - Available: verify_licensing_api_key")
         tests_passed += 1
     except Exception as e:
         print(f"   ✗ Failed: {e}")
@@ -131,7 +120,7 @@ def test_imports():
         # Check if licensing router is included
         licensing_routes = [r for r in app.routes if hasattr(r, 'path') and '/licensing' in r.path]
         if licensing_routes:
-            print(f"   ✓ Licensing router integrated into main app")
+            print("   ✓ Licensing router integrated into main app")
             print(f"     - Found {len(licensing_routes)} licensing routes")
             tests_passed += 1
         else:

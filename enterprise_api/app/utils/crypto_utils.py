@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import text
 from typing import Optional, cast
 
-from encypher.core.signing import Signer, SigningKey
+from encypher.core.signing import SigningKey
 from app.utils.aws_signer import AWSSigner
 
 _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None

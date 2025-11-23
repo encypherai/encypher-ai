@@ -3,9 +3,9 @@ Service for policy validation operations.
 """
 import csv
 import json
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict
 from datetime import datetime
-from sqlalchemy import func, and_, or_, select, delete 
+from sqlalchemy import func, select 
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.utils.caching import cached_async, invalidate_cache
 

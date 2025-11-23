@@ -4,7 +4,7 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from ..db.models import Subscription, Invoice, Payment
+from ..db.models import Subscription, Invoice
 from ..models.schemas import SubscriptionCreate
 
 

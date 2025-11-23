@@ -3,7 +3,7 @@ Coalition Service API Endpoints
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import Optional
 from uuid import UUID
 from datetime import datetime, date
 import structlog
@@ -11,19 +11,12 @@ import structlog
 from ...db.session import get_db
 from ...models.schemas import (
     CoalitionJoinRequest,
-    CoalitionMemberResponse,
     CoalitionLeaveRequest,
-    CoalitionStatsResponse,
-    RevenueResponse,
     LicensingAgreementCreate,
-    LicensingAgreementResponse,
     LicensingAgreementUpdate,
     ContentAccessTrack,
-    ContentAccessResponse,
     CoalitionContentCreate,
-    CoalitionContentResponse,
     SuccessResponse,
-    ErrorResponse,
 )
 from ...services.coalition_service import CoalitionService
 from ...db.models import (

@@ -1,6 +1,5 @@
 from types import SimpleNamespace
 
-import pytest
 
 from encypher_enterprise.models import SignResponse
 from encypher_enterprise.integrations import langchain, openai as openai_integration, litellm as litellm_integration

@@ -5,7 +5,7 @@ from typing import List
 import httpx
 
 from ...db.session import get_db
-from ...models.schemas import NotificationCreate, NotificationResponse, MessageResponse
+from ...models.schemas import NotificationCreate, NotificationResponse
 from ...services.notification_service import NotificationService
 from ...core.config import settings
 

@@ -11,9 +11,7 @@ from ...models.schemas import (
     UserCreate,
     UserLogin,
     UserResponse,
-    Token,
     RefreshTokenRequest,
-    MessageResponse,
     OAuthExchangeRequest,
 )
 from ...services.auth_service import AuthService

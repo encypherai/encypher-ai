@@ -1,5 +1,5 @@
-from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
+from typing import Any, List
+from fastapi import APIRouter, Depends, Request, BackgroundTasks
 from sqlalchemy.orm import Session
 
 from app import crud, schemas

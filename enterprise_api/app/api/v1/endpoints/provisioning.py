@@ -7,7 +7,6 @@ create organizations and obtain API keys.
 import time
 import logging
 from datetime import datetime
-from typing import Dict, Any
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.ext.asyncio import AsyncSession

@@ -9,7 +9,6 @@ os.environ["ENCRYPTION_NONCE"] = "00" * 12
 os.environ["SSL_COM_API_KEY"] = "test_key"
 
 from app.services.key_service_client import KeyServiceClient
-from app.config import settings
 
 @pytest.mark.asyncio
 async def test_validate_key_uses_cache():

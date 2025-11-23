@@ -5,7 +5,7 @@ unmarked files by calling the Enterprise API.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import AsyncIterator, Dict, List
 
 import httpx
 from encypher.interop.c2pa.text_wrapper import find_and_decode
@@ -21,7 +21,6 @@ from app.services.directory_signing import (
     _is_excluded,
     _matches_extension,
     _build_context,
-    _sidecar_path,
     _sign_file_via_api,
 )
 

@@ -8,7 +8,6 @@ from typing import Optional, Dict
 from datetime import datetime
 from fastapi import WebSocket, WebSocketException, status
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import async_session_factory
@@ -42,7 +41,7 @@ async def authenticate_websocket(
     
     # Demo key bypass for local testing
     if settings.demo_api_key and api_key == settings.demo_api_key:
-        logger.info(f"WebSocket authenticated with demo key")
+        logger.info("WebSocket authenticated with demo key")
         return {
             "api_key": api_key,
             "organization_id": settings.demo_organization_id,
@@ -79,7 +78,7 @@ async def authenticate_websocket(
             row = result.fetchone()
             
             if not row:
-                logger.warning(f"WebSocket authentication failed: Invalid API key")
+                logger.warning("WebSocket authentication failed: Invalid API key")
                 raise WebSocketException(
                     code=status.WS_1008_POLICY_VIOLATION,
                     reason="Invalid API key"
@@ -87,7 +86,7 @@ async def authenticate_websocket(
             
             # Check if revoked
             if row.revoked:
-                logger.warning(f"WebSocket authentication failed: Revoked API key")
+                logger.warning("WebSocket authentication failed: Revoked API key")
                 raise WebSocketException(
                     code=status.WS_1008_POLICY_VIOLATION,
                     reason="API key has been revoked"
@@ -95,7 +94,7 @@ async def authenticate_websocket(
             
             # Check if expired
             if row.expires_at and row.expires_at < datetime.utcnow():
-                logger.warning(f"WebSocket authentication failed: Expired API key")
+                logger.warning("WebSocket authentication failed: Expired API key")
                 raise WebSocketException(
                     code=status.WS_1008_POLICY_VIOLATION,
                     reason="API key has expired"

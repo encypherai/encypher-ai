@@ -76,11 +76,11 @@ print(f"Original lines: {len(text.splitlines())}")
 # Segment
 sentences = segment_sentences(text)
 
-print(f"\nSegmentation Results:")
+print("\nSegmentation Results:")
 print(f"  - Total sentences: {len(sentences)}")
 
 # Show first 10 sentences
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("FIRST 10 SENTENCES")
 print("=" * 80)
 
@@ -91,7 +91,7 @@ for i, sentence in enumerate(sentences[:10]):
     print(f"    {display}")
 
 # Check the specific area from the image (lines 3-8)
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("SENTENCES 3-8 (visible in image)")
 print("=" * 80)
 
@@ -99,7 +99,7 @@ for i in range(3, min(9, len(sentences))):
     print(f"\n[{i}] {sentences[i]}")
 
 # Quality check
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("QUALITY CHECK")
 print("=" * 80)
 
@@ -107,7 +107,7 @@ print("=" * 80)
 markup_only = [s for s in sentences if s.strip().startswith('{{') or s.strip().startswith('[[')]
 print(f"  - Markup-only sentences: {len(markup_only)}")
 if markup_only:
-    print(f"    Examples:")
+    print("    Examples:")
     for s in markup_only[:3]:
         print(f"      - {s}")
 
@@ -115,7 +115,7 @@ if markup_only:
 short = [s for s in sentences if len(s.strip()) < 20]
 print(f"  - Very short (<20 chars): {len(short)}")
 if short:
-    print(f"    Examples:")
+    print("    Examples:")
     for s in short[:3]:
         print(f"      - '{s}'")
 
@@ -123,7 +123,7 @@ if short:
 long = [s for s in sentences if len(s.strip()) > 300]
 print(f"  - Very long (>300 chars): {len(long)}")
 if long:
-    print(f"    Examples:")
+    print("    Examples:")
     for s in long[:2]:
         print(f"      - {s[:100]}...")
 

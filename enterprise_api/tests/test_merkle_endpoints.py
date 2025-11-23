@@ -14,7 +14,6 @@ from sqlalchemy.pool import StaticPool
 
 from app.main import app
 from app.database import Base, get_db
-from app.models.merkle import MerkleRoot, MerkleSubhash
 
 
 # Mock Organization model for testing

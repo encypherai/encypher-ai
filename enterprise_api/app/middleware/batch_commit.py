@@ -22,9 +22,8 @@ Safety:
 import asyncio
 import time
 import logging
-from typing import Dict, Set
-from contextlib import asynccontextmanager
-from fastapi import Request, Response
+from typing import Set
+from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -22,7 +22,7 @@ async def lifespan(app: FastAPI):
     """Lifespan events"""
     # Startup
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    logger.info(f"Creating database tables...")
+    logger.info("Creating database tables...")
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created")
     

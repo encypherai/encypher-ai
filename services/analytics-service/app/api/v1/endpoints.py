@@ -1,7 +1,7 @@
 """API endpoints for Analytics Service v1"""
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query, Request
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 from datetime import datetime, timedelta
 import httpx
 
@@ -13,7 +13,6 @@ from ...models.schemas import (
     ServiceMetrics,
     TimeSeriesData,
     AnalyticsReport,
-    MessageResponse,
     PageviewEvent,
 )
 from ...services.analytics_service import AnalyticsService

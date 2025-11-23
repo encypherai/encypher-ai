@@ -2,7 +2,6 @@
 Redis caching service for improving performance.
 """
 import hashlib
-import json
 from typing import Any, Optional
 from aiocache import Cache
 from aiocache.serializers import JsonSerializer

@@ -5,9 +5,7 @@ This script creates a PDF with Unicode variation selectors and then attempts to 
 using various methods to verify which approach works best.
 """
 
-import os
 import sys
-import tempfile
 from pathlib import Path
 from rich.console import Console
 
@@ -38,7 +36,6 @@ def create_test_pdf(output_path, text_with_variation_selectors):
         console.print("[yellow]Installing reportlab with uv...[/yellow]")
         import subprocess
         subprocess.check_call([sys.executable, "-m", "uv", "add", "reportlab"])
-        import reportlab
     
     try:
         import pikepdf
@@ -201,7 +198,7 @@ def extract_text_from_pdf(pdf_path):
             import re
             vs_pattern = re.compile(r'[\uFE00-\uFE0F]')
             if vs_pattern.search(binary_text):
-                console.print(f"[green]Found Unicode variation selectors in binary extraction[/green]")
+                console.print("[green]Found Unicode variation selectors in binary extraction[/green]")
                 matches = vs_pattern.findall(binary_text)
                 console.print(f"[blue]Found {len(matches)} variation selectors in binary data[/blue]")
             else:

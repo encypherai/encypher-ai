@@ -1,5 +1,5 @@
 """User service business logic"""
-from typing import Optional, List
+from typing import List
 from sqlalchemy.orm import Session
 
 from ..db.models import UserProfile, Team

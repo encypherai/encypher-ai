@@ -2,7 +2,7 @@
 Email service for sending emails from the application.
 """
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Optional
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart

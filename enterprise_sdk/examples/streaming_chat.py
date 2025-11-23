@@ -46,11 +46,11 @@ def main():
             print(f"\n✅ Signed chunk ({len(signed_chunk)} chars)", flush=True)
 
     # Finalize and sign remaining content
-    print(f"\n\n🔒 Finalizing signature...")
+    print("\n\n🔒 Finalizing signature...")
     final_signed_text = signer.finalize()
 
     print(f"✅ Complete signed text generated ({len(final_signed_text)} chars)")
-    print(f"\n📄 Signed text (first 150 chars):")
+    print("\n📄 Signed text (first 150 chars):")
     print(f"   {final_signed_text[:150]}...")
 
 if __name__ == "__main__":

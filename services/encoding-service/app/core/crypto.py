@@ -4,7 +4,6 @@ Cryptographic operations for document signing
 import hashlib
 import uuid
 from typing import Dict, Any
-from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives import serialization
 
 

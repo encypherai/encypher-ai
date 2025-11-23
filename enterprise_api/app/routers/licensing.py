@@ -10,7 +10,7 @@ from uuid import UUID
 
 from app.database import get_db
 from app.models.licensing import (
-    AICompany, LicensingAgreement, AgreementStatus, DistributionStatus
+    AICompany, AgreementStatus, DistributionStatus
 )
 from app.schemas.licensing import (
     LicensingAgreementCreate, LicensingAgreementUpdate,

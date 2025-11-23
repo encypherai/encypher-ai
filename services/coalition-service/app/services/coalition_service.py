@@ -3,17 +3,16 @@ Coalition Service - Business Logic
 """
 import uuid
 from datetime import datetime, date
-from typing import Optional, List
+from typing import Optional
 from decimal import Decimal
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
+from sqlalchemy import func
 import structlog
 
 from ..db.models import (
     CoalitionMember,
     CoalitionContent,
     LicensingAgreement,
-    ContentAccessLog,
     RevenueDistribution,
     MemberRevenue,
     CoalitionSettings,

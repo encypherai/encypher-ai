@@ -1,21 +1,18 @@
 """
 API endpoints for user management.
 """
-from typing import Any, List, Optional
+from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import get_password_hash
-from app.models.user import User as UserModel
-from app.schemas.user import User, UserCreate, UserUpdate
+from app.schemas.user import User, UserUpdate
 from app.services.user import (
     get_current_user,
-    get_user_by_email,
     get_user_by_id,
     get_users,
-    create_user,
     update_user
 )
 

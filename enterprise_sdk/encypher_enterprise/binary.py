@@ -4,10 +4,8 @@ Binary file support for signing PDFs, DOCX, images, and other formats.
 Provides text extraction and signing capabilities for binary files.
 """
 from pathlib import Path
-from typing import Optional, List, Dict, Any, BinaryIO
+from typing import Optional, List, Dict, Any
 from dataclasses import dataclass
-from datetime import datetime
-import io
 
 
 @dataclass

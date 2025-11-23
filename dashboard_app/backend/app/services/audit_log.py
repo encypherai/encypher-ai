@@ -3,9 +3,9 @@ Service for audit log operations.
 """
 import csv
 import json
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Tuple
 from datetime import datetime
-from sqlalchemy import select, func, update, delete, cast, Integer, and_
+from sqlalchemy import select, func, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.utils.caching import cached_async, invalidate_cache
 

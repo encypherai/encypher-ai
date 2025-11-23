@@ -3,7 +3,7 @@ API endpoints for Key Service v1
 """
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
-from typing import List, Optional
+from typing import List
 import httpx
 
 from ...db.session import get_db

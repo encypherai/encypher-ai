@@ -4,8 +4,8 @@ Quota enforcement system for API usage limits.
 Tracks and enforces usage quotas based on organization tier.
 """
 import logging
-from datetime import datetime, timedelta
-from typing import Optional, Dict
+from datetime import datetime
+from typing import Dict
 from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession

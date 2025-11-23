@@ -35,14 +35,12 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from statistics import mean
 from typing import Optional, List
 
 # Avoid adding new deps; use stdlib urllib for download
 from urllib.request import urlretrieve, urlopen
 import bz2
 import re
-from typing import Literal
 
 # Optional rich progress
 try:
@@ -57,7 +55,7 @@ try:
     from encypher_enterprise.async_client import AsyncEncypherClient
     from encypher_enterprise.batch import RepositorySigner
     from encypher_enterprise.verification import RepositoryVerifier
-except Exception as e:
+except Exception:
     print("Error: enterprise SDK is not available in this workspace.")
     print("Make sure 'enterprise_sdk' is part of the UV workspace and synced.")
     raise
@@ -145,7 +143,7 @@ def run_wikiextractor(dump_path: Path, extract_dir: Path, processes: int = 4) ->
         raise RuntimeError(
             "wikiextractor not found. Install it with: uv add wikiextractor"
         )
-    except subprocess.CalledProcessError as e:
+    except subprocess.CalledProcessError:
         print("! WikiExtractor failed; falling back to simple extractor (no multiprocessing)")
         simple_extract_dump(dump_path, extract_dir)
     print("✓ Extraction complete")
@@ -378,7 +376,6 @@ async def encode_merkle_async(files: list[Path], base_url: str, concurrency: int
     api_key = os.getenv("ENCYPHER_API_KEY")
     if not api_key:
         raise RuntimeError("ENCYPHER_API_KEY is not set. Export it for local signing.")
-    from encypher_enterprise.client import EncypherClient as SyncClient
     # Use threadpool to run blocking client in parallel? Better: use httpx directly
     import httpx
     headers = {"Authorization": f"Bearer {api_key}"}

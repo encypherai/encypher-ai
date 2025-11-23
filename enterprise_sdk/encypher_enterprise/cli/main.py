@@ -479,13 +479,13 @@ def sign_repo_command(
     console.print(f"Patterns: {', '.join(pattern)}")
     console.print(f"Exclude: {', '.join(exclude)}")
     if incremental:
-        console.print(f"Mode: Incremental (only changed files)")
+        console.print("Mode: Incremental (only changed files)")
     if track_changes:
-        console.print(f"Version tracking: Enabled")
+        console.print("Version tracking: Enabled")
     if language:
         console.print(f"Language: {language}")
     elif detect_language:
-        console.print(f"Language detection: Enabled")
+        console.print("Language detection: Enabled")
     
     # Sign repository
     signer = RepositorySigner(client, use_sentence_tracking=True)
@@ -956,7 +956,7 @@ def detect_language_command(
             lang_info = detector.detect(content)
             lang_name = detector.get_language_name(lang_info.language)
             
-            console.print(Text(f"\nDetected Language:", style="bold cyan"))
+            console.print(Text("\nDetected Language:", style="bold cyan"))
             console.print(f"  Language: {lang_name} ({lang_info.language})")
             console.print(f"  Confidence: {lang_info.confidence:.1%}")
         else:

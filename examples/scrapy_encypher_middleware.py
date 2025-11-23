@@ -23,7 +23,6 @@ import sys
 import os
 import logging
 from datetime import datetime
-from typing import List, Dict
 
 from scrapy import signals
 from scrapy.http import Response

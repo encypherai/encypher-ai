@@ -11,7 +11,6 @@ from ...models.schemas import (
     VerificationResponse,
     VerificationHistory,
     VerificationStats,
-    MessageResponse,
 )
 from ...services.verification_service import VerificationService
 from ...core.config import settings

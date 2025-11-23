@@ -3,10 +3,9 @@ Unit tests for the high-level API in the shared commercial library.
 """
 
 import unittest
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 import tempfile
 import os
-from pathlib import Path
 
 from encypher_commercial_shared import EncypherAI, VerificationResult
 

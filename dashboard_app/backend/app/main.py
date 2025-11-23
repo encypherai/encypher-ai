@@ -47,7 +47,7 @@ async def lifespan(app: FastAPI):
                     )
                     print(f"Created initial admin user: {admin_email}")
                 else:
-                    print(f"Initial admin user already exists, skipping creation")
+                    print("Initial admin user already exists, skipping creation")
             except Exception as e:
                 print(f"Error during initial admin user creation: {e}")
     yield

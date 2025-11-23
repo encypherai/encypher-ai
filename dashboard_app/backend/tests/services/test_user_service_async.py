@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.user import User
 from app.services.user import get_user_by_username, create_user, authenticate_user
 from app.schemas.user import UserCreate
-from app.core.security import verify_password, get_password_hash
+from app.core.security import verify_password
 
 # Mark all tests in this module as asyncio
 pytestmark = pytest.mark.asyncio

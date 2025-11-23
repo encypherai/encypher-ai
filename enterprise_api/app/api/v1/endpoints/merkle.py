@@ -5,8 +5,7 @@ Enterprise tier endpoints for content attribution and plagiarism detection.
 """
 import time
 import logging
-from typing import Dict, Any
-from uuid import UUID
+from typing import Dict
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession

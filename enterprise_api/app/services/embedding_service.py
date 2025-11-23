@@ -31,7 +31,6 @@ except ImportError:
     )
 
 from app.models.content_reference import ContentReference
-from app.models.merkle import MerkleRoot
 
 logger = logging.getLogger(__name__)
 

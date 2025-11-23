@@ -8,7 +8,6 @@ import logging
 from datetime import datetime, timezone
 from typing import Dict, Optional, Set
 from fastapi import WebSocket, WebSocketDisconnect
-import json
 
 logger = logging.getLogger(__name__)
 

@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List
+from typing import Dict, Any
 
 class PolicySchemaError(Exception):
     """Custom exception for policy schema validation errors."""

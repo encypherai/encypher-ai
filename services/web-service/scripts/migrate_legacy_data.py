@@ -2,7 +2,6 @@ import argparse
 import logging
 import sys
 from sqlalchemy import create_engine, text
-from sqlalchemy.orm import sessionmaker
 
 # Add app to path
 sys.path.append(".")

@@ -65,7 +65,7 @@ async def test_streaming():
                     break
             
             # Finalize stream
-            print(f"\n📤 Finalizing stream...")
+            print("\n📤 Finalizing stream...")
             await websocket.send(json.dumps({"type": "finalize"}))
             
             # Receive final response
@@ -73,7 +73,7 @@ async def test_streaming():
             data = json.loads(response)
             
             if data.get("type") == "complete":
-                print(f"\n✅ Stream complete!")
+                print("\n✅ Stream complete!")
                 print(f"  Document ID: {data.get('document_id')}")
                 print(f"  Total chunks: {data.get('total_chunks')}")
                 print(f"  Duration: {data.get('duration_seconds', 0):.2f}s")
@@ -90,7 +90,7 @@ async def test_streaming():
         traceback.print_exc()
         return 1
     
-    print(f"\n✅ Test completed successfully!")
+    print("\n✅ Test completed successfully!")
     return 0
 
 
@@ -99,7 +99,7 @@ async def test_rate_limiting():
     api_key = "demo_key_12345"
     uri = f"ws://localhost:8000/api/v1/stream/sign?api_key={api_key}"
     
-    print(f"\n🔥 Testing rate limiting...")
+    print("\n🔥 Testing rate limiting...")
     print(f"Connecting to {uri}...")
     
     try:
@@ -108,7 +108,7 @@ async def test_rate_limiting():
             await websocket.recv()
             
             # Send chunks as fast as possible
-            print(f"📤 Sending 100 chunks rapidly...")
+            print("📤 Sending 100 chunks rapidly...")
             
             rate_limited = False
             for i in range(100):
@@ -128,9 +128,9 @@ async def test_rate_limiting():
                     break
             
             if rate_limited:
-                print(f"✅ Rate limiting is working!")
+                print("✅ Rate limiting is working!")
             else:
-                print(f"⚠️  No rate limiting detected (sent 100 chunks)")
+                print("⚠️  No rate limiting detected (sent 100 chunks)")
             
             # Finalize
             await websocket.send(json.dumps({"type": "finalize"}))
@@ -148,10 +148,10 @@ async def test_reconnection():
     api_key = "demo_key_12345"
     uri = f"ws://localhost:8000/api/v1/stream/sign?api_key={api_key}"
     
-    print(f"\n🔄 Testing reconnection...")
+    print("\n🔄 Testing reconnection...")
     
     # First connection
-    print(f"📤 First connection...")
+    print("📤 First connection...")
     async with websockets.connect(uri) as websocket:
         response = await websocket.recv()
         data = json.loads(response)
@@ -166,10 +166,10 @@ async def test_reconnection():
             }))
             await websocket.recv()
         
-        print(f"  Sent 3 chunks, disconnecting...")
+        print("  Sent 3 chunks, disconnecting...")
     
     # Simulate reconnection
-    print(f"\n📤 Reconnecting with session recovery...")
+    print("\n📤 Reconnecting with session recovery...")
     uri_with_session = f"{uri}&session_id={session_id}"
     
     try:
@@ -184,10 +184,10 @@ async def test_reconnection():
             data = json.loads(response)
             
             if data.get("recovered"):
-                print(f"  ✅ Session recovered!")
+                print("  ✅ Session recovered!")
                 print(f"  Chunks processed: {data.get('chunks_processed')}")
             else:
-                print(f"  ⚠️  Session recovery failed")
+                print("  ⚠️  Session recovery failed")
             
             # Finalize
             await websocket.send(json.dumps({"type": "finalize"}))

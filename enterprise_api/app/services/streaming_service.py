@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 
 from app.services.session_service import session_service
 from app.utils.crypto_utils import decrypt_private_key
-from app.config import settings
 
 logger = logging.getLogger(__name__)
 

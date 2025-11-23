@@ -6,12 +6,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from .core.config import settings
-from .core.logging_config import setup_logging
 from .api.v1.endpoints import router as v1_router
 from .db.models import Base
 from .db.session import engine
-from .monitoring.metrics import setup_metrics
-from .middleware.logging import RequestLoggingMiddleware
 
 # Configure logging
 logging.basicConfig(
@@ -26,7 +23,7 @@ async def lifespan(app: FastAPI):
     """Lifespan events"""
     # Startup
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    logger.info(f"Creating database tables...")
+    logger.info("Creating database tables...")
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created")
     

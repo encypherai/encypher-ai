@@ -118,7 +118,7 @@ async def main():
     
     await engine.dispose()
     
-    print(f"✅ Seeding complete!")
+    print("✅ Seeding complete!")
     print(f"   Total schemas: {schema_count}")
     print(f"   Total templates: {template_count}")
 

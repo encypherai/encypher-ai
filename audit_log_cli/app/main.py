@@ -3,11 +3,10 @@ import logging
 import os
 import sys
 from pathlib import Path
-from typing import List, Optional, Dict, Any, Union
+from typing import Dict, Any
 from rich.console import Console
 import csv
 from rich.logging import RichHandler
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
 
 # Import from our shared commercial library instead of directly from EncypherAI
 from encypher_commercial_shared import EncypherAI, VerificationResult
@@ -210,7 +209,6 @@ def generate_report(
     
     # Monkey patch the load_public_key_from_pem function if it doesn't exist
     # This is a workaround for a module import issue
-    import sys
     from encypher_commercial_shared.high_level import load_public_key_from_data
     
     # Add the function to the module's globals if it doesn't exist
@@ -266,7 +264,7 @@ def generate_report(
                                         # Look for variation selectors in the text
                                         has_variation_selectors = any(0xFE00 <= ord(c) <= 0xFE0F for c in content)
                                         if has_variation_selectors:
-                                            console.print(f"[green]Found Unicode variation selectors in the text![/green]")
+                                            console.print("[green]Found Unicode variation selectors in the text![/green]")
                                         console.print(f"[blue]Unicode details: {debug_unicode(content)}[/blue]")
                                         
                                         # Use EncypherAI to verify the extracted text directly

@@ -3,7 +3,6 @@ Script to initialize the database with sample data for testing.
 """
 import os
 import sys
-import json
 import asyncio
 from datetime import datetime, timedelta
 import random
@@ -11,8 +10,7 @@ import random
 # Add the parent directory to the path so we can import the app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text, select, func
+from sqlalchemy import select, func
 from app.core.database import AsyncSessionLocal, Base, engine
 from app.models.user import User
 from app.models.audit_log import AuditLog

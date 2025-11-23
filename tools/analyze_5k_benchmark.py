@@ -30,7 +30,7 @@ print("=" * 80)
 print("5K FILE BENCHMARK ANALYSIS - ENHANCED SEGMENTATION")
 print("=" * 80)
 
-print(f"\nFiles Processed:")
+print("\nFiles Processed:")
 print(f"  - Embedded files found: {len(embedded_files):,}")
 print(f"  - Original files found: {len(original_files):,}")
 print(f"  - Success rate: {(len(embedded_files)/5000*100):.2f}%")
@@ -62,25 +62,25 @@ for i in range(sample_size):
             invisible = sum(1 for c in content if ord(c) > 0xE0000 or (0xFE00 <= ord(c) <= 0xFE0F))
             invisible_counts.append(invisible)
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print(f"FILE SIZE ANALYSIS ({sample_size} file sample)")
 print("=" * 80)
 
-print(f"\nOriginal Files:")
+print("\nOriginal Files:")
 print(f"  - Average size: {statistics.mean(original_sizes):,.0f} bytes")
 print(f"  - Median size: {statistics.median(original_sizes):,.0f} bytes")
 print(f"  - Min size: {min(original_sizes):,} bytes")
 print(f"  - Max size: {max(original_sizes):,} bytes")
 print(f"  - Total size: {sum(original_sizes)/1024/1024:.2f} MB")
 
-print(f"\nEmbedded Files:")
+print("\nEmbedded Files:")
 print(f"  - Average size: {statistics.mean(embedded_sizes):,.0f} bytes")
 print(f"  - Median size: {statistics.median(embedded_sizes):,.0f} bytes")
 print(f"  - Min size: {min(embedded_sizes):,} bytes")
 print(f"  - Max size: {max(embedded_sizes):,} bytes")
 print(f"  - Total size: {sum(embedded_sizes)/1024/1024:.2f} MB")
 
-print(f"\nSize Increase:")
+print("\nSize Increase:")
 print(f"  - Average increase: {statistics.mean(size_increases):.1f}%")
 print(f"  - Median increase: {statistics.median(size_increases):.1f}%")
 print(f"  - Min increase: {min(size_increases):.1f}%")
@@ -89,7 +89,7 @@ print(f"  - P25: {statistics.quantiles(size_increases, n=4)[0]:.1f}%")
 print(f"  - P75: {statistics.quantiles(size_increases, n=4)[2]:.1f}%")
 
 if invisible_counts:
-    print(f"\nInvisible Characters (100 file sample):")
+    print("\nInvisible Characters (100 file sample):")
     print(f"  - Average: {statistics.mean(invisible_counts):,.0f}")
     print(f"  - Median: {statistics.median(invisible_counts):,.0f}")
     print(f"  - Min: {min(invisible_counts):,}")
@@ -101,7 +101,7 @@ total_orig_mb = sum(original_sizes) / 1024 / 1024 * scale_factor
 total_emb_mb = sum(embedded_sizes) / 1024 / 1024 * scale_factor
 overhead_mb = total_emb_mb - total_orig_mb
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("FULL 5K DATASET ESTIMATES")
 print("=" * 80)
 print(f"  - Original total: {total_orig_mb:.2f} MB")
@@ -110,34 +110,34 @@ print(f"  - Overhead: {overhead_mb:.2f} MB ({(overhead_mb/total_orig_mb*100):.1f
 print(f"  - Average file increase: {statistics.mean(size_increases):.1f}%")
 
 # Performance metrics from benchmark
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("PERFORMANCE METRICS")
 print("=" * 80)
-print(f"  - Total files processed: 5,000")
-print(f"  - Total time: 588.85 seconds (9 min 48 sec)")
-print(f"  - Average per file: 117.77 ms")
-print(f"  - Median per file: 48.15 ms")
-print(f"  - P95 per file: 465.77 ms")
+print("  - Total files processed: 5,000")
+print("  - Total time: 588.85 seconds (9 min 48 sec)")
+print("  - Average per file: 117.77 ms")
+print("  - Median per file: 48.15 ms")
+print("  - P95 per file: 465.77 ms")
 print(f"  - Throughput: {5000/588.85:.1f} files/second")
-print(f"  - Concurrency: 8 workers")
-print(f"  - API workers: 4 (uvicorn)")
+print("  - Concurrency: 8 workers")
+print("  - API workers: 4 (uvicorn)")
 
 # Segmentation estimates
 avg_sentences_estimate = 124  # From article_0 analysis
 total_sentences = 5000 * avg_sentences_estimate
 sentences_per_second = total_sentences / 588.85
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("SEGMENTATION & EMBEDDING STATS")
 print("=" * 80)
 print(f"  - Estimated total sentences: ~{total_sentences:,}")
 print(f"  - Sentences per second: ~{sentences_per_second:.0f}")
 print(f"  - Average sentences per file: ~{avg_sentences_estimate}")
-print(f"  - Segmentation method: Enhanced (Wiki + Markdown)")
-print(f"  - Improvement over old: 3.6x more sentences detected")
+print("  - Segmentation method: Enhanced (Wiki + Markdown)")
+print("  - Improvement over old: 3.6x more sentences detected")
 
 # Quality check
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("QUALITY CHECK (first 5 files)")
 print("=" * 80)
 
@@ -153,7 +153,7 @@ for i, emb_file in enumerate(embedded_files[:5]):
     print(f"  - Invisible chars: {invisible:,}")
     print(f"  - Has C2PA wrapper: {'✓' if has_c2pa else '✗'}")
 
-print(f"\n" + "=" * 80)
+print("\n" + "=" * 80)
 print("SUMMARY")
 print("=" * 80)
 print("✅ Successfully processed 5,000 Wikipedia articles")

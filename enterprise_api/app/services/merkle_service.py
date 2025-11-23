@@ -5,13 +5,12 @@ Combines CRUD operations with Merkle tree logic to provide
 high-level business operations.
 """
 from typing import List, Optional, Dict, Any, Tuple
-from uuid import UUID
 import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import merkle as merkle_crud
-from app.utils.merkle import MerkleTree, generate_proof, verify_proof, MerkleProof
+from app.utils.merkle import MerkleTree, MerkleProof
 from app.utils.segmentation import HierarchicalSegmenter, normalize_for_hashing
 from app.models.merkle import MerkleRoot, MerkleSubhash, AttributionReport
 

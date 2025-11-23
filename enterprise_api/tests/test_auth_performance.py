@@ -7,9 +7,7 @@ os.environ["SSL_COM_API_KEY"] = "test_key"
 
 import pytest
 from unittest.mock import MagicMock, patch, AsyncMock
-from fastapi import HTTPException, Request
 from app.dependencies import get_current_organization
-from datetime import datetime
 from app import dependencies
 
 @pytest.mark.asyncio

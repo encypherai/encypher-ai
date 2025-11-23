@@ -2,7 +2,6 @@
 API endpoints for coalition management.
 """
 from typing import Any, List, Optional
-from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession

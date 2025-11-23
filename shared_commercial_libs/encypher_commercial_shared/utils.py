@@ -5,18 +5,14 @@ This module provides common utility functions used across the commercial tools,
 building on top of the high-level API.
 """
 
-import os
 import csv
-import base64
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Union, Tuple
-from datetime import datetime
+from typing import Dict, List, Optional, Union
 
 from rich.console import Console
 from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
 
 # Import for document handling
-import io
 try:
     import PyPDF2
     PYPDF2_AVAILABLE = True
@@ -119,7 +115,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                             # Check for our custom metadata field
                             if 'dc:description' in meta:
                                 metadata_text = meta['dc:description']
-                                console.print(f"[green]Successfully extracted Unicode text from PDF metadata[/green]")
+                                console.print("[green]Successfully extracted Unicode text from PDF metadata[/green]")
                     except Exception as meta_err:
                         console.print(f"[yellow]Metadata extraction failed: {meta_err}[/yellow]")
                     
@@ -130,7 +126,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                             # Get the attachment stream and decode it
                             raw_bytes = pdf.attachments['original_text.txt'].read_bytes()
                             attachment_text = raw_bytes.decode('utf-8', errors='replace')
-                            console.print(f"[green]Successfully extracted Unicode text from PDF attachment[/green]")
+                            console.print("[green]Successfully extracted Unicode text from PDF attachment[/green]")
                     except Exception as att_err:
                         console.print(f"[yellow]Attachment extraction failed: {att_err}[/yellow]")
                     
@@ -428,7 +424,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
             import re
             vs_pattern = re.compile(r'[\uFE00-\uFE0F]')
             if vs_pattern.search(text):
-                console.print(f"[green]Found Unicode variation selectors in binary fallback extraction[/green]")
+                console.print("[green]Found Unicode variation selectors in binary fallback extraction[/green]")
             
             return text
     except Exception as e:

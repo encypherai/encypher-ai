@@ -5,7 +5,7 @@ try:
     print(f"✓ spaCy imported: {spacy.__version__}")
     try:
         _nlp = spacy.load("en_core_web_sm")
-        print(f"✓ Model loaded: en_core_web_sm")
+        print("✓ Model loaded: en_core_web_sm")
         SPACY_AVAILABLE = True
     except OSError as e:
         print(f"✗ Model load failed: {e}")

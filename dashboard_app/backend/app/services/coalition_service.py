@@ -1,11 +1,10 @@
 """
 Service for coalition operations.
 """
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-from sqlalchemy import select, func, and_, or_, desc
+from sqlalchemy import select, func, and_, desc
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import joinedload
 
 from app.models.coalition import (
     CoalitionMember,
@@ -15,8 +14,6 @@ from app.models.coalition import (
 )
 from app.models.user import User
 from app.schemas.coalition import (
-    CoalitionMemberCreate,
-    CoalitionMemberUpdate,
     ContentItemCreate,
     RevenueTransactionCreate,
     ContentAccessLogCreate,

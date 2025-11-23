@@ -1,5 +1,3 @@
-import pytest
-import time
 import numpy as np
 from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
@@ -7,7 +5,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import app
 from app.main import app
-from app.models.organization import Organization
 
 class TestLoadSimulation:
     
@@ -51,7 +48,6 @@ class TestLoadSimulation:
         from app.services import stat_service as ss_module
         from app import database as db_module
         import app.dependencies as deps_module
-        from sqlalchemy.ext.asyncio import AsyncEngine
         from app.services import signing_executor as se_module
 
         from app.database import get_db
@@ -128,8 +124,8 @@ class TestLoadSimulation:
             p95 = np.percentile(latencies, 95)
             avg = np.mean(latencies)
             
-            print(f"\nSimulation Results:")
-            print(f"Total Requests: 100")
+            print("\nSimulation Results:")
+            print("Total Requests: 100")
             print(f"Total Time: {total_time:.2f}s")
             print(f"Avg Latency: {avg:.2f}ms")
             print(f"P95 Latency: {p95:.2f}ms")

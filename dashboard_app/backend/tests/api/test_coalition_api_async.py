@@ -10,8 +10,7 @@ from app.models.user import User
 from app.models.coalition import (
     CoalitionMember,
     ContentItem,
-    RevenueTransaction,
-    ContentAccessLog
+    RevenueTransaction
 )
 
 

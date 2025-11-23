@@ -4,7 +4,6 @@ This script creates examples with sophisticated tampering by modifying variation
 in the embedded metadata, which is more subtle than adding obvious text markers.
 """
 
-import os
 import sys
 from pathlib import Path
 
@@ -202,7 +201,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
             tampered_pdf_path = EXAMPLE_DIR / "tampered_variation_selectors.pdf"
             pdf_tampered.output(str(tampered_pdf_path))
             
-            console.print(f"[green]Created original and tampered PDF examples[/green]")
+            console.print("[green]Created original and tampered PDF examples[/green]")
             
         except ImportError:
             console.print("[yellow]FPDF not installed, skipping PDF example creation[/yellow]")
@@ -236,7 +235,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
             tampered_docx_path = EXAMPLE_DIR / "tampered_variation_selectors.docx"
             doc_tampered.save(str(tampered_docx_path))
             
-            console.print(f"[green]Created original and tampered DOCX examples[/green]")
+            console.print("[green]Created original and tampered DOCX examples[/green]")
             
         except ImportError:
             console.print("[yellow]python-docx not installed, skipping DOCX example creation[/yellow]")

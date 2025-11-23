@@ -8,7 +8,7 @@ Install with: uv add spacy
 Then: python -m spacy download en_core_web_sm
 """
 from functools import lru_cache
-from typing import List, Optional
+from typing import List
 import logging
 
 logger = logging.getLogger(__name__)

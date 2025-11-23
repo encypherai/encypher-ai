@@ -5,7 +5,6 @@ This module provides configuration options for optimizing database performance,
 particularly for high-throughput write workloads.
 """
 from pydantic_settings import BaseSettings
-from typing import Optional
 
 
 class PerformanceSettings(BaseSettings):

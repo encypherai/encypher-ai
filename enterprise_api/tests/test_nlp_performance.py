@@ -1,5 +1,4 @@
-import pytest
-from unittest.mock import MagicMock, patch, ANY
+from unittest.mock import MagicMock, patch
 # Set env vars to avoid pydantic errors during import
 import os
 os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/db"

@@ -3,7 +3,6 @@ Content diff tracking and version management.
 
 Tracks changes between document versions and generates unified diffs.
 """
-from pathlib import Path
 from typing import Optional, Dict, List, Tuple
 from dataclasses import dataclass
 from datetime import datetime
@@ -402,7 +401,7 @@ def generate_diff_report(
         stats = generator.calculate_stats(old_content, new_content)
         
         report = f"# Diff Report: {old_version} → {new_version}\n\n"
-        report += f"## Statistics\n"
+        report += "## Statistics\n"
         report += f"- Lines added: {stats.lines_added}\n"
         report += f"- Lines removed: {stats.lines_removed}\n"
         report += f"- Lines modified: {stats.lines_modified}\n"

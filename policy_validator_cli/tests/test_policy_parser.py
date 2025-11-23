@@ -2,7 +2,6 @@ import unittest
 import json
 import tempfile
 from pathlib import Path
-import os
 
 from policy_validator_cli.app.policy_parser import load_policy, PolicySchemaError
 

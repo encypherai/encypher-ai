@@ -1,11 +1,7 @@
 import pytest
-import httpx
-import asyncio
 import time
 import docker
-import os
 import socket
-from typing import List
 
 # Check if docker is available
 try:

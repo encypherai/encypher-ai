@@ -3,7 +3,7 @@ Merkle tree implementation for hierarchical content attribution.
 
 Builds Merkle trees from text segments and provides proof generation.
 """
-from typing import List, Optional, Dict, Any, Tuple
+from typing import List, Optional, Dict, Any
 import logging
 
 from .node import MerkleNode

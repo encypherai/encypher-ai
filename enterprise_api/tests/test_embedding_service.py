@@ -4,13 +4,11 @@ Unit tests for EmbeddingService.
 Tests ref_id generation, signature creation/verification, and embedding operations.
 """
 import pytest
-import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime
 from uuid import uuid4
 
 from app.services.embedding_service import EmbeddingService, EmbeddingReference
 from app.models.content_reference import ContentReference
-from app.models.merkle import MerkleRoot
 
 
 class TestRefIdGeneration:

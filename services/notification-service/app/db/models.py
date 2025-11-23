@@ -1,5 +1,5 @@
 """SQLAlchemy database models for Notification Service"""
-from sqlalchemy import Column, String, DateTime, JSON, Boolean
+from sqlalchemy import Column, String, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import uuid

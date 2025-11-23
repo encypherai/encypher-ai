@@ -7,9 +7,8 @@ from external services (SDK, WordPress plugin, CLI, etc.)
 import logging
 import secrets
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Optional, Dict, Any, Tuple
-from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select

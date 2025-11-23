@@ -3,11 +3,11 @@ Integration tests for incremental signing.
 """
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 import pytest
 
-from encypher_enterprise import RepositorySigner, FileMetadata
+from encypher_enterprise import RepositorySigner
 from encypher_enterprise.models import SignResponse
 
 

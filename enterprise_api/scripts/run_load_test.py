@@ -102,7 +102,7 @@ def main():
                 print("DB Ready!")
                 connected = True
                 break
-            except Exception as e:
+            except Exception:
                 time.sleep(1)
         
         if not connected:

@@ -2,7 +2,6 @@
 Encoding service business logic
 """
 import time
-from datetime import datetime
 from typing import Optional, Tuple, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func

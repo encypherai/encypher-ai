@@ -6,14 +6,11 @@ Tests complete WebSocket flows with real connections.
 import pytest
 import asyncio
 import json
-from typing import List, Dict
-from fastapi.testclient import TestClient
 from httpx import AsyncClient
 import websockets
 
 from app.main import app
 from app.services.session_service import session_service
-from app.core.websocket_manager import connection_manager
 from app.middleware.rate_limiter import streaming_rate_limiter
 
 

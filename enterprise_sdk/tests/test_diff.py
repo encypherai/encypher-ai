@@ -2,7 +2,6 @@
 Tests for diff tracking and version management.
 """
 import pytest
-from pathlib import Path
 from datetime import datetime
 from encypher_enterprise.diff import (
     DiffGenerator,

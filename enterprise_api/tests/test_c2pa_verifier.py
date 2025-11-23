@@ -3,13 +3,11 @@ Tests for C2PA manifest verification utility.
 """
 import pytest
 from unittest.mock import Mock, patch
-from datetime import datetime
 
 from app.utils.c2pa_verifier import (
     C2PAVerifier,
     C2PAVerificationResult,
     C2PAAssertion,
-    C2PASignature,
     verify_c2pa_manifest
 )
 

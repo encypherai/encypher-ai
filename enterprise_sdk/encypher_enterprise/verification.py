@@ -11,7 +11,6 @@ import time
 
 from .client import EncypherClient
 from .async_client import AsyncEncypherClient
-from .models import VerifyResponse
 
 
 @dataclass

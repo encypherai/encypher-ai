@@ -37,7 +37,7 @@ async def test():
             if out.exists():
                 print(f'\n✓ SUCCESS! File verified at: {out.resolve()}')
             else:
-                print(f'\n✗ ERROR! File does not exist after write!')
+                print('\n✗ ERROR! File does not exist after write!')
         else:
             print('✗ No embedded_content in response')
 

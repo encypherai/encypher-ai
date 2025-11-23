@@ -5,7 +5,7 @@ Async API tests for Audit Log endpoints.
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Dict, Any, Optional
+from typing import List, Dict
 from datetime import datetime, timedelta, timezone
 # import tempfile # Not used yet
 # import os # Not used yet
@@ -14,7 +14,6 @@ from datetime import datetime, timedelta, timezone
 
 from app.core.config import settings
 from app.models.user import User as UserModel
-from app.schemas.audit_log import AuditLog as AuditLogSchema, AuditLogPage, AuditLogCreate, AuditLogStats
 from app.core.security import get_password_hash # Corrected import for creating test user
 from app.models.audit_log import AuditLog as AuditLogModel # For creating test data
 
@@ -94,7 +93,7 @@ async def test_read_audit_logs_default_pagination(client: AsyncClient, db: Async
     initial_logs_count = 3 # Reduced for faster test
     print(f"Creating {initial_logs_count} initial logs for this test...")
     await create_test_audit_logs(db, count=initial_logs_count, department="API_Test_Dept_Paginate")
-    print(f"Initial logs created for department API_Test_Dept_Paginate.")
+    print("Initial logs created for department API_Test_Dept_Paginate.")
 
     print(f"Making GET request to {settings.API_V1_STR}/audit-logs/")
     response = await client.get(f"{settings.API_V1_STR}/audit-logs/", headers=headers)

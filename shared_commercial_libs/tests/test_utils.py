@@ -7,7 +7,6 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import os
 import csv
-from pathlib import Path
 
 from encypher_commercial_shared import EncypherAI, VerificationResult
 from encypher_commercial_shared.utils import scan_directory, generate_report, load_trusted_signers_from_directory as load_trusted_signers

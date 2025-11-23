@@ -10,7 +10,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
-from typing import Any, Dict, Iterable, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence
 
 from fastapi import HTTPException, status
 from sqlalchemy import select

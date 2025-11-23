@@ -3,7 +3,7 @@ API endpoints for CLI tool integration.
 """
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, status
+from fastapi import APIRouter, Depends, BackgroundTasks, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db

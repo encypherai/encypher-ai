@@ -7,7 +7,7 @@ from typing import List, Optional, Dict
 from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
-from sqlalchemy import select, and_, func
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.licensing import (
@@ -17,7 +17,7 @@ from app.models.licensing import (
 )
 from app.schemas.licensing import (
     LicensingAgreementCreate, LicensingAgreementUpdate,
-    ContentAccessTrack, RevenueDistributionCreate
+    RevenueDistributionCreate
 )
 from app.utils.api_key import generate_api_key, verify_api_key
 
@@ -389,7 +389,7 @@ class LicensingService:
             raise ValueError(f"Distribution {distribution_id} not found")
 
         if distribution.status != DistributionStatus.COMPLETED:
-            raise ValueError(f"Distribution must be completed before processing payouts")
+            raise ValueError("Distribution must be completed before processing payouts")
 
         member_revenues = await LicensingService.get_member_revenues(db, distribution_id)
 

@@ -1,7 +1,6 @@
 import time
 import docker
 import os
-import socket
 import subprocess
 import sys
 import httpx
