@@ -52,7 +52,7 @@ def _get_c2pa_assertion_data(assertion_dict: dict[str, Any]) -> dict[str, Any]:
                 deserialized_data = _deserialize_data_from_cbor_base64(cbor_b64_str)
                 return deserialized_data
             except Exception as e:
-                raise ValueError(f"Failed to deserialize CBOR/Base64 data for assertion '{assertion_dict.get('label')}': {e}")
+                raise ValueError(f"Failed to deserialize CBOR/Base64 data for assertion '{assertion_dict.get('label')}': {e}") from e
         else:
             raise ValueError(f"Assertion '{assertion_dict.get('label')}' has 'data_encoding' as CBOR but 'data' is not a string.")
 
