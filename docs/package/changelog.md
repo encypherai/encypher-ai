@@ -24,6 +24,20 @@ This document provides a chronological list of notable changes for each version 
 ### Security
 - Dependency hygiene: Eliminated transitive `python-ecdsa` (GHSA-wj6h-64fc-37mp) by removing `pycose` and using a native COSE EdDSA implementation.
 
+## 3.0.0 (2025-11-23)
+
+### Breaking Changes
+- **Dependency Optimization:** Removed `litellm` from core dependencies. If you relied on `encypher-ai` to install `litellm`, you must now install it explicitly or use `encypher-ai[dev]` for examples.
+- **Standardization:** Refactored core C2PA embedding logic to rely on the new `c2pa-text` reference library.
+
+### Added
+- **Dependency:** Added `c2pa-text` as a core dependency for low-level C2PA compliance.
+- **Dependency:** Added `requests` as a core dependency (required for timestamping).
+
+### Changed
+- **Developer Experience:** Replaced `black`, `flake8`, and `isort` with `ruff` for faster and more unified linting/formatting.
+- **Typing:** Modernized type hints across the codebase.
+
 ## 2.8.1 (2025-01-03)
 
 ### Fixed

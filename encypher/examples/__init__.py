@@ -1,12 +1,10 @@
 """
-Example implementations for EncypherAI.
+Examples for EncypherAI package.
 """
 
-from typing import List
-
 __all__: list[str] = [
-    "cli_example",
-    "fastapi_example",
+    "basic_usage",
+    "c2pa_compliance",
     "litellm_integration",
     "youtube_demo",
 ]
