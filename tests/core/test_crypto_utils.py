@@ -3,7 +3,7 @@ import json
 import os
 import tempfile
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional, Tuple, cast
+from typing import Any, Optional, cast
 
 import pytest
 from cryptography.hazmat.primitives import serialization
@@ -85,7 +85,7 @@ def format_timestamp(dt: Optional[datetime] = None) -> str:
 
 
 @pytest.fixture(scope="module")
-def test_keys() -> Tuple[PrivateKeyTypes, PublicKeyTypes]:
+def test_keys() -> tuple[PrivateKeyTypes, PublicKeyTypes]:
     """Generate a key pair for tests."""
     return generate_key_pair()
 
@@ -206,7 +206,7 @@ def manifest_payload_data() -> ManifestPayload:
 def test_serialize_payload_basic(basic_payload_data: BasicPayload):
     """Test canonical serialization of BasicPayload."""
     # Cast to Dict[str, Any] for serialize_payload
-    serialized_bytes = serialize_payload(cast(Dict[str, Any], basic_payload_data))
+    serialized_bytes = serialize_payload(cast(dict[str, Any], basic_payload_data))
     assert isinstance(serialized_bytes, bytes)
     # Deserialize to check structure and canonical form (keys sorted)
     data = json.loads(serialized_bytes.decode("utf-8"))
@@ -221,7 +221,7 @@ def test_serialize_payload_basic(basic_payload_data: BasicPayload):
 def test_serialize_payload_manifest(manifest_payload_data: ManifestPayload):
     """Test canonical serialization of ManifestPayload."""
     # Cast to Dict[str, Any] for serialize_payload
-    serialized_bytes = serialize_payload(cast(Dict[str, Any], manifest_payload_data))
+    serialized_bytes = serialize_payload(cast(dict[str, Any], manifest_payload_data))
     assert isinstance(serialized_bytes, bytes)
     # Deserialize to check structure and canonical form
     data = json.loads(serialized_bytes.decode("utf-8"))
@@ -246,7 +246,7 @@ def test_serialize_payload_manifest(manifest_payload_data: ManifestPayload):
 def test_serialize_payload_deterministic(basic_payload_data: BasicPayload):
     """Ensure serialization produces the same bytes for the same input."""
     # Cast to Dict[str, Any] for serialize_payload
-    bytes1 = serialize_payload(cast(Dict[str, Any], basic_payload_data))
+    bytes1 = serialize_payload(cast(dict[str, Any], basic_payload_data))
     # Create identical dict again
     payload2 = BasicPayload(
         timestamp=basic_payload_data["timestamp"],
@@ -254,7 +254,7 @@ def test_serialize_payload_deterministic(basic_payload_data: BasicPayload):
         custom_metadata={"value": 123, "info": "some basic custom data"},  # Note different order
     )
     # Cast to Dict[str, Any] for serialize_payload
-    bytes2 = serialize_payload(cast(Dict[str, Any], payload2))
+    bytes2 = serialize_payload(cast(dict[str, Any], payload2))
     assert bytes1 == bytes2
 
 
@@ -265,7 +265,7 @@ def test_sign_and_verify_basic(test_keys, basic_payload_data: BasicPayload):
     """Test signing and verifying a BasicPayload."""
     private_key, public_key = test_keys
     # Cast to Dict[str, Any] for serialize_payload
-    payload_bytes = serialize_payload(cast(Dict[str, Any], basic_payload_data))
+    payload_bytes = serialize_payload(cast(dict[str, Any], basic_payload_data))
     signer_id = "test-signer-basic"
     signature = sign_payload(private_key, payload_bytes)
 
@@ -278,7 +278,7 @@ def test_sign_and_verify_basic(test_keys, basic_payload_data: BasicPayload):
     )
 
     # Simulate verification process (in reality, this happens within UnicodeMetadata)
-    retrieved_payload_bytes = serialize_payload(cast(Dict[str, Any], outer_payload_data["payload"]))
+    retrieved_payload_bytes = serialize_payload(cast(dict[str, Any], outer_payload_data["payload"]))
     retrieved_sig_bytes = base64.urlsafe_b64decode(outer_payload_data["signature"] + "===")
     is_valid = verify_signature(public_key, retrieved_payload_bytes, retrieved_sig_bytes)
     assert is_valid is True
@@ -288,7 +288,7 @@ def test_sign_and_verify_manifest(test_keys, manifest_payload_data: ManifestPayl
     """Test signing and verifying a ManifestPayload."""
     private_key, public_key = test_keys
     # Cast to Dict[str, Any] for serialize_payload
-    payload_bytes = serialize_payload(cast(Dict[str, Any], manifest_payload_data))
+    payload_bytes = serialize_payload(cast(dict[str, Any], manifest_payload_data))
     signer_id = "test-signer-manifest"
     signature = sign_payload(private_key, payload_bytes)
 
@@ -301,7 +301,7 @@ def test_sign_and_verify_manifest(test_keys, manifest_payload_data: ManifestPayl
     )
 
     # Simulate verification process
-    retrieved_payload_bytes = serialize_payload(cast(Dict[str, Any], outer_payload_data["payload"]))
+    retrieved_payload_bytes = serialize_payload(cast(dict[str, Any], outer_payload_data["payload"]))
     retrieved_sig_bytes = base64.urlsafe_b64decode(outer_payload_data["signature"] + "===")
     is_valid = verify_signature(public_key, retrieved_payload_bytes, retrieved_sig_bytes)
     assert is_valid is True
@@ -311,7 +311,7 @@ def test_verify_failure_wrong_key(test_keys, basic_payload_data: BasicPayload):
     """Test that verification fails with the wrong public key."""
     private_key, _ = test_keys  # Use the correct private key to sign
     # Cast to Dict[str, Any] for serialize_payload
-    payload_bytes = serialize_payload(cast(Dict[str, Any], basic_payload_data))
+    payload_bytes = serialize_payload(cast(dict[str, Any], basic_payload_data))
     signer_id = "test-signer-basic-wrongkey"
     signature = sign_payload(private_key, payload_bytes)
 
@@ -325,7 +325,7 @@ def test_verify_failure_wrong_key(test_keys, basic_payload_data: BasicPayload):
         signature=base64.urlsafe_b64encode(signature).decode("ascii").rstrip("="),
     )
 
-    retrieved_payload_bytes = serialize_payload(cast(Dict[str, Any], outer_payload_data["payload"]))
+    retrieved_payload_bytes = serialize_payload(cast(dict[str, Any], outer_payload_data["payload"]))
     retrieved_sig_bytes = base64.urlsafe_b64decode(outer_payload_data["signature"] + "===")
     is_valid = verify_signature(wrong_public_key, retrieved_payload_bytes, retrieved_sig_bytes)
     assert is_valid is False
@@ -335,7 +335,7 @@ def test_verify_failure_tampered_payload(test_keys, basic_payload_data: BasicPay
     """Test that verification fails if the payload is altered after signing."""
     private_key, public_key = test_keys
     # Cast to Dict[str, Any] for serialize_payload
-    payload_bytes = serialize_payload(cast(Dict[str, Any], basic_payload_data))
+    payload_bytes = serialize_payload(cast(dict[str, Any], basic_payload_data))
     signer_id = "test-signer-tampered"
     signature = sign_payload(private_key, payload_bytes)
 
@@ -354,14 +354,14 @@ def test_verify_failure_tampered_payload(test_keys, basic_payload_data: BasicPay
     )
 
     # Verification uses the (tampered) payload from OuterPayload
-    retrieved_payload_bytes = serialize_payload(cast(Dict[str, Any], outer_payload_data["payload"]))
+    retrieved_payload_bytes = serialize_payload(cast(dict[str, Any], outer_payload_data["payload"]))
     retrieved_sig_bytes = base64.urlsafe_b64decode(outer_payload_data["signature"] + "===")
     is_valid_tampered = verify_signature(public_key, retrieved_payload_bytes, retrieved_sig_bytes)
     assert is_valid_tampered is False
 
     # Also verify that serializing the *original* payload still fails against the tampered payload's signature context
     # Although the signature was made from the original, verification compares against the *provided* (tampered) payload bytes
-    original_payload_bytes_for_check = serialize_payload(cast(Dict[str, Any], basic_payload_data))
+    original_payload_bytes_for_check = serialize_payload(cast(dict[str, Any], basic_payload_data))
     verify_signature(public_key, original_payload_bytes_for_check, retrieved_sig_bytes)
     # This might seem counter-intuitive, but verify_signature takes the bytes it's *told* correspond to the signature.
     # Since we provide the tampered bytes during the actual verification call, it fails correctly.
@@ -373,7 +373,7 @@ def test_verify_failure_corrupt_signature(test_keys, basic_payload_data: BasicPa
     """Test that verification fails with a corrupted signature."""
     private_key, public_key = test_keys
     # Cast to Dict[str, Any] for serialize_payload
-    payload_bytes = serialize_payload(cast(Dict[str, Any], basic_payload_data))
+    payload_bytes = serialize_payload(cast(dict[str, Any], basic_payload_data))
     signer_id = "test-signer-corrupt"
     signature = sign_payload(private_key, payload_bytes)
 
@@ -386,7 +386,7 @@ def test_verify_failure_corrupt_signature(test_keys, basic_payload_data: BasicPa
         signature=base64.urlsafe_b64encode(corrupted_signature).decode("ascii").rstrip("="),
     )
 
-    retrieved_payload_bytes = serialize_payload(cast(Dict[str, Any], outer_payload_data["payload"]))
+    retrieved_payload_bytes = serialize_payload(cast(dict[str, Any], outer_payload_data["payload"]))
     retrieved_sig_bytes = base64.urlsafe_b64decode(outer_payload_data["signature"] + "===")
     is_valid = verify_signature(public_key, retrieved_payload_bytes, retrieved_sig_bytes)
     assert is_valid is False

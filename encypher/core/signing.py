@@ -9,16 +9,17 @@ management for C2PA v2.2 compliance.
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional, Set, Union, Protocol, cast
+from typing import Optional, Protocol, Union, cast
 
-import requests
 import cbor2
+import requests
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, padding, rsa
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from cryptography.x509 import Certificate, NameOID
+
 ALG_HEADER = 1
 ALG_EDDSA = -8
 X5CHAIN_HEADER = 33
@@ -28,8 +29,8 @@ from .logging_config import logger
 
 class Signer(Protocol):
     """Protocol for abstract signing implementations (e.g., AWS KMS, Azure Key Vault)."""
-    def sign(self, data: bytes) -> bytes:
-        ...
+
+    def sign(self, data: bytes) -> bytes: ...
 
 
 SigningKey = Union[ed25519.Ed25519PrivateKey, Signer]
@@ -78,7 +79,7 @@ def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
         TypeError: If the provided key is invalid.
     """
     logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes).")
-    
+
     if hasattr(private_key, "sign") and callable(private_key.sign):
         try:
             signature = private_key.sign(payload_bytes)
@@ -89,7 +90,7 @@ def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
             raise RuntimeError(f"Signing failed: {e}")
 
     if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-        logger.error(f"Signing aborted: Incorrect private key type provided " f"({type(private_key)}). Expected Ed25519PrivateKey or Signer.")
+        logger.error(f"Signing aborted: Incorrect private key type provided ({type(private_key)}). Expected Ed25519PrivateKey or Signer.")
         raise TypeError("Signing requires an Ed25519PrivateKey instance or Signer implementation.")
 
     try:
@@ -117,10 +118,10 @@ def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature
         TypeError: If the provided key is not an Ed25519 public key.
     """
     if not isinstance(public_key, ed25519.Ed25519PublicKey):
-        logger.error(f"Verification aborted: Incorrect public key type provided " f"({type(public_key)}). Expected Ed25519PublicKey.")
+        logger.error(f"Verification aborted: Incorrect public key type provided ({type(public_key)}). Expected Ed25519PublicKey.")
         raise TypeError("Verification requires an Ed25519PublicKey instance.")
 
-    logger.debug(f"Attempting to verify signature (len={len(signature)}) against payload (len={len(payload_bytes)}) " f"using Ed25519 public key.")
+    logger.debug(f"Attempting to verify signature (len={len(signature)}) against payload (len={len(payload_bytes)}) using Ed25519 public key.")
     try:
         public_key.verify(signature, payload_bytes)
         logger.info("Signature verification successful.")
@@ -137,7 +138,7 @@ def sign_c2pa_cose(
     private_key: SigningKey,
     payload_bytes: bytes,
     timestamp_authority_url: Optional[str] = None,
-    certificates: Optional[List[Certificate]] = None,
+    certificates: Optional[list[Certificate]] = None,
 ) -> bytes:
     """
     Signs a C2PA payload using a COSE_Sign1 structure with optional timestamp and certificates.
@@ -172,13 +173,13 @@ def sign_c2pa_cose(
 
         protected_bstr = _encode_protected(protected_header)
         to_sign = _sig_structure(protected_bstr, payload_bytes)
-        
+
         # Use the generalized signing logic
         if hasattr(private_key, "sign") and callable(private_key.sign):
             signature = private_key.sign(to_sign)
         else:
             signature = private_key.sign(to_sign)
-            
+
         encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, cast(bytes, signature))
 
         # If timestamp authority URL is provided, request a timestamp
@@ -393,7 +394,7 @@ class TrustStore:
             trust_store_path: Path to a directory containing trusted root certificates in PEM format.
                              If None, uses the default trust store path.
         """
-        self.trusted_roots: Set[Certificate] = set()
+        self.trusted_roots: set[Certificate] = set()
         self.trust_store_path = trust_store_path or self._get_default_trust_store_path()
         self._load_trust_store()
 
@@ -460,7 +461,7 @@ class TrustStore:
         return file_path
 
 
-def validate_certificate_chain(cert_chain: List[Certificate], trust_store: TrustStore) -> bool:
+def validate_certificate_chain(cert_chain: list[Certificate], trust_store: TrustStore) -> bool:
     """
     Validate a certificate chain against a trust store.
 
@@ -536,7 +537,7 @@ def validate_certificate_chain(cert_chain: List[Certificate], trust_store: Trust
     return True
 
 
-def extract_certificates_from_cose(cose_bytes: bytes) -> List[Certificate]:
+def extract_certificates_from_cose(cose_bytes: bytes) -> list[Certificate]:
     """
     Extract X.509 certificates from a COSE_Sign1 message.
 

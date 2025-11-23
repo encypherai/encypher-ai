@@ -12,7 +12,6 @@ from encypher.interop.c2pa.text_wrapper import find_and_decode
 
 
 class TestC2PATextEmbedding(unittest.TestCase):
-
     def assertDictsAlmostEqual(self, d1, d2, msg=None):
         """Compares two dictionaries, allowing for minor float differences if needed in future."""
         # For this specific C2PA test, direct equality should be fine as no floats are involved.
@@ -222,7 +221,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         self.assertDictsAlmostEqual(
             comparison_dict,
             original_c2pa_like_manifest,
-            "Round-tripped CBOR manifest does not match original " "(after accounting for 'format' field).",
+            "Round-tripped CBOR manifest does not match original (after accounting for 'format' field).",
         )
 
     def test_c2pa_full_cbor_manifest_text_embedding_round_trip(self):

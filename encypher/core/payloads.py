@@ -1,6 +1,6 @@
 import json
 import struct
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
+from typing import Any, Literal, Optional, TypedDict, Union, cast
 
 import cbor2
 
@@ -15,7 +15,7 @@ class BasicPayload(TypedDict):
 
     model_id: Optional[str]
     timestamp: Optional[str]  # Recommended: ISO 8601 UTC format string
-    custom_metadata: Dict[str, Any]
+    custom_metadata: dict[str, Any]
 
 
 class ManifestAction(TypedDict):
@@ -44,9 +44,9 @@ class ManifestPayload(TypedDict):
     """
 
     claim_generator: str
-    assertions: List[ManifestAction]
+    assertions: list[ManifestAction]
     ai_assertion: Optional[ManifestAiInfo]
-    custom_claims: Dict[str, Any]
+    custom_claims: dict[str, Any]
     timestamp: Optional[str]  # ISO 8601 UTC format string
 
 
@@ -57,7 +57,7 @@ class C2PAAssertion(TypedDict):
     """Structure for a C2PA assertion."""
 
     label: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     kind: Optional[str]
 
 
@@ -67,20 +67,20 @@ C2PAPayload = TypedDict(
         "@context": str,
         "instance_id": str,
         "claim_generator": str,
-        "assertions": List[C2PAAssertion],
+        "assertions": list[C2PAAssertion],
     },
 )
 
 
 # Specific assertion data TypedDicts for clarity
 class C2PAActionsAssertionData(TypedDict):
-    actions: List[Dict[str, Any]]
+    actions: list[dict[str, Any]]
 
 
 class C2PAHashDataAssertionData(TypedDict):
     hash: str
     alg: str
-    exclusions: List[Any]
+    exclusions: list[Any]
 
 
 class C2PASoftBindingAssertionData(TypedDict):
@@ -114,7 +114,7 @@ class OuterPayload(TypedDict):
 # --- Serialization Functions ---
 
 
-def serialize_payload(payload: Dict[str, Any]) -> bytes:
+def serialize_payload(payload: dict[str, Any]) -> bytes:
     """
     Serializes the metadata payload dictionary into canonical JSON bytes.
     This is used for 'basic' and 'manifest' formats.
@@ -170,7 +170,7 @@ def deserialize_c2pa_payload_from_cbor(cbor_bytes: bytes) -> C2PAPayload:
         raise RuntimeError(f"Unexpected error deserializing C2PA payload from CBOR: {e}")
 
 
-def serialize_jumbf_payload(payload: Dict[str, Any]) -> bytes:
+def serialize_jumbf_payload(payload: dict[str, Any]) -> bytes:
     """Serializes a payload dictionary into a minimal JUMBF box.
 
     The function creates a single JUMBF box with a 4 byte length field and a
@@ -191,7 +191,7 @@ def serialize_jumbf_payload(payload: Dict[str, Any]) -> bytes:
         raise RuntimeError(f"Unexpected error serializing payload to JUMBF: {e}")
 
 
-def deserialize_jumbf_payload(jumbf_bytes: bytes) -> Dict[str, Any]:
+def deserialize_jumbf_payload(jumbf_bytes: bytes) -> dict[str, Any]:
     """Deserializes bytes produced by :func:`serialize_jumbf_payload`."""
     logger.debug(f"Attempting to deserialize {len(jumbf_bytes)} bytes from JUMBF.")
     try:

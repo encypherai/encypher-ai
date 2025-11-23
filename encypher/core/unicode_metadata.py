@@ -14,7 +14,7 @@ import re
 import unicodedata
 import uuid
 from datetime import date, datetime, timezone
-from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
+from typing import Any, Callable, Literal, Optional, Union, cast
 
 import cbor2
 from cryptography.exceptions import InvalidSignature
@@ -22,10 +22,9 @@ from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
+from encypher import __version__
 from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
 from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode
-
-from encypher import __version__
 
 from .constants import MetadataTarget
 from .logging_config import logger
@@ -41,7 +40,7 @@ from .payloads import (
     serialize_jumbf_payload,
     serialize_payload,
 )
-from .signing import extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature, SigningKey, Signer
+from .signing import SigningKey, extract_payload_from_cose_sign1, sign_c2pa_cose, sign_payload, verify_c2pa_cose, verify_signature
 
 
 class UnicodeMetadata:
@@ -59,7 +58,7 @@ class UnicodeMetadata:
     VARIATION_SELECTOR_SUPPLEMENT_END: int = 0xE01EF
 
     # Regular expressions for different target types
-    REGEX_PATTERNS: Dict[MetadataTarget, re.Pattern] = {
+    REGEX_PATTERNS: dict[MetadataTarget, re.Pattern] = {
         MetadataTarget.WHITESPACE: re.compile(r"(\s)"),
         MetadataTarget.PUNCTUATION: re.compile(r"([.,!?;:])"),
         MetadataTarget.FIRST_LETTER: re.compile(r"(\b\w)"),
@@ -141,7 +140,7 @@ class UnicodeMetadata:
             Decoded text
         """
         # Extract bytes from variation selectors
-        decoded: List[int] = []
+        decoded: list[int] = []
 
         for char in text:
             code_point = ord(char)
@@ -215,7 +214,7 @@ class UnicodeMetadata:
         MIN_TRAILING_RUN = 16  # conservative lower bound; actual payloads are much larger
 
         if run_len >= MIN_TRAILING_RUN:
-            decoded_trailing: List[int] = [cls.from_variation_selector(ord(ch)) or 0 for ch in text[run_start : end_idx + 1]]
+            decoded_trailing: list[int] = [cls.from_variation_selector(ord(ch)) or 0 for ch in text[run_start : end_idx + 1]]
             logger.debug(
                 f"Extracted {len(decoded_trailing)} bytes from variation selectors at end of text (run_start={run_start}, end_idx={end_idx})."
             )
@@ -223,7 +222,7 @@ class UnicodeMetadata:
 
         # 2) If no trailing block is found, attempt interleaved extraction as a fallback.
         #    This is less reliable but may succeed for ALL_CHARACTERS target.
-        decoded_interleaved: List[int] = []
+        decoded_interleaved: list[int] = []
         for char in text:
             code_point = ord(char)
             byte = cls.from_variation_selector(code_point)
@@ -306,7 +305,7 @@ class UnicodeMetadata:
         return pattern.sub("", text)
 
     @staticmethod
-    def _omit_keys_recursive(data: Union[Dict[str, Any], List[Any]], keys: List[str]) -> None:
+    def _omit_keys_recursive(data: Union[dict[str, Any], list[Any]], keys: list[str]) -> None:
         """Recursively remove specified keys from nested dictionaries."""
         if isinstance(data, dict):
             for k in list(data.keys()):
@@ -326,7 +325,7 @@ class UnicodeMetadata:
         cls,
         text: str,
         target: Optional[Union[str, MetadataTarget]] = None,
-    ) -> List[int]:
+    ) -> list[int]:
         """
         Find indices of characters in text where metadata can be embedded.
 
@@ -373,14 +372,14 @@ class UnicodeMetadata:
         model_id: Optional[str] = None,
         timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Optional[Union[str, MetadataTarget]] = None,
-        custom_metadata: Optional[Dict[str, Any]] = None,
+        custom_metadata: Optional[dict[str, Any]] = None,
         claim_generator: Optional[str] = None,
-        actions: Optional[List[Dict[str, Any]]] = None,
-        ingredients: Optional[List[Dict[str, Any]]] = None,
-        ai_info: Optional[Dict[str, Any]] = None,
-        custom_claims: Optional[Dict[str, Any]] = None,
-        custom_assertions: Optional[List[Dict[str, Any]]] = None,
-        omit_keys: Optional[List[str]] = None,
+        actions: Optional[list[dict[str, Any]]] = None,
+        ingredients: Optional[list[dict[str, Any]]] = None,
+        ai_info: Optional[dict[str, Any]] = None,
+        custom_claims: Optional[dict[str, Any]] = None,
+        custom_assertions: Optional[list[dict[str, Any]]] = None,
+        omit_keys: Optional[list[str]] = None,
         distribute_across_targets: bool = False,
         add_hard_binding: bool = True,
     ) -> str:
@@ -409,14 +408,14 @@ class UnicodeMetadata:
         if not isinstance(text, str):
             logger.error("Input validation failed: 'text' is not a string.")
             raise TypeError("Input text must be a string")
-        
+
         # Validate private key: accept either Ed25519PrivateKey OR a custom Signer (has .sign method)
         is_signer = hasattr(private_key, "sign") and callable(private_key.sign)
         if not isinstance(private_key, Ed25519PrivateKey) and not is_signer:
             # Note: PrivateKeyTypes is broader, but we specifically need Ed25519 here for signing.
             logger.error("Input validation failed: 'private_key' is not an Ed25519PrivateKey instance or Signer.")
             raise TypeError("Input 'private_key' must be an Ed25519PrivateKey instance or Signer implementation.")
-        
+
         if not signer_id or not isinstance(signer_id, str):
             # Enhanced to check type as well
             logger.error("Input validation failed: 'signer_id' is not a non-empty string.")
@@ -467,7 +466,7 @@ class UnicodeMetadata:
             logger.error(f"Timestamp error: {e}", exc_info=True)
             raise ValueError(f"Timestamp error: {e}")
 
-        payload_data: Dict[str, Any]  # Use Dict[str, Any] for flexible construction
+        payload_data: dict[str, Any]  # Use Dict[str, Any] for flexible construction
 
         if metadata_format == "basic":
             logger.debug("Using 'basic' metadata format.")
@@ -503,7 +502,7 @@ class UnicodeMetadata:
                 payload_data["timestamp"] = iso_timestamp
 
             # 2. Construct the inner manifest dictionary
-            inner_manifest: Dict[str, Any] = {}
+            inner_manifest: dict[str, Any] = {}
             if claim_generator:
                 inner_manifest["claim_generator"] = claim_generator
             if actions:
@@ -533,7 +532,7 @@ class UnicodeMetadata:
             }
             if iso_timestamp is not None:
                 payload_data["timestamp"] = iso_timestamp
-            cbor_manifest_dict: Dict[str, Any] = {}
+            cbor_manifest_dict: dict[str, Any] = {}
             if claim_generator:
                 cbor_manifest_dict["claim_generator"] = claim_generator
             if actions:
@@ -559,7 +558,7 @@ class UnicodeMetadata:
             }
             if iso_timestamp is not None:
                 payload_data["timestamp"] = iso_timestamp
-            jumbf_manifest_dict: Dict[str, Any] = {}
+            jumbf_manifest_dict: dict[str, Any] = {}
             if claim_generator:
                 jumbf_manifest_dict["claim_generator"] = claim_generator
             if actions:
@@ -587,7 +586,7 @@ class UnicodeMetadata:
 
         # --- Start: Signing & Packaging Logic based on format ---
         signature_b64: str
-        payload_for_outer_dict: Union[Dict[str, Any], str]
+        payload_for_outer_dict: Union[dict[str, Any], str]
         actual_payload_type_for_outer: str
 
         if metadata_format == "cbor_manifest":
@@ -757,13 +756,13 @@ class UnicodeMetadata:
         private_key: PrivateKeyTypes,
         signer_id: str,
         claim_generator: Optional[str],
-        actions: Optional[List[Dict[str, Any]]],
-        ingredients: Optional[List[Dict[str, Any]]],
+        actions: Optional[list[dict[str, Any]]],
+        ingredients: Optional[list[dict[str, Any]]],
         iso_timestamp: Optional[str],
         target: Optional[Union[str, MetadataTarget]],
         distribute_across_targets: bool,
         add_hard_binding: bool,
-        custom_assertions: Optional[List[Dict[str, Any]]] = None,
+        custom_assertions: Optional[list[dict[str, Any]]] = None,
     ) -> str:
         """
         Constructs and embeds a C2PA-compliant manifest.
@@ -795,21 +794,18 @@ class UnicodeMetadata:
         base_hash_result = compute_normalized_hash(text)
         content_hash = base_hash_result.hexdigest
 
-        current_exclusions: List[Dict[str, int]] = []
+        current_exclusions: list[dict[str, int]] = []
 
-        base_actions: List[Dict[str, Any]] = copy.deepcopy(actions) if actions else []
+        base_actions: list[dict[str, Any]] = copy.deepcopy(actions) if actions else []
         claim_gen = claim_generator or f"encypher-ai/{__version__}"
         instance_id = str(uuid.uuid4())
 
         # Only add c2pa.created if no creation or edit action exists
-        has_creation_or_edit_action = any(
-            a.get("label") in ["c2pa.created", "c2pa.edited"] 
-            for a in base_actions
-        )
-        
+        has_creation_or_edit_action = any(a.get("label") in ["c2pa.created", "c2pa.edited"] for a in base_actions)
+
         if not has_creation_or_edit_action:
             # Build created action with consistent field ordering: label, when, softwareAgent, then other fields
-            created_action: Dict[str, Any] = {
+            created_action: dict[str, Any] = {
                 "label": "c2pa.created",
             }
             if iso_timestamp is not None:
@@ -819,7 +815,7 @@ class UnicodeMetadata:
             base_actions.insert(0, created_action)
 
         # Build watermarked action with consistent field ordering
-        wm_action: Dict[str, Any] = {
+        wm_action: dict[str, Any] = {
             "label": "c2pa.watermarked",
         }
         if iso_timestamp is not None:
@@ -838,12 +834,12 @@ class UnicodeMetadata:
                 "claim_generator": claim_gen,
                 "assertions": [],
             }
-            
+
             # Add ingredients for provenance chain (if provided)
             if ingredients:
                 c2pa_manifest["ingredients"] = ingredients
 
-            actions_data: Dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
+            actions_data: dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
             c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
 
             # Add custom assertions if provided
@@ -862,12 +858,8 @@ class UnicodeMetadata:
                             kind = "ClaimReview"
                         elif "thumbnail" in label:
                             kind = "Thumbnail"
-                        
-                        c2pa_manifest["assertions"].append({
-                            "label": label,
-                            "data": data,
-                            "kind": kind
-                        })
+
+                        c2pa_manifest["assertions"].append({"label": label, "data": data, "kind": kind})
 
             if add_hard_binding:
                 hard_binding_data = {
@@ -875,9 +867,7 @@ class UnicodeMetadata:
                     "alg": "sha256",
                     "exclusions": copy.deepcopy(current_exclusions),
                 }
-                c2pa_manifest["assertions"].append(
-                    {"label": "c2pa.hash.data.v1", "data": hard_binding_data, "kind": "ContentHash"}
-                )
+                c2pa_manifest["assertions"].append({"label": "c2pa.hash.data.v1", "data": hard_binding_data, "kind": "ContentHash"})
 
             manifest_for_hashing = copy.deepcopy(c2pa_manifest)
             placeholder_soft_binding: C2PAAssertion = {
@@ -918,8 +908,8 @@ class UnicodeMetadata:
 
             final_text = text + wrapper_text
 
-            exclusion_tuples: List[Tuple[int, int]] = []
-            new_exclusions: List[Dict[str, int]] = []
+            exclusion_tuples: list[tuple[int, int]] = []
+            new_exclusions: list[dict[str, int]] = []
 
             if add_hard_binding:
                 wrapper_length_bytes = len(wrapper_text.encode("utf-8"))
@@ -951,6 +941,7 @@ class UnicodeMetadata:
 
         logger.info("Successfully embedded C2PA manifest for signer '%s'.", signer_id)
         return text + wrapper_text
+
     @classmethod
     def verify_metadata(
         cls,
@@ -958,7 +949,7 @@ class UnicodeMetadata:
         public_key_resolver: Callable[[str], Optional[Ed25519PublicKey]],
         return_payload_on_failure: bool = False,
         require_hard_binding: bool = True,
-    ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, C2PAPayload, None]]:
+    ) -> tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, C2PAPayload, None]]:
         """
         Verify and extract metadata from text embedded using Unicode variation selectors and a public key.
 
@@ -1061,7 +1052,7 @@ class UnicodeMetadata:
 
         # 4. Prepare Payload Bytes for Verification
         payload_to_verify_bytes: bytes
-        actual_inner_payload: Union[Dict[str, Any], None] = None
+        actual_inner_payload: Union[dict[str, Any], None] = None
 
         if payload_format == "cbor_manifest":
             if not isinstance(inner_payload, str):
@@ -1100,7 +1091,7 @@ class UnicodeMetadata:
                 payload_to_verify_bytes = serialize_payload(dict(inner_payload))
                 # Create a new dict from the TypedDict's items to satisfy mypy's strict checking.
                 # This is more explicit and robust than casting.
-                actual_inner_payload = {k: v for k, v in inner_payload.items()}
+                actual_inner_payload = dict(inner_payload.items())
             except Exception as e:
                 logger.error(f"Failed to serialize '{payload_format}' payload for verification: {e}")
                 return False, signer_id, inner_payload if return_payload_on_failure else None
@@ -1142,8 +1133,8 @@ class UnicodeMetadata:
         public_key_resolver: Callable[[str], Optional[Ed25519PublicKey]],
         return_payload_on_failure: bool,
         require_hard_binding: bool,  # New parameter
-        wrapper_exclusion: Optional[Tuple[int, int]],
-    ) -> Tuple[bool, Optional[str], Union[C2PAPayload, None]]:
+        wrapper_exclusion: Optional[tuple[int, int]],
+    ) -> tuple[bool, Optional[str], Union[C2PAPayload, None]]:
         """
         Verifies a C2PA-compliant manifest.
 
@@ -1263,7 +1254,7 @@ class UnicodeMetadata:
             expected_hard_hash = hard_binding_assertion["data"].get("hash")
 
             exclusions_data = hard_binding_assertion["data"].get("exclusions")
-            expected_exclusion: Optional[Tuple[int, int]] = None
+            expected_exclusion: Optional[tuple[int, int]] = None
             if isinstance(exclusions_data, list) and exclusions_data:
                 first = exclusions_data[0]
                 if isinstance(first, dict):
@@ -1297,10 +1288,8 @@ class UnicodeMetadata:
 
             if expected_hard_hash != actual_hard_hash:
                 logger.warning(
-                    (
-                        f"C2PA verification: Hard binding (content) hash mismatch. "
-                        f"Expected '{expected_hard_hash}', got '{actual_hard_hash}'. Text may have been tampered with."
-                    )
+                    f"C2PA verification: Hard binding (content) hash mismatch. "
+                    f"Expected '{expected_hard_hash}', got '{actual_hard_hash}'. Text may have been tampered with."
                 )
                 return False, signer_id, c2pa_manifest
 
@@ -1309,7 +1298,7 @@ class UnicodeMetadata:
         return True, signer_id, c2pa_manifest
 
     @classmethod
-    def _bytes_to_variation_selectors(cls, data: bytes) -> List[str]:
+    def _bytes_to_variation_selectors(cls, data: bytes) -> list[str]:
         """Convert bytes into a list of Unicode variation selector characters."""
         selectors = [cls.to_variation_selector(byte) for byte in data]
         valid_selectors = [s for s in selectors if s is not None]
