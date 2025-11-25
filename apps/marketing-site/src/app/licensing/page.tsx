@@ -341,6 +341,124 @@ export default function LicensingPage() {
         </div>
       </section>
 
+      {/* Feature Comparison Table */}
+      <section className="py-20 w-full bg-background">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+            Feature Comparison
+          </h2>
+          <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
+            Compare features across our publisher tiers to find the right fit for your needs.
+          </p>
+
+          <div className="max-w-5xl mx-auto overflow-x-auto">
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-4 px-4 font-semibold">Feature</th>
+                  <th className="text-center py-4 px-4 font-semibold">Starter<br/><span className="text-xs font-normal text-muted-foreground">Free</span></th>
+                  <th className="text-center py-4 px-4 font-semibold">Professional<br/><span className="text-xs font-normal text-muted-foreground">$49/mo</span></th>
+                  <th className="text-center py-4 px-4 font-semibold bg-primary/5 border-x border-primary/20">Business<br/><span className="text-xs font-normal text-muted-foreground">$199/mo</span></th>
+                  <th className="text-center py-4 px-4 font-semibold">Enterprise<br/><span className="text-xs font-normal text-muted-foreground">Custom</span></th>
+                </tr>
+              </thead>
+              <tbody className="text-sm">
+                {/* C2PA Signing */}
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">C2PA Document Signing</td>
+                  <td className="text-center py-3 px-4">10K/mo</td>
+                  <td className="text-center py-3 px-4">Unlimited</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">Unlimited</td>
+                  <td className="text-center py-3 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">Sentence-Level Tracking</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4">50K/mo</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">500K/mo</td>
+                  <td className="text-center py-3 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">Batch Operations</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">Streaming API</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                </tr>
+                {/* Team & Management */}
+                <tr className="border-b border-border/50 bg-muted/30">
+                  <td className="py-3 px-4 font-medium" colSpan={5}>Team & Management</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">Team Members</td>
+                  <td className="text-center py-3 px-4">1</td>
+                  <td className="text-center py-3 px-4">5</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">10</td>
+                  <td className="text-center py-3 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">API Keys</td>
+                  <td className="text-center py-3 px-4">2</td>
+                  <td className="text-center py-3 px-4">10</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">50</td>
+                  <td className="text-center py-3 px-4">Unlimited</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">Audit Logs</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">SSO / SAML</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                </tr>
+                {/* Coalition */}
+                <tr className="border-b border-border/50 bg-muted/30">
+                  <td className="py-3 px-4 font-medium" colSpan={5}>Coalition Revenue Share</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">Your Share</td>
+                  <td className="text-center py-3 px-4">65%</td>
+                  <td className="text-center py-3 px-4">70%</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">80%</td>
+                  <td className="text-center py-3 px-4">85%</td>
+                </tr>
+                {/* Support */}
+                <tr className="border-b border-border/50 bg-muted/30">
+                  <td className="py-3 px-4 font-medium" colSpan={5}>Support</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">Support Level</td>
+                  <td className="text-center py-3 px-4">Community</td>
+                  <td className="text-center py-3 px-4">Email</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">Priority</td>
+                  <td className="text-center py-3 px-4">Dedicated</td>
+                </tr>
+                <tr className="border-b border-border/50">
+                  <td className="py-3 px-4 font-medium">SLA</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
+                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">99.9%</td>
+                  <td className="text-center py-3 px-4">99.99%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       {/* AI Labs Section */}
       <section id="ai-labs" className="py-20 w-full bg-muted/30 border-y border-border scroll-mt-16">
         <div className="container mx-auto px-4">

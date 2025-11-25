@@ -246,12 +246,12 @@
 - [x] 9.10.7.6 Export audit logs to CSV/JSON - GET /audit-logs/export
 
 #### 9.10.8 Team Management (Business+ tier)
-- [ ] 9.10.8.1 Create team_members table (user_id, org_id, role, invited_at, accepted_at)
-- [ ] 9.10.8.2 Define roles: owner, admin, member, viewer
-- [ ] 9.10.8.3 POST /api/v1/org/members/invite endpoint
-- [ ] 9.10.8.4 DELETE /api/v1/org/members/{id} endpoint
-- [ ] 9.10.8.5 PATCH /api/v1/org/members/{id}/role endpoint
-- [ ] 9.10.8.6 Email invite flow with accept/decline
+- [x] 9.10.8.1 Create team_members table (user_id, org_id, role, invited_at, accepted_at) - alembic migration
+- [x] 9.10.8.2 Define roles: owner, admin, member, viewer - TeamRole enum
+- [x] 9.10.8.3 POST /api/v1/org/members/invite endpoint - With token-based invites
+- [x] 9.10.8.4 DELETE /api/v1/org/members/{id} endpoint - With role checks
+- [x] 9.10.8.5 PATCH /api/v1/org/members/{id}/role endpoint - With hierarchy enforcement
+- [x] 9.10.8.6 Email invite flow with accept/decline - POST /accept-invite endpoint
 - [ ] 9.10.8.7 Dashboard team management UI
 
 #### 9.10.9 Marketing Site Pricing Page
