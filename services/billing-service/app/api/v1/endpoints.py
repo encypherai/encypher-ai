@@ -327,6 +327,136 @@ async def upgrade_subscription(
 
 
 # =========================================================================
+# Usage Statistics
+# =========================================================================
+
+@router.get("/usage")
+async def get_usage_stats(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get current period usage statistics.
+    
+    Returns usage metrics for the current billing period including:
+    - API calls
+    - Documents signed
+    - Sentences tracked
+    - Verifications
+    """
+    from datetime import datetime, timedelta
+    from ...services.billing_service import PRICING_TIERS
+    
+    # Get user's organization/tier info
+    # For now, default to starter tier if no subscription
+    user_id = current_user.get("id")
+    org_id = current_user.get("organization_id", user_id)
+    
+    # Get subscription to determine tier
+    subscription = BillingService.get_user_subscription(db, user_id)
+    tier = subscription.plan_id if subscription else "starter"
+    tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["starter"])
+    limits = tier_info["limits"]
+    
+    # Calculate period dates (monthly billing cycle)
+    now = datetime.utcnow()
+    period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if now.month == 12:
+        period_end = period_start.replace(year=now.year + 1, month=1)
+    else:
+        period_end = period_start.replace(month=now.month + 1)
+    
+    # TODO: Get actual usage from analytics service
+    # For now, return placeholder data
+    usage_data = {
+        "c2pa_signatures": {"used": 0, "limit": limits.get("c2pa_signatures", 10000)},
+        "sentences_tracked": {"used": 0, "limit": limits.get("sentences_tracked", 0)},
+        "api_calls": {"used": 0, "limit": -1},  # Unlimited
+        "verifications": {"used": 0, "limit": -1},  # Unlimited
+    }
+    
+    metrics = {}
+    for metric_name, data in usage_data.items():
+        limit = data["limit"]
+        used = data["used"]
+        
+        if limit == -1:
+            remaining = "unlimited"
+            percentage = 0.0
+        elif limit == 0:
+            remaining = 0
+            percentage = 100.0 if used > 0 else 0.0
+        else:
+            remaining = max(0, limit - used)
+            percentage = (used / limit) * 100 if limit > 0 else 0.0
+        
+        metrics[metric_name] = {
+            "name": metric_name.replace("_", " ").title(),
+            "limit": limit if limit >= 0 else "unlimited",
+            "used": used,
+            "remaining": remaining,
+            "percentage_used": round(percentage, 2),
+            "available": limit == -1 or used < limit,
+        }
+    
+    return {
+        "organization_id": org_id,
+        "tier": tier,
+        "period_start": period_start.isoformat(),
+        "period_end": period_end.isoformat(),
+        "metrics": metrics,
+        "reset_date": period_end.isoformat(),
+    }
+
+
+# =========================================================================
+# Coalition Revenue
+# =========================================================================
+
+@router.get("/coalition")
+async def get_coalition_earnings(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get coalition earnings summary for the current user/organization.
+    
+    Returns:
+    - Coalition membership status
+    - Revenue share percentages
+    - Earnings history
+    - Pending payouts
+    """
+    from datetime import datetime
+    from ...services.billing_service import PRICING_TIERS
+    
+    user_id = current_user.get("id")
+    org_id = current_user.get("organization_id", user_id)
+    
+    # Get subscription to determine tier and rev share
+    subscription = BillingService.get_user_subscription(db, user_id)
+    tier = subscription.plan_id if subscription else "starter"
+    tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["starter"])
+    rev_share = tier_info["coalition_rev_share"]
+    
+    # TODO: Get actual coalition data from coalition-service
+    # For now, return placeholder data
+    return {
+        "member": True,
+        "opted_out": False,
+        "publisher_share_percent": rev_share["publisher"],
+        "encypher_share_percent": rev_share["encypher"],
+        "total_content": 0,
+        "total_earnings": 0.0,
+        "pending_earnings": 0.0,
+        "last_payout_date": None,
+        "earnings_history": [],
+        "payout_account_connected": False,
+        "payout_account_url": None,  # Will be Stripe Connect onboarding URL
+    }
+
+
+# =========================================================================
 # Plans & Pricing Info
 # =========================================================================
 

@@ -12,7 +12,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import apiClient, { PlanInfo, Invoice } from '../../lib/api';
+import apiClient, { PlanInfo, Invoice, BillingUsageStats, CoalitionSummary } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 export default function BillingPage() {
@@ -27,16 +27,18 @@ export default function BillingPage() {
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
   });
 
-  // Fetch subscription and invoices
+  // Fetch subscription, invoices, usage, and coalition data
   const billingQuery = useQuery({
     queryKey: ['billing', accessToken],
     queryFn: async () => {
-      if (!accessToken) return { subscription: null, invoices: [] };
-      const [subscription, invoices] = await Promise.all([
+      if (!accessToken) return { subscription: null, invoices: [], usage: null, coalition: null };
+      const [subscription, invoices, usage, coalition] = await Promise.all([
         apiClient.getSubscription(accessToken).catch(() => null),
         apiClient.getInvoices(accessToken).catch(() => []),
+        apiClient.getBillingUsage(accessToken).catch(() => null),
+        apiClient.getCoalitionEarnings(accessToken).catch(() => null),
       ]);
-      return { subscription, invoices };
+      return { subscription, invoices, usage, coalition };
     },
     enabled: Boolean(accessToken),
   });
@@ -86,6 +88,8 @@ export default function BillingPage() {
 
   const subscription = billingQuery.data?.subscription;
   const invoices = billingQuery.data?.invoices || [];
+  const usage = billingQuery.data?.usage;
+  const coalition = billingQuery.data?.coalition;
   const currentTier = subscription?.tier || 'starter';
   const isLoading = status === 'loading' || billingQuery.isLoading || plansQuery.isLoading;
 
@@ -165,6 +169,99 @@ export default function BillingPage() {
             </div>
           )}
         </Card>
+
+        {/* Usage Statistics */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Usage This Period</CardTitle>
+              <CardDescription>
+                {usage ? `Resets ${formatDate(usage.reset_date)}` : 'Loading...'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {usage?.metrics ? (
+                Object.entries(usage.metrics).map(([key, metric]) => (
+                  <div key={key} className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">{metric.name}</span>
+                      <span className="font-medium">
+                        {metric.used.toLocaleString()} / {metric.limit === 'unlimited' ? '∞' : metric.limit.toLocaleString()}
+                      </span>
+                    </div>
+                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full rounded-full transition-all ${
+                          metric.percentage_used > 90 ? 'bg-red-500' :
+                          metric.percentage_used > 70 ? 'bg-yellow-500' :
+                          'bg-blue-ncs'
+                        }`}
+                        style={{ width: `${Math.min(metric.percentage_used, 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-muted-foreground text-sm">No usage data available</p>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Coalition Earnings</CardTitle>
+              <CardDescription>
+                {coalition ? `${coalition.publisher_share_percent}% revenue share` : 'Loading...'}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {coalition ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Earnings</p>
+                      <p className="text-2xl font-bold text-delft-blue">
+                        ${coalition.total_earnings.toFixed(2)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Pending</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        ${coalition.pending_earnings.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Content in Coalition</span>
+                      <span className="font-medium">{coalition.total_content.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="text-muted-foreground">Payout Account</span>
+                      <span className={coalition.payout_account_connected ? 'text-green-600' : 'text-yellow-600'}>
+                        {coalition.payout_account_connected ? 'Connected' : 'Not Connected'}
+                      </span>
+                    </div>
+                  </div>
+                  {!coalition.payout_account_connected && (
+                    <Button
+                      variant="outline"
+                      fullWidth
+                      onClick={() => {
+                        // TODO: Redirect to Stripe Connect onboarding
+                        toast.info('Stripe Connect onboarding coming soon');
+                      }}
+                    >
+                      Connect Payout Account
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground text-sm">No coalition data available</p>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Change Plan Section */}
         <section className="space-y-4">
