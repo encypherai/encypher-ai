@@ -21,8 +21,16 @@ class Settings(BaseSettings):
     
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
     
+    # Stripe Configuration
     STRIPE_API_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_CONNECT_WEBHOOK_SECRET: str = ""
+    
+    # Stripe Price IDs (set after creating products in Stripe)
+    STRIPE_PRICE_PROFESSIONAL_MONTHLY: str = ""
+    STRIPE_PRICE_PROFESSIONAL_ANNUAL: str = ""
+    STRIPE_PRICE_BUSINESS_MONTHLY: str = ""
+    STRIPE_PRICE_BUSINESS_ANNUAL: str = ""
     
     API_GATEWAY_URL: str = "http://localhost:8000"
     CONSUL_HOST: str = "localhost"

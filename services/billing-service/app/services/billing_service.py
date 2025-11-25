@@ -8,11 +8,126 @@ from ..db.models import Subscription, Invoice
 from ..models.schemas import SubscriptionCreate
 
 
-# Plan definitions
+# Pricing tier definitions (aligned with pricing strategy)
+PRICING_TIERS = {
+    "starter": {
+        "name": "Starter",
+        "price_monthly": 0,
+        "price_annual": 0,
+        "features": [
+            "Unlimited C2PA signing",
+            "Unlimited verifications",
+            "2 API keys",
+            "Community support",
+            "7-day analytics",
+            "Licensing coalition (65/35 rev share)",
+        ],
+        "limits": {
+            "c2pa_signatures": 10000,
+            "sentences_tracked": 0,
+            "api_keys": 2,
+            "rate_limit": 10,
+        },
+        "coalition_rev_share": {"publisher": 65, "encypher": 35},
+    },
+    "professional": {
+        "name": "Professional",
+        "price_monthly": 99,
+        "price_annual": 950,
+        "features": [
+            "Everything in Starter",
+            "Sentence-level tracking (50K/mo)",
+            "Invisible embeddings",
+            "10 API keys",
+            "Email support (48hr SLA)",
+            "90-day analytics",
+            "BYOK encryption",
+            "WordPress Pro (no branding)",
+            "Licensing coalition (70/30 rev share)",
+        ],
+        "limits": {
+            "c2pa_signatures": -1,
+            "sentences_tracked": 50000,
+            "api_keys": 10,
+            "rate_limit": 50,
+        },
+        "coalition_rev_share": {"publisher": 70, "encypher": 30},
+    },
+    "business": {
+        "name": "Business",
+        "price_monthly": 499,
+        "price_annual": 4790,
+        "features": [
+            "Everything in Professional",
+            "Merkle tree encoding",
+            "Plagiarism detection",
+            "Source attribution API",
+            "Batch operations (100 docs)",
+            "50 API keys",
+            "Priority support (24hr SLA)",
+            "1-year analytics",
+            "Team management (10 users)",
+            "Audit logs",
+            "Licensing coalition (75/25 rev share)",
+        ],
+        "limits": {
+            "c2pa_signatures": -1,
+            "sentences_tracked": 500000,
+            "api_keys": 50,
+            "rate_limit": 200,
+        },
+        "coalition_rev_share": {"publisher": 75, "encypher": 25},
+    },
+    "enterprise": {
+        "name": "Enterprise",
+        "price_monthly": 0,  # Custom
+        "price_annual": 0,  # Custom
+        "features": [
+            "Everything in Business",
+            "Unlimited everything",
+            "Custom C2PA assertions",
+            "SSO/SCIM",
+            "Dedicated TAM + Slack",
+            "Custom SLAs",
+            "On-premise option",
+            "Licensing coalition (80/20 rev share)",
+        ],
+        "limits": {
+            "c2pa_signatures": -1,
+            "sentences_tracked": -1,
+            "api_keys": -1,
+            "rate_limit": -1,
+        },
+        "coalition_rev_share": {"publisher": 80, "encypher": 20},
+    },
+    "strategic_partner": {
+        "name": "Strategic Partner",
+        "price_monthly": 0,  # Negotiated
+        "price_annual": 0,  # Negotiated
+        "features": [
+            "Everything in Enterprise",
+            "Best revenue share (85/15)",
+            "Co-marketing",
+            "Product roadmap input",
+        ],
+        "limits": {
+            "c2pa_signatures": -1,
+            "sentences_tracked": -1,
+            "api_keys": -1,
+            "rate_limit": -1,
+        },
+        "coalition_rev_share": {"publisher": 85, "encypher": 15},
+    },
+}
+
+# Legacy plan mapping for backward compatibility
 PLANS = {
-    "free": {"name": "Free", "monthly": 0, "yearly": 0},
-    "pro": {"name": "Professional", "monthly": 29, "yearly": 290},
-    "enterprise": {"name": "Enterprise", "monthly": 99, "yearly": 990},
+    "free": {"name": "Starter", "monthly": 0, "yearly": 0},
+    "starter": {"name": "Starter", "monthly": 0, "yearly": 0},
+    "pro": {"name": "Professional", "monthly": 99, "yearly": 950},
+    "professional": {"name": "Professional", "monthly": 99, "yearly": 950},
+    "business": {"name": "Business", "monthly": 499, "yearly": 4790},
+    "enterprise": {"name": "Enterprise", "monthly": 0, "yearly": 0},
 }
 
 

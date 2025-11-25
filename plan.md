@@ -215,14 +215,17 @@
 - [ ] 9.10.4.4 Add upgrade/downgrade flow UI
 - [ ] 9.10.4.5 Add payment method management UI (placeholder for Stripe)
 
-#### 9.10.5 Payment Processor Integration (Stripe - Later)
-- [ ] 9.10.5.1 Set up Stripe account and API keys
-- [ ] 9.10.5.2 Create Stripe Products for each tier
-- [ ] 9.10.5.3 Implement Stripe Checkout for upgrades
-- [ ] 9.10.5.4 Implement Stripe Billing Portal for self-service
-- [ ] 9.10.5.5 Set up Stripe webhooks for subscription events
-- [ ] 9.10.5.6 Set up Stripe Connect for publisher payouts
+#### 9.10.5 Payment Processor Integration (Stripe)
+- [x] 9.10.5.1 Set up Stripe account and API keys - Config added to billing-service
+- [x] 9.10.5.2 Create Stripe Products for each tier - setup_stripe_products() helper created
+- [x] 9.10.5.3 Implement Stripe Checkout for upgrades - POST /checkout endpoint
+- [x] 9.10.5.4 Implement Stripe Billing Portal for self-service - GET /portal endpoint
+- [x] 9.10.5.5 Set up Stripe webhooks for subscription events - stripe_webhooks.py
+- [x] 9.10.5.6 Set up Stripe Connect for publisher payouts - StripeService.create_connect_account()
 - [ ] 9.10.5.7 Integrate with Zoho Books for accounting sync
+- [ ] 9.10.5.8 Create Stripe products in dashboard (run setup_stripe_products)
+- [ ] 9.10.5.9 Configure webhook endpoints in Stripe Dashboard
+- [ ] 9.10.5.10 Test end-to-end checkout flow
 
 #### 9.10.6 Coalition Revenue Tracking
 - [ ] 9.10.6.1 Track content corpus size per organization

@@ -1,10 +1,12 @@
 """Billing Service - Main Application"""
+import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from .core.config import settings
 from .api.v1.endpoints import router as v1_router
+from .api.v1.stripe_webhooks import router as webhook_router
 from .db.models import Base
 from .db.session import engine
 from .monitoring.metrics import setup_metrics
@@ -48,6 +50,7 @@ app.add_middleware(RequestLoggingMiddleware)
 setup_metrics(app)
 
 app.include_router(v1_router, prefix="/api/v1/billing", tags=["billing"])
+app.include_router(webhook_router, prefix="/api/v1", tags=["webhooks"])
 
 
 @app.get("/")
