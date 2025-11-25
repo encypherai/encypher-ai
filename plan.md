@@ -257,8 +257,8 @@
 #### 9.10.9 Marketing Site Pricing Page
 - [x] 9.10.9.1 Update pricing table with new tiers - Starter tier added
 - [x] 9.10.9.2 Add coalition rev share messaging - Rev share badges on each tier
-- [ ] 9.10.9.3 Add feature comparison table
-- [ ] 9.10.9.4 Add FAQ section
+- [x] 9.10.9.3 Add feature comparison table - Full comparison with categories
+- [x] 9.10.9.4 Add FAQ section - Already present (6 questions)
 - [x] 9.10.9.5 Add "Contact Sales" for Enterprise - Already present
 - [x] 9.10.9.6 Add /pricing route redirecting to /licensing
 
