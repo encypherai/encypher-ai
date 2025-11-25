@@ -11,7 +11,6 @@ Handles:
 """
 import logging
 from typing import Optional, Dict, Any, List
-from datetime import datetime
 
 import stripe
 from stripe.error import StripeError

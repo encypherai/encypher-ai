@@ -15,8 +15,6 @@ from ...models.schemas import (
     TierName,
     UpgradeRequest,
     UpgradeResponse,
-    UsageResponse,
-    CoalitionSummary,
     PlanInfo,
 )
 from ...services.billing_service import BillingService
