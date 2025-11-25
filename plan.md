@@ -184,10 +184,10 @@
 
 #### 9.10.1 Database Schema & Models (P0)
 - [x] 9.10.1.1 Create subscription_tiers table (id, name, price_monthly, price_annual, features JSON) - Using pricing.py constants
-- [ ] 9.10.1.2 Create organization_subscriptions table (org_id, tier_id, status, current_period_start/end)
-- [ ] 9.10.1.3 Create usage_records table (org_id, metric, count, period, recorded_at)
-- [ ] 9.10.1.4 Create coalition_earnings table (org_id, period, gross_revenue, publisher_share, encypher_share)
-- [x] 9.10.1.5 Add tier_id and coalition_rev_share to organizations table - Migration created
+- [x] 9.10.1.2 Create organization_subscriptions table (org_id, tier_id, status, current_period_start/end) - 20251125_150600
+- [x] 9.10.1.3 Create usage_records table (org_id, metric, count, period, recorded_at) - 20251125_150700
+- [x] 9.10.1.4 Create coalition_earnings table (org_id, period, gross_revenue, publisher_share, encypher_share) - add_coalition_tracking.py
+- [x] 9.10.1.5 Add tier_id and coalition_rev_share to organizations table - add_tier_coalition_fields.py
 - [x] 9.10.1.6 Create Pydantic schemas for all billing models - Updated billing-service schemas
 
 #### 9.10.2 Tier Enforcement in API (P0)
