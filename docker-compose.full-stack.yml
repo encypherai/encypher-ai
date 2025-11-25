@@ -331,6 +331,55 @@ services:
       timeout: 10s
       retries: 3
 
+  # ============================================
+  # ENTERPRISE API (C2PA Signing & Verification)
+  # ============================================
+  enterprise-api:
+    build:
+      context: .
+      dockerfile: enterprise_api/Dockerfile
+    container_name: encypher-enterprise-api
+    ports:
+      - "9000:8000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher
+      # Redis
+      REDIS_URL: redis://redis-cache:6379
+      # Security
+      KEY_ENCRYPTION_KEY: dev-key-encryption-key-32bytes!
+      ENCRYPTION_NONCE: dev-nonce-12b
+      # SSL.com (sandbox for dev)
+      SSL_COM_API_KEY: ${SSL_COM_API_KEY:-sandbox-key}
+      SSL_COM_API_URL: https://sandbox.ssl.com
+      # Demo organization
+      DEMO_API_KEY: demo-api-key-for-testing
+      DEMO_ORGANIZATION_ID: org_demo
+      # Service config
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      SERVICE_NAME: enterprise-api
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      # Internal service URLs
+      AUTH_SERVICE_URL: http://auth-service:8001
+      KEY_SERVICE_URL: http://key-service:8003
+      BILLING_SERVICE_URL: http://billing-service:8007
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    volumes:
+      # Mount source for hot reload during development
+      - ./enterprise_api:/app/enterprise_api
+      - ./encypher-ai:/app/encypher-ai
+      - ./c2pa-text/python:/app/c2pa-text/python
+
 volumes:
   postgres_data:
   prometheus_data:

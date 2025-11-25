@@ -148,3 +148,22 @@ async def require_lookup_permission(
             detail="Your API key does not have permission to lookup sentences",
         )
     return organization
+
+
+async def require_read_permission(
+    organization: Dict = Depends(get_current_organization),
+) -> Dict:
+    """
+    Require that the organization has read permission (basic authenticated access).
+    
+    This is a general-purpose dependency for endpoints that only require
+    authentication without specific feature permissions.
+
+    Args:
+        organization: Organization details from get_current_organization
+
+    Returns:
+        Organization details (authenticated)
+    """
+    # Basic authentication is sufficient - organization is already validated
+    return organization

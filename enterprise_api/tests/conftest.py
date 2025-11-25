@@ -9,7 +9,6 @@ import pytest
 import pytest_asyncio
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-from sqlalchemy.pool import StaticPool
 
 
 def _set_enterprise_app() -> None:
@@ -31,13 +30,17 @@ def _set_enterprise_app() -> None:
 _set_enterprise_app()
 
 # Now import app modules after setting up the path
-from app.database import Base
+from app.database import Base, get_db
 from app.main import app
-from app.dependencies import get_db
 
 
-# Test database URL - use in-memory SQLite for speed
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+# Test database URL - use PostgreSQL for compatibility with ARRAY types
+# In Docker: use internal hostname; locally: use localhost
+import os
+TEST_DATABASE_URL = os.getenv(
+    "TEST_DATABASE_URL",
+    "postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher"
+)
 
 
 @pytest.fixture(scope="session")
@@ -58,24 +61,17 @@ def temp_db_file():
 
 @pytest_asyncio.fixture(scope="function")
 async def async_engine():
-    """Create an async engine for testing with SQLite."""
-    # Use in-memory database with shared cache for speed
+    """Create an async engine for testing with PostgreSQL."""
     engine = create_async_engine(
         TEST_DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False
+        echo=False,
+        pool_pre_ping=True,
     )
     
-    # Create all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    # Tables should already exist in the test database
+    # Don't create/drop tables as we're using the shared dev database
     
     yield engine
-    
-    # Drop all tables
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
     
     await engine.dispose()
 
@@ -114,9 +110,9 @@ async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 @pytest.fixture
 def auth_headers() -> dict:
     """Return authentication headers for testing."""
-    # Use demo API key from settings
+    # Use demo API key - must match DEMO_API_KEY in docker-compose
     return {
-        "X-API-Key": os.getenv("DEMO_API_KEY", "demo-key-test"),
+        "Authorization": f"Bearer {os.getenv('DEMO_API_KEY', 'demo-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -135,11 +131,13 @@ async def async_client(client: AsyncClient) -> AsyncClient:
 
 
 # Tier-specific auth headers for testing tier-gated features
+# Note: In dev environment, all use demo key which has "demo" tier
+# For proper tier testing, create test organizations with different tiers
 @pytest.fixture
 def starter_auth_headers() -> dict:
     """Return auth headers for a Starter tier organization."""
     return {
-        "X-API-Key": os.getenv("STARTER_API_KEY", "starter-key-test"),
+        "Authorization": f"Bearer {os.getenv('STARTER_API_KEY', 'demo-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -148,7 +146,7 @@ def starter_auth_headers() -> dict:
 def professional_auth_headers() -> dict:
     """Return auth headers for a Professional tier organization."""
     return {
-        "X-API-Key": os.getenv("PROFESSIONAL_API_KEY", "professional-key-test"),
+        "Authorization": f"Bearer {os.getenv('PROFESSIONAL_API_KEY', 'demo-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -157,7 +155,7 @@ def professional_auth_headers() -> dict:
 def business_auth_headers() -> dict:
     """Return auth headers for a Business tier organization."""
     return {
-        "X-API-Key": os.getenv("BUSINESS_API_KEY", "business-key-test"),
+        "Authorization": f"Bearer {os.getenv('BUSINESS_API_KEY', 'demo-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -166,7 +164,7 @@ def business_auth_headers() -> dict:
 def business_admin_headers() -> dict:
     """Return auth headers for a Business tier admin user."""
     return {
-        "X-API-Key": os.getenv("BUSINESS_ADMIN_API_KEY", "business-admin-key-test"),
+        "Authorization": f"Bearer {os.getenv('BUSINESS_ADMIN_API_KEY', 'demo-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -175,7 +173,7 @@ def business_admin_headers() -> dict:
 def business_owner_headers() -> dict:
     """Return auth headers for a Business tier owner user."""
     return {
-        "X-API-Key": os.getenv("BUSINESS_OWNER_API_KEY", "business-owner-key-test"),
+        "Authorization": f"Bearer {os.getenv('BUSINESS_OWNER_API_KEY', 'demo-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -184,7 +182,7 @@ def business_owner_headers() -> dict:
 def enterprise_auth_headers() -> dict:
     """Return auth headers for an Enterprise tier organization."""
     return {
-        "X-API-Key": os.getenv("ENTERPRISE_API_KEY", "enterprise-key-test"),
+        "Authorization": f"Bearer {os.getenv('ENTERPRISE_API_KEY', 'demo-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 

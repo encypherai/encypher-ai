@@ -16,13 +16,16 @@ COPY encypher-ai/pyproject.toml encypher-ai/pyproject.toml
 
 # Install project dependencies in editable mode for live reload during development
 RUN pip install --upgrade pip && \
-    pip install --no-cache-dir hatchling
+    pip install --no-cache-dir hatchling setuptools
 
-# Copy source code
+# Copy source code - c2pa-text needs parent README.md so copy whole directory
+COPY c2pa-text /app/c2pa-text
 COPY encypher-ai /app/encypher-ai
 COPY enterprise_api /app/enterprise_api
 
-RUN pip install --no-cache-dir -e /app/encypher-ai && \
+# Install c2pa-text first (dependency of encypher-ai), then encypher-ai, then enterprise_api
+RUN pip install --no-cache-dir -e /app/c2pa-text/python && \
+    pip install --no-cache-dir -e /app/encypher-ai && \
     pip install --no-cache-dir -e /app/enterprise_api && \
     python -m spacy download en_core_web_sm
 
