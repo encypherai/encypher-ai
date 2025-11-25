@@ -1,6 +1,6 @@
 [package]
 name = "c2pa-text"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
 description = "Reference implementation for embedding C2PA manifests in text using Unicode variation selectors"
 authors = ["Encypher AI <contact@encypherai.com>"]
