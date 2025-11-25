@@ -198,7 +198,7 @@
 - [x] 9.10.2.5 Block sentence tracking for Starter tier - TIER_FEATURES config
 - [x] 9.10.2.6 Block batch operations for Starter/Professional tiers - TIER_FEATURES config
 - [x] 9.10.2.7 Return 403 with upgrade prompt for tier-locked features - TierService.check_feature_access()
-- [ ] 9.10.2.8 Add usage metering for signatures and tracked sentences
+- [x] 9.10.2.8 Add usage metering for signatures and tracked sentences - enterprise_api/app/routers/usage.py
 
 #### 9.10.3 Billing API Endpoints
 - [x] 9.10.3.1 GET /api/v1/billing/subscription - Current subscription info
