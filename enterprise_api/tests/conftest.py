@@ -127,6 +127,80 @@ def organization_id() -> str:
     return os.getenv("DEMO_ORGANIZATION_ID", "org_test")
 
 
+# Alias for async_client (some tests use this name)
+@pytest_asyncio.fixture(scope="function")
+async def async_client(client: AsyncClient) -> AsyncClient:
+    """Alias for client fixture."""
+    return client
+
+
+# Tier-specific auth headers for testing tier-gated features
+@pytest.fixture
+def starter_auth_headers() -> dict:
+    """Return auth headers for a Starter tier organization."""
+    return {
+        "X-API-Key": os.getenv("STARTER_API_KEY", "starter-key-test"),
+        "Content-Type": "application/json"
+    }
+
+
+@pytest.fixture
+def professional_auth_headers() -> dict:
+    """Return auth headers for a Professional tier organization."""
+    return {
+        "X-API-Key": os.getenv("PROFESSIONAL_API_KEY", "professional-key-test"),
+        "Content-Type": "application/json"
+    }
+
+
+@pytest.fixture
+def business_auth_headers() -> dict:
+    """Return auth headers for a Business tier organization."""
+    return {
+        "X-API-Key": os.getenv("BUSINESS_API_KEY", "business-key-test"),
+        "Content-Type": "application/json"
+    }
+
+
+@pytest.fixture
+def business_admin_headers() -> dict:
+    """Return auth headers for a Business tier admin user."""
+    return {
+        "X-API-Key": os.getenv("BUSINESS_ADMIN_API_KEY", "business-admin-key-test"),
+        "Content-Type": "application/json"
+    }
+
+
+@pytest.fixture
+def business_owner_headers() -> dict:
+    """Return auth headers for a Business tier owner user."""
+    return {
+        "X-API-Key": os.getenv("BUSINESS_OWNER_API_KEY", "business-owner-key-test"),
+        "Content-Type": "application/json"
+    }
+
+
+@pytest.fixture
+def enterprise_auth_headers() -> dict:
+    """Return auth headers for an Enterprise tier organization."""
+    return {
+        "X-API-Key": os.getenv("ENTERPRISE_API_KEY", "enterprise-key-test"),
+        "Content-Type": "application/json"
+    }
+
+
+@pytest.fixture
+def test_member_id() -> str:
+    """Return a test member ID for team management tests."""
+    return os.getenv("TEST_MEMBER_ID", "mem_test123")
+
+
+@pytest.fixture
+def owner_member_id() -> str:
+    """Return the owner member ID for team management tests."""
+    return os.getenv("OWNER_MEMBER_ID", "mem_owner123")
+
+
 # Configure pytest-asyncio
 def pytest_configure(config):
     """Configure pytest with custom markers."""
