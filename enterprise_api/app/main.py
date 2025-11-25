@@ -15,7 +15,7 @@ from uuid import uuid4
 from sqlalchemy import text
 
 from app.config import settings
-from app.routers import audit, batch, chat, licensing, lookup, onboarding, signing, streaming, team, usage, verification
+from app.routers import audit, batch, chat, coalition, licensing, lookup, onboarding, signing, streaming, team, usage, verification
 from app.api.v1.api import api_router as api_v1_router
 from app.database import engine
 from app.observability.metrics import render_prometheus
@@ -232,6 +232,7 @@ app.include_router(licensing.router, prefix="/api/v1", tags=["Licensing"])
 app.include_router(usage.router, prefix="/api/v1", tags=["Usage"])
 app.include_router(audit.router, prefix="/api/v1", tags=["Audit"])
 app.include_router(team.router, prefix="/api/v1", tags=["Team Management"])
+app.include_router(coalition.router, prefix="/api/v1", tags=["Coalition"])
 app.include_router(batch.router)
 
 # Include v1 API router (Merkle tree endpoints)
