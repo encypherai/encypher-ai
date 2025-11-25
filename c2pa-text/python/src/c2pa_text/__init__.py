@@ -4,12 +4,27 @@ C2PA Text Manifest Wrapper Reference Implementation.
 This module implements the C2PA Text Embedding Standard, allowing binary data
 (typically a C2PA JUMBF Manifest) to be embedded into valid UTF-8 strings using
 invisible Unicode Variation Selectors.
+
+Validation:
+    Use validate_manifest() to check manifest structure before embedding.
+    This helps catch issues early and provides detailed diagnostics.
 """
 
 import re
 import struct
 import unicodedata
 from typing import Optional, Tuple
+
+# Import validation utilities
+from .validator import (
+    ValidationCode,
+    ValidationIssue,
+    ValidationResult,
+    validate_manifest,
+    validate_jumbf_structure,
+    validate_wrapper_bytes,
+)
+
 
 # ---------------------- Constants -------------------------------------------
 
@@ -160,3 +175,24 @@ def extract_manifest(text: str) -> Tuple[Optional[bytes], str]:
     clean_text = text[:start] + text[end:]
 
     return manifest_bytes, unicodedata.normalize("NFC", clean_text)
+
+
+__all__ = [
+    # Core embedding functions
+    "embed_manifest",
+    "extract_manifest",
+    "find_wrapper_info",
+    "encode_wrapper",
+    "decode_wrapper_sequence",
+    # Validation
+    "validate_manifest",
+    "validate_jumbf_structure",
+    "validate_wrapper_bytes",
+    "ValidationCode",
+    "ValidationIssue",
+    "ValidationResult",
+    # Constants
+    "MAGIC",
+    "VERSION",
+    "ZWNBSP",
+]

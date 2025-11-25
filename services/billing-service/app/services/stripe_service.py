@@ -13,7 +13,7 @@ import logging
 from typing import Optional, Dict, Any, List
 
 import stripe
-from stripe.error import StripeError
+from stripe import StripeError
 
 from ..core.config import settings
 

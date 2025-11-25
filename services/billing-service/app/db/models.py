@@ -35,7 +35,7 @@ class Subscription(Base):
     stripe_subscription_id = Column(String, nullable=True, unique=True)
     stripe_customer_id = Column(String, nullable=True)
     
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -67,7 +67,7 @@ class Invoice(Base):
     stripe_invoice_id = Column(String, nullable=True, unique=True)
     
     line_items = Column(JSON, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -92,7 +92,7 @@ class Payment(Base):
     stripe_payment_intent_id = Column(String, nullable=True, unique=True)
     
     failure_message = Column(String, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_data = Column(JSON, nullable=True)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
