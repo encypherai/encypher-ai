@@ -14,6 +14,7 @@ import { useSession } from 'next-auth/react';
 import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 type PaymentMethod = {
   brand?: string;
@@ -42,16 +43,19 @@ type BillingInfo = {
 
 const planCatalog = (billingCycle: 'monthly' | 'annual') => [
   {
-    id: 'free',
-    name: 'Free',
+    id: 'starter',
+    name: 'Starter',
     price: 0,
     period: 'month',
     features: [
-      '1,000 signatures/month',
+      'Unlimited C2PA signing',
       'Unlimited verifications',
+      '2 API keys',
       'Community support',
-      'Basic analytics',
+      '7-day analytics',
+      'Licensing coalition (65/35 rev share)',
     ],
+    coalition: '65% you / 35% Encypher',
   },
   {
     id: billingCycle === 'monthly' ? 'pro-monthly' : 'pro-annual',
@@ -59,26 +63,38 @@ const planCatalog = (billingCycle: 'monthly' | 'annual') => [
     price: billingCycle === 'monthly' ? 99 : 950,
     period: billingCycle === 'monthly' ? 'month' : 'year',
     features: [
-      '50,000 signatures/month',
-      'Unlimited verifications',
-      'Priority email support',
-      'Advanced analytics & BYOK',
-      'API and CLI access',
+      'Everything in Starter',
+      'Sentence-level tracking (50K/mo)',
+      'Invisible embeddings',
+      '10 API keys',
+      'Email support (48hr SLA)',
+      '90-day analytics',
+      'BYOK encryption',
+      'WordPress Pro (no branding)',
+      'Licensing coalition (70/30 rev share)',
     ],
     popular: true,
+    coalition: '70% you / 30% Encypher',
   },
   {
-    id: billingCycle === 'monthly' ? 'enterprise-monthly' : 'enterprise-annual',
-    name: 'Enterprise',
+    id: billingCycle === 'monthly' ? 'business-monthly' : 'business-annual',
+    name: 'Business',
     price: billingCycle === 'monthly' ? 499 : 4790,
     period: billingCycle === 'monthly' ? 'month' : 'year',
     features: [
-      'Unlimited signatures',
-      'Dedicated TAM + Slack',
-      'Custom SLAs & invoicing',
-      'SSO / SCIM provisioning',
-      'Advanced observability',
+      'Everything in Professional',
+      'Merkle tree encoding',
+      'Plagiarism detection',
+      'Source attribution API',
+      'Batch operations (100 docs)',
+      '50 API keys',
+      'Priority support (24hr SLA)',
+      '1-year analytics',
+      'Team management (10 users)',
+      'Audit logs',
+      'Licensing coalition (75/25 rev share)',
     ],
+    coalition: '75% you / 25% Encypher',
   },
 ];
 
@@ -112,7 +128,6 @@ const normalizeInvoices = (raw: any): Invoice[] => {
 export default function BillingPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
   const billingQuery = useQuery({
@@ -125,8 +140,8 @@ export default function BillingPage() {
       ]);
 
       return {
-        billing: normalizeBillingInfo(infoResponse?.data ?? infoResponse),
-        invoices: normalizeInvoices(invoiceResponse),
+        billing: normalizeBillingInfo((infoResponse as any)?.data ?? infoResponse),
+        invoices: normalizeInvoices(invoiceResponse as any),
       };
     },
     enabled: Boolean(accessToken),
@@ -150,41 +165,6 @@ export default function BillingPage() {
   const invoices = billingQuery.data?.invoices ?? [];
   const plans = useMemo(() => planCatalog(billingCycle), [billingCycle]);
 
-  const headerActions = (
-    <div className="flex items-center space-x-4">
-      <Link href="/">
-        <Button variant="ghost" size="sm">
-          Dashboard
-        </Button>
-      </Link>
-      <Link href="/api-keys">
-        <Button variant="ghost" size="sm">
-          API Keys
-        </Button>
-      </Link>
-      <Link href="/analytics">
-        <Button variant="ghost" size="sm">
-          Analytics
-        </Button>
-      </Link>
-      {isAdmin && (
-        <Link href="/admin">
-          <Button variant="ghost" size="sm">
-            Admin
-          </Button>
-        </Link>
-      )}
-      <Link href="/settings">
-        <Button variant="ghost" size="sm">
-          Settings
-        </Button>
-      </Link>
-      <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">
-        {session?.user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
-      </div>
-    </div>
-  );
-
   const isLoading = status === 'loading' || billingQuery.isLoading;
 
   const paymentLabel = currentPlan?.paymentMethod
@@ -192,20 +172,8 @@ export default function BillingPage() {
     : 'Add payment method';
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
-            </Link>
-            <h1 className="text-xl font-bold text-delft-blue">Encypher Dashboard</h1>
-          </div>
-          {headerActions}
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 space-y-8">
+    <DashboardLayout>
+      <div className="space-y-8">
         <div>
           <h2 className="text-3xl font-bold text-delft-blue mb-2">Billing & Subscription</h2>
           <p className="text-muted-foreground">
@@ -336,11 +304,14 @@ export default function BillingPage() {
                       <td className="py-3 px-4">${invoice.amount.toFixed(2)}</td>
                       <td className="py-3 px-4 capitalize">{invoice.status}</td>
                       <td className="py-3 px-4 text-right">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={invoice.url || '#'} target="_blank" rel="noreferrer">
-                            Download
-                          </a>
-                        </Button>
+                        <a 
+                          href={invoice.url || '#'} 
+                          target="_blank" 
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors"
+                        >
+                          Download
+                        </a>
                       </td>
                     </tr>
                   ))}
@@ -349,7 +320,7 @@ export default function BillingPage() {
             </CardContent>
           </Card>
         </section>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

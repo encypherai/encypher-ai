@@ -1,0 +1,71 @@
+http:
+  routers:
+    dashboard:
+      rule: "Host(`s-dashboard.encypherai.com`)"
+      service: dashboard-service
+      entryPoints:
+        - websecure
+      tls: {}
+
+    marketing:
+      rule: "Host(`s-www.encypherai.com`)"
+      service: marketing-service
+      entryPoints:
+        - websecure
+      tls: {}
+
+    # API routing with path-based service selection
+    api-keys:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/keys`)"
+      service: key-service
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+
+    api-analytics:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/analytics`)"
+      service: analytics-service
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 100
+
+    api-auth:
+      rule: "Host(`s-api.encypherai.com`)"
+      service: auth-service
+      entryPoints:
+        - websecure
+      tls: {}
+      priority: 1
+
+  services:
+    dashboard-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3001"
+
+    marketing-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:3000"
+
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8001"
+
+    key-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8003"
+
+    analytics-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8006"
+
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/local-cert.pem
+      keyFile: /etc/traefik/certs/local-key.pem

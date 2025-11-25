@@ -1,33 +1,46 @@
-# Check if .env exists in marketing-site
-if (-not (Test-Path "apps/marketing-site/.env")) {
-    Copy-Item "apps/marketing-site/.env.example" "apps/marketing-site/.env"
-    Write-Host "Created .env for marketing-site"
+Write-Host "Starting Encypher Development Environment..." -ForegroundColor Cyan
+
+# 1. Cert Check
+if (-not (Test-Path "certs/local-cert.pem")) {
+    Write-Host "SSL Certs missing. Running setup..." -ForegroundColor Yellow
+    .\setup-local-https.ps1
 }
 
-# Start Backend Services
-Write-Host "Starting backend services with Docker..."
-Set-Location services
-docker-compose -f docker-compose.dev.yml up -d --build web-service enterprise-api postgres redis
+# 2. Docker Backend
+Write-Host "Starting Backend & Proxy..." -ForegroundColor Green
+docker-compose -f docker-compose.full-stack.yml up -d
+docker-compose -f docker-compose.https.yml up -d
 
-# Wait for DB
-Write-Host "Waiting for database..."
-Start-Sleep -Seconds 10
+# 3. Frontends
+Write-Host "Launching Frontends in new windows..." -ForegroundColor Green
 
-# Run Migrations
-Write-Host "Running database migrations..."
-try {
-    docker exec encypher-web-service alembic upgrade head
-} catch {
-    Write-Host "Migration failed. Please check container logs: docker logs encypher-web-service"
+# Dashboard
+if (Test-Path "apps/dashboard") {
+    $dashboardPath = Resolve-Path "apps/dashboard"
+    $cmd = "cd '$dashboardPath'; Write-Host 'Starting Dashboard...'; "
+    if (-not (Test-Path "$dashboardPath\node_modules")) {
+        $cmd += "Write-Host 'Installing dependencies...'; npm install; "
+    }
+    $cmd += "npm run dev"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
+} else {
+    Write-Warning "apps/dashboard not found!"
 }
 
-# Instructions
-Write-Host "`nBackend services are running!"
-Write-Host "Web Service: http://localhost:8002"
-Write-Host "`nTo start the frontend:"
-Write-Host "1. cd apps/marketing-site"
-Write-Host "2. npm install --legacy-peer-deps"
-Write-Host "3. npm run dev"
+# Marketing
+if (Test-Path "apps/marketing-site") {
+    $marketingPath = Resolve-Path "apps/marketing-site"
+    $cmd = "cd '$marketingPath'; Write-Host 'Starting Marketing Site...'; "
+    if (-not (Test-Path "$marketingPath\node_modules")) {
+        $cmd += "Write-Host 'Installing dependencies...'; npm install; "
+    }
+    $cmd += "npm run dev"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", $cmd
+} else {
+    Write-Warning "apps/marketing-site not found!"
+}
 
-# Return to root
-Set-Location ..
+Write-Host "`nAll systems go!" -ForegroundColor Cyan
+Write-Host "Access via: https://s-www.encypherai.com"
+Write-Host "Dashboard:  https://s-dashboard.encypherai.com"
+

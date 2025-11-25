@@ -120,7 +120,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8001
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -145,7 +145,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8002
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -172,7 +172,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8003
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -201,7 +201,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8004
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -256,7 +256,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8006
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -283,7 +283,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8007
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -309,7 +309,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8008
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy

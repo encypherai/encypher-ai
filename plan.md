@@ -67,10 +67,12 @@
 - [x] 7.3.2 Implement error handling and loading states
 - [x] 7.3.3 Add analytics event tracking to key user interactions
 - [x] 7.3.4 Update environment configuration
+- [x] 7.3.5 Enable Cross-Subdomain SSO (Marketing <-> Dashboard)
 
 ### 7.4 Testing & Deployment
 - [x] 7.4.1 Write unit and integration tests
 - [x] 7.4.2 Set up Local Development Environment (Docker + Scripts)
+    - [x] 7.4.2.1 Local HTTPS with mkcert & Traefik (for Secure Cookies)
 - [x] 7.4.3 Verify Encode/Decode Tool functionality (Local + Enterprise API)
 - [ ] 7.4.4 Set up CI/CD pipeline for web-service
 - [ ] 7.4.5 Deploy to staging environment
@@ -108,9 +110,150 @@
         - Polished Docs with Encypher Branding & Enterprise Upsell.
         - Added Security & Contribution guidelines.
 - **In Progress**:
-    - Marketing Site CI/CD & Deployment (7.4.4+)
+    - Dashboard Functional Implementation (9.0)
 - **Pending**:
+    - Marketing Site CI/CD & Deployment (7.4.4+)
     - Production Deployment
+
+
+## 9.0 Dashboard Full Functionality
+
+### 9.1 Core Infrastructure
+- [x] 9.1.1 Create API client library (`src/lib/api.ts`)
+- [x] 9.1.2 Add shared layout component with navigation
+- [x] 9.1.3 Configure React Query provider (already configured)
+
+### 9.2 Main Dashboard Page (`/`)
+- [x] 9.2.1 Fetch real usage stats from analytics-service
+- [x] 9.2.2 Fetch real API keys summary from key-service
+- [x] 9.2.3 Display user profile from session
+- [x] 9.2.4 Add navigation links to sub-pages
+- [x] 9.2.5 Add loading skeletons
+
+### 9.3 API Keys Page (`/api-keys`)
+- [x] 9.3.1 Fix missing API client import
+- [x] 9.3.2 Verify create/delete/list functionality (wired to key-service)
+- [x] 9.3.3 Add copy-to-clipboard for full key (already implemented)
+
+### 9.4 Analytics Page (`/analytics`)
+- [x] 9.4.1 Fetch real data from analytics-service
+- [x] 9.4.2 Connect time range selector to API
+- [ ] 9.4.3 Display real activity history (requires activity endpoint)
+
+### 9.5 Settings & Other Pages
+- [x] 9.5.1 Implement settings page functionality (profile/notifications)
+- [ ] 9.5.2 Implement billing page functionality (requires billing-service endpoints)
+- [x] 9.5.3 Add sign-out functionality (in DashboardLayout)
+
+### 9.6 Testing & Verification
+- [x] 9.6.1 Test full login -> dashboard flow (verified working)
+- [x] 9.6.2 Test API key generation (endpoint working, UI functional)
+- [x] 9.6.3 Verify analytics data display (endpoint working)
+
+### 9.7 Backend Fixes Applied
+- [x] 9.7.1 Fix key-service metadata column name (SQLAlchemy reserved)
+- [x] 9.7.2 Fix key-service missing logging import
+- [x] 9.7.3 Fix key-service get_current_user to parse standard response format
+- [x] 9.7.4 Update Traefik routing for key-service and analytics-service
+
+### 9.8 Design System & Branding
+- [x] 9.8.1 Add Roboto font to dashboard
+- [x] 9.8.2 Add logo to dashboard (copied from marketing site)
+- [x] 9.8.3 Default marketing emails to true for new users
+- [x] 9.8.4 Replace rosy-brown with cyber-teal per brand guidelines
+- [x] 9.8.5 Create design assessment document (docs/design/DESIGN_ASSESSMENT.md)
+- [x] 9.8.6 Fix API key normalizer bug (array.keys() method conflict)
+- [x] 9.8.7 Fix API key display (show key_prefix instead of fingerprint)
+- [x] 9.8.8 Remove misleading Copy button from key list view
+
+### 9.9 Dashboard UX/UI Improvements
+- [x] 9.9.1 Redesign main dashboard page with hero section, enhanced stats, sidebar
+- [x] 9.9.2 Make API key rows clickable (navigate to API Keys page)
+- [x] 9.9.3 Fix navigation - remove nested Link/Button pattern
+- [x] 9.9.4 Update billing page to use DashboardLayout for consistent header
+- [x] 9.9.5 Redesign header - larger logo, "Dashboard" badge, cleaner nav
+- [x] 9.9.6 Improve user dropdown with click-to-toggle and icons
+- [x] 9.9.7 Create unified pricing strategy document (docs/pricing/PRICING_STRATEGY.md)
+- [x] 9.9.8 Update billing tiers to align with pricing strategy (Starter/Professional/Business)
+- [x] 9.9.9 Comprehensive pricing strategy v2 with licensing coalition economics
+- [x] 9.9.10 Add rev share tiers (65/35 free → 85/15 strategic partner)
+- [x] 9.9.11 Document publisher revenue projections (NYT, Atlantic, regional, indie examples)
+- [x] 9.9.12 Update dashboard billing page with coalition rev share info
+
+### 9.10 Pricing Implementation
+
+#### 9.10.1 Database Schema & Models (P0)
+- [x] 9.10.1.1 Create subscription_tiers table (id, name, price_monthly, price_annual, features JSON) - Using pricing.py constants
+- [ ] 9.10.1.2 Create organization_subscriptions table (org_id, tier_id, status, current_period_start/end)
+- [ ] 9.10.1.3 Create usage_records table (org_id, metric, count, period, recorded_at)
+- [ ] 9.10.1.4 Create coalition_earnings table (org_id, period, gross_revenue, publisher_share, encypher_share)
+- [x] 9.10.1.5 Add tier_id and coalition_rev_share to organizations table - Migration created
+- [x] 9.10.1.6 Create Pydantic schemas for all billing models - Updated billing-service schemas
+
+#### 9.10.2 Tier Enforcement in API (P0)
+- [x] 9.10.2.1 Create TierService with feature/limit checking - enterprise_api/app/services/tier_service.py
+- [x] 9.10.2.2 Add tier check middleware/dependency for protected endpoints - require_feature() dependency
+- [x] 9.10.2.3 Implement rate limiting per tier (10/50/200/unlimited req/sec) - TIER_RATE_LIMITS in quota.py
+- [x] 9.10.2.4 Block Merkle endpoints for Starter/Professional tiers - TIER_FEATURES config
+- [x] 9.10.2.5 Block sentence tracking for Starter tier - TIER_FEATURES config
+- [x] 9.10.2.6 Block batch operations for Starter/Professional tiers - TIER_FEATURES config
+- [x] 9.10.2.7 Return 403 with upgrade prompt for tier-locked features - TierService.check_feature_access()
+- [ ] 9.10.2.8 Add usage metering for signatures and tracked sentences
+
+#### 9.10.3 Billing API Endpoints
+- [ ] 9.10.3.1 GET /api/v1/billing/subscription - Current subscription info
+- [ ] 9.10.3.2 GET /api/v1/billing/usage - Current period usage
+- [ ] 9.10.3.3 GET /api/v1/billing/invoices - Invoice history
+- [ ] 9.10.3.4 POST /api/v1/billing/upgrade - Initiate upgrade (returns Stripe checkout URL later)
+- [ ] 9.10.3.5 POST /api/v1/billing/cancel - Cancel subscription
+- [ ] 9.10.3.6 GET /api/v1/billing/coalition - Coalition earnings summary
+
+#### 9.10.4 Dashboard Billing Integration
+- [ ] 9.10.4.1 Connect billing page to real API endpoints
+- [ ] 9.10.4.2 Show real usage stats (signatures, sentences, API calls)
+- [ ] 9.10.4.3 Show coalition earnings dashboard
+- [ ] 9.10.4.4 Add upgrade/downgrade flow UI
+- [ ] 9.10.4.5 Add payment method management UI (placeholder for Stripe)
+
+#### 9.10.5 Payment Processor Integration (Stripe - Later)
+- [ ] 9.10.5.1 Set up Stripe account and API keys
+- [ ] 9.10.5.2 Create Stripe Products for each tier
+- [ ] 9.10.5.3 Implement Stripe Checkout for upgrades
+- [ ] 9.10.5.4 Implement Stripe Billing Portal for self-service
+- [ ] 9.10.5.5 Set up Stripe webhooks for subscription events
+- [ ] 9.10.5.6 Set up Stripe Connect for publisher payouts
+- [ ] 9.10.5.7 Integrate with Zoho Books for accounting sync
+
+#### 9.10.6 Coalition Revenue Tracking
+- [ ] 9.10.6.1 Track content corpus size per organization
+- [ ] 9.10.6.2 Calculate revenue attribution when AI deals close
+- [ ] 9.10.6.3 Apply tier-based rev share (65/35 → 85/15)
+- [ ] 9.10.6.4 Generate monthly earnings statements
+- [ ] 9.10.6.5 Build publisher earnings dashboard
+
+#### 9.10.7 Audit Logs (Business+ tier)
+- [ ] 9.10.7.1 Create audit_logs table
+- [ ] 9.10.7.2 Log all API key operations
+- [ ] 9.10.7.3 Log all signing/verification operations
+- [ ] 9.10.7.4 GET /api/v1/audit-logs endpoint
+- [ ] 9.10.7.5 Dashboard UI for audit log viewing
+- [ ] 9.10.7.6 Export audit logs to CSV/JSON
+
+#### 9.10.8 Team Management (Business+ tier)
+- [ ] 9.10.8.1 Create team_members table (user_id, org_id, role, invited_at, accepted_at)
+- [ ] 9.10.8.2 Define roles: owner, admin, member, viewer
+- [ ] 9.10.8.3 POST /api/v1/org/members/invite endpoint
+- [ ] 9.10.8.4 DELETE /api/v1/org/members/{id} endpoint
+- [ ] 9.10.8.5 PATCH /api/v1/org/members/{id}/role endpoint
+- [ ] 9.10.8.6 Email invite flow with accept/decline
+- [ ] 9.10.8.7 Dashboard team management UI
+
+#### 9.10.9 Marketing Site Pricing Page
+- [ ] 9.10.9.1 Update pricing table with new tiers
+- [ ] 9.10.9.2 Add coalition rev share messaging
+- [ ] 9.10.9.3 Add feature comparison table
+- [ ] 9.10.9.4 Add FAQ section
+- [ ] 9.10.9.5 Add "Contact Sales" for Enterprise
 
 
 ## 8.0 C2PA Standard Strategy (Commoditize the Complement)

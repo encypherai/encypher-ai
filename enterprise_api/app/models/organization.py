@@ -21,11 +21,16 @@ from app.database import Base
 
 
 class OrganizationTier(str, Enum):
-    """Organization tier levels."""
+    """Organization tier levels matching pricing strategy."""
 
-    FREE = "free"
-    PROFESSIONAL = "professional"
-    ENTERPRISE = "enterprise"
+    STARTER = "starter"  # Free tier - C2PA only, 65/35 rev share
+    PROFESSIONAL = "professional"  # $99/mo - Sentence tracking, 70/30 rev share
+    BUSINESS = "business"  # $499/mo - Merkle + plagiarism, 75/25 rev share
+    ENTERPRISE = "enterprise"  # Custom - Full platform, 80/20 rev share
+    STRATEGIC_PARTNER = "strategic_partner"  # Invite only - 85/15 rev share
+    
+    # Legacy alias for backward compatibility
+    FREE = "starter"
 
 
 class OrganizationCertificateStatus(str, Enum):
@@ -82,15 +87,31 @@ class Organization(Base):
     merkle_enabled = Column(Boolean, default=False)
     advanced_analytics_enabled = Column(Boolean, default=False)
     bulk_operations_enabled = Column(Boolean, default=False)
+    sentence_tracking_enabled = Column(Boolean, default=False)
+    streaming_enabled = Column(Boolean, default=False)
+    byok_enabled = Column(Boolean, default=False)
+    team_management_enabled = Column(Boolean, default=False)
+    audit_logs_enabled = Column(Boolean, default=False)
+    sso_enabled = Column(Boolean, default=False)
+    custom_assertions_enabled = Column(Boolean, default=False)
+
+    # Coalition settings
+    coalition_member = Column(Boolean, default=True)  # Auto-join on free tier
+    coalition_rev_share_publisher = Column(Integer, default=65)  # Publisher's share (65-85%)
+    coalition_rev_share_encypher = Column(Integer, default=35)  # Encypher's share (15-35%)
+    coalition_opted_out = Column(Boolean, default=False)
+    coalition_opted_out_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     # Usage tracking / quotas
     monthly_quota = Column(Integer, default=1000)
     documents_signed = Column(Integer, default=0)
     sentences_signed = Column(Integer, default=0)
+    sentences_tracked_this_month = Column(Integer, default=0)  # For sentence tracking quota
     api_calls_this_month = Column(Integer, default=0)
     merkle_encoding_calls_this_month = Column(Integer, default=0)
     merkle_attribution_calls_this_month = Column(Integer, default=0)
     merkle_plagiarism_calls_this_month = Column(Integer, default=0)
+    batch_operations_this_month = Column(Integer, default=0)
 
     # Timestamps
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
@@ -122,6 +143,13 @@ class Organization(Base):
             "merkle": self.merkle_enabled,
             "advanced_analytics": self.advanced_analytics_enabled,
             "bulk_operations": self.bulk_operations_enabled,
+            "sentence_tracking": self.sentence_tracking_enabled,
+            "streaming": self.streaming_enabled,
+            "byok": self.byok_enabled,
+            "team_management": self.team_management_enabled,
+            "audit_logs": self.audit_logs_enabled,
+            "sso": self.sso_enabled,
+            "custom_assertions": self.custom_assertions_enabled,
         }
         return feature_map.get(feature, False)
 

@@ -27,7 +27,7 @@
   --chart-1: var(--blue-ncs);
   --chart-2: var(--columbia-blue);
   --chart-3: var(--delft-blue);
-  --chart-4: var(--rosy-brown);
+  --chart-4: var(--cyber-teal);
   --chart-5: #64748b;
   --sidebar: var(--white);
   --sidebar-foreground: var(--delft-blue);
@@ -64,7 +64,7 @@
   --chart-1: var(--columbia-blue);
   --chart-2: var(--blue-ncs);
   --chart-3: #94a3b8;
-  --chart-4: var(--rosy-brown);
+  --chart-4: var(--cyber-teal);
   --chart-5: #64748b;
   --sidebar: #1e293b;
   --sidebar-foreground: var(--white);

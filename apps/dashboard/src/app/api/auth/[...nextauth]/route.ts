@@ -112,7 +112,7 @@ const handler = NextAuth({
   },
   cookies: {
     sessionToken: {
-      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token-dashboard',
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
       options: {
         domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
         httpOnly: true,

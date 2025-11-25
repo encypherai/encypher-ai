@@ -46,7 +46,7 @@ class ApiKey(Base):
     
     # Metadata
     description = Column(Text, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    meta_data = Column(JSON, nullable=True)  # Renamed from 'metadata' - reserved by SQLAlchemy
     
     def __repr__(self):
         return f"<ApiKey(id={self.id}, name={self.name}, user_id={self.user_id})>"

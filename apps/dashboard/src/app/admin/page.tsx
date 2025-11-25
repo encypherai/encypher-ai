@@ -8,8 +8,22 @@ import {
   CardDescription,
   CardContent,
   Input,
-  Badge,
 } from '@encypher/design-system';
+
+// Simple Badge component since it's not exported from design-system
+const Badge = ({ children, variant = 'default' }: { children: React.ReactNode; variant?: 'default' | 'success' | 'destructive' | 'secondary' }) => {
+  const colors: Record<string, string> = {
+    default: 'bg-muted text-muted-foreground',
+    success: 'bg-success/10 text-success',
+    destructive: 'bg-destructive/10 text-destructive',
+    secondary: 'bg-columbia-blue/10 text-columbia-blue',
+  };
+  return (
+    <span className={`px-2 py-1 text-xs rounded-full ${colors[variant] || colors.default}`}>
+      {children}
+    </span>
+  );
+};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
@@ -312,13 +326,12 @@ export default function AdminPage() {
                         >
                           {user.status === 'active' ? 'Suspend' : 'Activate'}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
+                        <a
+                          href={`mailto:${user.email}`}
+                          className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
                         >
-                          <Link href={`mailto:${user.email}`}>Contact</Link>
-                        </Button>
+                          Contact
+                        </a>
                       </td>
                     </tr>
                   ))}

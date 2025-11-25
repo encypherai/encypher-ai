@@ -13,11 +13,13 @@ import { MenuIcon } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { useState, useEffect } from 'react';
 import { toolLinks } from '@/config/tools';
+import { useSession, signOut } from 'next-auth/react';
 
 export function Navbar() {
   const { setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session, status } = useSession();
 
   // After mounting, we can show the theme toggle
   useEffect(() => {
@@ -97,8 +99,8 @@ export function Navbar() {
           {/* <Link href="/platform" className="text-sm font-medium hover:text-primary">
             Platform
           </Link> */}
-          {/* Auth Buttons - Disabled for publisher demo branch */}
-          {/* {status === "loading" ? null : session ? (
+          {/* Auth Buttons */}
+          {status === "loading" ? null : session ? (
             <>
               <Button
                 asChild
@@ -119,7 +121,7 @@ export function Navbar() {
                 <Link href="/auth/register?mode=signin">Sign In</Link>
               </Button>
             </div>
-          )} */}
+          )}
         </nav>
         
         <div className="flex items-center gap-2">
@@ -232,8 +234,8 @@ export function Navbar() {
               Company
             </Link>
             
-            {/* Auth Buttons for Mobile - Disabled for publisher demo branch */}
-            {/* {status === "loading" ? null : session ? (
+            {/* Auth Buttons for Mobile */}
+            {status === "loading" ? null : session ? (
               <>
                 <Button
                   asChild
@@ -270,7 +272,7 @@ export function Navbar() {
                   Sign Up
                 </Link>
               </div>
-            )} */}
+            )}
           </nav>
         </div>
       )}

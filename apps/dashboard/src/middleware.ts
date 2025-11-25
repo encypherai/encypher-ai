@@ -23,7 +23,7 @@ export async function middleware(req: NextRequest) {
   // Ensure we only read the dashboard's session cookie during local dev
   const cookieName = process.env.NODE_ENV === 'production'
     ? '__Secure-next-auth.session-token'
-    : 'next-auth.session-token-dashboard';
+    : 'next-auth.session-token';
 
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET, cookieName });
   if (!token) {

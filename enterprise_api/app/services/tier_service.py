@@ -1,0 +1,369 @@
+"""
+Tier enforcement service for API access control.
+
+Handles feature gating, quota enforcement, and tier-based access control.
+"""
+import logging
+from typing import Dict, Any
+from datetime import datetime
+
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from fastapi import HTTPException, status, Request
+
+from app.models.organization import Organization, OrganizationTier
+from app.utils.quota import (
+    QuotaType,
+    TIER_QUOTAS,
+    TIER_FEATURES,
+    TIER_RATE_LIMITS,
+    TIER_REV_SHARE,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class TierService:
+    """
+    Service for tier-based access control and feature enforcement.
+    
+    Provides methods to check feature availability, enforce quotas,
+    and manage tier-specific functionality.
+    """
+    
+    @staticmethod
+    def get_tier_features(tier: OrganizationTier) -> Dict[str, bool]:
+        """
+        Get all features available for a tier.
+        
+        Args:
+            tier: Organization tier
+            
+        Returns:
+            Dictionary of feature name -> enabled status
+        """
+        return TIER_FEATURES.get(tier, TIER_FEATURES[OrganizationTier.STARTER])
+    
+    @staticmethod
+    def is_feature_available(tier: OrganizationTier, feature: str) -> bool:
+        """
+        Check if a feature is available for a tier.
+        
+        Args:
+            tier: Organization tier
+            feature: Feature name (e.g., "merkle", "sentence_tracking")
+            
+        Returns:
+            True if feature is available, False otherwise
+        """
+        features = TIER_FEATURES.get(tier, {})
+        return features.get(feature, False)
+    
+    @staticmethod
+    def get_rate_limit(tier: OrganizationTier) -> int:
+        """
+        Get rate limit for a tier.
+        
+        Args:
+            tier: Organization tier
+            
+        Returns:
+            Rate limit in requests per second (-1 for unlimited)
+        """
+        return TIER_RATE_LIMITS.get(tier, 10)
+    
+    @staticmethod
+    def get_rev_share(tier: OrganizationTier) -> tuple:
+        """
+        Get coalition revenue share for a tier.
+        
+        Args:
+            tier: Organization tier
+            
+        Returns:
+            Tuple of (publisher_share, encypher_share) as percentages
+        """
+        return TIER_REV_SHARE.get(tier, (65, 35))
+    
+    @staticmethod
+    def get_quota_limit(tier: OrganizationTier, quota_type: QuotaType) -> int:
+        """
+        Get quota limit for a tier and quota type.
+        
+        Args:
+            tier: Organization tier
+            quota_type: Type of quota
+            
+        Returns:
+            Quota limit (-1 for unlimited, 0 for not available)
+        """
+        tier_quotas = TIER_QUOTAS.get(tier, {})
+        return tier_quotas.get(quota_type, 0)
+    
+    @staticmethod
+    async def check_feature_access(
+        db: AsyncSession,
+        organization_id: str,
+        feature: str,
+        raise_on_denied: bool = True
+    ) -> bool:
+        """
+        Check if an organization has access to a feature.
+        
+        Args:
+            db: Database session
+            organization_id: Organization identifier
+            feature: Feature name to check
+            raise_on_denied: If True, raise HTTPException on denied access
+            
+        Returns:
+            True if access granted, False if denied (when raise_on_denied=False)
+            
+        Raises:
+            HTTPException: If access denied and raise_on_denied=True
+        """
+        # Get organization
+        result = await db.execute(
+            select(Organization).where(Organization.organization_id == organization_id)
+        )
+        org = result.scalar_one_or_none()
+        
+        if not org:
+            if raise_on_denied:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Organization not found"
+                )
+            return False
+        
+        # Check feature availability for tier
+        is_available = TierService.is_feature_available(org.tier, feature)
+        
+        if not is_available and raise_on_denied:
+            # Get upgrade tier suggestion
+            upgrade_tier = TierService._get_upgrade_tier_for_feature(feature)
+            
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error": "FeatureNotAvailable",
+                    "message": f"The '{feature}' feature is not available on your current plan ({org.tier.value})",
+                    "current_tier": org.tier.value,
+                    "required_tier": upgrade_tier,
+                    "upgrade_url": "https://dashboard.encypherai.com/billing",
+                    "features_available": TierService.get_tier_features(org.tier),
+                }
+            )
+        
+        return is_available
+    
+    @staticmethod
+    def _get_upgrade_tier_for_feature(feature: str) -> str:
+        """
+        Get the minimum tier required for a feature.
+        
+        Args:
+            feature: Feature name
+            
+        Returns:
+            Tier name that provides the feature
+        """
+        tier_order = [
+            OrganizationTier.STARTER,
+            OrganizationTier.PROFESSIONAL,
+            OrganizationTier.BUSINESS,
+            OrganizationTier.ENTERPRISE,
+        ]
+        
+        for tier in tier_order:
+            if TierService.is_feature_available(tier, feature):
+                return tier.value
+        
+        return OrganizationTier.ENTERPRISE.value
+    
+    @staticmethod
+    async def get_organization_tier_info(
+        db: AsyncSession,
+        organization_id: str
+    ) -> Dict[str, Any]:
+        """
+        Get comprehensive tier information for an organization.
+        
+        Args:
+            db: Database session
+            organization_id: Organization identifier
+            
+        Returns:
+            Dictionary with tier info, features, quotas, and usage
+        """
+        # Get organization
+        result = await db.execute(
+            select(Organization).where(Organization.organization_id == organization_id)
+        )
+        org = result.scalar_one_or_none()
+        
+        if not org:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Organization not found"
+            )
+        
+        # Get tier info
+        features = TierService.get_tier_features(org.tier)
+        rate_limit = TierService.get_rate_limit(org.tier)
+        
+        # Build quota status
+        quotas = {}
+        for quota_type in QuotaType:
+            limit = TierService.get_quota_limit(org.tier, quota_type)
+            usage = TierService._get_current_usage(org, quota_type)
+            
+            quotas[quota_type.value] = {
+                "limit": limit if limit >= 0 else "unlimited",
+                "used": usage,
+                "remaining": "unlimited" if limit < 0 else max(0, limit - usage),
+                "available": limit != 0,
+            }
+        
+        return {
+            "organization_id": organization_id,
+            "organization_name": org.organization_name,
+            "tier": org.tier.value,
+            "tier_display_name": TierService._get_tier_display_name(org.tier),
+            "features": features,
+            "rate_limit": rate_limit if rate_limit >= 0 else "unlimited",
+            "quotas": quotas,
+            "coalition": {
+                "member": org.coalition_member,
+                "opted_out": org.coalition_opted_out,
+                "publisher_share": org.coalition_rev_share_publisher,
+                "encypher_share": org.coalition_rev_share_encypher,
+            },
+            "reset_date": TierService._get_reset_date().isoformat(),
+        }
+    
+    @staticmethod
+    def _get_tier_display_name(tier: OrganizationTier) -> str:
+        """Get human-readable tier name."""
+        display_names = {
+            OrganizationTier.STARTER: "Starter (Free)",
+            OrganizationTier.PROFESSIONAL: "Professional",
+            OrganizationTier.BUSINESS: "Business",
+            OrganizationTier.ENTERPRISE: "Enterprise",
+            OrganizationTier.STRATEGIC_PARTNER: "Strategic Partner",
+        }
+        return display_names.get(tier, tier.value)
+    
+    @staticmethod
+    def _get_current_usage(org: Organization, quota_type: QuotaType) -> int:
+        """Get current usage for a quota type."""
+        usage_fields = {
+            QuotaType.MERKLE_ENCODING: "merkle_encoding_calls_this_month",
+            QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
+            QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
+            QuotaType.API_CALLS: "api_calls_this_month",
+            QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
+            QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
+            QuotaType.C2PA_SIGNATURES: "documents_signed",
+        }
+        
+        field_name = usage_fields.get(quota_type)
+        if not field_name:
+            return 0
+        
+        return getattr(org, field_name, 0)
+    
+    @staticmethod
+    def _get_reset_date() -> datetime:
+        """Get the date when quotas reset (first day of next month)."""
+        now = datetime.utcnow()
+        if now.month == 12:
+            return datetime(now.year + 1, 1, 1)
+        else:
+            return datetime(now.year, now.month + 1, 1)
+    
+    @staticmethod
+    async def set_organization_tier(
+        db: AsyncSession,
+        organization_id: str,
+        new_tier: OrganizationTier,
+        update_features: bool = True
+    ) -> Organization:
+        """
+        Update an organization's tier and optionally sync feature flags.
+        
+        Args:
+            db: Database session
+            organization_id: Organization identifier
+            new_tier: New tier to set
+            update_features: If True, update feature flags to match tier
+            
+        Returns:
+            Updated organization
+        """
+        # Get organization
+        result = await db.execute(
+            select(Organization).where(Organization.organization_id == organization_id)
+        )
+        org = result.scalar_one_or_none()
+        
+        if not org:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Organization not found"
+            )
+        
+        old_tier = org.tier
+        org.tier = new_tier
+        
+        # Update feature flags if requested
+        if update_features:
+            features = TierService.get_tier_features(new_tier)
+            org.merkle_enabled = features.get("merkle", False)
+            org.sentence_tracking_enabled = features.get("sentence_tracking", False)
+            org.streaming_enabled = features.get("streaming", False)
+            org.bulk_operations_enabled = features.get("batch_operations", False)
+            org.byok_enabled = features.get("byok", False)
+            org.team_management_enabled = features.get("team_management", False)
+            org.audit_logs_enabled = features.get("audit_logs", False)
+            org.sso_enabled = features.get("sso", False)
+            org.custom_assertions_enabled = features.get("custom_assertions", False)
+            org.advanced_analytics_enabled = features.get("advanced_analytics", False)
+        
+        # Update coalition rev share
+        pub_share, enc_share = TierService.get_rev_share(new_tier)
+        org.coalition_rev_share_publisher = pub_share
+        org.coalition_rev_share_encypher = enc_share
+        
+        await db.commit()
+        await db.refresh(org)
+        
+        logger.info(
+            f"Organization {organization_id} tier changed from {old_tier.value} to {new_tier.value}"
+        )
+        
+        return org
+
+
+# FastAPI dependency for feature access checking
+def require_feature(feature: str):
+    """
+    FastAPI dependency that requires a specific feature.
+    
+    Usage:
+        @router.post("/merkle/encode")
+        async def encode(
+            _: None = Depends(require_feature("merkle")),
+            org_id: str = Depends(get_current_org_id),
+            db: AsyncSession = Depends(get_db)
+        ):
+            ...
+    """
+    async def _check_feature(
+        request: Request,
+        db: AsyncSession,
+        organization_id: str
+    ):
+        await TierService.check_feature_access(db, organization_id, feature)
+    
+    return _check_feature

@@ -11,10 +11,10 @@ import {
 } from '@encypher/design-system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 type ApiKeyRecord = {
   id: string;
@@ -26,19 +26,28 @@ type ApiKeyRecord = {
 };
 
 const normalizeApiKeys = (payload: any): ApiKeyRecord[] => {
-  const rawKeys: any[] =
-    payload?.data?.api_keys ||
-    payload?.data ||
-    payload?.api_keys ||
-    payload?.keys ||
-    payload ||
-    [];
+  // Handle various response formats from the API
+  // Note: Don't use payload?.keys as arrays have a .keys() method that would match
+  let rawKeys: any[];
+  if (Array.isArray(payload)) {
+    rawKeys = payload;
+  } else if (Array.isArray(payload?.data?.api_keys)) {
+    rawKeys = payload.data.api_keys;
+  } else if (Array.isArray(payload?.data)) {
+    rawKeys = payload.data;
+  } else if (Array.isArray(payload?.api_keys)) {
+    rawKeys = payload.api_keys;
+  } else {
+    rawKeys = [];
+  }
 
-  return (Array.isArray(rawKeys) ? rawKeys : []).map((key: any, idx: number) => ({
+  return rawKeys.map((key: any, idx: number) => ({
     id: String(key.id ?? key.key_id ?? key.uuid ?? idx),
     name: key.name ?? key.label ?? 'API Key',
     maskedKey:
+      key.key_prefix ??  // Prefer key_prefix (e.g., "ency_y7T2mUv...")
       key.masked_key ??
+      key.fingerprint ??
       key.key ??
       key.token ??
       `${String(key.prefix ?? 'ency').slice(0, 6)}****************`,
@@ -49,17 +58,17 @@ const normalizeApiKeys = (payload: any): ApiKeyRecord[] => {
 };
 
 const extractFullKey = (payload: any): string =>
+  payload?.data?.key ??  // API client wraps response in { data: { key: ... } }
   payload?.data?.api_key ??
   payload?.data?.token ??
+  payload?.key ??
   payload?.api_key ??
   payload?.token ??
-  payload?.key ??
   '';
 
 export default function ApiKeysPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
   const queryClient = useQueryClient();
 
   const [newKeyName, setNewKeyName] = useState('');
@@ -121,39 +130,6 @@ export default function ApiKeysPage() {
   const isLoadingSession = status === 'loading';
   const isLoadingKeys = apiKeysQuery.isLoading || !accessToken;
 
-  const headerActions = useMemo(
-    () => (
-      <div className="flex items-center space-x-4">
-        <Link href="/billing">
-          <Button variant="ghost" size="sm">
-            Billing
-          </Button>
-        </Link>
-        <Link href="/analytics">
-          <Button variant="ghost" size="sm">
-            Analytics
-          </Button>
-        </Link>
-        <Link href="/settings">
-          <Button variant="ghost" size="sm">
-            Settings
-          </Button>
-        </Link>
-        {isAdmin && (
-          <Link href="/admin">
-            <Button variant="ghost" size="sm">
-              Admin
-            </Button>
-          </Link>
-        )}
-        <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">
-          {session?.user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
-        </div>
-      </div>
-    ),
-    [session?.user?.name, isAdmin],
-  );
-
   const handleCopyKey = (key: string) => {
     navigator.clipboard.writeText(key);
     toast.success('API key copied to clipboard.');
@@ -201,12 +177,12 @@ export default function ApiKeysPage() {
               </div>
 
               <div className="flex items-center gap-2">
-                <code className="flex-1 bg-muted px-3 py-2 rounded border border-border font-mono text-sm">
+                <code className="flex-1 bg-muted px-3 py-2 rounded border border-border font-mono text-sm text-muted-foreground">
                   {key.maskedKey}
                 </code>
-                <Button variant="outline" size="sm" onClick={() => handleCopyKey(key.maskedKey)}>
-                  Copy
-                </Button>
+                <span className="text-xs text-muted-foreground italic">
+                  Full key shown only at creation
+                </span>
               </div>
 
               <div className="grid md:grid-cols-3 gap-4 text-sm text-muted-foreground">
@@ -231,20 +207,8 @@ export default function ApiKeysPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
-            </Link>
-            <h1 className="text-xl font-bold text-delft-blue">Encypher Dashboard</h1>
-          </div>
-          {headerActions}
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 flex flex-col gap-6">
+    <DashboardLayout>
+      <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold text-delft-blue mb-1">API Keys</h2>
@@ -293,7 +257,7 @@ export default function ApiKeysPage() {
         )}
 
         {renderKeyList()}
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

@@ -23,28 +23,154 @@ class QuotaType(str, Enum):
     MERKLE_ATTRIBUTION = "merkle_attribution"
     MERKLE_PLAGIARISM = "merkle_plagiarism"
     API_CALLS = "api_calls"
+    SENTENCES_TRACKED = "sentences_tracked"
+    BATCH_OPERATIONS = "batch_operations"
+    C2PA_SIGNATURES = "c2pa_signatures"  # Soft limit for abuse prevention
+
+
+# Rate limits by tier (requests per second)
+TIER_RATE_LIMITS: Dict[OrganizationTier, int] = {
+    OrganizationTier.STARTER: 10,
+    OrganizationTier.PROFESSIONAL: 50,
+    OrganizationTier.BUSINESS: 200,
+    OrganizationTier.ENTERPRISE: -1,  # Unlimited
+    OrganizationTier.STRATEGIC_PARTNER: -1,  # Unlimited
+}
+
+
+# Coalition revenue share by tier (publisher_share, encypher_share)
+TIER_REV_SHARE: Dict[OrganizationTier, tuple] = {
+    OrganizationTier.STARTER: (65, 35),
+    OrganizationTier.PROFESSIONAL: (70, 30),
+    OrganizationTier.BUSINESS: (75, 25),
+    OrganizationTier.ENTERPRISE: (80, 20),
+    OrganizationTier.STRATEGIC_PARTNER: (85, 15),
+}
+
+
+# Feature availability by tier
+TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
+    OrganizationTier.STARTER: {
+        "c2pa_signing": True,
+        "verification": True,
+        "sentence_tracking": False,
+        "merkle": False,
+        "streaming": False,
+        "batch_operations": False,
+        "byok": False,
+        "team_management": False,
+        "audit_logs": False,
+        "sso": False,
+        "custom_assertions": False,
+        "advanced_analytics": False,
+    },
+    OrganizationTier.PROFESSIONAL: {
+        "c2pa_signing": True,
+        "verification": True,
+        "sentence_tracking": True,
+        "merkle": False,
+        "streaming": True,
+        "batch_operations": False,
+        "byok": True,
+        "team_management": False,
+        "audit_logs": False,
+        "sso": False,
+        "custom_assertions": False,
+        "advanced_analytics": True,
+    },
+    OrganizationTier.BUSINESS: {
+        "c2pa_signing": True,
+        "verification": True,
+        "sentence_tracking": True,
+        "merkle": True,
+        "streaming": True,
+        "batch_operations": True,
+        "byok": True,
+        "team_management": True,
+        "audit_logs": True,
+        "sso": False,
+        "custom_assertions": False,
+        "advanced_analytics": True,
+    },
+    OrganizationTier.ENTERPRISE: {
+        "c2pa_signing": True,
+        "verification": True,
+        "sentence_tracking": True,
+        "merkle": True,
+        "streaming": True,
+        "batch_operations": True,
+        "byok": True,
+        "team_management": True,
+        "audit_logs": True,
+        "sso": True,
+        "custom_assertions": True,
+        "advanced_analytics": True,
+    },
+    OrganizationTier.STRATEGIC_PARTNER: {
+        "c2pa_signing": True,
+        "verification": True,
+        "sentence_tracking": True,
+        "merkle": True,
+        "streaming": True,
+        "batch_operations": True,
+        "byok": True,
+        "team_management": True,
+        "audit_logs": True,
+        "sso": True,
+        "custom_assertions": True,
+        "advanced_analytics": True,
+    },
+}
 
 
 # Quota limits by tier (per month)
+# -1 means unlimited
 TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
-    OrganizationTier.FREE: {
+    OrganizationTier.STARTER: {
+        QuotaType.C2PA_SIGNATURES: 10000,  # Soft cap for abuse prevention (marketed as "unlimited")
+        QuotaType.SENTENCES_TRACKED: 0,  # Not available
         QuotaType.MERKLE_ENCODING: 0,  # Not available
         QuotaType.MERKLE_ATTRIBUTION: 0,
         QuotaType.MERKLE_PLAGIARISM: 0,
-        QuotaType.API_CALLS: 1000,
-    },
-    OrganizationTier.PROFESSIONAL: {
-        QuotaType.MERKLE_ENCODING: 0,  # Not available
-        QuotaType.MERKLE_ATTRIBUTION: 0,
-        QuotaType.MERKLE_PLAGIARISM: 0,
+        QuotaType.BATCH_OPERATIONS: 0,
         QuotaType.API_CALLS: 10000,
     },
+    OrganizationTier.PROFESSIONAL: {
+        QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
+        QuotaType.SENTENCES_TRACKED: 50000,
+        QuotaType.MERKLE_ENCODING: 0,  # Not available
+        QuotaType.MERKLE_ATTRIBUTION: 0,
+        QuotaType.MERKLE_PLAGIARISM: 0,
+        QuotaType.BATCH_OPERATIONS: 0,
+        QuotaType.API_CALLS: 50000,
+    },
+    OrganizationTier.BUSINESS: {
+        QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
+        QuotaType.SENTENCES_TRACKED: 500000,
+        QuotaType.MERKLE_ENCODING: 10000,
+        QuotaType.MERKLE_ATTRIBUTION: 50000,
+        QuotaType.MERKLE_PLAGIARISM: 5000,
+        QuotaType.BATCH_OPERATIONS: 1000,
+        QuotaType.API_CALLS: 500000,
+    },
     OrganizationTier.ENTERPRISE: {
-        QuotaType.MERKLE_ENCODING: 1000,
-        QuotaType.MERKLE_ATTRIBUTION: 5000,
-        QuotaType.MERKLE_PLAGIARISM: 500,
-        QuotaType.API_CALLS: 100000,
-    }
+        QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
+        QuotaType.SENTENCES_TRACKED: -1,  # Unlimited
+        QuotaType.MERKLE_ENCODING: -1,  # Unlimited
+        QuotaType.MERKLE_ATTRIBUTION: -1,
+        QuotaType.MERKLE_PLAGIARISM: -1,
+        QuotaType.BATCH_OPERATIONS: -1,
+        QuotaType.API_CALLS: -1,
+    },
+    OrganizationTier.STRATEGIC_PARTNER: {
+        QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
+        QuotaType.SENTENCES_TRACKED: -1,  # Unlimited
+        QuotaType.MERKLE_ENCODING: -1,  # Unlimited
+        QuotaType.MERKLE_ATTRIBUTION: -1,
+        QuotaType.MERKLE_PLAGIARISM: -1,
+        QuotaType.BATCH_OPERATIONS: -1,
+        QuotaType.API_CALLS: -1,
+    },
 }
 
 

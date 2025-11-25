@@ -27,7 +27,8 @@ router = APIRouter()
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
     """
-    Verify user token with auth service
+    Verify user token with auth service and return user data.
+    Expects response format: {"success": true, "data": {...user fields...}, "error": null}
     """
     try:
         # Call auth service to verify token
@@ -43,7 +44,17 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                     detail="Invalid authentication credentials",
                 )
             
-            return response.json()
+            payload = response.json()
+            # Extract user data from standard response format
+            if isinstance(payload, dict) and payload.get("success") and isinstance(payload.get("data"), dict):
+                return payload["data"]
+            # Fallback for legacy direct user payloads
+            if isinstance(payload, dict) and "id" in payload:
+                return payload
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="Invalid response from auth service",
+            )
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  allowedDevOrigins: [
+    "s-dashboard.encypherai.com",
+    "http://localhost:3001",
+    "http://127.0.0.1:3001"
+  ],
   transpilePackages: ['@encypher/design-system'],
   
   // Optimize for production

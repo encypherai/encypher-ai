@@ -28,7 +28,8 @@ module.exports = {
         'delft-blue': '#1b2f50',
         'blue-ncs': '#2a87c4',
         'columbia-blue': '#b7d5ed',
-        'rosy-brown': '#ba8790',
+        'cyber-teal': '#00ced1',  // Replaced rosy-brown per brand guidelines
+        'neutral-gray': '#a7afbc',
         
         // Semantic colors
         border: 'hsl(var(--border))',

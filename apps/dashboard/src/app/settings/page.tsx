@@ -12,9 +12,10 @@ import {
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 type Profile = {
   name: string;
@@ -34,7 +35,7 @@ const defaultNotifications = {
   emailAlerts: true,
   usageAlerts: true,
   securityAlerts: true,
-  marketingEmails: false,
+  marketingEmails: true,  // Default to true - users can opt-out
 };
 
 const normalizeProfile = (raw: any): Profile => ({
@@ -56,7 +57,6 @@ const normalizeProfile = (raw: any): Profile => ({
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
   const [profile, setProfile] = useState<Profile>({
     name: '',
@@ -71,7 +71,7 @@ export default function SettingsPage() {
     queryKey: ['profile'],
     queryFn: async () => {
       if (!accessToken) throw new Error('You must be signed in to manage settings.');
-      const response = await apiClient.getProfile(accessToken);
+      const response = await apiClient.getProfile(accessToken) as any;
       return normalizeProfile(response?.data ?? response);
     },
     enabled: Boolean(accessToken),
@@ -104,44 +104,6 @@ export default function SettingsPage() {
     },
   });
 
-  const headerActions = useMemo(
-    () => (
-      <div className="flex items-center space-x-4">
-        <Link href="/">
-          <Button variant="ghost" size="sm">
-            Dashboard
-          </Button>
-        </Link>
-        <Link href="/api-keys">
-          <Button variant="ghost" size="sm">
-            API Keys
-          </Button>
-        </Link>
-        <Link href="/analytics">
-          <Button variant="ghost" size="sm">
-            Analytics
-          </Button>
-        </Link>
-        {isAdmin && (
-          <Link href="/admin">
-            <Button variant="ghost" size="sm">
-              Admin
-            </Button>
-          </Link>
-        )}
-        <Link href="/billing">
-          <Button variant="ghost" size="sm">
-            Billing
-          </Button>
-        </Link>
-        <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">
-          {session?.user?.name?.charAt(0)?.toUpperCase() ?? 'U'}
-        </div>
-      </div>
-    ),
-    [session?.user?.name, isAdmin],
-  );
-
   const isLoading = status === 'loading' || profileQuery.isLoading;
 
   const handleProfileSave = (e: React.FormEvent) => {
@@ -154,26 +116,13 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
-            </Link>
-            <h1 className="text-xl font-bold text-delft-blue">Encypher Dashboard</h1>
-          </div>
-          {headerActions}
-        </div>
-      </header>
+    <DashboardLayout>
+      <div className="mb-8">
+        <h2 className="text-3xl font-bold text-delft-blue mb-2">Settings</h2>
+        <p className="text-muted-foreground">Manage your account settings and preferences</p>
+      </div>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-delft-blue mb-2">Settings</h2>
-          <p className="text-muted-foreground">Manage your account settings and preferences</p>
-        </div>
-
-        <div className="grid md:grid-cols-4 gap-6">
+      <div className="grid md:grid-cols-4 gap-6">
           <div className="md:col-span-1">
             <Card>
               <CardContent className="p-4">
@@ -324,7 +273,6 @@ export default function SettingsPage() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+    </DashboardLayout>
   );
 }

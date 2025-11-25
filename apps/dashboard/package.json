@@ -4,10 +4,10 @@
   "private": true,
   "description": "Encypher user dashboard - dashboard.encypherai.com",
   "scripts": {
-    "dev": "next dev -p 3001",
-    "build": "next build",
-    "start": "next start -p 3001",
-    "lint": "next lint",
+    "dev": "npx next dev -p 3001",
+    "build": "npx next build",
+    "start": "npx next start -p 3001",
+    "lint": "npx next lint",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {

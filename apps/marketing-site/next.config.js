@@ -43,7 +43,8 @@ const nextConfig = {
     "http://localhost:52924",
     "http://127.0.0.1:52924",
     "http://localhost:8000",
-    "http://127.0.0.1:8000"
+    "http://127.0.0.1:8000",
+    "s-www.encypherai.com"
   ],
   async headers() {
     return [

@@ -10,7 +10,7 @@
     "rimraf": "^5.0.5"
   },
   "scripts": {
-    "dev": "node log-analytics-env.js && npx next dev --turbopack",
+    "dev": "node log-analytics-env.js && npx next dev",
     "dev:webpack": "node log-analytics-env.js && npx next dev",
     "build": "node log-analytics-env.js && npx next build",
     "start": "npx next start -p $PORT",

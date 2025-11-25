@@ -25,7 +25,7 @@ class Notification(Base):
     failed_at = Column(DateTime(timezone=True), nullable=True)
     error_message = Column(String, nullable=True)
     
-    metadata = Column(JSON, nullable=True)
+    meta_data = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     
     def __repr__(self):

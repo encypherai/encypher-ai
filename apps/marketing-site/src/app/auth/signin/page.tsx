@@ -85,7 +85,8 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const session = window.localStorage.getItem("next-auth.session-token");
-      if (session) router.replace("/dashboard");
+      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://s-dashboard.encypherai.com";
+      if (session) window.location.href = dashboardUrl;
     }
   }, [router]);
 
@@ -107,16 +108,17 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://s-dashboard.encypherai.com";
     try {
       const res = await signIn('credentials', {
         redirect: false,
         email,
         password,
-        callbackUrl: '/dashboard',
+        callbackUrl: dashboardUrl,
       });
       if (res && !res.error) {
         toast({ title: 'Signed in successfully!', variant: 'success' });
-        router.replace('/dashboard');
+        window.location.href = dashboardUrl;
       } else {
         setError('Invalid email or password.');
         toast({ title: 'Sign in failed', description: 'Invalid email or password.', variant: 'error' });
@@ -149,7 +151,7 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
     }
     setSignupLoading(true);
     try {
-      const data = await fetchApi<RegisterResponse>('/api/v1/auth/register', {
+      const data = await fetchApi<RegisterResponse>('/auth/signup', {
         method: 'POST',
         body: JSON.stringify({ email, password }),
       });
@@ -203,7 +205,7 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
                     key={provider.id}
                     className={`flex items-center justify-center gap-2 flex-1 py-3 px-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-ring
                       bg-background text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm group`}
-                    onClick={() => signIn(provider.id, { callbackUrl: "/dashboard" })}
+                    onClick={() => signIn(provider.id, { callbackUrl: process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://s-dashboard.encypherai.com" })}
                     aria-label={`Sign in with ${provider.name}`}
                     style={{ boxShadow: provider.id === 'google' ? '0 2px 10px 0 #4285F4' : provider.id === 'github' ? '0 2px 10px 0 #4285F4' : provider.id === 'discord' ? '0 2px 10px 0 #5865F2' : '0 2px 10px 0 var(--blue-ncs, #2a87c4)' }}
                   >

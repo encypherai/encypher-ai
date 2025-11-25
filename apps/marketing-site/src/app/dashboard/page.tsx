@@ -47,7 +47,7 @@ export default function DashboardPage() {
       console.log('[Dashboard] Using accessToken from session:', 
         session.accessToken ? `${session.accessToken.substring(0, 20)}...` : 'undefined');
       
-      const res = await fetchApi("/api/v1/users/me", {
+      const res = await fetchApi("/users/me", {
         method: "GET",
         token: session.accessToken
       });
