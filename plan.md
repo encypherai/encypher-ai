@@ -255,11 +255,12 @@
 - [ ] 9.10.8.7 Dashboard team management UI
 
 #### 9.10.9 Marketing Site Pricing Page
-- [ ] 9.10.9.1 Update pricing table with new tiers
-- [ ] 9.10.9.2 Add coalition rev share messaging
+- [x] 9.10.9.1 Update pricing table with new tiers - Starter tier added
+- [x] 9.10.9.2 Add coalition rev share messaging - Rev share badges on each tier
 - [ ] 9.10.9.3 Add feature comparison table
 - [ ] 9.10.9.4 Add FAQ section
-- [ ] 9.10.9.5 Add "Contact Sales" for Enterprise
+- [x] 9.10.9.5 Add "Contact Sales" for Enterprise - Already present
+- [x] 9.10.9.6 Add /pricing route redirecting to /licensing
 
 
 ## 8.0 C2PA Standard Strategy (Commoditize the Complement)
