@@ -9,167 +9,102 @@ import {
   CardContent,
 } from '@encypher/design-system';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useMemo, useState } from 'react';
+import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
-import apiClient from '../../lib/api';
+import apiClient, { PlanInfo, Invoice } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-
-type PaymentMethod = {
-  brand?: string;
-  last4?: string;
-  expMonth?: string | number;
-  expYear?: string | number;
-};
-
-type Invoice = {
-  id: string;
-  date: string;
-  amount: number;
-  status: string;
-  url?: string;
-};
-
-type BillingInfo = {
-  planId: string;
-  planName: string;
-  price: number;
-  period: 'month' | 'year';
-  features: string[];
-  renewalDate?: string;
-  paymentMethod?: PaymentMethod;
-};
-
-const planCatalog = (billingCycle: 'monthly' | 'annual') => [
-  {
-    id: 'starter',
-    name: 'Starter',
-    price: 0,
-    period: 'month',
-    features: [
-      'Unlimited C2PA signing',
-      'Unlimited verifications',
-      '2 API keys',
-      'Community support',
-      '7-day analytics',
-      'Licensing coalition (65/35 rev share)',
-    ],
-    coalition: '65% you / 35% Encypher',
-  },
-  {
-    id: billingCycle === 'monthly' ? 'pro-monthly' : 'pro-annual',
-    name: 'Professional',
-    price: billingCycle === 'monthly' ? 99 : 950,
-    period: billingCycle === 'monthly' ? 'month' : 'year',
-    features: [
-      'Everything in Starter',
-      'Sentence-level tracking (50K/mo)',
-      'Invisible embeddings',
-      '10 API keys',
-      'Email support (48hr SLA)',
-      '90-day analytics',
-      'BYOK encryption',
-      'WordPress Pro (no branding)',
-      'Licensing coalition (70/30 rev share)',
-    ],
-    popular: true,
-    coalition: '70% you / 30% Encypher',
-  },
-  {
-    id: billingCycle === 'monthly' ? 'business-monthly' : 'business-annual',
-    name: 'Business',
-    price: billingCycle === 'monthly' ? 499 : 4790,
-    period: billingCycle === 'monthly' ? 'month' : 'year',
-    features: [
-      'Everything in Professional',
-      'Merkle tree encoding',
-      'Plagiarism detection',
-      'Source attribution API',
-      'Batch operations (100 docs)',
-      '50 API keys',
-      'Priority support (24hr SLA)',
-      '1-year analytics',
-      'Team management (10 users)',
-      'Audit logs',
-      'Licensing coalition (75/25 rev share)',
-    ],
-    coalition: '75% you / 25% Encypher',
-  },
-];
-
-const normalizeBillingInfo = (raw: any): BillingInfo => ({
-  planId: raw?.plan_id ?? raw?.planId ?? 'free',
-  planName: raw?.plan_name ?? raw?.planName ?? 'Free',
-  price: raw?.price ?? 0,
-  period: (raw?.period ?? 'month') as 'month' | 'year',
-  features:
-    raw?.features ??
-    [
-      '1,000 signatures/month',
-      'Unlimited verifications',
-      'Email support',
-    ],
-  renewalDate: raw?.renewal_date ?? raw?.renews_on ?? '',
-  paymentMethod: raw?.payment_method ?? raw?.paymentMethod,
-});
-
-const normalizeInvoices = (raw: any): Invoice[] => {
-  const rows = raw?.data ?? raw?.invoices ?? raw ?? [];
-  return (Array.isArray(rows) ? rows : []).map((invoice: any, idx: number) => ({
-    id: invoice.id ?? invoice.invoice_id ?? `INV-${idx}`,
-    date: invoice.date ?? invoice.created_at ?? invoice.period_start ?? '',
-    amount: invoice.amount ?? invoice.total ?? 0,
-    status: invoice.status ?? invoice.state ?? 'paid',
-    url: invoice.download_url ?? invoice.url,
-  }));
-};
 
 export default function BillingPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
-  const billingQuery = useQuery({
-    queryKey: ['billing'],
-    queryFn: async () => {
-      if (!accessToken) throw new Error('You must be signed in to view billing details.');
-      const [infoResponse, invoiceResponse] = await Promise.all([
-        apiClient.getBillingInfo(accessToken),
-        apiClient.getInvoices(accessToken),
-      ]);
+  // Fetch plans from API
+  const plansQuery = useQuery({
+    queryKey: ['plans'],
+    queryFn: () => apiClient.getPlans(),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
-      return {
-        billing: normalizeBillingInfo((infoResponse as any)?.data ?? infoResponse),
-        invoices: normalizeInvoices(invoiceResponse as any),
-      };
+  // Fetch subscription and invoices
+  const billingQuery = useQuery({
+    queryKey: ['billing', accessToken],
+    queryFn: async () => {
+      if (!accessToken) return { subscription: null, invoices: [] };
+      const [subscription, invoices] = await Promise.all([
+        apiClient.getSubscription(accessToken).catch(() => null),
+        apiClient.getInvoices(accessToken).catch(() => []),
+      ]);
+      return { subscription, invoices };
     },
     enabled: Boolean(accessToken),
   });
 
-  const updatePlanMutation = useMutation({
-    mutationFn: async (planId: string) => {
-      if (!accessToken) throw new Error('You must be signed in to update your plan.');
-      await apiClient.updateSubscription(accessToken, planId);
+  // Upgrade mutation - redirects to Stripe Checkout
+  const upgradeMutation = useMutation({
+    mutationFn: async ({ tier, cycle }: { tier: string; cycle: 'monthly' | 'annual' }) => {
+      if (!accessToken) throw new Error('You must be signed in to upgrade.');
+      const response = await apiClient.upgradeSubscription(accessToken, tier, cycle);
+      return response;
     },
-    onSuccess: () => {
-      toast.success('Subscription updated.');
-      billingQuery.refetch();
+    onSuccess: (response) => {
+      if (response.checkout_url) {
+        // Redirect to Stripe Checkout
+        window.location.href = response.checkout_url;
+      } else if (response.success) {
+        toast.success(response.message);
+        billingQuery.refetch();
+      } else {
+        toast.info(response.message);
+      }
     },
-    onError: (err: any) => {
-      toast.error(err?.message || 'Failed to update plan.');
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to upgrade plan.');
     },
   });
 
-  const currentPlan = billingQuery.data?.billing;
-  const invoices = billingQuery.data?.invoices ?? [];
-  const plans = useMemo(() => planCatalog(billingCycle), [billingCycle]);
+  // Manage billing portal
+  const portalMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.getBillingPortal(accessToken);
+    },
+    onSuccess: (response) => {
+      window.location.href = response.portal_url;
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to open billing portal.');
+    },
+  });
 
-  const isLoading = status === 'loading' || billingQuery.isLoading;
+  // Filter plans based on billing cycle
+  const plans = useMemo(() => {
+    const allPlans = plansQuery.data || [];
+    return allPlans.filter(p => !p.enterprise); // Exclude enterprise (custom pricing)
+  }, [plansQuery.data]);
 
-  const paymentLabel = currentPlan?.paymentMethod
-    ? `${currentPlan.paymentMethod.brand ?? 'Card'} •••• ${currentPlan.paymentMethod.last4 ?? ''}`
-    : 'Add payment method';
+  const subscription = billingQuery.data?.subscription;
+  const invoices = billingQuery.data?.invoices || [];
+  const currentTier = subscription?.tier || 'starter';
+  const isLoading = status === 'loading' || billingQuery.isLoading || plansQuery.isLoading;
+
+  // Get price based on billing cycle
+  const getPrice = (plan: PlanInfo) => {
+    return billingCycle === 'annual' ? plan.price_annual : plan.price_monthly;
+  };
+
+  const getPeriod = () => billingCycle === 'annual' ? 'year' : 'month';
+
+  // Format date
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return '—';
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -181,34 +116,57 @@ export default function BillingPage() {
           </p>
         </div>
 
+        {/* Current Plan Card */}
         <Card className="border-columbia-blue">
           <CardHeader>
             <CardTitle>Current Plan</CardTitle>
             <CardDescription>
-              {isLoading ? 'Loading plan information…' : currentPlan?.planName}
+              {isLoading ? 'Loading plan information…' : subscription?.plan_name || 'Starter (Free)'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-3 gap-6">
+          <CardContent className="grid md:grid-cols-4 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Plan</p>
               <p className="text-2xl font-bold text-delft-blue">
-                {currentPlan?.planName ?? '—'}
+                {subscription?.plan_name || 'Starter'}
               </p>
               <p className="text-muted-foreground">
-                {currentPlan ? `$${currentPlan.price}/${currentPlan.period}` : '—'}
+                {subscription ? `$${subscription.amount}/${subscription.billing_cycle === 'annual' ? 'year' : 'month'}` : 'Free'}
               </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Status</p>
+              <p className="text-foreground capitalize">{subscription?.status || 'Active'}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Renews</p>
-              <p className="text-foreground">{currentPlan?.renewalDate || '—'}</p>
+              <p className="text-foreground">
+                {subscription?.current_period_end ? formatDate(subscription.current_period_end) : '—'}
+              </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Payment method</p>
-              <p className="text-foreground">{paymentLabel}</p>
+              <p className="text-sm text-muted-foreground mb-1">Coalition Rev Share</p>
+              <p className="text-foreground">
+                {subscription?.coalition_rev_share 
+                  ? `${subscription.coalition_rev_share.publisher}% you / ${subscription.coalition_rev_share.encypher}% Encypher`
+                  : '65% you / 35% Encypher'}
+              </p>
             </div>
           </CardContent>
+          {subscription && (
+            <div className="px-6 pb-6">
+              <Button
+                variant="outline"
+                onClick={() => portalMutation.mutate()}
+                disabled={portalMutation.isPending}
+              >
+                {portalMutation.isPending ? 'Opening...' : 'Manage Billing'}
+              </Button>
+            </div>
+          )}
         </Card>
 
+        {/* Change Plan Section */}
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
@@ -235,11 +193,14 @@ export default function BillingPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-4 gap-6">
             {plans.map((plan) => {
-              const isCurrent = currentPlan?.planId === plan.id || currentPlan?.planName === plan.name;
+              const isCurrent = currentTier === plan.id;
+              const price = getPrice(plan);
+              const revShare = plan.coalition_rev_share;
+              
               return (
-                <Card key={plan.id} className={`relative ${plan.popular ? 'border-blue-ncs' : ''}`}>
+                <Card key={plan.id} className={`relative ${plan.popular ? 'border-blue-ncs border-2' : ''}`}>
                   {plan.popular && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-ncs text-white text-xs font-semibold px-3 py-1 rounded-full">
                       Most popular
@@ -248,33 +209,98 @@ export default function BillingPage() {
                   <CardHeader>
                     <CardTitle>{plan.name}</CardTitle>
                     <CardDescription>
-                      <span className="text-3xl font-bold text-foreground">${plan.price}</span>
-                      <span className="text-muted-foreground">/{plan.period}</span>
+                      <span className="text-3xl font-bold text-foreground">
+                        {price === 0 ? 'Free' : `$${price}`}
+                      </span>
+                      {price > 0 && <span className="text-muted-foreground">/{getPeriod()}</span>}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
+                    {/* Coalition Rev Share Badge */}
+                    <div className="bg-muted/50 rounded-lg p-2 text-center">
+                      <p className="text-xs text-muted-foreground">Coalition Revenue</p>
+                      <p className="text-sm font-semibold text-delft-blue">
+                        {revShare.publisher}% you / {revShare.encypher}% Encypher
+                      </p>
+                    </div>
+                    
                     <ul className="space-y-2 text-sm text-muted-foreground">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs" /> {feature}
+                      {plan.features.slice(0, 6).map((feature) => (
+                        <li key={feature} className="flex items-start gap-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5 flex-shrink-0" />
+                          <span>{feature}</span>
                         </li>
                       ))}
+                      {plan.features.length > 6 && (
+                        <li className="text-xs text-muted-foreground">
+                          +{plan.features.length - 6} more features
+                        </li>
+                      )}
                     </ul>
+                    
                     <Button
                       variant={isCurrent ? 'outline' : 'primary'}
                       fullWidth
-                      disabled={isCurrent || updatePlanMutation.isPending}
-                      onClick={() => updatePlanMutation.mutate(plan.id)}
+                      disabled={isCurrent || upgradeMutation.isPending}
+                      onClick={() => {
+                        if (plan.id === 'starter') {
+                          toast.info('You are already on the Starter plan.');
+                        } else {
+                          upgradeMutation.mutate({ tier: plan.id, cycle: billingCycle });
+                        }
+                      }}
                     >
-                      {isCurrent ? 'Current plan' : 'Switch to this plan'}
+                      {isCurrent ? 'Current plan' : plan.id === 'starter' ? 'Downgrade' : 'Upgrade'}
                     </Button>
                   </CardContent>
                 </Card>
               );
             })}
+            
+            {/* Enterprise Card */}
+            <Card className="relative border-dashed">
+              <CardHeader>
+                <CardTitle>Enterprise</CardTitle>
+                <CardDescription>
+                  <span className="text-xl font-bold text-foreground">Custom pricing</span>
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-muted/50 rounded-lg p-2 text-center">
+                  <p className="text-xs text-muted-foreground">Coalition Revenue</p>
+                  <p className="text-sm font-semibold text-delft-blue">80% you / 20% Encypher</p>
+                </div>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
+                    Everything in Business
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
+                    Unlimited everything
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
+                    SSO/SCIM integration
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
+                    Dedicated support
+                  </li>
+                </ul>
+                <Button
+                  variant="outline"
+                  fullWidth
+                  onClick={() => window.location.href = 'mailto:sales@encypherai.com?subject=Enterprise%20Inquiry'}
+                >
+                  Contact Sales
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </section>
 
+        {/* Invoices Section */}
         <section className="space-y-4">
           <h3 className="text-2xl font-semibold text-delft-blue">Invoices</h3>
           <Card>
@@ -286,32 +312,29 @@ export default function BillingPage() {
                     <th className="py-3 px-4">Date</th>
                     <th className="py-3 px-4">Amount</th>
                     <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4" />
                   </tr>
                 </thead>
                 <tbody>
                   {invoices.length === 0 && (
                     <tr>
-                      <td colSpan={5} className="py-6 text-center text-muted-foreground">
+                      <td colSpan={4} className="py-6 text-center text-muted-foreground">
                         {isLoading ? 'Loading invoices…' : 'No invoices yet.'}
                       </td>
                     </tr>
                   )}
-                  {invoices.map((invoice) => (
+                  {invoices.map((invoice: Invoice) => (
                     <tr key={invoice.id} className="border-b border-border/60 last:border-0">
-                      <td className="py-3 px-4 font-medium">{invoice.id}</td>
-                      <td className="py-3 px-4">{invoice.date}</td>
-                      <td className="py-3 px-4">${invoice.amount.toFixed(2)}</td>
-                      <td className="py-3 px-4 capitalize">{invoice.status}</td>
-                      <td className="py-3 px-4 text-right">
-                        <a 
-                          href={invoice.url || '#'} 
-                          target="_blank" 
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium border border-border rounded-md hover:bg-muted transition-colors"
-                        >
-                          Download
-                        </a>
+                      <td className="py-3 px-4 font-medium">{invoice.invoice_number}</td>
+                      <td className="py-3 px-4">{formatDate(invoice.created_at)}</td>
+                      <td className="py-3 px-4">${invoice.amount_paid.toFixed(2)}</td>
+                      <td className="py-3 px-4">
+                        <span className={`capitalize px-2 py-1 rounded text-xs font-medium ${
+                          invoice.status === 'paid' ? 'bg-green-100 text-green-800' :
+                          invoice.status === 'open' ? 'bg-yellow-100 text-yellow-800' :
+                          'bg-gray-100 text-gray-800'
+                        }`}>
+                          {invoice.status}
+                        </span>
                       </td>
                     </tr>
                   ))}

@@ -129,16 +129,23 @@ Validation codes follow the C2PA specification (e.g., `manifest.text.corruptedWr
 ## Usage (TypeScript)
 
 ```typescript
-import { embedManifest, extractManifest } from 'c2pa-text';
+import { embedManifest, extractManifest, validateManifest } from 'c2pa-text';
 
 // 1. You have a binary C2PA manifest (JUMBF) as a Uint8Array
 const manifestBytes = new Uint8Array([/* ... */]);
 
-// 2. Embed it into text
+// 2. Validate before embedding (optional but recommended)
+const validation = validateManifest(manifestBytes);
+if (!validation.valid) {
+  console.error(validation.issues);
+  throw new Error('Invalid manifest');
+}
+
+// 3. Embed it into text
 const text = "Hello World";
 const watermarkedText = embedManifest(text, manifestBytes);
 
-// 3. Extract it back
+// 4. Extract it back
 const result = extractManifest(watermarkedText);
 if (result) {
   console.log(result.manifest);   // Uint8Array
@@ -149,18 +156,27 @@ if (result) {
 ## Usage (Rust)
 
 ```rust
-use c2pa_text::{embed_manifest, extract_manifest};
+use c2pa_text::{embed_manifest, extract_manifest, validate_manifest};
 
 // 1. Binary manifest
 let manifest_bytes = b"...";
 
-// 2. Embed
+// 2. Validate before embedding (optional but recommended)
+let validation = validate_manifest(manifest_bytes, true, false);
+if !validation.valid {
+    eprintln!("{}", validation);
+    return Err("Invalid manifest");
+}
+
+// 3. Embed
 let text = "Hello World";
 let watermarked = embed_manifest(text, manifest_bytes);
 
-// 3. Extract
-if let Ok((Some(bytes), clean_text)) = extract_manifest(&watermarked) {
-    println!("Extracted {} bytes", bytes.len());
+// 4. Extract
+if let Ok(result) = extract_manifest(&watermarked) {
+    if let Some(bytes) = result.manifest {
+        println!("Extracted {} bytes", bytes.len());
+    }
 }
 ```
 
@@ -172,12 +188,19 @@ import "github.com/encypherai/c2pa-text/go/c2pa_text"
 // 1. Binary manifest
 manifestBytes := []byte("...")
 
-// 2. Embed
+// 2. Validate before embedding (optional but recommended)
+validation := c2pa_text.ValidateManifest(manifestBytes, true, false)
+if !validation.Valid {
+    fmt.Println(validation)
+    return errors.New("invalid manifest")
+}
+
+// 3. Embed
 text := "Hello World"
 watermarked := c2pa_text.EmbedManifest(text, manifestBytes)
 
-// 3. Extract
-extractedBytes, cleanText, err := c2pa_text.ExtractManifest(watermarked)
+// 4. Extract
+extractedBytes, cleanText, _, _, err := c2pa_text.ExtractManifest(watermarked)
 ```
 
 ## License
