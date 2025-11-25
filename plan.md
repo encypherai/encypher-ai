@@ -202,19 +202,19 @@
 
 #### 9.10.3 Billing API Endpoints
 - [x] 9.10.3.1 GET /api/v1/billing/subscription - Current subscription info
-- [ ] 9.10.3.2 GET /api/v1/billing/usage - Current period usage
+- [x] 9.10.3.2 GET /api/v1/billing/usage - Current period usage with tier limits
 - [x] 9.10.3.3 GET /api/v1/billing/invoices - Invoice history
 - [x] 9.10.3.4 POST /api/v1/billing/upgrade - Initiate upgrade (returns Stripe checkout URL)
 - [x] 9.10.3.5 POST /api/v1/billing/cancel - Cancel subscription (DELETE endpoint)
-- [ ] 9.10.3.6 GET /api/v1/billing/coalition - Coalition earnings summary
+- [x] 9.10.3.6 GET /api/v1/billing/coalition - Coalition earnings summary
 - [x] 9.10.3.7 GET /api/v1/billing/plans - Get all available plans
 - [x] 9.10.3.8 POST /api/v1/billing/checkout - Create Stripe Checkout session
 - [x] 9.10.3.9 GET /api/v1/billing/portal - Get Stripe Billing Portal URL
 
 #### 9.10.4 Dashboard Billing Integration
 - [x] 9.10.4.1 Connect billing page to real API endpoints - lib/api.ts updated
-- [ ] 9.10.4.2 Show real usage stats (signatures, sentences, API calls)
-- [ ] 9.10.4.3 Show coalition earnings dashboard
+- [x] 9.10.4.2 Show real usage stats (signatures, sentences, API calls) - Usage card with progress bars
+- [x] 9.10.4.3 Show coalition earnings dashboard - Earnings card with payout status
 - [x] 9.10.4.4 Add upgrade/downgrade flow UI - Redirects to Stripe Checkout
 - [x] 9.10.4.5 Add payment method management UI - 'Manage Billing' opens Stripe Portal
 

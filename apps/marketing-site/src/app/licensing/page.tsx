@@ -106,60 +106,65 @@ export default function LicensingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-6 max-w-7xl mx-auto">
             
-            {/* WordPress Plugin Tier */}
-            <div className="bg-card rounded-lg border border-border p-8">
-              <div className="mb-6">
-                <h3 className="text-2xl font-bold mb-2 flex items-center gap-2">WordPress Plugin <Badge variant="blue" className="uppercase tracking-wide text-[10px] px-2 py-1">COMING SOON</Badge></h3>
+            {/* Starter Tier */}
+            <div className="bg-card rounded-lg border border-border p-6">
+              <div className="mb-4">
+                <h3 className="text-xl font-bold mb-2">Starter</h3>
                 <p className="text-sm text-muted-foreground">
-                  For bloggers, small publishers, and CMS users
+                  For bloggers and small publishers
                 </p>
               </div>
 
-              <div className="mb-6">
-                <div className="text-3xl font-bold mb-2">Free to Start</div>
+              <div className="mb-4">
+                <div className="text-3xl font-bold mb-1">Free</div>
                 <p className="text-sm text-muted-foreground">
-                  Revenue share on licensing you generate.<br />
-                  No licensing? No cost.
+                  Forever free for basic usage
                 </p>
               </div>
 
-              <ul className="space-y-3 mb-8">
+              {/* Coalition Rev Share Badge */}
+              <div className="bg-primary/10 rounded-lg p-3 mb-4 text-center">
+                <p className="text-xs text-muted-foreground">Coalition Revenue</p>
+                <p className="text-sm font-semibold text-primary">65% you / 35% Encypher</p>
+              </div>
+
+              <ul className="space-y-2 mb-6">
                 <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Self-service installation (WordPress, Drupal, Joomla)</span>
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Unlimited C2PA signing</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Basic C2PA content authentication</span>
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">Unlimited verifications</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Document-level tracking</span>
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">2 API keys</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm">Community support</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Usage dashboard</span>
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span className="text-sm">7-day analytics</span>
                 </li>
               </ul>
 
-              <div className="mb-6 pt-6 border-t border-border">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Best for:</strong> Independent publishers, bloggers, small news sites, niche publications
+              <div className="mb-4 pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground">
+                  <strong>Best for:</strong> Independent bloggers, small sites
                 </p>
               </div>
 
               <Button asChild className="w-full" variant="outline">
-                {/* <Link href="/wordpress-plugin"> */}
+                <Link href="/dashboard">
                   <span className="flex items-center justify-center gap-2">
-                    Get Plugin <Badge variant="blue" className="uppercase tracking-wide text-[10px]">COMING SOON</Badge> <ArrowRight className="ml-2 h-4 w-4" />
+                    Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
                   </span>
-                {/* </Link> */}
+                </Link>
               </Button>
             </div>
 
