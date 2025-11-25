@@ -3,9 +3,20 @@
 //! This module implements the C2PA Text Embedding Standard, allowing binary data
 //! (typically a C2PA JUMBF Manifest) to be embedded into valid UTF-8 strings using
 //! invisible Unicode Variation Selectors.
+//!
+//! # Validation
+//!
+//! Use [`validate_manifest`] to check manifest structure before embedding.
+//! This helps catch issues early and provides detailed diagnostics.
 
 use std::char;
 use unicode_normalization::UnicodeNormalization;
+
+pub mod validator;
+pub use validator::{
+    validate_jumbf_structure, validate_manifest, validate_wrapper_bytes,
+    ValidationCode, ValidationIssue, ValidationResult,
+};
 
 // ---------------------- Constants -------------------------------------------
 

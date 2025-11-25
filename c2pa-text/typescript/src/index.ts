@@ -1,6 +1,20 @@
 /**
  * C2PA Text Manifest Wrapper Reference Implementation.
+ *
+ * Validation:
+ *   Use validateManifest() to check manifest structure before embedding.
+ *   This helps catch issues early and provides detailed diagnostics.
  */
+
+// Re-export validation utilities
+export {
+  ValidationCode,
+  ValidationIssue,
+  ValidationResult,
+  validateManifest,
+  validateJumbfStructure,
+  validateWrapperBytes,
+} from './validator';
 
 // Constants
 const MAGIC = new Uint8Array([0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00]); // "C2PATXT\0"
