@@ -242,7 +242,7 @@
 - [x] 9.10.7.2 Log all API key operations - AuditAction enum defined
 - [x] 9.10.7.3 Log all signing/verification operations - AuditAction enum defined
 - [x] 9.10.7.4 GET /api/v1/audit-logs endpoint - Paginated with filters
-- [ ] 9.10.7.5 Dashboard UI for audit log viewing
+- [x] 9.10.7.5 Dashboard UI for audit log viewing - /audit-logs page
 - [x] 9.10.7.6 Export audit logs to CSV/JSON - GET /audit-logs/export
 
 #### 9.10.8 Team Management (Business+ tier)
@@ -252,7 +252,7 @@
 - [x] 9.10.8.4 DELETE /api/v1/org/members/{id} endpoint - With role checks
 - [x] 9.10.8.5 PATCH /api/v1/org/members/{id}/role endpoint - With hierarchy enforcement
 - [x] 9.10.8.6 Email invite flow with accept/decline - POST /accept-invite endpoint
-- [ ] 9.10.8.7 Dashboard team management UI
+- [x] 9.10.8.7 Dashboard team management UI - /team page
 
 #### 9.10.9 Marketing Site Pricing Page
 - [x] 9.10.9.1 Update pricing table with new tiers - Starter tier added
