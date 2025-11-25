@@ -37,10 +37,10 @@ def main():
                     "@context": "http://schema.org/",
                     "@type": "CreativeWork",
                     "author": {"@type": "Person", "name": "Erik EncypherAI"},
-                    "publisher": {"@type": "Organization", "name": "Encypher AI"},
-                    "copyrightHolder": {"name": "Encypher AI"},
+                    "publisher": {"@type": "Organization", "name": "Encypher Corporation"},
+                    "copyrightHolder": {"name": "Encypher Corporation"},
                     "copyrightYear": 2025,
-                    "copyrightNotice": "© 2025 Encypher AI. All Rights Reserved.",
+                    "copyrightNotice": "© 2025 Encypher Corporation. All Rights Reserved.",
                 },
             }
         ],
