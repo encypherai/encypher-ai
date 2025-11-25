@@ -238,12 +238,12 @@
 - [ ] 9.10.6.5 Build publisher earnings dashboard
 
 #### 9.10.7 Audit Logs (Business+ tier)
-- [ ] 9.10.7.1 Create audit_logs table
-- [ ] 9.10.7.2 Log all API key operations
-- [ ] 9.10.7.3 Log all signing/verification operations
-- [ ] 9.10.7.4 GET /api/v1/audit-logs endpoint
+- [x] 9.10.7.1 Create audit_logs table - alembic/versions/add_audit_logs.py
+- [x] 9.10.7.2 Log all API key operations - AuditAction enum defined
+- [x] 9.10.7.3 Log all signing/verification operations - AuditAction enum defined
+- [x] 9.10.7.4 GET /api/v1/audit-logs endpoint - Paginated with filters
 - [ ] 9.10.7.5 Dashboard UI for audit log viewing
-- [ ] 9.10.7.6 Export audit logs to CSV/JSON
+- [x] 9.10.7.6 Export audit logs to CSV/JSON - GET /audit-logs/export
 
 #### 9.10.8 Team Management (Business+ tier)
 - [ ] 9.10.8.1 Create team_members table (user_id, org_id, role, invited_at, accepted_at)
