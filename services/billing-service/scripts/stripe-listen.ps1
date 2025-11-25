@@ -1,6 +1,7 @@
 # Stripe CLI Local Webhook Listener
 # 
 # This script forwards Stripe webhook events to your local billing service.
+# Works with both Docker Compose and standalone service.
 # 
 # Prerequisites:
 #   1. Install Stripe CLI: https://stripe.com/docs/stripe-cli
@@ -9,14 +10,18 @@
 #   2. Login to Stripe: stripe login
 #
 # Usage:
-#   .\scripts\stripe-listen.ps1
+#   .\scripts\stripe-listen.ps1           # Default: localhost:8007
+#   .\scripts\stripe-listen.ps1 -Port 8007  # Custom port
 #
 # The script will output a webhook signing secret (whsec_...) that you need
 # to add to your .env file as STRIPE_WEBHOOK_SECRET
 
-$BILLING_SERVICE_PORT = 8007
+param(
+    [int]$Port = 8007
+)
+
 $WEBHOOK_PATH = "/api/v1/webhooks/stripe"
-$FORWARD_URL = "http://localhost:$BILLING_SERVICE_PORT$WEBHOOK_PATH"
+$FORWARD_URL = "http://localhost:$Port$WEBHOOK_PATH"
 
 Write-Host ""
 Write-Host "========================================" -ForegroundColor Cyan

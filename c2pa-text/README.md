@@ -101,6 +101,31 @@ watermarked_text = embed_manifest(text, manifest_bytes)
 extracted_bytes, clean_text = extract_manifest(watermarked_text)
 ```
 
+### Validation (Python)
+
+Validate manifest structure before embedding to catch issues early:
+
+```python
+from c2pa_text import validate_manifest, embed_manifest
+
+# Validate before embedding
+result = validate_manifest(manifest_bytes)
+if result.valid:
+    watermarked = embed_manifest(text, manifest_bytes)
+else:
+    print(result)  # Shows detailed validation issues
+    # Example output:
+    # Validation failed:
+    #   - [manifest.jumbf.truncated] JUMBF truncated: declared size 100, actual 8
+```
+
+Available validation functions:
+- `validate_manifest(bytes)` - Validate JUMBF structure before embedding
+- `validate_jumbf_structure(bytes, strict=True)` - Strict C2PA compliance checks
+- `validate_wrapper_bytes(bytes)` - Validate pre-encoded wrapper bytes
+
+Validation codes follow the C2PA specification (e.g., `manifest.text.corruptedWrapper`).
+
 ## Usage (TypeScript)
 
 ```typescript

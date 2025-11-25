@@ -172,7 +172,7 @@ def validate_jumbf_structure(jumbf_bytes: bytes, strict: bool = False) -> Valida
     if box_type != JUMBF_SUPERBOX_TYPE:
         result.add_issue(
             ValidationCode.INVALID_JUMBF_HEADER,
-            f"Expected JUMBF superbox type 'jumb', got '{box_type.decode('ascii', errors='replace')}'",
+            f"Expected JUMBF superbox type 'jumb', got '{box_type!r}'",
             offset=4,
             context=f"box_type={box_type.hex()}",
         )
@@ -190,13 +190,13 @@ def validate_jumbf_structure(jumbf_bytes: bytes, strict: bool = False) -> Valida
             )
             return result
 
-        desc_size = struct.unpack(">I", jumbf_bytes[header_size : header_size + 4])[0]
+        _desc_size = struct.unpack(">I", jumbf_bytes[header_size : header_size + 4])[0]  # noqa: F841
         desc_type = jumbf_bytes[header_size + 4 : header_size + 8]
 
         if desc_type != JUMBF_DESC_TYPE:
             result.add_issue(
                 ValidationCode.MISSING_DESCRIPTION_BOX,
-                f"Expected description box 'jumd', got '{desc_type.decode('ascii', errors='replace')}'",
+                f"Expected description box 'jumd', got '{desc_type!r}'",
                 offset=header_size + 4,
             )
             return result
@@ -209,7 +209,7 @@ def validate_jumbf_structure(jumbf_bytes: bytes, strict: bool = False) -> Valida
             if found_uuid != C2PA_MANIFEST_STORE_UUID:
                 result.add_issue(
                     ValidationCode.INVALID_C2PA_UUID,
-                    f"Invalid C2PA manifest store UUID",
+                    "Invalid C2PA manifest store UUID",
                     offset=uuid_offset,
                     context=f"expected={C2PA_MANIFEST_STORE_UUID.hex()}, found={found_uuid.hex()}",
                 )
@@ -276,7 +276,7 @@ def validate_wrapper_bytes(wrapper_bytes: bytes) -> ValidationResult:
     Returns:
         ValidationResult with detailed diagnostics.
     """
-    from . import MAGIC, VERSION, _HEADER_SIZE, _HEADER_STRUCT
+    from . import _HEADER_SIZE, _HEADER_STRUCT, MAGIC, VERSION
 
     result = ValidationResult(valid=True)
 
@@ -328,7 +328,7 @@ def validate_wrapper_bytes(wrapper_bytes: bytes) -> ValidationResult:
     if length != actual_jumbf_length:
         result.add_issue(
             ValidationCode.LENGTH_MISMATCH,
-            f"Length mismatch: header declares {length} bytes, actual JUMBF is {actual_jumbf_length}",
+            f"Length mismatch: declares {length} bytes, actual {actual_jumbf_length}",
             offset=9,
         )
         return result

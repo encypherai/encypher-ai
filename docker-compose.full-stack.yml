@@ -279,11 +279,21 @@ services:
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
       REDIS_URL: redis://redis-cache:6379
       AUTH_SERVICE_URL: http://auth-service:8001
+      ANALYTICS_SERVICE_URL: http://analytics-service:8006
       SERVICE_NAME: billing-service
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8007
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      API_GATEWAY_URL: http://localhost:8000
+      # Stripe Configuration - Set these in .env file or override here
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_CONNECT_WEBHOOK_SECRET: ${STRIPE_CONNECT_WEBHOOK_SECRET:-}
+      STRIPE_PRICE_PROFESSIONAL_MONTHLY: ${STRIPE_PRICE_PROFESSIONAL_MONTHLY:-}
+      STRIPE_PRICE_PROFESSIONAL_ANNUAL: ${STRIPE_PRICE_PROFESSIONAL_ANNUAL:-}
+      STRIPE_PRICE_BUSINESS_MONTHLY: ${STRIPE_PRICE_BUSINESS_MONTHLY:-}
+      STRIPE_PRICE_BUSINESS_ANNUAL: ${STRIPE_PRICE_BUSINESS_ANNUAL:-}
     depends_on:
       postgres:
         condition: service_healthy

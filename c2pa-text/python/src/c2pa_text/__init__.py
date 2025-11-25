@@ -20,11 +20,10 @@ from .validator import (
     ValidationCode,
     ValidationIssue,
     ValidationResult,
-    validate_manifest,
     validate_jumbf_structure,
+    validate_manifest,
     validate_wrapper_bytes,
 )
-
 
 # ---------------------- Constants -------------------------------------------
 
@@ -104,10 +103,10 @@ def embed_manifest(text: str, manifest_bytes: bytes) -> str:
 def find_wrapper_info(text: str) -> Optional[Tuple[bytes, int, int]]:
     """
     Locate and decode the C2PA wrapper in the text.
-    
+
     Args:
         text: The text to search.
-        
+
     Returns:
         Tuple(manifest_bytes, start_index, end_index) or None if not found/valid.
         start_index and end_index allow extracting or excluding the wrapper.
@@ -154,13 +153,13 @@ def find_wrapper_info(text: str) -> Optional[Tuple[bytes, int, int]]:
 def extract_manifest(text: str) -> Tuple[Optional[bytes], str]:
     """
     Extract a C2PA manifest from text.
-    
+
     Searches for the standard C2PA wrapper, decodes it, and returns the manifest
     and the clean text (NFC normalized).
-    
+
     Args:
         text: The text containing the embedding.
-        
+
     Returns:
         Tuple(manifest_bytes, clean_text).
         manifest_bytes is None if no valid wrapper is found.
