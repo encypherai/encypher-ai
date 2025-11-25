@@ -231,11 +231,11 @@
 - [ ] 9.10.5.10 Test end-to-end checkout flow
 
 #### 9.10.6 Coalition Revenue Tracking
-- [ ] 9.10.6.1 Track content corpus size per organization
-- [ ] 9.10.6.2 Calculate revenue attribution when AI deals close
-- [ ] 9.10.6.3 Apply tier-based rev share (65/35 → 85/15)
-- [ ] 9.10.6.4 Generate monthly earnings statements
-- [ ] 9.10.6.5 Build publisher earnings dashboard
+- [x] 9.10.6.1 Track content corpus size per organization - coalition_content_stats table
+- [x] 9.10.6.2 Calculate revenue attribution when AI deals close - attribute_deal_revenue()
+- [x] 9.10.6.3 Apply tier-based rev share (65/35 → 85/15) - TIER_REV_SHARE config
+- [x] 9.10.6.4 Generate monthly earnings statements - coalition_earnings table
+- [x] 9.10.6.5 Build publisher earnings dashboard - GET /coalition/dashboard
 
 #### 9.10.7 Audit Logs (Business+ tier)
 - [x] 9.10.7.1 Create audit_logs table - alembic/versions/add_audit_logs.py
