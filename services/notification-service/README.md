@@ -36,4 +36,4 @@ Service at: http://localhost:8008
 
 ## License
 
-Proprietary - Encypher AI
+Proprietary - Encypher Corporation

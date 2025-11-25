@@ -209,4 +209,4 @@ async def verify_token(token: str):
 
 ## License
 
-Proprietary - Encypher AI
+Proprietary - Encypher Corporation

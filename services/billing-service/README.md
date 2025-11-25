@@ -122,4 +122,4 @@ Optional:
 
 ## License
 
-Proprietary - Encypher AI
+Proprietary - Encypher Corporation

@@ -403,4 +403,4 @@ curl -X POST http://localhost:8001/api/v1/auth/verify \
 
 ## 📄 License
 
-Proprietary - Encypher AI. All rights reserved.
+Proprietary - Encypher Corporation. All rights reserved.

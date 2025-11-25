@@ -228,4 +228,4 @@ Example: `ency_Xk9mP2vN8qR5tY7wZ3bC6fH1jL4nM0sA`
 
 ## License
 
-Proprietary - Encypher AI
+Proprietary - Encypher Corporation

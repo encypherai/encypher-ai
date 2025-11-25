@@ -72,7 +72,7 @@ export default function SignupPage() {
           <div className="inline-flex items-center justify-center mb-4">
             <Image
               src={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/encypher_full_encoded_nobg.png`}
-              alt="Encypher AI Logo"
+              alt="Encypher Corporation Logo"
               width={160}
               height={60}
               priority

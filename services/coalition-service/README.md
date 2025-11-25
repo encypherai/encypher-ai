@@ -177,4 +177,4 @@ ruff check app/
 
 ## License
 
-Copyright © 2025 Encypher AI
+Copyright © 2025 Encypher Corporation

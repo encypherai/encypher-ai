@@ -125,7 +125,7 @@ function VerifyEmailContent() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="items-center">
           <div className="flex items-center justify-center">
-            <Image src="/encypher_full_nobg.png" alt="Encypher AI Logo" width={120} height={60} />
+            <Image src="/encypher_full_nobg.png" alt="Encypher Corporation Logo" width={120} height={60} />
           </div>
           <CardTitle className="text-center text-2xl">Verifying Your Account</CardTitle>
         </CardHeader>

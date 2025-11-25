@@ -157,12 +157,18 @@ async def execute_signing(
                 sentence_records
             )
 
+        # Update usage counters
+        # sentences_tracked_this_month is incremented when sentence-level tracking is used
+        sentence_tracking_enabled = organization.get("sentence_tracking_enabled", False)
+        sentences_to_track = len(sentences) if sentence_tracking_enabled else 0
+        
         await db.execute(
             text(
                 """
                 UPDATE organizations
                 SET documents_signed = documents_signed + 1,
                     sentences_signed = sentences_signed + :count,
+                    sentences_tracked_this_month = sentences_tracked_this_month + :tracked,
                     api_calls_this_month = api_calls_this_month + 1,
                     updated_at = :updated_at
                 WHERE organization_id = :org_id
@@ -171,6 +177,7 @@ async def execute_signing(
             {
                 "org_id": organization["organization_id"],
                 "count": len(sentences),
+                "tracked": sentences_to_track,
                 "updated_at": current_time,
             },
         )

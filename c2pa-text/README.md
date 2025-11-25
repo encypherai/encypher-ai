@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://encypherai.com">
-    <img src="https://encypherai.com/assets/logo.png" alt="Encypher AI Logo" width="200">
+    <img src="https://encypherai.com/assets/logo.png" alt="Encypher Corporation Logo" width="200">
   </a>
 
   # c2pa-text

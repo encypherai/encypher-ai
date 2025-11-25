@@ -3,7 +3,7 @@ import AIDemo from './components/AIDemo';
 import AISummary from '@/components/seo/AISummary';
 
 export const metadata: Metadata = {
-  title: 'AI Performance Analytics | Encypher AI Demo',
+  title: 'AI Performance Analytics | Encypher Corporation Demo',
   description: 'Stop flying blind. Track which model parameters drive viral performance. Google Analytics for AI with regulatory compliance built in.',
   keywords: 'AI analytics, model performance, C2PA, AI compliance, EU AI Act, model optimization, R&D intelligence',
   openGraph: {
