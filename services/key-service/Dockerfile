@@ -6,27 +6,24 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
-    postgresql-client \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install UV
 RUN pip install uv
 
-# Copy dependency files
+# Copy dependency files first for better caching
 COPY pyproject.toml ./
-
-# Install dependencies using UV
-RUN uv pip install --system -r pyproject.toml
+COPY README.md ./
 
 # Copy application code
 COPY app ./app
 
-# Expose port
-EXPOSE 8003
+# Install dependencies using UV
+RUN uv pip install --system .
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8003/health')"
+# Expose port (Railway provides PORT dynamically)
+EXPOSE 8004
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8003"]
+# Run the application - use PORT env var for Railway compatibility
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8004}"]
