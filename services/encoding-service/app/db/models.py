@@ -35,8 +35,8 @@ class EncodedDocument(Base):
     # Manifest
     manifest = Column(JSON, nullable=False)
     
-    # Metadata
-    metadata = Column(JSON, nullable=True)
+    # Extra metadata
+    extra_metadata = Column(JSON, nullable=True)
     format = Column(String, nullable=False, default="text")
     encoding_method = Column(String, nullable=False, default="unicode")
     

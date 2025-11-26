@@ -22,7 +22,7 @@ class UserProfile(Base):
     website = Column(String, nullable=True)
     
     preferences = Column(JSON, nullable=True)
-    metadata = Column(JSON, nullable=True)
+    extra_metadata = Column(JSON, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
@@ -42,7 +42,7 @@ class Team(Base):
     description = Column(String, nullable=True)
     is_active = Column(Boolean, default=True)
     
-    metadata = Column(JSON, nullable=True)
+    extra_metadata = Column(JSON, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

@@ -111,7 +111,7 @@ class ContentAccessLog(Base):
     accessed_at = Column(DateTime, nullable=False, default=datetime.utcnow, index=True)
     access_type = Column(String(50), nullable=True)  # training, inference, verification
     ai_company_name = Column(String(255), nullable=False)
-    metadata = Column(JSONB, nullable=True)
+    extra_metadata = Column(JSONB, nullable=True)
 
     # Relationships
     agreement = relationship("LicensingAgreement", back_populates="access_logs")
