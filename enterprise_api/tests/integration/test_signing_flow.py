@@ -199,6 +199,7 @@ async def _prepare_organization_with_api_key(
                 INSERT INTO organizations (
                     id,
                     name,
+                    email,
                     tier,
                     private_key_encrypted,
                     certificate_pem,
@@ -209,6 +210,7 @@ async def _prepare_organization_with_api_key(
                 VALUES (
                     :id,
                     :name,
+                    :email,
                     :tier,
                     :private_key_encrypted,
                     :certificate_pem,
@@ -222,6 +224,7 @@ async def _prepare_organization_with_api_key(
             {
                 "id": organization_id,
                 "name": organization_name,
+                "email": f"test-{organization_id}@example.com",
                 "tier": "enterprise",
                 "private_key_encrypted": encrypted_private_key,
                 "certificate_pem": certificate_pem,
@@ -238,18 +241,20 @@ async def _prepare_organization_with_api_key(
                 INSERT INTO api_keys (
                     id,
                     key_hash,
+                    key_prefix,
                     organization_id,
                     name,
-                    permissions,
+                    scopes,
                     created_at,
                     is_active
                 )
                 VALUES (
                     :id,
                     :key_hash,
+                    :key_prefix,
                     :organization_id,
                     :name,
-                    :permissions,
+                    :scopes,
                     :created_at,
                     TRUE
                 )
@@ -259,9 +264,10 @@ async def _prepare_organization_with_api_key(
             {
                 "id": f"key_{uuid.uuid4().hex[:12]}",
                 "key_hash": api_key,  # In tests, we use the key directly as hash
+                "key_prefix": api_key[:8],  # First 8 chars as prefix
                 "organization_id": organization_id,
                 "name": "Integration Test Key",
-                "permissions": '["sign", "verify", "lookup"]',
+                "scopes": '["sign", "verify", "lookup"]',
                 "created_at": timestamp,
             },
         )
@@ -431,11 +437,14 @@ async def real_db_session_factory():
     """
     Create a PostgreSQL session factory for integration tests.
     Uses the Docker PostgreSQL instance for full compatibility.
+    
+    Note: Uses core database for organization/key data.
+    Content data (documents, sentences) goes to content database.
     """
-    # Use PostgreSQL from Docker
+    # Use PostgreSQL from Docker - Core database for org/key data
     db_url = os.getenv(
-        "TEST_DATABASE_URL",
-        "postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher"
+        "CORE_DATABASE_URL",
+        "postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core"
     )
 
     engine = create_async_engine(
@@ -454,10 +463,9 @@ async def real_db_session_factory():
     db_module.engine = engine
     db_module.async_session_factory = session_factory
     settings.database_url = db_url
-    if not old_key:
-        settings.key_encryption_key = "0" * 64
-    if not old_nonce:
-        settings.encryption_nonce = "0" * 24
+    # Always use valid hex keys for integration tests
+    settings.key_encryption_key = "0" * 64
+    settings.encryption_nonce = "0" * 24
 
     try:
         yield session_factory
@@ -475,7 +483,7 @@ async def real_db_session_factory():
         await engine.dispose()
 
 
-@pytest.mark.skip(reason="Integration test requires schema migration - pending unified schema update")
+@pytest.mark.skip(reason="Requires full microservices stack (key-service) - run with docker-compose.full-stack.yml")
 @pytest.mark.real_db
 @pytest.mark.asyncio
 async def test_sign_verify_lookup_flow_with_real_database(real_db_session_factory):
@@ -501,7 +509,7 @@ async def test_sign_verify_lookup_flow_with_real_database(real_db_session_factor
     assert result["sentences"][0].startswith("This integration test")
 
 
-@pytest.mark.skip(reason="Integration test requires schema migration - pending unified schema update")
+@pytest.mark.skip(reason="Requires full microservices stack (key-service) - run with docker-compose.full-stack.yml")
 @pytest.mark.real_db
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
@@ -572,7 +580,7 @@ async def test_sign_verify_lookup_flow_various_content_types(
     assert result["sentences"]
 
 
-@pytest.mark.skip(reason="Integration test requires schema migration - pending unified schema update")
+@pytest.mark.skip(reason="Requires full microservices stack (key-service) - run with docker-compose.full-stack.yml")
 @pytest.mark.real_db
 @pytest.mark.asyncio
 async def test_streaming_text_verification(real_db_session_factory):
