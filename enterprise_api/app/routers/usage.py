@@ -1,6 +1,5 @@
 """Usage metering router for billing integration."""
 from datetime import datetime, timezone
-from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel

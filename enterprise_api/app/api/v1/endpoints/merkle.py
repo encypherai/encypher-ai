@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.dependencies import get_current_organization
 from app.schemas.merkle import (
     DocumentEncodeRequest,
     DocumentEncodeResponse,
@@ -28,6 +29,25 @@ from app.services.merkle_service import MerkleService
 from app.models.merkle import MerkleRoot
 
 logger = logging.getLogger(__name__)
+
+
+def require_merkle_feature(organization: dict = Depends(get_current_organization)) -> dict:
+    """
+    Dependency that requires merkle_enabled feature.
+    
+    Raises HTTPException 403 if the organization doesn't have merkle features enabled.
+    """
+    features = organization.get("features", {})
+    if not features.get("merkle_enabled", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_NOT_AVAILABLE",
+                "message": "Merkle tree features require Business tier or higher",
+                "upgrade_url": "/billing/upgrade",
+            }
+        )
+    return organization
 
 router = APIRouter(prefix="/enterprise/merkle", tags=["Enterprise - Merkle Trees"])
 
@@ -72,8 +92,7 @@ router = APIRouter(prefix="/enterprise/merkle", tags=["Enterprise - Merkle Trees
 async def encode_document(
     request: DocumentEncodeRequest,
     db: AsyncSession = Depends(get_db),
-    # TODO: Add authentication dependency
-    # current_org: Organization = Depends(get_current_organization)
+    organization: dict = Depends(require_merkle_feature),
 ) -> DocumentEncodeResponse:
     """
     Encode a document into Merkle trees.
@@ -81,6 +100,7 @@ async def encode_document(
     Args:
         request: Document encoding request
         db: Database session
+        organization: Authenticated organization with merkle feature
     
     Returns:
         DocumentEncodeResponse with root hashes and metadata
@@ -89,29 +109,13 @@ async def encode_document(
         HTTPException: If encoding fails
     """
     start_time = time.time()
-    
-    # TODO: Replace with actual organization from auth
-    organization_id = "org_demo"
+    organization_id = organization["organization_id"]
     
     try:
         logger.info(
             f"Encoding document {request.document_id} for org {organization_id} "
             f"at levels: {request.segmentation_levels}"
         )
-        
-        # TODO: Check organization tier and quota
-        # if not current_org.merkle_enabled:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="Merkle tree features not enabled for this organization"
-        #     )
-        
-        # TODO: Check and update quota
-        # if current_org.merkle_calls_this_month >= current_org.monthly_merkle_quota:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_403_FORBIDDEN,
-        #         detail="Monthly Merkle tree quota exceeded"
-        #     )
         
         # Encode the document
         roots: Dict[str, MerkleRoot] = await MerkleService.encode_document(
@@ -130,7 +134,7 @@ async def encode_document(
         
         for level, root in roots.items():
             roots_response[level] = MerkleRootResponse(
-                root_id=root.root_id,
+                root_id=str(root.id),  # Use 'id' and convert UUID to string
                 document_id=root.document_id,
                 root_hash=root.root_hash,
                 tree_depth=root.tree_depth,
@@ -201,7 +205,8 @@ async def encode_document(
 )
 async def find_sources(
     request: SourceAttributionRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    organization: dict = Depends(require_merkle_feature),
 ) -> SourceAttributionResponse:
     """
     Find source documents containing a text segment.
@@ -303,7 +308,8 @@ async def find_sources(
 )
 async def detect_plagiarism(
     request: PlagiarismDetectionRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    organization: dict = Depends(require_merkle_feature),
 ) -> PlagiarismDetectionResponse:
     """
     Detect plagiarism in target text.
@@ -311,14 +317,13 @@ async def detect_plagiarism(
     Args:
         request: Plagiarism detection request
         db: Database session
+        organization: Authenticated organization with merkle feature
     
     Returns:
         PlagiarismDetectionResponse with analysis results
     """
     start_time = time.time()
-    
-    # TODO: Replace with actual organization from auth
-    organization_id = "org_demo"
+    organization_id = organization["organization_id"]
     
     try:
         # Generate attribution report
@@ -366,7 +371,7 @@ async def detect_plagiarism(
         
         return PlagiarismDetectionResponse(
             success=True,
-            report_id=report.report_id,
+            report_id=str(report.id),  # Use 'id' and convert UUID to string
             target_document_id=report.target_document_id,
             total_segments=report.total_segments,
             matched_segments=report.matched_segments,

@@ -34,6 +34,9 @@ from app.middleware.public_rate_limiter import public_rate_limiter
 from app.middleware.api_key_auth import get_api_key_from_header, authenticate_api_key
 from app.utils.c2pa_verifier import c2pa_verifier
 from app.utils.crypto_utils import load_organization_public_key
+from app.services.embedding_service import EmbeddingService
+
+embedding_service = EmbeddingService()
 
 logger = logging.getLogger(__name__)
 

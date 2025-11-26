@@ -7,7 +7,6 @@ ORM models have been updated to use unified schema (id as PK).
 import pytest
 import uuid
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import merkle as merkle_crud
 
@@ -322,7 +321,7 @@ class TestMerkleProofCacheCRUD:
         )
         
         # Create a proof that expires immediately
-        cached = await merkle_crud.create_proof_cache(
+        await merkle_crud.create_proof_cache(
             db=db,
             target_hash="expired" + "0" * 57,
             root_id=root.id,

@@ -4,9 +4,10 @@ import time
 import docker
 import socket
 import numpy as np
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy import text
 from unittest.mock import patch, AsyncMock
+from starlette.testclient import TestClient
 
 # Import app components
 from app.main import app

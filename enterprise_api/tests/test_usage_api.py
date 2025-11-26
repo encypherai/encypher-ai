@@ -1,8 +1,6 @@
 """Tests for usage metering API endpoints."""
 import pytest
 from httpx import AsyncClient
-from unittest.mock import patch, MagicMock
-from datetime import datetime, timezone
 
 
 class TestUsageEndpoints:

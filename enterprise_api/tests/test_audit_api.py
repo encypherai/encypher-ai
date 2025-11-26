@@ -1,7 +1,6 @@
 """Tests for audit logging API endpoints."""
 import pytest
 from httpx import AsyncClient
-from datetime import datetime, timezone
 
 
 class TestAuditLogEndpoints:

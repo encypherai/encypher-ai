@@ -4,9 +4,8 @@ Tests for Merkle tree API endpoints.
 These tests verify the FastAPI endpoints work correctly.
 Uses PostgreSQL via Docker for full compatibility.
 
-NOTE: These tests are currently skipped because:
-1. The merkle router needs authentication dependency added
-2. Tests need to be updated to use the content database for document storage
+Authentication is now implemented via require_merkle_feature dependency.
+Uses business_auth_headers fixture which has merkle_enabled=True.
 """
 import pytest
 import uuid
@@ -15,8 +14,6 @@ from httpx import AsyncClient
 # Uses fixtures from conftest.py:
 # - async_client: AsyncClient connected to the app with PostgreSQL
 # - business_auth_headers: Business tier API key (has merkle_enabled)
-
-pytestmark = pytest.mark.skip(reason="Merkle router needs authentication dependency - pending implementation")
 
 
 class TestDocumentEncodeEndpoint:

@@ -42,7 +42,7 @@ async def load_organization_private_key(
     # Fetch potentially needed columns: encrypted key and KMS key ID
     try:
         result = await db.execute(
-            text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE organization_id = :org_id"),
+            text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE id = :org_id"),
             {"org_id": organization_id}
         )
         row = result.fetchone()
@@ -105,7 +105,7 @@ async def load_organization_public_key(
         return private_key.public_key()
     
     result = await db.execute(
-        text("SELECT public_key FROM organizations WHERE organization_id = :org_id"),
+        text("SELECT public_key FROM organizations WHERE id = :org_id"),
         {"org_id": organization_id}
     )
     row = result.fetchone()

@@ -109,7 +109,7 @@ async def list_schemas(
     organization_id = organization["organization_id"]
     # Build query - show org's schemas and public schemas
     stmt = select(C2PASchema).where(
-        (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public == True)
+        (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public)
     )
     
     if is_public is not None:
@@ -145,7 +145,7 @@ async def get_schema(
     organization_id = organization["organization_id"]
     stmt = select(C2PASchema).where(
         C2PASchema.id == schema_id,
-        (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public == True)
+        (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public)
     )
     result = await db.execute(stmt)
     schema = result.scalar_one_or_none()
@@ -238,7 +238,7 @@ async def validate_assertion(
     # Get schema if it exists
     stmt = select(C2PASchema).where(
         C2PASchema.label == request.label,
-        (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public == True)
+        (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public)
     ).order_by(C2PASchema.created_at.desc())
     
     result = await db.execute(stmt)
@@ -304,7 +304,7 @@ async def list_templates(
     """List available assertion templates."""
     organization_id = organization["organization_id"]
     stmt = select(C2PAAssertionTemplate).where(
-        (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public == True)
+        (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public)
     )
     
     if category:
@@ -340,7 +340,7 @@ async def get_template(
     organization_id = organization["organization_id"]
     stmt = select(C2PAAssertionTemplate).where(
         C2PAAssertionTemplate.id == template_id,
-        (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public == True)
+        (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public)
     )
     result = await db.execute(stmt)
     template = result.scalar_one_or_none()

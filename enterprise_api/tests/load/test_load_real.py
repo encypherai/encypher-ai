@@ -12,7 +12,6 @@ import time
 from typing import List
 import uuid
 
-import httpx
 import numpy as np
 import pytest
 import pytest_asyncio
@@ -107,7 +106,7 @@ class TestRealLoadPerformance:
             max_lat = np.max(latencies)
             
             print("\n=== Sign Endpoint Load Test Results ===")
-            print(f"Total Requests: 50")
+            print("Total Requests: 50")
             print(f"Successful: {len(latencies)}")
             print(f"Total Time: {total_time:.2f}s")
             print(f"Throughput: {len(latencies)/total_time:.1f} req/s")
@@ -179,7 +178,7 @@ class TestRealLoadPerformance:
             avg = np.mean(latencies)
             
             print("\n=== Verify Endpoint Load Test Results ===")
-            print(f"Total Requests: 50")
+            print("Total Requests: 50")
             print(f"Successful: {len(latencies)}")
             print(f"Total Time: {total_time:.2f}s")
             print(f"Throughput: {len(latencies)/total_time:.1f} req/s")
@@ -213,7 +212,7 @@ class TestRealLoadPerformance:
                 )
                 t1 = time.perf_counter()
                 return response.status_code == 200, (t1 - t0) * 1000
-            except Exception as e:
+            except Exception:
                 return False, 0
         
         # Run 20 concurrent requests in batches of 5
@@ -233,7 +232,7 @@ class TestRealLoadPerformance:
         successes = sum(1 for success, _ in all_results if success)
         latencies = [lat for success, lat in all_results if success and lat > 0]
         
-        print(f"\n=== Concurrent Sign Test Results ===")
+        print("\n=== Concurrent Sign Test Results ===")
         print(f"Total Requests: {num_requests}")
         print(f"Successful: {successes}")
         print(f"Total Time: {total_time:.2f}s")
@@ -299,8 +298,8 @@ class TestRealLoadPerformance:
             avg = np.mean(latencies)
             p95 = np.percentile(latencies, 95)
             
-            print(f"\n=== Batch Sign Test Results ===")
-            print(f"Batch Size: 10 items")
+            print("\n=== Batch Sign Test Results ===")
+            print("Batch Size: 10 items")
             print(f"Batches Run: {len(latencies)}")
             print(f"Avg Batch Latency: {avg:.2f}ms")
             print(f"P95 Batch Latency: {p95:.2f}ms")
@@ -321,7 +320,6 @@ class TestRealDatabasePerformance:
     async def test_merkle_root_creation_performance(self, db: AsyncSession):
         """Test Merkle root creation performance."""
         from app.models.merkle import MerkleRoot
-        from sqlalchemy import select
         import uuid as uuid_module
         
         print("\nTesting Merkle root creation performance...")
@@ -349,7 +347,7 @@ class TestRealDatabasePerformance:
         avg = np.mean(latencies)
         p95 = np.percentile(latencies, 95)
         
-        print(f"\n=== Merkle Root Creation Results ===")
+        print("\n=== Merkle Root Creation Results ===")
         print(f"Operations: {len(latencies)}")
         print(f"Avg Latency: {avg:.2f}ms")
         print(f"P95 Latency: {p95:.2f}ms")
@@ -370,7 +368,7 @@ class TestRealDatabasePerformance:
             result = await db.execute(
                 select(C2PASchema).where(C2PASchema.organization_id == "org_demo").limit(10)
             )
-            schemas = result.scalars().all()
+            result.scalars().all()
             t1 = time.perf_counter()
             
             latencies.append((t1 - t0) * 1000)
@@ -378,7 +376,7 @@ class TestRealDatabasePerformance:
         avg = np.mean(latencies)
         p95 = np.percentile(latencies, 95)
         
-        print(f"\n=== C2PA Schema Query Results ===")
+        print("\n=== C2PA Schema Query Results ===")
         print(f"Queries: {len(latencies)}")
         print(f"Avg Latency: {avg:.2f}ms")
         print(f"P95 Latency: {p95:.2f}ms")
@@ -443,7 +441,7 @@ class TestRealEndToEndFlow:
         assert verify_response.status_code == 200, f"Verify failed: {verify_response.text}"
         verify_data = verify_response.json()
         
-        print(f"\n=== Sign -> Verify Roundtrip Results ===")
+        print("\n=== Sign -> Verify Roundtrip Results ===")
         print(f"Sign Latency: {sign_time:.2f}ms")
         print(f"Verify Latency: {verify_time:.2f}ms")
         print(f"Total Roundtrip: {sign_time + verify_time:.2f}ms")
@@ -483,7 +481,7 @@ class TestRealEndToEndFlow:
         
         # Read
         t0 = time.perf_counter()
-        read_response = await real_client.get(
+        await real_client.get(
             f"/api/v1/enterprise/c2pa/schemas/{schema_id}",
             headers=auth_headers
         )
@@ -491,7 +489,7 @@ class TestRealEndToEndFlow:
         
         # List
         t0 = time.perf_counter()
-        list_response = await real_client.get(
+        await real_client.get(
             "/api/v1/enterprise/c2pa/schemas",
             headers=auth_headers
         )
@@ -499,13 +497,13 @@ class TestRealEndToEndFlow:
         
         # Delete
         t0 = time.perf_counter()
-        delete_response = await real_client.delete(
+        await real_client.delete(
             f"/api/v1/enterprise/c2pa/schemas/{schema_id}",
             headers=auth_headers
         )
         delete_time = (time.perf_counter() - t0) * 1000
         
-        print(f"\n=== C2PA Schema CRUD Results ===")
+        print("\n=== C2PA Schema CRUD Results ===")
         print(f"Create Latency: {create_time:.2f}ms")
         print(f"Read Latency: {read_time:.2f}ms")
         print(f"List Latency: {list_time:.2f}ms")

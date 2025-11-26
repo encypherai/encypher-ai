@@ -9,7 +9,6 @@ from fastapi.responses import JSONResponse, PlainTextResponse
 import time
 import logging
 from contextlib import asynccontextmanager
-from pathlib import Path
 from uuid import uuid4
 
 from sqlalchemy import text

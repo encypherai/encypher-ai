@@ -84,7 +84,7 @@ class MerkleService:
                 for node in tree.get_all_nodes():
                     subhash_data = {
                         'hash_value': node.hash,
-                        'root_id': root.root_id,
+                        'root_id': root.id,  # Use 'id' not 'root_id'
                         'node_type': 'leaf' if node.is_leaf else ('root' if node.is_root else 'branch'),
                         'depth_level': node.depth,
                         'position_index': node.position,
@@ -92,7 +92,7 @@ class MerkleService:
                         'left_child_hash': node.left.hash if node.left else None,
                         'right_child_hash': node.right.hash if node.right and node.right != node.left else None,
                         'text_content': node.content if node.is_leaf else None,
-                        'seg_metadata': node.metadata
+                        'segment_metadata': node.metadata  # Match model column name
                     }
                     subhashes_data.append(subhash_data)
                 

@@ -88,7 +88,7 @@ async def encode_document_with_embeddings(
                 if label:
                     stmt = select(C2PASchema).where(
                         C2PASchema.label == label,
-                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public == True))
+                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public))
                     ).order_by(C2PASchema.created_at.desc())
                     result = await db.execute(stmt)
                     schema_model = result.scalar_one_or_none()

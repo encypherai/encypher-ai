@@ -199,14 +199,18 @@ async def execute_signing(
             },
         )
 
-    await _index_in_coalition(
-        document_id=document_id,
-        organization=organization,
-        request=request,
-        text_hash=text_hash,
-        current_time=current_time,
-        db=db,
-    )
+    # Best-effort coalition indexing - don't fail signing if this fails
+    try:
+        await _index_in_coalition(
+            document_id=document_id,
+            organization=organization,
+            request=request,
+            text_hash=text_hash,
+            current_time=current_time,
+            db=db,
+        )
+    except Exception as exc:
+        logger.warning("Coalition indexing failed (non-critical): %s", exc)
 
     verification_url = _build_verification_url(document_id=document_id, is_demo_org=is_demo_org)
 
@@ -239,8 +243,9 @@ async def _index_in_coalition(
     """Best-effort coalition indexing."""
 
     try:
+        # Get the owner user_id from organization_members
         org_result = await db.execute(
-            text("SELECT user_id FROM organizations WHERE organization_id = :org_id"),
+            text("SELECT user_id FROM organization_members WHERE organization_id = :org_id AND role = 'owner' LIMIT 1"),
             {"org_id": organization["organization_id"]},
         )
         org_row = org_result.fetchone()

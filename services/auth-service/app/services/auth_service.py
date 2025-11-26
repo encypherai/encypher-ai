@@ -123,7 +123,7 @@ class AuthService:
         # Check if token exists and is not revoked
         db_token = db.query(RefreshToken).filter(
             RefreshToken.token == refresh_token,
-            RefreshToken.revoked == False,
+            not RefreshToken.revoked,
         ).first()
         
         if not db_token:
@@ -166,7 +166,7 @@ class AuthService:
         """Revoke all active refresh tokens for a user. Returns number revoked."""
         tokens = db.query(RefreshToken).filter(
             RefreshToken.user_id == user_id,
-            RefreshToken.revoked == False,
+            not RefreshToken.revoked,
         ).all()
         count = 0
         for t in tokens:

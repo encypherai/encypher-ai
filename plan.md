@@ -109,8 +109,16 @@
         - Implemented Python, TypeScript, Rust, and Go packages.
         - Polished Docs with Encypher Branding & Enterprise Upsell.
         - Added Security & Contribution guidelines.
+    - **Enterprise API Test Fixes (Nov 26, 2025)**:
+        - Fixed Merkle endpoints (MerkleRoot.id, segment_metadata, AttributionReport.id)
+        - Fixed schema/model alignment (certificate_rotated_at, OrganizationCertificateStatus enum)
+        - Fixed organization_id → id column references across codebase
+        - Added is_demo flag to all demo keys for proper signing
+        - Fixed coalition indexing query (organization_members table)
+        - **279 tests passing, 54 skipped (expected)**
 - **In Progress**:
     - Dashboard Functional Implementation (9.0)
+    - Stripe Integration Testing (9.10.5.8-10)
 - **Pending**:
     - Marketing Site CI/CD & Deployment (7.4.4+)
     - Production Deployment
@@ -138,11 +146,11 @@
 ### 9.4 Analytics Page (`/analytics`)
 - [x] 9.4.1 Fetch real data from analytics-service
 - [x] 9.4.2 Connect time range selector to API
-- [ ] 9.4.3 Display real activity history (requires activity endpoint)
+- [x] 9.4.3 Display real activity history (covered by audit logs feature 9.10.7)
 
 ### 9.5 Settings & Other Pages
 - [x] 9.5.1 Implement settings page functionality (profile/notifications)
-- [ ] 9.5.2 Implement billing page functionality (requires billing-service endpoints)
+- [x] 9.5.2 Implement billing page functionality (billing-service endpoints implemented in 9.10.3)
 - [x] 9.5.3 Add sign-out functionality (in DashboardLayout)
 
 ### 9.6 Testing & Verification

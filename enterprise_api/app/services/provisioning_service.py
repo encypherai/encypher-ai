@@ -183,7 +183,7 @@ class ProvisioningService:
         Returns:
             Dictionary of feature names and enabled status
         """
-        features = TIER_FEATURES.get(tier, set())
+        TIER_FEATURES.get(tier, set())
         
         return {
             "merkle_trees": tier == OrganizationTier.ENTERPRISE,

@@ -26,6 +26,7 @@ DEMO_KEYS = {
         "organization_id": "org_demo",
         "organization_name": "Demo Organization",
         "tier": "enterprise",  # Demo has all features
+        "is_demo": True,
         "features": {
             "team_management": True,
             "audit_logs": True,
@@ -48,6 +49,7 @@ DEMO_KEYS = {
         "organization_id": "org_starter",
         "organization_name": "Starter Test Organization",
         "tier": "starter",
+        "is_demo": True,
         "features": {
             "team_management": False,
             "audit_logs": False,
@@ -70,6 +72,7 @@ DEMO_KEYS = {
         "organization_id": "org_professional",
         "organization_name": "Professional Test Organization",
         "tier": "professional",
+        "is_demo": True,
         "features": {
             "team_management": False,
             "audit_logs": False,
@@ -92,6 +95,7 @@ DEMO_KEYS = {
         "organization_id": "org_business",
         "organization_name": "Business Test Organization",
         "tier": "business",
+        "is_demo": True,
         "user_id": "usr_business_owner",
         "api_key_owner_id": "usr_business_owner",
         "features": {
@@ -116,6 +120,7 @@ DEMO_KEYS = {
         "organization_id": "org_enterprise",
         "organization_name": "Enterprise Test Organization",
         "tier": "enterprise",
+        "is_demo": True,
         "user_id": "usr_enterprise_owner",
         "api_key_owner_id": "usr_enterprise_owner",
         "features": {

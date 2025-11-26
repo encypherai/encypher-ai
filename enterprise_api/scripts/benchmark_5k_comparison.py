@@ -1,7 +1,6 @@
 import argparse
 import asyncio
 import json
-import os
 import shutil
 import time
 import bz2
@@ -147,7 +146,7 @@ async def run_benchmark(files: list[Path], url: str, output_dir: Path, mode: str
                     else:
                         out_file.write_text(resp.text, encoding="utf-8")
                         
-                except Exception as e:
+                except Exception:
                     # console.print(f"[red]Error processing {file_path.name}: {e}[/red]")
                     pass
 

@@ -61,6 +61,7 @@ CREATE TABLE IF NOT EXISTS organizations (
     certificate_status VARCHAR(32) DEFAULT 'none'
         CHECK (certificate_status IN ('none', 'pending', 'active', 'expired', 'revoked')),
     certificate_expiry TIMESTAMPTZ,
+    certificate_rotated_at TIMESTAMPTZ,  -- Last certificate rotation timestamp
     private_key_encrypted BYTEA,  -- AES-256 encrypted
     ssl_order_id VARCHAR(100),
     

@@ -126,12 +126,12 @@ curl -X POST http://localhost:9000/api/v1/verify \\
     status_text = "Valid" if execution.is_valid else "Invalid"
 
     org_result = await db.execute(
-        text("SELECT organization_name FROM organizations WHERE organization_id = :org_id"),
+        text("SELECT name FROM organizations WHERE id = :org_id"),
         {"org_id": org_id},
     )
     org_row = org_result.fetchone()
     org_mapping = getattr(org_row, "_mapping", None) if org_row else None
-    org_name = org_mapping["organization_name"] if org_mapping else (org_row[0] if org_row else "Unknown")
+    org_name = org_mapping["name"] if org_mapping else (org_row[0] if org_row else "Unknown")
 
     return HTMLResponse(
         content=f"""

@@ -21,10 +21,8 @@ from app.database import async_session_factory
 from app.models.batch import (
     DEFAULT_RETENTION_DAYS,
     BatchItem,
-    BatchItemStatus,
     BatchRequest,
     BatchRequestType,
-    BatchStatus,
 )
 from app.models.request_models import SignRequest
 from app.schemas.batch import (

@@ -37,7 +37,7 @@ def _set_enterprise_app() -> None:
 _set_enterprise_app()
 
 # Now import app modules after setting up the path
-from app.database import Base, get_db, get_content_db
+from app.database import get_db, get_content_db
 from app.main import app
 
 

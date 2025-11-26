@@ -159,7 +159,7 @@ async def list_available_content(
     # In production, this would query the coalition_content table
 
     # Get active agreements for this AI company
-    agreements = await LicensingService.list_agreements(
+    await LicensingService.list_agreements(
         db=db,
         # TODO: Filter by ai_company_id
         status=AgreementStatus.ACTIVE

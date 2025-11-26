@@ -344,7 +344,7 @@ async def get_usage_stats(
     - Sentences tracked
     - Verifications
     """
-    from datetime import datetime, timedelta
+    from datetime import datetime
     from ...services.billing_service import PRICING_TIERS
     
     # Get user's organization/tier info
@@ -427,11 +427,10 @@ async def get_coalition_earnings(
     - Earnings history
     - Pending payouts
     """
-    from datetime import datetime
     from ...services.billing_service import PRICING_TIERS
     
     user_id = current_user.get("id")
-    org_id = current_user.get("organization_id", user_id)
+    current_user.get("organization_id", user_id)
     
     # Get subscription to determine tier and rev share
     subscription = BillingService.get_user_subscription(db, user_id)

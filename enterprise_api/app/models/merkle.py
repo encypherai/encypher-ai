@@ -9,7 +9,7 @@ from uuid import uuid4
 
 from sqlalchemy import (
     Column, String, Integer, TIMESTAMP, ForeignKey, 
-    CheckConstraint, Index, JSON, LargeBinary
+    CheckConstraint, Index, LargeBinary
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
 from sqlalchemy.orm import relationship

@@ -5,7 +5,6 @@ Uses PostgreSQL via Docker for full compatibility.
 """
 import os
 import unicodedata
-import tempfile
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path

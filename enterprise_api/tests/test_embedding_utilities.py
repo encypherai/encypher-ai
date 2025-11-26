@@ -16,6 +16,7 @@ The tests are skipped because:
 import pytest
 from app.utils.embeddings.markdown_embedder import MarkdownEmbedder
 from app.utils.embeddings.text_embedder import TextEmbedder
+from app.schemas.embeddings import EmbeddingReference
 
 pytestmark = pytest.mark.skip(
     reason="Legacy visible embedding utilities - not used in current C2PA-based architecture"

@@ -1,7 +1,6 @@
 """Tests for coalition revenue tracking API endpoints."""
 import pytest
 from httpx import AsyncClient
-from datetime import datetime, timezone, date
 
 
 class TestCoalitionEndpoints:

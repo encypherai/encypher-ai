@@ -205,9 +205,9 @@ class VerificationService:
             query = query.filter(VerificationResult.user_id == user_id)
         
         total = query.count()
-        valid = query.filter(VerificationResult.is_valid == True).count()
+        valid = query.filter(VerificationResult.is_valid).count()
         invalid = total - valid
-        tampered = query.filter(VerificationResult.is_tampered == True).count()
+        tampered = query.filter(VerificationResult.is_tampered).count()
         
         avg_confidence = query.with_entities(func.avg(VerificationResult.confidence_score)).scalar() or 0.0
         avg_time = query.with_entities(func.avg(VerificationResult.verification_time_ms)).scalar() or 0.0

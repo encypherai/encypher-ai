@@ -36,10 +36,11 @@ class OrganizationTier(str, Enum):
 class OrganizationCertificateStatus(str, Enum):
     """Certificate lifecycle state for an organization."""
 
-    ACTIVE = "active"
-    INACTIVE = "inactive"
-    REVOKED = "revoked"
-    EXPIRED = "expired"
+    NONE = "none"  # No certificate yet
+    PENDING = "pending"  # Certificate requested
+    ACTIVE = "active"  # Certificate valid
+    EXPIRED = "expired"  # Certificate expired
+    REVOKED = "revoked"  # Certificate revoked
 
 
 class Organization(Base):
@@ -79,7 +80,7 @@ class Organization(Base):
             validate_strings=True,
         ),
         nullable=False,
-        default=OrganizationCertificateStatus.ACTIVE,
+        default=OrganizationCertificateStatus.NONE,
     )
     certificate_rotated_at = Column(TIMESTAMP(timezone=True), nullable=True)
     certificate_expiry = Column(TIMESTAMP(timezone=True), nullable=True)

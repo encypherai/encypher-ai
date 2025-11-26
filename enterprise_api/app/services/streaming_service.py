@@ -115,7 +115,7 @@ class StreamingService:
             raise ValueError("Streaming handler not available")
         
         # Initialize or retrieve handler state
-        buffer_state = session_data.get("buffer_state", {})
+        session_data.get("buffer_state", {})
         
         # For now, we'll process each chunk independently
         # TODO: Implement stateful handler that persists across chunks

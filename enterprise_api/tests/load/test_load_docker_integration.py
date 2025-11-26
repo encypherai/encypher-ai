@@ -132,7 +132,7 @@ class TestLoadDockerIntegration:
                 assert resp.status_code == 200
                 latencies.append((t1 - t0) * 1000)
             
-            total_time = time.time() - start_total
+            time.time() - start_total
             
             # Stats
             p95 = np.percentile(latencies, 95)
