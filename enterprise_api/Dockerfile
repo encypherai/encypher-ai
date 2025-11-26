@@ -41,4 +41,5 @@ EXPOSE 8000
 
 # Use entrypoint script for database initialization
 ENTRYPOINT ["scripts/docker-entrypoint.sh"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Note: --reload removed for production (causes slower startup)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
