@@ -12,14 +12,15 @@ RUN apt-get update && apt-get install -y \
 # Install UV
 RUN pip install uv
 
-# Copy dependency files
+# Copy dependency files first for better caching
 COPY pyproject.toml ./
-
-# Install dependencies using UV
-RUN uv pip install --system -e .
+COPY README.md ./
 
 # Copy application code
 COPY app ./app
+
+# Install dependencies using UV (install from pyproject.toml)
+RUN uv pip install --system .
 
 # Expose port (Railway provides PORT dynamically)
 EXPOSE 8001
