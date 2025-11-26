@@ -1,0 +1,38 @@
+name: Lint
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  ruff:
+    name: Ruff Linting
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Ruff
+        run: pip install ruff
+      
+      - name: Run Ruff on services
+        run: |
+          echo "Checking all microservices..."
+          for service in services/*/; do
+            if [ -d "$service/app" ]; then
+              echo "Checking $service..."
+              ruff check "$service" --output-format=github
+            fi
+          done
+      
+      - name: Run Ruff on enterprise_api
+        run: |
+          echo "Checking enterprise_api..."
+          ruff check enterprise_api --output-format=github
