@@ -44,6 +44,8 @@ Railway will auto-detect the `Dockerfile` in each service's root directory.
 | analytics-service | `services/analytics-service` |
 | billing-service | `services/billing-service` |
 | notification-service | `services/notification-service` |
+| **marketing-site** | `apps/marketing-site` |
+| **dashboard** | `apps/dashboard` |
 
 > **Note:** The `railway.json` in each service directory is optional. It provides extra config (health checks, restart policies) but Railway will auto-build from the Dockerfile without it.
 
