@@ -253,6 +253,40 @@ async def verify_key(
     )
 
 
+@router.post("/validate")
+async def validate_key_with_org(
+    verify_data: ApiKeyVerify,
+    db: Session = Depends(get_db),
+):
+    """
+    Validate an API key and return full organization context.
+    
+    **Public endpoint** - The unified auth method for all services.
+    Returns organization details, tier, and feature flags.
+    
+    - **key**: The API key to validate
+    
+    Returns:
+        - organization_id, organization_name
+        - tier (starter, professional, business, enterprise)
+        - features (dict of enabled features)
+        - permissions (list of key permissions)
+        - usage limits
+    """
+    org_context = KeyService.verify_key_with_org(db, verify_data.key)
+    
+    if not org_context:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired API key",
+        )
+    
+    return {
+        "success": True,
+        "data": org_context,
+    }
+
+
 @router.get("/{key_id}/usage", response_model=KeyUsageStats)
 async def get_key_usage(
     key_id: str,

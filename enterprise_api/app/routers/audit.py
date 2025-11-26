@@ -148,11 +148,12 @@ async def get_audit_logs(
     
     if start_date:
         where_clauses.append("created_at >= :start_date")
-        params["start_date"] = start_date
+        # Parse ISO string to datetime for PostgreSQL
+        params["start_date"] = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
     
     if end_date:
         where_clauses.append("created_at <= :end_date")
-        params["end_date"] = end_date
+        params["end_date"] = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
     
     where_sql = " AND ".join(where_clauses)
     
@@ -221,11 +222,14 @@ async def export_audit_logs(
     org_id = organization["organization_id"]
     
     # Default to last 30 days
-    if not end_date:
-        end_date = datetime.now(timezone.utc).isoformat()
-    if not start_date:
-        start_dt = datetime.now(timezone.utc) - timedelta(days=30)
-        start_date = start_dt.isoformat()
+    end_dt = datetime.now(timezone.utc)
+    if end_date:
+        end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+    
+    if start_date:
+        start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+    else:
+        start_dt = end_dt - timedelta(days=30)
     
     result = await db.execute(
         text("""
@@ -238,7 +242,7 @@ async def export_audit_logs(
               AND created_at <= :end_date
             ORDER BY created_at DESC
         """),
-        {"org_id": org_id, "start_date": start_date, "end_date": end_date}
+        {"org_id": org_id, "start_date": start_dt, "end_date": end_dt}
     )
     rows = result.fetchall()
     
@@ -293,8 +297,8 @@ async def export_audit_logs(
     return {
         "organization_id": org_id,
         "export_date": datetime.now(timezone.utc).isoformat(),
-        "start_date": start_date,
-        "end_date": end_date,
+        "start_date": start_dt.isoformat(),
+        "end_date": end_dt.isoformat(),
         "total_records": len(logs),
         "logs": logs,
     }
@@ -318,8 +322,13 @@ async def log_audit_event(
     This is a helper function to be called from other parts of the application.
     Returns the ID of the created log entry.
     """
+    import json
+    
     log_id = f"audit_{uuid4().hex[:16]}"
     now = datetime.now(timezone.utc)
+    
+    # Serialize details dict to JSON string for PostgreSQL JSONB column
+    details_json = json.dumps(details) if details else None
     
     await db.execute(
         text("""
@@ -329,7 +338,7 @@ async def log_audit_event(
             )
             VALUES (
                 :id, :org_id, :created_at, :action, :actor_id, :actor_type,
-                :resource_type, :resource_id, :details, :ip_address, :user_agent
+                :resource_type, :resource_id, CAST(:details AS jsonb), :ip_address, :user_agent
             )
         """),
         {
@@ -341,7 +350,7 @@ async def log_audit_event(
             "actor_type": actor_type,
             "resource_type": resource_type,
             "resource_id": resource_id,
-            "details": details,
+            "details": details_json,
             "ip_address": ip_address,
             "user_agent": user_agent,
         }

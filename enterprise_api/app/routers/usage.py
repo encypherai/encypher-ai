@@ -126,18 +126,15 @@ async def get_usage_stats(
     """
     org_id = organization["organization_id"]
     
-    # Get organization usage data
+    # Get organization usage data from unified schema
     result = await db.execute(
         text("""
             SELECT 
                 tier,
-                documents_signed,
-                sentences_signed,
-                sentences_tracked_this_month,
-                batch_operations_this_month,
-                api_calls_this_month
+                monthly_api_usage,
+                monthly_api_limit
             FROM organizations
-            WHERE organization_id = :org_id
+            WHERE id = :org_id
         """),
         {"org_id": org_id}
     )
@@ -152,6 +149,27 @@ async def get_usage_stats(
     tier = row.tier or "starter"
     limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
     
+    # Get document counts from documents table
+    doc_result = await db.execute(
+        text("SELECT COUNT(*) FROM documents WHERE organization_id = :org_id"),
+        {"org_id": org_id}
+    )
+    documents_signed = doc_result.scalar() or 0
+    
+    # Get sentence counts from sentence_records table
+    sent_result = await db.execute(
+        text("SELECT COUNT(*) FROM sentence_records WHERE organization_id = :org_id"),
+        {"org_id": org_id}
+    )
+    sentences_tracked = sent_result.scalar() or 0
+    
+    # Get batch operation counts
+    batch_result = await db.execute(
+        text("SELECT COUNT(*) FROM batch_requests WHERE organization_id = :org_id"),
+        {"org_id": org_id}
+    )
+    batch_operations = batch_result.scalar() or 0
+    
     # Calculate period dates (monthly billing cycle)
     now = datetime.now(timezone.utc)
     period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -163,23 +181,23 @@ async def get_usage_stats(
     # Build metrics
     metrics = {
         "c2pa_signatures": _calculate_metric(
-            used=row.documents_signed or 0,
+            used=documents_signed,
             limit=limits["c2pa_signatures"],
             name="C2PA Signatures",
         ),
         "sentences_tracked": _calculate_metric(
-            used=row.sentences_tracked_this_month or 0,
+            used=sentences_tracked,
             limit=limits["sentences_tracked"],
             name="Sentences Tracked",
         ),
         "batch_operations": _calculate_metric(
-            used=row.batch_operations_this_month or 0,
+            used=batch_operations,
             limit=limits["batch_operations"],
             name="Batch Operations",
         ),
         "api_calls": _calculate_metric(
-            used=row.api_calls_this_month or 0,
-            limit=-1,  # Always unlimited
+            used=row.monthly_api_usage or 0,
+            limit=row.monthly_api_limit if row.monthly_api_limit != -1 else -1,
             name="API Calls",
         ),
     }
@@ -208,16 +226,14 @@ async def reset_monthly_usage(
     org_id = organization["organization_id"]
     now = datetime.now(timezone.utc)
     
-    # Reset monthly counters
+    # Reset monthly API usage counter
     await db.execute(
         text("""
             UPDATE organizations
             SET 
-                api_calls_this_month = 0,
-                sentences_tracked_this_month = 0,
-                batch_operations_this_month = 0,
+                monthly_api_usage = 0,
                 updated_at = :updated_at
-            WHERE organization_id = :org_id
+            WHERE id = :org_id
         """),
         {"org_id": org_id, "updated_at": now}
     )

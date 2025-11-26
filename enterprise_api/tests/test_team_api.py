@@ -4,16 +4,11 @@ from httpx import AsyncClient
 from datetime import datetime, timezone
 
 
-def skip_if_tier_gated(response):
-    """Skip test if response indicates tier-gating (403 with FEATURE_NOT_AVAILABLE)."""
-    if response.status_code == 403:
-        data = response.json()
-        if data.get("error", {}).get("code") == "FEATURE_NOT_AVAILABLE":
-            pytest.skip("Feature not available on current tier (requires Business+)")
-
-
 class TestTeamManagementEndpoints:
-    """Test suite for /api/v1/org/members endpoints."""
+    """Test suite for /api/v1/org/members endpoints.
+    
+    Uses business-api-key-for-testing which has Business tier with team management enabled.
+    """
 
     @pytest.mark.asyncio
     async def test_list_team_members_success(self, async_client: AsyncClient, business_auth_headers: dict):
@@ -22,8 +17,6 @@ class TestTeamManagementEndpoints:
             "/api/v1/org/members",
             headers=business_auth_headers,
         )
-        
-        skip_if_tier_gated(response)
         
         assert response.status_code == 200
         data = response.json()
@@ -58,23 +51,24 @@ class TestTeamManagementEndpoints:
     @pytest.mark.asyncio
     async def test_invite_member_success(self, async_client: AsyncClient, business_admin_headers: dict):
         """Test inviting a new team member."""
+        import uuid
+        unique_email = f"newmember-{uuid.uuid4().hex[:8]}@example.com"
+        
         response = await async_client.post(
             "/api/v1/org/members/invite",
             headers=business_admin_headers,
             json={
-                "email": "newmember@example.com",
+                "email": unique_email,
                 "role": "member",
             },
         )
-        
-        skip_if_tier_gated(response)
         
         assert response.status_code == 200
         data = response.json()
         
         assert data["success"] is True
         assert "invite_id" in data
-        assert data["email"] == "newmember@example.com"
+        assert data["email"] == unique_email
         assert data["role"] == "member"
         assert "expires_at" in data
 
@@ -90,7 +84,6 @@ class TestTeamManagementEndpoints:
             },
         )
         
-        skip_if_tier_gated(response)
         assert response.status_code == 422  # Validation error
 
     @pytest.mark.asyncio
@@ -105,7 +98,6 @@ class TestTeamManagementEndpoints:
             },
         )
         
-        skip_if_tier_gated(response)
         assert response.status_code == 422
 
     @pytest.mark.asyncio
@@ -120,10 +112,11 @@ class TestTeamManagementEndpoints:
             },
         )
         
-        skip_if_tier_gated(response)
         assert response.status_code == 400
         data = response.json()
-        assert "owner" in str(data.get("detail", "")).lower()
+        # Check for "owner" in either the detail or error.message
+        error_message = data.get("detail", "") or data.get("error", {}).get("message", "")
+        assert "owner" in str(error_message).lower()
 
     @pytest.mark.asyncio
     async def test_list_pending_invites(self, async_client: AsyncClient, business_admin_headers: dict):
@@ -132,8 +125,6 @@ class TestTeamManagementEndpoints:
             "/api/v1/org/members/invites",
             headers=business_admin_headers,
         )
-        
-        skip_if_tier_gated(response)
         
         assert response.status_code == 200
         data = response.json()
@@ -174,7 +165,6 @@ class TestTeamManagementEndpoints:
             json={"role": "admin"},
         )
         
-        skip_if_tier_gated(response)
         # May return 200 (success) or 404 (member not found in test env)
         assert response.status_code in [200, 404]
 
@@ -187,7 +177,6 @@ class TestTeamManagementEndpoints:
             json={"role": "member"},
         )
         
-        skip_if_tier_gated(response)
         # Should be forbidden
         assert response.status_code in [400, 403, 404]
 
@@ -199,7 +188,6 @@ class TestTeamManagementEndpoints:
             headers=business_owner_headers,
         )
         
-        skip_if_tier_gated(response)
         # May return 200 (success) or 404 (member not found)
         assert response.status_code in [200, 404]
 
@@ -232,8 +220,6 @@ class TestTeamManagementEndpoints:
             "/api/v1/org/members",
             headers=business_auth_headers,
         )
-        
-        skip_if_tier_gated(response)
         
         assert response.status_code == 200
         data = response.json()

@@ -51,15 +51,26 @@ class KeyServiceClient:
 
     async def validate_key(self, api_key: str) -> Optional[Dict[str, Any]]:
         """
-        Validate an API key.
+        Validate an API key and return full organization context.
 
-        First checks Redis cache. If miss, calls Key Service.
+        First checks Redis cache. If miss, calls Key Service /validate endpoint.
 
         Args:
             api_key: The API key to validate
 
         Returns:
-            Dict with key details if valid, None if invalid/error
+            Dict with organization context if valid:
+            {
+                "organization_id": "org_xxx",
+                "organization_name": "Acme Corp",
+                "tier": "business",
+                "features": {...},
+                "permissions": ["sign", "verify", "lookup"],
+                "monthly_api_limit": 500000,
+                "monthly_api_usage": 1234,
+                ...
+            }
+            None if invalid/error
         """
         redis_conn = await self._get_redis()
         
@@ -74,33 +85,36 @@ class KeyServiceClient:
             except Exception as e:
                 logger.warning(f"Redis cache read error: {e}")
 
-        # 2. Call Service
+        # 2. Call Key Service /validate endpoint (unified auth)
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.post(
-                    f"{self.base_url}/api/v1/keys/verify",
-                    json={"api_key": api_key},
+                    f"{self.base_url}/api/v1/keys/validate",
+                    json={"key": api_key},
                     timeout=5.0
                 )
                 
                 if response.status_code == 200:
                     data = response.json()
-                    if data.get("valid"):
-                        key_data = data.get("key")
+                    if data.get("success") and data.get("data"):
+                        org_context = data["data"]
                         
                         # 3. Update Cache
-                        if redis_conn and key_data:
+                        if redis_conn and org_context:
                             try:
                                 await redis_conn.setex(
                                     self._cache_key(api_key),
                                     self.cache_ttl,
-                                    json.dumps(key_data)
+                                    json.dumps(org_context)
                                 )
                             except Exception as e:
                                 logger.warning(f"Redis cache write error: {e}")
                         
-                        return key_data
+                        return org_context
                         
+        except httpx.ConnectError:
+            logger.warning("Key Service unavailable, falling back to demo mode")
+            # Fall through to return None - dependencies.py handles demo fallback
         except Exception as e:
             logger.error(f"Key Service call failed: {e}")
             

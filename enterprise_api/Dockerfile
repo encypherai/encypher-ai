@@ -24,13 +24,20 @@ COPY encypher-ai /app/encypher-ai
 COPY enterprise_api /app/enterprise_api
 
 # Install c2pa-text first (dependency of encypher-ai), then encypher-ai, then enterprise_api
+# Also install asyncpg for database initialization and pytest for testing
 RUN pip install --no-cache-dir -e /app/c2pa-text/python && \
     pip install --no-cache-dir -e /app/encypher-ai && \
     pip install --no-cache-dir -e /app/enterprise_api && \
+    pip install --no-cache-dir asyncpg pytest pytest-asyncio httpx && \
     python -m spacy download en_core_web_sm
 
 WORKDIR /app/enterprise_api
 
+# Make entrypoint script executable
+RUN chmod +x scripts/docker-entrypoint.sh
+
 EXPOSE 8000
 
+# Use entrypoint script for database initialization
+ENTRYPOINT ["scripts/docker-entrypoint.sh"]
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

@@ -19,6 +19,7 @@ from app.crud import merkle as merkle_crud
 class Organization(Base):
     """Mock organization model for testing."""
     __tablename__ = "organizations"
+    __table_args__ = {"extend_existing": True}
     organization_id = Column(String(255), primary_key=True)
 
 

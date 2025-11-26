@@ -44,56 +44,18 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to connect to Redis: {e}. Running without session persistence.")
     
-    # Initialize database schema on startup
+    # Verify database connection and schema
+    # Note: Schema is now managed by unified migrations in services/migrations/
+    # Run `start-dev.ps1` to initialize the database with all required tables
     try:
-        logger.info("Initializing database schema...")
-        # Look for schema file in scripts directory
-        schema_file = Path(__file__).parent.parent / "scripts" / "init_db.sql"
-        if schema_file.exists():
-            async with engine.begin() as conn:
-                schema_sql = schema_file.read_text()
-                # Split by semicolon and execute each statement
-                for statement in schema_sql.split(';'):
-                    statement = statement.strip()
-                    if statement:
-                        await conn.execute(text(statement))
-            logger.info("Database schema initialized successfully")
-        else:
-            logger.warning(f"Schema file not found at {schema_file}")
-            logger.info("Skipping schema initialization - database may already be initialized")
+        async with engine.begin() as conn:
+            # Quick health check - verify organizations table exists
+            result = await conn.execute(text("SELECT COUNT(*) FROM organizations"))
+            org_count = result.scalar()
+            logger.info(f"Database connected. Organizations: {org_count}")
     except Exception as e:
-        logger.error(f"Failed to initialize database schema: {e}", exc_info=True)
-        logger.info("Continuing startup - database may already be initialized")
-    
-    # Create demo organization if configured and doesn't exist
-    if settings.demo_api_key and settings.demo_organization_id:
-        try:
-            async with engine.begin() as conn:
-                # Check if demo org exists
-                result = await conn.execute(
-                    text("SELECT organization_id FROM organizations WHERE organization_id = :org_id"),
-                    {"org_id": settings.demo_organization_id}
-                )
-                if not result.fetchone():
-                    # Create demo organization
-                    await conn.execute(
-                        text("""
-                            INSERT INTO organizations (
-                                organization_id, organization_name, organization_type, 
-                                email, tier, monthly_quota
-                            ) VALUES (
-                                :org_id, :org_name, 'demo', 
-                                'demo@encypher.local', 'demo', 10000
-                            )
-                        """),
-                        {
-                            "org_id": settings.demo_organization_id,
-                            "org_name": settings.demo_organization_name
-                        }
-                    )
-                    logger.info(f"Created demo organization: {settings.demo_organization_id}")
-        except Exception as e:
-            logger.error(f"Failed to create demo organization: {e}", exc_info=True)
+        logger.error(f"Database connection failed: {e}")
+        logger.error("Make sure to run migrations first (start-dev.ps1 or services/migrations/*.sql)")
     
     try:
         yield

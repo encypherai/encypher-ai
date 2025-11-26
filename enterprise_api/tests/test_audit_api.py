@@ -4,19 +4,11 @@ from httpx import AsyncClient
 from datetime import datetime, timezone
 
 
-def skip_if_tier_gated(response):
-    """Skip test if response indicates tier-gating (403 with FEATURE_NOT_AVAILABLE)."""
-    if response.status_code == 403:
-        data = response.json()
-        if data.get("error", {}).get("code") == "FEATURE_NOT_AVAILABLE":
-            pytest.skip("Feature not available on current tier (requires Business+)")
-
-
 class TestAuditLogEndpoints:
     """Test suite for /api/v1/audit-logs endpoints.
     
     Note: Audit logs are tier-gated (Business+ only).
-    Tests using demo tier will skip with appropriate message.
+    Uses business-api-key-for-testing which has Business tier.
     """
 
     @pytest.mark.asyncio
@@ -26,8 +18,6 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs",
             headers=business_auth_headers,
         )
-        
-        skip_if_tier_gated(response)
         
         assert response.status_code == 200
         data = response.json()
@@ -50,8 +40,6 @@ class TestAuditLogEndpoints:
             headers=business_auth_headers,
         )
         
-        skip_if_tier_gated(response)
-        
         assert response.status_code == 200
         data = response.json()
         
@@ -67,8 +55,6 @@ class TestAuditLogEndpoints:
             headers=business_auth_headers,
         )
         
-        skip_if_tier_gated(response)
-        
         assert response.status_code == 200
         data = response.json()
         
@@ -83,8 +69,6 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs?start_date=2025-01-01T00:00:00Z&end_date=2025-12-31T23:59:59Z",
             headers=business_auth_headers,
         )
-        
-        skip_if_tier_gated(response)
         
         assert response.status_code == 200
         data = response.json()
@@ -118,8 +102,6 @@ class TestAuditLogEndpoints:
             headers=business_auth_headers,
         )
         
-        skip_if_tier_gated(response)
-        
         assert response.status_code == 200
         data = response.json()
         
@@ -136,8 +118,6 @@ class TestAuditLogEndpoints:
             headers=business_auth_headers,
         )
         
-        skip_if_tier_gated(response)
-        
         assert response.status_code == 200
         assert "text/csv" in response.headers.get("content-type", "")
 
@@ -148,8 +128,6 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs?page_size=1",
             headers=business_auth_headers,
         )
-        
-        skip_if_tier_gated(response)
         
         assert response.status_code == 200
         data = response.json()

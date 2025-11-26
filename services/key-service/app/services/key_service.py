@@ -103,6 +103,82 @@ class KeyService:
         return db_key
     
     @staticmethod
+    def verify_key_with_org(db: Session, api_key: str) -> Optional[dict]:
+        """
+        Verify an API key and return full organization context.
+        This is the unified auth method used by all services.
+        
+        Returns:
+            dict with organization_id, tier, features, permissions
+            or None if invalid
+        """
+        from sqlalchemy import text
+        
+        # Check format
+        if not verify_api_key_format(api_key):
+            return None
+        
+        # Hash the key
+        key_hash = hash_api_key(api_key)
+        
+        # Query key with organization join
+        result = db.execute(text("""
+            SELECT 
+                k.id as key_id,
+                k.organization_id,
+                k.permissions as key_permissions,
+                k.is_active,
+                k.is_revoked,
+                k.expires_at,
+                o.name as organization_name,
+                o.tier,
+                o.features,
+                o.monthly_api_limit,
+                o.monthly_api_usage,
+                o.coalition_member,
+                o.coalition_rev_share
+            FROM api_keys k
+            JOIN organizations o ON k.organization_id = o.id
+            WHERE k.key_hash = :key_hash
+        """), {"key_hash": key_hash}).fetchone()
+        
+        if not result:
+            return None
+        
+        # Check key status
+        if not result.is_active or result.is_revoked:
+            return None
+        
+        # Check expiration
+        if result.expires_at and result.expires_at < datetime.utcnow():
+            return None
+        
+        # Update usage (fire and forget style - don't block on this)
+        try:
+            db.execute(text("""
+                UPDATE api_keys 
+                SET last_used_at = NOW(), usage_count = usage_count + 1
+                WHERE key_hash = :key_hash
+            """), {"key_hash": key_hash})
+            db.commit()
+        except Exception:
+            db.rollback()  # Don't fail auth if usage update fails
+        
+        # Return organization context
+        return {
+            "key_id": result.key_id,
+            "organization_id": result.organization_id,
+            "organization_name": result.organization_name,
+            "tier": result.tier,
+            "features": result.features if isinstance(result.features, dict) else {},
+            "permissions": result.key_permissions if isinstance(result.key_permissions, list) else [],
+            "monthly_api_limit": result.monthly_api_limit,
+            "monthly_api_usage": result.monthly_api_usage,
+            "coalition_member": result.coalition_member,
+            "coalition_rev_share": result.coalition_rev_share,
+        }
+    
+    @staticmethod
     def update_key(db: Session, key_id: str, user_id: str, update_data: ApiKeyUpdate) -> Optional[ApiKey]:
         """Update an API key"""
         db_key = KeyService.get_key_by_id(db, key_id, user_id)

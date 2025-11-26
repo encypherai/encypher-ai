@@ -1,7 +1,10 @@
 """
 SQLAlchemy database models for Key Service
+
+Uses the unified schema from services/migrations/001_core_schema.sql
 """
-from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import uuid
@@ -14,21 +17,51 @@ def generate_uuid():
     return str(uuid.uuid4())
 
 
+class Organization(Base):
+    """Organization model - the billing entity"""
+    __tablename__ = "organizations"
+    
+    id = Column(String(64), primary_key=True)
+    name = Column(String(255), nullable=False)
+    slug = Column(String(100), unique=True)
+    email = Column(String(255), nullable=False, unique=True)
+    
+    # Subscription
+    tier = Column(String(32), nullable=False, default='starter')
+    stripe_customer_id = Column(String(255), unique=True)
+    stripe_subscription_id = Column(String(255))
+    subscription_status = Column(String(32), default='active')
+    
+    # Features (JSONB)
+    features = Column(JSONB, nullable=False, default={})
+    
+    # Usage
+    monthly_api_limit = Column(Integer, default=10000)
+    monthly_api_usage = Column(Integer, default=0)
+    
+    # Coalition
+    coalition_member = Column(Boolean, default=True)
+    coalition_rev_share = Column(Integer, default=65)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+
+
 class ApiKey(Base):
-    """API Key model"""
+    """API Key model - unified schema"""
     __tablename__ = "api_keys"
     
-    id = Column(String, primary_key=True, default=generate_uuid)
-    user_id = Column(String, nullable=False, index=True)
+    id = Column(String(64), primary_key=True, default=lambda: f"key_{uuid.uuid4().hex[:16]}")
+    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=False, index=True)
     
     # Key information
-    name = Column(String, nullable=False)
-    key_hash = Column(String, nullable=False, unique=True, index=True)  # SHA-256 hash
-    key_prefix = Column(String, nullable=False)  # First few chars for display (e.g., "ency_abc...")
-    fingerprint = Column(String, nullable=False)  # Short identifier
+    name = Column(String(255), nullable=False)
+    key_hash = Column(String(255), nullable=False, unique=True, index=True)  # SHA-256 hash
+    key_prefix = Column(String(20), nullable=False)  # First chars for display
     
-    # Permissions
-    permissions = Column(JSON, nullable=False, default=list)  # ["sign", "verify", "read"]
+    # Permissions (JSONB array)
+    permissions = Column(JSONB, nullable=False, default=["sign", "verify", "lookup"])
     
     # Status
     is_active = Column(Boolean, default=True, nullable=False)
@@ -38,7 +71,8 @@ class ApiKey(Base):
     last_used_at = Column(DateTime(timezone=True), nullable=True)
     usage_count = Column(Integer, default=0, nullable=False)
     
-    # Timestamps
+    # Lifecycle
+    created_by = Column(String(64), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     revoked_at = Column(DateTime(timezone=True), nullable=True)
@@ -46,28 +80,27 @@ class ApiKey(Base):
     
     # Metadata
     description = Column(Text, nullable=True)
-    meta_data = Column(JSON, nullable=True)  # Renamed from 'metadata' - reserved by SQLAlchemy
     
     def __repr__(self):
-        return f"<ApiKey(id={self.id}, name={self.name}, user_id={self.user_id})>"
+        return f"<ApiKey(id={self.id}, name={self.name}, org={self.organization_id})>"
 
 
 class KeyUsage(Base):
     """API Key usage tracking"""
     __tablename__ = "key_usage"
     
-    id = Column(String, primary_key=True, default=generate_uuid)
-    key_id = Column(String, nullable=False, index=True)
-    user_id = Column(String, nullable=False, index=True)
+    id = Column(String(64), primary_key=True, default=lambda: f"ku_{uuid.uuid4().hex[:12]}")
+    key_id = Column(String(64), ForeignKey('api_keys.id', ondelete='CASCADE'), nullable=False, index=True)
+    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=False, index=True)
     
     # Request information
-    endpoint = Column(String, nullable=True)
-    method = Column(String, nullable=True)
+    endpoint = Column(String(255), nullable=True)
+    method = Column(String(10), nullable=True)
     status_code = Column(Integer, nullable=True)
     
     # Client information
-    ip_address = Column(String, nullable=True)
-    user_agent = Column(String, nullable=True)
+    ip_address = Column(String(45), nullable=True)
+    user_agent = Column(String(500), nullable=True)
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -80,14 +113,14 @@ class KeyRotation(Base):
     """API Key rotation history"""
     __tablename__ = "key_rotations"
     
-    id = Column(String, primary_key=True, default=generate_uuid)
-    old_key_id = Column(String, nullable=False, index=True)
-    new_key_id = Column(String, nullable=False, index=True)
-    user_id = Column(String, nullable=False, index=True)
+    id = Column(String(64), primary_key=True, default=lambda: f"kr_{uuid.uuid4().hex[:12]}")
+    old_key_id = Column(String(64), nullable=False, index=True)
+    new_key_id = Column(String(64), nullable=False, index=True)
+    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=False, index=True)
     
     # Rotation information
-    reason = Column(String, nullable=True)
-    rotated_by = Column(String, nullable=True)  # user_id or "system"
+    reason = Column(String(255), nullable=True)
+    rotated_by = Column(String(64), nullable=True)  # user_id or "system"
     
     # Timestamp
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

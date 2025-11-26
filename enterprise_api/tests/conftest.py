@@ -131,13 +131,12 @@ async def async_client(client: AsyncClient) -> AsyncClient:
 
 
 # Tier-specific auth headers for testing tier-gated features
-# Note: In dev environment, all use demo key which has "demo" tier
-# For proper tier testing, create test organizations with different tiers
+# These use the API keys created by seed_test_data.sql
 @pytest.fixture
 def starter_auth_headers() -> dict:
     """Return auth headers for a Starter tier organization."""
     return {
-        "Authorization": f"Bearer {os.getenv('STARTER_API_KEY', 'demo-api-key-for-testing')}",
+        "Authorization": f"Bearer {os.getenv('STARTER_API_KEY', 'starter-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -146,7 +145,7 @@ def starter_auth_headers() -> dict:
 def professional_auth_headers() -> dict:
     """Return auth headers for a Professional tier organization."""
     return {
-        "Authorization": f"Bearer {os.getenv('PROFESSIONAL_API_KEY', 'demo-api-key-for-testing')}",
+        "Authorization": f"Bearer {os.getenv('PROFESSIONAL_API_KEY', 'professional-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -155,7 +154,7 @@ def professional_auth_headers() -> dict:
 def business_auth_headers() -> dict:
     """Return auth headers for a Business tier organization."""
     return {
-        "Authorization": f"Bearer {os.getenv('BUSINESS_API_KEY', 'demo-api-key-for-testing')}",
+        "Authorization": f"Bearer {os.getenv('BUSINESS_API_KEY', 'business-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -163,8 +162,9 @@ def business_auth_headers() -> dict:
 @pytest.fixture
 def business_admin_headers() -> dict:
     """Return auth headers for a Business tier admin user."""
+    # Uses same org as business, but could be different user in future
     return {
-        "Authorization": f"Bearer {os.getenv('BUSINESS_ADMIN_API_KEY', 'demo-api-key-for-testing')}",
+        "Authorization": f"Bearer {os.getenv('BUSINESS_ADMIN_API_KEY', 'business-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -173,7 +173,7 @@ def business_admin_headers() -> dict:
 def business_owner_headers() -> dict:
     """Return auth headers for a Business tier owner user."""
     return {
-        "Authorization": f"Bearer {os.getenv('BUSINESS_OWNER_API_KEY', 'demo-api-key-for-testing')}",
+        "Authorization": f"Bearer {os.getenv('BUSINESS_OWNER_API_KEY', 'business-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 
@@ -182,7 +182,7 @@ def business_owner_headers() -> dict:
 def enterprise_auth_headers() -> dict:
     """Return auth headers for an Enterprise tier organization."""
     return {
-        "Authorization": f"Bearer {os.getenv('ENTERPRISE_API_KEY', 'demo-api-key-for-testing')}",
+        "Authorization": f"Bearer {os.getenv('ENTERPRISE_API_KEY', 'enterprise-api-key-for-testing')}",
         "Content-Type": "application/json"
     }
 

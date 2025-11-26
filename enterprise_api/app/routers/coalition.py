@@ -347,10 +347,9 @@ async def opt_out_of_coalition(
     await db.execute(
         text("""
             UPDATE organizations
-            SET coalition_opted_out = TRUE,
-                coalition_opted_out_at = :now,
+            SET coalition_member = FALSE,
                 updated_at = :now
-            WHERE organization_id = :org_id
+            WHERE id = :org_id
         """),
         {"org_id": org_id, "now": now}
     )
@@ -377,10 +376,9 @@ async def opt_in_to_coalition(
     await db.execute(
         text("""
             UPDATE organizations
-            SET coalition_opted_out = FALSE,
-                coalition_opted_out_at = NULL,
+            SET coalition_member = TRUE,
                 updated_at = :now
-            WHERE organization_id = :org_id
+            WHERE id = :org_id
         """),
         {"org_id": org_id, "now": now}
     )
