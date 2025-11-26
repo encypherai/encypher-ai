@@ -34,9 +34,6 @@ from app.middleware.public_rate_limiter import public_rate_limiter
 from app.middleware.api_key_auth import get_api_key_from_header, authenticate_api_key
 from app.utils.c2pa_verifier import c2pa_verifier
 from app.utils.crypto_utils import load_organization_public_key
-from app.services.embedding_service import EmbeddingService
-
-embedding_service = EmbeddingService()
 
 logger = logging.getLogger(__name__)
 
@@ -163,12 +160,19 @@ async def verify_embedding(
                 detail="Invalid signature format (must be at least 8 hex characters)"
             )
         
-        # Verify embedding
-        reference = await embedding_service.verify_embedding(
-            db=db,
-            ref_id_hex=ref_id,
-            signature_hex=signature
+        # Look up content reference by ref_id
+        try:
+            ref_id_int = int(ref_id, 16)
+        except ValueError:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid ref_id format (must be hex)"
+            )
+        
+        result = await db.execute(
+            select(ContentReference).where(ContentReference.ref_id == ref_id_int)
         )
+        reference = result.scalar_one_or_none()
         
         if not reference:
             logger.warning(f"Verification failed for ref_id: {ref_id}")
@@ -346,12 +350,22 @@ async def batch_verify_embeddings(
         
         for ref_req in batch_request.references:
             try:
-                # Verify each embedding
-                reference = await embedding_service.verify_embedding(
-                    db=db,
-                    ref_id_hex=ref_req.ref_id,
-                    signature_hex=ref_req.signature
+                # Look up content reference by ref_id
+                try:
+                    ref_id_int = int(ref_req.ref_id, 16)
+                except ValueError:
+                    results.append(BatchVerifyResult(
+                        ref_id=ref_req.ref_id,
+                        valid=False,
+                        error="Invalid ref_id format"
+                    ))
+                    invalid_count += 1
+                    continue
+                
+                result = await db.execute(
+                    select(ContentReference).where(ContentReference.ref_id == ref_id_int)
                 )
+                reference = result.scalar_one_or_none()
                 
                 if reference:
                     results.append(BatchVerifyResult(
