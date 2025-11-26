@@ -98,6 +98,48 @@ async def wait_for_postgres(db_url: str, db_name: str, max_retries: int = 30, de
     return False
 
 
+def split_sql_statements(sql_content: str) -> list[str]:
+    """
+    Split SQL content into statements, handling dollar-quoted strings properly.
+    
+    Dollar-quoting ($$...$$) is used in PostgreSQL for function bodies and
+    should not be split on semicolons inside them.
+    """
+    statements = []
+    current_stmt = []
+    in_dollar_quote = False
+    lines = sql_content.split('\n')
+    
+    for line in lines:
+        stripped = line.strip()
+        
+        # Skip pure comment lines
+        if stripped.startswith('--'):
+            continue
+        
+        # Track dollar quoting
+        dollar_count = line.count('$$')
+        if dollar_count % 2 == 1:
+            in_dollar_quote = not in_dollar_quote
+        
+        current_stmt.append(line)
+        
+        # If we're not in a dollar quote and line ends with semicolon, end statement
+        if not in_dollar_quote and stripped.endswith(';'):
+            stmt = '\n'.join(current_stmt).strip()
+            if stmt and not stmt.startswith('--'):
+                statements.append(stmt)
+            current_stmt = []
+    
+    # Handle any remaining content
+    if current_stmt:
+        stmt = '\n'.join(current_stmt).strip()
+        if stmt and not stmt.startswith('--'):
+            statements.append(stmt)
+    
+    return statements
+
+
 async def run_migrations(db_url: str, migrations_dir: Path, db_name: str):
     """Run SQL migration files from a directory."""
     print(f"\nRunning {db_name} migrations from {migrations_dir}...")
@@ -118,28 +160,30 @@ async def run_migrations(db_url: str, migrations_dir: Path, db_name: str):
         print(f"  Running {sql_file.name}...")
         sql_content = sql_file.read_text(encoding="utf-8")
         
-        # Split by semicolons and execute each statement
-        statements = [s.strip() for s in sql_content.split(";") if s.strip()]
+        # Split SQL properly handling dollar-quoted strings
+        statements = split_sql_statements(sql_content)
         
         success_count = 0
         skip_count = 0
+        error_count = 0
         
         for stmt in statements:
-            if stmt and not stmt.startswith("--"):
-                # Run each statement in its own transaction
-                async with engine.begin() as conn:
-                    try:
-                        await conn.execute(text(stmt))
-                        success_count += 1
-                    except Exception as e:
-                        error_str = str(e).lower()
-                        # Ignore "already exists" and "does not exist" errors
-                        if "already exists" in error_str or "does not exist" in error_str:
-                            skip_count += 1
-                        else:
-                            print(f"    Warning: {e}")
+            # Run each statement in its own transaction
+            async with engine.begin() as conn:
+                try:
+                    await conn.execute(text(stmt))
+                    success_count += 1
+                except Exception as e:
+                    error_str = str(e).lower()
+                    # Ignore "already exists" errors (idempotent migrations)
+                    if "already exists" in error_str:
+                        skip_count += 1
+                    else:
+                        error_count += 1
+                        # Only print first 200 chars of error to avoid log spam
+                        print(f"    Warning: {str(e)[:200]}")
         
-        print(f"    {sql_file.name}: {success_count} executed, {skip_count} skipped")
+        print(f"    {sql_file.name}: {success_count} executed, {skip_count} skipped, {error_count} errors")
     
     await engine.dispose()
     print(f"{db_name} migrations complete!")
