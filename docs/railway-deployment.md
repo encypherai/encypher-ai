@@ -29,19 +29,23 @@ Railway Project: encypher-ai
 
 **Root Directory must be set manually in Railway Dashboard for each service.**
 
+Railway will auto-detect the `Dockerfile` in each service's root directory.
+
 ### Dashboard Settings for Each Service
 
-| Service | Root Directory | Health Path |
-|---------|---------------|-------------|
-| enterprise-api | `/enterprise_api` | `/health` |
-| auth-service | `/services/auth-service` | `/health` |
-| user-service | `/services/user-service` | `/health` |
-| key-service | `/services/key-service` | `/health` |
-| encoding-service | `/services/encoding-service` | `/health` |
-| verification-service | `/services/verification-service` | `/health` |
-| analytics-service | `/services/analytics-service` | `/health` |
-| billing-service | `/services/billing-service` | `/health` |
-| notification-service | `/services/notification-service` | `/health` |
+| Service | Root Directory (no leading slash) |
+|---------|-----------------------------------|
+| enterprise-api | `enterprise_api` |
+| auth-service | `services/auth-service` |
+| user-service | `services/user-service` |
+| key-service | `services/key-service` |
+| encoding-service | `services/encoding-service` |
+| verification-service | `services/verification-service` |
+| analytics-service | `services/analytics-service` |
+| billing-service | `services/billing-service` |
+| notification-service | `services/notification-service` |
+
+> **Note:** The `railway.json` in each service directory is optional. It provides extra config (health checks, restart policies) but Railway will auto-build from the Dockerfile without it.
 
 ### How to Set Root Directory
 
@@ -49,8 +53,8 @@ Railway Project: encypher-ai
 2. Click on the service (e.g., auth-service)
 3. Go to **Settings** tab
 4. Under **Source** section, click **"Add Root Directory"**
-5. Enter the path from the table above (e.g., `/services/auth-service`)
-6. Click **Save** → Service will auto-redeploy
+5. Enter the path from the table above (e.g., `services/auth-service`) - **no leading slash!**
+6. Click **Save** → Service will auto-redeploy using the Dockerfile in that directory
 
 ## Services Configuration
 
