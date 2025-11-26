@@ -1,8 +1,13 @@
 """
 Integration tests for embedding API endpoints.
 
-NOTE: These tests are currently skipped because the embedding API
-has changed and requires updates.
+NOTE: These tests are skipped because:
+1. The embedding API has been refactored to use C2PA-compliant invisible embeddings
+2. The old visible reference format (ency:v1/...) is no longer the primary approach
+3. The current API uses the /api/v1/sign endpoint with C2PA manifests
+
+The embedding endpoints tested here may be re-enabled in a future release
+for use cases requiring visible text references.
 """
 import pytest
 from fastapi.testclient import TestClient
@@ -10,7 +15,9 @@ from unittest.mock import AsyncMock, patch
 
 from app.main import app
 
-pytestmark = pytest.mark.skip(reason="Embedding API changed - needs update")
+pytestmark = pytest.mark.skip(
+    reason="Legacy embedding API - current architecture uses C2PA signing via /api/v1/sign"
+)
 
 client = TestClient(app)
 

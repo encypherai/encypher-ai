@@ -2,6 +2,12 @@
 Pytest configuration for load tests.
 
 These tests use the real Docker infrastructure without mocks.
+Run with: pytest tests/load -m stress
+
+These tests are excluded from the default test run because:
+1. They require Docker infrastructure to be running
+2. They can take several minutes to complete
+3. They may stress system resources
 """
 import os
 import sys
@@ -10,6 +16,14 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+
+
+# Mark all tests in this directory as stress tests (excluded by default)
+def pytest_collection_modifyitems(items):
+    """Mark all load tests as stress tests."""
+    for item in items:
+        if "load" in str(item.fspath):
+            item.add_marker(pytest.mark.stress)
 
 
 # Ensure app is importable

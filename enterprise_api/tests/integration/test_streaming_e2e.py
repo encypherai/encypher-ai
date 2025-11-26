@@ -49,6 +49,7 @@ streaming_e2e_enabled = os.environ.get("STREAMING_E2E_TESTS", "").lower() == "tr
 skip_streaming_reason = "Streaming E2E tests require running server. Set STREAMING_E2E_TESTS=true to run."
 
 
+@pytest.mark.e2e
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestWebSocketBasicFlow:
     """Test basic WebSocket streaming flow."""
@@ -133,6 +134,7 @@ class TestWebSocketBasicFlow:
             assert "duration_seconds" in data
 
 
+@pytest.mark.e2e
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestWebSocketAuthentication:
     """Test WebSocket authentication."""
@@ -156,6 +158,7 @@ class TestWebSocketAuthentication:
                 await websocket.recv()
 
 
+@pytest.mark.e2e
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestRateLimiting:
     """Test rate limiting functionality."""
@@ -224,6 +227,7 @@ class TestRateLimiting:
                     pass
 
 
+@pytest.mark.e2e
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestSessionRecovery:
     """Test session recovery functionality."""
@@ -270,6 +274,7 @@ class TestSessionRecovery:
             await websocket.recv()
 
 
+@pytest.mark.e2e
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestErrorHandling:
     """Test error handling."""
@@ -312,6 +317,7 @@ class TestErrorHandling:
             assert "json" in data["message"].lower()
 
 
+@pytest.mark.e2e
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestSessionManagementEndpoints:
     """Test session management REST endpoints."""
@@ -331,6 +337,7 @@ class TestSessionManagementEndpoints:
         pass
 
 
+@pytest.mark.e2e
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestConcurrentConnections:
     """Test concurrent connection handling."""
@@ -364,6 +371,8 @@ class TestConcurrentConnections:
         # All should complete successfully
 
 
+@pytest.mark.e2e
+@pytest.mark.slow
 @pytest.mark.skipif(not streaming_e2e_enabled, reason=skip_streaming_reason)
 class TestStreamingPerformance:
     """Test streaming performance benchmarks."""

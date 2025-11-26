@@ -1,15 +1,25 @@
 """
 Unit tests for embedding utilities (Markdown, Text, extraction libraries).
 
-NOTE: These tests are currently skipped because the EmbeddingReference API
-has changed.
+NOTE: These utilities are for VISIBLE text-based embeddings (e.g., "ency:v1/...")
+which is a different approach from the current INVISIBLE Unicode variation
+selector embeddings used by EmbeddingService.
+
+These utilities are kept for potential future use cases where visible
+references are preferred (e.g., academic citations, legal documents).
+
+The tests are skipped because:
+1. The utilities use a different EmbeddingReference API with to_compact_string()
+2. The current EmbeddingService uses invisible C2PA-compliant embeddings
+3. These utilities are not currently used in production code
 """
 import pytest
 from app.utils.embeddings.markdown_embedder import MarkdownEmbedder
 from app.utils.embeddings.text_embedder import TextEmbedder
-from app.services.embedding_service import EmbeddingReference
 
-pytestmark = pytest.mark.skip(reason="EmbeddingReference API changed")
+pytestmark = pytest.mark.skip(
+    reason="Legacy visible embedding utilities - not used in current C2PA-based architecture"
+)
 
 
 class TestMarkdownEmbedder:

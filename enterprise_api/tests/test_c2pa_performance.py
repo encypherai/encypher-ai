@@ -392,9 +392,10 @@ class TestC2PAMemoryUsage:
         assert validation_time_ms < 100
 
 
-@pytest.mark.asyncio  
+@pytest.mark.asyncio
+@pytest.mark.stress
 class TestC2PAStressTests:
-    """Stress tests for C2PA system."""
+    """Stress tests for C2PA system. Run with: pytest -m stress"""
     
     async def test_rapid_fire_validations(self, client: AsyncClient, auth_headers: dict):
         """Test system under rapid validation requests."""

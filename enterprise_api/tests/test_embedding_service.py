@@ -2,26 +2,21 @@
 Unit tests for EmbeddingService.
 
 Tests the enterprise embedding service built on encypher-ai package.
-
-NOTE: The EmbeddingService API has been refactored to use the encypher-ai package.
-The old methods (_generate_ref_id, _generate_signature, verify_signature) no longer exist.
-These tests need to be rewritten to test the current API:
-- create_embeddings() - async method that creates embeddings with C2PA manifests
-- verify_and_extract_embedding() - async method for verification
-
-TODO: Rewrite tests for current API (v1.0.0 launch blocker)
+The service provides:
+- create_embeddings() - Creates embeddings with C2PA manifests
+- verify_and_extract_embedding() - Verifies and extracts embedding data
+- get_reference_by_id() - Retrieves content reference by ID
+- get_references_by_document() - Gets all references for a document
 """
 import pytest
+import pytest_asyncio
 from datetime import datetime
 from uuid import uuid4
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.services.embedding_service import EmbeddingService, EmbeddingReference
-from app.models.content_reference import ContentReference
-
-# Mark entire module as skipped until tests are rewritten for new API
-pytestmark = pytest.mark.skip(reason="Tests need rewrite for refactored EmbeddingService API - see TODO in docstring")
 
 
 @pytest.fixture
@@ -36,222 +31,209 @@ def embedding_service(test_private_key):
     return EmbeddingService(private_key=test_private_key, signer_id="test_signer_001")
 
 
-class TestRefIdGeneration:
-    """Test reference ID generation."""
+class TestEmbeddingServiceInit:
+    """Test EmbeddingService initialization."""
     
-    def test_generate_ref_id_format(self, embedding_service):
-        """Test that ref_id has correct format."""
-        ref_id = embedding_service._generate_ref_id()
-        
-        # Should be 64-bit integer
-        assert isinstance(ref_id, int)
-        assert 0 <= ref_id < 2**64
-        
-        # Should be representable as 8 hex characters
-        ref_hex = format(ref_id, '08x')
-        assert len(ref_hex) == 16  # 8 bytes = 16 hex chars
+    def test_init_with_valid_key(self, test_private_key):
+        """Test initialization with valid Ed25519 key."""
+        service = EmbeddingService(
+            private_key=test_private_key,
+            signer_id="test_signer"
+        )
+        assert service.private_key == test_private_key
+        assert service.signer_id == "test_signer"
     
-    def test_generate_ref_id_uniqueness(self):
-        """Test that generated ref_ids are unique."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        
-        ref_ids = set()
-        for _ in range(1000):
-            ref_id = service._generate_ref_id()
-            assert ref_id not in ref_ids, "Duplicate ref_id generated"
-            ref_ids.add(ref_id)
-    
-    def test_generate_ref_id_monotonic_sequence(self):
-        """Test that sequence component increments."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        
-        # Generate multiple IDs quickly (same timestamp)
-        ref_ids = [service._generate_ref_id() for _ in range(10)]
-        
-        # Extract sequence components (bits 32-47)
-        sequences = [(ref_id >> 32) & 0xFFFF for ref_id in ref_ids]
-        
-        # Should be monotonically increasing
-        for i in range(1, len(sequences)):
-            assert sequences[i] >= sequences[i-1]
-
-
-class TestSignatureGeneration:
-    """Test HMAC signature generation and verification."""
-    
-    def test_generate_signature_format(self):
-        """Test that signature has correct format."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        ref_id = 0x123456789ABCDEF0
-        
-        signature = service._generate_signature(ref_id)
-        
-        # Should be 16 hex characters (8 bytes)
-        assert isinstance(signature, str)
-        assert len(signature) == 16
-        assert all(c in '0123456789abcdef' for c in signature)
-    
-    def test_signature_deterministic(self):
-        """Test that same ref_id produces same signature."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        ref_id = 0x123456789ABCDEF0
-        
-        sig1 = service._generate_signature(ref_id)
-        sig2 = service._generate_signature(ref_id)
-        
-        assert sig1 == sig2
-    
-    def test_signature_different_keys(self):
-        """Test that different keys produce different signatures."""
-        service1 = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        service2 = EmbeddingService(b'different_key_32_bytes_long!!!')
-        ref_id = 0x123456789ABCDEF0
-        
-        sig1 = service1._generate_signature(ref_id)
-        sig2 = service2._generate_signature(ref_id)
-        
-        assert sig1 != sig2
-    
-    def test_verify_signature_valid(self):
-        """Test verification of valid signature."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        ref_id = 0x123456789ABCDEF0
-        
-        signature = service._generate_signature(ref_id)
-        
-        assert service.verify_signature(ref_id, signature) is True
-    
-    def test_verify_signature_invalid(self):
-        """Test verification of invalid signature."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        ref_id = 0x123456789ABCDEF0
-        
-        invalid_signature = "0000000000000000"
-        
-        assert service.verify_signature(ref_id, invalid_signature) is False
-    
-    def test_verify_signature_wrong_ref_id(self):
-        """Test that signature for different ref_id fails."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        ref_id1 = 0x123456789ABCDEF0
-        ref_id2 = 0xFEDCBA9876543210
-        
-        signature1 = service._generate_signature(ref_id1)
-        
-        assert service.verify_signature(ref_id2, signature1) is False
+    def test_init_stores_signer_id(self, test_private_key):
+        """Test that signer_id is stored correctly."""
+        signer_id = "org_demo_signer_001"
+        service = EmbeddingService(
+            private_key=test_private_key,
+            signer_id=signer_id
+        )
+        assert service.signer_id == signer_id
 
 
 class TestEmbeddingReference:
     """Test EmbeddingReference dataclass."""
     
-    def test_to_compact_string(self):
-        """Test compact string generation."""
+    def test_create_embedding_reference(self):
+        """Test creating an EmbeddingReference."""
         ref = EmbeddingReference(
-            ref_id=0xa3f9c2e1,
-            signature="8k3mP9xQ12345678",
-            leaf_hash="abc123",
+            leaf_hash="abc123def456",
             leaf_index=0,
-            text_content="Test sentence",
+            text_content="Test sentence content.",
+            embedded_text="Test sentence content.\ufeffXXX",
             document_id="doc_001"
         )
         
-        compact = ref.to_compact_string()
-        
-        assert compact == "ency:v1/a3f9c2e1/8k3mP9xQ"
-        assert len(compact) <= 28  # Should be compact
+        assert ref.leaf_hash == "abc123def456"
+        assert ref.leaf_index == 0
+        assert ref.text_content == "Test sentence content."
+        assert ref.document_id == "doc_001"
+        assert ref.ref_id is None  # Optional, set after DB insert
     
-    def test_to_url(self):
-        """Test verification URL generation."""
+    def test_embedding_reference_to_dict(self):
+        """Test EmbeddingReference.to_dict() serialization."""
         ref = EmbeddingReference(
-            ref_id=0xa3f9c2e1,
-            signature="8k3mP9xQ12345678",
-            leaf_hash="abc123",
-            leaf_index=0,
-            text_content="Test sentence",
-            document_id="doc_001"
-        )
-        
-        url = ref.to_url()
-        
-        assert url == "https://verify.encypher.ai/a3f9c2e1"
-    
-    def test_to_dict(self):
-        """Test dictionary serialization."""
-        ref = EmbeddingReference(
-            ref_id=0xa3f9c2e1,
-            signature="8k3mP9xQ12345678",
-            leaf_hash="abc123",
-            leaf_index=0,
-            text_content="Test sentence",
-            document_id="doc_001"
+            leaf_hash="abc123def456",
+            leaf_index=2,
+            text_content="Test sentence.",
+            embedded_text="Test sentence.\ufeffXXX",
+            document_id="doc_test_001",
+            ref_id=12345
         )
         
         data = ref.to_dict()
         
-        assert data['ref_id'] == 'a3f9c2e1'
-        assert data['signature'] == '8k3mP9xQ'
-        assert data['embedding'] == 'ency:v1/a3f9c2e1/8k3mP9xQ'
-        assert 'verification_url' in data
+        assert data['leaf_index'] == 2
+        assert data['leaf_hash'] == "abc123def456"
+        assert data['text_content'] == "Test sentence."
+        assert data['embedded_text'] == "Test sentence.\ufeffXXX"
+        assert data['document_id'] == "doc_test_001"
+        assert data['has_invisible_embedding'] is True
+    
+    def test_embedding_reference_optional_ref_id(self):
+        """Test that ref_id is optional."""
+        ref = EmbeddingReference(
+            leaf_hash="hash",
+            leaf_index=0,
+            text_content="text",
+            embedded_text="text",
+            document_id="doc"
+        )
+        assert ref.ref_id is None
+        
+        ref_with_id = EmbeddingReference(
+            leaf_hash="hash",
+            leaf_index=0,
+            text_content="text",
+            embedded_text="text",
+            document_id="doc",
+            ref_id=999
+        )
+        assert ref_with_id.ref_id == 999
 
 
-class TestEmbeddingServiceAsync:
-    """Test async methods of EmbeddingService."""
+class TestCreateEmbeddings:
+    """Test EmbeddingService.create_embeddings() method."""
     
-    @pytest.fixture
-    async def db_session(self):
-        """Create test database session."""
-        # This would use your test database setup
-        # For now, we'll mock it
-        from unittest.mock import AsyncMock
-        return AsyncMock()
-    
-    @pytest.fixture
-    def service(self):
-        """Create embedding service instance."""
-        return EmbeddingService(b'test_secret_key_32_bytes_long!!')
+    @pytest_asyncio.fixture
+    async def mock_db(self):
+        """Create a mock database session."""
+        mock = AsyncMock()
+        mock.execute = AsyncMock(return_value=MagicMock(rowcount=0))
+        mock.commit = AsyncMock()
+        mock.flush = AsyncMock()
+        mock.add_all = MagicMock()
+        return mock
     
     @pytest.mark.asyncio
-    async def test_create_embeddings_basic(self, service, db_session):
-        """Test basic embedding creation."""
-        organization_id = "org_001"
-        document_id = "doc_001"
-        merkle_root_id = uuid4()
-        segments = ["Sentence one.", "Sentence two.", "Sentence three."]
+    async def test_create_embeddings_validates_length_mismatch(self, embedding_service, mock_db):
+        """Test that mismatched segments/hashes raises ValueError."""
+        with pytest.raises(ValueError, match="must have same length"):
+            await embedding_service.create_embeddings(
+                db=mock_db,
+                organization_id="org_001",
+                document_id="doc_001",
+                merkle_root_id=uuid4(),
+                segments=["Sentence one.", "Sentence two."],
+                leaf_hashes=["hash1"]  # Mismatched length
+            )
+    
+    @pytest.mark.asyncio
+    async def test_create_embeddings_returns_correct_count(self, embedding_service, mock_db):
+        """Test that create_embeddings returns correct number of references."""
+        segments = ["First sentence.", "Second sentence.", "Third sentence."]
         leaf_hashes = ["hash1", "hash2", "hash3"]
         
-        embeddings = await service.create_embeddings(
-            db=db_session,
-            organization_id=organization_id,
-            document_id=document_id,
-            merkle_root_id=merkle_root_id,
+        embeddings, full_doc = await embedding_service.create_embeddings(
+            db=mock_db,
+            organization_id="org_demo",
+            document_id="doc_test",
+            merkle_root_id=uuid4(),
             segments=segments,
             leaf_hashes=leaf_hashes
         )
         
         assert len(embeddings) == 3
-        assert all(isinstance(e, EmbeddingReference) for e in embeddings)
-        assert embeddings[0].leaf_index == 0
-        assert embeddings[1].leaf_index == 1
-        assert embeddings[2].leaf_index == 2
     
     @pytest.mark.asyncio
-    async def test_create_embeddings_with_license(self, service, db_session):
-        """Test embedding creation with license info."""
-        organization_id = "org_001"
-        document_id = "doc_001"
-        merkle_root_id = uuid4()
+    async def test_create_embeddings_returns_embedding_references(self, embedding_service, mock_db):
+        """Test that create_embeddings returns EmbeddingReference objects."""
         segments = ["Test sentence."]
+        leaf_hashes = ["testhash123"]
+        
+        embeddings, full_doc = await embedding_service.create_embeddings(
+            db=mock_db,
+            organization_id="org_demo",
+            document_id="doc_test",
+            merkle_root_id=uuid4(),
+            segments=segments,
+            leaf_hashes=leaf_hashes
+        )
+        
+        assert len(embeddings) == 1
+        assert isinstance(embeddings[0], EmbeddingReference)
+        assert embeddings[0].leaf_index == 0
+        assert embeddings[0].leaf_hash == "testhash123"
+        assert embeddings[0].text_content == "Test sentence."
+        assert embeddings[0].document_id == "doc_test"
+    
+    @pytest.mark.asyncio
+    async def test_create_embeddings_preserves_leaf_indices(self, embedding_service, mock_db):
+        """Test that leaf indices are preserved correctly."""
+        segments = ["A", "B", "C", "D", "E"]
+        leaf_hashes = ["h1", "h2", "h3", "h4", "h5"]
+        
+        embeddings, _ = await embedding_service.create_embeddings(
+            db=mock_db,
+            organization_id="org_demo",
+            document_id="doc_test",
+            merkle_root_id=uuid4(),
+            segments=segments,
+            leaf_hashes=leaf_hashes
+        )
+        
+        for i, emb in enumerate(embeddings):
+            assert emb.leaf_index == i
+            assert emb.leaf_hash == f"h{i+1}"
+    
+    @pytest.mark.asyncio
+    async def test_create_embeddings_returns_full_document(self, embedding_service, mock_db):
+        """Test that create_embeddings returns the full embedded document."""
+        segments = ["First.", "Second."]
+        leaf_hashes = ["h1", "h2"]
+        
+        embeddings, full_doc = await embedding_service.create_embeddings(
+            db=mock_db,
+            organization_id="org_demo",
+            document_id="doc_test",
+            merkle_root_id=uuid4(),
+            segments=segments,
+            leaf_hashes=leaf_hashes
+        )
+        
+        # Full document should contain both segments
+        assert "First" in full_doc
+        assert "Second" in full_doc
+        # Should have invisible embedding (ZWNBSP prefix)
+        assert "\ufeff" in full_doc
+    
+    @pytest.mark.asyncio
+    async def test_create_embeddings_with_license_info(self, embedding_service, mock_db):
+        """Test embedding creation with license information."""
+        segments = ["Licensed content."]
         leaf_hashes = ["hash1"]
         license_info = {
-            'type': 'All Rights Reserved',
-            'url': 'https://example.com/license'
+            'type': 'CC-BY-4.0',
+            'url': 'https://creativecommons.org/licenses/by/4.0/'
         }
         
-        embeddings = await service.create_embeddings(
-            db=db_session,
-            organization_id=organization_id,
-            document_id=document_id,
-            merkle_root_id=merkle_root_id,
+        embeddings, _ = await embedding_service.create_embeddings(
+            db=mock_db,
+            organization_id="org_demo",
+            document_id="doc_test",
+            merkle_root_id=uuid4(),
             segments=segments,
             leaf_hashes=leaf_hashes,
             license_info=license_info
@@ -260,132 +242,123 @@ class TestEmbeddingServiceAsync:
         assert len(embeddings) == 1
     
     @pytest.mark.asyncio
-    async def test_create_embeddings_mismatched_lengths(self, service, db_session):
-        """Test that mismatched segments/hashes raises error."""
-        with pytest.raises(ValueError, match="must have same length"):
-            await service.create_embeddings(
-                db=db_session,
-                organization_id="org_001",
-                document_id="doc_001",
-                merkle_root_id=uuid4(),
-                segments=["Sentence one.", "Sentence two."],
-                leaf_hashes=["hash1"]  # Mismatched length
+    async def test_create_embeddings_calls_db_operations(self, embedding_service, mock_db):
+        """Test that database operations are called."""
+        segments = ["Test."]
+        leaf_hashes = ["h1"]
+        
+        await embedding_service.create_embeddings(
+            db=mock_db,
+            organization_id="org_demo",
+            document_id="doc_test",
+            merkle_root_id=uuid4(),
+            segments=segments,
+            leaf_hashes=leaf_hashes
+        )
+        
+        # Should delete old references
+        assert mock_db.execute.called
+        # Should add new references
+        assert mock_db.add_all.called
+        # Should flush (not commit - deferred for performance)
+        assert mock_db.flush.called
+
+
+class TestGetReferenceById:
+    """Test EmbeddingService.get_reference_by_id() method."""
+    
+    @pytest_asyncio.fixture
+    async def mock_db(self):
+        """Create a mock database session."""
+        return AsyncMock()
+    
+    @pytest.mark.asyncio
+    async def test_get_reference_by_id_returns_none_when_not_found(self, embedding_service, mock_db):
+        """Test that get_reference_by_id returns None when not found."""
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = None
+        mock_db.execute.return_value = mock_result
+        
+        result = await embedding_service.get_reference_by_id(mock_db, 12345)
+        
+        assert result is None
+    
+    @pytest.mark.asyncio
+    async def test_get_reference_by_id_returns_reference(self, embedding_service, mock_db):
+        """Test that get_reference_by_id returns the reference when found."""
+        mock_reference = MagicMock()
+        mock_reference.ref_id = 12345
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_reference
+        mock_db.execute.return_value = mock_result
+        
+        result = await embedding_service.get_reference_by_id(mock_db, 12345)
+        
+        assert result == mock_reference
+
+
+class TestGetReferencesByDocument:
+    """Test EmbeddingService.get_references_by_document() method."""
+    
+    @pytest_asyncio.fixture
+    async def mock_db(self):
+        """Create a mock database session."""
+        return AsyncMock()
+    
+    @pytest.mark.asyncio
+    async def test_get_references_by_document_returns_list(self, embedding_service, mock_db):
+        """Test that get_references_by_document returns a list."""
+        mock_refs = [MagicMock(), MagicMock()]
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_refs
+        mock_db.execute.return_value = mock_result
+        
+        result = await embedding_service.get_references_by_document(
+            mock_db, "doc_001"
+        )
+        
+        assert isinstance(result, list)
+        assert len(result) == 2
+    
+    @pytest.mark.asyncio
+    async def test_get_references_by_document_with_org_filter(self, embedding_service, mock_db):
+        """Test filtering by organization_id."""
+        mock_refs = [MagicMock()]
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = mock_refs
+        mock_db.execute.return_value = mock_result
+        
+        result = await embedding_service.get_references_by_document(
+            mock_db, "doc_001", organization_id="org_demo"
+        )
+        
+        assert len(result) == 1
+        # Verify execute was called (query was built)
+        assert mock_db.execute.called
+
+
+class TestVerifyAndExtractEmbedding:
+    """Test EmbeddingService.verify_and_extract_embedding() method."""
+    
+    @pytest_asyncio.fixture
+    async def mock_db(self):
+        """Create a mock database session."""
+        return AsyncMock()
+    
+    @pytest.mark.asyncio
+    async def test_verify_returns_none_for_invalid_embedding(self, embedding_service, mock_db):
+        """Test that invalid embeddings return None."""
+        # Mock UnicodeMetadata.verify_metadata to return invalid
+        with patch('app.services.embedding_service.UnicodeMetadata') as mock_um:
+            mock_um.verify_metadata.return_value = (False, None, None)
+            
+            result = await embedding_service.verify_and_extract_embedding(
+                db=mock_db,
+                text="Plain text without embedding",
+                public_key_provider=lambda x: None
             )
-
-
-class TestEmbeddingParsing:
-    """Test parsing of embedding strings."""
-    
-    def test_parse_embedding_valid(self):
-        """Test parsing valid embedding string."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        
-        result = service.parse_embedding("ency:v1/a3f9c2e1/8k3mP9xQ")
-        
-        assert result is not None
-        version, ref_id_hex, signature_hex = result
-        assert version == "v1"
-        assert ref_id_hex == "a3f9c2e1"
-        assert signature_hex == "8k3mP9xQ"
-    
-    def test_parse_embedding_invalid_prefix(self):
-        """Test parsing with invalid prefix."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        
-        result = service.parse_embedding("invalid:v1/a3f9c2e1/8k3mP9xQ")
-        
-        assert result is None
-    
-    def test_parse_embedding_invalid_format(self):
-        """Test parsing with invalid format."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        
-        result = service.parse_embedding("ency:v1/invalid")
-        
-        assert result is None
-    
-    def test_parse_embedding_short_ref_id(self):
-        """Test parsing with short ref_id."""
-        service = EmbeddingService(b'test_secret_key_32_bytes_long!!')
-        
-        result = service.parse_embedding("ency:v1/abc/8k3mP9xQ")
-        
-        assert result is None
-
-
-class TestContentReferenceModel:
-    """Test ContentReference model methods."""
-    
-    def test_to_compact_string(self):
-        """Test model's to_compact_string method."""
-        ref = ContentReference(
-            ref_id=0xa3f9c2e1,
-            merkle_root_id=uuid4(),
-            leaf_hash="abc123",
-            leaf_index=0,
-            organization_id="org_001",
-            document_id="doc_001",
-            signature_hash="8k3mP9xQ12345678"
-        )
-        
-        compact = ref.to_compact_string()
-        
-        assert compact == "ency:v1/a3f9c2e1/8k3mP9xQ"
-    
-    def test_to_verification_url(self):
-        """Test model's to_verification_url method."""
-        ref = ContentReference(
-            ref_id=0xa3f9c2e1,
-            merkle_root_id=uuid4(),
-            leaf_hash="abc123",
-            leaf_index=0,
-            organization_id="org_001",
-            document_id="doc_001",
-            signature_hash="8k3mP9xQ12345678"
-        )
-        
-        url = ref.to_verification_url()
-        
-        assert url == "https://verify.encypher.ai/a3f9c2e1"
-    
-    def test_to_dict_basic(self):
-        """Test model's to_dict method."""
-        ref = ContentReference(
-            ref_id=0xa3f9c2e1,
-            merkle_root_id=uuid4(),
-            leaf_hash="abc123",
-            leaf_index=0,
-            organization_id="org_001",
-            document_id="doc_001",
-            text_content="Full text content",
-            text_preview="Full text...",
-            signature_hash="8k3mP9xQ12345678",
-            created_at=datetime.utcnow()
-        )
-        
-        data = ref.to_dict(include_text=False)
-        
-        assert data['ref_id'] == 'a3f9c2e1'
-        assert data['text_preview'] == 'Full text...'
-        assert 'text_content' not in data
-    
-    def test_to_dict_with_text(self):
-        """Test model's to_dict with full text."""
-        ref = ContentReference(
-            ref_id=0xa3f9c2e1,
-            merkle_root_id=uuid4(),
-            leaf_hash="abc123",
-            leaf_index=0,
-            organization_id="org_001",
-            document_id="doc_001",
-            text_content="Full text content",
-            signature_hash="8k3mP9xQ12345678",
-            created_at=datetime.utcnow()
-        )
-        
-        data = ref.to_dict(include_text=True)
-        
-        assert data['text_content'] == 'Full text content'
+            
+            assert result is None
 
 
 if __name__ == '__main__':
