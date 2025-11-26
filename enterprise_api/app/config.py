@@ -29,8 +29,8 @@ class Settings(BaseSettings):
     key_encryption_key: str
     encryption_nonce: str
 
-    # SSL.com
-    ssl_com_api_key: str
+    # SSL.com (optional for staging/development)
+    ssl_com_api_key: Optional[str] = None
     ssl_com_account_key: Optional[str] = None
     ssl_com_api_url: str = "https://api.ssl.com/v1"
     ssl_com_product_id: Optional[str] = None
