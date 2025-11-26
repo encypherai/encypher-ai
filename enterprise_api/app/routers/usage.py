@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_db, get_content_db
 from app.dependencies import require_read_permission
 
 
@@ -114,6 +114,7 @@ def _calculate_metric(used: int, limit: int, name: str) -> UsageMetric:
 async def get_usage_stats(
     organization: dict = Depends(require_read_permission),
     db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
 ) -> UsageResponse:
     """
     Get current period usage statistics for the organization.
@@ -149,15 +150,15 @@ async def get_usage_stats(
     tier = row.tier or "starter"
     limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
     
-    # Get document counts from documents table
-    doc_result = await db.execute(
+    # Get document counts from documents table (in content database)
+    doc_result = await content_db.execute(
         text("SELECT COUNT(*) FROM documents WHERE organization_id = :org_id"),
         {"org_id": org_id}
     )
     documents_signed = doc_result.scalar() or 0
     
-    # Get sentence counts from sentence_records table
-    sent_result = await db.execute(
+    # Get sentence counts from sentence_records table (in content database)
+    sent_result = await content_db.execute(
         text("SELECT COUNT(*) FROM sentence_records WHERE organization_id = :org_id"),
         {"org_id": org_id}
     )

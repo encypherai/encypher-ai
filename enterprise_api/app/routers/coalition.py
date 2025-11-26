@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_db, get_content_db
 from app.dependencies import require_read_permission
 
 
@@ -87,6 +87,7 @@ class CoalitionDashboardResponse(BaseModel):
 async def get_coalition_dashboard(
     organization: dict = Depends(require_read_permission),
     db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
 ) -> CoalitionDashboardResponse:
     """
     Get coalition dashboard data for the organization.
@@ -120,9 +121,9 @@ async def get_coalition_dashboard(
     )
     stats_row = stats_result.fetchone()
     
-    # If no stats exist, calculate from documents table
+    # If no stats exist, calculate from documents table (in content database)
     if not stats_row:
-        doc_stats = await db.execute(
+        doc_stats = await content_db.execute(
             text("""
                 SELECT 
                     COUNT(*) as doc_count,
@@ -392,6 +393,7 @@ async def opt_in_to_coalition(
 
 async def calculate_content_stats(
     db: AsyncSession,
+    content_db: AsyncSession,
     organization_id: str,
     period_start: date,
     period_end: date,
@@ -401,9 +403,13 @@ async def calculate_content_stats(
     
     This is typically called by a scheduled job.
     Returns the stats ID.
+    
+    Args:
+        db: Core database session (for storing stats)
+        content_db: Content database session (for querying documents)
     """
-    # Calculate stats from documents table
-    result = await db.execute(
+    # Calculate stats from documents table (in content database)
+    result = await content_db.execute(
         text("""
             SELECT 
                 COUNT(*) as doc_count,

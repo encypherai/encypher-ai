@@ -42,22 +42,17 @@ from app.main import app
 
 
 # Test database URLs - Two-Database Architecture
+# These match the docker-compose.full-stack.yml configuration
 # Core DB: Customer/billing data (organizations, api_keys, etc.)
 TEST_CORE_DATABASE_URL = os.getenv(
-    "TEST_CORE_DATABASE_URL",
-    os.getenv(
-        "CORE_DATABASE_URL",
-        "postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core"
-    )
+    "CORE_DATABASE_URL",
+    "postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core"
 )
 
 # Content DB: Verification data (documents, merkle trees, etc.)
 TEST_CONTENT_DATABASE_URL = os.getenv(
-    "TEST_CONTENT_DATABASE_URL",
-    os.getenv(
-        "CONTENT_DATABASE_URL",
-        "postgresql+asyncpg://encypher:encypher_dev_password@postgres-content:5432/encypher_content"
-    )
+    "CONTENT_DATABASE_URL",
+    "postgresql+asyncpg://encypher:encypher_dev_password@postgres-content:5432/encypher_content"
 )
 
 # Legacy alias for backward compatibility

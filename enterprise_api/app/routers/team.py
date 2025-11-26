@@ -181,8 +181,7 @@ async def list_team_members(
     
     result = await db.execute(
         text("""
-            SELECT om.id, om.user_id, u.email, u.name, om.role, om.status,
-                   om.invited_at, om.accepted_at, om.last_active_at
+            SELECT om.id, om.user_id, u.email, u.name, om.role, om.joined_at
             FROM organization_members om
             LEFT JOIN users u ON om.user_id = u.id
             WHERE om.organization_id = :org_id
@@ -193,7 +192,7 @@ async def list_team_members(
                     WHEN 'member' THEN 3 
                     WHEN 'viewer' THEN 4 
                 END,
-                om.created_at
+                om.joined_at
         """),
         {"org_id": org_id}
     )
@@ -206,10 +205,10 @@ async def list_team_members(
             email=row.email,
             name=row.name,
             role=TeamRole(row.role),
-            status=row.status,
-            invited_at=row.invited_at.isoformat() if row.invited_at else None,
-            accepted_at=row.accepted_at.isoformat() if row.accepted_at else None,
-            last_active_at=row.last_active_at.isoformat() if row.last_active_at else None,
+            status="active",  # All members in this table are active
+            invited_at=None,  # Invites are in organization_invites table
+            accepted_at=row.joined_at.isoformat() if row.joined_at else None,
+            last_active_at=None,  # Not tracked in current schema
         )
         for row in rows
     ]
@@ -301,7 +300,7 @@ async def invite_member(
         text("""
             INSERT INTO organization_invites (
                 id, organization_id, email, role, invited_by,
-                invite_token, status, expires_at
+                token, status, expires_at
             )
             VALUES (
                 :id, :org_id, :email, :role, :invited_by,
@@ -604,7 +603,7 @@ async def accept_invite(
         text("""
             SELECT id, organization_id, email, role, expires_at
             FROM organization_invites
-            WHERE invite_token = :token AND status = 'pending'
+            WHERE token = :token AND status = 'pending'
         """),
         {"token": token}
     )

@@ -145,7 +145,7 @@ CREATE TABLE IF NOT EXISTS organization_invites (
     email VARCHAR(255) NOT NULL,
     role VARCHAR(32) NOT NULL DEFAULT 'member'
         CHECK (role IN ('admin', 'member', 'viewer')),
-    invited_by VARCHAR(64) NOT NULL REFERENCES users(id),
+    invited_by VARCHAR(64) NOT NULL,  -- Can be user_id or api_key_owner_id
     
     -- Token
     token VARCHAR(255) NOT NULL UNIQUE,
@@ -626,6 +626,108 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trg_set_org_features BEFORE INSERT OR UPDATE OF tier ON organizations
     FOR EACH ROW EXECUTE FUNCTION set_org_features_from_tier();
+
+-- ============================================
+-- COALITION: Content Stats
+-- Aggregated content statistics for revenue sharing
+-- ============================================
+CREATE TABLE IF NOT EXISTS coalition_content_stats (
+    id VARCHAR(64) PRIMARY KEY DEFAULT 'stats_' || substr(md5(random()::text), 1, 12),
+    organization_id VARCHAR(64) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    
+    -- Period
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    
+    -- Stats
+    documents_count INTEGER NOT NULL DEFAULT 0,
+    sentences_count INTEGER NOT NULL DEFAULT 0,
+    total_characters BIGINT NOT NULL DEFAULT 0,
+    unique_content_hash_count INTEGER NOT NULL DEFAULT 0,
+    content_categories JSONB,
+    
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    
+    UNIQUE(organization_id, period_start, period_end)
+);
+
+CREATE INDEX IF NOT EXISTS idx_coalition_stats_org ON coalition_content_stats(organization_id);
+CREATE INDEX IF NOT EXISTS idx_coalition_stats_period ON coalition_content_stats(period_start, period_end);
+
+-- ============================================
+-- COALITION: Earnings
+-- Revenue sharing earnings records
+-- ============================================
+CREATE TABLE IF NOT EXISTS coalition_earnings (
+    id VARCHAR(64) PRIMARY KEY DEFAULT 'earn_' || substr(md5(random()::text), 1, 12),
+    organization_id VARCHAR(64) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    
+    -- Deal info
+    deal_id VARCHAR(64) NOT NULL,
+    deal_name VARCHAR(256),
+    ai_company VARCHAR(256),
+    
+    -- Period
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    
+    -- Revenue
+    gross_revenue_cents INTEGER NOT NULL DEFAULT 0,
+    publisher_share_percent INTEGER NOT NULL DEFAULT 70,
+    publisher_earnings_cents INTEGER NOT NULL DEFAULT 0,
+    
+    -- Attribution
+    attribution_method VARCHAR(64),
+    attribution_weight DECIMAL(5, 4),
+    
+    -- Status
+    status VARCHAR(32) NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'confirmed', 'paid', 'disputed')),
+    
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_coalition_earnings_org ON coalition_earnings(organization_id);
+CREATE INDEX IF NOT EXISTS idx_coalition_earnings_period ON coalition_earnings(period_start, period_end);
+CREATE INDEX IF NOT EXISTS idx_coalition_earnings_status ON coalition_earnings(status);
+
+-- ============================================
+-- COALITION: Payouts
+-- Payout records for publishers
+-- ============================================
+CREATE TABLE IF NOT EXISTS coalition_payouts (
+    id VARCHAR(64) PRIMARY KEY DEFAULT 'payout_' || substr(md5(random()::text), 1, 12),
+    organization_id VARCHAR(64) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+    
+    -- Period
+    period_start DATE NOT NULL,
+    period_end DATE NOT NULL,
+    
+    -- Amount
+    total_earnings_cents INTEGER NOT NULL DEFAULT 0,
+    payout_amount_cents INTEGER NOT NULL DEFAULT 0,
+    currency VARCHAR(8) NOT NULL DEFAULT 'USD',
+    
+    -- Status
+    status VARCHAR(32) NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'processing', 'completed', 'failed')),
+    
+    -- Payment details
+    payment_method VARCHAR(64),
+    payment_reference VARCHAR(256),
+    
+    -- Timestamps
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    processed_at TIMESTAMPTZ,
+    paid_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_coalition_payouts_org ON coalition_payouts(organization_id);
+CREATE INDEX IF NOT EXISTS idx_coalition_payouts_status ON coalition_payouts(status);
 
 -- ============================================
 -- VERIFICATION
