@@ -333,6 +333,7 @@ CREATE TABLE IF NOT EXISTS c2pa_assertion_schemas (
     
     -- Status
     is_active BOOLEAN DEFAULT TRUE,
+    is_public BOOLEAN DEFAULT FALSE,  -- Allow sharing across organizations
     
     -- Metadata
     description TEXT,
@@ -343,6 +344,7 @@ CREATE TABLE IF NOT EXISTS c2pa_assertion_schemas (
 );
 
 CREATE INDEX IF NOT EXISTS idx_c2pa_schemas_org ON c2pa_assertion_schemas(organization_id);
+CREATE INDEX IF NOT EXISTS idx_c2pa_schemas_public ON c2pa_assertion_schemas(is_public) WHERE is_public = TRUE;
 
 -- ============================================
 -- C2PA CUSTOM ASSERTION TEMPLATES
@@ -356,10 +358,12 @@ CREATE TABLE IF NOT EXISTS c2pa_assertion_templates (
     -- Template
     name VARCHAR(255) NOT NULL,
     template_data JSONB NOT NULL,
+    category VARCHAR(100),  -- news, legal, academic, publisher
     
     -- Status
     is_default BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    is_public BOOLEAN DEFAULT FALSE,  -- Allow sharing across organizations
     
     -- Metadata
     description TEXT,

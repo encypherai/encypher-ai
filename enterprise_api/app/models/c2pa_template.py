@@ -34,16 +34,30 @@ class C2PAAssertionTemplate(Base):
     
     Templates provide pre-configured sets of assertions
     for common use cases (news, legal, academic, etc.).
+    
+    Updated to match unified schema in 002_enterprise_api_schema.sql.
     """
     __tablename__ = "c2pa_assertion_templates"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    name = Column(String(255), nullable=False, index=True)
+    # Primary key - matches migration
+    id = Column(String(64), primary_key=True, default=lambda: f"tmpl_{uuid.uuid4().hex[:12]}")
+    
+    # Foreign keys - matches migration
+    organization_id = Column(String(64), nullable=False, index=True)
+    schema_id = Column(String(64), nullable=False, index=True)
+    
+    # Template data - matches migration
+    name = Column(String(255), nullable=False)
+    template_data = Column(JSONType, nullable=False)
+    category = Column(String(100), nullable=True)  # news, legal, academic, publisher
+    
+    # Status flags - matches migration
+    is_default = Column(Boolean, default=False, nullable=False)
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_public = Column(Boolean, default=False, nullable=False)
+    
+    # Metadata - matches migration
     description = Column(Text, nullable=True)
-    assertions = Column(JSONType, nullable=False)
-    organization_id = Column(String(255), nullable=True, index=True)
-    is_public = Column(Boolean, default=False, nullable=False, index=True)
-    category = Column(String(100), nullable=True, index=True)  # news, legal, academic, publisher
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
     
@@ -53,10 +67,13 @@ class C2PAAssertionTemplate(Base):
             'id': str(self.id),
             'name': self.name,
             'description': self.description,
-            'assertions': self.assertions,
-            'organization_id': self.organization_id,
-            'is_public': self.is_public,
+            'schema_id': self.schema_id,
+            'template_data': self.template_data,
             'category': self.category,
+            'organization_id': self.organization_id,
+            'is_default': self.is_default,
+            'is_active': self.is_active,
+            'is_public': self.is_public,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None
         }

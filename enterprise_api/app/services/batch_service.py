@@ -51,7 +51,7 @@ class WorkerResult:
     """Container for per-item worker output."""
 
     document_id: str
-    state: BatchItemStatus
+    state: str  # "completed", "failed", "pending", "processing"
     signed_text: Optional[str] = None
     embedded_content: Optional[str] = None
     verdict_payload: Optional[Dict[str, Any]] = None
@@ -61,10 +61,8 @@ class WorkerResult:
     duration_ms: int = 0
 
     def api_status(self) -> str:
-        if self.state == BatchItemStatus.SUCCESS:
+        if self.state == "completed":
             return "ok"
-        if self.state == BatchItemStatus.SKIPPED:
-            return "skipped"
         return "error"
 
 
@@ -170,13 +168,13 @@ class BatchService:
 
         batch_request = BatchRequest(
             organization_id=organization_id,
-            api_key=organization.get("api_key", ""),
-            request_type=request_type,
+            api_key_id=organization.get("api_key_id"),
+            request_type=request_type.value if hasattr(request_type, 'value') else str(request_type),
             mode=request.mode,
             segmentation_level=getattr(request, "segmentation_level", None),
             idempotency_key=request.idempotency_key,
             payload_hash=payload_hash,
-            status=BatchStatus.PENDING,
+            status="pending",
             item_count=len(request.items),
             request_metadata={"fail_fast": request.fail_fast},
             expires_at=BatchRequest.default_expiry(),
@@ -189,14 +187,14 @@ class BatchService:
         worker_results = await self._run_workers(request=request, organization=organization, request_type=request_type)
         duration_ms = int((time.perf_counter() - started_at) * 1000)
 
-        success_count = sum(1 for result in worker_results if result.state == BatchItemStatus.SUCCESS)
-        failure_count = sum(1 for result in worker_results if result.state == BatchItemStatus.FAILED)
+        success_count = sum(1 for result in worker_results if result.state == "completed")
+        failure_count = sum(1 for result in worker_results if result.state == "failed")
 
         batch_request.success_count = success_count
         batch_request.failure_count = failure_count
         batch_request.completed_at = datetime.now(timezone.utc)
         batch_request.status = (
-            BatchStatus.COMPLETED if failure_count == 0 else BatchStatus.FAILED
+            "completed" if failure_count == 0 else "failed"
         )
 
         await self._persist_results(db=db, batch_request=batch_request, results=worker_results)
@@ -207,7 +205,7 @@ class BatchService:
             success_count=success_count,
             failure_count=failure_count,
             mode=request.mode,
-            status=batch_request.status.value,
+            status=batch_request.status,
             duration_ms=duration_ms,
             started_at=batch_request.started_at.isoformat() if batch_request.started_at else None,
             completed_at=batch_request.completed_at.isoformat() if batch_request.completed_at else None,
@@ -264,7 +262,7 @@ class BatchService:
             success_count=batch_request.success_count,
             failure_count=batch_request.failure_count,
             mode=batch_request.mode,
-            status=batch_request.status.value,
+            status=batch_request.status,
             duration_ms=0,
             started_at=batch_request.started_at.isoformat() if batch_request.started_at else None,
             completed_at=batch_request.completed_at.isoformat() if batch_request.completed_at else None,
@@ -314,7 +312,7 @@ class BatchService:
                     result = await completed
                     results.append(result)
                     pending_meta.pop(completed, None)
-                    if request.fail_fast and result.state == BatchItemStatus.FAILED:
+                    if request.fail_fast and result.state == "failed":
                         for task in pending:
                             task.cancel()
                         if pending:
@@ -327,7 +325,7 @@ class BatchService:
                 results.append(
                     WorkerResult(
                         document_id=item.document_id,
-                        state=BatchItemStatus.SKIPPED,
+                        state="failed",  # Skipped items are treated as failed
                         statistics={},
                     )
                 )
@@ -364,7 +362,7 @@ class BatchService:
                 message = detail.get("message", "Batch item failed")
                 return WorkerResult(
                     document_id=item.document_id,
-                    state=BatchItemStatus.FAILED,
+                    state="failed",
                     error_code=code,
                     error_message=message,
                     statistics={"duration_ms": duration_ms},
@@ -375,7 +373,7 @@ class BatchService:
                 logger.error("Batch item failed: %s", exc, exc_info=True)
                 return WorkerResult(
                     document_id=item.document_id,
-                    state=BatchItemStatus.FAILED,
+                    state="failed",
                     error_code="E_BATCH_ITEM",
                     error_message=str(exc),
                     statistics={"duration_ms": duration_ms},
@@ -407,7 +405,7 @@ class BatchService:
                 stats = {"total_sentences": response.total_sentences, "duration_ms": duration_ms}
                 return WorkerResult(
                     document_id=response.document_id,
-                    state=BatchItemStatus.SUCCESS,
+                    state="completed",
                     signed_text=response.signed_text,
                     statistics=stats,
                     duration_ms=duration_ms,
@@ -429,7 +427,7 @@ class BatchService:
             stats["duration_ms"] = duration_ms
             return WorkerResult(
                 document_id=response.document_id,
-                state=BatchItemStatus.SUCCESS,
+                state="completed",
                 embedded_content=response.embedded_content,
                 statistics=stats,
                 duration_ms=duration_ms,
@@ -451,7 +449,7 @@ class BatchService:
                 payload_bytes=payload_bytes,
             )
             duration_ms = int((time.perf_counter() - duration_start) * 1000)
-            state = BatchItemStatus.SUCCESS if verdict.valid else BatchItemStatus.FAILED
+            state = "completed" if verdict.valid else "failed"
             error_code = None if verdict.valid else "E_VERIFY_TAMPERED"
             error_message = None if verdict.valid else verdict.reason_code
             return WorkerResult(

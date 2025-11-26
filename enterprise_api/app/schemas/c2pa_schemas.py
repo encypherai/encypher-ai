@@ -9,17 +9,17 @@ from pydantic import BaseModel, Field
 
 class C2PASchemaCreate(BaseModel):
     """Request schema for creating a C2PA assertion schema."""
-    namespace: str = Field(..., description="Namespace for the schema (e.g., 'com.acme')")
+    name: str = Field(..., description="Human-readable name for the schema")
     label: str = Field(..., description="Full assertion label (e.g., 'com.acme.legal.v1')")
-    version: str = Field(..., description="Schema version (e.g., 'v1', '1.0.0')")
-    schema: Dict[str, Any] = Field(..., description="JSON Schema for validation")
+    version: str = Field("1.0", description="Schema version (e.g., 'v1', '1.0.0')")
+    json_schema: Dict[str, Any] = Field(..., description="JSON Schema for validation")
     description: Optional[str] = Field(None, description="Human-readable description")
     is_public: bool = Field(False, description="Whether schema is publicly accessible")
 
 
 class C2PASchemaUpdate(BaseModel):
     """Request schema for updating a C2PA assertion schema."""
-    schema: Optional[Dict[str, Any]] = Field(None, description="Updated JSON Schema")
+    json_schema: Optional[Dict[str, Any]] = Field(None, description="Updated JSON Schema")
     description: Optional[str] = Field(None, description="Updated description")
     is_public: Optional[bool] = Field(None, description="Updated public flag")
 
@@ -27,15 +27,16 @@ class C2PASchemaUpdate(BaseModel):
 class C2PASchemaResponse(BaseModel):
     """Response schema for C2PA assertion schema."""
     id: str
-    namespace: str
+    name: str
     label: str
     version: str
-    schema: Dict[str, Any]
+    json_schema: Dict[str, Any]
     description: Optional[str]
-    organization_id: Optional[str]
+    organization_id: str
+    is_active: bool
     is_public: bool
-    created_at: str
-    updated_at: str
+    created_at: Optional[str]
+    updated_at: Optional[str]
 
 
 class C2PASchemaListResponse(BaseModel):
@@ -73,8 +74,9 @@ class C2PAAssertionValidateResponse(BaseModel):
 class C2PATemplateCreate(BaseModel):
     """Request schema for creating an assertion template."""
     name: str = Field(..., description="Template name")
+    schema_id: str = Field(..., description="ID of the schema this template uses")
+    template_data: Dict[str, Any] = Field(..., description="Template data/configuration")
     description: Optional[str] = Field(None, description="Template description")
-    assertions: List[Dict[str, Any]] = Field(..., description="List of assertion configurations")
     category: Optional[str] = Field(None, description="Template category (news, legal, academic, publisher)")
     is_public: bool = Field(False, description="Whether template is publicly accessible")
 
@@ -83,7 +85,7 @@ class C2PATemplateUpdate(BaseModel):
     """Request schema for updating an assertion template."""
     name: Optional[str] = Field(None, description="Updated name")
     description: Optional[str] = Field(None, description="Updated description")
-    assertions: Optional[List[Dict[str, Any]]] = Field(None, description="Updated assertions")
+    template_data: Optional[Dict[str, Any]] = Field(None, description="Updated template data")
     category: Optional[str] = Field(None, description="Updated category")
     is_public: Optional[bool] = Field(None, description="Updated public flag")
 
@@ -93,12 +95,15 @@ class C2PATemplateResponse(BaseModel):
     id: str
     name: str
     description: Optional[str]
-    assertions: List[Dict[str, Any]]
-    organization_id: Optional[str]
-    is_public: bool
+    schema_id: str
+    template_data: Dict[str, Any]
     category: Optional[str]
-    created_at: str
-    updated_at: str
+    organization_id: str
+    is_default: bool
+    is_active: bool
+    is_public: bool
+    created_at: Optional[str]
+    updated_at: Optional[str]
 
 
 class C2PATemplateListResponse(BaseModel):

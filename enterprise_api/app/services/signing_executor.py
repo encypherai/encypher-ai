@@ -1,5 +1,9 @@
 """
 Shared signing logic reused by HTTP endpoints and batch workers.
+
+Two-Database Architecture:
+- Content DB: Stores documents and sentence_records
+- Core DB: Stores organization usage counters
 """
 from __future__ import annotations
 
@@ -21,6 +25,7 @@ except ImportError as exc:  # pragma: no cover - import guard
     ) from exc
 
 from app.config import settings
+from app.database import content_session_factory, core_session_factory
 from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
 from app.utils.coalition_client import CoalitionClient
@@ -102,89 +107,88 @@ async def execute_signing(
     text_hash = compute_text_hash(request.text)
     current_time = datetime.now(timezone.utc)
 
+    # Two-Database Architecture:
+    # 1. Store document/sentences in CONTENT database
+    # 2. Update usage counters in CORE database
+    
     try:
-        await db.execute(
-            text(
-                """
-                INSERT INTO documents (
-                    document_id, organization_id, title, url, document_type,
-                    total_sentences, signed_text, text_hash, publication_date, created_at
-                )
-                VALUES (
-                    :doc_id, :org_id, :title, :url, :doc_type,
-                    :total, :signed, :hash, :pub_date, :created_at
-                )
-                """
-            ),
-            {
-                "doc_id": document_id,
-                "org_id": organization["organization_id"],
-                "title": request.document_title or "Untitled Document",
-                "url": request.document_url,
-                "doc_type": request.document_type,
-                "total": len(sentences),
-                "signed": signed_text,
-                "hash": text_hash,
-                "pub_date": current_time,
-                "created_at": current_time,
-            },
-        )
-
-        sentence_records = []
-        for idx, sentence in enumerate(sentences):
-            sentence_id = f"sent_{uuid.uuid4().hex[:20]}"
-            sentence_hash = compute_sentence_hash(sentence)
-            sentence_records.append({
-                "sent_id": sentence_id,
-                "doc_id": document_id,
-                "org_id": organization["organization_id"],
-                "text": sentence,
-                "hash": sentence_hash,
-                "idx": idx,
-            })
-
-        if sentence_records:
-            await db.execute(
+        # Write to CONTENT database (documents, sentences)
+        async with content_session_factory() as content_db:
+            await content_db.execute(
                 text(
                     """
-                    INSERT INTO sentence_records (
-                        sentence_id, document_id, organization_id,
-                        sentence_text, sentence_hash, sentence_index, embedded_in_manifest
+                    INSERT INTO documents (
+                        id, organization_id, title, url, document_type,
+                        total_sentences, signed_text, text_hash, publication_date, created_at
                     )
-                    VALUES (:sent_id, :doc_id, :org_id, :text, :hash, :idx, TRUE)
+                    VALUES (
+                        :doc_id, :org_id, :title, :url, :doc_type,
+                        :total, :signed, :hash, :pub_date, :created_at
+                    )
                     """
                 ),
-                sentence_records
+                {
+                    "doc_id": document_id,
+                    "org_id": organization["organization_id"],
+                    "title": request.document_title or "Untitled Document",
+                    "url": request.document_url,
+                    "doc_type": request.document_type,
+                    "total": len(sentences),
+                    "signed": signed_text,
+                    "hash": text_hash,
+                    "pub_date": current_time,
+                    "created_at": current_time,
+                },
             )
 
-        # Update usage counters
-        # sentences_tracked_this_month is incremented when sentence-level tracking is used
-        sentence_tracking_enabled = organization.get("sentence_tracking_enabled", False)
-        sentences_to_track = len(sentences) if sentence_tracking_enabled else 0
-        
-        await db.execute(
-            text(
-                """
-                UPDATE organizations
-                SET documents_signed = documents_signed + 1,
-                    sentences_signed = sentences_signed + :count,
-                    sentences_tracked_this_month = sentences_tracked_this_month + :tracked,
-                    api_calls_this_month = api_calls_this_month + 1,
-                    updated_at = :updated_at
-                WHERE organization_id = :org_id
-                """
-            ),
-            {
-                "org_id": organization["organization_id"],
-                "count": len(sentences),
-                "tracked": sentences_to_track,
-                "updated_at": current_time,
-            },
-        )
+            sentence_records = []
+            for idx, sentence in enumerate(sentences):
+                sentence_id = f"sent_{uuid.uuid4().hex[:20]}"
+                sentence_hash = compute_sentence_hash(sentence)
+                sentence_records.append({
+                    "sent_id": sentence_id,
+                    "doc_id": document_id,
+                    "org_id": organization["organization_id"],
+                    "text": sentence,
+                    "hash": sentence_hash,
+                    "idx": idx,
+                })
 
-        await db.commit()
+            if sentence_records:
+                await content_db.execute(
+                    text(
+                        """
+                        INSERT INTO sentence_records (
+                            id, document_id, organization_id,
+                            sentence_text, sentence_hash, sentence_index, embedded_in_manifest
+                        )
+                        VALUES (:sent_id, :doc_id, :org_id, :text, :hash, :idx, TRUE)
+                        """
+                    ),
+                    sentence_records
+                )
+            
+            await content_db.commit()
+
+        # Write to CORE database (usage counters)
+        async with core_session_factory() as core_db:
+            await core_db.execute(
+                text(
+                    """
+                    UPDATE organizations
+                    SET monthly_api_usage = monthly_api_usage + 1,
+                        updated_at = :updated_at
+                    WHERE id = :org_id
+                    """
+                ),
+                {
+                    "org_id": organization["organization_id"],
+                    "updated_at": current_time,
+                },
+            )
+            await core_db.commit()
+
     except Exception as exc:
-        await db.rollback()
         logger.error("Database error while storing document: %s", exc, exc_info=True)
         raise HTTPException(
             status_code=500,

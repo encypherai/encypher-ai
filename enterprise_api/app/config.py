@@ -13,8 +13,13 @@ class Settings(BaseSettings):
     # Environment
     environment: str = "development"  # development | preview | production
 
-    # Database
-    database_url: str
+    # Databases (Two-Database Architecture)
+    # Core DB: Customer/billing data (organizations, api_keys, etc.)
+    core_database_url: Optional[str] = None
+    # Content DB: Verification data (documents, merkle trees, etc.)
+    content_database_url: Optional[str] = None
+    # Legacy single database URL (for backward compatibility)
+    database_url: Optional[str] = None
     
     # Redis (for session management)
     redis_url: str = "redis://localhost:6379/0"
@@ -68,6 +73,16 @@ class Settings(BaseSettings):
     def encryption_nonce_bytes(self) -> bytes:
         """Convert hex string to bytes for encryption nonce."""
         return bytes.fromhex(self.encryption_nonce)
+
+    @property
+    def core_database_url_resolved(self) -> str:
+        """Get core database URL, falling back to legacy database_url."""
+        return self.core_database_url or self.database_url or ""
+    
+    @property
+    def content_database_url_resolved(self) -> str:
+        """Get content database URL, falling back to legacy database_url."""
+        return self.content_database_url or self.database_url or ""
 
     @property
     def is_development(self) -> bool:

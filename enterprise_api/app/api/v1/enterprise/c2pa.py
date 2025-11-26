@@ -8,7 +8,6 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
-from uuid import UUID
 
 from app.database import get_db
 from app.middleware.api_key_auth import get_current_organization
@@ -37,7 +36,7 @@ router = APIRouter()
 @router.post("/schemas", response_model=C2PASchemaResponse, status_code=201)
 async def create_schema(
     schema_data: C2PASchemaCreate,
-    organization_id: str = Depends(get_current_organization),
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -46,13 +45,14 @@ async def create_schema(
     Allows organizations to define custom assertion types with
     JSON Schema validation rules.
     """
+    organization_id = organization["organization_id"]
     try:
         # Validate the schema itself
-        validator.register_schema(schema_data.label, schema_data.schema)
+        validator.register_schema(schema_data.label, schema_data.json_schema)
         
-        # Check if schema already exists
+        # Check if schema already exists for this org
         stmt = select(C2PASchema).where(
-            C2PASchema.namespace == schema_data.namespace,
+            C2PASchema.organization_id == organization_id,
             C2PASchema.label == schema_data.label,
             C2PASchema.version == schema_data.version
         )
@@ -67,10 +67,10 @@ async def create_schema(
         
         # Create new schema
         new_schema = C2PASchema(
-            namespace=schema_data.namespace,
+            name=schema_data.name,
             label=schema_data.label,
             version=schema_data.version,
-            schema=schema_data.schema,
+            json_schema=schema_data.json_schema,
             description=schema_data.description,
             organization_id=organization_id,
             is_public=schema_data.is_public
@@ -84,6 +84,8 @@ async def create_schema(
         
         return C2PASchemaResponse(**new_schema.to_dict())
         
+    except HTTPException:
+        raise
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -95,9 +97,8 @@ async def create_schema(
 async def list_schemas(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    namespace: Optional[str] = None,
     is_public: Optional[bool] = None,
-    organization_id: str = Depends(get_current_organization),
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -105,13 +106,12 @@ async def list_schemas(
     
     Returns schemas owned by the organization or public schemas.
     """
-    # Build query
+    organization_id = organization["organization_id"]
+    # Build query - show org's schemas and public schemas
     stmt = select(C2PASchema).where(
         (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public == True)
     )
     
-    if namespace:
-        stmt = stmt.where(C2PASchema.namespace == namespace)
     if is_public is not None:
         stmt = stmt.where(C2PASchema.is_public == is_public)
     
@@ -137,11 +137,12 @@ async def list_schemas(
 
 @router.get("/schemas/{schema_id}", response_model=C2PASchemaResponse)
 async def get_schema(
-    schema_id: UUID,
-    organization_id: str = Depends(get_current_organization),
+    schema_id: str,
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """Get a specific C2PA assertion schema."""
+    organization_id = organization["organization_id"]
     stmt = select(C2PASchema).where(
         C2PASchema.id == schema_id,
         (C2PASchema.organization_id == organization_id) | (C2PASchema.is_public == True)
@@ -157,12 +158,13 @@ async def get_schema(
 
 @router.put("/schemas/{schema_id}", response_model=C2PASchemaResponse)
 async def update_schema(
-    schema_id: UUID,
+    schema_id: str,
     schema_update: C2PASchemaUpdate,
-    organization_id: str = Depends(get_current_organization),
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """Update a C2PA assertion schema."""
+    organization_id = organization["organization_id"]
     stmt = select(C2PASchema).where(
         C2PASchema.id == schema_id,
         C2PASchema.organization_id == organization_id
@@ -174,11 +176,11 @@ async def update_schema(
         raise HTTPException(status_code=404, detail="Schema not found or not owned by organization")
     
     # Update fields
-    if schema_update.schema is not None:
+    if schema_update.json_schema is not None:
         # Validate new schema
         try:
-            validator.register_schema(schema.label, schema_update.schema)
-            schema.schema = schema_update.schema
+            validator.register_schema(schema.label, schema_update.json_schema)
+            schema.json_schema = schema_update.json_schema
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
     
@@ -197,11 +199,12 @@ async def update_schema(
 
 @router.delete("/schemas/{schema_id}", status_code=204)
 async def delete_schema(
-    schema_id: UUID,
-    organization_id: str = Depends(get_current_organization),
+    schema_id: str,
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a C2PA assertion schema."""
+    organization_id = organization["organization_id"]
     stmt = select(C2PASchema).where(
         C2PASchema.id == schema_id,
         C2PASchema.organization_id == organization_id
@@ -223,7 +226,7 @@ async def delete_schema(
 @router.post("/validate", response_model=C2PAAssertionValidateResponse)
 async def validate_assertion(
     request: C2PAAssertionValidateRequest,
-    organization_id: str = Depends(get_current_organization),
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -231,6 +234,7 @@ async def validate_assertion(
     
     Checks the assertion data against its registered schema.
     """
+    organization_id = organization["organization_id"]
     # Get schema if it exists
     stmt = select(C2PASchema).where(
         C2PASchema.label == request.label,
@@ -240,13 +244,13 @@ async def validate_assertion(
     result = await db.execute(stmt)
     schema_model = result.scalar_one_or_none()
     
-    schema = schema_model.schema if schema_model else None
+    json_schema = schema_model.json_schema if schema_model else None
     
     # Validate
     is_valid, errors, warnings = validator.validate_assertion(
         request.label,
         request.data,
-        schema
+        json_schema
     )
     
     return C2PAAssertionValidateResponse(
@@ -265,14 +269,16 @@ async def validate_assertion(
 @router.post("/templates", response_model=C2PATemplateResponse, status_code=201)
 async def create_template(
     template_data: C2PATemplateCreate,
-    organization_id: str = Depends(get_current_organization),
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new assertion template."""
+    organization_id = organization["organization_id"]
     new_template = C2PAAssertionTemplate(
         name=template_data.name,
+        schema_id=template_data.schema_id,
+        template_data=template_data.template_data,
         description=template_data.description,
-        assertions=template_data.assertions,
         organization_id=organization_id,
         is_public=template_data.is_public,
         category=template_data.category
@@ -292,10 +298,11 @@ async def list_templates(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     category: Optional[str] = None,
-    organization_id: str = Depends(get_current_organization),
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """List available assertion templates."""
+    organization_id = organization["organization_id"]
     stmt = select(C2PAAssertionTemplate).where(
         (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public == True)
     )
@@ -325,11 +332,12 @@ async def list_templates(
 
 @router.get("/templates/{template_id}", response_model=C2PATemplateResponse)
 async def get_template(
-    template_id: UUID,
-    organization_id: str = Depends(get_current_organization),
+    template_id: str,
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """Get a specific assertion template."""
+    organization_id = organization["organization_id"]
     stmt = select(C2PAAssertionTemplate).where(
         C2PAAssertionTemplate.id == template_id,
         (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public == True)
@@ -345,12 +353,13 @@ async def get_template(
 
 @router.put("/templates/{template_id}", response_model=C2PATemplateResponse)
 async def update_template(
-    template_id: UUID,
+    template_id: str,
     template_update: C2PATemplateUpdate,
-    organization_id: str = Depends(get_current_organization),
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """Update an assertion template."""
+    organization_id = organization["organization_id"]
     stmt = select(C2PAAssertionTemplate).where(
         C2PAAssertionTemplate.id == template_id,
         C2PAAssertionTemplate.organization_id == organization_id
@@ -366,8 +375,8 @@ async def update_template(
         template.name = template_update.name
     if template_update.description is not None:
         template.description = template_update.description
-    if template_update.assertions is not None:
-        template.assertions = template_update.assertions
+    if template_update.template_data is not None:
+        template.template_data = template_update.template_data
     if template_update.category is not None:
         template.category = template_update.category
     if template_update.is_public is not None:
@@ -383,11 +392,12 @@ async def update_template(
 
 @router.delete("/templates/{template_id}", status_code=204)
 async def delete_template(
-    template_id: UUID,
-    organization_id: str = Depends(get_current_organization),
+    template_id: str,
+    organization: dict = Depends(get_current_organization),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete an assertion template."""
+    organization_id = organization["organization_id"]
     stmt = select(C2PAAssertionTemplate).where(
         C2PAAssertionTemplate.id == template_id,
         C2PAAssertionTemplate.organization_id == organization_id

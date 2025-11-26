@@ -45,21 +45,26 @@ class OrganizationCertificateStatus(str, Enum):
 class Organization(Base):
     """
     Organization model with tier, quota tracking, and certificate metadata.
+    
+    Updated to use unified schema with 'id' as primary key.
     """
 
     __tablename__ = "organizations"
     __table_args__ = {"extend_existing": True}
 
-    # Primary key
-    organization_id = Column(String(255), primary_key=True)
+    # Primary key - matches unified schema: id VARCHAR(64) PRIMARY KEY
+    id = Column(String(64), primary_key=True)
+    
+    # Alias for backward compatibility
+    organization_id = synonym("id")
 
-    # Organization details
-    organization_name = Column(String(255), nullable=False)
-    # Preserve historical attribute name for backward compatibility
-    name = synonym("organization_name")
-    organization_type = Column(String(50), nullable=False, default="enterprise")
-    email = Column(String(255), nullable=False)
-    tier = Column(SQLEnum(OrganizationTier), nullable=False, default=OrganizationTier.FREE)
+    # Organization details - matches unified schema
+    name = Column(String(255), nullable=False)
+    # Alias for backward compatibility
+    organization_name = synonym("name")
+    slug = Column(String(100), nullable=True, unique=True)
+    email = Column(String(255), nullable=False, unique=True)
+    tier = Column(String(32), nullable=False, default="starter")
 
     # Certificate metadata
     certificate_pem = Column(Text, nullable=True)

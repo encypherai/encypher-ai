@@ -34,34 +34,47 @@ class C2PASchema(Base):
     
     Allows organizations to register custom assertion types
     with JSON Schema validation rules.
-    """
-    __tablename__ = "c2pa_schemas"
     
-    id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
-    namespace = Column(String(255), nullable=False, index=True)
-    label = Column(String(255), nullable=False, index=True)
-    version = Column(String(50), nullable=False)
-    schema = Column(JSONType, nullable=False)
+    Updated to match unified schema in 002_enterprise_api_schema.sql.
+    """
+    __tablename__ = "c2pa_assertion_schemas"
+    
+    # Primary key - matches migration
+    id = Column(String(64), primary_key=True, default=lambda: f"schema_{uuid.uuid4().hex[:12]}")
+    
+    # Foreign key - matches migration
+    organization_id = Column(String(64), nullable=False, index=True)
+    
+    # Schema definition - matches migration
+    name = Column(String(255), nullable=False)
+    label = Column(String(255), nullable=False)
+    version = Column(String(20), nullable=False, default="1.0")
+    json_schema = Column(JSONType, nullable=False)
+    
+    # Status - matches migration
+    is_active = Column(Boolean, default=True, nullable=False)
+    is_public = Column(Boolean, default=False, nullable=False)
+    
+    # Metadata - matches migration
     description = Column(Text, nullable=True)
-    organization_id = Column(String(255), nullable=True, index=True)
-    is_public = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(TIMESTAMP, nullable=False, server_default=func.now())
     updated_at = Column(TIMESTAMP, nullable=False, server_default=func.now(), onupdate=func.now())
     
     __table_args__ = (
-        Index('uq_schema_namespace_label_version', 'namespace', 'label', 'version', unique=True),
+        Index('uq_c2pa_schema_org_label_version', 'organization_id', 'label', 'version', unique=True),
     )
     
     def to_dict(self):
         """Convert to dictionary for API responses."""
         return {
             'id': str(self.id),
-            'namespace': self.namespace,
+            'name': self.name,
             'label': self.label,
             'version': self.version,
-            'schema': self.schema,
+            'json_schema': self.json_schema,
             'description': self.description,
             'organization_id': self.organization_id,
+            'is_active': self.is_active,
             'is_public': self.is_public,
             'created_at': self.created_at.isoformat() if self.created_at else None,
             'updated_at': self.updated_at.isoformat() if self.updated_at else None

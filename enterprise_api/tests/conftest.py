@@ -1,7 +1,14 @@
+"""
+Pytest configuration and fixtures for Enterprise API tests.
+
+Uses PostgreSQL via Docker for full compatibility with production.
+Two-Database Architecture:
+- Core DB: Customer/billing data
+- Content DB: Verification/content data
+"""
 import importlib.util
 import sys
 import os
-import tempfile
 from pathlib import Path
 from typing import AsyncGenerator
 
@@ -30,74 +37,95 @@ def _set_enterprise_app() -> None:
 _set_enterprise_app()
 
 # Now import app modules after setting up the path
-from app.database import Base, get_db
+from app.database import Base, get_db, get_content_db
 from app.main import app
 
 
-# Test database URL - use PostgreSQL for compatibility with ARRAY types
-# In Docker: use internal hostname; locally: use localhost
-import os
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher"
+# Test database URLs - Two-Database Architecture
+# Core DB: Customer/billing data (organizations, api_keys, etc.)
+TEST_CORE_DATABASE_URL = os.getenv(
+    "TEST_CORE_DATABASE_URL",
+    os.getenv(
+        "CORE_DATABASE_URL",
+        "postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core"
+    )
 )
 
+# Content DB: Verification data (documents, merkle trees, etc.)
+TEST_CONTENT_DATABASE_URL = os.getenv(
+    "TEST_CONTENT_DATABASE_URL",
+    os.getenv(
+        "CONTENT_DATABASE_URL",
+        "postgresql+asyncpg://encypher:encypher_dev_password@postgres-content:5432/encypher_content"
+    )
+)
 
-@pytest.fixture(scope="session")
-def temp_db_file():
-    """Create a temporary database file for the test session."""
-    # Create a temporary file
-    fd, path = tempfile.mkstemp(suffix=".db")
-    os.close(fd)
-    
-    yield path
-    
-    # Cleanup
-    try:
-        os.unlink(path)
-    except Exception:
-        pass
+# Legacy alias for backward compatibility
+TEST_DATABASE_URL = TEST_CORE_DATABASE_URL
 
 
 @pytest_asyncio.fixture(scope="function")
 async def async_engine():
-    """Create an async engine for testing with PostgreSQL."""
+    """Create an async engine for CORE database testing."""
     engine = create_async_engine(
-        TEST_DATABASE_URL,
+        TEST_CORE_DATABASE_URL,
         echo=False,
         pool_pre_ping=True,
     )
-    
-    # Tables should already exist in the test database
-    # Don't create/drop tables as we're using the shared dev database
-    
     yield engine
-    
+    await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def content_engine():
+    """Create an async engine for CONTENT database testing."""
+    engine = create_async_engine(
+        TEST_CONTENT_DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,
+    )
+    yield engine
     await engine.dispose()
 
 
 @pytest_asyncio.fixture(scope="function")
 async def db(async_engine) -> AsyncGenerator[AsyncSession, None]:
-    """Create a database session for testing."""
+    """Create a CORE database session for testing."""
     async_session = async_sessionmaker(
         async_engine,
         class_=AsyncSession,
         expire_on_commit=False
     )
-    
     async with async_session() as session:
         yield session
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
-    """Create an async HTTP client for testing."""
+async def content_db(content_engine) -> AsyncGenerator[AsyncSession, None]:
+    """Create a CONTENT database session for testing."""
+    async_session = async_sessionmaker(
+        content_engine,
+        class_=AsyncSession,
+        expire_on_commit=False
+    )
+    async with async_session() as session:
+        yield session
+
+
+@pytest_asyncio.fixture(scope="function")
+async def client(db: AsyncSession, content_db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
+    """Create an async HTTP client for testing with both databases."""
     
-    # Override the get_db dependency
+    # Override the get_db dependency (core database)
     async def override_get_db():
         yield db
     
+    # Override the get_content_db dependency
+    async def override_get_content_db():
+        yield content_db
+    
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_content_db] = override_get_content_db
     
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:

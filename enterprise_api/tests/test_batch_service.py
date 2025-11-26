@@ -9,12 +9,13 @@ from app.models.batch import BatchRequest
 from app.models.response_models import SignResponse, VerifyVerdict
 from app.schemas.batch import BatchItemPayload, BatchSignRequest, BatchVerifyRequest
 from app.services.batch_service import BatchService
+import app.services.batch_service as batch_service_module
 
 
 @pytest.mark.asyncio
 async def test_batch_sign_c2pa_persists_results(monkeypatch, async_engine):
     test_session = async_sessionmaker(async_engine, expire_on_commit=False)
-    monkeypatch.setattr("app.services.batch_service.async_session_factory", test_session)
+    monkeypatch.setattr(batch_service_module, "async_session_factory", test_session)
 
     async def fake_execute_signing(*, request, organization, db, document_id):
         return SignResponse(
@@ -25,7 +26,7 @@ async def test_batch_sign_c2pa_persists_results(monkeypatch, async_engine):
             verification_url="http://local/verify",
         )
 
-    monkeypatch.setattr("app.services.batch_service.execute_signing", fake_execute_signing)
+    monkeypatch.setattr(batch_service_module, "execute_signing", fake_execute_signing)
     organization = {
         "organization_id": "org_demo",
         "organization_name": "Demo Org",
@@ -54,7 +55,9 @@ async def test_batch_sign_c2pa_persists_results(monkeypatch, async_engine):
         assert response.data.summary.success_count == 2
         assert all(item.status == "ok" for item in response.data.results)
 
-        result = await session.execute(select(BatchRequest))
+        result = await session.execute(
+            select(BatchRequest).where(BatchRequest.idempotency_key == request.idempotency_key)
+        )
         batch_row = result.scalar_one()
         assert batch_row.success_count == 2
 
@@ -62,7 +65,7 @@ async def test_batch_sign_c2pa_persists_results(monkeypatch, async_engine):
 @pytest.mark.asyncio
 async def test_batch_sign_idempotency_conflict(monkeypatch, async_engine):
     test_session = async_sessionmaker(async_engine, expire_on_commit=False)
-    monkeypatch.setattr("app.services.batch_service.async_session_factory", test_session)
+    monkeypatch.setattr(batch_service_module, "async_session_factory", test_session)
 
     async def fake_execute_signing(*args, **kwargs):
         return SignResponse(
@@ -73,7 +76,7 @@ async def test_batch_sign_idempotency_conflict(monkeypatch, async_engine):
             verification_url="http://local",
         )
 
-    monkeypatch.setattr("app.services.batch_service.execute_signing", fake_execute_signing)
+    monkeypatch.setattr(batch_service_module, "execute_signing", fake_execute_signing)
     organization = {
         "organization_id": "org_demo",
         "organization_name": "Demo Org",
@@ -116,7 +119,7 @@ async def test_batch_sign_idempotency_conflict(monkeypatch, async_engine):
 @pytest.mark.asyncio
 async def test_batch_verify_mixed_results(monkeypatch, async_engine):
     test_session = async_sessionmaker(async_engine, expire_on_commit=False)
-    monkeypatch.setattr("app.services.batch_service.async_session_factory", test_session)
+    monkeypatch.setattr(batch_service_module, "async_session_factory", test_session)
 
     class DummyExecution:
         def __init__(self, is_valid: bool):
@@ -146,9 +149,9 @@ async def test_batch_verify_mixed_results(monkeypatch, async_engine):
             details={},
         )
 
-    monkeypatch.setattr("app.services.batch_service.execute_verification", fake_execute_verification)
-    monkeypatch.setattr("app.services.batch_service.determine_reason_code", fake_reason_code)
-    monkeypatch.setattr("app.services.batch_service.build_verdict", fake_build_verdict)
+    monkeypatch.setattr(batch_service_module, "execute_verification", fake_execute_verification)
+    monkeypatch.setattr(batch_service_module, "determine_reason_code", fake_reason_code)
+    monkeypatch.setattr(batch_service_module, "build_verdict", fake_build_verdict)
 
     organization = {
         "organization_id": "org_demo",

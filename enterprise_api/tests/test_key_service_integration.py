@@ -40,12 +40,12 @@ async def test_validate_key_calls_service_on_cache_miss():
     
     service = KeyServiceClient(redis_client=mock_redis)
     
-    # Mock http response
+    # Mock http response - matches actual Key Service response format
     mock_response = MagicMock()
     mock_response.status_code = 200
     mock_response.json.return_value = {
-        "valid": True,
-        "key": {
+        "success": True,
+        "data": {
             "api_key": "test_key",
             "organization_id": "org_service",
             "can_sign": True

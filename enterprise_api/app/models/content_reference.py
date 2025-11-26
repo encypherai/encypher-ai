@@ -33,21 +33,21 @@ class ContentReference(Base):
     # Link to Merkle tree system (nullable for free tier - no Merkle tree)
     merkle_root_id = Column(
         PGUUID(as_uuid=True),
-        ForeignKey("merkle_roots.root_id", ondelete="CASCADE"),
+        ForeignKey("merkle_roots.id", ondelete="CASCADE"),  # Updated to use unified schema
         nullable=True,  # Free tier has no Merkle tree
         index=True
     )
     leaf_hash = Column(String(64), nullable=False, index=True)
     leaf_index = Column(Integer, nullable=False)
     
-    # Document metadata
+    # Document metadata - FK to unified schema organizations.id
     organization_id = Column(
-        String(255),
-        ForeignKey("organizations.organization_id", ondelete="CASCADE"),
+        String(64),
+        ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
-    document_id = Column(String(255), nullable=False, index=True)
+    document_id = Column(String(64), nullable=False, index=True)
     
     # Content information
     text_content = Column(Text, nullable=True)

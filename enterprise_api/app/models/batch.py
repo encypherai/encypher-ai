@@ -33,6 +33,9 @@ class BatchRequestType(str, Enum):
 
     SIGN = "sign"
     VERIFY = "verify"
+    
+    def __str__(self):
+        return self.value
 
 
 class BatchStatus(str, Enum):
@@ -68,16 +71,16 @@ class BatchRequest(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     organization_id = Column(String(255), nullable=False)
-    api_key = Column(String(64), nullable=False)
-    request_type = Column(SQLEnum(BatchRequestType, name="batch_request_type"), nullable=False)
+    api_key_id = Column(String(64), nullable=True)
+    request_type = Column(String(16), nullable=False)
     mode = Column(String(32), nullable=False)
     segmentation_level = Column(String(32), nullable=True)
     idempotency_key = Column(String(128), nullable=False)
     payload_hash = Column(String(64), nullable=False)
     status = Column(
-        SQLEnum(BatchStatus, name="batch_request_status"),
+        String(16),
         nullable=False,
-        default=BatchStatus.PENDING,
+        default="pending",
     )
     item_count = Column(Integer, nullable=False)
     success_count = Column(Integer, nullable=False, default=0)
@@ -123,9 +126,9 @@ class BatchItem(Base):
     )
     document_id = Column(String(255), nullable=False)
     status = Column(
-        SQLEnum(BatchItemStatus, name="batch_item_status"),
+        String(16),
         nullable=False,
-        default=BatchItemStatus.PENDING,
+        default="pending",
     )
     mode = Column(String(32), nullable=False)
     duration_ms = Column(Integer, nullable=True)

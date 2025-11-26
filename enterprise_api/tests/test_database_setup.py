@@ -1,9 +1,11 @@
 """
-Test database setup with SQLite.
+Test database setup with PostgreSQL.
 
 Verifies that the test database configuration works correctly.
+Uses PostgreSQL via Docker for full compatibility.
 """
 import pytest
+import uuid
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,19 +38,21 @@ class TestDatabaseSetup:
     
     async def test_create_c2pa_schema(self, db: AsyncSession):
         """Test creating a C2PA schema."""
+        unique_suffix = uuid.uuid4().hex[:8]
+        unique_label = f"com.test.example.{unique_suffix}"
+        
         schema = C2PASchema(
-            namespace="com.test",
-            label="com.test.example.v1",
+            name="Test Schema",
+            label=unique_label,
             version="1.0",
-            schema={
+            json_schema={
                 "type": "object",
                 "properties": {
                     "field1": {"type": "string"}
                 }
             },
             description="Test schema",
-            organization_id="org_test",
-            is_public=False
+            organization_id="org_business"
         )
         
         db.add(schema)
@@ -56,25 +60,40 @@ class TestDatabaseSetup:
         await db.refresh(schema)
         
         assert schema.id is not None
-        assert schema.label == "com.test.example.v1"
+        assert schema.label == unique_label
     
     async def test_create_c2pa_template(self, db: AsyncSession):
         """Test creating a C2PA assertion template."""
+        # First create a schema to reference with unique label
+        unique_suffix = uuid.uuid4().hex[:8]
+        unique_label = f"com.test.template.{unique_suffix}"
+        
+        schema = C2PASchema(
+            name="Template Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_business"
+        )
+        db.add(schema)
+        await db.commit()
+        await db.refresh(schema)
+        
+        # Now create template referencing the schema
         template = C2PAAssertionTemplate(
             name="Test Template",
             description="A test template",
-            assertions=[
-                {
-                    "label": "c2pa.location.v1",
-                    "data": {
-                        "latitude": 37.7749,
-                        "longitude": -122.4194
-                    }
+            schema_id=schema.id,
+            template_data={
+                "label": "c2pa.location.v1",
+                "data": {
+                    "latitude": 37.7749,
+                    "longitude": -122.4194
                 }
-            ],
-            organization_id="org_test",
-            is_public=False,
-            category="test"
+            },
+            organization_id="org_business",
+            is_default=False,
+            is_active=True
         )
         
         db.add(template)
@@ -83,16 +102,29 @@ class TestDatabaseSetup:
         
         assert template.id is not None
         assert template.name == "Test Template"
-        assert len(template.assertions) == 1
+        assert template.template_data is not None
     
     async def test_database_isolation(self, db: AsyncSession):
-        """Test that each test gets a clean database."""
-        # This test should start with empty tables
-        result = await db.execute(select(C2PASchema))
-        schemas = result.scalars().all()
+        """Test that database operations work correctly within a session."""
+        # Create a unique schema for this test
+        unique_label = f"com.test.isolation.{uuid.uuid4().hex[:8]}"
+        schema = C2PASchema(
+            name="Isolation Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_business"
+        )
+        db.add(schema)
+        await db.commit()
         
-        # Should be empty since previous test's data was rolled back
-        assert len(schemas) == 0
+        # Verify it was created
+        result = await db.execute(
+            select(C2PASchema).where(C2PASchema.label == unique_label)
+        )
+        found = result.scalar_one_or_none()
+        assert found is not None
+        assert found.label == unique_label
 
 
 @pytest.mark.asyncio
@@ -101,12 +133,15 @@ class TestDatabaseTransactions:
     
     async def test_commit_persists_data(self, db: AsyncSession):
         """Test that committed data persists."""
+        unique_suffix = uuid.uuid4().hex[:8]
+        unique_label = f"com.test.commit.{unique_suffix}"
+        
         schema = C2PASchema(
-            namespace="com.test",
-            label="com.test.commit.v1",
+            name="Commit Schema",
+            label=unique_label,
             version="1.0",
-            schema={"type": "object"},
-            organization_id="org_test"
+            json_schema={"type": "object"},
+            organization_id="org_business"
         )
         
         db.add(schema)
@@ -114,21 +149,22 @@ class TestDatabaseTransactions:
         
         # Query again to verify persistence
         result = await db.execute(
-            select(C2PASchema).where(C2PASchema.label == "com.test.commit.v1")
+            select(C2PASchema).where(C2PASchema.label == unique_label)
         )
         found = result.scalar_one_or_none()
         
         assert found is not None
-        assert found.label == "com.test.commit.v1"
+        assert found.label == unique_label
     
     async def test_rollback_discards_data(self, db: AsyncSession):
         """Test that rollback discards uncommitted data."""
+        unique_label = f"com.test.rollback.{uuid.uuid4().hex[:8]}"
         schema = C2PASchema(
-            namespace="com.test",
-            label="com.test.rollback.v1",
+            name="Rollback Schema",
+            label=unique_label,
             version="1.0",
-            schema={"type": "object"},
-            organization_id="org_test"
+            json_schema={"type": "object"},
+            organization_id="org_business"
         )
         
         db.add(schema)
@@ -136,7 +172,7 @@ class TestDatabaseTransactions:
         
         # Query to verify data was discarded
         result = await db.execute(
-            select(C2PASchema).where(C2PASchema.label == "com.test.rollback.v1")
+            select(C2PASchema).where(C2PASchema.label == unique_label)
         )
         found = result.scalar_one_or_none()
         

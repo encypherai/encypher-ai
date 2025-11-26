@@ -1,54 +1,132 @@
 """
 Database connection module for Encypher Enterprise API.
+
+Two-Database Architecture:
+- Core DB: Customer/billing data (organizations, api_keys, subscriptions)
+- Content DB: Verification data (documents, merkle trees, sentences)
+
 Uses SQLAlchemy with asyncpg for async PostgreSQL operations.
 """
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from app.config import settings
 
-# Create async engine
-engine = create_async_engine(
-    settings.database_url.replace("postgresql://", "postgresql+asyncpg://"),
+
+def _normalize_url(url: str) -> str:
+    """Ensure URL uses asyncpg driver."""
+    if url.startswith("postgresql://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://")
+    return url
+
+
+# ============================================
+# CORE DATABASE (Customer/Billing Data)
+# ============================================
+# Tables: organizations, users, api_keys, subscriptions, audit_logs, etc.
+core_engine = create_async_engine(
+    _normalize_url(settings.core_database_url_resolved),
     echo=settings.is_development,
-    pool_size=100,  # Increased from 20 for high concurrency (16 workers × 64 concurrent requests)
-    max_overflow=50,  # Increased from 10 to handle burst traffic
+    pool_size=50,
+    max_overflow=25,
     pool_pre_ping=True,
     future=True,
 )
 
-# Create session factory
-async_session_factory = async_sessionmaker(
-    engine,
+core_session_factory = async_sessionmaker(
+    core_engine,
     class_=AsyncSession,
     expire_on_commit=False,
     autoflush=False,
     autocommit=False,
 )
 
+# ============================================
+# CONTENT DATABASE (Verification Data)
+# ============================================
+# Tables: documents, sentence_records, merkle_roots, merkle_subhashes, etc.
+content_engine = create_async_engine(
+    _normalize_url(settings.content_database_url_resolved),
+    echo=settings.is_development,
+    pool_size=100,  # Higher pool for verification workloads
+    max_overflow=50,
+    pool_pre_ping=True,
+    future=True,
+)
+
+content_session_factory = async_sessionmaker(
+    content_engine,
+    class_=AsyncSession,
+    expire_on_commit=False,
+    autoflush=False,
+    autocommit=False,
+)
+
+# ============================================
+# LEGACY ALIASES (Backward Compatibility)
+# ============================================
+# Default to core database for backward compatibility
+engine = core_engine
+async_session_factory = core_session_factory
+
 # Base class for ORM models
 Base = declarative_base()
 
 
-# Dependency for getting database session
+# ============================================
+# DEPENDENCY INJECTION
+# ============================================
+
 async def get_db():
     """
-    Dependency for getting database session in FastAPI endpoints.
+    Get a session for the CORE database (customer/billing data).
     
-    Performance optimization: Sessions auto-commit at the end of the request.
-    Individual operations use flush() instead of commit() to batch disk writes.
-
-    Usage:
-        @app.get("/endpoint")
-        async def endpoint(db: AsyncSession = Depends(get_db)):
-            ...
+    Use this for:
+    - Organization lookups
+    - API key validation
+    - User authentication
+    - Billing operations
+    - Audit logging
     """
-    async with async_session_factory() as session:
+    async with core_session_factory() as session:
         try:
             yield session
-            # Auto-commit at end of request (batches all flush() operations)
             await session.commit()
         except Exception:
-            # Rollback on error
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+
+async def get_core_db():
+    """Explicit alias for get_db() - core database session."""
+    async with core_session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
+        finally:
+            await session.close()
+
+
+async def get_content_db():
+    """
+    Get a session for the CONTENT database (verification data).
+    
+    Use this for:
+    - Document storage
+    - Sentence records
+    - Merkle tree operations
+    - Attribution reports
+    - Content verification
+    """
+    async with content_session_factory() as session:
+        try:
+            yield session
+            await session.commit()
+        except Exception:
             await session.rollback()
             raise
         finally:

@@ -2,6 +2,7 @@
 Integration tests for C2PA custom assertions API endpoints.
 """
 import pytest
+import uuid
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,13 +16,14 @@ class TestC2PASchemaAPI:
     
     async def test_create_schema(self, client: AsyncClient, auth_headers: dict):
         """Test creating a new C2PA schema."""
+        unique_label = f"com.test.custom.{uuid.uuid4().hex[:8]}"
         schema_data = {
-            "namespace": "com.test",
-            "label": "com.test.custom.v1",
+            "name": "Test Custom Schema",
+            "label": unique_label,
             "version": "1.0",
             "description": "Test custom schema",
             "is_public": False,
-            "schema": {
+            "json_schema": {
                 "type": "object",
                 "properties": {
                     "field1": {"type": "string"},
@@ -39,30 +41,31 @@ class TestC2PASchemaAPI:
         
         assert response.status_code == 201
         data = response.json()
-        assert data["namespace"] == "com.test"
-        assert data["label"] == "com.test.custom.v1"
+        assert data["name"] == "Test Custom Schema"
+        assert data["label"] == unique_label
         assert data["version"] == "1.0"
         assert "id" in data
     
     async def test_create_schema_duplicate(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test creating duplicate schema returns 409."""
+        unique_label = f"com.test.duplicate.{uuid.uuid4().hex[:8]}"
         # Create first schema
         schema = C2PASchema(
-            namespace="com.test",
-            label="com.test.duplicate.v1",
+            name="Duplicate Test Schema",
+            label=unique_label,
             version="1.0",
-            schema={"type": "object"},
-            organization_id="org_test"
+            json_schema={"type": "object"},
+            organization_id="org_demo"  # Use seeded org
         )
         db.add(schema)
         await db.commit()
         
         # Try to create duplicate
         schema_data = {
-            "namespace": "com.test",
-            "label": "com.test.duplicate.v1",
+            "name": "Duplicate Test Schema",
+            "label": unique_label,
             "version": "1.0",
-            "schema": {"type": "object"}
+            "json_schema": {"type": "object"}
         }
         
         response = await client.post(
@@ -75,11 +78,12 @@ class TestC2PASchemaAPI:
     
     async def test_create_schema_invalid_json_schema(self, client: AsyncClient, auth_headers: dict):
         """Test creating schema with invalid JSON Schema returns 400."""
+        unique_label = f"com.test.invalid.{uuid.uuid4().hex[:8]}"
         schema_data = {
-            "namespace": "com.test",
-            "label": "com.test.invalid.v1",
+            "name": "Invalid Schema",
+            "label": unique_label,
             "version": "1.0",
-            "schema": {
+            "json_schema": {
                 "type": "invalid_type"  # Invalid
             }
         }
@@ -95,13 +99,14 @@ class TestC2PASchemaAPI:
     async def test_list_schemas(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test listing schemas."""
         # Create test schemas
+        unique_prefix = uuid.uuid4().hex[:8]
         for i in range(3):
             schema = C2PASchema(
-                namespace="com.test",
-                label=f"com.test.schema{i}.v1",
+                name=f"List Test Schema {i}",
+                label=f"com.test.schema{unique_prefix}{i}.v1",
                 version="1.0",
-                schema={"type": "object"},
-                organization_id="org_test"
+                json_schema={"type": "object"},
+                organization_id="org_demo"  # Use seeded org
             )
             db.add(schema)
         await db.commit()
@@ -117,43 +122,47 @@ class TestC2PASchemaAPI:
         assert "total" in data
         assert data["total"] >= 3
     
-    async def test_list_schemas_with_namespace_filter(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
-        """Test listing schemas with namespace filter."""
-        # Create schemas with different namespaces
+    async def test_list_schemas_with_is_public_filter(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
+        """Test listing schemas with is_public filter."""
+        # Create schemas with different is_public values
+        unique_prefix = uuid.uuid4().hex[:8]
         schema1 = C2PASchema(
-            namespace="com.test",
-            label="com.test.schema1.v1",
+            name="Public Schema",
+            label=f"com.test.public.{unique_prefix}",
             version="1.0",
-            schema={"type": "object"},
-            organization_id="org_test"
+            json_schema={"type": "object"},
+            organization_id="org_demo",
+            is_public=True
         )
         schema2 = C2PASchema(
-            namespace="com.other",
-            label="com.other.schema1.v1",
+            name="Private Schema",
+            label=f"com.test.private.{unique_prefix}",
             version="1.0",
-            schema={"type": "object"},
-            organization_id="org_test"
+            json_schema={"type": "object"},
+            organization_id="org_demo",
+            is_public=False
         )
         db.add_all([schema1, schema2])
         await db.commit()
         
         response = await client.get(
-            "/api/v1/enterprise/c2pa/schemas?namespace=com.test",
+            "/api/v1/enterprise/c2pa/schemas?is_public=true",
             headers=auth_headers
         )
         
         assert response.status_code == 200
         data = response.json()
-        assert all(s["namespace"] == "com.test" for s in data["schemas"])
+        assert all(s["is_public"] is True for s in data["schemas"])
     
     async def test_get_schema(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test getting a specific schema."""
+        unique_label = f"com.test.get.{uuid.uuid4().hex[:8]}"
         schema = C2PASchema(
-            namespace="com.test",
-            label="com.test.get.v1",
+            name="Get Test Schema",
+            label=unique_label,
             version="1.0",
-            schema={"type": "object"},
-            organization_id="org_test"
+            json_schema={"type": "object"},
+            organization_id="org_demo"  # Use seeded org
         )
         db.add(schema)
         await db.commit()
@@ -167,7 +176,7 @@ class TestC2PASchemaAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["id"] == str(schema.id)
-        assert data["label"] == "com.test.get.v1"
+        assert data["label"] == unique_label
     
     async def test_get_schema_not_found(self, client: AsyncClient, auth_headers: dict):
         """Test getting non-existent schema returns 404."""
@@ -181,13 +190,14 @@ class TestC2PASchemaAPI:
     
     async def test_update_schema(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test updating a schema."""
+        unique_label = f"com.test.update.{uuid.uuid4().hex[:8]}"
         schema = C2PASchema(
-            namespace="com.test",
-            label="com.test.update.v1",
+            name="Update Test Schema",
+            label=unique_label,
             version="1.0",
-            schema={"type": "object"},
+            json_schema={"type": "object"},
             description="Original description",
-            organization_id="org_test"
+            organization_id="org_demo"  # Use seeded org
         )
         db.add(schema)
         await db.commit()
@@ -211,12 +221,13 @@ class TestC2PASchemaAPI:
     
     async def test_delete_schema(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test deleting a schema."""
+        unique_label = f"com.test.delete.{uuid.uuid4().hex[:8]}"
         schema = C2PASchema(
-            namespace="com.test",
-            label="com.test.delete.v1",
+            name="Delete Test Schema",
+            label=unique_label,
             version="1.0",
-            schema={"type": "object"},
-            organization_id="org_test"
+            json_schema={"type": "object"},
+            organization_id="org_demo"  # Use seeded org
         )
         db.add(schema)
         await db.commit()
@@ -291,20 +302,32 @@ class TestC2PAValidationAPI:
 class TestC2PATemplateAPI:
     """Test C2PA template management API endpoints."""
     
-    async def test_create_template(self, client: AsyncClient, auth_headers: dict):
+    async def test_create_template(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test creating a new template."""
+        # First create a schema to reference
+        unique_label = f"com.test.template.{uuid.uuid4().hex[:8]}"
+        schema = C2PASchema(
+            name="Template Test Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_demo"
+        )
+        db.add(schema)
+        await db.commit()
+        await db.refresh(schema)
+        
         template_data = {
             "name": "Test Template",
+            "schema_id": schema.id,
             "description": "Test template description",
             "category": "news",
             "is_public": False,
-            "assertions": [
-                {
-                    "label": "c2pa.location.v1",
-                    "description": "Story location",
-                    "optional": True
-                }
-            ]
+            "template_data": {
+                "label": "c2pa.location.v1",
+                "description": "Story location",
+                "optional": True
+            }
         }
         
         response = await client.post(
@@ -321,13 +344,27 @@ class TestC2PATemplateAPI:
     
     async def test_list_templates(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test listing templates."""
+        # First create a schema to reference
+        unique_label = f"com.test.list.{uuid.uuid4().hex[:8]}"
+        schema = C2PASchema(
+            name="List Template Test Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_demo"
+        )
+        db.add(schema)
+        await db.commit()
+        await db.refresh(schema)
+        
         # Create test templates
         for i in range(3):
             template = C2PAAssertionTemplate(
-                name=f"Template {i}",
-                assertions=[],
+                name=f"Template {uuid.uuid4().hex[:8]}",
+                schema_id=schema.id,
+                template_data={},
                 category="news",
-                organization_id="org_test"
+                organization_id="org_demo"
             )
             db.add(template)
         await db.commit()
@@ -345,17 +382,32 @@ class TestC2PATemplateAPI:
     
     async def test_list_templates_with_category_filter(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test listing templates with category filter."""
+        # First create a schema to reference
+        unique_label = f"com.test.catfilter.{uuid.uuid4().hex[:8]}"
+        schema = C2PASchema(
+            name="Category Filter Test Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_demo"
+        )
+        db.add(schema)
+        await db.commit()
+        await db.refresh(schema)
+        
         template1 = C2PAAssertionTemplate(
-            name="News Template",
-            assertions=[],
+            name=f"News Template {uuid.uuid4().hex[:8]}",
+            schema_id=schema.id,
+            template_data={},
             category="news",
-            organization_id="org_test"
+            organization_id="org_demo"
         )
         template2 = C2PAAssertionTemplate(
-            name="Legal Template",
-            assertions=[],
+            name=f"Legal Template {uuid.uuid4().hex[:8]}",
+            schema_id=schema.id,
+            template_data={},
             category="legal",
-            organization_id="org_test"
+            organization_id="org_demo"
         )
         db.add_all([template1, template2])
         await db.commit()
@@ -371,11 +423,25 @@ class TestC2PATemplateAPI:
     
     async def test_get_template(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test getting a specific template."""
+        # First create a schema to reference
+        unique_label = f"com.test.gettempl.{uuid.uuid4().hex[:8]}"
+        schema = C2PASchema(
+            name="Get Template Test Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_demo"
+        )
+        db.add(schema)
+        await db.commit()
+        await db.refresh(schema)
+        
         template = C2PAAssertionTemplate(
             name="Get Template",
-            assertions=[],
+            schema_id=schema.id,
+            template_data={},
             category="news",
-            organization_id="org_test"
+            organization_id="org_demo"
         )
         db.add(template)
         await db.commit()
@@ -393,12 +459,26 @@ class TestC2PATemplateAPI:
     
     async def test_update_template(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test updating a template."""
+        # First create a schema to reference
+        unique_label = f"com.test.updatetempl.{uuid.uuid4().hex[:8]}"
+        schema = C2PASchema(
+            name="Update Template Test Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_demo"
+        )
+        db.add(schema)
+        await db.commit()
+        await db.refresh(schema)
+        
         template = C2PAAssertionTemplate(
             name="Update Template",
             description="Original description",
-            assertions=[],
+            schema_id=schema.id,
+            template_data={},
             category="news",
-            organization_id="org_test"
+            organization_id="org_demo"
         )
         db.add(template)
         await db.commit()
@@ -422,11 +502,25 @@ class TestC2PATemplateAPI:
     
     async def test_delete_template(self, client: AsyncClient, auth_headers: dict, db: AsyncSession):
         """Test deleting a template."""
+        # First create a schema to reference
+        unique_label = f"com.test.deletetempl.{uuid.uuid4().hex[:8]}"
+        schema = C2PASchema(
+            name="Delete Template Test Schema",
+            label=unique_label,
+            version="1.0",
+            json_schema={"type": "object"},
+            organization_id="org_demo"
+        )
+        db.add(schema)
+        await db.commit()
+        await db.refresh(schema)
+        
         template = C2PAAssertionTemplate(
             name="Delete Template",
-            assertions=[],
+            schema_id=schema.id,
+            template_data={},
             category="news",
-            organization_id="org_test"
+            organization_id="org_demo"
         )
         db.add(template)
         await db.commit()

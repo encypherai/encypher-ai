@@ -63,7 +63,7 @@ async def create_merkle_root(
 async def get_merkle_root_by_id(db: AsyncSession, root_id: UUID) -> Optional[MerkleRoot]:
     """Get a Merkle root by its ID."""
     result = await db.execute(
-        select(MerkleRoot).where(MerkleRoot.root_id == root_id)
+        select(MerkleRoot).where(MerkleRoot.id == root_id)
     )
     return result.scalar_one_or_none()
 
@@ -136,7 +136,7 @@ async def delete_merkle_root(db: AsyncSession, root_id: UUID) -> bool:
         True if deleted, False if not found
     """
     result = await db.execute(
-        delete(MerkleRoot).where(MerkleRoot.root_id == root_id)
+        delete(MerkleRoot).where(MerkleRoot.id == root_id)
     )
     await db.commit()
     return result.rowcount > 0
@@ -188,7 +188,7 @@ async def create_merkle_subhash(
         left_child_hash=left_child_hash,
         right_child_hash=right_child_hash,
         text_content=text_content,
-        seg_metadata=segment_metadata or {}
+        segment_metadata=segment_metadata or {}
     )
     db.add(subhash)
     await db.commit()
@@ -454,7 +454,7 @@ async def create_attribution_report(
         matched_segments=matched_segments,
         source_documents=source_documents,
         heat_map_data=heat_map_data,
-        report_meta=report_metadata or {}
+        report_metadata=report_metadata or {}
     )
     db.add(report)
     await db.commit()
@@ -468,7 +468,7 @@ async def get_attribution_report(
 ) -> Optional[AttributionReport]:
     """Get an attribution report by ID."""
     result = await db.execute(
-        select(AttributionReport).where(AttributionReport.report_id == report_id)
+        select(AttributionReport).where(AttributionReport.id == report_id)
     )
     return result.scalar_one_or_none()
 
@@ -513,7 +513,7 @@ async def delete_attribution_report(db: AsyncSession, report_id: UUID) -> bool:
         True if deleted, False if not found
     """
     result = await db.execute(
-        delete(AttributionReport).where(AttributionReport.report_id == report_id)
+        delete(AttributionReport).where(AttributionReport.id == report_id)
     )
     await db.commit()
     return result.rowcount > 0
