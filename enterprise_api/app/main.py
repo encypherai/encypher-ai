@@ -32,10 +32,13 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler replacing deprecated on_event startup/shutdown."""
     logger.info("Encypher Enterprise API starting up...")
     logger.info(f"Environment: {settings.environment}")
-    logger.info(
-        f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Not configured'}"
-    )
-    logger.info(f"SSL.com API: {settings.ssl_com_api_url}")
+    # Log database connection info (safely handle None)
+    db_url = settings.core_database_url_resolved or settings.database_url or ""
+    logger.info(f"Database: {db_url.split('@')[1] if '@' in db_url else 'Not configured'}")
+    if settings.ssl_com_api_key:
+        logger.info(f"SSL.com API: {settings.ssl_com_api_url}")
+    else:
+        logger.info("SSL.com API: Not configured (optional for staging)")
     
     # Initialize Redis connection for session management
     try:
