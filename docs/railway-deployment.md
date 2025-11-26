@@ -10,14 +10,47 @@ This guide covers deploying the Encypher platform to Railway with multiple micro
 Railway Project: encypher-ai
 ├── Environment: staging
 │   ├── enterprise-api (Port: dynamic)     ✅ Deployed
-│   ├── auth-service (Port: dynamic)       🚧 To Deploy
-│   ├── key-service (Port: dynamic)        🚧 To Deploy
-│   ├── postgres (Core DB)                 ✅ Deployed
-│   ├── postgres-content (Content DB)      ✅ Deployed
-│   └── redis                              ✅ Deployed
+│   ├── auth-service (Port: dynamic)       ✅ Created
+│   ├── user-service (Port: dynamic)       ✅ Created
+│   ├── key-service (Port: dynamic)        ✅ Created
+│   ├── encoding-service (Port: dynamic)   ✅ Created
+│   ├── verification-service (Port: dynamic) ✅ Created
+│   ├── analytics-service (Port: dynamic)  ✅ Created
+│   ├── billing-service (Port: dynamic)    ✅ Created
+│   ├── notification-service (Port: dynamic) ✅ Created
+│   ├── Postgres-Core (Core DB)            ✅ Deployed
+│   ├── Postgres-Content (Content DB)      ✅ Deployed
+│   └── Redis                              ✅ Deployed
 └── Environment: production
     └── (Same structure, separate instances)
 ```
+
+## ⚠️ REQUIRED: Dashboard Configuration
+
+**Root Directory must be set manually in Railway Dashboard for each service.**
+
+### Dashboard Settings for Each Service
+
+| Service | Root Directory | Health Path |
+|---------|---------------|-------------|
+| enterprise-api | `/enterprise_api` | `/health` |
+| auth-service | `/services/auth-service` | `/health` |
+| user-service | `/services/user-service` | `/health` |
+| key-service | `/services/key-service` | `/health` |
+| encoding-service | `/services/encoding-service` | `/health` |
+| verification-service | `/services/verification-service` | `/health` |
+| analytics-service | `/services/analytics-service` | `/health` |
+| billing-service | `/services/billing-service` | `/health` |
+| notification-service | `/services/notification-service` | `/health` |
+
+### How to Set Root Directory
+
+1. Go to Railway Dashboard → encypher-ai project
+2. Click on the service (e.g., auth-service)
+3. Go to **Settings** tab
+4. Under **Source** section, click **"Add Root Directory"**
+5. Enter the path from the table above (e.g., `/services/auth-service`)
+6. Click **Save** → Service will auto-redeploy
 
 ## Services Configuration
 
