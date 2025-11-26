@@ -94,7 +94,7 @@ class EncodingService:
                 signature=signature,
                 signer_id=user_id,
                 manifest=manifest,
-                metadata=document_data.metadata,
+                extra_metadata=document_data.metadata,
                 format=document_data.format,
                 encoding_method=settings.DEFAULT_ENCODING,
             )
@@ -177,7 +177,7 @@ class EncodingService:
             signature="",  # No signature for embed-only
             signer_id=user_id,
             manifest=manifest,
-            metadata=document_data.metadata,
+            extra_metadata=document_data.metadata,
             format=document_data.format,
             encoding_method=settings.DEFAULT_ENCODING,
         )

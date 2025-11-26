@@ -32,7 +32,7 @@ async def get_current_user(authorization: str = Header(None)) -> Optional[dict]:
             if response.status_code == 200:
                 return response.json()
             return None
-    except:
+    except Exception:
         return None
 
 
