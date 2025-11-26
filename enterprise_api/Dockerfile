@@ -22,6 +22,7 @@ RUN pip install --upgrade pip && \
 COPY c2pa-text /app/c2pa-text
 COPY encypher-ai /app/encypher-ai
 COPY enterprise_api /app/enterprise_api
+COPY services/migrations /app/services/migrations
 
 # Install c2pa-text first (dependency of encypher-ai), then encypher-ai, then enterprise_api
 # Also install asyncpg for database initialization and pytest for testing
