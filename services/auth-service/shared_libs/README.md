@@ -2,6 +2,8 @@
 
 Shared Python library for EncypherAI commercial tools and services.
 
+> **⚠️ Auto-Sync Enabled:** Changes to this directory are automatically synced to `services/*/shared_libs/` via GitHub Actions. See `.github/workflows/sync-shared-libs.yml`.
+
 ## Structure
 
 ```
