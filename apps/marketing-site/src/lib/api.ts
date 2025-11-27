@@ -2,10 +2,13 @@
  * API client for the marketing site web-service
  */
 
-// Base URL for the web-service
-// Default to localhost for dev, but in prod this should be the service URL
+// Base URL for the web-service (enterprise-api for content operations)
 const API_BASE_URL = process.env.NEXT_PUBLIC_WEB_SERVICE_URL || 'http://localhost:8002';
 const API_V1 = `${API_BASE_URL}/api/v1`;
+
+// Auth service URL (separate microservice for authentication)
+const AUTH_SERVICE_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8001';
+const AUTH_API_V1 = `${AUTH_SERVICE_URL}/api/v1`;
 
 export interface DemoRequestData {
   name: string;
@@ -52,13 +55,19 @@ export class AuthError extends Error {
 
 /**
  * Generic fetch wrapper
+ * Routes /auth/* endpoints to auth-service, all others to enterprise-api
  */
 export async function fetchApi<T>(endpoint: string, options: FetchApiOptions = {}): Promise<T> {
   let url = endpoint;
   
-  // If not absolute URL, prepend API_V1 (unless it starts with http)
+  // If not absolute URL, determine which service to call
   if (!endpoint.startsWith('http')) {
+    // Route auth endpoints to auth-service
+    if (endpoint.startsWith('/auth/')) {
+      url = `${AUTH_API_V1}${endpoint}`;
+    } else {
       url = `${API_V1}${endpoint}`;
+    }
   }
   
   const headers: Record<string, string> = {
