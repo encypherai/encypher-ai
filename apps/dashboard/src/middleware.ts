@@ -21,9 +21,8 @@ export async function middleware(req: NextRequest) {
   }
 
   // Determine cookie name based on environment
-  // Railway uses HTTPS so needs __Secure- prefix
-  const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
-  const isSecure = process.env.NODE_ENV === 'production' || !!isRailway;
+  // Use __Secure- prefix when NEXTAUTH_COOKIE_DOMAIN is set (HTTPS environments)
+  const isSecure = !!process.env.NEXTAUTH_COOKIE_DOMAIN;
   const cookieName = isSecure
     ? '__Secure-next-auth.session-token'
     : 'next-auth.session-token';

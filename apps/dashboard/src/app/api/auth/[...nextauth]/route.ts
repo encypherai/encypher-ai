@@ -108,17 +108,16 @@ const handler = NextAuth({
     strategy: 'jwt',
   },
   // Cookie configuration for cross-subdomain auth
-  // - Railway: uses .up.railway.app for SSO across preview URLs
-  // - Production: uses NEXTAUTH_COOKIE_DOMAIN (e.g., .encypherai.com)
-  // - Local dev: no domain set (localhost cookies)
+  // Set NEXTAUTH_COOKIE_DOMAIN to enable SSO across subdomains:
+  // - Railway staging: .up.railway.app
+  // - Production: .encypherai.com
+  // - Local dev: leave unset (cookies scoped to localhost)
   cookies: (() => {
-    // Determine cookie domain based on environment
-    const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
-    const cookieDomain = process.env.NEXTAUTH_COOKIE_DOMAIN || (isRailway ? '.up.railway.app' : undefined);
-    
+    const cookieDomain = process.env.NEXTAUTH_COOKIE_DOMAIN;
     if (!cookieDomain) return undefined;
     
-    const isSecure = process.env.NODE_ENV === 'production' || !!isRailway;
+    // Use secure cookies when domain is set (assumes HTTPS in staging/production)
+    const isSecure = !!cookieDomain;
     const cookiePrefix = isSecure ? '__Secure-' : '';
     
     return {
