@@ -85,11 +85,18 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         f"https://{settings.marketing_domain}",
+        f"https://www.{settings.marketing_domain}",
         f"https://{settings.infrastructure_domain}",
+        f"https://www.{settings.infrastructure_domain}",
         f"https://api.{settings.infrastructure_domain}",
         f"https://verify.{settings.infrastructure_domain}",
         f"https://dashboard.{settings.infrastructure_domain}",
-        "http://localhost:3000",  # For local development
+        # Railway staging domains
+        "https://marketing-site-staging-21cc.up.railway.app",
+        "https://dashboard-staging-25b2.up.railway.app",
+        # Local development
+        "http://localhost:3000",
+        "http://localhost:3001",
     ],
     allow_credentials=True,
     allow_methods=["*"],
