@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "web-service"
 version = "0.1.0"
-description = "Marketing website backend service for EncypherAI"
-authors = ["EncypherAI Team <team@encypherai.com>"]
+description = "Marketing website backend service for Encypher"
+authors = ["Encypher Team <contact@encypherai.com>"]
 license = "Proprietary"
 readme = "README.md"
 packages = [{include = "app"}]

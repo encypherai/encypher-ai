@@ -1,6 +1,6 @@
 # EncypherAI Web Service
 
-Backend service for the EncypherAI marketing website, handling contact forms, demo requests, and web analytics.
+Backend service for the EncypherAI marketing website, handling contact forms, demo requests, and web analytics. 
 
 ## Features
 
