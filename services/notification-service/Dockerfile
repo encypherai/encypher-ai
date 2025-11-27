@@ -7,18 +7,18 @@ RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/li
 # Install UV
 RUN pip install uv
 
-# Copy shared library first (for caching)
-COPY shared_commercial_libs /shared_libs
+# Copy shared library (copied from repo during build)
+COPY shared_libs /shared_libs
 
 # Install shared library
 RUN uv pip install --system /shared_libs
 
 # Copy dependency files
-COPY services/notification-service/pyproject.toml ./
-COPY services/notification-service/README.md ./
+COPY pyproject.toml ./
+COPY README.md ./
 
 # Copy application code
-COPY services/notification-service/app ./app
+COPY app ./app
 
 # Install dependencies
 RUN uv pip install --system .

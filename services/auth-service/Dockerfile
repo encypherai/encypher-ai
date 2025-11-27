@@ -12,16 +12,16 @@ RUN apt-get update && apt-get install -y \
 # Install UV
 RUN pip install uv
 
-# Copy shared library (expects build context from repo root)
-COPY shared_commercial_libs /shared_libs
+# Copy shared library (copied from repo during build)
+COPY shared_libs /shared_libs
 
 # Install shared library first
 RUN uv pip install --system /shared_libs
 
 # Copy service files
-COPY services/auth-service/pyproject.toml ./
-COPY services/auth-service/README.md ./
-COPY services/auth-service/app ./app
+COPY pyproject.toml ./
+COPY README.md ./
+COPY app ./app
 
 # Install service dependencies
 RUN uv pip install --system .

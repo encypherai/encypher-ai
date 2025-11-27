@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Welcome to EncypherAI! 🎉</h1>
+
+<p>Hi{{ ' ' + user_name if user_name else '' }},</p>
+
+<p>Your email has been verified and your account is now active. You're all set to start making AI transparent and trustworthy!</p>
+
+<p>Here's what you can do next:</p>
+
+<ul>
+  <li><strong>Generate API Keys</strong> – Create keys to integrate EncypherAI into your applications</li>
+  <li><strong>Explore the Dashboard</strong> – Monitor your usage and manage your account</li>
+  <li><strong>Read the Docs</strong> – Learn how to embed provenance metadata in AI-generated content</li>
+</ul>
+
+<div class="cta-container">
+  <a href="{{ dashboard_url }}" class="cta-button">Go to Dashboard</a>
+</div>
+
+<div class="divider"></div>
+
+<p>Need help getting started? Check out our <a href="https://encypherai.com/docs" style="color: #457b9d;">documentation</a> or reach out to us at <a href="mailto:support@encypherai.com" style="color: #457b9d;">support@encypherai.com</a>.</p>
+
+<p>We're excited to have you on board!</p>
+
+<p style="margin-top: 24px;">
+  — The EncypherAI Team
+</p>
+{% endblock %}
