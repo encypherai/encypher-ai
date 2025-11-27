@@ -49,17 +49,17 @@ Implement a comprehensive email system for auth-service with email verification 
   - [x] 2.6.1 Return error if not verified with option to resend
 
 ### 3.0 Frontend Integration
-- [ ] 3.1 Marketing site: Add "Check your email" page after signup
-- [ ] 3.2 Marketing site: Add email verification callback page
-- [ ] 3.3 Marketing site: Handle "email not verified" login error
-- [ ] 3.4 Marketing site: Add "Resend verification email" functionality
+- [x] 3.1 Marketing site: Add "Check your email" page after signup (existing in signin flow)
+- [x] 3.2 Marketing site: Add email verification callback page (`/auth/verify-email`)
+- [x] 3.3 Marketing site: Handle "email not verified" login error
+- [x] 3.4 Marketing site: Add "Resend verification email" functionality
 
 ### 4.0 Environment Configuration
-- [ ] 4.1 Add env vars to auth-service config:
+- [x] 4.1 Add env vars to auth-service config:
   - SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_TLS
   - EMAIL_FROM, EMAIL_FROM_NAME
   - FRONTEND_URL (for verification links)
-- [ ] 4.2 Set Railway env vars for staging
+- [x] 4.2 Set Railway env vars for staging (partial - need SMTP_USER/SMTP_PASS)
 - [ ] 4.3 Document env vars in README
 
 ### 5.0 Future: Zoho CRM Integration
@@ -102,7 +102,7 @@ Located at: `c:\Users\eriks\encypher_website\backend\email_templates\`
 ---
 
 ## Current Goal
-Complete `1.0 Email Infrastructure` - Set up email service and branded templates
+Complete `4.3 Document env vars in README` - Final documentation
 
 ## Dependencies
 - Core DB migration for `email_verification_tokens` table

@@ -75,6 +75,11 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
   const [signupConfirm, setSignupConfirm] = useState('');
   const [signupLoading, setSignupLoading] = useState(false);
   const [signupError, setSignupError] = useState<string | null>(null);
+  
+  // Email verification state
+  const [showEmailNotVerified, setShowEmailNotVerified] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState('');
+  const [resendLoading, setResendLoading] = useState(false);
 
   // Effect to update mode when initialMode prop changes
   useEffect(() => {
@@ -108,6 +113,7 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setShowEmailNotVerified(false);
     const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://s-dashboard.encypherai.com";
     try {
       const res = await signIn('credentials', {
@@ -120,14 +126,44 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
         toast({ title: 'Signed in successfully!', variant: 'success' });
         window.location.href = dashboardUrl;
       } else {
-        setError('Invalid email or password.');
-        toast({ title: 'Sign in failed', description: 'Invalid email or password.', variant: 'error' });
+        // Check if error is about email not verified
+        const errorMsg = res?.error || '';
+        if (errorMsg.toLowerCase().includes('not verified') || errorMsg.toLowerCase().includes('verify')) {
+          setShowEmailNotVerified(true);
+          setUnverifiedEmail(email);
+          setError('Please verify your email before signing in.');
+          toast({ title: 'Email not verified', description: 'Please check your inbox for the verification email.', variant: 'error' });
+        } else {
+          setError('Invalid email or password.');
+          toast({ title: 'Sign in failed', description: 'Invalid email or password.', variant: 'error' });
+        }
       }
     } catch {
       setError('Network error. Please try again.');
       toast({ title: 'Network error', description: 'Please try again.', variant: 'error' });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  // Resend verification email
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return;
+    setResendLoading(true);
+    try {
+      const response = await fetchApi<{ success: boolean }>('/auth/resend-verification', {
+        method: 'POST',
+        body: JSON.stringify({ email: unverifiedEmail }),
+      });
+      if (response.success) {
+        toast({ title: 'Verification email sent', description: 'Please check your inbox.', variant: 'success' });
+      } else {
+        toast({ title: 'Failed to send', description: 'Please try again later.', variant: 'error' });
+      }
+    } catch {
+      toast({ title: 'Error', description: 'Failed to resend verification email.', variant: 'error' });
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -227,7 +263,7 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
             <div className="flex-1 h-px bg-border" />
           </div>
           {/* Credentials Form */}
-          {mode === 'signin' && credentialsProvider && (
+          {mode === 'signin' && credentialsProvider && !showEmailNotVerified && (
             <SignInForm
               onSignIn={async (email: string, password: string) => {
                 setEmail(email);
@@ -241,6 +277,42 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
               password={password}
               setPassword={setPassword}
             />
+          )}
+          {/* Email Not Verified State */}
+          {mode === 'signin' && showEmailNotVerified && (
+            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 space-y-4">
+              <div className="flex items-start gap-3">
+                <svg className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <h3 className="font-semibold text-amber-800 dark:text-amber-200">Email Not Verified</h3>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    Please check your inbox for the verification email we sent to <strong>{unverifiedEmail}</strong>.
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={handleResendVerification}
+                  disabled={resendLoading}
+                  className="w-full py-2 px-4 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg transition disabled:opacity-50"
+                >
+                  {resendLoading ? 'Sending...' : 'Resend Verification Email'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowEmailNotVerified(false);
+                    setError(null);
+                  }}
+                  className="w-full py-2 px-4 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-lg transition"
+                >
+                  Try Different Email
+                </button>
+              </div>
+            </div>
           )}
           {mode === 'signup' && !showRegistrationStatus && (
             <SignUpForm
