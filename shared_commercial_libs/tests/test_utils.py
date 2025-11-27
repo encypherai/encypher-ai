@@ -9,7 +9,8 @@ import os
 import csv
 
 from encypher_commercial_shared import EncypherAI, VerificationResult
-from encypher_commercial_shared.utils import scan_directory, generate_report, load_trusted_signers_from_directory as load_trusted_signers
+from encypher_commercial_shared.core import scan_directory, generate_report
+from encypher_commercial_shared.core.utils import load_trusted_signers_from_directory as load_trusted_signers
 
 
 class TestUtils(unittest.TestCase):

@@ -1,115 +1,95 @@
-# Shared Commercial Libraries
+# EncypherAI Commercial Shared Library
 
-This directory houses proprietary Python libraries that are shared among the commercial tools in the `encypherai-commercial` monorepo (e.g., `audit_log_cli`, `policy_validator_cli`, `dashboard_app/backend`).
+Shared Python library for EncypherAI commercial tools and services.
 
-## EncypherAI Commercial Shared Library
+## Structure
 
-The `encypher_commercial_shared` package provides a high-level API for working with the EncypherAI package (v2.2.0+) across all commercial tools. It builds on top of the core EncypherAI functionality while adding commercial-specific features.
+```
+shared_commercial_libs/
+├── src/
+│   └── encypher_commercial_shared/
+│       ├── __init__.py
+│       ├── core/           # EncypherAI wrapper (CLI tools)
+│       │   ├── api.py      # EncypherAI class, VerificationResult
+│       │   └── utils.py    # scan_directory, generate_report
+│       └── email/          # Email functionality (services)
+│           ├── sender.py   # EmailConfig, send_email
+│           ├── emails.py   # Pre-built email functions
+│           └── templates/  # Jinja2 email templates
+├── tests/
+├── pyproject.toml
+└── README.md
+```
 
-### Features
+## Modules
 
-- **High-level API**: Simplified interface for embedding and verifying metadata
-- **Consistent Results**: Standardized `VerificationResult` class for all verification operations
-- **Utility Functions**: Common utilities for scanning directories, generating reports, etc.
-- **Rich Console Output**: Improved user experience with progress bars and colored output
-
-### Usage Example
+### `core` - EncypherAI Wrapper
+High-level API for CLI tools (audit_log_cli, policy_validator_cli).
 
 ```python
 from encypher_commercial_shared import EncypherAI, VerificationResult
-from encypher_commercial_shared.utils import scan_directory, generate_report
+from encypher_commercial_shared.core import scan_directory, generate_report
 
-# Initialize the EncypherAI high-level API
-encypher = EncypherAI(
-    trusted_signers={"signer1": "path/to/public_key.pem"},
-    verbose=True
+encypher = EncypherAI(trusted_signers={"signer1": "key.pem"})
+result = encypher.verify_from_text("Text with metadata")
+```
+
+### `email` - Email Service
+Shared email functionality for microservices.
+
+```python
+from encypher_commercial_shared.email import (
+    EmailConfig,
+    send_email,
+    send_verification_email,
+    send_welcome_email,
 )
 
-# Verify metadata from text
-result = encypher.verify_from_text("Text with embedded metadata")
-print(f"Verified: {result.verified}, Signer: {result.signer_id}")
+# From environment variables
+config = EmailConfig.from_env()
 
-# Scan a directory for files with embedded metadata
-results = scan_directory("path/to/directory", encypher)
+# Or explicit
+config = EmailConfig(
+    smtp_host="smtp.zoho.com",
+    smtp_user="support@encypherai.com",
+    smtp_pass="...",
+)
 
-# Generate a CSV report
-generate_report(results, "report.csv")
+# Send pre-built email
+send_verification_email(config, "user@example.com", "John", token)
+
+# Or custom email
+send_email(config, "user@example.com", "Subject", "<h1>HTML</h1>")
 ```
 
-## Installation (as an editable local package)
-
-To make these shared libraries available to other projects within this monorepo during development, install them in editable mode into the virtual environments of the consuming projects.
-
-For example, from the `audit_log_cli` directory, after activating its virtual environment:
+## Installation
 
 ```bash
+# From another project in the monorepo
 uv pip install -e ../shared_commercial_libs
+
+# Or add to pyproject.toml dependencies
+# "encypher-commercial-shared"
 ```
 
-Alternatively, if you configure UV workspaces at the root `pyproject.toml`, UV might handle this more automatically.
+## Environment Variables (for email)
 
-## Compatibility
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SMTP_HOST` | smtp.zoho.com | SMTP server |
+| `SMTP_PORT` | 587 | SMTP port |
+| `SMTP_USER` | | SMTP username |
+| `SMTP_PASS` | | SMTP password |
+| `SMTP_TLS` | true | Use TLS |
+| `EMAIL_FROM` | support@encypherai.com | From address |
+| `EMAIL_FROM_NAME` | Support - Encypher | From name |
+| `FRONTEND_URL` | http://localhost:3000 | For email links |
+| `DASHBOARD_URL` | | Dashboard URL |
 
-This shared library is compatible with EncypherAI v2.2.0 and later. It provides a stable API that abstracts away the underlying implementation details of the EncypherAI package, making it easier to maintain compatibility across commercial tools as the core package evolves.
-
-## Development and Testing
-
-### Managing Dependencies
-
-This project uses UV for package management. UV manages dependencies through the `pyproject.toml` file and maintains a lockfile (`uv.lock`) for reproducible environments.
+## Development
 
 ```bash
-# Navigate to the shared_commercial_libs directory
 cd shared_commercial_libs
-
-# Add a regular dependency
-uv add requests
-
-# Add a dependency with version constraint
-uv add 'rich>=13.0.0'
-
-# Add a development dependency
-uv add --dev pytest
-
-# Remove a dependency
-uv remove some-package
-
-# Upgrade a specific package
-uv lock --upgrade-package rich
+uv sync
+uv run pytest tests/
 ```
-
-After adding dependencies, UV automatically updates both the `pyproject.toml` and `uv.lock` files, and installs the packages in your virtual environment.
-
-The development dependencies are specified in the `[project.optional-dependencies.dev]` section of `pyproject.toml`, including:
-
-- `pytest` and `pytest-cov` for testing and code coverage
-- `black` and `isort` for code formatting
-- `mypy` for type checking
-- `ruff` for linting
-
-### Running Tests
-
-The library includes a comprehensive test suite to ensure functionality and compatibility. To run the tests:
-
-```bash
-# Run all tests using the test runner
-uv run tests/run_tests.py
-
-# Or run tests with pytest directly
-uv run -m pytest tests/
-
-# Run individual test modules
-uv run -m pytest tests/test_high_level.py
-uv run -m pytest tests/test_utils.py
-
-# Run tests with coverage report
-uv run -m pytest --cov=encypher_commercial_shared tests/
-```
-
-The test suite includes:
-
-- Unit tests for the high-level API (`EncypherAI` class)
-- Unit tests for utility functions (scanning, report generation)
-- Mock-based tests to avoid dependencies on actual EncypherAI functionality during testing
-
-When implementing new features or fixing bugs, please ensure that appropriate tests are added or updated.

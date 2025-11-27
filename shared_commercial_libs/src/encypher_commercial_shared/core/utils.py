@@ -25,7 +25,7 @@ try:
 except ImportError:
     DOCX2TXT_AVAILABLE = False
 
-from .high_level import EncypherAI, VerificationResult
+from .api import EncypherAI, VerificationResult
 
 
 console = Console()
