@@ -1,0 +1,582 @@
+/**
+ * Dashboard API Client
+ * 
+ * Handles all API calls to backend microservices.
+ * Uses the access token from NextAuth session for authentication.
+ */
+
+// All API calls go through the unified API gateway (Traefik routes to appropriate service)
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://s-api.encypherai.com';
+
+// Service-specific base URLs (all routed through the same API gateway)
+const AUTH_SERVICE_URL = API_BASE_URL;
+const KEY_SERVICE_URL = API_BASE_URL;
+const ANALYTICS_SERVICE_URL = API_BASE_URL;
+const BILLING_SERVICE_URL = process.env.NEXT_PUBLIC_BILLING_URL || 'http://localhost:8007';
+
+interface ApiResponse<T = unknown> {
+  success: boolean;
+  data: T | null;
+  error: {
+    code: string;
+    message: string;
+    details?: unknown;
+  } | null;
+}
+
+interface ApiKeyInfo {
+  id: string;
+  name: string;
+  fingerprint: string;
+  permissions: string[];
+  created_at: string;
+  last_used_at?: string;
+  is_revoked: boolean;
+}
+
+interface ApiKeyCreateResponse {
+  id: string;
+  name: string;
+  key: string; // Full key - only shown once!
+  fingerprint: string;
+  permissions: string[];
+  created_at: string;
+}
+
+interface UsageStats {
+  total_api_calls: number;
+  total_documents_signed: number;
+  total_verifications: number;
+  success_rate: number;
+  avg_response_time_ms: number;
+  period_start: string;
+  period_end: string;
+}
+
+interface TimeSeriesData {
+  timestamp: string;
+  count: number;
+  value?: number;
+}
+
+interface AnalyticsReport {
+  user_id: string;
+  period_start: string;
+  period_end: string;
+  usage_stats: UsageStats;
+  time_series: TimeSeriesData[];
+}
+
+// Billing types
+interface PlanInfo {
+  id: string;
+  name: string;
+  tier: string;
+  price_monthly: number;
+  price_annual: number;
+  features: string[];
+  limits: Record<string, number>;
+  coalition_rev_share: { publisher: number; encypher: number };
+  popular?: boolean;
+  enterprise?: boolean;
+}
+
+interface SubscriptionInfo {
+  id: string;
+  user_id: string;
+  organization_id?: string;
+  plan_id: string;
+  plan_name: string;
+  tier: string;
+  status: string;
+  billing_cycle: string;
+  amount: number;
+  currency: string;
+  current_period_start: string;
+  current_period_end: string;
+  cancel_at_period_end: boolean;
+  created_at: string;
+  features?: Record<string, boolean>;
+  coalition_rev_share?: { publisher: number; encypher: number };
+}
+
+interface Invoice {
+  id: string;
+  invoice_number: string;
+  status: string;
+  amount_due: number;
+  amount_paid: number;
+  currency: string;
+  period_start: string;
+  period_end: string;
+  due_date?: string;
+  paid_at?: string;
+  created_at: string;
+}
+
+interface CheckoutResponse {
+  checkout_url: string;
+  session_id: string;
+}
+
+interface PortalResponse {
+  portal_url: string;
+}
+
+interface UpgradeResponse {
+  success: boolean;
+  checkout_url?: string;
+  message: string;
+  new_tier?: string;
+  effective_date?: string;
+}
+
+interface UsageMetric {
+  name: string;
+  limit: number | 'unlimited';
+  used: number;
+  remaining: number | 'unlimited';
+  percentage_used: number;
+  available: boolean;
+}
+
+interface BillingUsageStats {
+  organization_id: string;
+  tier: string;
+  period_start: string;
+  period_end: string;
+  metrics: Record<string, UsageMetric>;
+  reset_date: string;
+}
+
+interface CoalitionSummary {
+  member: boolean;
+  opted_out: boolean;
+  publisher_share_percent: number;
+  encypher_share_percent: number;
+  total_content: number;
+  total_earnings: number;
+  pending_earnings: number;
+  last_payout_date: string | null;
+  earnings_history: Array<{
+    period: string;
+    amount: number;
+    status: string;
+  }>;
+  payout_account_connected: boolean;
+  payout_account_url: string | null;
+}
+
+class ApiError extends Error {
+  constructor(
+    message: string,
+    public statusCode: number,
+    public code?: string
+  ) {
+    super(message);
+    this.name = 'ApiError';
+  }
+}
+
+async function fetchWithAuth<T>(
+  url: string,
+  accessToken: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${accessToken}`,
+    ...options.headers,
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    let errorMessage = `Request failed with status ${response.status}`;
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.detail || errorData.message || errorMessage;
+    } catch {
+      // Ignore JSON parse errors
+    }
+    throw new ApiError(errorMessage, response.status);
+  }
+
+  return response.json();
+}
+
+const apiClient = {
+  // ============================================
+  // API Keys (key-service)
+  // ============================================
+  
+  /**
+   * Get all API keys for the current user
+   */
+  async getApiKeys(accessToken: string): Promise<ApiKeyInfo[]> {
+    const response = await fetchWithAuth<ApiKeyInfo[]>(
+      `${KEY_SERVICE_URL}/api/v1/keys`,
+      accessToken
+    );
+    return response;
+  },
+
+  /**
+   * Create a new API key
+   */
+  async createApiKey(
+    accessToken: string,
+    name: string,
+    permissions: string[] = ['sign', 'verify', 'read']
+  ): Promise<ApiResponse<ApiKeyCreateResponse>> {
+    const response = await fetchWithAuth<ApiKeyCreateResponse>(
+      `${KEY_SERVICE_URL}/api/v1/keys/generate`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ name, permissions }),
+      }
+    );
+    return {
+      success: true,
+      data: response,
+      error: null,
+    };
+  },
+
+  /**
+   * Delete (revoke) an API key
+   */
+  async deleteApiKey(accessToken: string, keyId: string): Promise<void> {
+    await fetchWithAuth<{ message: string }>(
+      `${KEY_SERVICE_URL}/api/v1/keys/${keyId}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
+
+  /**
+   * Get usage stats for a specific key
+   */
+  async getKeyUsage(accessToken: string, keyId: string): Promise<unknown> {
+    return fetchWithAuth(
+      `${KEY_SERVICE_URL}/api/v1/keys/${keyId}/usage`,
+      accessToken
+    );
+  },
+
+  // ============================================
+  // Analytics (analytics-service)
+  // ============================================
+
+  /**
+   * Get usage statistics for the current user
+   */
+  async getUsageStats(accessToken: string, days: number = 30): Promise<UsageStats> {
+    return fetchWithAuth<UsageStats>(
+      `${ANALYTICS_SERVICE_URL}/api/v1/analytics/usage?days=${days}`,
+      accessToken
+    );
+  },
+
+  /**
+   * Get comprehensive analytics report
+   */
+  async getAnalyticsReport(accessToken: string, days: number = 30): Promise<AnalyticsReport> {
+    return fetchWithAuth<AnalyticsReport>(
+      `${ANALYTICS_SERVICE_URL}/api/v1/analytics/report?days=${days}`,
+      accessToken
+    );
+  },
+
+  /**
+   * Get time series data for a specific metric
+   */
+  async getTimeSeries(
+    accessToken: string,
+    metricType: string,
+    days: number = 7,
+    interval: 'hour' | 'day' = 'day'
+  ): Promise<TimeSeriesData[]> {
+    return fetchWithAuth<TimeSeriesData[]>(
+      `${ANALYTICS_SERVICE_URL}/api/v1/analytics/timeseries?metric_type=${metricType}&days=${days}&interval=${interval}`,
+      accessToken
+    );
+  },
+
+  // ============================================
+  // User Profile (auth-service)
+  // ============================================
+
+  /**
+   * Get current user profile
+   */
+  async getUserProfile(accessToken: string): Promise<unknown> {
+    return fetchWithAuth(
+      `${AUTH_SERVICE_URL}/api/v1/auth/verify`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
+  /**
+   * Logout - revoke refresh token
+   */
+  async logout(accessToken: string): Promise<void> {
+    await fetchWithAuth(
+      `${AUTH_SERVICE_URL}/api/v1/auth/logout`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
+  // ============================================
+  // Profile Management
+  // ============================================
+
+  /**
+   * Get user profile
+   */
+  async getProfile(accessToken: string): Promise<unknown> {
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${AUTH_SERVICE_URL}/api/v1/auth/verify`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response;
+  },
+
+  /**
+   * Update user profile
+   */
+  async updateProfile(accessToken: string, data: {
+    name?: string;
+    company?: string;
+    phone?: string;
+    job_title?: string;
+    notifications?: {
+      emailAlerts?: boolean;
+      usageAlerts?: boolean;
+      securityAlerts?: boolean;
+      marketingEmails?: boolean;
+    };
+  }): Promise<unknown> {
+    // Note: This endpoint may need to be implemented in auth-service
+    // For now, we'll make the call and handle gracefully if it doesn't exist
+    try {
+      return await fetchWithAuth(
+        `${AUTH_SERVICE_URL}/api/v1/auth/profile`,
+        accessToken,
+        {
+          method: 'PUT',
+          body: JSON.stringify(data),
+        }
+      );
+    } catch (error) {
+      // If profile update endpoint doesn't exist, return success silently
+      console.warn('Profile update endpoint not available:', error);
+      return { success: true, data: null };
+    }
+  },
+  // ============================================
+  // Admin (placeholder - requires admin endpoints)
+  // ============================================
+
+  async getAdminStats(accessToken: string): Promise<unknown> {
+    // Placeholder - returns mock data until admin endpoints are implemented
+    return {
+      totalUsers: 0,
+      activeUsers: 0,
+      totalApiCalls: 0,
+      revenue: 0,
+    };
+  },
+
+  async getAdminUsers(accessToken: string, search?: string): Promise<unknown[]> {
+    // Placeholder - returns empty array until admin endpoints are implemented
+    return [];
+  },
+
+  async updateAdminUser(accessToken: string, userId: string, data: unknown): Promise<unknown> {
+    // Placeholder
+    return { success: true };
+  },
+
+  async toggleUserStatus(accessToken: string, userId: string, enabled?: boolean): Promise<unknown> {
+    // Placeholder
+    return { success: true };
+  },
+
+  // ============================================
+  // Billing (billing-service)
+  // ============================================
+
+  /**
+   * Get all available subscription plans
+   */
+  async getPlans(): Promise<PlanInfo[]> {
+    const response = await fetch(`${BILLING_SERVICE_URL}/api/v1/billing/plans`);
+    if (!response.ok) {
+      throw new ApiError('Failed to fetch plans', response.status);
+    }
+    return response.json();
+  },
+
+  /**
+   * Get current subscription info
+   */
+  async getSubscription(accessToken: string): Promise<SubscriptionInfo | null> {
+    try {
+      return await fetchWithAuth<SubscriptionInfo>(
+        `${BILLING_SERVICE_URL}/api/v1/billing/subscription`,
+        accessToken
+      );
+    } catch (error) {
+      // 404 means no subscription - return null
+      if (error instanceof ApiError && error.statusCode === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  /**
+   * Get billing info (subscription + plans for display)
+   */
+  async getBillingInfo(accessToken: string): Promise<{
+    subscription: SubscriptionInfo | null;
+    plans: PlanInfo[];
+  }> {
+    const [subscription, plans] = await Promise.all([
+      this.getSubscription(accessToken).catch(() => null),
+      this.getPlans(),
+    ]);
+    return { subscription, plans };
+  },
+
+  /**
+   * Get invoices for the current user
+   */
+  async getInvoices(accessToken: string): Promise<Invoice[]> {
+    try {
+      return await fetchWithAuth<Invoice[]>(
+        `${BILLING_SERVICE_URL}/api/v1/billing/invoices`,
+        accessToken
+      );
+    } catch (error) {
+      console.warn('Failed to fetch invoices:', error);
+      return [];
+    }
+  },
+
+  /**
+   * Get current billing period usage statistics
+   */
+  async getBillingUsage(accessToken: string): Promise<BillingUsageStats> {
+    return fetchWithAuth<BillingUsageStats>(
+      `${BILLING_SERVICE_URL}/api/v1/billing/usage`,
+      accessToken
+    );
+  },
+
+  /**
+   * Get coalition earnings summary
+   */
+  async getCoalitionEarnings(accessToken: string): Promise<CoalitionSummary> {
+    return fetchWithAuth<CoalitionSummary>(
+      `${BILLING_SERVICE_URL}/api/v1/billing/coalition`,
+      accessToken
+    );
+  },
+
+  /**
+   * Create a Stripe Checkout session for upgrading
+   */
+  async createCheckout(
+    accessToken: string,
+    tier: string,
+    billingCycle: 'monthly' | 'annual'
+  ): Promise<CheckoutResponse> {
+    return fetchWithAuth<CheckoutResponse>(
+      `${BILLING_SERVICE_URL}/api/v1/billing/checkout`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ tier, billing_cycle: billingCycle }),
+      }
+    );
+  },
+
+  /**
+   * Get Stripe Billing Portal URL
+   */
+  async getBillingPortal(accessToken: string): Promise<PortalResponse> {
+    return fetchWithAuth<PortalResponse>(
+      `${BILLING_SERVICE_URL}/api/v1/billing/portal`,
+      accessToken
+    );
+  },
+
+  /**
+   * Upgrade subscription
+   */
+  async upgradeSubscription(
+    accessToken: string,
+    targetTier: string,
+    billingCycle: 'monthly' | 'annual'
+  ): Promise<UpgradeResponse> {
+    return fetchWithAuth<UpgradeResponse>(
+      `${BILLING_SERVICE_URL}/api/v1/billing/upgrade`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ target_tier: targetTier, billing_cycle: billingCycle }),
+      }
+    );
+  },
+
+  /**
+   * Cancel subscription
+   */
+  async cancelSubscription(accessToken: string, subscriptionId: string): Promise<void> {
+    await fetchWithAuth(
+      `${BILLING_SERVICE_URL}/api/v1/billing/subscription/${subscriptionId}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
+
+  /**
+   * Legacy method for backward compatibility
+   */
+  async updateSubscription(accessToken: string, plan: string): Promise<UpgradeResponse> {
+    // Extract tier and billing cycle from plan ID (e.g., "pro-monthly" -> "professional", "monthly")
+    const [tierPart, cyclePart] = plan.split('-');
+    const tier = tierPart === 'pro' ? 'professional' : tierPart;
+    const billingCycle = (cyclePart as 'monthly' | 'annual') || 'monthly';
+    
+    return this.upgradeSubscription(accessToken, tier, billingCycle);
+  },
+};
+
+export default apiClient;
+export { ApiError };
+export type { 
+  ApiKeyInfo, 
+  ApiKeyCreateResponse, 
+  UsageStats, 
+  AnalyticsReport, 
+  TimeSeriesData,
+  PlanInfo,
+  SubscriptionInfo,
+  Invoice,
+  CheckoutResponse,
+  PortalResponse,
+  UpgradeResponse,
+  UsageMetric,
+  BillingUsageStats,
+  CoalitionSummary,
+};

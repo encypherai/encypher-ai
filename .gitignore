@@ -16,8 +16,11 @@ dist/
 develop-eggs/
 *.egg-info/
 .eggs/
-lib/
-lib64/
+# Python lib directories (but not src/lib which is used by Next.js)
+/lib/
+/lib64/
+**/python*/lib/
+!**/src/lib/
 parts/
 sdist/
 var/
