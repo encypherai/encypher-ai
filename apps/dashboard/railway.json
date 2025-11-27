@@ -4,7 +4,7 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "healthcheckPath": "/",
+    "healthcheckPath": "/api/health",
     "healthcheckTimeout": 300,
     "numReplicas": 1,
     "restartPolicyType": "ON_FAILURE",
