@@ -22,6 +22,7 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
+    "@encypher/design-system": "file:./design-system",
     "@auth/core": "^0.34.2",
     "@headlessui/react": "^2.2.2",
     "@hookform/resolvers": "^4.1.3",

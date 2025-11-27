@@ -37,6 +37,8 @@ const nextConfig = {
   // Optimize React
   reactStrictMode: true,
   poweredByHeader: false,
+  // Transpile the design system package
+  transpilePackages: ['@encypher/design-system'],
   allowedDevOrigins: [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
