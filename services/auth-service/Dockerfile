@@ -32,4 +32,5 @@ RUN uv pip install --system .
 EXPOSE 8001
 
 # Run migrations and start the application
-CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}"]
+# Use a startup script for better error handling
+CMD ["sh", "-c", "echo 'Running database migrations...' && alembic upgrade head && echo 'Migrations complete. Starting server...' && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}"]
