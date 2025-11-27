@@ -16,7 +16,26 @@ from ..core.security import (
     verify_token,
 )
 from ..core.config import settings
-from .email_service import generate_token, send_verification_email, send_welcome_email
+from encypher_commercial_shared.email import (
+    EmailConfig,
+    generate_token,
+    send_verification_email as _send_verification_email,
+    send_welcome_email as _send_welcome_email,
+)
+
+# Create email config from settings
+def _get_email_config() -> EmailConfig:
+    return EmailConfig(
+        smtp_host=settings.SMTP_HOST,
+        smtp_port=settings.SMTP_PORT,
+        smtp_user=settings.SMTP_USER,
+        smtp_pass=settings.SMTP_PASS,
+        smtp_tls=settings.SMTP_TLS,
+        email_from=settings.EMAIL_FROM,
+        email_from_name=settings.EMAIL_FROM_NAME,
+        frontend_url=settings.FRONTEND_URL,
+        dashboard_url=settings.DASHBOARD_URL,
+    )
 
 
 class AuthService:
@@ -291,7 +310,9 @@ class AuthService:
     @staticmethod
     def send_verification_email(user: User, token: str) -> bool:
         """Send verification email to user."""
-        return send_verification_email(
+        config = _get_email_config()
+        return _send_verification_email(
+            config=config,
             to_email=user.email,
             user_name=user.name,
             verification_token=token,
@@ -330,7 +351,8 @@ class AuthService:
         db.refresh(user)
         
         # Send welcome email
-        send_welcome_email(to_email=user.email, user_name=user.name)
+        config = _get_email_config()
+        _send_welcome_email(config=config, to_email=user.email, user_name=user.name)
         
         return user
     

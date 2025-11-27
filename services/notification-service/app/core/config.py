@@ -14,11 +14,16 @@ class Settings(BaseSettings):
     AUTH_SERVICE_URL: str = "http://localhost:8001"
     ALLOWED_ORIGINS: str = "http://localhost:3000"
     
-    SMTP_HOST: str = "smtp.gmail.com"
+    # Email Configuration (uses shared email library)
+    SMTP_HOST: str = "smtp.zoho.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
-    EMAIL_FROM: str = "noreply@encypherai.com"
+    SMTP_PASS: str = ""  # Renamed from SMTP_PASSWORD for consistency
+    SMTP_TLS: bool = True
+    EMAIL_FROM: str = "support@encypherai.com"
+    EMAIL_FROM_NAME: str = "Support - Encypher"
+    FRONTEND_URL: str = "http://localhost:3000"
+    DASHBOARD_URL: str = ""
     
     model_config = SettingsConfigDict(env_file=".env", case_sensitive=True)
     
