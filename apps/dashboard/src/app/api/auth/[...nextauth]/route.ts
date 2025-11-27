@@ -6,6 +6,11 @@ import GitHubProvider from 'next-auth/providers/github';
 const API_BASE =
   (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
+// Validate required environment variables
+if (!process.env.NEXTAUTH_SECRET) {
+  console.error('[NextAuth] NEXTAUTH_SECRET is not set!');
+}
+
 const handler = NextAuth({
   providers: [
     // Email/Password Authentication
