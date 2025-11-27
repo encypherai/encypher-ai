@@ -342,13 +342,15 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt" as const,
   },
 
-  cookies: {
+  // Cookie configuration - only set domain if NEXTAUTH_COOKIE_DOMAIN is explicitly set
+  // This allows Railway preview URLs (different domains) to work without cross-domain issues
+  cookies: process.env.NEXTAUTH_COOKIE_DOMAIN ? {
     sessionToken: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN,
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
       },
@@ -356,9 +358,9 @@ export const authOptions: NextAuthOptions = {
     callbackUrl: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN,
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
       },
@@ -366,14 +368,14 @@ export const authOptions: NextAuthOptions = {
     csrfToken: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.csrf-token' : 'next-auth.csrf-token',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN,
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: 'lax' as const,
         path: '/',
         secure: process.env.NODE_ENV === 'production',
       },
     },
-  },
+  } : undefined,
 
   callbacks: {
     /**

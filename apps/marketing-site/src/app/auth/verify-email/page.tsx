@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { fetchApi } from "../../../lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +15,12 @@ interface VerifyEmailResponse {
   success: boolean;
   data?: {
     message: string;
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
     user: {
       id: string;
+      uuid: string;
       email: string;
       name?: string;
       email_verified: boolean;
@@ -72,7 +77,38 @@ function VerifyEmailContent() {
 
         if (response.success && response.data) {
           setStatus("success");
-          setMessage(response.data.message || "Your email has been verified successfully!");
+          setMessage("Email verified! Signing you in...");
+          
+          // Auto sign-in with the access token from verification
+          const { access_token, user } = response.data;
+          
+          try {
+            // Use NextAuth credentials provider with the access token
+            const signInResult = await signIn("credentials", {
+              redirect: false,
+              accessToken: access_token,
+              email: user.email,
+              name: user.name,
+            });
+            
+            if (signInResult?.ok) {
+              // Get dashboard URL from environment or use default
+              const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com";
+              setMessage("Success! Redirecting to dashboard...");
+              
+              // Small delay to show success message
+              setTimeout(() => {
+                window.location.href = dashboardUrl;
+              }, 1500);
+            } else {
+              // Sign-in failed, show manual sign-in option
+              setMessage(response.data.message || "Your email has been verified successfully!");
+            }
+          } catch (signInErr) {
+            console.error("[VerifyEmail] Auto sign-in error:", signInErr);
+            // Fall back to manual sign-in
+            setMessage(response.data.message || "Your email has been verified successfully!");
+          }
         } else {
           setStatus("error");
           setMessage(response.error?.message || "Email verification failed. The link may have expired.");
