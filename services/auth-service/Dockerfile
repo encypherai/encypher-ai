@@ -22,6 +22,8 @@ RUN uv pip install --system /shared_libs
 COPY pyproject.toml ./
 COPY README.md ./
 COPY app ./app
+COPY alembic ./alembic
+COPY alembic.ini ./
 
 # Install service dependencies
 RUN uv pip install --system .
@@ -29,5 +31,5 @@ RUN uv pip install --system .
 # Expose port (Railway provides PORT dynamically)
 EXPOSE 8001
 
-# Run the application
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}"]
+# Run migrations and start the application
+CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}"]
