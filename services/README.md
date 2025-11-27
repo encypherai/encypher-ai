@@ -284,30 +284,27 @@ docker-compose -f docker-compose.dev.yml down
 
 ### Railway Deployment (Monorepo)
 
-Services that depend on `shared_commercial_libs` require special Railway configuration:
+Services that depend on `shared_commercial_libs` have a local copy in their `shared_libs/` directory.
 
-1. **Set Root Directory to `/`** (repo root) in Railway service settings
-2. The `railway.json` in each service specifies `dockerfilePath` relative to repo root
-3. Dockerfiles copy `shared_commercial_libs` and install it before service dependencies
+**Automatic Sync:** A GitHub Action (`.github/workflows/sync-shared-libs.yml`) automatically syncs changes from `shared_commercial_libs/` to each service's `shared_libs/` folder whenever the shared library is updated.
 
-**Example railway.json:**
-```json
-{
-  "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "services/auth-service/Dockerfile",
-    "watchPatterns": [
-      "services/auth-service/**",
-      "shared_commercial_libs/**"
-    ]
-  }
-}
+**Railway Root Directory Settings:**
+- **auth-service**: `services/auth-service`
+- **notification-service**: `services/notification-service`
+- **enterprise_api**: `enterprise_api`
+
+**How it works:**
+1. Developer updates `shared_commercial_libs/`
+2. GitHub Action copies changes to `services/*/shared_libs/`
+3. Railway detects changes and rebuilds affected services
+4. Dockerfiles install from local `shared_libs/` directory
+
+**Manual Sync (if needed):**
+```bash
+# From repo root
+cp -r shared_commercial_libs services/auth-service/shared_libs
+cp -r shared_commercial_libs services/notification-service/shared_libs
 ```
-
-**Required Railway Dashboard Settings:**
-- Go to Service → Settings → Build
-- Set "Root Directory" to `/` (empty = repo root)
-- This allows the Dockerfile to access `shared_commercial_libs/`
 
 ## 🔄 Service Dependencies
 
