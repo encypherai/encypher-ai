@@ -28,7 +28,16 @@ export async function middleware(req: NextRequest) {
     ? '__Secure-next-auth.session-token'
     : 'next-auth.session-token';
 
+  // Debug: log cookie info
+  const allCookies = req.cookies.getAll();
+  console.log('[Dashboard Middleware] Path:', pathname);
+  console.log('[Dashboard Middleware] Cookie domain:', process.env.NEXTAUTH_COOKIE_DOMAIN);
+  console.log('[Dashboard Middleware] Looking for cookie:', cookieName);
+  console.log('[Dashboard Middleware] All cookies:', allCookies.map(c => c.name));
+
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET, cookieName });
+  console.log('[Dashboard Middleware] Token found:', !!token);
+  
   if (!token) {
     const signInUrl = new URL('/login', req.url);
     signInUrl.searchParams.set('callbackUrl', pathname + search);
