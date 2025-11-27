@@ -20,8 +20,11 @@ export async function middleware(req: NextRequest) {
     return res;
   }
 
-  // Ensure we only read the dashboard's session cookie during local dev
-  const cookieName = process.env.NODE_ENV === 'production'
+  // Determine cookie name based on environment
+  // Railway uses HTTPS so needs __Secure- prefix
+  const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID;
+  const isSecure = process.env.NODE_ENV === 'production' || !!isRailway;
+  const cookieName = isSecure
     ? '__Secure-next-auth.session-token'
     : 'next-auth.session-token';
 
