@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "npx next dev -p 3001",
     "build": "npx next build",
-    "start": "npx next start -p 3001",
+    "start": "next start",
     "lint": "npx next lint",
     "type-check": "tsc --noEmit"
   },
