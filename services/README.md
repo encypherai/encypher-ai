@@ -282,6 +282,33 @@ docker-compose -f docker-compose.dev.yml down
 - CI/CD with GitHub Actions
 - Blue-green deployments
 
+### Railway Deployment (Monorepo)
+
+Services that depend on `shared_commercial_libs` require special Railway configuration:
+
+1. **Set Root Directory to `/`** (repo root) in Railway service settings
+2. The `railway.json` in each service specifies `dockerfilePath` relative to repo root
+3. Dockerfiles copy `shared_commercial_libs` and install it before service dependencies
+
+**Example railway.json:**
+```json
+{
+  "build": {
+    "builder": "DOCKERFILE",
+    "dockerfilePath": "services/auth-service/Dockerfile",
+    "watchPatterns": [
+      "services/auth-service/**",
+      "shared_commercial_libs/**"
+    ]
+  }
+}
+```
+
+**Required Railway Dashboard Settings:**
+- Go to Service → Settings → Build
+- Set "Root Directory" to `/` (empty = repo root)
+- This allows the Dockerfile to access `shared_commercial_libs/`
+
 ## 🔄 Service Dependencies
 
 ### auth-service

@@ -18,7 +18,7 @@ dependencies = [
     "prometheus-fastapi-instrumentator>=7.1.0",
     "structlog>=25.5.0",
     "python-json-logger>=4.0.0",
-    "encypher-commercial-shared",
+    # Note: encypher-commercial-shared is installed separately in Dockerfile
 ]
 
 [build-system]

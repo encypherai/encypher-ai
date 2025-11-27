@@ -12,18 +12,22 @@ RUN apt-get update && apt-get install -y \
 # Install UV
 RUN pip install uv
 
-# Copy dependency files first for better caching
-COPY pyproject.toml ./
-COPY README.md ./
+# Copy shared library (expects build context from repo root)
+COPY shared_commercial_libs /shared_libs
 
-# Copy application code
-COPY app ./app
+# Install shared library first
+RUN uv pip install --system /shared_libs
 
-# Install dependencies using UV (install from pyproject.toml)
+# Copy service files
+COPY services/auth-service/pyproject.toml ./
+COPY services/auth-service/README.md ./
+COPY services/auth-service/app ./app
+
+# Install service dependencies
 RUN uv pip install --system .
 
 # Expose port (Railway provides PORT dynamically)
 EXPOSE 8001
 
-# Run the application - use PORT env var for Railway compatibility
+# Run the application
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8001}"]
