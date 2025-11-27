@@ -560,6 +560,96 @@ const apiClient = {
     
     return this.upgradeSubscription(accessToken, tier, billingCycle);
   },
+  // Generic HTTP methods for flexibility
+  async get<T = unknown>(url: string, accessToken?: string): Promise<{ data: T }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'GET',
+      headers,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new ApiError(error.message || 'Request failed', response.status);
+    }
+    
+    const data = await response.json();
+    return { data };
+  },
+
+  async post<T = unknown>(url: string, body?: unknown, accessToken?: string): Promise<{ data: T }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'POST',
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new ApiError(error.message || 'Request failed', response.status);
+    }
+    
+    const data = await response.json();
+    return { data };
+  },
+
+  async patch<T = unknown>(url: string, body?: unknown, accessToken?: string): Promise<{ data: T }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'PATCH',
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new ApiError(error.message || 'Request failed', response.status);
+    }
+    
+    const data = await response.json();
+    return { data };
+  },
+
+  async delete<T = unknown>(url: string, accessToken?: string): Promise<{ data: T }> {
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken) {
+      headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+    
+    const response = await fetch(`${API_BASE_URL}${url}`, {
+      method: 'DELETE',
+      headers,
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Request failed' }));
+      throw new ApiError(error.message || 'Request failed', response.status);
+    }
+    
+    const data = await response.json().catch(() => ({}));
+    return { data };
+  },
 };
 
 export default apiClient;

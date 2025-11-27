@@ -83,11 +83,11 @@ const handler = NextAuth({
         token.id = user.id as string | undefined;
         token.email = (user.email ?? undefined) as string | undefined;
         // propagate access token and role metadata if present from credentials
-        // @ts-ignore
+        // @ts-expect-error - extending user type
         if (user.accessToken) token.accessToken = user.accessToken as string;
-        // @ts-ignore
+        // @ts-expect-error - extending user type
         if (user.role) token.role = user.role as string;
-        // @ts-ignore
+        // @ts-expect-error - extending user type
         if (user.tier) token.tier = user.tier as string;
       }
       return token;
@@ -97,12 +97,9 @@ const handler = NextAuth({
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         // expose accessToken in session for API calls if needed
-        // @ts-ignore
-        session.user.accessToken = token.accessToken as string | undefined;
-        // @ts-ignore
-        session.user.role = token.role as string | undefined;
-        // @ts-ignore
-        session.user.tier = token.tier as string | undefined;
+        (session.user as Record<string, unknown>).accessToken = token.accessToken as string | undefined;
+        (session.user as Record<string, unknown>).role = token.role as string | undefined;
+        (session.user as Record<string, unknown>).tier = token.tier as string | undefined;
       }
       return session;
     },

@@ -35,7 +35,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 
 // Action categories for filtering
 const ACTION_CATEGORIES = {
@@ -107,7 +107,7 @@ export default function AuditLogsPage() {
       if (actionFilter !== 'all') {
         params.append('action', actionFilter);
       }
-      const response = await api.get(`/api/v1/audit-logs?${params}`);
+      const response = await api.get<AuditLogsResponse>(`/api/v1/audit-logs?${params}`);
       return response.data;
     },
   });
@@ -115,12 +115,10 @@ export default function AuditLogsPage() {
   // Export audit logs
   const handleExport = async (format: 'json' | 'csv') => {
     try {
-      const response = await api.get(`/api/v1/audit-logs/export?format=${format}`, {
-        responseType: format === 'csv' ? 'blob' : 'json',
-      });
+      const response = await api.get<string | object>(`/api/v1/audit-logs/export?format=${format}`);
       
       const blob = format === 'csv' 
-        ? new Blob([response.data], { type: 'text/csv' })
+        ? new Blob([response.data as string], { type: 'text/csv' })
         : new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
       
       const url = window.URL.createObjectURL(blob);

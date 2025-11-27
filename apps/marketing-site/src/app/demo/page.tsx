@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import Navbar from '@/components/layout/navbar';
-import Footer from '@/components/layout/footer';
+import { Navbar } from '@/components/layout/navbar';
+import { Footer } from '@/components/layout/footer';
 import { submitDemoRequest, DemoRequestData } from '@/lib/api';
 
 export default function DemoPage() {

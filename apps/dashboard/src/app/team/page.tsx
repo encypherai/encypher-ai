@@ -52,7 +52,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { api } from '@/lib/api';
+import api from '@/lib/api';
 import { toast } from 'sonner';
 
 // Role icons and colors
@@ -102,7 +102,7 @@ export default function TeamPage() {
   const { data: teamData, isLoading, error } = useQuery<TeamResponse>({
     queryKey: ['team-members'],
     queryFn: async () => {
-      const response = await api.get('/api/v1/org/members');
+      const response = await api.get<TeamResponse>('/api/v1/org/members');
       return response.data;
     },
   });
@@ -111,7 +111,7 @@ export default function TeamPage() {
   const { data: invites } = useQuery<PendingInvite[]>({
     queryKey: ['team-invites'],
     queryFn: async () => {
-      const response = await api.get('/api/v1/org/members/invites');
+      const response = await api.get<PendingInvite[]>('/api/v1/org/members/invites');
       return response.data;
     },
   });
