@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  output: 'standalone', // Required for Docker deployment
   allowedDevOrigins: [
     "s-dashboard.encypherai.com",
     "http://localhost:3001",

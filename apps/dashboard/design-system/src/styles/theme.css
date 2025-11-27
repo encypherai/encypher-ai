@@ -1,0 +1,164 @@
+/**
+ * Encypher Unified Brand System
+ * 
+ * Core brand colors and theme variables used across all Encypher properties:
+ * - encypherai.com (Marketing)
+ * - dashboard.encypherai.com (Dashboard)
+ * - verify.encypherai.com (Verification)
+ * - docs.encypherai.com (Documentation)
+ */
+
+:root {
+  /* ===== BRAND COLORS ===== */
+  /* Primary palette - consistent across all properties */
+  --delft-blue: #1b2f50;
+  --blue-ncs: #2a87c4;
+  --columbia-blue: #b7d5ed;
+  --rosy-brown: #ba8790;
+  --white: #ffffff;
+  
+  /* ===== SEMANTIC COLORS (Light Mode) ===== */
+  --background: var(--white);
+  --foreground: var(--delft-blue);
+  
+  /* Primary action color - HIGH CONTRAST for CTAs */
+  --primary: var(--columbia-blue);
+  --primary-foreground: var(--white);
+  
+  /* Secondary actions */
+  --secondary: #f1f5f9;
+  --secondary-foreground: var(--delft-blue);
+  
+  /* Accent color */
+  --accent: var(--blue-ncs);
+  --accent-foreground: var(--white);
+  
+  /* Muted/subtle elements */
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  
+  /* Cards and elevated surfaces */
+  --card: var(--white);
+  --card-foreground: var(--delft-blue);
+  
+  /* Popovers and dropdowns */
+  --popover: var(--white);
+  --popover-foreground: var(--delft-blue);
+  
+  /* Borders and inputs */
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  
+  /* Focus rings */
+  --ring: var(--columbia-blue);
+  
+  /* Destructive/error states */
+  --destructive: #ef4444;
+  --destructive-foreground: var(--white);
+  
+  /* Success states */
+  --success: #10b981;
+  --success-foreground: var(--white);
+  
+  /* Warning states */
+  --warning: #f59e0b;
+  --warning-foreground: var(--white);
+  
+  /* Info states */
+  --info: var(--blue-ncs);
+  --info-foreground: var(--white);
+  
+  /* ===== CHART COLORS ===== */
+  --chart-1: var(--blue-ncs);
+  --chart-2: var(--columbia-blue);
+  --chart-3: var(--delft-blue);
+  --chart-4: var(--rosy-brown);
+  --chart-5: #64748b;
+  
+  /* ===== SIDEBAR (Dashboard specific) ===== */
+  --sidebar: var(--white);
+  --sidebar-foreground: var(--delft-blue);
+  --sidebar-primary: var(--columbia-blue);
+  --sidebar-primary-foreground: var(--white);
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: var(--delft-blue);
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: var(--columbia-blue);
+  
+  /* ===== SPACING & SIZING ===== */
+  --radius: 0.625rem;
+  
+  /* ===== TYPOGRAPHY ===== */
+  --font-sans: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Roboto Mono', 'Courier New', monospace;
+}
+
+/* ===== DARK MODE ===== */
+.dark {
+  --background: var(--delft-blue);
+  --foreground: var(--white);
+  
+  /* Primary - lighter in dark mode for contrast */
+  --primary: var(--columbia-blue);
+  --primary-foreground: var(--delft-blue);
+  
+  /* Secondary */
+  --secondary: #334155;
+  --secondary-foreground: var(--white);
+  
+  /* Accent */
+  --accent: var(--blue-ncs);
+  --accent-foreground: var(--white);
+  
+  /* Muted */
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  
+  /* Cards */
+  --card: #1e293b;
+  --card-foreground: var(--white);
+  
+  /* Popovers */
+  --popover: #1e293b;
+  --popover-foreground: var(--white);
+  
+  /* Borders */
+  --border: #334155;
+  --input: #334155;
+  
+  /* Focus rings */
+  --ring: var(--columbia-blue);
+  
+  /* Destructive */
+  --destructive: #ef4444;
+  --destructive-foreground: var(--white);
+  
+  /* Success */
+  --success: #10b981;
+  --success-foreground: var(--white);
+  
+  /* Warning */
+  --warning: #f59e0b;
+  --warning-foreground: var(--white);
+  
+  /* Info */
+  --info: var(--columbia-blue);
+  --info-foreground: var(--delft-blue);
+  
+  /* Charts */
+  --chart-1: var(--columbia-blue);
+  --chart-2: var(--blue-ncs);
+  --chart-3: #94a3b8;
+  --chart-4: var(--rosy-brown);
+  --chart-5: #64748b;
+  
+  /* Sidebar */
+  --sidebar: #1e293b;
+  --sidebar-foreground: var(--white);
+  --sidebar-primary: var(--columbia-blue);
+  --sidebar-primary-foreground: var(--delft-blue);
+  --sidebar-accent: #334155;
+  --sidebar-accent-foreground: var(--white);
+  --sidebar-border: #334155;
+  --sidebar-ring: var(--columbia-blue);
+}

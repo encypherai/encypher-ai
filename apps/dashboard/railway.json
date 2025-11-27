@@ -1,18 +1,17 @@
 {
   "$schema": "https://railway.com/railway.schema.json",
   "build": {
-    "builder": "DOCKERFILE",
-    "dockerfilePath": "Dockerfile",
+    "builder": "NIXPACKS",
+    "buildCommand": "npm run build",
     "watchPatterns": [
       "src/**",
       "public/**",
       "package.json",
-      "next.config.js",
-      "Dockerfile",
-      "../../packages/design-system/**"
+      "next.config.js"
     ]
   },
   "deploy": {
+    "startCommand": "npm start",
     "healthcheckPath": "/",
     "healthcheckTimeout": 300,
     "numReplicas": 1,
