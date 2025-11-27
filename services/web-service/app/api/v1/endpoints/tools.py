@@ -74,7 +74,7 @@ async def encode_text(request: EncodeRequest):
                     error_json = response.json()
                     if "detail" in error_json:
                         error_detail = error_json["detail"]
-                except:
+                except Exception:
                     pass
                 raise HTTPException(status_code=response.status_code, detail=f"Enterprise API Error: {error_detail}")
             
