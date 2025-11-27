@@ -21,7 +21,7 @@ class User(Base):
     id = Column(String, primary_key=True, default=generate_uuid)
     email = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=True)
-    hashed_password = Column(String, nullable=True)  # Nullable for OAuth users
+    password_hash = Column(String, nullable=True)  # Nullable for OAuth users (matches core_db schema)
     
     # OAuth fields
     oauth_provider = Column(String, nullable=True)  # google, github, etc.

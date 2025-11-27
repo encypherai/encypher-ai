@@ -34,7 +34,7 @@ class AuthService:
         db_user = User(
             email=user_data.email,
             name=user_data.name,
-            hashed_password=hashed_password,
+            password_hash=hashed_password,
             tier=user_data.tier or "free",
         )
 
@@ -58,11 +58,11 @@ class AuthService:
         if not user:
             return None
         
-        if not user.hashed_password:
+        if not user.password_hash:
             # OAuth user trying to login with password
             return None
         
-        if not verify_password(credentials.password, user.hashed_password):
+        if not verify_password(credentials.password, user.password_hash):
             return None
         
         if not user.is_active:
@@ -233,7 +233,7 @@ class AuthService:
         user = User(
             email=email or f"{provider}_{provider_id}@users.void",
             name=name,
-            hashed_password=None,
+            password_hash=None,
             oauth_provider=provider,
             oauth_id=provider_id,
             is_active=True,
