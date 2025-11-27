@@ -77,6 +77,17 @@ class OAuthExchangeRequest(BaseModel):
     access_token: Optional[str] = None  # For Google/GitHub
 
 
+# Email Verification Schemas
+class EmailVerifyRequest(BaseModel):
+    """Email verification request schema"""
+    token: str
+
+
+class ResendVerificationRequest(BaseModel):
+    """Resend verification email request schema"""
+    email: EmailStr
+
+
 # Password Reset Schemas
 class PasswordResetRequest(BaseModel):
     """Password reset request schema"""

@@ -13,6 +13,8 @@ from ...models.schemas import (
     UserResponse,
     RefreshTokenRequest,
     OAuthExchangeRequest,
+    EmailVerifyRequest,
+    ResendVerificationRequest,
 )
 from ...services.auth_service import AuthService
 from ...core.config import settings
@@ -29,7 +31,8 @@ async def signup(
     _: None = Depends(rate_limiter("auth_signup", limit=5, window_sec=60)),
 ):
     """
-    Create a new user account
+    Create a new user account.
+    Sends verification email to the user.
 
     - **email**: User's email address
     - **password**: User's password (min 8 characters)
@@ -37,14 +40,33 @@ async def signup(
     """
     try:
         user = AuthService.create_user(db, user_data)
+        
+        # Send verification email for new users
+        if not user.email_verified:
+            token = AuthService.create_verification_token(db, user)
+            AuthService.send_verification_email(user, token)
 
         # Wrap in standard response format
-        return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
+        return {
+            "success": True,
+            "data": {
+                **UserResponse.model_validate(user).model_dump(),
+                "verification_email_sent": not user.email_verified,
+            },
+            "error": None,
+        }
     except ValueError as e:
         # Idempotent fallback: if a ValueError occurred, try returning existing user by email
         existing = AuthService.get_user_by_email(db, user_data.email)
         if existing:
-            return {"success": True, "data": UserResponse.model_validate(existing).model_dump(), "error": None}
+            return {
+                "success": True,
+                "data": {
+                    **UserResponse.model_validate(existing).model_dump(),
+                    "verification_email_sent": False,
+                },
+                "error": None,
+            }
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),
@@ -75,6 +97,13 @@ async def login(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
+    # Check if email is verified
+    if not user.email_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email not verified. Please check your inbox for the verification email.",
+        )
+    
     # Create tokens
     access_token, refresh_token = AuthService.create_tokens(user)
     
@@ -98,6 +127,65 @@ async def login(
         "error": None,
     }
 
+
+# ==========================================
+# Email Verification Endpoints
+# ==========================================
+
+@router.post("/verify-email")
+async def verify_email(
+    request: EmailVerifyRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Verify a user's email address using a verification token.
+    
+    - **token**: Verification token from email
+    """
+    user = AuthService.verify_email(db, request.token)
+    
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired verification token",
+        )
+    
+    return {
+        "success": True,
+        "data": {
+            "message": "Email verified successfully",
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
+    }
+
+
+@router.post("/resend-verification")
+async def resend_verification(
+    request: ResendVerificationRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("auth_resend_verification", limit=3, window_sec=300)),
+):
+    """
+    Resend verification email to a user.
+    
+    - **email**: User's email address
+    """
+    # Always return success to prevent email enumeration
+    AuthService.resend_verification_email(db, request.email)
+    
+    return {
+        "success": True,
+        "data": {
+            "message": "If an account exists with this email, a verification email has been sent.",
+        },
+        "error": None,
+    }
+
+
+# ==========================================
+# Token Refresh Endpoint
+# ==========================================
 
 @router.post("/refresh")
 async def refresh_token(

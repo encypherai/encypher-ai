@@ -52,6 +52,23 @@ class Settings(BaseSettings):
     # Monitoring
     PROMETHEUS_PORT: int = 9001
     
+    # Email Configuration
+    SMTP_HOST: str = "smtp.zoho.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASS: str = ""
+    SMTP_TLS: bool = True
+    EMAIL_FROM: str = "noreply@encypherai.com"
+    EMAIL_FROM_NAME: str = "EncypherAI"
+    
+    # Frontend URLs (for email links)
+    FRONTEND_URL: str = "http://localhost:3000"
+    DASHBOARD_URL: str = ""  # If empty, uses FRONTEND_URL/dashboard
+    
+    # Email Verification
+    VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
+    PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

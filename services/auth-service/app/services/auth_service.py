@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
-from ..db.models import User, RefreshToken
+from ..db.models import User, RefreshToken, EmailVerificationToken
 from sqlalchemy.exc import IntegrityError
 from ..models.schemas import UserCreate, UserLogin
 from ..core.security import (
@@ -16,6 +16,7 @@ from ..core.security import (
     verify_token,
 )
 from ..core.config import settings
+from .email_service import generate_token, send_verification_email, send_welcome_email
 
 
 class AuthService:
@@ -256,3 +257,99 @@ class AuthService:
         db.commit()
         db.refresh(user)
         return user
+
+    # ==========================================
+    # Email Verification Methods
+    # ==========================================
+    
+    @staticmethod
+    def create_verification_token(db: Session, user: User) -> str:
+        """
+        Create an email verification token for a user.
+        Invalidates any existing tokens for this user.
+        """
+        # Invalidate existing tokens
+        db.query(EmailVerificationToken).filter(
+            EmailVerificationToken.user_id == user.id,
+            EmailVerificationToken.used == False,
+        ).update({"used": True, "used_at": datetime.utcnow()})
+        
+        # Create new token
+        token = generate_token(32)
+        expires_at = datetime.utcnow() + timedelta(hours=settings.VERIFICATION_TOKEN_EXPIRE_HOURS)
+        
+        db_token = EmailVerificationToken(
+            user_id=user.id,
+            token=token,
+            expires_at=expires_at,
+        )
+        db.add(db_token)
+        db.commit()
+        
+        return token
+    
+    @staticmethod
+    def send_verification_email(user: User, token: str) -> bool:
+        """Send verification email to user."""
+        return send_verification_email(
+            to_email=user.email,
+            user_name=user.name,
+            verification_token=token,
+        )
+    
+    @staticmethod
+    def verify_email(db: Session, token: str) -> Optional[User]:
+        """
+        Verify a user's email using a verification token.
+        Returns the user if successful, None otherwise.
+        """
+        # Find valid token
+        db_token = db.query(EmailVerificationToken).filter(
+            EmailVerificationToken.token == token,
+            EmailVerificationToken.used == False,
+            EmailVerificationToken.expires_at > datetime.utcnow(),
+        ).first()
+        
+        if not db_token:
+            return None
+        
+        # Get user
+        user = db.query(User).filter(User.id == db_token.user_id).first()
+        if not user:
+            return None
+        
+        # Mark token as used
+        db_token.used = True
+        db_token.used_at = datetime.utcnow()
+        
+        # Mark user as verified
+        user.email_verified = True
+        user.email_verified_at = datetime.utcnow()
+        
+        db.commit()
+        db.refresh(user)
+        
+        # Send welcome email
+        send_welcome_email(to_email=user.email, user_name=user.name)
+        
+        return user
+    
+    @staticmethod
+    def resend_verification_email(db: Session, email: str) -> bool:
+        """
+        Resend verification email to a user.
+        Returns True if email was sent, False otherwise.
+        """
+        user = db.query(User).filter(User.email == email).first()
+        
+        if not user:
+            # Don't reveal if user exists
+            return True
+        
+        if user.email_verified:
+            # Already verified
+            return True
+        
+        # Create new token and send email
+        token = AuthService.create_verification_token(db, user)
+        return AuthService.send_verification_email(user, token)
