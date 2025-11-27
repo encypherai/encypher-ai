@@ -1,0 +1,45 @@
+name: Sync Shared Libraries
+
+on:
+  push:
+    paths:
+      - 'shared_commercial_libs/**'
+    branches:
+      - main
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  sync-shared-libs:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Sync shared_libs to auth-service
+        run: |
+          rm -rf services/auth-service/shared_libs
+          cp -r shared_commercial_libs services/auth-service/shared_libs
+          echo "✅ Synced to auth-service"
+      
+      - name: Sync shared_libs to notification-service
+        run: |
+          rm -rf services/notification-service/shared_libs
+          cp -r shared_commercial_libs services/notification-service/shared_libs
+          echo "✅ Synced to notification-service"
+      
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git diff --quiet || echo "changes=true" >> $GITHUB_OUTPUT
+      
+      - name: Commit and push changes
+        if: steps.check_changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add services/*/shared_libs/
+          git commit -m "chore: Sync shared_commercial_libs to services [skip ci]"
+          git push
