@@ -15,30 +15,34 @@ def generate_uuid():
 
 
 class User(Base):
-    """User model"""
+    """User model - matches core_db schema exactly"""
     __tablename__ = "users"
     
-    id = Column(String, primary_key=True, default=generate_uuid)
-    email = Column(String, unique=True, index=True, nullable=False)
-    name = Column(String, nullable=True)
-    password_hash = Column(String, nullable=True)  # Nullable for OAuth users (matches core_db schema)
+    id = Column(String(64), primary_key=True, default=generate_uuid)
     
-    # OAuth fields
-    oauth_provider = Column(String, nullable=True)  # google, github, etc.
-    oauth_id = Column(String, nullable=True)  # Provider's user ID
+    # Identity
+    email = Column(String(255), unique=True, index=True, nullable=False)
+    password_hash = Column(String(255), nullable=True)  # NULL for OAuth-only users
     
-    # Status fields
-    is_active = Column(Boolean, default=True, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-    is_superuser = Column(Boolean, default=False, nullable=False)
-
-    # Tier field for coalition
-    tier = Column(String(20), default="free", nullable=False)  # free, pro, enterprise
+    # Profile
+    name = Column(String(255), nullable=True)
+    avatar_url = Column(String(500), nullable=True)
+    
+    # Auth
+    email_verified = Column(Boolean, default=False)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    
+    # OAuth Providers (separate columns per provider in core_db)
+    google_id = Column(String(255), unique=True, nullable=True)
+    github_id = Column(String(255), unique=True, nullable=True)
+    
+    # Status
+    is_active = Column(Boolean, default=True)
+    last_login_at = Column(DateTime(timezone=True), nullable=True)
     
     # Timestamps
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    last_login = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email})>"

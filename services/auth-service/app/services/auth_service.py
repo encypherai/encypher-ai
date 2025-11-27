@@ -35,7 +35,6 @@ class AuthService:
             email=user_data.email,
             name=user_data.name,
             password_hash=hashed_password,
-            tier=user_data.tier or "free",
         )
 
         db.add(db_user)
@@ -69,7 +68,7 @@ class AuthService:
             return None
         
         # Update last login
-        user.last_login = datetime.utcnow()
+        user.last_login_at = datetime.utcnow()
         db.commit()
         
         return user
@@ -200,13 +199,21 @@ class AuthService:
         email: Optional[str],
         name: Optional[str] = None,
     ) -> User:
-        """Create or update a user from an OAuth provider."""
+        """
+        Create or update a user from an OAuth provider.
+        Uses google_id/github_id columns per core_db schema.
+        """
+        # Determine which provider column to use
+        provider_column = None
+        if provider == "google":
+            provider_column = User.google_id
+        elif provider == "github":
+            provider_column = User.github_id
+        else:
+            raise ValueError(f"Unsupported OAuth provider: {provider}")
+        
         # Try match by provider id first
-        user = (
-            db.query(User)
-            .filter(User.oauth_provider == provider, User.oauth_id == provider_id)
-            .first()
-        )
+        user = db.query(User).filter(provider_column == provider_id).first()
         if user:
             # Update basic profile fields if provided
             if email and not user.email:
@@ -221,8 +228,11 @@ class AuthService:
         if email:
             user = db.query(User).filter(User.email == email).first()
             if user:
-                user.oauth_provider = provider
-                user.oauth_id = provider_id
+                # Link OAuth provider to existing user
+                if provider == "google":
+                    user.google_id = provider_id
+                elif provider == "github":
+                    user.github_id = provider_id
                 if name and not user.name:
                     user.name = name
                 db.commit()
@@ -230,14 +240,18 @@ class AuthService:
                 return user
 
         # Create new OAuth user
-        user = User(
-            email=email or f"{provider}_{provider_id}@users.void",
-            name=name,
-            password_hash=None,
-            oauth_provider=provider,
-            oauth_id=provider_id,
-            is_active=True,
-        )
+        user_kwargs = {
+            "email": email or f"{provider}_{provider_id}@users.void",
+            "name": name,
+            "password_hash": None,
+            "is_active": True,
+        }
+        if provider == "google":
+            user_kwargs["google_id"] = provider_id
+        elif provider == "github":
+            user_kwargs["github_id"] = provider_id
+        
+        user = User(**user_kwargs)
         db.add(user)
         db.commit()
         db.refresh(user)

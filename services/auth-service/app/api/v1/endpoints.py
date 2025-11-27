@@ -15,14 +15,10 @@ from ...models.schemas import (
     OAuthExchangeRequest,
 )
 from ...services.auth_service import AuthService
-from ...utils.coalition_client import CoalitionClient
 from ...core.config import settings
 from ...deps.rate_limit import rate_limiter
 
 router = APIRouter()
-
-# Initialize coalition client
-coalition_client = CoalitionClient(settings.COALITION_SERVICE_URL)
 
 
 # Standard Response Format used; returning UserResponse inside data
@@ -38,28 +34,9 @@ async def signup(
     - **email**: User's email address
     - **password**: User's password (min 8 characters)
     - **name**: User's full name (optional)
-    - **tier**: User tier (free, pro, enterprise) - defaults to free
     """
     try:
         user = AuthService.create_user(db, user_data)
-
-        # Auto-enroll in coalition if free tier
-        if user.tier == "free":
-            # Run coalition enrollment asynchronously (don't block on failure)
-            try:
-                await coalition_client.auto_enroll_member(
-                    user_id=user.id,
-                    tier=user.tier,
-                )
-            except Exception as e:
-                # Log error but don't fail signup
-                import structlog
-                logger = structlog.get_logger()
-                logger.warning(
-                    "coalition_enrollment_failed_but_user_created",
-                    user_id=user.id,
-                    error=str(e),
-                )
 
         # Wrap in standard response format
         return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
