@@ -5,6 +5,7 @@ Authentication and authorization microservice for the Encypher platform.
 ## Features
 
 - ✅ User registration and login
+- ✅ **Email verification flow** (verification required before login)
 - ✅ JWT-based authentication
 - ✅ Refresh token management
 - ✅ OAuth integration (Google, GitHub)
@@ -13,6 +14,7 @@ Authentication and authorization microservice for the Encypher platform.
 - ✅ Token verification for other services
 - ✅ Session management
 - ✅ Health check endpoints
+- ✅ **Branded email templates** (via shared library)
 
 ## Tech Stack
 
@@ -67,13 +69,25 @@ The service will be available at `http://localhost:8001`
 
 **POST /api/v1/auth/signup**
 - Create a new user account
+- Sends verification email automatically
 - Body: `{ "email": "user@example.com", "password": "password123", "name": "John Doe" }`
-- Returns: User object
+- Returns: User object with `verification_email_sent: true`
+
+**POST /api/v1/auth/verify-email**
+- Verify user's email address
+- Body: `{ "token": "verification-token-from-email" }`
+- Returns: User object (sends welcome email on success)
+
+**POST /api/v1/auth/resend-verification**
+- Resend verification email
+- Body: `{ "email": "user@example.com" }`
+- Returns: Success message (rate limited: 3 per 5 minutes)
 
 **POST /api/v1/auth/login**
-- Authenticate user
+- Authenticate user (requires verified email)
 - Body: `{ "email": "user@example.com", "password": "password123" }`
 - Returns: `{ "access_token": "...", "refresh_token": "...", "token_type": "bearer" }`
+- Error 403 if email not verified
 
 **POST /api/v1/auth/refresh**
 - Refresh access token
@@ -154,6 +168,21 @@ See `.env.example` for all available configuration options.
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 - `GITHUB_CLIENT_ID` - GitHub OAuth client ID
 - `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
+
+### Email Configuration
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SMTP_HOST` | smtp.zoho.com | SMTP server hostname |
+| `SMTP_PORT` | 587 | SMTP server port |
+| `SMTP_USER` | | SMTP username (email address) |
+| `SMTP_PASS` | | SMTP password or app password |
+| `SMTP_TLS` | true | Enable TLS encryption |
+| `EMAIL_FROM` | support@encypherai.com | From email address |
+| `EMAIL_FROM_NAME` | Support - Encypher | From display name |
+| `FRONTEND_URL` | http://localhost:3000 | Frontend URL for email links |
+| `DASHBOARD_URL` | | Dashboard URL (optional) |
+| `VERIFICATION_TOKEN_EXPIRE_HOURS` | 24 | Token expiry time |
 
 ## Architecture
 

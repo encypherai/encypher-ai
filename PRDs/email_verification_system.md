@@ -60,7 +60,7 @@ Implement a comprehensive email system for auth-service with email verification 
   - EMAIL_FROM, EMAIL_FROM_NAME
   - FRONTEND_URL (for verification links)
 - [x] 4.2 Set Railway env vars for staging (partial - need SMTP_USER/SMTP_PASS)
-- [ ] 4.3 Document env vars in README
+- [x] 4.3 Document env vars in README
 
 ### 5.0 Future: Zoho CRM Integration
 - [ ] 5.1 Create `services/auth-service/app/services/crm_service.py`
