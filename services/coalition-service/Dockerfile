@@ -21,12 +21,12 @@ RUN uv pip install --system -r pyproject.toml
 # Copy application code
 COPY app ./app
 
-# Expose port
-EXPOSE 8009
+# Expose port (Railway provides PORT env var)
+EXPOSE ${PORT:-8009}
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8009/health')"
+    CMD python -c "import requests; import os; requests.get(f'http://localhost:{os.environ.get(\"PORT\", 8009)}/health')"
 
-# Run the application
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8009"]
+# Run the application (use PORT env var for Railway compatibility)
+CMD python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8009}
