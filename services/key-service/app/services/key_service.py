@@ -18,7 +18,7 @@ from ..core.security import (
 
 class KeyService:
     """API Key management service"""
-    
+
     @staticmethod
     def create_key(db: Session, user_id: str, key_data: ApiKeyCreate) -> Tuple[ApiKey, str]:
         """
@@ -29,10 +29,10 @@ class KeyService:
         api_key = generate_api_key()
         key_hash = hash_api_key(api_key)
         fingerprint = generate_key_fingerprint(api_key)
-        
+
         # Create key prefix for display (first 12 chars)
         key_prefix = api_key[:12] + "..."
-        
+
         # Create database record
         db_key = ApiKey(
             user_id=user_id,
@@ -44,23 +44,23 @@ class KeyService:
             description=key_data.description,
             expires_at=key_data.expires_at,
         )
-        
+
         db.add(db_key)
         db.commit()
         db.refresh(db_key)
-        
+
         return db_key, api_key
-    
+
     @staticmethod
     def get_user_keys(db: Session, user_id: str, include_revoked: bool = False) -> List[ApiKey]:
         """Get all API keys for a user"""
         query = db.query(ApiKey).filter(ApiKey.user_id == user_id)
-        
+
         if not include_revoked:
             query = query.filter(ApiKey.is_revoked == False)
-        
+
         return query.order_by(ApiKey.created_at.desc()).all()
-    
+
     @staticmethod
     def get_key_by_id(db: Session, key_id: str, user_id: str) -> Optional[ApiKey]:
         """Get a specific API key by ID"""
@@ -68,7 +68,7 @@ class KeyService:
             ApiKey.id == key_id,
             ApiKey.user_id == user_id
         ).first()
-    
+
     @staticmethod
     def verify_key(db: Session, api_key: str) -> Optional[ApiKey]:
         """
@@ -77,31 +77,31 @@ class KeyService:
         # Check format
         if not verify_api_key_format(api_key):
             return None
-        
+
         # Hash the key
         key_hash = hash_api_key(api_key)
-        
+
         # Find key in database
         db_key = db.query(ApiKey).filter(
             ApiKey.key_hash == key_hash,
             ApiKey.is_active == True,
             ApiKey.is_revoked == False,
         ).first()
-        
+
         if not db_key:
             return None
-        
+
         # Check expiration
         if db_key.expires_at and db_key.expires_at < datetime.utcnow():
             return None
-        
+
         # Update last used
         db_key.last_used_at = datetime.utcnow()
         db_key.usage_count += 1
         db.commit()
-        
+
         return db_key
-    
+
     @staticmethod
     def verify_key_with_org(db: Session, api_key: str) -> Optional[dict]:
         """
@@ -113,14 +113,14 @@ class KeyService:
             or None if invalid
         """
         from sqlalchemy import text
-        
+
         # Check format
         if not verify_api_key_format(api_key):
             return None
-        
+
         # Hash the key
         key_hash = hash_api_key(api_key)
-        
+
         # Query key with organization join
         result = db.execute(text("""
             SELECT 
@@ -141,18 +141,18 @@ class KeyService:
             JOIN organizations o ON k.organization_id = o.id
             WHERE k.key_hash = :key_hash
         """), {"key_hash": key_hash}).fetchone()
-        
+
         if not result:
             return None
-        
+
         # Check key status
         if not result.is_active or result.is_revoked:
             return None
-        
+
         # Check expiration
         if result.expires_at and result.expires_at < datetime.utcnow():
             return None
-        
+
         # Update usage (fire and forget style - don't block on this)
         try:
             db.execute(text("""
@@ -163,7 +163,7 @@ class KeyService:
             db.commit()
         except Exception:
             db.rollback()  # Don't fail auth if usage update fails
-        
+
         # Return organization context
         return {
             "key_id": result.key_id,
@@ -177,51 +177,51 @@ class KeyService:
             "coalition_member": result.coalition_member,
             "coalition_rev_share": result.coalition_rev_share,
         }
-    
+
     @staticmethod
     def update_key(db: Session, key_id: str, user_id: str, update_data: ApiKeyUpdate) -> Optional[ApiKey]:
         """Update an API key"""
         db_key = KeyService.get_key_by_id(db, key_id, user_id)
-        
+
         if not db_key:
             return None
-        
+
         # Update fields
         if update_data.name is not None:
             db_key.name = update_data.name
-        
+
         if update_data.description is not None:
             db_key.description = update_data.description
-        
+
         if update_data.permissions is not None:
             db_key.permissions = update_data.permissions
-        
+
         db_key.updated_at = datetime.utcnow()
         db.commit()
         db.refresh(db_key)
-        
+
         return db_key
-    
+
     @staticmethod
     def revoke_key(db: Session, key_id: str, user_id: str) -> bool:
         """Revoke an API key"""
         db_key = KeyService.get_key_by_id(db, key_id, user_id)
-        
+
         if not db_key:
             return False
-        
+
         db_key.is_revoked = True
         db_key.is_active = False
         db_key.revoked_at = datetime.utcnow()
         db.commit()
-        
+
         return True
-    
+
     @staticmethod
     def rotate_key(
-        db: Session, 
-        key_id: str, 
-        user_id: str, 
+        db: Session,
+        key_id: str,
+        user_id: str,
         reason: Optional[str] = None
     ) -> Optional[Tuple[ApiKey, str]]:
         """
@@ -229,10 +229,10 @@ class KeyService:
         Returns: (new ApiKey model, new key string) or None
         """
         old_key = KeyService.get_key_by_id(db, key_id, user_id)
-        
+
         if not old_key:
             return None
-        
+
         # Create new key with same properties
         new_key_data = ApiKeyCreate(
             name=old_key.name,
@@ -240,14 +240,14 @@ class KeyService:
             permissions=old_key.permissions,
             expires_at=old_key.expires_at,
         )
-        
+
         new_db_key, new_api_key = KeyService.create_key(db, user_id, new_key_data)
-        
+
         # Revoke old key
         old_key.is_revoked = True
         old_key.is_active = False
         old_key.revoked_at = datetime.utcnow()
-        
+
         # Record rotation
         rotation = KeyRotation(
             old_key_id=old_key.id,
@@ -256,12 +256,12 @@ class KeyService:
             reason=reason,
             rotated_by=user_id,
         )
-        
+
         db.add(rotation)
         db.commit()
-        
+
         return new_db_key, new_api_key
-    
+
     @staticmethod
     def log_key_usage(
         db: Session,
@@ -283,13 +283,13 @@ class KeyService:
             ip_address=ip_address,
             user_agent=user_agent,
         )
-        
+
         db.add(usage)
         db.commit()
         db.refresh(usage)
-        
+
         return usage
-    
+
     @staticmethod
     def get_key_usage_stats(db: Session, key_id: str, user_id: str) -> dict:
         """Get usage statistics for an API key"""
@@ -297,10 +297,10 @@ class KeyService:
         db_key = KeyService.get_key_by_id(db, key_id, user_id)
         if not db_key:
             return {}
-        
+
         # Get total requests
         total_requests = db.query(KeyUsage).filter(KeyUsage.key_id == key_id).count()
-        
+
         # Get requests by endpoint
         endpoint_stats = db.query(
             KeyUsage.endpoint,
@@ -308,9 +308,9 @@ class KeyService:
         ).filter(
             KeyUsage.key_id == key_id
         ).group_by(KeyUsage.endpoint).all()
-        
+
         requests_by_endpoint = {stat.endpoint: stat.count for stat in endpoint_stats}
-        
+
         return {
             "key_id": key_id,
             "total_requests": total_requests,

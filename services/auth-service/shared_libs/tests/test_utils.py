@@ -19,7 +19,7 @@ class TestUtils(unittest.TestCase):
     def setUp(self):
         """Set up test fixtures."""
         self.encypher = MagicMock(spec=EncypherAI)
-        
+
         # Create mock verification results
         self.mock_result1 = VerificationResult(
             verified=True,
@@ -31,7 +31,7 @@ class TestUtils(unittest.TestCase):
             signer_id=None,
             raw_payload={}
         )
-        
+
         # Set up return values for the mock
         self.encypher.verify_from_file.side_effect = [self.mock_result1, self.mock_result2]
 
@@ -41,26 +41,26 @@ class TestUtils(unittest.TestCase):
         # Set up mock directory structure
         mock_dir = MagicMock()
         mock_path.return_value = mock_dir
-        
+
         # Mock the directory exists check
         mock_dir.exists.return_value = True
-        
+
         # Mock the glob method to return some files
         mock_file1 = MagicMock()
         mock_file1.is_dir.return_value = False
         mock_file1.suffix = ".txt"
         mock_file1.__str__.return_value = "file1.txt"
         mock_file1.name = "file1.txt"
-        
+
         mock_file2 = MagicMock()
         mock_file2.is_dir.return_value = False
         mock_file2.suffix = ".md"
         mock_file2.__str__.return_value = "file2.md"
         mock_file2.name = "file2.md"
-        
+
         # Return a list that's already sorted
         mock_dir.glob.side_effect = [[mock_file1], [mock_file2]]
-        
+
         # Call the function
         results = scan_directory(
             directory_path="/test/dir",
@@ -68,12 +68,12 @@ class TestUtils(unittest.TestCase):
             file_extensions=[".txt", ".md"],
             show_progress=False
         )
-        
+
         # Verify the results
         self.assertEqual(len(results), 2)
         self.assertEqual(results["file1.txt"], self.mock_result1)
         self.assertEqual(results["file2.md"], self.mock_result2)
-        
+
         # Verify the mock calls
         self.encypher.verify_from_file.assert_any_call("file1.txt")
         self.encypher.verify_from_file.assert_any_call("file2.md")
@@ -83,31 +83,31 @@ class TestUtils(unittest.TestCase):
         # Create a temporary directory for the report
         with tempfile.TemporaryDirectory() as temp_dir:
             report_path = os.path.join(temp_dir, "test_report.csv")
-            
+
             # Create some test results
             results = {
                 "file1.txt": self.mock_result1,
                 "file2.md": self.mock_result2
             }
-            
+
             # Generate the report
             generate_report(results, report_path)
-            
+
             # Verify the report was created
             self.assertTrue(os.path.exists(report_path))
-            
+
             # Read the report and verify its contents
             with open(report_path, 'r', newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 rows = list(reader)
-                
+
                 self.assertEqual(len(rows), 2)
-                
+
                 # Verify the first row
                 self.assertEqual(rows[0]["File"], "file1.txt")
                 self.assertEqual(rows[0]["Verified"], "True")
                 self.assertEqual(rows[0]["Signer ID"], "test-signer")
-                
+
                 # Verify the second row
                 self.assertEqual(rows[1]["File"], "file2.md")
                 self.assertEqual(rows[1]["Verified"], "False")
@@ -119,22 +119,22 @@ class TestUtils(unittest.TestCase):
         # Set up mock directory structure
         mock_dir = MagicMock()
         mock_path.return_value = mock_dir
-        
+
         # Mock the glob method to return some key files
         mock_key1 = MagicMock()
         mock_key1.stem = "signer1"
         mock_key1.__str__.return_value = "/test/keys/signer1.pem"
-        
+
         mock_key2 = MagicMock()
         mock_key2.stem = "signer2"
         mock_key2.__str__.return_value = "/test/keys/signer2.pem"
-        
+
         mock_dir.glob.return_value = [mock_key1, mock_key2]
         mock_dir.is_dir.return_value = True
-        
+
         # Call the function
         trusted_signers = load_trusted_signers("/test/keys")
-        
+
         # Verify the results
         self.assertEqual(len(trusted_signers), 2)
         self.assertEqual(trusted_signers["signer1"], "/test/keys/signer1.pem")

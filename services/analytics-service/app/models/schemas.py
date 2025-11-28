@@ -25,7 +25,7 @@ class MetricResponse(BaseModel):
     count: int
     value: Optional[float]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

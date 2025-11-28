@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
 # Import for document handling
 try:
@@ -26,7 +26,6 @@ except ImportError:
     DOCX2TXT_AVAILABLE = False
 
 from .api import EncypherAI, VerificationResult
-
 
 console = Console()
 
@@ -45,10 +44,10 @@ def debug_unicode(text, max_chars=200):
     """
     if not text:
         return "[No text extracted]"
-        
+
     result = []
     sample_text = text[:max_chars] + ('...' if len(text) > max_chars else '')
-    
+
     for char in sample_text:
         code_point = ord(char)
         if 0xFE00 <= code_point <= 0xFE0F:  # Variation selectors
@@ -57,7 +56,7 @@ def debug_unicode(text, max_chars=200):
             result.append(f"{char}({hex(code_point)})")
         else:
             result.append(char)
-    
+
     return ''.join(result)
 
 
@@ -72,7 +71,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
     """
     file_path = Path(file_path) if isinstance(file_path, str) else file_path
     suffix = file_path.suffix.lower()
-    
+
     # Check if PyPDF2 is available for PDF extraction
     PYPDF2_AVAILABLE = False
     try:
@@ -80,7 +79,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
         PYPDF2_AVAILABLE = True
     except ImportError:
         pass
-    
+
     # Check if docx2txt is available for DOCX extraction
     DOCX2TXT_AVAILABLE = False
     try:
@@ -88,7 +87,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
         DOCX2TXT_AVAILABLE = True
     except ImportError:
         pass
-    
+
     if suffix in ['.txt', '.md', '.py', '.js', '.html', '.css', '.json', '.xml', '.csv', '.log']:
         try:
             with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
@@ -99,7 +98,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
     elif suffix == '.pdf':
         # Try multiple PDF extraction methods to preserve Unicode metadata
         extracted_text = None
-        
+
         # Method 0: First try to extract pikepdf metadata and attachments (best for Unicode preservation)
         try:
             import importlib.util
@@ -107,7 +106,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                 try:
                     import pikepdf
                     pdf = pikepdf.open(str(file_path))
-                    
+
                     # Try to extract text from metadata
                     metadata_text = None
                     try:
@@ -118,7 +117,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                                 console.print("[green]Successfully extracted Unicode text from PDF metadata[/green]")
                     except Exception as meta_err:
                         console.print(f"[yellow]Metadata extraction failed: {meta_err}[/yellow]")
-                    
+
                     # Try to extract text from attachments
                     attachment_text = None
                     try:
@@ -129,7 +128,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                             console.print("[green]Successfully extracted Unicode text from PDF attachment[/green]")
                     except Exception as att_err:
                         console.print(f"[yellow]Attachment extraction failed: {att_err}[/yellow]")
-                    
+
                     # Use the best text source (metadata or attachment)
                     if metadata_text and attachment_text:
                         # Use the longer one as it likely contains more information
@@ -138,22 +137,22 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                         extracted_text = metadata_text
                     elif attachment_text:
                         extracted_text = attachment_text
-                        
+
                     # If we found text, return it immediately
                     if extracted_text:
                         return extracted_text
-                        
+
                 except Exception as pike_err:
                     console.print(f"[yellow]pikepdf extraction failed: {pike_err}[/yellow]")
         except ImportError:
             console.print("[yellow]pikepdf not available for PDF metadata extraction[/yellow]")
-        
+
         # Method 1: Try using PyPDF2 with raw extraction to preserve Unicode characters
         if PYPDF2_AVAILABLE:
             try:
                 with open(file_path, 'rb') as f:
                     pdf_reader = PyPDF2.PdfReader(f)
-                    
+
                     # First try to extract from document info dictionary which might contain metadata
                     if pdf_reader.metadata:
                         for key in ['/Subject', '/Description', '/Title', '/Author']:
@@ -164,19 +163,19 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                                     extracted_text = meta_text
                                     console.print(f"[green]Found Unicode text in PDF metadata field: {key}[/green]")
                                     break
-                    
+
                     # If no metadata text found, extract from pages
                     if not extracted_text:
                         text = ''
                         for page_num in range(len(pdf_reader.pages)):
                             # Get the page
                             page = pdf_reader.pages[page_num]
-                            
+
                             # Try to extract text with maximum preservation of Unicode characters
                             try:
                                 # Extract text with default method
                                 page_text = page.extract_text()
-                                
+
                                 # If available, also try to extract the raw content stream for better Unicode preservation
                                 if hasattr(page, '/Contents') and page['/Contents'] is not None:
                                     try:
@@ -199,15 +198,15 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                             except Exception as page_err:
                                 console.print(f"[yellow]Page text extraction failed: {page_err}[/yellow]")
                                 continue
-                                
+
                             if page_text:
                                 text += page_text + '\n'
-                        
+
                         if text.strip():
                             extracted_text = text
             except Exception as e:
                 console.print(f"[yellow]PyPDF2 extraction failed for {file_path}: {e}[/yellow]")
-                
+
             # If PyPDF2 extraction failed or produced minimal text, try a binary approach
             if not extracted_text or len(extracted_text) < 100:  # Arbitrary threshold to detect poor extraction
                 try:
@@ -226,7 +225,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                                 extracted_text = binary_extracted
                 except Exception as bin_err:
                     console.print(f"[yellow]Binary extraction attempt failed: {bin_err}[/yellow]")
-        
+
         # Method 2: Try pdfminer.six with enhanced Unicode handling if PyPDF2 failed
         if not extracted_text or len(extracted_text) < 100:  # Try if PyPDF2 failed or produced minimal text
             try:
@@ -236,45 +235,49 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                     try:
                         from pdfminer.high_level import extract_text
                         from pdfminer.layout import LAParams
-                        
+
                         # Use custom LAParams to better preserve character spacing and Unicode
                         laparams = LAParams(
                             char_margin=1.0,  # Smaller value joins characters in words better
                             line_margin=0.1,  # Smaller value joins lines better
                             all_texts=True    # Extract all text, including those in figures
                         )
-                        
+
                         # Extract with custom parameters
                         text = extract_text(str(file_path), laparams=laparams)
-                        
+
                         if text.strip():
                             extracted_text = text
-                            
+
                         # If standard extraction didn't work well, try raw extraction
                         if not extracted_text or len(extracted_text) < 100:
                             try:
-                                from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+                                from io import StringIO
+
                                 from pdfminer.converter import TextConverter
                                 from pdfminer.layout import LAParams
+                                from pdfminer.pdfinterp import (
+                                    PDFPageInterpreter,
+                                    PDFResourceManager,
+                                )
                                 from pdfminer.pdfpage import PDFPage
-                                from io import StringIO
-                                
+
                                 # Set up PDF resource manager and converter
                                 rsrcmgr = PDFResourceManager()
                                 retstr = StringIO()
                                 device = TextConverter(rsrcmgr, retstr, laparams=laparams)
                                 interpreter = PDFPageInterpreter(rsrcmgr, device)
-                                
+
                                 # Process each page
                                 with open(str(file_path), 'rb') as fp:
                                     for page in PDFPage.get_pages(fp):
                                         interpreter.process_page(page)
-                                
+
                                 # Get text from StringIO
                                 raw_text = retstr.getvalue()
                                 device.close()
                                 retstr.close()
-                                
+
                                 if raw_text.strip() and len(raw_text) > len(extracted_text or ''):
                                     extracted_text = raw_text
                             except Exception as raw_err:
@@ -285,28 +288,29 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                 console.print("[yellow]pdfminer.six not available for PDF extraction[/yellow]")
             except Exception as e:
                 console.print(f"[yellow]pdfminer.six import failed: {e}[/yellow]")
-        
+
         # Method 3: Try using Microsoft Word COM automation if available
         if not extracted_text:
             try:
-                import comtypes.client
-                import tempfile
                 import os
-                
+                import tempfile
+
+                import comtypes.client
+
                 # Create a temporary text file
                 temp_txt = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
                 temp_txt.close()
-                
+
                 # Use Word to open the PDF and save as text
                 word = comtypes.client.CreateObject('Word.Application')
                 word.Visible = 0
-                
+
                 # Try to open the PDF with Word
                 try:
                     doc = word.Documents.Open(str(file_path))
                     doc.SaveAs(temp_txt.name, FileFormat=2)  # FileFormat=2 is for text
                     doc.Close()
-                    
+
                     # Read the text file
                     with open(temp_txt.name, 'r', encoding='utf-8', errors='replace') as f:
                         extracted_text = f.read()
@@ -321,21 +325,21 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                         pass
             except Exception as e:
                 console.print(f"[yellow]Word COM automation not available: {e}[/yellow]")
-        
+
         if extracted_text:
             return extracted_text
-            
+
     elif suffix == '.docx':
         # Try multiple DOCX extraction methods to preserve Unicode metadata
         extracted_text = None
-        
+
         # Method 1: Try using python-docx with direct run access (best for Unicode preservation)
         try:
             import importlib.util
             if importlib.util.find_spec("docx"):
                 from docx import Document
                 doc = Document(str(file_path))
-                
+
                 # Extract text with direct access to runs to preserve Unicode characters
                 paragraphs_text = []
                 for paragraph in doc.paragraphs:
@@ -346,7 +350,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                         run_texts.append(run.text)
                     # Join all runs without any processing to preserve all Unicode characters
                     paragraphs_text.append(''.join(run_texts))
-                
+
                 # Also extract text from tables
                 for table in doc.tables:
                     for row in table.rows:
@@ -358,7 +362,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                                     cell_run_texts.append(run.text)
                             row_texts.append(''.join(cell_run_texts))
                         paragraphs_text.append(' | '.join(row_texts))
-                
+
                 text = '\n'.join(paragraphs_text)
                 if text.strip():
                     extracted_text = text
@@ -366,7 +370,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
             console.print("[yellow]python-docx not available for DOCX extraction[/yellow]")
         except Exception as e:
             console.print(f"[yellow]python-docx extraction failed: {e}[/yellow]")
-        
+
         # Method 2: Try docx2txt if python-docx failed
         if not extracted_text and DOCX2TXT_AVAILABLE:
             try:
@@ -375,32 +379,33 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                     extracted_text = text
             except Exception as e:
                 console.print(f"[yellow]docx2txt extraction failed: {e}[/yellow]")
-        
+
         # Method 3: Try using Microsoft Word COM automation if available
         if not extracted_text:
             try:
-                import comtypes.client
-                import tempfile
                 import os
-                
+                import tempfile
+
+                import comtypes.client
+
                 # Create a temporary text file
                 temp_txt = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
                 temp_txt.close()
-                
+
                 # Use Word to open the DOCX and save as text
                 word = comtypes.client.CreateObject('Word.Application')
                 word.Visible = 0
-                
+
                 # Open the DOCX with Word
                 doc = word.Documents.Open(str(file_path))
                 doc.SaveAs(temp_txt.name, FileFormat=2)  # FileFormat=2 is for text
                 doc.Close()
                 word.Quit()
-                
+
                 # Read the text file
                 with open(temp_txt.name, 'r', encoding='utf-8', errors='replace') as f:
                     extracted_text = f.read()
-                
+
                 # Clean up the temporary file
                 try:
                     os.unlink(temp_txt.name)
@@ -408,28 +413,28 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                     pass
             except Exception as e:
                 console.print(f"[yellow]Word COM automation not available: {e}[/yellow]")
-        
+
         if extracted_text:
             return extracted_text
-    
+
     # Fallback: try to read as binary and decode as UTF-8
     try:
         with open(file_path, 'rb') as f:
             content = f.read()
             # Try to decode as UTF-8
             text = content.decode('utf-8', errors='replace')
-            
+
             # Check if the text contains Unicode variation selectors (0xFE00-0xFE0F)
             # This is a final check to ensure we're not missing any
             import re
             vs_pattern = re.compile(r'[\uFE00-\uFE0F]')
             if vs_pattern.search(text):
                 console.print("[green]Found Unicode variation selectors in binary fallback extraction[/green]")
-            
+
             return text
     except Exception as e:
         console.print(f"[yellow]Binary fallback extraction failed for {file_path}: {e}[/yellow]")
-    
+
     console.print(f"[yellow]Unsupported file type or extraction failed: {file_path}[/yellow]")
     return None
 
@@ -458,27 +463,27 @@ def scan_directory(
         Dictionary mapping file paths to VerificationResult objects
     """
     results = {}
-    
+
     # Collect all files to scan
     files_to_scan = []
     directory = Path(directory_path)
-    
+
     if not directory.exists():
         console.print(f"[red]Directory not found: {directory_path}[/red]")
         return results
-    
+
     # Use glob patterns to find files with the specified extensions
     for ext in file_extensions:
         # Make sure extension starts with a dot
         if not ext.startswith('.'):
             ext = f'.{ext}'
-            
+
         # Find files with this extension
         if recursive:
             files_to_scan.extend(list(directory.glob(f'**/*{ext}')))
         else:
             files_to_scan.extend(list(directory.glob(f'*{ext}')))
-    
+
     # Remove duplicates and sort
     # Deduplicate while preserving order to avoid comparison errors with mocks in tests
     seen = set()
@@ -489,14 +494,14 @@ def scan_directory(
             seen.add(key)
             unique_files.append(fp)
     files_to_scan = unique_files
-    
+
     # Sort files for consistent results when possible
     try:
         files_to_scan.sort()
     except TypeError:
         # If files can't be sorted (e.g., MagicMock objects), continue without sorting
         pass
-    
+
     # Scan files with progress bar if requested
     if show_progress and files_to_scan:
         with Progress(
@@ -506,16 +511,16 @@ def scan_directory(
             console=console,
         ) as progress:
             task = progress.add_task(f"Scanning {len(files_to_scan)} files...", total=len(files_to_scan))
-            
+
             for file_path in files_to_scan:
                 # Skip directories (shouldn't happen with glob, but just in case)
                 if file_path.is_dir():
                     progress.advance(task)
                     continue
-                
+
                 # Update progress description
                 progress.update(task, description=f"Scanning {file_path.name}")
-                
+
                 # Verify metadata
                 try:
                     # First try to extract text from the file
@@ -524,7 +529,7 @@ def scan_directory(
                         text_content = extract_text_from_file(file_path)
                     except Exception as e:
                         console.print(f"[yellow]Error extracting text from {file_path}: {e}[/yellow]")
-                    
+
                     # If we have text content, verify it
                     if text_content:
                         # Verify the extracted text
@@ -545,7 +550,7 @@ def scan_directory(
                                 format=None,
                                 raw_payload=None
                             )
-                    
+
                     # If content integrity verification is enabled and metadata was found
                     if verify_content_integrity and result.has_metadata:
                         # If the signature is valid, perform additional checks
@@ -559,11 +564,11 @@ def scan_directory(
                                     result.verified = False
                                     if hasattr(result, 'verification_details'):
                                         result.verification_details = "Content modified after signing"
-                    
+
                     results[str(file_path)] = result
                 except Exception as e:
                     console.print(f"[yellow]Error scanning {file_path}: {e}[/yellow]")
-                
+
                 # Advance progress
                 progress.advance(task)
     else:
@@ -571,11 +576,11 @@ def scan_directory(
         for file_path in files_to_scan:
             if file_path.is_dir():
                 continue
-                
+
             try:
                 # Try to extract text from the file based on its type
                 text_content = extract_text_from_file(file_path)
-                
+
                 if text_content:
                     # For all file types, verify the extracted text
                     # This handles both direct text files and extracted content from PDFs/DOCXs
@@ -597,7 +602,7 @@ def scan_directory(
                             raw_payload=None,
                             verification_details="Text extraction and direct verification failed"
                         )
-                
+
                 # If content integrity verification is enabled and metadata was found
                 if verify_content_integrity and result.has_metadata:
                     # If the signature is valid, perform additional checks
@@ -618,11 +623,11 @@ def scan_directory(
                                 result.verified = False
                                 if hasattr(result, 'verification_details'):
                                     result.verification_details = "Content modified after signing"
-                
+
                 results[str(file_path)] = result
             except Exception as e:
                 console.print(f"[yellow]Error scanning {file_path}: {e}[/yellow]")
-    
+
     return results
 
 
@@ -642,26 +647,26 @@ def generate_report(
     if not results:
         console.print("[yellow]No results to report[/yellow]")
         return
-    
+
     # Ensure output directory exists
     output_path = Path(output_file)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Define CSV headers
     headers = [
-        "File", "Verified", "Has Metadata", "Signer ID", 
+        "File", "Verified", "Has Metadata", "Signer ID",
         "Timestamp", "Model ID", "Format", "Verification Details"
     ]
-    
+
     if include_raw_payload:
         headers.append("Raw Payload")
-    
+
     # Write CSV report
     try:
         with open(output_file, "w", newline="", encoding="utf-8") as f:
             writer = csv.writer(f)
             writer.writerow(headers)
-            
+
             for file_path, result in results.items():
                 row = [
                     file_path,
@@ -673,12 +678,12 @@ def generate_report(
                     result.format or "",
                     result.verification_details or "",
                 ]
-                
+
                 if include_raw_payload:
                     row.append(str(result.raw_payload) if result.raw_payload else "")
-                
+
                 writer.writerow(row)
-        
+
         console.print(f"[green]Report saved to {output_file}[/green]")
     except Exception as e:
         console.print(f"[red]Error generating report: {e}[/red]")
@@ -703,18 +708,18 @@ def load_trusted_signers_from_directory(
     """
     trusted_signers = {}
     directory = Path(directory_path)
-    
+
     if not directory.exists():
         if verbose:
             console.print(f"[yellow]Directory not found: {directory_path}[/yellow]")
         return trusted_signers
-    
+
     # Find all .pem files in the directory
     for file_path in directory.glob("*.pem"):
         signer_id = file_path.stem  # Use filename without extension as signer ID
         trusted_signers[signer_id] = str(file_path)
-        
+
         if verbose:
             console.print(f"[green]Loaded trusted signer {signer_id} from {file_path}[/green]")
-    
+
     return trusted_signers

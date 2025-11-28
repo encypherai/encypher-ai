@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import demo_requests, analytics_events, tools
+from app.api.v1.endpoints import analytics_events, demo_requests, tools
 
 api_router = APIRouter()
 api_router.include_router(demo_requests.router, prefix="/demo-requests", tags=["demo-requests"])

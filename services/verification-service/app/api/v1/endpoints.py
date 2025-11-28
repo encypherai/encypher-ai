@@ -22,7 +22,7 @@ async def get_current_user(authorization: str = Header(None)) -> Optional[dict]:
     """Verify user token with auth service (optional)"""
     if not authorization:
         return None
-    
+
     try:
         async with httpx.AsyncClient() as client:
             response = await client.post(
@@ -59,7 +59,7 @@ async def verify_signature(
             ip_address=x_forwarded_for,
             user_agent=user_agent,
         )
-        
+
         return VerificationResponse(
             is_valid=result.is_valid,
             is_tampered=result.is_tampered,
@@ -101,7 +101,7 @@ async def verify_document(
             ip_address=x_forwarded_for,
             user_agent=user_agent,
         )
-        
+
         return VerificationResponse(
             is_valid=result.is_valid,
             is_tampered=result.is_tampered,

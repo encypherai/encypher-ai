@@ -47,7 +47,7 @@ def get_circuit_breaker(service_name: str, fail_max: int = 5, timeout_duration: 
                 )
             ]
         )
-    
+
     return service_breakers[service_name]
 
 
@@ -86,7 +86,7 @@ async def http_call_with_retry(
         httpx.TimeoutException: On timeout after retries
     """
     logger.debug("http_call_attempt", url=url, method=method)
-    
+
     async with httpx.AsyncClient(timeout=timeout) as client:
         if method == "GET":
             response = await client.get(url, **kwargs)
@@ -98,7 +98,7 @@ async def http_call_with_retry(
             response = await client.delete(url, **kwargs)
         else:
             raise ValueError(f"Unsupported HTTP method: {method}")
-        
+
         response.raise_for_status()
         return response
 
@@ -131,11 +131,11 @@ async def call_service_with_breaker(
         httpx.HTTPError: On HTTP errors after retries
     """
     breaker = get_circuit_breaker(service_name)
-    
+
     @breaker
     async def protected_call():
         return await http_call_with_retry(url, method, **kwargs)
-    
+
     try:
         return await protected_call()
     except Exception as e:

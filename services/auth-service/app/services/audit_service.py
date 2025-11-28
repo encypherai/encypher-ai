@@ -26,10 +26,10 @@ class AuditService:
             result="success"
         )
     """
-    
+
     def __init__(self, db: AsyncSession):
         self.db = db
-    
+
     async def log(
         self,
         action: str,
@@ -77,11 +77,11 @@ class AuditService:
             result=result,
             error_message=error_message
         )
-        
+
         self.db.add(audit_log)
         await self.db.commit()
         await self.db.refresh(audit_log)
-        
+
         # Also log to structured logger
         logger.info(
             "audit_log_created",
@@ -90,9 +90,9 @@ class AuditService:
             resource_type=resource_type,
             result=result
         )
-        
+
         return audit_log
-    
+
     async def query_logs(
         self,
         organization_id: Optional[str] = None,
@@ -123,7 +123,7 @@ class AuditService:
             List of AuditLog instances
         """
         query = select(AuditLog)
-        
+
         # Build filters
         filters = []
         if organization_id:
@@ -140,19 +140,19 @@ class AuditService:
             filters.append(AuditLog.timestamp >= start_date)
         if end_date:
             filters.append(AuditLog.timestamp <= end_date)
-        
+
         if filters:
             query = query.where(and_(*filters))
-        
+
         # Order by timestamp descending
         query = query.order_by(AuditLog.timestamp.desc())
-        
+
         # Apply pagination
         query = query.limit(limit).offset(offset)
-        
+
         result = await self.db.execute(query)
         return result.scalars().all()
-    
+
     async def get_security_events(
         self,
         organization_id: str,
@@ -169,9 +169,9 @@ class AuditService:
             List of security-critical audit logs
         """
         from datetime import timedelta
-        
+
         start_date = datetime.utcnow() - timedelta(hours=hours)
-        
+
         # Security-critical actions
         security_actions = [
             "user.login",
@@ -183,7 +183,7 @@ class AuditService:
             "api_key.rotated",
             "permission.changed"
         ]
-        
+
         query = select(AuditLog).where(
             and_(
                 AuditLog.organization_id == organization_id,
@@ -191,6 +191,6 @@ class AuditService:
                 or_(*[AuditLog.action == action for action in security_actions])
             )
         ).order_by(AuditLog.timestamp.desc())
-        
+
         result = await self.db.execute(query)
         return result.scalars().all()

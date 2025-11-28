@@ -1,9 +1,7 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
+from sqlalchemy import engine_from_config, pool
 
 # Import Base and all models for autogenerate support
 from app.db.base import Base
@@ -61,7 +59,7 @@ def run_migrations_online() -> None:
     """
     # Override sqlalchemy.url with environment variable if present
     from app.core.config import settings
-    
+
     if settings.SQLALCHEMY_DATABASE_URI:
         config.set_main_option("sqlalchemy.url", str(settings.SQLALCHEMY_DATABASE_URI))
 

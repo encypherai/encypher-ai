@@ -56,11 +56,11 @@ class StripeService:
     Handles all Stripe API interactions including customers,
     subscriptions, checkout, and webhooks.
     """
-    
+
     # =========================================================================
     # Customer Management
     # =========================================================================
-    
+
     @staticmethod
     async def create_customer(
         email: str,
@@ -84,20 +84,20 @@ class StripeService:
             customer_metadata = metadata or {}
             if organization_id:
                 customer_metadata["organization_id"] = organization_id
-            
+
             customer = stripe.Customer.create(
                 email=email,
                 name=name,
                 metadata=customer_metadata,
             )
-            
+
             logger.info(f"Created Stripe customer {customer.id} for {email}")
             return customer
-            
+
         except StripeError as e:
             logger.error(f"Failed to create Stripe customer: {e}")
             raise
-    
+
     @staticmethod
     async def get_customer(customer_id: str) -> Optional[stripe.Customer]:
         """Get a Stripe customer by ID."""
@@ -106,7 +106,7 @@ class StripeService:
         except StripeError as e:
             logger.error(f"Failed to retrieve customer {customer_id}: {e}")
             return None
-    
+
     @staticmethod
     async def get_or_create_customer(
         email: str,
@@ -119,27 +119,27 @@ class StripeService:
         try:
             # Search for existing customer
             customers = stripe.Customer.list(email=email, limit=1)
-            
+
             if customers.data:
                 customer = customers.data[0]
                 logger.info(f"Found existing Stripe customer {customer.id}")
                 return customer
-            
+
             # Create new customer
             return await StripeService.create_customer(
                 email=email,
                 name=name,
                 organization_id=organization_id
             )
-            
+
         except StripeError as e:
             logger.error(f"Failed to get/create customer: {e}")
             raise
-    
+
     # =========================================================================
     # Checkout Sessions
     # =========================================================================
-    
+
     @staticmethod
     async def create_checkout_session(
         customer_id: str,
@@ -169,7 +169,7 @@ class StripeService:
             session_metadata = metadata or {}
             if organization_id:
                 session_metadata["organization_id"] = organization_id
-            
+
             session_params = {
                 "customer": customer_id,
                 "payment_method_types": ["card"],
@@ -185,19 +185,19 @@ class StripeService:
                 "billing_address_collection": "required",
                 "tax_id_collection": {"enabled": True},
             }
-            
+
             if trial_days > 0:
                 session_params["subscription_data"]["trial_period_days"] = trial_days
-            
+
             session = stripe.checkout.Session.create(**session_params)
-            
+
             logger.info(f"Created checkout session {session.id} for customer {customer_id}")
             return session
-            
+
         except StripeError as e:
             logger.error(f"Failed to create checkout session: {e}")
             raise
-    
+
     @staticmethod
     async def create_upgrade_checkout(
         customer_id: str,
@@ -224,17 +224,17 @@ class StripeService:
                     "metadata": {"upgrade_from": current_subscription_id}
                 },
             )
-            
+
             return session
-            
+
         except StripeError as e:
             logger.error(f"Failed to create upgrade checkout: {e}")
             raise
-    
+
     # =========================================================================
     # Billing Portal
     # =========================================================================
-    
+
     @staticmethod
     async def create_billing_portal_session(
         customer_id: str,
@@ -251,18 +251,18 @@ class StripeService:
                 customer=customer_id,
                 return_url=return_url,
             )
-            
+
             logger.info(f"Created billing portal session for customer {customer_id}")
             return session
-            
+
         except StripeError as e:
             logger.error(f"Failed to create billing portal session: {e}")
             raise
-    
+
     # =========================================================================
     # Subscription Management
     # =========================================================================
-    
+
     @staticmethod
     async def get_subscription(subscription_id: str) -> Optional[stripe.Subscription]:
         """Get a subscription by ID."""
@@ -271,7 +271,7 @@ class StripeService:
         except StripeError as e:
             logger.error(f"Failed to retrieve subscription {subscription_id}: {e}")
             return None
-    
+
     @staticmethod
     async def cancel_subscription(
         subscription_id: str,
@@ -293,14 +293,14 @@ class StripeService:
                 )
             else:
                 subscription = stripe.Subscription.delete(subscription_id)
-            
+
             logger.info(f"Canceled subscription {subscription_id}")
             return subscription
-            
+
         except StripeError as e:
             logger.error(f"Failed to cancel subscription: {e}")
             raise
-    
+
     @staticmethod
     async def update_subscription(
         subscription_id: str,
@@ -320,7 +320,7 @@ class StripeService:
         """
         try:
             subscription = stripe.Subscription.retrieve(subscription_id)
-            
+
             updated = stripe.Subscription.modify(
                 subscription_id,
                 items=[{
@@ -329,18 +329,18 @@ class StripeService:
                 }],
                 proration_behavior=proration_behavior,
             )
-            
+
             logger.info(f"Updated subscription {subscription_id} to price {new_price_id}")
             return updated
-            
+
         except StripeError as e:
             logger.error(f"Failed to update subscription: {e}")
             raise
-    
+
     # =========================================================================
     # Invoices
     # =========================================================================
-    
+
     @staticmethod
     async def get_invoices(
         customer_id: str,
@@ -353,11 +353,11 @@ class StripeService:
                 limit=limit,
             )
             return invoices.data
-            
+
         except StripeError as e:
             logger.error(f"Failed to get invoices: {e}")
             return []
-    
+
     @staticmethod
     async def get_upcoming_invoice(customer_id: str) -> Optional[stripe.Invoice]:
         """Get upcoming invoice for a customer."""
@@ -366,11 +366,11 @@ class StripeService:
         except StripeError as e:
             logger.error(f"Failed to get upcoming invoice: {e}")
             return None
-    
+
     # =========================================================================
     # Webhook Processing
     # =========================================================================
-    
+
     @staticmethod
     def verify_webhook_signature(
         payload: bytes,
@@ -396,11 +396,11 @@ class StripeService:
                 settings.STRIPE_WEBHOOK_SECRET
             )
             return event
-            
+
         except stripe.error.SignatureVerificationError as e:
             logger.error(f"Webhook signature verification failed: {e}")
             raise ValueError("Invalid webhook signature")
-    
+
     @staticmethod
     async def handle_webhook_event(event: stripe.Event) -> Dict[str, Any]:
         """
@@ -414,9 +414,9 @@ class StripeService:
         """
         event_type = event.type
         data = event.data.object
-        
+
         logger.info(f"Processing webhook event: {event_type}")
-        
+
         handlers = {
             "checkout.session.completed": StripeService._handle_checkout_completed,
             "customer.subscription.created": StripeService._handle_subscription_created,
@@ -426,30 +426,30 @@ class StripeService:
             "invoice.payment_failed": StripeService._handle_invoice_payment_failed,
             "customer.created": StripeService._handle_customer_created,
         }
-        
+
         handler = handlers.get(event_type)
         if handler:
             return await handler(data)
-        
+
         logger.info(f"Unhandled webhook event type: {event_type}")
         return {"status": "ignored", "event_type": event_type}
-    
+
     @staticmethod
     async def _handle_checkout_completed(session: Dict) -> Dict[str, Any]:
         """Handle successful checkout completion."""
         logger.info(f"Checkout completed: {session.get('id')}")
-        
+
         # Extract metadata
         organization_id = session.get("metadata", {}).get("organization_id")
         subscription_id = session.get("subscription")
         customer_id = session.get("customer")
-        
+
         # TODO: Update organization subscription in database
         # This should:
         # 1. Update organization tier based on subscription
         # 2. Sync feature flags
         # 3. Update coalition rev share
-        
+
         return {
             "status": "success",
             "action": "subscription_created",
@@ -457,62 +457,62 @@ class StripeService:
             "subscription_id": subscription_id,
             "customer_id": customer_id,
         }
-    
+
     @staticmethod
     async def _handle_subscription_created(subscription: Dict) -> Dict[str, Any]:
         """Handle new subscription creation."""
         logger.info(f"Subscription created: {subscription.get('id')}")
         return {"status": "success", "action": "subscription_created"}
-    
+
     @staticmethod
     async def _handle_subscription_updated(subscription: Dict) -> Dict[str, Any]:
         """Handle subscription update (upgrade/downgrade)."""
         logger.info(f"Subscription updated: {subscription.get('id')}")
-        
+
         # Check if this is a tier change
         # TODO: Update organization tier if needed
-        
+
         return {"status": "success", "action": "subscription_updated"}
-    
+
     @staticmethod
     async def _handle_subscription_deleted(subscription: Dict) -> Dict[str, Any]:
         """Handle subscription cancellation."""
         logger.info(f"Subscription deleted: {subscription.get('id')}")
-        
+
         # TODO: Downgrade organization to Starter tier
-        
+
         return {"status": "success", "action": "subscription_canceled"}
-    
+
     @staticmethod
     async def _handle_invoice_paid(invoice: Dict) -> Dict[str, Any]:
         """Handle successful invoice payment."""
         logger.info(f"Invoice paid: {invoice.get('id')}")
-        
+
         # TODO: Record payment in database
         # TODO: Send receipt email
-        
+
         return {"status": "success", "action": "invoice_paid"}
-    
+
     @staticmethod
     async def _handle_invoice_payment_failed(invoice: Dict) -> Dict[str, Any]:
         """Handle failed invoice payment."""
         logger.warning(f"Invoice payment failed: {invoice.get('id')}")
-        
+
         # TODO: Send payment failure notification
         # TODO: Update subscription status
-        
+
         return {"status": "success", "action": "payment_failed_handled"}
-    
+
     @staticmethod
     async def _handle_customer_created(customer: Dict) -> Dict[str, Any]:
         """Handle new customer creation."""
         logger.info(f"Customer created: {customer.get('id')}")
         return {"status": "success", "action": "customer_created"}
-    
+
     # =========================================================================
     # Stripe Connect (Publisher Payouts)
     # =========================================================================
-    
+
     @staticmethod
     async def create_connect_account(
         email: str,
@@ -542,14 +542,14 @@ class StripeService:
                     "organization_id": organization_id,
                 },
             )
-            
+
             logger.info(f"Created Connect account {account.id} for org {organization_id}")
             return account
-            
+
         except StripeError as e:
             logger.error(f"Failed to create Connect account: {e}")
             raise
-    
+
     @staticmethod
     async def create_connect_onboarding_link(
         account_id: str,
@@ -568,13 +568,13 @@ class StripeService:
                 return_url=return_url,
                 type="account_onboarding",
             )
-            
+
             return link
-            
+
         except StripeError as e:
             logger.error(f"Failed to create onboarding link: {e}")
             raise
-    
+
     @staticmethod
     async def create_payout(
         connect_account_id: str,
@@ -601,20 +601,20 @@ class StripeService:
                 destination=connect_account_id,
                 description=description or "Encypher Coalition Revenue Share",
             )
-            
+
             logger.info(
                 f"Created payout of ${amount_cents/100:.2f} to {connect_account_id}"
             )
             return transfer
-            
+
         except StripeError as e:
             logger.error(f"Failed to create payout: {e}")
             raise
-    
+
     # =========================================================================
     # Product/Price Setup (Run once to configure Stripe)
     # =========================================================================
-    
+
     @staticmethod
     async def setup_stripe_products() -> Dict[str, Any]:
         """
@@ -624,7 +624,7 @@ class StripeService:
         Returns the product/price IDs to configure in your app.
         """
         products_created = {}
-        
+
         tiers = [
             {
                 "id": "professional",
@@ -641,7 +641,7 @@ class StripeService:
                 "price_annual": 479000,  # $4790 in cents
             },
         ]
-        
+
         try:
             for tier in tiers:
                 # Create product
@@ -650,7 +650,7 @@ class StripeService:
                     description=tier["description"],
                     metadata={"tier_id": tier["id"]},
                 )
-                
+
                 # Create monthly price
                 price_monthly = stripe.Price.create(
                     product=product.id,
@@ -659,7 +659,7 @@ class StripeService:
                     recurring={"interval": "month"},
                     metadata={"tier_id": tier["id"], "billing_cycle": "monthly"},
                 )
-                
+
                 # Create annual price
                 price_annual = stripe.Price.create(
                     product=product.id,
@@ -668,17 +668,17 @@ class StripeService:
                     recurring={"interval": "year"},
                     metadata={"tier_id": tier["id"], "billing_cycle": "annual"},
                 )
-                
+
                 products_created[tier["id"]] = {
                     "product_id": product.id,
                     "price_monthly": price_monthly.id,
                     "price_annual": price_annual.id,
                 }
-                
+
                 logger.info(f"Created Stripe product for {tier['id']}: {product.id}")
-            
+
             return products_created
-            
+
         except StripeError as e:
             logger.error(f"Failed to setup Stripe products: {e}")
             raise
@@ -705,10 +705,10 @@ def get_stripe_price_id(tier: str, billing_cycle: str) -> Optional[str]:
             "annual": settings.STRIPE_PRICE_BUSINESS_ANNUAL,
         },
     }
-    
+
     tier_prices = price_map.get(tier)
     if not tier_prices:
         return None
-    
+
     price_id = tier_prices.get(billing_cycle)
     return price_id if price_id else None

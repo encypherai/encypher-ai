@@ -13,10 +13,10 @@ def generate_api_key() -> str:
     """
     # Generate cryptographically secure random bytes
     random_bytes = secrets.token_urlsafe(settings.KEY_LENGTH)
-    
+
     # Create key with prefix
     api_key = f"{settings.KEY_PREFIX}{random_bytes}"
-    
+
     return api_key
 
 
@@ -34,15 +34,15 @@ def verify_api_key_format(api_key: str) -> bool:
     """
     if not api_key:
         return False
-    
+
     # Check prefix
     if not api_key.startswith(settings.KEY_PREFIX):
         return False
-    
+
     # Check minimum length
     if len(api_key) < len(settings.KEY_PREFIX) + 20:
         return False
-    
+
     return True
 
 

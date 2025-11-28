@@ -33,10 +33,10 @@ def sign_content(content: str, private_key_pem: str) -> str:
         private_key_pem.encode(),
         password=None
     )
-    
+
     # Sign content
     signature = private_key.sign(content.encode())
-    
+
     return signature.hex()
 
 
@@ -55,11 +55,11 @@ def verify_signature(content: str, signature_hex: str, public_key_pem: str) -> b
     try:
         # Load public key
         public_key = serialization.load_pem_public_key(public_key_pem.encode())
-        
+
         # Verify signature
         signature = bytes.fromhex(signature_hex)
         public_key.verify(signature, content.encode())
-        
+
         return True
     except Exception:
         return False

@@ -1,7 +1,8 @@
 """Pydantic schemas for User Service"""
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel
 
 
 class ProfileUpdate(BaseModel):
@@ -26,7 +27,7 @@ class ProfileResponse(BaseModel):
     location: Optional[str]
     website: Optional[str]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -45,7 +46,7 @@ class TeamResponse(BaseModel):
     description: Optional[str]
     is_active: bool
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

@@ -27,9 +27,9 @@ async def lifespan(app: FastAPI):
     logger.info("Creating database tables...")
     Base.metadata.create_all(bind=engine)
     logger.info("Database tables created")
-    
+
     yield
-    
+
     # Shutdown
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
@@ -76,7 +76,7 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "app.main:app",
         host=settings.SERVICE_HOST,

@@ -30,7 +30,7 @@ class SignedDocumentResponse(BaseModel):
     content_hash: str
     manifest: Dict[str, Any]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -47,7 +47,7 @@ class DocumentInfo(BaseModel):
     is_active: bool
     created_at: datetime
     metadata: Optional[Dict[str, Any]]
-    
+
     class Config:
         from_attributes = True
 

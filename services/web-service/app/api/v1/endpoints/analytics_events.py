@@ -1,5 +1,6 @@
 from typing import Any, List
-from fastapi import APIRouter, Depends, Request, BackgroundTasks
+
+from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
 
 from app import crud, schemas
@@ -21,7 +22,7 @@ def track_event(
     # Extract metadata from request if not provided in payload
     client_host = request.client.host if request.client else None
     user_agent = request.headers.get("user-agent")
-    
+
     # Create event
     event = crud.analytics_event.create_with_metadata(
         db=db,
@@ -29,7 +30,7 @@ def track_event(
         ip_address=client_host,
         user_agent=user_agent
     )
-    
+
     return event
 
 @router.get("/session/{session_id}", response_model=List[schemas.AnalyticsEventInDB])

@@ -37,13 +37,13 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                 f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
                 headers={"Authorization": authorization}
             )
-            
+
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
                 )
-            
+
             payload = response.json()
             # Extract user data from standard response format
             if isinstance(payload, dict) and payload.get("success") and isinstance(payload.get("data"), dict):
@@ -80,7 +80,7 @@ async def generate_key(
     """
     try:
         db_key, api_key = KeyService.create_key(db, current_user["id"], key_data)
-        
+
         return ApiKeyResponse(
             id=db_key.id,
             name=db_key.name,
@@ -123,13 +123,13 @@ async def get_key(
     - **key_id**: ID of the key to retrieve
     """
     db_key = KeyService.get_key_by_id(db, key_id, current_user["id"])
-    
+
     if not db_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found",
         )
-    
+
     return db_key
 
 
@@ -149,13 +149,13 @@ async def update_key(
     - **permissions**: New permissions (optional)
     """
     db_key = KeyService.update_key(db, key_id, current_user["id"], update_data)
-    
+
     if not db_key:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found",
         )
-    
+
     return db_key
 
 
@@ -173,13 +173,13 @@ async def revoke_key(
     - **key_id**: ID of the key to revoke
     """
     success = KeyService.revoke_key(db, key_id, current_user["id"])
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found",
         )
-    
+
     return {"message": "API key revoked successfully"}
 
 
@@ -201,15 +201,15 @@ async def rotate_key(
     - **reason**: Optional reason for rotation
     """
     result = KeyService.rotate_key(db, key_id, current_user["id"], rotation_data.reason)
-    
+
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found",
         )
-    
+
     new_db_key, new_api_key = result
-    
+
     return KeyRotationResponse(
         old_key_id=key_id,
         new_key=ApiKeyResponse(
@@ -237,13 +237,13 @@ async def verify_key(
     - **key**: The API key to verify
     """
     db_key = KeyService.verify_key(db, verify_data.key)
-    
+
     if not db_key:
         return ApiKeyVerifyResponse(
             valid=False,
             message="Invalid or expired API key",
         )
-    
+
     return ApiKeyVerifyResponse(
         valid=True,
         key_id=db_key.id,
@@ -274,13 +274,13 @@ async def validate_key_with_org(
         - usage limits
     """
     org_context = KeyService.verify_key_with_org(db, verify_data.key)
-    
+
     if not org_context:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired API key",
         )
-    
+
     return {
         "success": True,
         "data": org_context,
@@ -299,13 +299,13 @@ async def get_key_usage(
     - **key_id**: ID of the key
     """
     stats = KeyService.get_key_usage_stats(db, key_id, current_user["id"])
-    
+
     if not stats:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="API key not found",
         )
-    
+
     return KeyUsageStats(**stats, requests_by_day={})
 
 

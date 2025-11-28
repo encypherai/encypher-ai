@@ -1,8 +1,8 @@
 from typing import Generator
 
-
 # from app.core import security
 from app.db.base import SessionLocal
+
 
 def get_db() -> Generator:
     try:

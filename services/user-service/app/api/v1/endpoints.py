@@ -1,13 +1,14 @@
 """API endpoints for User Service v1"""
-from fastapi import APIRouter, Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
 from typing import List
-import httpx
 
-from ...db.session import get_db
-from ...models.schemas import ProfileUpdate, ProfileResponse, TeamCreate, TeamResponse
-from ...services.user_service import UserService
+import httpx
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from sqlalchemy.orm import Session
+
 from ...core.config import settings
+from ...db.session import get_db
+from ...models.schemas import ProfileResponse, ProfileUpdate, TeamCreate, TeamResponse
+from ...services.user_service import UserService
 
 router = APIRouter()
 

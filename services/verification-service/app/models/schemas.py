@@ -35,7 +35,7 @@ class VerificationResponse(BaseModel):
     warnings: Optional[List[str]]
     verification_time_ms: int
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -48,7 +48,7 @@ class VerificationHistory(BaseModel):
     is_tampered: bool
     confidence_score: float
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

@@ -8,12 +8,12 @@ Services should use this module for all email operations.
 import os
 import secrets
 import smtplib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -52,7 +52,7 @@ class EmailConfig:
     email_from_name: str = "Support - Encypher"
     frontend_url: str = "http://localhost:3000"
     dashboard_url: str = ""
-    
+
     @classmethod
     def from_env(cls) -> "EmailConfig":
         """Create config from environment variables."""
@@ -92,7 +92,7 @@ def render_template(template_name: str, **context) -> str:
         "brand_name": "EncypherAI",
     }
     template_context = {**base_context, **context}
-    
+
     env = _get_jinja_env()
     template = env.get_template(template_name)
     return template.render(**template_context)
@@ -125,14 +125,14 @@ def send_email(
         msg["Subject"] = subject
         msg["From"] = f"{config.email_from_name} <{config.email_from}>"
         msg["To"] = to_email
-        
+
         # Plain text fallback
         if plain_content:
             msg.attach(MIMEText(plain_content, "plain"))
-        
+
         # HTML content
         msg.attach(MIMEText(html_content, "html"))
-        
+
         # Connect and send
         with smtplib.SMTP(config.smtp_host, config.smtp_port) as server:
             if config.smtp_tls:
@@ -140,11 +140,11 @@ def send_email(
             if config.smtp_user and config.smtp_pass:
                 server.login(config.smtp_user, config.smtp_pass)
             server.sendmail(config.email_from, [to_email], msg.as_string())
-        
+
         if logger:
             logger.info("email_sent", to=to_email, subject=subject)
         return True
-        
+
     except Exception as e:
         if logger:
             logger.error("email_send_failed", to=to_email, subject=subject, error=str(e))

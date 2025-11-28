@@ -96,14 +96,14 @@ async def get_usage_stats(
     """
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     stats = AnalyticsService.get_usage_stats(
         db=db,
         user_id=current_user["id"],
         start_date=start_date,
         end_date=end_date,
     )
-    
+
     return UsageStats(**stats)
 
 
@@ -120,14 +120,14 @@ async def get_service_metrics(
     """
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     metrics = AnalyticsService.get_service_metrics(
         db=db,
         user_id=current_user["id"],
         start_date=start_date,
         end_date=end_date,
     )
-    
+
     return [ServiceMetrics(**m) for m in metrics]
 
 
@@ -148,7 +148,7 @@ async def get_time_series(
     """
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     time_series = AnalyticsService.get_time_series(
         db=db,
         user_id=current_user["id"],
@@ -157,7 +157,7 @@ async def get_time_series(
         end_date=end_date,
         interval=interval,
     )
-    
+
     return [TimeSeriesData(**ts) for ts in time_series]
 
 
@@ -174,7 +174,7 @@ async def get_analytics_report(
     """
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     # Get usage stats
     usage_stats = AnalyticsService.get_usage_stats(
         db=db,
@@ -182,7 +182,7 @@ async def get_analytics_report(
         start_date=start_date,
         end_date=end_date,
     )
-    
+
     # Get service metrics
     service_metrics = AnalyticsService.get_service_metrics(
         db=db,
@@ -190,7 +190,7 @@ async def get_analytics_report(
         start_date=start_date,
         end_date=end_date,
     )
-    
+
     # Get time series for API calls
     time_series = AnalyticsService.get_time_series(
         db=db,
@@ -200,7 +200,7 @@ async def get_analytics_report(
         end_date=end_date,
         interval="day",
     )
-    
+
     return AnalyticsReport(
         user_id=current_user["id"],
         period_start=start_date,

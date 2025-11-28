@@ -26,7 +26,7 @@ class CacheService:
         # Delete value
         await cache.delete("user", user_id="123")
     """
-    
+
     def __init__(self, redis_url: str, namespace: str = "encypher"):
         """
         Initialize cache service.
@@ -38,9 +38,9 @@ class CacheService:
         # Parse Redis URL
         if "://" in redis_url:
             redis_url = redis_url.split("://")[1]
-        
+
         host, port = redis_url.split(":")
-        
+
         self.cache = Cache(
             Cache.REDIS,
             endpoint=host,
@@ -48,10 +48,10 @@ class CacheService:
             serializer=JsonSerializer(),
             namespace=namespace
         )
-        
+
         self.namespace = namespace
         logger.info("cache_service_initialized", redis_host=host, redis_port=port)
-    
+
     def _make_key(self, prefix: str, *args, **kwargs) -> str:
         """
         Generate cache key from prefix and arguments.
@@ -68,17 +68,17 @@ class CacheService:
         key_parts = [prefix]
         key_parts.extend([str(arg) for arg in args])
         key_parts.extend([f"{k}={v}" for k, v in sorted(kwargs.items())])
-        
+
         # Create key string
         key_string = ":".join(key_parts)
-        
-        # Hash if too long
+
+        # Hash if too long (using SHA256 for consistency, not security)
         if len(key_string) > 200:
-            key_hash = hashlib.md5(key_string.encode()).hexdigest()
+            key_hash = hashlib.sha256(key_string.encode()).hexdigest()[:32]
             return f"{prefix}:{key_hash}"
-        
+
         return key_string
-    
+
     async def get(self, prefix: str, *args, **kwargs) -> Optional[Any]:
         """
         Get value from cache.
@@ -92,20 +92,20 @@ class CacheService:
             Cached value or None if not found
         """
         key = self._make_key(prefix, *args, **kwargs)
-        
+
         try:
             value = await self.cache.get(key)
-            
+
             if value is not None:
                 logger.debug("cache_hit", key=key)
             else:
                 logger.debug("cache_miss", key=key)
-            
+
             return value
         except Exception as e:
             logger.error("cache_get_error", key=key, error=str(e))
             return None
-    
+
     async def set(
         self,
         prefix: str,
@@ -128,7 +128,7 @@ class CacheService:
             True if successful, False otherwise
         """
         key = self._make_key(prefix, *args, **kwargs)
-        
+
         try:
             await self.cache.set(key, value, ttl=ttl)
             logger.debug("cache_set", key=key, ttl=ttl)
@@ -136,7 +136,7 @@ class CacheService:
         except Exception as e:
             logger.error("cache_set_error", key=key, error=str(e))
             return False
-    
+
     async def delete(self, prefix: str, *args, **kwargs) -> bool:
         """
         Delete value from cache.
@@ -150,7 +150,7 @@ class CacheService:
             True if successful, False otherwise
         """
         key = self._make_key(prefix, *args, **kwargs)
-        
+
         try:
             await self.cache.delete(key)
             logger.debug("cache_delete", key=key)
@@ -158,7 +158,7 @@ class CacheService:
         except Exception as e:
             logger.error("cache_delete_error", key=key, error=str(e))
             return False
-    
+
     async def clear_pattern(self, pattern: str) -> int:
         """
         Clear all keys matching a pattern.
@@ -177,7 +177,7 @@ class CacheService:
         except Exception as e:
             logger.error("cache_clear_pattern_error", pattern=pattern, error=str(e))
             return 0
-    
+
     async def exists(self, prefix: str, *args, **kwargs) -> bool:
         """
         Check if key exists in cache.
@@ -191,7 +191,7 @@ class CacheService:
             True if key exists, False otherwise
         """
         key = self._make_key(prefix, *args, **kwargs)
-        
+
         try:
             value = await self.cache.get(key)
             return value is not None
@@ -220,25 +220,25 @@ def cached(prefix: str, ttl: int = 300):
             # Get cache service from first argument (usually self)
             if args and hasattr(args[0], 'cache'):
                 cache = args[0].cache
-                
+
                 # Generate cache key from function arguments
                 cache_key_args = args[1:] if len(args) > 1 else []
-                
+
                 # Try to get from cache
                 cached_value = await cache.get(prefix, *cache_key_args, **kwargs)
                 if cached_value is not None:
                     return cached_value
-                
+
                 # Call function
                 result = await func(*args, **kwargs)
-                
+
                 # Cache result
                 await cache.set(prefix, result, ttl=ttl, *cache_key_args, **kwargs)
-                
+
                 return result
             else:
                 # No cache available, just call function
                 return await func(*args, **kwargs)
-        
+
         return wrapper
     return decorator

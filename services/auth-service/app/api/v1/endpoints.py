@@ -17,7 +17,6 @@ from ...models.schemas import (
     ResendVerificationRequest,
 )
 from ...services.auth_service import AuthService
-from ...core.config import settings
 from ...deps.rate_limit import rate_limiter
 
 router = APIRouter()
@@ -40,7 +39,7 @@ async def signup(
     """
     try:
         user = AuthService.create_user(db, user_data)
-        
+
         # Send verification email for new users
         if not user.email_verified:
             token = AuthService.create_verification_token(db, user)
@@ -89,24 +88,24 @@ async def login(
     - **password**: User's password
     """
     user = AuthService.authenticate_user(db, credentials)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Check if email is verified
     if not user.email_verified:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Email not verified. Please check your inbox for the verification email.",
         )
-    
+
     # Create tokens
     access_token, refresh_token = AuthService.create_tokens(user)
-    
+
     # Store refresh token
     AuthService.store_refresh_token(
         db,
@@ -115,7 +114,7 @@ async def login(
         user_agent=user_agent,
         ip_address=x_forwarded_for,
     )
-    
+
     return {
         "success": True,
         "data": {
@@ -143,13 +142,13 @@ async def verify_email(
     - **token**: Verification token from email
     """
     user = AuthService.verify_email(db, request.token)
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired verification token",
         )
-    
+
     return {
         "success": True,
         "data": {
@@ -173,7 +172,7 @@ async def resend_verification(
     """
     # Always return success to prevent email enumeration
     AuthService.resend_verification_email(db, request.email)
-    
+
     return {
         "success": True,
         "data": {
@@ -198,16 +197,16 @@ async def refresh_token(
     - **refresh_token**: Valid refresh token
     """
     result = AuthService.refresh_access_token(db, request.refresh_token)
-    
+
     if not result:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired refresh token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     new_access_token, user = result
-    
+
     return {
         "success": True,
         "data": {
@@ -392,26 +391,26 @@ async def verify_token(
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Verify token
     payload = AuthService.verify_access_token(token)
-    
+
     if not payload:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Get user
     user = AuthService.get_user_by_id(db, payload["sub"])
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
-    
+
     return {"success": True, "data": UserResponse.model_validate(user).model_dump(), "error": None}
 
 

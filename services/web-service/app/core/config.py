@@ -7,11 +7,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     PROJECT_NAME: str = "EncypherAI Web Service"
     API_V1_STR: str = "/api/v1"
-    
+
     # Security
     SECRET_KEY: str = "CHANGE_THIS_TO_A_SECRET_KEY"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
-    
+
     # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
         "http://localhost:3000",  # Default Next.js dev server
@@ -57,15 +57,15 @@ class Settings(BaseSettings):
     EMAILS_ENABLED: bool = False
     EMAIL_FROM_EMAIL: str = "noreply@encypherai.com"
     EMAIL_FROM_NAME: str = "EncypherAI"
-    
+
     # Web Analytics
     ANALYTICS_ENABLED: bool = True
     ANALYTICS_DB_URI: Optional[PostgresDsn] = None
-    
+
     # Environment
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
-    
+
     model_config = SettingsConfigDict(case_sensitive=True, env_file=".env")
 
 

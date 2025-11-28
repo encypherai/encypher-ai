@@ -24,7 +24,7 @@ def sign_document_batch(self, documents: list, metadata: dict):
         task_id=self.request.id,
         document_count=len(documents)
     )
-    
+
     results = []
     for i, doc in enumerate(documents):
         try:
@@ -33,7 +33,7 @@ def sign_document_batch(self, documents: list, metadata: dict):
                 state='PROGRESS',
                 meta={'current': i + 1, 'total': len(documents)}
             )
-            
+
             # Sign document (placeholder - implement actual signing)
             result = {
                 "document_id": f"doc_{i}",
@@ -41,7 +41,7 @@ def sign_document_batch(self, documents: list, metadata: dict):
                 "content": doc
             }
             results.append(result)
-            
+
         except Exception as e:
             logger.error(
                 "document_signing_failed",
@@ -54,14 +54,14 @@ def sign_document_batch(self, documents: list, metadata: dict):
                 "status": "failed",
                 "error": str(e)
             })
-    
+
     logger.info(
         "batch_signing_completed",
         task_id=self.request.id,
         total=len(documents),
         successful=sum(1 for r in results if r["status"] == "signed")
     )
-    
+
     return results
 
 
@@ -84,7 +84,7 @@ def sign_large_document(self, document_id: str, content: str, metadata: dict):
         document_id=document_id,
         content_length=len(content)
     )
-    
+
     try:
         # Sign document (placeholder - implement actual signing)
         result = {
@@ -93,15 +93,15 @@ def sign_large_document(self, document_id: str, content: str, metadata: dict):
             "signature": "placeholder_signature",
             "metadata": metadata
         }
-        
+
         logger.info(
             "large_document_signing_completed",
             task_id=self.request.id,
             document_id=document_id
         )
-        
+
         return result
-        
+
     except Exception as e:
         logger.error(
             "large_document_signing_failed",
@@ -120,18 +120,18 @@ def cleanup_old_signatures():
     This should be scheduled to run daily.
     """
     logger.info("signature_cleanup_started")
-    
+
     try:
         # Implement cleanup logic
         deleted_count = 0
-        
+
         logger.info(
             "signature_cleanup_completed",
             deleted_count=deleted_count
         )
-        
+
         return {"deleted": deleted_count}
-        
+
     except Exception as e:
         logger.error("signature_cleanup_failed", error=str(e))
         raise

@@ -36,13 +36,13 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                 f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
                 headers={"Authorization": authorization}
             )
-            
+
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
                 )
-            
+
             return response.json()
     except httpx.RequestError:
         raise HTTPException(
@@ -70,36 +70,36 @@ async def sign_document(
     """
     # Verify API key
     key_info = await EncodingService.verify_api_key(document_data.api_key)
-    
+
     if not key_info:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid API key",
         )
-    
+
     # Check permissions
     if "sign" not in key_info.get("permissions", []):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="API key does not have 'sign' permission",
         )
-    
+
     user_id = key_info["user_id"]
-    
+
     # Check document size
     if len(document_data.content) > settings.MAX_DOCUMENT_SIZE:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"Document size exceeds maximum of {settings.MAX_DOCUMENT_SIZE} bytes",
         )
-    
+
     # Check format
     if document_data.format not in settings.supported_formats_list:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Unsupported format. Supported: {settings.SUPPORTED_FORMATS}",
         )
-    
+
     try:
         # Sign document
         db_document, processing_time = EncodingService.sign_document(
@@ -110,7 +110,7 @@ async def sign_document(
             ip_address=x_forwarded_for,
             user_agent=user_agent,
         )
-        
+
         return SignedDocumentResponse(
             document_id=db_document.document_id,
             encoded_content=db_document.encoded_content,
@@ -119,7 +119,7 @@ async def sign_document(
             manifest=db_document.manifest,
             created_at=db_document.created_at,
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -146,14 +146,14 @@ async def embed_metadata(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail=f"Document size exceeds maximum of {settings.MAX_DOCUMENT_SIZE} bytes",
         )
-    
+
     try:
         db_document = EncodingService.embed_metadata(
             db=db,
             user_id=current_user["id"],
             document_data=document_data,
         )
-        
+
         return SignedDocumentResponse(
             document_id=db_document.document_id,
             encoded_content=db_document.encoded_content,
@@ -162,7 +162,7 @@ async def embed_metadata(
             manifest=db_document.manifest,
             created_at=db_document.created_at,
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -197,13 +197,13 @@ async def get_document(
     - **document_id**: Document ID
     """
     document = EncodingService.get_document(db, document_id, current_user["id"])
-    
+
     if not document:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found",
         )
-    
+
     return document
 
 
@@ -219,13 +219,13 @@ async def get_manifest(
     - **document_id**: Document ID
     """
     document = EncodingService.get_document(db, document_id, current_user["id"])
-    
+
     if not document:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Document not found",
         )
-    
+
     return ManifestResponse(**document.manifest)
 
 

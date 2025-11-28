@@ -1,5 +1,7 @@
 from fastapi.testclient import TestClient
+
 from app.core.config import settings
+
 
 def test_create_demo_request(client: TestClient):
     data = {

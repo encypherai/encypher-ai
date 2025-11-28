@@ -81,11 +81,11 @@ def setup_metrics(app):
         inprogress_name="http_requests_inprogress",
         inprogress_labels=True,
     )
-    
+
     # Instrument the app
     instrumentator.instrument(app)
-    
+
     # Expose metrics endpoint
     instrumentator.expose(app, endpoint="/metrics", include_in_schema=False)
-    
+
     return instrumentator

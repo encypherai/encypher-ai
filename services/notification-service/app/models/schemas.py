@@ -1,7 +1,8 @@
 """Pydantic schemas for Notification Service"""
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, Optional
+
+from pydantic import BaseModel, Field
 
 
 class NotificationCreate(BaseModel):
@@ -23,7 +24,7 @@ class NotificationResponse(BaseModel):
     subject: Optional[str]
     sent_at: Optional[datetime]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 

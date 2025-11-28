@@ -1,8 +1,10 @@
 from datetime import datetime
-from typing import Optional
-from pydantic import BaseModel, EmailStr, Field
 from enum import Enum
+from typing import Optional
 from uuid import UUID
+
+from pydantic import BaseModel, EmailStr, Field
+
 
 class DemoRequestStatus(str, Enum):
     NEW = "new"

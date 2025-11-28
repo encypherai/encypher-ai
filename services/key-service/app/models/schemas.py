@@ -23,7 +23,7 @@ class ApiKeyResponse(BaseModel):
     fingerprint: str
     permissions: List[str]
     created_at: datetime
-    
+
     class Config:
         from_attributes = True
 
@@ -42,7 +42,7 @@ class ApiKeyInfo(BaseModel):
     created_at: datetime
     expires_at: Optional[datetime]
     description: Optional[str]
-    
+
     class Config:
         from_attributes = True
 

@@ -1,13 +1,14 @@
 """API endpoints for Notification Service v1"""
-from fastapi import APIRouter, Depends, HTTPException, status, Header
-from sqlalchemy.orm import Session
 from typing import List
-import httpx
 
+import httpx
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from sqlalchemy.orm import Session
+
+from ...core.config import settings
 from ...db.session import get_db
 from ...models.schemas import NotificationCreate, NotificationResponse
 from ...services.notification_service import NotificationService
-from ...core.config import settings
 
 router = APIRouter()
 

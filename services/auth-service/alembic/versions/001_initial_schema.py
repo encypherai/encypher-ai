@@ -51,7 +51,7 @@ def index_exists(conn, index_name: str) -> bool:
 
 def upgrade() -> None:
     conn = op.get_bind()
-    
+
     # =========================================
     # USERS TABLE
     # =========================================
@@ -72,10 +72,10 @@ def upgrade() -> None:
             sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
             sa.Column('updated_at', sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
         )
-    
+
     if not index_exists(conn, 'ix_users_email'):
         op.create_index('ix_users_email', 'users', ['email'], unique=True)
-    
+
     # =========================================
     # REFRESH TOKENS TABLE
     # =========================================
@@ -105,12 +105,12 @@ def upgrade() -> None:
         for col_name, col_type, nullable in missing_columns:
             if not column_exists(conn, 'refresh_tokens', col_name):
                 op.add_column('refresh_tokens', sa.Column(col_name, col_type, nullable=nullable))
-    
+
     if not index_exists(conn, 'ix_refresh_tokens_user_id'):
         op.create_index('ix_refresh_tokens_user_id', 'refresh_tokens', ['user_id'])
     if not index_exists(conn, 'ix_refresh_tokens_token'):
         op.create_index('ix_refresh_tokens_token', 'refresh_tokens', ['token'], unique=True)
-    
+
     # =========================================
     # PASSWORD RESET TOKENS TABLE
     # =========================================
@@ -125,12 +125,12 @@ def upgrade() -> None:
             sa.Column('used', sa.Boolean(), default=False, nullable=False),
             sa.Column('used_at', sa.DateTime(timezone=True), nullable=True),
         )
-    
+
     if not index_exists(conn, 'ix_password_reset_tokens_user_id'):
         op.create_index('ix_password_reset_tokens_user_id', 'password_reset_tokens', ['user_id'])
     if not index_exists(conn, 'ix_password_reset_tokens_token'):
         op.create_index('ix_password_reset_tokens_token', 'password_reset_tokens', ['token'], unique=True)
-    
+
     # =========================================
     # EMAIL VERIFICATION TOKENS TABLE
     # =========================================
@@ -145,7 +145,7 @@ def upgrade() -> None:
             sa.Column('used', sa.Boolean(), default=False, nullable=False),
             sa.Column('used_at', sa.DateTime(timezone=True), nullable=True),
         )
-    
+
     if not index_exists(conn, 'ix_email_verification_tokens_user_id'):
         op.create_index('ix_email_verification_tokens_user_id', 'email_verification_tokens', ['user_id'])
     if not index_exists(conn, 'ix_email_verification_tokens_token'):

@@ -93,13 +93,13 @@ async def get_subscription(
 ):
     """Get current subscription"""
     subscription = BillingService.get_user_subscription(db, current_user["id"])
-    
+
     if not subscription:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="No active subscription found",
         )
-    
+
     return subscription
 
 
@@ -111,13 +111,13 @@ async def cancel_subscription(
 ):
     """Cancel a subscription"""
     success = BillingService.cancel_subscription(db, subscription_id, current_user["id"])
-    
+
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Subscription not found",
         )
-    
+
     return {"message": "Subscription will be canceled at period end"}
 
 
@@ -168,7 +168,7 @@ async def create_checkout_session(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Cannot checkout for {request.tier.value} tier. Use contact sales for Enterprise."
         )
-    
+
     # Get Stripe price ID
     price_id = get_stripe_price_id(request.tier.value, request.billing_cycle)
     if not price_id:
@@ -176,7 +176,7 @@ async def create_checkout_session(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Price not configured for {request.tier.value} {request.billing_cycle}"
         )
-    
+
     try:
         # Get or create Stripe customer
         customer = await StripeService.get_or_create_customer(
@@ -184,12 +184,12 @@ async def create_checkout_session(
             name=current_user.get("name"),
             organization_id=current_user.get("organization_id"),
         )
-        
+
         # Default URLs
         base_url = settings.API_GATEWAY_URL.replace("/api", "")
         success_url = request.success_url or f"{base_url}/billing?success=true"
         cancel_url = request.cancel_url or f"{base_url}/billing?canceled=true"
-        
+
         # Create checkout session
         session = await StripeService.create_checkout_session(
             customer_id=customer.id,
@@ -198,12 +198,12 @@ async def create_checkout_session(
             cancel_url=cancel_url,
             organization_id=current_user.get("organization_id"),
         )
-        
+
         return CheckoutResponse(
             checkout_url=session.url,
             session_id=session.id,
         )
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -232,19 +232,19 @@ async def get_billing_portal(
             name=current_user.get("name"),
             organization_id=current_user.get("organization_id"),
         )
-        
+
         # Default return URL
         base_url = settings.API_GATEWAY_URL.replace("/api", "")
         portal_return_url = return_url or f"{base_url}/billing"
-        
+
         # Create portal session
         session = await StripeService.create_billing_portal_session(
             customer_id=customer.id,
             return_url=portal_return_url,
         )
-        
+
         return PortalResponse(portal_url=session.url)
-        
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -265,23 +265,23 @@ async def upgrade_subscription(
     For downgrades or free tier, processes immediately.
     """
     target_tier = request.target_tier
-    
+
     # If upgrading to a paid tier, redirect to checkout
     if target_tier in [TierName.PROFESSIONAL, TierName.BUSINESS]:
         price_id = get_stripe_price_id(target_tier.value, request.billing_cycle)
-        
+
         if not price_id:
             return UpgradeResponse(
                 success=False,
                 message=f"Price not configured for {target_tier.value}. Please contact support.",
             )
-        
+
         try:
             customer = await StripeService.get_or_create_customer(
                 email=current_user.get("email"),
                 organization_id=current_user.get("organization_id"),
             )
-            
+
             base_url = settings.API_GATEWAY_URL.replace("/api", "")
             session = await StripeService.create_checkout_session(
                 customer_id=customer.id,
@@ -290,27 +290,27 @@ async def upgrade_subscription(
                 cancel_url=f"{base_url}/billing?upgrade=canceled",
                 organization_id=current_user.get("organization_id"),
             )
-            
+
             return UpgradeResponse(
                 success=True,
                 checkout_url=session.url,
                 message=f"Redirecting to checkout for {target_tier.value} plan",
                 new_tier=target_tier.value,
             )
-            
+
         except Exception as e:
             return UpgradeResponse(
                 success=False,
                 message=f"Failed to create checkout: {str(e)}",
             )
-    
+
     # For Enterprise, return contact sales message
     elif target_tier == TierName.ENTERPRISE:
         return UpgradeResponse(
             success=False,
             message="Enterprise plans require custom pricing. Please contact sales@encypherai.com",
         )
-    
+
     # For Starter (downgrade), process immediately
     elif target_tier == TierName.STARTER:
         # TODO: Cancel Stripe subscription and downgrade
@@ -319,7 +319,7 @@ async def upgrade_subscription(
             message="Your subscription will be downgraded to Starter at the end of your billing period.",
             new_tier="starter",
         )
-    
+
     return UpgradeResponse(
         success=False,
         message="Invalid tier specified",
@@ -346,18 +346,18 @@ async def get_usage_stats(
     """
     from datetime import datetime
     from ...services.billing_service import PRICING_TIERS
-    
+
     # Get user's organization/tier info
     # For now, default to starter tier if no subscription
     user_id = current_user.get("id")
     org_id = current_user.get("organization_id", user_id)
-    
+
     # Get subscription to determine tier
     subscription = BillingService.get_user_subscription(db, user_id)
     tier = subscription.plan_id if subscription else "starter"
     tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["starter"])
     limits = tier_info["limits"]
-    
+
     # Calculate period dates (monthly billing cycle)
     now = datetime.utcnow()
     period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -365,7 +365,7 @@ async def get_usage_stats(
         period_end = period_start.replace(year=now.year + 1, month=1)
     else:
         period_end = period_start.replace(month=now.month + 1)
-    
+
     # TODO: Get actual usage from analytics service
     # For now, return placeholder data
     usage_data = {
@@ -374,12 +374,12 @@ async def get_usage_stats(
         "api_calls": {"used": 0, "limit": -1},  # Unlimited
         "verifications": {"used": 0, "limit": -1},  # Unlimited
     }
-    
+
     metrics = {}
     for metric_name, data in usage_data.items():
         limit = data["limit"]
         used = data["used"]
-        
+
         if limit == -1:
             remaining = "unlimited"
             percentage = 0.0
@@ -389,7 +389,7 @@ async def get_usage_stats(
         else:
             remaining = max(0, limit - used)
             percentage = (used / limit) * 100 if limit > 0 else 0.0
-        
+
         metrics[metric_name] = {
             "name": metric_name.replace("_", " ").title(),
             "limit": limit if limit >= 0 else "unlimited",
@@ -398,7 +398,7 @@ async def get_usage_stats(
             "percentage_used": round(percentage, 2),
             "available": limit == -1 or used < limit,
         }
-    
+
     return {
         "organization_id": org_id,
         "tier": tier,
@@ -428,16 +428,16 @@ async def get_coalition_earnings(
     - Pending payouts
     """
     from ...services.billing_service import PRICING_TIERS
-    
+
     user_id = current_user.get("id")
     current_user.get("organization_id", user_id)
-    
+
     # Get subscription to determine tier and rev share
     subscription = BillingService.get_user_subscription(db, user_id)
     tier = subscription.plan_id if subscription else "starter"
     tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["starter"])
     rev_share = tier_info["coalition_rev_share"]
-    
+
     # TODO: Get actual coalition data from coalition-service
     # For now, return placeholder data
     return {
@@ -468,12 +468,12 @@ async def get_available_plans():
     """
     # Import pricing info
     from ...services.billing_service import PRICING_TIERS
-    
+
     plans = []
     for tier_id, tier in PRICING_TIERS.items():
         if tier_id == "strategic_partner":
             continue  # Don't show invite-only tier
-        
+
         plans.append(PlanInfo(
             id=tier_id,
             name=tier["name"],
@@ -484,5 +484,5 @@ async def get_available_plans():
             limits=tier["limits"],
             coalition_rev_share=tier["coalition_rev_share"],
         ))
-    
+
     return plans

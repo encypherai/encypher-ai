@@ -1,5 +1,6 @@
 from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
@@ -20,11 +21,11 @@ def create_demo_request(
     """
     # Create the demo request
     demo_request = crud.demo_request.create(db, obj_in=demo_request_in)
-    
+
     # Send email notifications
     background_tasks.add_task(email.send_new_lead_notification, demo_request)
     background_tasks.add_task(email.send_demo_confirmation, demo_request.email, demo_request.name)
-    
+
     return demo_request
 
 @router.get("/{request_id}", response_model=schemas.DemoRequest)
@@ -77,6 +78,6 @@ def update_demo_request(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Demo request not found",
         )
-    
+
     demo_request = crud.demo_request.update(db, db_obj=demo_request, obj_in=demo_request_in)
     return demo_request

@@ -1,8 +1,9 @@
-import httpx
 import uuid
+from typing import Any, Dict, Optional
+
+import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
 
 router = APIRouter()
 
@@ -37,13 +38,13 @@ async def encode_text(request: EncodeRequest):
     Proxy to Enterprise API encode-with-embeddings endpoint.
     """
     doc_id = f"doc_{uuid.uuid4().hex}"
-    
+
     # Combine custom_metadata and ai_info into metadata
     # This ensures both legacy KV pairs and C2PA info are preserved if sent
     metadata_payload = (request.custom_metadata or {}).copy()
     if request.ai_info:
         metadata_payload.update(request.ai_info)
-    
+
     # Map to EncodeWithEmbeddingsRequest
     payload = {
         "document_id": doc_id,
@@ -57,7 +58,7 @@ async def encode_text(request: EncodeRequest):
             "include_text": True
         }
     }
-    
+
     async with httpx.AsyncClient() as client:
         try:
             # Use longer timeout as generating keys/embeddings might take time
@@ -67,7 +68,7 @@ async def encode_text(request: EncodeRequest):
                 headers={"Authorization": f"Bearer {DEMO_API_KEY}"},
                 timeout=30.0
             )
-            
+
             if response.status_code != 201:
                 error_detail = response.text
                 try:
@@ -77,18 +78,18 @@ async def encode_text(request: EncodeRequest):
                 except Exception:
                     pass
                 raise HTTPException(status_code=response.status_code, detail=f"Enterprise API Error: {error_detail}")
-            
+
             data = response.json()
             encoded = data.get("embedded_content")
             metadata = data.get("metadata")
-            
+
             if not encoded:
                 # Fallback if API returns empty content but success
                 # This might happen if 'plain' format isn't fully supported for embedding injection in the version
                 encoded = request.original_text
-                
+
             return {"encoded_text": encoded, "metadata": metadata}
-            
+
         except httpx.ConnectError:
             raise HTTPException(status_code=503, detail="Enterprise API not available")
         except Exception as e:
@@ -100,7 +101,7 @@ async def decode_text(request: DecodeRequest):
     Proxy to Enterprise API verify endpoint.
     """
     payload = {"text": request.encoded_text}
-    
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
@@ -110,35 +111,35 @@ async def decode_text(request: DecodeRequest):
                 headers={"Authorization": f"Bearer {DEMO_API_KEY}"},
                 timeout=30.0
             )
-            
+
             if response.status_code != 200:
                  # Try to handle specific error codes
                 raise HTTPException(status_code=response.status_code, detail=response.text)
 
             data = response.json()
-            
+
             # VerifyResponse: { success: bool, data: Verdict, error: ... }
             success = data.get("success", False)
             verdict = data.get("data", {})
-            
+
             # Verdict object uses 'valid' field
             is_valid = verdict.get("valid", False) if verdict else False
-            
+
             verification_status = "Success" if (success and is_valid) else "Failure"
-            
+
             # Extract metadata if available
             details = verdict.get("details", {})
             manifest = details.get("manifest", {})
             metadata = {
                 "manifest": manifest
             }
-            
+
             return {
                 "metadata": metadata,
                 "verification_status": verification_status,
                 "raw_hidden_data": verdict
             }
-            
+
         except httpx.ConnectError:
              raise HTTPException(status_code=503, detail="Enterprise API not available")
         except Exception as e:

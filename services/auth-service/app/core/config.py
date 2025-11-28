@@ -12,7 +12,7 @@ from typing import List
 
 class Settings(BaseSettings):
     """Application settings"""
-    
+
     # ===========================================
     # SERVICE CONFIGURATION (service-specific)
     # ===========================================
@@ -21,19 +21,19 @@ class Settings(BaseSettings):
     SERVICE_HOST: str = "0.0.0.0"
     LOG_LEVEL: str = "INFO"
     ENVIRONMENT: str = "development"
-    
+
     # ===========================================
     # SHARED: Database (from shared vars)
     # ===========================================
     DATABASE_URL: str
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
-    
+
     # ===========================================
     # SHARED: Redis (from shared vars)
     # ===========================================
     REDIS_URL: str = "redis://localhost:6379"
-    
+
     # ===========================================
     # SHARED: JWT Configuration (from shared vars)
     # ===========================================
@@ -41,12 +41,12 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
-    
+
     # ===========================================
     # SHARED: CORS (from shared vars)
     # ===========================================
     ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
-    
+
     # ===========================================
     # SHARED: Frontend URLs (from shared vars)
     # Used for email links, redirects, etc.
@@ -54,7 +54,7 @@ class Settings(BaseSettings):
     MARKETING_SITE_URL: str = "http://localhost:3000"
     DASHBOARD_URL: str = "http://localhost:3001"
     API_URL: str = "http://localhost:8000"
-    
+
     # ===========================================
     # SERVICE-SPECIFIC: OAuth Providers
     # ===========================================
@@ -62,7 +62,7 @@ class Settings(BaseSettings):
     GOOGLE_CLIENT_SECRET: str = ""
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
-    
+
     # ===========================================
     # SERVICE-SPECIFIC: Email Configuration
     # ===========================================
@@ -73,30 +73,30 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
     EMAIL_FROM: str = "noreply@encypherai.com"
     EMAIL_FROM_NAME: str = "EncypherAI"
-    
+
     # ===========================================
     # SERVICE-SPECIFIC: Token Expiration
     # ===========================================
     VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
-    
+
     # ===========================================
     # INTERNAL SERVICE URLS (for service-to-service)
     # ===========================================
     COALITION_SERVICE_URL: str = "http://localhost:8009"
-    
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=True,
         extra="allow",
     )
-    
+
     @property
     def allowed_origins_list(self) -> List[str]:
         """Parse ALLOWED_ORIGINS into a list"""
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
-    
+
     @property
     def FRONTEND_URL(self) -> str:
         """Alias for MARKETING_SITE_URL for backward compatibility"""

@@ -1,0 +1,35 @@
+# Ruff configuration for EncypherAI Commercial
+# https://docs.astral.sh/ruff/configuration/
+
+line-length = 100
+
+[lint]
+# Enable these rule categories
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "S",   # flake8-bandit (security)
+    "B",   # flake8-bugbear
+    "I",   # isort
+]
+
+# Ignore these specific rules
+ignore = [
+    "S101",  # assert - used in tests
+    "S104",  # hardcoded-bind-all-interfaces - intentional for Docker
+    "S608",  # hardcoded-sql-expression - false positives in Alembic migrations
+    "E501",  # line-too-long - handled by formatter
+    "W293",  # blank-line-with-whitespace - auto-fixed
+    "W291",  # trailing-whitespace - auto-fixed
+    "B008",  # function-call-in-default-argument - FastAPI Depends() pattern
+]
+
+# Per-file ignores
+[lint.per-file-ignores]
+"**/alembic/**/*.py" = ["S608"]  # SQL in migrations is intentional
+"**/tests/**/*.py" = ["S101", "S106"]  # asserts and test passwords OK
+"**/scripts/**/*.py" = ["S106", "S603", "S110"]  # scripts may use subprocess
+
+[lint.isort]
+known-first-party = ["app", "encypher"]

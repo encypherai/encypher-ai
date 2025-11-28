@@ -35,15 +35,15 @@ def check_tampering(original_content: str, current_content: str) -> Tuple[bool, 
     """
     if original_content == current_content:
         return False, 1.0
-    
+
     # Simple similarity check
     original_hash = hashlib.sha256(original_content.encode()).hexdigest()
     current_hash = hashlib.sha256(current_content.encode()).hexdigest()
-    
+
     if original_hash == current_hash:
         return False, 1.0
-    
+
     # Calculate similarity (simplified)
     similarity = len(set(original_content) & set(current_content)) / max(len(set(original_content)), len(set(current_content)))
-    
+
     return True, similarity

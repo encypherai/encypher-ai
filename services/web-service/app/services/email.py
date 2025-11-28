@@ -16,7 +16,7 @@ def send_email(
     environment: Dict[str, Any] = {},
 ) -> None:
     assert settings.EMAILS_ENABLED, "no provided configuration for email variables"
-    
+
     message = MIMEMultipart("alternative")
     message["Subject"] = subject_template
     message["From"] = f"{settings.EMAIL_FROM_NAME} <{settings.EMAIL_FROM_EMAIL}>"
@@ -34,7 +34,7 @@ def send_email(
         smtp_options = {"host": settings.SMTP_HOST, "port": settings.SMTP_PORT}
         if settings.SMTP_TLS:
             smtp_options["tls"] = True
-        
+
         if settings.SMTP_PORT == 465:
              with smtplib.SMTP_SSL(settings.SMTP_HOST, settings.SMTP_PORT) as server:
                 if settings.SMTP_USER:
@@ -47,7 +47,7 @@ def send_email(
                 if settings.SMTP_USER:
                     server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
                 server.sendmessage(message)
-        
+
         logger.info(f"Sent email to {email_to}")
     except Exception as e:
         logger.error(f"Failed to send email to {email_to}: {e}")
@@ -61,7 +61,7 @@ def send_new_lead_notification(demo_request: Any) -> None:
         return
 
     subject = f"New Demo Request: {demo_request.organization}"
-    
+
     html_content = f"""
     <html>
         <body>
@@ -82,10 +82,10 @@ def send_new_lead_notification(demo_request: Any) -> None:
         </body>
     </html>
     """
-    
+
     # In a real scenario, we'd have a sales email in settings
-    sales_email = "sales@encypherai.com" 
-    
+    sales_email = "sales@encypherai.com"
+
     send_email(
         email_to=sales_email,
         subject_template=subject,
@@ -100,7 +100,7 @@ def send_demo_confirmation(email_to: str, name: str) -> None:
         return
 
     subject = "We've received your demo request - EncypherAI"
-    
+
     html_content = f"""
     <html>
         <body>
@@ -114,7 +114,7 @@ def send_demo_confirmation(email_to: str, name: str) -> None:
         </body>
     </html>
     """
-    
+
     send_email(
         email_to=email_to,
         subject_template=subject,

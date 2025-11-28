@@ -20,7 +20,7 @@ from ..core.config import settings
 
 class EncodingService:
     """Document encoding and signing service"""
-    
+
     @staticmethod
     async def verify_api_key(api_key: str) -> Optional[Dict[str, Any]]:
         """
@@ -36,7 +36,7 @@ class EncodingService:
                     json={"key": api_key},
                     timeout=5.0
                 )
-                
+
                 if response.status_code == 200:
                     data = response.json()
                     if data.get("valid"):
@@ -44,7 +44,7 @@ class EncodingService:
                 return None
         except Exception:
             return None
-    
+
     @staticmethod
     def sign_document(
         db: Session,
@@ -61,17 +61,17 @@ class EncodingService:
             (EncodedDocument, processing_time_ms)
         """
         start_time = time.time()
-        
+
         try:
             # Generate document ID
             document_id = generate_document_id()
-            
+
             # Hash content
             content_hash = hash_content(document_data.content)
-            
+
             # Sign content
             signature = sign_content(document_data.content, private_key_pem)
-            
+
             # Create manifest
             manifest = create_manifest(
                 document_id=document_id,
@@ -79,11 +79,11 @@ class EncodingService:
                 signature=signature,
                 metadata=document_data.metadata or {}
             )
-            
+
             # For now, encoded content is same as original
             # In production, this would use Unicode steganography
             encoded_content = document_data.content
-            
+
             # Create database record
             db_document = EncodedDocument(
                 user_id=user_id,
@@ -98,14 +98,14 @@ class EncodingService:
                 format=document_data.format,
                 encoding_method=settings.DEFAULT_ENCODING,
             )
-            
+
             db.add(db_document)
             db.commit()
             db.refresh(db_document)
-            
+
             # Calculate processing time
             processing_time = (time.time() - start_time) * 1000
-            
+
             # Log operation
             EncodingService._log_operation(
                 db=db,
@@ -118,12 +118,12 @@ class EncodingService:
                 ip_address=ip_address,
                 user_agent=user_agent,
             )
-            
+
             return db_document, processing_time
-            
+
         except Exception as e:
             processing_time = (time.time() - start_time) * 1000
-            
+
             # Log failed operation
             EncodingService._log_operation(
                 db=db,
@@ -137,9 +137,9 @@ class EncodingService:
                 ip_address=ip_address,
                 user_agent=user_agent,
             )
-            
+
             raise
-    
+
     @staticmethod
     def embed_metadata(
         db: Session,
@@ -151,14 +151,14 @@ class EncodingService:
         """
         # Generate document ID
         document_id = generate_document_id()
-        
+
         # Hash content
         content_hash = hash_content(document_data.content)
-        
+
         # For now, encoded content is same as original
         # In production, this would use Unicode steganography
         encoded_content = document_data.content
-        
+
         # Create simple manifest without signature
         manifest = {
             "manifest_id": document_id,
@@ -166,7 +166,7 @@ class EncodingService:
             "content_hash": content_hash,
             "metadata": document_data.metadata,
         }
-        
+
         # Create database record
         db_document = EncodedDocument(
             user_id=user_id,
@@ -181,13 +181,13 @@ class EncodingService:
             format=document_data.format,
             encoding_method=settings.DEFAULT_ENCODING,
         )
-        
+
         db.add(db_document)
         db.commit()
         db.refresh(db_document)
-        
+
         return db_document
-    
+
     @staticmethod
     def get_document(db: Session, document_id: str, user_id: str) -> Optional[EncodedDocument]:
         """Get a document by ID"""
@@ -195,14 +195,14 @@ class EncodingService:
             EncodedDocument.document_id == document_id,
             EncodedDocument.user_id == user_id
         ).first()
-    
+
     @staticmethod
     def get_user_documents(db: Session, user_id: str, limit: int = 100) -> list[EncodedDocument]:
         """Get all documents for a user"""
         return db.query(EncodedDocument).filter(
             EncodedDocument.user_id == user_id
         ).order_by(EncodedDocument.created_at.desc()).limit(limit).all()
-    
+
     @staticmethod
     def get_operation_stats(db: Session, user_id: str) -> Dict[str, Any]:
         """Get operation statistics for a user"""
@@ -210,27 +210,27 @@ class EncodingService:
         total = db.query(SigningOperation).filter(
             SigningOperation.user_id == user_id
         ).count()
-        
+
         # Successful operations
         successful = db.query(SigningOperation).filter(
             SigningOperation.user_id == user_id,
             SigningOperation.status == "success"
         ).count()
-        
+
         # Failed operations
         failed = total - successful
-        
+
         # Average processing time
         avg_time = db.query(func.avg(SigningOperation.processing_time_ms)).filter(
             SigningOperation.user_id == user_id,
             SigningOperation.status == "success"
         ).scalar() or 0.0
-        
+
         # Total content size
         total_size = db.query(func.sum(SigningOperation.content_size_bytes)).filter(
             SigningOperation.user_id == user_id
         ).scalar() or 0
-        
+
         return {
             "total_operations": total,
             "successful_operations": successful,
@@ -238,7 +238,7 @@ class EncodingService:
             "average_processing_time_ms": float(avg_time),
             "total_content_size_bytes": int(total_size),
         }
-    
+
     @staticmethod
     def _log_operation(
         db: Session,
@@ -264,9 +264,9 @@ class EncodingService:
             ip_address=ip_address,
             user_agent=user_agent,
         )
-        
+
         db.add(operation)
         db.commit()
         db.refresh(operation)
-        
+
         return operation

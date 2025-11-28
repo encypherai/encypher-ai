@@ -24,45 +24,45 @@ def upgrade() -> None:
         sa.Column('id', sa.String(64), primary_key=True),
         sa.Column('user_id', sa.String(64), nullable=False, index=True),
         sa.Column('organization_id', sa.String(64), nullable=True, index=True),
-        
+
         # Metric details
         sa.Column('metric_type', sa.String(50), nullable=False, index=True),
         sa.Column('service_name', sa.String(50), nullable=False, index=True),
         sa.Column('endpoint', sa.String(255), nullable=True),
-        
+
         # Counts and values
         sa.Column('count', sa.Integer, server_default='1'),
         sa.Column('value', sa.Numeric(10, 2), nullable=True),
-        
+
         # Performance
         sa.Column('response_time_ms', sa.Integer, nullable=True),
         sa.Column('status_code', sa.Integer, nullable=True),
-        
+
         # Metadata
         sa.Column('meta', postgresql.JSONB, nullable=True),
-        
+
         # Time partitioning keys
         sa.Column('date', sa.String(10), nullable=False, index=True),
         sa.Column('hour', sa.Integer, nullable=False),
-        
+
         # Timestamp
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now(), index=True),
     )
-    
+
     # Aggregated metrics table (pre-computed)
     op.create_table(
         'aggregated_metrics',
         sa.Column('id', sa.String(64), primary_key=True),
         sa.Column('user_id', sa.String(64), nullable=True, index=True),
         sa.Column('organization_id', sa.String(64), nullable=True, index=True),
-        
+
         # Aggregation details
         sa.Column('metric_type', sa.String(50), nullable=False, index=True),
         sa.Column('service_name', sa.String(50), nullable=False, index=True),
         sa.Column('aggregation_period', sa.String(20), nullable=False, index=True),
         sa.Column('period_start', sa.DateTime(timezone=True), nullable=False, index=True),
         sa.Column('period_end', sa.DateTime(timezone=True), nullable=False),
-        
+
         # Aggregated values
         sa.Column('total_count', sa.Integer, server_default='0'),
         sa.Column('total_value', sa.Numeric(12, 2), nullable=True),
@@ -71,15 +71,15 @@ def upgrade() -> None:
         sa.Column('max_response_time_ms', sa.Integer, nullable=True),
         sa.Column('success_count', sa.Integer, server_default='0'),
         sa.Column('error_count', sa.Integer, server_default='0'),
-        
+
         # Metadata
         sa.Column('meta', postgresql.JSONB, nullable=True),
-        
+
         # Timestamps
         sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.func.now()),
         sa.Column('updated_at', sa.DateTime(timezone=True), onupdate=sa.func.now()),
     )
-    
+
     # Composite indexes for common queries
     op.create_index('idx_usage_org_date', 'usage_metrics', ['organization_id', 'date'])
     op.create_index('idx_aggregated_org_period', 'aggregated_metrics', ['organization_id', 'period_start'])

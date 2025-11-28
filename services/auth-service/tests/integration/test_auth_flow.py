@@ -27,7 +27,7 @@ async def test_complete_auth_flow():
         user_data = register_response.json()
         assert "id" in user_data
         assert user_data["email"] == email
-        
+
         # 2. Login
         login_response = await client.post(
             f"{BASE_URL}/api/v1/auth/login",
@@ -40,14 +40,14 @@ async def test_complete_auth_flow():
         tokens = login_response.json()
         assert "access_token" in tokens
         assert "refresh_token" in tokens
-        
+
         # 3. Verify token
         verify_response = await client.post(
             f"{BASE_URL}/api/v1/auth/verify",
             headers={"Authorization": f"Bearer {tokens['access_token']}"}
         )
         assert verify_response.status_code == 200
-        
+
         # 4. Refresh token
         refresh_response = await client.post(
             f"{BASE_URL}/api/v1/auth/refresh",
@@ -56,7 +56,7 @@ async def test_complete_auth_flow():
         assert refresh_response.status_code == 200
         new_tokens = refresh_response.json()
         assert "access_token" in new_tokens
-        
+
         # 5. Logout
         logout_response = await client.post(
             f"{BASE_URL}/api/v1/auth/logout",
@@ -71,7 +71,7 @@ async def test_metrics_endpoint():
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{BASE_URL}/metrics")
         assert response.status_code == 200
-        
+
         metrics_text = response.text
         assert "auth_attempts_total" in metrics_text
         assert "http_requests_total" in metrics_text
@@ -84,7 +84,7 @@ async def test_health_check():
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{BASE_URL}/health")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["status"] == "healthy"
         assert "service" in data
@@ -111,7 +111,7 @@ async def test_failed_login_attempt():
             }
         )
         assert response.status_code == 401
-        
+
         # Check that metrics recorded the failure
         metrics_response = await client.get(f"{BASE_URL}/metrics")
         assert "auth_attempts_total" in metrics_response.text

@@ -1,13 +1,14 @@
 """Notification service business logic"""
 from datetime import datetime
-from typing import List, Optional
-from sqlalchemy.orm import Session
-import structlog
+from typing import List
 
+import structlog
+from encypher_commercial_shared.email import EmailConfig, send_email
+from sqlalchemy.orm import Session
+
+from ..core.config import settings
 from ..db.models import Notification
 from ..models.schemas import NotificationCreate
-from ..core.config import settings
-from encypher_commercial_shared.email import EmailConfig, send_email, render_template
 
 logger = structlog.get_logger(__name__)
 
@@ -29,7 +30,7 @@ def _get_email_config() -> EmailConfig:
 
 class NotificationService:
     """Notification service"""
-    
+
     @staticmethod
     def create_notification(
         db: Session,
@@ -46,11 +47,11 @@ class NotificationService:
             content=notification_data.content,
             metadata=notification_data.metadata,
         )
-        
+
         db.add(notification)
         db.commit()
         db.refresh(notification)
-        
+
         # Send based on notification type
         success = False
         if notification_data.notification_type == "email":
@@ -62,24 +63,24 @@ class NotificationService:
                 notification_type=notification_data.notification_type,
                 notification_id=notification.id,
             )
-        
+
         # Update status
         if success:
             notification.status = "sent"
             notification.sent_at = datetime.utcnow()
         else:
             notification.status = "failed"
-        
+
         db.commit()
         db.refresh(notification)
-        
+
         return notification
-    
+
     @staticmethod
     def _send_email_notification(notification: Notification) -> bool:
         """Send an email notification."""
         config = _get_email_config()
-        
+
         return send_email(
             config=config,
             to_email=notification.recipient,
@@ -87,7 +88,7 @@ class NotificationService:
             html_content=notification.content,
             logger=logger,
         )
-    
+
     @staticmethod
     def get_user_notifications(db: Session, user_id: str, limit: int = 100) -> List[Notification]:
         """Get notifications for user"""

@@ -10,11 +10,10 @@ from .api import (
     VerificationResult,
     load_public_key_from_pem,
 )
-
 from .utils import (
-    scan_directory,
-    generate_report,
     debug_unicode,
+    generate_report,
+    scan_directory,
 )
 
 __all__ = [
