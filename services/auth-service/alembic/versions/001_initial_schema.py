@@ -98,19 +98,20 @@ def upgrade() -> None:
             sa.Column('user_agent', sa.String(500), nullable=True),
             sa.Column('ip_address', sa.String(45), nullable=True),
         )
-    else:
-        # Table exists - add any missing columns
-        missing_columns = [
-            ('token', sa.Text(), True),
-            ('revoked', sa.Boolean(), False),
-            ('revoked_at', sa.DateTime(timezone=True), True),
-            ('user_agent', sa.String(500), True),
-            ('ip_address', sa.String(45), True),
-            ('created_at', sa.DateTime(timezone=True), True),
-        ]
-        for col_name, col_type, nullable in missing_columns:
-            if not column_exists(conn, 'refresh_tokens', col_name):
-                op.add_column('refresh_tokens', sa.Column(col_name, col_type, nullable=nullable))
+    
+    # Always check for missing columns (handles schema drift)
+    missing_columns = [
+        ('token', sa.Text(), True),
+        ('revoked', sa.Boolean(), False),
+        ('revoked_at', sa.DateTime(timezone=True), True),
+        ('user_agent', sa.String(500), True),
+        ('ip_address', sa.String(45), True),
+        ('created_at', sa.DateTime(timezone=True), True),
+    ]
+    for col_name, col_type, nullable in missing_columns:
+        if not column_exists(conn, 'refresh_tokens', col_name):
+            default_val = False if col_name == 'revoked' else None
+            op.add_column('refresh_tokens', sa.Column(col_name, col_type, nullable=nullable, server_default=str(default_val) if default_val is not None else None))
 
     if not index_exists(conn, 'ix_refresh_tokens_user_id'):
         op.create_index('ix_refresh_tokens_user_id', 'refresh_tokens', ['user_id'])
