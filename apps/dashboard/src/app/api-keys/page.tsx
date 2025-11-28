@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  Badge,
   Button,
   Card,
   CardHeader,
@@ -65,6 +66,27 @@ const extractFullKey = (payload: any): string =>
   payload?.api_key ??
   payload?.token ??
   '';
+
+/**
+ * Format ISO date string to human-readable format
+ */
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString || dateString === '—') return 'Never';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString;
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(date);
+  } catch {
+    return dateString;
+  }
+};
 
 export default function ApiKeysPage() {
   const { data: session, status } = useSession();
@@ -159,44 +181,56 @@ export default function ApiKeysPage() {
     return (
       <div className="grid gap-4">
         {apiKeys.map((key) => (
-          <Card key={key.id} className="border-border">
-            <CardContent className="p-6 flex flex-col gap-3">
-              <div className="flex items-center justify-between">
+          <Card key={key.id} className="border-border hover:shadow-md transition-shadow">
+            <CardContent className="p-6 flex flex-col gap-4">
+              {/* Header: Name + Delete */}
+              <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Key name</p>
-                  <p className="font-semibold text-foreground">{key.name}</p>
+                  <h3 className="text-lg font-semibold text-foreground">{key.name}</h3>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Created {formatDate(key.createdAt)}
+                  </p>
                 </div>
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   size="sm"
-                  onClick={() => deleteKeyMutation.mutate(key.id)}
+                  onClick={() => {
+                    if (confirm('Are you sure you want to delete this API key? This action cannot be undone.')) {
+                      deleteKeyMutation.mutate(key.id);
+                    }
+                  }}
                   disabled={deleteKeyMutation.isPending}
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
                 >
                   Delete
                 </Button>
               </div>
 
-              <div className="flex items-center gap-2">
-                <code className="flex-1 bg-muted px-3 py-2 rounded border border-border font-mono text-sm text-muted-foreground">
+              {/* API Key Display */}
+              <div className="flex items-center gap-3">
+                <code className="flex-1 bg-muted px-4 py-2.5 rounded-lg border border-border font-mono text-sm text-foreground">
                   {key.maskedKey}
                 </code>
-                <span className="text-xs text-muted-foreground italic">
+                <span className="text-xs text-muted-foreground italic whitespace-nowrap">
                   Full key shown only at creation
                 </span>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-4 text-sm text-muted-foreground">
-                <div>
-                  <span className="block text-xs uppercase tracking-wide">Created</span>
-                  {key.createdAt || '—'}
+              {/* Metadata: Permissions + Last Used */}
+              <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-border">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground uppercase tracking-wide">Permissions:</span>
+                  <div className="flex gap-1.5">
+                    {key.permissions?.map((perm) => (
+                      <Badge key={perm} variant="primary" size="sm">
+                        {perm}
+                      </Badge>
+                    )) || <span className="text-muted-foreground">—</span>}
+                  </div>
                 </div>
-                <div>
-                  <span className="block text-xs uppercase tracking-wide">Last used</span>
-                  {key.lastUsedAt || 'Never'}
-                </div>
-                <div>
-                  <span className="block text-xs uppercase tracking-wide">Permissions</span>
-                  {key.permissions?.join(', ') || '—'}
+                <div className="text-sm text-muted-foreground">
+                  <span className="text-xs uppercase tracking-wide">Last used:</span>{' '}
+                  {formatDate(key.lastUsedAt)}
                 </div>
               </div>
             </CardContent>
@@ -235,23 +269,35 @@ export default function ApiKeysPage() {
         </div>
 
         {generatedKey && (
-          <Card className="border-columbia-blue bg-columbia-blue/5">
-            <CardHeader>
-              <CardTitle>New API Key</CardTitle>
-              <CardDescription>
-                Store this value in a safe place. For security reasons we can’t show it again.
+          <Card className="border-2 border-warning bg-warning/5 shadow-lg">
+            <CardHeader className="pb-2">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <CardTitle className="text-lg">New API Key Created</CardTitle>
+              </div>
+              <CardDescription className="text-foreground/80 font-medium">
+                Copy this key now — you won't be able to see it again!
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex items-center gap-3">
-              <code className="flex-1 bg-white px-3 py-2 rounded border border-border font-mono text-sm">
-                {generatedKey}
-              </code>
-              <Button variant="outline" size="sm" onClick={() => handleCopyKey(generatedKey)}>
-                Copy
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setGeneratedKey('')}>
-                Dismiss
-              </Button>
+            <CardContent className="flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <code className="flex-1 bg-white px-4 py-3 rounded-lg border-2 border-border font-mono text-sm select-all">
+                  {generatedKey}
+                </code>
+                <Button variant="primary" size="sm" onClick={() => handleCopyKey(generatedKey)}>
+                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                  Copy
+                </Button>
+              </div>
+              <div className="flex justify-end">
+                <Button variant="ghost" size="sm" onClick={() => setGeneratedKey('')}>
+                  I've copied it, dismiss
+                </Button>
+              </div>
             </CardContent>
           </Card>
         )}

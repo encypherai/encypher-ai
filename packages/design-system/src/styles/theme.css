@@ -35,7 +35,7 @@
   
   /* Muted/subtle elements */
   --muted: #f1f5f9;
-  --muted-foreground: #64748b;
+  --muted-foreground: #475569; /* Increased contrast for WCAG AA compliance */
   
   /* Cards and elevated surfaces */
   --card: var(--white);
