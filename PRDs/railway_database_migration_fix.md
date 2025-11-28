@@ -6,13 +6,20 @@
 
 ## Progress Log
 
+### Nov 27, 2025 - 9:15 PM
+- ✅ **Fixed DATABASE_URL issue** - Railway variable references `${{db-auth.DATABASE_URL}}` weren't resolving
+- ✅ Set actual DATABASE_URL values directly for all 9 services
+- ✅ Redeployed all services
+- ✅ **Auth-service is now running!** Migrations completed successfully
+- ✅ Created shared database startup library (`encypher_commercial_shared.db`)
+
 ### Nov 27, 2025 - 9:10 PM
 - ✅ Created 9 PostgreSQL databases on Railway (renamed to db-auth, db-keys, etc.)
 - ✅ Linked each database to its corresponding service via `DATABASE_URL`
 - ✅ Redeployed all services
 - ⚠️ Found schema drift issue: `refresh_tokens` table missing `revoked` column
 - ✅ Fixed migration to always check for missing columns
-- 🔄 Redeploying auth-service with fix
+- ❌ Railway variable references not resolving (empty DATABASE_URL)
 
 ---
 
