@@ -5,14 +5,23 @@
  * Uses the access token from NextAuth session for authentication.
  */
 
-// All API calls go through the unified API gateway (Traefik routes to appropriate service)
+// All API calls go through Traefik (routes to appropriate microservice based on path)
+// In production: https://s-api.encypherai.com
+// In development: Traefik runs on localhost:443 (HTTPS) or localhost:80 (HTTP)
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://s-api.encypherai.com';
 
-// Service-specific base URLs (all routed through the same API gateway)
+// All services use the same base URL - Traefik routes based on path:
+//   /api/v1/auth/*       -> auth-service
+//   /api/v1/keys/*       -> key-service
+//   /api/v1/analytics/*  -> analytics-service
+//   /api/v1/billing/*    -> billing-service
+//   /api/v1/users/*      -> user-service
+//   /api/v1/verify/*     -> verification-service
+//   /api/v1/coalition/*  -> coalition-service
 const AUTH_SERVICE_URL = API_BASE_URL;
 const KEY_SERVICE_URL = API_BASE_URL;
 const ANALYTICS_SERVICE_URL = API_BASE_URL;
-const BILLING_SERVICE_URL = process.env.NEXT_PUBLIC_BILLING_URL || 'http://localhost:8007';
+const BILLING_SERVICE_URL = API_BASE_URL;
 
 interface ApiResponse<T = unknown> {
   success: boolean;

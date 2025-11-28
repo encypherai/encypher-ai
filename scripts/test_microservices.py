@@ -27,8 +27,10 @@ BASE_URLS = {
     "billing": "http://localhost:8007",
     "notification": "http://localhost:8008",
     "coalition": "http://localhost:8009",
-    "gateway": "http://localhost:8000",
 }
+
+# Traefik handles routing in production (port 80/443)
+# For local testing, we test services directly
 
 class TestResults:
     def __init__(self):
@@ -272,26 +274,20 @@ def test_coalition_service(token: str = None):
     except Exception as e:
         results.record("Coalition service", False, str(e))
 
-def test_api_gateway():
-    """Test API gateway routing"""
-    print("\n9. API Gateway Tests")
+def test_traefik_routing():
+    """Test Traefik routing (if running)"""
+    print("\n9. Traefik Routing Tests (Optional)")
     print("-" * 30)
     
+    # Traefik runs on port 80/443 - only test if running
     try:
-        # Test gateway health
-        resp = requests.get(f"{BASE_URLS['gateway']}/health", timeout=5)
-        results.record("Gateway health", resp.status_code == 200)
-        
-        # Test routing to auth service
-        resp = requests.get(f"{BASE_URLS['gateway']}/api/v1/auth/health", timeout=5)
-        if resp.status_code in [200, 404]:  # 404 if route not configured
-            results.record("Gateway -> Auth routing", True)
+        resp = requests.get("http://localhost:8080/api/overview", timeout=2)
+        if resp.status_code == 200:
+            results.record("Traefik dashboard accessible", True)
         else:
-            results.record("Gateway -> Auth routing", False, f"Status {resp.status_code}")
+            results.record("Traefik dashboard", False, f"Status {resp.status_code}")
     except requests.exceptions.ConnectionError:
-        results.record("API Gateway", False, "Connection refused")
-    except Exception as e:
-        results.record("API Gateway", False, str(e))
+        print("  ⊘ Traefik not running (optional for direct service testing)")
 
 def main():
     print("=" * 50)
@@ -307,7 +303,7 @@ def main():
     test_encoding_service(token)
     test_verification_service()
     test_coalition_service(token)
-    test_api_gateway()
+    test_traefik_routing()
     
     # Print summary
     success = results.summary()

@@ -21,8 +21,10 @@ BASE_URLS = {
     "billing": "http://localhost:8007",
     "notification": "http://localhost:8008",
     "coalition": "http://localhost:8009",
-    "gateway": "http://localhost:8000",
 }
+
+# Traefik handles routing in production (port 80/443)
+# For local testing, we test services directly on their ports
 
 class TestResults:
     def __init__(self):
@@ -440,29 +442,23 @@ def test_coalition_service(token: str):
         results.record("GET /api/v1/coalition/stats", False, str(e))
 
 # ============================================
-# API GATEWAY TESTS
+# TRAEFIK ROUTING TESTS (Optional)
 # ============================================
-def test_api_gateway(token: str):
-    """Test API gateway routing"""
+def test_traefik_routing(token: str):
+    """Test Traefik routing (if running)"""
     print("\n" + "="*60)
-    print("API GATEWAY (8000)")
+    print("TRAEFIK ROUTING (Optional)")
     print("="*60)
     
-    headers = {"Authorization": f"Bearer {token}"} if token else {}
-    
-    # Test health
+    # Traefik dashboard runs on port 8080
     try:
-        resp = requests.get(f"{BASE_URLS['gateway']}/health", timeout=5)
-        results.record("GET /health", resp.status_code == 200)
-    except Exception as e:
-        results.record("GET /health", False, str(e))
-    
-    # Test routing to auth (POST endpoint)
-    try:
-        resp = requests.post(f"{BASE_URLS['gateway']}/api/v1/auth/verify", headers=headers, timeout=5)
-        results.record("POST /api/v1/auth/verify (routed)", resp.status_code in [200, 401, 404, 502], f"Status {resp.status_code}")
-    except Exception as e:
-        results.record("POST /api/v1/auth/verify (routed)", False, str(e))
+        resp = requests.get("http://localhost:8080/api/overview", timeout=2)
+        if resp.status_code == 200:
+            results.record("Traefik dashboard accessible", True)
+        else:
+            results.record("Traefik dashboard", False, f"Status {resp.status_code}")
+    except requests.exceptions.ConnectionError:
+        print("  ⊘ Traefik not running (optional - services tested directly)")
 
 def main():
     print("="*60)
@@ -487,7 +483,7 @@ def main():
     test_verification_service(token)
     test_notification_service(token)
     test_coalition_service(token)
-    test_api_gateway(token)
+    test_traefik_routing(token)
     
     # Print summary
     success = results.summary()

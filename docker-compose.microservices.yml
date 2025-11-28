@@ -491,34 +491,34 @@ services:
       timeout: 10s
       retries: 3
 
-  # API Gateway (Port 8000)
-  api-gateway:
-    build: ./services/api-gateway
-    container_name: encypher-api-gateway
+  # ==============================================
+  # TRAEFIK (API Gateway / Reverse Proxy)
+  # ==============================================
+  # Traefik handles all routing, TLS termination, and load balancing
+  # Routes requests to appropriate microservices based on path
+  traefik:
+    image: traefik:v2.10
+    container_name: encypher-traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.filename=/etc/traefik/dynamic.yml"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--log.level=INFO"
     ports:
-      - "8000:8000"
-    environment:
-      # No database - gateway only
-      REDIS_URL: redis://redis:6379
-      # Downstream services
-      AUTH_SERVICE_URL: http://auth-service:8001
-      KEY_SERVICE_URL: http://key-service:8003
-      BILLING_SERVICE_URL: http://billing-service:8007
-      ANALYTICS_SERVICE_URL: http://analytics-service:8006
-      ENCODING_SERVICE_URL: http://encoding-service:8004
-      VERIFICATION_SERVICE_URL: http://verification-service:8005
-      # Service config
-      SERVICE_NAME: api-gateway
-      SERVICE_PORT: 8000
-      ENVIRONMENT: development
-      LOG_LEVEL: INFO
-      # CORS
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
-    depends_on:
-      auth-service:
-        condition: service_healthy
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik Dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./config/traefik:/etc/traefik
+      - ./certs:/etc/traefik/certs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD", "traefik", "healthcheck"]
       interval: 30s
       timeout: 10s
       retries: 3

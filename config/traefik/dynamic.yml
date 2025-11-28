@@ -1,25 +1,48 @@
+# Traefik Dynamic Configuration
+# Routes requests to appropriate microservices based on host and path
+#
+# API Routing (s-api.encypherai.com):
+#   /api/v1/keys/*       -> key-service (8003)
+#   /api/v1/analytics/*  -> analytics-service (8006)
+#   /api/v1/billing/*    -> billing-service (8007)
+#   /api/v1/users/*      -> user-service (8002)
+#   /api/v1/encode/*     -> encoding-service (8004)
+#   /api/v1/verify/*     -> verification-service (8005)
+#   /api/v1/coalition/*  -> coalition-service (8009)
+#   /api/v1/notifications/* -> notification-service (8008)
+#   /api/v1/auth/*       -> auth-service (8001) [default]
+
 http:
   routers:
+    # ===========================================
+    # FRONTEND APPS
+    # ===========================================
     dashboard:
-      rule: "Host(`s-dashboard.encypherai.com`)"
+      rule: "Host(`s-dashboard.encypherai.com`) || Host(`localhost`) && PathPrefix(`/dashboard`)"
       service: dashboard-service
       entryPoints:
         - websecure
+        - web
       tls: {}
 
     marketing:
-      rule: "Host(`s-www.encypherai.com`)"
+      rule: "Host(`s-www.encypherai.com`) || Host(`localhost`)"
       service: marketing-service
       entryPoints:
         - websecure
+        - web
       tls: {}
+      priority: 1
 
-    # API routing with path-based service selection
+    # ===========================================
+    # API ROUTING (path-based service selection)
+    # ===========================================
     api-keys:
       rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/keys`)"
       service: key-service
       entryPoints:
         - websecure
+        - web
       tls: {}
       priority: 100
 
@@ -28,18 +51,97 @@ http:
       service: analytics-service
       entryPoints:
         - websecure
+        - web
       tls: {}
       priority: 100
 
+    api-billing:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/billing`)"
+      service: billing-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-users:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/users`)"
+      service: user-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-profile:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/profile`)"
+      service: user-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-encode:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/encode`)"
+      service: encoding-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-documents:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/documents`)"
+      service: encoding-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-verify:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/verify`)"
+      service: verification-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-coalition:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/coalition`)"
+      service: coalition-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-notifications:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/notifications`)"
+      service: notification-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    # Default: auth-service handles /api/v1/auth/* and fallback
     api-auth:
       rule: "Host(`s-api.encypherai.com`)"
       service: auth-service
       entryPoints:
         - websecure
+        - web
       tls: {}
       priority: 1
 
+  # ===========================================
+  # SERVICES (Backend URLs)
+  # ===========================================
   services:
+    # Frontend Apps
     dashboard-service:
       loadBalancer:
         servers:
@@ -50,20 +152,51 @@ http:
         servers:
           - url: "http://host.docker.internal:3000"
 
+    # Microservices
     auth-service:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:8001"
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8002"
 
     key-service:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:8003"
 
+    encoding-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8004"
+
+    verification-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8005"
+
     analytics-service:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:8006"
+
+    billing-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8007"
+
+    notification-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8008"
+
+    coalition-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8009"
 
 tls:
   certificates:

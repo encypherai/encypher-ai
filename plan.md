@@ -365,10 +365,10 @@
 - [x] 10.10.4 Test health endpoint
 - [ ] 10.10.5 Test coalition endpoints
 
-### 10.11 API Gateway
-- [x] 10.11.1 Update Dockerfile with health check
-- [x] 10.11.2 Test routing to all downstream services
-- [x] 10.11.3 Test CORS configuration
+### 10.11 API Gateway (Traefik)
+- [x] 10.11.1 Consolidated to use Traefik (removed redundant FastAPI api-gateway)
+- [x] 10.11.2 Updated Traefik config with all microservice routes
+- [x] 10.11.3 Updated dashboard API client to use unified Traefik routing
 
 ### 10.12 Integration Testing
 - [x] 10.12.1 Test full auth flow (signup → login → API key → use key)
@@ -380,10 +380,15 @@
 Database-per-service architecture complete. All 10 services running with isolated databases.
 
 ## Completed (Nov 27, 2025)
-- All 10 microservices running with database-per-service architecture
+- All 9 microservices running with database-per-service architecture
 - Alembic migrations run automatically on startup
 - Health endpoints verified for all services
 - Full auth flow tested (signup → login → API key → verify)
-- API Gateway routing verified
+- **Consolidated API Gateway to Traefik** (removed redundant FastAPI api-gateway per DRY)
+- Updated Traefik config with routes for all 9 microservices
+- Updated dashboard API client to use unified Traefik routing
 - Integration test suite created (scripts/test_microservices.py)
+- Individual endpoint tests created (scripts/test_service_endpoints.py) - **29/29 passing**
+- Fixed key-service SQLAlchemy boolean filter bug
+- Environment variables verified across all services (shared + service-specific)
 
