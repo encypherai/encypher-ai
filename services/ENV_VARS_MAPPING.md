@@ -4,23 +4,24 @@ This document maps which shared environment variables are used by each service.
 
 ## All Services (13 total)
 
-### Backend Microservices (9)
-1. auth-service
-2. key-service
-3. billing-service
-4. user-service
-5. notification-service
-6. encoding-service
-7. verification-service
-8. analytics-service
-9. coalition-service
+### Backend Microservices (10)
+1. auth-service (port 8001)
+2. user-service (port 8002)
+3. key-service (port 8003)
+4. encoding-service (port 8004)
+5. verification-service (port 8005)
+6. analytics-service (port 8006)
+7. billing-service (port 8007)
+8. notification-service (port 8008)
+9. coalition-service (port 8009)
+10. api-gateway (port 8000)
 
 ### APIs (1)
-10. enterprise-api
+11. enterprise-api (port 9000)
 
 ### Frontend Apps (2)
-11. marketing-site (Next.js)
-12. dashboard (Next.js)
+12. marketing-site (port 3000, Next.js)
+13. dashboard (port 3001, Next.js)
 
 ---
 

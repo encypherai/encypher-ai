@@ -135,11 +135,18 @@ services:
     ports:
       - "8000:8000"
     environment:
-      GATEWAY_PORT: 8000
-      LOG_LEVEL: DEBUG
+      # Shared Variables
+      REDIS_URL: redis://redis:6379
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
       AUTH_SERVICE_URL: http://auth-service:8001
+      KEY_SERVICE_URL: http://key-service:8003
       ANALYTICS_SERVICE_URL: http://analytics-service:8006
+      BILLING_SERVICE_URL: http://billing-service:8007
+      ENVIRONMENT: development
+      LOG_LEVEL: DEBUG
+      # Service-specific
+      SERVICE_NAME: api-gateway
+      SERVICE_PORT: 8000
       ENTERPRISE_API_URL: http://host.docker.internal:9000
     depends_on:
       auth-service:
@@ -150,22 +157,33 @@ services:
       - ./api-gateway/app:/app/app
     restart: unless-stopped
 
-  # Key Service (coming soon)
-  # key-service:
-  #   build:
-  #     context: ./key-service
-  #     dockerfile: Dockerfile
-  #   container_name: encypher-key-service
-  #   ports:
-  #     - "8003:8003"
-  #   environment:
-  #     DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
-  #     REDIS_URL: redis://redis:6379/1
-  #     AUTH_SERVICE_URL: http://auth-service:8001
-  #   depends_on:
-  #     - postgres
-  #     - redis
-  #     - auth-service
+  # Key Service
+  key-service:
+    build:
+      context: ./key-service
+      dockerfile: Dockerfile
+    container_name: encypher-key-service
+    ports:
+      - "8003:8003"
+    environment:
+      # Shared Variables
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
+      REDIS_URL: redis://redis:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      # Service-specific
+      SERVICE_NAME: key-service
+      SERVICE_PORT: 8003
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    restart: unless-stopped
 
 volumes:
   postgres_data:

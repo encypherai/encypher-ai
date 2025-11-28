@@ -188,14 +188,16 @@ services:
     ports:
       - "8003:8003"
     environment:
+      # Shared Variables
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
       REDIS_URL: redis://redis-cache:6379
       AUTH_SERVICE_URL: http://auth-service:8001
-      SERVICE_NAME: key-service
-      SERVICE_HOST: 0.0.0.0
-      SERVICE_PORT: 8003
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      ENVIRONMENT: development
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      # Service-specific
+      SERVICE_NAME: key-service
+      SERVICE_PORT: 8003
     depends_on:
       postgres-core:
         condition: service_healthy
