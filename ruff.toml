@@ -28,9 +28,11 @@ ignore = [
 
 # Per-file ignores
 [lint.per-file-ignores]
-"**/alembic/**/*.py" = ["S608"]  # SQL in migrations is intentional
-"**/tests/**/*.py" = ["S101", "S106"]  # asserts and test passwords OK
-"**/scripts/**/*.py" = ["S106", "S603", "S110"]  # scripts may use subprocess
+"**/alembic/**" = ["S608"]  # SQL in migrations is intentional
+"alembic/**" = ["S608"]  # SQL in migrations is intentional
+"*/alembic/*" = ["S608"]  # SQL in migrations is intentional
+"**/tests/**" = ["S101", "S106"]  # asserts and test passwords OK
+"**/scripts/**" = ["S106", "S603", "S110"]  # scripts may use subprocess
 "services/auth-service/app/core/security.py" = ["S107"]  # token_type is not a password
 "services/auth-service/app/models/schemas.py" = ["S105"]  # token_type field is not a password
 "services/auth-service/app/services/auth_service.py" = ["S106"]  # token_type argument is not a password

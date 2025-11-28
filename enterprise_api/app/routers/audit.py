@@ -158,13 +158,15 @@ async def get_audit_logs(
     where_sql = " AND ".join(where_clauses)
     
     # Get total count
+    # Note: where_sql contains only hardcoded column names and :param placeholders, not user input
     count_result = await db.execute(
-        text(f"SELECT COUNT(*) FROM audit_logs WHERE {where_sql}"),
+        text(f"SELECT COUNT(*) FROM audit_logs WHERE {where_sql}"),  # noqa: S608
         params
     )
     total = count_result.scalar() or 0
     
     # Get paginated results
+    # Note: where_sql is built from hardcoded strings, user values are parameterized
     result = await db.execute(
         text(f"""
             SELECT 
@@ -174,7 +176,7 @@ async def get_audit_logs(
             WHERE {where_sql}
             ORDER BY created_at DESC
             LIMIT :limit OFFSET :offset
-        """),
+        """),  # noqa: S608
         params
     )
     rows = result.fetchall()

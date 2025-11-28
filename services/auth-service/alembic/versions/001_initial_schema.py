@@ -19,33 +19,39 @@ depends_on = None
 
 def table_exists(conn, table_name: str) -> bool:
     """Check if a table exists in the database."""
-    result = conn.execute(text(f"""
+    # Note: table_name is always a hardcoded string from this migration, not user input
+    sql = f"""
         SELECT EXISTS (
             SELECT FROM information_schema.tables 
             WHERE table_name = '{table_name}'
         )
-    """))
+    """  # noqa: S608
+    result = conn.execute(text(sql))
     return result.scalar()
 
 
 def column_exists(conn, table_name: str, column_name: str) -> bool:
     """Check if a column exists in a table."""
-    result = conn.execute(text(f"""
+    # Note: table_name/column_name are always hardcoded strings from this migration
+    sql = f"""
         SELECT EXISTS (
             SELECT FROM information_schema.columns 
             WHERE table_name = '{table_name}' AND column_name = '{column_name}'
         )
-    """))
+    """  # noqa: S608
+    result = conn.execute(text(sql))
     return result.scalar()
 
 
 def index_exists(conn, index_name: str) -> bool:
     """Check if an index exists."""
-    result = conn.execute(text(f"""
+    # Note: index_name is always a hardcoded string from this migration
+    sql = f"""
         SELECT EXISTS (
             SELECT FROM pg_indexes WHERE indexname = '{index_name}'
         )
-    """))
+    """  # noqa: S608
+    result = conn.execute(text(sql))
     return result.scalar()
 
 
