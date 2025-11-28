@@ -53,12 +53,17 @@ class ApiKey(Base):
     __tablename__ = "api_keys"
     
     id = Column(String(64), primary_key=True, default=lambda: f"key_{uuid.uuid4().hex[:16]}")
-    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=False, index=True)
+    
+    # Owner - can be organization_id OR user_id depending on context
+    # For dashboard users without orgs, we use user_id
+    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=True, index=True)
+    user_id = Column(String(64), nullable=True, index=True)  # For users without orgs
     
     # Key information
     name = Column(String(255), nullable=False)
     key_hash = Column(String(255), nullable=False, unique=True, index=True)  # SHA-256 hash
     key_prefix = Column(String(20), nullable=False)  # First chars for display
+    fingerprint = Column(String(64), nullable=True)  # Key fingerprint for identification
     
     # Permissions (JSONB array)
     permissions = Column(JSONB, nullable=False, default=["sign", "verify", "lookup"])
@@ -82,7 +87,7 @@ class ApiKey(Base):
     description = Column(Text, nullable=True)
     
     def __repr__(self):
-        return f"<ApiKey(id={self.id}, name={self.name}, org={self.organization_id})>"
+        return f"<ApiKey(id={self.id}, name={self.name}, user={self.user_id}, org={self.organization_id})>"
 
 
 class KeyUsage(Base):

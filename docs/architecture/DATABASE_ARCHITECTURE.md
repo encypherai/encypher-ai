@@ -2,20 +2,29 @@
 
 ## Overview
 
-EncypherAI uses a **two-database architecture** with Redis caching:
+EncypherAI uses a **database-per-service architecture** for maximum scalability and isolation:
 
-| Database | Purpose | Services |
-|----------|---------|----------|
-| **postgres-core** | Authentication, Users, Organizations, API Keys, Billing | auth-service, key-service, billing-service, user-service |
-| **postgres-content** | Content operations, Verification, Analytics, Coalition | encoding-service, verification-service, analytics-service, coalition-service |
-| **Redis** | Caching, Sessions, Rate Limiting | All services |
+| Service | Database | Port | Purpose |
+|---------|----------|------|---------|
+| **auth-service** | `encypher_auth` | 5432 | Users, tokens, OAuth |
+| **key-service** | `encypher_keys` | 5432 | Organizations, API keys |
+| **billing-service** | `encypher_billing` | 5432 | Subscriptions, invoices, payments |
+| **user-service** | `encypher_users` | 5432 | User profiles, teams |
+| **notification-service** | `encypher_notifications` | 5432 | Notification logs |
+| **encoding-service** | `encypher_encoding` | 5433 | Encoded documents, signing ops |
+| **verification-service** | `encypher_verification` | 5433 | Verification results |
+| **analytics-service** | `encypher_analytics` | 5433 | Usage metrics |
+| **coalition-service** | `encypher_coalition` | 5433 | Coalition members, revenue |
+| **Redis** | - | 6379 | Caching, sessions, rate limiting |
 
 ## Design Principles
 
-1. **Database per Domain** - Not per service, but per domain boundary
-2. **Shared Tables via Views** - Services that need cross-domain data use read-only views
-3. **Event-Driven Sync** - Changes propagate via events, not direct DB access
-4. **Each Service Owns Its Tables** - Migrations are service-specific
+1. **Database per Service** - Each service owns its own database, full isolation
+2. **Alembic Migrations** - Each service manages its own schema via Alembic
+3. **Auto-Migration on Startup** - Services run `alembic upgrade head` before starting
+4. **API-Based Communication** - Services call each other's APIs, never direct DB access
+5. **Event-Driven Sync** - Changes propagate via Redis pub/sub or message queue
+6. **Independent Scaling** - Each database can be scaled independently
 
 ---
 
