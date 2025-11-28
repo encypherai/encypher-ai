@@ -79,3 +79,25 @@ jobs:
         uses: trufflesecurity/trufflehog@main
         with:
           extra_args: --only-verified
+
+  type-check:
+    name: Type Checking (mypy)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install mypy
+        run: pip install mypy types-requests types-PyYAML types-redis
+      
+      - name: Run mypy on auth-service
+        run: mypy services/auth-service/app/ --config-file mypy.ini || true
+        continue-on-error: true
+      
+      - name: Run mypy on enterprise-api
+        run: mypy enterprise_api/app/ --config-file mypy.ini || true
+        continue-on-error: true
