@@ -4,7 +4,7 @@ Pre-built email functions for common use cases.
 These functions combine template rendering with sending for convenience.
 """
 
-from typing import Any, Optional
+from typing import Optional, Any
 
 from .sender import EmailConfig, render_template, send_email
 
@@ -30,14 +30,14 @@ def send_verification_email(
         True if sent successfully
     """
     verification_url = f"{config.frontend_url}/auth/verify-email?token={verification_token}"
-
+    
     html_content = render_template(
         "email_verification.html",
         subject="Verify your email address",
         user_name=user_name,
         verification_url=verification_url,
     )
-
+    
     plain_content = f"""
 Verify your email address
 
@@ -53,7 +53,7 @@ If you didn't create an account with EncypherAI, you can safely ignore this emai
 
 — The EncypherAI Team
 """
-
+    
     return send_email(
         config=config,
         to_email=to_email,
@@ -83,14 +83,14 @@ def send_welcome_email(
         True if sent successfully
     """
     dashboard_url = config.dashboard_url or f"{config.frontend_url}/dashboard"
-
+    
     html_content = render_template(
         "welcome.html",
         subject="Welcome to EncypherAI!",
         user_name=user_name,
         dashboard_url=dashboard_url,
     )
-
+    
     plain_content = f"""
 Welcome to EncypherAI!
 
@@ -109,7 +109,7 @@ Need help? Check out our documentation at https://encypherai.com/docs or email s
 
 — The EncypherAI Team
 """
-
+    
     return send_email(
         config=config,
         to_email=to_email,
@@ -143,7 +143,7 @@ def send_password_reset_email(
         True if sent successfully
     """
     reset_url = f"{config.frontend_url}/auth/reset-password?token={reset_token}"
-
+    
     html_content = render_template(
         "password_reset.html",
         subject="Reset your password",
@@ -151,7 +151,7 @@ def send_password_reset_email(
         reset_url=reset_url,
         ip_address=ip_address,
     )
-
+    
     plain_content = f"""
 Reset your password
 
@@ -167,7 +167,7 @@ If you didn't request a password reset, you can safely ignore this email. Your p
 
 — The EncypherAI Team
 """
-
+    
     return send_email(
         config=config,
         to_email=to_email,
