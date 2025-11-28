@@ -134,10 +134,13 @@ async def login(
 @router.post("/verify-email")
 async def verify_email(
     request: EmailVerifyRequest,
+    user_agent: Optional[str] = Header(None),
+    x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
     """
     Verify a user's email address using a verification token.
+    Returns tokens for auto-login after successful verification.
     
     - **token**: Verification token from email
     """
@@ -149,10 +152,25 @@ async def verify_email(
             detail="Invalid or expired verification token",
         )
 
+    # Create tokens for auto-login after verification
+    access_token, refresh_token = AuthService.create_tokens(user)
+
+    # Store refresh token
+    AuthService.store_refresh_token(
+        db,
+        user.id,
+        refresh_token,
+        user_agent=user_agent,
+        ip_address=x_forwarded_for,
+    )
+
     return {
         "success": True,
         "data": {
             "message": "Email verified successfully",
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
             "user": UserResponse.model_validate(user).model_dump(),
         },
         "error": None,

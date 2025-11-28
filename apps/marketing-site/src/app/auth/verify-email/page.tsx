@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { fetchApi } from "../../../lib/api";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +15,9 @@ interface VerifyEmailResponse {
   success: boolean;
   data?: {
     message: string;
+    access_token: string;
+    refresh_token: string;
+    token_type: string;
     user: {
       id: string;
       email: string;
@@ -73,6 +77,22 @@ function VerifyEmailContent() {
         if (response.success && response.data) {
           setStatus("success");
           setMessage(response.data.message || "Your email has been verified successfully!");
+          
+          // Auto-sign in with the tokens from verification
+          if (response.data.access_token) {
+            const signInResult = await signIn("credentials", {
+              redirect: false,
+              backendToken: response.data.access_token,
+              isVerifiedTokenFlow: "true",
+            });
+            
+            if (signInResult?.ok) {
+              // Redirect to dashboard after successful auto-login
+              setTimeout(() => {
+                router.push(process.env.NEXT_PUBLIC_DASHBOARD_URL || "/dashboard");
+              }, 1500);
+            }
+          }
         } else {
           setStatus("error");
           setMessage(response.error?.message || "Email verification failed. The link may have expired.");
@@ -85,7 +105,7 @@ function VerifyEmailContent() {
     };
 
     verifyEmail();
-  }, [token, called]);
+  }, [token, called, router]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 p-4">
@@ -120,10 +140,16 @@ function VerifyEmailContent() {
           {status === "success" && (
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
-                Your account is now active. You can sign in to access your dashboard.
+                Your account is now active. Redirecting you to the dashboard...
               </p>
-              <Button asChild className="w-full" size="lg">
-                <Link href="/auth/signin">Sign In to Dashboard</Link>
+              <div className="flex items-center justify-center">
+                <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
+                <span className="text-sm text-muted-foreground">Signing you in...</span>
+              </div>
+              <Button asChild className="w-full" size="lg" variant="outline">
+                <Link href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "/dashboard"}>
+                  Go to Dashboard Now
+                </Link>
               </Button>
             </div>
           )}
