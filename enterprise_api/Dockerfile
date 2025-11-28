@@ -34,13 +34,16 @@ RUN pip install --no-cache-dir -e /app/c2pa-text/python && \
 
 WORKDIR /app/enterprise_api
 
-# Make entrypoint script executable
-RUN chmod +x scripts/docker-entrypoint.sh
+# Install curl for health checks and fix line endings
+RUN apt-get update && apt-get install -y --no-install-recommends curl dos2unix && \
+    rm -rf /var/lib/apt/lists/* && \
+    dos2unix scripts/docker-entrypoint.sh && \
+    chmod +x scripts/docker-entrypoint.sh
 
 EXPOSE 8000
 
 # Use entrypoint script for database initialization
-ENTRYPOINT ["scripts/docker-entrypoint.sh"]
+ENTRYPOINT ["/bin/sh", "scripts/docker-entrypoint.sh"]
 # Default CMD - Railway will override via startCommand if needed
 # Note: Railway provides PORT env var dynamically
 CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

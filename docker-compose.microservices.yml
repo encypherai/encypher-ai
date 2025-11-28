@@ -492,6 +492,49 @@ services:
       retries: 3
 
   # ==============================================
+  # ENTERPRISE API (Port 9000)
+  # ==============================================
+  # C2PA signing/verification, Merkle trees, embeddings
+  enterprise-api:
+    build:
+      context: .
+      dockerfile: enterprise_api/Dockerfile
+    container_name: encypher-enterprise-api
+    ports:
+      - "9000:9000"
+    environment:
+      # Database (uses same postgres-auth for now, can be split later)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-auth:5432/encypher_auth
+      CORE_DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-auth:5432/encypher_auth
+      CONTENT_DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-auth:5432/encypher_auth
+      # Redis
+      REDIS_URL: redis://redis:6379/0
+      # Service URLs
+      AUTH_SERVICE_URL: http://auth-service:8001
+      KEY_SERVICE_URL: http://key-service:8003
+      COALITION_SERVICE_URL: http://coalition-service:8009
+      # Encryption keys (dev only - generate new for production!)
+      KEY_ENCRYPTION_KEY: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
+      ENCRYPTION_NONCE: "0123456789abcdef01234567"
+      # Environment
+      ENVIRONMENT: development
+      PORT: 9000
+      # Demo API key for testing
+      DEMO_API_KEY: "demo_test_key_12345"
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # ==============================================
   # TRAEFIK (API Gateway / Reverse Proxy)
   # ==============================================
   # Traefik handles all routing, TLS termination, and load balancing
