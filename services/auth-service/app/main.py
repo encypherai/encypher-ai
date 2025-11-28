@@ -65,9 +65,9 @@ try:
     @app.get("/metrics")
     async def metrics_fallback():
         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
-except Exception:
-    # If prometheus_client is unavailable, skip fallback
-    pass
+except ImportError:
+    # prometheus_client not available - metrics endpoint handled by instrumentator
+    logger.debug("prometheus_client not available, using instrumentator for metrics")
 
 
 @app.get("/")

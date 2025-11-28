@@ -8,8 +8,8 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "EncypherAI Web Service"
     API_V1_STR: str = "/api/v1"
 
-    # Security
-    SECRET_KEY: str = "CHANGE_THIS_TO_A_SECRET_KEY"
+    # Security - MUST be set via environment variable in production
+    SECRET_KEY: str = ""  # noqa: S105 - Default empty, must be set via env
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
     # CORS
@@ -28,10 +28,10 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    # Database
+    # Database - credentials should be set via environment variables
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_PASSWORD: str = ""  # noqa: S105 - Must be set via env
     POSTGRES_DB: str = "web_service"
     SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 

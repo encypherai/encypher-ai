@@ -24,8 +24,8 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
             if response.status_code != 200:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
             return response.json()
-    except httpx.RequestError:
-        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Auth service unavailable")
+    except httpx.RequestError as e:
+        raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="Auth service unavailable") from e
 
 
 @router.post("/send", response_model=NotificationResponse, status_code=status.HTTP_201_CREATED)

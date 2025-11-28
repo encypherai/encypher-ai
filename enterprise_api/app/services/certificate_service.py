@@ -120,7 +120,12 @@ class CertificateResolver:
                 status = certificate_status or OrganizationCertificateStatus.ACTIVE
                 try:
                     public_key = extract_public_key_from_certificate(certificate_pem)
-                except Exception:
+                except (ValueError, TypeError) as e:
+                    # Skip certificates that can't be parsed - log for debugging
+                    import logging
+                    logging.getLogger(__name__).warning(
+                        f"Failed to extract public key for org {organization_id}: {e}"
+                    )
                     continue
 
                 refreshed[organization_id] = ResolvedCertificate(

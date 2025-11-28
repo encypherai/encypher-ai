@@ -2,7 +2,7 @@ import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from app.core.config import settings
 
@@ -13,9 +13,11 @@ def send_email(
     email_to: str,
     subject_template: str = "",
     html_template: str = "",
-    environment: Dict[str, Any] = {},
+    environment: Optional[Dict[str, Any]] = None,
 ) -> None:
     assert settings.EMAILS_ENABLED, "no provided configuration for email variables"
+    if environment is None:
+        environment = {}
 
     message = MIMEMultipart("alternative")
     message["Subject"] = subject_template

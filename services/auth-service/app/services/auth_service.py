@@ -135,7 +135,7 @@ class AuthService:
     def refresh_access_token(db: Session, refresh_token: str) -> Optional[Tuple[str, User]]:
         """Refresh an access token using a refresh token"""
         # Verify the refresh token
-        payload = verify_token(refresh_token, token_type="refresh")
+        payload = verify_token(refresh_token, token_type="refresh")  # noqa: S106
         if not payload:
             return None
 
@@ -208,7 +208,7 @@ class AuthService:
     @staticmethod
     def verify_access_token(token: str) -> Optional[dict]:
         """Verify an access token and return payload"""
-        return verify_token(token, token_type="access")
+        return verify_token(token, token_type="access")  # noqa: S106
 
     @staticmethod
     def upsert_oauth_user(

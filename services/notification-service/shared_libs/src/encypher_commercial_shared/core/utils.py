@@ -321,8 +321,8 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                     # Clean up the temporary file
                     try:
                         os.unlink(temp_txt.name)
-                    except:
-                        pass
+                    except OSError:
+                        pass  # File cleanup is best-effort
             except Exception as e:
                 console.print(f"[yellow]Word COM automation not available: {e}[/yellow]")
 
@@ -409,8 +409,8 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                 # Clean up the temporary file
                 try:
                     os.unlink(temp_txt.name)
-                except Exception:
-                    pass
+                except OSError:
+                    pass  # File cleanup is best-effort
             except Exception as e:
                 console.print(f"[yellow]Word COM automation not available: {e}[/yellow]")
 
@@ -439,10 +439,12 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
     return None
 
 
+DEFAULT_FILE_EXTENSIONS = [".txt", ".md", ".py", ".js", ".html", ".css", ".json", ".pdf", ".doc", ".docx"]
+
 def scan_directory(
     directory_path: str,
     encypher_ai: EncypherAI,
-    file_extensions: List[str] = [".txt", ".md", ".py", ".js", ".html", ".css", ".json", ".pdf", ".doc", ".docx"],
+    file_extensions: Optional[List[str]] = None,
     recursive: bool = True,
     show_progress: bool = True,
     verify_content_integrity: bool = False,
@@ -462,6 +464,9 @@ def scan_directory(
     Returns:
         Dictionary mapping file paths to VerificationResult objects
     """
+    if file_extensions is None:
+        file_extensions = DEFAULT_FILE_EXTENSIONS
+    
     results = {}
 
     # Collect all files to scan

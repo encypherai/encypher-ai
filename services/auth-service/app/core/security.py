@@ -56,7 +56,7 @@ def decode_token(token: str) -> Optional[Dict[str, Any]]:
         return None
 
 
-def verify_token(token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:
+def verify_token(token: str, token_type: str = "access") -> Optional[Dict[str, Any]]:  # noqa: S107
     """Verify a token and check its type"""
     payload = decode_token(token)
     if payload and payload.get("type") == token_type:

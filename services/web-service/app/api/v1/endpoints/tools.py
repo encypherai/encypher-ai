@@ -75,7 +75,8 @@ async def encode_text(request: EncodeRequest):
                     error_json = response.json()
                     if "detail" in error_json:
                         error_detail = error_json["detail"]
-                except Exception:
+                except (ValueError, KeyError):
+                    # Response is not valid JSON or missing expected fields
                     pass
                 raise HTTPException(status_code=response.status_code, detail=f"Enterprise API Error: {error_detail}")
 
@@ -90,10 +91,10 @@ async def encode_text(request: EncodeRequest):
 
             return {"encoded_text": encoded, "metadata": metadata}
 
-        except httpx.ConnectError:
-            raise HTTPException(status_code=503, detail="Enterprise API not available")
+        except httpx.ConnectError as e:
+            raise HTTPException(status_code=503, detail="Enterprise API not available") from e
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e
 
 @router.post("/decode", response_model=DecodeResponse)
 async def decode_text(request: DecodeRequest):
@@ -140,7 +141,7 @@ async def decode_text(request: DecodeRequest):
                 "raw_hidden_data": verdict
             }
 
-        except httpx.ConnectError:
-             raise HTTPException(status_code=503, detail="Enterprise API not available")
+        except httpx.ConnectError as e:
+            raise HTTPException(status_code=503, detail="Enterprise API not available") from e
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+            raise HTTPException(status_code=500, detail=str(e)) from e

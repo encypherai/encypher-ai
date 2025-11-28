@@ -23,6 +23,7 @@ ignore = [
     "W293",  # blank-line-with-whitespace - auto-fixed
     "W291",  # trailing-whitespace - auto-fixed
     "B008",  # function-call-in-default-argument - FastAPI Depends() pattern
+    "E712",  # true-false-comparison - SQLAlchemy requires == True/False for SQL generation
 ]
 
 # Per-file ignores
@@ -30,6 +31,9 @@ ignore = [
 "**/alembic/**/*.py" = ["S608"]  # SQL in migrations is intentional
 "**/tests/**/*.py" = ["S101", "S106"]  # asserts and test passwords OK
 "**/scripts/**/*.py" = ["S106", "S603", "S110"]  # scripts may use subprocess
+"services/auth-service/app/core/security.py" = ["S107"]  # token_type is not a password
+"services/auth-service/app/models/schemas.py" = ["S105"]  # token_type field is not a password
+"services/auth-service/app/services/auth_service.py" = ["S106"]  # token_type argument is not a password
 
 [lint.isort]
 known-first-party = ["app", "encypher"]
