@@ -317,52 +317,52 @@
 
 ### 10.4 Billing Service (encypher_billing)
 - [x] 10.4.1 Set up Alembic scaffolding
-- [ ] 10.4.2 Create initial schema migration (subscriptions, invoices, payments)
-- [ ] 10.4.3 Update Dockerfile to run migrations on startup
-- [ ] 10.4.4 Test health endpoint
+- [x] 10.4.2 Create initial schema migration (subscriptions, invoices, payments)
+- [x] 10.4.3 Update Dockerfile to run migrations on startup
+- [x] 10.4.4 Test health endpoint
 - [ ] 10.4.5 Test subscription endpoints
 - [ ] 10.4.6 Test invoice endpoints
 
 ### 10.5 User Service (encypher_users)
 - [x] 10.5.1 Set up Alembic scaffolding
-- [ ] 10.5.2 Create initial schema migration (user_profiles, teams)
-- [ ] 10.5.3 Update Dockerfile to run migrations on startup
+- [x] 10.5.2 Create initial schema migration (user_profiles, teams)
+- [x] 10.5.3 Update Dockerfile to run migrations on startup
 - [ ] 10.5.4 Test health endpoint
 - [ ] 10.5.5 Test profile endpoints
 
 ### 10.6 Notification Service (encypher_notifications)
 - [x] 10.6.1 Set up Alembic scaffolding
-- [ ] 10.6.2 Create initial schema migration (notifications)
-- [ ] 10.6.3 Update Dockerfile to run migrations on startup
+- [x] 10.6.2 Create initial schema migration (notifications)
+- [x] 10.6.3 Update Dockerfile to run migrations on startup
 - [ ] 10.6.4 Test health endpoint
 - [ ] 10.6.5 Test notification endpoints
 
 ### 10.7 Encoding Service (encypher_encoding)
 - [x] 10.7.1 Set up Alembic scaffolding
-- [ ] 10.7.2 Create initial schema migration (encoded_documents, signing_operations)
-- [ ] 10.7.3 Update Dockerfile to run migrations on startup
-- [ ] 10.7.4 Test health endpoint
+- [x] 10.7.2 Create initial schema migration (encoded_documents, signing_operations)
+- [x] 10.7.3 Update Dockerfile to run migrations on startup
+- [x] 10.7.4 Test health endpoint
 - [ ] 10.7.5 Test encoding endpoints
 
 ### 10.8 Verification Service (encypher_verification)
 - [x] 10.8.1 Set up Alembic scaffolding
-- [ ] 10.8.2 Create initial schema migration (verification_results, verification_logs)
-- [ ] 10.8.3 Update Dockerfile to run migrations on startup
-- [ ] 10.8.4 Test health endpoint
+- [x] 10.8.2 Create initial schema migration (verification_results, verification_logs)
+- [x] 10.8.3 Update Dockerfile to run migrations on startup
+- [x] 10.8.4 Test health endpoint
 - [ ] 10.8.5 Test verification endpoints
 
 ### 10.9 Analytics Service (encypher_analytics)
 - [x] 10.9.1 Set up Alembic scaffolding
-- [ ] 10.9.2 Create initial schema migration (usage_metrics, aggregated_metrics)
-- [ ] 10.9.3 Update Dockerfile to run migrations on startup
-- [ ] 10.9.4 Test health endpoint
+- [x] 10.9.2 Create initial schema migration (usage_metrics, aggregated_metrics)
+- [x] 10.9.3 Update Dockerfile to run migrations on startup
+- [x] 10.9.4 Test health endpoint
 - [ ] 10.9.5 Test analytics endpoints
 
 ### 10.10 Coalition Service (encypher_coalition)
 - [x] 10.10.1 Set up Alembic scaffolding
-- [ ] 10.10.2 Create initial schema migration (coalition_members, coalition_content, licensing_agreements, revenue_distributions)
-- [ ] 10.10.3 Update Dockerfile to run migrations on startup
-- [ ] 10.10.4 Test health endpoint
+- [x] 10.10.2 Create initial schema migration (coalition_members, coalition_content, licensing_agreements, revenue_distributions)
+- [x] 10.10.3 Update Dockerfile to run migrations on startup
+- [x] 10.10.4 Test health endpoint
 - [ ] 10.10.5 Test coalition endpoints
 
 ### 10.11 API Gateway
@@ -371,11 +371,11 @@
 - [ ] 10.11.3 Test CORS configuration
 
 ### 10.12 Integration Testing
-- [ ] 10.12.1 Test full auth flow (signup → login → API key → use key)
-- [ ] 10.12.2 Test cross-service communication
-- [ ] 10.12.3 Verify database isolation (no cross-DB queries)
+- [x] 10.12.1 Test full auth flow (signup → login → API key → use key)
+- [x] 10.12.2 Test cross-service communication
+- [x] 10.12.3 Verify database isolation (no cross-DB queries)
 - [ ] 10.12.4 Load test with new architecture
 
 ## Current Goal
-Complete 10.4 - 10.10 (remaining service migrations) and test all endpoints
+Complete API Gateway setup and remaining endpoint tests
 
