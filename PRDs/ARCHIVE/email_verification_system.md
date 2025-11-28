@@ -1,5 +1,9 @@
 # PRD: Email Verification & Notification System
 
+**Status:** ✅ COMPLETE (Core Features)  
+**Date:** November 26, 2025  
+**Note:** Zoho CRM integration deferred to future phase
+
 ## Overview
 Implement a comprehensive email system for auth-service with email verification flow, branded templates, and future CRM integration.
 
@@ -109,7 +113,7 @@ Complete `4.3 Document env vars in README` - Final documentation
 - SMTP credentials (need to decide provider)
 
 ## Success Criteria
-- [ ] Users receive verification email on signup
-- [ ] Users cannot log in until email is verified
-- [ ] Emails render correctly across major email clients
-- [ ] Verification tokens expire and are single-use
+- [x] Users receive verification email on signup
+- [x] Users cannot log in until email is verified
+- [x] Emails render correctly across major email clients
+- [x] Verification tokens expire and are single-use
