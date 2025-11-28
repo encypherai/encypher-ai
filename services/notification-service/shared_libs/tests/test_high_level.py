@@ -2,10 +2,10 @@
 Unit tests for the high-level API in the shared commercial library.
 """
 
-import os
-import tempfile
 import unittest
 from unittest.mock import patch
+import tempfile
+import os
 
 from encypher_commercial_shared import EncypherAI, VerificationResult
 
@@ -29,7 +29,7 @@ class TestEncypherAI(unittest.TestCase):
         encypher = EncypherAI(verbose=True)
         # Manually set trusted signers for testing
         encypher.trusted_signers = trusted_signers
-
+        
         self.assertTrue(encypher.verbose)
         self.assertEqual(encypher.trusted_signers, trusted_signers)
 
@@ -39,16 +39,16 @@ class TestEncypherAI(unittest.TestCase):
         """Test verifying metadata from text."""
         # Set up a trusted signer for the test
         self.encypher._trusted_signers = {"test-signer": "mock_key"}
-
+        
         # Mock the extraction result
         mock_extract.return_value = {"timestamp": "2025-06-03T11:00:00", "model_id": "test-model", "signer_id": "test-signer"}
-
+        
         # Mock the verification result
         mock_verify.return_value = (True, "test-signer", {"timestamp": "2025-06-03T11:00:00", "model_id": "test-model"})
-
+        
         # Call the method
         result = self.encypher.verify_from_text("Test text with metadata")
-
+        
         # Verify the result
         self.assertTrue(result.verified)
         self.assertEqual(result.signer_id, "test-signer")
@@ -61,7 +61,7 @@ class TestEncypherAI(unittest.TestCase):
         with tempfile.NamedTemporaryFile(delete=False, mode='w') as temp:
             temp.write("Test content with metadata")
             temp_path = temp.name
-
+        
         try:
             # Mock the verification result
             mock_result = VerificationResult(
@@ -70,10 +70,10 @@ class TestEncypherAI(unittest.TestCase):
                 raw_payload={"timestamp": "2025-06-03T11:00:00", "model_id": "test-model"}
             )
             mock_verify_from_text.return_value = mock_result
-
+            
             # Call the method
             result = self.encypher.verify_from_file(temp_path)
-
+            
             # Verify the result
             self.assertEqual(result, mock_result)
             mock_verify_from_text.assert_called_once()
@@ -86,10 +86,10 @@ class TestEncypherAI(unittest.TestCase):
         """Test extracting metadata from text."""
         # Mock the extraction result
         mock_extract.return_value = {"metadata": "test-metadata"}
-
+        
         # Call the method
         result = self.encypher.verify_from_text("Test text with metadata")
-
+        
         # Verify that extract_metadata was called
         mock_extract.assert_called_once_with("Test text with metadata")
 
