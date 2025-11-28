@@ -2,7 +2,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y gcc libpq-dev && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y gcc libpq-dev curl && rm -rf /var/lib/apt/lists/*
 
 # Install UV
 RUN pip install uv
@@ -23,5 +23,10 @@ COPY app ./app
 # Install dependencies
 RUN uv pip install --system .
 
-EXPOSE 8009
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8009}"]
+COPY alembic.ini ./
+COPY alembic ./alembic
+
+EXPOSE 8008
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8008}/health || exit 1
+CMD ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8008}"]

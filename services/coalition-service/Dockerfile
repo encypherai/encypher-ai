@@ -6,7 +6,8 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     gcc \
-    postgresql-client \
+    libpq-dev \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Install UV
@@ -20,13 +21,15 @@ RUN uv pip install --system -r pyproject.toml
 
 # Copy application code
 COPY app ./app
+COPY alembic.ini ./
+COPY alembic ./alembic
 
-# Expose port (Railway provides PORT env var)
-EXPOSE ${PORT:-8009}
+# Expose port
+EXPOSE 8009
 
 # Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD python -c "import requests; import os; requests.get(f'http://localhost:{os.environ.get(\"PORT\", 8009)}/health')"
+HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8009}/health || exit 1
 
-# Run the application (use PORT env var for Railway compatibility)
-CMD python -m uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8009}
+# Run migrations then start the application
+CMD ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8009}"]

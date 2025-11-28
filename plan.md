@@ -116,8 +116,12 @@
         - Added is_demo flag to all demo keys for proper signing
         - Fixed coalition indexing query (organization_members table)
         - **279 tests passing, 54 skipped (expected)**
+    - **Database-per-Service Architecture (Nov 27, 2025)**:
+        - Implemented database-per-service for scalability
+        - Auth-service and Key-service fully migrated and tested
+        - Alembic migrations run automatically on startup
 - **In Progress**:
-    - Dashboard Functional Implementation (9.0)
+    - Microservices Database Migration (10.0)
     - Stripe Integration Testing (9.10.5.8-10)
 - **Pending**:
     - Marketing Site CI/CD & Deployment (7.4.4+)
@@ -285,4 +289,93 @@
 - [x] 8.2.1 Polish Documentation (Badges, Logo, Attribution, Upsell)
 - [x] 8.2.2 Add Enterprise Trust Docs (SECURITY.md, CONTRIBUTING.md)
 - [x] 8.2.3 Verify Marketing Asset Links
+
+
+## 10.0 Database-per-Service Architecture (Worldwide Launch Scalability)
+
+### 10.1 Architecture & Infrastructure
+- [x] 10.1.1 Update DATABASE_ARCHITECTURE.md with per-service design
+- [x] 10.1.2 Create docker-compose.microservices.yml with per-service databases
+- [x] 10.1.3 Create Alembic setup automation script (scripts/setup_service_alembic.py)
+- [x] 10.1.4 Create Dockerfile template with migrations (services/templates/Dockerfile.template)
+
+### 10.2 Auth Service (encypher_auth)
+- [x] 10.2.1 Set up Alembic migrations
+- [x] 10.2.2 Update Dockerfile to run migrations on startup
+- [x] 10.2.3 Test health endpoint
+- [x] 10.2.4 Test signup/login flow
+- [x] 10.2.5 Test token verification
+
+### 10.3 Key Service (encypher_keys)
+- [x] 10.3.1 Set up Alembic migrations
+- [x] 10.3.2 Create initial schema migration (organizations, api_keys, key_usage, key_rotations)
+- [x] 10.3.3 Update Dockerfile to run migrations on startup
+- [x] 10.3.4 Test health endpoint
+- [x] 10.3.5 Test API key generation
+- [ ] 10.3.6 Test API key verification endpoint
+- [ ] 10.3.7 Test key rotation endpoint
+
+### 10.4 Billing Service (encypher_billing)
+- [x] 10.4.1 Set up Alembic scaffolding
+- [ ] 10.4.2 Create initial schema migration (subscriptions, invoices, payments)
+- [ ] 10.4.3 Update Dockerfile to run migrations on startup
+- [ ] 10.4.4 Test health endpoint
+- [ ] 10.4.5 Test subscription endpoints
+- [ ] 10.4.6 Test invoice endpoints
+
+### 10.5 User Service (encypher_users)
+- [x] 10.5.1 Set up Alembic scaffolding
+- [ ] 10.5.2 Create initial schema migration (user_profiles, teams)
+- [ ] 10.5.3 Update Dockerfile to run migrations on startup
+- [ ] 10.5.4 Test health endpoint
+- [ ] 10.5.5 Test profile endpoints
+
+### 10.6 Notification Service (encypher_notifications)
+- [x] 10.6.1 Set up Alembic scaffolding
+- [ ] 10.6.2 Create initial schema migration (notifications)
+- [ ] 10.6.3 Update Dockerfile to run migrations on startup
+- [ ] 10.6.4 Test health endpoint
+- [ ] 10.6.5 Test notification endpoints
+
+### 10.7 Encoding Service (encypher_encoding)
+- [x] 10.7.1 Set up Alembic scaffolding
+- [ ] 10.7.2 Create initial schema migration (encoded_documents, signing_operations)
+- [ ] 10.7.3 Update Dockerfile to run migrations on startup
+- [ ] 10.7.4 Test health endpoint
+- [ ] 10.7.5 Test encoding endpoints
+
+### 10.8 Verification Service (encypher_verification)
+- [x] 10.8.1 Set up Alembic scaffolding
+- [ ] 10.8.2 Create initial schema migration (verification_results, verification_logs)
+- [ ] 10.8.3 Update Dockerfile to run migrations on startup
+- [ ] 10.8.4 Test health endpoint
+- [ ] 10.8.5 Test verification endpoints
+
+### 10.9 Analytics Service (encypher_analytics)
+- [x] 10.9.1 Set up Alembic scaffolding
+- [ ] 10.9.2 Create initial schema migration (usage_metrics, aggregated_metrics)
+- [ ] 10.9.3 Update Dockerfile to run migrations on startup
+- [ ] 10.9.4 Test health endpoint
+- [ ] 10.9.5 Test analytics endpoints
+
+### 10.10 Coalition Service (encypher_coalition)
+- [x] 10.10.1 Set up Alembic scaffolding
+- [ ] 10.10.2 Create initial schema migration (coalition_members, coalition_content, licensing_agreements, revenue_distributions)
+- [ ] 10.10.3 Update Dockerfile to run migrations on startup
+- [ ] 10.10.4 Test health endpoint
+- [ ] 10.10.5 Test coalition endpoints
+
+### 10.11 API Gateway
+- [ ] 10.11.1 Update Dockerfile with health check
+- [ ] 10.11.2 Test routing to all downstream services
+- [ ] 10.11.3 Test CORS configuration
+
+### 10.12 Integration Testing
+- [ ] 10.12.1 Test full auth flow (signup → login → API key → use key)
+- [ ] 10.12.2 Test cross-service communication
+- [ ] 10.12.3 Verify database isolation (no cross-DB queries)
+- [ ] 10.12.4 Load test with new architecture
+
+## Current Goal
+Complete 10.4 - 10.10 (remaining service migrations) and test all endpoints
 
