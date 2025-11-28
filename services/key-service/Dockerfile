@@ -23,7 +23,7 @@ COPY app ./app
 RUN uv pip install --system .
 
 # Expose port (Railway provides PORT dynamically)
-EXPOSE 8004
+EXPOSE 8003
 
 # Run the application - use PORT env var for Railway compatibility
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8004}"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8003}"]
