@@ -84,6 +84,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
+        # Production domains
         f"https://{settings.marketing_domain}",
         f"https://www.{settings.marketing_domain}",
         f"https://{settings.infrastructure_domain}",
@@ -91,6 +92,9 @@ app.add_middleware(
         f"https://api.{settings.infrastructure_domain}",
         f"https://verify.{settings.infrastructure_domain}",
         f"https://dashboard.{settings.infrastructure_domain}",
+        # Staging domains
+        "https://staging.encypherai.com",
+        "https://dashboard-staging.encypherai.com",
         # Railway staging domains
         "https://marketing-site-staging-21cc.up.railway.app",
         "https://dashboard-staging-25b2.up.railway.app",
