@@ -131,18 +131,19 @@ services:
     ports:
       - "8001:8001"
     environment:
+      # Shared Variables
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
       REDIS_URL: redis://redis-cache:6379
-      SECRET_KEY: dev_secret_key_change_in_production
-      JWT_SECRET_KEY: dev_jwt_secret_key_change_in_production
-      JWT_ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: 30
-      REFRESH_TOKEN_EXPIRE_DAYS: 7
-      SERVICE_NAME: auth-service
-      SERVICE_HOST: 0.0.0.0
-      SERVICE_PORT: 8001
+      JWT_SECRET_KEY: dev_jwt_secret_key_change_in_production_min_32_chars
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+      MARKETING_SITE_URL: http://localhost:3000
+      DASHBOARD_URL: http://localhost:3001
+      API_URL: http://localhost:8001
+      ENVIRONMENT: development
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      # Service-specific
+      SERVICE_NAME: auth-service
+      SERVICE_PORT: 8001
     depends_on:
       postgres-core:
         condition: service_healthy

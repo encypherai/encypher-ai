@@ -228,14 +228,17 @@ CREATE INDEX IF NOT EXISTS idx_sessions_expires ON sessions(expires_at);
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     id VARCHAR(64) PRIMARY KEY DEFAULT 'rt_' || substr(md5(random()::text), 1, 16),
     user_id VARCHAR(64) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    session_id VARCHAR(64) REFERENCES sessions(id) ON DELETE CASCADE,
     
-    -- Token Data
-    token_hash VARCHAR(255) NOT NULL UNIQUE,
+    -- Token Data (stored as JWT, not hashed for refresh token validation)
+    token TEXT NOT NULL UNIQUE,
     
     -- Status
-    is_revoked BOOLEAN DEFAULT FALSE,
+    revoked BOOLEAN DEFAULT FALSE,
     revoked_at TIMESTAMPTZ,
+    
+    -- Client Info
+    user_agent VARCHAR(500),
+    ip_address VARCHAR(45),
     
     -- Timestamps
     created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -243,7 +246,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 );
 
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
-CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 
 -- ============================================
 -- BILLING: SUBSCRIPTION HISTORY

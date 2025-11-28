@@ -6,11 +6,6 @@ import GitHubProvider from 'next-auth/providers/github';
 const API_BASE =
   (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
-// Validate required environment variables
-if (!process.env.NEXTAUTH_SECRET) {
-  console.error('[NextAuth] NEXTAUTH_SECRET is not set!');
-}
-
 const handler = NextAuth({
   providers: [
     // Email/Password Authentication
@@ -112,52 +107,38 @@ const handler = NextAuth({
   session: {
     strategy: 'jwt',
   },
-  // Cookie configuration for cross-subdomain auth
-  // Set NEXTAUTH_COOKIE_DOMAIN to enable SSO across subdomains:
-  // - Railway staging: .up.railway.app
-  // - Production: .encypherai.com
-  // - Local dev: leave unset (cookies scoped to localhost)
-  cookies: (() => {
-    const cookieDomain = process.env.NEXTAUTH_COOKIE_DOMAIN;
-    if (!cookieDomain) return undefined;
-    
-    // Use secure cookies when domain is set (assumes HTTPS in staging/production)
-    const isSecure = !!cookieDomain;
-    const cookiePrefix = isSecure ? '__Secure-' : '';
-    
-    return {
-      sessionToken: {
-        name: `${cookiePrefix}next-auth.session-token`,
-        options: {
-          domain: cookieDomain,
-          httpOnly: true,
-          sameSite: 'lax' as const,
-          path: '/',
-          secure: isSecure,
-        },
+  cookies: {
+    sessionToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
+      options: {
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
       },
-      callbackUrl: {
-        name: `${cookiePrefix}next-auth.callback-url`,
-        options: {
-          domain: cookieDomain,
-          httpOnly: true,
-          sameSite: 'lax' as const,
-          path: '/',
-          secure: isSecure,
-        },
+    },
+    callbackUrl: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
+      options: {
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
       },
-      csrfToken: {
-        name: `${cookiePrefix}next-auth.csrf-token`,
-        options: {
-          domain: cookieDomain,
-          httpOnly: true,
-          sameSite: 'lax' as const,
-          path: '/',
-          secure: isSecure,
-        },
+    },
+    csrfToken: {
+      name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.csrf-token' : 'next-auth.csrf-token',
+      options: {
+        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
       },
-    };
-  })(),
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET,
 });
 

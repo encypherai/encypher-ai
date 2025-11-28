@@ -1,5 +1,10 @@
 """
 Configuration management for Auth Service
+
+Environment Variables:
+- Shared (from Railway shared vars): DATABASE_URL, REDIS_URL, JWT_SECRET_KEY, 
+  ALLOWED_ORIGINS, MARKETING_SITE_URL, DASHBOARD_URL
+- Service-specific: SMTP_*, GOOGLE_*, GITHUB_*, etc.
 """
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
@@ -8,51 +13,59 @@ from typing import List
 class Settings(BaseSettings):
     """Application settings"""
     
-    # Service Configuration
+    # ===========================================
+    # SERVICE CONFIGURATION (service-specific)
+    # ===========================================
     SERVICE_NAME: str = "auth-service"
     SERVICE_PORT: int = 8001
     SERVICE_HOST: str = "0.0.0.0"
     LOG_LEVEL: str = "INFO"
+    ENVIRONMENT: str = "development"
     
-    # Database
+    # ===========================================
+    # SHARED: Database (from shared vars)
+    # ===========================================
     DATABASE_URL: str
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10
     
-    # Redis
-    REDIS_URL: str = "redis://localhost:6379/0"
-    REDIS_PASSWORD: str = ""
-    REDIS_DB: int = 0
+    # ===========================================
+    # SHARED: Redis (from shared vars)
+    # ===========================================
+    REDIS_URL: str = "redis://localhost:6379"
     
-    # JWT Configuration
+    # ===========================================
+    # SHARED: JWT Configuration (from shared vars)
+    # ===========================================
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     
-    # OAuth Providers
+    # ===========================================
+    # SHARED: CORS (from shared vars)
+    # ===========================================
+    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001"
+    
+    # ===========================================
+    # SHARED: Frontend URLs (from shared vars)
+    # Used for email links, redirects, etc.
+    # ===========================================
+    MARKETING_SITE_URL: str = "http://localhost:3000"
+    DASHBOARD_URL: str = "http://localhost:3001"
+    API_URL: str = "http://localhost:8000"
+    
+    # ===========================================
+    # SERVICE-SPECIFIC: OAuth Providers
+    # ===========================================
     GOOGLE_CLIENT_ID: str = ""
     GOOGLE_CLIENT_SECRET: str = ""
     GITHUB_CLIENT_ID: str = ""
     GITHUB_CLIENT_SECRET: str = ""
     
-    # CORS
-    ALLOWED_ORIGINS: str = "http://localhost:3000,http://localhost:3001,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com"
-    
-    # API Gateway
-    API_GATEWAY_URL: str = "http://localhost:8000"
-
-    # Service URLs
-    COALITION_SERVICE_URL: str = "http://localhost:8009"
-
-    # Service Discovery
-    CONSUL_HOST: str = "localhost"
-    CONSUL_PORT: int = 8500
-    
-    # Monitoring
-    PROMETHEUS_PORT: int = 9001
-    
-    # Email Configuration
+    # ===========================================
+    # SERVICE-SPECIFIC: Email Configuration
+    # ===========================================
     SMTP_HOST: str = "smtp.zoho.com"
     SMTP_PORT: int = 587
     SMTP_USER: str = ""
@@ -61,13 +74,16 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "noreply@encypherai.com"
     EMAIL_FROM_NAME: str = "EncypherAI"
     
-    # Frontend URLs (for email links)
-    FRONTEND_URL: str = "http://localhost:3000"
-    DASHBOARD_URL: str = ""  # If empty, uses FRONTEND_URL/dashboard
-    
-    # Email Verification
+    # ===========================================
+    # SERVICE-SPECIFIC: Token Expiration
+    # ===========================================
     VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
+    
+    # ===========================================
+    # INTERNAL SERVICE URLS (for service-to-service)
+    # ===========================================
+    COALITION_SERVICE_URL: str = "http://localhost:8009"
     
     model_config = SettingsConfigDict(
         env_file=".env",
