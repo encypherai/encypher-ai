@@ -1,6 +1,6 @@
 # 📚 EncypherAI Commercial - Documentation Index
 
-**Last Updated**: October 30, 2025  
+**Last Updated**: November 27, 2025  
 **Repository**: encypherai-commercial  
 **Documentation Status**: ✅ Complete & Current
 
@@ -130,11 +130,12 @@ Use this index to jump directly to the documentation you need.
 #### Services Overview
 | Document | Purpose |
 |----------|---------|
-| [services/README.md](./services/README.md) | **Microservices architecture** (485 lines) |
-| [services/docker-compose.dev.yml](./services/docker-compose.dev.yml) | Development environment |
+| [services/README.md](./services/README.md) | **Microservices architecture** |
+| [services/ENV_VARS_MAPPING.md](./services/ENV_VARS_MAPPING.md) | Environment variables mapping |
+| [docker-compose.microservices.yml](./docker-compose.microservices.yml) | Full microservices stack |
 
-**Architecture**: 9 services (2 active, 7 planned)  
-**Status**: 🚧 In Development
+**Architecture**: 9 services with database-per-service  
+**Status**: ✅ Production Ready (Nov 2025)
 
 #### Auth Service
 | Document | Purpose |
