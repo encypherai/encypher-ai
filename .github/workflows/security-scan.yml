@@ -101,3 +101,55 @@ jobs:
       - name: Run mypy on enterprise-api
         run: mypy enterprise_api/app/ --config-file mypy.ini || true
         continue-on-error: true
+
+  test-coverage:
+    name: Test Coverage
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+      
+      - name: Install enterprise-api dependencies
+        run: |
+          cd enterprise_api
+          uv sync
+      
+      - name: Run enterprise-api tests with coverage
+        run: |
+          cd enterprise_api
+          uv run pytest tests/ --cov=app --cov-report=xml --cov-report=term-missing -v
+        env:
+          DATABASE_URL: postgresql://test:test@localhost:5432/test
+          REDIS_URL: redis://localhost:6379/0
+        continue-on-error: true
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: enterprise_api/coverage.xml
+          fail_ci_if_error: false
