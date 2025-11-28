@@ -1,0 +1,193 @@
+# Traefik Dynamic Configuration for Railway
+# Routes requests to microservices via Railway's internal networking
+
+http:
+  routers:
+    # Health check is handled by Traefik's built-in /ping endpoint
+    # No need for a separate health router
+
+    # ===========================================
+    # API ROUTING (path-based)
+    # ===========================================
+    
+    # Key Service - API key management
+    api-keys:
+      rule: "PathPrefix(`/api/v1/keys`)"
+      service: key-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Analytics Service - usage stats
+    api-analytics:
+      rule: "PathPrefix(`/api/v1/analytics`)"
+      service: analytics-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Billing Service - subscriptions, payments
+    api-billing:
+      rule: "PathPrefix(`/api/v1/billing`)"
+      service: billing-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # User Service - user profiles
+    api-users:
+      rule: "PathPrefix(`/api/v1/users`) || PathPrefix(`/api/v1/profile`)"
+      service: user-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Verification Service - content verification
+    api-verify:
+      rule: "PathPrefix(`/api/v1/verify`)"
+      service: verification-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Encoding Service - document encoding
+    api-encode:
+      rule: "PathPrefix(`/api/v1/encode`) || PathPrefix(`/api/v1/documents`)"
+      service: encoding-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Coalition Service - publisher coalition
+    api-coalition:
+      rule: "PathPrefix(`/api/v1/coalition`)"
+      service: coalition-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Notification Service - notifications
+    api-notifications:
+      rule: "PathPrefix(`/api/v1/notifications`)"
+      service: notification-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Auth Service - authentication (default for /api/v1/auth/*)
+    api-auth:
+      rule: "PathPrefix(`/api/v1/auth`)"
+      service: auth-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Enterprise API - signing, batch, streaming, etc.
+    api-enterprise:
+      rule: "PathPrefix(`/api/v1/sign`) || PathPrefix(`/api/v1/batch`) || PathPrefix(`/api/v1/merkle`) || PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/onboarding`) || PathPrefix(`/api/v1/streaming`) || PathPrefix(`/api/v1/chat`) || PathPrefix(`/api/v1/licensing`) || PathPrefix(`/api/v1/usage`) || PathPrefix(`/api/v1/audit`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/enterprise`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+  # ===========================================
+  # SERVICES (Railway internal networking)
+  # ===========================================
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://auth-service.railway.internal:8080"
+
+    key-service:
+      loadBalancer:
+        servers:
+          - url: "http://key-service.railway.internal:8080"
+
+    analytics-service:
+      loadBalancer:
+        servers:
+          - url: "http://analytics-service.railway.internal:8080"
+
+    billing-service:
+      loadBalancer:
+        servers:
+          - url: "http://billing-service.railway.internal:8080"
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: "http://user-service.railway.internal:8080"
+
+    verification-service:
+      loadBalancer:
+        servers:
+          - url: "http://verification-service.railway.internal:8080"
+
+    encoding-service:
+      loadBalancer:
+        servers:
+          - url: "http://encoding-service.railway.internal:8080"
+
+    coalition-service:
+      loadBalancer:
+        servers:
+          - url: "http://coalition-service.railway.internal:8080"
+
+    notification-service:
+      loadBalancer:
+        servers:
+          - url: "http://notification-service.railway.internal:8080"
+
+    enterprise-api:
+      loadBalancer:
+        servers:
+          - url: "http://enterprise-api.railway.internal:8080"
+
+  # ===========================================
+  # MIDDLEWARES
+  # ===========================================
+  middlewares:
+    # CORS middleware
+    cors:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        accessControlAllowHeaders:
+          - "*"
+        accessControlAllowOriginList:
+          - "http://localhost:3000"
+          - "http://localhost:3001"
+          - "https://staging.encypherai.com"
+          - "https://dashboard-staging.encypherai.com"
+          - "https://encypherai.com"
+          - "https://www.encypherai.com"
+          - "https://dashboard.encypherai.com"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 100
+        addVaryHeader: true
