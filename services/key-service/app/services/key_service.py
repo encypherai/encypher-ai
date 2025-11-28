@@ -57,7 +57,7 @@ class KeyService:
         query = db.query(ApiKey).filter(ApiKey.user_id == user_id)
         
         if not include_revoked:
-            query = query.filter(not ApiKey.is_revoked)
+            query = query.filter(ApiKey.is_revoked == False)
         
         return query.order_by(ApiKey.created_at.desc()).all()
     
@@ -84,8 +84,8 @@ class KeyService:
         # Find key in database
         db_key = db.query(ApiKey).filter(
             ApiKey.key_hash == key_hash,
-            ApiKey.is_active,
-            not ApiKey.is_revoked,
+            ApiKey.is_active == True,
+            ApiKey.is_revoked == False,
         ).first()
         
         if not db_key:
