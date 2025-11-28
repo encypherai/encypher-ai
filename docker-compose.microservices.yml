@@ -139,6 +139,42 @@ services:
       timeout: 5s
       retries: 5
 
+  # User Service Database
+  postgres-users:
+    image: postgres:15-alpine
+    container_name: encypher-postgres-users
+    environment:
+      POSTGRES_DB: encypher_users
+      POSTGRES_USER: encypher
+      POSTGRES_PASSWORD: encypher_dev_password
+    ports:
+      - "5439:5432"
+    volumes:
+      - postgres_users_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U encypher -d encypher_users"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Notification Service Database
+  postgres-notifications:
+    image: postgres:15-alpine
+    container_name: encypher-postgres-notifications
+    environment:
+      POSTGRES_DB: encypher_notifications
+      POSTGRES_USER: encypher
+      POSTGRES_PASSWORD: encypher_dev_password
+    ports:
+      - "5440:5432"
+    volumes:
+      - postgres_notifications_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U encypher -d encypher_notifications"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ============================================
   # REDIS (Shared Cache & Message Broker)
   # ============================================
@@ -391,6 +427,70 @@ services:
       timeout: 10s
       retries: 3
 
+  # User Service (Port 8002)
+  user-service:
+    build: ./services/user-service
+    container_name: encypher-user-service
+    ports:
+      - "8002:8002"
+    environment:
+      # Service-specific database
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-users:5432/encypher_users
+      # Shared services
+      REDIS_URL: redis://redis:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      # Service config
+      SERVICE_NAME: user-service
+      SERVICE_PORT: 8002
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      # CORS
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    depends_on:
+      postgres-users:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Notification Service (Port 8008)
+  notification-service:
+    build: ./services/notification-service
+    container_name: encypher-notification-service
+    ports:
+      - "8008:8008"
+    environment:
+      # Service-specific database
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-notifications:5432/encypher_notifications
+      # Shared services
+      REDIS_URL: redis://redis:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      # Service config
+      SERVICE_NAME: notification-service
+      SERVICE_PORT: 8008
+      ENVIRONMENT: development
+      LOG_LEVEL: INFO
+      # CORS
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
+    depends_on:
+      postgres-notifications:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8008/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # API Gateway (Port 8000)
   api-gateway:
     build: ./services/api-gateway
@@ -431,4 +531,6 @@ volumes:
   postgres_verification_data:
   postgres_analytics_data:
   postgres_coalition_data:
+  postgres_users_data:
+  postgres_notifications_data:
   redis_data:

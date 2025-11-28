@@ -327,14 +327,14 @@
 - [x] 10.5.1 Set up Alembic scaffolding
 - [x] 10.5.2 Create initial schema migration (user_profiles, teams)
 - [x] 10.5.3 Update Dockerfile to run migrations on startup
-- [ ] 10.5.4 Test health endpoint
+- [x] 10.5.4 Test health endpoint
 - [ ] 10.5.5 Test profile endpoints
 
 ### 10.6 Notification Service (encypher_notifications)
 - [x] 10.6.1 Set up Alembic scaffolding
 - [x] 10.6.2 Create initial schema migration (notifications)
 - [x] 10.6.3 Update Dockerfile to run migrations on startup
-- [ ] 10.6.4 Test health endpoint
+- [x] 10.6.4 Test health endpoint
 - [ ] 10.6.5 Test notification endpoints
 
 ### 10.7 Encoding Service (encypher_encoding)
@@ -366,9 +366,9 @@
 - [ ] 10.10.5 Test coalition endpoints
 
 ### 10.11 API Gateway
-- [ ] 10.11.1 Update Dockerfile with health check
-- [ ] 10.11.2 Test routing to all downstream services
-- [ ] 10.11.3 Test CORS configuration
+- [x] 10.11.1 Update Dockerfile with health check
+- [x] 10.11.2 Test routing to all downstream services
+- [x] 10.11.3 Test CORS configuration
 
 ### 10.12 Integration Testing
 - [x] 10.12.1 Test full auth flow (signup → login → API key → use key)
@@ -377,5 +377,13 @@
 - [ ] 10.12.4 Load test with new architecture
 
 ## Current Goal
-Complete API Gateway setup and remaining endpoint tests
+Database-per-service architecture complete. All 10 services running with isolated databases.
+
+## Completed (Nov 27, 2025)
+- All 10 microservices running with database-per-service architecture
+- Alembic migrations run automatically on startup
+- Health endpoints verified for all services
+- Full auth flow tested (signup → login → API key → verify)
+- API Gateway routing verified
+- Integration test suite created (scripts/test_microservices.py)
 

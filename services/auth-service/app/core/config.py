@@ -96,6 +96,11 @@ class Settings(BaseSettings):
     def allowed_origins_list(self) -> List[str]:
         """Parse ALLOWED_ORIGINS into a list"""
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
+    
+    @property
+    def FRONTEND_URL(self) -> str:
+        """Alias for MARKETING_SITE_URL for backward compatibility"""
+        return self.MARKETING_SITE_URL
 
 
 # Global settings instance
