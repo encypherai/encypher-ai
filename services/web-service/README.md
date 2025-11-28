@@ -1,20 +1,35 @@
 # EncypherAI Web Service
 
-Backend service for the EncypherAI marketing website, handling contact forms, demo requests, and web analytics. 
+Backend service for the EncypherAI marketing website, handling demo requests, sales contact forms, and web analytics.
 
 ## Features
 
-- **Demo Requests**: API endpoints to submit and manage demo requests.
-- **Analytics**: Event tracking for page views and user interactions.
-- **Email Notifications**: Automated email notifications for new leads.
-- **Database**: PostgreSQL integration with Alembic migrations.
+- **AI Demo Requests**: `/api/v1/ai-demo/demo-requests` - Handle demo requests from AI demo page
+- **Publisher Demo Requests**: `/api/v1/publisher-demo/demo-requests` - Handle demo requests from publisher demo page
+- **Sales Contact**: `/api/v1/sales/enterprise-requests` and `/api/v1/sales/general-requests`
+- **Analytics**: Event tracking for page views and user interactions
+- **Email Notifications**: Automated email notifications for new leads and confirmations
+- **Database**: PostgreSQL integration with Alembic migrations
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/ai-demo/demo-requests` | POST | Submit AI demo request |
+| `/api/v1/ai-demo/analytics/events` | POST | Track AI demo analytics |
+| `/api/v1/publisher-demo/demo-requests` | POST | Submit publisher demo request |
+| `/api/v1/publisher-demo/analytics/events` | POST | Track publisher demo analytics |
+| `/api/v1/sales/enterprise-requests` | POST | Submit enterprise sales inquiry |
+| `/api/v1/sales/general-requests` | POST | Submit general sales inquiry |
+| `/api/v1/demo-requests` | POST/GET | Legacy generic demo requests |
+| `/api/v1/analytics` | POST | Legacy generic analytics |
+| `/health` | GET | Health check |
 
 ## Setup
 
-1. **Install Dependencies**:
-   This project uses `poetry` for dependency management.
+1. **Install Dependencies** (using UV):
    ```bash
-   poetry install
+   uv sync
    ```
 
 2. **Environment Variables**:
@@ -26,23 +41,35 @@ Backend service for the EncypherAI marketing website, handling contact forms, de
 3. **Database Migration**:
    Run Alembic migrations to set up the database schema.
    ```bash
-   alembic upgrade head
+   uv run alembic upgrade head
    ```
 
 4. **Run Server**:
    ```bash
-   uvicorn app.main:app --reload
+   uv run uvicorn app.main:app --reload --port 8002
    ```
 
 ## API Documentation
 
-Once the server is running, you can access the API documentation at:
-- Swagger UI: `http://localhost:8000/api/v1/docs`
-- ReDoc: `http://localhost:8000/api/v1/redoc`
+Once the server is running, access the API documentation at:
+- Swagger UI: `http://localhost:8002/api/v1/docs`
+- ReDoc: `http://localhost:8002/api/v1/redoc`
 
 ## Testing
 
-Run the test suite using `pytest`:
+Run the test suite:
 ```bash
-pytest
+uv run pytest
 ```
+
+## Environment Variables
+
+See `.env.example` for all available configuration options:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `POSTGRES_SERVER` | Database host | `localhost` |
+| `POSTGRES_DB` | Database name | `encypher_web` |
+| `EMAILS_ENABLED` | Enable email sending | `false` |
+| `SALES_EMAIL` | Sales notification recipient | `sales@encypherai.com` |
+| `DEMO_EMAIL` | Demo notification recipient | `demo@encypherai.com` |

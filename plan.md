@@ -5,41 +5,25 @@
 
 ---
 
-## Current Architecture Status
+## Current Goal
 
-### ✅ Completed Infrastructure
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| **Enterprise API** | ✅ Production Ready | C2PA signing, Merkle trees, 279 tests passing |
-| **Enterprise SDK** | ✅ Production Ready | Python SDK with CLI, batch operations |
-| **Microservices (9)** | ✅ Running | Database-per-service architecture |
-| **Dashboard** | ✅ Functional | API keys, analytics, billing UI |
-| **Marketing Site** | ✅ Functional | Pricing, SSO with dashboard |
-| **WordPress Plugin** | ✅ Complete | Free/Pro/Enterprise tiers |
-
-### 🔧 Microservices Architecture
-
-All services running with isolated databases and Alembic migrations:
-
-| Service | Port | Database | Status |
-|---------|------|----------|--------|
-| auth-service | 8001 | encypher_auth | ✅ |
-| user-service | 8002 | encypher_users | ✅ |
-| key-service | 8003 | encypher_keys | ✅ |
-| encoding-service | 8004 | encypher_encoding | ✅ |
-| verification-service | 8005 | encypher_verification | ✅ |
-| analytics-service | 8006 | encypher_analytics | ✅ |
-| billing-service | 8007 | encypher_billing | ✅ |
-| notification-service | 8008 | encypher_notifications | ✅ |
-| coalition-service | 8009 | encypher_coalition | ✅ |
-| enterprise-api | 9000 | encypher_core + encypher_content | ✅ |
+Complete `15.0 - Web Service Migration`
 
 ---
 
 ## Active Work Items
 
 ### 🚧 In Progress
+
+- [x] **15.0 Web Service Migration** (Marketing Site Backend) ✅
+  - [x] 15.1 Convert pyproject.toml from Poetry to UV
+  - [x] 15.2 Add ai-demo router (POST /demo-requests, POST /analytics/events)
+  - [x] 15.3 Add publisher-demo router (POST /demo-requests, POST /analytics/events)
+  - [x] 15.4 Add sales router (POST /enterprise-requests, POST /general-requests)
+  - [x] 15.5 Add email service for notifications
+  - [x] 15.6 Update marketing site to use web-service URL
+  - [x] 15.7 Test all endpoints (10/10 passed)
+  - [x] 15.8 Update documentation
 
 - [ ] **11.0 Production Deployment**
   - [ ] 11.1 Railway deployment configuration

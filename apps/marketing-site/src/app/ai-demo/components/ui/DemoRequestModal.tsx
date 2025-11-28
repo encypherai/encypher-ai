@@ -38,8 +38,8 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
     setIsSubmitting(true);
 
     try {
-      // Use backend API URL
-      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+      // Use web-service URL for demo requests
+      const baseUrl = process.env.NEXT_PUBLIC_WEB_SERVICE_URL || 'http://localhost:8002';
       const url = `${baseUrl}/api/v1/ai-demo/demo-requests`;
       
       const response = await fetch(url, {

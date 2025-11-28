@@ -1,3 +1,11 @@
-from .email import send_demo_confirmation, send_email, send_new_lead_notification
+from .email import (
+    email_client,
+    send_demo_confirmation,
+    send_demo_notification,
+)
 
-__all__ = ["send_email", "send_new_lead_notification", "send_demo_confirmation"]
+__all__ = [
+    "email_client",
+    "send_demo_notification",
+    "send_demo_confirmation",
+]

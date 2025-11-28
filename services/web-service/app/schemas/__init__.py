@@ -2,7 +2,6 @@ from .analytics_event import (
     AnalyticsEventCreate,
     AnalyticsEventInDB,
     AnalyticsEventResponse,
-    AnalyticsEventType,
 )
 from .demo_request import DemoRequest, DemoRequestCreate, DemoRequestUpdate
 
@@ -13,5 +12,4 @@ __all__ = [
     "AnalyticsEventCreate",
     "AnalyticsEventResponse",
     "AnalyticsEventInDB",
-    "AnalyticsEventType",
 ]

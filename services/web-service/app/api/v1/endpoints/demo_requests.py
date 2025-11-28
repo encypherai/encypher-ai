@@ -5,9 +5,10 @@ from sqlalchemy.orm import Session
 
 from app import crud, models, schemas
 from app.api import deps
-from app.services import email
+from app.services.email import send_demo_confirmation, send_demo_notification
 
 router = APIRouter()
+
 
 @router.post("/", response_model=schemas.DemoRequest)
 def create_demo_request(
@@ -23,8 +24,10 @@ def create_demo_request(
     demo_request = crud.demo_request.create(db, obj_in=demo_request_in)
 
     # Send email notifications
-    background_tasks.add_task(email.send_new_lead_notification, demo_request)
-    background_tasks.add_task(email.send_demo_confirmation, demo_request.email, demo_request.name)
+    background_tasks.add_task(send_demo_notification, demo_request, "general")
+    background_tasks.add_task(
+        send_demo_confirmation, demo_request.email, demo_request.name, "general"
+    )
 
     return demo_request
 

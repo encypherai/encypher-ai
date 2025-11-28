@@ -30,9 +30,10 @@ class Settings(BaseSettings):
 
     # Database - credentials should be set via environment variables
     POSTGRES_SERVER: str = "localhost"
+    POSTGRES_PORT: int = 5432
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = ""  # noqa: S105 - Must be set via env
-    POSTGRES_DB: str = "web_service"
+    POSTGRES_DB: str = "encypher_web"
     SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
@@ -40,11 +41,13 @@ class Settings(BaseSettings):
     def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
         if isinstance(v, str):
             return v
+        port = values.data.get("POSTGRES_PORT", 5432)
+        host = f"{values.data.get('POSTGRES_SERVER')}:{port}"
         return PostgresDsn.build(
             scheme="postgresql+psycopg2",
             username=values.data.get("POSTGRES_USER"),
             password=values.data.get("POSTGRES_PASSWORD"),
-            host=values.data.get("POSTGRES_SERVER"),
+            host=host,
             path=f"{values.data.get('POSTGRES_DB') or ''}",
         )
 
@@ -53,10 +56,12 @@ class Settings(BaseSettings):
     SMTP_PORT: int = 587
     SMTP_HOST: str = "smtp.gmail.com"
     SMTP_USER: str = ""
-    SMTP_PASSWORD: str = ""
+    SMTP_PASSWORD: str = ""  # noqa: S105
     EMAILS_ENABLED: bool = False
     EMAIL_FROM_EMAIL: str = "noreply@encypherai.com"
-    EMAIL_FROM_NAME: str = "EncypherAI"
+    EMAIL_FROM_NAME: str = "Encypher"
+    SALES_EMAIL: str = "sales@encypherai.com"
+    DEMO_EMAIL: str = "demo@encypherai.com"
 
     # Web Analytics
     ANALYTICS_ENABLED: bool = True

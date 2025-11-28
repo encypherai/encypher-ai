@@ -2,9 +2,9 @@
  * API client for the marketing site web-service
  */
 
-// Base URL for the web-service (enterprise-api for content operations)
-const API_BASE_URL = process.env.NEXT_PUBLIC_WEB_SERVICE_URL || 'http://localhost:8002';
-const API_V1 = `${API_BASE_URL}/api/v1`;
+// Web service URL for demo requests, analytics, and sales forms
+const WEB_SERVICE_URL = process.env.NEXT_PUBLIC_WEB_SERVICE_URL || 'http://localhost:8002';
+const WEB_API_V1 = `${WEB_SERVICE_URL}/api/v1`;
 
 // Auth service URL (separate microservice for authentication)
 const AUTH_SERVICE_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8001';
@@ -66,7 +66,7 @@ export async function fetchApi<T>(endpoint: string, options: FetchApiOptions = {
     if (endpoint.startsWith('/auth/')) {
       url = `${AUTH_API_V1}${endpoint}`;
     } else {
-      url = `${API_V1}${endpoint}`;
+      url = `${WEB_API_V1}${endpoint}`;
     }
   }
   

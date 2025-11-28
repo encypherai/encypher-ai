@@ -6,11 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
 from app.models.analytics_event import AnalyticsEvent
-from app.schemas.analytics_event import (
-    AnalyticsEventCreate,
-    AnalyticsEventType,
-    AnalyticsEventUpdate,
-)
+from app.schemas.analytics_event import AnalyticsEventCreate
+
+
+# Simple update schema since we don't need complex updates for analytics
+class AnalyticsEventUpdate:
+    pass
 
 
 class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, AnalyticsEventUpdate]):
@@ -100,7 +101,7 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
     ) -> List[AnalyticsEvent]:
         """Get page view events with optional filters"""
         query = db.query(self.model).filter(
-            self.model.event_type == AnalyticsEventType.PAGE_VIEW
+            self.model.event_type == "page_view"
         )
 
         if page_url:
