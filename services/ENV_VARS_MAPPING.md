@@ -2,23 +2,47 @@
 
 This document maps which shared environment variables are used by each service.
 
+## All Services (13 total)
+
+### Backend Microservices (9)
+1. auth-service
+2. key-service
+3. billing-service
+4. user-service
+5. notification-service
+6. encoding-service
+7. verification-service
+8. analytics-service
+9. coalition-service
+
+### APIs (1)
+10. enterprise-api
+
+### Frontend Apps (2)
+11. marketing-site (Next.js)
+12. dashboard (Next.js)
+
+---
+
 ## Shared Variables (Set in Railway Shared Variables)
 
 | Variable | Description | Used By |
 |----------|-------------|---------|
 | `DATABASE_URL` | Core DB connection (users, orgs, billing) | auth-service, key-service, billing-service, user-service, notification-service |
 | `CONTENT_DATABASE_URL` | Content DB connection (documents, analytics) | encoding-service, verification-service, analytics-service, coalition-service |
-| `REDIS_URL` | Redis cache connection | ALL services |
-| `JWT_SECRET_KEY` | JWT signing key | auth-service (+ any service validating JWTs) |
+| `REDIS_URL` | Redis cache connection | ALL backend services |
+| `JWT_SECRET_KEY` | JWT signing key | auth-service |
 | `NEXTAUTH_SECRET` | NextAuth session secret | marketing-site, dashboard |
 | `ALLOWED_ORIGINS` | CORS allowed origins | ALL backend services |
 | `AUTH_SERVICE_URL` | Internal auth service URL | key-service, billing-service, encoding-service, verification-service, analytics-service, notification-service, coalition-service |
 | `KEY_SERVICE_URL` | Internal key service URL | encoding-service, verification-service, enterprise-api |
-| `MARKETING_SITE_URL` | Public marketing site URL | auth-service, notification-service, marketing-site, dashboard |
-| `DASHBOARD_URL` | Public dashboard URL | auth-service, notification-service, marketing-site, dashboard |
-| `API_URL` | Public API URL | auth-service, marketing-site, dashboard |
-| `ENVIRONMENT` | Environment name (development/staging/production) | ALL services |
-| `LOG_LEVEL` | Logging level | ALL services |
+| `NEXT_PUBLIC_API_URL` | Public API URL (for frontends) | marketing-site, dashboard |
+| `NEXT_PUBLIC_MARKETING_SITE_URL` | Public marketing site URL | marketing-site, dashboard |
+| `NEXT_PUBLIC_DASHBOARD_URL` | Public dashboard URL | marketing-site, dashboard |
+| `MARKETING_SITE_URL` | Marketing site URL (backend use) | auth-service, notification-service |
+| `DASHBOARD_URL` | Dashboard URL (backend use) | auth-service, notification-service |
+| `ENVIRONMENT` | Environment name | ALL services |
+| `LOG_LEVEL` | Logging level | ALL backend services |
 
 ## Service-Specific Variables
 
