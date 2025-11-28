@@ -14,6 +14,9 @@ shared_commercial_libs/
 │       ├── core/           # EncypherAI wrapper (CLI tools)
 │       │   ├── api.py      # EncypherAI class, VerificationResult
 │       │   └── utils.py    # scan_directory, generate_report
+│       ├── db/             # Database utilities (microservices)
+│       │   ├── __init__.py
+│       │   └── startup.py  # ensure_database_ready, check_database_connection
 │       └── email/          # Email functionality (services)
 │           ├── sender.py   # EmailConfig, send_email
 │           ├── emails.py   # Pre-built email functions
@@ -35,6 +38,46 @@ from encypher_commercial_shared.core import scan_directory, generate_report
 encypher = EncypherAI(trusted_signers={"signer1": "key.pem"})
 result = encypher.verify_from_text("Text with metadata")
 ```
+
+### `db` - Database Startup Utilities
+Database connection validation and migration utilities for microservices.
+
+```python
+from encypher_commercial_shared.db import (
+    ensure_database_ready,
+    check_database_connection,
+    run_migrations_if_needed,
+    DatabaseStartupError,
+)
+
+# Simple usage - validates connection and runs migrations
+ensure_database_ready(
+    service_name="auth-service",
+    alembic_config_path="alembic.ini"
+)
+
+# Or with more control
+check_database_connection(
+    database_url=os.environ["DATABASE_URL"],
+    max_retries=5,
+    retry_delay=2.0,
+    service_name="auth-service"
+)
+
+# Run migrations separately
+run_migrations_if_needed(
+    alembic_config_path="alembic.ini",
+    service_name="auth-service",
+    auto_upgrade=True
+)
+```
+
+**Features:**
+- Connection validation with configurable retries
+- Automatic Alembic migration detection and execution
+- Clear error messages for common issues (empty URL, invalid format)
+- Graceful handling of missing alembic.ini
+- Logging with service name prefix
 
 ### `email` - Email Service
 Shared email functionality for microservices.
