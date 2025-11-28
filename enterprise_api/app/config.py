@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Domains
     marketing_domain: str = "encypher.ai"
     infrastructure_domain: str = "encypherai.com"
+    
+    # CORS - comma-separated list of allowed origins
+    allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 
     # Demo / sandbox API key support
     demo_api_key: Optional[str] = None

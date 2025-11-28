@@ -80,10 +80,16 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS middleware (configure allowed origins)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
+# CORS middleware - use ALLOWED_ORIGINS env var for flexibility
+# Falls back to domain-based origins if env var not set
+def get_cors_origins():
+    """Get CORS origins from env var or build from domain settings."""
+    if settings.allowed_origins and settings.allowed_origins != "http://localhost:3000,http://localhost:3001":
+        # Use explicit ALLOWED_ORIGINS env var
+        return [origin.strip() for origin in settings.allowed_origins.split(",")]
+    
+    # Fall back to domain-based origins
+    return [
         # Production domains
         f"https://{settings.marketing_domain}",
         f"https://www.{settings.marketing_domain}",
@@ -95,13 +101,14 @@ app.add_middleware(
         # Staging domains
         "https://staging.encypherai.com",
         "https://dashboard-staging.encypherai.com",
-        # Railway staging domains
-        "https://marketing-site-staging-21cc.up.railway.app",
-        "https://dashboard-staging-25b2.up.railway.app",
         # Local development
         "http://localhost:3000",
         "http://localhost:3001",
-    ],
+    ]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=get_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
