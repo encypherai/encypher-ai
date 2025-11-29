@@ -244,18 +244,42 @@ if (-not $SkipDocker) {
     Write-Step "5/8" "Skipping migrations (Docker skipped)"
 }
 
-# Step 6: Start Enterprise API
+# Step 6: Start Microservices and Enterprise API
 if (-not $SkipDocker) {
-    Write-Step "6/8" "Starting Enterprise API..."
+    Write-Step "6/8" "Starting microservices and Enterprise API..."
     
-    # Build and start enterprise-api
-    docker-compose -f docker-compose.full-stack.yml up -d enterprise-api 2>$null
+    # Build and start essential microservices + enterprise-api
+    # auth-service: Authentication (required for login)
+    # user-service: User management
+    # key-service: API key management
+    docker-compose -f docker-compose.full-stack.yml up -d auth-service user-service key-service enterprise-api 2>$null
     if ($LASTEXITCODE -ne 0) {
-        Write-Err "Failed to start Enterprise API"
+        Write-Err "Failed to start services"
     } else {
-        # Wait for it to be healthy
+        # Wait for auth-service (required for login)
         $retryCount = 0
         $maxRetries = 30
+        do {
+            $retryCount++
+            try {
+                $health = Invoke-RestMethod -Uri "http://localhost:8001/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
+                if ($health.status -eq "healthy") {
+                    Write-Success "Auth Service is ready (port 8001)"
+                    break
+                }
+            } catch {
+                # Still starting
+            }
+            Write-Host "    Waiting for Auth Service... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
+            Start-Sleep -Seconds 2
+        } while ($retryCount -lt $maxRetries)
+        
+        if ($retryCount -ge $maxRetries) {
+            Write-Warn "Auth Service may still be starting (check docker logs)"
+        }
+        
+        # Wait for Enterprise API
+        $retryCount = 0
         do {
             $retryCount++
             try {
@@ -276,7 +300,7 @@ if (-not $SkipDocker) {
         }
     }
 } else {
-    Write-Step "6/8" "Skipping Enterprise API (Docker skipped)"
+    Write-Step "6/8" "Skipping microservices (Docker skipped)"
 }
 
 # Step 7: Start Frontend Applications
@@ -330,6 +354,9 @@ $services = @(
     @{Name="PostgreSQL Content"; Port=5433},
     @{Name="Redis"; Port=6379},
     @{Name="Traefik Gateway"; Port=8000},
+    @{Name="Auth Service"; Port=8001},
+    @{Name="User Service"; Port=8002},
+    @{Name="Key Service"; Port=8003},
     @{Name="Enterprise API"; Port=9000}
 )
 
