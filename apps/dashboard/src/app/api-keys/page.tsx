@@ -291,7 +291,7 @@ export default function ApiKeysPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue mb-1">API Keys</h2>
+            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">API Keys</h2>
             <p className="text-muted-foreground">
               Generate and manage API keys for your WordPress plugin, SDKs, or custom integrations.
             </p>
@@ -368,3 +368,4 @@ export default function ApiKeysPage() {
     </DashboardLayout>
   );
 }
+

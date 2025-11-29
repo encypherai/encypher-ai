@@ -165,7 +165,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href="/api-keys">
-                <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors">
+                <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-delft-blue dark:text-white font-medium rounded-lg hover:bg-columbia-blue transition-colors">
                   <IconPlus />
                   New API Key
                 </button>
@@ -346,7 +346,7 @@ export default function DashboardPage() {
                   ))}
                   {apiKeys.length > 3 && (
                     <Link href="/api-keys" className="block">
-                      <button className="w-full py-3 text-sm font-medium text-blue-ncs hover:text-delft-blue transition-colors">
+                      <button className="w-full py-3 text-sm font-medium text-blue-ncs hover:text-delft-blue dark:text-white transition-colors">
                         View all {apiKeys.length} keys →
                       </button>
                     </Link>
@@ -382,7 +382,7 @@ export default function DashboardPage() {
               </li>
             </ul>
             <a href="https://docs.encypherai.com/quickstart" target="_blank" rel="noopener noreferrer">
-              <button className="w-full mt-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors text-sm">
+              <button className="w-full mt-5 py-2.5 bg-white text-delft-blue dark:text-white font-medium rounded-lg hover:bg-columbia-blue transition-colors text-sm">
                 View Quickstart Guide
               </button>
             </a>
@@ -404,7 +404,7 @@ export default function DashboardPage() {
               </Link>
               
               <Link href="/settings" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
-                <div className="w-9 h-9 bg-delft-blue/10 rounded-lg flex items-center justify-center text-delft-blue">
+                <div className="w-9 h-9 bg-delft-blue/10 dark:bg-slate-600 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -418,7 +418,7 @@ export default function DashboardPage() {
               </Link>
 
               <a href="https://docs.encypherai.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
-                <div className="w-9 h-9 bg-columbia-blue/30 rounded-lg flex items-center justify-center text-delft-blue">
+                <div className="w-9 h-9 bg-columbia-blue/30 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
                   <IconBook />
                 </div>
                 <div className="flex-1">
@@ -450,3 +450,4 @@ export default function DashboardPage() {
     </DashboardLayout>
   );
 }
+

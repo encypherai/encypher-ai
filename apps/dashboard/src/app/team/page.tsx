@@ -257,7 +257,7 @@ export default function TeamPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue mb-1">Team Management</h2>
+            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">Team Management</h2>
             <p className="text-muted-foreground">
               Manage your organization's team members and roles
             </p>
@@ -281,7 +281,7 @@ export default function TeamPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Team Seats</p>
-                  <p className="text-2xl font-bold text-delft-blue">
+                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
                     {seats.used} / {seats.unlimited ? '∞' : seats.max}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -457,3 +457,4 @@ export default function TeamPage() {
     </DashboardLayout>
   );
 }
+

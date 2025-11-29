@@ -256,7 +256,7 @@ export default function InvitationPage() {
               <p className="text-muted-foreground">
                 <span className="font-medium text-foreground">{invitation.inviter_name}</span> has invited you to join
               </p>
-              <p className="text-xl font-bold text-delft-blue mt-1">{invitation.organization_name}</p>
+              <p className="text-xl font-bold text-delft-blue dark:text-white mt-1">{invitation.organization_name}</p>
               <p className="text-sm text-muted-foreground mt-2">
                 as a <span className="font-medium capitalize">{invitation.role}</span>
               </p>

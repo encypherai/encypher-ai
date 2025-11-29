@@ -147,7 +147,7 @@ export default function WebhooksPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue mb-1">Webhooks</h2>
+            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">Webhooks</h2>
             <p className="text-muted-foreground">
               Receive real-time notifications when events happen in your account
             </p>
@@ -367,3 +367,4 @@ export default function WebhooksPage() {
     </DashboardLayout>
   );
 }
+

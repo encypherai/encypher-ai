@@ -239,7 +239,7 @@ export default function PlaygroundPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue mb-1">API Playground</h2>
+            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">API Playground</h2>
             <p className="text-muted-foreground">
               Test API endpoints interactively with your credentials
             </p>
@@ -463,3 +463,4 @@ export default function PlaygroundPage() {
     </DashboardLayout>
   );
 }
+

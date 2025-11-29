@@ -174,7 +174,7 @@ export default function BillingPage() {
     <DashboardLayout>
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-delft-blue mb-2">Billing & Subscription</h2>
+          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Billing & Subscription</h2>
           <p className="text-muted-foreground">
             Manage your plan, payment methods, and download invoices for your records.
           </p>
@@ -191,7 +191,7 @@ export default function BillingPage() {
           <CardContent className="grid md:grid-cols-4 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Plan</p>
-              <p className="text-2xl font-bold text-delft-blue">
+              <p className="text-2xl font-bold text-delft-blue dark:text-white">
                 {subscription?.plan_name || 'Starter'}
               </p>
               <p className="text-muted-foreground">
@@ -325,7 +325,7 @@ export default function BillingPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Earnings</p>
-                      <p className="text-2xl font-bold text-delft-blue">
+                      <p className="text-2xl font-bold text-delft-blue dark:text-white">
                         ${coalition.total_earnings.toFixed(2)}
                       </p>
                     </div>
@@ -380,7 +380,7 @@ export default function BillingPage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-semibold text-delft-blue">Change plan</h3>
+              <h3 className="text-2xl font-semibold text-delft-blue dark:text-white">Change plan</h3>
               <p className="text-muted-foreground">Scale with usage. Upgrade or downgrade any time.</p>
             </div>
             <div className="flex bg-muted rounded-full p-1">
@@ -448,7 +448,7 @@ export default function BillingPage() {
                     {/* Coalition Rev Share Badge */}
                     <div className="bg-muted/50 rounded-lg p-2 text-center">
                       <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                      <p className="text-sm font-semibold text-delft-blue">
+                      <p className="text-sm font-semibold text-delft-blue dark:text-white">
                         {revShare.publisher}% you / {revShare.encypher}% Encypher
                       </p>
                     </div>
@@ -497,7 +497,7 @@ export default function BillingPage() {
               <CardContent className="space-y-4">
                 <div className="bg-muted/50 rounded-lg p-2 text-center">
                   <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                  <p className="text-sm font-semibold text-delft-blue">80% you / 20% Encypher</p>
+                  <p className="text-sm font-semibold text-delft-blue dark:text-white">80% you / 20% Encypher</p>
                 </div>
                 <ul className="space-y-2 text-sm text-muted-foreground min-h-[180px]">
                   <li className="flex items-start gap-2">
@@ -551,7 +551,7 @@ export default function BillingPage() {
 
         {/* Invoices Section */}
         <section className="space-y-4">
-          <h3 className="text-2xl font-semibold text-delft-blue">Invoices</h3>
+          <h3 className="text-2xl font-semibold text-delft-blue dark:text-white">Invoices</h3>
           <Card>
             <CardContent className="p-0">
               <table className="w-full text-sm">

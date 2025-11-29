@@ -210,7 +210,7 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-delft-blue mb-2">Settings</h2>
+        <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Settings</h2>
         <p className="text-muted-foreground">Manage your account settings and preferences</p>
       </div>
 
@@ -469,3 +469,4 @@ export default function SettingsPage() {
     </DashboardLayout>
   );
 }
+

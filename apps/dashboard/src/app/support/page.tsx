@@ -60,7 +60,7 @@ export default function SupportPage() {
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-delft-blue mb-2">Support & Help</h2>
+          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Support & Help</h2>
           <p className="text-muted-foreground">Get help with Encypher and find answers to common questions</p>
         </div>
 
@@ -144,3 +144,4 @@ export default function SupportPage() {
     </DashboardLayout>
   );
 }
+
