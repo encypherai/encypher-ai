@@ -14,71 +14,37 @@ import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import apiClient, { PlanInfo, Invoice, BillingUsageStats, CoalitionSummary } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { getSelfServeTiers, type TierConfig } from '@encypher/pricing-config';
 
-// Fallback plans when billing service is unavailable
-// Aligned with docs/pricing/PRICING_STRATEGY.md
-const FALLBACK_PLANS: PlanInfo[] = [
-  {
-    id: 'starter',
-    name: 'Starter',
-    tier: 'starter',
-    price_monthly: 0,
-    price_annual: 0,
-    features: [
-      'Unlimited C2PA signing',
-      'Unlimited verifications',
-      '2 API keys',
-      'Community support',
-      '7-day analytics',
-      'Licensing coalition (65/35 rev share)',
-    ],
-    limits: { c2pa_signatures: 10000, sentences_tracked: 0, api_keys: 2, rate_limit: 10 },
-    coalition_rev_share: { publisher: 65, encypher: 35 },
-  },
-  {
-    id: 'professional',
-    name: 'Professional',
-    tier: 'professional',
-    price_monthly: 99,
-    price_annual: 950,
-    features: [
-      'Everything in Starter',
-      'Sentence-level tracking (50K/mo)',
-      'Invisible embeddings',
-      '10 API keys',
-      'Email support (48hr SLA)',
-      '90-day analytics',
-      'BYOK encryption',
-      'WordPress Pro (no branding)',
-      'Licensing coalition (70/30 rev share)',
-    ],
-    limits: { c2pa_signatures: -1, sentences_tracked: 50000, api_keys: 10, rate_limit: 50 },
-    coalition_rev_share: { publisher: 70, encypher: 30 },
-    popular: true,
-  },
-  {
-    id: 'business',
-    name: 'Business',
-    tier: 'business',
-    price_monthly: 499,
-    price_annual: 4790,
-    features: [
-      'Everything in Professional',
-      'Merkle tree encoding',
-      'Plagiarism detection',
-      'Source attribution API',
-      'Batch operations (100 docs)',
-      '50 API keys',
-      'Priority support (24hr SLA)',
-      '1-year analytics',
-      'Team management (10 users)',
-      'Audit logs',
-      'Licensing coalition (75/25 rev share)',
-    ],
-    limits: { c2pa_signatures: -1, sentences_tracked: 500000, api_keys: 50, rate_limit: 200 },
-    coalition_rev_share: { publisher: 75, encypher: 25 },
-  },
-];
+/**
+ * Convert shared pricing config to API-compatible PlanInfo format.
+ * Used as fallback when billing service is unavailable.
+ */
+function tierConfigToPlanInfo(tier: TierConfig): PlanInfo {
+  return {
+    id: tier.id,
+    name: tier.name,
+    tier: tier.id,
+    price_monthly: tier.price.monthly,
+    price_annual: tier.price.annual,
+    features: tier.features,
+    limits: {
+      c2pa_signatures: tier.limits.c2paSignatures,
+      sentences_tracked: tier.limits.sentencesTracked,
+      api_keys: tier.limits.apiKeys,
+      rate_limit: tier.limits.rateLimit,
+    },
+    coalition_rev_share: {
+      publisher: tier.revShare.publisher,
+      encypher: tier.revShare.encypher,
+    },
+    popular: tier.popular,
+    enterprise: tier.enterprise,
+  };
+}
+
+// Fallback plans from shared config (excludes enterprise)
+const FALLBACK_PLANS: PlanInfo[] = getSelfServeTiers().map(tierConfigToPlanInfo);
 
 export default function BillingPage() {
   const { data: session, status } = useSession();
