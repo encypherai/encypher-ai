@@ -386,9 +386,20 @@ export default function PlaygroundPage() {
               )}
               
               {selectedApiKey === 'session' && (
-                <p className="text-xs text-muted-foreground">
-                  Using your current login session. This works for dashboard endpoints but signing/verification require API keys.
-                </p>
+                <div className="space-y-2">
+                  {accessToken ? (
+                    <p className="text-xs text-green-600 dark:text-green-400">
+                      ✓ Session token available. This works for dashboard endpoints (API Keys, Auth).
+                    </p>
+                  ) : (
+                    <p className="text-xs text-amber-600 dark:text-amber-400">
+                      ⚠ No session token available. You may have logged in via OAuth. Use an API key for authentication, or log out and log in with email/password.
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    Note: Signing/verification endpoints require API keys, not session tokens.
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>

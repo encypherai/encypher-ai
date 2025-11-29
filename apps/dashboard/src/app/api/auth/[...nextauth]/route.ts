@@ -83,7 +83,7 @@ const handler = NextAuth({
     error: '/login',
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id as string | undefined;
         token.email = (user.email ?? undefined) as string | undefined;
@@ -94,6 +94,34 @@ const handler = NextAuth({
         if (user.role) token.role = user.role as string;
         // @ts-expect-error - extending user type
         if (user.tier) token.tier = user.tier as string;
+        
+        // For OAuth logins, exchange provider tokens for internal access token
+        if (account && (account.provider === 'google' || account.provider === 'github')) {
+          try {
+            console.log('[NextAuth] Exchanging OAuth token for internal access token');
+            const exchangeRes = await fetch(`${API_BASE}/auth/oauth/exchange`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                provider: account.provider,
+                id_token: account.id_token,
+                access_token: account.access_token,
+              }),
+            });
+            
+            if (exchangeRes.ok) {
+              const exchangeData = await exchangeRes.json();
+              if (exchangeData.success && exchangeData.data?.access_token) {
+                token.accessToken = exchangeData.data.access_token;
+                console.log('[NextAuth] OAuth token exchange successful');
+              }
+            } else {
+              console.warn('[NextAuth] OAuth token exchange failed:', await exchangeRes.text());
+            }
+          } catch (error) {
+            console.error('[NextAuth] OAuth token exchange error:', error);
+          }
+        }
       }
       return token;
     },
