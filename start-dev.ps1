@@ -1,10 +1,80 @@
 # ============================================================================
 # Encypher Development Environment Startup Script
 # ============================================================================
-# This script starts all services needed for local development:
-# - Infrastructure: PostgreSQL (core + content), Redis
-# - Backend: Enterprise API (Docker)
-# - Frontend: Marketing Site, Dashboard (Next.js)
+#
+# This script starts ALL services needed for local development, mirroring
+# the production architecture. Uses docker-compose.full-stack.yml.
+#
+# ============================================================================
+# ARCHITECTURE OVERVIEW
+# ============================================================================
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │                         INFRASTRUCTURE                                   │
+# ├─────────────────────────────────────────────────────────────────────────┤
+# │  Traefik API Gateway     │ 8000  │ Routes /api/v1/* to microservices    │
+# │  Traefik Dashboard       │ 8080  │ Traefik admin UI                     │
+# │  PostgreSQL Core         │ 5432  │ Core business data (users, orgs)     │
+# │  PostgreSQL Content      │ 5433  │ Content data (docs, verification)    │
+# │  Redis Cache             │ 6379  │ Caching, sessions, rate limiting     │
+# │  Redis Celery            │ 6380  │ Background task queue                │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │                         MICROSERVICES                                    │
+# ├─────────────────────────────────────────────────────────────────────────┤
+# │  Service              │ Port  │ Database       │ Description            │
+# │  ─────────────────────┼───────┼────────────────┼──────────────────────  │
+# │  auth-service         │ 8001  │ postgres-core  │ Authentication, JWT    │
+# │  user-service         │ 8002  │ postgres-core  │ User profiles, teams   │
+# │  key-service          │ 8003  │ postgres-core  │ API keys, orgs         │
+# │  encoding-service     │ 8004  │ postgres-core  │ C2PA encoding          │
+# │  verification-service │ 8005  │ postgres-core  │ Content verification   │
+# │  analytics-service    │ 8006  │ postgres-core  │ Usage metrics          │
+# │  billing-service      │ 8007  │ postgres-core  │ Subscriptions, Stripe  │
+# │  notification-service │ 8008  │ postgres-core  │ Email, notifications   │
+# │  enterprise-api       │ 9000  │ core + content │ C2PA sign/verify API   │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# ┌─────────────────────────────────────────────────────────────────────────┐
+# │                         FRONTEND APPS                                    │
+# ├─────────────────────────────────────────────────────────────────────────┤
+# │  Marketing Site       │ 3000  │ Next.js        │ encypherai.com         │
+# │  Dashboard            │ 3001  │ Next.js        │ dashboard.encypherai   │
+# └─────────────────────────────────────────────────────────────────────────┘
+#
+# ============================================================================
+# TRAEFIK API GATEWAY ROUTING (port 8000)
+# ============================================================================
+#
+#   /api/v1/auth/*       → Auth Service (8001)
+#   /api/v1/users/*      → User Service (8002)
+#   /api/v1/keys/*       → Key Service (8003)
+#   /api/v1/encode       → Encoding Service (8004)
+#   /api/v1/verify       → Verification Service (8005)
+#   /api/v1/analytics/*  → Analytics Service (8006)
+#   /api/v1/billing/*    → Billing Service (8007)
+#   /api/v1/notifications/* → Notification Service (8008)
+#   /api/v1/*            → Enterprise API (9000) [catch-all]
+#
+# ============================================================================
+# DATABASE ARCHITECTURE
+# ============================================================================
+#
+# Currently uses TWO databases (simplified from database-per-service):
+#
+#   postgres-core (5432):
+#     - encypher_core database
+#     - Tables: users, organizations, api_keys, subscriptions, etc.
+#     - Used by: auth, user, key, billing, notification services
+#
+#   postgres-content (5433):
+#     - encypher_content database
+#     - Tables: encoded_documents, verification_results, merkle_trees
+#     - Used by: enterprise-api (for C2PA content)
+#
+# See docs/architecture/DATABASE_ARCHITECTURE.md for full schema details.
+#
 # ============================================================================
 
 param(
