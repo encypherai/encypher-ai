@@ -17,6 +17,7 @@
   /* Light mode semantic colors */
   --background: 0 0% 100%;
   --foreground: 213 49% 21%;
+  --heading: 213 49% 21%; /* delft-blue in light mode */
   
   --primary: 205 62% 82%;
   --primary-foreground: 0 0% 100%;
@@ -59,6 +60,7 @@
 .dark {
   --background: 213 49% 21%;
   --foreground: 0 0% 100%;
+  --heading: 0 0% 100%; /* white in dark mode */
   
   --primary: 205 62% 82%;
   --primary-foreground: 213 49% 21%;

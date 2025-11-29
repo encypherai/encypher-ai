@@ -78,7 +78,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           variant === 'primary' && 'bg-blue-ncs text-white hover:bg-blue-ncs/90 active:bg-blue-ncs/80 focus-visible:ring-blue-ncs',
           variant === 'secondary' && 'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-secondary',
           variant === 'outline' && 'border-2 border-blue-ncs text-blue-ncs bg-transparent hover:bg-blue-ncs hover:text-white focus-visible:ring-blue-ncs',
-          variant === 'ghost' && 'text-delft-blue hover:bg-muted focus-visible:ring-muted',
+          variant === 'ghost' && 'text-foreground hover:bg-muted focus-visible:ring-muted',
           variant === 'destructive' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive',
           variant === 'success' && 'bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success',
           

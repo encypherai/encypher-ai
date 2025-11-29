@@ -77,6 +77,8 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        // Heading color - delft-blue in light mode, white in dark mode
+        heading: 'hsl(var(--heading))',
       },
       borderRadius: {
         lg: 'var(--radius)',
