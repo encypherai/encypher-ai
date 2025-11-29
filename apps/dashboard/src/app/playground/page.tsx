@@ -251,6 +251,16 @@ export default function PlaygroundPage() {
     toast.success('Copied to clipboard');
   };
 
+  const copySelection = () => {
+    const selection = window.getSelection();
+    if (selection && selection.toString().trim()) {
+      navigator.clipboard.writeText(selection.toString());
+      toast.success('Selection copied to clipboard');
+    } else {
+      toast.info('Select some text first');
+    }
+  };
+
   const getStatusColor = (status: number | null) => {
     if (!status) return 'text-slate-500';
     if (status >= 200 && status < 300) return 'text-green-600';
@@ -484,13 +494,21 @@ export default function PlaygroundPage() {
             <CardContent>
               {response ? (
                 <div className="relative">
-                  <button
-                    onClick={() => copyToClipboard(response)}
-                    className="absolute top-2 right-2 text-xs text-blue-ncs hover:underline"
-                  >
-                    Copy
-                  </button>
-                  <pre className="bg-slate-900 text-slate-100 p-4 rounded-lg overflow-auto max-h-96 text-sm font-mono">
+                  <div className="absolute top-2 right-2 flex gap-2 z-10">
+                    <button
+                      onClick={copySelection}
+                      className="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1 rounded transition-colors"
+                    >
+                      Copy Selection
+                    </button>
+                    <button
+                      onClick={() => copyToClipboard(response)}
+                      className="text-xs bg-blue-600 hover:bg-blue-500 text-white px-2 py-1 rounded transition-colors"
+                    >
+                      Copy All
+                    </button>
+                  </div>
+                  <pre className="bg-slate-900 text-slate-100 p-4 pt-10 rounded-lg overflow-auto max-h-96 text-sm font-mono select-text cursor-text selection:bg-blue-500/40">
                     {response}
                   </pre>
                 </div>
