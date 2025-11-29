@@ -17,7 +17,8 @@ import {
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
 
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+// API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://s-api.encypherai.com/api/v1').replace(/\/$/, '');
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
@@ -30,18 +31,20 @@ interface ApiEndpoint {
   category: string;
   requiresAuth: boolean;
   sampleBody?: string;
+  authType?: 'session' | 'apikey' | 'both'; // Which auth methods work
 }
 
 const endpoints: ApiEndpoint[] = [
-  // Signing & Verification
+  // Signing & Verification (Enterprise API - uses API key auth)
   {
     id: 'sign',
     name: 'Sign Content',
     method: 'POST',
     path: '/sign',
-    description: 'Sign text content with cryptographic metadata',
+    description: 'Sign text content with cryptographic metadata using Unicode steganography',
     category: 'Signing',
     requiresAuth: true,
+    authType: 'apikey',
     sampleBody: JSON.stringify({
       text: "Hello, this is AI-generated content that needs authentication.",
       model_id: "gpt-4",
@@ -56,64 +59,72 @@ const endpoints: ApiEndpoint[] = [
     description: 'Verify signed content and extract metadata',
     category: 'Verification',
     requiresAuth: true,
+    authType: 'apikey',
     sampleBody: JSON.stringify({
       text: "Paste signed content here to verify..."
     }, null, 2),
   },
   {
-    id: 'decode',
-    name: 'Decode Metadata',
+    id: 'lookup',
+    name: 'Lookup Signature',
     method: 'POST',
-    path: '/decode',
-    description: 'Extract embedded metadata from signed content',
+    path: '/lookup',
+    description: 'Look up signature details by document ID or hash',
     category: 'Verification',
     requiresAuth: true,
+    authType: 'apikey',
     sampleBody: JSON.stringify({
-      text: "Paste signed content here to decode..."
+      document_id: "doc_example_id"
     }, null, 2),
   },
-  // API Keys
+  // API Keys (Key Service - uses session auth)
   {
     id: 'list-keys',
     name: 'List API Keys',
     method: 'GET',
-    path: '/api-keys',
+    path: '/keys',
     description: 'Get all API keys for your account',
     category: 'API Keys',
     requiresAuth: true,
+    authType: 'session',
   },
   {
     id: 'create-key',
     name: 'Create API Key',
     method: 'POST',
-    path: '/api-keys',
+    path: '/keys/generate',
     description: 'Generate a new API key',
     category: 'API Keys',
     requiresAuth: true,
+    authType: 'session',
     sampleBody: JSON.stringify({
       name: "My New API Key",
-      permissions: ["sign", "verify"]
+      permissions: ["sign", "verify", "read"]
     }, null, 2),
   },
-  // Profile
+  // Auth (Auth Service - uses session auth)
   {
-    id: 'get-profile',
-    name: 'Get Profile',
-    method: 'GET',
-    path: '/users/me',
-    description: 'Get your user profile',
-    category: 'Profile',
+    id: 'verify-token',
+    name: 'Verify Token',
+    method: 'POST',
+    path: '/auth/verify',
+    description: 'Verify your session token and get user info',
+    category: 'Auth',
     requiresAuth: true,
+    authType: 'session',
   },
-  // Usage
+  // Key Validation (Key Service - public endpoint)
   {
-    id: 'get-usage',
-    name: 'Get Usage Stats',
-    method: 'GET',
-    path: '/usage/stats?days=30',
-    description: 'Get usage statistics for the last 30 days',
-    category: 'Analytics',
-    requiresAuth: true,
+    id: 'validate-key',
+    name: 'Validate API Key',
+    method: 'POST',
+    path: '/keys/validate',
+    description: 'Validate an API key and get organization context',
+    category: 'API Keys',
+    requiresAuth: false,
+    sampleBody: JSON.stringify({
+      key: "ency_your_api_key_here"
+    }, null, 2),
   },
 ];
 
@@ -174,11 +185,23 @@ export default function PlaygroundPage() {
         'Content-Type': 'application/json',
       };
 
+      // Determine which auth to use based on endpoint and selection
       if (selectedEndpoint.requiresAuth) {
+        const authType = selectedEndpoint.authType || 'both';
+        
         if (selectedApiKey === 'session' && accessToken) {
+          // Session token - always use Bearer format
           headers['Authorization'] = `Bearer ${accessToken}`;
         } else if (selectedApiKey === 'custom' && customApiKey.trim()) {
-          headers['X-API-Key'] = customApiKey.trim();
+          // API Key - use Bearer format (enterprise API expects this)
+          headers['Authorization'] = `Bearer ${customApiKey.trim()}`;
+        }
+        
+        // Show warning if using wrong auth type
+        if (authType === 'session' && selectedApiKey === 'custom') {
+          toast.warning('This endpoint works best with session auth');
+        } else if (authType === 'apikey' && selectedApiKey === 'session') {
+          toast.warning('This endpoint requires an API key for full functionality');
         }
       }
 
@@ -315,6 +338,13 @@ export default function PlaygroundPage() {
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Authentication</CardTitle>
+              {selectedEndpoint.authType && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {selectedEndpoint.authType === 'session' && '⚡ This endpoint uses session auth'}
+                  {selectedEndpoint.authType === 'apikey' && '🔑 This endpoint requires an API key'}
+                  {selectedEndpoint.authType === 'both' && '✓ Supports both session and API key'}
+                </p>
+              )}
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
@@ -333,21 +363,21 @@ export default function PlaygroundPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">Your API Key</label>
                   <Input
-                    type="password"
+                    type="text"
                     value={customApiKey}
                     onChange={(e) => setCustomApiKey(e.target.value)}
-                    placeholder="enc_..."
+                    placeholder="ency_..."
                     className="font-mono text-sm"
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Paste the API key you received when creating it. Keys start with <code className="bg-muted px-1 rounded">enc_</code>
+                    Paste the API key you received when creating it. Keys start with <code className="bg-muted px-1 rounded">ency_</code>
                   </p>
                 </div>
               )}
               
               {selectedApiKey === 'session' && (
                 <p className="text-xs text-muted-foreground">
-                  Using your current login session. This works for testing but use API keys in production.
+                  Using your current login session. This works for dashboard endpoints but signing/verification require API keys.
                 </p>
               )}
             </CardContent>
@@ -409,7 +439,7 @@ export default function PlaygroundPage() {
               <Button
                 variant="primary"
                 onClick={handleSendRequest}
-                disabled={isLoading || !accessToken}
+                disabled={isLoading || (!accessToken && selectedApiKey === 'session') || (selectedApiKey === 'custom' && !customApiKey.trim())}
                 className="w-full"
               >
                 {isLoading ? (
