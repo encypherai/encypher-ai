@@ -148,6 +148,7 @@ export default function PlaygroundPage() {
   });
 
   const [selectedApiKey, setSelectedApiKey] = useState<string>('session');
+  const [customApiKey, setCustomApiKey] = useState<string>('');
 
   // Update request body when endpoint changes
   useEffect(() => {
@@ -176,8 +177,8 @@ export default function PlaygroundPage() {
       if (selectedEndpoint.requiresAuth) {
         if (selectedApiKey === 'session' && accessToken) {
           headers['Authorization'] = `Bearer ${accessToken}`;
-        } else if (selectedApiKey !== 'session') {
-          headers['X-API-Key'] = selectedApiKey;
+        } else if (selectedApiKey === 'custom' && customApiKey.trim()) {
+          headers['X-API-Key'] = customApiKey.trim();
         }
       }
 
@@ -275,7 +276,7 @@ export default function PlaygroundPage() {
                     className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${
                       activeCategory === cat
                         ? 'bg-blue-ncs text-white'
-                        : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
                     }`}
                   >
                     {cat}
@@ -293,8 +294,8 @@ export default function PlaygroundPage() {
                       onClick={() => setSelectedEndpoint(endpoint)}
                       className={`w-full text-left px-4 py-3 border-b last:border-0 transition-colors ${
                         selectedEndpoint.id === endpoint.id
-                          ? 'bg-blue-50'
-                          : 'hover:bg-slate-50'
+                          ? 'bg-blue-50 dark:bg-blue-900/30'
+                          : 'hover:bg-slate-50 dark:hover:bg-slate-700'
                       }`}
                     >
                       <div className="flex items-center gap-2 mb-1">
@@ -315,23 +316,40 @@ export default function PlaygroundPage() {
             <CardHeader className="pb-3">
               <CardTitle className="text-lg">Authentication</CardTitle>
             </CardHeader>
-            <CardContent>
-              <label className="block text-sm font-medium mb-2">Use Credentials</label>
-              <select
-                value={selectedApiKey}
-                onChange={(e) => setSelectedApiKey(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
-              >
-                <option value="session">Session Token (Current Login)</option>
-                {(apiKeysQuery.data || []).map((key) => (
-                  <option key={key.id} value={key.fingerprint}>
-                    {key.name} ({key.fingerprint.slice(0, 12)}...)
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-muted-foreground mt-2">
-                Select which credentials to use for API requests
-              </p>
+            <CardContent className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Authentication Method</label>
+                <select
+                  value={selectedApiKey}
+                  onChange={(e) => setSelectedApiKey(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
+                >
+                  <option value="session">Session Token (Current Login)</option>
+                  <option value="custom">API Key (Paste Below)</option>
+                </select>
+              </div>
+              
+              {selectedApiKey === 'custom' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">Your API Key</label>
+                  <Input
+                    type="password"
+                    value={customApiKey}
+                    onChange={(e) => setCustomApiKey(e.target.value)}
+                    placeholder="enc_..."
+                    className="font-mono text-sm"
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Paste the API key you received when creating it. Keys start with <code className="bg-muted px-1 rounded">enc_</code>
+                  </p>
+                </div>
+              )}
+              
+              {selectedApiKey === 'session' && (
+                <p className="text-xs text-muted-foreground">
+                  Using your current login session. This works for testing but use API keys in production.
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -381,7 +399,7 @@ export default function PlaygroundPage() {
                     value={requestBody}
                     onChange={(e) => setRequestBody(e.target.value)}
                     rows={8}
-                    className="w-full px-3 py-2 border border-slate-200 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs resize-y"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs resize-y"
                     placeholder="Enter JSON request body..."
                   />
                 </div>
@@ -447,7 +465,7 @@ export default function PlaygroundPage() {
                   </pre>
                 </div>
               ) : (
-                <div className="bg-slate-50 border border-slate-200 rounded-lg p-8 text-center">
+                <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg p-8 text-center">
                   <svg className="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
