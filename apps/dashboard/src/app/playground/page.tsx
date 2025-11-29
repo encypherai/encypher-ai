@@ -439,8 +439,9 @@ export default function PlaygroundPage() {
                     value={requestBody}
                     onChange={(e) => setRequestBody(e.target.value)}
                     rows={8}
-                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs resize-y"
+                    className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-100 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs resize-y"
                     placeholder="Enter JSON request body..."
+                    style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
                   />
                 </div>
               )}
@@ -508,7 +509,14 @@ export default function PlaygroundPage() {
                       Copy All
                     </button>
                   </div>
-                  <pre className="bg-slate-900 text-slate-100 p-4 pt-10 rounded-lg overflow-auto max-h-96 text-sm font-mono select-text cursor-text selection:bg-blue-500/40">
+                  <pre 
+                    className="bg-slate-900 text-slate-100 p-4 pt-10 rounded-lg overflow-auto max-h-96 text-sm font-mono"
+                    style={{ 
+                      WebkitUserSelect: 'text', 
+                      userSelect: 'text',
+                      cursor: 'text',
+                    }}
+                  >
                     {response}
                   </pre>
                 </div>

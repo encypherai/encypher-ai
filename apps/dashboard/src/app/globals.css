@@ -125,3 +125,30 @@ h1, h2, h3, h4, h5, h6 {
 code, pre {
   font-family: 'Roboto Mono', monospace;
 }
+
+/* ===== TEXT SELECTION ===== */
+/* Ensure text selection is visible across all browsers */
+::selection {
+  background-color: rgba(42, 135, 196, 0.4); /* blue-ncs with opacity */
+  color: inherit;
+}
+
+::-moz-selection {
+  background-color: rgba(42, 135, 196, 0.4);
+  color: inherit;
+}
+
+/* Specific selection styling for code/pre elements */
+pre::selection, pre *::selection,
+code::selection, code *::selection,
+textarea::selection {
+  background-color: rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+  color: inherit;
+}
+
+pre::-moz-selection, pre *::-moz-selection,
+code::-moz-selection, code *::-moz-selection,
+textarea::-moz-selection {
+  background-color: rgba(59, 130, 246, 0.5);
+  color: inherit;
+}

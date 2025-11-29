@@ -22,6 +22,16 @@ http:
         - web
 
     # ============================================
+    # ORGANIZATIONS -> Auth Service (8001)
+    # Team management, invitations, audit logs
+    # ============================================
+    organizations-router:
+      rule: "PathPrefix(`/api/v1/organizations`)"
+      service: auth-service
+      entryPoints:
+        - web
+
+    # ============================================
     # USER MANAGEMENT -> User Service (8002)
     # ============================================
     users-router:
@@ -58,10 +68,12 @@ http:
         - web
 
     # ============================================
-    # VERIFICATION -> Verification Service (8005)
+    # VERIFICATION SERVICE -> Verification Service (8005)
+    # Only routes specific verification-service endpoints
+    # The main /verify endpoint is handled by enterprise-api
     # ============================================
-    verification-router:
-      rule: "PathPrefix(`/api/v1/verify`)"
+    verification-service-router:
+      rule: "PathPrefix(`/api/v1/verify/signature`) || PathPrefix(`/api/v1/verify/document`) || PathPrefix(`/api/v1/verify/history`) || PathPrefix(`/api/v1/verify/stats`)"
       service: verification-service
       entryPoints:
         - web
