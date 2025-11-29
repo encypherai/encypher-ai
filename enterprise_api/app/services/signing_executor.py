@@ -63,11 +63,15 @@ async def execute_signing(
     is_demo_org = organization.get("is_demo", False)
 
     # Load organization's private key
+    # For demo orgs (including user-level keys), use demo key and demo signer_id
     try:
         if is_demo_org:
             private_key = get_demo_private_key()
+            # Use demo org ID as signer so verification can find the public key
+            signer_id = settings.demo_organization_id
         else:
             private_key = await load_organization_private_key(organization["organization_id"], db)
+            signer_id = organization["organization_id"]
     except ValueError as exc:
         logger.error("Failed to load private key: %s", exc)
         raise HTTPException(
@@ -87,7 +91,7 @@ async def execute_signing(
         signed_text = UnicodeMetadata.embed_metadata(
             text=request.text,
             private_key=private_key,
-            signer_id=organization["organization_id"],
+            signer_id=signer_id,
             metadata_format="c2pa",
             claim_generator=request.claim_generator,
             actions=request.actions,
