@@ -2,6 +2,26 @@ version: '3.8'
 
 services:
   # ============================================
+  # API GATEWAY (Traefik)
+  # ============================================
+  traefik:
+    image: traefik:v3.0
+    container_name: encypher-traefik
+    ports:
+      - "8000:8000"   # API Gateway
+      - "8080:8080"   # Traefik Dashboard
+    volumes:
+      - ./infrastructure/traefik/traefik-local.yml:/etc/traefik/traefik.yml:ro
+      - ./infrastructure/traefik/routes-local.yml:/etc/traefik/routes-local.yml:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # ============================================
   # DATABASES (Two-Database Architecture)
   # ============================================
   

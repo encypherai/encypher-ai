@@ -1,0 +1,142 @@
+# Traefik Route Configuration for Local Development
+# Maps API paths to appropriate microservices
+
+http:
+  routers:
+    # ============================================
+    # API KEY MANAGEMENT -> Key Service (8003)
+    # ============================================
+    keys-router:
+      rule: "PathPrefix(`/api/v1/keys`)"
+      service: key-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # AUTHENTICATION -> Auth Service (8001)
+    # ============================================
+    auth-router:
+      rule: "PathPrefix(`/api/v1/auth`)"
+      service: auth-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # USER MANAGEMENT -> User Service (8002)
+    # ============================================
+    users-router:
+      rule: "PathPrefix(`/api/v1/users`)"
+      service: user-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # ANALYTICS -> Analytics Service (8006)
+    # ============================================
+    analytics-router:
+      rule: "PathPrefix(`/api/v1/analytics`)"
+      service: analytics-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # BILLING -> Billing Service (8007)
+    # ============================================
+    billing-router:
+      rule: "PathPrefix(`/api/v1/billing`)"
+      service: billing-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # ENCODING -> Encoding Service (8004)
+    # ============================================
+    encoding-router:
+      rule: "PathPrefix(`/api/v1/encode`)"
+      service: encoding-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # VERIFICATION -> Verification Service (8005)
+    # ============================================
+    verification-router:
+      rule: "PathPrefix(`/api/v1/verify`)"
+      service: verification-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # NOTIFICATIONS -> Notification Service (8008)
+    # ============================================
+    notifications-router:
+      rule: "PathPrefix(`/api/v1/notifications`)"
+      service: notification-service
+      entryPoints:
+        - web
+
+    # ============================================
+    # C2PA SIGNING/VERIFICATION -> Enterprise API (9000)
+    # Catch-all for /api/v1/* routes not matched above
+    # ============================================
+    enterprise-router:
+      rule: "PathPrefix(`/api/v1`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 1  # Lower priority, matches last
+
+    # ============================================
+    # HEALTH CHECK (Traefik itself)
+    # ============================================
+    health-router:
+      rule: "Path(`/health`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+
+  services:
+    auth-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8001"
+
+    user-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8002"
+
+    key-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8003"
+
+    encoding-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8004"
+
+    verification-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8005"
+
+    analytics-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8006"
+
+    billing-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8007"
+
+    notification-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8008"
+
+    enterprise-api:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:9000"

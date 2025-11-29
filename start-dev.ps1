@@ -152,12 +152,12 @@ if (-not $SkipDocker) {
     # Stop any existing containers first
     docker-compose -f docker-compose.full-stack.yml down 2>$null
     
-    # Start infrastructure
-    docker-compose -f docker-compose.full-stack.yml up -d postgres-core postgres-content redis-cache 2>$null
+    # Start infrastructure (including Traefik API Gateway)
+    docker-compose -f docker-compose.full-stack.yml up -d postgres-core postgres-content redis-cache traefik 2>$null
     if ($LASTEXITCODE -ne 0) {
         Write-Err "Failed to start Docker infrastructure"
     } else {
-        Write-Success "Infrastructure containers started"
+        Write-Success "Infrastructure containers started (including Traefik)"
     }
 } else {
     Write-Step "3/8" "Skipping Docker (use existing services)"
@@ -329,6 +329,7 @@ $services = @(
     @{Name="PostgreSQL Core"; Port=5432},
     @{Name="PostgreSQL Content"; Port=5433},
     @{Name="Redis"; Port=6379},
+    @{Name="Traefik Gateway"; Port=8000},
     @{Name="Enterprise API"; Port=9000}
 )
 
@@ -354,16 +355,22 @@ Write-Host "Services:" -ForegroundColor Yellow
 Write-Host "  PostgreSQL Core:    localhost:5432" -ForegroundColor Gray
 Write-Host "  PostgreSQL Content: localhost:5433" -ForegroundColor Gray
 Write-Host "  Redis:              localhost:6379" -ForegroundColor Gray
-Write-Host "  Enterprise API:     http://localhost:9000" -ForegroundColor Gray
+Write-Host "  Traefik Gateway:    http://localhost:8000 (API routing)" -ForegroundColor Gray
+Write-Host "  Traefik Dashboard:  http://localhost:8080" -ForegroundColor Gray
+Write-Host "  Enterprise API:     http://localhost:9000 (direct)" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Frontend URLs:" -ForegroundColor Yellow
 Write-Host "  Marketing Site:     http://localhost:3000" -ForegroundColor Cyan
 Write-Host "  Dashboard:          http://localhost:3001" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "API Endpoints:" -ForegroundColor Yellow
-Write-Host "  Health:             http://localhost:9000/health" -ForegroundColor Gray
-Write-Host "  Encode Tool:        http://localhost:9000/api/v1/tools/encode" -ForegroundColor Gray
-Write-Host "  Decode Tool:        http://localhost:9000/api/v1/tools/decode" -ForegroundColor Gray
+Write-Host "API Gateway (Traefik routes to microservices):" -ForegroundColor Yellow
+Write-Host "  All API calls:      http://localhost:8000/api/v1/*" -ForegroundColor Cyan
+Write-Host "  Routes:" -ForegroundColor Gray
+Write-Host "    /api/v1/keys/*    -> Key Service (8003)" -ForegroundColor DarkGray
+Write-Host "    /api/v1/auth/*    -> Auth Service (8001)" -ForegroundColor DarkGray
+Write-Host "    /api/v1/users/*   -> User Service (8002)" -ForegroundColor DarkGray
+Write-Host "    /api/v1/sign      -> Enterprise API (9000)" -ForegroundColor DarkGray
+Write-Host "    /api/v1/verify    -> Enterprise API (9000)" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "Test API Keys:" -ForegroundColor Yellow
 Write-Host "  demo-api-key-for-testing (all features)" -ForegroundColor Gray
