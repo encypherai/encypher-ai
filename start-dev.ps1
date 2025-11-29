@@ -145,19 +145,22 @@ if ($CleanStart) {
     Write-Step "2/8" "Skipping cache clean (use -CleanStart to clean)"
 }
 
-# Step 3: Start Docker Infrastructure
+# Step 3: Start All Docker Services
 if (-not $SkipDocker) {
-    Write-Step "3/8" "Starting Docker infrastructure..."
+    Write-Step "3/8" "Starting all Docker services..."
     
     # Stop any existing containers first
     docker-compose -f docker-compose.full-stack.yml down 2>$null
     
-    # Start infrastructure (including Traefik API Gateway)
-    docker-compose -f docker-compose.full-stack.yml up -d postgres-core postgres-content redis-cache traefik 2>$null
+    # Start ALL services (mirrors production)
+    # Infrastructure: postgres-core, postgres-content, redis-cache, redis-celery, traefik
+    # Microservices: auth, user, key, encoding, verification, analytics, billing, notification
+    # Enterprise API: C2PA signing/verification
+    docker-compose -f docker-compose.full-stack.yml up -d 2>$null
     if ($LASTEXITCODE -ne 0) {
-        Write-Err "Failed to start Docker infrastructure"
+        Write-Err "Failed to start Docker services"
     } else {
-        Write-Success "Infrastructure containers started (including Traefik)"
+        Write-Success "All Docker services starting..."
     }
 } else {
     Write-Step "3/8" "Skipping Docker (use existing services)"
@@ -244,60 +247,72 @@ if (-not $SkipDocker) {
     Write-Step "5/8" "Skipping migrations (Docker skipped)"
 }
 
-# Step 6: Start Microservices and Enterprise API
+# Step 6: Wait for Microservices
 if (-not $SkipDocker) {
-    Write-Step "6/8" "Starting microservices and Enterprise API..."
+    Write-Step "6/8" "Waiting for microservices to be ready..."
     
-    # Build and start essential microservices + enterprise-api
-    # auth-service: Authentication (required for login)
-    # user-service: User management
-    # key-service: API key management
-    docker-compose -f docker-compose.full-stack.yml up -d auth-service user-service key-service enterprise-api 2>$null
-    if ($LASTEXITCODE -ne 0) {
-        Write-Err "Failed to start services"
-    } else {
-        # Wait for auth-service (required for login)
-        $retryCount = 0
-        $maxRetries = 30
-        do {
-            $retryCount++
-            try {
-                $health = Invoke-RestMethod -Uri "http://localhost:8001/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
-                if ($health.status -eq "healthy") {
-                    Write-Success "Auth Service is ready (port 8001)"
-                    break
-                }
-            } catch {
-                # Still starting
+    # Wait for auth-service (required for login)
+    $retryCount = 0
+    $maxRetries = 30
+    do {
+        $retryCount++
+        try {
+            $health = Invoke-RestMethod -Uri "http://localhost:8001/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
+            if ($health.status -eq "healthy") {
+                Write-Success "Auth Service is ready (port 8001)"
+                break
             }
-            Write-Host "    Waiting for Auth Service... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
-            Start-Sleep -Seconds 2
-        } while ($retryCount -lt $maxRetries)
-        
-        if ($retryCount -ge $maxRetries) {
-            Write-Warn "Auth Service may still be starting (check docker logs)"
+        } catch {
+            # Still starting
         }
-        
-        # Wait for Enterprise API
-        $retryCount = 0
-        do {
-            $retryCount++
-            try {
-                $health = Invoke-RestMethod -Uri "http://localhost:9000/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
-                if ($health.status -eq "healthy") {
-                    Write-Success "Enterprise API is ready (port 9000)"
-                    break
-                }
-            } catch {
-                # Still starting
+        Write-Host "    Waiting for Auth Service... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
+        Start-Sleep -Seconds 2
+    } while ($retryCount -lt $maxRetries)
+    
+    if ($retryCount -ge $maxRetries) {
+        Write-Warn "Auth Service may still be starting (check docker logs)"
+    }
+    
+    # Wait for Key Service
+    $retryCount = 0
+    do {
+        $retryCount++
+        try {
+            $health = Invoke-RestMethod -Uri "http://localhost:8003/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
+            if ($health.status -eq "healthy") {
+                Write-Success "Key Service is ready (port 8003)"
+                break
             }
-            Write-Host "    Waiting for Enterprise API... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
-            Start-Sleep -Seconds 2
-        } while ($retryCount -lt $maxRetries)
-        
-        if ($retryCount -ge $maxRetries) {
-            Write-Warn "Enterprise API may still be starting (check docker logs)"
+        } catch {
+            # Still starting
         }
+        Write-Host "    Waiting for Key Service... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
+        Start-Sleep -Seconds 2
+    } while ($retryCount -lt $maxRetries)
+    
+    if ($retryCount -ge $maxRetries) {
+        Write-Warn "Key Service may still be starting (check docker logs)"
+    }
+    
+    # Wait for Enterprise API
+    $retryCount = 0
+    do {
+        $retryCount++
+        try {
+            $health = Invoke-RestMethod -Uri "http://localhost:9000/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
+            if ($health.status -eq "healthy") {
+                Write-Success "Enterprise API is ready (port 9000)"
+                break
+            }
+        } catch {
+            # Still starting
+        }
+        Write-Host "    Waiting for Enterprise API... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
+        Start-Sleep -Seconds 2
+    } while ($retryCount -lt $maxRetries)
+    
+    if ($retryCount -ge $maxRetries) {
+        Write-Warn "Enterprise API may still be starting (check docker logs)"
     }
 } else {
     Write-Step "6/8" "Skipping microservices (Docker skipped)"
@@ -352,11 +367,17 @@ Start-Sleep -Seconds 3  # Give services a moment
 $services = @(
     @{Name="PostgreSQL Core"; Port=5432},
     @{Name="PostgreSQL Content"; Port=5433},
-    @{Name="Redis"; Port=6379},
+    @{Name="Redis Cache"; Port=6379},
+    @{Name="Redis Celery"; Port=6380},
     @{Name="Traefik Gateway"; Port=8000},
     @{Name="Auth Service"; Port=8001},
     @{Name="User Service"; Port=8002},
     @{Name="Key Service"; Port=8003},
+    @{Name="Encoding Service"; Port=8004},
+    @{Name="Verification Service"; Port=8005},
+    @{Name="Analytics Service"; Port=8006},
+    @{Name="Billing Service"; Port=8007},
+    @{Name="Notification Service"; Port=8008},
     @{Name="Enterprise API"; Port=9000}
 )
 
@@ -378,26 +399,30 @@ if ($script:hasErrors) {
 }
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Services:" -ForegroundColor Yellow
+Write-Host "Infrastructure:" -ForegroundColor Yellow
 Write-Host "  PostgreSQL Core:    localhost:5432" -ForegroundColor Gray
 Write-Host "  PostgreSQL Content: localhost:5433" -ForegroundColor Gray
-Write-Host "  Redis:              localhost:6379" -ForegroundColor Gray
-Write-Host "  Traefik Gateway:    http://localhost:8000 (API routing)" -ForegroundColor Gray
-Write-Host "  Traefik Dashboard:  http://localhost:8080" -ForegroundColor Gray
-Write-Host "  Enterprise API:     http://localhost:9000 (direct)" -ForegroundColor Gray
+Write-Host "  Redis Cache:        localhost:6379" -ForegroundColor Gray
+Write-Host "  Redis Celery:       localhost:6380" -ForegroundColor Gray
+Write-Host ""
+Write-Host "Microservices:" -ForegroundColor Yellow
+Write-Host "  Auth Service:       http://localhost:8001" -ForegroundColor Gray
+Write-Host "  User Service:       http://localhost:8002" -ForegroundColor Gray
+Write-Host "  Key Service:        http://localhost:8003" -ForegroundColor Gray
+Write-Host "  Encoding Service:   http://localhost:8004" -ForegroundColor Gray
+Write-Host "  Verification Svc:   http://localhost:8005" -ForegroundColor Gray
+Write-Host "  Analytics Service:  http://localhost:8006" -ForegroundColor Gray
+Write-Host "  Billing Service:    http://localhost:8007" -ForegroundColor Gray
+Write-Host "  Notification Svc:   http://localhost:8008" -ForegroundColor Gray
+Write-Host "  Enterprise API:     http://localhost:9000" -ForegroundColor Gray
+Write-Host ""
+Write-Host "API Gateway (Traefik):" -ForegroundColor Yellow
+Write-Host "  Gateway URL:        http://localhost:8000/api/v1/*" -ForegroundColor Cyan
+Write-Host "  Dashboard:          http://localhost:8080" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Frontend URLs:" -ForegroundColor Yellow
 Write-Host "  Marketing Site:     http://localhost:3000" -ForegroundColor Cyan
 Write-Host "  Dashboard:          http://localhost:3001" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "API Gateway (Traefik routes to microservices):" -ForegroundColor Yellow
-Write-Host "  All API calls:      http://localhost:8000/api/v1/*" -ForegroundColor Cyan
-Write-Host "  Routes:" -ForegroundColor Gray
-Write-Host "    /api/v1/keys/*    -> Key Service (8003)" -ForegroundColor DarkGray
-Write-Host "    /api/v1/auth/*    -> Auth Service (8001)" -ForegroundColor DarkGray
-Write-Host "    /api/v1/users/*   -> User Service (8002)" -ForegroundColor DarkGray
-Write-Host "    /api/v1/sign      -> Enterprise API (9000)" -ForegroundColor DarkGray
-Write-Host "    /api/v1/verify    -> Enterprise API (9000)" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "Test API Keys:" -ForegroundColor Yellow
 Write-Host "  demo-api-key-for-testing (all features)" -ForegroundColor Gray
