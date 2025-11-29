@@ -165,7 +165,7 @@ export default function DashboardPage() {
             </div>
             <div className="flex flex-wrap gap-3">
               <Link href="/api-keys">
-                <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-delft-blue dark:text-white font-medium rounded-lg hover:bg-columbia-blue transition-colors">
+                <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors">
                   <IconPlus />
                   New API Key
                 </button>
@@ -382,7 +382,7 @@ export default function DashboardPage() {
               </li>
             </ul>
             <a href="https://docs.encypherai.com/quickstart" target="_blank" rel="noopener noreferrer">
-              <button className="w-full mt-5 py-2.5 bg-white text-delft-blue dark:text-white font-medium rounded-lg hover:bg-columbia-blue transition-colors text-sm">
+              <button className="w-full mt-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors text-sm">
                 View Quickstart Guide
               </button>
             </a>

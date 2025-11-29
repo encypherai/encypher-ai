@@ -386,7 +386,7 @@ export default function BillingPage() {
             <div className="flex bg-muted rounded-full p-1">
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  billingCycle === 'monthly' ? 'bg-white shadow' : 'text-muted-foreground'
+                  billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 shadow text-foreground' : 'text-muted-foreground'
                 }`}
                 onClick={() => setBillingCycle('monthly')}
               >
@@ -394,7 +394,7 @@ export default function BillingPage() {
               </button>
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  billingCycle === 'annual' ? 'bg-white shadow' : 'text-muted-foreground'
+                  billingCycle === 'annual' ? 'bg-white dark:bg-slate-700 shadow text-foreground' : 'text-muted-foreground'
                 }`}
                 onClick={() => setBillingCycle('annual')}
               >
