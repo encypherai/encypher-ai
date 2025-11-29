@@ -8,14 +8,17 @@ import {
   CardDescription,
   CardContent,
   Input,
+  Badge,
 } from '@encypher/design-system';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
 type Profile = {
   name: string;
@@ -57,6 +60,7 @@ const normalizeProfile = (raw: any): Profile => ({
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
   const [profile, setProfile] = useState<Profile>({
     name: '',
@@ -66,6 +70,12 @@ export default function SettingsPage() {
     jobTitle: '',
     notifications: defaultNotifications,
   });
+
+  // Email change state
+  const [showEmailChange, setShowEmailChange] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailChangePassword, setEmailChangePassword] = useState('');
+  const [pendingEmailChange, setPendingEmailChange] = useState<string | null>(null);
 
   const profileQuery = useQuery({
     queryKey: ['profile'],
@@ -115,6 +125,60 @@ export default function SettingsPage() {
     },
   });
 
+  // Email change request mutation
+  const requestEmailChangeMutation = useMutation({
+    mutationFn: async ({ newEmail, password }: { newEmail: string; password: string }) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      const response = await fetch(`${API_BASE}/auth/request-email-change`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ new_email: newEmail, password }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to request email change');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast.success('Verification email sent to your new address. Please check your inbox.');
+      setPendingEmailChange(newEmail);
+      setShowEmailChange(false);
+      setNewEmail('');
+      setEmailChangePassword('');
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to request email change');
+    },
+  });
+
+  // Cancel pending email change
+  const cancelEmailChangeMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      const response = await fetch(`${API_BASE}/auth/cancel-email-change`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || 'Failed to cancel email change');
+      }
+    },
+    onSuccess: () => {
+      toast.success('Email change request cancelled');
+      setPendingEmailChange(null);
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || 'Failed to cancel email change');
+    },
+  });
+
   const isLoading = status === 'loading' || profileQuery.isLoading;
 
   const handleProfileSave = (e: React.FormEvent) => {
@@ -124,6 +188,23 @@ export default function SettingsPage() {
 
   const handleNotificationsSave = () => {
     updateProfileMutation.mutate(profile);
+  };
+
+  const handleEmailChangeRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmail.trim()) {
+      toast.error('Please enter a new email address');
+      return;
+    }
+    if (newEmail === profile.email) {
+      toast.error('New email must be different from current email');
+      return;
+    }
+    if (!emailChangePassword) {
+      toast.error('Please enter your current password');
+      return;
+    }
+    requestEmailChangeMutation.mutate({ newEmail, password: emailChangePassword });
   };
 
   return (
@@ -176,9 +257,110 @@ export default function SettingsPage() {
                         </div>
                         <div>
                           <label className="block text-sm font-medium mb-2">Email</label>
-                          <Input type="email" value={profile.email} disabled />
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Input type="email" value={profile.email} disabled className="flex-1" />
+                              {!showEmailChange && !pendingEmailChange && (
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => setShowEmailChange(true)}
+                                >
+                                  Change
+                                </Button>
+                              )}
+                            </div>
+                            {pendingEmailChange && (
+                              <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded-lg">
+                                <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span className="text-sm text-amber-800 flex-1">
+                                  Pending change to <strong>{pendingEmailChange}</strong>
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => cancelEmailChangeMutation.mutate()}
+                                  disabled={cancelEmailChangeMutation.isPending}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
+
+                      {/* Email Change Form */}
+                      {showEmailChange && (
+                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-lg space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-medium text-sm">Change Email Address</h4>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowEmailChange(false);
+                                setNewEmail('');
+                                setEmailChangePassword('');
+                              }}
+                              className="text-slate-400 hover:text-slate-600"
+                            >
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            We&apos;ll send a verification link to your new email address. Your email won&apos;t change until you verify it.
+                          </p>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">New Email Address</label>
+                              <Input
+                                type="email"
+                                placeholder="newemail@example.com"
+                                value={newEmail}
+                                onChange={(e) => setNewEmail(e.target.value)}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Current Password</label>
+                              <Input
+                                type="password"
+                                placeholder="Enter your password"
+                                value={emailChangePassword}
+                                onChange={(e) => setEmailChangePassword(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              type="button"
+                              variant="primary"
+                              size="sm"
+                              onClick={handleEmailChangeRequest}
+                              disabled={requestEmailChangeMutation.isPending}
+                            >
+                              {requestEmailChangeMutation.isPending ? 'Sending...' : 'Send Verification Email'}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setShowEmailChange(false);
+                                setNewEmail('');
+                                setEmailChangePassword('');
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <label className="block text-sm font-medium mb-2">Company</label>

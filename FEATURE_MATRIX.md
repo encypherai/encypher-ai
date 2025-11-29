@@ -133,6 +133,8 @@ This document provides a comprehensive breakdown of all EncypherAI features orga
 | Command Palette (Cmd+K) | ✅ | ✅ | ✅ | ✅ |
 | Onboarding Flow | ✅ | ✅ | ✅ | ✅ |
 | Keyboard Shortcuts | ✅ | ✅ | ✅ | ✅ |
+| API Playground | ✅ | ✅ | ✅ | ✅ |
+| Email Change Verification | ✅ | ✅ | ✅ | ✅ |
 | Custom Branding | ❌ | ❌ | ❌ | ✅ |
 | White-Label Dashboard | ❌ | ❌ | ❌ | ✅ |
 

@@ -17,6 +17,7 @@ interface DashboardLayoutProps {
 const navItems = [
   { href: '/', label: 'Overview' },
   { href: '/api-keys', label: 'API Keys' },
+  { href: '/playground', label: 'Playground' },
   { href: '/analytics', label: 'Analytics' },
   { href: '/webhooks', label: 'Webhooks', businessOnly: true },
   { href: '/team', label: 'Team', businessOnly: true },
