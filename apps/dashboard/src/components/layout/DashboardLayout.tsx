@@ -36,6 +36,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+    
   // Filter nav items based on tier
   const visibleNavItems = navItems.filter(item => !item.businessOnly || hasTeamFeature);
 
@@ -63,12 +64,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             {/* Logo + Dashboard Badge + Org Switcher */}
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center">
+                {/* Light mode logo */}
                 <Image
                   src="/assets/encypher_full_nobg.png"
                   alt="Encypher"
                   width={140}
                   height={36}
-                  className="h-8 w-auto"
+                  className="h-8 w-auto dark:hidden"
+                  priority
+                />
+                {/* Dark mode logo */}
+                <Image
+                  src="/assets/encypher_full_logo_w.svg"
+                  alt="Encypher"
+                  width={140}
+                  height={36}
+                  className="h-8 w-auto hidden dark:block"
                   priority
                 />
               </Link>

@@ -66,27 +66,27 @@ export function MobileNav({
 
       {/* Slide-out drawer */}
       <div
-        className={`fixed inset-y-0 left-0 w-72 bg-white shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-out ${
+        className={`fixed inset-y-0 left-0 w-72 bg-white dark:bg-slate-800 shadow-xl z-50 lg:hidden transform transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-200">
+        <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 bg-gradient-to-br from-blue-ncs to-delft-blue rounded-full flex items-center justify-center text-white text-sm font-semibold">
               {userInitial}
             </div>
             <div className="min-w-0">
-              <p className="font-semibold text-sm text-delft-blue truncate">{userName}</p>
-              <p className="text-xs text-slate-500 truncate">{userEmail}</p>
+              <p className="font-semibold text-sm text-delft-blue dark:text-white truncate">{userName}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{userEmail}</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
             aria-label="Close menu"
           >
-            <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -105,7 +105,7 @@ export function MobileNav({
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                       isActive
                         ? 'bg-blue-ncs/10 text-blue-ncs'
-                        : 'text-slate-600 hover:bg-slate-100 hover:text-delft-blue'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-delft-blue dark:hover:text-white'
                     }`}
                   >
                     {item.label}
@@ -132,12 +132,12 @@ export function MobileNav({
         </nav>
 
         {/* Footer actions */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 bg-white">
+        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
           <a
             href="https://docs.encypherai.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
