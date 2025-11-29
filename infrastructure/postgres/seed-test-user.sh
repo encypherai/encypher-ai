@@ -23,11 +23,11 @@ echo "Creating test user for development..."
 USER_ID=$(cat /proc/sys/kernel/random/uuid)
 
 # Pre-hashed password for "TestPassword123!"
-# Generated using passlib's bcrypt_sha256 scheme (12 rounds)
-# This matches the auth-service's get_password_hash() function which uses:
-#   CryptContext(schemes=['bcrypt_sha256'], bcrypt_sha256__rounds=12)
-# Note: Using single quotes to prevent shell expansion of $ characters
-PASSWORD_HASH='$bcrypt-sha256$v=2,t=2b,r=12$pFHqBpCHQUL684/4HEAR2e$7qaVEInsDi0X8B1H/NIQVGUbQg2JWma'
+# Generated using: SHA-256 prehash -> base64 -> bcrypt (12 rounds)
+# This matches auth-service's get_password_hash() function:
+#   prehash = base64.b64encode(hashlib.sha256(password.encode()).digest())
+#   bcrypt.hashpw(prehash, bcrypt.gensalt(rounds=12))
+PASSWORD_HASH='$2b$12$OrxH0TsUKSSl3fGz7d0cse45n2J.XYzo8OWJl4w7t1c.YCL2yptZC'
 
 # Insert test user into encypher_auth database
 # Using -v to pass variables safely without shell expansion issues
