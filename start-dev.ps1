@@ -14,8 +14,7 @@
 # ├─────────────────────────────────────────────────────────────────────────┤
 # │  Traefik API Gateway     │ 8000  │ Routes /api/v1/* to microservices    │
 # │  Traefik Dashboard       │ 8080  │ Traefik admin UI                     │
-# │  PostgreSQL Core         │ 5432  │ Core business data (users, orgs)     │
-# │  PostgreSQL Content      │ 5433  │ Content data (docs, verification)    │
+# │  PostgreSQL              │ 5432  │ 10 per-service databases             │
 # │  Redis Cache             │ 6379  │ Caching, sessions, rate limiting     │
 # │  Redis Celery            │ 6380  │ Background task queue                │
 # └─────────────────────────────────────────────────────────────────────────┘
@@ -23,17 +22,17 @@
 # ┌─────────────────────────────────────────────────────────────────────────┐
 # │                         MICROSERVICES                                    │
 # ├─────────────────────────────────────────────────────────────────────────┤
-# │  Service              │ Port  │ Database       │ Description            │
-# │  ─────────────────────┼───────┼────────────────┼──────────────────────  │
-# │  auth-service         │ 8001  │ postgres-core  │ Authentication, JWT    │
-# │  user-service         │ 8002  │ postgres-core  │ User profiles, teams   │
-# │  key-service          │ 8003  │ postgres-core  │ API keys, orgs         │
-# │  encoding-service     │ 8004  │ postgres-core  │ C2PA encoding          │
-# │  verification-service │ 8005  │ postgres-core  │ Content verification   │
-# │  analytics-service    │ 8006  │ postgres-core  │ Usage metrics          │
-# │  billing-service      │ 8007  │ postgres-core  │ Subscriptions, Stripe  │
-# │  notification-service │ 8008  │ postgres-core  │ Email, notifications   │
-# │  enterprise-api       │ 9000  │ core + content │ C2PA sign/verify API   │
+# │  Service              │ Port  │ Database            │ Description          │
+# │  ─────────────────────┼───────┼─────────────────────┼────────────────────  │
+# │  auth-service         │ 8001  │ encypher_auth       │ Authentication, JWT  │
+# │  user-service         │ 8002  │ encypher_users      │ User profiles, teams │
+# │  key-service          │ 8003  │ encypher_keys       │ API keys, orgs       │
+# │  encoding-service     │ 8004  │ encypher_encoding   │ C2PA encoding        │
+# │  verification-service │ 8005  │ encypher_verification│ Content verification│
+# │  analytics-service    │ 8006  │ encypher_analytics  │ Usage metrics        │
+# │  billing-service      │ 8007  │ encypher_billing    │ Subscriptions        │
+# │  notification-service │ 8008  │ encypher_notifications│ Email, notifications│
+# │  enterprise-api       │ 9000  │ encypher_content    │ C2PA sign/verify API │
 # └─────────────────────────────────────────────────────────────────────────┘
 #
 # ┌─────────────────────────────────────────────────────────────────────────┐
@@ -79,6 +78,14 @@
 # This matches production where each service has its own PostgreSQL instance.
 #
 # See docs/architecture/DATABASE_ARCHITECTURE.md for full schema details.
+#
+# ============================================================================
+# TEST USER (Development Only)
+# ============================================================================
+#
+# A test user is automatically created on first database initialization:
+#   Email:    test@encypherai.com
+#   Password: TestPassword123!
 #
 # ============================================================================
 
@@ -461,8 +468,10 @@ Write-Host "Frontend URLs:" -ForegroundColor Yellow
 Write-Host "  Marketing Site:     http://localhost:3000" -ForegroundColor Cyan
 Write-Host "  Dashboard:          http://localhost:3001" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Test API Keys:" -ForegroundColor Yellow
-Write-Host "  demo-api-key-for-testing (all features)" -ForegroundColor Gray
+Write-Host "Test Credentials:" -ForegroundColor Yellow
+Write-Host "  Email:    test@encypherai.com" -ForegroundColor Gray
+Write-Host "  Password: TestPassword123!" -ForegroundColor Gray
+Write-Host "  API Key:  demo-api-key-for-testing" -ForegroundColor Gray
 Write-Host ""
 Write-Host "Commands:" -ForegroundColor Yellow
 Write-Host "  Stop all:    docker-compose -f docker-compose.full-stack.yml down" -ForegroundColor Gray
