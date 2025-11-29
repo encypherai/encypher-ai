@@ -58,20 +58,25 @@
 #   /api/v1/*            → Enterprise API (9000) [catch-all]
 #
 # ============================================================================
-# DATABASE ARCHITECTURE
+# DATABASE ARCHITECTURE (Per-Service Databases)
 # ============================================================================
 #
-# Currently uses TWO databases (simplified from database-per-service):
+# Each microservice has its own isolated database (matches production):
 #
-#   postgres-core (5432):
-#     - encypher_core database
-#     - Tables: users, organizations, api_keys, subscriptions, etc.
-#     - Used by: auth, user, key, billing, notification services
+#   PostgreSQL (5432) - Single container, multiple databases:
+#     - encypher_auth:          auth-service
+#     - encypher_users:         user-service
+#     - encypher_keys:          key-service
+#     - encypher_billing:       billing-service
+#     - encypher_notifications: notification-service
+#     - encypher_encoding:      encoding-service
+#     - encypher_verification:  verification-service
+#     - encypher_analytics:     analytics-service
+#     - encypher_coalition:     coalition-service
+#     - encypher_content:       enterprise-api (C2PA content)
 #
-#   postgres-content (5433):
-#     - encypher_content database
-#     - Tables: encoded_documents, verification_results, merkle_trees
-#     - Used by: enterprise-api (for C2PA content)
+# Each service receives DATABASE_URL pointing to its own database.
+# This matches production where each service has its own PostgreSQL instance.
 #
 # See docs/architecture/DATABASE_ARCHITECTURE.md for full schema details.
 #
@@ -238,41 +243,24 @@ if (-not $SkipDocker) {
 
 # Step 4: Wait for databases
 if (-not $SkipDocker) {
-    Write-Step "4/8" "Waiting for databases..."
+    Write-Step "4/8" "Waiting for PostgreSQL..."
     
-    # Wait for PostgreSQL Core
+    # Wait for PostgreSQL (single container with multiple databases)
     $maxRetries = 30
     $retryCount = 0
     do {
         $retryCount++
-        docker exec encypher-postgres-core pg_isready -U encypher -d encypher_core 2>$null | Out-Null
+        docker exec encypher-postgres pg_isready -U encypher 2>$null | Out-Null
         if ($LASTEXITCODE -eq 0) {
-            Write-Success "PostgreSQL Core is ready (port 5432)"
+            Write-Success "PostgreSQL is ready (port 5432)"
             break
         }
-        Write-Host "    Waiting for PostgreSQL Core... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
+        Write-Host "    Waiting for PostgreSQL... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
         Start-Sleep -Seconds 2
     } while ($retryCount -lt $maxRetries)
     
     if ($retryCount -ge $maxRetries) {
-        Write-Err "PostgreSQL Core did not start in time"
-    }
-    
-    # Wait for PostgreSQL Content
-    $retryCount = 0
-    do {
-        $retryCount++
-        docker exec encypher-postgres-content pg_isready -U encypher -d encypher_content 2>$null | Out-Null
-        if ($LASTEXITCODE -eq 0) {
-            Write-Success "PostgreSQL Content is ready (port 5433)"
-            break
-        }
-        Write-Host "    Waiting for PostgreSQL Content... ($retryCount/$maxRetries)" -ForegroundColor DarkGray
-        Start-Sleep -Seconds 2
-    } while ($retryCount -lt $maxRetries)
-    
-    if ($retryCount -ge $maxRetries) {
-        Write-Err "PostgreSQL Content did not start in time"
+        Write-Err "PostgreSQL did not start in time"
     }
     
     # Verify Redis
@@ -286,35 +274,16 @@ if (-not $SkipDocker) {
     Write-Step "4/8" "Skipping database wait (Docker skipped)"
 }
 
-# Step 5: Run Database Migrations
+# Step 5: Database Initialization
 if (-not $SkipDocker) {
-    Write-Step "5/8" "Running database migrations..."
+    Write-Step "5/8" "Databases initialized via init-databases.sql..."
     
-    # Core DB migrations
-    $coreDir = "services/migrations/core_db"
-    if (Test-Path $coreDir) {
-        $migrations = Get-ChildItem -Path $coreDir -Filter "*.sql" | Sort-Object Name
-        foreach ($migration in $migrations) {
-            $content = Get-Content $migration.FullName -Raw
-            $content | docker exec -i encypher-postgres-core psql -U encypher -d encypher_core -q 2>$null | Out-Null
-        }
-        Write-Info "Core DB: $($migrations.Count) migration files processed"
-    }
-    
-    # Content DB migrations
-    $contentDir = "services/migrations/content_db"
-    if (Test-Path $contentDir) {
-        $migrations = Get-ChildItem -Path $contentDir -Filter "*.sql" | Sort-Object Name
-        foreach ($migration in $migrations) {
-            $content = Get-Content $migration.FullName -Raw
-            $content | docker exec -i encypher-postgres-content psql -U encypher -d encypher_content -q 2>$null | Out-Null
-        }
-        Write-Info "Content DB: $($migrations.Count) migration files processed"
-    }
-    
-    Write-Success "Migrations complete"
+    # The init-databases.sql script runs automatically on first PostgreSQL startup
+    # It creates all per-service databases. Each service runs its own Alembic migrations.
+    Write-Info "Per-service databases created by PostgreSQL init script"
+    Write-Success "Database initialization complete"
 } else {
-    Write-Step "5/8" "Skipping migrations (Docker skipped)"
+    Write-Step "5/8" "Skipping database init (Docker skipped)"
 }
 
 # Step 6: Wait for Microservices
@@ -435,8 +404,7 @@ Write-Step "8/8" "Verifying services..."
 Start-Sleep -Seconds 3  # Give services a moment
 
 $services = @(
-    @{Name="PostgreSQL Core"; Port=5432},
-    @{Name="PostgreSQL Content"; Port=5433},
+    @{Name="PostgreSQL"; Port=5432},
     @{Name="Redis Cache"; Port=6379},
     @{Name="Redis Celery"; Port=6380},
     @{Name="Traefik Gateway"; Port=8000},
@@ -470,8 +438,7 @@ if ($script:hasErrors) {
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Infrastructure:" -ForegroundColor Yellow
-Write-Host "  PostgreSQL Core:    localhost:5432" -ForegroundColor Gray
-Write-Host "  PostgreSQL Content: localhost:5433" -ForegroundColor Gray
+Write-Host "  PostgreSQL:         localhost:5432 (10 databases)" -ForegroundColor Gray
 Write-Host "  Redis Cache:        localhost:6379" -ForegroundColor Gray
 Write-Host "  Redis Celery:       localhost:6380" -ForegroundColor Gray
 Write-Host ""

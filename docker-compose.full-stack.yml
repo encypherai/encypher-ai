@@ -22,43 +22,38 @@ services:
       retries: 3
 
   # ============================================
-  # DATABASES (Two-Database Architecture)
+  # DATABASES (Per-Service Database Architecture)
   # ============================================
+  # Each microservice gets its own database for full isolation.
+  # In production, these would be separate PostgreSQL instances.
+  # For dev, we use one PostgreSQL container with multiple databases.
+  #
+  # Database assignments:
+  #   - encypher_auth:          auth-service
+  #   - encypher_users:         user-service
+  #   - encypher_keys:          key-service
+  #   - encypher_billing:       billing-service
+  #   - encypher_notifications: notification-service
+  #   - encypher_encoding:      encoding-service
+  #   - encypher_verification:  verification-service
+  #   - encypher_analytics:     analytics-service
+  #   - encypher_coalition:     coalition-service
+  #   - encypher_content:       enterprise-api (C2PA content)
   
-  # Core Database: Customer/billing data (sensitive)
-  postgres-core:
+  postgres:
     image: postgres:15-alpine
-    container_name: encypher-postgres-core
+    container_name: encypher-postgres
     environment:
-      POSTGRES_DB: encypher_core
       POSTGRES_USER: encypher
       POSTGRES_PASSWORD: encypher_dev_password
+      POSTGRES_DB: encypher_auth  # Default DB (required by postgres image)
     ports:
       - "5432:5432"
     volumes:
-      - postgres_core_data:/var/lib/postgresql/data
-      - ./services/migrations/core_db:/docker-entrypoint-initdb.d
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U encypher -d encypher_core"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  # Content Database: Verification/Merkle data (semi-public)
-  postgres-content:
-    image: postgres:15-alpine
-    container_name: encypher-postgres-content
-    environment:
-      POSTGRES_DB: encypher_content
-      POSTGRES_USER: encypher
-      POSTGRES_PASSWORD: encypher_dev_password
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_content_data:/var/lib/postgresql/data
-      - ./services/migrations/content_db:/docker-entrypoint-initdb.d
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U encypher -d encypher_content"]
+      test: ["CMD-SHELL", "pg_isready -U encypher"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -151,9 +146,10 @@ services:
     ports:
       - "8001:8001"
     environment:
-      # Shared Variables
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_auth
       REDIS_URL: redis://redis-cache:6379
+      # Shared config
       JWT_SECRET_KEY: dev_jwt_secret_key_change_in_production_min_32_chars
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
       MARKETING_SITE_URL: http://localhost:3000
@@ -165,7 +161,7 @@ services:
       SERVICE_NAME: auth-service
       SERVICE_PORT: 8001
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -181,7 +177,8 @@ services:
     ports:
       - "8002:8002"
     environment:
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_users
       REDIS_URL: redis://redis-cache:6379
       AUTH_SERVICE_URL: http://auth-service:8001
       SERVICE_NAME: user-service
@@ -190,7 +187,7 @@ services:
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -208,8 +205,8 @@ services:
     ports:
       - "8003:8003"
     environment:
-      # Shared Variables
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_keys
       REDIS_URL: redis://redis-cache:6379
       AUTH_SERVICE_URL: http://auth-service:8001
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
@@ -219,7 +216,7 @@ services:
       SERVICE_NAME: key-service
       SERVICE_PORT: 8003
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -237,7 +234,8 @@ services:
     ports:
       - "8004:8004"
     environment:
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_encoding
       REDIS_URL: redis://redis-cache:6379
       REDIS_CELERY_URL: redis://redis-celery:6379
       AUTH_SERVICE_URL: http://auth-service:8001
@@ -248,7 +246,7 @@ services:
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -270,7 +268,8 @@ services:
     ports:
       - "8005:8005"
     environment:
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_verification
       REDIS_URL: redis://redis-cache:6379
       SERVICE_NAME: verification-service
       SERVICE_HOST: 0.0.0.0
@@ -278,7 +277,7 @@ services:
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: "*"  # Public service
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -294,7 +293,8 @@ services:
     ports:
       - "8006:8006"
     environment:
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_analytics
       REDIS_URL: redis://redis-cache:6379
       AUTH_SERVICE_URL: http://auth-service:8001
       SERVICE_NAME: analytics-service
@@ -303,7 +303,7 @@ services:
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -321,7 +321,8 @@ services:
     ports:
       - "8007:8007"
     environment:
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_billing
       REDIS_URL: redis://redis-cache:6379
       AUTH_SERVICE_URL: http://auth-service:8001
       ANALYTICS_SERVICE_URL: http://analytics-service:8006
@@ -340,7 +341,7 @@ services:
       STRIPE_PRICE_BUSINESS_MONTHLY: ${STRIPE_PRICE_BUSINESS_MONTHLY:-}
       STRIPE_PRICE_BUSINESS_ANNUAL: ${STRIPE_PRICE_BUSINESS_ANNUAL:-}
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -358,7 +359,8 @@ services:
     ports:
       - "8008:8008"
     environment:
-      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_notifications
       REDIS_URL: redis://redis-cache:6379
       SERVICE_NAME: notification-service
       SERVICE_HOST: 0.0.0.0
@@ -366,7 +368,7 @@ services:
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
     depends_on:
-      postgres-core:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -379,6 +381,9 @@ services:
   # ============================================
   # ENTERPRISE API (C2PA Signing & Verification)
   # ============================================
+  # Enterprise API uses two databases:
+  #   - encypher_keys: For organization/API key lookups (reads from key-service's DB)
+  #   - encypher_content: For C2PA content storage (its own DB)
   enterprise-api:
     build:
       context: .
@@ -387,13 +392,10 @@ services:
     ports:
       - "9000:8000"
     environment:
-      # Databases (Two-Database Architecture)
-      # Core DB: Customer/billing data (organizations, api_keys, etc.)
-      CORE_DATABASE_URL: postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core
-      # Content DB: Verification data (documents, merkle trees, etc.)
-      CONTENT_DATABASE_URL: postgresql+asyncpg://encypher:encypher_dev_password@postgres-content:5432/encypher_content
-      # Legacy alias (points to core for backward compatibility)
-      DATABASE_URL: postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core
+      # Database (service-specific - matches production)
+      # Enterprise API owns the content database for C2PA documents
+      DATABASE_URL: postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher_content
+      # For organization/key lookups, it calls key-service API (not direct DB access)
       # Redis
       REDIS_URL: redis://redis-cache:6379
       # Security
@@ -410,14 +412,12 @@ services:
       LOG_LEVEL: DEBUG
       SERVICE_NAME: enterprise-api
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,https://staging.encypherai.com,https://dashboard-staging.encypherai.com,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com
-      # Internal service URLs
+      # Internal service URLs (for cross-service API calls)
       AUTH_SERVICE_URL: http://auth-service:8001
       KEY_SERVICE_URL: http://key-service:8003
       BILLING_SERVICE_URL: http://billing-service:8007
     depends_on:
-      postgres-core:
-        condition: service_healthy
-      postgres-content:
+      postgres:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
@@ -433,8 +433,7 @@ services:
       - ./c2pa-text/python:/app/c2pa-text/python
 
 volumes:
-  postgres_core_data:
-  postgres_content_data:
+  postgres_data:
   prometheus_data:
   grafana_data:
 
