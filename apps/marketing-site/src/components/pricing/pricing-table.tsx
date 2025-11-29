@@ -4,108 +4,137 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 
+// Dashboard URL for sign-up flows
+const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';
+
 const tiers = [
   {
-    name: 'Open Source (AGPLv3)',
-    description: 'Ideal for individual developers, researchers, and open-source projects. Requires any modifications or derivative works (if networked) to be shared under AGPLv3. Perfect for experimentation and community collaboration.',
+    name: 'Starter',
+    description: 'Perfect for bloggers and small publishers. Sign unlimited content, join the licensing coalition, and earn when AI companies use your content.',
     price: 'Free',
     period: '',
+    revShare: '65% you / 35% Encypher',
     features: [
-      'Full access to all core functions',
-      'AGPLv3 license',
-      'Community support via GitHub & Discord',
-      'Public documentation',
-      'Full source code access'
+      'Unlimited C2PA signing',
+      'Unlimited verifications',
+      '2 API keys',
+      'Community support',
+      '7-day analytics',
+      'Auto-join licensing coalition',
     ],
-    cta: 'View on GitHub',
-    ctaLink: 'https://github.com/encypherai/encypher-ai',
+    cta: 'Get Started Free',
+    ctaLink: `${DASHBOARD_URL}/signup`,
     highlighted: false
   },
   {
-    name: 'Commercial License',
-    description: 'For businesses and organizations requiring the flexibility to integrate Encypher into proprietary systems without AGPLv3\'s open-source obligations. Includes standard support.',
-    price: '$5,000',
-    startingAt: true,
-    period: 'per year',
+    name: 'Professional',
+    description: 'For regional news and niche publications. Track every sentence, know when your content appears in AI outputs, and earn a better revenue share.',
+    price: '$99',
+    period: '/month',
+    revShare: '70% you / 30% Encypher',
     features: [
-      'Use in proprietary/closed-source projects',
-      'Standard email support (2 business day SLA)',
-      'Access to updates and maintenance releases',
-      'Suitable for most commercial applications',
-      'License compliance assurance'
+      'Everything in Starter',
+      'Sentence-level tracking (50K/mo)',
+      'Invisible embeddings',
+      '10 API keys',
+      'Email support (48hr SLA)',
+      '90-day analytics',
+      'BYOK encryption',
+      'WordPress Pro (no branding)',
     ],
-    cta: 'Contact Sales',
-    ctaLink: '/about#contact',
-    highlighted: false
-  },
-  {
-    name: 'Enterprise License',
-    description: 'Tailored for large-scale deployments with specific compliance, security, and support needs. Includes dedicated support, custom integrations, and volume-based pricing.',
-    price: 'Custom Pricing',
-    startingAt: false,
-    period: '',
-    features: [
-      'All Commercial License features',
-      'Dedicated account manager & priority support (custom SLA)',
-      'Custom integration support & consultancy hours',
-      'Volume-based pricing & flexible deployment options',
-      'Option for on-premise or private cloud deployment',
-      'Security & compliance review assistance',
-      'Influence on product roadmap'
-    ],
-    cta: 'Contact Sales',
-    ctaLink: '/about#contact',
+    cta: 'Start Free Trial',
+    ctaLink: `${DASHBOARD_URL}/signup?plan=professional`,
     highlighted: true
+  },
+  {
+    name: 'Business',
+    description: 'For major digital publishers. Enterprise-grade content tracking, plagiarism detection, team collaboration, and the best self-serve revenue share.',
+    price: '$499',
+    period: '/month',
+    revShare: '75% you / 25% Encypher',
+    features: [
+      'Everything in Professional',
+      'Merkle tree encoding',
+      'Plagiarism detection',
+      'Source attribution API',
+      'Batch operations (100 docs)',
+      '50 API keys',
+      'Priority support (24hr SLA)',
+      '1-year analytics',
+      'Team management (10 users)',
+      'Audit logs',
+    ],
+    cta: 'Start Free Trial',
+    ctaLink: `${DASHBOARD_URL}/signup?plan=business`,
+    highlighted: false
+  },
+  {
+    name: 'Enterprise',
+    description: 'For global media giants and wire services. Full platform access, dedicated support, custom SLAs, and the best revenue share terms.',
+    price: 'Custom',
+    period: '',
+    revShare: '80% you / 20% Encypher',
+    features: [
+      'Everything in Business',
+      'Unlimited everything',
+      'Custom C2PA assertions',
+      'SSO/SCIM integration',
+      'Dedicated TAM + Slack',
+      'Custom SLAs',
+      'On-premise option',
+      'White-label WordPress',
+    ],
+    cta: 'Contact Sales',
+    ctaLink: '/about#contact',
+    highlighted: false,
+    enterprise: true
   }
 ];
 
 export function PricingTable() {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
       {tiers.map((tier) => (
         <Card 
           key={tier.name} 
-          className={`flex flex-col ${tier.highlighted ? 'border-primary shadow-lg' : ''}`}
+          className={`flex flex-col ${tier.highlighted ? 'border-primary shadow-lg ring-2 ring-primary/20' : ''}`}
         >
+          {tier.highlighted && (
+            <div className="bg-primary text-primary-foreground text-center text-sm font-medium py-1 rounded-t-lg">
+              Most Popular
+            </div>
+          )}
           <CardHeader>
             <CardTitle>{tier.name}</CardTitle>
-            <CardDescription>{tier.description}</CardDescription>
+            <div className="mt-2">
+              <span className="text-3xl font-bold">{tier.price}</span>
+              {tier.period && <span className="text-muted-foreground">{tier.period}</span>}
+            </div>
+            {/* Coalition Revenue Share - Lead with this */}
+            <div className="mt-3 p-2 bg-muted/50 rounded-lg text-center">
+              <p className="text-xs text-muted-foreground">Coalition Revenue</p>
+              <p className="text-sm font-semibold">{tier.revShare}</p>
+            </div>
+            <CardDescription className="mt-3">{tier.description}</CardDescription>
           </CardHeader>
           <CardContent className="flex-1">
-            <div className="mb-6">
-              {tier.price === 'Custom Pricing' ? (
-                <a href={tier.ctaLink} className="block">
-                  <Button variant="default" className="w-full text-lg py-6">{tier.cta}</Button>
-                </a>
-              ) : (
-                <>
-                  {tier.startingAt && (
-                    <span className="block text-sm text-muted-foreground mb-1">Starting at</span>
-                  )}
-                  <span className="text-3xl font-bold">{tier.price}</span>
-                  {tier.period && <span className="text-muted-foreground ml-1">{tier.period}</span>}
-                </>
-              )}
-            </div>
             <ul className="space-y-2">
               {tier.features.map((feature) => (
-                <li key={feature} className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-primary" />
+                <li key={feature} className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                   <span className="text-sm">{feature}</span>
                 </li>
               ))}
             </ul>
           </CardContent>
           <CardFooter>
-            {tier.price !== 'Custom Pricing' && (
-              <Button 
-                asChild 
-                className="w-full" 
-                variant={tier.highlighted ? 'default' : 'outline'}
-              >
-                <a href={tier.ctaLink}>{tier.cta}</a>
-              </Button>
-            )}
+            <Button 
+              asChild 
+              className="w-full" 
+              variant={tier.highlighted ? 'default' : 'outline'}
+            >
+              <a href={tier.ctaLink}>{tier.cta}</a>
+            </Button>
           </CardFooter>
         </Card>
       ))}
