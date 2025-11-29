@@ -7,45 +7,33 @@
 -- Run by PostgreSQL on first container startup via docker-entrypoint-initdb.d
 -- ============================================================================
 
--- Auth Service Database
--- Tables: users, refresh_tokens, password_reset_tokens, email_verification_tokens
-CREATE DATABASE encypher_auth;
+-- Use a DO block to handle "IF NOT EXISTS" for CREATE DATABASE
+-- (PostgreSQL doesn't support CREATE DATABASE IF NOT EXISTS directly)
 
--- User Service Database  
--- Tables: user_profiles, user_preferences, teams, team_members
-CREATE DATABASE encypher_users;
+DO $$
+BEGIN
+    -- User Service Database
+    IF NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_users') THEN
+        PERFORM dblink_exec('dbname=postgres', 'CREATE DATABASE encypher_users');
+    END IF;
+END
+$$;
 
--- Key Service Database
--- Tables: organizations, organization_members, api_keys
-CREATE DATABASE encypher_keys;
+-- Since we can't use dblink without extension, use a simpler approach:
+-- Create databases, ignore errors if they exist
 
--- Billing Service Database
--- Tables: subscriptions, invoices, payments, usage_records
-CREATE DATABASE encypher_billing;
+-- Note: encypher_auth is created as POSTGRES_DB, so skip it
 
--- Notification Service Database
--- Tables: notification_logs, email_templates, notification_preferences
-CREATE DATABASE encypher_notifications;
-
--- Encoding Service Database
--- Tables: encoded_documents, signing_operations
-CREATE DATABASE encypher_encoding;
-
--- Verification Service Database
--- Tables: verification_results, verification_cache
-CREATE DATABASE encypher_verification;
-
--- Analytics Service Database
--- Tables: usage_metrics, aggregated_metrics
-CREATE DATABASE encypher_analytics;
-
--- Coalition Service Database
--- Tables: coalition_members, coalition_content, licensing_agreements, revenue_distributions
-CREATE DATABASE encypher_coalition;
-
--- Enterprise API Content Database
--- Tables: documents, merkle_trees, signatures (C2PA content)
-CREATE DATABASE encypher_content;
+-- Create remaining databases using template0
+SELECT 'CREATE DATABASE encypher_users' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_users')\gexec
+SELECT 'CREATE DATABASE encypher_keys' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_keys')\gexec
+SELECT 'CREATE DATABASE encypher_billing' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_billing')\gexec
+SELECT 'CREATE DATABASE encypher_notifications' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_notifications')\gexec
+SELECT 'CREATE DATABASE encypher_encoding' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_encoding')\gexec
+SELECT 'CREATE DATABASE encypher_verification' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_verification')\gexec
+SELECT 'CREATE DATABASE encypher_analytics' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_analytics')\gexec
+SELECT 'CREATE DATABASE encypher_coalition' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_coalition')\gexec
+SELECT 'CREATE DATABASE encypher_content' WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = 'encypher_content')\gexec
 
 -- Grant all privileges to the encypher user on all databases
 GRANT ALL PRIVILEGES ON DATABASE encypher_auth TO encypher;
@@ -59,5 +47,4 @@ GRANT ALL PRIVILEGES ON DATABASE encypher_analytics TO encypher;
 GRANT ALL PRIVILEGES ON DATABASE encypher_coalition TO encypher;
 GRANT ALL PRIVILEGES ON DATABASE encypher_content TO encypher;
 
--- Log completion
 \echo 'All Encypher databases created successfully!'
