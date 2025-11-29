@@ -104,12 +104,15 @@ Usage: .\start-dev.ps1 [options]
 Options:
   -SkipDocker     Skip starting Docker services (use if already running)
   -SkipFrontend   Skip starting frontend applications
-  -CleanStart     Clean all caches (.next, node_modules/.cache) before starting
+  -CleanStart     Full clean rebuild:
+                    - Removes Docker volumes (fresh database with test user)
+                    - Rebuilds all Docker images from Dockerfiles
+                    - Clears .next and node_modules caches
   -Help           Show this help message
 
 Examples:
-  .\start-dev.ps1                    # Start everything
-  .\start-dev.ps1 -CleanStart        # Clean start (fixes most issues)
+  .\start-dev.ps1                    # Start everything (uses cached images)
+  .\start-dev.ps1 -CleanStart        # Full rebuild from scratch (fixes most issues)
   .\start-dev.ps1 -SkipDocker        # Only start frontends
 
 "@
@@ -202,7 +205,29 @@ Write-Success "Node.js $nodeVersion"
 
 # Step 2: Clean caches if requested
 if ($CleanStart) {
-    Write-Step "2/8" "Cleaning caches..."
+    Write-Step "2/8" "Cleaning caches and Docker resources..."
+    
+    # Stop and remove all containers, networks, and volumes
+    Write-Info "Stopping Docker containers and removing volumes..."
+    docker-compose -f docker-compose.full-stack.yml down -v 2>$null
+    
+    # Remove old Docker images for our services to force rebuild
+    Write-Info "Removing old Docker images to force rebuild..."
+    $services = @(
+        "encypherai-commercial-auth-service",
+        "encypherai-commercial-user-service",
+        "encypherai-commercial-key-service",
+        "encypherai-commercial-encoding-service",
+        "encypherai-commercial-verification-service",
+        "encypherai-commercial-analytics-service",
+        "encypherai-commercial-billing-service",
+        "encypherai-commercial-notification-service",
+        "encypherai-commercial-enterprise-api"
+    )
+    foreach ($service in $services) {
+        docker rmi $service 2>$null | Out-Null
+    }
+    Write-Info "Docker images cleared"
     
     # Clean Next.js caches
     if (Test-Path "apps/marketing-site/.next") {
@@ -222,7 +247,7 @@ if ($CleanStart) {
         Remove-Item -Recurse -Force "apps/dashboard/node_modules/.cache" -ErrorAction SilentlyContinue
     }
     
-    Write-Success "Caches cleaned"
+    Write-Success "All caches and Docker resources cleaned"
 } else {
     Write-Step "2/8" "Skipping cache clean (use -CleanStart to clean)"
 }
@@ -231,14 +256,23 @@ if ($CleanStart) {
 if (-not $SkipDocker) {
     Write-Step "3/8" "Starting all Docker services..."
     
-    # Stop any existing containers first
-    docker-compose -f docker-compose.full-stack.yml down 2>$null
+    # Stop any existing containers first (unless already done in CleanStart)
+    if (-not $CleanStart) {
+        docker-compose -f docker-compose.full-stack.yml down 2>$null
+    }
     
     # Start ALL services (mirrors production)
-    # Infrastructure: postgres-core, postgres-content, redis-cache, redis-celery, traefik
+    # Infrastructure: postgres, redis-cache, redis-celery, traefik
     # Microservices: auth, user, key, encoding, verification, analytics, billing, notification
     # Enterprise API: C2PA signing/verification
-    docker-compose -f docker-compose.full-stack.yml up -d 2>$null
+    if ($CleanStart) {
+        # Force rebuild all images from Dockerfiles with latest code
+        Write-Info "Building all Docker images from scratch (this may take a few minutes)..."
+        docker-compose -f docker-compose.full-stack.yml up -d --build --force-recreate 2>$null
+    } else {
+        docker-compose -f docker-compose.full-stack.yml up -d 2>$null
+    }
+    
     if ($LASTEXITCODE -ne 0) {
         Write-Err "Failed to start Docker services"
     } else {
