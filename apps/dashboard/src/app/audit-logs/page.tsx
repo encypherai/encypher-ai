@@ -62,7 +62,7 @@ export default function AuditLogsPage() {
       if (!orgId) return [];
       const accessToken = (session?.user as any)?.accessToken;
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/audit-logs?limit=${pageSize}&offset=${(page - 1) * pageSize}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/audit-logs?limit=${pageSize}&offset=${(page - 1) * pageSize}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

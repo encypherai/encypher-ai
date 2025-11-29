@@ -48,8 +48,9 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // NEXT_PUBLIC_API_URL already includes /api/v1
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations`,
+        `${process.env.NEXT_PUBLIC_API_URL}/organizations`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,

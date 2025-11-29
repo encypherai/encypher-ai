@@ -42,7 +42,7 @@ export default function InvitationPage() {
     async function fetchInvitation() {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/invitations/${token}`
+          `${process.env.NEXT_PUBLIC_API_URL}/organizations/invitations/${token}`
         );
         const data = await response.json();
         
@@ -73,7 +73,7 @@ export default function InvitationPage() {
     setSubmitting(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/invitations/${token}/accept`,
+        `${process.env.NEXT_PUBLIC_API_URL}/organizations/invitations/${token}/accept`,
         {
           method: 'POST',
           headers: {
@@ -116,7 +116,7 @@ export default function InvitationPage() {
     setSubmitting(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/invitations/${token}/accept-new`,
+        `${process.env.NEXT_PUBLIC_API_URL}/organizations/invitations/${token}/accept-new`,
         {
           method: 'POST',
           headers: {

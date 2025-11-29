@@ -275,7 +275,7 @@ const apiClient = {
    */
   async getKeyUsage(accessToken: string, keyId: string): Promise<unknown> {
     return fetchWithAuth(
-      `${KEY_SERVICE_URL}/api/v1/keys/${keyId}/usage`,
+      `${KEY_SERVICE_URL}/keys/${keyId}/usage`,
       accessToken
     );
   },

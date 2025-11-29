@@ -79,7 +79,7 @@ export default function TeamPage() {
     queryFn: async () => {
       if (!accessToken || !hasTeamFeature || !orgId) return null;
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/seats`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/seats`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!response.ok) return null;
@@ -98,7 +98,7 @@ export default function TeamPage() {
     queryFn: async () => {
       if (!accessToken || !hasTeamFeature || !orgId) return [];
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/members`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/members`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!response.ok) return [];
@@ -117,7 +117,7 @@ export default function TeamPage() {
     queryFn: async () => {
       if (!accessToken || !hasTeamFeature || !orgId) return [];
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/invitations`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations`, {
           headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!response.ok) return [];
@@ -133,7 +133,7 @@ export default function TeamPage() {
   // Invite mutation
   const inviteMutation = useMutation({
     mutationFn: async ({ email, role }: { email: string; role: string }) => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/invitations`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ export default function TeamPage() {
   // Cancel invitation mutation
   const cancelInviteMutation = useMutation({
     mutationFn: async (invitationId: string) => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/invitations/${invitationId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations/${invitationId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -183,7 +183,7 @@ export default function TeamPage() {
   // Remove member mutation
   const removeMemberMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/members/${userId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/members/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${accessToken}` },
       });
@@ -203,7 +203,7 @@ export default function TeamPage() {
   // Update role mutation
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/members/${userId}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/members/${userId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
