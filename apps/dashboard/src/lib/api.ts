@@ -6,18 +6,21 @@
  */
 
 // All API calls go through Traefik (routes to appropriate microservice based on path)
-// In production: https://s-api.encypherai.com
-// In development: Traefik runs on localhost:443 (HTTPS) or localhost:80 (HTTP)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://s-api.encypherai.com';
+// In production: https://s-api.encypherai.com/api/v1
+// In development: http://localhost:8000/api/v1
+// 
+// IMPORTANT: NEXT_PUBLIC_API_URL should include /api/v1 suffix
+// e.g., http://localhost:8000/api/v1 or https://s-api.encypherai.com/api/v1
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://s-api.encypherai.com/api/v1';
 
 // All services use the same base URL - Traefik routes based on path:
-//   /api/v1/auth/*       -> auth-service
-//   /api/v1/keys/*       -> key-service
-//   /api/v1/analytics/*  -> analytics-service
-//   /api/v1/billing/*    -> billing-service
-//   /api/v1/users/*      -> user-service
-//   /api/v1/verify/*     -> verification-service
-//   /api/v1/coalition/*  -> coalition-service
+//   /keys/*       -> key-service
+//   /auth/*       -> auth-service
+//   /analytics/*  -> analytics-service
+//   /billing/*    -> billing-service
+//   /users/*      -> user-service
+//   /verify/*     -> verification-service
+//   /coalition/*  -> coalition-service
 const AUTH_SERVICE_URL = API_BASE_URL;
 const KEY_SERVICE_URL = API_BASE_URL;
 const ANALYTICS_SERVICE_URL = API_BASE_URL;
@@ -227,7 +230,7 @@ const apiClient = {
    */
   async getApiKeys(accessToken: string): Promise<ApiKeyInfo[]> {
     const response = await fetchWithAuth<ApiKeyInfo[]>(
-      `${KEY_SERVICE_URL}/api/v1/keys`,
+      `${KEY_SERVICE_URL}/keys`,
       accessToken
     );
     return response;
@@ -242,7 +245,7 @@ const apiClient = {
     permissions: string[] = ['sign', 'verify', 'read']
   ): Promise<ApiResponse<ApiKeyCreateResponse>> {
     const response = await fetchWithAuth<ApiKeyCreateResponse>(
-      `${KEY_SERVICE_URL}/api/v1/keys/generate`,
+      `${KEY_SERVICE_URL}/keys/generate`,
       accessToken,
       {
         method: 'POST',
@@ -261,7 +264,7 @@ const apiClient = {
    */
   async deleteApiKey(accessToken: string, keyId: string): Promise<void> {
     await fetchWithAuth<{ message: string }>(
-      `${KEY_SERVICE_URL}/api/v1/keys/${keyId}`,
+      `${KEY_SERVICE_URL}/keys/${keyId}`,
       accessToken,
       { method: 'DELETE' }
     );
@@ -286,7 +289,7 @@ const apiClient = {
    */
   async getUsageStats(accessToken: string, days: number = 30): Promise<UsageStats> {
     return fetchWithAuth<UsageStats>(
-      `${ANALYTICS_SERVICE_URL}/api/v1/analytics/usage?days=${days}`,
+      `${ANALYTICS_SERVICE_URL}/analytics/usage?days=${days}`,
       accessToken
     );
   },
@@ -296,7 +299,7 @@ const apiClient = {
    */
   async getAnalyticsReport(accessToken: string, days: number = 30): Promise<AnalyticsReport> {
     return fetchWithAuth<AnalyticsReport>(
-      `${ANALYTICS_SERVICE_URL}/api/v1/analytics/report?days=${days}`,
+      `${ANALYTICS_SERVICE_URL}/analytics/report?days=${days}`,
       accessToken
     );
   },
@@ -311,7 +314,7 @@ const apiClient = {
     interval: 'hour' | 'day' = 'day'
   ): Promise<TimeSeriesData[]> {
     return fetchWithAuth<TimeSeriesData[]>(
-      `${ANALYTICS_SERVICE_URL}/api/v1/analytics/timeseries?metric_type=${metricType}&days=${days}&interval=${interval}`,
+      `${ANALYTICS_SERVICE_URL}/analytics/timeseries?metric_type=${metricType}&days=${days}&interval=${interval}`,
       accessToken
     );
   },
@@ -325,7 +328,7 @@ const apiClient = {
    */
   async getUserProfile(accessToken: string): Promise<unknown> {
     return fetchWithAuth(
-      `${AUTH_SERVICE_URL}/api/v1/auth/verify`,
+      `${AUTH_SERVICE_URL}/auth/verify`,
       accessToken,
       { method: 'POST' }
     );
@@ -336,7 +339,7 @@ const apiClient = {
    */
   async logout(accessToken: string): Promise<void> {
     await fetchWithAuth(
-      `${AUTH_SERVICE_URL}/api/v1/auth/logout`,
+      `${AUTH_SERVICE_URL}/auth/logout`,
       accessToken,
       { method: 'POST' }
     );
@@ -351,7 +354,7 @@ const apiClient = {
    */
   async getProfile(accessToken: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${AUTH_SERVICE_URL}/api/v1/auth/verify`,
+      `${AUTH_SERVICE_URL}/auth/verify`,
       accessToken,
       { method: 'POST' }
     );
@@ -377,7 +380,7 @@ const apiClient = {
     // For now, we'll make the call and handle gracefully if it doesn't exist
     try {
       return await fetchWithAuth(
-        `${AUTH_SERVICE_URL}/api/v1/auth/profile`,
+        `${AUTH_SERVICE_URL}/auth/profile`,
         accessToken,
         {
           method: 'PUT',
@@ -427,7 +430,7 @@ const apiClient = {
    * Get all available subscription plans
    */
   async getPlans(): Promise<PlanInfo[]> {
-    const response = await fetch(`${BILLING_SERVICE_URL}/api/v1/billing/plans`);
+    const response = await fetch(`${BILLING_SERVICE_URL}/billing/plans`);
     if (!response.ok) {
       throw new ApiError('Failed to fetch plans', response.status);
     }
@@ -440,7 +443,7 @@ const apiClient = {
   async getSubscription(accessToken: string): Promise<SubscriptionInfo | null> {
     try {
       return await fetchWithAuth<SubscriptionInfo>(
-        `${BILLING_SERVICE_URL}/api/v1/billing/subscription`,
+        `${BILLING_SERVICE_URL}/billing/subscription`,
         accessToken
       );
     } catch (error) {
@@ -472,7 +475,7 @@ const apiClient = {
   async getInvoices(accessToken: string): Promise<Invoice[]> {
     try {
       return await fetchWithAuth<Invoice[]>(
-        `${BILLING_SERVICE_URL}/api/v1/billing/invoices`,
+        `${BILLING_SERVICE_URL}/billing/invoices`,
         accessToken
       );
     } catch (error) {
@@ -486,7 +489,7 @@ const apiClient = {
    */
   async getBillingUsage(accessToken: string): Promise<BillingUsageStats> {
     return fetchWithAuth<BillingUsageStats>(
-      `${BILLING_SERVICE_URL}/api/v1/billing/usage`,
+      `${BILLING_SERVICE_URL}/billing/usage`,
       accessToken
     );
   },
@@ -496,7 +499,7 @@ const apiClient = {
    */
   async getCoalitionEarnings(accessToken: string): Promise<CoalitionSummary> {
     return fetchWithAuth<CoalitionSummary>(
-      `${BILLING_SERVICE_URL}/api/v1/billing/coalition`,
+      `${BILLING_SERVICE_URL}/billing/coalition`,
       accessToken
     );
   },
@@ -510,7 +513,7 @@ const apiClient = {
     billingCycle: 'monthly' | 'annual'
   ): Promise<CheckoutResponse> {
     return fetchWithAuth<CheckoutResponse>(
-      `${BILLING_SERVICE_URL}/api/v1/billing/checkout`,
+      `${BILLING_SERVICE_URL}/billing/checkout`,
       accessToken,
       {
         method: 'POST',
@@ -524,7 +527,7 @@ const apiClient = {
    */
   async getBillingPortal(accessToken: string): Promise<PortalResponse> {
     return fetchWithAuth<PortalResponse>(
-      `${BILLING_SERVICE_URL}/api/v1/billing/portal`,
+      `${BILLING_SERVICE_URL}/billing/portal`,
       accessToken
     );
   },
@@ -538,7 +541,7 @@ const apiClient = {
     billingCycle: 'monthly' | 'annual'
   ): Promise<UpgradeResponse> {
     return fetchWithAuth<UpgradeResponse>(
-      `${BILLING_SERVICE_URL}/api/v1/billing/upgrade`,
+      `${BILLING_SERVICE_URL}/billing/upgrade`,
       accessToken,
       {
         method: 'POST',
@@ -552,7 +555,7 @@ const apiClient = {
    */
   async cancelSubscription(accessToken: string, subscriptionId: string): Promise<void> {
     await fetchWithAuth(
-      `${BILLING_SERVICE_URL}/api/v1/billing/subscription/${subscriptionId}`,
+      `${BILLING_SERVICE_URL}/billing/subscription/${subscriptionId}`,
       accessToken,
       { method: 'DELETE' }
     );
