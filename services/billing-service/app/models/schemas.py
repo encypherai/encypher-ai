@@ -24,6 +24,8 @@ class PlanInfo(BaseModel):
     features: List[str]
     limits: Dict[str, Any]
     coalition_rev_share: Dict[str, int]  # {"publisher": 65, "encypher": 35}
+    enterprise: bool = False  # True for enterprise/custom pricing plans
+    popular: bool = False  # True for the recommended plan
 
 
 class SubscriptionCreate(BaseModel):
