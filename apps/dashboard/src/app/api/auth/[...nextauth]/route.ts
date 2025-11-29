@@ -17,10 +17,12 @@ const handler = NextAuth({
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.log('[NextAuth] Missing credentials');
           return null;
         }
 
         try {
+          console.log('[NextAuth] Attempting login to:', `${API_BASE}/auth/login`);
           // Call API Gateway auth login (SRF)
           const res = await fetch(`${API_BASE}/auth/login`, {
             method: 'POST',
@@ -32,9 +34,11 @@ const handler = NextAuth({
           });
 
           const data = await res.json();
+          console.log('[NextAuth] API response status:', res.status, 'success:', data.success);
 
           if (res.ok && data.success && data.data?.user && data.data?.access_token) {
             const user = data.data.user;
+            console.log('[NextAuth] Login successful for user:', user.email);
             return {
               id: String(user.id),
               email: user.email,
@@ -45,9 +49,10 @@ const handler = NextAuth({
             } as any;
           }
           
+          console.log('[NextAuth] Login failed - invalid response structure');
           return null;
         } catch (error) {
-          console.error('Auth error:', error);
+          console.error('[NextAuth] Auth error:', error);
           return null;
         }
       }
@@ -111,7 +116,8 @@ const handler = NextAuth({
     sessionToken: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        // Only set domain if NEXTAUTH_COOKIE_DOMAIN is explicitly set (for cross-subdomain auth)
+        ...(process.env.NEXTAUTH_COOKIE_DOMAIN && { domain: process.env.NEXTAUTH_COOKIE_DOMAIN }),
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
@@ -121,7 +127,7 @@ const handler = NextAuth({
     callbackUrl: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        ...(process.env.NEXTAUTH_COOKIE_DOMAIN && { domain: process.env.NEXTAUTH_COOKIE_DOMAIN }),
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
@@ -131,7 +137,7 @@ const handler = NextAuth({
     csrfToken: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.csrf-token' : 'next-auth.csrf-token',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        ...(process.env.NEXTAUTH_COOKIE_DOMAIN && { domain: process.env.NEXTAUTH_COOKIE_DOMAIN }),
         httpOnly: true,
         sameSite: 'lax',
         path: '/',

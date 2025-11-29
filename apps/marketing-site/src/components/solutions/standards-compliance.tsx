@@ -140,7 +140,7 @@ export default function StandardsCompliance() {
                   alt={`${logo.split('.')[0]} logo`}
                   height={40}
                   width={100}
-                  style={{objectFit: "contain"}}
+                  style={{objectFit: "contain", width: "auto", height: 40}}
                   className="grayscale"
                 />
               </div>
@@ -162,7 +162,7 @@ export default function StandardsCompliance() {
                   alt={`${logo.split('.')[0]} logo`}
                   height={40}
                   width={100}
-                  style={{objectFit: "contain"}}
+                  style={{objectFit: "contain", width: "auto", height: 40}}
                   className="grayscale"
                 />
               </div>

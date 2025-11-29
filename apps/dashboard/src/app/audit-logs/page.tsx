@@ -2,343 +2,222 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { format } from 'date-fns';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import {
-  Shield,
-  Download,
-  Filter,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  Lock,
-  Key,
-  FileText,
-  Users,
-  Settings,
-  CreditCard,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
+  Button,
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import api from '@/lib/api';
-
-// Action categories for filtering
-const ACTION_CATEGORIES = {
-  all: 'All Actions',
-  'api_key': 'API Keys',
-  'document': 'Documents',
-  'org': 'Organization',
-  'subscription': 'Billing',
-  'certificate': 'Certificates',
-  'coalition': 'Coalition',
-};
-
-// Action icons mapping
-const getActionIcon = (action: string) => {
-  if (action.startsWith('api_key')) return <Key className="h-4 w-4" />;
-  if (action.startsWith('document') || action.startsWith('batch')) return <FileText className="h-4 w-4" />;
-  if (action.startsWith('org.member')) return <Users className="h-4 w-4" />;
-  if (action.startsWith('org')) return <Settings className="h-4 w-4" />;
-  if (action.startsWith('subscription')) return <CreditCard className="h-4 w-4" />;
-  if (action.startsWith('certificate')) return <Lock className="h-4 w-4" />;
-  if (action.startsWith('coalition')) return <Shield className="h-4 w-4" />;
-  return <FileText className="h-4 w-4" />;
-};
-
-// Action badge color
-const getActionBadgeVariant = (action: string): 'default' | 'secondary' | 'destructive' | 'outline' => {
-  if (action.includes('created') || action.includes('added')) return 'default';
-  if (action.includes('revoked') || action.includes('removed') || action.includes('cancelled')) return 'destructive';
-  if (action.includes('updated') || action.includes('changed')) return 'secondary';
-  return 'outline';
-};
+  Input,
+} from '@encypher/design-system';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 interface AuditLog {
   id: string;
-  timestamp: string;
   action: string;
   actor_id: string;
-  actor_type: string;
   resource_type: string;
   resource_id?: string;
   details?: Record<string, unknown>;
-  ip_address?: string;
-  user_agent?: string;
+  created_at: string;
 }
 
-interface AuditLogsResponse {
-  organization_id: string;
-  logs: AuditLog[];
-  total: number;
-  page: number;
-  page_size: number;
-  has_more: boolean;
+// Format date helper
+function formatDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+// Get action badge color
+function getActionColor(action: string): string {
+  if (action.includes('created') || action.includes('joined')) return 'bg-green-100 text-green-800';
+  if (action.includes('removed') || action.includes('cancelled') || action.includes('revoked')) return 'bg-red-100 text-red-800';
+  if (action.includes('updated') || action.includes('changed')) return 'bg-blue-100 text-blue-800';
+  if (action.includes('invited')) return 'bg-purple-100 text-purple-800';
+  return 'bg-gray-100 text-gray-800';
 }
 
 export default function AuditLogsPage() {
-  const [page, setPage] = useState(1);
+  const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState('');
-  const [actionFilter, setActionFilter] = useState('all');
+  const [page, setPage] = useState(1);
   const pageSize = 25;
 
+  const userTier = (session?.user as any)?.tier || 'starter';
+  const hasAuditFeature = ['business', 'enterprise'].includes(userTier);
+  const orgId = (session?.user as any)?.organizationId;
+
   // Fetch audit logs
-  const { data, isLoading, error } = useQuery<AuditLogsResponse>({
-    queryKey: ['audit-logs', page, actionFilter],
+  const { data: logs, isLoading, error } = useQuery({
+    queryKey: ['audit-logs', orgId, page],
     queryFn: async () => {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        page_size: pageSize.toString(),
-      });
-      if (actionFilter !== 'all') {
-        params.append('action', actionFilter);
-      }
-      const response = await api.get<AuditLogsResponse>(`/api/v1/audit-logs?${params}`);
-      return response.data;
+      if (!orgId) return [];
+      const accessToken = (session?.user as any)?.accessToken;
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/organizations/${orgId}/audit-logs?limit=${pageSize}&offset=${(page - 1) * pageSize}`,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      if (!response.ok) throw new Error('Failed to fetch audit logs');
+      const data = await response.json();
+      return data.data || [];
     },
+    enabled: hasAuditFeature && !!orgId && !!session,
   });
 
-  // Export audit logs
-  const handleExport = async (format: 'json' | 'csv') => {
-    try {
-      const response = await api.get<string | object>(`/api/v1/audit-logs/export?format=${format}`);
-      
-      const blob = format === 'csv' 
-        ? new Blob([response.data as string], { type: 'text/csv' })
-        : new Blob([JSON.stringify(response.data, null, 2)], { type: 'application/json' });
-      
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-    } catch (err) {
-      console.error('Export failed:', err);
-    }
-  };
-
-  // Filter logs by search query
-  const filteredLogs = data?.logs.filter(log => {
+  // Filter logs by search
+  const filteredLogs = (logs || []).filter((log: AuditLog) => {
     if (!searchQuery) return true;
     const query = searchQuery.toLowerCase();
     return (
       log.action.toLowerCase().includes(query) ||
-      log.actor_id.toLowerCase().includes(query) ||
-      log.resource_type.toLowerCase().includes(query) ||
-      (log.resource_id && log.resource_id.toLowerCase().includes(query))
+      log.resource_type.toLowerCase().includes(query)
     );
-  }) || [];
+  });
 
-  // Check if feature is available (Business+ tier)
-  const isFeatureUnavailable = error && (error as Error).message?.includes('403');
-
-  if (isFeatureUnavailable) {
+  // Upgrade prompt for non-Business users
+  if (!hasAuditFeature) {
     return (
-      <div className="container mx-auto py-8 px-4">
-        <Card className="max-w-2xl mx-auto">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 rounded-full bg-muted flex items-center justify-center">
-              <Lock className="h-6 w-6 text-muted-foreground" />
-            </div>
-            <CardTitle>Audit Logs</CardTitle>
-            <CardDescription>
-              Audit logs are available on Business and Enterprise plans
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-sm text-muted-foreground mb-6">
-              Track all API key operations, document signing, team changes, and more with comprehensive audit logging.
-            </p>
-            <Button asChild>
-              <a href="/billing">Upgrade to Business</a>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4">
+          <div className="w-16 h-16 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
+            <svg className="w-8 h-8 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Audit Logs</h1>
+          <p className="text-muted-foreground max-w-md mb-6">
+            Track all activity in your organization including team changes, API key operations, and more.
+            Audit logs are available on Business and Enterprise plans.
+          </p>
+          <Link href="/billing">
+            <Button variant="primary">Upgrade to Business</Button>
+          </Link>
+        </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Shield className="h-8 w-8" />
-            Audit Logs
-          </h1>
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-foreground">Audit Logs</h1>
           <p className="text-muted-foreground mt-1">
             Track all activity in your organization
           </p>
         </div>
-        <div className="flex gap-2 mt-4 md:mt-0">
-          <Button variant="outline" size="sm" onClick={() => handleExport('csv')}>
-            <Download className="h-4 w-4 mr-2" />
-            Export CSV
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => handleExport('json')}>
-            <Download className="h-4 w-4 mr-2" />
-            Export JSON
-          </Button>
-        </div>
-      </div>
 
-      {/* Filters */}
-      <Card className="mb-6">
-        <CardContent className="pt-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search by action, actor, or resource..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
+        {/* Search */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <Input
+              type="text"
+              placeholder="Search by action or resource..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="max-w-md"
+            />
+          </CardContent>
+        </Card>
+
+        {/* Logs Table */}
+        <Card>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-8 text-center text-muted-foreground">
+                Loading audit logs...
               </div>
-            </div>
-            <div className="w-full md:w-48">
-              <Select value={actionFilter} onValueChange={setActionFilter}>
-                <SelectTrigger>
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue placeholder="Filter by action" />
-                </SelectTrigger>
-                <SelectContent>
-                  {Object.entries(ACTION_CATEGORIES).map(([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Logs Table */}
-      <Card>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Loading audit logs...
-            </div>
-          ) : error && !isFeatureUnavailable ? (
-            <div className="p-8 text-center">
-              <AlertCircle className="h-8 w-8 text-destructive mx-auto mb-2" />
-              <p className="text-destructive">Failed to load audit logs</p>
-            </div>
-          ) : filteredLogs.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              No audit logs found
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b bg-muted/50">
-                    <th className="text-left py-3 px-4 font-medium">Timestamp</th>
-                    <th className="text-left py-3 px-4 font-medium">Action</th>
-                    <th className="text-left py-3 px-4 font-medium">Actor</th>
-                    <th className="text-left py-3 px-4 font-medium">Resource</th>
-                    <th className="text-left py-3 px-4 font-medium">Details</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLogs.map((log) => (
-                    <tr key={log.id} className="border-b hover:bg-muted/30">
-                      <td className="py-3 px-4 text-sm">
-                        <div className="font-mono text-xs">
-                          {format(new Date(log.timestamp), 'MMM d, yyyy')}
-                        </div>
-                        <div className="font-mono text-xs text-muted-foreground">
-                          {format(new Date(log.timestamp), 'HH:mm:ss')}
-                        </div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
-                          {getActionIcon(log.action)}
-                          <Badge variant={getActionBadgeVariant(log.action)}>
-                            {log.action.replace(/\./g, ' ').replace(/_/g, ' ')}
-                          </Badge>
-                        </div>
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        <div className="font-medium">{log.actor_id.slice(0, 16)}...</div>
-                        <div className="text-xs text-muted-foreground">{log.actor_type}</div>
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        <div className="font-medium">{log.resource_type}</div>
-                        {log.resource_id && (
-                          <div className="text-xs text-muted-foreground font-mono">
-                            {log.resource_id.slice(0, 16)}...
-                          </div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-sm">
-                        {log.details && Object.keys(log.details).length > 0 ? (
-                          <div className="text-xs text-muted-foreground max-w-xs truncate">
-                            {JSON.stringify(log.details)}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
+            ) : error ? (
+              <div className="p-8 text-center text-red-600">
+                Failed to load audit logs
+              </div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="p-8 text-center text-muted-foreground">
+                No audit logs found
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left py-3 px-4 font-medium text-sm">Timestamp</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Action</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Resource</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Details</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </thead>
+                  <tbody>
+                    {filteredLogs.map((log: AuditLog) => (
+                      <tr key={log.id} className="border-b hover:bg-muted/30">
+                        <td className="py-3 px-4 text-sm font-mono text-muted-foreground">
+                          {formatDate(log.created_at)}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getActionColor(log.action)}`}>
+                            {log.action.replace(/\./g, ' ').replace(/_/g, ' ')}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 text-sm">
+                          <div className="font-medium">{log.resource_type}</div>
+                          {log.resource_id && (
+                            <div className="text-xs text-muted-foreground font-mono">
+                              {log.resource_id.slice(0, 12)}...
+                            </div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-sm text-muted-foreground">
+                          {log.details ? (
+                            <span className="text-xs font-mono">
+                              {JSON.stringify(log.details).slice(0, 50)}
+                              {JSON.stringify(log.details).length > 50 ? '...' : ''}
+                            </span>
+                          ) : (
+                            '—'
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* Pagination */}
-      {data && data.total > pageSize && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-muted-foreground">
-            Showing {((page - 1) * pageSize) + 1} to {Math.min(page * pageSize, data.total)} of {data.total} logs
-          </p>
-          <div className="flex gap-2">
+        {/* Pagination */}
+        {filteredLogs.length >= pageSize && (
+          <div className="flex justify-between items-center mt-4">
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setPage(p => Math.max(1, p - 1))}
               disabled={page === 1}
             >
-              <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
+            <span className="text-sm text-muted-foreground">Page {page}</span>
             <Button
               variant="outline"
-              size="sm"
               onClick={() => setPage(p => p + 1)}
-              disabled={!data.has_more}
+              disabled={filteredLogs.length < pageSize}
             >
               Next
-              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </DashboardLayout>
   );
 }

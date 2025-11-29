@@ -44,11 +44,29 @@ src/
 
 ## 🔐 Features
 
+### Core Features
 - **API Key Management** - Generate, view, and revoke API keys
 - **Usage Statistics** - Track API calls, documents signed, verifications
 - **Quick Actions** - Sign documents, verify content, view analytics
-- **Responsive Design** - Works on all devices
+- **Responsive Design** - Works on all devices with mobile navigation
 - **Admin Controls** - Manage users, roles, tiers, and invoices without touching the database
+
+### User Experience
+- **Onboarding Flow** - Welcome modal for new users with step-by-step guide
+- **Password Reset** - Forgot password and reset password flows
+- **Command Palette** - Quick navigation with Cmd+K / Ctrl+K
+- **Dark Mode** - Theme toggle with system preference detection
+- **Notification Center** - In-app notifications with bell icon
+
+### Team & Organization
+- **Team Management** - Invite members, manage roles, view audit logs
+- **Organization Switcher** - Switch between organizations (business tier)
+- **Webhooks** - Configure webhook endpoints for real-time notifications
+
+### Data & Export
+- **Activity Feed** - Recent activity timeline
+- **CSV Export** - Export analytics and API keys data
+- **Audit Logs** - View organization activity history
 
 ## 🌐 Deployment
 

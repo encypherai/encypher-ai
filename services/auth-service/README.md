@@ -15,6 +15,9 @@ Authentication and authorization microservice for the Encypher platform.
 - ✅ Session management
 - ✅ Health check endpoints
 - ✅ **Branded email templates** (via shared library)
+- ✅ **Team Management** (Organizations, Members, Invitations)
+- ✅ **Role-based Access Control** (Owner, Admin, Manager, Member, Viewer)
+- ✅ **Audit Logging** for organization actions
 
 ## Tech Stack
 
@@ -106,6 +109,84 @@ The service will be available at `http://localhost:8001`
 - Header: `Authorization: Bearer <token>`
 - Returns: User object
 
+### Team Management (Organizations)
+
+**POST /api/v1/organizations**
+- Create a new organization (current user becomes owner)
+- Body: `{ "name": "Acme Corp", "email": "team@acme.com" }`
+- Returns: Organization object
+
+**GET /api/v1/organizations**
+- List organizations the current user belongs to
+- Returns: Array of organization objects
+
+**GET /api/v1/organizations/:id**
+- Get organization details
+- Returns: Organization object
+
+**PATCH /api/v1/organizations/:id**
+- Update organization settings (Admin+ only)
+- Body: `{ "name": "New Name" }`
+- Returns: Updated organization object
+
+### Team Members
+
+**GET /api/v1/organizations/:id/members**
+- List all members of an organization
+- Returns: Array of member objects with user details
+
+**PATCH /api/v1/organizations/:id/members/:userId**
+- Update a member's role (Admin+ only)
+- Body: `{ "role": "admin" }` (admin, manager, member, viewer)
+- Returns: Updated member object
+
+**DELETE /api/v1/organizations/:id/members/:userId**
+- Remove a member from the organization (Admin+ only)
+- Returns: Success message
+
+**GET /api/v1/organizations/:id/seats**
+- Get seat usage information
+- Returns: `{ "used": 3, "max": 5, "available": 2, "unlimited": false }`
+
+### Invitations
+
+**POST /api/v1/organizations/:id/invitations**
+- Send an invitation to join the organization (Manager+ only)
+- Body: `{ "email": "new@example.com", "role": "member", "message": "Welcome!" }`
+- Returns: Invitation object
+
+**GET /api/v1/organizations/:id/invitations**
+- List pending invitations (Manager+ only)
+- Returns: Array of invitation objects
+
+**DELETE /api/v1/organizations/:id/invitations/:invitationId**
+- Cancel a pending invitation (Manager+ only)
+- Returns: Success message
+
+**POST /api/v1/organizations/:id/invitations/:invitationId/resend**
+- Resend an invitation (generates new token, extends expiry)
+- Returns: Updated invitation object
+
+**GET /api/v1/organizations/invitations/:token**
+- Get invitation details (public endpoint for invitation page)
+- Returns: Invitation details including org name, inviter, role
+
+**POST /api/v1/organizations/invitations/:token/accept**
+- Accept invitation (for logged-in users)
+- Returns: Membership details
+
+**POST /api/v1/organizations/invitations/:token/accept-new**
+- Accept invitation and create new account
+- Body: `{ "name": "John Doe", "password": "securepass123" }`
+- Returns: User object, membership, and auth tokens
+
+### Audit Logs
+
+**GET /api/v1/organizations/:id/audit-logs**
+- Get organization audit logs (any member)
+- Query params: `limit`, `offset`, `action` (filter)
+- Returns: Array of audit log entries
+
 ### Health
 
 **GET /health**
@@ -190,18 +271,33 @@ See `.env.example` for all available configuration options.
 app/
 ├── api/
 │   └── v1/
-│       └── endpoints.py    # API routes
+│       ├── endpoints.py       # Auth API routes
+│       └── organizations.py   # Team management API routes
 ├── core/
-│   ├── config.py          # Configuration
-│   └── security.py        # Security utilities
+│   ├── config.py              # Configuration
+│   └── security.py            # Security utilities
 ├── db/
-│   ├── models.py          # Database models
-│   └── session.py         # Database session
+│   ├── models.py              # Database models (User, Organization, etc.)
+│   └── session.py             # Database session
 ├── models/
-│   └── schemas.py         # Pydantic schemas
+│   └── schemas.py             # Pydantic schemas
 ├── services/
-│   └── auth_service.py    # Business logic
-└── main.py                # Application entry point
+│   ├── auth_service.py        # Authentication business logic
+│   └── organization_service.py # Team management business logic
+├── deps/
+│   └── rate_limit.py          # Rate limiting
+└── main.py                    # Application entry point
+
+alembic/
+└── versions/
+    ├── 001_initial_schema.py  # Users, tokens tables
+    └── 002_team_management.py # Organizations, members, invitations
+
+tests/
+├── conftest.py                # Pytest configuration
+├── test_organization_service.py # Unit tests (29 tests)
+└── integration/
+    └── test_auth_flow.py      # Integration tests
 ```
 
 ## Integration with Other Services
@@ -222,6 +318,37 @@ async def verify_token(token: str):
         return None
 ```
 
+## Role-Based Access Control
+
+The team management system uses a 5-level role hierarchy:
+
+| Role | Level | Permissions |
+|------|-------|-------------|
+| **Owner** | 5 | Full control, cannot be removed |
+| **Admin** | 4 | Manage members, billing, settings, API keys |
+| **Manager** | 3 | Invite members, create API keys |
+| **Member** | 2 | Use API keys, view own analytics |
+| **Viewer** | 1 | Read-only access |
+
+### Permission Matrix
+
+| Action | Owner | Admin | Manager | Member | Viewer |
+|--------|-------|-------|---------|--------|--------|
+| Invite members | ✅ | ✅ | ✅ | ❌ | ❌ |
+| Manage members | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Manage billing | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Create API keys | ✅ | ✅ | ✅ | ❌ | ❌ |
+| View audit logs | ✅ | ✅ | ✅ | ✅ | ✅ |
+
+### Seat Limits by Plan
+
+| Plan | Max Seats |
+|------|-----------|
+| Starter | 1 (no team features) |
+| Professional | 1 (no team features) |
+| Business | 5 |
+| Enterprise | Unlimited |
+
 ## Security
 
 - Passwords are hashed using bcrypt
@@ -229,6 +356,9 @@ async def verify_token(token: str):
 - Refresh tokens are stored in database
 - Tokens can be revoked
 - Rate limiting recommended at API Gateway level
+- Invitation tokens are cryptographically secure, expire after 7 days
+- All team actions are logged to audit log
+- Owner role is protected (cannot be removed or demoted)
 
 ## Monitoring
 

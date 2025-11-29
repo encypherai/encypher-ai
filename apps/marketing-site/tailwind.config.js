@@ -36,8 +36,15 @@ const config = {
         'columbia-blue': {
           DEFAULT: '#b7d5ed',
         },
+        'cyber-teal': {
+          DEFAULT: '#00ced1',
+        },
+        // Legacy alias - deprecated, use cyber-teal instead
         'rosy-brown': {
-          DEFAULT: '#ba8790',
+          DEFAULT: '#00ced1',
+        },
+        'neutral-gray': {
+          DEFAULT: '#a7afbc',
         },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

@@ -5,6 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useState } from 'react';
+import { OrganizationSwitcher } from '../OrganizationSwitcher';
+import { MobileNav } from '../MobileNav';
+import { NotificationCenter } from '../NotificationCenter';
+import { ThemeToggleButton } from '../../contexts/ThemeContext';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -14,6 +18,8 @@ const navItems = [
   { href: '/', label: 'Overview' },
   { href: '/api-keys', label: 'API Keys' },
   { href: '/analytics', label: 'Analytics' },
+  { href: '/webhooks', label: 'Webhooks', businessOnly: true },
+  { href: '/team', label: 'Team', businessOnly: true },
   { href: '/settings', label: 'Settings' },
   { href: '/billing', label: 'Billing' },
 ];
@@ -22,9 +28,15 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
   const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
+  const userTier = (session?.user as any)?.tier || 'starter';
+  const hasTeamFeature = ['business', 'enterprise'].includes(userTier);
   const userName = session?.user?.name || session?.user?.email || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Filter nav items based on tier
+  const visibleNavItems = navItems.filter(item => !item.businessOnly || hasTeamFeature);
 
   const handleSignOut = () => {
     signOut({ callbackUrl: process.env.NEXT_PUBLIC_SITE_URL || 'https://s-www.encypherai.com' });
@@ -36,7 +48,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            {/* Logo + Dashboard Badge */}
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="lg:hidden p-2 -ml-2 rounded-lg hover:bg-slate-100 transition-colors"
+              aria-label="Open menu"
+            >
+              <svg className="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+
+            {/* Logo + Dashboard Badge + Org Switcher */}
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center">
                 <Image
@@ -53,11 +76,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   Dashboard
                 </span>
               </div>
+              {/* Organization Switcher - only shows if user has multiple orgs */}
+              {hasTeamFeature && (
+                <div className="hidden md:block">
+                  <OrganizationSwitcher />
+                </div>
+              )}
             </div>
 
             {/* Center Navigation */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navItems.map((item) => {
+              {visibleNavItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
                   <Link 
@@ -87,13 +116,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               )}
             </nav>
 
-            {/* Right Side - Docs + User */}
-            <div className="flex items-center gap-3">
+            {/* Right Side - Theme + Notifications + Docs + User */}
+            <div className="flex items-center gap-2">
+              {/* Theme Toggle */}
+              <div className="hidden sm:block">
+                <ThemeToggleButton />
+              </div>
+
+              {/* Notifications */}
+              <NotificationCenter />
+
+              {/* Docs Link */}
               <a
                 href="https://docs.encypherai.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-delft-blue transition-colors"
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-delft-blue dark:hover:text-white transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
@@ -174,6 +212,17 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       <main className="container mx-auto px-4 py-8">
         {children}
       </main>
+
+      {/* Mobile Navigation */}
+      <MobileNav
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+        navItems={visibleNavItems}
+        isAdmin={isAdmin}
+        userName={userName}
+        userEmail={session?.user?.email || ''}
+        userInitial={userInitial}
+      />
     </div>
   );
 }

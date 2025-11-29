@@ -389,7 +389,7 @@ services:
       ENVIRONMENT: development
       LOG_LEVEL: DEBUG
       SERVICE_NAME: enterprise-api
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,https://staging.encypherai.com,https://dashboard-staging.encypherai.com,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com
       # Internal service URLs
       AUTH_SERVICE_URL: http://auth-service:8001
       KEY_SERVICE_URL: http://key-service:8003

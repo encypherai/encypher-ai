@@ -16,6 +16,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { exportApiKeys } from '../../lib/exportCsv';
 
 type ApiKeyRecord = {
   id: string;
@@ -163,17 +164,62 @@ export default function ApiKeysPage() {
     }
 
     if (apiKeysQuery.isError) {
+      const errorMessage = (apiKeysQuery.error as Error)?.message || '';
+      // Treat 404 or "Not Found" as empty state (service may not have keys endpoint yet)
+      if (errorMessage.includes('404') || errorMessage.toLowerCase().includes('not found')) {
+        return (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
+              <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No API Keys Yet</h3>
+            <p className="text-muted-foreground text-center max-w-md mb-6">
+              Generate your first API key to start authenticating your content with cryptographic proof.
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => createKeyMutation.mutate()}
+              disabled={!accessToken || createKeyMutation.isPending}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Generate Your First Key
+            </Button>
+          </div>
+        );
+      }
       return (
         <div className="text-destructive">
-          {(apiKeysQuery.error as Error)?.message || 'Unable to load API keys.'}
+          {errorMessage || 'Unable to load API keys.'}
         </div>
       );
     }
 
     if (!apiKeys.length) {
       return (
-        <div className="text-muted-foreground">
-          You have not generated any API keys yet.
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
+            <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-foreground mb-2">No API Keys Yet</h3>
+          <p className="text-muted-foreground text-center max-w-md mb-6">
+            Generate your first API key to start authenticating your content with cryptographic proof.
+          </p>
+          <Button
+            variant="primary"
+            onClick={() => createKeyMutation.mutate()}
+            disabled={!accessToken || createKeyMutation.isPending}
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Generate Your First Key
+          </Button>
         </div>
       );
     }
@@ -251,6 +297,21 @@ export default function ApiKeysPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            {apiKeys.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  exportApiKeys(apiKeys);
+                  toast.success('API keys exported');
+                }}
+              >
+                <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Export
+              </Button>
+            )}
             <Input
               placeholder="Key name (e.g., WordPress Production)"
               value={newKeyName}

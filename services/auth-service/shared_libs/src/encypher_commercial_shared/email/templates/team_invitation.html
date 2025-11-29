@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>You're invited to join {{ organization_name }}</h1>
+
+<p>Hi there,</p>
+
+<p><strong>{{ inviter_name }}</strong> has invited you to join <strong>{{ organization_name }}</strong> on EncypherAI as a <strong>{{ role }}</strong>.</p>
+
+{% if message %}
+<div style="background-color: #f8fafc; border-left: 4px solid #3b82f6; padding: 16px; margin: 24px 0; border-radius: 0 8px 8px 0;">
+  <p style="margin: 0; font-style: italic; color: #475569;">"{{ message }}"</p>
+  <p style="margin: 8px 0 0 0; font-size: 14px; color: #64748b;">— {{ inviter_name }}</p>
+</div>
+{% endif %}
+
+<div class="cta-container">
+  <a href="{{ invitation_url }}" class="cta-button">Accept Invitation</a>
+</div>
+
+<p>This invitation will expire in <strong>7 days</strong>.</p>
+
+<div class="divider"></div>
+
+<h2 style="font-size: 18px; color: #1e293b;">What you'll get access to:</h2>
+
+<ul style="color: #475569; line-height: 1.8;">
+  <li>C2PA-compliant content signing and verification</li>
+  <li>Shared API keys and usage analytics</li>
+  <li>Team collaboration features</li>
+  <li>Centralized billing and management</li>
+</ul>
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #64748b;">
+  If the button doesn't work, copy and paste this link into your browser:
+</p>
+<div class="link-fallback">
+  <a href="{{ invitation_url }}">{{ invitation_url }}</a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #94a3b8;">
+  If you don't recognize {{ inviter_name }} or {{ organization_name }}, you can safely ignore this email.
+</p>
+{% endblock %}

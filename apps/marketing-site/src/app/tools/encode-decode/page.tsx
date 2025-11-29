@@ -25,16 +25,16 @@ function EncodeDecodeContent() {
 // Main page component with Suspense boundary
 export default function EncodeDecodePage() {
   return (
-    <>
+    <div className="min-h-screen bg-background">
       {/* Visible breadcrumbs for accessibility/UX */}
-      <main className="max-w-2xl mx-auto py-12 px-4">
-        <Suspense fallback={<div>Loading...</div>}>
+      <main className="max-w-4xl mx-auto py-12 px-4">
+        <Suspense fallback={<div className="text-center py-8">Loading...</div>}>
           <EncodeDecodeContent />
         </Suspense>
+        <div className="mt-6 text-xs text-muted-foreground text-center">
+          <Link href="/tools">← All Tools</Link>
+        </div>
       </main>
-      <div className="mt-6 text-xs text-muted-foreground text-center">
-        <Link href="/tools">← All Tools</Link>
-      </div>
-    </>
+    </div>
   );
 }

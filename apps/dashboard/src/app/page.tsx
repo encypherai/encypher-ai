@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { OnboardingModal, useIsNewUser } from '../components/onboarding/OnboardingModal';
 import apiClient from '../lib/api';
 
 // Icons as components for cleaner code
@@ -94,6 +95,7 @@ function ApiKeysSkeleton() {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const isNewUser = useIsNewUser();
 
   // Fetch usage stats
   const statsQuery = useQuery({
@@ -140,6 +142,9 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
+      {/* Onboarding Modal for new users */}
+      <OnboardingModal isNewUser={isNewUser} />
+
       {/* Welcome Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-delft-blue via-delft-blue to-blue-ncs p-8 mb-8">
         {/* Background Pattern */}

@@ -1,6 +1,6 @@
 # 📚 EncypherAI Commercial - Documentation Index
 
-**Last Updated**: November 27, 2025  
+**Last Updated**: November 28, 2025  
 **Repository**: encypherai-commercial  
 **Documentation Status**: ✅ Complete & Current
 
@@ -25,7 +25,8 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [README.md](./README.md) | Repository overview, structure, getting started | Everyone |
-| [MICROSERVICES_FEATURES.md](./MICROSERVICES_FEATURES.md) | **Complete feature matrix for all 8 services** | Everyone |
+| [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) | **Master feature list by subscription tier** | Everyone |
+| [MICROSERVICES_FEATURES.md](./MICROSERVICES_FEATURES.md) | Complete feature matrix for all 8 services | Everyone |
 | [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) | Complete audit report with findings | Developers, Managers |
 | [AUDIT_COMPLETE.md](./AUDIT_COMPLETE.md) | Quick completion summary | Everyone |
 | [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) | This file - navigation guide | Everyone |
@@ -76,11 +77,12 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose |
 |----------|---------|
 | [apps/dashboard/README.md](./apps/dashboard/README.md) | Setup, features, deployment |
+| [PRDs/dashboard_enhancements.md](./PRDs/dashboard_enhancements.md) | Dashboard enhancement PRD |
 
 **Domain**: `dashboard.encypherai.com`  
 **Tech**: Next.js, React, Tailwind CSS  
-**Features**: API key management, usage tracking  
-**Status**: ✅ Active
+**Features**: API key management, usage tracking, team management, webhooks, notifications, command palette, dark mode, CSV export  
+**Status**: ✅ Active (Enhanced November 2025)
 
 #### Compliance Dashboard
 | Document | Purpose |
@@ -140,11 +142,12 @@ Use this index to jump directly to the documentation you need.
 #### Auth Service
 | Document | Purpose |
 |----------|---------|
-| [services/auth-service/README.md](./services/auth-service/README.md) | Setup, API endpoints |
-| [services/auth-service/agents.md](./services/auth-service/agents.md) | **Development guide** (650 lines) |
+| [services/auth-service/README.md](./services/auth-service/README.md) | Setup, API endpoints, RBAC |
+| [services/auth-service/agents.md](./services/auth-service/agents.md) | **Development guide** (650+ lines) |
+| [PRDs/team_management_feature.md](./PRDs/team_management_feature.md) | Team management feature PRD |
 
-**Features**: JWT auth, OAuth (Google/GitHub), session management  
-**Status**: ✅ Active  
+**Features**: JWT auth, OAuth (Google/GitHub), session management, **Team Management**, RBAC  
+**Status**: ✅ Active (Team Management added Nov 2025)  
 **Port**: 8001
 
 #### Key Service
