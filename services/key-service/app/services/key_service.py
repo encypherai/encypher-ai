@@ -172,12 +172,14 @@ class KeyService:
         # Handle user-level keys (no organization linked)
         if not result.organization_id:
             # User-level key - provide default starter tier context
+            # Mark as demo so they can use demo signing keys for testing
             return {
                 "key_id": result.key_id,
                 "user_id": result.user_id,
                 "organization_id": f"user_{result.user_id}",  # Synthetic org ID
                 "organization_name": "Personal Account",
                 "tier": "starter",  # Default tier for user keys
+                "is_demo": True,  # Allow using demo private key for signing
                 "features": {
                     "team_management": False,
                     "audit_logs": False,
