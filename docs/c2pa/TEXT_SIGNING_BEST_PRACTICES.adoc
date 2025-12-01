@@ -1,0 +1,905 @@
+= C2PA Text Signing Best Practices
+:version: 2.0
+:date: November 2025
+:audience: Organizations implementing C2PA text signing without prior C2PA experience
+:toc: left
+:toclevels: 3
+:sectanchors:
+:sectlinks:
+
+[abstract]
+This document provides practical guidance for organizations implementing C2PA text signing with minimal manifests. It is written for teams who have not implemented any other C2PA workflows and need clear, actionable instructions. This guidance is complementary to the normative C2PA specifications and should be read in conjunction with the link:https://c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html[C2PA Technical Specification 2.2] and link:Manifests_Text.adoc[Manifests_Text specification].
+
+== Introduction
+
+=== What is C2PA Text Signing?
+
+C2PA text signing embeds cryptographic provenance information directly into Unicode text using invisible variation selectors as defined in link:Manifests_Text.adoc#embedding_manifests_into_unstructured_text[Manifests_Text.adoc]. This allows:
+
+* *Attribution*: Identify who created or approved the content
+* *Integrity*: Detect if content has been modified
+* *Provenance*: Track the history of content through multiple edits
+* *Non-repudiation*: Cryptographic proof that a specific organization signed the content
+
+=== Key Principle: Format-Agnostic Embedding
+
+Unlike traditional metadata approaches that rely on container-specific structures (XML attributes, JSON fields, HTTP headers), C2PA text signing uses Unicode variation selectors (U+FE00-U+FE0F and U+E0100-U+E01EF) that work in any Unicode-capable system.
+
+Per link:Manifests_Text.adoc#embedding_manifests_into_unstructured_text[Manifests_Text.adoc]:
+
+[quote]
+____
+Unicode variation selectors are used because they are specifically designed to be visually non-rendering while remaining part of the valid Unicode character set.
+____
+
+This approach works across:
+
+* Plain text files (`.txt`)
+* JSON documents (string values)
+* XML documents (text nodes)
+* Database fields (TEXT/VARCHAR columns)
+* Message broker payloads (Kafka, Kinesis, Pulsar)
+* API request/response bodies
+* Any Unicode-capable system
+
+[IMPORTANT]
+====
+The manifest is embedded IN the text itself, not in format-specific metadata. This ensures cross-format portability and copy-paste preservation.
+====
+
+=== What is a "Minimal Manifest"?
+
+A minimal C2PA manifest for text contains only the essential assertions:
+
+[cols="1,2,1"]
+|===
+|Assertion |Purpose |Required?
+
+|`c2pa.actions.v1`
+|Records what action was taken (created, edited, approved)
+|Yes
+
+|`c2pa.hash.data`
+|Cryptographic binding to the text content (hard binding)
+|Yes
+
+|`c2pa.soft_binding`
+|URI reference to full external manifest
+|Recommended
+
+|Signature
+|COSE_Sign1 signature proving signer identity
+|Yes
+|===
+
+Per the link:https://c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_bindings[C2PA 2.2 specification on bindings]:
+
+* Hard binding is mandatory (exactly one hard binding assertion per manifest)
+* Soft binding is optional (zero or more soft binding assertions allowed)
+* Minimal manifests (~2-5KB) with URI references enable efficient workflows
+
+== Core Concepts
+
+=== The Signer's Role
+
+In C2PA, the signer is making a cryptographic attestation. The signature means:
+
+[quote]
+____
+I, [Organization/Individual], assert that the statements in this manifest are true to the best of my knowledge.
+____
+
+The signer is not necessarily the creator. The signer is whoever is willing to cryptographically attest to the manifest's claims.
+
+[NOTE]
+====
+See link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_trust_model[C2PA Implementation Guidance Section 6.3] for the complete trust model.
+====
+
+=== Trust Model
+
+C2PA uses a Trust Anchor model as defined in the link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_trust_model[Implementation Guidance]:
+
+1. Signer has a private key and certificate
+2. Certificate is issued by a trusted Certificate Authority (CA)
+3. Validator checks if the certificate chains to a trusted root
+
+For organizational signatures: Your organization obtains a signing certificate from a CA. When you sign content, validators can verify it came from your organization.
+
+=== Actions vs. Signatures
+
+[cols="1,2,2"]
+|===
+|Concept |What it Records |Who Performs It
+
+|Action
+|What happened to the content (created, edited, reviewed)
+|The actor who performed the action
+
+|Signature
+|Who is attesting to the manifest's accuracy
+|The signer (may be different from actor)
+|===
+
+.Example
+A localization vendor creates Spanish metadata (`c2pa.created` action). A distributor reviews and signs it (distributor's signature). The action records the vendor's work; the signature is the distributor's attestation.
+
+== Signing Scenarios
+
+=== Scenario A: Creator Signs Their Own Work
+
+*Use Case*: A localization company produces Spanish descriptive metadata and signs the file themselves.
+
+==== Workflow
+
+1. Localization Vendor creates Spanish metadata
+2. Vendor signs with their own certificate
+3. Manifest records: action=c2pa.created, signer=Vendor
+
+==== Implementation
+
+[source,json]
+----
+{
+  "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+  "claim_generator": "LocalizationVendor/v1.0",
+  "instance_id": "uuid-1234-5678",
+  "assertions": [
+    {
+      "label": "c2pa.actions.v1",
+      "data": {
+        "actions": [
+          {
+            "action": "c2pa.created",
+            "when": "2025-11-26T10:00:00Z",
+            "softwareAgent": "LocalizationTool/v2.0",
+            "description": "Created Spanish descriptive metadata"
+          }
+        ]
+      }
+    },
+    {
+      "label": "c2pa.hash.data.v1",
+      "data": {
+        "hash": "<sha256-of-normalized-text>",
+        "alg": "sha256",
+        "exclusions": [{"start": 1234, "length": 567}]
+      }
+    }
+  ],
+  "signature": "<COSE_Sign1 with Vendor's certificate>"
+}
+----
+
+==== Key Points
+
+* *Action*: `c2pa.created` - the vendor created this content
+* *Signer*: The vendor's certificate
+* *Meaning*: "We, LocalizationVendor, created this Spanish metadata on this date"
+
+=== Scenario B: Third Party Reviews and Approves
+
+*Use Case*: A distribution company receives localized content from a vendor, reviews it, and signs to indicate approval.
+
+==== Workflow
+
+1. Vendor creates and signs content (Scenario A)
+2. Distributor receives signed content
+3. Distributor reviews content
+4. Distributor adds new manifest with:
+   * action=c2pa.reviewed (or c2pa.published)
+   * ingredient reference to vendor's manifest
+   * Distributor's signature
+
+==== Implementation
+
+[source,json]
+----
+{
+  "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+  "claim_generator": "DistributorCorp/v1.0",
+  "instance_id": "uuid-9999-0000",
+  "assertions": [
+    {
+      "label": "c2pa.actions.v1",
+      "data": {
+        "actions": [
+          {
+            "action": "c2pa.opened",
+            "when": "2025-11-26T14:00:00Z",
+            "description": "Received for review"
+          },
+          {
+            "action": "c2pa.published",
+            "when": "2025-11-26T16:00:00Z",
+            "description": "Approved for distribution"
+          }
+        ]
+      }
+    },
+    {
+      "label": "c2pa.ingredient.v1",
+      "data": {
+        "title": "Original localized content",
+        "instance_id": "uuid-1234-5678",
+        "relationship": "parentOf",
+        "c2pa_manifest": {}
+      }
+    },
+    {
+      "label": "c2pa.hash.data.v1",
+      "data": {
+        "hash": "<sha256-of-normalized-text>",
+        "alg": "sha256",
+        "exclusions": [{"start": 2345, "length": 678}]
+      }
+    }
+  ],
+  "signature": "<COSE_Sign1 with Distributor's certificate>"
+}
+----
+
+[NOTE]
+====
+See link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_ingredients[C2PA Implementation Guidance Section 3.3] for complete ingredient specification.
+====
+
+=== Scenario C: Third Party Approves Unsigned Content
+
+*Use Case*: A distributor receives unsigned content from a vendor and signs it to indicate approval, without the vendor having signed it originally.
+
+==== Workflow
+
+1. Vendor creates content (NO signature)
+2. Distributor receives unsigned content
+3. Distributor reviews and approves
+4. Distributor creates manifest with:
+   * action=c2pa.published (preferred, indicates they didn't create content)
+   * OR action=c2pa.created (if taking full responsibility)
+   * Distributor's signature
+
+==== Implementation
+
+[source,json]
+----
+{
+  "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+  "claim_generator": "DistributorCorp/v1.0",
+  "instance_id": "uuid-aaaa-bbbb",
+  "assertions": [
+    {
+      "label": "c2pa.actions.v1",
+      "data": {
+        "actions": [
+          {
+            "action": "c2pa.published",
+            "when": "2025-11-26T16:00:00Z",
+            "description": "Approved and published content created by external vendor",
+            "parameters": {
+              "com.yourcompany.source": "ExternalVendor",
+              "com.yourcompany.approval_type": "first_signature"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "label": "c2pa.hash.data.v1",
+      "data": {
+        "hash": "<sha256-of-normalized-text>",
+        "alg": "sha256",
+        "exclusions": [{"start": 1234, "length": 567}]
+      }
+    }
+  ],
+  "signature": "<COSE_Sign1 with Distributor's certificate>"
+}
+----
+
+[IMPORTANT]
+====
+When signing unsigned content, the signer is making a stronger statement because there is no prior provenance. Consider:
+
+1. Document your review process in the action description
+2. Add custom assertions for audit trail
+3. Keep external records of the original source
+====
+
+== Universal Text Embedding
+
+=== Why Unicode Variation Selectors Are Universal
+
+C2PA text signing uses the `C2PATextManifestWrapper` structure as defined in link:Manifests_Text.adoc#_the_c2patextmanifestwrapper_structure[Manifests_Text.adoc Section 2.2].
+
+The embedding method is:
+
+[source]
+----
+[Visible Text Content] + U+FEFF + [C2PATextManifestWrapper as variation selectors]
+----
+
+For complete details on the encoding and decoding algorithms, see link:Manifests_Text.adoc#_encoding_and_decoding_algorithms[Manifests_Text.adoc Section 2.4].
+
+==== Format-Agnostic Compatibility
+
+Because the manifest is embedded using invisible Unicode characters within the text itself, this approach works across all Unicode-capable systems without requiring format-specific metadata fields or schema changes.
+
+=== Full vs. Minimal Manifests
+
+==== Option A: Full Manifest Embedded
+
+Embed the complete manifest (including full provenance chain, all actions, ingredients).
+
+.Pros
+* Offline verification
+* Complete provenance travels with content
+* No external dependencies
+
+.Cons
+* ~5-50KB overhead (depending on provenance depth)
+* May be significant for short messages
+
+.Best for
+Documents, long-form content, copy-paste workflows
+
+==== Option B: Minimal Manifest with External Reference (RECOMMENDED)
+
+Embed only essential assertions and use soft binding to reference external manifest.
+
+.Pros
+* ~2-5KB overhead (minimal)
+* Offline integrity verification (hard binding works)
+* Online provenance lookup (via URI)
+* Signed URL (tamper-proof)
+
+.Cons
+* Requires network access for full provenance
+* Depends on manifest repository availability
+
+.Best for
+Message brokers, API responses, high-volume workflows, short messages, structured documents
+
+[NOTE]
+====
+This pattern is explicitly supported per link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_can_an_application_remove_an_existing_c2pa_manifest_store[C2PA Implementation Guidance Section 3.2.7]:
+
+"Completely removing an embedded C2PA Manifest Store from an asset is not recommended, unless the C2PA Manifest Store is being 'externalized' - meaning that an embedded C2PA Manifest Store is replaced by a URI to an external location."
+====
+
+=== Minimal Manifest Pattern (RECOMMENDED)
+
+==== Structure
+
+[source,json]
+----
+{
+  "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+  "claim_generator": "YourOrg/v1.0",
+  "instance_id": "uuid-minimal-123",
+  "assertions": [
+    {
+      "label": "c2pa.actions.v1",
+      "data": {
+        "actions": [
+          {
+            "action": "c2pa.created",
+            "when": "2025-11-30T12:00:00Z",
+            "softwareAgent": "YourApp/v1.0"
+          }
+        ]
+      }
+    },
+    {
+      "label": "c2pa.hash.data.v1",
+      "data": {
+        "hash": "<sha256-of-normalized-text>",
+        "alg": "sha256",
+        "exclusions": [{"start": 1234, "length": 567}]
+      }
+    },
+    {
+      "label": "c2pa.soft_binding",
+      "data": {
+        "alg": "uri",
+        "hash": "https://manifests.company.com/uuid-123.c2pa"
+      }
+    }
+  ],
+  "signature": "<COSE_Sign1>"
+}
+----
+
+==== Key Components
+
+1. *Hard Binding* (`c2pa.hash.data.v1`): Provides content integrity verification (works offline)
+2. *Soft Binding* (`c2pa.soft_binding`): URI reference to full external manifest (works online)
+3. *Signature*: Covers both bindings, making the URI tamper-proof
+
+[NOTE]
+====
+For complete guidance on hard bindings, see link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_guidance_on_hard_bindings[C2PA Implementation Guidance Section 4.1].
+
+For complete guidance on soft bindings, see link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_guidance_on_use_of_soft_bindings[C2PA Implementation Guidance Section 4.2].
+====
+
+==== Benefits
+
+* *Offline*: Hard binding verifies content hasn't been tampered with
+* *Online*: Soft binding URI provides full provenance chain
+* *Efficient*: ~2-5KB embedded, full manifest external
+* *Secure*: Signature covers the URI (tamper-proof reference)
+* *Compliant*: Fully C2PA 2.2 compliant per Section 3.2.7 (manifest externalization)
+
+== Canonicalization and Normalization
+
+=== The Problem
+
+Different systems may represent the same text differently:
+
+* Line endings: `\n` vs `\r\n` vs `\r`
+* Unicode normalization: NFC vs NFD vs NFKC vs NFKD
+* Whitespace: Trailing spaces, tabs vs spaces
+
+These "immaterial" differences would change the hash, causing verification failures.
+
+=== NFC Normalization (MANDATORY)
+
+Per link:Manifests_Text.adoc#_normalization[Manifests_Text.adoc Section 3.6.5]:
+
+[quote]
+____
+Both producers and consumers shall normalize text to Unicode Normalization Form C (NFC) before calculating hashes (see https://www.unicode.org/reports/tr15/[UAX #15: Unicode Normalization Forms]). This ensures consistent hash values across different platforms that may store text in different normalization forms.
+____
+
+==== Universal Canonicalization Algorithm
+
+[source,python]
+----
+import unicodedata
+import hashlib
+
+def canonicalize_text(text: str) -> str:
+    """
+    Universal text canonicalization for C2PA signing.
+    Works regardless of source format (XML, JSON, plain text, etc.)
+    """
+    # Step 1: Remove BOM if present
+    if text.startswith('\ufeff'):
+        text = text[1:]
+
+    # Step 2: Normalize line endings to Unix-style
+    text = text.replace('\r\n', '\n').replace('\r', '\n')
+
+    # Step 3: Apply Unicode NFC normalization (MANDATORY per C2PA)
+    text = unicodedata.normalize("NFC", text)
+
+    return text
+
+def hash_text(text: str) -> bytes:
+    """Hash text content for C2PA hard binding."""
+    canonical = canonicalize_text(text)
+    return hashlib.sha256(canonical.encode('utf-8')).digest()
+----
+
+==== What This Algorithm Handles
+
+[cols="1,2"]
+|===
+|Issue |How It's Handled
+
+|BOM (Byte Order Mark)
+|Removed
+
+|Line endings (`\r\n`, `\r`, `\n`)
+|Normalized to `\n`
+
+|Unicode composition (é vs e+´)
+|NFC normalization
+
+|Whitespace (spaces, tabs)
+|Preserved as-is
+
+|Trailing whitespace
+|Preserved as-is
+|===
+
+[IMPORTANT]
+====
+This algorithm intentionally does NOT perform format-specific canonicalization (XML C14N, JSON JCS) because such approaches break cross-format portability. If you hash canonicalized XML, verification will fail when text is copied to JSON or plain text.
+
+Default recommendation: Use NFC normalization alone for maximum portability.
+====
+
+=== Hard Binding vs. Soft Binding
+
+==== Hard Binding (MANDATORY)
+
+A cryptographic hash of the content that proves the content hasn't been modified.
+
+*Requirement*: Exactly one hard binding is required per manifest. For text, this is `c2pa.hash.data`.
+
+*What it proves*: "This exact text (byte-for-byte, after NFC normalization) is what was signed."
+
+See link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_guidance_on_hard_bindings[C2PA Implementation Guidance Section 4.1] for complete requirements.
+
+==== Soft Binding (OPTIONAL)
+
+A perceptual fingerprint, watermark, or URI reference that can identify content or locate manifests even after modifications.
+
+*Requirement*: Zero or more soft bindings allowed per manifest.
+
+*What it's for*:
+
+1. Manifest recovery: If the manifest is stripped, a soft binding can help locate the original manifest in a repository
+2. Derived content matching: Identify content that's been transcoded, resized, or reformatted
+3. URI references: Point to full external manifests (recommended for minimal manifests)
+
+See link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_guidance_on_use_of_soft_bindings[C2PA Implementation Guidance Section 4.2] for complete guidance.
+
+== Use Case Examples
+
+=== Message Brokers (Kafka, Kinesis, Pulsar)
+
+==== Use Case
+
+Log-based message brokers where:
+
+* Full revision history is a fundamental feature (append-only logs)
+* Minimal overhead is critical (high-volume streams)
+* Cross-format portability is required (messages may be exported/transformed)
+
+==== Pattern
+
+Embed minimal manifest directly in message payload using Unicode variation selectors per link:Manifests_Text.adoc#embedding_manifests_into_unstructured_text[Manifests_Text.adoc].
+
+==== Example: Kafka Message
+
+[source,python]
+----
+# Producer
+message = "User alice@example.com logged in at 2025-11-30T12:00:00Z"
+minimal_manifest = create_minimal_manifest(
+    content=message,
+    action="c2pa.created",
+    external_manifest_uri="https://manifests.company.com/msg-uuid-123.c2pa"
+)
+signed_message = embed_manifest(message, minimal_manifest)
+producer.send(topic="audit_log", value=signed_message)
+
+# Consumer
+message = consumer.poll()
+content, manifest = extract_manifest(message)
+if verify_signature(manifest) and verify_hard_binding(content, manifest):
+    # Content is authentic and unmodified
+    full_manifest_uri = manifest['assertions']['c2pa.soft_binding']['hash']
+    # Fetch full provenance on-demand if needed
+----
+
+==== Benefits
+
+* Provenance embedded in append-only log (tamper-evident)
+* No separate manifest storage required
+* Hard binding works offline
+* Full provenance available on-demand (URI)
+* ~2-5KB overhead per message
+
+=== JSON Documents
+
+==== Use Case
+
+Schema-validated JSON documents where:
+
+* Signature must not distort the document structure
+* Document must remain valid JSON
+* Cross-format portability required (JSON to XML to database to plain text)
+
+==== Pattern
+
+Manifest is embedded in the text content itself via Unicode variation selectors, NOT as a JSON field.
+
+==== Example
+
+[source,json]
+----
+{
+  "content_id": "spanish-ad-scene-1",
+  "description": "María entra en la habitación y observa la escena<invisible-manifest>",
+  "language": "es-ES",
+  "duration_ms": 4500
+}
+----
+
+[NOTE]
+====
+The manifest is embedded using invisible Unicode variation selectors within the string value for `description`. When rendered, the variation selectors are not visible.
+====
+
+==== Key Points
+
+* The manifest is part of the string value for `description`
+* No JSON schema changes required
+* Copy-paste to a `.txt` file preserves the manifest
+* Paste into a database field preserves the manifest
+* Variation selectors are invisible when rendered
+
+=== XML Documents
+
+==== Use Case
+
+Schema-validated XML documents where:
+
+* Signature must not distort the document structure
+* Document must remain valid XML
+* Cross-format portability required
+
+==== Pattern
+
+Manifest is embedded in the text node itself via Unicode variation selectors, NOT as XML attributes or elements.
+
+==== Example
+
+[source,xml]
+----
+<?xml version="1.0" encoding="UTF-8"?>
+<descriptive-metadata>
+  <content id="scene-1" lang="es">
+    María entra en la habitación y observa la escena<invisible-manifest>
+  </content>
+  <timestamp>2025-11-30T12:00:00Z</timestamp>
+</descriptive-metadata>
+----
+
+==== Key Points
+
+* The manifest is part of the text node
+* No XML schema changes required
+* Remains valid XML (variation selectors are valid Unicode)
+* Copy-paste preserves manifest
+
+=== Database Records
+
+==== Use Case
+
+Audit logs, content metadata, or any text stored in database TEXT/VARCHAR columns.
+
+==== Pattern
+
+Manifest is embedded in the text value itself via Unicode variation selectors.
+
+==== Example
+
+[source,sql]
+----
+-- Insert signed content
+INSERT INTO audit_log (timestamp, event_description, user_id) VALUES (
+  '2025-11-30 12:00:00',
+  'User alice@example.com logged in from IP 192.0.2.1<invisible-manifest>',
+  'alice'
+);
+
+-- Query and verify
+SELECT event_description FROM audit_log WHERE user_id = 'alice';
+-- Application extracts manifest and verifies signature
+----
+
+==== Key Points
+
+* The manifest is part of the VARCHAR/TEXT column
+* No schema changes required
+* Survives database export/import
+* Works with any database (PostgreSQL, MySQL, SQLite, etc.)
+
+== Tooling and Conformance Requirements
+
+=== Can Non-Conforming Tools Be Used?
+
+The C2PA specification distinguishes between:
+
+1. Conforming Products: Listed on the link:https://c2pa.org/conformance/[C2PA Conforming Products List]
+2. Non-Conforming Tools: Any tool that implements C2PA but isn't on the list
+
+For organizational signatures, conformance is less critical because the signature identifies the organization, not the tool.
+
+[NOTE]
+====
+See link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_user_generated_text[C2PA Implementation Guidance Section 5.1.1] for the complete discussion on organizational signatures.
+====
+
+=== Organizational Signatures vs. Product Signatures
+
+[cols="1,2,2"]
+|===
+|Aspect |Product Signature |Organizational Signature
+
+|Certificate Subject
+|"Adobe Photoshop"
+|"Acme Corporation"
+
+|What it proves
+|This tool created the manifest
+|This organization vouches for the manifest
+
+|Conformance requirement
+|Tool should be conforming
+|Tool conformance less critical
+|===
+
+=== Requirements for Non-Conforming Tools
+
+If using a non-conforming tool for organizational signatures:
+
+1. *Implement the specification correctly*
+   * Follow `C2PATextManifestWrapper` structure per link:Manifests_Text.adoc#_the_c2patextmanifestwrapper_structure[Manifests_Text.adoc]
+   * Use correct byte-to-variation-selector mapping per link:Manifests_Text.adoc#_byte_to_variation_selector_conversion[Manifests_Text.adoc Section 2.4.1]
+   * Apply NFC normalization before hashing per link:Manifests_Text.adoc#_normalization[Manifests_Text.adoc Section 3.6.5]
+   * Use SHA-256 for hashes
+   * Use COSE_Sign1 for signatures
+
+2. *Use proper certificates*
+   * Obtain certificates from a recognized CA
+   * Certificate should identify your organization
+   * Include proper Extended Key Usage (EKU)
+
+3. *Validate your implementation*
+   * Test against reference implementations
+   * Verify manifests can be read by conforming validators
+   * Document any deviations
+
+== Implementation Checklist
+
+=== Before You Start
+
+* [ ] Obtain organizational signing certificate from a CA
+* [ ] Set up secure key storage (HSM recommended for production)
+* [ ] Set up manifest repository (if using minimal manifests with URI references)
+* [ ] Document your signing policy (who can sign, what review is required)
+
+=== Technical Requirements
+
+* [ ] Implement NFC normalization before all hashing (link:Manifests_Text.adoc#_normalization[Manifests_Text.adoc Section 3.6.5])
+* [ ] Use SHA-256 for content hashes
+* [ ] Use COSE_Sign1 for signatures (Ed25519 or ECDSA P-256 recommended)
+* [ ] Follow `C2PATextManifestWrapper` structure (link:Manifests_Text.adoc#_the_c2patextmanifestwrapper_structure[Manifests_Text.adoc Section 2.2])
+* [ ] Calculate exclusion regions correctly for hard binding (link:Manifests_Text.adoc#_exclusion_handling[Manifests_Text.adoc Section 3.6.7])
+* [ ] Implement byte-to-variation-selector encoding correctly (link:Manifests_Text.adoc#_byte_to_variation_selector_conversion[Manifests_Text.adoc Section 2.4.1])
+
+=== Minimal Manifest Pattern
+
+* [ ] Implement minimal manifest creation (actions + hard binding + soft binding URI + signature)
+* [ ] Set up manifest repository with HTTPS access
+* [ ] Serve external manifests with `Content-Type: application/c2pa`
+* [ ] Implement URI signing (soft binding URI covered by signature)
+
+=== Validation
+
+* [ ] Test manifest extraction from Unicode variation selectors
+* [ ] Verify signature validates against certificate
+* [ ] Verify hard binding (content hash) matches
+* [ ] Verify soft binding URI is signed (tamper-proof)
+* [ ] Test with modified content (should fail verification)
+* [ ] Test cross-format portability (JSON to XML to plain text)
+
+== Frequently Asked Questions
+
+=== Do I need to be on the C2PA Conforming Products List?
+
+No, not for organizational signatures. The conforming products list is primarily for tools that want to advertise C2PA compliance. For organizational signatures, what matters is:
+
+1. Your implementation follows the specification
+2. Your certificate identifies your organization
+3. Validators can verify your signatures
+
+=== What if the original creator didn't sign the content?
+
+You can still sign it (Scenario C). Your signature means "I, [Organization], vouch for this content." Use appropriate actions (`c2pa.published` rather than `c2pa.created`) to make this clear.
+
+=== Can I sign content without embedding the manifest?
+
+Yes, but we recommend the minimal manifest with URI pattern instead. This gives you:
+
+* Offline integrity verification (hard binding)
+* Tamper-proof URL (signed soft binding)
+* Full provenance available online (external manifest)
+
+Pure external manifests (HTTP Link headers, XMP references) lose portability when content is copied.
+
+See link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_manifest_repositories[C2PA Implementation Guidance Section 3.2.6] for manifest repository guidance.
+
+=== Why use Unicode variation selectors instead of JSON/XML metadata?
+
+Format-agnostic portability. Unicode variation selectors work everywhere:
+
+* Copy-paste between formats (JSON to XML to plain text)
+* Database storage (TEXT/VARCHAR columns)
+* Message brokers (Kafka, Kinesis, Pulsar)
+* No schema changes required
+
+JSON/XML metadata breaks when content is copied to other formats.
+
+=== What's the overhead of minimal manifests?
+
+Approximately 2-5KB embedded using Unicode variation selectors. This includes:
+
+* Hard binding (content hash)
+* Soft binding (URI to full manifest)
+* Signature
+* Minimal action history
+
+Full manifests with provenance chains: 5-50KB depending on depth.
+
+=== How do I handle multiple signers?
+
+Use the ingredient system per link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_ingredients[C2PA Implementation Guidance Section 3.3]. Each signer creates a new manifest that references the previous manifest as an ingredient:
+
+----
+Vendor signs → Manifest A (embedded minimal + URI to full A)
+Distributor signs → Manifest B (embedded minimal + URI to full B, ingredient: A)
+Publisher signs → Manifest C (embedded minimal + URI to full C, ingredient: B)
+----
+
+Full provenance chains stored externally, minimal manifests embedded.
+
+=== What timestamp should I use?
+
+Use the actual time of signing in ISO 8601 format with UTC timezone:
+
+----
+2025-11-26T16:30:00Z
+----
+
+For legal evidence, consider adding an RFC 3161 timestamp from a Timestamp Authority (TSA). See link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html#_time_stamp_manifests[C2PA Implementation Guidance Section 3.2.5].
+
+=== How does this relate to ETSI XAdES/JAdES?
+
+C2PA minimal manifests with URI references are conceptually similar to ETSI's detached signatures (XAdES-B-T, JAdES-B-T):
+
+[cols="1,2,2"]
+|===
+|Feature |ETSI XAdES/JAdES |C2PA Minimal Manifest
+
+|Detached signature
+|Separate XML/JSON file
+|Embedded via Unicode variation selectors
+
+|Content binding
+|Hash reference
+|Hard binding (hash)
+
+|External manifest
+|Separate file
+|URI via soft binding
+
+|Timestamp
+|RFC 3161 TSA
+|Optional TSA or action timestamp
+
+|Format-agnostic
+|No (XML/JSON specific)
+|Yes (Unicode-based)
+|===
+
+C2PA adds format-agnostic portability via Unicode variation selectors.
+
+== References
+
+* link:https://c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html[C2PA Technical Specification 2.2]
+* link:https://c2pa.org/specifications/specifications/2.2/guidance/Guidance.html[C2PA Implementation Guidance]
+* link:Manifests_Text.adoc[C2PA Manifests_Text Specification]
+* link:https://www.unicode.org/reports/tr15/[Unicode Normalization Forms (UAX #15)]
+* link:https://www.etsi.org/deliver/etsi_ts/119100_119199/11918201/01.01.01_60/ts_11918201v010101p.pdf[ETSI TS 119 182-1 (JAdES)]
+* link:https://datatracker.ietf.org/doc/html/rfc3161[RFC 3161 - Time-Stamp Protocol (TSP)]
+
+== Document History
+
+[cols="1,1,3"]
+|===
+|Version |Date |Changes
+
+|1.0
+|November 2025
+|Initial release
+
+|2.0
+|November 2025
+|Major revision: Universal text embedding via Unicode variation selectors, minimal manifest with URI pattern, message broker/database/API examples, format-agnostic portability emphasis, converted to AsciiDoc format with normative spec references
+|===

@@ -4,9 +4,7 @@ Tools router for public encode/decode demo endpoints.
 These endpoints use a demo key for the public website tools,
 allowing users to try encoding/decoding without authentication.
 """
-import hashlib
 import logging
-import re
 from typing import Any, Dict, List, Literal, Optional
 
 from fastapi import APIRouter, HTTPException, status
@@ -156,20 +154,6 @@ def _get_target_enum(target_str: str) -> MetadataTarget:
     return target_map[target_lower]
 
 
-def _get_visible_text(text: str) -> str:
-    """
-    Remove Unicode variation selectors to get the visible text content.
-    
-    Variation selectors are used to embed metadata invisibly.
-    - U+FE00 to U+FE0F: Variation Selectors
-    - U+E0100 to U+E01EF: Variation Selectors Supplement
-    """
-    return re.sub(r'[\ufe00-\ufe0f\U000e0100-\U000e01ef]', '', text)
-
-
-def _compute_content_hash(text: str) -> str:
-    """Compute SHA-256 hash of the text content."""
-    return hashlib.sha256(text.encode('utf-8')).hexdigest()
 
 
 # =============================================================================
@@ -190,31 +174,37 @@ async def encode_text(request: EncodeToolRequest) -> EncodeToolResponse:
         private_key, _ = _get_demo_keys()
         target_enum = _get_target_enum(request.target or "first_letter")
         
-        # Compute content hash for tamper detection
-        content_hash = _compute_content_hash(request.original_text)
-        
         # Build metadata
         custom_metadata = request.custom_metadata or {}
         if "source" not in custom_metadata:
             custom_metadata["source"] = "Encypher Demo"
-        
+
         # Determine format
         metadata_format = request.metadata_format or "c2pa_v2_2"
-        
-        # Build actions for C2PA format - always include content hash
+
+        # Build C2PA-compliant actions
         actions = []
+        custom_assertions = []
+
+        # Add c2pa.created action (core library will add if not present)
+        from datetime import datetime, timezone
+        iso_timestamp = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
+        # If AI info provided, add as custom assertion per C2PA 2.2
         if request.ai_info:
-            actions.append({
-                "action": "ai",
-                "ai_info": request.ai_info
-            })
-        # Include content hash in custom action for tamper detection
-        custom_with_hash = {**custom_metadata, "content_hash": content_hash}
-        actions.append({
-            "action": "custom",
-            "custom_data": custom_with_hash
-        })
-        
+            claim_generator = request.ai_info.get("claim_generator", "Encypher Demo UI")
+            provenance = request.ai_info.get("provenance", "")
+
+            # Add c2pa.generative-ai assertion (if we have model info)
+            if provenance or claim_generator:
+                custom_assertions.append({
+                    "label": "c2pa.generative-ai",
+                    "data": {
+                        "softwareAgent": claim_generator,
+                        "description": provenance if provenance else "AI-assisted content generation"
+                    }
+                })
+
         # Encode
         if metadata_format == "c2pa_v2_2":
             encoded_text = UnicodeMetadata.embed_metadata(
@@ -224,6 +214,9 @@ async def encode_text(request: EncodeToolRequest) -> EncodeToolResponse:
                 metadata_format="manifest",
                 target=target_enum,
                 actions=actions if actions else None,
+                custom_assertions=custom_assertions if custom_assertions else None,
+                claim_generator=request.ai_info.get("claim_generator") if request.ai_info else "Encypher Demo UI",
+                iso_timestamp=iso_timestamp,
             )
         else:
             encoded_text = UnicodeMetadata.embed_metadata(
@@ -236,15 +229,14 @@ async def encode_text(request: EncodeToolRequest) -> EncodeToolResponse:
             )
         
         logger.info(f"Successfully encoded text with {metadata_format} format")
-        
+
+        # Extract the manifest to return it in the response
+        extracted_metadata = UnicodeMetadata.extract_metadata(text=encoded_text)
+        manifest_data = extracted_metadata if extracted_metadata else {}
+
         return EncodeToolResponse(
             encoded_text=encoded_text,
-            metadata={
-                "format": metadata_format,
-                "signer_id": _demo_signer_id,
-                "target": request.target,
-                "custom_metadata": custom_metadata,
-            },
+            metadata=manifest_data,
             error=None,
         )
         
@@ -321,49 +313,26 @@ async def decode_text(request: DecodeToolRequest) -> DecodeToolResponse:
                 signer_id = None
                 payload = decoded_metadata
             
-            # Check content hash for tamper detection
-            content_tampered = False
-            reason_code = "OK" if signature_valid else "SIGNATURE_INVALID"
-            
-            if signature_valid and payload:
-                # Extract stored content hash from payload
-                stored_hash = None
-                actions = payload.get("manifest", payload).get("actions", [])
-                for action in actions:
-                    if action.get("action") == "custom":
-                        stored_hash = action.get("custom_data", {}).get("content_hash")
-                        break
-                
-                if stored_hash:
-                    # Get visible text and compute actual hash
-                    visible_text = _get_visible_text(request.encoded_text)
-                    actual_hash = _compute_content_hash(visible_text)
-                    
-                    if stored_hash != actual_hash:
-                        content_tampered = True
-                        signature_valid = False  # Mark as invalid due to tampering
-                        reason_code = "CONTENT_MODIFIED"
-                        logger.warning(f"Content tampering detected: stored_hash={stored_hash[:16]}... actual_hash={actual_hash[:16]}...")
-            
+            # Core library handles hard binding verification automatically
+            # signature_valid = False means either signature is invalid OR hard binding check failed
+            reason_code = "VERIFIED" if signature_valid else "VERIFICATION_FAILED"
+
             # Build verdict
             verdict = VerifyVerdict(
-                valid=signature_valid and not content_tampered,
-                tampered=content_tampered or (not signature_valid and decoded_metadata is not None),
+                valid=signature_valid,
+                tampered=not signature_valid and decoded_metadata is not None,
                 reason_code=reason_code,
                 signer_id=signer_id,
                 signer_name=f"{signer_id} (Demo Key)" if signer_id else None,
             )
-            
+
             # Determine verification status
-            if content_tampered:
-                verification_status = "Failure"
-                error_msg = "Content has been modified after signing (tamper detected)"
-            elif signature_valid:
+            if signature_valid:
                 verification_status = "Success"
                 error_msg = None
             else:
                 verification_status = "Failure"
-                error_msg = "Signature verification failed"
+                error_msg = "Verification failed - signature invalid or content modified"
             
             return DecodeToolResponse(
                 metadata=payload if isinstance(payload, dict) else decoded_metadata,
