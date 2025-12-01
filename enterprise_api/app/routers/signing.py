@@ -21,26 +21,37 @@ async def sign_content(
     db: AsyncSession = Depends(get_db),
 ) -> SignResponse:
     """Sign content with a C2PA manifest."""
-
-    allowed, retry_after, remaining, limit = api_rate_limiter.check(
+    
+    # Get tier from organization context for tier-aware rate limiting
+    tier = organization.get("tier", "starter")
+    
+    result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],
         scope="sign",
+        tier=tier,
     )
-    if not allowed:
+    
+    # Add rate limit headers to response
+    for header, value in api_rate_limiter.get_headers(result).items():
+        response.headers[header] = value
+    
+    if not result.allowed:
         detail = {
             "code": "E_RATE_SIGN",
             "message": "Signing rate limit exceeded",
+            "hint": f"Rate limit is {result.limit} requests per minute for {tier} tier",
         }
-        headers = {"Retry-After": str(retry_after or 1)}
-        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail=detail, headers=headers)
-    response.headers["X-RateLimit-Remaining"] = str(remaining)
-    response.headers["X-RateLimit-Limit"] = str(limit)
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=detail,
+            headers=api_rate_limiter.get_headers(result),
+        )
 
-    result = await execute_signing(
+    signing_result = await execute_signing(
         request=request,
         organization=organization,
         db=db,
         document_id=request.document_id,
     )
     increment("sign_requests")
-    return result
+    return signing_result

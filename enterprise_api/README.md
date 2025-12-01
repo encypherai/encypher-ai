@@ -1002,12 +1002,40 @@ The Enterprise API uses the **Key Service** for all authentication:
 
 ### Rate Limiting
 
-| Tier | Requests/Second | Requests/Month |
-|------|----------------|----------------|
-| Starter | 10 | 10,000 |
-| Professional | 50 | 100,000 |
-| Business | 100 | 500,000 |
-| Enterprise | Unlimited | Unlimited |
+Rate limits are enforced per organization with tier-aware limits. All responses include rate limit headers.
+
+| Tier | Requests/Second | Requests/Minute | Monthly Quota |
+|------|-----------------|-----------------|---------------|
+| Starter | 10 | 600 | 10,000 |
+| Professional | 50 | 3,000 | 100,000 |
+| Business | 200 | 12,000 | 500,000 |
+| Enterprise | Unlimited | Unlimited | Unlimited |
+| Strategic Partner | Unlimited | Unlimited | Unlimited |
+
+**Rate Limit Headers:**
+
+All API responses include the following headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the current window |
+| `X-RateLimit-Remaining` | Requests remaining in the current window |
+| `X-RateLimit-Reset` | Unix timestamp when the rate limit window resets |
+| `Retry-After` | Seconds until rate limit resets (only on 429 responses) |
+
+**Example Response Headers:**
+```
+X-RateLimit-Limit: 600
+X-RateLimit-Remaining: 542
+X-RateLimit-Reset: 1733097600
+```
+
+**Public Endpoints (Unauthenticated):**
+
+| Endpoint | Limit |
+|----------|-------|
+| `/api/v1/verify` | 1,000 requests/hour per IP |
+| `/api/v1/public/verify/batch` | 100 requests/hour per IP |
 
 ### Data Security
 

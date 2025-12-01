@@ -28,18 +28,28 @@ async def batch_sign(
     """Sign multiple documents in a single request."""
 
     correlation_id = _correlation_id(request)
-    allowed, retry_after, remaining, limit = api_rate_limiter.check(
+    tier = organization.get("tier", "starter")
+    
+    result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],
         scope="batch_sign",
+        tier=tier,
     )
-    if not allowed:
+    
+    # Add rate limit headers to response
+    for header, value in api_rate_limiter.get_headers(result).items():
+        response.headers[header] = value
+    
+    if not result.allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={"code": "E_RATE_BATCH_SIGN", "message": "Batch signing rate limit exceeded"},
-            headers={"Retry-After": str(retry_after or 1)},
+            detail={
+                "code": "E_RATE_BATCH_SIGN",
+                "message": "Batch signing rate limit exceeded",
+                "hint": f"Rate limit is {result.limit} requests per minute for {tier} tier",
+            },
+            headers=api_rate_limiter.get_headers(result),
         )
-    response.headers["X-RateLimit-Remaining"] = str(remaining)
-    response.headers["X-RateLimit-Limit"] = str(limit)
 
     return await batch_service.sign_batch(
         db=db,
@@ -60,18 +70,28 @@ async def batch_verify(
     """Verify multiple documents in a single request."""
 
     correlation_id = _correlation_id(request)
-    allowed, retry_after, remaining, limit = api_rate_limiter.check(
+    tier = organization.get("tier", "starter")
+    
+    result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],
         scope="batch_verify",
+        tier=tier,
     )
-    if not allowed:
+    
+    # Add rate limit headers to response
+    for header, value in api_rate_limiter.get_headers(result).items():
+        response.headers[header] = value
+    
+    if not result.allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={"code": "E_RATE_BATCH_VERIFY", "message": "Batch verification rate limit exceeded"},
-            headers={"Retry-After": str(retry_after or 1)},
+            detail={
+                "code": "E_RATE_BATCH_VERIFY",
+                "message": "Batch verification rate limit exceeded",
+                "hint": f"Rate limit is {result.limit} requests per minute for {tier} tier",
+            },
+            headers=api_rate_limiter.get_headers(result),
         )
-    response.headers["X-RateLimit-Remaining"] = str(remaining)
-    response.headers["X-RateLimit-Limit"] = str(limit)
 
     return await batch_service.verify_batch(
         db=db,

@@ -8,7 +8,7 @@ import logging
 from typing import Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -172,6 +172,7 @@ curl -X POST http://localhost:9000/api/v1/verify \\
 async def verify_content(
     verify_request: VerifyRequest,
     raw_request: Request,
+    response: Response,
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -182,7 +183,11 @@ async def verify_content(
     """
 
     correlation_id = f"req-{uuid4().hex}"
-    await public_rate_limiter(raw_request, endpoint_type="verify_single")
+    rate_limit_headers = await public_rate_limiter(raw_request, endpoint_type="verify_single")
+    
+    # Add rate limit headers to response
+    for header, value in rate_limit_headers.items():
+        response.headers[header] = value
 
     payload_bytes = len(verify_request.text.encode("utf-8"))
     if payload_bytes == 0:
