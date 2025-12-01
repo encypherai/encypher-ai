@@ -4,18 +4,19 @@ This directory contains the microservices architecture for the Encypher platform
 
 ## 🏗️ Architecture Overview
 
-The Encypher platform uses a microservices architecture with the following services:
+The Encypher platform uses a microservices architecture with all services running in Docker.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        API Gateway                           │
-│                    (Port 8000)                               │
+│                   Traefik API Gateway                        │
+│                      (Port 8000)                             │
+│         Routes /api/v1/* to appropriate services             │
 └─────────────────────────────────────────────────────────────┘
                               │
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
 ┌───────▼────────┐   ┌───────▼────────┐   ┌───────▼────────┐
-│  Auth Service  │   │  User Service  │   │ Billing Service│
+│  Auth Service  │   │  User Service  │   │  Key Service   │
 │   (Port 8001)  │   │   (Port 8002)  │   │   (Port 8003)  │
 └────────────────┘   └────────────────┘   └────────────────┘
         │                     │                     │
@@ -24,7 +25,7 @@ The Encypher platform uses a microservices architecture with the following servi
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
 ┌───────▼────────┐   ┌───────▼────────┐   ┌───────▼────────┐
-│  Key Service   │   │Encoding Service│   │Verification Svc│
+│Encoding Service│   │Verification Svc│   │Analytics Svc   │
 │   (Port 8004)  │   │   (Port 8005)  │   │   (Port 8006)  │
 └────────────────┘   └────────────────┘   └────────────────┘
         │                     │                     │
@@ -32,32 +33,37 @@ The Encypher platform uses a microservices architecture with the following servi
                               │
         ┌─────────────────────┼─────────────────────┐
         │                     │                     │
-┌───────▼────────┐   ┌───────▼────────┐
-│Analytics Svc   │   │Notification Svc│
-│   (Port 8007)  │   │   (Port 8008)  │
-└────────────────┘   └────────────────┘
+┌───────▼────────┐   ┌───────▼────────┐   ┌───────▼────────┐
+│Billing Service │   │Notification Svc│   │ Enterprise API │
+│   (Port 8007)  │   │   (Port 8008)  │   │   (Port 9000)  │
+└────────────────┘   └────────────────┘   └────────────────┘
 ```
 
 ## 📦 Services
 
-### ✅ Implemented Services
+### All Services
 
-| Service | Port | Status | Description |
-|---------|------|--------|-------------|
-| [**auth-service**](./auth-service/) | 8001 | ✅ Active | User authentication, JWT tokens, OAuth integration |
-| [**key-service**](./key-service/) | 8004 | 🚧 Partial | Cryptographic key management and rotation |
+| Service | Port | Database | Status | Description |
+|---------|------|----------|--------|-------------|
+| **Traefik** | 8000 | - | ✅ Active | API Gateway, routes to microservices |
+| [**auth-service**](./auth-service/) | 8001 | postgres-core | ✅ Active | Authentication, JWT, OAuth |
+| [**user-service**](./user-service/) | 8002 | postgres-core | ✅ Active | User profiles, teams |
+| [**key-service**](./key-service/) | 8003 | postgres-core | ✅ Active | API keys, organizations |
+| [**encoding-service**](./encoding-service/) | 8004 | postgres-core | ✅ Active | C2PA encoding |
+| [**verification-service**](./verification-service/) | 8005 | postgres-core | ✅ Active | Content verification |
+| [**analytics-service**](./analytics-service/) | 8006 | postgres-core | ✅ Active | Usage metrics |
+| [**billing-service**](./billing-service/) | 8007 | postgres-core | ✅ Active | Subscriptions, Stripe |
+| [**notification-service**](./notification-service/) | 8008 | postgres-core | ✅ Active | Email, notifications |
+| **enterprise-api** | 9000 | core + content | ✅ Active | C2PA sign/verify API |
 
-### 🚧 Planned Services
+### Infrastructure
 
-| Service | Port | Status | Description |
-|---------|------|--------|-------------|
-| **api-gateway** | 8000 | 📋 Planned | Central API gateway, routing, rate limiting |
-| **user-service** | 8002 | 📋 Planned | User profile management, preferences |
-| **billing-service** | 8003 | 📋 Planned | Subscription management, usage tracking |
-| **encoding-service** | 8005 | 📋 Planned | C2PA content encoding and signing |
-| **verification-service** | 8006 | 📋 Planned | Content verification and tamper detection |
-| **analytics-service** | 8007 | 📋 Planned | Usage analytics and reporting |
-| **notification-service** | 8008 | 📋 Planned | Email, SMS, and push notifications |
+| Service | Port | Description |
+|---------|------|-------------|
+| **PostgreSQL Core** | 5432 | Core business data (users, orgs, keys) |
+| **PostgreSQL Content** | 5433 | Content data (documents, verification) |
+| **Redis Cache** | 6379 | Caching, sessions, rate limiting |
+| **Redis Celery** | 6380 | Background task queue |
 
 ## 🚀 Quick Start
 

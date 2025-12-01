@@ -23,8 +23,11 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
 
     # ===========================================
-    # SHARED: Database (from shared vars)
+    # DATABASE CONFIGURATION
     # ===========================================
+    # Each service gets its own DATABASE_URL pointing to its own database
+    # In dev: postgresql://...@postgres:5432/encypher_auth
+    # In prod: Separate PostgreSQL instance per service
     DATABASE_URL: str
     DATABASE_POOL_SIZE: int = 20
     DATABASE_MAX_OVERFLOW: int = 10

@@ -1,12 +1,14 @@
 # Auth Service - Agent Development Guide
 
 ## Overview
-Microservice providing JWT-based authentication, OAuth integration, and session management for the Encypher platform.
+Microservice providing JWT-based authentication, OAuth integration, session management, and **team management** for the Encypher platform.
 
 ## Current Status
 ✅ **Production Ready** - Fully functional authentication service
 ✅ **Well Documented** - Complete README with API reference
 ✅ **Clean Architecture** - FastAPI best practices
+✅ **Team Management** - Organizations, members, invitations, RBAC (Nov 2025)
+✅ **Unit Tests** - 29 tests for OrganizationService
 
 ## Architecture
 
@@ -32,20 +34,29 @@ auth-service/
 │   ├── main.py              # FastAPI application
 │   ├── api/
 │   │   └── v1/
-│   │       └── endpoints.py # API routes
+│   │       ├── endpoints.py     # Auth API routes
+│   │       └── organizations.py # Team management routes
 │   ├── core/
 │   │   ├── config.py        # Pydantic settings
 │   │   └── security.py      # JWT, password hashing
 │   ├── db/
-│   │   ├── models.py        # SQLAlchemy models
+│   │   ├── models.py        # SQLAlchemy models (User, Organization, etc.)
 │   │   └── session.py       # Database session
 │   ├── models/
 │   │   └── schemas.py       # Pydantic schemas
 │   └── services/
-│       └── auth_service.py  # Business logic
+│       ├── auth_service.py        # Auth business logic
+│       └── organization_service.py # Team management logic
+├── alembic/
+│   └── versions/
+│       ├── 001_initial_schema.py
+│       └── 002_team_management.py
 ├── tests/
+│   ├── conftest.py
+│   └── test_organization_service.py
 ├── .env.example
 ├── Dockerfile
+├── pytest.ini
 ├── pyproject.toml
 └── README.md
 ```

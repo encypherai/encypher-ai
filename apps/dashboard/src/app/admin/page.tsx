@@ -194,7 +194,7 @@ export default function AdminPage() {
             <Link href="/">
               <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
             </Link>
-            <h1 className="text-xl font-bold text-delft-blue">Encypher Admin</h1>
+            <h1 className="text-xl font-bold text-delft-blue dark:text-white">Encypher Admin</h1>
           </div>
           {headerActions}
         </div>
@@ -202,7 +202,7 @@ export default function AdminPage() {
 
       <main className="container mx-auto px-4 py-8 space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-delft-blue mb-2">User management</h2>
+          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">User management</h2>
           <p className="text-muted-foreground">
             Manage customer accounts, permissions, and enterprise entitlements without leaving the dashboard.
           </p>
@@ -212,7 +212,7 @@ export default function AdminPage() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground mb-1">Total users</p>
-              <p className="text-3xl font-bold text-delft-blue">
+              <p className="text-3xl font-bold text-delft-blue dark:text-white">
                 {stats?.totalUsers?.toLocaleString() ?? '—'}
               </p>
             </CardContent>
@@ -220,7 +220,7 @@ export default function AdminPage() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground mb-1">Active users</p>
-              <p className="text-3xl font-bold text-delft-blue">
+              <p className="text-3xl font-bold text-delft-blue dark:text-white">
                 {stats?.activeUsers?.toLocaleString() ?? '—'}
               </p>
             </CardContent>
@@ -228,7 +228,7 @@ export default function AdminPage() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground mb-1">Paying customers</p>
-              <p className="text-3xl font-bold text-delft-blue">
+              <p className="text-3xl font-bold text-delft-blue dark:text-white">
                 {stats?.payingCustomers?.toLocaleString() ?? '—'}
               </p>
             </CardContent>
@@ -236,7 +236,7 @@ export default function AdminPage() {
           <Card>
             <CardContent className="pt-6">
               <p className="text-sm text-muted-foreground mb-1">Monthly recurring revenue</p>
-              <p className="text-3xl font-bold text-delft-blue">
+              <p className="text-3xl font-bold text-delft-blue dark:text-white">
                 {stats?.mrr ? `$${stats.mrr.toLocaleString()}` : '—'}
               </p>
             </CardContent>
@@ -344,3 +344,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

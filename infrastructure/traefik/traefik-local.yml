@@ -1,0 +1,22 @@
+# Traefik Local Development Configuration
+# Routes all API requests through a single endpoint (localhost:8000)
+
+api:
+  dashboard: true
+  insecure: true
+
+entryPoints:
+  web:
+    address: ":8000"
+
+providers:
+  file:
+    filename: /etc/traefik/routes-local.yml
+    watch: true
+
+log:
+  level: INFO
+  format: common
+
+accessLog:
+  format: common

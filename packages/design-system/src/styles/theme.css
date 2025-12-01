@@ -14,7 +14,8 @@
   --delft-blue: #1b2f50;
   --blue-ncs: #2a87c4;
   --columbia-blue: #b7d5ed;
-  --rosy-brown: #ba8790;
+  --cyber-teal: #00ced1;
+  --neutral-gray: #a7afbc;
   --white: #ffffff;
   
   /* ===== SEMANTIC COLORS (Light Mode) ===== */
@@ -72,7 +73,7 @@
   --chart-1: var(--blue-ncs);
   --chart-2: var(--columbia-blue);
   --chart-3: var(--delft-blue);
-  --chart-4: var(--rosy-brown);
+  --chart-4: var(--cyber-teal);
   --chart-5: #64748b;
   
   /* ===== SIDEBAR (Dashboard specific) ===== */
@@ -149,7 +150,7 @@
   --chart-1: var(--columbia-blue);
   --chart-2: var(--blue-ncs);
   --chart-3: #94a3b8;
-  --chart-4: var(--rosy-brown);
+  --chart-4: var(--cyber-teal);
   --chart-5: #64748b;
   
   /* Sidebar */

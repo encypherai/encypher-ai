@@ -6,6 +6,8 @@ import { useSession } from 'next-auth/react';
 import { useState } from 'react';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
+import { exportAnalyticsData, exportTimeSeriesData } from '../../lib/exportCsv';
+import { toast } from 'sonner';
 
 // Skeleton components
 function StatCardSkeleton() {
@@ -76,25 +78,45 @@ export default function AnalyticsPage() {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-delft-blue mb-2">Usage & Analytics</h2>
+        <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Usage & Analytics</h2>
         <p className="text-muted-foreground">
           Track your API usage, performance metrics, and activity history
         </p>
       </div>
 
-      {/* Time Range Selector */}
-      <div className="flex items-center space-x-2 mb-6">
-        <span className="text-sm text-muted-foreground">Time range:</span>
-        {(['7', '30', '90'] as const).map((range) => (
+      {/* Time Range Selector + Export */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center space-x-2">
+          <span className="text-sm text-muted-foreground">Time range:</span>
+          {(['7', '30', '90'] as const).map((range) => (
+            <Button
+              key={range}
+              variant={timeRange === range ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setTimeRange(range)}
+            >
+              Last {range}d
+            </Button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2">
           <Button
-            key={range}
-            variant={timeRange === range ? 'primary' : 'outline'}
+            variant="outline"
             size="sm"
-            onClick={() => setTimeRange(range)}
+            onClick={() => {
+              if (stats) {
+                exportAnalyticsData(stats, timeSeries);
+                toast.success('Analytics data exported');
+              }
+            }}
+            disabled={!stats}
           >
-            Last {range}d
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            Export CSV
           </Button>
-        ))}
+        </div>
       </div>
 
       {/* Stats Overview */}
@@ -112,7 +134,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground mb-1">Total API Calls</div>
-                <div className="text-3xl font-bold text-delft-blue">
+                <div className="text-3xl font-bold text-delft-blue dark:text-white">
                   {formatNumber(stats?.total_api_calls || 0)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
@@ -122,7 +144,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground mb-1">Documents Signed</div>
-                <div className="text-3xl font-bold text-delft-blue">
+                <div className="text-3xl font-bold text-delft-blue dark:text-white">
                   {formatNumber(stats?.total_documents_signed || 0)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
@@ -132,7 +154,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground mb-1">Verifications</div>
-                <div className="text-3xl font-bold text-delft-blue">
+                <div className="text-3xl font-bold text-delft-blue dark:text-white">
                   {formatNumber(stats?.total_verifications || 0)}
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
@@ -142,7 +164,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground mb-1">Success Rate</div>
-                <div className="text-3xl font-bold text-delft-blue">
+                <div className="text-3xl font-bold text-delft-blue dark:text-white">
                   {stats?.success_rate?.toFixed(1) || '0'}%
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
@@ -152,7 +174,7 @@ export default function AnalyticsPage() {
             <Card>
               <CardContent className="pt-6">
                 <div className="text-sm text-muted-foreground mb-1">Avg Response</div>
-                <div className="text-3xl font-bold text-delft-blue">
+                <div className="text-3xl font-bold text-delft-blue dark:text-white">
                   {stats?.avg_response_time_ms?.toFixed(0) || '0'}ms
                 </div>
                 <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
@@ -263,3 +285,4 @@ export default function AnalyticsPage() {
     </DashboardLayout>
   );
 }
+

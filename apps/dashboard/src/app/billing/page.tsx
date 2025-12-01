@@ -14,6 +14,37 @@ import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import apiClient, { PlanInfo, Invoice, BillingUsageStats, CoalitionSummary } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { getSelfServeTiers, type TierConfig } from '@encypher/pricing-config';
+
+/**
+ * Convert shared pricing config to API-compatible PlanInfo format.
+ * Used as fallback when billing service is unavailable.
+ */
+function tierConfigToPlanInfo(tier: TierConfig): PlanInfo {
+  return {
+    id: tier.id,
+    name: tier.name,
+    tier: tier.id,
+    price_monthly: tier.price.monthly,
+    price_annual: tier.price.annual,
+    features: tier.features,
+    limits: {
+      c2pa_signatures: tier.limits.c2paSignatures,
+      sentences_tracked: tier.limits.sentencesTracked,
+      api_keys: tier.limits.apiKeys,
+      rate_limit: tier.limits.rateLimit,
+    },
+    coalition_rev_share: {
+      publisher: tier.revShare.publisher,
+      encypher: tier.revShare.encypher,
+    },
+    popular: tier.popular,
+    enterprise: tier.enterprise,
+  };
+}
+
+// Fallback plans from shared config (excludes enterprise)
+const FALLBACK_PLANS: PlanInfo[] = getSelfServeTiers().map(tierConfigToPlanInfo);
 
 export default function BillingPage() {
   const { data: session, status } = useSession();
@@ -80,9 +111,11 @@ export default function BillingPage() {
     },
   });
 
-  // Filter plans based on billing cycle
+  // Filter plans based on billing cycle, use fallback if API fails
   const plans = useMemo(() => {
-    const allPlans = plansQuery.data || [];
+    const allPlans = plansQuery.data && plansQuery.data.length > 0 
+      ? plansQuery.data 
+      : FALLBACK_PLANS;
     return allPlans.filter(p => !p.enterprise); // Exclude enterprise (custom pricing)
   }, [plansQuery.data]);
 
@@ -114,7 +147,7 @@ export default function BillingPage() {
     <DashboardLayout>
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-delft-blue mb-2">Billing & Subscription</h2>
+          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Billing & Subscription</h2>
           <p className="text-muted-foreground">
             Manage your plan, payment methods, and download invoices for your records.
           </p>
@@ -131,7 +164,7 @@ export default function BillingPage() {
           <CardContent className="grid md:grid-cols-4 gap-6">
             <div>
               <p className="text-sm text-muted-foreground mb-1">Plan</p>
-              <p className="text-2xl font-bold text-delft-blue">
+              <p className="text-2xl font-bold text-delft-blue dark:text-white">
                 {subscription?.plan_name || 'Starter'}
               </p>
               <p className="text-muted-foreground">
@@ -176,11 +209,29 @@ export default function BillingPage() {
             <CardHeader>
               <CardTitle>Usage This Period</CardTitle>
               <CardDescription>
-                {usage ? `Resets ${formatDate(usage.reset_date)}` : 'Loading...'}
+                {isLoading ? (
+                  <span className="inline-block h-4 w-32 bg-muted animate-pulse rounded" />
+                ) : usage ? (
+                  `Resets ${formatDate(usage.reset_date)}`
+                ) : (
+                  'No billing period active'
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {usage?.metrics ? (
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="h-4 w-24 bg-muted animate-pulse rounded" />
+                        <span className="h-4 w-16 bg-muted animate-pulse rounded" />
+                      </div>
+                      <div className="h-2 bg-muted rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              ) : usage?.metrics ? (
                 Object.entries(usage.metrics).map(([key, metric]) => (
                   <div key={key} className="space-y-2">
                     <div className="flex justify-between text-sm">
@@ -202,7 +253,15 @@ export default function BillingPage() {
                   </div>
                 ))
               ) : (
-                <p className="text-muted-foreground text-sm">No usage data available</p>
+                <div className="flex flex-col items-center py-6 text-center">
+                  <div className="w-12 h-12 mb-3 rounded-full bg-muted flex items-center justify-center">
+                    <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <p className="text-muted-foreground text-sm">No usage data yet</p>
+                  <p className="text-muted-foreground text-xs mt-1">Start using the API to see your metrics</p>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -211,16 +270,35 @@ export default function BillingPage() {
             <CardHeader>
               <CardTitle>Coalition Earnings</CardTitle>
               <CardDescription>
-                {coalition ? `${coalition.publisher_share_percent}% revenue share` : 'Loading...'}
+                {isLoading ? (
+                  <span className="inline-block h-4 w-32 bg-muted animate-pulse rounded" />
+                ) : coalition ? (
+                  `${coalition.publisher_share_percent}% revenue share`
+                ) : (
+                  'Join the coalition to earn'
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {coalition ? (
+              {isLoading ? (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="block h-4 w-20 bg-muted animate-pulse rounded mb-2" />
+                      <span className="block h-8 w-24 bg-muted animate-pulse rounded" />
+                    </div>
+                    <div>
+                      <span className="block h-4 w-20 bg-muted animate-pulse rounded mb-2" />
+                      <span className="block h-8 w-24 bg-muted animate-pulse rounded" />
+                    </div>
+                  </div>
+                </div>
+              ) : coalition ? (
                 <>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-muted-foreground">Total Earnings</p>
-                      <p className="text-2xl font-bold text-delft-blue">
+                      <p className="text-2xl font-bold text-delft-blue dark:text-white">
                         ${coalition.total_earnings.toFixed(2)}
                       </p>
                     </div>
@@ -257,7 +335,15 @@ export default function BillingPage() {
                   )}
                 </>
               ) : (
-                <p className="text-muted-foreground text-sm">No coalition data available</p>
+                <div className="flex flex-col items-center py-6 text-center">
+                  <div className="w-12 h-12 mb-3 rounded-full bg-muted flex items-center justify-center">
+                    <svg className="w-6 h-6 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <p className="text-muted-foreground text-sm">No earnings yet</p>
+                  <p className="text-muted-foreground text-xs mt-1">Sign content to start earning</p>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -267,13 +353,13 @@ export default function BillingPage() {
         <section className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-2xl font-semibold text-delft-blue">Change plan</h3>
+              <h3 className="text-2xl font-semibold text-delft-blue dark:text-white">Change plan</h3>
               <p className="text-muted-foreground">Scale with usage. Upgrade or downgrade any time.</p>
             </div>
             <div className="flex bg-muted rounded-full p-1">
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  billingCycle === 'monthly' ? 'bg-white shadow' : 'text-muted-foreground'
+                  billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 shadow text-foreground' : 'text-muted-foreground'
                 }`}
                 onClick={() => setBillingCycle('monthly')}
               >
@@ -281,7 +367,7 @@ export default function BillingPage() {
               </button>
               <button
                 className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  billingCycle === 'annual' ? 'bg-white shadow' : 'text-muted-foreground'
+                  billingCycle === 'annual' ? 'bg-white dark:bg-slate-700 shadow text-foreground' : 'text-muted-foreground'
                 }`}
                 onClick={() => setBillingCycle('annual')}
               >
@@ -292,62 +378,80 @@ export default function BillingPage() {
 
           <div className="grid md:grid-cols-4 gap-6">
             {plans.map((plan) => {
-              const isCurrent = currentTier === plan.id;
+              const isCurrent = currentTier === plan.id || (currentTier === 'starter' && plan.id === 'starter');
               const price = getPrice(plan);
               const revShare = plan.coalition_rev_share;
               
               return (
-                <Card key={plan.id} className={`relative ${plan.popular ? 'border-blue-ncs border-2' : ''}`}>
-                  {plan.popular && (
+                <Card 
+                  key={plan.id} 
+                  className={`relative border-2 transition-all ${
+                    isCurrent 
+                      ? 'border-green-500 bg-green-50/30 shadow-lg ring-2 ring-green-500/20' 
+                      : plan.popular 
+                        ? 'border-blue-ncs shadow-md' 
+                        : 'border-border hover:border-blue-ncs/50 hover:shadow-md'
+                  }`}
+                >
+                  {/* Current Plan Badge */}
+                  {isCurrent && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Current plan
+                    </div>
+                  )}
+                  {/* Popular Badge (only show if not current) */}
+                  {plan.popular && !isCurrent && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-ncs text-white text-xs font-semibold px-3 py-1 rounded-full">
                       Most popular
                     </div>
                   )}
-                  <CardHeader>
-                    <CardTitle>{plan.name}</CardTitle>
-                    <CardDescription>
-                      <span className="text-3xl font-bold text-foreground">
+                  <CardHeader className="text-center pb-2">
+                    <CardTitle className="text-lg">{plan.name}</CardTitle>
+                    <div className="pt-2">
+                      <span className="text-4xl font-bold text-foreground">
                         {price === 0 ? 'Free' : `$${price}`}
                       </span>
-                      {price > 0 && <span className="text-muted-foreground">/{getPeriod()}</span>}
-                    </CardDescription>
+                      {price > 0 && <span className="text-muted-foreground text-sm">/{getPeriod()}</span>}
+                    </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Coalition Rev Share Badge */}
                     <div className="bg-muted/50 rounded-lg p-2 text-center">
                       <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                      <p className="text-sm font-semibold text-delft-blue">
+                      <p className="text-sm font-semibold text-delft-blue dark:text-white">
                         {revShare.publisher}% you / {revShare.encypher}% Encypher
                       </p>
                     </div>
                     
-                    <ul className="space-y-2 text-sm text-muted-foreground">
-                      {plan.features.slice(0, 6).map((feature) => (
+                    <ul className="space-y-2 text-sm text-muted-foreground min-h-[180px]">
+                      {plan.features.map((feature) => (
                         <li key={feature} className="flex items-start gap-2">
-                          <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5 flex-shrink-0" />
+                          <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
                           <span>{feature}</span>
                         </li>
                       ))}
-                      {plan.features.length > 6 && (
-                        <li className="text-xs text-muted-foreground">
-                          +{plan.features.length - 6} more features
-                        </li>
-                      )}
                     </ul>
                     
                     <Button
                       variant={isCurrent ? 'outline' : 'primary'}
                       fullWidth
                       disabled={isCurrent || upgradeMutation.isPending}
+                      className={isCurrent ? 'border-green-500 text-green-600 cursor-default' : ''}
                       onClick={() => {
+                        if (isCurrent) return;
                         if (plan.id === 'starter') {
-                          toast.info('You are already on the Starter plan.');
+                          toast.info('Contact support to downgrade your plan.');
                         } else {
                           upgradeMutation.mutate({ tier: plan.id, cycle: billingCycle });
                         }
                       }}
                     >
-                      {isCurrent ? 'Current plan' : plan.id === 'starter' ? 'Downgrade' : 'Upgrade'}
+                      {isCurrent ? '✓ Your Plan' : plan.id === 'starter' ? 'Downgrade' : 'Upgrade'}
                     </Button>
                   </CardContent>
                 </Card>
@@ -355,34 +459,55 @@ export default function BillingPage() {
             })}
             
             {/* Enterprise Card */}
-            <Card className="relative border-dashed">
-              <CardHeader>
-                <CardTitle>Enterprise</CardTitle>
-                <CardDescription>
-                  <span className="text-xl font-bold text-foreground">Custom pricing</span>
-                </CardDescription>
+            <Card className="relative border-2 border-border hover:border-delft-blue/50 hover:shadow-md transition-all">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-lg">Enterprise</CardTitle>
+                <div className="pt-2">
+                  <span className="text-4xl font-bold text-foreground">Custom</span>
+                  <p className="text-muted-foreground text-sm mt-1">Contact for pricing</p>
+                </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="bg-muted/50 rounded-lg p-2 text-center">
                   <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                  <p className="text-sm font-semibold text-delft-blue">80% you / 20% Encypher</p>
+                  <p className="text-sm font-semibold text-delft-blue dark:text-white">80% you / 20% Encypher</p>
                 </div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <ul className="space-y-2 text-sm text-muted-foreground min-h-[180px]">
                   <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
+                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
                     Everything in Business
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
-                    Unlimited everything
+                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Unlimited API calls
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
+                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Unlimited team seats
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
                     SSO/SCIM integration
                   </li>
                   <li className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-ncs mt-1.5" />
-                    Dedicated support
+                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Dedicated account manager
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Custom SLA & contracts
                   </li>
                 </ul>
                 <Button
@@ -399,7 +524,7 @@ export default function BillingPage() {
 
         {/* Invoices Section */}
         <section className="space-y-4">
-          <h3 className="text-2xl font-semibold text-delft-blue">Invoices</h3>
+          <h3 className="text-2xl font-semibold text-delft-blue dark:text-white">Invoices</h3>
           <Card>
             <CardContent className="p-0">
               <table className="w-full text-sm">

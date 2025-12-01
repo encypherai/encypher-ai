@@ -2,11 +2,29 @@
 
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@encypher/design-system';
 import { useState } from 'react';
-import Link from 'next/link';
+import { toast } from 'sonner';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
 
 export default function SupportPage() {
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subject.trim() || !message.trim()) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    setSending(true);
+    // Simulate sending - in production this would call an API
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    toast.success('Message sent! We\'ll get back to you within 24 hours.');
+    setSubject('');
+    setMessage('');
+    setSending(false);
+  };
 
   const faqs = [
     {
@@ -32,38 +50,17 @@ export default function SupportPage() {
   ];
 
   const resources = [
-    { title: 'Documentation', description: 'Complete API reference and guides', icon: '📚', link: '#' },
-    { title: 'API Reference', description: 'Detailed endpoint documentation', icon: '🔧', link: '#' },
-    { title: 'SDK Downloads', description: 'Python, JavaScript, and more', icon: '📦', link: '#' },
-    { title: 'Status Page', description: 'Check system status', icon: '🟢', link: '#' },
+    { title: 'Documentation', description: 'Complete API reference and guides', icon: '📚', link: 'https://docs.encypherai.com' },
+    { title: 'API Reference', description: 'Detailed endpoint documentation', icon: '🔧', link: 'https://docs.encypherai.com/api' },
+    { title: 'SDK Downloads', description: 'Python, JavaScript, and more', icon: '📦', link: 'https://docs.encypherai.com/sdks' },
+    { title: 'Status Page', description: 'Check system status', icon: '🟢', link: 'https://status.encypherai.com' },
   ];
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Link href="/">
-                <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
-              </Link>
-              <h1 className="text-xl font-bold text-delft-blue">Encypher Dashboard</h1>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Link href="/"><Button variant="ghost" size="sm">Dashboard</Button></Link>
-              <Link href="/api-keys"><Button variant="ghost" size="sm">API Keys</Button></Link>
-              <Link href="/analytics"><Button variant="ghost" size="sm">Analytics</Button></Link>
-              <Link href="/settings"><Button variant="ghost" size="sm">Settings</Button></Link>
-              <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">U</div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
+    <DashboardLayout>
+      <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-delft-blue mb-2">Support & Help</h2>
+          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Support & Help</h2>
           <p className="text-muted-foreground">Get help with Encypher and find answers to common questions</p>
         </div>
 
@@ -143,7 +140,8 @@ export default function SupportPage() {
             </div>
           </CardContent>
         </Card>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }
+

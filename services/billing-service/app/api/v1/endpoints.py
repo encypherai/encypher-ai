@@ -483,6 +483,8 @@ async def get_available_plans():
             features=tier["features"],
             limits=tier["limits"],
             coalition_rev_share=tier["coalition_rev_share"],
+            enterprise=tier_id == "enterprise",  # Mark enterprise for custom pricing
+            popular=tier_id == "professional",  # Professional is the recommended tier
         ))
 
     return plans

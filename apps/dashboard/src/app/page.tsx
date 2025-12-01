@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
+import { OnboardingModal, useIsNewUser } from '../components/onboarding/OnboardingModal';
 import apiClient from '../lib/api';
 
 // Icons as components for cleaner code
@@ -59,7 +60,7 @@ const IconPlus = () => (
 // Skeleton loader component
 function StatCardSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-border p-6 animate-pulse">
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-6 animate-pulse">
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="h-4 w-24 bg-muted rounded mb-3" />
@@ -76,7 +77,7 @@ function ApiKeysSkeleton() {
   return (
     <div className="space-y-3">
       {[1, 2].map((i) => (
-        <div key={i} className="bg-gradient-to-r from-slate-50 to-white rounded-xl border border-border p-5 animate-pulse">
+        <div key={i} className="bg-gradient-to-r from-slate-50 to-white dark:from-slate-800 dark:to-slate-700 rounded-xl border border-border p-5 animate-pulse">
           <div className="flex items-center gap-4">
             <div className="w-10 h-10 bg-muted rounded-lg" />
             <div className="flex-1">
@@ -94,6 +95,7 @@ function ApiKeysSkeleton() {
 export default function DashboardPage() {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const isNewUser = useIsNewUser();
 
   // Fetch usage stats
   const statsQuery = useQuery({
@@ -140,6 +142,9 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
+      {/* Onboarding Modal for new users */}
+      <OnboardingModal isNewUser={isNewUser} />
+
       {/* Welcome Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-delft-blue via-delft-blue to-blue-ncs p-8 mb-8">
         {/* Background Pattern */}
@@ -188,11 +193,11 @@ export default function DashboardPage() {
         ) : (
           <>
             {/* API Calls Card */}
-            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">API Calls</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue">
+                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
                     {formatNumber(stats?.total_api_calls || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -207,11 +212,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Documents Signed Card */}
-            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Documents Signed</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue">
+                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
                     {formatNumber(stats?.total_documents_signed || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -226,11 +231,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Verifications Card */}
-            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Verifications</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue">
+                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
                     {formatNumber(stats?.total_verifications || 0)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -245,11 +250,11 @@ export default function DashboardPage() {
             </div>
 
             {/* Success Rate Card */}
-            <div className="bg-white rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5 lg:p-6 hover:shadow-md transition-shadow">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Success Rate</p>
-                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue">
+                  <p className="text-3xl lg:text-4xl font-bold text-delft-blue dark:text-white">
                     {stats?.success_rate?.toFixed(1) || '100'}%
                   </p>
                   <p className="text-xs text-muted-foreground mt-2 flex items-center gap-1">
@@ -270,11 +275,11 @@ export default function DashboardPage() {
       <div className="grid lg:grid-cols-3 gap-6 lg:gap-8">
         {/* API Keys Section - Takes 2 columns */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl border border-border overflow-hidden">
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-border overflow-hidden">
             <div className="p-6 border-b border-border">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-xl font-bold text-delft-blue">API Keys</h2>
+                  <h2 className="text-xl font-bold text-delft-blue dark:text-white">API Keys</h2>
                   <p className="text-sm text-muted-foreground mt-1">Manage your authentication credentials</p>
                 </div>
                 <Link href="/api-keys">
@@ -296,7 +301,7 @@ export default function DashboardPage() {
                       <IconKey />
                     </div>
                   </div>
-                  <h3 className="text-lg font-semibold text-delft-blue mb-2">No API Keys Yet</h3>
+                  <h3 className="text-lg font-semibold text-delft-blue dark:text-white mb-2">No API Keys Yet</h3>
                   <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
                     Generate your first API key to start authenticating your content with cryptographic proof.
                   </p>
@@ -320,7 +325,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-1">
-                          <h3 className="font-semibold text-delft-blue truncate">{key.name}</h3>
+                          <h3 className="font-semibold text-delft-blue dark:text-white truncate">{key.name}</h3>
                           <span className={`px-2 py-0.5 text-xs font-medium rounded-full flex-shrink-0 ${
                             key.is_revoked 
                               ? 'bg-red-100 text-red-700' 
@@ -341,7 +346,7 @@ export default function DashboardPage() {
                   ))}
                   {apiKeys.length > 3 && (
                     <Link href="/api-keys" className="block">
-                      <button className="w-full py-3 text-sm font-medium text-blue-ncs hover:text-delft-blue transition-colors">
+                      <button className="w-full py-3 text-sm font-medium text-blue-ncs hover:text-delft-blue dark:text-white transition-colors">
                         View all {apiKeys.length} keys →
                       </button>
                     </Link>
@@ -384,40 +389,40 @@ export default function DashboardPage() {
           </div>
 
           {/* Quick Links */}
-          <div className="bg-white rounded-xl border border-border p-5">
-            <h3 className="font-bold text-delft-blue mb-4">Quick Links</h3>
+          <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5">
+            <h3 className="font-bold text-delft-blue dark:text-white mb-4">Quick Links</h3>
             <div className="space-y-2">
               <Link href="/analytics" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
                 <div className="w-9 h-9 bg-blue-ncs/10 rounded-lg flex items-center justify-center text-blue-ncs">
                   <IconChart />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-delft-blue text-sm">Analytics</p>
+                  <p className="font-medium text-delft-blue dark:text-white text-sm">Analytics</p>
                   <p className="text-xs text-muted-foreground">View usage metrics</p>
                 </div>
                 <IconArrowRight />
               </Link>
               
               <Link href="/settings" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
-                <div className="w-9 h-9 bg-delft-blue/10 rounded-lg flex items-center justify-center text-delft-blue">
+                <div className="w-9 h-9 bg-delft-blue/10 dark:bg-slate-600 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-delft-blue text-sm">Settings</p>
+                  <p className="font-medium text-delft-blue dark:text-white text-sm">Settings</p>
                   <p className="text-xs text-muted-foreground">Account preferences</p>
                 </div>
                 <IconArrowRight />
               </Link>
 
               <a href="https://docs.encypherai.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
-                <div className="w-9 h-9 bg-columbia-blue/30 rounded-lg flex items-center justify-center text-delft-blue">
+                <div className="w-9 h-9 bg-columbia-blue/30 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
                   <IconBook />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-delft-blue text-sm">Documentation</p>
+                  <p className="font-medium text-delft-blue dark:text-white text-sm">Documentation</p>
                   <p className="text-xs text-muted-foreground">API reference & guides</p>
                 </div>
                 <IconArrowRight />
@@ -432,7 +437,7 @@ export default function DashboardPage() {
                 <IconShield />
               </div>
               <div>
-                <p className="font-bold text-delft-blue text-sm">C2PA Compliant</p>
+                <p className="font-bold text-delft-blue dark:text-white text-sm">C2PA Compliant</p>
                 <p className="text-xs text-muted-foreground">Industry standard</p>
               </div>
             </div>
@@ -445,3 +450,4 @@ export default function DashboardPage() {
     </DashboardLayout>
   );
 }
+

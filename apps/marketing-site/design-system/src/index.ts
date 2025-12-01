@@ -9,6 +9,7 @@
 export { cn } from './utils/cn';
 
 // Components
+export { Badge, type BadgeProps } from './components/Badge';
 export { Button, type ButtonProps } from './components/Button';
 export {
   Card,

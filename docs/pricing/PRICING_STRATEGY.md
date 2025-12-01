@@ -700,6 +700,58 @@ AI licensing revenue flows back to publishers based on:
 
 ---
 
+## GTM Strategy: Dashboard as the Gateway
+
+### The Unified Approach
+
+All customers—from indie bloggers to the New York Times—use the same infrastructure:
+
+```
+Publisher → Dashboard → Enterprise API → C2PA Signing + Coalition
+```
+
+The **dashboard is the source of truth** for pricing and the primary entry point for all customers. The marketing site mirrors the dashboard pricing and directs users to sign up.
+
+### Customer Journey by Segment
+
+| Segment | Entry Point | Conversion Path |
+|---------|-------------|-----------------|
+| **Long Tail** (bloggers) | Marketing site → Dashboard signup | Self-serve, credit card |
+| **Mid-Market** (regional news) | Marketing site → Dashboard signup | Self-serve or sales assist |
+| **Enterprise** (major publishers) | Marketing site → Dashboard → Contact Sales | Enterprise contract |
+| **Strategic** (NYT, WSJ) | Direct outreach → Dashboard demo → Custom contract | White-glove sales |
+
+### Why Dashboard-First Works
+
+1. **Try Before You Buy**: Publishers can test the tech immediately
+2. **Self-Serve Scale**: Long tail signs up without sales involvement
+3. **Qualified Leads**: Enterprise prospects who contact sales already understand the product
+4. **Unified Codebase**: One platform to maintain, not separate enterprise tools
+5. **Network Effects**: Every publisher on the platform grows the coalition corpus
+
+### Enterprise Sales Flow
+
+1. Publisher discovers Encypher (marketing, referral, outreach)
+2. Signs up for free Starter tier on dashboard
+3. Tests C2PA signing, sees coalition revenue potential
+4. Clicks "Contact Sales" for Enterprise features
+5. Sales negotiates custom contract (pricing, rev share, SLA)
+6. Account upgraded to Enterprise tier in dashboard
+7. Publisher manages keys, users, analytics through same dashboard
+
+### Pricing Alignment
+
+The dashboard tiers align with GTM pricing:
+
+| Dashboard Tier | GTM Tier | Annual Value |
+|----------------|----------|--------------|
+| Starter (Free) | Long tail | $0 + 35% rev share |
+| Professional ($99/mo) | Tier 3 (<$3M) | ~$1,200/yr + 30% rev share |
+| Business ($499/mo) | Tier 2 ($3-5M) | ~$6,000/yr + 25% rev share |
+| Enterprise (Custom) | Tier 1 (>$20M) | $30K+/yr + 20-25% rev share |
+
+---
+
 ## Competitive Positioning
 
 ### vs. No Solution (Status Quo)
@@ -746,8 +798,8 @@ AI licensing revenue flows back to publishers based on:
 
 ## Document Control
 
-**Version:** 2.0  
-**Last Updated:** November 25, 2025  
+**Version:** 2.1  
+**Last Updated:** November 29, 2025  
 **Next Review:** December 15, 2025  
 **Approved By:** [Pending Executive Review]
 
@@ -757,3 +809,4 @@ AI licensing revenue flows back to publishers based on:
 |---------|------|---------|
 | 1.0 | Nov 25, 2025 | Initial draft |
 | 2.0 | Nov 25, 2025 | Complete rewrite with coalition economics, publisher examples, feature matrix |
+| 2.1 | Nov 29, 2025 | Added GTM Strategy section: Dashboard as the Gateway. Aligned dashboard, marketing site, and internal docs. |

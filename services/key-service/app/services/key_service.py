@@ -108,6 +108,10 @@ class KeyService:
         Verify an API key and return full organization context.
         This is the unified auth method used by all services.
         
+        Supports both:
+        - Organization-level keys (linked to organization_id)
+        - User-level keys (linked to user_id, no organization)
+        
         Returns:
             dict with organization_id, tier, features, permissions
             or None if invalid
@@ -121,11 +125,12 @@ class KeyService:
         # Hash the key
         key_hash = hash_api_key(api_key)
 
-        # Query key with organization join
+        # First try: Query key with organization join (org-level keys)
         result = db.execute(text("""
             SELECT 
                 k.id as key_id,
                 k.organization_id,
+                k.user_id,
                 k.permissions as key_permissions,
                 k.is_active,
                 k.is_revoked,
@@ -138,7 +143,7 @@ class KeyService:
                 o.coalition_member,
                 o.coalition_rev_share
             FROM api_keys k
-            JOIN organizations o ON k.organization_id = o.id
+            LEFT JOIN organizations o ON k.organization_id = o.id
             WHERE k.key_hash = :key_hash
         """), {"key_hash": key_hash}).fetchone()
 
@@ -164,7 +169,37 @@ class KeyService:
         except Exception:
             db.rollback()  # Don't fail auth if usage update fails
 
-        # Return organization context
+        # Handle user-level keys (no organization linked)
+        if not result.organization_id:
+            # User-level key - provide default starter tier context
+            # Mark as demo so they can use demo signing keys for testing
+            return {
+                "key_id": result.key_id,
+                "user_id": result.user_id,
+                "organization_id": f"user_{result.user_id}",  # Synthetic org ID
+                "organization_name": "Personal Account",
+                "tier": "starter",  # Default tier for user keys
+                "is_demo": True,  # Allow using demo private key for signing
+                "features": {
+                    "team_management": False,
+                    "audit_logs": False,
+                    "merkle_enabled": False,
+                    "bulk_operations": False,
+                    "sentence_tracking": False,
+                    "streaming": True,
+                    "byok": False,
+                    "sso": False,
+                    "custom_assertions": False,
+                    "max_team_members": 1,
+                },
+                "permissions": result.key_permissions if isinstance(result.key_permissions, list) else ["sign", "verify"],
+                "monthly_api_limit": 10000,  # Starter tier limit
+                "monthly_api_usage": 0,
+                "coalition_member": True,
+                "coalition_rev_share": 65,
+            }
+
+        # Return organization context for org-level keys
         return {
             "key_id": result.key_id,
             "organization_id": result.organization_id,

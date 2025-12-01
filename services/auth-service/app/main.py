@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from .core.config import settings
 from .core.logging_config import setup_logging
 from .api.v1.endpoints import router as v1_router
+from .api.v1.organizations import router as organizations_router
 from .db.models import Base
 from .db.session import engine
 from .monitoring.metrics import setup_metrics
@@ -57,6 +58,7 @@ setup_metrics(app)
 
 # Include routers
 app.include_router(v1_router, prefix="/api/v1/auth", tags=["authentication"])
+app.include_router(organizations_router, prefix="/api/v1", tags=["organizations"])
 
 # Fallback metrics endpoint (in case instrumentator isn't exposing it)
 try:

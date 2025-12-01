@@ -75,36 +75,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'rounded-lg',
           
           // Variant styles
-          {
-            // PRIMARY: Columbia Blue with white text - HIGH CONTRAST for CTAs
-            'bg-columbia-blue text-white hover:bg-columbia-blue/90 active:bg-columbia-blue/80': 
-              variant === 'primary',
-            'focus-visible:ring-columbia-blue': variant === 'primary' || variant === 'outline',
-            
-            // SECONDARY: Light background
-            'bg-secondary text-secondary-foreground hover:bg-secondary/80': 
-              variant === 'secondary',
-            'focus-visible:ring-secondary': variant === 'secondary',
-            
-            // OUTLINE: Border with transparent background
-            'border-2 border-columbia-blue text-columbia-blue bg-transparent': 
-              variant === 'outline',
-            'hover:bg-columbia-blue hover:text-white': variant === 'outline',
-            
-            // GHOST: Transparent background
-            'text-delft-blue hover:bg-muted': variant === 'ghost',
-            'focus-visible:ring-muted': variant === 'ghost',
-            
-            // DESTRUCTIVE: Red for dangerous actions
-            'bg-destructive text-destructive-foreground hover:bg-destructive/90': 
-              variant === 'destructive',
-            'focus-visible:ring-destructive': variant === 'destructive',
-            
-            // SUCCESS: Green for positive actions
-            'bg-success text-success-foreground hover:bg-success/90': 
-              variant === 'success',
-            'focus-visible:ring-success': variant === 'success',
-          },
+          variant === 'primary' && 'bg-blue-ncs text-white hover:bg-blue-ncs/90 active:bg-blue-ncs/80 focus-visible:ring-blue-ncs',
+          variant === 'secondary' && 'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus-visible:ring-secondary',
+          variant === 'outline' && 'border-2 border-blue-ncs text-blue-ncs bg-transparent hover:bg-blue-ncs hover:text-white focus-visible:ring-blue-ncs',
+          variant === 'ghost' && 'text-foreground hover:bg-muted focus-visible:ring-muted',
+          variant === 'destructive' && 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus-visible:ring-destructive',
+          variant === 'success' && 'bg-success text-success-foreground hover:bg-success/90 focus-visible:ring-success',
           
           // Size styles
           {

@@ -55,5 +55,17 @@ When creating a new PRD, include:
 
 - Use WBS numbering (1.0, 1.1, 1.1.1)
 - Mark tasks with `- [ ]` (pending) or `- [x]` (complete)
+- **Tasks require test verification to be marked complete:**
+  ```markdown
+  - [x] 2.1.3 Add login form — ✅ pytest ✅ puppeteer
+  - [ ] 2.1.4 Add validation — (cannot mark complete without tests)
+  ```
 - Update status section when completing major milestones
 - Move to ARCHIVE when fully complete
+
+## Single Source of Truth
+
+PRDs in `CURRENT/` are the **only** source of truth for active work.
+- No separate `plan.md` — all planning lives in PRDs
+- Team files (`.teams/TEAM_XXX_*.md`) reference PRD tasks, don't duplicate them
+- One PRD per feature/initiative

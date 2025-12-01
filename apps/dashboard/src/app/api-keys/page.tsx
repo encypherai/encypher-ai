@@ -12,10 +12,91 @@ import {
 } from '@encypher/design-system';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { exportApiKeys } from '../../lib/exportCsv';
+
+// Modal component for creating API keys
+function CreateKeyModal({
+  isOpen,
+  onClose,
+  onSubmit,
+  isLoading,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (name: string) => void;
+  isLoading: boolean;
+}) {
+  const [keyName, setKeyName] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isOpen) {
+      setKeyName('');
+      // Focus input after modal opens
+      setTimeout(() => inputRef.current?.focus(), 100);
+    }
+  }, [isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (keyName.trim()) {
+      onSubmit(keyName.trim());
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      
+      {/* Modal */}
+      <div className="relative bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+        <h3 className="text-xl font-semibold text-foreground mb-2">Create New API Key</h3>
+        <p className="text-sm text-muted-foreground mb-6">
+          Give your API key a descriptive name to help you identify it later.
+        </p>
+        
+        <form onSubmit={handleSubmit}>
+          <Input
+            ref={inputRef}
+            placeholder="e.g., WordPress Production, Development Server"
+            value={keyName}
+            onChange={(e) => setKeyName(e.target.value)}
+            disabled={isLoading}
+            className="mb-6"
+          />
+          
+          <div className="flex justify-end gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!keyName.trim() || isLoading}
+            >
+              {isLoading ? 'Creating...' : 'Create Key'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
 
 type ApiKeyRecord = {
   id: string;
@@ -93,7 +174,7 @@ export default function ApiKeysPage() {
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const queryClient = useQueryClient();
 
-  const [newKeyName, setNewKeyName] = useState('');
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedKey, setGeneratedKey] = useState('');
 
   const apiKeysQuery = useQuery({
@@ -108,9 +189,9 @@ export default function ApiKeysPage() {
   });
 
   const createKeyMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (keyName: string) => {
       if (!accessToken) throw new Error('You must be signed in to create API keys.');
-      const response = await apiClient.createApiKey(accessToken, newKeyName || 'New API key', [
+      const response = await apiClient.createApiKey(accessToken, keyName, [
         'sign',
         'verify',
         'read',
@@ -126,13 +207,17 @@ export default function ApiKeysPage() {
         setGeneratedKey('');
         toast.success('API key created.');
       }
-      setNewKeyName('');
+      setIsModalOpen(false);
       queryClient.invalidateQueries({ queryKey: ['api-keys'] });
     },
     onError: (err: any) => {
       toast.error(err?.message || 'Failed to create API key.');
     },
   });
+
+  const handleCreateKey = (name: string) => {
+    createKeyMutation.mutate(name);
+  };
 
   const deleteKeyMutation = useMutation({
     mutationFn: async (keyId: string) => {
@@ -163,17 +248,62 @@ export default function ApiKeysPage() {
     }
 
     if (apiKeysQuery.isError) {
+      const errorMessage = (apiKeysQuery.error as Error)?.message || '';
+      // Treat 404 or "Not Found" as empty state (service may not have keys endpoint yet)
+      if (errorMessage.includes('404') || errorMessage.toLowerCase().includes('not found')) {
+        return (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
+              <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-foreground mb-2">No API Keys Yet</h3>
+            <p className="text-muted-foreground text-center max-w-md mb-6">
+              Generate your first API key to start authenticating your content with cryptographic proof.
+            </p>
+            <Button
+              variant="primary"
+              onClick={() => setIsModalOpen(true)}
+              disabled={!accessToken || createKeyMutation.isPending}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Generate Your First Key
+            </Button>
+          </div>
+        );
+      }
       return (
         <div className="text-destructive">
-          {(apiKeysQuery.error as Error)?.message || 'Unable to load API keys.'}
+          {errorMessage || 'Unable to load API keys.'}
         </div>
       );
     }
 
     if (!apiKeys.length) {
       return (
-        <div className="text-muted-foreground">
-          You have not generated any API keys yet.
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="w-20 h-20 mb-6 rounded-full bg-blue-ncs/10 flex items-center justify-center">
+            <svg className="w-10 h-10 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-foreground mb-2">No API Keys Yet</h3>
+          <p className="text-muted-foreground text-center max-w-md mb-6">
+            Generate your first API key to start authenticating your content with cryptographic proof.
+          </p>
+          <Button
+            variant="primary"
+            onClick={() => setIsModalOpen(true)}
+            disabled={!accessToken || createKeyMutation.isPending}
+          >
+            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            Generate Your First Key
+          </Button>
         </div>
       );
     }
@@ -245,26 +375,39 @@ export default function ApiKeysPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue mb-1">API Keys</h2>
+            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">API Keys</h2>
             <p className="text-muted-foreground">
               Generate and manage API keys for your WordPress plugin, SDKs, or custom integrations.
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <Input
-              placeholder="Key name (e.g., WordPress Production)"
-              value={newKeyName}
-              onChange={(e) => setNewKeyName(e.target.value)}
-              disabled={createKeyMutation.isPending || !accessToken}
-              className="w-64"
-            />
-            <Button
-              variant="primary"
-              onClick={() => createKeyMutation.mutate()}
-              disabled={!accessToken || createKeyMutation.isPending}
-            >
-              {createKeyMutation.isPending ? 'Generating…' : 'Generate key'}
-            </Button>
+            {apiKeys.length > 0 && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    exportApiKeys(apiKeys);
+                    toast.success('API keys exported');
+                  }}
+                >
+                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => setIsModalOpen(true)}
+                  disabled={!accessToken || createKeyMutation.isPending}
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  {createKeyMutation.isPending ? 'Generating…' : 'Generate Key'}
+                </Button>
+              </>
+            )}
           </div>
         </div>
 
@@ -304,6 +447,15 @@ export default function ApiKeysPage() {
 
         {renderKeyList()}
       </div>
+
+      {/* Create Key Modal */}
+      <CreateKeyModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleCreateKey}
+        isLoading={createKeyMutation.isPending}
+      />
     </DashboardLayout>
   );
 }
+
