@@ -1,6 +1,10 @@
 # Windsurf specific
 .windsurf/
 
+# AI Agent session artifacts (ephemeral)
+.teams/TEAM_*.md
+.questions/TEAM_*.md
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
