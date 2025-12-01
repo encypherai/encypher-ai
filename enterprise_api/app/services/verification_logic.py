@@ -25,6 +25,7 @@ except ImportError as exc:  # pragma: no cover - import guard
 
 from app.models.response_models import VerifyVerdict
 from app.services.certificate_service import ResolvedCertificate, certificate_resolver
+from app.services.status_service import status_service
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,9 @@ class VerificationExecution:
     resolved_cert: Optional[ResolvedCertificate]
     duration_ms: int
     exception_message: Optional[str]
+    # TEAM_002: Document revocation status
+    document_revoked: bool = False
+    revocation_reason: Optional[str] = None
 
 
 def _coerce_manifest(raw: Any) -> Dict[str, Any]:
@@ -58,6 +62,29 @@ def _coerce_manifest(raw: Any) -> Dict[str, Any]:
                 else:
                     return {}
     return {}
+
+
+def _find_status_assertion(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """
+    Find the status list assertion in a C2PA manifest.
+    
+    TEAM_002: Looks for org.encypher.status assertion containing
+    StatusList2021Entry data.
+    """
+    assertions = manifest.get("assertions", [])
+    if isinstance(assertions, list):
+        for assertion in assertions:
+            if isinstance(assertion, dict):
+                label = assertion.get("label", "")
+                if label == "org.encypher.status":
+                    return assertion.get("data", {})
+    
+    # Also check custom_metadata for backward compatibility
+    custom = manifest.get("custom_metadata", {})
+    if isinstance(custom, dict) and "statusListCredential" in custom:
+        return custom
+    
+    return None
 
 
 def parse_manifest_timestamp(manifest: Dict[str, Any]) -> Optional[datetime]:
@@ -85,6 +112,9 @@ def determine_reason_code(
 
     if execution.is_valid:
         return "OK"
+    # TEAM_002: Check document revocation before certificate issues
+    if execution.document_revoked:
+        return "DOC_REVOKED"
     if execution.revoked_signers:
         return "CERT_REVOKED"
     if execution.missing_signers:
@@ -136,6 +166,36 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     manifest_dict = _coerce_manifest(manifest)
     resolved_cert = certificate_resolver.get(signer_id) if signer_id else None
 
+    # TEAM_002: Check document revocation status via bitstring status list
+    document_revoked = False
+    revocation_reason = None
+    
+    if is_valid and signer_id and manifest_dict:
+        # Try to check revocation status from manifest assertions
+        try:
+            status_assertion = _find_status_assertion(manifest_dict)
+            if status_assertion:
+                status_list_url = status_assertion.get("statusListCredential")
+                bit_index_str = status_assertion.get("statusListIndex")
+                
+                if status_list_url and bit_index_str:
+                    bit_index = int(bit_index_str)
+                    document_revoked = await status_service.check_revocation(
+                        status_list_url=status_list_url,
+                        bit_index=bit_index,
+                    )
+                    
+                    if document_revoked:
+                        is_valid = False
+                        revocation_reason = "Document has been revoked by publisher"
+                        logger.info(
+                            f"Document revoked: signer={signer_id}, "
+                            f"list={status_list_url}, bit={bit_index}"
+                        )
+        except Exception as e:
+            logger.warning(f"Failed to check document revocation: {e}")
+            # Continue without revocation check - fail open
+
     return VerificationExecution(
         is_valid=is_valid,
         signer_id=signer_id,
@@ -145,6 +205,8 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
         resolved_cert=resolved_cert,
         duration_ms=duration_ms,
         exception_message=exception_message,
+        document_revoked=document_revoked,
+        revocation_reason=revocation_reason,
     )
 
 
@@ -167,6 +229,11 @@ def build_verdict(
         details["revoked_signers"] = sorted(execution.revoked_signers)
     if execution.exception_message:
         details["exception"] = execution.exception_message
+    # TEAM_002: Include document revocation info
+    if execution.document_revoked:
+        details["document_revoked"] = True
+        if execution.revocation_reason:
+            details["revocation_reason"] = execution.revocation_reason
     if execution.resolved_cert:
         details["certificate_status"] = execution.resolved_cert.status.value
         if execution.resolved_cert.certificate_rotated_at:

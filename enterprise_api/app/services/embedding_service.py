@@ -31,6 +31,7 @@ except ImportError:
     )
 
 from app.models.content_reference import ContentReference
+from app.services.status_service import status_service
 
 logger = logging.getLogger(__name__)
 
@@ -210,7 +211,11 @@ class EmbeddingService:
                     'created_by': 'embedding_service',
                     'uses_encypher_ai': True,
                     'signer_id': self.signer_id
-                }
+                },
+                # TEAM_002: Status list fields will be populated after allocation
+                status_list_index=None,
+                status_bit_index=None,
+                status_list_url=None,
             )
             
             references_to_insert.append(reference)
@@ -376,6 +381,30 @@ class EmbeddingService:
         logger.info(
             f"Deleted {result.rowcount} old content references for document {document_id}"
         )
+        
+        # TEAM_002: Allocate status list index for this document
+        # This enables per-document revocation via bitstring status lists
+        try:
+            list_index, bit_index, status_list_url = await status_service.allocate_status_index(
+                db=db,
+                organization_id=organization_id,
+                document_id=document_id,
+            )
+            
+            # Update all references with status list info
+            for ref in references_to_insert:
+                ref.status_list_index = list_index
+                ref.status_bit_index = bit_index
+                ref.status_list_url = status_list_url
+            
+            logger.info(
+                f"Allocated status index for document {document_id}: "
+                f"list={list_index}, bit={bit_index}"
+            )
+        except Exception as e:
+            logger.warning(f"Failed to allocate status index: {e}")
+            # Continue without status list - document will still be signed
+            # but won't be revocable via bitstring
         
         # Bulk insert all new references (enterprise feature: database tracking)
         db.add_all(references_to_insert)

@@ -1,77 +1,267 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+// Tabs import removed - using custom styled buttons for better active state visibility
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, Check, Zap, Building2 } from 'lucide-react';
+import { ArrowRight, Check, Newspaper, BarChart3, Shield, FileText, Award, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 import Link from 'next/link';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import AISummary from '@/components/seo/AISummary';
+import FeatureComparisonTable from '@/components/pricing/FeatureComparisonTable';
+import StandardsCompliance from '@/components/solutions/standards-compliance';
+import Image from 'next/image';
+import { useLicense } from '@/lib/hooks/useLicense';
 import { getAllTiers, formatPrice, formatRevShare, type TierConfig } from '@encypher/pricing-config';
 
 // Dashboard URL for sign-up flows
 const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';
 
-// Marketing-specific tier descriptions
-const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta: { text: string; variant: 'default' | 'outline' }; showPrice: boolean }> = {
+type ICP = 'publishers' | 'ai-labs' | 'enterprises';
+
+// ICP-specific value propositions aligned with demos
+const ICP_VALUE_PROPS: Record<ICP, { headline: string; subheadline: string; icon: typeof Newspaper }> = {
+  publishers: {
+    headline: 'Turn Your Archive Into Revenue',
+    subheadline: 'Cryptographic watermarking that survives copy-paste. Formal notice capability for AI licensing.',
+    icon: Newspaper,
+  },
+  'ai-labs': {
+    headline: 'Google Analytics for AI',
+    subheadline: 'Performance intelligence + regulatory compliance. Building standards WITH you through C2PA—OpenAI is a member.',
+    icon: BarChart3,
+  },
+  enterprises: {
+    headline: 'AI Governance Infrastructure',
+    subheadline: 'EU AI Act & China watermarking compliance with C2PA.',
+    icon: Shield,
+  },
+};
+
+// Marketing-specific tier descriptions for publishers
+const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta: { text: string; variant: 'default' | 'outline' }; showPrice: boolean; highlight?: string }> = {
   starter: {
-    description: 'For bloggers and small publishers',
-    bestFor: 'Independent bloggers, small sites',
+    description: 'Get paid when AI uses your content',
+    bestFor: 'Independent bloggers, small sites, WordPress users',
     cta: { text: 'Get Started Free', variant: 'outline' },
     showPrice: true,
+    highlight: 'WordPress plugin installs in 5 minutes',
   },
   professional: {
     description: 'For regional publishers and growing media companies',
     bestFor: 'Regional newspapers, digital magazines, trade publications',
     cta: { text: 'Start Free Trial', variant: 'default' },
     showPrice: true,
+    highlight: 'Invisible embeddings + 70% revenue share',
   },
   business: {
     description: 'For major digital publishers needing enterprise features',
     bestFor: 'Major digital publishers, news networks',
     cta: { text: 'Start Free Trial', variant: 'outline' },
     showPrice: true,
+    highlight: 'Plagiarism detection + source attribution',
   },
   enterprise: {
-    description: 'For Tier 1 publishers and major media companies',
-    bestFor: 'NYT, Universal Music, News Corp, major media conglomerates',
+    description: '$30k implementation in 30 days',
+    bestFor: 'NYT, Guardian, News Corp, major media conglomerates',
     cta: { text: 'Contact Sales', variant: 'outline' },
     showPrice: false,
+    highlight: 'Founding members lock 25% rate',
   },
 };
 
+// Map license tier to TierId for feature comparison
+type TierId = 'starter' | 'professional' | 'business' | 'enterprise';
+
+function normalizeTier(tier: string | undefined): TierId | null {
+  if (!tier) return null;
+  const normalized = tier.toLowerCase();
+  if (['starter', 'free', 'basic'].includes(normalized)) return 'starter';
+  if (['professional', 'pro'].includes(normalized)) return 'professional';
+  if (['business', 'team'].includes(normalized)) return 'business';
+  if (['enterprise', 'custom'].includes(normalized)) return 'enterprise';
+  return null;
+}
+
 export default function PricingPage() {
+  const [activeICP, setActiveICP] = useState<ICP>('publishers');
   const [showPublisherModal, setShowPublisherModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
+  const [showFullFeatureTable, setShowFullFeatureTable] = useState(false);
+  
+  const router = useRouter();
+  const { data: session } = useSession();
+  const { license } = useLicense();
+  
+  // Get user's current plan for feature table highlighting
+  const currentPlan = normalizeTier(license?.tier);
+  const isLoggedIn = !!session;
+  
+  // Handle upgrade from feature table
+  const handleUpgrade = (tier: TierId) => {
+    if (tier === 'enterprise') {
+      setShowPublisherModal(true);
+    } else {
+      router.push(`${DASHBOARD_URL}/billing?upgrade=${tier}`);
+    }
+  };
   
   const tiers = getAllTiers();
 
   return (
     <div className="bg-background text-foreground">
+      {/* SEO: AI Summary with all ICP information for crawlers */}
       <AISummary
-        title="Encypher Pricing"
-        whatWeDo="Provide flexible pricing from free self-service to white-glove enterprise implementations."
-        whoItsFor="Publishers of all sizes seeking content authentication and AI licensing revenue."
-        keyDifferentiator="Success-based models aligned with outcomes. Earn when AI companies use your content."
-        primaryValue="Start free, scale as you grow. Coalition revenue share improves with each tier."
+        title="Encypher Pricing & Licensing"
+        whatWeDo="Provide C2PA-compliant content provenance infrastructure for publishers, AI companies, and enterprises. Built on global standards adopted by Adobe, Microsoft, Google, and mandated by EU AI Act and China watermarking regulations."
+        whoItsFor="Publishers seeking AI licensing revenue through content provenance, AI labs needing compliance infrastructure and performance analytics, and enterprises requiring regulatory compliance (EU AI Act, China watermarking mandate)."
+        keyDifferentiator="Standards-based infrastructure with global interoperability. Publishers earn 65-80% of coalition licensing revenue. AI labs get compliant infrastructure + performance intelligence. Enterprises get regulatory compliance + competitive advantage."
+        primaryValue="Start free, scale as you grow. Built on C2PA standard for interoperability with major platforms. Coalition revenue share improves with each tier."
       />
 
-      {/* Hero Section */}
-      <section className="relative w-full py-20 md:py-32 bg-muted/30 border-b border-border">
+      {/* Hero Section with ICP Selector */}
+      <section className="relative w-full py-12 md:py-16 bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-              For Publishers: From WordPress to Enterprise
-            </h1>
-            <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-4">
-              Scale from self-service plugins to white-glove implementations. Success-based models mean we only win when you generate licensing revenue.
-            </p>
+          {/* ICP Tab Selector - Vertical on mobile, horizontal on desktop */}
+          <div className="flex justify-center mb-6 px-4">
+            {/* Mobile: Vertical stack */}
+            <div className="flex flex-col sm:hidden gap-2 w-full max-w-xs">
+              {(['publishers', 'ai-labs', 'enterprises'] as const).map((icp) => {
+                const isActive = activeICP === icp;
+                const config = {
+                  publishers: { icon: Newspaper, label: 'Publishers' },
+                  'ai-labs': { icon: BarChart3, label: 'AI Labs' },
+                  enterprises: { icon: Shield, label: 'Enterprises' },
+                }[icp];
+                const IconComponent = config.icon;
+                return (
+                  <button
+                    key={icp}
+                    onClick={() => setActiveICP(icp)}
+                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all text-sm"
+                    style={isActive ? {
+                      backgroundColor: '#2a87c4',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    } : {
+                      backgroundColor: '#e2e8f0',
+                      color: '#64748b'
+                    }}
+                  >
+                    <IconComponent className="h-4 w-4" />
+                    <span>{config.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {/* Desktop: Horizontal tabs */}
+            <div className="hidden sm:inline-flex rounded-lg p-1.5 gap-1" style={{ backgroundColor: '#e2e8f0' }}>
+              {(['publishers', 'ai-labs', 'enterprises'] as const).map((icp) => {
+                const isActive = activeICP === icp;
+                const config = {
+                  publishers: { icon: Newspaper, label: 'Publishers' },
+                  'ai-labs': { icon: BarChart3, label: 'AI Labs' },
+                  enterprises: { icon: Shield, label: 'Enterprises' },
+                }[icp];
+                const IconComponent = config.icon;
+                return (
+                  <button
+                    key={icp}
+                    onClick={() => setActiveICP(icp)}
+                    className="flex items-center justify-center gap-2 py-3 px-6 rounded-md font-medium transition-all text-sm"
+                    style={isActive ? {
+                      backgroundColor: '#2a87c4',
+                      color: '#ffffff',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    } : {
+                      color: '#64748b'
+                    }}
+                  >
+                    <IconComponent className="h-4 w-4" />
+                    <span>{config.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Pricing Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+          {/* C2PA Co-Chair Authority Badge - Single source of standards authority */}
+          <div className="flex justify-center mb-4 px-4">
+            <div className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
+              <Award className="h-4 w-4 text-primary flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium text-center">
+                <span className="hidden md:inline">C2PA Text Provenance Co-Chair — Building standards with Google, BBC, OpenAI, Adobe & Microsoft</span>
+                <span className="md:hidden">C2PA Co-Chair with Google, BBC, OpenAI, Adobe</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Dynamic Value Prop based on active ICP */}
+          <div className="text-center">
+            {(() => {
+              const props = ICP_VALUE_PROPS[activeICP];
+              const IconComponent = props.icon;
+              return (
+                <>
+                  <div className="flex justify-center mb-4">
+                    <div className="p-3 bg-primary/10 rounded-full">
+                      <IconComponent className="h-8 w-8 text-primary" />
+                    </div>
+                  </div>
+                  <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight mb-4">
+                    {props.headline}
+                  </h1>
+                  <p className="text-lg md:text-xl max-w-2xl mx-auto text-muted-foreground">
+                    {props.subheadline}
+                  </p>
+                </>
+              );
+            })()}
+          </div>
+
+          {/* C2PA & CAI Logos - Standards Authority */}
+          <div className="mt-8 flex justify-center items-center gap-6 md:gap-10">
+            <div className="relative h-8 w-24 md:h-10 md:w-32">
+              <Image
+                src="/c2pa-hero.svg"
+                alt="C2PA Logo"
+                fill
+                style={{objectFit: 'contain'}}
+              />
+            </div>
+            <div className="relative h-8 w-24 md:h-10 md:w-32">
+              <Image
+                src="/CAI_Lockup_RGB_Black.svg"
+                alt="Content Authenticity Initiative Logo"
+                fill
+                style={{objectFit: 'contain'}}
+              />
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      {/* 
+        SEO NOTE: All three sections are rendered in the DOM but only one is visible.
+        This ensures crawlers index all content while users see a clean tabbed interface.
+        Using CSS visibility/display instead of conditional rendering.
+      */}
+
+      {/* ==================== PUBLISHERS SECTION ==================== */}
+      <section 
+        id="publishers" 
+        className={`py-12 w-full ${activeICP === 'publishers' ? 'block' : 'hidden'}`}
+        aria-hidden={activeICP !== 'publishers'}
+      >
+        <div className="container mx-auto px-4">
+
+          {/* Publisher Pricing Cards */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-16">
             {tiers.map((tier: TierConfig) => {
               const marketing = TIER_MARKETING[tier.id];
               const isPopular = tier.popular;
@@ -87,9 +277,12 @@ export default function PricingPage() {
                 >
                   {isPopular && (
                     <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <Badge variant="default" className="px-4 py-1 text-sm font-semibold bg-primary">
+                      <span 
+                        className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full shadow-md"
+                        style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}
+                      >
                         Most Popular
-                      </Badge>
+                      </span>
                     </div>
                   )}
                   
@@ -108,10 +301,10 @@ export default function PricingPage() {
                       <p className="text-sm text-muted-foreground">/month</p>
                     )}
                     {marketing.showPrice && tier.price.monthly === 0 && (
-                      <p className="text-sm text-muted-foreground">Forever free for basic usage</p>
+                      <p className="text-sm text-muted-foreground">Forever free</p>
                     )}
                     {!marketing.showPrice && (
-                      <p className="text-sm text-muted-foreground">White-glove everything. Success-based model.</p>
+                      <p className="text-sm text-muted-foreground">White-glove everything</p>
                     )}
                   </div>
 
@@ -129,6 +322,13 @@ export default function PricingPage() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Highlight callout */}
+                  {marketing.highlight && (
+                    <div className="mb-4 py-2 px-3 bg-muted/50 rounded text-xs text-center font-medium">
+                      {marketing.highlight}
+                    </div>
+                  )}
 
                   <div className="mb-4 pt-4 border-t border-border">
                     <p className="text-xs text-muted-foreground">
@@ -155,55 +355,91 @@ export default function PricingPage() {
               );
             })}
           </div>
-        </div>
-      </section>
 
-      {/* Publisher Value Prop */}
-      <section className="py-20 w-full bg-background">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-lg p-8">
+          {/* Key Differentiators - Quick Overview */}
+          <div className="max-w-5xl mx-auto mb-12">
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="bg-card border border-border rounded-lg p-6 text-center">
+                <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-4">
+                  <Shield className="h-6 w-6 text-primary" />
+                </div>
+                <h4 className="font-bold mb-2">Survives Copy-Paste</h4>
+                <p className="text-sm text-muted-foreground">
+                  Cryptographic watermarking embedded in text travels with your content across the web.
+                </p>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-6 text-center">
+                <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-4">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <h4 className="font-bold mb-2">Formal Notice Capability</h4>
+                <p className="text-sm text-muted-foreground">
+                  Sentence-level tracking enables legal notice to AI companies with mathematical proof.
+                </p>
+              </div>
+              <div className="bg-card border border-border rounded-lg p-6 text-center">
+                <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-4">
+                  <Clock className="h-6 w-6 text-primary" />
+                </div>
+                <h4 className="font-bold mb-2">30-Day Implementation</h4>
+                <p className="text-sm text-muted-foreground">
+                  Enterprise: $30k implementation in 30 days. WordPress plugin: install in 5 minutes.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Publisher Value Prop */}
+          <div className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-lg p-8 mb-12">
             <h3 className="text-2xl font-bold mb-4 text-center">The Publisher Opportunity</h3>
             <div className="grid md:grid-cols-2 gap-8">
               <div>
-                <p className="text-sm text-muted-foreground mb-2">Traditional Approach:</p>
+                <p className="text-sm text-muted-foreground mb-2">Without Content Provenance:</p>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm">Litigation costs</span>
-                    <span className="font-semibold text-destructive">Millions/year</span>
+                    <span className="text-sm">AI training attribution</span>
+                    <span className="font-semibold text-destructive">None</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Licensing revenue</span>
                     <span className="font-semibold">$0</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Evidence quality</span>
-                    <span className="font-semibold text-destructive">26% accurate</span>
+                    <span className="text-sm">Formal notice capability</span>
+                    <span className="font-semibold text-destructive">Impossible</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Content after copy-paste</span>
+                    <span className="font-semibold text-destructive">Untraceable</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-border">
                     <span className="font-bold">Net result</span>
-                    <span className="font-bold text-destructive">Loss</span>
+                    <span className="font-bold text-destructive">Lost opportunity</span>
                   </div>
                 </div>
               </div>
-
               <div>
                 <p className="text-sm text-muted-foreground mb-2">With Encypher:</p>
                 <div className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm">Litigation costs</span>
-                    <span className="font-semibold text-primary">Eliminated</span>
+                    <span className="text-sm">AI training attribution</span>
+                    <span className="font-semibold text-primary">C2PA verified</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Licensing revenue</span>
+                    <span className="font-semibold text-primary">65-80% to you</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm">Formal notice capability</span>
                     <span className="font-semibold text-primary">Enabled</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Evidence quality</span>
-                    <span className="font-semibold text-primary">100% accurate</span>
+                    <span className="text-sm">Content after copy-paste</span>
+                    <span className="font-semibold text-primary">Still provable</span>
                   </div>
                   <div className="flex justify-between pt-2 border-t border-border">
                     <span className="font-bold">Net result</span>
-                    <span className="font-bold text-primary">Significant gain</span>
+                    <span className="font-bold text-primary">New revenue stream</span>
                   </div>
                 </div>
               </div>
@@ -212,161 +448,436 @@ export default function PricingPage() {
               Success-based model means you keep the majority of licensing revenue. We only win when you win.
             </p>
           </div>
-        </div>
-      </section>
 
-      {/* Feature Comparison Table */}
-      <section className="py-20 w-full bg-muted/30">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-            Feature Comparison
-          </h2>
-          <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            Compare features across our publisher tiers to find the right fit for your needs.
-          </p>
+          {/* Founding Member Benefits - Enterprise */}
+          <div className="max-w-3xl mx-auto bg-muted/50 border border-border rounded-lg p-6 mb-12 text-center">
+            <Badge variant="outline" className="mb-3">Limited Time</Badge>
+            <h4 className="font-bold text-lg mb-2">Founding Coalition Members</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              First movers lock in 25% revenue share (vs 30% later) and help define how text provenance standards work.
+            </p>
+            <Button onClick={() => setShowPublisherModal(true)} variant="outline" size="sm">
+              Learn About Founding Benefits <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
 
-          <div className="max-w-5xl mx-auto overflow-x-auto">
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-4 px-4 font-semibold">Feature</th>
-                  <th className="text-center py-4 px-4 font-semibold">Starter<br/><span className="text-xs font-normal text-muted-foreground">Free</span></th>
-                  <th className="text-center py-4 px-4 font-semibold bg-primary/5 border-x border-primary/20">Professional<br/><span className="text-xs font-normal text-muted-foreground">$99/mo</span></th>
-                  <th className="text-center py-4 px-4 font-semibold">Business<br/><span className="text-xs font-normal text-muted-foreground">$499/mo</span></th>
-                  <th className="text-center py-4 px-4 font-semibold">Enterprise<br/><span className="text-xs font-normal text-muted-foreground">Custom</span></th>
-                </tr>
-              </thead>
-              <tbody className="text-sm">
-                {/* C2PA Signing */}
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">C2PA Document Signing</td>
-                  <td className="text-center py-3 px-4">10K/mo</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">Unlimited</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">Sentence-Level Tracking</td>
-                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">50K/mo</td>
-                  <td className="text-center py-3 px-4">500K/mo</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">Batch Operations</td>
-                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                </tr>
-                {/* Team & Management */}
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <td className="py-3 px-4 font-medium" colSpan={5}>Team & Management</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">API Keys</td>
-                  <td className="text-center py-3 px-4">2</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">10</td>
-                  <td className="text-center py-3 px-4">50</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">Team Members</td>
-                  <td className="text-center py-3 px-4">1</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">5</td>
-                  <td className="text-center py-3 px-4">10</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">Audit Logs</td>
-                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">SSO / SCIM</td>
-                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4 text-muted-foreground">—</td>
-                  <td className="text-center py-3 px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                </tr>
-                {/* Coalition */}
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <td className="py-3 px-4 font-medium" colSpan={5}>Coalition Revenue Share</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">Your Share</td>
-                  <td className="text-center py-3 px-4">65%</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20 font-semibold text-primary">70%</td>
-                  <td className="text-center py-3 px-4">75%</td>
-                  <td className="text-center py-3 px-4">80%</td>
-                </tr>
-                {/* Support */}
-                <tr className="border-b border-border/50 bg-muted/30">
-                  <td className="py-3 px-4 font-medium" colSpan={5}>Support</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">Support Level</td>
-                  <td className="text-center py-3 px-4">Community</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">Email (48hr)</td>
-                  <td className="text-center py-3 px-4">Priority (24hr)</td>
-                  <td className="text-center py-3 px-4">Dedicated TAM</td>
-                </tr>
-                <tr className="border-b border-border/50">
-                  <td className="py-3 px-4 font-medium">Analytics Retention</td>
-                  <td className="text-center py-3 px-4">7 days</td>
-                  <td className="text-center py-3 px-4 bg-primary/5 border-x border-primary/20">90 days</td>
-                  <td className="text-center py-3 px-4">1 year</td>
-                  <td className="text-center py-3 px-4">Unlimited</td>
-                </tr>
-              </tbody>
-            </table>
+          {/* Simplified Feature Comparison - Always Visible */}
+          <div className="max-w-5xl mx-auto mb-8">
+            <h3 className="text-2xl font-bold text-center mb-4">Quick Comparison</h3>
+            <p className="text-center text-xs text-muted-foreground mb-4 md:hidden">
+              ← Swipe to see all plans →
+            </p>
+            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+              <table className="w-full border-collapse text-sm min-w-[600px]">
+                <thead>
+                  <tr className="border-b-2 border-border">
+                    <th className="text-left py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Feature</th>
+                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Starter<br/><span className="text-xs font-normal text-muted-foreground">Free</span></th>
+                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap bg-primary/5">Pro<br/><span className="text-xs font-normal text-muted-foreground">$99/mo</span></th>
+                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Business<br/><span className="text-xs font-normal text-muted-foreground">$499/mo</span></th>
+                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Enterprise<br/><span className="text-xs font-normal text-muted-foreground">Custom</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/50">
+                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">C2PA Signing</td>
+                    <td className="text-center py-3 px-2 md:px-4">10K/mo</td>
+                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5">Unlimited</td>
+                    <td className="text-center py-3 px-2 md:px-4">Unlimited</td>
+                    <td className="text-center py-3 px-2 md:px-4">Unlimited</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">Embeddings</td>
+                    <td className="text-center py-3 px-2 md:px-4 text-muted-foreground">—</td>
+                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                    <td className="text-center py-3 px-2 md:px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                    <td className="text-center py-3 px-2 md:px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">Tracking</td>
+                    <td className="text-center py-3 px-2 md:px-4 text-muted-foreground">—</td>
+                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5">50K/mo</td>
+                    <td className="text-center py-3 px-2 md:px-4">500K/mo</td>
+                    <td className="text-center py-3 px-2 md:px-4">Unlimited</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">WordPress</td>
+                    <td className="text-center py-3 px-2 md:px-4">Basic</td>
+                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5">Pro</td>
+                    <td className="text-center py-3 px-2 md:px-4">Pro</td>
+                    <td className="text-center py-3 px-2 md:px-4">White-label</td>
+                  </tr>
+                  <tr className="border-b border-border/50 bg-muted/30">
+                    <td className="py-3 px-2 md:px-4 font-bold whitespace-nowrap">Revenue</td>
+                    <td className="text-center py-3 px-2 md:px-4 font-bold">65%</td>
+                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5 font-bold text-primary">70%</td>
+                    <td className="text-center py-3 px-2 md:px-4 font-bold">75%</td>
+                    <td className="text-center py-3 px-2 md:px-4 font-bold">80%</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Collapsible Full Feature Table */}
+          <div className="max-w-6xl mx-auto">
+            <button
+              onClick={() => setShowFullFeatureTable(!showFullFeatureTable)}
+              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showFullFeatureTable ? (
+                <>Hide full feature comparison <ChevronUp className="h-4 w-4" /></>
+              ) : (
+                <>Show all 28 features <ChevronDown className="h-4 w-4" /></>
+              )}
+            </button>
+            
+            {showFullFeatureTable && (
+              <div className="mt-4">
+                <p className="text-center text-muted-foreground mb-6 text-sm">
+                  Every feature maps directly to our Enterprise API. See{' '}
+                  <Link href="/docs/api" className="text-primary hover:underline">API documentation</Link> for details.
+                </p>
+                <FeatureComparisonTable 
+                  currentPlan={currentPlan}
+                  showUpsell={isLoggedIn}
+                  onUpgrade={handleUpgrade}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* What is Content Provenance - Beginner Explainer */}
+          <div className="max-w-3xl mx-auto mt-16 p-6 bg-muted/30 rounded-lg">
+            <h4 className="font-bold text-lg mb-3">New to content provenance?</h4>
+            <p className="text-sm text-muted-foreground mb-4">
+              <strong>Content provenance</strong> is cryptographic proof that you created your content. 
+              When AI companies scrape the web for training data, they currently can't tell who owns what. 
+              Our technology embeds invisible, tamper-proof signatures directly into your text that:
+            </p>
+            <ul className="text-sm text-muted-foreground space-y-2 mb-4">
+              <li className="flex items-start gap-2">
+                <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span><strong>Survive copy-paste</strong> — Your proof travels with your content</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span><strong>Enable licensing</strong> — AI companies can identify and pay you</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                <span><strong>Are invisible</strong> — Readers see nothing different</span>
+              </li>
+            </ul>
+            <p className="text-sm text-muted-foreground">
+              Built on <strong>C2PA</strong>, the same standard used by NYT, BBC, Adobe, and Google. 
+              We co-authored the text specification.
+            </p>
           </div>
         </div>
       </section>
 
-      {/* ICP Selection - Other Audiences */}
-      <section className="py-20 w-full bg-background">
+      {/* ==================== AI LABS SECTION ==================== */}
+      <section 
+        id="ai-labs" 
+        className={`py-12 w-full ${activeICP === 'ai-labs' ? 'block' : 'hidden'}`}
+        aria-hidden={activeICP !== 'ai-labs'}
+      >
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
-            Not a Publisher?
-          </h2>
-          <p className="text-lg text-muted-foreground text-center mb-12 max-w-2xl mx-auto">
-            We also work with AI labs and enterprises. Choose your path below.
-          </p>
+          {/* The Problem - aligned with AI Demo Section 1 */}
+          <div className="max-w-4xl mx-auto mb-12 text-center">
+            <p className="text-lg text-muted-foreground mb-2">The Problem</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              You spend <span className="text-primary">$2.7B per model</span> with zero performance analytics.
+            </h2>
+            <p className="text-muted-foreground">
+              No visibility into which training data drives real-world performance. No way to optimize R&D spend.
+            </p>
+          </div>
 
-          <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
-            {/* AI Labs Card */}
-            <div className="bg-card rounded-lg border-2 border-border p-8 hover:border-primary transition-colors">
-              <Zap className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-2xl font-bold mb-3">AI Labs</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                Publisher ecosystem access + performance intelligence in one infrastructure layer.
+          <div className="max-w-5xl mx-auto">
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              {/* Performance Intelligence */}
+              <div className="bg-card rounded-lg border border-border p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <BarChart3 className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold">Performance Intelligence</h3>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Sentence-level analytics on all outputs</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Track which parameters drive viral performance</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Real-world feedback loop for R&D optimization</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Publisher ecosystem performance data</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Regulatory Compliance */}
+              <div className="bg-card rounded-lg border border-border p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-primary/10 rounded-lg">
+                    <Shield className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="text-xl font-bold">Regulatory Compliance</h3>
+                </div>
+                <ul className="space-y-3">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">EU AI Act compliant infrastructure</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">China watermarking mandate ready</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">C2PA standard (Adobe, Microsoft, Google)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">Publisher coalition licensing access</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* CTA Card */}
+            <div className="bg-primary/5 border-2 border-primary/20 rounded-lg p-8 text-center">
+              <h3 className="text-2xl font-bold mb-2">Custom Enterprise Licensing</h3>
+              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+                Annual licensing tailored to your scale. One integration covers the entire publisher ecosystem.
               </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button 
+                  onClick={() => setShowAIModal(true)}
+                  size="lg" 
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Schedule Technical Evaluation <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/ai-demo">
+                    See Interactive Demo <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Standards Footer */}
+          <div className="max-w-3xl mx-auto mt-12">
+            <p className="text-sm text-muted-foreground mb-4 text-center">Built on global standards</p>
+            <div className="flex flex-wrap justify-center gap-8">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">C2PA</span>
+                <span className="text-sm text-muted-foreground">Standard</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">EU AI Act</span>
+                <span className="text-sm text-muted-foreground">Compliant</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-primary">China</span>
+                <span className="text-sm text-muted-foreground">Watermarking Ready</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ==================== ENTERPRISES SECTION ==================== */}
+      <section 
+        id="enterprises" 
+        className={`py-12 w-full ${activeICP === 'enterprises' ? 'block' : 'hidden'}`}
+        aria-hidden={activeICP !== 'enterprises'}
+      >
+        <div className="container mx-auto px-4">
+          {/* Regulatory Context */}
+          <div className="max-w-4xl mx-auto mb-12 text-center">
+            <p className="text-lg text-muted-foreground mb-2">The Regulatory Reality</p>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">
+              EU AI Act & China watermarking mandates are here.
+            </h2>
+            <p className="text-muted-foreground">
+              Turn compliance requirements into competitive advantage with C2PA infrastructure.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
+            {/* Pilot */}
+            <div className="bg-card rounded-lg border border-border p-6">
+              <h3 className="text-xl font-bold mb-2">Pilot</h3>
+              <p className="text-sm text-muted-foreground mb-4">Validate value with limited deployment</p>
+              
+              <div className="mb-6">
+                <div className="text-2xl font-bold mb-1">Contact Us</div>
+                <p className="text-xs text-muted-foreground">30-60 day evaluation period</p>
+              </div>
+
+              <ul className="space-y-2 text-sm mb-6">
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Basic C2PA implementation</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Compliance reporting</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Standard support</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Success metrics defined</span>
+                </li>
+              </ul>
+
               <Button 
-                onClick={() => setShowAIModal(true)}
+                onClick={() => setShowEnterpriseModal(true)}
+                variant="outline" 
                 className="w-full"
-                variant="outline"
               >
-                Schedule Technical Evaluation <ArrowRight className="ml-2 h-4 w-4" />
+                Start Pilot
               </Button>
             </div>
 
-            {/* Enterprises Card */}
-            <div className="bg-card rounded-lg border-2 border-border p-8 hover:border-primary transition-colors">
-              <Building2 className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-2xl font-bold mb-3">Enterprises</h3>
-              <p className="text-sm text-muted-foreground mb-6">
-                EU AI Act compliance baseline with performance intelligence upside for scaled deployments.
-              </p>
+            {/* Production */}
+            <div className="bg-card rounded-lg border-2 border-primary/50 p-6">
+              <Badge className="mb-4 bg-primary">Recommended</Badge>
+              <h3 className="text-xl font-bold mb-2">Production</h3>
+              <p className="text-sm text-muted-foreground mb-4">Full-scale deployment with enhanced features</p>
+              
+              <div className="mb-6">
+                <div className="text-2xl font-bold mb-1">Custom Pricing</div>
+                <p className="text-xs text-muted-foreground">Based on volume and requirements</p>
+              </div>
+
+              <ul className="space-y-2 text-sm mb-6">
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Everything in Pilot</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Sentence-level tracking</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Intelligence dashboards</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Priority support (24hr SLA)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Quarterly business reviews</span>
+                </li>
+              </ul>
+
               <Button 
                 onClick={() => setShowEnterpriseModal(true)}
-                className="w-full"
-                variant="outline"
+                className="w-full bg-primary hover:bg-primary/90"
               >
-                Contact Enterprise Sales <ArrowRight className="ml-2 h-4 w-4" />
+                Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+            </div>
+
+            {/* Strategic */}
+            <div className="bg-card rounded-lg border border-border p-6">
+              <h3 className="text-xl font-bold mb-2">Strategic</h3>
+              <p className="text-sm text-muted-foreground mb-4">Partnership-level engagement</p>
+              
+              <div className="mb-6">
+                <div className="text-2xl font-bold mb-1">Custom</div>
+                <p className="text-xs text-muted-foreground">Multi-year strategic partnership</p>
+              </div>
+
+              <ul className="space-y-2 text-sm mb-6">
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Everything in Production</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Dedicated account team</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Custom feature development</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>On-premise deployment option</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <span>Advisory board participation</span>
+                </li>
+              </ul>
+
+              <Button 
+                onClick={() => setShowEnterpriseModal(true)}
+                variant="outline" 
+                className="w-full"
+              >
+                Discuss Partnership
+              </Button>
+            </div>
+          </div>
+
+          {/* Enterprise Value Prop */}
+          <div className="max-w-4xl mx-auto bg-muted/30 rounded-lg p-8">
+            <h3 className="text-2xl font-bold mb-6 text-center">EU AI Act Compliance + Competitive Advantage</h3>
+            <div className="grid md:grid-cols-2 gap-8">
+              <div>
+                <h4 className="font-bold mb-3">Compliance Baseline</h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>C2PA-compliant content provenance</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Audit trails for AI-generated content</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Regulatory reporting dashboards</span>
+                  </li>
+                </ul>
+              </div>
+              <div>
+                <h4 className="font-bold mb-3">Competitive Advantage</h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Performance intelligence on AI outputs</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Content attribution and licensing</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5" />
+                    <span>Publisher ecosystem compatibility</span>
+                  </li>
+                </ul>
+              </div>
             </div>
           </div>
         </div>
@@ -403,6 +914,9 @@ export default function PricingPage() {
           />
         )}
       </AnimatePresence>
+
+      {/* C2PA Member Company Logo Scroller */}
+      <StandardsCompliance />
     </div>
   );
 }

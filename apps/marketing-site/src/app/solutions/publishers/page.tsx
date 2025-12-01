@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { ArrowRight, DollarSign, Scale, TrendingUp } from 'lucide-react';
+import { ArrowRight, DollarSign, Scale, TrendingUp, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import {
   Accordion,
@@ -16,7 +16,6 @@ import AISummary from '@/components/seo/AISummary';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import Script from 'next/script';
 import { faqSchema } from '@/lib/seo';
-import dynamic from 'next/dynamic';
 
 // using real iframe embed (/publisher-demo/embed)
 export default function PublishersPage() {
@@ -84,6 +83,86 @@ export default function PublishersPage() {
               style={{ height: '80vh', border: '0', display: 'block' }}
               sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups"
             />
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section className="py-16 w-full bg-muted/30 border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4 text-center">
+              Transparent, Success-Based Pricing
+            </h2>
+            <p className="text-lg text-muted-foreground mb-8 text-center">
+              We only win when you win. Revenue share model aligned with your success.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {/* Starter */}
+              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+                <h3 className="text-xl font-semibold mb-2">Starter</h3>
+                <p className="text-3xl font-bold mb-1">Free</p>
+                <p className="text-sm text-muted-foreground mb-4">65% you / 35% Encypher</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>Unlimited C2PA signing</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>2 API keys</span>
+                  </li>
+                </ul>
+              </div>
+              {/* Professional */}
+              <div className="bg-card p-6 rounded-lg shadow-md border-2 border-primary relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full">Most Popular</div>
+                <h3 className="text-xl font-semibold mb-2">Professional</h3>
+                <p className="text-3xl font-bold mb-1">$99<span className="text-lg font-normal">/mo</span></p>
+                <p className="text-sm text-muted-foreground mb-4">70% you / 30% Encypher</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>Sentence-level tracking</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>10 API keys</span>
+                  </li>
+                </ul>
+              </div>
+              {/* Enterprise */}
+              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+                <h3 className="text-xl font-semibold mb-2">Enterprise</h3>
+                <p className="text-3xl font-bold mb-1">Custom</p>
+                <p className="text-sm text-muted-foreground mb-4">80% you / 20% Encypher</p>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>$30k implementation</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>Founding members lock 25%</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Link href="/pricing">
+                  View Full Pricing <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button 
+                onClick={() => setShowContactModal(true)}
+                size="lg" 
+                variant="outline"
+                className="font-semibold py-3 px-6 rounded-lg"
+              >
+                Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </section>

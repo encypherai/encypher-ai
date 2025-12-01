@@ -58,13 +58,22 @@ export function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="bg-background !bg-opacity-100 !backdrop-blur-none !bg-neutral-900 !shadow-lg">
               <DropdownMenuItem asChild>
-                <Link href="/solutions/ai-companies">For AI Companies</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
                 <Link href="/solutions/publishers">For Publishers</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link href="/solutions/ai-companies">For AI Companies</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/solutions/enterprises">For Enterprises</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="border-t border-border/40 mt-1 pt-1" disabled>
+                <span className="text-xs text-muted-foreground">Demos</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/publisher-demo">Publisher Demo</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/ai-demo">AI Labs Demo</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -192,6 +201,22 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
             >
               For Enterprises
+            </Link>
+            {/* Mobile Demos Links */}
+            <span className="text-xs text-muted-foreground pl-4 pt-2">Demos</span>
+            <Link 
+              href="/publisher-demo" 
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Publisher Demo
+            </Link>
+            <Link 
+              href="/ai-demo" 
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              AI Labs Demo
             </Link>
             {/* Mobile Tools Links */}
             <span className="text-sm font-medium">Tools</span>

@@ -35,10 +35,10 @@ export default function AiCompaniesPage() {
       <section className="relative w-full py-20 md:py-32 bg-muted/30 border-b border-border">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-            See Which Parameters Drive Viral Content
+            Performance Intelligence + Regulatory Compliance
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
-            Track every output to optimize your models. One integration covers the entire publisher ecosystem. Performance intelligence + compliance infrastructure.
+            Real-world engagement data on how your models perform across the internet. One integration for EU AI Act, China watermarking mandate, and C2PA compliance. We're building standards WITH you through C2PA—OpenAI is a member.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
@@ -88,6 +88,51 @@ export default function AiCompaniesPage() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="py-16 w-full bg-muted/30 border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="max-w-3xl mx-auto text-center">
+            <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4">
+              Custom Enterprise Licensing
+            </h2>
+            <p className="text-lg text-muted-foreground mb-6">
+              Annual licensing tailored to your scale. One integration covers the entire publisher ecosystem.
+            </p>
+            <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border mb-6">
+              <ul className="space-y-3 text-left max-w-md mx-auto">
+                <li className="flex items-center gap-3">
+                  <BarChart className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Real-world performance analytics on all outputs</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Shield className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>EU AI Act + China mandate compliant</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <Zap className="h-5 w-5 text-primary flex-shrink-0" />
+                  <span>Publisher coalition licensing access</span>
+                </li>
+              </ul>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button 
+                onClick={() => setShowContactModal(true)}
+                size="lg" 
+                className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" 
+                style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}
+              >
+                Schedule Technical Evaluation <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg">
+                <Link href="/pricing">
+                  View Full Pricing <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Value Props Section */}
       <section className="py-20 w-full bg-background">
         <div className="container mx-auto px-4">
@@ -101,16 +146,16 @@ export default function AiCompaniesPage() {
             </div>
             <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
               <Zap className="h-12 w-12 text-primary mb-4 mx-auto" />
-              <h3 className="text-2xl font-semibold mb-3">Protagonist Positioning</h3>
+              <h3 className="text-2xl font-semibold mb-3">Regulatory Compliance</h3>
               <p className="text-muted-foreground">
-                Shift from a defensive, reactive posture to a proactive, offensive strategy by taking control of industry standards.
+                One integration covers EU AI Act, China watermarking mandate, and C2PA standard. Stay compliant across all jurisdictions.
               </p>
             </div>
             <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
               <Shield className="h-12 w-12 text-primary mb-4 mx-auto" />
-              <h3 className="text-2xl font-semibold mb-3">Technical Safe Harbor</h3>
+              <h3 className="text-2xl font-semibold mb-3">Standards Collaboration</h3>
               <p className="text-muted-foreground">
-                Mitigate legal risks with court-admissible, cryptographic proof of content origin and usage. Comply with industry standards and regulations.
+                Building infrastructure WITH the AI industry through C2PA. OpenAI, Google, Adobe, and Microsoft are members. This is collaborative, not adversarial.
               </p>
             </div>
           </div>

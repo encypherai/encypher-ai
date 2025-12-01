@@ -30,12 +30,12 @@ export default function HomePage() {
         <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-16 md:py-20 lg:py-28 relative z-10">
           <div className="max-w-4xl mx-auto text-center space-y-4 sm:space-y-6">
             <h1 className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 text-shadow-md leading-tight px-2" style={{ minHeight: '3rem' }}>
-              Turn Content Intelligence Into Market Advantage
+              Cryptographic Proof for the AI Economy
             </h1>
             <p className="text-sm xs:text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8 text-shadow-md max-w-3xl mx-auto leading-relaxed px-2" style={{ minHeight: '4rem' }}>
-              AI Labs: See how your models perform in the wild.<br />
-              Publishers: Transform content theft into revenue.<br />
-              Cryptographic proof, not guesswork.
+              Publishers: Transform unmarked content into provably owned assets.<br />
+              AI Labs: Performance Intelligence on your models across the internet.<br />
+              From the authors of the C2PA text standard.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center items-center px-2">
@@ -106,18 +106,18 @@ export default function HomePage() {
                 <FileText className="h-8 w-8 text-primary" />
                 <h3 className="text-2xl font-semibold">For Publishers</h3>
               </div>
-              <h4 className="text-xl font-bold mb-3">From Litigation Costs to Licensing Revenue</h4>
+              <h4 className="text-xl font-bold mb-3">Transform Unmarked Content Into Provably Owned Assets</h4>
               <p className="text-muted-foreground mb-4">
-                Court-admissible evidence with 100% accuracy. Track which sentences were used, where, and when. Transform $14M in legal costs into $20M+ in licensing revenue.
+                Cryptographic watermarking that survives copy-paste and scraping. Serve formal notice to AI companies with mathematical proof of ownership.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Sentence-level tracking proves exact usage</span>
+                  <span className="text-sm">Cryptographic proof survives copy-paste and scraping</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Mathematical certainty vs. 26% accuracy detection</span>
+                  <span className="text-sm">Formal notice capability with sentence-level tracking</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -137,22 +137,22 @@ export default function HomePage() {
                 <Zap className="h-8 w-8 text-primary" />
                 <h3 className="text-2xl font-semibold">For AI Labs</h3>
               </div>
-              <h4 className="text-xl font-bold mb-3">See Which Parameters Drive Viral Content</h4>
+              <h4 className="text-xl font-bold mb-3">Performance Intelligence + Regulatory Compliance</h4>
               <p className="text-muted-foreground mb-4">
-                Track every output. Optimize every parameter. One integration covers the entire publisher ecosystem. Performance intelligence + compliance infrastructure.
+                Real-world engagement data on how your models perform across the internet. One integration for EU AI Act, China watermarking mandate, and C2PA compliance.
               </p>
               <ul className="space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Real-world performance data on every output</span>
+                  <span className="text-sm">Track which outputs go viral and why</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">Publisher compatibility through enhanced C2PA</span>
+                  <span className="text-sm">EU AI Act + China mandate compliant infrastructure</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
-                  <span className="text-sm">End $2.7B in blind R&D spending</span>
+                  <span className="text-sm">Building standards WITH OpenAI, Google, Adobe through C2PA</span>
                 </li>
               </ul>
               <Button asChild className="w-full mt-6 shadow-lg btn-blue-hover" size="lg" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>

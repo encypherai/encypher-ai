@@ -68,7 +68,17 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `POST /api/v1/public/verify/batch` | Batch verify embeddings (public) | Public |
 | `POST /api/v1/public/extract-and-verify` | Extract and verify C2PA manifest with full provenance chain | Public |
 
-### Streaming Endpoints (NEW)
+### Document Revocation Endpoints (NEW)
+
+| Endpoint | Description | Tier |
+|----------|-------------|------|
+| `POST /api/v1/status/documents/{id}/revoke` | Revoke a document's authenticity | Enterprise |
+| `POST /api/v1/status/documents/{id}/reinstate` | Reinstate a revoked document | Enterprise |
+| `GET /api/v1/status/documents/{id}` | Get document revocation status | Enterprise |
+| `GET /api/v1/status/list/{org}/{index}` | Get status list credential (public, CDN-cacheable) | Public |
+| `GET /api/v1/status/stats` | Get revocation statistics | Enterprise |
+
+### Streaming Endpoints
 
 | Endpoint | Description | Tier |
 |----------|-------------|------|
@@ -101,6 +111,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ **Custom C2PA Assertions**: Define and validate custom assertion types
 - ✅ **Assertion Templates**: Pre-built templates for news, legal, academic, publisher use cases
 - ✅ **Schema Registry**: Register and manage custom assertion schemas with JSON Schema validation
+- ✅ **Document Revocation** ⭐ **NEW**: Per-document revocation via W3C StatusList2021 bitstrings
 - ✅ Public embedding extraction & verification API (no auth required)
 - ✅ Partner integration tools (extraction libraries, web scraping)
 - ✅ Source attribution
@@ -560,6 +571,96 @@ curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
 
 ---
 
+### Document Revocation (Enterprise) ⭐ NEW
+
+Revoke individual documents without affecting your entire signing certificate. Uses W3C StatusList2021 bitstrings for internet-scale revocation (10+ billion documents).
+
+**Revoke a Document:**
+
+```bash
+curl -X POST https://api.encypherai.com/api/v1/status/documents/doc_abc123/revoke \
+  -H "Authorization: Bearer encypher_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "factual_error",
+    "reason_detail": "Article contained incorrect statistics"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "document_id": "doc_abc123",
+  "action": "revoked",
+  "timestamp": "2025-12-01T19:00:00Z",
+  "message": "Document doc_abc123 has been revoked. Verification will fail within 5 minutes."
+}
+```
+
+**Revocation Reasons:**
+
+| Reason | Description |
+|--------|-------------|
+| `factual_error` | Content contains factual errors |
+| `legal_takedown` | Legal request (DMCA, court order) |
+| `copyright_claim` | Copyright infringement claim |
+| `privacy_request` | Privacy/GDPR request |
+| `publisher_request` | Publisher-initiated takedown |
+| `security_concern` | Security vulnerability in content |
+| `content_policy` | Violates content policy |
+| `other` | Other reason (specify in reason_detail) |
+
+**Verification of Revoked Documents:**
+
+When a revoked document is verified, the response includes:
+
+```json
+{
+  "success": true,
+  "data": {
+    "valid": false,
+    "tampered": false,
+    "reason_code": "DOC_REVOKED",
+    "signer_id": "org_publisher",
+    "signer_name": "Acme News",
+    "details": {
+      "document_revoked": true,
+      "revocation_reason": "Document has been revoked by publisher"
+    }
+  }
+}
+```
+
+**How It Works:**
+
+1. **Signing**: Each document is assigned a position in a bitstring status list
+2. **Revocation**: Setting the bit marks the document as revoked
+3. **Verification**: Verifiers fetch the cached status list and check the bit
+4. **Propagation**: Changes propagate within 5 minutes (CDN cache TTL)
+
+**Scale:**
+
+| Metric | Capacity |
+|--------|----------|
+| Documents per list | 131,072 |
+| Storage per 1B docs | ~120 MB |
+| Lookup time | O(1) |
+| Revocation latency | <5 minutes |
+
+**Public Status List Endpoint:**
+
+Status lists are served publicly for third-party verification:
+
+```
+GET https://status.encypherai.com/v1/{org_id}/list/{index}
+```
+
+Returns a W3C StatusList2021Credential (JSON-LD) with 5-minute cache headers.
+
+---
+
 ## 🏗️ Architecture
 
 ### System Architecture
@@ -602,13 +703,21 @@ curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
 │ PostgreSQL Database                     │
 │ - Document metadata                     │
 │ - Merkle tree nodes                     │
+│ - Status list entries                   │
 │ - Usage statistics                      │
+└─────────────────────────────────────────┘
+                ↓
+┌─────────────────────────────────────────┐
+│ Status List CDN (NEW)                   │
+│ - W3C StatusList2021 bitstrings         │
+│ - 5-minute cache TTL                    │
+│ - O(1) revocation lookups               │
 └─────────────────────────────────────────┘
 ```
 
 ### C2PA Compliance
 
-Our implementation follows **C2PA 2.2 Text Manifest Specification**:
+Our implementation follows **C2PA 2.3 Text Manifest Specification**:
 
 - **Wrapper Format**: `C2PATXT\0` header with Unicode variation selectors
 - **Prefix**: Single zero-width no-break space (U+FEFF)

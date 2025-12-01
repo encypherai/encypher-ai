@@ -22,9 +22,9 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
+    "@auth/core": "^0.34.2",
     "@encypher/design-system": "file:./design-system",
     "@encypher/pricing-config": "file:../../packages/pricing-config",
-    "@auth/core": "^0.34.2",
     "@headlessui/react": "^2.2.2",
     "@hookform/resolvers": "^4.1.3",
     "@next/third-parties": "^15.3.2",
@@ -73,6 +73,7 @@
     "tw-animate-css": "^1.2.4",
     "tweetnacl": "^1.0.3",
     "tweetnacl-util": "^0.15.1",
+    "vanilla-cookieconsent": "^3.1.0",
     "zod": "^3.24.2",
     "zxcvbn": "^4.4.2"
   },

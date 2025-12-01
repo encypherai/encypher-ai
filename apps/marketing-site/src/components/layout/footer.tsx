@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { showCookiePreferences } from '@/components/CookieConsent';
 
 export function Footer() {
   return (
@@ -102,6 +103,14 @@ export function Footer() {
                 <a href="https://github.com/encypherai/encypher-ai/tree/main?tab=License-1-ov-file#readme" target="_blank" rel="noopener noreferrer" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
                   Licence (AGPL-3.0)
                 </a>
+              </li>
+              <li>
+                <button 
+                  onClick={showCookiePreferences}
+                  className="text-sm text-muted-foreground hover:text-foreground transition-colors text-left"
+                >
+                  Cookie Settings
+                </button>
               </li>
             </ul>
           </div>
