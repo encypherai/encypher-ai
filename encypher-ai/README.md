@@ -34,18 +34,18 @@ The encoding is done using Unicode variation selectors, which are designed to sp
 
 ## Relationship with C2PA
 
-Encypher's manifest format is inspired by the [Coalition for Content Provenance and Authenticity (C2PA)](https://c2pa.org/) standard, adapted specifically for plain-text environments. While C2PA focuses on embedding provenance information in rich media file formats, Encypher extends these concepts to text-only content where traditional file embedding methods aren't applicable.
+Encypher implements the [Coalition for Content Provenance and Authenticity (C2PA)](https://c2pa.org/) standard for plain-text environments using the **C2PA Text Embedding Standard**. The core library uses the [`c2pa-text`](https://github.com/encypherai/c2pa-text) reference implementation for text manifest wrappers.
 
-Key alignments include:
-- **Structured provenance manifests** with claim generators and actions
-- **Cryptographic integrity** through digital signatures
-- **Content hash verification** for tamper detection
-- **CBOR Manifests**: Support for embedding full C2PA-compliant manifests using CBOR for a compact, standards-aligned format
-- **Hard binding approach**: Direct embedding of manifests into the content itself
-- **Shared mission** of improving content transparency and trust
-- **Spec version**: Currently aligned with the C2PA 2.2 specification; upcoming v3.0 will target C2PA 2.3 alignment
+Key features:
+- **C2PA 2.2 compliant manifests** with proper structure (`@context`, `instance_id`, `claim_generator`)
+- **Hard binding** via `c2pa.hash.data.v1` assertions with NFC normalization
+- **Soft binding** via `c2pa.soft_binding.v1` for manifest recovery
+- **C2PATextManifestWrapper** encoding using Unicode variation selectors (U+FE00-U+FE0F, U+E0100-U+E01EF)
+- **COSE_Sign1 signatures** for cryptographic integrity
+- **Format-agnostic embedding** that works across JSON, XML, databases, and message brokers
+- **Spec version**: Aligned with C2PA 2.2 specification and Manifests_Text.adoc
 
-Our implementation uses Unicode variation selectors (U+FE00 to U+FE0F) to invisibly embed C2PA manifests directly into text content, enabling provenance tracking and tamper detection without altering the visible appearance of the text.
+Our implementation uses the official `c2pa-text` library to encode C2PA manifests into invisible Unicode variation selectors, enabling provenance tracking and tamper detection without altering the visible appearance of the text.
 
 Learn more about [EncypherAI's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
 
