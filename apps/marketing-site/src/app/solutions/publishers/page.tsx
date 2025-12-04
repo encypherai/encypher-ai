@@ -143,7 +143,7 @@ export default function PublishersPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Founding members lock 25%</span>
+                    <span>Founding members lock 80/20</span>
                   </li>
                 </ul>
               </div>

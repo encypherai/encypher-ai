@@ -1,7 +1,7 @@
 """
-EncypherAI Email Module
+Encypher Email Module
 
-Shared email functionality for all EncypherAI services.
+Shared email functionality for all Encypher services.
 Provides SMTP sending, template rendering, and common email types.
 """
 

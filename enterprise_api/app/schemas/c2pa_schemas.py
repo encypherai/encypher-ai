@@ -1,9 +1,9 @@
 """
 Pydantic schemas for C2PA custom assertions API.
 """
-from typing import Dict, Any, List, Optional
-from pydantic import BaseModel, Field
+from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel, Field
 
 # Schema Management Schemas
 

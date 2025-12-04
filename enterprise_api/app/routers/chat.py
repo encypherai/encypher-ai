@@ -3,10 +3,11 @@ Chat Application Router - OpenAI-Compatible Streaming.
 
 Provides OpenAI-compatible streaming endpoints for chat applications.
 """
-import logging
-import json
 import asyncio
-from typing import List, Optional, Dict, Any, AsyncGenerator
+import json
+import logging
+from typing import Any, AsyncGenerator, Dict, List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel

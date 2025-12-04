@@ -30,8 +30,8 @@ const ICP_VALUE_PROPS: Record<ICP, { headline: string; subheadline: string; icon
     icon: Newspaper,
   },
   'ai-labs': {
-    headline: 'Google Analytics for AI',
-    subheadline: 'Performance intelligence + regulatory compliance. Building standards WITH you through C2PA—OpenAI is a member.',
+    headline: '"Google Analytics" for AI',
+    subheadline: 'Performance intelligence + regulatory compliance. Building standards WITH you through C2PA. Meta, Google, and OpenAI are already members.',
     icon: BarChart3,
   },
   enterprises: {
@@ -46,7 +46,7 @@ const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta
   starter: {
     description: 'Get paid when AI uses your content',
     bestFor: 'Independent bloggers, small sites, WordPress users',
-    cta: { text: 'Get Started Free', variant: 'outline' },
+    cta: { text: 'Get Started Free', variant: 'default' },
     showPrice: true,
     highlight: 'WordPress plugin installs in 5 minutes',
   },
@@ -60,16 +60,16 @@ const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta
   business: {
     description: 'For major digital publishers needing enterprise features',
     bestFor: 'Major digital publishers, news networks',
-    cta: { text: 'Start Free Trial', variant: 'outline' },
+    cta: { text: 'Start Free Trial', variant: 'default' },
     showPrice: true,
     highlight: 'Plagiarism detection + source attribution',
   },
   enterprise: {
     description: '$30k implementation in 30 days',
     bestFor: 'NYT, Guardian, News Corp, major media conglomerates',
-    cta: { text: 'Contact Sales', variant: 'outline' },
+    cta: { text: 'Contact Sales', variant: 'default' },
     showPrice: false,
-    highlight: 'Founding members lock 25% rate',
+    highlight: 'Founding members lock 80% you / 20% Encypher',
   },
 };
 
@@ -189,17 +189,6 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* C2PA Co-Chair Authority Badge - Single source of standards authority */}
-          <div className="flex justify-center mb-4 px-4">
-            <div className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
-              <Award className="h-4 w-4 text-primary flex-shrink-0" />
-              <span className="text-xs md:text-sm font-medium text-center">
-                <span className="hidden md:inline">C2PA Text Provenance Co-Chair — Building standards with Google, BBC, OpenAI, Adobe & Microsoft</span>
-                <span className="md:hidden">C2PA Co-Chair with Google, BBC, OpenAI, Adobe</span>
-              </span>
-            </div>
-          </div>
-
           {/* Dynamic Value Prop based on active ICP */}
           <div className="text-center">
             {(() => {
@@ -223,8 +212,19 @@ export default function PricingPage() {
             })()}
           </div>
 
+          {/* C2PA Co-Chair Authority Badge - Single source of standards authority */}
+          <div className="flex justify-center mt-8 px-4">
+            <div className="inline-flex items-center gap-2 px-3 md:px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
+              <Award className="h-4 w-4 text-primary flex-shrink-0" />
+              <span className="text-xs md:text-sm font-medium text-center">
+                <span className="hidden md:inline">C2PA Text Provenance Co-Chair — Building standards with Google, BBC, OpenAI, Adobe & Microsoft</span>
+                <span className="md:hidden">C2PA Co-Chair with Google, BBC, OpenAI, Adobe</span>
+              </span>
+            </div>
+          </div>
+
           {/* C2PA & CAI Logos - Standards Authority */}
-          <div className="mt-8 flex justify-center items-center gap-6 md:gap-10">
+          <div className="mt-4 flex justify-center items-center gap-6 md:gap-10">
             <div className="relative h-8 w-24 md:h-10 md:w-32">
               <Image
                 src="/c2pa-hero.svg"
@@ -269,7 +269,7 @@ export default function PricingPage() {
               return (
                 <div 
                   key={tier.id}
-                  className={`bg-card rounded-lg p-6 relative ${
+                  className={`bg-card rounded-lg p-6 relative flex flex-col ${
                     isPopular 
                       ? 'border-2 border-primary/50 shadow-lg' 
                       : 'border border-border'
@@ -286,15 +286,17 @@ export default function PricingPage() {
                     </div>
                   )}
                   
-                  <div className="mb-4">
+                  {/* Tier Name & Description - Fixed height */}
+                  <div className="h-[72px] mb-4">
                     <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground line-clamp-2">
                       {marketing.description}
                     </p>
                   </div>
 
-                  <div className="mb-4">
-                    <div className="text-3xl font-bold mb-1">
+                  {/* Price Section - Fixed height with centered content */}
+                  <div className="h-[72px] mb-4 flex flex-col justify-center items-center text-center">
+                    <div className="text-3xl font-bold">
                       {marketing.showPrice ? formatPrice(tier) : 'Custom'}
                     </div>
                     {marketing.showPrice && tier.price.monthly > 0 && (
@@ -304,17 +306,18 @@ export default function PricingPage() {
                       <p className="text-sm text-muted-foreground">Forever free</p>
                     )}
                     {!marketing.showPrice && (
-                      <p className="text-sm text-muted-foreground">White-glove everything</p>
+                      <p className="text-sm text-muted-foreground">White-glove implementation</p>
                     )}
                   </div>
 
-                  {/* Coalition Rev Share Badge */}
-                  <div className="bg-primary/10 rounded-lg p-3 mb-4 text-center">
+                  {/* Coalition Rev Share Badge - Fixed height */}
+                  <div className="h-[60px] bg-primary/10 rounded-lg p-3 mb-4 flex flex-col justify-center items-center text-center">
                     <p className="text-xs text-muted-foreground">Coalition Revenue</p>
                     <p className="text-sm font-semibold text-primary">{formatRevShare(tier)}</p>
                   </div>
 
-                  <ul className="space-y-2 mb-6">
+                  {/* Features List - Fixed height */}
+                  <ul className="h-[180px] space-y-2 mb-4">
                     {tier.features.slice(0, 6).map((feature) => (
                       <li key={feature} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
@@ -323,34 +326,40 @@ export default function PricingPage() {
                     ))}
                   </ul>
 
-                  {/* Highlight callout */}
-                  {marketing.highlight && (
-                    <div className="mb-4 py-2 px-3 bg-muted/50 rounded text-xs text-center font-medium">
-                      {marketing.highlight}
-                    </div>
-                  )}
+                  {/* Highlight callout - Fixed height */}
+                  <div className="h-[48px] mb-4 flex items-center justify-center">
+                    {marketing.highlight && (
+                      <div className="py-2 px-3 bg-muted/50 rounded text-xs text-center font-medium w-full">
+                        {marketing.highlight}
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="mb-4 pt-4 border-t border-border">
-                    <p className="text-xs text-muted-foreground">
+                  {/* Best for section - Fixed height */}
+                  <div className="h-[56px] mb-4 pt-4 border-t border-border">
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                       <strong>Best for:</strong> {marketing.bestFor}
                     </p>
                   </div>
 
-                  {tier.enterprise ? (
-                    <Button 
-                      onClick={() => setShowPublisherModal(true)}
-                      className="w-full" 
-                      variant={marketing.cta.variant}
-                    >
-                      {marketing.cta.text} <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  ) : (
-                    <Button asChild className="w-full" variant={marketing.cta.variant}>
-                      <Link href={tier.price.monthly === 0 ? `${DASHBOARD_URL}/signup` : `${DASHBOARD_URL}/signup?plan=${tier.id}`}>
+                  {/* CTA Button - Auto pushed to bottom */}
+                  <div className="mt-auto">
+                    {tier.enterprise ? (
+                      <Button 
+                        onClick={() => setShowPublisherModal(true)}
+                        className="w-full" 
+                        variant={marketing.cta.variant}
+                      >
                         {marketing.cta.text} <ArrowRight className="ml-2 h-4 w-4" />
-                      </Link>
-                    </Button>
-                  )}
+                      </Button>
+                    ) : (
+                      <Button asChild className="w-full" variant={marketing.cta.variant}>
+                        <Link href={tier.price.monthly === 0 ? `${DASHBOARD_URL}/signup` : `${DASHBOARD_URL}/signup?plan=${tier.id}`}>
+                          {marketing.cta.text} <ArrowRight className="ml-2 h-4 w-4" />
+                        </Link>
+                      </Button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -454,21 +463,17 @@ export default function PricingPage() {
             <Badge variant="outline" className="mb-3">Limited Time</Badge>
             <h4 className="font-bold text-lg mb-2">Founding Coalition Members</h4>
             <p className="text-sm text-muted-foreground mb-4">
-              First movers lock in 25% revenue share (vs 30% later) and help define how text provenance standards work.
+              Founding members lock in an 80% (publisher) / 20% (Encypher) revenue share and help define how text provenance standards work.
             </p>
             <Button onClick={() => setShowPublisherModal(true)} variant="outline" size="sm">
               Learn About Founding Benefits <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
 
-          {/* Simplified Feature Comparison - Always Visible */}
-          <div className="max-w-5xl mx-auto mb-8">
-            <h3 className="text-2xl font-bold text-center mb-4">Quick Comparison</h3>
-            <p className="text-center text-xs text-muted-foreground mb-4 md:hidden">
-              ← Swipe to see all plans →
-            </p>
-            <div className="overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-              <table className="w-full border-collapse text-sm min-w-[600px]">
+          {/* Quick Comparison Table */}
+          <div className="max-w-5xl mx-auto mb-12">
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b-2 border-border">
                     <th className="text-left py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Feature</th>
@@ -517,6 +522,9 @@ export default function PricingPage() {
                 </tbody>
               </table>
             </div>
+            <p className="text-xs text-muted-foreground mt-3 text-center max-w-3xl mx-auto">
+              Coalition revenue is paid when AI companies license the corpus. Your percentage (65-80%) reflects how much of those licensing fees flow back to you; Encypher keeps the remainder to operate the infrastructure.
+            </p>
           </div>
 
           {/* Collapsible Full Feature Table */}
@@ -536,7 +544,7 @@ export default function PricingPage() {
               <div className="mt-4">
                 <p className="text-center text-muted-foreground mb-6 text-sm">
                   Every feature maps directly to our Enterprise API. See{' '}
-                  <Link href="/docs/api" className="text-primary hover:underline">API documentation</Link> for details.
+                  <Link href="https://docs.encypherai.com" className="text-primary hover:underline">API documentation</Link> for details.
                 </p>
                 <FeatureComparisonTable 
                   currentPlan={currentPlan}
@@ -663,8 +671,7 @@ export default function PricingPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button 
                   onClick={() => setShowAIModal(true)}
-                  size="lg" 
-                  className="bg-primary hover:bg-primary/90"
+                  size="lg"
                 >
                   Schedule Technical Evaluation <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -748,7 +755,6 @@ export default function PricingPage() {
 
               <Button 
                 onClick={() => setShowEnterpriseModal(true)}
-                variant="outline" 
                 className="w-full"
               >
                 Start Pilot
@@ -791,7 +797,7 @@ export default function PricingPage() {
 
               <Button 
                 onClick={() => setShowEnterpriseModal(true)}
-                className="w-full bg-primary hover:bg-primary/90"
+                className="w-full"
               >
                 Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
@@ -832,7 +838,6 @@ export default function PricingPage() {
 
               <Button 
                 onClick={() => setShowEnterpriseModal(true)}
-                variant="outline" 
                 className="w-full"
               >
                 Discuss Partnership
@@ -879,6 +884,12 @@ export default function PricingPage() {
                 </ul>
               </div>
             </div>
+          </div>
+          <div className="max-w-3xl mx-auto mt-8 text-center text-sm text-muted-foreground">
+            <p>
+              Building on Encypher? Enterprise SaaS and non-publisher platforms can start with a free Starter account to test the API today.
+              OEM and non-publisher licensing is handled through custom Enterprise agreements — contact our team to discuss terms.
+            </p>
           </div>
         </div>
       </section>

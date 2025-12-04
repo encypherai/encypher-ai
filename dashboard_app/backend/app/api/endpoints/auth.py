@@ -1,24 +1,37 @@
 """
-Authentication endpoints for the EncypherAI Dashboard API.
+Authentication endpoints for the Encypher Dashboard API.
 """
-from datetime import datetime, timedelta
-from typing import Any, Dict
 import secrets
 import string
+from datetime import datetime, timedelta
+from typing import Any, Dict
 
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.security import create_access_token, verify_password, get_password_hash
 from app.core.database import get_db
-from app.schemas.user import Token, User, PasswordReset, PasswordResetRequest, TokenRefresh, UserProfileUpdate
-from app.services.user import authenticate_user, get_current_user, get_user_by_email, update_user, get_user_by_username
+from app.core.security import create_access_token, get_password_hash, verify_password
 from app.models.blacklisted_token import BlacklistedToken
 from app.models.user import User as UserModel
+from app.schemas.user import (
+    PasswordReset,
+    PasswordResetRequest,
+    Token,
+    TokenRefresh,
+    User,
+    UserProfileUpdate,
+)
 from app.services.email import send_password_reset_email
+from app.services.user import (
+    authenticate_user,
+    get_current_user,
+    get_user_by_email,
+    get_user_by_username,
+    update_user,
+)
 
 router = APIRouter()
 

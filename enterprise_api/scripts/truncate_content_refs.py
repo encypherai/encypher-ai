@@ -4,7 +4,9 @@ Truncate content_references table for clean embeddings benchmarks.
 Usage: uv run python scripts/truncate_content_refs.py
 """
 import asyncio
+
 from sqlalchemy import text
+
 from app.database import engine
 
 

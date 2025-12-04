@@ -1,5 +1,5 @@
 """
-Utility functions for EncypherAI commercial tools.
+Utility functions for Encypher commercial tools.
 
 This module provides common utility functions used across the commercial tools,
 building on top of the high-level API.
@@ -25,7 +25,7 @@ try:
 except ImportError:
     DOCX2TXT_AVAILABLE = False
 
-from .api import EncypherAI, VerificationResult
+from .api import Encypher, VerificationResult
 
 
 console = Console()
@@ -436,7 +436,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
 
 def scan_directory(
     directory_path: str,
-    encypher_ai: EncypherAI,
+    encypher_ai: Encypher,
     file_extensions: List[str] = [".txt", ".md", ".py", ".js", ".html", ".css", ".json", ".pdf", ".doc", ".docx"],
     recursive: bool = True,
     show_progress: bool = True,
@@ -447,7 +447,7 @@ def scan_directory(
     
     Args:
         directory_path: Path to the directory to scan
-        encypher_ai: EncypherAI instance to use for verification
+        encypher_ai: Encypher instance to use for verification
         file_extensions: List of file extensions to scan
         recursive: Whether to scan subdirectories
         show_progress: Whether to show a progress bar

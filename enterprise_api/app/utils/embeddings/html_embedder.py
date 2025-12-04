@@ -6,8 +6,8 @@ No need to inject visible markers into HTML.
 
 This module is kept for backward compatibility but should not be used.
 """
-from typing import List
 import logging
+from typing import List
 
 logger = logging.getLogger(__name__)
 

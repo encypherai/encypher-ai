@@ -1,6 +1,6 @@
 # LiteLLM Integration
 
-This guide explains how to integrate EncypherAI with LiteLLM to embed and verify metadata in content generated from over 100 LLM providers through a unified interface.
+This guide explains how to integrate Encypher with LiteLLM to embed and verify metadata in content generated from over 100 LLM providers through a unified interface.
 
 ## Prerequisites
 
@@ -138,7 +138,7 @@ if verification_result.is_valid:
 3.  **Include Provider Information**: Always include the provider name in the metadata to track which service generated the content.
 4.  **Consistent Metadata**: Maintain a consistent metadata schema across different providers to simplify downstream processing.
 5.  **API Key Management**: Use environment variables or a secure key management system like HashiCorp Vault to store API keys for different providers.
-6.  **Error Handling**: Implement proper error handling for both LiteLLM and EncypherAI operations.
+6.  **Error Handling**: Implement proper error handling for both LiteLLM and Encypher operations.
 
 ## Troubleshooting
 
@@ -200,6 +200,6 @@ If metadata extraction fails:
 ## Related Documentation
 
 - [LiteLLM Documentation](https://docs.litellm.ai/)
-- [EncypherAI Streaming Support](../user-guide/streaming.md)
+- [Encypher Streaming Support](../user-guide/streaming.md)
 - [Metadata Encoding Guide](../user-guide/metadata-encoding.md)
 - [Extraction and Verification](../user-guide/extraction-verification.md)

@@ -5,17 +5,14 @@ TEAM_002: Tests for per-document revocation at internet scale.
 """
 import base64
 import gzip
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
 
 from app.models.status_list import (
-    StatusListEntry,
-    StatusListMetadata,
-    RevocationReason,
     BITS_PER_LIST,
     BYTES_PER_LIST,
+    RevocationReason,
 )
 from app.services.status_service import StatusService
 

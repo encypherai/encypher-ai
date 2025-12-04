@@ -4,8 +4,9 @@ Test database setup with PostgreSQL.
 Verifies that the test database configuration works correctly.
 Uses PostgreSQL via Docker for full compatibility.
 """
-import pytest
 import uuid
+
+import pytest
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 

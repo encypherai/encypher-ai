@@ -18,18 +18,17 @@ from datetime import datetime, timezone
 from typing import Dict, Optional, Tuple
 from uuid import uuid4
 
-from sqlalchemy import select, update, func
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.dialects.postgresql import insert as pg_insert
 
+from app.config import settings
 from app.models.status_list import (
-    StatusListEntry,
-    StatusListMetadata,
-    RevocationReason,
     BITS_PER_LIST,
     BYTES_PER_LIST,
+    RevocationReason,
+    StatusListEntry,
+    StatusListMetadata,
 )
-from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +130,7 @@ class StatusService:
             select(StatusListMetadata)
             .where(
                 StatusListMetadata.organization_id == organization_id,
-                StatusListMetadata.is_full == False,
+                StatusListMetadata.is_full.is_(False),
             )
             .order_by(StatusListMetadata.list_index.desc())
             .limit(1)
@@ -555,7 +554,7 @@ class StatusService:
                 StatusListMetadata.list_index
             )
             .where(
-                (StatusListMetadata.last_generated_at == None) |
+                (StatusListMetadata.last_generated_at.is_(None)) |
                 (StatusListMetadata.last_generated_at < threshold_dt)
             )
         )

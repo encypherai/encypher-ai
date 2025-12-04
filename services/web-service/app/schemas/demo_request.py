@@ -1,6 +1,5 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
@@ -17,10 +16,10 @@ class DemoRequestStatus(str, Enum):
 class DemoRequestBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=255, description="Full name of the requester")
     email: EmailStr = Field(..., description="Email address of the requester")
-    organization: Optional[str] = Field(None, max_length=255, description="Company or organization name")
-    role: Optional[str] = Field(None, max_length=100, description="Professional role or title")
-    message: Optional[str] = Field(None, description="Additional message from the requester")
-    source: Optional[str] = Field(None, max_length=100, description="Source of the demo request")
+    organization: str | None = Field(None, max_length=255, description="Company or organization name")
+    role: str | None = Field(None, max_length=100, description="Professional role or title")
+    message: str | None = Field(None, description="Additional message from the requester")
+    source: str | None = Field(None, max_length=100, description="Source of the demo request")
     consent: bool = Field(False, description="Whether the user consented to be contacted")
 
 # Properties to receive on creation
@@ -29,17 +28,17 @@ class DemoRequestCreate(DemoRequestBase):
 
 # Properties to receive on update (admin only)
 class DemoRequestUpdate(BaseModel):
-    status: Optional[DemoRequestStatus] = None
-    notes: Optional[str] = Field(None, description="Internal notes about the demo request")
+    status: DemoRequestStatus | None = None
+    notes: str | None = Field(None, description="Internal notes about the demo request")
 
 # Properties shared by models stored in DB
 class DemoRequestInDBBase(DemoRequestBase):
     id: int
     uuid: UUID
     status: DemoRequestStatus = DemoRequestStatus.NEW
-    ip_address: Optional[str] = None
-    user_agent: Optional[str] = None
-    referrer: Optional[str] = None
+    ip_address: str | None = None
+    user_agent: str | None = None
+    referrer: str | None = None
     created_at: datetime
     updated_at: datetime
 

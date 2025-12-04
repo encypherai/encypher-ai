@@ -154,7 +154,7 @@ export default function DemoPage() {
                         onChange={(e) => handleCheckboxChange(e.target.checked)}
                       />
                       <Label htmlFor="consent" className="text-sm font-normal text-muted-foreground">
-                        I agree to receive communications from EncypherAI. I can unsubscribe at any time.
+                        I agree to receive communications from Encypher. I can unsubscribe at any time.
                       </Label>
                     </div>
                   </div>

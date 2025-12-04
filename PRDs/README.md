@@ -2,7 +2,7 @@
 
 **Last Updated:** November 27, 2025
 
-This folder contains Product Requirements Documents for EncypherAI Commercial.
+This folder contains Product Requirements Documents for Encypher Commercial.
 
 ## Folder Structure
 

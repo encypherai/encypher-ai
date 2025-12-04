@@ -1,6 +1,6 @@
 # Changelog
 
-This document provides a chronological list of notable changes for each version of EncypherAI.
+This document provides a chronological list of notable changes for each version of Encypher.
 
 ## Unreleased
 
@@ -219,7 +219,7 @@ This document provides a chronological list of notable changes for each version 
 - Improved API for metadata embedding and verification
 - Updated documentation with digital signature examples
 - C2PA-inspired manifest structure for enhanced content provenance
-- Interoperability module (`encypher.interop.c2pa`) for conversion between EncypherAI and C2PA-like structures
+- Interoperability module (`encypher.interop.c2pa`) for conversion between Encypher and C2PA-like structures
 - Comprehensive documentation on C2PA relationship and alignment
 
 ### Changed
@@ -249,7 +249,7 @@ This document provides a chronological list of notable changes for each version 
 ## 1.0.0 (03-22-2025)
 
 ### Added
-- Initial stable release of EncypherAI
+- Initial stable release of Encypher
 - Core metadata encoding and decoding functionality
 - HMAC verification for tamper detection
 - Support for multiple embedding targets:

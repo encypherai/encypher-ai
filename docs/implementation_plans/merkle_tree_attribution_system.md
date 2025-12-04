@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This document outlines the implementation plan for adding a Merkle tree-based hierarchical content attribution system to the EncypherAI Enterprise API. The system will be offered as a premium "Enterprise" tier feature, while maintaining the existing basic C2PA embedding as a "Free" tier.
+This document outlines the implementation plan for adding a Merkle tree-based hierarchical content attribution system to the Encypher Enterprise API. The system will be offered as a premium "Enterprise" tier feature, while maintaining the existing basic C2PA embedding as a "Free" tier.
 
 ### Key Objectives
 1. Implement Merkle tree construction for hierarchical text segmentation

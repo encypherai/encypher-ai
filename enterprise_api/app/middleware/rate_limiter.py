@@ -5,8 +5,8 @@ Implements rate limiting for WebSocket connections and streaming chunks.
 """
 import logging
 import time
-from typing import Dict, Optional
 from collections import defaultdict
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 

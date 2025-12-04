@@ -132,9 +132,8 @@ export default function SalesContactModal({
     setIsSubmitting(true);
 
     try {
-      // Use web-service URL for sales contact forms
-      const baseUrl = process.env.NEXT_PUBLIC_WEB_SERVICE_URL || 'http://localhost:8002';
-      const url = `${baseUrl}${config.apiEndpoint}`;
+      // Use local API route for demo requests (handles forwarding to web-service in production)
+      const url = '/api/demo-request';
       
       const response = await fetch(url, {
         method: 'POST',

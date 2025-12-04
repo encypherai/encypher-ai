@@ -1,44 +1,44 @@
 """
-Script to create example files with EncypherAI metadata for the dashboard app.
+Script to create example files with Encypher metadata for the dashboard app.
 Includes text files, PDFs, and other document types with various metadata attributes.
 """
 
-import sys
-import json
 import base64
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
-from typing import Dict, Any, Optional
+import json
 import random
+import sys
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from typing import Any, Dict, Optional
 
 # Add the parent directory to the path so we can import the shared library
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
-    # Import from the core EncypherAI package as used in shared_commercial_libs
-    from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
-    from encypher.core.keys import load_public_key_from_data, load_private_key_from_data
-    
+    # Import from the core Encypher package as used in shared_commercial_libs
     # Import from our shared commercial library
-    from encypher_commercial_shared import EncypherAI
-    
+    from reportlab.lib import colors
+
     # For document generation
     from reportlab.lib.pagesizes import letter
-    from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+
+    from encypher.core.keys import load_private_key_from_data, load_public_key_from_data
+    from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+    from encypher_commercial_shared import Encypher
     
     # For Word document generation
     try:
         import docx
-        from docx.shared import Inches, Pt
         from docx.enum.text import WD_ALIGN_PARAGRAPH
+        from docx.shared import Inches, Pt
         DOCX_AVAILABLE = True
     except ImportError:
         DOCX_AVAILABLE = False
     
     from rich.console import Console
-    from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
+    from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
     
     console = Console()
     
@@ -51,8 +51,8 @@ try:
     KEY_DIR.mkdir(exist_ok=True)
     
     # Generate a test private/public key pair for signing
-    from cryptography.hazmat.primitives.asymmetric import ed25519
     from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ed25519
     
     def generate_key_pair(private_key_path, public_key_path, force=False):
         """Generate a test Ed25519 key pair for signing and verification."""
@@ -88,7 +88,7 @@ try:
     
     # Generate keys for different signers
     signers = [
-        {"id": "encypherai-official", "name": "EncypherAI Official"},
+        {"id": "encypherai-official", "name": "Encypher Official"},
         {"id": "compliance-dept", "name": "Compliance Department"},
         {"id": "research-team", "name": "Research Team"},
         {"id": "untrusted-source", "name": "Untrusted Source"}
@@ -102,15 +102,15 @@ try:
         generate_key_pair(private_key_path, public_key_path)
         console.print(f"[green]Generated {signer['name']} keys at {KEY_DIR}[/green]")
     
-    # Create a list of EncypherAI instances for each signer
+    # Create a list of Encypher instances for each signer
     encypherai_instances = {}
     for signer in signers:
         signer_id = signer["id"]
         private_key_path = KEY_DIR / f"{signer_id}-private.pem"
         public_key_path = KEY_DIR / f"{signer_id}-public.pem"
         
-        # Create EncypherAI instance with timestamp support
-        ea = EncypherAI(
+        # Create Encypher instance with timestamp support
+        ea = Encypher(
             private_key_path=str(private_key_path),
             public_key_path=str(public_key_path),
             signer_id=signer_id,
@@ -165,7 +165,7 @@ try:
         timestamp: Optional[datetime] = None,
         tamper: bool = False
     ):
-        """Create a Word document with embedded EncypherAI metadata."""
+        """Create a Word document with embedded Encypher metadata."""
         if not DOCX_AVAILABLE:
             console.print("[yellow]Skipping DOCX creation - docx library not available[/yellow]")
             return None
@@ -252,7 +252,7 @@ DOCX_BASE64_END"""
         timestamp: Optional[datetime] = None,
         tamper: bool = False
     ):
-        """Create a PDF file with embedded EncypherAI metadata."""
+        """Create a PDF file with embedded Encypher metadata."""
         # Create the PDF
         doc = SimpleDocTemplate(str(output_path), pagesize=letter)
         styles = getSampleStyleSheet()
@@ -349,7 +349,7 @@ PDF_BASE64_END"""
         tamper: bool = False,
         tamper_metadata: bool = False
     ):
-        """Create a text file with embedded EncypherAI metadata."""
+        """Create a text file with embedded Encypher metadata."""
         ea = encypherai_instances[signer_id]
         
         # If tampering metadata is requested, create a modified copy
@@ -472,7 +472,7 @@ PDF_BASE64_END"""
                     "category": category["name"],
                     "document_id": f"doc-{category['name'].lower().replace(' ', '-')}-{i+1}",
                     "version": "1.0.0",
-                    "created_by": f"EncypherAI {category['name']} Generator",
+                    "created_by": f"Encypher {category['name']} Generator",
                     "department": category["name"],
                     "confidentiality": random.choice(["Public", "Internal", "Confidential", "Restricted"]),
                     "tags": [f"tag-{random.randint(1, 10)}" for _ in range(random.randint(1, 3))]
@@ -511,7 +511,7 @@ PDF_BASE64_END"""
                     
 Total Amount: {metadata['currency']} {metadata['total_amount']}
 
-This report was generated by the EncypherAI Financial Reporting System and is intended for internal use only.
+This report was generated by the Encypher Financial Reporting System and is intended for internal use only.
 The information contained herein is confidential and should not be shared outside the organization.
 
 Document ID: {metadata['document_id']}
@@ -537,7 +537,7 @@ Confidentiality: {metadata['confidentiality']}
 Status: {metadata['compliance_status']}
 Reviewer: {metadata['reviewer']}
 
-This document contains the results of a compliance check performed by the EncypherAI Compliance Department.
+This document contains the results of a compliance check performed by the Encypher Compliance Department.
 The findings in this report should be addressed according to company policy.
 
 Document ID: {metadata['document_id']}
@@ -550,7 +550,7 @@ Confidentiality: {metadata['confidentiality']}
 Source: {metadata['source']}
 Verification Status: {metadata['verification_status']}
 
-This document was received from an external source and has been processed by the EncypherAI system.
+This document was received from an external source and has been processed by the Encypher system.
 The content has not been verified for accuracy or completeness.
 
 Document ID: {metadata['document_id']}
@@ -614,7 +614,7 @@ Confidentiality: {metadata['confidentiality']}
                 story = []
                 
                 title = f"Document Without Metadata - {i+1}"
-                content = f"""This is an example document without any EncypherAI metadata.
+                content = f"""This is an example document without any Encypher metadata.
                 
 This file should be detected as having no metadata when scanned by the verification tools.
 
@@ -630,7 +630,7 @@ File ID: no-metadata-{i+1}
                 # Create a text file without metadata
                 content = f"""Document Without Metadata - {i+1}
 
-This is an example document without any EncypherAI metadata.
+This is an example document without any Encypher metadata.
                 
 This file should be detected as having no metadata when scanned by the verification tools.
 
@@ -648,9 +648,9 @@ File ID: no-metadata-{i+1}
     # Create a README file with information about the examples
     readme_path = EXAMPLE_DIR / "README.md"
     with open(readme_path, 'w', encoding='utf-8') as f:
-        f.write(f"""# EncypherAI Dashboard Example Files
+        f.write(f"""# Encypher Dashboard Example Files
 
-This directory contains example files with EncypherAI metadata for testing and demonstration purposes.
+This directory contains example files with Encypher metadata for testing and demonstration purposes.
 
 ## File Categories
 
@@ -661,7 +661,7 @@ This directory contains example files with EncypherAI metadata for testing and d
 - **Valid Files**: Files with valid metadata and signatures
 - **Tampered Content**: Files where the content was modified after metadata was embedded
 - **Tampered Metadata**: Files where the metadata was tampered with
-- **No Metadata**: Files without any EncypherAI metadata
+- **No Metadata**: Files without any Encypher metadata
 
 ## Trusted Signers
 
@@ -669,7 +669,7 @@ This directory contains example files with EncypherAI metadata for testing and d
 
 ## Usage
 
-These files can be used to test the EncypherAI verification tools and dashboard functionality.
+These files can be used to test the Encypher verification tools and dashboard functionality.
 You can use the audit-log-cli tool to scan these files:
 
 ```

@@ -25,6 +25,12 @@ export interface TierLimits {
   c2paSignatures: number;
   /** Sentences tracked per month (-1 = unlimited, 0 = not available) */
   sentencesTracked: number;
+  /** Merkle encodings per month (-1 = unlimited, 0 = not available) */
+  merkleEncodings?: number;
+  /** Attribution lookups per month (-1 = unlimited, 0 = not available) */
+  attributionLookups?: number;
+  /** Plagiarism checks per month (-1 = unlimited, 0 = not available) */
+  plagiarismChecks?: number;
 }
 
 /**

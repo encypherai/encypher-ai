@@ -1,4 +1,3 @@
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -15,9 +14,9 @@ class CRUDDemoRequest(CRUDBase[DemoRequest, DemoRequestCreate, DemoRequestUpdate
         db: Session,
         *,
         obj_in: DemoRequestCreate,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        referrer: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        referrer: str | None = None
     ) -> DemoRequest:
         """Create a new demo request with additional metadata"""
         # Convert the Pydantic model to a dict
@@ -38,7 +37,7 @@ class CRUDDemoRequest(CRUDBase[DemoRequest, DemoRequestCreate, DemoRequestUpdate
         db.refresh(db_obj)
         return db_obj
 
-    def get_by_email(self, db: Session, *, email: str) -> Optional[DemoRequest]:
+    def get_by_email(self, db: Session, *, email: str) -> DemoRequest | None:
         """Get a demo request by email"""
         return db.query(self.model).filter(self.model.email == email).first()
 

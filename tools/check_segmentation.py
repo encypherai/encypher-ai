@@ -1,6 +1,7 @@
 """Check how the text is being segmented into sentences."""
-from pathlib import Path
 import sys
+from pathlib import Path
+
 sys.path.insert(0, str(Path('../enterprise_api').resolve()))
 
 from app.services.segmentation_service import SegmentationService

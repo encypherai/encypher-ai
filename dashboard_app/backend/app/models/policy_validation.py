@@ -1,11 +1,12 @@
 """
 Policy validation model for storing validation results.
 """
-from sqlalchemy import Column, Integer, String, Boolean, JSON, Text, DateTime, ForeignKey
-from sqlalchemy.sql import func
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.core.database import Base
+
 
 class PolicySchema(Base):
     """Policy schema model for storing policy definitions."""

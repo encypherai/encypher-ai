@@ -1,9 +1,9 @@
 """
-High-level API for EncypherAI commercial tools.
+High-level API for Encypher commercial tools.
 
 This module provides a simplified, consistent interface for working with the
-EncypherAI package across all commercial tools. It builds on top of the
-core EncypherAI functionality while adding commercial-specific features.
+Encypher package across all commercial tools. It builds on top of the
+core Encypher functionality while adding commercial-specific features.
 """
 
 from datetime import datetime
@@ -12,7 +12,7 @@ from typing import Dict, Optional, Any, Union
 from pydantic import BaseModel
 from rich.console import Console
 
-# Import from the core EncypherAI package
+# Import from the core Encypher package
 from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
 from encypher.core.keys import load_public_key_from_data, load_private_key_from_data
 
@@ -72,11 +72,11 @@ class VerificationResult(BaseModel):
         return result
 
 
-class EncypherAI:
+class Encypher:
     """
-    High-level API for EncypherAI operations.
+    High-level API for Encypher operations.
     
-    This class provides a simplified interface for working with the EncypherAI
+    This class provides a simplified interface for working with the Encypher
     package, including metadata embedding, verification, and extraction.
     """
     
@@ -105,7 +105,7 @@ class EncypherAI:
         verbose: bool = False
     ):
         """
-        Initialize the EncypherAI high-level API.
+        Initialize the Encypher high-level API.
         
         Args:
             private_key_path: Path to the private key file for signing (PEM format)

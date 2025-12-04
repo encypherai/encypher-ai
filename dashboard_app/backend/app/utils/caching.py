@@ -1,11 +1,12 @@
 """
 Caching utilities for the dashboard application.
 """
-from typing import Any, Dict, Optional, Callable, Awaitable
-from datetime import datetime, timedelta
-import logging
 import asyncio
 import functools
+import logging
+from collections.abc import Awaitable
+from datetime import datetime, timedelta
+from typing import Any, Callable, Dict, Optional
 
 logger = logging.getLogger(__name__)
 

@@ -4,9 +4,9 @@ API Key generation and management utilities.
 Provides secure API key generation, hashing, and verification for AI company authentication.
 """
 import secrets
-import bcrypt
 from typing import Tuple
 
+import bcrypt
 
 API_KEY_PREFIX = "lic_"
 API_KEY_LENGTH = 32  # bytes (64 hex characters)

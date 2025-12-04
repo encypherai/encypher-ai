@@ -1,7 +1,8 @@
-import pytest
-import time
-import docker
 import socket
+import time
+
+import docker
+import pytest
 
 # Check if docker is available
 try:

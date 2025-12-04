@@ -4,14 +4,14 @@ Auto-provisioning service for organizations and API keys.
 Handles automatic creation of organizations, users, and API keys
 from external services (SDK, WordPress plugin, CLI, etc.)
 """
+import hashlib
 import logging
 import secrets
-import hashlib
 from datetime import datetime
-from typing import Optional, Dict, Any, Tuple
+from typing import Any, Dict, Optional, Tuple
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization, OrganizationTier
 from app.utils.feature_flags import TIER_FEATURES

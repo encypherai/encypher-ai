@@ -10,9 +10,9 @@ This migration adds:
 - New feature flags for tier-based access control
 - Additional usage tracking fields
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers
 revision = 'add_tier_coalition'

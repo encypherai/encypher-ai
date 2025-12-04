@@ -66,7 +66,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <Link href="/" className="flex items-center">
                 {/* Light mode logo */}
                 <Image
-                  src="/assets/encypher_full_nobg.png"
+                  src="/assets/encypher_full_logo_color.svg"
                   alt="Encypher"
                   width={140}
                   height={36}
@@ -75,7 +75,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 />
                 {/* Dark mode logo */}
                 <Image
-                  src="/assets/encypher_full_logo_w.svg"
+                  src="/assets/encypher_full_logo_white.svg"
                   alt="Encypher"
                   width={140}
                   height={36}

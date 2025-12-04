@@ -1,5 +1,5 @@
 """
-Script to create tampered example files with EncypherAI metadata for testing purposes.
+Script to create tampered example files with Encypher metadata for testing purposes.
 This script creates examples with sophisticated tampering by modifying variation selectors
 in the embedded metadata, which is more subtle than adding obvious text markers.
 """
@@ -11,14 +11,13 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
-    # Import from the core EncypherAI package as used in shared_commercial_libs
-    from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
-    from encypher.core.keys import load_public_key_from_data, load_private_key_from_data
-    
+    # Import from the core Encypher package as used in shared_commercial_libs
     # Import from our shared commercial library
-    from encypher_commercial_shared import EncypherAI
-    
     from rich.console import Console
+
+    from encypher.core.keys import load_private_key_from_data, load_public_key_from_data
+    from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+    from encypher_commercial_shared import Encypher
     console = Console()
     
     # Directory to save example files
@@ -30,8 +29,8 @@ try:
     KEY_DIR.mkdir(exist_ok=True)
     
     # Generate a test private/public key pair for signing
-    from cryptography.hazmat.primitives.asymmetric import ed25519
     from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ed25519
     
     def generate_key_pair(private_key_path, public_key_path):
         """Generate a test Ed25519 key pair for signing and verification."""
@@ -67,8 +66,8 @@ try:
     generate_key_pair(test_signer_private_key_path, test_signer_public_key_path)
     console.print(f"[green]Generated test signer keys at {KEY_DIR}[/green]")
     
-    # Create EncypherAI instance with the test signer
-    ea_test = EncypherAI(
+    # Create Encypher instance with the test signer
+    ea_test = Encypher(
         private_key_path=str(test_signer_private_key_path),
         public_key_path=str(test_signer_public_key_path),
         signer_id="test-signer",
@@ -91,12 +90,12 @@ try:
         verbose=True
     )
     
-    # We'll use UnicodeMetadata directly instead of modifying EncypherAI methods
+    # We'll use UnicodeMetadata directly instead of modifying Encypher methods
     
     # Create example files with metadata
     
     # Example 1: Create a file with valid metadata
-    example_text = """This is an example file with valid EncypherAI metadata.
+    example_text = """This is an example file with valid Encypher metadata.
 The metadata is embedded in this text file and can be verified
 using the test-signer public key.
 

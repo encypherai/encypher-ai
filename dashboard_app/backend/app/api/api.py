@@ -1,9 +1,19 @@
 """
-API router for the EncypherAI Dashboard Backend.
+API router for the Encypher Dashboard Backend.
 """
 from fastapi import APIRouter
 
-from app.api.endpoints import auth, audit_logs, policy_validation, cli, users, signing, scanning, demo, coalition
+from app.api.endpoints import (
+    audit_logs,
+    auth,
+    cli,
+    coalition,
+    demo,
+    policy_validation,
+    scanning,
+    signing,
+    users,
+)
 
 api_router = APIRouter()
 

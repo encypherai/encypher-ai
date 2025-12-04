@@ -7,9 +7,10 @@ Create Date: 2025-12-01 11:00:00.000000
 Implements W3C StatusList2021 for internet-scale document revocation.
 Supports 10+ billion documents with O(1) status lookups.
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = '20251201_110000'

@@ -1,6 +1,6 @@
 # Streaming API Documentation
 
-**Status:** Phase 1 Implementation (In Progress)  
+**Status:** Phase 1 Implementation (Complete)  
 **Version:** 1.0.0-preview  
 **Last Updated:** 2025-10-30
 
@@ -28,7 +28,7 @@ The Streaming API provides real-time content signing capabilities for streaming 
 - ⏳ Advanced monitoring
 
 ### Phase 3 (Planned)
-- ⏳ OpenAI-compatible streaming endpoint
+- ✅ OpenAI-compatible streaming endpoint (WebSocket `/api/v1/stream/chat` implemented; client wrappers still evolving)
 - ⏳ LangChain integration
 - ⏳ LlamaIndex integration
 

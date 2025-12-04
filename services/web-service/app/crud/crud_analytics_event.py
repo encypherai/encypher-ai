@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Dict, List, Optional
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -22,12 +21,12 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
         db: Session,
         *,
         obj_in: AnalyticsEventCreate,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        user_id: Optional[str] = None,
-        device_type: Optional[str] = None,
-        browser: Optional[str] = None,
-        os: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        user_id: str | None = None,
+        device_type: str | None = None,
+        browser: str | None = None,
+        os: str | None = None
     ) -> AnalyticsEvent:
         """Create a new analytics event with additional metadata"""
         # Convert the Pydantic model to a dict
@@ -56,7 +55,7 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
 
     def get_events_by_session(
         self, db: Session, *, session_id: str, limit: int = 100
-    ) -> List[AnalyticsEvent]:
+    ) -> list[AnalyticsEvent]:
         """Get all events for a specific session"""
         return (
             db.query(self.model)
@@ -68,7 +67,7 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
 
     def get_events_by_user(
         self, db: Session, *, user_id: str, limit: int = 100
-    ) -> List[AnalyticsEvent]:
+    ) -> list[AnalyticsEvent]:
         """Get all events for a specific user"""
         return (
             db.query(self.model)
@@ -80,7 +79,7 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
 
     def get_events_by_type(
         self, db: Session, *, event_type: str, limit: int = 100
-    ) -> List[AnalyticsEvent]:
+    ) -> list[AnalyticsEvent]:
         """Get all events of a specific type"""
         return (
             db.query(self.model)
@@ -94,11 +93,11 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
         self,
         db: Session,
         *,
-        page_url: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        page_url: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 100
-    ) -> List[AnalyticsEvent]:
+    ) -> list[AnalyticsEvent]:
         """Get page view events with optional filters"""
         query = db.query(self.model).filter(
             self.model.event_type == "page_view"
@@ -119,9 +118,9 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
         self,
         db: Session,
         *,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None
-    ) -> Dict[str, int]:
+        start_date: datetime | None = None,
+        end_date: datetime | None = None
+    ) -> dict[str, int]:
         """Get counts of events grouped by event type"""
         query = db.query(
             self.model.event_type,

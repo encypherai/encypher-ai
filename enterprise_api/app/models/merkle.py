@@ -8,10 +8,17 @@ from datetime import datetime
 from uuid import uuid4
 
 from sqlalchemy import (
-    Column, String, Integer, TIMESTAMP, ForeignKey, 
-    CheckConstraint, Index, LargeBinary
+    TIMESTAMP,
+    CheckConstraint,
+    Column,
+    ForeignKey,
+    Index,
+    Integer,
+    LargeBinary,
+    String,
 )
-from sqlalchemy.dialects.postgresql import UUID as PGUUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base

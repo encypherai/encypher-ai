@@ -2,8 +2,8 @@
 """
 Create a test user in the local database for dashboard testing.
 """
-import hashlib
 import base64
+import hashlib
 import uuid
 from datetime import datetime
 
@@ -49,7 +49,7 @@ def create_test_user():
         
         if existing:
             print(f"User already exists with id: {existing[0]}")
-            print(f"\nTest credentials:")
+            print("\nTest credentials:")
             print(f"  Email: {email}")
             print(f"  Password: {password}")
             return
@@ -71,8 +71,8 @@ def create_test_user():
         
         conn.commit()
         
-        print(f"✅ Test user created successfully!")
-        print(f"\nTest credentials:")
+        print("✅ Test user created successfully!")
+        print("\nTest credentials:")
         print(f"  Email: {email}")
         print(f"  Password: {password}")
         print(f"  User ID: {user_id}")

@@ -9,10 +9,10 @@ This migration adds:
 - team_invites table for pending invitations
 - Indexes for efficient querying
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers
 revision = 'add_team_members'

@@ -5,8 +5,8 @@ Test runner for the shared commercial library.
 This script discovers and runs all tests in the tests directory.
 """
 
-import unittest
 import sys
+import unittest
 from pathlib import Path
 
 # Add the parent directory to the path so we can import the package

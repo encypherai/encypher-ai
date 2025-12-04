@@ -1,9 +1,10 @@
-import unittest
 import json
 import tempfile
+import unittest
 from pathlib import Path
 
-from policy_validator_cli.app.policy_parser import load_policy, PolicySchemaError
+from policy_validator_cli.app.policy_parser import PolicySchemaError, load_policy
+
 
 class TestPolicyParser(unittest.TestCase):
     """Tests for the policy_parser module."""

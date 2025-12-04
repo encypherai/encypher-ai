@@ -6,8 +6,16 @@ Stores minimal signed embeddings that link text segments to Merkle trees.
 from datetime import datetime
 
 from sqlalchemy import (
-    Column, BigInteger, String, Integer, TIMESTAMP, ForeignKey,
-    CheckConstraint, Index, JSON, Text
+    JSON,
+    TIMESTAMP,
+    BigInteger,
+    CheckConstraint,
+    Column,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship

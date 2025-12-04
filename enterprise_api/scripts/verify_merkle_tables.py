@@ -6,9 +6,11 @@ Usage:
     uv run python scripts/verify_merkle_tables.py
 """
 import asyncio
+
 from sqlalchemy import text
-from app.database import engine
+
 from app.config import settings
+from app.database import engine
 
 
 async def verify_tables():

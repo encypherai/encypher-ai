@@ -8,7 +8,7 @@
 
 ## 🎯 **Architecture Overview**
 
-EncypherAI is transitioning from a monolithic FastAPI application to a microservices architecture for improved scalability, maintainability, and fault isolation.
+Encypher is transitioning from a monolithic FastAPI application to a microservices architecture for improved scalability, maintainability, and fault isolation.
 
 ---
 
@@ -575,7 +575,7 @@ Replica Replica Replica
 
 <div align="center">
 
-**EncypherAI Microservices Architecture**  
+**Encypher Microservices Architecture**  
 **Version 1.0 | October 2025**
 
 [View Progress](./MICROSERVICES_PROGRESS.md) • [Migration Plan](./MICROSERVICES_MIGRATION_PLAN.md)

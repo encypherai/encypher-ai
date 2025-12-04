@@ -15,19 +15,18 @@ from enum import Enum
 from uuid import uuid4
 
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Boolean,
     TIMESTAMP,
+    Boolean,
+    Column,
     ForeignKey,
     Index,
+    Integer,
+    String,
     Text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 
 from app.database import Base
-
 
 # Constants for bitstring sizing
 BITS_PER_LIST = 131072  # 2^17 = 131,072 documents per list

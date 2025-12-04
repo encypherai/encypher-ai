@@ -11,9 +11,11 @@ Usage:
 import asyncio
 import sys
 from pathlib import Path
+
 from sqlalchemy import text
-from app.database import engine
+
 from app.config import settings
+from app.database import engine
 
 # Migration files in order
 MIGRATIONS = [

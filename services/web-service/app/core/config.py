@@ -1,11 +1,11 @@
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 from pydantic import AnyHttpUrl, PostgresDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    PROJECT_NAME: str = "EncypherAI Web Service"
+    PROJECT_NAME: str = "Encypher Web Service"
     API_V1_STR: str = "/api/v1"
 
     # Security - MUST be set via environment variable in production
@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = [
+    BACKEND_CORS_ORIGINS: list[AnyHttpUrl] = [
         "http://localhost:3000",  # Default Next.js dev server
         "https://encypherai.com",
         "https://www.encypherai.com",
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")
     @classmethod
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
@@ -34,11 +34,11 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = ""  # noqa: S105 - Must be set via env
     POSTGRES_DB: str = "encypher_web"
-    SQLALCHEMY_DATABASE_URI: Optional[PostgresDsn] = None
+    SQLALCHEMY_DATABASE_URI: PostgresDsn | None = None
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
     @classmethod
-    def assemble_db_connection(cls, v: Optional[str], values: Dict[str, Any]) -> Any:
+    def assemble_db_connection(cls, v: str | None, values: dict[str, Any]) -> Any:
         if isinstance(v, str):
             return v
         port = values.data.get("POSTGRES_PORT", 5432)
@@ -65,7 +65,7 @@ class Settings(BaseSettings):
 
     # Web Analytics
     ANALYTICS_ENABLED: bool = True
-    ANALYTICS_DB_URI: Optional[PostgresDsn] = None
+    ANALYTICS_DB_URI: PostgresDsn | None = None
 
     # Environment
     ENVIRONMENT: str = "development"

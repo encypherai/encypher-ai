@@ -112,7 +112,7 @@ function VerifyEmailContent() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="items-center space-y-4">
           <div className="flex items-center justify-center">
-            <Image src="/encypher_full_nobg.png" alt="EncypherAI" width={140} height={70} />
+            <Image src="/encypher_full_nobg.png" alt="Encypher" width={140} height={70} />
           </div>
           
           {status === "loading" && (

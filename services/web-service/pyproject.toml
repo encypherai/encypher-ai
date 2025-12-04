@@ -42,7 +42,7 @@ build-backend = "hatchling.build"
 packages = ["app"]
 
 [tool.ruff]
-line-length = 88
+line-length = 150
 target-version = "py311"
 
 [tool.ruff.lint]
@@ -52,6 +52,7 @@ ignore = ["S101", "S105", "S106", "B008"]  # Allow assert, hardcoded passwords, 
 [tool.ruff.lint.per-file-ignores]
 "app/services/email.py" = ["E501"]  # Allow long lines in email templates
 "app/api/v1/endpoints/*.py" = ["E501"]  # Allow long lines in log messages
+"scripts/**" = ["E501"]  # Allow long lines in scripts
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

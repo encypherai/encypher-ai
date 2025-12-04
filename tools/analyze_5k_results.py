@@ -1,6 +1,6 @@
 """Analyze the 5K file benchmark results."""
-from pathlib import Path
 import statistics
+from pathlib import Path
 
 # Paths
 output_dir = Path('../outputs/wikipedia_prepared/part_00000')
@@ -121,7 +121,7 @@ print("✓ Successfully processed 5,000 Wikipedia articles")
 print("✓ Enhanced segmentation detecting ~3.6x more sentences")
 print("✓ Each sentence has minimal invisible embedding")
 print("✓ ONE C2PA wrapper per document")
-print("✓ Average file size increase: ~{:.1f}%".format(statistics.mean(size_increases)))
-print("✓ Processing speed: ~{:.1f} files/second".format(5000/588.85))
+print(f"✓ Average file size increase: ~{statistics.mean(size_increases):.1f}%")
+print(f"✓ Processing speed: ~{5000/588.85:.1f} files/second")
 print("✓ All embedded files saved successfully")
 print("=" * 80)

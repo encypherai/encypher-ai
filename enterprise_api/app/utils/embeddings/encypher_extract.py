@@ -11,12 +11,13 @@ Usage:
     references = extractor.extract_from_html(html_content)
     results = extractor.verify_batch(references)
 """
-import re
-import requests
-from typing import List, Dict, Optional, Any
-from dataclasses import dataclass
-from bs4 import BeautifulSoup
 import logging
+import re
+from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
+import requests
+from bs4 import BeautifulSoup
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

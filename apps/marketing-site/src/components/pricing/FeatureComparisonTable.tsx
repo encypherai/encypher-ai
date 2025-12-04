@@ -228,8 +228,8 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
         enterprise: true,
       },
       {
-        name: 'BYOK Encryption',
-        description: 'Bring your own encryption keys',
+        name: 'Bring Your Own Keys (BYOK)',
+        description: 'Use your own signing keys',
         starter: false,
         professional: true,
         business: true,

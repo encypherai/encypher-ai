@@ -5,9 +5,9 @@ Revises: add_org_certificate_metadata
 Create Date: 2025-11-21 19:00:00
 
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'add_kms_support'

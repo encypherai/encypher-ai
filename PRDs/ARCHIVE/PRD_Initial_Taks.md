@@ -1,15 +1,15 @@
-**Product Requirements Document: EncypherAI - Commercial AI Governance Features (Phase 1)**
+**Product Requirements Document: Encypher - Commercial AI Governance Features (Phase 1)**
 
 **1. Introduction / Overview**
 
-* **1.1 Purpose:** This document outlines the initial set of commercial features to be developed for the EncypherAI platform. These features are designed to be implementable swiftly and will form the core of an "AI Governance Solution" that our System Integration (SI) partners, starting with Baleen Data, can offer to enterprise clients.
+* **1.1 Purpose:** This document outlines the initial set of commercial features to be developed for the Encypher platform. These features are designed to be implementable swiftly and will form the core of an "AI Governance Solution" that our System Integration (SI) partners, starting with Baleen Data, can offer to enterprise clients.
 * **1.2 Target Users (via SI Partners):**
     * Enterprise Compliance Officers (like "David" from our ICPs)[cite: 1052].
     * AI Governance Teams & Legal Departments within enterprises.
     * AI Security & Data Governance Consultants (like "Susan" from our ICPs) [cite: 1026] who will use these tools as part of their service delivery.
 * **1.3 Goals:**
     * Provide tangible, high-value tools that address enterprise needs for AI content auditability, compliance, and internal governance[cite: 496, 497].
-    * Enable SI partners like Baleen Data to offer a compelling, differentiated AI Governance Solution built around EncypherAI.
+    * Enable SI partners like Baleen Data to offer a compelling, differentiated AI Governance Solution built around Encypher.
     * Generate early commercial proof points by delivering features that enterprises are willing to pay for as part of a commercial license.
     * Ensure these initial features can be developed and deployed relatively quickly, leveraging our existing core metadata embedding and verification technology.
 
@@ -19,14 +19,14 @@
 
 **2.1 Feature: Basic Audit Log & Report Generation Utility**
 
-* **2.1.1 Goal:** To provide enterprises with the ability to generate auditable reports on AI-generated content that has been processed with EncypherAI metadata, supporting compliance and internal oversight.
+* **2.1.1 Goal:** To provide enterprises with the ability to generate auditable reports on AI-generated content that has been processed with Encypher metadata, supporting compliance and internal oversight.
 * **2.1.2 User Stories:**
     * "As David (CCO), I want to generate a quarterly report of AI model usage across departments so that I can demonstrate compliance with internal AI policies and external regulations like the EU AI Act."
     * "As Susan (AI Security Consultant), I want to provide my clients with a verifiable log of their AI-generated content, showing provenance and signature status, as part of my AI governance implementation service."
 * **2.1.3 Requirements / Scope (V1):**
     * Command-Line Interface (CLI) tool primarily, for speed of development.
     * Ability to scan a specified directory of text files or accept a list of text inputs.
-    * Parses EncypherAI metadata from compliant texts.
+    * Parses Encypher metadata from compliant texts.
     * Outputs a report (initially CSV format) containing:
         * Filename/Identifier
         * Signature Status (Valid, Invalid, Missing)
@@ -62,9 +62,9 @@
 
 **2.2 Feature: Metadata Policy Validation Tool**
 
-* **2.2.1 Goal:** To enable enterprises to define and enforce internal policies regarding the content and structure of EncypherAI metadata, ensuring consistency and adherence to governance standards.
+* **2.2.1 Goal:** To enable enterprises to define and enforce internal policies regarding the content and structure of Encypher metadata, ensuring consistency and adherence to governance standards.
 * **2.2.2 User Stories:**
-    * "As David (CCO), I want to ensure all AI-generated legal documents include a `case_id` and `sensitivity_level` in their EncypherAI metadata, so we can track usage and apply appropriate controls."
+    * "As David (CCO), I want to ensure all AI-generated legal documents include a `case_id` and `sensitivity_level` in their Encypher metadata, so we can track usage and apply appropriate controls."
     * "As Susan (Consultant), I want to help my clients set up metadata policies and then run validation checks to demonstrate the effectiveness of the new governance framework."
 * **2.2.3 Requirements / Scope (V1):**
     * CLI tool primarily.
@@ -72,7 +72,7 @@
         * Schema should specify required metadata keys.
         * Schema can optionally specify expected data types (string, integer, boolean) for values (basic validation).
         * Schema can optionally specify allowed values for certain keys (enum-like).
-    * Scans input texts (directory or list) containing EncypherAI metadata.
+    * Scans input texts (directory or list) containing Encypher metadata.
     * Compares extracted metadata against the defined policy schema.
     * Outputs a report (CSV initially) highlighting:
         * Compliant metadata instances.
@@ -106,7 +106,7 @@
 
 **3. "Compliance Readiness" Dashboard - Design Principles & Description (V1)**
 
-* **3.1 General Design Philosophy:** The dashboard will embody EncypherAI's brand personality: **Trustworthy, Transparent & Open, Developer-Friendly (for admins), Confident yet Accessible.** It must be clean, modern, and provide clear, actionable insights without overwhelming the user.
+* **3.1 General Design Philosophy:** The dashboard will embody Encypher's brand personality: **Trustworthy, Transparent & Open, Developer-Friendly (for admins), Confident yet Accessible.** It must be clean, modern, and provide clear, actionable insights without overwhelming the user.
 * **3.2 Visual Identity Alignment (from Marketing Guidelines):**
     * **Color Palette:** Primarily Deep Navy (`#1B2F50`) for backgrounds/major elements, Azure Blue (`#2A87C4`) for primary actions/highlights, Light Sky Blue (`#B7D5ED`) for secondary elements, and Neutral Gray (`#A7AFBC`) for text, with White (`#FFFFFF`) for core content areas. Soft Rose Accent (`#BA8790`) to be used sparingly for critical alerts or notifications.
     * **Typography:** Clean, readable sans-serif fonts (e.g., Roboto, Open Sans) with clear hierarchy.

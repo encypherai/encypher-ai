@@ -8,13 +8,14 @@ Tests cover:
 - Hierarchical structure building
 """
 import pytest
+
 from app.utils.segmentation import (
-    segment_sentences_default,  # Use spaCy-based default
-    segment_paragraphs,
-    segment_sections,
+    SPACY_AVAILABLE,
     HierarchicalSegmenter,
     build_hierarchical_structure,
-    SPACY_AVAILABLE
+    segment_paragraphs,
+    segment_sections,
+    segment_sentences_default,  # Use spaCy-based default
 )
 
 

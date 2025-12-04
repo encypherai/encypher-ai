@@ -7,15 +7,15 @@ Two-Database Architecture:
 - Content DB: Verification/content data
 """
 import importlib.util
-import sys
 import os
+import sys
 from pathlib import Path
 from typing import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 def _set_enterprise_app() -> None:
@@ -37,9 +37,8 @@ def _set_enterprise_app() -> None:
 _set_enterprise_app()
 
 # Now import app modules after setting up the path
-from app.database import get_db, get_content_db
+from app.database import get_content_db, get_db
 from app.main import app
-
 
 # Test database URLs - Two-Database Architecture
 # These match the docker-compose.full-stack.yml configuration

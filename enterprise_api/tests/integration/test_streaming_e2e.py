@@ -8,17 +8,18 @@ They connect to localhost:8000 and require DEMO_API_KEY to be set.
 Run with: pytest tests/integration/test_streaming_e2e.py -v
 After starting the server with: uvicorn app.main:app --host 0.0.0.0 --port 8000
 """
-import os
-import pytest
 import asyncio
 import json
-from httpx import AsyncClient
-import websockets
+import os
 
-from app.main import app
-from app.services.session_service import session_service
-from app.middleware.rate_limiter import streaming_rate_limiter
+import pytest
+import websockets
+from httpx import AsyncClient
+
 from app.config import settings
+from app.main import app
+from app.middleware.rate_limiter import streaming_rate_limiter
+from app.services.session_service import session_service
 
 
 @pytest.fixture
@@ -223,7 +224,7 @@ class TestRateLimiting:
             for ws in connections:
                 try:
                     await ws.close()
-                except:
+                except Exception:
                     pass
 
 

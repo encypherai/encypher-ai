@@ -4,6 +4,7 @@ Basic tests for streaming functionality.
 Tests WebSocket connection manager and session service.
 """
 import pytest
+
 from app.core.websocket_manager import ConnectionManager
 from app.services.session_service import SessionService
 

@@ -3,12 +3,12 @@ Merkle proof generation and verification.
 
 Provides cryptographic proofs that a text segment belongs to a document.
 """
-from typing import List, Dict, Any, Optional
-from dataclasses import dataclass, field
 import logging
+from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
-from .node import MerkleNode
 from .hashing import combine_hashes
+from .node import MerkleNode
 
 logger = logging.getLogger(__name__)
 

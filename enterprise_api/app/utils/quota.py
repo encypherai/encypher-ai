@@ -5,12 +5,12 @@ Tracks and enforces usage quotas based on organization tier.
 """
 import logging
 from datetime import datetime
-from typing import Dict
 from enum import Enum
+from typing import Dict
 
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
 from fastapi import HTTPException, status
+from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization, OrganizationTier
 
@@ -68,7 +68,7 @@ TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
         "c2pa_signing": True,
         "verification": True,
         "sentence_tracking": True,
-        "merkle": False,
+        "merkle": True,  # Sentence-level Merkle roots available for all paid tiers
         "streaming": True,
         "batch_operations": False,
         "byok": True,
@@ -138,9 +138,9 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
     OrganizationTier.PROFESSIONAL: {
         QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
         QuotaType.SENTENCES_TRACKED: 50000,
-        QuotaType.MERKLE_ENCODING: 0,  # Not available
-        QuotaType.MERKLE_ATTRIBUTION: 0,
-        QuotaType.MERKLE_PLAGIARISM: 0,
+        QuotaType.MERKLE_ENCODING: 5000,  # Sentence-level Merkle available for paid tiers
+        QuotaType.MERKLE_ATTRIBUTION: 10000,
+        QuotaType.MERKLE_PLAGIARISM: 0,  # Business+ only
         QuotaType.BATCH_OPERATIONS: 0,
         QuotaType.API_CALLS: 50000,
     },
@@ -218,6 +218,22 @@ class QuotaManager:
         # Get quota limit for tier
         quota_limit = QuotaManager.get_quota_limit(org.tier, quota_type)
         
+        # Quota = 0 means feature not available for this tier
+        if quota_limit == 0:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "error": "FeatureNotAvailable",
+                    "message": f"'{quota_type.value}' is not available on {org.tier.value} tier",
+                    "current_tier": org.tier.value,
+                    "upgrade_url": "https://dashboard.encypherai.com/billing",
+                }
+            )
+        
+        # Quota = -1 means unlimited - allow without tracking
+        if quota_limit == -1:
+            return True
+        
         # Get current usage
         current_usage = QuotaManager._get_current_usage(org, quota_type)
         
@@ -271,6 +287,9 @@ class QuotaManager:
             QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
             QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
             QuotaType.API_CALLS: "api_calls_this_month",
+            QuotaType.C2PA_SIGNATURES: "documents_signed",
+            QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
+            QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
         }
         
         field_name = usage_fields.get(quota_type)
@@ -301,6 +320,9 @@ class QuotaManager:
             QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
             QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
             QuotaType.API_CALLS: "api_calls_this_month",
+            QuotaType.C2PA_SIGNATURES: "documents_signed",
+            QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
+            QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
         }
         
         field_name = usage_fields.get(quota_type)
@@ -313,6 +335,48 @@ class QuotaManager:
         
         await db.commit()
         await db.refresh(org)
+    
+    @staticmethod
+    async def get_quota_headers(
+        db: AsyncSession,
+        organization_id: str,
+        quota_type: QuotaType
+    ) -> dict:
+        """
+        Get HTTP headers showing quota usage for a specific quota type.
+        
+        Returns headers like:
+        - X-Quota-Limit: 5000
+        - X-Quota-Used: 1234
+        - X-Quota-Remaining: 3766
+        - X-Quota-Reset: 2025-01-01T00:00:00Z
+        """
+        result = await db.execute(
+            select(Organization).where(Organization.organization_id == organization_id)
+        )
+        org = result.scalar_one_or_none()
+        
+        if not org:
+            return {}
+        
+        limit = QuotaManager.get_quota_limit(org.tier, quota_type)
+        used = QuotaManager._get_current_usage(org, quota_type)
+        
+        if limit == -1:
+            return {
+                "X-Quota-Limit": "unlimited",
+                "X-Quota-Used": str(used),
+                "X-Quota-Remaining": "unlimited",
+                "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
+            }
+        
+        remaining = max(0, limit - used)
+        return {
+            "X-Quota-Limit": str(limit),
+            "X-Quota-Used": str(used),
+            "X-Quota-Remaining": str(remaining),
+            "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
+        }
     
     @staticmethod
     def _get_reset_date() -> datetime:
@@ -388,7 +452,10 @@ class QuotaManager:
                 merkle_encoding_calls_this_month=0,
                 merkle_attribution_calls_this_month=0,
                 merkle_plagiarism_calls_this_month=0,
-                api_calls_this_month=0
+                api_calls_this_month=0,
+                documents_signed=0,
+                sentences_tracked_this_month=0,
+                batch_operations_this_month=0,
             )
         )
         await db.commit()

@@ -667,10 +667,10 @@ final_text = signer.finalize()  # Important!
 
 ## License
 
-Proprietary - EncypherAI Commercial License
+Proprietary - Encypher Commercial License
 
-Copyright (c) 2025 EncypherAI. All rights reserved.
+Copyright (c) 2025 Encypher. All rights reserved.
 
 ---
 
-**Built with care by the EncypherAI team**
+**Built with care by the Encypher team**

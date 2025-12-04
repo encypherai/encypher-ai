@@ -1,5 +1,5 @@
 """
-Database startup utilities for EncypherAI microservices.
+Database startup utilities for Encypher microservices.
 
 Provides functions to validate database connections and run migrations
 on service startup. Designed to be called from FastAPI lifespan events
@@ -24,10 +24,10 @@ Usage:
         uvicorn.run(app, ...)
 """
 
+import logging
 import os
 import sys
 import time
-import logging
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -143,10 +143,10 @@ def run_migrations_if_needed(
         return True
     
     try:
-        from alembic.config import Config
         from alembic import command
-        from alembic.script import ScriptDirectory
+        from alembic.config import Config
         from alembic.runtime.migration import MigrationContext
+        from alembic.script import ScriptDirectory
         from sqlalchemy import create_engine
     except ImportError:
         logger.warning(f"[{service_name}] Alembic not installed, skipping migrations")

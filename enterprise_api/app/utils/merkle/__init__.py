@@ -7,13 +7,13 @@ This package provides:
 - Proof generation and verification
 - Hash computation utilities
 """
-from .node import MerkleNode
-from .tree import MerkleTree
-from .hashing import compute_hash, combine_hashes, compute_normalized_hash
-from .proof import MerkleProof, generate_proof, verify_proof
-
 # Import normalize_for_hashing from segmentation
 from app.utils.segmentation import normalize_for_hashing
+
+from .hashing import combine_hashes, compute_hash, compute_normalized_hash
+from .node import MerkleNode
+from .proof import MerkleProof, generate_proof, verify_proof
+from .tree import MerkleTree
 
 __all__ = [
     "MerkleNode",

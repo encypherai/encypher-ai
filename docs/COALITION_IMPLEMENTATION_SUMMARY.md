@@ -21,7 +21,7 @@ We've created a comprehensive plan to implement a coalition-based licensing mode
 2. **enterprise_sdk** - Python client, batch signing, streaming ✅
 3. **wordpress-provenance-plugin** - Auto-signing, verification ✅
 4. **policy_validator_cli** - Metadata policy validation ✅
-5. **shared_commercial_libs** - Common utilities, EncypherAI wrapper ✅
+5. **shared_commercial_libs** - Common utilities, Encypher wrapper ✅
 6. **dashboard_app** - Compliance dashboard, directory signing ✅
 7. **audit_log_cli** - File scanning, report generation ⚠️ (has known issues)
 8. **services/** - Auth service ✅, Key service 🚧 (partial)

@@ -3,21 +3,30 @@ Licensing Agreement Management Service.
 
 Business logic for creating, managing, and tracking licensing agreements.
 """
-from typing import List, Optional, Dict
 from datetime import date, datetime
 from decimal import Decimal
+from typing import Dict, List, Optional
 from uuid import UUID
-from sqlalchemy import select, and_
+
+from sqlalchemy import and_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.content_reference import ContentReference
 from app.models.licensing import (
-    AICompany, LicensingAgreement, ContentAccessLog,
-    RevenueDistribution, MemberRevenue,
-    AgreementStatus, DistributionStatus, PayoutStatus
+    AgreementStatus,
+    AICompany,
+    ContentAccessLog,
+    DistributionStatus,
+    LicensingAgreement,
+    MemberRevenue,
+    PayoutStatus,
+    RevenueDistribution,
 )
 from app.schemas.licensing import (
-    LicensingAgreementCreate, LicensingAgreementUpdate,
-    RevenueDistributionCreate
+    ContentMetadata,
+    LicensingAgreementCreate,
+    LicensingAgreementUpdate,
+    RevenueDistributionCreate,
 )
 from app.utils.api_key import generate_api_key, verify_api_key
 
@@ -97,6 +106,7 @@ class LicensingService:
     async def list_agreements(
         db: AsyncSession,
         status: Optional[AgreementStatus] = None,
+        ai_company_id: Optional[UUID] = None,
         limit: int = 100,
         offset: int = 0
     ) -> List[LicensingAgreement]:
@@ -106,10 +116,126 @@ class LicensingService:
         if status:
             query = query.where(LicensingAgreement.status == status)
 
+        if ai_company_id:
+            query = query.where(LicensingAgreement.ai_company_id == ai_company_id)
+
         query = query.limit(limit).offset(offset).order_by(LicensingAgreement.created_at.desc())
 
         result = await db.execute(query)
         return list(result.scalars().all())
+
+    @staticmethod
+    async def get_active_agreement_for_company(
+        db: AsyncSession,
+        ai_company_id: UUID
+    ) -> Optional[LicensingAgreement]:
+        """Get the active agreement for an AI company."""
+        agreements = await LicensingService.list_agreements(
+            db=db,
+            status=AgreementStatus.ACTIVE,
+            ai_company_id=ai_company_id,
+            limit=1
+        )
+        # Return first active agreement that is within date range
+        for agreement in agreements:
+            if agreement.is_active():
+                return agreement
+        return None
+
+    @staticmethod
+    async def list_available_content(
+        db: AsyncSession,
+        agreement: LicensingAgreement,
+        content_type: Optional[str] = None,
+        min_word_count: Optional[int] = None,
+        limit: int = 100,
+        offset: int = 0
+    ) -> tuple[List[ContentMetadata], int]:
+        """
+        List content available under a licensing agreement.
+
+        Queries ContentReference table for content from coalition members
+        that matches the agreement terms.
+
+        Args:
+            db: Database session
+            agreement: The licensing agreement
+            content_type: Optional filter by content type
+            min_word_count: Optional minimum word count filter
+            limit: Results per page
+            offset: Pagination offset
+
+        Returns:
+            Tuple of (list of ContentMetadata, total count)
+        """
+        from sqlalchemy import func
+
+        # Build base query for content references
+        query = select(ContentReference).where(
+            ContentReference.created_at >= agreement.start_date,
+            ContentReference.created_at <= agreement.end_date,
+        )
+
+        # Apply agreement content type filters if specified
+        # Note: ContentReference doesn't have content_type directly,
+        # but we can filter by license_type or other metadata
+        if agreement.content_types:
+            # Filter by license_type if it matches content_types
+            query = query.where(
+                ContentReference.license_type.in_(agreement.content_types)
+            )
+
+        # Apply request-level content_type filter
+        if content_type:
+            query = query.where(ContentReference.license_type == content_type)
+
+        # Get total count
+        count_query = select(func.count()).select_from(query.subquery())
+        count_result = await db.execute(count_query)
+        total = count_result.scalar() or 0
+
+        # Apply pagination
+        query = query.limit(limit).offset(offset).order_by(ContentReference.created_at.desc())
+
+        result = await db.execute(query)
+        references = list(result.scalars().all())
+
+        # Convert to ContentMetadata
+        content_list = [
+            ContentMetadata(
+                id=ref.ref_id,  # Use ref_id as UUID-like identifier
+                content_type=ref.license_type or "unknown",
+                word_count=None,  # ContentReference doesn't store word count
+                signed_at=ref.created_at,
+                content_hash=ref.signature_hash,
+                verification_url=ref.to_verification_url(),
+            )
+            for ref in references
+        ]
+
+        return content_list, total
+
+    @staticmethod
+    async def get_content_owner(
+        db: AsyncSession,
+        content_id: int
+    ) -> Optional[str]:
+        """
+        Get the organization_id (member_id) that owns a piece of content.
+
+        Args:
+            db: Database session
+            content_id: The content reference ID (BigInteger)
+
+        Returns:
+            Organization ID if found, None otherwise
+        """
+        result = await db.execute(
+            select(ContentReference.organization_id).where(
+                ContentReference.ref_id == content_id
+            )
+        )
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def update_agreement(

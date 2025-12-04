@@ -3,8 +3,9 @@ from datetime import datetime
 from typing import List
 
 import structlog
-from encypher_commercial_shared.email import EmailConfig, send_email
 from sqlalchemy.orm import Session
+
+from encypher_commercial_shared.email import EmailConfig, send_email
 
 from ..core.config import settings
 from ..db.models import Notification

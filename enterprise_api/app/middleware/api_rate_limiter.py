@@ -21,7 +21,6 @@ from typing import Deque, Dict, Optional, Tuple
 
 from app.config import settings
 
-
 # Rate limits by tier (requests per second)
 # These align with docs/pricing/PRICING_STRATEGY.md
 TIER_RATE_LIMITS_PER_SECOND: Dict[str, int] = {

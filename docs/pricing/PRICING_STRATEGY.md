@@ -796,10 +796,45 @@ The dashboard tiers align with GTM pricing:
 
 ---
 
+## Future Cohort Pricing Policy
+
+### Founding Coalition Members
+
+Publishers who join the coalition during the **founding period** (prior to first major AI licensing deal) receive the best available terms:
+
+- **Revenue share:** 80% publisher / 20% Encypher (Enterprise tier)
+- **Lock-in:** These terms are **grandfathered** for the life of the contract
+- **Benefits:** Input on product roadmap, early access to features, co-marketing opportunities
+
+### Future Cohort Terms
+
+After the founding period closes, new coalition members may receive different terms:
+
+- Standard tier rev shares may be adjusted (e.g., 60/65/70/75 instead of 65/70/75/80)
+- Founding members retain their original terms regardless of future changes
+- Any changes to standard terms will be announced with at least 90 days notice
+
+**Rationale:** Early adopters who help establish the standard and validate the model deserve the best terms. Later entrants benefit from an established corpus and proven AI licensing deals, justifying a higher platform take.
+
+---
+
+## OEM / Non-Publisher Pricing
+
+For customers who want to integrate Encypher APIs but do not participate in the Licensing Coalition (e.g., SaaS platforms, internal enterprise use), see:
+
+**[OEM Pricing Guidelines](./OEM_PRICING_GUIDELINES.md)**
+
+Key differences from publisher tiers:
+- No coalition revenue share (they pay platform fees instead)
+- Sales-driven (not self-serve)
+- Base platform fee + usage-based component
+
+---
+
 ## Document Control
 
-**Version:** 2.1  
-**Last Updated:** November 29, 2025  
+**Version:** 2.2  
+**Last Updated:** December 3, 2025  
 **Next Review:** December 15, 2025  
 **Approved By:** [Pending Executive Review]
 
@@ -810,3 +845,4 @@ The dashboard tiers align with GTM pricing:
 | 1.0 | Nov 25, 2025 | Initial draft |
 | 2.0 | Nov 25, 2025 | Complete rewrite with coalition economics, publisher examples, feature matrix |
 | 2.1 | Nov 29, 2025 | Added GTM Strategy section: Dashboard as the Gateway. Aligned dashboard, marketing site, and internal docs. |
+| 2.2 | Dec 3, 2025 | Added Future Cohort Pricing Policy and OEM/Non-Publisher section. Clarified founding member grandfathering. |

@@ -20,12 +20,13 @@ Safety:
 - Configurable batch size and timeout for different workloads
 """
 import asyncio
-import time
 import logging
+import time
 from typing import Set
+
 from fastapi import Request
-from starlette.middleware.base import BaseHTTPMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger(__name__)
 

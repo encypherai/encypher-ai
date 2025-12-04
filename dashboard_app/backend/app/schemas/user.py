@@ -1,8 +1,10 @@
 """
 Pydantic schemas for user-related API requests and responses.
 """
-from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Optional
+
+from pydantic import BaseModel, EmailStr, Field, validator
+
 
 class UserBase(BaseModel):
     """Base user schema with common attributes."""

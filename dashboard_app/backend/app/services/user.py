@@ -1,19 +1,19 @@
 """
 User service for authentication and user management.
 """
-from typing import Optional, Any
+from typing import Any, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.database import get_db
-from app.core.security import verify_password, get_password_hash, decode_access_token
-from app.models.user import User
+from app.core.security import decode_access_token, get_password_hash, verify_password
 from app.models.blacklisted_token import BlacklistedToken
+from app.models.user import User
 
 # OAuth2 password bearer for token authentication
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_V1_STR}/auth/login")

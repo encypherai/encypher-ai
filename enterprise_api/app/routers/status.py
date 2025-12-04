@@ -8,11 +8,10 @@ Provides endpoints for:
 - Serving status lists (public, CDN-cacheable)
 - Querying document status
 """
-import json
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Body, Query
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -279,7 +278,7 @@ async def get_status_stats(
     """
     organization_id = org.get("organization_id") or org.get("id")
     
-    from sqlalchemy import select, func
+    from sqlalchemy import select
     
     # Get list metadata
     result = await db.execute(

@@ -4,10 +4,11 @@ import os
 from pathlib import Path
 
 import typer
-from encypher_ai import EncypherAI
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.progress import Progress
+
+from encypher_ai import Encypher
 
 from .policy_parser import PolicySchemaError, load_policy
 from .validator import validate_metadata
@@ -47,7 +48,7 @@ def validate_metadata(
     ),
 ):
     """
-    Validates EncypherAI metadata against a defined policy.
+    Validates Encypher metadata against a defined policy.
     """
     # 1. Load and parse the policy file
     console.print(
@@ -93,9 +94,9 @@ def validate_metadata(
         f":page_facing_up: Validation report will be saved to: [bold green]{output_file}[/bold green]"
     )
 
-    # 3. Initialize EncypherAI
-    console.print("\n:gear: Initializing EncypherAI...")
-    ea = EncypherAI()  # Using default configuration
+    # 3. Initialize Encypher
+    console.print("\n:gear: Initializing Encypher...")
+    ea = Encypher()  # Using default configuration
 
     # 4. Process files and validate metadata
     all_results = []
@@ -110,10 +111,10 @@ def validate_metadata(
 
             try:
                 # Read file content
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     content = f.read()
 
-                # Extract metadata using EncypherAI
+                # Extract metadata using Encypher
                 verification_result = ea.verify_from_text(content)
 
                 # Validate metadata against policy rules

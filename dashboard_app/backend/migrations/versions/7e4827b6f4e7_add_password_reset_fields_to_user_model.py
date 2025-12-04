@@ -5,9 +5,8 @@ Revises: 0f99842641fa
 Create Date: 2025-06-02 09:38:07.811268
 
 """
-from typing import Sequence, Union
-
-
+from collections.abc import Sequence
+from typing import Union
 
 # revision identifiers, used by Alembic.
 revision: str = '7e4827b6f4e7'

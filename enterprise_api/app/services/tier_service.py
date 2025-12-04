@@ -4,20 +4,20 @@ Tier enforcement service for API access control.
 Handles feature gating, quota enforcement, and tier-based access control.
 """
 import logging
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any, Dict
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, Request, status
 from sqlalchemy import select
-from fastapi import HTTPException, status, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization, OrganizationTier
 from app.utils.quota import (
-    QuotaType,
-    TIER_QUOTAS,
     TIER_FEATURES,
+    TIER_QUOTAS,
     TIER_RATE_LIMITS,
     TIER_REV_SHARE,
+    QuotaType,
 )
 
 logger = logging.getLogger(__name__)

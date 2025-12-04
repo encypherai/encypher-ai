@@ -98,7 +98,7 @@ export function Navbar() {
           <Link href="/blog" className="text-sm font-medium hover:text-primary">
             Blog
           </Link>
-          <Link href="/licensing" className="text-sm font-medium hover:text-primary">
+          <Link href="/pricing" className="text-sm font-medium hover:text-primary">
             Pricing
           </Link>
           <Link href="/company" className="text-sm font-medium hover:text-primary">
@@ -245,7 +245,7 @@ export function Navbar() {
               Blog
             </Link>
             <Link 
-              href="/licensing" 
+              href="/pricing" 
               className="text-sm font-medium hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >

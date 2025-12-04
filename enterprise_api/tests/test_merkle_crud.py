@@ -4,12 +4,12 @@ Unit tests for Merkle CRUD operations.
 These tests use PostgreSQL via Docker for full compatibility.
 ORM models have been updated to use unified schema (id as PK).
 """
-import pytest
 import uuid
 from datetime import datetime
 
-from app.crud import merkle as merkle_crud
+import pytest
 
+from app.crud import merkle as merkle_crud
 
 # Use the db fixture from conftest.py which connects to PostgreSQL
 # The db fixture is already configured to use the Docker PostgreSQL instance

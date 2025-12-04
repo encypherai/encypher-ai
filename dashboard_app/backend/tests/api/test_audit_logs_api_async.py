@@ -2,20 +2,21 @@
 Async API tests for Audit Log endpoints.
 """
 
+from datetime import datetime, timedelta, timezone
+from typing import Dict, List
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from typing import List, Dict
-from datetime import datetime, timedelta, timezone
+
 # import tempfile # Not used yet
 # import os # Not used yet
 # import csv # Not used yet
 # import json # Not used yet
-
 from app.core.config import settings
+from app.core.security import get_password_hash  # Corrected import for creating test user
+from app.models.audit_log import AuditLog as AuditLogModel  # For creating test data
 from app.models.user import User as UserModel
-from app.core.security import get_password_hash # Corrected import for creating test user
-from app.models.audit_log import AuditLog as AuditLogModel # For creating test data
 
 pytestmark = pytest.mark.asyncio
 
@@ -107,7 +108,7 @@ async def test_read_audit_logs_default_pagination(client: AsyncClient, db: Async
     
     # To ensure test isolation, we should only count logs created by *this test instance*.
     # The best way is to filter by a unique characteristic, like the department.
-    from sqlalchemy import select, func
+    from sqlalchemy import func, select
     count_stmt = select(func.count(AuditLogModel.id)).where(AuditLogModel.department == "API_Test_Dept_Paginate")
     db_total_for_dept = (await db.execute(count_stmt)).scalar_one()
     print(f"DB count for department 'API_Test_Dept_Paginate': {db_total_for_dept}")

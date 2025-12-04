@@ -8,22 +8,21 @@ Uses invisible Unicode variation selector embeddings with enterprise features:
 - Batch operations and analytics
 - Public verification API
 """
-import time
 import logging
-from typing import List, Dict, Any, Optional, Tuple
 import secrets
-from uuid import UUID
+import time
 from dataclasses import dataclass
 from datetime import datetime
+from typing import Any, Dict, List, Optional, Tuple
+from uuid import UUID
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import from free encypher-ai package (foundation)
 try:
-    from encypher.core.unicode_metadata import UnicodeMetadata
-    from encypher.core.keys import load_private_key_from_data
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from encypher.core.unicode_metadata import UnicodeMetadata
 except ImportError:
     raise ImportError(
         "encypher-ai package not found. "
@@ -261,7 +260,7 @@ class EmbeddingService:
         action_data = {
             "label": action,  # "c2pa.created" or "c2pa.edited"
             "when": current_timestamp,
-            "softwareAgent": f"EncypherAI Enterprise API/{organization_id}"
+            "softwareAgent": f"Encypher Enterprise API/{organization_id}"
         }
         
         # Add digitalSourceType if provided (C2PA 2.2 compliance)
@@ -276,6 +275,7 @@ class EmbeddingService:
             logger.info(f"Fetching previous manifest for ingredient reference: {previous_instance_id}")
             try:
                 from sqlalchemy import select
+
                 from app.models.content_reference import ContentReference as ContentReferenceModel
                 
                 # Fetch previous manifest by instance_id
@@ -325,7 +325,7 @@ class EmbeddingService:
                 custom_metadata=document_metadata, # Still pass it, though likely ignored by _embed_c2pa
                 metadata_format=metadata_format,  # C2PA-compliant wrapper
                 add_hard_binding=add_hard_binding,
-                claim_generator=f"EncypherAI Enterprise API/{organization_id}",
+                claim_generator=f"Encypher Enterprise API/{organization_id}",
                 actions=c2pa_actions,  # Pass C2PA actions
                 ingredients=c2pa_ingredients,  # Pass ingredient references
                 custom_assertions=final_custom_assertions  # Pass custom assertions including metadata
@@ -369,6 +369,7 @@ class EmbeddingService:
         
         # Delete old content references for this document (if re-signing)
         from sqlalchemy import delete
+
         from app.models.content_reference import ContentReference as ContentReferenceModel
         
         delete_stmt = delete(ContentReferenceModel).where(

@@ -15,7 +15,7 @@ Implement a comprehensive email system for auth-service with email verification 
 
 ## Goals
 1. **Email Verification Flow**: Require email verification before allowing login
-2. **Branded Email Templates**: Modern, responsive templates matching EncypherAI brand
+2. **Branded Email Templates**: Modern, responsive templates matching Encypher brand
 3. **Email Service**: Reliable email delivery via SMTP/Resend
 4. **Future: Zoho CRM Integration**: Auto-add signups to CRM
 
@@ -29,7 +29,7 @@ Implement a comprehensive email system for auth-service with email verification 
   - [x] 1.1.2 Sync email sending (async can be added later)
   - [x] 1.1.3 Jinja2 template rendering
 - [x] 1.2 Create email templates directory `services/auth-service/app/templates/email/`
-  - [x] 1.2.1 `base.html` - Brand base template (EncypherAI colors, logo, footer)
+  - [x] 1.2.1 `base.html` - Brand base template (Encypher colors, logo, footer)
   - [x] 1.2.2 `email_verification.html` - Verification email with CTA button
   - [x] 1.2.3 `welcome.html` - Post-verification welcome email
   - [x] 1.2.4 `password_reset.html` - Password reset email

@@ -107,6 +107,29 @@ http:
       entryPoints:
         - web
 
+    # ============================================
+    # API DOCUMENTATION -> Enterprise API (9000)
+    # Serves OpenAPI docs at /docs and /redoc
+    # Also serves OpenAPI JSON at /openapi.json
+    # ============================================
+    docs-router:
+      rule: "Path(`/docs`) || Path(`/redoc`) || Path(`/openapi.json`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 10  # Higher priority than catch-all
+
+    # ============================================
+    # ROOT LANDING -> Enterprise API (9000)
+    # Serves API info/welcome page at /
+    # ============================================
+    root-router:
+      rule: "Path(`/`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 10
+
   services:
     auth-service:
       loadBalancer:

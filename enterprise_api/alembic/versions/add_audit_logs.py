@@ -8,10 +8,10 @@ This migration adds:
 - audit_logs table for tracking all auditable actions
 - Indexes for efficient querying by organization, action, and date
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers
 revision = 'add_audit_logs'

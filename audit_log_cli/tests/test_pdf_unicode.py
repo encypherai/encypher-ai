@@ -7,6 +7,7 @@ using various methods to verify which approach works best.
 
 import sys
 from pathlib import Path
+
 from rich.console import Console
 
 # Initialize console for rich output
@@ -46,8 +47,8 @@ def create_test_pdf(output_path, text_with_variation_selectors):
         import pikepdf
     
     # Import required modules
-    from reportlab.pdfgen import canvas
     from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
     
     # Create a basic PDF
     pdf_path = str(output_path)
@@ -90,7 +91,7 @@ def create_test_pdf(output_path, text_with_variation_selectors):
     # Add metadata
     with pdf.open_metadata() as meta:
         meta['dc:description'] = text_with_variation_selectors
-        meta['pdf:Producer'] = 'EncypherAI Unicode Metadata Test'
+        meta['pdf:Producer'] = 'Encypher Unicode Metadata Test'
     
     # Add text as attachment
     filespec = pdf.make_stream(text_with_variation_selectors.encode('utf-8'))

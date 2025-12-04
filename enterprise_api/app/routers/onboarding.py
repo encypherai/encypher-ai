@@ -1,16 +1,17 @@
 """
 Onboarding router for SSL.com certificate requests and lifecycle management.
 """
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-import uuid
-import httpx
 import logging
+import uuid
+
+import httpx
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.utils.ssl_com_client import SSLComClient
 from app.dependencies import get_current_organization
+from app.utils.ssl_com_client import SSLComClient
 
 router = APIRouter()
 logger = logging.getLogger(__name__)

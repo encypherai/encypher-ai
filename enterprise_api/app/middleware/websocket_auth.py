@@ -4,8 +4,9 @@ WebSocket Authentication Middleware.
 Provides authentication for WebSocket connections using API keys.
 """
 import logging
-from typing import Optional, Dict
 from datetime import datetime
+from typing import Dict, Optional
+
 from fastapi import WebSocket, WebSocketException, status
 from sqlalchemy import text
 

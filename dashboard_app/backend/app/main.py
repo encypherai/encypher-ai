@@ -1,8 +1,9 @@
-import os
 import asyncio
 import logging
-from dotenv import load_dotenv
+import os
 from contextlib import asynccontextmanager
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -11,9 +12,10 @@ load_dotenv()
 
 from app.api.api import api_router
 from app.core.config import settings
-from app.core.database import Base, engine, AsyncSessionLocal
+from app.core.database import AsyncSessionLocal, Base, engine
 from app.services.user import create_user, get_user_by_email, get_user_by_username
 from app.utils.caching import cleanup_expired_cache_entries
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -62,9 +64,9 @@ async def lifespan(app: FastAPI):
     print("Application shutdown.")
 
 app = FastAPI(
-    title="EncypherAI Dashboard Backend",
+    title="Encypher Dashboard Backend",
     version="0.1.0",
-    description="API for the EncypherAI Compliance Readiness Dashboard",
+    description="API for the Encypher Compliance Readiness Dashboard",
     lifespan=lifespan
 )
 
@@ -81,7 +83,7 @@ app.add_middleware(
 # Root endpoint
 @app.get("/")
 async def read_root():
-    return {"message": "Welcome to the EncypherAI Dashboard Backend"}
+    return {"message": "Welcome to the Encypher Dashboard Backend"}
 
 
 # Health check endpoint

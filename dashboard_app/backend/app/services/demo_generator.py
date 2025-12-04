@@ -10,8 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import List
 
-from app.schemas.demo import DemoGenerateRequest, DemoGenerateResponse, DEFAULT_TOPICS
-
+from app.schemas.demo import DEFAULT_TOPICS, DemoGenerateRequest, DemoGenerateResponse
 
 _PARAGRAPHS: List[str] = [
     "In a surprising turn of events, sources confirmed late Tuesday that the committee reached a bipartisan agreement after weeks of negotiation.",

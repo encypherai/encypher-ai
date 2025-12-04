@@ -1,7 +1,7 @@
 # Dashboard Example Integration PRD
 
 ## Overview
-This PRD outlines the integration of EncypherAI metadata example files into the dashboard application, providing users with realistic examples for demonstration, testing, and educational purposes.
+This PRD outlines the integration of Encypher metadata example files into the dashboard application, providing users with realistic examples for demonstration, testing, and educational purposes.
 
 ## Goals
 - Provide realistic example files with various metadata attributes and verification statuses

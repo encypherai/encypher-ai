@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Encypher Logo](https://encypherai.com/logo.svg)
+![Encypher Logo](https://encypherai.com/encypher_full_logo_color.svg)
 
 **Production-ready API for C2PA-compliant content signing and verification**
 
@@ -74,7 +74,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ **Audit Logs**: Complete activity tracking
 - ✅ **Usage Analytics**: Detailed usage metrics
 - ✅ **Tier-Based Access**: Feature gating by subscription tier
-- ✅ **BYOK Support**: Bring Your Own Keys (Enterprise)
+- ✅ **Bring Your Own Keys (BYOK)**: Use your own signing keys (Professional+)
 - ✅ **SSO Integration**: Single Sign-On (Enterprise)
 
 ---
@@ -88,7 +88,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
 | `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
-| `/stats` | GET | ✅ | All | Get usage statistics | Key Service |
+| `/api/v1/usage` | GET | ✅ | All | Get organization usage statistics | Key Service |
 
 ### Enterprise Merkle Endpoints
 
@@ -128,55 +128,74 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/stream/sign` | WS | ✅ | Professional+ | Real-time WebSocket signing |
-| `/api/v1/stream/chat` | WS | ✅ | Professional+ | Chat application wrapper |
-| `/api/v1/stream/events` | GET | ✅ | Professional+ | Server-Sent Events (SSE) |
+| `/api/v1/stream/sign` | POST/WS | ✅ | Professional+ | Real-time signing via SSE (POST) and WebSocket (WS) |
+| `/api/v1/stream/chat` | WS | ✅ | Professional+ | WebSocket chat stream (signing wrapper) |
+| `/api/v1/stream/chat/openai-compatible` | POST | ✅ | Professional+ | OpenAI-compatible SSE chat completions with signing |
+| `/api/v1/stream/events` | GET | ✅ | Professional+ | Server-Sent Events (SSE) heartbeat and events |
 | `/api/v1/stream/session/create` | POST | ✅ | Professional+ | Create streaming session |
 | `/api/v1/stream/session/{id}/close` | POST | ✅ | Professional+ | Close streaming session |
 | `/api/v1/stream/runs/{run_id}` | GET | ✅ | Professional+ | Get streaming run state |
+| `/api/v1/stream/stats` | GET | ✅ | Professional+ | Get organization streaming statistics |
+| `/api/v1/stream/health` | GET | ❌ | Internal | Streaming subsystem health check |
 
 ### Team & Administration Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/team/members` | GET | ✅ | Business+ | List team members |
-| `/api/v1/team/members` | POST | ✅ | Business+ | Add team member |
-| `/api/v1/team/members/{user_id}` | DELETE | ✅ | Business+ | Remove team member |
+| `/api/v1/org/members` | GET | ✅ | Business+ | List team members |
+| `/api/v1/org/members/invite` | POST | ✅ | Business+ | Invite team member |
+| `/api/v1/org/members/invites` | GET | ✅ | Business+ | List pending invites |
+| `/api/v1/org/members/invites/{invite_id}` | DELETE | ✅ | Business+ | Revoke invite |
+| `/api/v1/org/members/{member_id}/role` | PATCH | ✅ | Business+ | Update member role |
+| `/api/v1/org/members/{member_id}` | DELETE | ✅ | Business+ | Remove team member |
 | `/api/v1/audit/logs` | GET | ✅ | Business+ | Get audit logs |
-| `/api/v1/usage/summary` | GET | ✅ | All | Get usage summary |
+| `/api/v1/usage` | GET | ✅ | All | Get usage metrics for current period |
+| `/api/v1/usage/history` | GET | ✅ | All | Get historical usage summaries (preview) |
 
 ### Coalition Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/coalition/status` | GET | ✅ | All | Get coalition membership status |
-| `/api/v1/coalition/stats` | GET | ✅ | All | Get coalition statistics |
-| `/api/v1/coalition/revenue` | GET | ✅ | All | Get revenue breakdown |
+| `/api/v1/coalition/dashboard` | GET | ✅ | All | Get coalition dashboard (content, earnings, payouts) |
+| `/api/v1/coalition/content-stats` | GET | ✅ | All | Get historical content corpus statistics |
+| `/api/v1/coalition/earnings` | GET | ✅ | All | Get detailed earnings history |
+| `/api/v1/coalition/opt-out` | POST | ✅ | All | Opt out of coalition revenue sharing |
+| `/api/v1/coalition/opt-in` | POST | ✅ | All | Opt in to coalition revenue sharing |
 
 ### Document Revocation Endpoints (NEW)
 
 | Endpoint | Description | Tier |
 |----------|-------------|------|
-| `POST /api/v1/status/documents/{id}/revoke` | Revoke a document's authenticity | Enterprise |
-| `POST /api/v1/status/documents/{id}/reinstate` | Reinstate a revoked document | Enterprise |
-| `GET /api/v1/status/documents/{id}` | Get document revocation status | Enterprise |
-| `GET /api/v1/status/list/{org}/{index}` | Get status list credential (public, CDN-cacheable) | Public |
+| `POST /api/v1/status/documents/{document_id}/revoke` | Revoke a document's authenticity | Enterprise |
+| `POST /api/v1/status/documents/{document_id}/reinstate` | Reinstate a revoked document | Enterprise |
+| `GET /api/v1/status/documents/{document_id}` | Get document revocation status | Enterprise |
+| `GET /api/v1/status/list/{organization_id}/{list_index}` | Get status list credential (public, CDN-cacheable) | Public |
 | `GET /api/v1/status/stats` | Get revocation statistics | Enterprise |
 
-### Streaming Endpoints
 ### Licensing Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
 | `/api/v1/licensing/agreements` | GET | ✅ | Professional+ | List licensing agreements |
 | `/api/v1/licensing/agreements/{id}` | GET | ✅ | Professional+ | Get agreement details |
+| `/api/v1/licensing/agreements` | POST | ✅ | Professional+ | Create licensing agreement for an AI company |
+| `/api/v1/licensing/agreements/{id}` | PATCH | ✅ | Professional+ | Update licensing agreement |
+| `/api/v1/licensing/agreements/{id}` | DELETE | ✅ | Professional+ | Terminate licensing agreement |
+| `/api/v1/licensing/content` | GET | ✅ (AI key) | Professional+ | List content available under active AI-company agreements |
+| `/api/v1/licensing/track-access` | POST | ✅ (AI key) | Professional+ | Track AI-company content access for attribution |
+| `/api/v1/licensing/distributions` | POST | ✅ | Professional+ | Create revenue distribution for a period |
+| `/api/v1/licensing/distributions` | GET | ✅ | Professional+ | List revenue distributions |
+| `/api/v1/licensing/distributions/{id}` | GET | ✅ | Professional+ | Get revenue distribution details |
+| `/api/v1/licensing/payouts` | POST | ✅ | Professional+ | Process payouts for a distribution (simulated) |
+
+For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 
 ### Onboarding & Provisioning Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/onboarding/status` | GET | ✅ | All | Get onboarding status |
-| `/api/v1/onboarding/complete` | POST | ✅ | All | Complete onboarding |
+| `/api/v1/onboarding/request-certificate` | POST | ✅ | All | Request SSL.com code signing certificate |
+| `/api/v1/onboarding/certificate-status` | GET | ✅ | All | Get current certificate status |
 
 ### Health & Monitoring Endpoints
 
@@ -189,12 +208,12 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 ### Features by Tier
 
-#### Starter Tier ($29/month)
+#### Starter Tier (Free)
 - ✅ C2PA-compliant signing
 - ✅ Content verification
 - ✅ Public verification pages
 - ✅ 10,000 requests/month
-- ✅ Coalition membership (70% revenue share)
+- ✅ Coalition membership (65% publisher / 35% Encypher revenue share)
 
 #### Professional Tier ($99/month)
 - ✅ All Starter features
@@ -204,7 +223,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ Streaming support (WebSocket/SSE)
 - ✅ 100,000 requests/month
 - ✅ Priority support
-- ✅ Coalition membership (75% revenue share)
+- ✅ Coalition membership (70% publisher / 30% Encypher revenue share)
 
 #### Business Tier ($499/month)
 - ✅ All Professional features
@@ -213,9 +232,9 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ Batch operations
 - ✅ Team management (up to 10 members)
 - ✅ Audit logs
-- ✅ BYOK support
+- ✅ Bring Your Own Keys (BYOK)
 - ✅ 500,000 requests/month
-- ✅ Coalition membership (80% revenue share)
+- ✅ Coalition membership (75% publisher / 25% Encypher revenue share)
 
 #### Enterprise Tier (Custom pricing)
 - ✅ All Business features
@@ -229,7 +248,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ Unlimited requests
 - ✅ SLA guarantee (99.9%)
 - ✅ Dedicated support
-- ✅ Coalition membership (85% revenue share)
+- ✅ Coalition membership (80% publisher / 20% Encypher revenue share)
 
 ---
 
@@ -259,6 +278,22 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
 ---
 
 ## 📚 API Reference
+
+### Interactive API Docs
+
+The API exposes interactive OpenAPI documentation:
+
+**Via Traefik Gateway (recommended):**
+- Local: `http://localhost:8000/docs` (Swagger UI), `http://localhost:8000/redoc` (ReDoc)
+- Staging: `https://api.staging.encypherai.com/docs`
+- Production: `https://api.encypherai.com/docs`
+
+**Direct to Enterprise API (development only):**
+- `http://localhost:9000/docs`, `http://localhost:9000/redoc`
+
+The gateway URL is what you should give to external developers—it's the single entry point for all API operations.
+
+For up-to-date per-tier limits and quotas, see [FEATURE_MATRIX.md](../FEATURE_MATRIX.md).
 
 ### POST /api/v1/sign
 
@@ -432,9 +467,9 @@ Lookup sentence provenance (Professional+ tier).
 
 ---
 
-### GET /stats
+### GET /api/v1/usage
 
-Get usage statistics for your API key.
+Get usage statistics for your organizations current billing period.
 
 **Dependencies**: Key Service (required)
 
@@ -442,25 +477,29 @@ Get usage statistics for your API key.
 
 ```json
 {
-  "success": true,
-  "period": "current_month",
-  "usage": {
-    "sign_requests": 1234,
-    "verify_requests": 5678,
-    "lookup_requests": 234,
-    "total_requests": 7146
+  "organization_id": "org_123",
+  "tier": "business",
+  "period_start": "2025-11-01T00:00:00Z",
+  "period_end": "2025-12-01T00:00:00Z",
+  "metrics": {
+    "c2pa_signatures": {
+      "name": "C2PA Signatures",
+      "used": 1234,
+      "limit": -1,
+      "remaining": -1,
+      "percentage_used": 0.0,
+      "available": true
+    },
+    "api_calls": {
+      "name": "API Calls",
+      "used": 450,
+      "limit": 10000,
+      "remaining": 9550,
+      "percentage_used": 4.5,
+      "available": true
+    }
   },
-  "quota": {
-    "tier": "professional",
-    "monthly_limit": 10000,
-    "remaining": 2854,
-    "reset_date": "2025-11-01T00:00:00Z"
-  },
-  "performance": {
-    "avg_sign_time_ms": 45,
-    "avg_verify_time_ms": 23,
-    "success_rate": 99.8
-  }
+  "reset_date": "2025-12-01T00:00:00Z"
 }
 ```
 

@@ -1,15 +1,23 @@
 import argparse
 import asyncio
+import bz2
 import json
+import re
 import shutil
 import time
-import bz2
-import re
 from pathlib import Path
 from urllib.request import urlretrieve
+
 import httpx
 from rich.console import Console
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
+from rich.progress import (
+    BarColumn,
+    Progress,
+    SpinnerColumn,
+    TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
+)
 from rich.table import Table
 
 # Constants

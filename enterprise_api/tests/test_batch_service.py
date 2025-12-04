@@ -5,11 +5,11 @@ from fastapi import HTTPException
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import async_sessionmaker
 
+import app.services.batch_service as batch_service_module
 from app.models.batch import BatchRequest
 from app.models.response_models import SignResponse, VerifyVerdict
 from app.schemas.batch import BatchItemPayload, BatchSignRequest, BatchVerifyRequest
 from app.services.batch_service import BatchService
-import app.services.batch_service as batch_service_module
 
 
 @pytest.mark.asyncio

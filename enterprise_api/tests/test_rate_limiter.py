@@ -4,12 +4,11 @@ Tests for tier-aware rate limiting.
 TEAM_002: Tests for rate limit headers and tier-based limits.
 """
 import time
-import pytest
 
 from app.middleware.api_rate_limiter import (
+    TIER_RATE_LIMITS_PER_SECOND,
     ApiRateLimiter,
     RateLimitResult,
-    TIER_RATE_LIMITS_PER_SECOND,
 )
 
 

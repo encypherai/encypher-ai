@@ -1,7 +1,7 @@
 [project]
 name = "audit-log-cli"
 version = "0.1.0"
-description = "Commercial CLI tool for auditing and verifying EncypherAI metadata"
+description = "Commercial CLI tool for auditing and verifying Encypher metadata"
 readme = "README.md"
 requires-python = ">=3.9"
 dependencies = [
@@ -37,3 +37,10 @@ dev = [
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
 ]
+
+[tool.ruff]
+line-length = 150
+target-version = "py39"
+
+[tool.ruff.lint]
+ignore = ["E402", "E701", "E712", "E722", "E741", "F401", "F841", "B904", "B005"]

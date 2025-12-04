@@ -149,7 +149,7 @@ Expected response:
 Get your organization's usage statistics:
 
 ```bash
-curl -X GET https://api.encypherai.com/stats \
+curl -X GET https://api.encypherai.com/api/v1/usage \
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 

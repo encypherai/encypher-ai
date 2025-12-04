@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Type Checker Script for EncypherAI Commercial
+Type Checker Script for Encypher Commercial
 
 Runs mypy on all Python services and generates a report.
 
@@ -65,7 +65,7 @@ def run_mypy(path: str) -> Tuple[int, int, str]:
 
 def main():
     print("=" * 60)
-    print("Type Checker (mypy) for EncypherAI Commercial")
+    print("Type Checker (mypy) for Encypher Commercial")
     print("=" * 60)
     
     total_errors = 0

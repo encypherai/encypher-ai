@@ -83,4 +83,6 @@ Create `.env.local`:
 ## 📚 Documentation
 
 - [Design System](../../packages/design-system/README.md)
-- [Migration Plan](../../docs/architecture/SUBDOMAIN_MIGRATION_PLAN.md)
+- [Subdomain Strategy](../../docs/architecture/SUBDOMAIN_STRATEGY.md)
+- [Pricing Config (SSOT)](../../packages/pricing-config/README.md)
+- [Pricing Strategy & OEM Guidelines](../../docs/pricing/PRICING_STRATEGY.md)

@@ -1,12 +1,14 @@
-from typing import List, Any
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query
+from typing import Any, List
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.deps import get_current_active_user
 from app.core.database import get_db
 from app.models.user import User
+from app.schemas.audit_log import AuditLog as AuditLogSchema
+from app.schemas.audit_log import AuditLogCreate, AuditLogFilters, AuditLogStats
 from app.services import audit_log as audit_log_service
-from app.schemas.audit_log import AuditLog as AuditLogSchema, AuditLogCreate, AuditLogFilters, AuditLogStats
-from app.api.deps import get_current_active_user
 
 router = APIRouter()
 

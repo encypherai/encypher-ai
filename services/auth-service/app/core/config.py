@@ -75,7 +75,7 @@ class Settings(BaseSettings):
     SMTP_PASS: str = ""
     SMTP_TLS: bool = True
     EMAIL_FROM: str = "noreply@encypherai.com"
-    EMAIL_FROM_NAME: str = "EncypherAI"
+    EMAIL_FROM_NAME: str = "Encypher"
 
     # ===========================================
     # SERVICE-SPECIFIC: Token Expiration

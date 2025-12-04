@@ -3,16 +3,16 @@ Unit tests for refactored EmbeddingService with invisible Unicode embeddings.
 
 Tests the new encypher-ai integration for invisible embeddings.
 """
-import pytest
-from uuid import uuid4
 from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
 
-from app.services.embedding_service import EmbeddingService, EmbeddingReference
+import pytest
+
+from app.services.embedding_service import EmbeddingReference, EmbeddingService
 
 # Mock encypher-ai imports for testing
 try:
     from encypher.core.keys import generate_ed25519_key_pair
-    from cryptography.hazmat.primitives.asymmetric.types import Ed25519PrivateKey, Ed25519PublicKey
     ENCYPHER_AVAILABLE = True
 except ImportError:
     ENCYPHER_AVAILABLE = False

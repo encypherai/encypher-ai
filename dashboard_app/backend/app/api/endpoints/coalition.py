@@ -9,29 +9,29 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.coalition import (
+    AdminCoalitionOverview,
     CoalitionMember,
     CoalitionStats,
-    ContentItem,
-    ContentItemCreate,
-    RevenueTransaction,
-    RevenueTransactionCreate,
     ContentAccessLog,
     ContentAccessLogCreate,
-    AdminCoalitionOverview,
+    ContentItem,
+    ContentItemCreate,
     MemberListResponse,
+    RevenueTransaction,
+    RevenueTransactionCreate,
 )
-from app.services.user import get_current_user
 from app.services.coalition_service import (
-    get_coalition_stats,
-    get_member_revenue,
-    get_top_content,
+    create_access_log,
     create_content_item,
     create_revenue_transaction,
-    create_access_log,
     get_admin_coalition_overview,
     get_coalition_members,
+    get_coalition_stats,
+    get_member_revenue,
     get_or_create_coalition_member,
+    get_top_content,
 )
+from app.services.user import get_current_user
 
 router = APIRouter()
 

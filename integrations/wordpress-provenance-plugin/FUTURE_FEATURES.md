@@ -242,7 +242,7 @@ final_document = UnicodeMetadata.embed_metadata(
     signer_id=self.signer_id,
     metadata_format="c2pa",  # ← Creates ONE wrapper at end
     add_hard_binding=True,
-    claim_generator=f"EncypherAI Enterprise API/{organization_id}",
+    claim_generator=f"Encypher Enterprise API/{organization_id}",
     actions=[{"action": "c2pa.created"}],
     ...
 )

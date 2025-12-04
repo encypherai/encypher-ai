@@ -173,7 +173,7 @@
         </div>
         
         <div class="footer">
-            <p>Powered by <a href="https://encypherai.com" target="_blank">EncypherAI</a></p>
+            <p>Powered by <a href="https://encypherai.com" target="_blank">Encypher</a></p>
             <p style="margin-top: 10px; font-size: 12px;">This report verifies the authenticity and provenance of the content using C2PA standards.</p>
         </div>
     </div>

@@ -43,21 +43,21 @@ Verify your email address
 
 Hi{' ' + user_name if user_name else ''},
 
-Thanks for signing up for EncypherAI! To complete your registration, please verify your email address by visiting:
+Thanks for signing up for Encypher! To complete your registration, please verify your email address by visiting:
 
 {verification_url}
 
 This link will expire in 24 hours.
 
-If you didn't create an account with EncypherAI, you can safely ignore this email.
+If you didn't create an account with Encypher, you can safely ignore this email.
 
-— The EncypherAI Team
+— The Encypher Team
 """
     
     return send_email(
         config=config,
         to_email=to_email,
-        subject="Verify your email address - EncypherAI",
+        subject="Verify your email address - Encypher",
         html_content=html_content,
         plain_content=plain_content.strip(),
         logger=logger,
@@ -86,20 +86,20 @@ def send_welcome_email(
     
     html_content = render_template(
         "welcome.html",
-        subject="Welcome to EncypherAI!",
+        subject="Welcome to Encypher!",
         user_name=user_name,
         dashboard_url=dashboard_url,
     )
     
     plain_content = f"""
-Welcome to EncypherAI!
+Welcome to Encypher!
 
 Hi{' ' + user_name if user_name else ''},
 
 Your email has been verified and your account is now active. You're all set to start making AI transparent and trustworthy!
 
 Here's what you can do next:
-- Generate API Keys – Create keys to integrate EncypherAI into your applications
+- Generate API Keys – Create keys to integrate Encypher into your applications
 - Explore the Dashboard – Monitor your usage and manage your account
 - Read the Docs – Learn how to embed provenance metadata in AI-generated content
 
@@ -107,13 +107,13 @@ Go to Dashboard: {dashboard_url}
 
 Need help? Check out our documentation at https://encypherai.com/docs or email support@encypherai.com.
 
-— The EncypherAI Team
+— The Encypher Team
 """
     
     return send_email(
         config=config,
         to_email=to_email,
-        subject="Welcome to EncypherAI! 🎉",
+        subject="Welcome to Encypher! 🎉",
         html_content=html_content,
         plain_content=plain_content.strip(),
         logger=logger,
@@ -157,7 +157,7 @@ Reset your password
 
 Hi{' ' + user_name if user_name else ''},
 
-We received a request to reset the password for your EncypherAI account. Visit the link below to create a new password:
+We received a request to reset the password for your Encypher account. Visit the link below to create a new password:
 
 {reset_url}
 
@@ -165,13 +165,13 @@ This link will expire in 1 hour for security reasons.
 
 If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
 
-— The EncypherAI Team
+— The Encypher Team
 """
     
     return send_email(
         config=config,
         to_email=to_email,
-        subject="Reset your password - EncypherAI",
+        subject="Reset your password - Encypher",
         html_content=html_content,
         plain_content=plain_content.strip(),
         logger=logger,

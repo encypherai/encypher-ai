@@ -1,5 +1,5 @@
 """
-Streaming handlers for EncypherAI metadata encoding.
+Streaming handlers for Encypher metadata encoding.
 
 This module provides utilities for handling streaming responses from LLMs
 and encoding metadata into the streaming chunks.

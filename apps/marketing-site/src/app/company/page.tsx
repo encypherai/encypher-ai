@@ -45,12 +45,19 @@ export default function CompanyPage() {
         <div className="space-y-4 mb-12">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight">About Encypher</h1>
           <p className="text-xl text-muted-foreground">
-            Building Content Intelligence & Provenance Infrastructure
+            Building Trust Infrastructure for the AI Economy
           </p>
+
+          {/* Mission Statement */}
+          <div className="bg-primary/5 border border-primary/20 rounded-lg p-6 mt-8">
+            <p className="text-lg font-medium text-center">
+              We believe AI and creators can thrive together. Our mission is to build the infrastructure that makes this possible—open standards that enable attribution, licensing, and trust at scale.
+            </p>
+          </div>
 
           <div className="text-center pt-8">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-8">
-              We're Authoring the Future of Text Content Authenticity
+              Co-Authors of the C2PA Text Standard
             </h3>
             <div className="flex justify-center items-center gap-12 md:gap-16 flex-wrap">
               <div className="relative h-12 w-48">
@@ -76,24 +83,21 @@ export default function CompanyPage() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">Our Story</h2>
             <p className="text-muted-foreground mb-4">
-              We wrote the C2PA text authentication standard. When the industry needed a technical foundation for AI content verification, we created it.
+              When the industry needed a standard for AI content authenticity, we wrote it. As co-authors of the C2PA text specification, we work alongside Adobe, Microsoft, Google, OpenAI, and the BBC to define how digital content is authenticated.
             </p>
             <p className="text-muted-foreground mb-4">
-              But standard C2PA wasn't enough. Publishers needed court-admissible evidence. AI labs needed performance intelligence. The market needed infrastructure for content licensing at scale.
+              But standards alone don't solve problems—infrastructure does. Publishers need provable ownership. AI labs need performance intelligence and compliance infrastructure. The ecosystem needs interoperability.
             </p>
             <p className="text-muted-foreground mb-4">
-              So we built it. Sentence-level tracking that provides mathematical certainty—not statistical guessing. Infrastructure that enables both litigation evidence and model optimization. A dual-licensing model where open source drives adoption and commercial features drive competitive advantage.
-            </p>
-            <p className="text-muted-foreground mb-4">
-              We're not building a product. We're building the transaction layer for the AI content economy.
+              So we built it. Sentence-level tracking with cryptographic certainty. Open-source foundations with commercial capabilities. Infrastructure that serves both creators and AI companies—because the future isn't adversarial, it's collaborative.
             </p>
             <ul className="space-y-2 mb-4">
-              <li className="text-muted-foreground"><strong>For Publishers:</strong> Transform litigation costs into licensing revenue.</li>
-              <li className="text-muted-foreground"><strong>For AI Labs:</strong> See which parameters drive viral content.</li>
-              <li className="text-muted-foreground"><strong>For Developers:</strong> Implement the standard we wrote.</li>
+              <li className="text-muted-foreground"><strong>For Publishers:</strong> Transform unmarked content into provably owned assets with licensing capability.</li>
+              <li className="text-muted-foreground"><strong>For AI Labs:</strong> Performance intelligence on your models + regulatory compliance infrastructure.</li>
+              <li className="text-muted-foreground"><strong>For Developers:</strong> Open-source SDK implementing the standard we co-authored.</li>
             </ul>
             <p className="text-muted-foreground">
-              The coalition is forming. The infrastructure is here. The market transformation begins now.
+              The coalition is growing. The infrastructure is ready. We're building the trust layer for the AI economy.
             </p>
           </section>
 
@@ -110,7 +114,7 @@ export default function CompanyPage() {
                       <h3 className="text-xl font-semibold">Erik Svilich</h3>
                       <p className="text-sm text-muted-foreground mb-2">Founder & CEO</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        As Founder & CEO, Erik leads Encypher&apos;s mission to build the trust infrastructure for AI-generated content. He is the author of C2PA&apos;s text provenance standard and serves as co-chair of the C2PA Text Task Force, working directly with industry leaders to establish the open standard for digital content authenticity. An experienced entrepreneur with a background in AI SaaS and enterprise software, Erik founded Encypher to provide the foundational infrastructure that enables verifiable proof of origin and licensing for digital content at scale.
+                        Co-author of the C2PA text standard and co-chair of the C2PA Text Task Force. Working with Adobe, Microsoft, Google, and OpenAI to define content authenticity standards. Background in AI SaaS and enterprise software.
                       </p>
                       <div className="flex gap-2">
                         <a 
@@ -146,7 +150,7 @@ export default function CompanyPage() {
                       <h3 className="text-xl font-semibold">Nate Alvord</h3>
                       <p className="text-sm text-muted-foreground mb-2">Chief Revenue Officer</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        With 25+ years in enterprise sales and IP monetization, Nate brings deep expertise in scaling revenue operations and building strategic partnerships. He spent over 16 years leading sales at industry leaders including Digimarc, Intellectual Ventures, and Dolby, where he developed a proven track record negotiating complex contracts with major media companies. At  Encypher, Nate drives our commercial strategy, enterprise partnerships, and revenue growth as we establish the standard for AI content authentication and licensing.
+                        25+ years in enterprise sales and IP monetization. Former sales leader at Digimarc, Intellectual Ventures, and Dolby. Drives commercial strategy and enterprise partnerships.
                       </p>
                       <div className="flex gap-2">
                         <a 
@@ -170,7 +174,7 @@ export default function CompanyPage() {
                       <h3 className="text-xl font-semibold">Hiep Dang</h3>
                       <p className="text-sm text-muted-foreground mb-2">Strategic Advisor</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        With over 20 years of experience driving product and go-to-market strategies in the AI/ML and security sectors, Hiep brings invaluable expertise to Encypher. He has a proven track record in scaling technology ventures, notably developing the GTM strategy at Cylance that contributed to its $1.4B acquisition by BlackBerry. Hiep advises Encypher on product roadmap development, enterprise GTM strategy, fundraising, and building the strategic alliances necessary to establish Encypher as a trusted standard in AI content provenance.
+                        20+ years in AI/ML and security GTM strategy. Developed GTM at Cylance (acquired by BlackBerry for $1.4B). Advises on product strategy and enterprise partnerships.
                       </p>
                       <div className="flex gap-2">
                         <a 
@@ -195,7 +199,7 @@ export default function CompanyPage() {
                       <h3 className="text-xl font-semibold">Allen Guthier</h3>
                       <p className="text-sm text-muted-foreground mb-2">Strategic Advisor</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Allen brings a wealth of experience to Encypher from his decades in the enterprise Software-as-a-Service (SaaS) sector and his current role as a Venture Partner at the Oregon Venture Fund (OVF). His expertise is invaluable in guiding Encypher's scaling efforts, fundraising strategies, and alignment with market demands. Allen has firsthand experience in scaling tech companies, including playing a key role at CloudHealth Technologies through its $535M acquisition by VMware, and managing global customer success engineering teams at VMware. He advises Encypher on operational best practices, building strong technical and customer-facing teams, navigating high-growth phases, and achieving robust product-market fit. His investor perspective helps refine our venture capital engagement and ensures we are focused on sustainable differentiation and strategic impact.
+                        Venture Partner at Oregon Venture Fund. Key role at CloudHealth through $535M acquisition by VMware. Advises on scaling, fundraising, and product-market fit.
                       </p>
                       <div className="flex gap-2">
                         <a 
@@ -220,7 +224,7 @@ export default function CompanyPage() {
                       <h3 className="text-xl font-semibold">Adarsh Bhatt</h3>
                       <p className="text-sm text-muted-foreground mb-2">Strategic Advisor</p>
                       <p className="text-sm text-muted-foreground mb-4">
-                        Adarsh provides  Encypher with critical guidance on early-stage venture capital, startup business development, and fundraising strategy. As Co-Founder and General Partner of Comma Capital, an early-stage venture firm, he offers direct insights relevant to  Encypher&apos;s investment stage. Adarsh&apos;s hands-on experience as the first business development hire at multiple tech startups informs his advice on partnership strategy, early customer acquisition, and go-to-market acceleration, particularly within B2B and SaaS domains. Drawing on Comma Capital&apos;s &quot;operators turned founders&quot; philosophy and his diverse background in finance, technology, and startup execution, Adarsh helps  Encypher translate its innovative technology into a compelling, market-ready value proposition to accelerate growth and secure essential resources.
+                        Co-Founder & GP at Comma Capital. First BD hire at multiple tech startups. Advises on fundraising, partnerships, and go-to-market strategy.
                       </p>
                       <div className="flex gap-2">
                         <a 

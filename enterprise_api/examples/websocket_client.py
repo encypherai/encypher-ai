@@ -5,9 +5,10 @@ Usage:
     uv run python examples/websocket_client.py
 """
 import asyncio
-import websockets
 import json
 import sys
+
+import websockets
 
 
 async def test_streaming():

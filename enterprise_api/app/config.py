@@ -2,9 +2,10 @@
 Configuration module for Encypher Enterprise API.
 Uses Pydantic Settings for environment variable management.
 """
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from typing import Optional
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):

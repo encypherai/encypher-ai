@@ -95,7 +95,7 @@ export default function DashboardLayout({ children, currentPath }: DashboardLayo
           <div className="flex-shrink-0 flex items-center px-4">
             <Image
               src="/horizontal-logo-nobg.png"
-              alt="EncypherAI Logo"
+              alt="Encypher Logo"
               width={180}
               height={40}
               className="h-8 w-auto"
@@ -134,7 +134,7 @@ export default function DashboardLayout({ children, currentPath }: DashboardLayo
             <div className="flex items-center h-16 flex-shrink-0 px-4 bg-primary-900 dark:bg-gray-900">
               <Image
                 src="/horizontal-logo-nobg.png"
-                alt="EncypherAI Logo"
+                alt="Encypher Logo"
                 width={180}
                 height={40}
                 className="h-8 w-auto"

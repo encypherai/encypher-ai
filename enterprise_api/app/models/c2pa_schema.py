@@ -3,11 +3,12 @@ C2PA Schema Model
 
 Stores custom C2PA assertion schemas for validation.
 """
-from sqlalchemy import Column, String, Text, Boolean, TIMESTAMP, Index, JSON
+import uuid
+
+from sqlalchemy import JSON, TIMESTAMP, Boolean, Column, Index, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from sqlalchemy.types import TypeDecorator
-import uuid
 
 from app.database import Base
 

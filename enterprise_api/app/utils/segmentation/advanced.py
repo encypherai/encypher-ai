@@ -7,9 +7,9 @@ Requires: spacy and a language model (e.g., en_core_web_sm)
 Install with: uv add spacy
 Then: python -m spacy download en_core_web_sm
 """
+import logging
 from functools import lru_cache
 from typing import List
-import logging
 
 logger = logging.getLogger(__name__)
 

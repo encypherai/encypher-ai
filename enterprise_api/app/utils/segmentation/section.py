@@ -4,7 +4,7 @@ Section-level text segmentation.
 Segments text into sections based on headers and structural markers.
 """
 import re
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 def segment_sections(text: str, min_length: int = 50) -> List[str]:

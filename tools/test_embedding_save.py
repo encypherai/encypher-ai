@@ -1,7 +1,9 @@
 """Test that embeddings are actually saved to files."""
 import asyncio
 from pathlib import Path
+
 import httpx
+
 
 async def test():
     # Read the first article

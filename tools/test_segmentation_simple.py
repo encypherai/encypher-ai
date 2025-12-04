@@ -2,6 +2,7 @@
 import re
 from pathlib import Path
 
+
 def segment_sentences(text: str, min_length: int = 3):
     """Simple sentence segmentation (same logic as API)."""
     if not text or not text.strip():

@@ -5,15 +5,14 @@ Follows the repository pattern for clean separation of concerns.
 All operations are async for performance.
 """
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from sqlalchemy import select, and_, delete, insert
+from sqlalchemy import and_, delete, insert, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.merkle import MerkleRoot, MerkleSubhash, MerkleProofCache, AttributionReport
-
+from app.models.merkle import AttributionReport, MerkleProofCache, MerkleRoot, MerkleSubhash
 
 # ============================================================================
 # MerkleRoot CRUD Operations

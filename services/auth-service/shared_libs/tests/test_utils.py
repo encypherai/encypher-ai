@@ -8,7 +8,7 @@ import tempfile
 import os
 import csv
 
-from encypher_commercial_shared import EncypherAI, VerificationResult
+from encypher_commercial_shared import Encypher, VerificationResult
 from encypher_commercial_shared.core import scan_directory, generate_report
 from encypher_commercial_shared.core.utils import load_trusted_signers_from_directory as load_trusted_signers
 
@@ -18,7 +18,7 @@ class TestUtils(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.encypher = MagicMock(spec=EncypherAI)
+        self.encypher = MagicMock(spec=Encypher)
         
         # Create mock verification results
         self.mock_result1 = VerificationResult(

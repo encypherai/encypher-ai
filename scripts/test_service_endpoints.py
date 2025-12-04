@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
 """
-Individual endpoint tests for each EncypherAI microservice.
+Individual endpoint tests for each Encypher microservice.
 
 Usage:
     python scripts/test_service_endpoints.py
 """
-import requests
-import json
+import subprocess
 import sys
 from datetime import datetime
-import subprocess
+
+import requests
 
 BASE_URLS = {
     "auth": "http://localhost:8001",
@@ -50,7 +50,7 @@ class TestResults:
         print(f"\n{'='*60}")
         print(f"Results: {self.passed} passed, {self.failed} failed, {self.skipped} skipped (total: {total})")
         if self.errors:
-            print(f"\nFailed tests:")
+            print("\nFailed tests:")
             for name, error in self.errors:
                 print(f"  - {name}: {error}")
         return self.failed == 0
@@ -192,17 +192,17 @@ def test_key_service(token: str):
     if key_id:
         try:
             resp = requests.get(f"{BASE_URLS['key']}/api/v1/keys/{key_id}", headers=headers, timeout=5)
-            results.record(f"GET /api/v1/keys/{{id}}", resp.status_code == 200)
+            results.record("GET /api/v1/keys/{id}", resp.status_code == 200)
         except Exception as e:
-            results.record(f"GET /api/v1/keys/{{id}}", False, str(e))
+            results.record("GET /api/v1/keys/{id}", False, str(e))
     
     # Revoke key (do this last since it invalidates the key)
     if key_id:
         try:
             resp = requests.delete(f"{BASE_URLS['key']}/api/v1/keys/{key_id}", headers=headers, timeout=5)
-            results.record(f"DELETE /api/v1/keys/{{id}}", resp.status_code in [200, 204])
+            results.record("DELETE /api/v1/keys/{id}", resp.status_code in [200, 204])
         except Exception as e:
-            results.record(f"DELETE /api/v1/keys/{{id}}", False, str(e))
+            results.record("DELETE /api/v1/keys/{id}", False, str(e))
 
 # ============================================
 # USER SERVICE TESTS
@@ -462,16 +462,16 @@ def test_traefik_routing(token: str):
 
 def main():
     print("="*60)
-    print("EncypherAI Individual Service Endpoint Tests")
+    print("Encypher Individual Service Endpoint Tests")
     print("="*60)
     
     # Get auth token
     print("\nSetting up test user...")
     token, user_id = get_auth_token()
     if token:
-        print(f"  ✓ Auth token obtained")
+        print("  ✓ Auth token obtained")
     else:
-        print(f"  ✗ Failed to get auth token - some tests will be skipped")
+        print("  ✗ Failed to get auth token - some tests will be skipped")
     
     # Run all tests
     test_auth_service(token)

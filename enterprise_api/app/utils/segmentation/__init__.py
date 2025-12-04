@@ -11,21 +11,21 @@ This package provides:
 
 By default, spaCy is used for accurate boundary detection and tokenization.
 """
-from .sentence import segment_sentences
+from .hierarchical import HierarchicalSegmenter, build_hierarchical_structure
 from .paragraph import segment_paragraphs
 from .section import segment_sections
-from .word import segment_words_simple, segment_words_normalized
-from .hierarchical import HierarchicalSegmenter, build_hierarchical_structure
+from .sentence import segment_sentences
+from .word import segment_words_normalized, segment_words_simple
 
 # Default segmenter (spaCy-based with Unicode normalization) - RECOMMENDED
 try:
     from .default import (
+        SPACY_AVAILABLE,
         DefaultSegmenter,
-        segment_sentences_default,
-        segment_words_default,
         normalize_for_hashing,
         normalize_unicode,
-        SPACY_AVAILABLE
+        segment_sentences_default,
+        segment_words_default,
     )
     DEFAULT_AVAILABLE = True
 except ImportError:
@@ -39,7 +39,12 @@ except ImportError:
 
 # Advanced segmentation (for special use cases)
 try:
-    from .advanced import AdvancedSegmenter, segment_sentences_advanced, segment_words, normalize_text_advanced
+    from .advanced import (
+        AdvancedSegmenter,
+        normalize_text_advanced,
+        segment_sentences_advanced,
+        segment_words,
+    )
     ADVANCED_AVAILABLE = True
 except ImportError:
     ADVANCED_AVAILABLE = False

@@ -19,7 +19,9 @@ import pytest_asyncio
 from cryptography import x509
 from cryptography.hazmat.primitives import serialization
 from cryptography.x509.oid import NameOID
-from httpx import AsyncClient, ASGITransport
+from encypher.interop.c2pa import text_wrapper
+from encypher.streaming.handlers import StreamingHandler
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
@@ -29,8 +31,6 @@ from app.database import get_db
 from app.main import app
 from app.utils.crypto_utils import encrypt_private_key, generate_ed25519_keypair
 from app.utils.sentence_parser import parse_sentences
-from encypher.streaming.handlers import StreamingHandler
-from encypher.interop.c2pa import text_wrapper
 
 
 @pytest.fixture(autouse=True)

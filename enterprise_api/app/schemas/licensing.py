@@ -3,16 +3,14 @@ Pydantic schemas for Licensing Agreement Management API.
 
 Request and response models for licensing endpoints.
 """
-from pydantic import BaseModel, Field, EmailStr, validator
-from typing import Optional, List
 from datetime import date, datetime
 from decimal import Decimal
+from typing import List, Optional
 from uuid import UUID
 
-from app.models.licensing import (
-    AgreementStatus, AgreementType, DistributionStatus, PayoutStatus
-)
+from pydantic import BaseModel, EmailStr, Field, validator
 
+from app.models.licensing import AgreementStatus, AgreementType, DistributionStatus, PayoutStatus
 
 # ============================================================================
 # AI Company Schemas
@@ -111,7 +109,7 @@ class LicensingAgreementCreateResponse(BaseModel):
 
 class ContentMetadata(BaseModel):
     """Schema for content metadata returned to AI companies."""
-    id: UUID
+    id: int  # ContentReference uses BigInteger ref_id
     content_type: str
     word_count: Optional[int]
     signed_at: datetime
@@ -128,7 +126,7 @@ class ContentListResponse(BaseModel):
 
 class ContentAccessTrack(BaseModel):
     """Schema for tracking content access."""
-    content_id: UUID
+    content_id: int  # ContentReference uses BigInteger ref_id
     access_type: Optional[str] = "view"
 
 

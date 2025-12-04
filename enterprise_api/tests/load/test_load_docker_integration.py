@@ -1,15 +1,16 @@
-import pytest
-import httpx
 import asyncio
-import time
-import docker
 import os
 import socket
-import numpy as np
 import subprocess
 import sys
-from sqlalchemy.ext.asyncio import create_async_engine
+import time
+
+import docker
+import httpx
+import numpy as np
+import pytest
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import create_async_engine
 
 # Check if docker is available
 try:

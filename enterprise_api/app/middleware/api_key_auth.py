@@ -4,9 +4,10 @@ API Key Authentication Middleware for HTTP Endpoints.
 Provides authentication for enterprise API endpoints using API keys.
 """
 import logging
-from typing import Optional, Dict
 from datetime import datetime
-from fastapi import Header, HTTPException, status, Depends
+from typing import Dict, Optional
+
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 

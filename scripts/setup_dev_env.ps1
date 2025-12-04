@@ -1,4 +1,4 @@
-# Setup development environment for EncypherAI Commercial projects
+# Setup development environment for Encypher Commercial projects
 # This script initializes projects and ensures dependencies are properly installed
 
 # Function to set up a project

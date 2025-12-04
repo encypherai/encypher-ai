@@ -149,61 +149,196 @@ Request ID: {demo_request.uuid}
     )
 
 
+# Logo URL - hosted on production site for email compatibility
+# White logo used on blue gradient header background
+LOGO_URL = "https://encypherai.com/encypher_full_logo_white.svg"
+
+
+# ICP-specific email content configuration
+# Messaging aligned with demo pages, not explicit sales copy
+ICP_EMAIL_CONFIG = {
+    "ai-demo": {
+        "subject": "We received your demo request",
+        "tagline": "Real-world performance intelligence for AI",
+        "cta_text": "Continue Exploring",
+        "cta_url": "https://encypherai.com/ai-demo",
+        "secondary_cta_text": "View Pricing",
+        "secondary_cta_url": "https://encypherai.com/pricing?tab=ai-labs",
+        "next_steps": [
+            "A solutions engineer will reach out within 24 hours",
+            "We'll discuss your specific use case",
+            "Schedule a personalized walkthrough",
+        ],
+    },
+    "publisher-demo": {
+        "subject": "We received your demo request",
+        "tagline": "Content authentication for the AI era",
+        "cta_text": "Continue Exploring",
+        "cta_url": "https://encypherai.com/publisher-demo",
+        "secondary_cta_text": "View Pricing",
+        "secondary_cta_url": "https://encypherai.com/pricing?tab=publishers",
+        "next_steps": [
+            "A member of our team will reach out within 24 hours",
+            "We'll discuss your content protection needs",
+            "Schedule a personalized demo",
+        ],
+    },
+    "enterprise": {
+        "subject": "We received your inquiry",
+        "tagline": "Enterprise content authentication",
+        "cta_text": "Learn More",
+        "cta_url": "https://encypherai.com/pricing?tab=enterprises",
+        "secondary_cta_text": "View Solutions",
+        "secondary_cta_url": "https://encypherai.com/solutions",
+        "next_steps": [
+            "An account manager will reach out within 24 hours",
+            "We'll discuss your requirements",
+            "Schedule a technical deep-dive",
+        ],
+    },
+    "general": {
+        "subject": "We received your inquiry",
+        "tagline": "Cryptographic content authentication",
+        "cta_text": "Explore Solutions",
+        "cta_url": "https://encypherai.com",
+        "secondary_cta_text": "View Pricing",
+        "secondary_cta_url": "https://encypherai.com/pricing",
+        "next_steps": [
+            "A member of our team will reach out within 24 hours",
+            "We'll discuss your specific needs",
+            "If appropriate, we'll schedule a demo",
+        ],
+    },
+}
+
+
+def _get_email_config(context: str) -> dict:
+    """Get ICP-specific email configuration."""
+    return ICP_EMAIL_CONFIG.get(context, ICP_EMAIL_CONFIG["general"])
+
+
 def send_demo_confirmation(
     to_email: str,
     name: str,
     context: str = "general",
 ) -> None:
-    """Send confirmation email to the requester."""
-    context_messages = {
-        "ai-demo": "AI Performance Analytics",
-        "publisher-demo": "content protection solutions",
-        "enterprise": "enterprise solutions",
-        "general": "products and services",
-    }
-    product_msg = context_messages.get(context, "products and services")
+    """Send confirmation email to the requester with ICP-aligned messaging."""
+    config = _get_email_config(context)
 
-    subject = "Thank you for your interest in Encypher"
+    subject = config["subject"]
 
+    # Plain text version
+    next_steps_text = "\n".join(f"  • {step}" for step in config["next_steps"])
     body = f"""Hello {name},
 
-Thank you for your interest in Encypher's {product_msg}!
+Thank you for your interest in Encypher.
 
 We've received your request and our team will review it shortly. You can expect to hear from us within 24 hours.
 
-In the meantime, feel free to explore our website at https://encypherai.com for more information.
+What happens next?
+{next_steps_text}
+
+In the meantime, explore more at: {config["cta_url"]}
 
 Best regards,
 The Encypher Team
+
+---
+Encypher Corporation
+https://encypherai.com
 """
 
+    # HTML version with proper branding
+    next_steps_html = "".join(
+        f'<li style="margin-bottom: 8px;">{step}</li>' for step in config["next_steps"]
+    )
+
     html = f"""
+<!DOCTYPE html>
 <html>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto;">
-    <div style="background: linear-gradient(135deg, #2563eb, #0891b2); padding: 30px; text-align: center;">
-        <h1 style="color: white; margin: 0;">Encypher</h1>
-    </div>
-    <div style="padding: 30px;">
-        <h2>Hello {name},</h2>
-        <p>Thank you for your interest in Encypher's {product_msg}!</p>
-        <p>We've received your request and our team will review it shortly. You can expect to hear from us within <strong>24 hours</strong>.</p>
-        <h3>What happens next?</h3>
-        <ul>
-            <li>A member of our team will reach out to you</li>
-            <li>We'll discuss your specific needs</li>
-            <li>If appropriate, we'll schedule a personalized demo</li>
-        </ul>
-        <p>In the meantime, feel free to explore our website for more information:</p>
-        <p style="text-align: center; margin: 30px 0;">
-            <a href="https://encypherai.com" style="background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">
-                Visit encypherai.com
-            </a>
-        </p>
-        <p>Best regards,<br>The Encypher Team</p>
-    </div>
-    <div style="background: #f5f5f5; padding: 20px; text-align: center; font-size: 12px; color: #666;">
-        <p> 2025 Encypher Corporation. All rights reserved.</p>
-    </div>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Roboto', Arial, sans-serif; line-height: 1.6; color: #1b2f50; background-color: #f5f5f5;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f5f5f5;">
+        <tr>
+            <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                    <!-- Header with Logo -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #1b2f50 0%, #2a87c4 100%); padding: 40px 30px; text-align: center;">
+                            <img src="{LOGO_URL}" alt="Encypher" width="200" style="max-width: 200px; height: auto;">
+                        </td>
+                    </tr>
+                    
+                    <!-- Main Content -->
+                    <tr>
+                        <td style="padding: 40px 30px;">
+                            <h2 style="margin: 0 0 8px 0; color: #1b2f50; font-size: 24px; font-weight: 600;">
+                                Hello {name},
+                            </h2>
+                            
+                            <p style="margin: 0 0 24px 0; font-size: 15px; color: #64748b;">
+                                {config["tagline"]}
+                            </p>
+                            
+                            <p style="margin: 0 0 24px 0; color: #1b2f50; font-size: 16px;">
+                                Thank you for your interest. We've received your request and our team will review it shortly.
+                            </p>
+                            
+                            <p style="margin: 0 0 24px 0; color: #1b2f50; font-size: 16px;">
+                                You can expect to hear from us within <strong>24 hours</strong>.
+                            </p>
+                            
+                            <h3 style="margin: 28px 0 12px 0; color: #1b2f50; font-size: 16px; font-weight: 600;">
+                                What happens next?
+                            </h3>
+                            
+                            <ul style="margin: 0 0 28px 0; padding-left: 20px; color: #64748b; font-size: 15px;">
+                                {next_steps_html}
+                            </ul>
+                            
+                            <!-- CTA Buttons -->
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td align="center" style="padding: 8px 0;">
+                                        <a href="{config["cta_url"]}" style="display: inline-block; background-color: #2a87c4; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: 500; font-size: 15px;">
+                                            {config["cta_text"]}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td align="center" style="padding: 8px 0;">
+                                        <a href="{config["secondary_cta_url"]}" style="display: inline-block; color: #2a87c4; padding: 10px 20px; text-decoration: none; font-weight: 500; font-size: 14px;">
+                                            {config["secondary_cta_text"]}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                            
+                            <p style="margin: 28px 0 0 0; color: #1b2f50; font-size: 15px;">
+                                Best regards,<br>
+                                <strong>The Encypher Team</strong>
+                            </p>
+                        </td>
+                    </tr>
+                    
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 20px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+                            <p style="margin: 0 0 8px 0; color: #64748b; font-size: 13px;">
+                                <a href="https://encypherai.com" style="color: #2a87c4; text-decoration: none;">encypherai.com</a>
+                            </p>
+                            <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                                &copy; 2025 Encypher Corporation. All rights reserved.
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
 """

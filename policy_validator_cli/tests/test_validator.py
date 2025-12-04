@@ -1,5 +1,7 @@
 import unittest
+
 from policy_validator_cli.app.validator import validate_metadata
+
 
 class TestValidator(unittest.TestCase):
     """Tests for the validator module."""

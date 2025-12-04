@@ -5,7 +5,7 @@ Combines all v1 endpoints into a single router.
 """
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import merkle, provisioning, embeddings
+from app.api.v1.endpoints import embeddings, merkle, provisioning
 from app.api.v1.enterprise import c2pa
 from app.api.v1.public import verify
 

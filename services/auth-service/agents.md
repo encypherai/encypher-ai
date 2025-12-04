@@ -647,4 +647,4 @@ The service is production-ready with no major known issues.
 - Implement retry logic for transient errors
 
 ## License
-Proprietary - EncypherAI Commercial Suite
+Proprietary - Encypher Commercial Suite

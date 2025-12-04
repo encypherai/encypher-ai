@@ -169,7 +169,7 @@ metadata, clean_text = encoder.decode_metadata(encoded_text)
 
 ### Custom HMAC Implementation
 
-By default, EncypherAI uses SHA-256 for HMAC generation. If you need to customize this:
+By default, Encypher uses SHA-256 for HMAC generation. If you need to customize this:
 
 ```python
 from encypher.core.metadata_encoder import MetadataEncoder

@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-Test Coverage Script for EncypherAI Commercial
+Test Coverage Script for Encypher Commercial
 
 Runs pytest with coverage on all Python services and generates a report.
 
 Usage:
     python scripts/run_test_coverage.py [--service SERVICE_NAME]
 """
+import argparse
 import subprocess
 import sys
-import argparse
 from pathlib import Path
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple
 
 # Services with their test directories
 SERVICES = [
@@ -112,7 +112,7 @@ def main():
     args = parser.parse_args()
     
     print("=" * 60)
-    print("Test Coverage Report for EncypherAI Commercial")
+    print("Test Coverage Report for Encypher Commercial")
     print("=" * 60)
     
     results: Dict[str, Tuple[float, int, int]] = {}
@@ -177,7 +177,7 @@ def main():
     print("-" * 55)
     print(f"{'TOTAL':<25} {avg_coverage:>9.1f}% {total_passed:>8} {total_failed:>8}")
     
-    print(f"\nCoverage Legend: + >= 80%, ~ 50-79%, ! < 50%")
+    print("\nCoverage Legend: + >= 80%, ~ 50-79%, ! < 50%")
     
     if total_failed > 0:
         print(f"\n[!] {total_failed} tests failed!")

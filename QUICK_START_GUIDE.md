@@ -1,6 +1,6 @@
-# 🚀 EncypherAI Commercial - Quick Start Guide
+# 🚀 Encypher Commercial - Quick Start Guide
 
-**Welcome to the EncypherAI Commercial Suite!**
+**Welcome to the Encypher Commercial Suite!**
 
 This guide will get you up and running in **15 minutes**.
 
@@ -162,7 +162,8 @@ uv run python scripts/init_db.py
 uv run uvicorn app.main:app --reload --port 9000
 
 # 6. Test the API
-# Visit: http://localhost:9000/docs
+# Local docs (Swagger UI): http://localhost:9000/docs
+# Production docs (once deployed): https://api.encypherai.com/docs
 ```
 
 **✅ Success!** Enterprise API is running with Swagger docs.
@@ -170,6 +171,8 @@ uv run uvicorn app.main:app --reload --port 9000
 **Next Steps:**
 - Read [enterprise_api/README.md](./enterprise_api/README.md)
 - Check [enterprise_api/docs/API.md](./enterprise_api/docs/API.md)
+- Review [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) for AI company licensing, content access, and payouts
+- Review [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) for per-tier API limits and quotas
 - Review [enterprise_api/agents.md](./enterprise_api/agents.md)
 
 ### Quick API Test

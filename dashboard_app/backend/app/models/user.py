@@ -1,11 +1,12 @@
 """
 User model for authentication and authorization.
 """
-from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy.sql.sqltypes import DateTime
+from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.sql import func
+from sqlalchemy.sql.sqltypes import DateTime
 
 from app.core.database import Base
+
 
 class User(Base):
     """User model for authentication and authorization."""

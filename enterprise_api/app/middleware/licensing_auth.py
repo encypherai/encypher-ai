@@ -3,15 +3,14 @@ Licensing API Key Authentication Middleware.
 
 Provides authentication for AI companies using API keys.
 """
-from fastapi import HTTPException, Security, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models.licensing import AICompany
 from app.services.licensing_service import LicensingService
 from app.utils.api_key import is_valid_api_key_format
-
 
 security = HTTPBearer()
 optional_security = HTTPBearer(auto_error=False)

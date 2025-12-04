@@ -3,10 +3,10 @@ Pydantic schemas for embedding API endpoints.
 
 Defines request/response models for minimal signed embeddings.
 """
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from pydantic import BaseModel, Field, validator
+from typing import Any, Dict, List, Optional
 
+from pydantic import BaseModel, Field, validator
 
 # ============================================================================
 # Embedding Creation Schemas

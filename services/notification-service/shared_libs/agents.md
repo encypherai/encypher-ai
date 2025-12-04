@@ -1,7 +1,7 @@
 # Shared Commercial Libraries - Agent Development Guide
 
 ## Overview
-Internal Python library providing high-level APIs and utilities shared across all EncypherAI commercial tools. Acts as an abstraction layer over the core `encypher-ai` package.
+Internal Python library providing high-level APIs and utilities shared across all Encypher commercial tools. Acts as an abstraction layer over the core `encypher-ai` package.
 
 ## Current Status
 ✅ **Production Ready** - Stable API used by multiple tools
@@ -30,7 +30,7 @@ This library serves as:
 shared_commercial_libs/
 ├── encypher_commercial_shared/
 │   ├── __init__.py          # Public API exports
-│   ├── high_level.py        # EncypherAI high-level API
+│   ├── high_level.py        # Encypher high-level API
 │   └── utils.py             # Utility functions
 ├── tests/
 │   ├── run_tests.py
@@ -42,14 +42,14 @@ shared_commercial_libs/
 
 ## Public API
 
-### EncypherAI Class
+### Encypher Class
 High-level API for embedding and verifying metadata.
 
 ```python
-from encypher_commercial_shared import EncypherAI, VerificationResult
+from encypher_commercial_shared import Encypher, VerificationResult
 
 # Initialize
-ea = EncypherAI(
+ea = Encypher(
     trusted_signers={"signer1": "path/to/public_key.pem"},
     verbose=True
 )
@@ -77,7 +77,7 @@ class VerificationResult:
 ### Utility Functions
 
 #### scan_directory()
-Scan directory for files with EncypherAI metadata.
+Scan directory for files with Encypher metadata.
 
 ```python
 from encypher_commercial_shared.utils import scan_directory
@@ -197,7 +197,7 @@ else:
 ### 3. Optional Features
 Optional features use keyword arguments:
 ```python
-ea = EncypherAI(
+ea = Encypher(
     trusted_signers=signers,  # Optional
     verbose=True              # Optional
 )
@@ -207,7 +207,7 @@ ea = EncypherAI(
 All parameters have sensible defaults:
 ```python
 # Minimal usage
-ea = EncypherAI()
+ea = Encypher()
 result = ea.verify_from_text(text)
 ```
 
@@ -220,7 +220,7 @@ result = ea.verify_from_text(text)
 4. Add tests in `tests/test_utils.py`
 5. Update README.md with usage example
 
-### Modifying EncypherAI Class
+### Modifying Encypher Class
 1. Update `encypher_commercial_shared/high_level.py`
 2. Maintain backward compatibility
 3. Add tests in `tests/test_high_level.py`
@@ -337,9 +337,9 @@ The library is stable with no major known issues.
 
 ### Basic Verification
 ```python
-from encypher_commercial_shared import EncypherAI
+from encypher_commercial_shared import Encypher
 
-ea = EncypherAI()
+ea = Encypher()
 result = ea.verify_from_text("Text with metadata")
 
 if result.verified:
@@ -351,9 +351,9 @@ else:
 
 ### With Trusted Signers
 ```python
-from encypher_commercial_shared import EncypherAI
+from encypher_commercial_shared import Encypher
 
-ea = EncypherAI(
+ea = Encypher(
     trusted_signers={
         "org1": "/path/to/org1_public.pem",
         "org2": "/path/to/org2_public.pem"
@@ -368,10 +368,10 @@ if result.signer_id:
 
 ### Directory Scanning
 ```python
-from encypher_commercial_shared import EncypherAI
+from encypher_commercial_shared import Encypher
 from encypher_commercial_shared.utils import scan_directory, generate_report
 
-ea = EncypherAI(verbose=True)
+ea = Encypher(verbose=True)
 
 # Scan directory
 results = scan_directory(
@@ -392,9 +392,9 @@ print(f"Verified: {verified}/{len(results)}")
 
 ### Custom Error Handling
 ```python
-from encypher_commercial_shared import EncypherAI
+from encypher_commercial_shared import Encypher
 
-ea = EncypherAI()
+ea = Encypher()
 
 try:
     result = ea.verify_from_file("document.txt")
@@ -403,7 +403,7 @@ try:
         if "file not found" in result.error.lower():
             print("File does not exist")
         elif "no metadata" in result.error.lower():
-            print("File has no EncypherAI metadata")
+            print("File has no Encypher metadata")
         else:
             print(f"Verification error: {result.error}")
     elif result.verified:
@@ -456,7 +456,7 @@ openssl rsa -pubin -in signer.pem -text -noout
 ls -la trusted_signers/
 
 # Test with absolute paths
-ea = EncypherAI(trusted_signers={
+ea = Encypher(trusted_signers={
     "signer": "/absolute/path/to/signer.pem"
 })
 ```
@@ -480,8 +480,8 @@ ea = EncypherAI(trusted_signers={
 ### Code Style
 ```python
 # Good: Use public API
-from encypher_commercial_shared import EncypherAI
-ea = EncypherAI()
+from encypher_commercial_shared import Encypher
+ea = Encypher()
 
 # Bad: Import private modules
 from encypher_commercial_shared.high_level import _internal_function
@@ -521,7 +521,7 @@ print(result.metadata["key"])  # May fail if error occurred
 - [ ] Type checking passes (mypy)
 
 ## License
-Proprietary - EncypherAI Commercial Suite
+Proprietary - Encypher Commercial Suite
 
 ## Related Documentation
 - [audit_log_cli](../audit_log_cli/README.md) - Primary consumer

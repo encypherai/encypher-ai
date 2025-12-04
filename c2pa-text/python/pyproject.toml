@@ -30,7 +30,7 @@ requires = ["flit_core >=3.2,<4"]
 build-backend = "flit_core.buildapi"
 
 [tool.ruff]
-line-length = 100
+line-length = 150
 target-version = "py38"
 
 [tool.ruff.lint]

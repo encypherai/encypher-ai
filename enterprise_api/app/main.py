@@ -3,21 +3,36 @@ Encypher Enterprise API - Main Application
 
 FastAPI application for C2PA-compliant content signing and verification.
 """
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
-import time
 import logging
+import time
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy import text
 
-from app.config import settings
-from app.routers import audit, batch, chat, coalition, licensing, lookup, onboarding, signing, status, streaming, team, tools, usage, verification
 from app.api.v1.api import api_router as api_v1_router
+from app.config import settings
 from app.database import engine
 from app.observability.metrics import render_prometheus
+from app.routers import (
+    audit,
+    batch,
+    chat,
+    coalition,
+    licensing,
+    lookup,
+    onboarding,
+    signing,
+    status,
+    streaming,
+    team,
+    tools,
+    usage,
+    verification,
+)
 from app.services.session_service import session_service
 
 # Configure logging

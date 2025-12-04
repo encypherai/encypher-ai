@@ -1,10 +1,11 @@
 """
 Unit tests for Public API Rate Limiter.
 """
-import pytest
 import time
 from unittest.mock import Mock
-from fastapi import Request, HTTPException
+
+import pytest
+from fastapi import HTTPException, Request
 
 from app.middleware.public_rate_limiter import PublicAPIRateLimiter
 

@@ -3,10 +3,11 @@ Script to seed the database with sample data for dashboard testing.
 This will create sample audit logs and policy validation results.
 """
 import asyncio
-import sys
 import os
-from datetime import datetime, timedelta
 import random
+import sys
+from datetime import datetime, timedelta
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Add the parent directory to sys.path to import app modules

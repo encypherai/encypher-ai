@@ -218,7 +218,7 @@ Publishers add this snippet to their HTML:
       badge.innerHTML = `
         <div class="encypher-badge__compact">
           <span class="encypher-badge__icon">${icon}</span>
-          <img src="https://encypherai.com/assets/logo-icon.svg" 
+          <img src="https://encypherai.com/encypher_check_color.svg" 
                alt="Encypher" 
                class="encypher-badge__logo">
           <span class="encypher-badge__text">${text}</span>

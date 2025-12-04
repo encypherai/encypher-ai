@@ -1,10 +1,10 @@
 [project]
 name = "encypher-commercial-shared"
 version = "0.2.0"
-description = "Shared commercial libraries for EncypherAI tools and services."
+description = "Shared commercial libraries for Encypher tools and services."
 requires-python = ">=3.9"
 authors = [
-    {name = "EncypherAI Inc.", email = "dev@encypher.ai"},
+    {name = "Encypher Inc.", email = "dev@encypher.ai"},
 ]
 readme = "README.md"
 dependencies = [

@@ -160,7 +160,7 @@ curl -X POST http://localhost:9000/api/v1/verify \\
             <h2>Manifest Details</h2>
             <pre>{manifest_json}</pre>
             <p style="margin-top: 40px; color: #666; font-size: 14px;">
-                Verified by EncypherAI Enterprise API
+                Verified by Encypher Enterprise API
             </p>
         </body>
     </html>

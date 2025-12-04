@@ -40,8 +40,11 @@ build-backend = "hatchling.build"
 packages = ["app"]
 
 [tool.ruff]
-line-length = 120
+line-length = 150
 target-version = "py311"
+
+[tool.ruff.lint]
+ignore = ["E402", "E701", "E712", "E722", "E741", "F401", "F841", "B904", "B005"]
 
 [tool.black]
 line-length = 120

@@ -8,10 +8,10 @@ This migration adds:
 - usage_records table for tracking billable usage metrics
 - Supports time-series usage data for billing calculations
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers
 revision = '20251125_150700'

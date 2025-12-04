@@ -1,4 +1,4 @@
-# EncypherAI Commercial - Development Plan
+# Encypher Commercial - Development Plan
 
 **Last Updated:** November 27, 2025  
 **Status:** Production Ready (Core Infrastructure)

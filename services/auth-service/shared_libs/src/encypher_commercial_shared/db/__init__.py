@@ -1,5 +1,5 @@
 """
-Database utilities for EncypherAI microservices.
+Database utilities for Encypher microservices.
 
 This module provides shared database functionality including:
 - Connection validation

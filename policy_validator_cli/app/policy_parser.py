@@ -2,7 +2,8 @@
 
 import json
 from pathlib import Path
-from typing import Dict, Any
+from typing import Any, Dict
+
 
 class PolicySchemaError(Exception):
     """Custom exception for policy schema validation errors."""
@@ -14,7 +15,7 @@ def load_policy(policy_path: Path) -> Dict[str, Any]:
         raise FileNotFoundError(f"Policy file not found: {policy_path}")
 
     try:
-        with open(policy_path, 'r', encoding='utf-8') as f:
+        with open(policy_path, encoding='utf-8') as f:
             policy_data = json.load(f)
     except json.JSONDecodeError as e:
         raise PolicySchemaError(f"Invalid JSON in policy file {policy_path}: {e}")

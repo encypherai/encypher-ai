@@ -11,8 +11,8 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.models.batch import BatchItem, BatchRequest
 from app.models.response_models import SignResponse
 from app.schemas.batch import BatchItemPayload, BatchSignRequest
-from app.services.batch_service import BatchService
 from app.services import batch_service as batch_service_module
+from app.services.batch_service import BatchService
 
 
 async def run() -> None:

@@ -8,9 +8,10 @@ For production, consider upgrading to Redis-based rate limiting.
 """
 import logging
 import time
-from typing import Dict, Optional, Tuple
 from collections import defaultdict
-from fastapi import Request, HTTPException, status
+from typing import Dict, Optional, Tuple
+
+from fastapi import HTTPException, Request, status
 
 logger = logging.getLogger(__name__)
 

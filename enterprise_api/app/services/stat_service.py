@@ -4,6 +4,7 @@ Separated to ensure non-blocking operations and proper session management.
 """
 import logging
 from datetime import datetime
+
 from sqlalchemy import text
 
 from app.database import async_session_factory

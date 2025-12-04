@@ -7,13 +7,12 @@ allowing users to try encoding/decoding without authentication.
 import hashlib
 import logging
 import re
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Dict, Literal, Optional
 
+from encypher.core.constants import MetadataTarget
+from encypher.core.unicode_metadata import UnicodeMetadata
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.constants import MetadataTarget
 
 from app.config import settings
 

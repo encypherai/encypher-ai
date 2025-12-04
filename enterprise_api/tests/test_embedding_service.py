@@ -8,14 +8,14 @@ The service provides:
 - get_reference_by_id() - Retrieves content reference by ID
 - get_references_by_document() - Gets all references for a document
 """
+from unittest.mock import AsyncMock, MagicMock, patch
+from uuid import uuid4
+
 import pytest
 import pytest_asyncio
-from uuid import uuid4
-from unittest.mock import AsyncMock, MagicMock, patch
-
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
-from app.services.embedding_service import EmbeddingService, EmbeddingReference
+from app.services.embedding_service import EmbeddingReference, EmbeddingService
 
 
 @pytest.fixture

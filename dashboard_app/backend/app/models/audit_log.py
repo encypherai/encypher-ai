@@ -1,10 +1,11 @@
 """
 Audit log model for storing verification results.
 """
-from sqlalchemy import Column, Integer, String, Boolean, JSON, Text, DateTime
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
 from app.core.database import Base
+
 
 class AuditLog(Base):
     """Audit log model for storing verification results."""

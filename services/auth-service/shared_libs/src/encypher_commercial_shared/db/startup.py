@@ -1,5 +1,5 @@
 """
-Database startup utilities for EncypherAI microservices.
+Database startup utilities for Encypher microservices.
 
 Provides functions to validate database connections and run migrations
 on service startup. Designed to be called from FastAPI lifespan events

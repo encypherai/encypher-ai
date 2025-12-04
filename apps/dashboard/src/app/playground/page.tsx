@@ -48,7 +48,7 @@ const endpoints: ApiEndpoint[] = [
     sampleBody: JSON.stringify({
       text: "Hello, this is AI-generated content that needs authentication.",
       model_id: "gpt-4",
-      custom_metadata: { author: "EncypherAI" }
+      custom_metadata: { author: "Encypher" }
     }, null, 2),
   },
   {

@@ -9,13 +9,14 @@ Tests cover:
 - Proof verification
 """
 import pytest
+
 from app.utils.merkle import (
     MerkleNode,
-    MerkleTree,
-    compute_hash,
-    combine_hashes,
     MerkleProof,
-    verify_proof
+    MerkleTree,
+    combine_hashes,
+    compute_hash,
+    verify_proof,
 )
 from app.utils.merkle.proof import generate_proof
 

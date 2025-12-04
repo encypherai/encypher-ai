@@ -1,21 +1,23 @@
 """
 Script to initialize the database with sample data for testing.
 """
-import os
-import sys
 import asyncio
-from datetime import datetime, timedelta
+import os
 import random
+import sys
+from datetime import datetime, timedelta
 
 # Add the parent directory to the path so we can import the app
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
+
 from app.core.database import AsyncSessionLocal, Base, engine
-from app.models.user import User
+from app.core.security import get_password_hash
 from app.models.audit_log import AuditLog
 from app.models.policy_validation import PolicySchema, PolicyValidationResult
-from app.core.security import get_password_hash
+from app.models.user import User
+
 
 # Create all tables - we'll do this asynchronously
 async def create_tables():

@@ -6,9 +6,8 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db, get_content_db
+from app.database import get_content_db, get_db
 from app.dependencies import require_read_permission
-
 
 router = APIRouter()
 

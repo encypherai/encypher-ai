@@ -3,11 +3,11 @@ Merkle tree implementation for hierarchical content attribution.
 
 Builds Merkle trees from text segments and provides proof generation.
 """
-from typing import List, Optional, Dict, Any
 import logging
+from typing import Any, Dict, List, Optional
 
+from .hashing import combine_hashes, compute_hash
 from .node import MerkleNode
-from .hashing import compute_hash, combine_hashes
 
 logger = logging.getLogger(__name__)
 

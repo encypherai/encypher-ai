@@ -3,16 +3,18 @@ Organization model for tier-based access control and certificate metadata.
 
 Keeps track of usage quotas, feature flags, and signing certificate state.
 """
-from enum import Enum
 from datetime import datetime
+from enum import Enum
 
 from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Boolean,
     TIMESTAMP,
+    Boolean,
+    Column,
+    Integer,
+    String,
     Text,
+)
+from sqlalchemy import (
     Enum as SQLEnum,
 )
 from sqlalchemy.orm import synonym
@@ -170,7 +172,7 @@ class Organization(Base):
             Remaining quota count
         """
 
-        from app.utils.quota import QuotaType, TIER_QUOTAS
+        from app.utils.quota import TIER_QUOTAS, QuotaType
 
         quota_map = {
             "api_calls": (QuotaType.API_CALLS, self.api_calls_this_month),

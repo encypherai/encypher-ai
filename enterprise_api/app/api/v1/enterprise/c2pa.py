@@ -5,25 +5,26 @@ Endpoints for managing custom C2PA schemas and templates.
 """
 import logging
 from typing import Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
 
 from app.database import get_db
 from app.middleware.api_key_auth import get_current_organization
 from app.models.c2pa_schema import C2PASchema
 from app.models.c2pa_template import C2PAAssertionTemplate
 from app.schemas.c2pa_schemas import (
-    C2PASchemaCreate,
-    C2PASchemaUpdate,
-    C2PASchemaResponse,
-    C2PASchemaListResponse,
     C2PAAssertionValidateRequest,
     C2PAAssertionValidateResponse,
+    C2PASchemaCreate,
+    C2PASchemaListResponse,
+    C2PASchemaResponse,
+    C2PASchemaUpdate,
     C2PATemplateCreate,
-    C2PATemplateUpdate,
+    C2PATemplateListResponse,
     C2PATemplateResponse,
-    C2PATemplateListResponse
+    C2PATemplateUpdate,
 )
 from app.services.c2pa_validator import validator
 

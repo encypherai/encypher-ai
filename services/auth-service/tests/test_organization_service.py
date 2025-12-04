@@ -9,15 +9,12 @@ from sqlalchemy.orm import Session
 from app.services.organization_service import (
     OrganizationService,
     ROLE_HIERARCHY,
-    ROLE_CAN_INVITE,
-    ROLE_CAN_MANAGE_MEMBERS,
     generate_slug,
 )
 from app.db.models import (
     Organization,
     OrganizationMember,
     OrganizationInvitation,
-    OrganizationAuditLog,
     User,
 )
 

@@ -244,7 +244,7 @@ print("Baseline NFC hash:", clean_text_hash)
 custom_actions = [
     {
         "label": "c2pa.created",
-        "softwareAgent": "EncypherAI/examples",
+        "softwareAgent": "Encypher/examples",
         "when": datetime.now().isoformat(),
     }
 ]
@@ -255,7 +255,7 @@ embedded_text = UnicodeMetadata.embed_metadata(
     private_key=private_key,
     signer_id=signer_id,
     metadata_format="c2pa",
-    claim_generator="EncypherAI/examples",
+    claim_generator="Encypher/examples",
     actions=custom_actions,
 )
 
@@ -299,7 +299,7 @@ embedded_text = UnicodeMetadata.embed_metadata(
 
 ## C2PA Binding Mechanisms
 
-The EncypherAI SDK leverages C2PA's multi-layered approach to ensure content integrity and authenticity. This involves two primary types of cryptographic bindings within the manifest itself, which is then embedded in the text using our Unicode variation selector technique.
+The Encypher SDK leverages C2PA's multi-layered approach to ensure content integrity and authenticity. This involves two primary types of cryptographic bindings within the manifest itself, which is then embedded in the text using our Unicode variation selector technique.
 
 ### Hard Binding (Content Integrity)
 

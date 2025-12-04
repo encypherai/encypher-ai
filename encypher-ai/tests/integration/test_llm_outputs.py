@@ -1,6 +1,6 @@
 # ruff: noqa: E501
 """
-Integration tests for EncypherAI with sample LLM outputs.
+Integration tests for Encypher with sample LLM outputs.
 """
 
 from datetime import datetime, timezone

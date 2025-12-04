@@ -9,6 +9,7 @@ from app.dependencies import require_sign_permission, require_verify_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.schemas.batch import BatchResponseEnvelope, BatchSignRequest, BatchVerifyRequest
 from app.services.batch_service import batch_service
+from app.utils.quota import QuotaManager, QuotaType
 
 router = APIRouter(prefix="/api/v1", tags=["Batch"])
 
@@ -51,12 +52,39 @@ async def batch_sign(
             headers=api_rate_limiter.get_headers(result),
         )
 
-    return await batch_service.sign_batch(
+    # Check monthly quota for batch operations (1 per batch request)
+    await QuotaManager.check_quota(
+        db=db,
+        organization_id=organization["organization_id"],
+        quota_type=QuotaType.BATCH_OPERATIONS,
+        increment=1,
+    )
+
+    # Also count each document against C2PA signatures quota
+    await QuotaManager.check_quota(
+        db=db,
+        organization_id=organization["organization_id"],
+        quota_type=QuotaType.C2PA_SIGNATURES,
+        increment=len(batch_request.items),
+    )
+
+    result = await batch_service.sign_batch(
         db=db,
         request=batch_request,
         organization=organization,
         correlation_id=correlation_id,
     )
+    
+    # Add quota usage headers to response
+    quota_headers = await QuotaManager.get_quota_headers(
+        db=db,
+        organization_id=organization["organization_id"],
+        quota_type=QuotaType.BATCH_OPERATIONS,
+    )
+    for header, value in quota_headers.items():
+        response.headers[header] = value
+    
+    return result
 
 
 @router.post("/batch/verify", response_model=BatchResponseEnvelope)

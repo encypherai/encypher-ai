@@ -6,13 +6,14 @@ manifest verification capabilities. It can be used both server-side and in the S
 
 C2PA manifests provide cryptographic proof of content provenance and authenticity.
 """
-import logging
-import requests
-from typing import Optional, Dict, Any, List
-from datetime import datetime
-from dataclasses import dataclass
 import hashlib
 import json
+import logging
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Dict, List, Optional
+
+import requests
 
 logger = logging.getLogger(__name__)
 

@@ -1,19 +1,18 @@
 """Team management router for Business+ tier organizations."""
-from datetime import datetime, timezone, timedelta
-from enum import Enum
-from typing import Optional, List
-from uuid import uuid4
 import secrets
+from datetime import datetime, timedelta, timezone
+from enum import Enum
+from typing import List, Optional
+from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from pydantic import BaseModel, EmailStr
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import require_read_permission
-from app.routers.audit import log_audit_event, AuditAction
-
+from app.routers.audit import AuditAction, log_audit_event
 
 router = APIRouter(prefix="/org/members", tags=["Team Management"])
 

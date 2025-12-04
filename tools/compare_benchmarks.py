@@ -1,6 +1,6 @@
 """Compare C2PA-only vs Embeddings benchmark results."""
-from pathlib import Path
 import statistics
+from pathlib import Path
 
 work_dir = Path('../outputs/wikipedia_prepared')
 

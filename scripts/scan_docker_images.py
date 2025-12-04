@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """
-Docker Image Security Scanner for EncypherAI Commercial
+Docker Image Security Scanner for Encypher Commercial
 
 Uses Trivy (via Docker) to scan all service images for vulnerabilities.
 
 Usage:
     python scripts/scan_docker_images.py
 """
-import subprocess
 import json
+import subprocess
 import sys
-from typing import List, Dict, Any
+from typing import Any, Dict
 
 # Images to scan (built from docker-compose.microservices.yml)
 IMAGES = [
@@ -148,7 +148,7 @@ def main():
                 clean_line = line.strip()[:80].encode('ascii', 'replace').decode('ascii')
                 print(f"    {clean_line}")
             if len(vuln_lines) < critical_count + high_count:
-                print(f"    ... and more")
+                print("    ... and more")
         else:
             print("  No HIGH/CRITICAL vulnerabilities found!")
         

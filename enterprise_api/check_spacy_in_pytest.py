@@ -18,4 +18,5 @@ print(f"\nSPACY_AVAILABLE = {SPACY_AVAILABLE}")
 
 # Now try importing from our module
 from app.utils.segmentation import SPACY_AVAILABLE as MODULE_SPACY_AVAILABLE
+
 print(f"MODULE SPACY_AVAILABLE = {MODULE_SPACY_AVAILABLE}")
