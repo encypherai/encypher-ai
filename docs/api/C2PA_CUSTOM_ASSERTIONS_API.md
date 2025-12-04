@@ -1,6 +1,6 @@
 # C2PA Custom Assertions API Guide
 
-Complete guide to using custom C2PA assertions in the EncypherAI Enterprise API.
+Complete guide to using custom C2PA assertions in the Encypher Enterprise API.
 
 ---
 

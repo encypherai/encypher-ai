@@ -1,4 +1,4 @@
-# EncypherAI Commercial Suite
+# Encypher Commercial Suite
 
 <div align="center">
 
@@ -16,11 +16,11 @@
 
 ## 🎯 Overview
 
-EncypherAI is dedicated to establishing trust and verifiable provenance for AI-generated content. This repository houses the **proprietary source code** for EncypherAI's commercial software offerings, built upon our open-source `encypher-ai` core library.
+Encypher is dedicated to establishing trust and verifiable provenance for AI-generated content. This repository houses the **proprietary source code** for Encypher's commercial software offerings, built upon our open-source `encypher-ai` core library.
 
-**Important:** The code in this repository is proprietary, subject to EncypherAI's commercial licensing terms, and is **NOT open source**. It is intended for the internal EncypherAI development team and authorized partners.
+**Important:** The code in this repository is proprietary, subject to Encypher's commercial licensing terms, and is **NOT open source**. It is intended for the internal Encypher development team and authorized partners.
 
-### The EncypherAI Open-Source Core
+### The Encypher Open-Source Core
 
 Our public [`encypher-ai`](https://github.com/encypher-ai/encypher-ai) Python package (AGPLv3 licensed, available on PyPI) provides foundational capabilities:
 
@@ -334,6 +334,7 @@ pnpm dev
 ### Core Documentation
 
 - **[Enterprise API Documentation](./enterprise_api/README.md)** - Complete API reference with endpoints, authentication, examples
+- **[Licensing API Documentation](./enterprise_api/docs/LICENSING_API.md)** - AI-company licensing, content access, and revenue distribution
 - **[Enterprise SDK Documentation](./enterprise_sdk/README.md)** - SDK usage, batch operations, CI/CD integration
 - **[Compliance Dashboard Guide](./dashboard_app/README.md)** - Directory signing, verification workflows
 - **[Design System Guide](./packages/design-system/README.md)** - Component library, brand colors, usage examples
@@ -489,7 +490,7 @@ uv run python scripts/repo_stats.py
 
 **Proprietary** - All rights reserved. See [LICENSE](./LICENSE) for details.
 
-This software is confidential and proprietary to EncypherAI. Unauthorized copying, distribution, or use is strictly prohibited.
+This software is confidential and proprietary to Encypher. Unauthorized copying, distribution, or use is strictly prohibited.
 
 ---
 
@@ -507,7 +508,7 @@ Built with:
 
 <div align="center">
 
-**Made with ❤️ by the EncypherAI Team**
+**Made with ❤️ by the Encypher Team**
 
 [Website](https://encypherai.com) • [Dashboard](https://dashboard.encypherai.com) • [API Docs](https://docs.encypherai.com)
 

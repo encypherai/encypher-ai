@@ -19,14 +19,14 @@ Usage:
     The middleware will automatically detect embeddings in all scraped pages.
     Access findings via spider.encypher_findings
 """
-import sys
-import os
 import logging
+import os
+import sys
 from datetime import datetime
 
 from scrapy import signals
-from scrapy.http import Response
 from scrapy.exceptions import NotConfigured
+from scrapy.http import Response
 
 # Add path for encypher_extract
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'enterprise_api', 'app', 'utils', 'embeddings'))

@@ -4,9 +4,9 @@ Ensure each workspace package is importable when running pytest from the repo ro
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 import types
 from importlib.machinery import ModuleSpec
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 ENTERPRISE_APP_PATH = ROOT / "enterprise_api" / "app"

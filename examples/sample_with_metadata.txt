@@ -1,4 +1,4 @@
-This is a sample text file that demonstrates how EncypherAI metadata would be embedded.
+This is a sample text file that demonstrates how Encypher metadata would be embedded.
 
 The metadata would typically appear in a format like:
 
@@ -8,7 +8,7 @@ The metadata would typically appear in a format like:
   "timestamp": "2025-06-03T11:12:23-07:00",
   "model_id": "example-model-v1",
   "custom": {
-    "organization": "EncypherAI Inc.",
+    "organization": "Encypher Inc.",
     "purpose": "Demonstration",
     "classification": "Public"
   }
@@ -16,4 +16,4 @@ The metadata would typically appear in a format like:
 </EA-METADATA>
 
 The above is just a representation of what metadata might look like. In a real scenario, 
-the metadata would be properly signed and encoded according to the EncypherAI specification.
+the metadata would be properly signed and encoded according to the Encypher specification.

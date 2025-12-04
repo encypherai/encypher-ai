@@ -1,11 +1,11 @@
-# EncypherAI Commercial Examples
+# Encypher Commercial Examples
 
-This directory contains examples demonstrating how to use the EncypherAI commercial tools and shared library.
+This directory contains examples demonstrating how to use the Encypher commercial tools and shared library.
 
 ## Contents
 
 ### Audit & Verification
-- `sample_with_metadata.txt`: A sample text file with a representation of what EncypherAI metadata might look like
+- `sample_with_metadata.txt`: A sample text file with a representation of what Encypher metadata might look like
 - `run_audit_example.ps1`: PowerShell script to demonstrate running the audit_log_cli on the sample file
 - `trusted_signers/`: Directory created by the example script to store trusted signer public keys
 
@@ -42,11 +42,11 @@ This script will:
 You can also use the shared commercial library directly in your Python code:
 
 ```python
-from encypher_commercial_shared import EncypherAI, VerificationResult
+from encypher_commercial_shared import Encypher, VerificationResult
 from encypher_commercial_shared.utils import scan_directory, generate_report
 
-# Initialize the EncypherAI high-level API
-encypher = EncypherAI(verbose=True)
+# Initialize the Encypher high-level API
+encypher = Encypher(verbose=True)
 
 # Verify metadata from a file
 result = encypher.verify_from_file("examples/sample_with_metadata.txt")
