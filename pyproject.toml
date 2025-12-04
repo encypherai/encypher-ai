@@ -7,7 +7,7 @@ name = "encypher-ai"
 version = "3.0.0"
 description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
-authors = [{name = "EncypherAI Team"}]
+authors = [{name = "Encypher Team"}]
 license = "AGPL-3.0"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -72,6 +72,7 @@ python_classes = "Test*"
 [tool.ruff]
 line-length = 150
 target-version = "py39"
+# Inherits from root ruff.toml
 
 [tool.ruff.lint]
 select = [
@@ -83,7 +84,7 @@ select = [
     "C4", # flake8-comprehensions
     "UP", # pyupgrade
 ]
-ignore = []
+ignore = ["E501", "E701", "E741", "E722", "B005", "F811"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -93,3 +94,6 @@ line-ending = "auto"
 
 [tool.setuptools]
 packages = ["encypher"]
+
+[tool.uv.sources]
+c2pa-text = { path = "../c2pa-text/python", editable = true }

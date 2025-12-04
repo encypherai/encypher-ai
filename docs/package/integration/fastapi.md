@@ -1,6 +1,6 @@
 # FastAPI Integration
 
-This guide explains how to integrate EncypherAI with FastAPI to build robust web applications that can embed and verify metadata in AI-generated content. We will use the modern `Encypher` and `StreamingEncypher` classes for this integration.
+This guide explains how to integrate Encypher with FastAPI to build robust web applications that can embed and verify metadata in AI-generated content. We will use the modern `Encypher` and `StreamingEncypher` classes for this integration.
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ from encypher.core.keys import generate_ed25519_key_pair
 
 # --- 1. Initialization and Key Management ---
 app = FastAPI(
-    title="EncypherAI FastAPI Integration",
+    title="Encypher FastAPI Integration",
     description="An example of embedding and verifying metadata in API responses using Encypher and StreamingEncypher.",
 )
 
@@ -282,7 +282,7 @@ app.add_middleware(RateLimitMiddleware, requests_per_minute=60)
 
 ### Docker Deployment
 
-Here's a sample Dockerfile for deploying a FastAPI application with EncypherAI:
+Here's a sample Dockerfile for deploying a FastAPI application with Encypher:
 
 ```dockerfile
 FROM python:3.11-slim
@@ -354,12 +354,12 @@ except FileNotFoundError:
 
 ## Best Practices
 
-1. **Secure Key Management**: Store your EncypherAI private key securely using environment variables or a secure key management system.
+1. **Secure Key Management**: Store your Encypher private key securely using environment variables or a secure key management system.
 2. **Timestamps (optional)**: Timestamps are recommended but optional across all metadata formats (including C2PA). When a timestamp is omitted, C2PA assertions that normally include a `when` field will simply omit it.
 
 3. **Input Validation**: Use Pydantic models to validate input data and provide clear error messages.
 
-4. **Error Handling**: Implement proper error handling for both FastAPI and EncypherAI operations.
+4. **Error Handling**: Implement proper error handling for both FastAPI and Encypher operations.
 
 5. **Rate Limiting**: Implement rate limiting to prevent abuse of your API.
 
@@ -391,6 +391,6 @@ except FileNotFoundError:
 ## Related Documentation
 
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
-- [EncypherAI Streaming Support](../user-guide/streaming.md)
+- [Encypher Streaming Support](../user-guide/streaming.md)
 - [Metadata Encoding Guide](../user-guide/metadata-encoding.md)
 - [Extraction and Verification](../user-guide/extraction-verification.md)

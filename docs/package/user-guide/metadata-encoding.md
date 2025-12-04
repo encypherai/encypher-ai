@@ -1,6 +1,6 @@
 # Metadata Encoding Formats
 
-EncypherAI supports different formats for encoding metadata, allowing you to choose the best fit for your application's needs. The format determines the structure and content of the payload that gets digitally signed and embedded in the text.
+Encypher supports different formats for encoding metadata, allowing you to choose the best fit for your application's needs. The format determines the structure and content of the payload that gets digitally signed and embedded in the text.
 
 The SDK automatically selects the appropriate format based on the parameters you provide to the `embed_metadata` or `StreamingHandler` methods. The two primary formats are the simple `basic` format and the C2PA-compliant `cbor_manifest`.
 
@@ -83,7 +83,7 @@ def public_key_provider(kid: str) -> Optional[object]:
 # A manifest is a dictionary containing a list of assertions.
 # Each assertion is a dictionary with a 'label' and a 'data' payload.
 my_c2pa_manifest = {
-    "claim_generator": "EncypherAI-Example/1.0",
+    "claim_generator": "Encypher-Example/1.0",
     "assertions": [
         {
             "label": "stds.schema-org.CreativeWork",

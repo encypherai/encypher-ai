@@ -1,8 +1,8 @@
 # ruff: noqa: E501
 """
-EncypherAI YouTube Demo Script (Updated for Digital Signatures)
+Encypher YouTube Demo Script (Updated for Digital Signatures)
 
-A visually appealing, step-by-step demonstration of EncypherAI's core functionality
+A visually appealing, step-by-step demonstration of Encypher's core functionality
 for use in introductory videos and presentations, now featuring Ed25519 digital signatures.
 """
 
@@ -76,7 +76,7 @@ def print_header():
     clear_screen()
     console.print(
         Panel.fit(
-            "[bold blue]EncypherAI Demo (v2.3.0 Signatures)[/bold blue]\n[italic]Invisible Metadata for AI-Generated Content[/italic]",
+            "[bold blue]Encypher Demo (v2.3.0 Signatures)[/bold blue]\n[italic]Invisible Metadata for AI-Generated Content[/italic]",
             border_style="blue",
             padding=(1, 10),
         )
@@ -200,7 +200,7 @@ def demo_basic_encoding():
     console.print(
         Markdown(
             """
-    EncypherAI allows you to embed arbitrary metadata (like a JSON object) into text invisibly.
+    Encypher allows you to embed arbitrary metadata (like a JSON object) into text invisibly.
     This metadata is now secured with an Ed25519 digital signature.
 
     Let's start with a simple example:
@@ -209,7 +209,7 @@ def demo_basic_encoding():
     )
 
     # Original text
-    original_text = "This is a sample sentence for the EncypherAI demo."
+    original_text = "This is a sample sentence for the Encypher demo."
     console.print("\n[bold]Original Text:[/bold]")
     console.print(Panel(original_text, border_style="green"))
 
@@ -274,7 +274,7 @@ def demo_metadata_extraction():
     )
 
     # Original text and metadata (same as in basic encoding for consistency in demo)
-    original_text = "This is a sample sentence for the EncypherAI demo, prepared for extraction."
+    original_text = "This is a sample sentence for the Encypher demo, prepared for extraction."
     custom_metadata_payload = {
         "source": "AI Model Z (Signature Demo)",
         "confidence": 0.95,
@@ -540,7 +540,7 @@ def demo_streaming():
     console.print(
         Markdown(
             """
-    EncypherAI supports embedding metadata in real-time as content is streamed.
+    Encypher supports embedding metadata in real-time as content is streamed.
     The `StreamingHandler` accumulates text chunks and applies the final signature upon completion.
     This is ideal for applications like live AI responses or large file processing.
     """
@@ -578,7 +578,7 @@ def demo_streaming():
     console.print("\n[bold]Simulating streaming content...[/bold]")
     simulated_stream = [
         "This is the first chunk of a streamed message. ",
-        "EncypherAI is processing it. ",
+        "Encypher is processing it. ",
         "Metadata is being prepared. ",
         "The final chunk arrives now, and the signature will be applied.",
     ]
@@ -650,7 +650,7 @@ def demo_manifest_format():
     console.print(
         Markdown(
             """
-    EncypherAI also supports a 'manifest' metadata format. This format is useful for more complex scenarios,
+    Encypher also supports a 'manifest' metadata format. This format is useful for more complex scenarios,
     such as when you need to associate metadata with multiple distinct blocks of data or when you want a more
     structured envelope for your metadata. The signature covers the entire manifest.
 
@@ -810,7 +810,7 @@ def demo_real_world_use_cases():
 
 def demo_conclusion():
     """Show conclusion and call to action."""
-    print_section("Get Started with EncypherAI")
+    print_section("Get Started with Encypher")
 
     console.print(
         Markdown(
@@ -844,9 +844,9 @@ def main():
     console.print(
         Markdown(
             """
-    # Welcome to EncypherAI!
+    # Welcome to Encypher!
 
-    EncypherAI is an open-source Python package that enables invisible metadata embedding in AI-generated text.
+    Encypher is an open-source Python package that enables invisible metadata embedding in AI-generated text.
 
     In this demo, we'll walk through:
 
@@ -886,7 +886,7 @@ def main():
     print_header()
     demo_conclusion()
 
-    console.print("\n[bold green]Thank you for watching the EncypherAI demo![/bold green]")
+    console.print("\n[bold green]Thank you for watching the Encypher demo![/bold green]")
 
 
 if __name__ == "__main__":

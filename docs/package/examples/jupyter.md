@@ -1,12 +1,12 @@
 # Jupyter Notebook Examples
 
-This page provides examples of using EncypherAI in Jupyter Notebooks, allowing you to interactively explore and experiment with the library's features.
+This page provides examples of using Encypher in Jupyter Notebooks, allowing you to interactively explore and experiment with the library's features.
 
 > Note: Timestamps are optional across all metadata formats, including C2PA. When you omit a timestamp, C2PA action assertions that normally include a `when` field will simply omit it.
 
 ## Getting Started with Jupyter
 
-If you don't already have Jupyter installed, you can install it along with EncypherAI:
+If you don't already have Jupyter installed, you can install it along with Encypher:
 
 ```bash
 uv pip install encypher-ai==2.3.0 jupyter
@@ -14,7 +14,7 @@ uv pip install encypher-ai==2.3.0 jupyter
 
 ## Basic Example Notebook
 
-Below is a basic example of using EncypherAI in a Jupyter notebook. You can copy this code into a new notebook to get started.
+Below is a basic example of using Encypher in a Jupyter notebook. You can copy this code into a new notebook to get started.
 
 ```python
 # Import necessary libraries
@@ -27,7 +27,7 @@ import time
 import json
 
 # Display the version
-print(f"EncypherAI version: {encypher.__version__}")
+print(f"Encypher version: {encypher.__version__}")
 
 # Generate a key pair for digital signatures
 private_key, public_key = generate_key_pair()
@@ -52,7 +52,7 @@ that maximize its chance of achieving its goals.
 # Create metadata
 metadata = {
     "model": "example-model",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": key_id  # Required for verification
@@ -138,7 +138,7 @@ original_text = "This is a sample text that will have metadata embedded within i
 # Create metadata
 metadata = {
     "model": "example-model",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": key_id  # Required for verification
@@ -237,7 +237,7 @@ for target in targets:
 
 ## Streaming Example Notebook
 
-This notebook demonstrates how to use EncypherAI with streaming content:
+This notebook demonstrates how to use Encypher with streaming content:
 
 ```python
 # Import necessary libraries
@@ -265,7 +265,7 @@ def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
 # Create metadata
 metadata = {
     "model": "streaming-example",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": key_id  # Required for verification
@@ -336,7 +336,7 @@ elif is_valid: # Should not happen if payload is None and is_valid is True, but 
 
 ## Tamper Detection Notebook
 
-This notebook demonstrates how EncypherAI can detect tampering:
+This notebook demonstrates how Encypher can detect tampering:
 
 ```python
 # Import necessary libraries
@@ -367,7 +367,7 @@ original_text = "This is a sample text that will be used to demonstrate tamper d
 # Create metadata
 metadata = {
     "model": "tamper-detection-demo",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": key_id  # Required for verification
@@ -507,4 +507,4 @@ print("\nExtracted custom metadata:")
 print(json.dumps(extracted, indent=2))
 ```
 
-These examples should help you get started with EncypherAI in Jupyter notebooks. Feel free to modify and experiment with them to explore the library's capabilities.
+These examples should help you get started with Encypher in Jupyter notebooks. Feel free to modify and experiment with them to explore the library's capabilities.

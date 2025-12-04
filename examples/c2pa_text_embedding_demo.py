@@ -1,10 +1,10 @@
 # c:\Users\eriks\encypher-ai\examples\c2pa_text_embedding_demo.py
 """
-Demonstrates embedding a C2PA-style manifest into text using EncypherAI.
+Demonstrates embedding a C2PA-style manifest into text using Encypher.
 
 This example shows:
 1. Defining a C2PA-like manifest.
-2. Converting it to EncypherAI's internal ManifestPayload format.
+2. Converting it to Encypher's internal ManifestPayload format.
 3. Embedding the payload into a sample text string.
 4. Extracting the payload from the text.
 5. Verifying the extracted payload.
@@ -22,13 +22,13 @@ from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest, encypher_
 
 
 def main():
-    print("--- EncypherAI C2PA-style Text Embedding Demo ---", flush=True)
+    print("--- Encypher C2PA-style Text Embedding Demo ---", flush=True)
 
     # 1. Define the C2PA-like manifest (as provided by the user)
     # Note: For real applications, ensure timestamps are accurate (current or past).
     # The example timestamp is slightly in the future for demo purposes.
     demo_manifest_c2pa_like = {
-        "claim_generator": "EncypherAI/2.1.0",
+        "claim_generator": "Encypher/2.1.0",
         "timestamp": "2025-06-16T10:30:00Z",
         "assertions": [
             {
@@ -36,7 +36,7 @@ def main():
                 "data": {
                     "@context": "http://schema.org/",
                     "@type": "CreativeWork",
-                    "author": {"@type": "Person", "name": "Erik EncypherAI"},
+                    "author": {"@type": "Person", "name": "Erik Encypher"},
                     "publisher": {"@type": "Organization", "name": "Encypher Corporation"},
                     "copyrightHolder": {"name": "Encypher Corporation"},
                     "copyrightYear": 2025,
@@ -48,9 +48,9 @@ def main():
     print("\n1. Original C2PA-like Manifest:", flush=True)
     print(json.dumps(demo_manifest_c2pa_like, indent=2), flush=True)
 
-    # 2. Convert C2PA-like manifest to EncypherAI ManifestPayload
+    # 2. Convert C2PA-like manifest to Encypher ManifestPayload
     encypher_ai_payload_to_embed = c2pa_like_dict_to_encypher_manifest(demo_manifest_c2pa_like)
-    print("\n2. Converted EncypherAI ManifestPayload (for embedding):", flush=True)
+    print("\n2. Converted Encypher ManifestPayload (for embedding):", flush=True)
     print(json.dumps(encypher_ai_payload_to_embed, indent=2), flush=True)
 
     # Prepare for embedding: Generate keys and define sample text
@@ -69,7 +69,7 @@ def main():
     )
     print(f"\nSample text (length: {len(sample_article_text)} chars)", flush=True)
 
-    # 3. Embed the EncypherAI ManifestPayload into the sample text
+    # 3. Embed the Encypher ManifestPayload into the sample text
     try:
         text_with_embedded_metadata = UnicodeMetadata.embed_metadata(
             text=sample_article_text,
@@ -100,7 +100,7 @@ def main():
             print("\nERROR: No metadata payload extracted.", flush=True)
             return
 
-        print("\n4. Extracted EncypherAI ManifestPayload:", flush=True)
+        print("\n4. Extracted Encypher ManifestPayload:", flush=True)
         print(json.dumps(extracted_payload, indent=2), flush=True)
         if extracted_signer_id:
             print(f"   Key ID used for signature: {extracted_signer_id}", flush=True)
@@ -112,7 +112,7 @@ def main():
         else:
             print("   FAILURE: The extracted metadata's signature is NOT valid or could not be verified.", flush=True)
 
-        # 6. Convert the extracted EncypherAI ManifestPayload back to a C2PA-like dictionary
+        # 6. Convert the extracted Encypher ManifestPayload back to a C2PA-like dictionary
         # First, reconstruct the manifest structure expected by the conversion function
         # from the output of verify_and_extract_metadata.
         if extracted_payload and "manifest" in extracted_payload:
@@ -140,12 +140,12 @@ def main():
         print("\n1. Original C2PA-like Manifest (for CBOR demo):", flush=True)
         print(json.dumps(demo_manifest_c2pa_like, indent=2), flush=True)
 
-        # 2. Convert C2PA-like manifest to EncypherAI ManifestPayload with CBOR encoding for assertion data
+        # 2. Convert C2PA-like manifest to Encypher ManifestPayload with CBOR encoding for assertion data
         encypher_ai_payload_cbor_to_embed = c2pa_like_dict_to_encypher_manifest(demo_manifest_c2pa_like, encode_assertion_data_as_cbor=True)
-        print("\n2. Converted EncypherAI ManifestPayload (with CBOR assertion data):", flush=True)
+        print("\n2. Converted Encypher ManifestPayload (with CBOR assertion data):", flush=True)
         print(json.dumps(encypher_ai_payload_cbor_to_embed, indent=2), flush=True)
 
-        # 3. Embed the CBOR-data EncypherAI ManifestPayload into the sample text
+        # 3. Embed the CBOR-data Encypher ManifestPayload into the sample text
         text_with_cbor_embedded_metadata = UnicodeMetadata.embed_metadata(
             text=sample_article_text,  # Use the same sample text
             private_key=private_key,
@@ -169,7 +169,7 @@ def main():
             print("\nERROR: No CBOR-data metadata payload extracted.", flush=True)
             # Potentially skip the rest of this CBOR section or handle error
         else:
-            print("\n4. Extracted EncypherAI ManifestPayload (from CBOR-data embedding):", flush=True)
+            print("\n4. Extracted Encypher ManifestPayload (from CBOR-data embedding):", flush=True)
             print(json.dumps(extracted_cbor_payload, indent=2), flush=True)
             if extracted_cbor_signer_id:
                 print(f"   Key ID used for signature: {extracted_cbor_signer_id}", flush=True)
@@ -181,7 +181,7 @@ def main():
             else:
                 print("   FAILURE: The extracted CBOR-data metadata's signature is NOT valid or could not be verified.", flush=True)
 
-            # 6. Convert the extracted EncypherAI ManifestPayload (from CBOR-data embedding) back to a C2PA-like dictionary
+            # 6. Convert the extracted Encypher ManifestPayload (from CBOR-data embedding) back to a C2PA-like dictionary
             if extracted_cbor_payload and "manifest" in extracted_cbor_payload:
                 inner_cbor_manifest = extracted_cbor_payload["manifest"]
                 manifest_for_cbor_conversion = {
@@ -221,13 +221,13 @@ def main():
         print("\n1. Original C2PA-like Manifest (for full CBOR manifest demo):", flush=True)
         print(json.dumps(demo_manifest_c2pa_like, indent=2), flush=True)
 
-        # 2. Convert C2PA-like manifest to EncypherAI ManifestPayload with nested data structure
+        # 2. Convert C2PA-like manifest to Encypher ManifestPayload with nested data structure
         # Note: use_nested_data=True is required for cbor_manifest format
         encypher_ai_payload_cbor_manifest = c2pa_like_dict_to_encypher_manifest(
             demo_manifest_c2pa_like,
             use_nested_data=True,  # Important: use nested data structure for cbor_manifest
         )
-        print("\n2. Converted EncypherAI ManifestPayload (for full CBOR manifest):", flush=True)
+        print("\n2. Converted Encypher ManifestPayload (for full CBOR manifest):", flush=True)
         print(json.dumps(encypher_ai_payload_cbor_manifest, indent=2), flush=True)
 
         # 3. Embed the full CBOR manifest into the sample text

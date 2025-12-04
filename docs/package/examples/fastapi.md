@@ -1,13 +1,13 @@
 # FastAPI Example
 
-This example demonstrates how to build a complete FastAPI application that integrates EncypherAI for metadata embedding and verification using digital signatures. The application provides endpoints for encoding, decoding, and verifying metadata in text.
+This example demonstrates how to build a complete FastAPI application that integrates Encypher for metadata embedding and verification using digital signatures. The application provides endpoints for encoding, decoding, and verifying metadata in text.
 
 ## Prerequisites
 
 Before you begin, make sure you have:
 
 1. FastAPI and its dependencies installed
-2. EncypherAI installed
+2. Encypher installed
 3. (Optional) An LLM provider API key if you're integrating with an LLM
 
 ```bash
@@ -90,7 +90,7 @@ public_pem = public_key.public_bytes(
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="EncypherAI Demo",
+    title="Encypher Demo",
     description="API for embedding and extracting metadata in text using Digital Signatures",
     version="2.3.0"
 )
@@ -132,7 +132,7 @@ with open("templates/index.html", "w") as f:
 <!DOCTYPE html>
 <html>
 <head>
-    <title>EncypherAI Demo</title>
+    <title>Encypher Demo</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -152,7 +152,7 @@ with open("templates/index.html", "w") as f:
 </head>
 <body>
     <div class="container my-5">
-        <h1 class="mb-4">EncypherAI Demo</h1>
+        <h1 class="mb-4">Encypher Demo</h1>
 
         <ul class="nav nav-tabs" id="myTab" role="tablist">
             <li class="nav-item" role="presentation">
@@ -177,7 +177,7 @@ with open("templates/index.html", "w") as f:
                             <label for="metadata" class="form-label">Metadata (JSON)</label>
                             <textarea class="form-control" id="metadata" name="metadata" rows="5" required>{
     "model": "gpt-4",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": 1742713200,
     "version": "2.3.0"
 }</textarea>
@@ -419,7 +419,7 @@ async def generate_with_openai(
         # Create metadata
         metadata = {
             "model": model,
-            "organization": "EncypherAI",
+            "organization": "Encypher",
             "timestamp": int(time.time()),
             "prompt": prompt,
             "version": "2.3.0"
@@ -565,7 +565,7 @@ data = {
     "text": "This is a sample text that will have metadata embedded within it.",
     "metadata": {
         "model": "gpt-4",
-        "organization": "EncypherAI",
+        "organization": "Encypher",
         "timestamp": int(time.time()),
         "version": "2.3.0"
     },

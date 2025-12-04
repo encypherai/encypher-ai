@@ -1,5 +1,5 @@
 """
-EncypherAI Core Package
+Encypher Core Package
 
 A Python package for embedding and extracting metadata in text using Unicode
 variation selectors.

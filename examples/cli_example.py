@@ -1,7 +1,7 @@
 """
-Command Line Interface Example for EncypherAI
+Command Line Interface Example for Encypher
 
-This example demonstrates how to use EncypherAI from the command line
+This example demonstrates how to use Encypher from the command line
 to encode and decode metadata in text.
 """
 
@@ -242,7 +242,7 @@ def decode_text(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="EncypherAI CLI - Encode and Decode Unicode Metadata with Digital Signatures.")
+    parser = argparse.ArgumentParser(description="Encypher CLI - Encode and Decode Unicode Metadata with Digital Signatures.")
     subparsers = parser.add_subparsers(dest="command", required=True, help="Available commands")
 
     # --- Generate Keys Command ---

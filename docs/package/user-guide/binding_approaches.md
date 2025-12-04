@@ -4,7 +4,7 @@
 
 When implementing content provenance systems like C2PA, a fundamental design decision is how to associate provenance metadata with the content itself. This association is commonly referred to as "binding," and the approach chosen has significant implications for security, usability, and compatibility.
 
-This guide explains the different binding approaches, with a focus on EncypherAI's implementation for text content.
+This guide explains the different binding approaches, with a focus on Encypher's implementation for text content.
 
 ## Binding Approaches
 
@@ -17,7 +17,7 @@ Hard binding embeds provenance metadata directly within the content itself, maki
 - The binding is inseparable from the content
 - Metadata travels with the content across platforms and formats
 
-**EncypherAI's Implementation:**
+**Encypher's Implementation:**
 Our Unicode variation selector approach is a hard binding technique. We embed C2PA manifests directly into text using zero-width, non-printing Unicode characters that become part of the text itself while remaining invisible to readers.
 
 ```
@@ -98,7 +98,7 @@ This⁠︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ is example text.
 
 The C2PA standard was originally designed with media files in mind, where metadata is typically stored in designated sections of the file format (e.g., XMP in JPEG files). This approach is a form of hard binding, as the metadata becomes part of the file structure.
 
-For text content, especially plain text that lacks a container format, C2PA doesn't specify a standard binding approach. EncypherAI's Unicode variation selector method extends C2PA principles to text content while maintaining the security benefits of hard binding.
+For text content, especially plain text that lacks a container format, C2PA doesn't specify a standard binding approach. Encypher's Unicode variation selector method extends C2PA principles to text content while maintaining the security benefits of hard binding.
 
 ## Choosing the Right Approach
 
@@ -127,9 +127,9 @@ When selecting a binding approach for your use case, consider these factors:
 - Progressive enhancement is desired
 - Resources allow for implementing both approaches
 
-## EncypherAI's Approach
+## Encypher's Approach
 
-EncypherAI has chosen a hard binding approach for text content using Unicode variation selectors because:
+Encypher has chosen a hard binding approach for text content using Unicode variation selectors because:
 
 1. **Format Independence**: Text often exists in multiple formats and is frequently copied between them
 2. **Copy-Paste Resilience**: Provenance should survive when text is copied from one document to another
@@ -185,4 +185,4 @@ As content provenance technology evolves, binding approaches are likely to becom
 4. **Blockchain Integration**: Distributed ledger technologies for metadata verification
 5. **User-Controlled Binding**: Allowing content creators to choose binding approaches
 
-EncypherAI is actively researching these areas while maintaining our commitment to secure, reliable content provenance that works across the diverse ecosystem of text content.
+Encypher is actively researching these areas while maintaining our commitment to secure, reliable content provenance that works across the diverse ecosystem of text content.

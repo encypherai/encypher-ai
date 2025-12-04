@@ -1,9 +1,9 @@
 """
-C2PA Interoperability Module for EncypherAI.
+C2PA Interoperability Module for Encypher.
 
-This module provides utilities for conceptual interoperability between EncypherAI's
+This module provides utilities for conceptual interoperability between Encypher's
 manifest format and C2PA-like structures. These utilities serve as a bridge for
-organizations working with both EncypherAI (for plain text) and C2PA (for rich media).
+organizations working with both Encypher (for plain text) and C2PA (for rich media).
 
 Note: This module provides a conceptual mapping, not a fully C2PA-compliant implementation.
 The goal is to demonstrate potential interoperability and provide a starting point for
@@ -15,15 +15,15 @@ from typing import Any
 
 def encypher_manifest_to_c2pa_like_dict(manifest: dict[str, Any]) -> dict[str, Any]:
     """
-    Converts an EncypherAI ManifestPayload to a dictionary using field names
+    Converts an Encypher ManifestPayload to a dictionary using field names
     conceptually aligned with C2PA assertion structures.
 
-    This function provides a conceptual bridge between EncypherAI's plain-text
+    This function provides a conceptual bridge between Encypher's plain-text
     manifest format and C2PA's rich media manifest structure, enabling potential
     interoperability between the two approaches.
 
     Args:
-        manifest: An EncypherAI manifest payload dictionary (can be a TypedDict ManifestPayload
+        manifest: An Encypher manifest payload dictionary (can be a TypedDict ManifestPayload
                  or a regular dict with the same structure)
 
     Returns:
@@ -35,9 +35,9 @@ def encypher_manifest_to_c2pa_like_dict(manifest: dict[str, Any]) -> dict[str, A
         from encypher.core.payloads import ManifestPayload
         from encypher.interop.c2pa import encypher_manifest_to_c2pa_like_dict
 
-        # Original EncypherAI manifest
+        # Original Encypher manifest
         manifest = ManifestPayload(
-            claim_generator="EncypherAI/1.1.0",
+            claim_generator="Encypher/1.1.0",
             assertions=[{"label": "c2pa.created", "when": "2025-04-13T12:00:00Z"}],
             ai_assertion={"model_id": "gpt-4o", "model_version": "1.0"},
             custom_claims={},
@@ -95,18 +95,18 @@ def encypher_manifest_to_c2pa_like_dict(manifest: dict[str, Any]) -> dict[str, A
 
 def c2pa_like_dict_to_encypher_manifest(data: dict[str, Any]) -> dict[str, Any]:
     """
-    Creates an EncypherAI ManifestPayload from a dictionary structured
+    Creates an Encypher ManifestPayload from a dictionary structured
     similarly to C2PA assertions. Handles missing fields gracefully.
 
     This function provides a conceptual bridge from C2PA-like structures
-    to EncypherAI's manifest format, enabling potential interoperability
+    to Encypher's manifest format, enabling potential interoperability
     between the two approaches.
 
     Args:
         data: A dictionary with C2PA-like structure containing provenance information.
 
     Returns:
-        An EncypherAI ManifestPayload dictionary that can be used with EncypherAI's
+        An Encypher ManifestPayload dictionary that can be used with Encypher's
         embedding functions.
 
     Example:
@@ -129,7 +129,7 @@ def c2pa_like_dict_to_encypher_manifest(data: dict[str, Any]) -> dict[str, Any]:
             "timestamp": "2025-04-13T12:00:00Z"
         }
 
-        # Convert to EncypherAI manifest
+        # Convert to Encypher manifest
         manifest = c2pa_like_dict_to_encypher_manifest(c2pa_data)
         ```
     """
@@ -192,7 +192,7 @@ def get_c2pa_manifest_schema() -> dict[str, Any]:
     return {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "title": "C2PA-like Manifest",
-        "description": "A simplified schema for C2PA-like manifests used with EncypherAI",
+        "description": "A simplified schema for C2PA-like manifests used with Encypher",
         "type": "object",
         "properties": {
             "claim_generator": {
