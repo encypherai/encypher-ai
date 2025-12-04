@@ -1,6 +1,6 @@
 # Google Gemini Integration
 
-This guide demonstrates how to integrate EncypherAI with Google's Gemini API to embed and verify metadata in both standard and streaming AI-generated content.
+This guide demonstrates how to integrate Encypher with Google's Gemini API to embed and verify metadata in both standard and streaming AI-generated content.
 
 ## Prerequisites
 
@@ -131,7 +131,7 @@ if verification_result.is_valid:
 
 1.  **Include Model Information**: Always include the model name and other relevant details in the metadata.
 2.  **Timestamps (optional)**: It's recommended to include a UTC timestamp, but timestamps are optional across all formats (including C2PA). When omitted, C2PA assertions that normally include `when` will simply omit that field.
-3.  **Use Secure Keys**: Store your Gemini API key and EncypherAI private keys securely, using environment variables or a dedicated key management system.
+3.  **Use Secure Keys**: Store your Gemini API key and Encypher private keys securely, using environment variables or a dedicated key management system.
 
 ## Troubleshooting
 

@@ -1,3 +1,3 @@
 """
-Tests for EncypherAI Core package.
+Tests for Encypher Core package.
 """

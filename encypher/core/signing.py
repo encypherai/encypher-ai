@@ -1,5 +1,5 @@
 """
-Cryptographic signing and verification utilities for EncypherAI.
+Cryptographic signing and verification utilities for Encypher.
 
 This module provides functions for signing payloads and verifying signatures
 using Ed25519 keys, as well as X.509 certificate validation and trust list
