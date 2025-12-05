@@ -27,20 +27,4 @@ CREATE INDEX IF NOT EXISTS idx_attribution_org ON attribution_reports(organizati
 CREATE INDEX IF NOT EXISTS idx_attribution_scan ON attribution_reports(scan_timestamp);
 CREATE INDEX IF NOT EXISTS idx_attribution_target ON attribution_reports(target_document_id) WHERE target_document_id IS NOT NULL;
 
--- Add comments for documentation (only if columns exist)
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'attribution_reports' AND column_name = 'id') THEN
-        COMMENT ON TABLE attribution_reports IS 'Stores plagiarism detection and source attribution reports';
-        COMMENT ON COLUMN attribution_reports.id IS 'Unique identifier for the report';
-        COMMENT ON COLUMN attribution_reports.organization_id IS 'Organization that requested the report';
-        COMMENT ON COLUMN attribution_reports.target_document_id IS 'Optional identifier for the target document';
-        COMMENT ON COLUMN attribution_reports.target_text_hash IS 'Hash of the target text being analyzed';
-        COMMENT ON COLUMN attribution_reports.scan_timestamp IS 'When the scan was performed';
-        COMMENT ON COLUMN attribution_reports.total_segments IS 'Total number of segments scanned';
-        COMMENT ON COLUMN attribution_reports.matched_segments IS 'Number of segments with matches found';
-        COMMENT ON COLUMN attribution_reports.source_documents IS 'Array of source document matches with statistics';
-        COMMENT ON COLUMN attribution_reports.heat_map_data IS 'Visualization data for heat map generation';
-        COMMENT ON COLUMN attribution_reports.report_metadata IS 'Additional metadata (scan parameters, etc.)';
-    END IF;
-END $$;
+-- Comments are optional and may fail if table structure differs - that's OK

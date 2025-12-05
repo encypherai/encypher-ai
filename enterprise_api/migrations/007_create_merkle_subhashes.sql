@@ -24,21 +24,4 @@ CREATE TABLE IF NOT EXISTS merkle_subhashes (
 CREATE INDEX IF NOT EXISTS idx_subhashes_hash ON merkle_subhashes(hash_value);
 CREATE INDEX IF NOT EXISTS idx_subhashes_root ON merkle_subhashes(root_id);
 
--- Add comments for documentation (only if columns exist)
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'merkle_subhashes' AND column_name = 'id') THEN
-        COMMENT ON TABLE merkle_subhashes IS 'Indexes all hashes (leaves and branches) in Merkle trees for efficient lookup';
-        COMMENT ON COLUMN merkle_subhashes.id IS 'Unique identifier for the sub-hash entry';
-        COMMENT ON COLUMN merkle_subhashes.hash_value IS 'SHA-256 hash value of the node';
-        COMMENT ON COLUMN merkle_subhashes.root_id IS 'Reference to the Merkle root this hash belongs to';
-        COMMENT ON COLUMN merkle_subhashes.node_type IS 'Type of node: leaf (text segment), branch (intermediate), or root';
-        COMMENT ON COLUMN merkle_subhashes.depth_level IS 'Distance from root (root=0, children=1, etc.)';
-        COMMENT ON COLUMN merkle_subhashes.position_index IS 'Position within the level (left-to-right, 0-indexed)';
-        COMMENT ON COLUMN merkle_subhashes.parent_hash IS 'Hash of parent node (NULL for root)';
-        COMMENT ON COLUMN merkle_subhashes.left_child_hash IS 'Hash of left child (NULL for leaves)';
-        COMMENT ON COLUMN merkle_subhashes.right_child_hash IS 'Hash of right child (NULL for leaves)';
-        COMMENT ON COLUMN merkle_subhashes.text_content IS 'Original text content (only for leaf nodes)';
-        COMMENT ON COLUMN merkle_subhashes.segment_metadata IS 'Additional metadata (original index, length, etc.)';
-    END IF;
-END $$;
+-- Comments are optional and may fail if table structure differs - that's OK

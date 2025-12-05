@@ -20,17 +20,4 @@ CREATE TABLE IF NOT EXISTS merkle_proof_cache (
 CREATE INDEX IF NOT EXISTS idx_merkle_proof_cache_target_root ON merkle_proof_cache(target_hash, root_id);
 CREATE INDEX IF NOT EXISTS idx_merkle_proof_cache_expires ON merkle_proof_cache(expires_at);
 
--- Add comments for documentation (only if columns exist)
-DO $$
-BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'merkle_proof_cache' AND column_name = 'id') THEN
-        COMMENT ON TABLE merkle_proof_cache IS 'Caches generated Merkle proofs for performance optimization';
-        COMMENT ON COLUMN merkle_proof_cache.id IS 'Unique identifier for the cache entry';
-        COMMENT ON COLUMN merkle_proof_cache.target_hash IS 'Hash of the leaf node being proved';
-        COMMENT ON COLUMN merkle_proof_cache.root_id IS 'Reference to the Merkle root';
-        COMMENT ON COLUMN merkle_proof_cache.proof_path IS 'Array of sibling hashes along the path to root';
-        COMMENT ON COLUMN merkle_proof_cache.position_bits IS 'Binary representation of path (0=left, 1=right)';
-        COMMENT ON COLUMN merkle_proof_cache.created_at IS 'When the proof was cached';
-        COMMENT ON COLUMN merkle_proof_cache.expires_at IS 'When the cache entry expires (default 24 hours)';
-    END IF;
-END $$;
+-- Comments are optional and may fail if table structure differs - that's OK
