@@ -100,6 +100,16 @@ http:
       middlewares:
         - cors
 
+    # Organizations - team/org management (handled by auth-service)
+    api-organizations:
+      rule: "PathPrefix(`/api/v1/organizations`)"
+      service: auth-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
     # Enterprise API - signing, batch, streaming, etc.
     api-enterprise:
       rule: "PathPrefix(`/api/v1/sign`) || PathPrefix(`/api/v1/batch`) || PathPrefix(`/api/v1/merkle`) || PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/onboarding`) || PathPrefix(`/api/v1/streaming`) || PathPrefix(`/api/v1/chat`) || PathPrefix(`/api/v1/licensing`) || PathPrefix(`/api/v1/usage`) || PathPrefix(`/api/v1/audit`) || PathPrefix(`/api/v1/team`) || PathPrefix(`/api/v1/enterprise`)"
