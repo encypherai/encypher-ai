@@ -21,6 +21,46 @@ const handler = NextAuth({
           throw new Error('Please enter both email and password');
         }
 
+        // Handle token-based login from email verification
+        if (credentials.password.startsWith('__TOKEN__')) {
+          const accessToken = credentials.password.replace('__TOKEN__', '');
+          console.log('[NextAuth] Token-based login for:', credentials.email);
+          
+          // Verify the token with the auth service
+          try {
+            const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+              },
+            });
+            
+            if (verifyRes.ok) {
+              const verifyData = await verifyRes.json();
+              if (verifyData.success && verifyData.data) {
+                const user = verifyData.data;
+                console.log('[NextAuth] Token verification successful for:', user.email);
+                return {
+                  id: String(user.id),
+                  email: user.email,
+                  name: user.name,
+                  accessToken: accessToken,
+                  role: user.role ?? 'member',
+                  tier: user.tier ?? 'free',
+                } as any;
+              }
+            }
+            
+            // Token verification failed, fall through to show success but require manual login
+            console.log('[NextAuth] Token verification failed, user should login manually');
+            throw new Error('Session expired. Please log in with your credentials.');
+          } catch (error) {
+            console.error('[NextAuth] Token verification error:', error);
+            throw new Error('Session expired. Please log in with your credentials.');
+          }
+        }
+
         try {
           console.log('[NextAuth] Attempting login to:', `${API_BASE}/auth/login`);
           // Call API Gateway auth login (SRF)
