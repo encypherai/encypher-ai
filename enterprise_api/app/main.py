@@ -34,6 +34,7 @@ from app.routers import (
     verification,
 )
 from app.services.session_service import session_service
+from app.utils.db_startup import ensure_database_ready
 
 # Configure logging
 logging.basicConfig(
@@ -55,24 +56,19 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("SSL.com API: Not configured (optional for staging)")
     
+    # Ensure database is ready and run migrations
+    ensure_database_ready(
+        database_url=db_url,
+        service_name="enterprise-api",
+        run_migrations=True,
+        exit_on_failure=True
+    )
+    
     # Initialize Redis connection for session management
     try:
         await session_service.connect()
     except Exception as e:
         logger.warning(f"Failed to connect to Redis: {e}. Running without session persistence.")
-    
-    # Verify database connection and schema
-    # Note: Schema is now managed by unified migrations in services/migrations/
-    # Run `start-dev.ps1` to initialize the database with all required tables
-    try:
-        async with engine.begin() as conn:
-            # Quick health check - verify organizations table exists
-            result = await conn.execute(text("SELECT COUNT(*) FROM organizations"))
-            org_count = result.scalar()
-            logger.info(f"Database connected. Organizations: {org_count}")
-    except Exception as e:
-        logger.error(f"Database connection failed: {e}")
-        logger.error("Make sure to run migrations first (start-dev.ps1 or services/migrations/*.sql)")
     
     try:
         yield

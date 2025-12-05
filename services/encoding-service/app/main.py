@@ -9,8 +9,9 @@ from contextlib import asynccontextmanager
 
 from .core.config import settings
 from .api.v1.endpoints import router as v1_router
-from .db.models import Base
-from .db.session import engine
+
+# Import database startup utilities
+from encypher_commercial_shared.db import ensure_database_ready
 
 # Configure logging
 logging.basicConfig(
@@ -25,9 +26,15 @@ async def lifespan(app: FastAPI):
     """Lifespan events"""
     # Startup
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    logger.info("Creating database tables...")
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created")
+    
+    # Ensure database is ready and run migrations
+    ensure_database_ready(
+        database_url=settings.DATABASE_URL,
+        service_name=settings.SERVICE_NAME,
+        alembic_config_path="alembic.ini",
+        run_migrations=True,
+        exit_on_failure=True
+    )
 
     yield
 

@@ -14,6 +14,9 @@ from .db.session import engine
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
 
+# Import database startup utilities
+from encypher_commercial_shared.db import ensure_database_ready
+
 # Configure structured logging
 logger = setup_logging(settings.LOG_LEVEL)
 
@@ -23,9 +26,15 @@ async def lifespan(app: FastAPI):
     """Lifespan events"""
     # Startup
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    logger.info("Creating database tables...")
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created")
+    
+    # Ensure database is ready and run migrations
+    ensure_database_ready(
+        database_url=settings.DATABASE_URL,
+        service_name=settings.SERVICE_NAME,
+        alembic_config_path="alembic.ini",
+        run_migrations=True,
+        exit_on_failure=True
+    )
 
     yield
 
