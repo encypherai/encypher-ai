@@ -13,6 +13,12 @@ RUN apt-get update && apt-get install -y \
 # Install UV
 RUN pip install uv
 
+# Copy shared library (synced from /shared_commercial_libs/)
+COPY shared_libs /shared_libs
+
+# Install shared library first
+RUN uv pip install --system /shared_libs
+
 # Copy dependency files first for better caching
 COPY pyproject.toml ./
 COPY README.md ./

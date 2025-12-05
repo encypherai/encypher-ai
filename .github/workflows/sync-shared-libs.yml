@@ -18,17 +18,43 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
       
-      - name: Sync shared_libs to auth-service
+      - name: Sync shared_libs to all services
         run: |
-          rm -rf services/auth-service/shared_libs
-          cp -r shared_commercial_libs services/auth-service/shared_libs
-          echo "✅ Synced to auth-service"
-      
-      - name: Sync shared_libs to notification-service
-        run: |
-          rm -rf services/notification-service/shared_libs
-          cp -r shared_commercial_libs services/notification-service/shared_libs
-          echo "✅ Synced to notification-service"
+          # List of all services that use shared_commercial_libs
+          SERVICES=(
+            "analytics-service"
+            "auth-service"
+            "billing-service"
+            "coalition-service"
+            "encoding-service"
+            "key-service"
+            "notification-service"
+            "user-service"
+            "verification-service"
+            "web-service"
+          )
+          
+          for SERVICE in "${SERVICES[@]}"; do
+            echo "Syncing to $SERVICE..."
+            rm -rf "services/$SERVICE/shared_libs"
+            cp -r shared_commercial_libs "services/$SERVICE/shared_libs"
+            
+            # Add SYNC_NOTICE.md to indicate this is a synced copy
+            cat > "services/$SERVICE/shared_libs/SYNC_NOTICE.md" << 'EOF'
+          # AUTO-SYNCED - DO NOT EDIT
+          
+          This directory is automatically synced from `/shared_commercial_libs/`.
+          
+          **Source of Truth**: `/shared_commercial_libs/`
+          
+          Any changes made here will be overwritten on the next sync.
+          To make changes, edit the files in `/shared_commercial_libs/` and push to main.
+          
+          Synced by: GitHub Actions (sync-shared-libs.yml)
+          EOF
+            echo "  Synced to $SERVICE"
+          done
+          echo "All services synced."
       
       - name: Check for changes
         id: check_changes
@@ -41,5 +67,5 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add services/*/shared_libs/
-          git commit -m "chore: Sync shared_commercial_libs to services [skip ci]"
+          git commit -m "chore: Sync shared_commercial_libs to all services [skip ci]"
           git push
