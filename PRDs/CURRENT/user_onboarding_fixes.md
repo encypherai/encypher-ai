@@ -170,3 +170,20 @@ KEY_SERVICE_URL=http://key-service.railway.internal:8080
 - Test complete flow in production
 - Verify auto-login works correctly
 - Confirm API keys work in playground
+
+### 2025-12-05 - Additional Fixes (Commit 2)
+
+**Issue**: "Organization not found" error persisted because downstream code (quota.py, tier_service.py, usage.py) was querying the local database for organization records that don't exist for user-level keys.
+
+**Fix**: Updated all organization lookup code to handle synthetic org IDs (`user_{user_id}`) by using starter tier defaults without database lookup:
+- `enterprise_api/app/utils/quota.py`: `check_quota`, `get_quota_headers`, `get_quota_status`
+- `enterprise_api/app/services/tier_service.py`: `check_feature_access`, `get_organization_tier_info`
+- `enterprise_api/app/routers/usage.py`: `get_usage_stats`
+
+### 2025-12-05 - Additional Fixes (Commit 3)
+
+**Issue**: Marketing site showed "[AUTH] No valid credentials provided" after email verification because the signIn call was missing required user data.
+
+**Fix**: 
+- Marketing site verify-email: Pass `email`, `name`, `user_uuid`, `is_verified` to signIn
+- Dashboard NextAuth: Add token-based login support with `__TOKEN__` prefix handling
