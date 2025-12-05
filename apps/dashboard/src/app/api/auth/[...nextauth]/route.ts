@@ -199,6 +199,9 @@ const handler = NextAuth({
   },
   session: {
     strategy: 'jwt',
+    // Match backend JWT expiration (30 minutes) plus small buffer
+    // This ensures NextAuth session expires around the same time as backend token
+    maxAge: 30 * 60, // 30 minutes in seconds
   },
   cookies: {
     sessionToken: {

@@ -101,6 +101,56 @@ watermarked_text = embed_manifest(text, manifest_bytes)
 extracted_bytes, clean_text = extract_manifest(watermarked_text)
 ```
 
+### HTTP Utilities (Python)
+
+For making API calls that correctly handle Unicode variation selectors (avoiding encoding issues in PowerShell, curl, etc.):
+
+```python
+from c2pa_text.http import sign_text, verify_text, sign_and_verify
+
+# Sign text
+result = sign_text(
+    api_url="https://api.encypherai.com/api/v1/sign",
+    api_key="your_api_key",
+    text="Hello, world!",
+    custom_metadata={"author": "Your Name"}
+)
+signed_text = result["signed_text"]
+
+# Verify text
+verification = verify_text(
+    api_url="https://api.encypherai.com/api/v1/verify",
+    api_key="your_api_key",
+    text=signed_text
+)
+print(f"Valid: {verification['data']['valid']}")
+
+# Or test round-trip in one call
+result = sign_and_verify(
+    base_url="https://api.encypherai.com/api/v1",
+    api_key="your_api_key",
+    text="Test document"
+)
+```
+
+### CLI (Python)
+
+A command-line tool is included for quick testing:
+
+```bash
+# Sign text
+python -m c2pa_text --api-key YOUR_KEY sign --text "Hello, world!"
+
+# Verify text from file
+python -m c2pa_text --api-key YOUR_KEY verify --file signed.txt
+
+# Test round-trip (sign + verify)
+python -m c2pa_text --api-key YOUR_KEY test --text "Test document"
+
+# Use staging API
+python -m c2pa_text --api-key YOUR_KEY --base-url https://api-staging.encypherai.com/api/v1 test --text "Test"
+```
+
 ### Validation (Python)
 
 Validate manifest structure before embedding to catch issues early:
@@ -151,6 +201,37 @@ if (result) {
   console.log(result.manifest);   // Uint8Array
   console.log(result.cleanText);  // "Hello World"
 }
+```
+
+### HTTP Utilities (TypeScript)
+
+For making API calls that correctly handle Unicode variation selectors:
+
+```typescript
+import { signText, verifyText, signAndVerify } from 'c2pa-text';
+
+// Sign text
+const signResult = await signText({
+  apiUrl: 'https://api.encypherai.com/api/v1/sign',
+  apiKey: 'your_api_key',
+  text: 'Hello, world!',
+  customMetadata: { author: 'Your Name' }
+});
+
+// Verify text
+const verifyResult = await verifyText({
+  apiUrl: 'https://api.encypherai.com/api/v1/verify',
+  apiKey: 'your_api_key',
+  text: signResult.signed_text
+});
+console.log(`Valid: ${verifyResult.data.valid}`);
+
+// Or test round-trip in one call
+const result = await signAndVerify({
+  baseUrl: 'https://api.encypherai.com/api/v1',
+  apiKey: 'your_api_key',
+  text: 'Test document'
+});
 ```
 
 ## Usage (Rust)

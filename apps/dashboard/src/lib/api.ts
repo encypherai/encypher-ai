@@ -188,6 +188,13 @@ class ApiError extends Error {
     super(message);
     this.name = 'ApiError';
   }
+
+  /**
+   * Check if this error indicates an expired or invalid session
+   */
+  isAuthError(): boolean {
+    return this.statusCode === 401 || this.statusCode === 403;
+  }
 }
 
 async function fetchWithAuth<T>(

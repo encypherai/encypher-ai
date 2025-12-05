@@ -5,9 +5,7 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
 
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
-import { useRouter } from 'next/navigation';
+// Note: API_BASE not used directly in login - auth goes through NextAuth
 import Link from 'next/link';
 import MetadataBackground from '../../components/hero/MetadataBackground';
 
@@ -16,7 +14,6 @@ const LOGO_COLOR = '/assets/encypher_full_logo_color.svg';
 const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -38,12 +35,17 @@ export default function LoginPage() {
       if (result?.error) {
         // NextAuth passes the error message from authorize() in result.error
         setError(result.error === 'CredentialsSignin' ? 'Invalid email or password' : result.error);
+        setLoading(false);
+      } else if (result?.ok) {
+        // Force a hard navigation to ensure middleware re-evaluates with fresh session
+        // Using window.location instead of router.push to avoid Next.js cache issues
+        window.location.href = '/';
       } else {
-        router.push('/');
+        setError('Login failed. Please try again.');
+        setLoading(false);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
-    } finally {
       setLoading(false);
     }
   };

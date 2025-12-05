@@ -4,6 +4,10 @@
  * Validation:
  *   Use validateManifest() to check manifest structure before embedding.
  *   This helps catch issues early and provides detailed diagnostics.
+ *
+ * HTTP Utilities:
+ *   Use signText() and verifyText() from './http' for API calls that
+ *   correctly handle Unicode variation selectors.
  */
 
 // Re-export validation utilities
@@ -15,6 +19,18 @@ export {
   validateJumbfStructure,
   validateWrapperBytes,
 } from './validator';
+
+// Re-export HTTP utilities
+export {
+  signText,
+  verifyText,
+  signAndVerify,
+  SignTextOptions,
+  VerifyTextOptions,
+  SignResponse,
+  VerifyResponse,
+  C2PAHTTPError,
+} from './http';
 
 // Constants
 const MAGIC = new Uint8Array([0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00]); // "C2PATXT\0"
