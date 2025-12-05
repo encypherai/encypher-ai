@@ -36,3 +36,8 @@ asyncio_default_fixture_loop_scope = "function"
 markers = [
     "real_db: marks tests that require a live database"
 ]
+
+[dependency-groups]
+dev = [
+    "rich>=14.2.0",
+]
