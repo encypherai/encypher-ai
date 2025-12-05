@@ -22,6 +22,9 @@ const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://s-api.encypherai.c
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
+// Tier definitions for feature gating
+type Tier = 'starter' | 'professional' | 'business' | 'enterprise';
+
 interface ApiEndpoint {
   id: string;
   name: string;
@@ -31,20 +34,38 @@ interface ApiEndpoint {
   category: string;
   requiresAuth: boolean;
   sampleBody?: string;
-  authType?: 'session' | 'apikey' | 'both'; // Which auth methods work
+  authType?: 'session' | 'apikey' | 'both';
+  minTier?: Tier; // Minimum tier required (undefined = all tiers)
+  docsUrl?: string; // Link to documentation
 }
 
+// Tier hierarchy for comparison
+const tierOrder: Record<Tier, number> = {
+  starter: 0,
+  professional: 1,
+  business: 2,
+  enterprise: 3,
+};
+
+const hasTierAccess = (userTier: Tier, requiredTier?: Tier): boolean => {
+  if (!requiredTier) return true;
+  return tierOrder[userTier] >= tierOrder[requiredTier];
+};
+
 const endpoints: ApiEndpoint[] = [
-  // Signing & Verification (Enterprise API - uses API key auth)
+  // ============================================
+  // SIGNING & VERIFICATION (Core - All Tiers)
+  // ============================================
   {
     id: 'sign',
     name: 'Sign Content',
     method: 'POST',
     path: '/sign',
-    description: 'Sign text content with cryptographic metadata using Unicode steganography',
+    description: 'Sign text content with C2PA-compliant cryptographic metadata',
     category: 'Signing',
     requiresAuth: true,
     authType: 'apikey',
+    docsUrl: 'https://docs.encypherai.com/api/sign',
     sampleBody: JSON.stringify({
       text: "Hello, this is AI-generated content that needs authentication.",
       model_id: "gpt-4",
@@ -56,10 +77,11 @@ const endpoints: ApiEndpoint[] = [
     name: 'Verify Content',
     method: 'POST',
     path: '/verify',
-    description: 'Verify signed content and extract metadata',
+    description: 'Verify signed content and extract C2PA metadata',
     category: 'Verification',
     requiresAuth: true,
     authType: 'apikey',
+    docsUrl: 'https://docs.encypherai.com/api/verify',
     sampleBody: JSON.stringify({
       text: "Paste signed content here to verify..."
     }, null, 2),
@@ -73,11 +95,214 @@ const endpoints: ApiEndpoint[] = [
     category: 'Verification',
     requiresAuth: true,
     authType: 'apikey',
+    docsUrl: 'https://docs.encypherai.com/api/lookup',
     sampleBody: JSON.stringify({
       document_id: "doc_example_id"
     }, null, 2),
   },
-  // API Keys (Key Service - uses session auth)
+  
+  // ============================================
+  // STREAMING (Professional+)
+  // ============================================
+  {
+    id: 'streaming-start',
+    name: 'Start Streaming Session',
+    method: 'POST',
+    path: '/streaming/start',
+    description: 'Start a streaming signing session for real-time content',
+    category: 'Streaming',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    docsUrl: 'https://docs.encypherai.com/api/streaming',
+    sampleBody: JSON.stringify({
+      model_id: "gpt-4",
+      session_metadata: { conversation_id: "conv_123" }
+    }, null, 2),
+  },
+  {
+    id: 'streaming-chunk',
+    name: 'Send Streaming Chunk',
+    method: 'POST',
+    path: '/streaming/chunk',
+    description: 'Send a chunk of content in an active streaming session',
+    category: 'Streaming',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    sampleBody: JSON.stringify({
+      session_id: "sess_example",
+      chunk: "This is a chunk of streaming content...",
+      sequence: 1
+    }, null, 2),
+  },
+  {
+    id: 'streaming-end',
+    name: 'End Streaming Session',
+    method: 'POST',
+    path: '/streaming/end',
+    description: 'Finalize a streaming session and get the signed document',
+    category: 'Streaming',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    sampleBody: JSON.stringify({
+      session_id: "sess_example"
+    }, null, 2),
+  },
+  
+  // ============================================
+  // BATCH OPERATIONS (Business+)
+  // ============================================
+  {
+    id: 'batch-sign',
+    name: 'Batch Sign',
+    method: 'POST',
+    path: '/api/v1/batch/sign',
+    description: 'Sign multiple documents in a single request',
+    category: 'Batch',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'business',
+    docsUrl: 'https://docs.encypherai.com/api/batch',
+    sampleBody: JSON.stringify({
+      documents: [
+        { text: "First document to sign", document_id: "doc_1" },
+        { text: "Second document to sign", document_id: "doc_2" }
+      ],
+      model_id: "gpt-4"
+    }, null, 2),
+  },
+  {
+    id: 'batch-verify',
+    name: 'Batch Verify',
+    method: 'POST',
+    path: '/api/v1/batch/verify',
+    description: 'Verify multiple documents in a single request',
+    category: 'Batch',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'business',
+    sampleBody: JSON.stringify({
+      documents: [
+        { text: "First signed document..." },
+        { text: "Second signed document..." }
+      ]
+    }, null, 2),
+  },
+  
+  // ============================================
+  // MERKLE TREE (Professional+)
+  // ============================================
+  {
+    id: 'merkle-encode',
+    name: 'Merkle Encode',
+    method: 'POST',
+    path: '/merkle/encode',
+    description: 'Encode document with sentence-level Merkle tree for granular verification',
+    category: 'Merkle',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    docsUrl: 'https://docs.encypherai.com/api/merkle',
+    sampleBody: JSON.stringify({
+      text: "This is a document with multiple sentences. Each sentence gets its own hash. This enables sentence-level verification.",
+      document_id: "doc_merkle_example"
+    }, null, 2),
+  },
+  {
+    id: 'merkle-attribution',
+    name: 'Merkle Attribution',
+    method: 'POST',
+    path: '/merkle/attribution',
+    description: 'Check if content matches any registered sentences',
+    category: 'Merkle',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    sampleBody: JSON.stringify({
+      text: "Check if this sentence appears in any registered documents."
+    }, null, 2),
+  },
+  
+  // ============================================
+  // USAGE & ANALYTICS
+  // ============================================
+  {
+    id: 'usage-stats',
+    name: 'Get Usage Stats',
+    method: 'GET',
+    path: '/usage',
+    description: 'Get your current API usage and quota information',
+    category: 'Usage',
+    requiresAuth: true,
+    authType: 'apikey',
+  },
+  
+  // ============================================
+  // TEAM MANAGEMENT (Business+)
+  // ============================================
+  {
+    id: 'team-list',
+    name: 'List Team Members',
+    method: 'GET',
+    path: '/team/members',
+    description: 'List all members of your organization',
+    category: 'Team',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'business',
+    docsUrl: 'https://docs.encypherai.com/api/team',
+  },
+  {
+    id: 'team-invite',
+    name: 'Invite Team Member',
+    method: 'POST',
+    path: '/team/invite',
+    description: 'Invite a new member to your organization',
+    category: 'Team',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'business',
+    sampleBody: JSON.stringify({
+      email: "colleague@example.com",
+      role: "member"
+    }, null, 2),
+  },
+  
+  // ============================================
+  // AUDIT LOGS (Business+)
+  // ============================================
+  {
+    id: 'audit-logs',
+    name: 'Get Audit Logs',
+    method: 'GET',
+    path: '/audit/logs',
+    description: 'Retrieve audit logs for compliance and security review',
+    category: 'Audit',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'business',
+    docsUrl: 'https://docs.encypherai.com/api/audit',
+  },
+  
+  // ============================================
+  // COALITION (All Tiers)
+  // ============================================
+  {
+    id: 'coalition-status',
+    name: 'Coalition Status',
+    method: 'GET',
+    path: '/coalition/status',
+    description: 'Get your Publisher Coalition membership status and revenue share',
+    category: 'Coalition',
+    requiresAuth: true,
+    authType: 'apikey',
+  },
+  
+  // ============================================
+  // API KEYS (Dashboard - Session Auth)
+  // ============================================
   {
     id: 'list-keys',
     name: 'List API Keys',
@@ -102,7 +327,22 @@ const endpoints: ApiEndpoint[] = [
       permissions: ["sign", "verify", "read"]
     }, null, 2),
   },
-  // Auth (Auth Service - uses session auth)
+  {
+    id: 'validate-key',
+    name: 'Validate API Key',
+    method: 'POST',
+    path: '/keys/validate',
+    description: 'Validate an API key and get organization context (public endpoint)',
+    category: 'API Keys',
+    requiresAuth: false,
+    sampleBody: JSON.stringify({
+      key: "ency_your_api_key_here"
+    }, null, 2),
+  },
+  
+  // ============================================
+  // AUTH (Dashboard - Session Auth)
+  // ============================================
   {
     id: 'verify-token',
     name: 'Verify Token',
@@ -113,18 +353,15 @@ const endpoints: ApiEndpoint[] = [
     requiresAuth: true,
     authType: 'session',
   },
-  // Key Validation (Key Service - public endpoint)
   {
-    id: 'validate-key',
-    name: 'Validate API Key',
-    method: 'POST',
-    path: '/keys/validate',
-    description: 'Validate an API key and get organization context',
-    category: 'API Keys',
-    requiresAuth: false,
-    sampleBody: JSON.stringify({
-      key: "ency_your_api_key_here"
-    }, null, 2),
+    id: 'user-profile',
+    name: 'Get Profile',
+    method: 'GET',
+    path: '/auth/me',
+    description: 'Get your user profile information',
+    category: 'Auth',
+    requiresAuth: true,
+    authType: 'session',
   },
 ];
 
@@ -135,9 +372,26 @@ const methodColors: Record<HttpMethod, string> = {
   DELETE: 'bg-red-100 text-red-700',
 };
 
+// Tier badge colors
+const tierColors: Record<Tier, string> = {
+  starter: 'bg-slate-100 text-slate-600',
+  professional: 'bg-blue-100 text-blue-700',
+  business: 'bg-purple-100 text-purple-700',
+  enterprise: 'bg-amber-100 text-amber-700',
+};
+
+const tierLabels: Record<Tier, string> = {
+  starter: 'Free',
+  professional: 'Pro',
+  business: 'Business',
+  enterprise: 'Enterprise',
+};
+
 export default function PlaygroundPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
+  // Get user tier from session (default to starter for new users)
+  const userTier = ((session?.user as Record<string, unknown>)?.tier as Tier) || 'starter';
 
   const [selectedEndpoint, setSelectedEndpoint] = useState<ApiEndpoint>(endpoints[0]);
   const [customPath, setCustomPath] = useState('');
@@ -160,6 +414,9 @@ export default function PlaygroundPage() {
 
   const [selectedApiKey, setSelectedApiKey] = useState<string>('session');
   const [customApiKey, setCustomApiKey] = useState<string>('');
+
+  // Check if user has access to the selected endpoint
+  const hasAccess = hasTierAccess(userTier, selectedEndpoint.minTier);
 
   // Update request body when endpoint changes
   useEffect(() => {
@@ -321,25 +578,33 @@ export default function PlaygroundPage() {
               <div className="max-h-96 overflow-y-auto">
                 {endpoints
                   .filter((e) => e.category === activeCategory)
-                  .map((endpoint) => (
-                    <button
-                      key={endpoint.id}
-                      onClick={() => setSelectedEndpoint(endpoint)}
-                      className={`w-full text-left px-4 py-3 border-b last:border-0 transition-colors ${
-                        selectedEndpoint.id === endpoint.id
-                          ? 'bg-blue-50 dark:bg-blue-900/30'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-700'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className={`px-2 py-0.5 text-xs font-bold rounded ${methodColors[endpoint.method]}`}>
-                          {endpoint.method}
-                        </span>
-                        <span className="font-medium text-sm">{endpoint.name}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground truncate">{endpoint.path}</p>
-                    </button>
-                  ))}
+                  .map((endpoint) => {
+                    const endpointHasAccess = hasTierAccess(userTier, endpoint.minTier);
+                    return (
+                      <button
+                        key={endpoint.id}
+                        onClick={() => setSelectedEndpoint(endpoint)}
+                        className={`w-full text-left px-4 py-3 border-b last:border-0 transition-colors ${
+                          selectedEndpoint.id === endpoint.id
+                            ? 'bg-blue-50 dark:bg-blue-900/30'
+                            : 'hover:bg-slate-50 dark:hover:bg-slate-700'
+                        } ${!endpointHasAccess ? 'opacity-60' : ''}`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={`px-2 py-0.5 text-xs font-bold rounded ${methodColors[endpoint.method]}`}>
+                            {endpoint.method}
+                          </span>
+                          <span className="font-medium text-sm flex-1">{endpoint.name}</span>
+                          {endpoint.minTier && (
+                            <span className={`px-1.5 py-0.5 text-[10px] font-medium rounded ${tierColors[endpoint.minTier]}`}>
+                              {!endpointHasAccess && '🔒 '}{tierLabels[endpoint.minTier]}+
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground truncate">{endpoint.path}</p>
+                      </button>
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>
@@ -457,11 +722,35 @@ export default function PlaygroundPage() {
                 </div>
               )}
 
+              {/* Tier Access Warning */}
+              {!hasAccess && selectedEndpoint.minTier && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <span className="text-amber-500 text-xl">🔒</span>
+                    <div>
+                      <h4 className="font-medium text-amber-800 dark:text-amber-200">
+                        {tierLabels[selectedEndpoint.minTier]}+ Feature
+                      </h4>
+                      <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                        This endpoint requires the {tierLabels[selectedEndpoint.minTier]} plan or higher.
+                        You can still view the API structure and documentation.
+                      </p>
+                      <a
+                        href="/billing"
+                        className="inline-block mt-2 text-sm font-medium text-amber-800 dark:text-amber-200 hover:underline"
+                      >
+                        Upgrade your plan →
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Send Button */}
               <Button
                 variant="primary"
                 onClick={handleSendRequest}
-                disabled={isLoading || (!accessToken && selectedApiKey === 'session') || (selectedApiKey === 'custom' && !customApiKey.trim())}
+                disabled={isLoading || !hasAccess || (!accessToken && selectedApiKey === 'session') || (selectedApiKey === 'custom' && !customApiKey.trim())}
                 className="w-full"
               >
                 {isLoading ? (
@@ -472,6 +761,13 @@ export default function PlaygroundPage() {
                     </svg>
                     Sending...
                   </>
+                ) : !hasAccess ? (
+                  <>
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    Upgrade to Test
+                  </>
                 ) : (
                   <>
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -481,6 +777,18 @@ export default function PlaygroundPage() {
                   </>
                 )}
               </Button>
+
+              {/* Documentation Link */}
+              {selectedEndpoint.docsUrl && (
+                <a
+                  href={selectedEndpoint.docsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-center text-sm text-blue-ncs hover:underline"
+                >
+                  View full documentation for this endpoint →
+                </a>
+              )}
             </CardContent>
           </Card>
 
