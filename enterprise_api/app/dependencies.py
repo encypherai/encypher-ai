@@ -10,7 +10,7 @@ Unified Authentication Architecture:
 import logging
 from typing import Dict
 
-from fastapi import BackgroundTasks, Depends, HTTPException, Security, status
+from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
@@ -145,6 +145,7 @@ DEMO_KEYS = {
 
 
 async def get_current_organization(
+    request: Request,
     background_tasks: BackgroundTasks,
     credentials: HTTPAuthorizationCredentials = Security(security),
 ) -> Dict:
@@ -153,6 +154,8 @@ async def get_current_organization(
     
     Uses Key Service /validate endpoint for unified authentication.
     Falls back to demo keys for local development.
+    
+    Also sets request.state for metrics middleware.
 
     Returns:
         Dictionary containing:
@@ -163,31 +166,37 @@ async def get_current_organization(
         - usage limits
     """
     api_key = credentials.credentials
+    org_context = None
 
     # 1. Try Key Service first (production path)
     org_context = await key_service_client.validate_key(api_key)
     
     if org_context:
         # Normalize the response to ensure consistent structure
-        return _normalize_org_context(org_context)
-    
-    # 2. Fall back to demo keys (development/testing)
-    if api_key in DEMO_KEYS:
+        org_context = _normalize_org_context(org_context)
+    elif api_key in DEMO_KEYS:
+        # 2. Fall back to demo keys (development/testing)
         logger.debug(f"Using demo key: {api_key[:20]}...")
-        # Normalize demo key data to ensure consistent structure
-        return _normalize_org_context(DEMO_KEYS[api_key].copy())
-    
-    # 3. Legacy demo key support (from settings)
-    if settings.demo_api_key and api_key == settings.demo_api_key:
+        org_context = _normalize_org_context(DEMO_KEYS[api_key].copy())
+    elif settings.demo_api_key and api_key == settings.demo_api_key:
+        # 3. Legacy demo key support (from settings)
         logger.debug("Using legacy demo key from settings")
-        return _normalize_org_context(DEMO_KEYS.get("demo-api-key-for-testing", {}).copy())
-
-    # 4. Invalid key
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Invalid API key",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+        org_context = _normalize_org_context(DEMO_KEYS.get("demo-api-key-for-testing", {}).copy())
+    else:
+        # 4. Invalid key
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Set request.state for metrics middleware
+    request.state.organization_id = org_context.get("organization_id")
+    request.state.user_id = org_context.get("user_id") or org_context.get("api_key_owner_id")
+    request.state.api_key_id = org_context.get("api_key_id")
+    request.state.tier = org_context.get("tier")
+    
+    return org_context
 
 
 def _normalize_org_context(org_context: Dict) -> Dict:

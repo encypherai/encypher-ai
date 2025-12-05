@@ -49,12 +49,25 @@ class AnalyticsService:
         start_date: datetime,
         end_date: datetime,
     ) -> Dict[str, Any]:
-        """Get usage statistics for a user"""
+        """Get usage statistics for a user or organization.
+        
+        Args:
+            user_id: User ID or organization ID to query
+        """
+        from sqlalchemy import or_
+        
+        # Query by both user_id and organization_id for compatibility
+        def user_or_org_filter():
+            return or_(
+                UsageMetric.user_id == user_id,
+                UsageMetric.organization_id == user_id,
+            )
+        
         # Total API calls
         total_api_calls = db.query(func.sum(UsageMetric.count)).filter(
             and_(
-                UsageMetric.user_id == user_id,
-                UsageMetric.metric_type == "api_call",
+                user_or_org_filter(),
+                UsageMetric.metric_type.in_(["api_call", "API_CALL"]),
                 UsageMetric.created_at >= start_date,
                 UsageMetric.created_at <= end_date,
             )
@@ -63,8 +76,8 @@ class AnalyticsService:
         # Documents signed
         total_documents_signed = db.query(func.sum(UsageMetric.count)).filter(
             and_(
-                UsageMetric.user_id == user_id,
-                UsageMetric.metric_type == "document_signed",
+                user_or_org_filter(),
+                UsageMetric.metric_type.in_(["document_signed", "DOCUMENT_SIGNED"]),
                 UsageMetric.created_at >= start_date,
                 UsageMetric.created_at <= end_date,
             )
@@ -73,28 +86,51 @@ class AnalyticsService:
         # Verifications
         total_verifications = db.query(func.sum(UsageMetric.count)).filter(
             and_(
-                UsageMetric.user_id == user_id,
-                UsageMetric.metric_type == "verification",
+                user_or_org_filter(),
+                UsageMetric.metric_type.in_(["verification", "document_verified", "DOCUMENT_VERIFIED"]),
                 UsageMetric.created_at >= start_date,
                 UsageMetric.created_at <= end_date,
             )
         ).scalar() or 0
 
-        # Keys generated
-        total_keys_generated = db.query(func.sum(UsageMetric.count)).filter(
+        # Calculate success rate from status codes
+        total_requests = db.query(func.count(UsageMetric.id)).filter(
             and_(
-                UsageMetric.user_id == user_id,
-                UsageMetric.metric_type == "key_generated",
+                user_or_org_filter(),
+                UsageMetric.status_code.isnot(None),
                 UsageMetric.created_at >= start_date,
                 UsageMetric.created_at <= end_date,
             )
         ).scalar() or 0
+        
+        successful_requests = db.query(func.count(UsageMetric.id)).filter(
+            and_(
+                user_or_org_filter(),
+                UsageMetric.status_code >= 200,
+                UsageMetric.status_code < 400,
+                UsageMetric.created_at >= start_date,
+                UsageMetric.created_at <= end_date,
+            )
+        ).scalar() or 0
+        
+        success_rate = (successful_requests / total_requests * 100) if total_requests > 0 else 0.0
+        
+        # Average response time
+        avg_response_time = db.query(func.avg(UsageMetric.response_time_ms)).filter(
+            and_(
+                user_or_org_filter(),
+                UsageMetric.response_time_ms.isnot(None),
+                UsageMetric.created_at >= start_date,
+                UsageMetric.created_at <= end_date,
+            )
+        ).scalar() or 0.0
 
         return {
-            "total_api_calls": int(total_api_calls),
+            "total_api_calls": int(total_api_calls) or int(total_documents_signed + total_verifications),
             "total_documents_signed": int(total_documents_signed),
             "total_verifications": int(total_verifications),
-            "total_keys_generated": int(total_keys_generated),
+            "success_rate": float(success_rate),
+            "avg_response_time_ms": float(avg_response_time),
             "period_start": start_date,
             "period_end": end_date,
         }

@@ -34,6 +34,7 @@ from app.routers import (
     verification,
 )
 from app.services.session_service import session_service
+from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
 from app.utils.db_startup import ensure_database_ready
 
 # Configure logging
@@ -70,10 +71,22 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to connect to Redis: {e}. Running without session persistence.")
     
+    # Initialize metrics service for analytics
+    try:
+        await init_metrics_service()
+        logger.info("Metrics service initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize metrics service: {e}. Running without metrics.")
+    
     try:
         yield
     finally:
         logger.info("Encypher Enterprise API shutting down...")
+        # Cleanup metrics service
+        try:
+            await shutdown_metrics_service()
+        except Exception as e:
+            logger.error(f"Error shutting down metrics service: {e}")
         # Cleanup Redis connection
         try:
             await session_service.disconnect()
@@ -106,6 +119,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add metrics middleware for analytics
+from app.middleware.metrics_middleware import MetricsMiddleware
+app.add_middleware(MetricsMiddleware)
 
 
 # Request logging middleware

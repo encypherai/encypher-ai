@@ -20,7 +20,8 @@ http:
       middlewares:
         - cors
 
-    # Analytics Service - usage stats
+    # Analytics Service - usage stats and metrics
+    # Consumes metrics from Redis Streams (emitted by enterprise-api)
     api-analytics:
       rule: "PathPrefix(`/api/v1/analytics`)"
       service: analytics-service

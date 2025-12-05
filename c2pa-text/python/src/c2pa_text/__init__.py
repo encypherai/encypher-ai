@@ -194,6 +194,4 @@ __all__ = [
     "MAGIC",
     "VERSION",
     "ZWNBSP",
-    # HTTP utilities (import from c2pa_text.http)
-    # sign_text, verify_text, sign_and_verify, C2PAHTTPError
 ]
