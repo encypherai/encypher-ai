@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Union
 
 from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskProgressColumn
+from rich.progress import BarColumn, Progress, TaskProgressColumn, TextColumn
 
 # Import for document handling
 try:
@@ -26,7 +26,6 @@ except ImportError:
     DOCX2TXT_AVAILABLE = False
 
 from .api import Encypher, VerificationResult
-
 
 console = Console()
 
@@ -91,7 +90,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
     
     if suffix in ['.txt', '.md', '.py', '.js', '.html', '.css', '.json', '.xml', '.csv', '.log']:
         try:
-            with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
                 content = f.read()
                 return content
         except Exception as e:
@@ -253,11 +252,15 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                         # If standard extraction didn't work well, try raw extraction
                         if not extracted_text or len(extracted_text) < 100:
                             try:
-                                from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
+                                from io import StringIO
+
                                 from pdfminer.converter import TextConverter
                                 from pdfminer.layout import LAParams
+                                from pdfminer.pdfinterp import (
+                                    PDFPageInterpreter,
+                                    PDFResourceManager,
+                                )
                                 from pdfminer.pdfpage import PDFPage
-                                from io import StringIO
                                 
                                 # Set up PDF resource manager and converter
                                 rsrcmgr = PDFResourceManager()
@@ -289,9 +292,10 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
         # Method 3: Try using Microsoft Word COM automation if available
         if not extracted_text:
             try:
-                import comtypes.client
-                import tempfile
                 import os
+                import tempfile
+
+                import comtypes.client
                 
                 # Create a temporary text file
                 temp_txt = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
@@ -308,7 +312,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                     doc.Close()
                     
                     # Read the text file
-                    with open(temp_txt.name, 'r', encoding='utf-8', errors='replace') as f:
+                    with open(temp_txt.name, encoding='utf-8', errors='replace') as f:
                         extracted_text = f.read()
                 except Exception as e:
                     console.print(f"[yellow]Word automation failed to open PDF: {e}[/yellow]")
@@ -379,9 +383,10 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
         # Method 3: Try using Microsoft Word COM automation if available
         if not extracted_text:
             try:
-                import comtypes.client
-                import tempfile
                 import os
+                import tempfile
+
+                import comtypes.client
                 
                 # Create a temporary text file
                 temp_txt = tempfile.NamedTemporaryFile(delete=False, suffix='.txt')
@@ -398,7 +403,7 @@ def extract_text_from_file(file_path: Union[str, Path]) -> Optional[str]:
                 word.Quit()
                 
                 # Read the text file
-                with open(temp_txt.name, 'r', encoding='utf-8', errors='replace') as f:
+                with open(temp_txt.name, encoding='utf-8', errors='replace') as f:
                     extracted_text = f.read()
                 
                 # Clean up the temporary file

@@ -4,7 +4,7 @@ Pre-built email functions for common use cases.
 These functions combine template rendering with sending for convenience.
 """
 
-from typing import Optional, Any
+from typing import Any, Optional
 
 from .sender import EmailConfig, render_template, send_email
 

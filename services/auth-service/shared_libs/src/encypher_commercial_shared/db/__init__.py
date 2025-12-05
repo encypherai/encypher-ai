@@ -8,10 +8,10 @@ This module provides shared database functionality including:
 """
 
 from .startup import (
-    check_database_connection,
-    run_migrations_if_needed,
-    ensure_database_ready,
     DatabaseStartupError,
+    check_database_connection,
+    ensure_database_ready,
+    run_migrations_if_needed,
 )
 
 __all__ = [

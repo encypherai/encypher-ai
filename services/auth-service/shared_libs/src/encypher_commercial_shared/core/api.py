@@ -7,14 +7,16 @@ core Encypher functionality while adding commercial-specific features.
 """
 
 from datetime import datetime
-from typing import Dict, Optional, Any, Union
+from typing import Any, Dict, Optional, Union
 
 from pydantic import BaseModel
 from rich.console import Console
 
+from encypher.core.keys import load_private_key_from_data, load_public_key_from_data
+
 # Import from the core Encypher package
-from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
-from encypher.core.keys import load_public_key_from_data, load_private_key_from_data
+from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+
 
 # Add compatibility function to the global namespace
 def load_public_key_from_pem(pem_data):
@@ -295,7 +297,7 @@ class Encypher:
             VerificationResult object with verification status and metadata
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 text = f.read()
             return self.verify_from_text(text)
         except Exception as e:

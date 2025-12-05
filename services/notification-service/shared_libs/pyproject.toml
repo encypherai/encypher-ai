@@ -44,3 +44,10 @@ dev = [
     "pytest>=8.3.5",
     "pytest-cov>=6.1.1",
 ]
+
+[tool.ruff]
+line-length = 150
+target-version = "py39"
+
+[tool.ruff.lint]
+ignore = ["E402", "E701", "E712", "E722", "E741", "F401", "F841", "B904", "B005", "B006"]

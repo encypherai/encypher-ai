@@ -24,10 +24,10 @@ Usage:
         uvicorn.run(app, ...)
 """
 
+import logging
 import os
 import sys
 import time
-import logging
 from typing import Optional
 from urllib.parse import urlparse
 
@@ -77,16 +77,16 @@ def check_database_connection(
         raise DatabaseStartupError(
             f"[{service_name}] Invalid DATABASE_URL format: {e}. "
             f"URL should be: postgresql://user:pass@host:port/dbname"
-        )
+        ) from e
     
     # Try to connect
     try:
         from sqlalchemy import create_engine, text
-    except ImportError:
+    except ImportError as e:
         raise DatabaseStartupError(
             f"[{service_name}] SQLAlchemy is not installed. "
             "Please add sqlalchemy to your dependencies."
-        )
+        ) from e
     
     # Mask password in logs
     safe_url = database_url.replace(parsed.password or "", "***") if parsed.password else database_url
@@ -114,7 +114,7 @@ def check_database_connection(
                 raise DatabaseStartupError(
                     f"[{service_name}] Failed to connect to database after {max_retries} attempts. "
                     f"URL: {safe_url}, Error: {e}"
-                )
+                ) from e
     
     return False
 
@@ -143,10 +143,10 @@ def run_migrations_if_needed(
         return True
     
     try:
-        from alembic.config import Config
         from alembic import command
-        from alembic.script import ScriptDirectory
+        from alembic.config import Config
         from alembic.runtime.migration import MigrationContext
+        from alembic.script import ScriptDirectory
         from sqlalchemy import create_engine
     except ImportError:
         logger.warning(f"[{service_name}] Alembic not installed, skipping migrations")
@@ -194,7 +194,7 @@ def run_migrations_if_needed(
             return False
             
     except Exception as e:
-        raise DatabaseStartupError(f"[{service_name}] Migration failed: {e}")
+        raise DatabaseStartupError(f"[{service_name}] Migration failed: {e}") from e
 
 
 def ensure_database_ready(

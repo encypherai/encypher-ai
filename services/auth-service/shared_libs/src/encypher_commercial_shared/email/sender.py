@@ -9,11 +9,11 @@ import os
 import secrets
 import smtplib
 from dataclasses import dataclass
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 

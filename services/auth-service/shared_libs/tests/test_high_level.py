@@ -2,10 +2,10 @@
 Unit tests for the high-level API in the shared commercial library.
 """
 
+import os
+import tempfile
 import unittest
 from unittest.mock import patch
-import tempfile
-import os
 
 from encypher_commercial_shared import Encypher, VerificationResult
 
