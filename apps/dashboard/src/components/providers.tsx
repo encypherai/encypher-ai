@@ -13,6 +13,29 @@ interface ProvidersProps {
   children: ReactNode;
 }
 
+// Helper to check if error is an auth error
+function isAuthError(error: unknown): boolean {
+  if (error instanceof Error && 'statusCode' in error) {
+    const statusCode = (error as { statusCode: number }).statusCode;
+    return statusCode === 401 || statusCode === 403;
+  }
+  return false;
+}
+
+// Track if we're already handling logout to prevent multiple redirects
+let isLoggingOut = false;
+
+async function handleAuthError() {
+  if (isLoggingOut) return;
+  isLoggingOut = true;
+  
+  toast.error('Your session has expired. Please sign in again.');
+  
+  // Use window.location for guaranteed redirect
+  await signOut({ redirect: false });
+  window.location.href = '/login';
+}
+
 export function Providers({ children }: ProvidersProps) {
   // Create QueryClient with global error handling for auth errors
   const [queryClient] = useState(() => new QueryClient({
@@ -20,12 +43,10 @@ export function Providers({ children }: ProvidersProps) {
       queries: {
         // Retry once on failure, but not on auth errors
         retry: (failureCount, error) => {
-          // Don't retry on auth errors
-          if (error instanceof Error && 'statusCode' in error) {
-            const statusCode = (error as { statusCode: number }).statusCode;
-            if (statusCode === 401 || statusCode === 403) {
-              return false;
-            }
+          if (isAuthError(error)) {
+            // Trigger logout on auth error
+            handleAuthError();
+            return false;
           }
           return failureCount < 1;
         },
@@ -35,12 +56,8 @@ export function Providers({ children }: ProvidersProps) {
       mutations: {
         // Handle auth errors globally for mutations
         onError: async (error) => {
-          if (error instanceof Error && 'statusCode' in error) {
-            const statusCode = (error as { statusCode: number }).statusCode;
-            if (statusCode === 401 || statusCode === 403) {
-              toast.error('Your session has expired. Please sign in again.');
-              await signOut({ callbackUrl: '/login', redirect: true });
-            }
+          if (isAuthError(error)) {
+            await handleAuthError();
           }
         },
       },
