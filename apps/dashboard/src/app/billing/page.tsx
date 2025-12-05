@@ -376,72 +376,88 @@ export default function BillingPage() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan) => {
               const isCurrent = currentTier === plan.id || (currentTier === 'starter' && plan.id === 'starter');
               const price = getPrice(plan);
               const revShare = plan.coalition_rev_share;
               
               return (
-                <Card 
+                <div 
                   key={plan.id} 
-                  className={`relative border-2 transition-all ${
+                  className={`bg-card rounded-xl p-6 relative flex flex-col transition-all ${
                     isCurrent 
-                      ? 'border-green-500 bg-green-50/30 shadow-lg ring-2 ring-green-500/20' 
+                      ? 'border-2 border-green-500 shadow-lg ring-2 ring-green-500/20' 
                       : plan.popular 
-                        ? 'border-blue-ncs shadow-md' 
-                        : 'border-border hover:border-blue-ncs/50 hover:shadow-md'
+                        ? 'border-2 border-blue-ncs/50 shadow-lg' 
+                        : 'border border-border hover:border-blue-ncs/30 hover:shadow-md'
                   }`}
                 >
                   {/* Current Plan Badge */}
                   {isCurrent && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-semibold px-3 py-1 rounded-full flex items-center gap-1">
-                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Current plan
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-full shadow-md bg-green-500 text-white">
+                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Current plan
+                      </span>
                     </div>
                   )}
                   {/* Popular Badge (only show if not current) */}
                   {plan.popular && !isCurrent && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-ncs text-white text-xs font-semibold px-3 py-1 rounded-full">
-                      Most popular
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                      <span className="inline-block px-4 py-1.5 text-xs font-semibold rounded-full shadow-md bg-blue-ncs text-white">
+                        Most Popular
+                      </span>
                     </div>
                   )}
-                  <CardHeader className="text-center pb-2">
-                    <CardTitle className="text-lg">{plan.name}</CardTitle>
-                    <div className="pt-2">
-                      <span className="text-4xl font-bold text-foreground">
-                        {price === 0 ? 'Free' : `$${price}`}
-                      </span>
-                      {price > 0 && <span className="text-muted-foreground text-sm">/{getPeriod()}</span>}
+                  
+                  {/* Tier Name */}
+                  <div className="pt-2 mb-4">
+                    <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
+                  </div>
+
+                  {/* Price Section */}
+                  <div className="mb-4 text-center">
+                    <div className="text-4xl font-bold text-foreground">
+                      {price === 0 ? 'Free' : `$${price}`}
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Coalition Rev Share Badge */}
-                    <div className="bg-muted/50 rounded-lg p-2 text-center">
-                      <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                      <p className="text-sm font-semibold text-delft-blue dark:text-white">
-                        {revShare.publisher}% you / {revShare.encypher}% Encypher
-                      </p>
-                    </div>
-                    
-                    <ul className="space-y-2 text-sm text-muted-foreground min-h-[180px]">
-                      {plan.features.map((feature) => (
-                        <li key={feature} className="flex items-start gap-2">
-                          <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                    
+                    {price > 0 && (
+                      <p className="text-sm text-muted-foreground">/{getPeriod()}</p>
+                    )}
+                    {price === 0 && (
+                      <p className="text-sm text-muted-foreground">Forever free</p>
+                    )}
+                  </div>
+
+                  {/* Coalition Rev Share Badge */}
+                  <div className="bg-blue-ncs/10 rounded-lg p-3 mb-4 text-center">
+                    <p className="text-xs text-muted-foreground">Coalition Revenue</p>
+                    <p className="text-sm font-semibold text-blue-ncs">
+                      {revShare.publisher}% you / {revShare.encypher}% Encypher
+                    </p>
+                  </div>
+                  
+                  {/* Features List */}
+                  <ul className="space-y-2.5 text-sm mb-6 flex-1">
+                    {plan.features.map((feature) => (
+                      <li key={feature} className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-muted-foreground">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  
+                  {/* CTA Button */}
+                  <div className="mt-auto">
                     <Button
                       variant={isCurrent ? 'outline' : 'primary'}
                       fullWidth
                       disabled={isCurrent || upgradeMutation.isPending}
-                      className={isCurrent ? 'border-green-500 text-green-600 cursor-default' : ''}
+                      className={isCurrent ? 'border-green-500 text-green-600 cursor-default hover:bg-green-50' : ''}
                       onClick={() => {
                         if (isCurrent) return;
                         if (plan.id === 'starter') {
@@ -453,63 +469,72 @@ export default function BillingPage() {
                     >
                       {isCurrent ? '✓ Your Plan' : plan.id === 'starter' ? 'Downgrade' : 'Upgrade'}
                     </Button>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
             
             {/* Enterprise Card */}
-            <Card className="relative border-2 border-border hover:border-delft-blue/50 hover:shadow-md transition-all">
-              <CardHeader className="text-center pb-2">
-                <CardTitle className="text-lg">Enterprise</CardTitle>
-                <div className="pt-2">
-                  <span className="text-4xl font-bold text-foreground">Custom</span>
-                  <p className="text-muted-foreground text-sm mt-1">Contact for pricing</p>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="bg-muted/50 rounded-lg p-2 text-center">
-                  <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                  <p className="text-sm font-semibold text-delft-blue dark:text-white">80% you / 20% Encypher</p>
-                </div>
-                <ul className="space-y-2 text-sm text-muted-foreground min-h-[180px]">
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Everything in Business
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Unlimited API calls
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Unlimited team seats
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    SSO/SCIM integration
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Dedicated account manager
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Custom SLA & contracts
-                  </li>
-                </ul>
+            <div className="bg-card rounded-xl p-6 relative flex flex-col border border-border hover:border-blue-ncs/30 hover:shadow-md transition-all">
+              {/* Tier Name */}
+              <div className="pt-2 mb-4">
+                <h3 className="text-xl font-bold text-foreground">Enterprise</h3>
+              </div>
+
+              {/* Price Section */}
+              <div className="mb-4 text-center">
+                <div className="text-4xl font-bold text-foreground">Custom</div>
+                <p className="text-sm text-muted-foreground">Contact for pricing</p>
+              </div>
+
+              {/* Coalition Rev Share Badge */}
+              <div className="bg-blue-ncs/10 rounded-lg p-3 mb-4 text-center">
+                <p className="text-xs text-muted-foreground">Coalition Revenue</p>
+                <p className="text-sm font-semibold text-blue-ncs">80% you / 20% Encypher</p>
+              </div>
+              
+              {/* Features List */}
+              <ul className="space-y-2.5 text-sm mb-6 flex-1">
+                <li className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-muted-foreground">Everything in Business</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-muted-foreground">Unlimited API calls</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-muted-foreground">Unlimited team seats</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-muted-foreground">SSO/SCIM integration</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-muted-foreground">Dedicated account manager</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-muted-foreground">Custom SLA & contracts</span>
+                </li>
+              </ul>
+              
+              {/* CTA Button */}
+              <div className="mt-auto">
                 <Button
                   variant="outline"
                   fullWidth
@@ -517,8 +542,8 @@ export default function BillingPage() {
                 >
                   Contact Sales
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </section>
 
