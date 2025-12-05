@@ -15,7 +15,7 @@ import FeatureComparisonTable from '@/components/pricing/FeatureComparisonTable'
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import Image from 'next/image';
 import { useLicense } from '@/lib/hooks/useLicense';
-import { getAllTiers, formatPrice, formatRevShare, type TierConfig } from '@encypher/pricing-config';
+import { getAllTiers, formatPrice, formatRevShare, type TierConfig } from '@/lib/pricing-config';
 
 // Dashboard URL for sign-up flows
 const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';

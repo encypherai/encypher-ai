@@ -7,8 +7,30 @@
    width="7676.1865"
    height="1365.3333"
    viewBox="0 0 7676.1865 1365.3333"
+   sodipodi:docname="encypher_full_logo_color.svg"
+   inkscape:version="1.3.2 (091e20e, 2023-11-25, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="0.1955398"
+     inkscape:cx="3838.0933"
+     inkscape:cy="682.72545"
+     inkscape:window-width="2560"
+     inkscape:window-height="1369"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg1" />
   <defs
      id="defs1">
     <clipPath
@@ -60,7 +82,8 @@
          id="text1"
          xml:space="preserve"
          transform="matrix(1.3333333,0,0,1.3333333,1459.4596,1110.8593)"
-         clip-path="url(#clipPath1)"><tspan
+         clip-path="url(#clipPath1)"
+         style="display:none"><tspan
            style="font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;font-size:900px;font-family:Roboto;-inkscape-font-specification:'Roboto Bold';writing-mode:lr-tb;fill:#1b2f50;fill-opacity:1;fill-rule:nonzero;stroke:none"
            x="0 504.89999 1138.5 1728 2289.6001 2872.8 3507.3 4012.2"
            y="0"

@@ -14,7 +14,7 @@ import { useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import apiClient, { PlanInfo, Invoice, BillingUsageStats, CoalitionSummary } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { getSelfServeTiers, type TierConfig } from '@encypher/pricing-config';
+import { getSelfServeTiers, type TierConfig } from '@/lib/pricing-config';
 
 /**
  * Convert shared pricing config to API-compatible PlanInfo format.

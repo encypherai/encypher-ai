@@ -15,11 +15,18 @@ import { useState, useEffect } from 'react';
 import { toolLinks } from '@/config/tools';
 import { useSession, signOut } from 'next-auth/react';
 
+// Canonical SVG logos - use color on light backgrounds, white on dark backgrounds
+const LOGO_COLOR = '/encypher_full_logo_color.svg';
+const LOGO_WHITE = '/encypher_full_logo_white.svg';
+
 export function Navbar() {
-  const { setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session, status } = useSession();
+  
+  // Determine which logo to use based on theme
+  const logoSrc = mounted && resolvedTheme === 'light' ? LOGO_COLOR : LOGO_WHITE;
 
   // After mounting, we can show the theme toggle
   useEffect(() => {
@@ -36,13 +43,12 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center">
             <Image 
-              src="/encypher_full_nobg.png" 
+              src={logoSrc}
               alt="Encypher Logo" 
               width={160} 
               height={40}
-              className="h-10 w-auto"
+              className="h-10 w-auto object-contain"
               priority
-              quality={90}
             />
           </Link>
         </div>

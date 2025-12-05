@@ -5,6 +5,7 @@
   "description": "Encypher user dashboard - dashboard.encypherai.com",
   "scripts": {
     "dev": "next dev -p 3001",
+    "prebuild": "node scripts/sync-pricing-config.js",
     "build": "next build",
     "start": "next start -p ${PORT:-3001}",
     "lint": "next lint",
@@ -12,7 +13,6 @@
   },
   "dependencies": {
     "@encypher/design-system": "file:./design-system",
-    "@encypher/pricing-config": "file:../../packages/pricing-config",
     "@next/third-parties": "^15.3.2",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",

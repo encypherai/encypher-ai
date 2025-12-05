@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "node log-analytics-env.js && npx next dev",
     "dev:webpack": "node log-analytics-env.js && npx next dev",
+    "prebuild": "node scripts/sync-pricing-config.js",
     "build": "node log-analytics-env.js && npx next build",
     "start": "npx next start -p $PORT",
     "lint": "next lint",
@@ -24,7 +25,6 @@
   "dependencies": {
     "@auth/core": "^0.41.1",
     "@encypher/design-system": "file:./design-system",
-    "@encypher/pricing-config": "file:../../packages/pricing-config",
     "@headlessui/react": "^2.2.2",
     "@hookform/resolvers": "^4.1.3",
     "@next/third-parties": "^15.3.2",

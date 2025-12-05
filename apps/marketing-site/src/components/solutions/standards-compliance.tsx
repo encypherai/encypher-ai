@@ -1,6 +1,7 @@
 'use client';
 
 import Image from 'next/image';
+import styles from './StandardsCompliance.module.css';
 
 const companyLogos = [
   'akamai_technologies_inc_1743684419708_0014100000TdzWHAAZ.svg',
@@ -81,22 +82,17 @@ export default function StandardsCompliance() {
         </h3>
         
         {/* Slider 1 (Right to Left) */}
-        <div className="w-full overflow-hidden">
-          <div 
-            className="flex items-center animate-scroll-left"
-            style={{ 
-              width: 'max-content',
-            }}
-          >
+        <div className={styles.logoSlider}>
+          <div className={`${styles.sliderTrack} ${styles.scrollRtoL}`}>
             {/* Render logos twice for seamless loop */}
             {[...firstHalf, ...firstHalf].map((logo: string, index: number) => (
-              <div key={`rtl-${index}`} className="inline-flex items-center justify-center px-8 flex-shrink-0 opacity-60">
+              <div key={`rtl-${index}`} className={styles.logo}>
                 <Image
                   src={`/c2pa_companies/${logo}`}
                   alt={`${logo.split('.')[0]} logo`}
                   height={40}
                   width={120}
-                  style={{objectFit: "contain", width: "auto", height: 40}}
+                  style={{ objectFit: 'contain', width: 'auto', height: 40 }}
                   className="grayscale"
                 />
               </div>
@@ -105,22 +101,17 @@ export default function StandardsCompliance() {
         </div>
 
         {/* Slider 2 (Left to Right) */}
-        <div className="w-full overflow-hidden">
-          <div 
-            className="flex items-center animate-scroll-right"
-            style={{ 
-              width: 'max-content',
-            }}
-          >
+        <div className={styles.logoSlider}>
+          <div className={`${styles.sliderTrack} ${styles.scrollLtoR}`}>
             {/* Render logos twice for seamless loop */}
             {[...secondHalf, ...secondHalf].map((logo: string, index: number) => (
-              <div key={`ltr-${index}`} className="inline-flex items-center justify-center px-8 flex-shrink-0 opacity-60">
+              <div key={`ltr-${index}`} className={styles.logo}>
                 <Image
                   src={`/c2pa_companies/${logo}`}
                   alt={`${logo.split('.')[0]} logo`}
                   height={40}
                   width={120}
-                  style={{objectFit: "contain", width: "auto", height: 40}}
+                  style={{ objectFit: 'contain', width: 'auto', height: 40 }}
                   className="grayscale"
                 />
               </div>
@@ -128,32 +119,6 @@ export default function StandardsCompliance() {
           </div>
         </div>
       </div>
-
-      {/* CSS Keyframes for infinite scroll */}
-      <style jsx>{`
-        @keyframes scroll-left {
-          0% {
-            transform: translateX(0);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        @keyframes scroll-right {
-          0% {
-            transform: translateX(-50%);
-          }
-          100% {
-            transform: translateX(0);
-          }
-        }
-        .animate-scroll-left {
-          animation: scroll-left 30s linear infinite;
-        }
-        .animate-scroll-right {
-          animation: scroll-right 30s linear infinite;
-        }
-      `}</style>
     </section>
   );
 }

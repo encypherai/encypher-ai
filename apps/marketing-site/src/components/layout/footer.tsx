@@ -2,9 +2,25 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
+import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 import { showCookiePreferences } from '@/components/CookieConsent';
 
+// Canonical SVG logos - use color on light backgrounds, white on dark backgrounds
+const LOGO_COLOR = '/encypher_full_logo_color.svg';
+const LOGO_WHITE = '/encypher_full_logo_white.svg';
+
 export function Footer() {
+  const { resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+  
+  // Determine which logo to use based on theme
+  const logoSrc = mounted && resolvedTheme === 'light' ? LOGO_COLOR : LOGO_WHITE;
+  
   return (
     <footer className="border-t bg-background">
       <div className="container py-8 md:py-12">
@@ -12,11 +28,11 @@ export function Footer() {
           <div className="space-y-3">
             <Link href="/">
               <Image
-                src="/encypher_full_nobg.png"
+                src={logoSrc}
                 alt="Encypher Logo"
                 width={180}
-                height={30}
-                className="h-7 w-auto"
+                height={45}
+                className="h-8 w-auto object-contain"
               />
             </Link>
             <p className="text-sm text-muted-foreground">

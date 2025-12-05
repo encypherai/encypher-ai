@@ -346,7 +346,10 @@ export const authOptions: NextAuthOptions = {
     sessionToken: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.session-token' : 'next-auth.session-token',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        // In development, don't set domain to allow localhost cookies to work
+        ...(process.env.NODE_ENV === 'production' && {
+          domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        }),
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
@@ -356,7 +359,9 @@ export const authOptions: NextAuthOptions = {
     callbackUrl: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.callback-url' : 'next-auth.callback-url',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        ...(process.env.NODE_ENV === 'production' && {
+          domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        }),
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
@@ -366,7 +371,9 @@ export const authOptions: NextAuthOptions = {
     csrfToken: {
       name: process.env.NODE_ENV === 'production' ? '__Secure-next-auth.csrf-token' : 'next-auth.csrf-token',
       options: {
-        domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        ...(process.env.NODE_ENV === 'production' && {
+          domain: process.env.NEXTAUTH_COOKIE_DOMAIN || '.encypherai.com',
+        }),
         httpOnly: true,
         sameSite: 'lax',
         path: '/',

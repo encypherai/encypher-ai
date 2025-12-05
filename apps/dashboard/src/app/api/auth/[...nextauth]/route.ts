@@ -18,7 +18,7 @@ const handler = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           console.log('[NextAuth] Missing credentials');
-          return null;
+          throw new Error('Please enter both email and password');
         }
 
         try {
@@ -36,7 +36,23 @@ const handler = NextAuth({
           const data = await res.json();
           console.log('[NextAuth] API response status:', res.status, 'success:', data.success);
 
-          if (res.ok && data.success && data.data?.user && data.data?.access_token) {
+          // Handle specific error responses
+          if (res.status === 401) {
+            console.log('[NextAuth] Login failed - invalid credentials');
+            throw new Error('Invalid email or password');
+          }
+          
+          if (res.status === 403) {
+            console.log('[NextAuth] Login failed - account not verified');
+            throw new Error('Please verify your email before signing in');
+          }
+
+          if (!res.ok) {
+            console.log('[NextAuth] Login failed - server error:', res.status);
+            throw new Error(data.error?.message || data.detail || 'Login failed. Please try again.');
+          }
+
+          if (data.success && data.data?.user && data.data?.access_token) {
             const user = data.data.user;
             console.log('[NextAuth] Login successful for user:', user.email);
             return {
@@ -50,10 +66,14 @@ const handler = NextAuth({
           }
           
           console.log('[NextAuth] Login failed - invalid response structure');
-          return null;
+          throw new Error('Login failed. Please try again.');
         } catch (error) {
           console.error('[NextAuth] Auth error:', error);
-          return null;
+          // Re-throw if it's already our custom error
+          if (error instanceof Error) {
+            throw error;
+          }
+          throw new Error('An error occurred during login. Please try again.');
         }
       }
     }),
