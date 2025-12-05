@@ -186,7 +186,8 @@ class QuotaManager:
         db: AsyncSession,
         organization_id: str,
         quota_type: QuotaType,
-        increment: int = 1
+        increment: int = 1,
+        tier_override: str = None
     ) -> bool:
         """
         Check if organization has quota available and increment if so.
@@ -196,6 +197,7 @@ class QuotaManager:
             organization_id: Organization identifier
             quota_type: Type of quota to check
             increment: Amount to increment (default 1)
+            tier_override: Optional tier to use instead of DB lookup (for user-level keys)
         
         Returns:
             True if quota available, False if exceeded
@@ -203,7 +205,29 @@ class QuotaManager:
         Raises:
             HTTPException: If quota exceeded
         """
-        # Get organization
+        # Handle user-level keys (synthetic org IDs like "user_{user_id}")
+        # These don't have a record in the organizations table
+        if organization_id.startswith("user_"):
+            # Use starter tier limits for user-level keys
+            tier = OrganizationTier.STARTER
+            quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
+            
+            # For user-level keys, we don't track usage in DB - just check if feature is available
+            if quota_limit == 0:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "error": "FeatureNotAvailable",
+                        "message": f"'{quota_type.value}' is not available on starter tier",
+                        "current_tier": "starter",
+                        "upgrade_url": "https://dashboard.encypherai.com/billing",
+                    }
+                )
+            # Allow the request - user-level keys have generous limits
+            logger.debug(f"User-level key {organization_id}: allowing {quota_type.value} (limit: {quota_limit})")
+            return True
+        
+        # Get organization from database for org-level keys
         result = await db.execute(
             select(Organization).where(Organization.organization_id == organization_id)
         )
@@ -351,6 +375,23 @@ class QuotaManager:
         - X-Quota-Remaining: 3766
         - X-Quota-Reset: 2025-01-01T00:00:00Z
         """
+        # Handle user-level keys (synthetic org IDs)
+        if organization_id.startswith("user_"):
+            limit = QuotaManager.get_quota_limit(OrganizationTier.STARTER, quota_type)
+            if limit == -1:
+                return {
+                    "X-Quota-Limit": "unlimited",
+                    "X-Quota-Used": "0",
+                    "X-Quota-Remaining": "unlimited",
+                    "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
+                }
+            return {
+                "X-Quota-Limit": str(limit),
+                "X-Quota-Used": "0",  # Not tracked for user-level keys
+                "X-Quota-Remaining": str(limit),
+                "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
+            }
+        
         result = await db.execute(
             select(Organization).where(Organization.organization_id == organization_id)
         )
@@ -407,7 +448,28 @@ class QuotaManager:
         Returns:
             Dictionary with quota status for all quota types
         """
-        # Get organization
+        # Handle user-level keys (synthetic org IDs)
+        if organization_id.startswith("user_"):
+            tier = OrganizationTier.STARTER
+            status_dict = {
+                "organization_id": organization_id,
+                "tier": "starter",
+                "reset_date": QuotaManager._get_reset_date().isoformat(),
+                "quotas": {}
+            }
+            
+            for quota_type in QuotaType:
+                limit = QuotaManager.get_quota_limit(tier, quota_type)
+                status_dict["quotas"][quota_type.value] = {
+                    "limit": limit,
+                    "used": 0,  # Not tracked for user-level keys
+                    "remaining": limit if limit > 0 else 0,
+                    "percentage_used": 0
+                }
+            
+            return status_dict
+        
+        # Get organization from database
         result = await db.execute(
             select(Organization).where(Organization.organization_id == organization_id)
         )
