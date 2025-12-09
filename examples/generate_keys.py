@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Helper script to generate Ed25519 key pair for EncypherAI.
+Helper script to generate Ed25519 key pair for Encypher.
 
 Generates a private and public key pair in PEM format and a suggested key_id.
 Provides instructions for storing the private key securely (e.g., in a .env file)
@@ -21,7 +21,7 @@ console = Console()
 def generate_and_print_keys():
     """Generates and prints Ed25519 keys and instructions."""
 
-    console.print(Panel("[bold cyan]EncypherAI Key Pair Generator[/bold cyan]", expand=False))
+    console.print(Panel("[bold cyan]Encypher Key Pair Generator[/bold cyan]", expand=False))
 
     # Generate private key
     private_key = ed25519.Ed25519PrivateKey.generate()

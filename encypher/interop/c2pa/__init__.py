@@ -1,6 +1,6 @@
-"""C2PA interoperability helpers for EncypherAI.
+"""C2PA interoperability helpers for Encypher.
 
-This package groups utilities that allow EncypherAI to produce and consume
+This package groups utilities that allow Encypher to produce and consume
 strictly-compliant C2PA artefacts. Sub-modules are organised by media type.
 
 Exports:

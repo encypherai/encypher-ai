@@ -1,7 +1,7 @@
 """
-LiteLLM Integration Example for EncypherAI
+LiteLLM Integration Example for Encypher
 
-This example demonstrates how to integrate EncypherAI with LiteLLM
+This example demonstrates how to integrate Encypher with LiteLLM
 to encode metadata into LLM responses.
 """
 
@@ -34,16 +34,16 @@ EXAMPLE_PRIVATE_KEY: Optional[Ed25519PrivateKey] = None
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="EncypherAI LiteLLM Integration API",
+    title="Encypher LiteLLM Integration API",
     description="""
-    EncypherAI API for encoding metadata in LLM outputs using LiteLLM, with Ed25519 digital signatures.
+    Encypher API for encoding metadata in LLM outputs using LiteLLM, with Ed25519 digital signatures.
 
     This API provides endpoints for:
     - Encoding metadata in LLM responses
     - Streaming support with real-time metadata encoding
     - Support for all major LLM providers through LiteLLM
 
-    For more information, visit [EncypherAI Documentation](https://docs.encypherai.com).
+    For more information, visit [Encypher Documentation](https://docs.encypherai.com).
     """,
     version="2.3.0",
     docs_url=None,
@@ -79,7 +79,7 @@ async def startup_event():
     EXAMPLE_PRIVATE_KEY = load_ed25519_private_key(EXAMPLE_LITELLM_PRIVATE_KEY_PATH)
     if not EXAMPLE_PRIVATE_KEY:
         raise RuntimeError(f"Failed to load private key from {EXAMPLE_LITELLM_PRIVATE_KEY_PATH}. Please ensure it exists or can be generated.")
-    print("LiteLLM EncypherAI example initialized with an example private key.")
+    print("LiteLLM Encypher example initialized with an example private key.")
     print("IMPORTANT: Ensure your LLM provider API keys (e.g., OPENAI_API_KEY) are set in your environment!")
 
 

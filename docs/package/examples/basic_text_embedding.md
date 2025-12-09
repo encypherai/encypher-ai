@@ -1,7 +1,7 @@
 # Basic Text Embedding Tutorial
 
 This tutorial walks through the minimal steps required to embed a C2PA manifest
-into plain text with EncypherAI. The workflow follows the latest
+into plain text with Encypher. The workflow follows the latest
 ``C2PATextManifestWrapper`` proposal: the manifest is encoded as a JUMBF
 container, converted to Unicode variation selectors, and appended to the end of
 the text after a ``U+FEFF`` marker. The visible content never changes, but copy
@@ -11,7 +11,7 @@ and paste operations retain the provenance wrapper.
 
 Before starting, ensure you have:
 
-- The EncypherAI Python package installed (``uv add encypher-ai``)
+- The Encypher Python package installed (``uv add encypher-ai``)
 - An understanding of Python basics and Ed25519 keys
 
 ```python
@@ -34,7 +34,7 @@ embedded metadata.
 ## Step 2: Prepare the Text Content
 
 ```python
-text = "EncypherAI now emits FEFF-prefixed text manifests."
+text = "Encypher now emits FEFF-prefixed text manifests."
 ```
 
 ## Step 3: Embed the C2PA Manifest

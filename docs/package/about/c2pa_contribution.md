@@ -2,7 +2,7 @@
 
 ## Our Commitment to Open Standards
 
-EncypherAI is committed to advancing open standards for content provenance and authenticity. While our implementation of text provenance using Unicode variation selectors is protected under the AGPLv3 license, we believe in contributing to the broader ecosystem of content provenance technologies.
+Encypher is committed to advancing open standards for content provenance and authenticity. While our implementation of text provenance using Unicode variation selectors is protected under the AGPLv3 license, we believe in contributing to the broader ecosystem of content provenance technologies.
 
 This document outlines our approach to contributing to the C2PA (Coalition for Content Provenance and Authenticity) standard and our vision for the future of text provenance.
 
@@ -14,7 +14,7 @@ Our contribution to the C2PA community focuses on extending these principles to 
 
 ## Our Contribution
 
-EncypherAI is actively contributing the following concepts to the C2PA community:
+Encypher is actively contributing the following concepts to the C2PA community:
 
 1. **Text Binding Approaches**: Conceptual frameworks for binding provenance information to text content, including our Unicode variation selector approach as one possible implementation.
 
@@ -34,7 +34,7 @@ It's important to distinguish between our specific implementation and the broade
 
 ## Participation in C2PA
 
-EncypherAI is actively participating in C2PA initiatives related to text content:
+Encypher is actively participating in C2PA initiatives related to text content:
 
 - Contributing to working groups focused on text provenance
 - Sharing research findings and technical approaches
@@ -71,6 +71,6 @@ For C2PA-related inquiries and collaboration opportunities:
 
 ## Conclusion
 
-EncypherAI believes that robust text provenance is essential for combating misinformation and maintaining trust in digital content. By contributing our concepts to the C2PA community while protecting our specific implementation through appropriate licensing, we aim to strike a balance between open innovation and sustainable development.
+Encypher believes that robust text provenance is essential for combating misinformation and maintaining trust in digital content. By contributing our concepts to the C2PA community while protecting our specific implementation through appropriate licensing, we aim to strike a balance between open innovation and sustainable development.
 
 We look forward to working with the C2PA community to establish text provenance as a core component of the digital content ecosystem.

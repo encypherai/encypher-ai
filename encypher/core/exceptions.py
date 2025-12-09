@@ -1,5 +1,5 @@
 class EncypherError(Exception):
-    """Base class for exceptions in the EncypherAI package."""
+    """Base class for exceptions in the Encypher package."""
 
     pass
 

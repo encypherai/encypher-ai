@@ -357,7 +357,7 @@ import time
 # Create metadata
 metadata = {
     "model_id": "gpt-4",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),  # Unix/Epoch timestamp
     "version": "1.0.0"
 }

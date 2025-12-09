@@ -1,5 +1,5 @@
 """
-Configuration settings for EncypherAI.
+Configuration settings for Encypher.
 
 This module provides a centralized configuration system that supports
 loading from environment variables and configuration files.
@@ -15,7 +15,7 @@ from encypher.core.unicode_metadata import MetadataTarget
 
 class Settings:
     """
-    Settings class for EncypherAI configuration.
+    Settings class for Encypher configuration.
 
     This class handles loading configuration from environment variables
     and configuration files, with sensible defaults.

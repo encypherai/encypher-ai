@@ -1,7 +1,7 @@
 """
-Constants for the EncypherAI core module.
+Constants for the Encypher core module.
 
-This module contains constants used throughout the EncypherAI core module,
+This module contains constants used throughout the Encypher core module,
 particularly for metadata embedding and extraction.
 """
 

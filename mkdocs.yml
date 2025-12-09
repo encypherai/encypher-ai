@@ -1,10 +1,10 @@
-site_name: EncypherAI Documentation
+site_name: Encypher Documentation
 site_url: https://docs.encypherai.com
 repo_url: https://github.com/encypherai/encypher-ai
 repo_name: encypherai/encypher-ai
 edit_uri: blob/main/docs/
-site_description: Documentation for the EncypherAI package - Invisible metadata embedding for AI-generated text
-site_author: EncypherAI Team
+site_description: Documentation for the Encypher package - Invisible metadata embedding for AI-generated text
+site_author: Encypher Team
 docs_dir: docs
 
 theme:

@@ -4,7 +4,7 @@
 
 As digital content becomes increasingly sophisticated, establishing the provenance and authenticity of text content is becoming as critical as it is for images and videos. Text provenance presents unique challenges due to the fluid nature of text, its ease of modification, and the lack of established standards specifically designed for text content.
 
-EncypherAI's text provenance solution extends C2PA principles to text content, providing a robust framework for verifying the origin and integrity of textual information.
+Encypher's text provenance solution extends C2PA principles to text content, providing a robust framework for verifying the origin and integrity of textual information.
 
 ## The Challenge of Text Provenance
 
@@ -19,7 +19,7 @@ These challenges require innovative approaches that can maintain provenance info
 
 ## C2PA and Text Content
 
-The Coalition for Content Provenance and Authenticity (C2PA) has established standards for tracking the origin and history of digital content, primarily focusing on images and videos. EncypherAI extends these principles to text content by:
+The Coalition for Content Provenance and Authenticity (C2PA) has established standards for tracking the origin and history of digital content, primarily focusing on images and videos. Encypher extends these principles to text content by:
 
 1. Creating C2PA-compliant manifests for text
 2. Embedding these manifests directly into the text using Unicode variation selectors
@@ -148,7 +148,7 @@ print("Baseline NFC hash:", baseline_hash)
 custom_actions = [
     {
         "label": "c2pa.created",
-        "softwareAgent": "EncypherAI/guide",
+        "softwareAgent": "Encypher/guide",
         "when": datetime.now().isoformat(),
     }
 ]
@@ -157,7 +157,7 @@ custom_actions = [
 custom_actions = [
     {
         "label": "c2pa.created",
-        "softwareAgent": "EncypherAI/guide",
+        "softwareAgent": "Encypher/guide",
         "when": datetime.now().isoformat(),
     }
 ]
@@ -167,7 +167,7 @@ embedded_article = UnicodeMetadata.embed_metadata(
     private_key=private_key,
     signer_id=signer_id,
     metadata_format="c2pa",
-    claim_generator="EncypherAI/guide",
+    claim_generator="Encypher/guide",
     actions=custom_actions,
     add_hard_binding=True,
 )
@@ -221,4 +221,4 @@ As text provenance technology evolves, several promising directions are emerging
 4. **Integration with Publishing Platforms**: Automatic embedding in content management systems
 5. **User-Friendly Verification**: Simplified tools for readers to verify content
 
-EncypherAI is actively contributing to these developments, pushing the boundaries of what's possible in text provenance while maintaining compatibility with emerging standards.
+Encypher is actively contributing to these developments, pushing the boundaries of what's possible in text provenance while maintaining compatibility with emerging standards.
