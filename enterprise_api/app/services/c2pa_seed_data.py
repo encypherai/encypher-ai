@@ -3,7 +3,7 @@ C2PA Seed Data
 
 Standard schemas and templates for C2PA assertions.
 """
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 
 def get_standard_schemas() -> List[Dict[str, Any]]:

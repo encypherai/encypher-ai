@@ -1,31 +1,27 @@
 """
 Service for coalition operations.
 """
-from typing import List, Optional, Dict, Any
 from datetime import datetime, timedelta
-from sqlalchemy import select, func, and_, desc
+from typing import Any, Dict, List, Optional
+
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.coalition import (
-    CoalitionMember,
-    ContentItem,
-    RevenueTransaction,
-    ContentAccessLog
-)
+from app.models.coalition import CoalitionMember, ContentAccessLog, ContentItem, RevenueTransaction
 from app.models.user import User
 from app.schemas.coalition import (
-    ContentItemCreate,
-    RevenueTransactionCreate,
-    ContentAccessLogCreate,
-    CoalitionStats,
-    ContentStats,
-    RevenueStats,
-    RevenueHistoryItem,
-    TopContentItem,
-    RecentAccessItem,
     AdminCoalitionOverview,
+    CoalitionStats,
+    ContentAccessLogCreate,
+    ContentItemCreate,
+    ContentStats,
     MemberListItem,
     MemberListResponse,
+    RecentAccessItem,
+    RevenueHistoryItem,
+    RevenueStats,
+    RevenueTransactionCreate,
+    TopContentItem,
 )
 
 

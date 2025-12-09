@@ -1,6 +1,6 @@
-# Contributing to EncypherAI
+# Contributing to Encypher
 
-We welcome contributions to EncypherAI! This document outlines the process for contributing to the project and guidelines to follow.
+We welcome contributions to Encypher! This document outlines the process for contributing to the project and guidelines to follow.
 
 ## Code of Conduct
 

@@ -1,6 +1,6 @@
-# EncypherAI Dashboard Example Files
+# Encypher Dashboard Example Files
 
-This directory contains example files with EncypherAI metadata for testing and demonstration purposes.
+This directory contains example files with Encypher metadata for testing and demonstration purposes.
 
 ## File Categories
 
@@ -14,18 +14,18 @@ This directory contains example files with EncypherAI metadata for testing and d
 - **Valid Files**: Files with valid metadata and signatures
 - **Tampered Content**: Files where the content was modified after metadata was embedded
 - **Tampered Metadata**: Files where the metadata was tampered with
-- **No Metadata**: Files without any EncypherAI metadata
+- **No Metadata**: Files without any Encypher metadata
 
 ## Trusted Signers
 
-- **EncypherAI Official** (`encypherai-official`): Public key at `keys/encypherai-official-public.pem`
+- **Encypher Official** (`encypherai-official`): Public key at `keys/encypherai-official-public.pem`
 - **Compliance Department** (`compliance-dept`): Public key at `keys/compliance-dept-public.pem`
 - **Research Team** (`research-team`): Public key at `keys/research-team-public.pem`
 - **Untrusted Source** (`untrusted-source`): Public key at `keys/untrusted-source-public.pem`
 
 ## Usage
 
-These files can be used to test the EncypherAI verification tools and dashboard functionality.
+These files can be used to test the Encypher verification tools and dashboard functionality.
 You can use the audit-log-cli tool to scan these files:
 
 ```

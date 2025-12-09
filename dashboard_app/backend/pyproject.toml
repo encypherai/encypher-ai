@@ -30,3 +30,22 @@ test = [
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+
+[tool.ruff]
+line-length = 150
+target-version = "py39"
+
+[tool.ruff.lint]
+ignore = [
+    "E402",  # module-import-not-at-top - needed for path manipulation
+    "E501",  # line-too-long - handled by line-length
+    "E701",  # multiple-statements - sometimes used for compact code
+    "E712",  # true-false-comparison - SQLAlchemy requires == True/False
+    "E722",  # bare-except - sometimes needed
+    "E741",  # ambiguous-variable-name - sometimes l/O are appropriate
+    "F401",  # unused-import - conditional imports for availability checks
+    "F821",  # undefined-name - false positives with conditional imports
+    "F841",  # unused-variable - sometimes intentional
+    "B005",  # strip-with-multi-characters - sometimes intentional
+    "B904",  # raise-without-from - not always needed
+]

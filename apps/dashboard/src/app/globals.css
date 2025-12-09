@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap');
+@import "vanilla-cookieconsent/dist/cookieconsent.css";
+@import "../styles/cookie-consent.css";
 
 @tailwind base;
 @tailwind components;

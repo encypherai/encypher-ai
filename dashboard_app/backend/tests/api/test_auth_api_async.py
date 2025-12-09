@@ -1,7 +1,7 @@
 import pytest
+from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import status
 
 from app.schemas.user import UserCreate
 from app.services.user import create_user

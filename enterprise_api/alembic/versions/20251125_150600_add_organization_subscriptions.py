@@ -8,10 +8,10 @@ This migration adds:
 - organization_subscriptions table for tracking Stripe subscriptions
 - Links organizations to their subscription tier and billing status
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers
 revision = '20251125_150600'

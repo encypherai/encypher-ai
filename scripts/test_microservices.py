@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Integration test suite for EncypherAI Microservices
+Integration test suite for Encypher Microservices
 Database-per-Service Architecture
 
 Usage:
@@ -12,10 +12,10 @@ Tests:
 3. Key service (generate, verify, list keys)
 4. Cross-service communication
 """
-import requests
-import json
 import sys
 from datetime import datetime
+
+import requests
 
 BASE_URLS = {
     "auth": "http://localhost:8001",
@@ -52,7 +52,7 @@ class TestResults:
         print(f"\n{'='*50}")
         print(f"Results: {self.passed}/{total} passed")
         if self.errors:
-            print(f"\nFailed tests:")
+            print("\nFailed tests:")
             for name, error in self.errors:
                 print(f"  - {name}: {error}")
         return self.failed == 0
@@ -291,7 +291,7 @@ def test_traefik_routing():
 
 def main():
     print("=" * 50)
-    print("EncypherAI Microservices Integration Tests")
+    print("Encypher Microservices Integration Tests")
     print("=" * 50)
     
     # Run all tests

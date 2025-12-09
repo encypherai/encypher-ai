@@ -1,7 +1,9 @@
 """Comprehensive analysis of embeddings, segmentation, and Merkle tree."""
 import asyncio
 from pathlib import Path
+
 import httpx
+
 
 async def analyze():
     # Read the original article

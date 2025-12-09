@@ -2,7 +2,8 @@
 Unit tests for C2PA validator service.
 """
 import pytest
-from app.services.c2pa_validator import C2PAValidator, STANDARD_C2PA_ACTIONS
+
+from app.services.c2pa_validator import STANDARD_C2PA_ACTIONS, C2PAValidator
 
 
 class TestC2PAValidator:

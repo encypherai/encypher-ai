@@ -2,8 +2,11 @@
 Add C2PA provenance columns to content_references table.
 """
 import asyncio
-from app.database import engine
+
 from sqlalchemy import text
+
+from app.database import engine
+
 
 async def migrate():
     async with engine.begin() as conn:

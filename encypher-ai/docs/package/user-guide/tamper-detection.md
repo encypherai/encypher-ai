@@ -1,10 +1,10 @@
 # Tamper Detection
 
-A core feature of EncypherAI is its ability to detect when a piece of text has been modified after its metadata was embedded. This is achieved through cryptographic signatures and content hashing, providing a robust guarantee of authenticity and integrity.
+A core feature of Encypher is its ability to detect when a piece of text has been modified after its metadata was embedded. This is achieved through cryptographic signatures and content hashing, providing a robust guarantee of authenticity and integrity.
 
 ## How It Works: The Digital Signature
 
-When you embed metadata, EncypherAI performs several key steps:
+When you embed metadata, Encypher performs several key steps:
 
 1.  **Payload Creation**: It assembles the metadata you provide (e.g., timestamp, custom data, or a C2PA manifest) into a structured payload.
 2.  **Content Hashing (Hard Binding)**: It calculates a cryptographic hash (SHA-256) of the original, unmodified text. This hash is added to the metadata payload. This is the **hard binding**—it directly links the payload to the specific text content.

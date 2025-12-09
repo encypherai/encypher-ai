@@ -1,9 +1,9 @@
-# EncypherAI Feature Matrix by Tier
+# Encypher Feature Matrix by Tier
 
 **Last Updated**: November 28, 2025  
 **Version**: 1.0
 
-This document provides a comprehensive breakdown of all EncypherAI features organized by subscription tier.
+This document provides a comprehensive breakdown of all Encypher features organized by subscription tier.
 
 ---
 
@@ -54,11 +54,12 @@ This document provides a comprehensive breakdown of all EncypherAI features orga
 | Ed25519 Signatures | ✅ | ✅ | ✅ | ✅ |
 | C2PA-Compliant Manifests | ✅ | ✅ | ✅ | ✅ |
 | Unicode Metadata Embedding | ✅ | ✅ | ✅ | ✅ |
-| Batch Signing | ❌ | ✅ (100/batch) | ✅ (1000/batch) | ✅ (Unlimited) |
-| Streaming Support | ❌ | ✅ | ✅ | ✅ |
+| Batch Signing | ❌ | ❌ | ✅ (100/batch) | ✅ (Unlimited) |
+| Streaming Support (WebSocket/SSE) | ❌ | ✅ | ✅ | ✅ |
 | Custom Metadata Fields | ❌ | ✅ | ✅ | ✅ |
-| Merkle Tree Encoding | ❌ | ❌ | ❌ | ✅ |
-| Minimal Signed Embeddings | ❌ | ❌ | ❌ | ✅ |
+| Sentence-Level Merkle Roots | ❌ | ✅ (5K/mo) | ✅ (10K/mo) | ✅ (Unlimited) |
+| C2PA vs Merkle Encoding Choice | ❌ | ✅ | ✅ | ✅ |
+| Minimal Signed Embeddings | ❌ | ✅ | ✅ | ✅ |
 
 ---
 
@@ -69,11 +70,22 @@ This document provides a comprehensive breakdown of all EncypherAI features orga
 | Signature Verification | ✅ | ✅ | ✅ | ✅ |
 | Tampering Detection | ✅ | ✅ | ✅ | ✅ |
 | Metadata Extraction | ✅ | ✅ | ✅ | ✅ |
-| Batch Verification | ❌ | ✅ | ✅ | ✅ |
+| Batch Verification | ❌ | ❌ | ✅ | ✅ |
 | Public Verification Page | ❌ | ✅ | ✅ | ✅ |
 | Verification API | ✅ | ✅ | ✅ | ✅ |
-| Source Attribution | ❌ | ❌ | ❌ | ✅ |
-| Plagiarism Detection | ❌ | ❌ | ❌ | ✅ |
+| Source Attribution | ❌ | ✅ (10K/mo) | ✅ (50K/mo) | ✅ (Unlimited) |
+| Plagiarism Detection | ❌ | ❌ | ✅ (5K/mo) | ✅ (Unlimited) |
+
+---
+
+## 🤝 AI Licensing & Content Access
+
+| Feature | Free | Pro | Business | Enterprise |
+|---------|:----:|:---:|:--------:|:----------:|
+| AI Company Licensing API (agreements, usage) | ❌ | ❌ | ❌ | ✅ |
+| Content access APIs for AI models | ❌ | ❌ | ❌ | ✅ |
+| Revenue distribution & payouts (coalition members) | ❌ | ❌ | ❌ | ✅ |
+| Licensing usage & attribution reports | ❌ | ❌ | ❌ | ✅ |
 
 ---
 

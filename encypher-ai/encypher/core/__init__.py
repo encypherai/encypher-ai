@@ -1,5 +1,5 @@
 """
-Core encoding and decoding functionality for EncypherAI.
+Core encoding and decoding functionality for Encypher.
 """
 
 from encypher.core.keys import generate_ed25519_key_pair as generate_key_pair

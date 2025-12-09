@@ -1,21 +1,20 @@
 """
-EncypherAI Email Module
+Encypher Email Module
 
-Shared email functionality for all EncypherAI services.
+Shared email functionality for all Encypher services.
 Provides SMTP sending, template rendering, and common email types.
 """
 
-from .sender import (
-    EmailConfig,
-    send_email,
-    render_template,
-    generate_token,
-)
-
 from .emails import (
+    send_password_reset_email,
     send_verification_email,
     send_welcome_email,
-    send_password_reset_email,
+)
+from .sender import (
+    EmailConfig,
+    generate_token,
+    render_template,
+    send_email,
 )
 
 __all__ = [

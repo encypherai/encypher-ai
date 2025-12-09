@@ -4,16 +4,15 @@ Licensing Agreement Management Models.
 Database models for managing licensing agreements with AI companies,
 tracking content access, and revenue distribution.
 """
-from enum import Enum
-from datetime import datetime, date
+import uuid
+from datetime import date, datetime
 from decimal import Decimal
-from sqlalchemy import (
-    Column, String, Integer, TIMESTAMP, Enum as SQLEnum,
-    DECIMAL, DATE, ForeignKey, ARRAY
-)
+from enum import Enum
+
+from sqlalchemy import ARRAY, DATE, DECIMAL, TIMESTAMP, Column, ForeignKey, Integer, String
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-import uuid
 
 from app.database import Base
 

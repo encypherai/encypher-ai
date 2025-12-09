@@ -5,9 +5,10 @@ Revises: add_org_certificate_metadata
 Create Date: 2025-11-12
 """
 
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "add_batch_requests"

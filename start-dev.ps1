@@ -46,15 +46,22 @@
 # TRAEFIK API GATEWAY ROUTING (port 8000)
 # ============================================================================
 #
+#   /                    → Enterprise API (9000) [API landing page]
+#   /docs                → Enterprise API (9000) [Swagger UI]
+#   /redoc               → Enterprise API (9000) [ReDoc]
+#   /openapi.json        → Enterprise API (9000) [OpenAPI spec]
+#   /health              → Enterprise API (9000) [Health check]
+#
 #   /api/v1/auth/*       → Auth Service (8001)
+#   /api/v1/organizations/* → Auth Service (8001) [Team management]
 #   /api/v1/users/*      → User Service (8002)
 #   /api/v1/keys/*       → Key Service (8003)
 #   /api/v1/encode       → Encoding Service (8004)
-#   /api/v1/verify       → Verification Service (8005)
+#   /api/v1/verify/*     → Verification Service (8005) [specific paths]
 #   /api/v1/analytics/*  → Analytics Service (8006)
 #   /api/v1/billing/*    → Billing Service (8007)
 #   /api/v1/notifications/* → Notification Service (8008)
-#   /api/v1/*            → Enterprise API (9000) [catch-all]
+#   /api/v1/*            → Enterprise API (9000) [catch-all: sign, verify, stream, etc.]
 #
 # ============================================================================
 # DATABASE ARCHITECTURE (Per-Service Databases)

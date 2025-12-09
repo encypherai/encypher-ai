@@ -34,12 +34,12 @@ async def init_database():
     schema_sql = sql_file.read_text()
 
     # Connect to database
-    print(f"= Connecting to database...")
+    print("= Connecting to database...")
     conn = await asyncpg.connect(database_url)
 
     try:
         # Execute schema
-        print("=Ë Creating database schema...")
+        print("=Ã‹ Creating database schema...")
         await conn.execute(schema_sql)
         print(" Database schema initialized")
 
@@ -94,7 +94,7 @@ async def init_database():
             """, encrypted_key)
             print(" Keypair generated and stored (encrypted)")
         else:
-            print("   Encryption keys not set - skipping keypair storage")
+            print("Â   Encryption keys not set - skipping keypair storage")
 
         # Check if test API key exists
         existing_key = await conn.fetchval(
@@ -111,7 +111,7 @@ async def init_database():
                 VALUES ($1, 'test_org_001', 'Test API Key')
             """, test_api_key)
             print(f" Test API key created: {test_api_key}")
-            print(f"\n=Ë Save this API key for testing:")
+            print("\n=Ã‹ Save this API key for testing:")
             print(f"   {test_api_key}\n")
 
         print(" Database initialization complete!")

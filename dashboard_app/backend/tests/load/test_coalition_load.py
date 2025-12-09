@@ -4,10 +4,11 @@ Tests system performance under high load (10K+ members).
 
 Run with: locust -f test_coalition_load.py --host=http://localhost:8000
 """
-from locust import HttpUser, task, between
 import random
 import uuid
 from datetime import datetime
+
+from locust import HttpUser, between, task
 
 
 class CoalitionMemberUser(HttpUser):

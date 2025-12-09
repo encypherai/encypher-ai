@@ -301,26 +301,38 @@ Get current certificate status for organization.
 
 ---
 
-### GET /stats
+### GET /api/v1/usage
 
-Get organization usage statistics.
+Get organization usage statistics for the current billing period.
 
 **Authentication:** Required
 
 **Response:**
 ```json
 {
-  "success": true,
   "organization_id": "org_123",
-  "organization_name": "Example Publisher",
   "tier": "enterprise",
-  "usage": {
-    "documents_signed": 150,
-    "sentences_signed": 2500,
-    "api_calls_this_month": 450,
-    "monthly_quota": 10000,
-    "quota_remaining": 9550
-  }
+  "period_start": "2025-11-01T00:00:00Z",
+  "period_end": "2025-12-01T00:00:00Z",
+  "metrics": {
+    "c2pa_signatures": {
+      "name": "C2PA Signatures",
+      "used": 150,
+      "limit": -1,
+      "remaining": -1,
+      "percentage_used": 0.0,
+      "available": true
+    },
+    "api_calls": {
+      "name": "API Calls",
+      "used": 450,
+      "limit": 10000,
+      "remaining": 9550,
+      "percentage_used": 4.5,
+      "available": true
+    }
+  },
+  "reset_date": "2025-12-01T00:00:00Z"
 }
 ```
 
@@ -351,9 +363,9 @@ All errors follow this format:
 
 ---
 
-## Webhooks
+## Webhooks (Planned)
 
-Webhook delivery is rolling out in stages during the preview window. The management APIs are available now; event delivery will begin once the preview webhook worker is enabled (target: Q4 2025).
+Webhook delivery is planned for a future Enterprise API release. The paths and payloads below represent the intended design, but **no `/api/v1/webhooks` endpoints are currently exposed by the service**.
 
 ### Supported Events
 - `certificate.issued` - SSL.com certificate issued/renewed
@@ -445,7 +457,7 @@ Preview deliveries are synchronous and retried up to three times. Production del
 - `POST /api/v1/stream/sign`  
   Streams `start`, `progress`, `partial`, and `final` events via Server-Sent Events. The final event includes the signed text, verification URL, and runtime statistics. Provide an optional `run_id` to make retries idempotent.
 
-- `GET /stream/runs/{run_id}`  
+- `GET /api/v1/stream/runs/{run_id}`  
   Returns the most recent persisted state for a streaming run, enabling clients to resume after reconnects.
 
 ---

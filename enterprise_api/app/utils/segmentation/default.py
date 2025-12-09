@@ -9,8 +9,8 @@ This module provides the default segmentation strategy:
 IMPORTANT: We NEVER modify the original content stored in the tree.
 Normalization is only applied to hash computation for matching.
 """
-import unicodedata
 import logging
+import unicodedata
 from typing import List
 
 logger = logging.getLogger(__name__)

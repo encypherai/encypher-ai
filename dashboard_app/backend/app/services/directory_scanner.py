@@ -4,11 +4,11 @@ unmarked files by calling the Enterprise API.
 """
 from __future__ import annotations
 
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator, Dict, List
+from typing import Dict, List
 
 import httpx
-from encypher.interop.c2pa.text_wrapper import find_and_decode
 
 from app.core.config import settings
 from app.schemas.scanning import (
@@ -17,12 +17,13 @@ from app.schemas.scanning import (
     ScannedFileResult,
 )
 from app.services.directory_signing import (
-    _iter_candidate_files,
-    _is_excluded,
-    _matches_extension,
     _build_context,
+    _is_excluded,
+    _iter_candidate_files,
+    _matches_extension,
     _sign_file_via_api,
 )
+from encypher.interop.c2pa.text_wrapper import find_and_decode
 
 
 async def scan_directory(request: DirectoryScanRequest) -> DirectoryScanResponse:

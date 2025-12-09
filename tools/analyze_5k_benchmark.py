@@ -1,7 +1,7 @@
 """Analyze the 5K file benchmark results - find actual embedded files."""
-from pathlib import Path
 import statistics
 import sys
+from pathlib import Path
 
 # Find the work directory
 work_dir = Path('../outputs/wikipedia_prepared')

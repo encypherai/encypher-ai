@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Encypher Logo](https://encypherai.com/logo.svg)
+![Encypher Logo](https://encypherai.com/encypher_full_logo_color.svg)
 
 **Enterprise-grade content signing and verification for publishers, news organizations, and content creators**
 

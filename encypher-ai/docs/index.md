@@ -1,15 +1,15 @@
-# EncypherAI Documentation
+# Encypher Documentation
 
 <div align="center">
-  <img src="assets/horizontal-logo.png" alt="EncypherAI Logo" width="600"/>
+  <img src="assets/horizontal-logo.png" alt="Encypher Logo" width="600"/>
   <h2>Invisible Metadata for AI-Generated Text</h2>
 </div>
 
-## Welcome to EncypherAI
+## Welcome to Encypher
 
-EncypherAI is an open-source Python package that enables invisible metadata embedding in AI-generated text using zero-width characters.
+Encypher is an open-source Python package that enables invisible metadata embedding in AI-generated text using zero-width characters.
 
-This documentation provides comprehensive information about the EncypherAI package, including installation instructions, usage examples, API reference, and integration guides.
+This documentation provides comprehensive information about the Encypher package, including installation instructions, usage examples, API reference, and integration guides.
 
 ## Key Features
 
@@ -27,9 +27,9 @@ This documentation provides comprehensive information about the EncypherAI packa
 
 <div align="center">
   <a href="https://www.youtube.com/watch?v=_MNP0nHc77k">
-    <img src="https://img.youtube.com/vi/_MNP0nHc77k/0.jpg" alt="EncypherAI Demo Video" width="600"/>
+    <img src="https://img.youtube.com/vi/_MNP0nHc77k/0.jpg" alt="Encypher Demo Video" width="600"/>
   </a>
-  <p>Watch our demo video to see EncypherAI in action</p>
+  <p>Watch our demo video to see Encypher in action</p>
 </div>
 
 ## Getting Started
@@ -68,11 +68,11 @@ This documentation provides comprehensive information about the EncypherAI packa
 
 ## Contributing
 
-We welcome contributions to EncypherAI! Check out our [contribution guidelines](package/contributing.md) to get started.
+We welcome contributions to Encypher! Check out our [contribution guidelines](package/contributing.md) to get started.
 
 ## License
 
-EncypherAI is provided under a dual licensing model designed to support both open-source community use via an [AGPL-3.0 License](package/licensing.md) and commercial enterprise adoption via commercial licenses.
+Encypher is provided under a dual licensing model designed to support both open-source community use via an [AGPL-3.0 License](package/licensing.md) and commercial enterprise adoption via commercial licenses.
 
 ## GitHub Repository
 

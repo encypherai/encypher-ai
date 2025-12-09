@@ -1,6 +1,6 @@
-# EncypherAI Dashboard Backend
+# Encypher Dashboard Backend
 
-This is the FastAPI backend for the EncypherAI Compliance Readiness Dashboard. It provides API endpoints for authentication, audit logs, policy validation, and CLI tool integration.
+This is the FastAPI backend for the Encypher Compliance Readiness Dashboard. It provides API endpoints for authentication, audit logs, policy validation, and CLI tool integration.
 
 ## Features
 

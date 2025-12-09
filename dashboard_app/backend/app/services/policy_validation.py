@@ -3,19 +3,21 @@ Service for policy validation operations.
 """
 import csv
 import json
-from typing import List, Optional, Dict
 from datetime import datetime
-from sqlalchemy import func, select 
+from typing import Dict, List, Optional
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.utils.caching import cached_async, invalidate_cache
 
 from app.models.policy_validation import PolicySchema, PolicyValidationResult
 from app.schemas.policy_validation import (
     PolicySchemaCreate,
-    PolicyValidationResultCreate,
     PolicyValidationFilters,
-    PolicyValidationStats
+    PolicyValidationResultCreate,
+    PolicyValidationStats,
 )
+from app.utils.caching import cached_async, invalidate_cache
+
 
 async def get_policy_schemas(
     db: AsyncSession,
@@ -191,7 +193,7 @@ async def import_validation_results_from_csv(db: AsyncSession, csv_file_path: st
     
     count = 0
     results_to_add = []
-    with open(csv_file_path, 'r', newline='', encoding='utf-8') as csvfile:
+    with open(csv_file_path, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             metadata = {}

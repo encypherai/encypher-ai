@@ -1,10 +1,12 @@
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import numpy as np
-from unittest.mock import MagicMock, patch, AsyncMock
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 # Import app
 from app.main import app
+
 
 class TestLoadSimulation:
     
@@ -44,15 +46,15 @@ class TestLoadSimulation:
         mock_db.execute.return_value = mock_result
         
         # Ensure modules are imported
-        from app.services import key_service_client as ksc_module
-        from app.services import stat_service as ss_module
-        from app import database as db_module
-        import app.dependencies as deps_module
-        from app.services import signing_executor as se_module
-
-        from app.database import get_db
         from cryptography.hazmat.primitives.asymmetric import ed25519
+
+        import app.dependencies as deps_module
         import app.middleware.api_rate_limiter as limiter_module
+        from app import database as db_module
+        from app.database import get_db
+        from app.services import key_service_client as ksc_module
+        from app.services import signing_executor as se_module
+        from app.services import stat_service as ss_module
         
         # Generate a dummy private key for signing
         dummy_private_key = ed25519.Ed25519PrivateKey.generate()

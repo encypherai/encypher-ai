@@ -1,13 +1,15 @@
 """
-Configuration settings for the EncypherAI Dashboard Backend.
+Configuration settings for the Encypher Dashboard Backend.
 """
 import os
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
+
 
 class Settings(BaseModel):
     """Application settings."""
-    PROJECT_NAME: str = "EncypherAI Dashboard"
+    PROJECT_NAME: str = "Encypher Dashboard"
     API_V1_STR: str = "/api/v1"
     ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
     
@@ -36,7 +38,7 @@ class Settings(BaseModel):
     
     # Email settings
     EMAILS_FROM_EMAIL: str = os.getenv("EMAILS_FROM_EMAIL", "noreply@encypherai.com")
-    EMAILS_FROM_NAME: str = os.getenv("EMAILS_FROM_NAME", "EncypherAI Dashboard")
+    EMAILS_FROM_NAME: str = os.getenv("EMAILS_FROM_NAME", "Encypher Dashboard")
     SMTP_HOST: str = os.getenv("SMTP_HOST", "localhost")
     SMTP_PORT: int = int(os.getenv("SMTP_PORT", "25"))
     SMTP_USER: Optional[str] = os.getenv("SMTP_USER")

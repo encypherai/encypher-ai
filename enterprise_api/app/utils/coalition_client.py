@@ -1,10 +1,11 @@
 """
 Coalition Service Client for Enterprise API
 """
-import httpx
 import logging
-from typing import Optional
 from datetime import datetime
+from typing import Optional
+
+import httpx
 
 logger = logging.getLogger(__name__)
 

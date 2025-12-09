@@ -3,11 +3,12 @@ C2PA Assertion Template Model
 
 Stores reusable C2PA assertion templates.
 """
-from sqlalchemy import Column, String, Text, Boolean, TIMESTAMP, JSON
+import uuid
+
+from sqlalchemy import JSON, TIMESTAMP, Boolean, Column, String, Text
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.sql import func
 from sqlalchemy.types import TypeDecorator
-import uuid
 
 from app.database import Base
 

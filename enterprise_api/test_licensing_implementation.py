@@ -5,8 +5,8 @@ Simple validation script for Licensing Agreement Management implementation.
 This script validates that all components are properly structured and can be imported.
 """
 
-import sys
 import os
+import sys
 
 # Add the app directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -24,9 +24,7 @@ def test_imports():
     # Test 1: Models
     print("1. Testing models import...")
     try:
-        from app.models.licensing import (
-            AgreementStatus
-        )
+        from app.models.licensing import AgreementStatus
         print("   ✓ All models imported successfully")
         print("     - AICompany, LicensingAgreement, ContentAccessLog")
         print("     - RevenueDistribution, MemberRevenue")

@@ -1,30 +1,30 @@
 """
 Test script to demonstrate the usage of the shared commercial library.
 
-This script shows how to use the EncypherAI high-level API from the
+This script shows how to use the Encypher high-level API from the
 encypher_commercial_shared library for metadata verification.
 """
 
 from pathlib import Path
 
-# Import from the shared commercial library
-from encypher_commercial_shared import EncypherAI, VerificationResult
-from encypher_commercial_shared.utils import scan_directory, generate_report
-
 from rich.console import Console
+
+# Import from the shared commercial library
+from encypher_commercial_shared import Encypher, VerificationResult
+from encypher_commercial_shared.utils import generate_report, scan_directory
 
 console = Console()
 
 
 def test_verify_from_text():
     """Test verifying metadata from text using the shared library."""
-    console.print("[bold]Testing EncypherAI.verify_from_text[/bold]")
+    console.print("[bold]Testing Encypher.verify_from_text[/bold]")
     
     # Sample text with metadata (this is just a placeholder)
-    sample_text = "This is a sample text that might contain EncypherAI metadata."
+    sample_text = "This is a sample text that might contain Encypher metadata."
     
-    # Initialize the EncypherAI high-level API
-    encypher = EncypherAI(verbose=True)
+    # Initialize the Encypher high-level API
+    encypher = Encypher(verbose=True)
     
     # Verify metadata from text
     result = encypher.verify_from_text(sample_text)
@@ -48,8 +48,8 @@ def test_scan_directory():
     # Get the current directory
     current_dir = Path(__file__).parent
     
-    # Initialize the EncypherAI high-level API
-    encypher = EncypherAI(verbose=True)
+    # Initialize the Encypher high-level API
+    encypher = Encypher(verbose=True)
     
     # Scan the current directory for files with metadata
     results = scan_directory(
@@ -73,8 +73,8 @@ def test_generate_report():
     """Test generating a report from verification results."""
     console.print("\n[bold]Testing generate_report utility[/bold]")
     
-    # Initialize the EncypherAI high-level API
-    encypher = EncypherAI(verbose=True)
+    # Initialize the Encypher high-level API
+    encypher = Encypher(verbose=True)
     
     # Create some sample results
     results = {
@@ -100,7 +100,7 @@ def test_generate_report():
 
 
 if __name__ == "__main__":
-    console.print("[bold green]Testing the EncypherAI Commercial Shared Library[/bold green]")
+    console.print("[bold green]Testing the Encypher Commercial Shared Library[/bold green]")
     
     # Run the tests
     test_verify_from_text()

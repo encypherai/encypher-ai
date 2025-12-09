@@ -15,6 +15,7 @@ import { ConditionalLayoutWrapper } from '@/components/layout/ConditionalLayoutW
 import { ScriptsContainer } from '@/components/ScriptsContainer';
 import WebPageSchema from '@/components/seo/WebPageSchema';
 import { AnalyticsTracker } from '@/components/AnalyticsTracker';
+import CookieConsentBanner from '@/components/CookieConsent';
 
 const isProd = process.env.NEXT_PUBLIC_ENV === "production";
 
@@ -68,6 +69,7 @@ export default function RootLayout({
               <Toaster />
               <ScriptsContainer isProd={isProd} />
               <WebPageSchema />
+              <CookieConsentBanner />
             </ToastProvider>
           </Providers>
         </ClientProviders>

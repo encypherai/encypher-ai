@@ -15,11 +15,18 @@ import { useState, useEffect } from 'react';
 import { toolLinks } from '@/config/tools';
 import { useSession, signOut } from 'next-auth/react';
 
+// Canonical SVG logos - use color on light backgrounds, white on dark backgrounds
+const LOGO_COLOR = '/encypher_full_logo_color.svg';
+const LOGO_WHITE = '/encypher_full_logo_white.svg';
+
 export function Navbar() {
-  const { setTheme } = useTheme();
+  const { theme, resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session, status } = useSession();
+  
+  // Determine which logo to use based on theme
+  const logoSrc = mounted && resolvedTheme === 'light' ? LOGO_COLOR : LOGO_WHITE;
 
   // After mounting, we can show the theme toggle
   useEffect(() => {
@@ -36,13 +43,12 @@ export function Navbar() {
         <div className="flex items-center gap-2">
           <Link href="/" className="flex items-center">
             <Image 
-              src="/encypher_full_nobg.png" 
+              src={logoSrc}
               alt="Encypher Logo" 
               width={160} 
               height={40}
-              className="h-10 w-auto"
+              className="h-10 w-auto object-contain"
               priority
-              quality={90}
             />
           </Link>
         </div>
@@ -58,13 +64,22 @@ export function Navbar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="bg-background !bg-opacity-100 !backdrop-blur-none !bg-neutral-900 !shadow-lg">
               <DropdownMenuItem asChild>
-                <Link href="/solutions/ai-companies">For AI Companies</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
                 <Link href="/solutions/publishers">For Publishers</Link>
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
+                <Link href="/solutions/ai-companies">For AI Companies</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
                 <Link href="/solutions/enterprises">For Enterprises</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="border-t border-border/40 mt-1 pt-1" disabled>
+                <span className="text-xs text-muted-foreground">Demos</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/publisher-demo">Publisher Demo</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/ai-demo">AI Labs Demo</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -89,7 +104,7 @@ export function Navbar() {
           <Link href="/blog" className="text-sm font-medium hover:text-primary">
             Blog
           </Link>
-          <Link href="/licensing" className="text-sm font-medium hover:text-primary">
+          <Link href="/pricing" className="text-sm font-medium hover:text-primary">
             Pricing
           </Link>
           <Link href="/company" className="text-sm font-medium hover:text-primary">
@@ -193,6 +208,22 @@ export function Navbar() {
             >
               For Enterprises
             </Link>
+            {/* Mobile Demos Links */}
+            <span className="text-xs text-muted-foreground pl-4 pt-2">Demos</span>
+            <Link 
+              href="/publisher-demo" 
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Publisher Demo
+            </Link>
+            <Link 
+              href="/ai-demo" 
+              className="text-sm font-medium hover:text-primary pl-4"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              AI Labs Demo
+            </Link>
             {/* Mobile Tools Links */}
             <span className="text-sm font-medium">Tools</span>
             {toolLinks.filter(t => !t.hiddenInMenu).map(t => (
@@ -220,7 +251,7 @@ export function Navbar() {
               Blog
             </Link>
             <Link 
-              href="/licensing" 
+              href="/pricing" 
               className="text-sm font-medium hover:text-primary"
               onClick={() => setMobileMenuOpen(false)}
             >

@@ -4,15 +4,15 @@ Service layer for Merkle tree operations.
 Combines CRUD operations with Merkle tree logic to provide
 high-level business operations.
 """
-from typing import List, Optional, Dict, Any, Tuple
 import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.crud import merkle as merkle_crud
-from app.utils.merkle import MerkleTree, MerkleProof
+from app.models.merkle import AttributionReport, MerkleRoot, MerkleSubhash
+from app.utils.merkle import MerkleProof, MerkleTree
 from app.utils.segmentation import HierarchicalSegmenter, normalize_for_hashing
-from app.models.merkle import MerkleRoot, MerkleSubhash, AttributionReport
 
 logger = logging.getLogger(__name__)
 

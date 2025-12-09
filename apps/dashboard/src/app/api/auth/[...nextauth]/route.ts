@@ -18,7 +18,47 @@ const handler = NextAuth({
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           console.log('[NextAuth] Missing credentials');
-          return null;
+          throw new Error('Please enter both email and password');
+        }
+
+        // Handle token-based login from email verification
+        if (credentials.password.startsWith('__TOKEN__')) {
+          const accessToken = credentials.password.replace('__TOKEN__', '');
+          console.log('[NextAuth] Token-based login for:', credentials.email);
+          
+          // Verify the token with the auth service
+          try {
+            const verifyRes = await fetch(`${API_BASE}/auth/verify`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+              },
+            });
+            
+            if (verifyRes.ok) {
+              const verifyData = await verifyRes.json();
+              if (verifyData.success && verifyData.data) {
+                const user = verifyData.data;
+                console.log('[NextAuth] Token verification successful for:', user.email);
+                return {
+                  id: String(user.id),
+                  email: user.email,
+                  name: user.name,
+                  accessToken: accessToken,
+                  role: user.role ?? 'member',
+                  tier: user.tier ?? 'free',
+                } as any;
+              }
+            }
+            
+            // Token verification failed, fall through to show success but require manual login
+            console.log('[NextAuth] Token verification failed, user should login manually');
+            throw new Error('Session expired. Please log in with your credentials.');
+          } catch (error) {
+            console.error('[NextAuth] Token verification error:', error);
+            throw new Error('Session expired. Please log in with your credentials.');
+          }
         }
 
         try {
@@ -36,7 +76,23 @@ const handler = NextAuth({
           const data = await res.json();
           console.log('[NextAuth] API response status:', res.status, 'success:', data.success);
 
-          if (res.ok && data.success && data.data?.user && data.data?.access_token) {
+          // Handle specific error responses
+          if (res.status === 401) {
+            console.log('[NextAuth] Login failed - invalid credentials');
+            throw new Error('Invalid email or password');
+          }
+          
+          if (res.status === 403) {
+            console.log('[NextAuth] Login failed - account not verified');
+            throw new Error('Please verify your email before signing in');
+          }
+
+          if (!res.ok) {
+            console.log('[NextAuth] Login failed - server error:', res.status);
+            throw new Error(data.error?.message || data.detail || 'Login failed. Please try again.');
+          }
+
+          if (data.success && data.data?.user && data.data?.access_token) {
             const user = data.data.user;
             console.log('[NextAuth] Login successful for user:', user.email);
             return {
@@ -50,10 +106,14 @@ const handler = NextAuth({
           }
           
           console.log('[NextAuth] Login failed - invalid response structure');
-          return null;
+          throw new Error('Login failed. Please try again.');
         } catch (error) {
           console.error('[NextAuth] Auth error:', error);
-          return null;
+          // Re-throw if it's already our custom error
+          if (error instanceof Error) {
+            throw error;
+          }
+          throw new Error('An error occurred during login. Please try again.');
         }
       }
     }),
@@ -139,6 +199,9 @@ const handler = NextAuth({
   },
   session: {
     strategy: 'jwt',
+    // Match backend JWT expiration (1 hour) - industry standard for B2B SaaS
+    // This ensures NextAuth session expires around the same time as backend token
+    maxAge: 60 * 60, // 1 hour in seconds
   },
   cookies: {
     sessionToken: {

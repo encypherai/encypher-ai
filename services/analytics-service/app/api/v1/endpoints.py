@@ -96,10 +96,16 @@ async def get_usage_stats(
     """
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-
+    
+    # Use organization_id if available, fall back to user_id
+    # For user-level API keys, organization_id is "user_{user_id}"
+    org_id = current_user.get("organization_id")
+    user_id = current_user.get("id") or current_user.get("user_id")
+    
+    # Query by organization_id first (new metrics), then user_id (legacy)
     stats = AnalyticsService.get_usage_stats(
         db=db,
-        user_id=current_user["id"],
+        user_id=org_id or user_id,
         start_date=start_date,
         end_date=end_date,
     )

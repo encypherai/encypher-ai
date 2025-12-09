@@ -112,7 +112,7 @@ The demo includes a Streamlit dashboard that displays the article with verificat
 ```python
 # From demo_dashboard.py
 def enhance_html_with_logo_and_popup(html_content, manifest_data):
-    """Add EncypherAI logo badge and manifest popup to the HTML content."""
+    """Add Encypher logo badge and manifest popup to the HTML content."""
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Find first paragraph (which contains embedded metadata)
@@ -128,7 +128,7 @@ def enhance_html_with_logo_and_popup(html_content, manifest_data):
     badge_img = soup.new_tag('img')
     badge_img['src'] = 'icon-logo-nobg.png'
     badge_img['class'] = 'encypher-badge'
-    badge_img['alt'] = 'EncypherAI Verified'
+    badge_img['alt'] = 'Encypher Verified'
     badge_img['title'] = 'Click to view provenance information'
     badge_img['onclick'] = 'toggleManifestPopup()'
 
@@ -367,7 +367,7 @@ Running `enhanced_tamper_test.py` demonstrates two tamper scenarios:
 
 The Streamlit dashboard displays:
 
-1. The encoded article with an EncypherAI badge next to the first paragraph
+1. The encoded article with an Encypher badge next to the first paragraph
 2. A verification notice under the author line
 3. A popup that shows the manifest details when clicking the badge
 4. Verification results showing the signature and content hash status
@@ -396,7 +396,7 @@ custom_actions = [
     {
         "label": "c2pa.captured",
         "softwareAgent": "YourApp/1.0.0",
-        "description": "Article prepared with EncypherAI",
+        "description": "Article prepared with Encypher",
     },
 ]
 
@@ -473,7 +473,7 @@ def add_css_and_js(soup):
 
 ## Conclusion
 
-The C2PA text demo showcases a complete implementation of text provenance using EncypherAI's Unicode variation selector approach. It demonstrates:
+The C2PA text demo showcases a complete implementation of text provenance using Encypher's Unicode variation selector approach. It demonstrates:
 
 1. How to embed C2PA manifests into HTML articles
 2. How to verify embedded metadata and detect tampering

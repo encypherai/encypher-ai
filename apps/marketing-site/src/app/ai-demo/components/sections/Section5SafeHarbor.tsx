@@ -164,10 +164,10 @@ export default function Section5SafeHarbor({ isActive, onComplete, onAnimationSt
             </h3>
             <div className="space-y-4 text-slate-700">
               <div>
-                <strong className="text-slate-900">1. LITIGATION EXPOSURE</strong> ($5B+ active claims)
+                <strong className="text-slate-900">1. PUBLISHER ECOSYSTEM</strong> (growing coalition)
                 <br />
                 <span className="text-slate-600">
-                  Technical defense + publisher compatibility
+                  Compatible infrastructure + licensing access
                 </span>
               </div>
               <div>

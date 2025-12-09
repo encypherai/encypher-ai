@@ -3,14 +3,16 @@ Service for audit log operations.
 """
 import csv
 import json
-from typing import List, Optional, Tuple
 from datetime import datetime
-from sqlalchemy import select, func, and_
+from typing import List, Optional, Tuple
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.utils.caching import cached_async, invalidate_cache
 
 from app.models.audit_log import AuditLog
 from app.schemas.audit_log import AuditLogCreate, AuditLogFilters, AuditLogStats
+from app.utils.caching import cached_async, invalidate_cache
+
 
 async def get_audit_logs(
     db: AsyncSession,
@@ -190,7 +192,7 @@ async def import_audit_log_from_csv(db: AsyncSession, csv_file_path: str) -> int
     """
     count = 0
     logs_to_add = []
-    with open(csv_file_path, 'r', newline='', encoding='utf-8') as csvfile:
+    with open(csv_file_path, newline='', encoding='utf-8') as csvfile:
         reader = csv.DictReader(csvfile)
         for row in reader:
             metadata = {}

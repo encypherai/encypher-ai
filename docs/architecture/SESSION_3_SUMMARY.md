@@ -570,7 +570,7 @@ cd services/<service-name> && uv run pytest
 
 <div align="center">
 
-**Made with ❤️ and ☕ by the EncypherAI Team**
+**Made with ❤️ and ☕ by the Encypher Team**
 
 **Session 3 Complete - Onwards to Week 2!** 🎉
 

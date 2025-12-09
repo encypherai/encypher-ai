@@ -1,9 +1,9 @@
 # validator.py
 
-from typing import Dict, Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 try:
-    from encypher_ai import EncypherAI, VerificationResult  # type: ignore[import-not-found]
+    from encypher_ai import Encypher, VerificationResult  # type: ignore[import-not-found]
 except ImportError:  # pragma: no cover - fallback when encypher_ai is unavailable
     from dataclasses import dataclass
     from enum import Enum
@@ -18,7 +18,7 @@ except ImportError:  # pragma: no cover - fallback when encypher_ai is unavailab
         is_verified: bool
         metadata: Dict[str, Any]
 
-    class EncypherAI:
+    class Encypher:
         def verify_from_text(self, text: str) -> VerificationResult:
             return VerificationResult(
                 status=VerificationStatus.UNKNOWN,
@@ -39,7 +39,7 @@ def validate_metadata(
     Validates extracted metadata against a list of policy rules.
 
     Args:
-        metadata: The metadata extracted from the text (e.g., from EncypherAI.verify_from_text().metadata).
+        metadata: The metadata extracted from the text (e.g., from Encypher.verify_from_text().metadata).
         policy_rules: A list of rule objects from the loaded policy file.
         source_identifier: A string identifying the source of the metadata (e.g., filename, text input #).
 

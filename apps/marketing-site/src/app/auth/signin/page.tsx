@@ -90,7 +90,7 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const session = window.localStorage.getItem("next-auth.session-token");
-      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://s-dashboard.encypherai.com";
+      const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com";
       if (session) window.location.href = dashboardUrl;
     }
   }, [router]);
@@ -114,7 +114,7 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
     setLoading(true);
     setError(null);
     setShowEmailNotVerified(false);
-    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://s-dashboard.encypherai.com";
+    const dashboardUrl = process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com";
     try {
       const res = await signIn('credentials', {
         redirect: false,
@@ -241,7 +241,7 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
                     key={provider.id}
                     className={`flex items-center justify-center gap-2 flex-1 py-3 px-2 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-ring
                       bg-background text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm group`}
-                    onClick={() => signIn(provider.id, { callbackUrl: process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://s-dashboard.encypherai.com" })}
+                    onClick={() => signIn(provider.id, { callbackUrl: process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com" })}
                     aria-label={`Sign in with ${provider.name}`}
                     style={{ boxShadow: provider.id === 'google' ? '0 2px 10px 0 #4285F4' : provider.id === 'github' ? '0 2px 10px 0 #4285F4' : provider.id === 'discord' ? '0 2px 10px 0 #5865F2' : '0 2px 10px 0 var(--blue-ncs, #2a87c4)' }}
                   >

@@ -2,11 +2,14 @@
 API Key Authentication Middleware for HTTP Endpoints.
 
 Provides authentication for enterprise API endpoints using API keys.
+Delegates to key-service for validation to support both org-level and user-level keys.
 """
 import logging
-from typing import Optional, Dict
 from datetime import datetime
-from fastapi import Header, HTTPException, status, Depends
+from typing import Dict, Optional
+
+import httpx
+from fastapi import Depends, Header, HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +17,20 @@ from app.config import settings
 from app.database import get_db
 
 logger = logging.getLogger(__name__)
+
+# Cache for key-service client
+_key_service_client: Optional[httpx.AsyncClient] = None
+
+
+def get_key_service_client() -> httpx.AsyncClient:
+    """Get or create the key-service HTTP client."""
+    global _key_service_client
+    if _key_service_client is None:
+        _key_service_client = httpx.AsyncClient(
+            base_url=settings.key_service_url,
+            timeout=10.0,
+        )
+    return _key_service_client
 
 
 async def get_api_key_from_header(
@@ -49,6 +66,11 @@ async def authenticate_api_key(
 ) -> Dict:
     """
     Authenticate API key and return organization details.
+    
+    Authentication flow:
+    1. Check for demo key bypass
+    2. Call key-service /validate endpoint (supports both org and user keys)
+    3. Fall back to local database lookup for legacy keys
     
     Args:
         api_key: API key from header
@@ -86,7 +108,54 @@ async def authenticate_api_key(
             "private_key_encrypted": settings.demo_private_key_bytes or b""
         }
     
-    # Query database for API key
+    # Try key-service validation first (supports both org and user keys)
+    try:
+        client = get_key_service_client()
+        response = await client.post(
+            "/api/v1/keys/validate",
+            json={"key": api_key}
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("success") and data.get("data"):
+                key_data = data["data"]
+                logger.info(f"Request authenticated via key-service for org {key_data.get('organization_id')}")
+                
+                # Map key-service response to our expected format
+                permissions = key_data.get("permissions", [])
+                return {
+                    "api_key": api_key,
+                    "organization_id": key_data.get("organization_id"),
+                    "organization_name": key_data.get("organization_name", "Personal Account"),
+                    "organization_type": "user" if key_data.get("is_demo") else "organization",
+                    "tier": key_data.get("tier", "starter"),
+                    "can_sign": "sign" in permissions or key_data.get("is_demo", False),
+                    "can_verify": "verify" in permissions or key_data.get("is_demo", False),
+                    "can_lookup": "read" in permissions or key_data.get("is_demo", False),
+                    "monthly_quota": key_data.get("monthly_api_limit", 10_000),
+                    "api_calls_this_month": key_data.get("monthly_api_usage", 0),
+                    "is_demo": key_data.get("is_demo", False),
+                    "private_key_encrypted": settings.demo_private_key_bytes or b"" if key_data.get("is_demo") else b"",
+                    "features": key_data.get("features", {}),
+                    "coalition_member": key_data.get("coalition_member", True),
+                    "coalition_rev_share": key_data.get("coalition_rev_share", 65),
+                }
+        elif response.status_code == 401:
+            logger.warning("Authentication failed via key-service: Invalid API key")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+    except httpx.RequestError as e:
+        logger.warning(f"Key-service unavailable, falling back to local DB: {e}")
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Key-service validation failed, falling back to local DB: {e}")
+    
+    # Fall back to local database lookup for legacy keys
     try:
         result = await db.execute(
             text(
@@ -106,7 +175,7 @@ async def authenticate_api_key(
         row = result.fetchone()
         
         if not row:
-            logger.warning("Authentication failed: Invalid API key")
+            logger.warning("Authentication failed: Invalid API key (not found in key-service or local DB)")
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key",
@@ -156,7 +225,7 @@ async def authenticate_api_key(
         )
         await db.commit()
         
-        logger.info(f"Request authenticated for org {row.organization_id}")
+        logger.info(f"Request authenticated via local DB for org {row.organization_id}")
         
         # Return organization details
         return {

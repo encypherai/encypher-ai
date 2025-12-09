@@ -1,11 +1,12 @@
-import time
-import docker
 import os
 import socket
-import numpy as np
 import subprocess
 import sys
+import time
+
+import docker
 import httpx
+import numpy as np
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 

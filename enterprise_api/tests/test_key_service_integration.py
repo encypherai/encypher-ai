@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
 import os
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 # Set env vars
 os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/db"
@@ -9,6 +10,7 @@ os.environ["ENCRYPTION_NONCE"] = "00" * 12
 os.environ["SSL_COM_API_KEY"] = "test_key"
 
 from app.services.key_service_client import KeyServiceClient
+
 
 @pytest.mark.asyncio
 async def test_validate_key_uses_cache():

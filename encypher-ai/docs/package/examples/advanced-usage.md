@@ -1,6 +1,6 @@
 # Advanced Usage Examples
 
-This guide provides advanced examples for using the EncypherAI package in various scenarios.
+This guide provides advanced examples for using the Encypher package in various scenarios.
 
 > Note: Timestamp optional
 >
@@ -107,7 +107,7 @@ handler = EnhancedMetadataHandler()
 text = "This is a sample text for advanced encoding."
 metadata = {
     "model": "gpt-4",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "version": "2.3.0"
 }
 
@@ -207,7 +207,7 @@ texts = [
 
 metadata_template = {
     "model": "gpt-4",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "version": "2.3.0"
 }
 
@@ -317,7 +317,7 @@ class EnhancedStreamingHandler(StreamingHandler):
 # Example usage
 metadata = {
     "model": "streaming-demo",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": "enhanced-stream-example"  # Required for verification
@@ -457,7 +457,7 @@ def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
 text = "This is a sample text for verification."
 metadata = {
     "model": "gpt-4",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": key_id  # Required for verification
@@ -476,10 +476,10 @@ encoded_text = UnicodeMetadata.embed_metadata(
 verification_results = verify_content_with_custom_logic(
     encoded_text,
     resolver=resolve_public_key,
-    expected_organization="EncypherAI",
+    expected_organization="Encypher",
     max_age_hours=48
 )
 
 print(f"Verification results: {json.dumps(verification_results, indent=2)}")
 
-These advanced examples demonstrate how to extend and customize EncypherAI's functionality for various use cases using digital signatures for enhanced security and verification.
+These advanced examples demonstrate how to extend and customize Encypher's functionality for various use cases using digital signatures for enhanced security and verification.

@@ -1,7 +1,7 @@
 # Policy Validator CLI - Agent Development Guide
 
 ## Overview
-The Policy Validator CLI validates EncypherAI metadata against user-defined JSON policy schemas, ensuring compliance with organizational governance standards.
+The Policy Validator CLI validates Encypher metadata against user-defined JSON policy schemas, ensuring compliance with organizational governance standards.
 
 ## Current Status
 ✅ **Functional** - Core functionality works well
@@ -116,7 +116,7 @@ uv run mypy app/
 
 ### With encypher-ai (core)
 - Direct import and usage
-- Uses `EncypherAI()` class for verification
+- Uses `Encypher()` class for verification
 - Extracts metadata from verified content
 
 ### Standalone Usage
@@ -287,7 +287,7 @@ The code is well-structured with no major issues identified.
 ## Comparison with audit_log_cli
 
 ### Similarities
-- Both scan files for EncypherAI metadata
+- Both scan files for Encypher metadata
 - Both generate CSV reports
 - Both use typer and rich for CLI
 
@@ -401,4 +401,4 @@ python -m json.tool policy.json
 ```
 
 ## License
-Proprietary - EncypherAI Commercial Suite
+Proprietary - Encypher Commercial Suite

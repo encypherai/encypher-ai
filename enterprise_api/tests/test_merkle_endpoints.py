@@ -7,8 +7,9 @@ Uses PostgreSQL via Docker for full compatibility.
 Authentication is now implemented via require_merkle_feature dependency.
 Uses business_auth_headers fixture which has merkle_enabled=True.
 """
-import pytest
 import uuid
+
+import pytest
 from httpx import AsyncClient
 
 # Uses fixtures from conftest.py:

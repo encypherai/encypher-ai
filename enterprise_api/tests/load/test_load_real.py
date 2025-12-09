@@ -9,18 +9,17 @@ Run with: docker exec encypher-enterprise-api pytest tests/load/test_load_real.p
 import asyncio
 import os
 import time
-from typing import List
 import uuid
+from typing import List
 
 import numpy as np
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.main import app
 from app.database import get_db
-
+from app.main import app
 
 # Configuration
 DEMO_API_KEY = os.getenv("DEMO_API_KEY", "demo-api-key-for-testing")
@@ -319,8 +318,9 @@ class TestRealDatabasePerformance:
     @pytest.mark.asyncio
     async def test_merkle_root_creation_performance(self, db: AsyncSession):
         """Test Merkle root creation performance."""
-        from app.models.merkle import MerkleRoot
         import uuid as uuid_module
+
+        from app.models.merkle import MerkleRoot
         
         print("\nTesting Merkle root creation performance...")
         
@@ -357,8 +357,9 @@ class TestRealDatabasePerformance:
     @pytest.mark.asyncio
     async def test_c2pa_schema_query_performance(self, db: AsyncSession):
         """Test C2PA schema query performance."""
-        from app.models.c2pa_schema import C2PASchema
         from sqlalchemy import select
+
+        from app.models.c2pa_schema import C2PASchema
         
         print("\nTesting C2PA schema query performance...")
         

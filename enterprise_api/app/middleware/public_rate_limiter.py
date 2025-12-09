@@ -8,9 +8,10 @@ For production, consider upgrading to Redis-based rate limiting.
 """
 import logging
 import time
-from typing import Dict, Optional, Tuple
 from collections import defaultdict
-from fastapi import Request, HTTPException, status
+from typing import Dict, Optional, Tuple
+
+from fastapi import HTTPException, Request, status
 
 logger = logging.getLogger(__name__)
 
@@ -155,11 +156,47 @@ class PublicAPIRateLimiter:
         
         return True, None, None
     
+    def get_rate_limit_headers(
+        self,
+        request: Request,
+        endpoint_type: str = "default"
+    ) -> Dict[str, str]:
+        """
+        Get rate limit headers for a request.
+        
+        Args:
+            request: FastAPI request
+            endpoint_type: Type of endpoint
+            
+        Returns:
+            Dictionary of rate limit headers
+        """
+        client_ip = self._get_client_ip(request)
+        limits = self.ENDPOINT_LIMITS.get(endpoint_type, self.ENDPOINT_LIMITS["default"])
+        max_requests = limits["requests_per_hour"]
+        window_seconds = limits["window_seconds"]
+        
+        key = (client_ip, endpoint_type)
+        
+        # Cleanup and count
+        self.requests[key] = self._cleanup_old_entries(self.requests[key], window_seconds)
+        request_count = sum(count for _, count in self.requests[key])
+        remaining = max(0, max_requests - request_count)
+        
+        # Calculate reset time
+        reset_at = int(time.time()) + window_seconds
+        
+        return {
+            "X-RateLimit-Limit": str(max_requests),
+            "X-RateLimit-Remaining": str(remaining),
+            "X-RateLimit-Reset": str(reset_at),
+        }
+
     async def __call__(
         self,
         request: Request,
         endpoint_type: str = "default"
-    ):
+    ) -> Dict[str, str]:
         """
         Middleware callable for FastAPI.
         
@@ -167,13 +204,16 @@ class PublicAPIRateLimiter:
             request: FastAPI request
             endpoint_type: Type of endpoint
             
+        Returns:
+            Rate limit headers dictionary
+            
         Raises:
             HTTPException: If rate limit exceeded
         """
         allowed, error_msg, retry_after = self.check_rate_limit(request, endpoint_type)
+        headers = self.get_rate_limit_headers(request, endpoint_type)
         
         if not allowed:
-            headers = {}
             if retry_after:
                 headers["Retry-After"] = str(retry_after)
             
@@ -182,6 +222,8 @@ class PublicAPIRateLimiter:
                 detail=error_msg,
                 headers=headers
             )
+        
+        return headers
     
     def reset_ip(self, ip_address: str) -> None:
         """

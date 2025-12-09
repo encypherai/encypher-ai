@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Secret Scanner for EncypherAI Commercial
+Secret Scanner for Encypher Commercial
 
 Scans the codebase for potential secrets and generates a report.
 Uses detect-secrets under the hood.
@@ -8,11 +8,10 @@ Uses detect-secrets under the hood.
 Usage:
     python scripts/scan_secrets.py
 """
-import subprocess
 import json
+import subprocess
 import sys
-from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 # Files/patterns that are known to contain test/example secrets (not real)
 KNOWN_SAFE_PATTERNS = [
@@ -94,7 +93,7 @@ def categorize_findings(results: Dict[str, List]) -> Dict[str, List]:
 
 def main():
     print("=" * 60)
-    print("Secret Scanner for EncypherAI Commercial")
+    print("Secret Scanner for Encypher Commercial")
     print("=" * 60)
     
     print("\nScanning codebase for potential secrets...")

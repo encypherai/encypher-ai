@@ -1,6 +1,6 @@
 # Dashboard Frontend (Next.js)
 
-This is the Next.js frontend for the EncypherAI Compliance Readiness Dashboard.
+This is the Next.js frontend for the Encypher Compliance Readiness Dashboard.
 
 ## Setup
 

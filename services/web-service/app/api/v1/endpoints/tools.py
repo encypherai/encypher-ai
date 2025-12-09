@@ -1,5 +1,5 @@
 import uuid
-from typing import Any, Dict, Optional
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, HTTPException
@@ -10,22 +10,22 @@ router = APIRouter()
 class EncodeRequest(BaseModel):
     original_text: str
     target: str = "first_letter"
-    custom_metadata: Optional[Dict[str, str]] = None
-    metadata_format: Optional[str] = None
-    ai_info: Optional[Dict[str, str]] = None
+    custom_metadata: dict[str, str] | None = None
+    metadata_format: str | None = None
+    ai_info: dict[str, str] | None = None
 
 class EncodeResponse(BaseModel):
     encoded_text: str
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
 
 class DecodeRequest(BaseModel):
     encoded_text: str
 
 class DecodeResponse(BaseModel):
-    metadata: Optional[Dict[str, Any]] = None
+    metadata: dict[str, Any] | None = None
     verification_status: str
-    error: Optional[str] = None
-    raw_hidden_data: Optional[Dict[str, Any]] = None
+    error: str | None = None
+    raw_hidden_data: dict[str, Any] | None = None
 
 # Docker service name for enterprise-api
 ENTERPRISE_API_URL = "http://encypher-enterprise-api:8000"

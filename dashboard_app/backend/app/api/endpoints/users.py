@@ -9,12 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_password_hash
 from app.schemas.user import User, UserUpdate
-from app.services.user import (
-    get_current_user,
-    get_user_by_id,
-    get_users,
-    update_user
-)
+from app.services.user import get_current_user, get_user_by_id, get_users, update_user
 
 router = APIRouter()
 

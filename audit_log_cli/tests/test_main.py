@@ -1,6 +1,8 @@
 import unittest
+
 from typer.testing import CliRunner
-from audit_log_cli.app.main import app # Assuming 'app' is your Typer application
+
+from audit_log_cli.app.main import app  # Assuming 'app' is your Typer application
 
 runner = CliRunner()
 

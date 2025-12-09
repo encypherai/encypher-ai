@@ -5,9 +5,9 @@ Revises:
 Create Date: 2025-11-02 00:40:00
 
 """
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'free_tier_nullable'

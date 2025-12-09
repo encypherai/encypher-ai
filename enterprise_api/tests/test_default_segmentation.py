@@ -16,11 +16,11 @@ except ImportError:
 
 from app.utils.segmentation import (
     DefaultSegmenter,
+    HierarchicalSegmenter,
+    normalize_for_hashing,
+    normalize_unicode,
     segment_sentences_default,
     segment_words_default,
-    normalize_unicode,
-    normalize_for_hashing,
-    HierarchicalSegmenter
 )
 
 

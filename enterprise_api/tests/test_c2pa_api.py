@@ -1,8 +1,9 @@
 """
 Integration tests for C2PA custom assertions API endpoints.
 """
-import pytest
 import uuid
+
+import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 

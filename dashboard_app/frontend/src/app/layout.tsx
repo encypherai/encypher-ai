@@ -3,7 +3,7 @@ import './globals.css';
 import ClientProviders from './client-providers';
 
 export const metadata: Metadata = {
-  title: 'EncypherAI Dashboard',
+  title: 'Encypher Dashboard',
   description: 'Compliance Readiness Dashboard',
 };
 

@@ -1,4 +1,4 @@
-from typing import Generator
+from collections.abc import Generator
 
 # from app.core import security
 from app.db.base import SessionLocal

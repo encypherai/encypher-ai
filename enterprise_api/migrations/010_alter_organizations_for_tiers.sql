@@ -49,7 +49,7 @@ SET
     tier = 'enterprise',
     merkle_enabled = TRUE,
     monthly_merkle_quota = 10000
-WHERE organization_id = 'org_demo';
+WHERE id = 'org_demo';
 
 -- Note: If org_demo doesn't exist yet, it will be created with enterprise tier
 -- when the first demo API call is made

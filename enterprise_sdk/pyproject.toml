@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "Proprietary"}
 authors = [
-    {name = "EncypherAI", email = "sdk@encypherai.com"}
+    {name = "Encypher", email = "sdk@encypherai.com"}
 ]
 keywords = ["c2pa", "content-signing", "provenance", "ai", "streaming", "langchain", "openai"]
 classifiers = [
@@ -73,8 +73,11 @@ line-length = 100
 target-version = ['py39']
 
 [tool.ruff]
-line-length = 100
+line-length = 150
 target-version = "py39"
+
+[tool.ruff.lint]
+ignore = ["E402", "E701", "E712", "E722", "E741", "F401", "F841", "B904", "B005"]
 
 [tool.mypy]
 python_version = "3.9"

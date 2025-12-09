@@ -1,6 +1,6 @@
 # Metadata Policy Validation Tool (CLI)
 
-This CLI tool validates EncypherAI metadata in text assets against user-defined policies. It scans files for EncypherAI metadata and checks if they comply with specified policy rules regarding required fields, data types, and allowed values.
+This CLI tool validates Encypher metadata in text assets against user-defined policies. It scans files for Encypher metadata and checks if they comply with specified policy rules regarding required fields, data types, and allowed values.
 
 ## Setup
 
@@ -31,7 +31,7 @@ uv run python -m policy_validator_cli.app.main validate-metadata --input <path_t
 
 ### Command Options
 
-- `--input`, `-i`: Path to the directory or file to scan for EncypherAI metadata.
+- `--input`, `-i`: Path to the directory or file to scan for Encypher metadata.
 - `--policy`, `-p`: Path to the JSON policy file defining validation rules.
 - `--output`, `-o`: Path to save the validation CSV report (default: `validation_report.csv`).
 - `--verbose`, `-v`: Show detailed validation results in console output.
@@ -59,7 +59,7 @@ python -m policy_validator_cli.app.main validate-metadata --input ./documents/ -
 
 ## Policy File Format
 
-The policy file is a JSON document that defines the rules for validating EncypherAI metadata. Here's an example:
+The policy file is a JSON document that defines the rules for validating Encypher metadata. Here's an example:
 
 ```json
 {
@@ -108,7 +108,7 @@ The policy file is a JSON document that defines the rules for validating Encyphe
 The tool generates a CSV report with the following columns:
 
 - `source`: Path to the file
-- `is_verified`: Whether the EncypherAI signature is verified
+- `is_verified`: Whether the Encypher signature is verified
 - `status`: Status of the verification (e.g., VERIFIED, UNVERIFIED)
 - `policy_valid`: Whether the metadata complies with the policy
 - `errors`: List of validation errors (if any)

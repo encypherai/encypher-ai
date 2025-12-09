@@ -6,9 +6,8 @@ from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db, get_content_db
+from app.database import get_content_db, get_db
 from app.dependencies import require_read_permission
-
 
 router = APIRouter()
 
@@ -125,6 +124,28 @@ async def get_usage_stats(
     - API calls
     """
     org_id = organization["organization_id"]
+    
+    # Handle user-level keys (synthetic org IDs like "user_{user_id}")
+    if org_id.startswith("user_"):
+        tier = "starter"
+        limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
+        
+        # Return default usage for user-level keys (not tracked in DB)
+        return UsageResponse(
+            organization_id=org_id,
+            tier=tier,
+            period_start=datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0),
+            period_end=datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(
+                month=datetime.utcnow().month + 1 if datetime.utcnow().month < 12 else 1,
+                year=datetime.utcnow().year if datetime.utcnow().month < 12 else datetime.utcnow().year + 1
+            ),
+            metrics=[
+                _build_metric("c2pa_signatures", 0, limits["c2pa_signatures"]),
+                _build_metric("sentences_tracked", 0, limits["sentences_tracked"]),
+                _build_metric("batch_operations", 0, limits["batch_operations"]),
+                _build_metric("api_calls", 0, limits["api_calls"]),
+            ],
+        )
     
     # Get organization usage data from unified schema
     result = await db.execute(

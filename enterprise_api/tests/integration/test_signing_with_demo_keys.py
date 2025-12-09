@@ -8,12 +8,13 @@ NOTE: These tests have async event loop issues when run in sequence.
 Run them individually or with a running server for reliable results.
 """
 import os
-import pytest
 import unicodedata
-from httpx import AsyncClient, ASGITransport
+
+import pytest
+from encypher.interop.c2pa import text_wrapper
+from httpx import ASGITransport, AsyncClient
 
 from app.main import app
-from encypher.interop.c2pa import text_wrapper
 
 # Skip all tests in this module unless explicitly enabled
 pytestmark = pytest.mark.skipif(

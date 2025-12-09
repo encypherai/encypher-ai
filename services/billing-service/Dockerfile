@@ -6,6 +6,10 @@ RUN apt-get update && apt-get install -y gcc libpq-dev curl && rm -rf /var/lib/a
 
 RUN pip install uv
 
+# Copy shared library (synced from /shared_commercial_libs/)
+COPY shared_libs /shared_libs
+RUN uv pip install --system /shared_libs
+
 COPY pyproject.toml README.md ./
 COPY app ./app
 COPY alembic.ini ./

@@ -2,15 +2,17 @@
 Unit tests for the utility functions in the shared commercial library.
 """
 
-import unittest
-from unittest.mock import patch, MagicMock
-import tempfile
-import os
 import csv
+import os
+import tempfile
+import unittest
+from unittest.mock import MagicMock, patch
 
-from encypher_commercial_shared import EncypherAI, VerificationResult
-from encypher_commercial_shared.core import scan_directory, generate_report
-from encypher_commercial_shared.core.utils import load_trusted_signers_from_directory as load_trusted_signers
+from encypher_commercial_shared import Encypher, VerificationResult
+from encypher_commercial_shared.core import generate_report, scan_directory
+from encypher_commercial_shared.core.utils import (
+    load_trusted_signers_from_directory as load_trusted_signers,
+)
 
 
 class TestUtils(unittest.TestCase):
@@ -18,7 +20,7 @@ class TestUtils(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.encypher = MagicMock(spec=EncypherAI)
+        self.encypher = MagicMock(spec=Encypher)
         
         # Create mock verification results
         self.mock_result1 = VerificationResult(
@@ -97,7 +99,7 @@ class TestUtils(unittest.TestCase):
             self.assertTrue(os.path.exists(report_path))
             
             # Read the report and verify its contents
-            with open(report_path, 'r', newline='', encoding='utf-8') as csvfile:
+            with open(report_path, newline='', encoding='utf-8') as csvfile:
                 reader = csv.DictReader(csvfile)
                 rows = list(reader)
                 

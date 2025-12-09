@@ -20,6 +20,8 @@ export default function SignupPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,12 +52,14 @@ export default function SignupPage() {
         }),
       });
 
-      if (res.ok) {
-        // Redirect to login or auto-login
-        router.push('/login?registered=true');
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        // Show success state with email verification notice
+        setRegisteredEmail(formData.email);
+        setSuccess(true);
       } else {
-        const data = await res.json();
-        setError(data.message || 'Failed to create account');
+        setError(data.detail || data.message || data.error?.message || 'Failed to create account');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -64,21 +68,99 @@ export default function SignupPage() {
     }
   };
 
+  // Success state - show email verification notice
+  if (success) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-columbia-blue via-blue-ncs to-delft-blue flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <Link href="/">
+              <Image
+                src="/assets/encypher_full_logo_white.svg"
+                alt="Encypher"
+                width={180}
+                height={45}
+                className="h-12 w-auto object-contain"
+                priority
+              />
+            </Link>
+          </div>
+
+          <Card className="shadow-2xl">
+            <CardHeader className="text-center">
+              <div className="mx-auto mb-4 w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <CardTitle className="text-2xl">Check Your Email</CardTitle>
+              <CardDescription>
+                We've sent a verification link to
+                <span className="block font-semibold text-foreground mt-1">{registeredEmail}</span>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Next Steps:</h4>
+                <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-2 list-decimal list-inside">
+                  <li>Open your email inbox</li>
+                  <li>Click the verification link in our email</li>
+                  <li>You'll be automatically logged in</li>
+                </ol>
+              </div>
+              
+              <p className="text-xs text-muted-foreground text-center">
+                Didn't receive the email? Check your spam folder or{' '}
+                <button
+                  onClick={() => {
+                    setSuccess(false);
+                    setError('');
+                  }}
+                  className="text-blue-ncs hover:underline"
+                >
+                  try again
+                </button>
+              </p>
+
+              <div className="pt-4 border-t">
+                <Button
+                  variant="outline"
+                  fullWidth
+                  onClick={() => router.push('/login')}
+                >
+                  Go to Login
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Footer */}
+          <div className="mt-8 text-center text-sm text-white/60">
+            <Link href="https://encypherai.com" className="hover:text-white">
+              ← Back to main site
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-delft-blue to-blue-ncs flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-columbia-blue via-blue-ncs to-delft-blue flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
+        <div className="flex justify-center mb-8">
+          <Link href="/">
             <Image
-              src={`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/encypher_full_encoded_nobg.png`}
-              alt="Encypher Corporation Logo"
-              width={160}
-              height={60}
+              src="/assets/encypher_full_logo_white.svg"
+              alt="Encypher"
+              width={180}
+              height={45}
+              className="h-12 w-auto object-contain"
               priority
             />
-          </div>
-          <p className="text-columbia-blue/80">Create your account</p>
+          </Link>
         </div>
 
         {/* Signup Card */}
@@ -217,8 +299,8 @@ export default function SignupPage() {
         </Card>
 
         {/* Footer */}
-        <div className="mt-8 text-center text-sm text-columbia-blue/60">
-          <Link href="https://encypherai.com" className="hover:text-columbia-blue">
+        <div className="mt-8 text-center text-sm text-white/60">
+          <Link href="https://encypherai.com" className="hover:text-white">
             ← Back to main site
           </Link>
         </div>

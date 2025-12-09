@@ -20,7 +20,8 @@ http:
       middlewares:
         - cors
 
-    # Analytics Service - usage stats
+    # Analytics Service - usage stats and metrics
+    # Consumes metrics from Redis Streams (emitted by enterprise-api)
     api-analytics:
       rule: "PathPrefix(`/api/v1/analytics`)"
       service: analytics-service
@@ -50,10 +51,11 @@ http:
       middlewares:
         - cors
 
-    # Verification Service - content verification
+    # Verification - C2PA content verification (handled by enterprise-api)
+    # Note: verification-service is for future advanced verification features
     api-verify:
       rule: "PathPrefix(`/api/v1/verify`)"
-      service: verification-service
+      service: enterprise-api
       entryPoints:
         - web
       priority: 100
@@ -93,6 +95,16 @@ http:
     # Auth Service - authentication (default for /api/v1/auth/*)
     api-auth:
       rule: "PathPrefix(`/api/v1/auth`)"
+      service: auth-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
+    # Organizations - team/org management (handled by auth-service)
+    api-organizations:
+      rule: "PathPrefix(`/api/v1/organizations`)"
       service: auth-service
       entryPoints:
         - web

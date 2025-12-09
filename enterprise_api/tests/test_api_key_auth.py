@@ -1,16 +1,17 @@
 """
 Unit tests for API Key Authentication.
 """
-import pytest
-from unittest.mock import Mock, AsyncMock, patch
 from datetime import datetime, timedelta
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 from fastapi import HTTPException
 
 from app.middleware.api_key_auth import (
-    get_api_key_from_header,
     authenticate_api_key,
+    get_api_key_from_header,
     require_embedding_permission,
-    require_verification_permission
+    require_verification_permission,
 )
 
 

@@ -1,16 +1,11 @@
 """
 Models package.
 """
-from app.models.user import User
 from app.models.audit_log import AuditLog
 from app.models.blacklisted_token import BlacklistedToken
+from app.models.coalition import CoalitionMember, ContentAccessLog, ContentItem, RevenueTransaction
 from app.models.policy_validation import PolicyValidation
-from app.models.coalition import (
-    CoalitionMember,
-    ContentItem,
-    RevenueTransaction,
-    ContentAccessLog
-)
+from app.models.user import User
 
 __all__ = [
     "User",

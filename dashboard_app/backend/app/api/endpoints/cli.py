@@ -3,13 +3,13 @@ API endpoints for CLI tool integration.
 """
 from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, BackgroundTasks, status
+from fastapi import APIRouter, BackgroundTasks, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.models.user import User
-from app.services.user import get_current_active_superuser
 from app.services.cli_integration import run_scheduled_scan
+from app.services.user import get_current_active_superuser
 
 router = APIRouter()
 

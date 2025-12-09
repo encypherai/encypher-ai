@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Encypher Logo](https://encypherai.com/logo.svg)
+![Encypher Logo](https://encypherai.com/encypher_full_logo_color.svg)
 
 **Production-ready API for C2PA-compliant content signing and verification**
 
@@ -14,7 +14,7 @@
 [Features](#-features) •
 [Quick Start](#-quick-start) •
 [API Reference](#-api-reference) •
-[Enterprise Features](#-enterprise-features) •
+[Architecture](#-architecture) •
 [Documentation](#-documentation)
 
 </div>
@@ -25,11 +25,13 @@
 
 The Encypher Enterprise API provides cryptographic content signing and verification infrastructure for publishers, news organizations, legal firms, and content platforms. Built on **C2PA 2.2 standards** with enterprise-grade features for sentence-level tracking and source attribution.
 
+**Part of the Encypher Microservices Ecosystem** - This API integrates with multiple backend microservices for authentication, key management, and coalition features.
+
 ### Why Encypher API?
 
 - **🔒 C2PA 2.2 Compliant**: Industry-standard content authenticity
 - **⚡ High Performance**: <100ms verification, 1000+ req/s capacity
-- **🌍 Global CDN**: Low-latency endpoints worldwide
+- **🔗 Microservices Architecture**: Scalable, resilient, database-per-service design
 - **📊 Enterprise Features**: Merkle trees, source attribution, plagiarism detection
 - **🔐 SSL.com Integration**: Automated certificate lifecycle management
 - **⚖️ Court-Admissible**: Tamper-evident manifests for legal evidence
@@ -38,76 +40,215 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 ## ✨ Features
 
-### Core API Endpoints
+### Complete Feature List
+
+#### Core Capabilities
+- ✅ **C2PA-Compliant Signing**: Full C2PA 2.2 text manifest support
+- ✅ **Content Verification**: Cryptographic verification with tamper detection
+- ✅ **Sentence-Level Tracking**: Track provenance of individual sentences
+- ✅ **Public Verification Pages**: Shareable verification URLs
+- ✅ **Batch Operations**: Sign/verify up to 100 documents at once
+- ✅ **Streaming Support**: WebSocket and SSE for real-time operations
+- ✅ **Custom Metadata**: Attach arbitrary metadata to signed content
+- ✅ **API Key Management**: Via integrated Key Service
+
+#### Enterprise Features
+- ✅ **Merkle Tree Encoding**: Hierarchical content fingerprinting
+- ✅ **Source Attribution**: Find original sources of quoted content
+- ✅ **Plagiarism Detection**: Detect unauthorized content reuse
+- ✅ **Invisible Embeddings**: Unicode-based portable content tracking
+- ✅ **Custom C2PA Assertions**: Define custom assertion types
+- ✅ **Assertion Templates**: Pre-built templates for various industries
+- ✅ **Schema Registry**: Manage custom JSON schemas
+- ✅ **C2PA Provenance Chain**: Full edit history tracking
+- ✅ **Public Extraction API**: Third-party embedding verification
+
+#### Coalition Features (via Coalition Service)
+- ✅ **Auto-Enrollment**: Automatic coalition membership for free tier
+- ✅ **Content Indexing**: Aggregate content for bulk licensing
+- ✅ **Revenue Sharing**: 70/30 split (members/platform)
+- ✅ **Access Tracking**: Monitor content usage by AI companies
+
+#### Team & Administration
+- ✅ **Team Management**: Multi-user organizations
+- ✅ **Audit Logs**: Complete activity tracking
+- ✅ **Usage Analytics**: Detailed usage metrics
+- ✅ **Tier-Based Access**: Feature gating by subscription tier
+- ✅ **Bring Your Own Keys (BYOK)**: Use your own signing keys (Professional+)
+- ✅ **SSO Integration**: Single Sign-On (Enterprise)
+
+---
+
+## 📋 Complete API Endpoint Reference
+
+### Core Endpoints
+
+| Endpoint | Method | Auth | Tier | Description | Dependencies |
+|----------|--------|------|------|-------------|--------------|
+| `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
+| `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
+| `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
+| `/api/v1/usage` | GET | ✅ | All | Get organization usage statistics | Key Service |
+
+### Enterprise Merkle Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/merkle/encode` | POST | ✅ | Enterprise | Encode document into Merkle tree |
+| `/api/v1/enterprise/merkle/attribute` | POST | ✅ | Enterprise | Find source documents via Merkle matching |
+| `/api/v1/enterprise/merkle/detect-plagiarism` | POST | ✅ | Enterprise | Detect plagiarized content |
+
+### Enterprise Embeddings Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/embeddings/encode-with-embeddings` | POST | ✅ | Professional+ | Create invisible signed embeddings |
+| `/api/v1/public/verify/{ref_id}` | GET | ❌ | Public | Verify embedding by reference ID |
+| `/api/v1/public/verify/batch` | POST | ❌ | Public | Batch verify embeddings |
+| `/api/v1/public/extract-and-verify` | POST | ❌ | Public | Extract and verify C2PA manifest |
+
+### Enterprise C2PA Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/c2pa/schemas` | POST | ✅ | Enterprise | Register custom C2PA assertion schema |
+| `/api/v1/enterprise/c2pa/schemas` | GET | ✅ | Enterprise | List custom schemas |
+| `/api/v1/enterprise/c2pa/validate` | POST | ✅ | Enterprise | Validate assertion before embedding |
+| `/api/v1/enterprise/c2pa/templates` | POST | ✅ | Enterprise | Create assertion template |
+| `/api/v1/enterprise/c2pa/templates` | GET | ✅ | Enterprise | List assertion templates |
+
+### Batch Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/batch/sign` | POST | ✅ | Business+ | Batch sign up to 100 documents |
+| `/api/v1/batch/verify` | POST | ✅ | Business+ | Batch verify signed content |
+
+### Streaming Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/stream/sign` | POST/WS | ✅ | Professional+ | Real-time signing via SSE (POST) and WebSocket (WS) |
+| `/api/v1/stream/chat` | WS | ✅ | Professional+ | WebSocket chat stream (signing wrapper) |
+| `/api/v1/stream/chat/openai-compatible` | POST | ✅ | Professional+ | OpenAI-compatible SSE chat completions with signing |
+| `/api/v1/stream/events` | GET | ✅ | Professional+ | Server-Sent Events (SSE) heartbeat and events |
+| `/api/v1/stream/session/create` | POST | ✅ | Professional+ | Create streaming session |
+| `/api/v1/stream/session/{id}/close` | POST | ✅ | Professional+ | Close streaming session |
+| `/api/v1/stream/runs/{run_id}` | GET | ✅ | Professional+ | Get streaming run state |
+| `/api/v1/stream/stats` | GET | ✅ | Professional+ | Get organization streaming statistics |
+| `/api/v1/stream/health` | GET | ❌ | Internal | Streaming subsystem health check |
+
+### Team & Administration Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/org/members` | GET | ✅ | Business+ | List team members |
+| `/api/v1/org/members/invite` | POST | ✅ | Business+ | Invite team member |
+| `/api/v1/org/members/invites` | GET | ✅ | Business+ | List pending invites |
+| `/api/v1/org/members/invites/{invite_id}` | DELETE | ✅ | Business+ | Revoke invite |
+| `/api/v1/org/members/{member_id}/role` | PATCH | ✅ | Business+ | Update member role |
+| `/api/v1/org/members/{member_id}` | DELETE | ✅ | Business+ | Remove team member |
+| `/api/v1/audit/logs` | GET | ✅ | Business+ | Get audit logs |
+| `/api/v1/usage` | GET | ✅ | All | Get usage metrics for current period |
+| `/api/v1/usage/history` | GET | ✅ | All | Get historical usage summaries (preview) |
+
+### Coalition Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/coalition/dashboard` | GET | ✅ | All | Get coalition dashboard (content, earnings, payouts) |
+| `/api/v1/coalition/content-stats` | GET | ✅ | All | Get historical content corpus statistics |
+| `/api/v1/coalition/earnings` | GET | ✅ | All | Get detailed earnings history |
+| `/api/v1/coalition/opt-out` | POST | ✅ | All | Opt out of coalition revenue sharing |
+| `/api/v1/coalition/opt-in` | POST | ✅ | All | Opt in to coalition revenue sharing |
+
+### Document Revocation Endpoints (NEW)
 
 | Endpoint | Description | Tier |
 |----------|-------------|------|
-| `POST /api/v1/sign` | Sign content with C2PA manifest | All |
-| `POST /api/v1/verify` | Verify signed content | All |
-| `POST /api/v1/lookup` | Lookup sentence provenance | All |
-| `GET /stats` | Usage statistics | All |
+| `POST /api/v1/status/documents/{document_id}/revoke` | Revoke a document's authenticity | Enterprise |
+| `POST /api/v1/status/documents/{document_id}/reinstate` | Reinstate a revoked document | Enterprise |
+| `GET /api/v1/status/documents/{document_id}` | Get document revocation status | Enterprise |
+| `GET /api/v1/status/list/{organization_id}/{list_index}` | Get status list credential (public, CDN-cacheable) | Public |
+| `GET /api/v1/status/stats` | Get revocation statistics | Enterprise |
 
-### Enterprise Endpoints
+### Licensing Endpoints
 
-| Endpoint | Description | Tier |
-|----------|-------------|------|
-| `POST /api/v1/enterprise/merkle/encode` | Encode document into Merkle tree | Enterprise |
-| `POST /api/v1/enterprise/merkle/attribute` | Find source documents | Enterprise |
-| `POST /api/v1/enterprise/merkle/detect-plagiarism` | Detect plagiarism | Enterprise |
-| `POST /api/v1/enterprise/embeddings/encode-with-embeddings` | Create portable signed embeddings with C2PA provenance chain | Professional+ |
-| `POST /api/v1/enterprise/c2pa/schemas` | Register custom C2PA assertion schema | Enterprise |
-| `GET /api/v1/enterprise/c2pa/schemas` | List custom schemas | Enterprise |
-| `POST /api/v1/enterprise/c2pa/validate` | Validate assertion before embedding | Enterprise |
-| `POST /api/v1/enterprise/c2pa/templates` | Create assertion template | Enterprise |
-| `GET /api/v1/enterprise/c2pa/templates` | List assertion templates | Enterprise |
-| `POST /api/v1/batch/sign` | Batch sign up to 100 documents with idempotency support | Enterprise |
-| `POST /api/v1/batch/verify` | Batch verify signed content with consolidated results | Enterprise |
-| `POST /api/v1/stream/sign` | SSE endpoint streaming signing progress and final payloads | Enterprise |
-| `GET /api/v1/stream/runs/{run_id}` | Retrieve persisted streaming run state for retries | Enterprise |
-| `GET /api/v1/public/verify/{ref_id}` | Verify embedding (public, no auth) | Public |
-| `POST /api/v1/public/verify/batch` | Batch verify embeddings (public) | Public |
-| `POST /api/v1/public/extract-and-verify` | Extract and verify C2PA manifest with full provenance chain | Public |
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/licensing/agreements` | GET | ✅ | Professional+ | List licensing agreements |
+| `/api/v1/licensing/agreements/{id}` | GET | ✅ | Professional+ | Get agreement details |
+| `/api/v1/licensing/agreements` | POST | ✅ | Professional+ | Create licensing agreement for an AI company |
+| `/api/v1/licensing/agreements/{id}` | PATCH | ✅ | Professional+ | Update licensing agreement |
+| `/api/v1/licensing/agreements/{id}` | DELETE | ✅ | Professional+ | Terminate licensing agreement |
+| `/api/v1/licensing/content` | GET | ✅ (AI key) | Professional+ | List content available under active AI-company agreements |
+| `/api/v1/licensing/track-access` | POST | ✅ (AI key) | Professional+ | Track AI-company content access for attribution |
+| `/api/v1/licensing/distributions` | POST | ✅ | Professional+ | Create revenue distribution for a period |
+| `/api/v1/licensing/distributions` | GET | ✅ | Professional+ | List revenue distributions |
+| `/api/v1/licensing/distributions/{id}` | GET | ✅ | Professional+ | Get revenue distribution details |
+| `/api/v1/licensing/payouts` | POST | ✅ | Professional+ | Process payouts for a distribution (simulated) |
 
-### Streaming Endpoints (NEW)
+For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 
-| Endpoint | Description | Tier |
-|----------|-------------|------|
-| `WS /api/v1/stream/sign` | Real-time WebSocket signing | Professional+ |
-| `WS /api/v1/stream/chat` | Chat application wrapper | Professional+ |
-| `GET /api/v1/stream/events` | Server-Sent Events (SSE) | Professional+ |
-| `POST /api/v1/stream/session/create` | Create streaming session | Professional+ |
-| `POST /api/v1/stream/session/{id}/close` | Close streaming session | Professional+ |
+### Onboarding & Provisioning Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/onboarding/request-certificate` | POST | ✅ | All | Request SSL.com code signing certificate |
+| `/api/v1/onboarding/certificate-status` | GET | ✅ | All | Get current certificate status |
+
+### Health & Monitoring Endpoints
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/health` | GET | ❌ | Public | Health check |
+| `/readyz` | GET | ❌ | Public | Readiness probe |
+| `/metrics` | GET | ❌ | Internal | Prometheus metrics |
+| `/` | GET | ❌ | Public | API information |
 
 ### Features by Tier
 
-#### Basic Tier
+#### Starter Tier (Free)
 - ✅ C2PA-compliant signing
 - ✅ Content verification
 - ✅ Public verification pages
-- ✅ 1,000 requests/month
-
-#### Professional Tier
-- ✅ All Basic features
-- ✅ Sentence-level lookup
-- ✅ Invisible signed embeddings (Unicode variation selectors)
-- ✅ Custom metadata
 - ✅ 10,000 requests/month
-- ✅ Priority support
+- ✅ Coalition membership (65% publisher / 35% Encypher revenue share)
 
-#### Enterprise Tier
+#### Professional Tier ($99/month)
+- ✅ All Starter features
+- ✅ Sentence-level lookup
+- ✅ Invisible signed embeddings
+- ✅ Custom metadata
+- ✅ Streaming support (WebSocket/SSE)
+- ✅ 100,000 requests/month
+- ✅ Priority support
+- ✅ Coalition membership (70% publisher / 30% Encypher revenue share)
+
+#### Business Tier ($499/month)
 - ✅ All Professional features
 - ✅ Merkle tree encoding
-- ✅ **C2PA Provenance Chain**: Full edit history with ingredient references
-- ✅ **Custom C2PA Assertions**: Define and validate custom assertion types
-- ✅ **Assertion Templates**: Pre-built templates for news, legal, academic, publisher use cases
-- ✅ **Schema Registry**: Register and manage custom assertion schemas with JSON Schema validation
-- ✅ Public embedding extraction & verification API (no auth required)
-- ✅ Partner integration tools (extraction libraries, web scraping)
+- ✅ Custom C2PA assertions
+- ✅ Batch operations
+- ✅ Team management (up to 10 members)
+- ✅ Audit logs
+- ✅ Bring Your Own Keys (BYOK)
+- ✅ 500,000 requests/month
+- ✅ Coalition membership (75% publisher / 25% Encypher revenue share)
+
+#### Enterprise Tier (Custom pricing)
+- ✅ All Business features
+- ✅ **C2PA Provenance Chain**: Full edit history
+- ✅ **Assertion Templates**: Pre-built industry templates
+- ✅ **Schema Registry**: Custom assertion schemas
 - ✅ Source attribution
 - ✅ Plagiarism detection
+- ✅ Unlimited team members
+- ✅ SSO integration
 - ✅ Unlimited requests
 - ✅ SLA guarantee (99.9%)
 - ✅ Dedicated support
+- ✅ Coalition membership (80% publisher / 20% Encypher revenue share)
 
 ---
 
@@ -138,9 +279,27 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
 
 ## 📚 API Reference
 
+### Interactive API Docs
+
+The API exposes interactive OpenAPI documentation:
+
+**Via Traefik Gateway (recommended):**
+- Local: `http://localhost:8000/docs` (Swagger UI), `http://localhost:8000/redoc` (ReDoc)
+- Staging: `https://api.staging.encypherai.com/docs`
+- Production: `https://api.encypherai.com/docs`
+
+**Direct to Enterprise API (development only):**
+- `http://localhost:9000/docs`, `http://localhost:9000/redoc`
+
+The gateway URL is what you should give to external developers—it's the single entry point for all API operations.
+
+For up-to-date per-tier limits and quotas, see [FEATURE_MATRIX.md](../FEATURE_MATRIX.md).
+
 ### POST /api/v1/sign
 
 Sign content with C2PA-compliant manifest.
+
+**Dependencies**: Key Service (required), Coalition Service (optional)
 
 **Request:**
 
@@ -193,22 +352,13 @@ Sign content with C2PA-compliant manifest.
 }
 ```
 
-**Error Response:**
-
-```json
-{
-  "success": false,
-  "error": "Invalid API key",
-  "error_code": "AUTH_INVALID_KEY",
-  "status_code": 401
-}
-```
-
 ---
 
 ### POST /api/v1/verify
 
 Verify signed content and detect tampering.
+
+**Dependencies**: None (public endpoint)
 
 **Request:**
 
@@ -280,6 +430,8 @@ Verify signed content and detect tampering.
 
 Lookup sentence provenance (Professional+ tier).
 
+**Dependencies**: None (public endpoint)
+
 **Request:**
 
 ```json
@@ -315,33 +467,39 @@ Lookup sentence provenance (Professional+ tier).
 
 ---
 
-### GET /stats
+### GET /api/v1/usage
 
-Get usage statistics for your API key.
+Get usage statistics for your organizations current billing period.
+
+**Dependencies**: Key Service (required)
 
 **Response:**
 
 ```json
 {
-  "success": true,
-  "period": "current_month",
-  "usage": {
-    "sign_requests": 1234,
-    "verify_requests": 5678,
-    "lookup_requests": 234,
-    "total_requests": 7146
+  "organization_id": "org_123",
+  "tier": "business",
+  "period_start": "2025-11-01T00:00:00Z",
+  "period_end": "2025-12-01T00:00:00Z",
+  "metrics": {
+    "c2pa_signatures": {
+      "name": "C2PA Signatures",
+      "used": 1234,
+      "limit": -1,
+      "remaining": -1,
+      "percentage_used": 0.0,
+      "available": true
+    },
+    "api_calls": {
+      "name": "API Calls",
+      "used": 450,
+      "limit": 10000,
+      "remaining": 9550,
+      "percentage_used": 4.5,
+      "available": true
+    }
   },
-  "quota": {
-    "tier": "professional",
-    "monthly_limit": 10000,
-    "remaining": 2854,
-    "reset_date": "2025-11-01T00:00:00Z"
-  },
-  "performance": {
-    "avg_sign_time_ms": 45,
-    "avg_verify_time_ms": 23,
-    "success_rate": 99.8
-  }
+  "reset_date": "2025-12-01T00:00:00Z"
 }
 ```
 
@@ -560,55 +718,290 @@ curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
 
 ---
 
+### Document Revocation (Enterprise) ⭐ NEW
+
+Revoke individual documents without affecting your entire signing certificate. Uses W3C StatusList2021 bitstrings for internet-scale revocation (10+ billion documents).
+
+**Revoke a Document:**
+
+```bash
+curl -X POST https://api.encypherai.com/api/v1/status/documents/doc_abc123/revoke \
+  -H "Authorization: Bearer encypher_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reason": "factual_error",
+    "reason_detail": "Article contained incorrect statistics"
+  }'
+```
+
+**Response:**
+
+```json
+{
+  "success": true,
+  "document_id": "doc_abc123",
+  "action": "revoked",
+  "timestamp": "2025-12-01T19:00:00Z",
+  "message": "Document doc_abc123 has been revoked. Verification will fail within 5 minutes."
+}
+```
+
+**Revocation Reasons:**
+
+| Reason | Description |
+|--------|-------------|
+| `factual_error` | Content contains factual errors |
+| `legal_takedown` | Legal request (DMCA, court order) |
+| `copyright_claim` | Copyright infringement claim |
+| `privacy_request` | Privacy/GDPR request |
+| `publisher_request` | Publisher-initiated takedown |
+| `security_concern` | Security vulnerability in content |
+| `content_policy` | Violates content policy |
+| `other` | Other reason (specify in reason_detail) |
+
+**Verification of Revoked Documents:**
+
+When a revoked document is verified, the response includes:
+
+```json
+{
+  "success": true,
+  "data": {
+    "valid": false,
+    "tampered": false,
+    "reason_code": "DOC_REVOKED",
+    "signer_id": "org_publisher",
+    "signer_name": "Acme News",
+    "details": {
+      "document_revoked": true,
+      "revocation_reason": "Document has been revoked by publisher"
+    }
+  }
+}
+```
+
+**How It Works:**
+
+1. **Signing**: Each document is assigned a position in a bitstring status list
+2. **Revocation**: Setting the bit marks the document as revoked
+3. **Verification**: Verifiers fetch the cached status list and check the bit
+4. **Propagation**: Changes propagate within 5 minutes (CDN cache TTL)
+
+**Scale:**
+
+| Metric | Capacity |
+|--------|----------|
+| Documents per list | 131,072 |
+| Storage per 1B docs | ~120 MB |
+| Lookup time | O(1) |
+| Revocation latency | <5 minutes |
+
+**Public Status List Endpoint:**
+
+Status lists are served publicly for third-party verification:
+
+```
+GET https://status.encypherai.com/v1/{org_id}/list/{index}
+```
+
+Returns a W3C StatusList2021Credential (JSON-LD) with 5-minute cache headers.
+
+---
+
 ## 🏗️ Architecture
 
-### System Architecture
+### Microservices Architecture
+
+The Enterprise API is part of a comprehensive microservices ecosystem. Each service maintains its own database following the **database-per-service** pattern for scalability and resilience.
 
 ```
-┌─────────────────────────────────────────┐
-│ Client Applications                     │
-│ (SDK, CLI, WordPress, Direct API)      │
-└─────────────────────────────────────────┘
-                ↓
-┌─────────────────────────────────────────┐
-│ API Gateway (Railway)                   │
-│ - Rate limiting                         │
-│ - Authentication                        │
-│ - Load balancing                        │
-└─────────────────────────────────────────┘
-                ↓
-┌─────────────────────────────────────────┐
-│ FastAPI Application                     │
-│ - /api/v1/sign                         │
-│ - /api/v1/verify                       │
-│ - /api/v1/lookup                       │
-│ - /api/v1/enterprise/*                 │
-└─────────────────────────────────────────┘
-                ↓
-┌─────────────────────────────────────────┐
-│ Key Service (Internal)                  │
-│ - Validates API Keys                    │
-│ - Manages quotas & permissions          │
-└─────────────────────────────────────────┘
-                ↓
-┌─────────────────────────────────────────┐
-│ encypher-ai Core Library (v2.9.0)     │
-│ - C2PA manifest generation             │
-│ - Unicode metadata embedding           │
-│ - Signature verification               │
-└─────────────────────────────────────────┘
-                ↓
-┌─────────────────────────────────────────┐
-│ PostgreSQL Database                     │
-│ - Document metadata                     │
-│ - Merkle tree nodes                     │
-│ - Usage statistics                      │
-└─────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                    Client Applications                        │
+│          (SDK, CLI, WordPress, Direct API Calls)             │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+┌──────────────────────────────────────────────────────────────┐
+│                    API Gateway (Traefik)                      │
+│                        Port 8000                              │
+│          Routes /api/v1/* to appropriate services             │
+└──────────────────────────────────────────────────────────────┘
+                              ↓
+            ┌─────────────────┴─────────────────┐
+            ↓                                   ↓
+┌─────────────────────────┐       ┌─────────────────────────┐
+│   Enterprise API        │       │    Key Service          │
+│     Port 9000           │←──────│     Port 8003           │
+│                         │       │                         │
+│ - C2PA Signing          │       │ - API Key Validation    │
+│ - Content Verification  │       │ - Org Context/Tier      │
+│ - Merkle Trees          │       │ - Feature Permissions   │
+│ - Embeddings            │       │ - Usage Quotas          │
+│ - Sentence Tracking     │       │                         │
+└─────────────────────────┘       └─────────────────────────┘
+            ↓                                   ↓
+┌─────────────────────────┐       ┌─────────────────────────┐
+│  PostgreSQL Content DB  │       │  PostgreSQL Keys DB     │
+│   (Enterprise API)      │       │   (Key Service)         │
+│                         │       │                         │
+│ - documents             │       │ - api_keys              │
+│ - merkle_trees          │       │ - organizations         │
+│ - sentence_records      │       │ - subscriptions         │
+│ - manifests             │       │ - usage_records         │
+│ - embeddings            │       │                         │
+└─────────────────────────┘       └─────────────────────────┘
+
+            ↓
+┌─────────────────────────┐       ┌─────────────────────────┐
+│  Coalition Service      │       │    Auth Service         │
+│     Port 8009           │       │     Port 8001           │
+│                         │       │                         │
+│ - Content Indexing      │       │ - User Authentication   │
+│ - Revenue Distribution  │       │ - JWT Management        │
+│ - Licensing Management  │       │ - OAuth Integration     │
+│ - Member Stats          │       │                         │
+└─────────────────────────┘       └─────────────────────────┘
+            ↓                                   ↓
+┌─────────────────────────┐       ┌─────────────────────────┐
+│ PostgreSQL Coalition DB │       │  PostgreSQL Auth DB     │
+│  (Coalition Service)    │       │   (Auth Service)        │
+│                         │       │                         │
+│ - coalition_members     │       │ - users                 │
+│ - coalition_content     │       │ - sessions              │
+│ - licensing_agreements  │       │ - oauth_tokens          │
+│ - revenue_distributions │       │                         │
+└─────────────────────────┘       └─────────────────────────┘
+
+                    ↓
+┌──────────────────────────────────────────────────────────────┐
+│                    Redis Cache Layer                          │
+│                        Port 6379                              │
+│                                                               │
+│ - Key Validation Cache (5min TTL)                            │
+│ - Session Management                                          │
+│ - Rate Limiting State                                         │
+│ - Streaming Session State                                    │
+└──────────────────────────────────────────────────────────────┘
+
+                    ↓
+┌──────────────────────────────────────────────────────────────┐
+│                  encypher-ai Core Library                     │
+│                      (v2.9.0+)                               │
+│                                                               │
+│ - C2PA Manifest Generation                                    │
+│ - Unicode Metadata Embedding                                  │
+│ - Cryptographic Signature Verification                        │
+│ - Merkle Tree Operations                                      │
+└──────────────────────────────────────────────────────────────┘
 ```
+
+### Database-Per-Service Pattern
+
+Each microservice maintains its own PostgreSQL database for complete autonomy:
+
+| Service | Database | Tables | Purpose |
+|---------|----------|--------|---------|
+| **Enterprise API** | `encypher_content` | documents, merkle_trees, sentence_records, manifests, embeddings | Content signing and verification data |
+| **Key Service** | `encypher_keys` | api_keys, organizations, subscriptions, usage_records | API key management and billing |
+| **Coalition Service** | `encypher_coalition` | coalition_members, coalition_content, licensing_agreements | Coalition membership and licensing |
+| **Auth Service** | `encypher_auth` | users, sessions, oauth_tokens | User authentication |
+| **User Service** | `encypher_users` | profiles, teams, team_members | User profiles and teams |
+| **Analytics Service** | `encypher_analytics` | events, metrics, aggregations | Usage analytics |
+| **Billing Service** | `encypher_billing` | invoices, payments, subscriptions | Billing and payments |
+
+### Service Dependencies
+
+#### Enterprise API Dependencies
+
+**Required Services:**
+- **Key Service** (Port 8003)
+  - Purpose: API key validation, organization context, tier features
+  - Used by: All authenticated endpoints
+  - Fallback: Demo keys for local development
+  - Health Impact: Critical - API cannot authenticate without it
+
+**Optional Services:**
+- **Coalition Service** (Port 8009)
+  - Purpose: Content indexing, coalition membership, revenue distribution
+  - Used by: `/api/v1/sign` endpoint for coalition members
+  - Fallback: Graceful degradation (signing continues, indexing skipped)
+  - Health Impact: Non-critical
+
+**Infrastructure:**
+- **PostgreSQL Content Database**: Required (own database)
+- **Redis Cache**: Required for session management and key validation caching
+
+### Unified Authentication Flow
+
+```
+1. Client → Enterprise API
+   Authorization: Bearer encypher_abc123...
+
+2. Enterprise API → Key Service
+   POST /api/v1/keys/validate
+   { "key": "encypher_abc123..." }
+
+3. Key Service → PostgreSQL Keys DB
+   SELECT * FROM api_keys WHERE key_hash = hash(...)
+   JOIN organizations, subscriptions
+
+4. Key Service → Enterprise API
+   {
+     "success": true,
+     "data": {
+       "organization_id": "org_xyz",
+       "tier": "business",
+       "features": {...},
+       "permissions": ["sign", "verify", "lookup"],
+       "usage": {...}
+     }
+   }
+
+5. Enterprise API → Redis
+   Cache validation result (5min TTL)
+
+6. Enterprise API → Client
+   Process request with org context
+```
+
+**Caching Strategy:**
+- First request: Validates via Key Service, caches result in Redis (5min TTL)
+- Subsequent requests: Uses cached validation (no Key Service call)
+- Cache miss: Automatic re-validation via Key Service
+
+### Coalition Integration Flow
+
+```
+1. Client signs content → Enterprise API
+   POST /api/v1/sign
+
+2. Enterprise API checks if user is coalition member
+
+3. If coalition member:
+   Enterprise API → Coalition Service
+   POST /api/v1/coalition/content
+   {
+     "member_id": "...",
+     "document_id": "...",
+     "content_hash": "...",
+     "word_count": 1500,
+     "signed_at": "2025-12-01T10:00:00Z"
+   }
+
+4. Coalition Service → PostgreSQL Coalition DB
+   INSERT INTO coalition_content (...)
+
+5. Coalition Service tracks content for:
+   - Bulk licensing to AI companies
+   - Revenue distribution (70% members, 30% platform)
+   - Access tracking and analytics
+```
+
+**Graceful Degradation:**
+If Coalition Service is unavailable, content signing continues successfully. Coalition indexing is retried in background or skipped with warning log.
 
 ### C2PA Compliance
 
-Our implementation follows **C2PA 2.2 Text Manifest Specification**:
+Our implementation follows **C2PA 2.3 Text Manifest Specification**:
 
 - **Wrapper Format**: `C2PATXT\0` header with Unicode variation selectors
 - **Prefix**: Single zero-width no-break space (U+FEFF)
@@ -622,19 +1015,66 @@ Our implementation follows **C2PA 2.2 Text Manifest Specification**:
 
 ## 🔐 Security
 
+### Unified Authentication Architecture
+
+The Enterprise API uses the **Key Service** for all authentication:
+
+1. **API Key Validation**: All API keys validated via Key Service `/api/v1/keys/validate` endpoint
+2. **Caching**: Validation results cached in Redis (5-minute TTL) to reduce latency
+3. **Organization Context**: Key Service returns complete organization context:
+   - Tier (starter, professional, business, enterprise)
+   - Features enabled for the tier
+   - Usage limits and current usage
+   - Permissions (sign, verify, lookup)
+   - Coalition membership status
+
+**Service Location**: `services/key-service` (Port 8003)
+
+**Demo Keys**: For local development when Key Service is unavailable, Enterprise API falls back to demo keys defined in `app/dependencies.py`
+
 ### Authentication
 
-- **API Keys**: Bearer token authentication
+- **API Keys**: Bearer token authentication via Key Service
 - **Key Rotation**: Automatic rotation every 90 days
 - **Scoped Keys**: Limit keys to specific endpoints/operations
+- **Key Format**: `encypher_<random_32_chars>`
 
 ### Rate Limiting
 
-| Tier | Requests/Second | Requests/Month |
-|------|----------------|----------------|
-| Basic | 10 | 1,000 |
-| Professional | 50 | 10,000 |
-| Enterprise | Unlimited | Unlimited |
+Rate limits are enforced per organization with tier-aware limits. All responses include rate limit headers.
+
+| Tier | Requests/Second | Requests/Minute | Monthly Quota |
+|------|-----------------|-----------------|---------------|
+| Starter | 10 | 600 | 10,000 |
+| Professional | 50 | 3,000 | 100,000 |
+| Business | 200 | 12,000 | 500,000 |
+| Enterprise | Unlimited | Unlimited | Unlimited |
+| Strategic Partner | Unlimited | Unlimited | Unlimited |
+
+**Rate Limit Headers:**
+
+All API responses include the following headers:
+
+| Header | Description |
+|--------|-------------|
+| `X-RateLimit-Limit` | Maximum requests allowed in the current window |
+| `X-RateLimit-Remaining` | Requests remaining in the current window |
+| `X-RateLimit-Reset` | Unix timestamp when the rate limit window resets |
+| `Retry-After` | Seconds until rate limit resets (only on 429 responses) |
+
+**Example Response Headers:**
+```
+X-RateLimit-Limit: 600
+X-RateLimit-Remaining: 542
+X-RateLimit-Reset: 1733097600
+```
+
+**Public Endpoints (Unauthenticated):**
+
+| Endpoint | Limit |
+|----------|-------|
+| `/api/v1/verify` | 1,000 requests/hour per IP |
+| `/api/v1/public/verify/batch` | 100 requests/hour per IP |
 
 ### Data Security
 
@@ -655,6 +1095,8 @@ See [BENCHMARK_BASELINE.md](BENCHMARK_BASELINE.md) for detailed analysis of the 
 |-----------|-------------|------------|------------|
 | Sign (C2PA) | 3.61ms | ~277 req/s | CPU |
 | Merkle Encode | 108ms | ~9 req/s | Database I/O |
+| Key Validation (cached) | <1ms | N/A | Redis |
+| Key Validation (uncached) | ~15ms | N/A | HTTP to Key Service |
 
 ### Scalability
 
@@ -662,12 +1104,15 @@ See [BENCHMARK_BASELINE.md](BENCHMARK_BASELINE.md) for detailed analysis of the 
 - **Availability**: 99.9% SLA (Enterprise tier)
 - **Global CDN**: <50ms latency worldwide
 - **Auto-scaling**: Handles traffic spikes automatically
+- **Database Isolation**: Each service scales independently
 
 ---
 
 ## 🛠️ Error Handling
 
 ### Error Codes
+
+#### Standard Errors
 
 | Code | Description | HTTP Status |
 |------|-------------|-------------|
@@ -681,19 +1126,119 @@ See [BENCHMARK_BASELINE.md](BENCHMARK_BASELINE.md) for detailed analysis of the 
 | `VERIFICATION_ERROR` | Error during verification | 500 |
 | `NOT_FOUND` | Document not found | 404 |
 
+#### Microservices Integration Errors
+
+| Code | Description | HTTP Status |
+|------|-------------|-------------|
+| `SERVICE_UNAVAILABLE` | Key Service or Coalition Service unavailable | 503 |
+| `KEY_VALIDATION_FAILED` | Key Service validation error | 401 |
+| `COALITION_INDEX_FAILED` | Failed to index content in coalition (non-blocking warning) | 200 |
+
 ### Error Response Format
 
 ```json
 {
   "success": false,
-  "error": "Human-readable error message",
-  "error_code": "ERROR_CODE",
-  "status_code": 400,
-  "details": {
-    "field": "Additional context"
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Human-readable error message",
+    "hint": "Optional suggestion for resolution"
   },
-  "request_id": "req_abc123"
+  "correlation_id": "req_abc123",
+  "status_code": 400
 }
+```
+
+---
+
+## 🤝 Coalition Service Integration
+
+The Enterprise API automatically indexes signed content with the Coalition Service for eligible users.
+
+### Content Indexing Flow
+
+When content is signed:
+1. Enterprise API creates C2PA manifest and signs content
+2. If user is a coalition member, content is indexed via Coalition Service
+3. Coalition Service tracks content for licensing and revenue distribution
+
+**Implementation**: See `app/utils/coalition_client.py`
+
+**Service Endpoints Used**:
+- `POST /api/v1/coalition/content` - Index signed content
+- `GET /api/v1/coalition/status/{user_id}` - Check membership
+- `GET /api/v1/coalition/stats/{user_id}` - Get member statistics
+
+**Coalition Features**:
+- ✅ Automatic content indexing for coalition members
+- ✅ Revenue sharing (70-85% members / 15-30% platform, based on tier)
+- ✅ Bulk licensing to AI companies
+- ✅ Access tracking and analytics
+
+**Service Location**: `services/coalition-service` (Port 8009)
+
+**Documentation**: See `services/coalition-service/README.md`
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+#### Microservices Integration
+
+```bash
+# Key Service (Required)
+KEY_SERVICE_URL=http://localhost:8003
+
+# Coalition Service (Optional)
+COALITION_SERVICE_URL=http://localhost:8009
+
+# Auth Service (Future)
+AUTH_SERVICE_URL=http://localhost:8001
+```
+
+#### Database Configuration
+
+```bash
+# Enterprise API Content Database (Own Database)
+DATABASE_URL=postgresql://user:pass@localhost:5432/encypher_content
+
+# Legacy Configuration Support
+# CORE_DATABASE_URL and CONTENT_DATABASE_URL are no longer used
+# Each microservice maintains its own database
+```
+
+#### Redis Configuration
+
+```bash
+# Redis for caching and session management
+REDIS_URL=redis://localhost:6379/0
+```
+
+#### SSL.com Configuration
+
+```bash
+# SSL.com API (Optional for staging/development)
+SSL_COM_API_KEY=your_api_key
+SSL_COM_ACCOUNT_KEY=your_account_key
+SSL_COM_API_URL=https://api.ssl.com/v1
+SSL_COM_PRODUCT_ID=your_product_id
+```
+
+#### Security Configuration
+
+```bash
+# Encryption keys (for private key storage)
+KEY_ENCRYPTION_KEY=<hex_string>
+ENCRYPTION_NONCE=<hex_string>
+```
+
+#### CORS Configuration
+
+```bash
+# Comma-separated list of allowed origins
+ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,https://dashboard.encypherai.com
 ```
 
 ---
@@ -711,6 +1256,8 @@ See [BENCHMARK_BASELINE.md](BENCHMARK_BASELINE.md) for detailed analysis of the 
 
 - **PHP**: [encypher-php](https://github.com/community/encypher-php)
 - **.NET**: [Encypher.NET](https://github.com/community/encypher-dotnet)
+
+---
 
 ## 🧪 Testing
 
@@ -730,6 +1277,33 @@ curl -X POST https://api-staging.encypherai.com/api/v1/sign \
   }'
 ```
 
+### Local Development Setup
+
+1. **Start Required Services:**
+```bash
+# From services directory
+cd services
+docker-compose -f docker-compose.dev.yml up -d postgres-keys redis
+
+# Start Key Service
+cd key-service
+uv run python -m app.main
+```
+
+2. **Start Enterprise API:**
+```bash
+cd enterprise_api
+cp .env.example .env
+# Edit .env with your configuration
+uv run python -m app.main
+```
+
+3. **Optional: Start Coalition Service:**
+```bash
+cd services/coalition-service
+uv run python -m app.main
+```
+
 ### Benchmarking & Load Testing
 For detailed instructions on running local benchmarks and load tests, please refer to the [Scripts Documentation](scripts/README.md).
 
@@ -739,7 +1313,10 @@ For detailed instructions on running local benchmarks and load tests, please ref
 
 - **API Docs**: [docs.encypherai.com/api](https://docs.encypherai.com/api)
 - **SDK Docs**: [docs.encypherai.com/sdk](https://docs.encypherai.com/sdk)
-- **C2PA Custom Assertions API**: [docs/api/C2PA_CUSTOM_ASSERTIONS_API.md](../docs/api/C2PA_CUSTOM_ASSERTIONS_API.md) ⭐ **NEW**
+- **Microservices Overview**: [services/README.md](../services/README.md)
+- **Key Service**: [services/key-service/README.md](../services/key-service/README.md)
+- **Coalition Service**: [services/coalition-service/README.md](../services/coalition-service/README.md)
+- **C2PA Custom Assertions API**: [docs/api/C2PA_CUSTOM_ASSERTIONS_API.md](../docs/api/C2PA_CUSTOM_ASSERTIONS_API.md)
 - **C2PA Provenance Chain**: [docs/c2pa/C2PA_PROVENANCE_CHAIN.md](../docs/c2pa/C2PA_PROVENANCE_CHAIN.md)
 - **C2PA Implementation**: [docs/c2pa/C2PA Implimentation Guidance.md](../docs/c2pa/C2PA%20Implimentation%20Guidance.md)
 - **C2PA Spec**: [docs/c2pa/Manifests_Text.adoc](../docs/c2pa/Manifests_Text.adoc)
@@ -774,6 +1351,7 @@ Proprietary - See [LICENSE](../LICENSE) for details.
 Built with:
 - [FastAPI](https://fastapi.tiangolo.com/) - Modern web framework
 - [PostgreSQL](https://www.postgresql.org/) - Database
+- [Redis](https://redis.io/) - Caching and session management
 - [Railway](https://railway.app/) - Hosting platform
 - [C2PA](https://c2pa.org/) - Content authenticity standards
 - [SSL.com](https://www.ssl.com/) - Certificate authority

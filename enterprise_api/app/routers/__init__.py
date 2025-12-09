@@ -1,6 +1,36 @@
 """
 Routers for the Encypher Enterprise API.
 """
-from app.routers import signing, verification, lookup, onboarding, dashboard
+from app.routers import (
+    audit,
+    batch,
+    chat,
+    coalition,
+    licensing,
+    lookup,
+    onboarding,
+    signing,
+    status,
+    streaming,
+    team,
+    tools,
+    usage,
+    verification,
+)
 
-__all__ = ["signing", "verification", "lookup", "onboarding", "dashboard"]
+__all__ = [
+    "audit",
+    "batch",
+    "chat",
+    "coalition",
+    "licensing",
+    "lookup",
+    "onboarding",
+    "signing",
+    "status",
+    "streaming",
+    "team",
+    "tools",
+    "usage",
+    "verification",
+]

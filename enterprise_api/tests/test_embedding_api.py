@@ -9,9 +9,10 @@ NOTE: These tests are skipped because:
 The embedding endpoints tested here may be re-enabled in a future release
 for use cases requiring visible text references.
 """
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from fastapi.testclient import TestClient
-from unittest.mock import AsyncMock, patch
 
 from app.main import app
 
@@ -90,8 +91,9 @@ class TestPublicVerifyEndpoint:
     def test_verify_valid_embedding(self, mock_embedding_service):
         """Test verification of valid embedding."""
         # Mock content reference
-        from app.models.content_reference import ContentReference
         from uuid import uuid4
+
+        from app.models.content_reference import ContentReference
         
         mock_reference = ContentReference(
             ref_id=0xa3f9c2e1,
@@ -148,8 +150,9 @@ class TestBatchVerifyEndpoint:
     @patch('app.api.v1.public.verify.embedding_service')
     def test_batch_verify_mixed_results(self, mock_embedding_service):
         """Test batch verification with mixed valid/invalid results."""
-        from app.models.content_reference import ContentReference
         from uuid import uuid4
+
+        from app.models.content_reference import ContentReference
         
         # Mock: first reference valid, second invalid
         def mock_verify(db, ref_id_hex, signature_hex):
@@ -193,8 +196,8 @@ class TestHTMLEmbedder:
     
     def test_embed_data_attribute(self):
         """Test embedding with data-attribute method."""
-        from app.utils.embeddings.html_embedder import HTMLEmbedder
         from app.services.embedding_service import EmbeddingReference
+        from app.utils.embeddings.html_embedder import HTMLEmbedder
         
         html = "<p>Sentence one.</p><p>Sentence two.</p>"
         embeddings = [

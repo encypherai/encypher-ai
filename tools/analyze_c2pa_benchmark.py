@@ -1,6 +1,6 @@
 """Analyze the C2PA-only benchmark results."""
-from pathlib import Path
 import statistics
+from pathlib import Path
 
 # Find the work directory
 work_dir = Path('../outputs/wikipedia_prepared')

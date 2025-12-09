@@ -1,14 +1,15 @@
 """
 Tests for C2PA manifest verification utility.
 """
-import pytest
 from unittest.mock import Mock, patch
 
+import pytest
+
 from app.utils.c2pa_verifier import (
-    C2PAVerifier,
-    C2PAVerificationResult,
     C2PAAssertion,
-    verify_c2pa_manifest
+    C2PAVerificationResult,
+    C2PAVerifier,
+    verify_c2pa_manifest,
 )
 
 

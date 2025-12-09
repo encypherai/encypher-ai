@@ -1,4 +1,4 @@
-# 📚 EncypherAI Commercial - Documentation Index
+# 📚 Encypher Commercial - Documentation Index
 
 **Last Updated**: November 28, 2025  
 **Repository**: encypherai-commercial  
@@ -33,6 +33,7 @@ Use this index to jump directly to the documentation you need.
 | [CHANGELOG.md](./CHANGELOG.md) | Version history and changes | Developers |
 | [LICENSE](./LICENSE) | Proprietary license information | Legal, Management |
 | [docs/api/ERROR_CODES.md](./docs/api/ERROR_CODES.md) | Canonical API error codes and descriptions | Developers, Support |
+| [docs/pricing/PRICING_STRATEGY.md](./docs/pricing/PRICING_STRATEGY.md) | Pricing strategy, tiers, coalition economics, OEM guidelines | Product, Marketing, Sales |
 
 ---
 
@@ -108,6 +109,7 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/docs/API.md](./enterprise_api/docs/API.md) | Detailed API documentation |
 | [enterprise_api/docs/DEPLOYMENT.md](./enterprise_api/docs/DEPLOYMENT.md) | Deployment guide |
 | [enterprise_api/docs/QUICKSTART.md](./enterprise_api/docs/QUICKSTART.md) | Quick start guide |
+| [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) | Licensing API reference (agreements, content, payouts) |
 | [docs/perf/batch-sign.md](./docs/perf/batch-sign.md) | Batch throughput benchmark results |
 
 **Key Features**: C2PA signing, verification, Merkle trees, plagiarism detection  

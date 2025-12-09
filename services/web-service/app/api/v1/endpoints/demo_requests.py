@@ -1,4 +1,3 @@
-from typing import List
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -49,14 +48,14 @@ def read_demo_request(
         )
     return demo_request
 
-@router.get("/", response_model=List[schemas.DemoRequest])
+@router.get("/", response_model=list[schemas.DemoRequest])
 def read_demo_requests(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
     # TODO: Restore auth when auth-service integration is ready
     # current_user: models.User = Depends(deps.get_current_active_superuser),
-) -> List[models.DemoRequest]:
+) -> list[models.DemoRequest]:
     """
     Retrieve demo requests. Admin only.
     """

@@ -10,13 +10,14 @@ This example demonstrates a production-ready web scraper that:
 Requirements:
     pip install requests beautifulsoup4 lxml
 """
-import sys
-import os
-import time
 import logging
+import os
+import sys
+import time
 from datetime import datetime
-from typing import List, Dict, Set
+from typing import Dict, List, Set
 from urllib.parse import urljoin, urlparse
+
 import requests
 from bs4 import BeautifulSoup
 

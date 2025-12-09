@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, Request
 from sqlalchemy.orm import Session
@@ -33,7 +33,7 @@ def track_event(
 
     return event
 
-@router.get("/session/{session_id}", response_model=List[schemas.AnalyticsEventInDB])
+@router.get("/session/{session_id}", response_model=list[schemas.AnalyticsEventInDB])
 def read_session_events(
     session_id: str,
     skip: int = 0,

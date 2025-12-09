@@ -5,8 +5,9 @@ Revises: add_licensing_mgmt
 Create Date: 2025-11-11
 """
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "add_org_certificate_metadata"

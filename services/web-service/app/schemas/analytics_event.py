@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, Optional
+from typing import Any
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, Field
@@ -9,14 +9,14 @@ from pydantic import BaseModel, Field
 class AnalyticsEventCreate(BaseModel):
     """Schema for creating an analytics event from the marketing site."""
     event_name: str = Field(..., max_length=255, description="Event name")
-    event_type: Optional[str] = Field(None, max_length=100, description="Event type")
-    session_id: Optional[str] = Field(None, max_length=128, description="Session ID")
-    page_url: Optional[str] = Field(None, description="Page URL")
-    page_title: Optional[str] = Field(None, max_length=512, description="Page title")
-    user_id: Optional[str] = Field(None, description="User ID if authenticated")
-    user_agent: Optional[str] = Field(None, description="User agent string")
-    referrer: Optional[str] = Field(None, description="Referrer URL")
-    properties: Optional[Dict[str, Any]] = Field(
+    event_type: str | None = Field(None, max_length=100, description="Event type")
+    session_id: str | None = Field(None, max_length=128, description="Session ID")
+    page_url: str | None = Field(None, description="Page URL")
+    page_title: str | None = Field(None, max_length=512, description="Page title")
+    user_id: str | None = Field(None, description="User ID if authenticated")
+    user_agent: str | None = Field(None, description="User agent string")
+    referrer: str | None = Field(None, description="Referrer URL")
+    properties: dict[str, Any] | None = Field(
         default_factory=dict,
         description="Additional event properties"
     )
@@ -27,7 +27,7 @@ class AnalyticsEventResponse(BaseModel):
     """Schema for analytics event response."""
     success: bool
     message: str = "Event tracked successfully"
-    event_id: Optional[UUID] = Field(default_factory=uuid4)
+    event_id: UUID | None = Field(default_factory=uuid4)
 
     class Config:
         from_attributes = True
@@ -39,8 +39,8 @@ class AnalyticsEventInDB(BaseModel):
     event_id: UUID
     event_type: str
     event_name: str
-    session_id: Optional[str]
-    page_url: Optional[str]
+    session_id: str | None
+    page_url: str | None
     created_at: datetime
 
     class Config:

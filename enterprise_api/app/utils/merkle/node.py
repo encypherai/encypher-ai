@@ -3,8 +3,8 @@ Merkle tree node implementation.
 
 Represents a single node in a Merkle tree (leaf or branch).
 """
-from typing import Optional, Dict, Any
 from dataclasses import dataclass, field
+from typing import Any, Dict, Optional
 
 
 @dataclass

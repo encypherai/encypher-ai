@@ -7,8 +7,9 @@
 from __future__ import annotations
 
 import argparse
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Dict, Tuple, Optional, Set, Iterable
+from typing import Dict, Optional, Set, Tuple
 
 from rich.console import Console
 from rich.table import Table

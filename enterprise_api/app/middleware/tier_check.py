@@ -4,8 +4,9 @@ Tier-based access control middleware.
 Validates organization tier and feature access for enterprise endpoints.
 """
 import logging
-from typing import Optional, Callable
-from fastapi import Request, HTTPException, status
+from typing import Callable, Optional
+
+from fastapi import HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from app.models.organization import OrganizationTier

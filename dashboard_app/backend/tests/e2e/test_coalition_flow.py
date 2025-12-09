@@ -2,18 +2,14 @@
 End-to-end tests for coalition user flow.
 Tests the complete user journey from signup to revenue tracking.
 """
+from datetime import datetime, timedelta
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timedelta
 
+from app.models.coalition import CoalitionMember, ContentAccessLog, ContentItem, RevenueTransaction
 from app.models.user import User
-from app.models.coalition import (
-    CoalitionMember,
-    ContentItem,
-    RevenueTransaction,
-    ContentAccessLog
-)
 
 
 @pytest.mark.asyncio

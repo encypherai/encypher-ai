@@ -6,11 +6,14 @@ import { getToken } from 'next-auth/jwt';
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
 
-  // Allow public paths, health checks, and Next.js internals
+  // Allow public paths, health checks, static assets, and Next.js internals
   if (
     pathname.startsWith('/api/auth') ||
     pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forgot-password') ||
     pathname.startsWith('/_next') ||
+    pathname.startsWith('/assets') ||
     pathname === '/health' ||
     pathname === '/api/health' ||
     pathname === '/favicon.ico' ||

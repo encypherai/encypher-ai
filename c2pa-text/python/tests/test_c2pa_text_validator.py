@@ -4,8 +4,6 @@ Tests for the C2PA manifest validator.
 
 import struct
 
-import pytest
-
 from c2pa_text import (
     MAGIC,
     VERSION,

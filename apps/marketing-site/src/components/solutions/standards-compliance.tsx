@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef } from 'react';
+import styles from './StandardsCompliance.module.css';
 
 const companyLogos = [
   'akamai_technologies_inc_1743684419708_0014100000TdzWHAAZ.svg',
@@ -34,62 +34,17 @@ const companyLogos = [
   'adobe_inc_1714766282443_0014100000Te1FFAAZ.svg'
 ];
 
+// Split logos into two halves for different sliders
+const firstHalf = companyLogos.slice(0, Math.ceil(companyLogos.length / 2));
+const secondHalf = companyLogos.slice(Math.ceil(companyLogos.length / 2));
+
 export default function StandardsCompliance() {
-  const slider1Ref = useRef<HTMLDivElement>(null);
-  const slider2Ref = useRef<HTMLDivElement>(null);
-  
-  // Split logos into two halves for different sliders
-  const firstHalf = companyLogos.slice(0, Math.ceil(companyLogos.length / 2));
-  const secondHalf = companyLogos.slice(Math.ceil(companyLogos.length / 2));
-  
-  // Double the arrays for seamless looping
-  const firstHalfExtended = [...firstHalf, ...firstHalf];
-  const secondHalfExtended = [...secondHalf, ...secondHalf];
-
-  useEffect(() => {
-    let animationId: number;
-    let position1 = 0;
-    let position2 = 0;
-    
-    const logoWidth = 180; // Approximate width of each logo including padding
-    const resetPoint1 = firstHalf.length * logoWidth;
-    const resetPoint2 = secondHalf.length * logoWidth;
-    
-    const animate = () => {
-      // Slider 1: Right to Left
-      position1 -= 0.5; // Adjust speed here
-      if (position1 <= -resetPoint1) {
-        position1 = 0; // Reset seamlessly
-      }
-      if (slider1Ref.current) {
-        slider1Ref.current.style.transform = `translateX(${position1}px)`;
-      }
-      
-      // Slider 2: Left to Right
-      position2 += 0.5; // Adjust speed here
-      if (position2 >= resetPoint2) {
-        position2 = 0; // Reset seamlessly
-      }
-      if (slider2Ref.current) {
-        slider2Ref.current.style.transform = `translateX(${-resetPoint2 + position2}px)`;
-      }
-      
-      animationId = requestAnimationFrame(animate);
-    };
-    
-    animationId = requestAnimationFrame(animate);
-    
-    return () => {
-      if (animationId) cancelAnimationFrame(animationId);
-    };
-  }, [firstHalf.length, secondHalf.length]);
-
   return (
     <section className="py-12 w-full border-t border-border overflow-hidden" style={{backgroundColor: 'rgba(183, 213, 237, 0.3)'}}>
       <div className="container mx-auto px-4">
         <div className="text-center">
           <h3 className="text-2xl font-semibold text-muted-foreground uppercase tracking-wider mb-8">
-            We're Authoring the Future of Text Content Authenticity
+            We&apos;re Authoring the Future of Text Content Authenticity
           </h3>
           <div className="flex justify-center items-center gap-12 md:gap-16 mb-8">
             <div className="relative h-12 w-48">
@@ -120,27 +75,24 @@ export default function StandardsCompliance() {
         </div>
       </div>
       
-      {/* Logo Sliders */}
-      <div className="relative flex flex-col gap-4">
-        <h3 className="text-center text-lg font-semibold text-muted-foreground tracking-wider mb-8">
-          Collaborating with the World's Leading Companies
+      {/* Logo Sliders - CSS Animation for smooth infinite scroll */}
+      <div className="relative flex flex-col gap-6">
+        <h3 className="text-center text-lg font-semibold text-muted-foreground tracking-wider mb-4">
+          Collaborating with the World&apos;s Leading Companies
         </h3>
         
-        {/* Slider 1 (Right to Left) - First Half */}
-        <div className="w-full overflow-hidden whitespace-nowrap">
-          <div 
-            ref={slider1Ref}
-            className="flex items-center"
-            style={{ willChange: 'transform' }}
-          >
-            {firstHalfExtended.map((logo, index) => (
-              <div key={`rtl-${index}`} className="inline-flex items-center justify-center px-10 flex-shrink-0 opacity-60">
+        {/* Slider 1 (Right to Left) */}
+        <div className={styles.logoSlider}>
+          <div className={`${styles.sliderTrack} ${styles.scrollRtoL}`}>
+            {/* Render logos twice for seamless loop */}
+            {[...firstHalf, ...firstHalf].map((logo: string, index: number) => (
+              <div key={`rtl-${index}`} className={styles.logo}>
                 <Image
                   src={`/c2pa_companies/${logo}`}
                   alt={`${logo.split('.')[0]} logo`}
                   height={40}
-                  width={100}
-                  style={{objectFit: "contain", width: "auto", height: 40}}
+                  width={120}
+                  style={{ objectFit: 'contain', width: 'auto', height: 40 }}
                   className="grayscale"
                 />
               </div>
@@ -148,30 +100,24 @@ export default function StandardsCompliance() {
           </div>
         </div>
 
-        {/* Slider 2 (Left to Right) - Second Half */}
-        <div className="w-full overflow-hidden whitespace-nowrap">
-          <div 
-            ref={slider2Ref}
-            className="flex items-center"
-            style={{ willChange: 'transform' }}
-          >
-            {secondHalfExtended.map((logo, index) => (
-              <div key={`ltr-${index}`} className="inline-flex items-center justify-center px-10 flex-shrink-0 opacity-60">
+        {/* Slider 2 (Left to Right) */}
+        <div className={styles.logoSlider}>
+          <div className={`${styles.sliderTrack} ${styles.scrollLtoR}`}>
+            {/* Render logos twice for seamless loop */}
+            {[...secondHalf, ...secondHalf].map((logo: string, index: number) => (
+              <div key={`ltr-${index}`} className={styles.logo}>
                 <Image
                   src={`/c2pa_companies/${logo}`}
                   alt={`${logo.split('.')[0]} logo`}
                   height={40}
-                  width={100}
-                  style={{objectFit: "contain", width: "auto", height: 40}}
+                  width={120}
+                  style={{ objectFit: 'contain', width: 'auto', height: 40 }}
                   className="grayscale"
                 />
               </div>
             ))}
           </div>
         </div>
-        
-        {/* Gradient overlay for fade effect */}
-        {/* <div className="absolute inset-0 bg-gradient-to-r from-[rgba(183,213,237,0.3)] via-transparent to-[rgba(183,213,237,0.3)] pointer-events-none"></div> */}
       </div>
     </section>
   );

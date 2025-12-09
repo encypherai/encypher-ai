@@ -1,10 +1,10 @@
 # Audit Log & Report Generation Utility (CLI)
 
-This CLI tool scans text assets, validates EncypherAI metadata, and generates auditable reports.
+This CLI tool scans text assets, validates Encypher metadata, and generates auditable reports.
 
 ## Compatibility
 
-This tool is compatible with EncypherAI v2.2.0 and uses the shared commercial library (`encypher_commercial_shared`) which provides a stable high-level API. The dependencies are specified in `pyproject.toml` to ensure version compatibility.
+This tool is compatible with Encypher v2.2.0 and uses the shared commercial library (`encypher_commercial_shared`) which provides a stable high-level API. The dependencies are specified in `pyproject.toml` to ensure version compatibility.
 
 ## Setup
 

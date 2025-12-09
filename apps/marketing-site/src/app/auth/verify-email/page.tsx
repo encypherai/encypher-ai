@@ -79,11 +79,16 @@ function VerifyEmailContent() {
           setMessage(response.data.message || "Your email has been verified successfully!");
           
           // Auto-sign in with the tokens from verification
-          if (response.data.access_token) {
+          if (response.data.access_token && response.data.user) {
+            const user = response.data.user;
             const signInResult = await signIn("credentials", {
               redirect: false,
               backendToken: response.data.access_token,
               isVerifiedTokenFlow: "true",
+              email: user.email,
+              name: user.name || "",
+              user_uuid: user.id,
+              is_verified: "true",
             });
             
             if (signInResult?.ok) {
@@ -91,6 +96,9 @@ function VerifyEmailContent() {
               setTimeout(() => {
                 router.push(process.env.NEXT_PUBLIC_DASHBOARD_URL || "/dashboard");
               }, 1500);
+            } else {
+              console.error("[VerifyEmail] Auto-login failed:", signInResult?.error);
+              // Still show success - user can manually log in
             }
           }
         } else {
@@ -112,7 +120,7 @@ function VerifyEmailContent() {
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="items-center space-y-4">
           <div className="flex items-center justify-center">
-            <Image src="/encypher_full_nobg.png" alt="EncypherAI" width={140} height={70} />
+            <Image src="/encypher_full_nobg.png" alt="Encypher" width={140} height={70} />
           </div>
           
           {status === "loading" && (

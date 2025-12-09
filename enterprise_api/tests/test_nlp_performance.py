@@ -1,12 +1,14 @@
-from unittest.mock import MagicMock, patch
 # Set env vars to avoid pydantic errors during import
 import os
+from unittest.mock import MagicMock, patch
+
 os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/db"
 os.environ["KEY_ENCRYPTION_KEY"] = "00" * 32
 os.environ["ENCRYPTION_NONCE"] = "00" * 12
 os.environ["SSL_COM_API_KEY"] = "test_key"
 
 from app.utils.segmentation.advanced import segment_sentences_advanced
+
 
 def test_spacy_reloads_every_time():
     """

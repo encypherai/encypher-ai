@@ -7,10 +7,11 @@ from contextlib import asynccontextmanager
 from .core.config import settings
 from .api.v1.endpoints import router as v1_router
 from .api.v1.stripe_webhooks import router as webhook_router
-from .db.models import Base
-from .db.session import engine
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
+
+# Import database startup utilities
+from encypher_commercial_shared.db import ensure_database_ready
 
 logging.basicConfig(
     level=getattr(logging, settings.LOG_LEVEL),
@@ -22,8 +23,16 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created")
+    
+    # Ensure database is ready and run migrations
+    ensure_database_ready(
+        database_url=settings.DATABASE_URL,
+        service_name=settings.SERVICE_NAME,
+        alembic_config_path="alembic.ini",
+        run_migrations=True,
+        exit_on_failure=True
+    )
+    
     yield
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 

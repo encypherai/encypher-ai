@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Update Dependencies Script for EncypherAI Commercial
+Update Dependencies Script for Encypher Commercial
 
 Updates all services to use consistent, secure dependency versions.
 
@@ -70,7 +70,7 @@ def update_pyproject(filepath: Path) -> int:
         filepath.write_text(content)
         print(f"  Updated {changes} dependencies")
     else:
-        print(f"  No updates needed")
+        print("  No updates needed")
     
     return changes
 

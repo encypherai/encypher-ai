@@ -4,20 +4,20 @@ Tier enforcement service for API access control.
 Handles feature gating, quota enforcement, and tier-based access control.
 """
 import logging
-from typing import Dict, Any
 from datetime import datetime
+from typing import Any, Dict
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi import HTTPException, Request, status
 from sqlalchemy import select
-from fastapi import HTTPException, status, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization, OrganizationTier
 from app.utils.quota import (
-    QuotaType,
-    TIER_QUOTAS,
     TIER_FEATURES,
+    TIER_QUOTAS,
     TIER_RATE_LIMITS,
     TIER_REV_SHARE,
+    QuotaType,
 )
 
 logger = logging.getLogger(__name__)
@@ -122,7 +122,28 @@ class TierService:
         Raises:
             HTTPException: If access denied and raise_on_denied=True
         """
-        # Get organization
+        # Handle user-level keys (synthetic org IDs like "user_{user_id}")
+        if organization_id.startswith("user_"):
+            # Use starter tier for user-level keys
+            tier = OrganizationTier.STARTER
+            is_available = TierService.is_feature_available(tier, feature)
+            
+            if not is_available and raise_on_denied:
+                upgrade_tier = TierService._get_upgrade_tier_for_feature(feature)
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "error": "FeatureNotAvailable",
+                        "message": f"The '{feature}' feature is not available on starter tier",
+                        "current_tier": "starter",
+                        "required_tier": upgrade_tier,
+                        "upgrade_url": "https://dashboard.encypherai.com/billing",
+                        "features_available": TierService.get_tier_features(tier),
+                    }
+                )
+            return is_available
+        
+        # Get organization from database
         result = await db.execute(
             select(Organization).where(Organization.organization_id == organization_id)
         )
@@ -196,7 +217,40 @@ class TierService:
         Returns:
             Dictionary with tier info, features, quotas, and usage
         """
-        # Get organization
+        # Handle user-level keys (synthetic org IDs)
+        if organization_id.startswith("user_"):
+            tier = OrganizationTier.STARTER
+            features = TierService.get_tier_features(tier)
+            rate_limit = TierService.get_rate_limit(tier)
+            
+            quotas = {}
+            for quota_type in QuotaType:
+                limit = TierService.get_quota_limit(tier, quota_type)
+                quotas[quota_type.value] = {
+                    "limit": limit if limit >= 0 else "unlimited",
+                    "used": 0,
+                    "remaining": "unlimited" if limit < 0 else limit,
+                    "available": limit != 0,
+                }
+            
+            return {
+                "organization_id": organization_id,
+                "organization_name": "Personal Account",
+                "tier": "starter",
+                "tier_display_name": "Starter (Free)",
+                "features": features,
+                "rate_limit": rate_limit if rate_limit >= 0 else "unlimited",
+                "quotas": quotas,
+                "coalition": {
+                    "member": True,
+                    "opted_out": False,
+                    "publisher_share": 65,
+                    "encypher_share": 35,
+                },
+                "reset_date": TierService._get_reset_date().isoformat(),
+            }
+        
+        # Get organization from database
         result = await db.execute(
             select(Organization).where(Organization.organization_id == organization_id)
         )

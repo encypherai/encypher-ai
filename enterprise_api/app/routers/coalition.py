@@ -1,17 +1,16 @@
 """Coalition revenue tracking router."""
-from datetime import datetime, timezone, date
-from dateutil.relativedelta import relativedelta
-from typing import Optional, List
+from datetime import date, datetime, timezone
+from typing import List, Optional
 from uuid import uuid4
 
+from dateutil.relativedelta import relativedelta
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db, get_content_db
+from app.database import get_content_db, get_db
 from app.dependencies import require_read_permission
-
 
 router = APIRouter(prefix="/coalition", tags=["Coalition"])
 

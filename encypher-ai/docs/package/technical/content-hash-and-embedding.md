@@ -1,6 +1,6 @@
 # Content Hash Coverage and Embedding Technical Details
 
-This document explains how EncypherAI embeds Coalition for Content Provenance and Authenticity (C2PA) manifests inside plain
+This document explains how Encypher embeds Coalition for Content Provenance and Authenticity (C2PA) manifests inside plain
 text while respecting the updated `C2PATextManifestWrapper` specification. It focuses on two critical implementation details:
 
 1. **How we compute and record the hard-binding content hash**

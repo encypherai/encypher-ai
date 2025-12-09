@@ -8,12 +8,12 @@ Services should use this module for all email operations.
 import os
 import secrets
 import smtplib
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from datetime import datetime
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
@@ -89,7 +89,7 @@ def render_template(template_name: str, **context) -> str:
     """
     base_context = {
         "year": datetime.now().year,
-        "brand_name": "EncypherAI",
+        "brand_name": "Encypher",
     }
     template_context = {**base_context, **context}
     

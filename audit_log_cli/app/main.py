@@ -1,22 +1,22 @@
-from typing import List, Optional
+import csv
 import logging
 import os
 import sys
 from pathlib import Path
-from typing import Dict, Any
-from rich.console import Console
-import csv
-from rich.logging import RichHandler
-
-# Import from our shared commercial library instead of directly from EncypherAI
-from encypher_commercial_shared import EncypherAI, VerificationResult
-from encypher_commercial_shared.utils import scan_directory, generate_report as generate_csv_report
+from typing import Any, Dict, List, Optional
 
 import typer
+from rich.console import Console
+from rich.logging import RichHandler
+
+# Import from our shared commercial library instead of directly from Encypher
+from encypher_commercial_shared import Encypher, VerificationResult
+from encypher_commercial_shared.utils import generate_report as generate_csv_report
+from encypher_commercial_shared.utils import scan_directory
 
 try:
     from encypher_ai import (  # type: ignore[import-not-found]
-        EncypherAI,
+        Encypher,
         VerificationResult,
     )
 except ImportError:  # pragma: no cover - fallback for local development
@@ -33,7 +33,7 @@ except ImportError:  # pragma: no cover - fallback for local development
         is_verified: bool
         metadata: Dict[str, Any]
 
-    class EncypherAI:
+    class Encypher:
         """Fallback stub that mimics the public API used in tests."""
 
         def verify_from_text(self, text: str) -> VerificationResult:
@@ -104,9 +104,9 @@ def generate_report(
     ),
 ) -> None:
     """
-    Generates an audit report for EncypherAI metadata.
+    Generates an audit report for Encypher metadata.
 
-    This command scans files or processes text input to verify EncypherAI metadata
+    This command scans files or processes text input to verify Encypher metadata
     and generates a CSV report with the results.
     """
     if target and text_input:
@@ -140,12 +140,12 @@ def generate_report(
         typer.echo("Error: No files or text inputs to process.")
         raise typer.Exit(code=1)
 
-    ea = EncypherAI()
+    ea = Encypher()
     results = []
 
     for file_path in files_to_scan:
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
             verification_result = ea.verify_from_text(content)
             results.append({"source": str(file_path), "result": verification_result})
@@ -187,7 +187,7 @@ def generate_report(
             writer.writerow(row)
 
     typer.echo(f"Report successfully generated at {output_file}")
-    # Initialize EncypherAI with trusted signers if provided
+    # Initialize Encypher with trusted signers if provided
     trusted_signers = {}
     if trusted_signers_dir:
         console.print(f":key: Loading trusted signers from {trusted_signers_dir}...")
@@ -204,8 +204,8 @@ def generate_report(
                 style="yellow",
             )
 
-    # Initialize the EncypherAI high-level API
-    console.print("\n:gear: Initializing EncypherAI...")
+    # Initialize the Encypher high-level API
+    console.print("\n:gear: Initializing Encypher...")
     
     # Monkey patch the load_public_key_from_pem function if it doesn't exist
     # This is a workaround for a module import issue
@@ -214,15 +214,15 @@ def generate_report(
     # Add the function to the module's globals if it doesn't exist
     module = sys.modules.get('encypher_commercial_shared.high_level')
     if module and not hasattr(module, 'load_public_key_from_pem'):
-        setattr(module, 'load_public_key_from_pem', load_public_key_from_data)
+        module.load_public_key_from_pem = load_public_key_from_data
     
     try:
-        ea = EncypherAI(trusted_signers=trusted_signers, verbose=verbose)
+        ea = Encypher(trusted_signers=trusted_signers, verbose=verbose)
     except Exception as e:
         # Log the error but continue - the verification might still work
-        log.warning(f"Error during EncypherAI initialization: {e}")
+        log.warning(f"Error during Encypher initialization: {e}")
         # Create a new instance without trusted signers
-        ea = EncypherAI(verbose=verbose)
+        ea = Encypher(verbose=verbose)
         console.print(":warning: Continuing without trusted signers due to initialization error", style="yellow")
 
     results = {}
@@ -255,10 +255,12 @@ def generate_report(
                             # For text files, we can extract text and verify directly
                             if file_path_str.lower().endswith(('.txt', '.md', '.py', '.js', '.html', '.css', '.json')):
                                 try:
-                                    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
+                                    with open(file_path, encoding='utf-8', errors='replace') as f:
                                         content = f.read()
                                         # Debug output to show Unicode characters in extracted text
-                                        from shared_commercial_libs.encypher_commercial_shared.utils import debug_unicode
+                                        from shared_commercial_libs.encypher_commercial_shared.utils import (
+                                            debug_unicode,
+                                        )
                                         console.print(f"[blue]Extracted text from {file_path}:[/blue]")
                                         console.print(f"[blue]Text length: {len(content)} characters[/blue]")
                                         # Look for variation selectors in the text
@@ -267,7 +269,7 @@ def generate_report(
                                             console.print("[green]Found Unicode variation selectors in the text![/green]")
                                         console.print(f"[blue]Unicode details: {debug_unicode(content)}[/blue]")
                                         
-                                        # Use EncypherAI to verify the extracted text directly
+                                        # Use Encypher to verify the extracted text directly
                                         # This will detect tampering with variation selectors
                                         verification_result = ea.verify_from_text(content)
                                         if not verification_result.verified and result.verified:
@@ -280,10 +282,12 @@ def generate_report(
                             
                             # For PDF files, extract text and check for tampering markers
                             elif file_path_str.lower().endswith('.pdf'):
-                                from shared_commercial_libs.encypher_commercial_shared.utils import extract_text_from_file
+                                from shared_commercial_libs.encypher_commercial_shared.utils import (
+                                    extract_text_from_file,
+                                )
                                 extracted_text = extract_text_from_file(file_path)
                                 if extracted_text:
-                                    # First try to verify using EncypherAI's verification
+                                    # First try to verify using Encypher's verification
                                     verification_result = ea.verify_from_text(extracted_text)
                                     
                                     # Update the result with the verification result
@@ -305,11 +309,13 @@ def generate_report(
                             
                             # For DOCX files, extract text and check for tampering markers
                             elif file_path_str.lower().endswith(('.docx', '.doc')):
-                                from shared_commercial_libs.encypher_commercial_shared.utils import extract_text_from_file
+                                from shared_commercial_libs.encypher_commercial_shared.utils import (
+                                    extract_text_from_file,
+                                )
                                 # Try multiple extraction methods for DOCX
                                 extracted_text = extract_text_from_file(file_path)
                                 if extracted_text:
-                                    # First try to verify using EncypherAI's verification
+                                    # First try to verify using Encypher's verification
                                     verification_result = ea.verify_from_text(extracted_text)
                                     
                                     # Update the result with the verification result
@@ -329,7 +335,7 @@ def generate_report(
                                         tampered_files.append(file_path)
                                         console.print(f"[yellow]Tampering detected in DOCX: {file_path}[/yellow]")
                                         
-                            # We rely solely on EncypherAI's verification capabilities to detect tampering
+                            # We rely solely on Encypher's verification capabilities to detect tampering
                             # No filename-based detection is used as it's not a realistic approach for production
                                     
                         except Exception as e:

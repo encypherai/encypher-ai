@@ -1,4 +1,4 @@
-# EncypherAI Commercial - Root Agent Development Guide
+# Encypher Commercial - Root Agent Development Guide
 
 <!-- AI_INSTRUCTIONS_START -->
 ## 🤖 AI Agent Protocols (READ FIRST)

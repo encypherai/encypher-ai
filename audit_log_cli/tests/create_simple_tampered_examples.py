@@ -4,6 +4,7 @@ This script creates examples with obvious tampering by adding text markers.
 """
 
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -12,13 +13,13 @@ sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
     # Import from our shared commercial library
-    from encypher_commercial_shared import EncypherAI
-    
-    # Import from the core EncypherAI package
-    from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
-    from encypher.core.keys import load_private_key_from_data
-    
     from rich.console import Console
+
+    from encypher.core.keys import load_private_key_from_data
+
+    # Import from the core Encypher package
+    from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+    from encypher_commercial_shared import Encypher
     console = Console()
     
     # Directory to save example files
@@ -30,8 +31,8 @@ try:
     KEY_DIR.mkdir(exist_ok=True)
     
     # Generate a test private/public key pair for signing
-    from cryptography.hazmat.primitives.asymmetric import ed25519
     from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ed25519
     
     def generate_key_pair(private_key_path, public_key_path):
         """Generate a test Ed25519 key pair for signing and verification."""
@@ -67,8 +68,8 @@ try:
     generate_key_pair(test_signer_private_key_path, test_signer_public_key_path)
     console.print(f"[green]Generated test signer keys at {KEY_DIR}[/green]")
     
-    # Create EncypherAI instance with the test signer
-    ea_test = EncypherAI(
+    # Create Encypher instance with the test signer
+    ea_test = Encypher(
         private_key_path=str(test_signer_private_key_path),
         public_key_path=str(test_signer_public_key_path),
         signer_id="test-signer",
@@ -78,7 +79,7 @@ try:
     # Create example files with metadata
     
     # Example 1: Create a file with valid metadata
-    example_text = """This is an example file with valid EncypherAI metadata.
+    example_text = """This is an example file with valid Encypher metadata.
 The metadata is embedded in this text file and can be verified
 using the test-signer public key.
 
@@ -271,11 +272,11 @@ This file should pass verification when scanned by the audit-log-cli tool.
         if not pdf_creation_successful:
             # Simulate copy-pasting text with embedded metadata into PDF files
             try:
-                from reportlab.pdfgen import canvas
                 from reportlab.lib.pagesizes import letter
                 from reportlab.lib.utils import simpleSplit
                 from reportlab.pdfbase import pdfmetrics
                 from reportlab.pdfbase.ttfonts import TTFont
+                from reportlab.pdfgen import canvas
                 
                 # Try to register Windows system fonts with good Unicode support
                 # Try multiple fonts in order of preference
@@ -437,8 +438,8 @@ This file should pass verification when scanned by the audit-log-cli tool.
             
             # Create PDFs directly using a more reliable method for Unicode preservation
             try:
-                import os
                 import binascii
+                import os
                 import tempfile
                 
                 # Debug function to show Unicode code points in a string
@@ -494,10 +495,10 @@ This file should pass verification when scanned by the audit-log-cli tool.
                             console.print(f"[yellow]Error downloading font: {font_err}, will try system fonts[/yellow]")
                         
                         # Import required ReportLab modules
-                        from reportlab.pdfgen import canvas
                         from reportlab.lib.pagesizes import letter
                         from reportlab.pdfbase import pdfmetrics
                         from reportlab.pdfbase.ttfonts import TTFont
+                        from reportlab.pdfgen import canvas
                         
                         # Create a temporary file for the initial PDF
                         temp_pdf = tempfile.NamedTemporaryFile(delete=False, suffix='.pdf')
@@ -564,7 +565,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
                         # Add the full text with Unicode variation selectors as a document-level metadata string
                         with pdf.open_metadata() as meta:
                             meta['dc:description'] = text
-                            meta['pdf:Producer'] = 'EncypherAI Unicode Metadata Preservation'
+                            meta['pdf:Producer'] = 'Encypher Unicode Metadata Preservation'
                             
                         # Also add the text as a separate attachment to ensure preservation
                         filespec = pdf.make_stream(text.encode('utf-8'))
@@ -609,8 +610,8 @@ This file should pass verification when scanned by the audit-log-cli tool.
                         try:
                             console.print("[yellow]Attempting fallback PDF creation method...[/yellow]")
                             # Create a simple PDF with just the text content
-                            from reportlab.pdfgen import canvas
                             from reportlab.lib.pagesizes import letter
+                            from reportlab.pdfgen import canvas
                             
                             c = canvas.Canvas(str(output_path), pagesize=letter)
                             width, height = letter
@@ -660,8 +661,8 @@ This file should pass verification when scanned by the audit-log-cli tool.
                             import pikepdf
                         
                         # Import required ReportLab modules
-                        from reportlab.pdfgen import canvas
                         from reportlab.lib.pagesizes import letter
+                        from reportlab.pdfgen import canvas
                         
                         # Create a basic PDF with the text
                         pdf_path = str(output_path)
@@ -703,7 +704,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
                         # Add metadata
                         with pdf.open_metadata() as meta:
                             meta['dc:description'] = text
-                            meta['pdf:Producer'] = 'EncypherAI Unicode Metadata Test'
+                            meta['pdf:Producer'] = 'Encypher Unicode Metadata Test'
                         
                         # Add text as attachment
                         filespec = pdf.make_stream(text.encode('utf-8'))

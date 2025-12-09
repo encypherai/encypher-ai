@@ -5,9 +5,10 @@ from __future__ import annotations
 
 import fnmatch
 import hashlib
+from collections.abc import AsyncIterator, Iterable
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, AsyncIterator, Dict, Iterable, List, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 

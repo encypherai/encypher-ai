@@ -1,6 +1,6 @@
 # 🚀 Microservices Quick Start Guide
 
-**Get up and running with EncypherAI microservices in 5 minutes!**
+**Get up and running with Encypher microservices in 5 minutes!**
 
 ---
 

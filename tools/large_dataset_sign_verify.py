@@ -27,24 +27,31 @@ Notes:
 """
 import argparse
 import asyncio
+import bz2
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 # Avoid adding new deps; use stdlib urllib for download
-from urllib.request import urlretrieve, urlopen
-import bz2
-import re
+from urllib.request import urlopen, urlretrieve
 
 # Optional rich progress
 try:
-    from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TimeElapsedColumn, TimeRemainingColumn
+    from rich.progress import (
+        BarColumn,
+        Progress,
+        SpinnerColumn,
+        TextColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn,
+    )
     HAVE_RICH = True
 except Exception:
     HAVE_RICH = False

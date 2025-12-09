@@ -65,6 +65,25 @@ interface UsageStats {
   period_end: string;
 }
 
+// Enterprise API usage response (from /usage endpoint)
+interface EnterpriseUsageMetric {
+  name: string;
+  used: number;
+  limit: number;  // -1 for unlimited
+  remaining: number;  // -1 for unlimited
+  percentage_used: number;
+  available: boolean;
+}
+
+interface EnterpriseUsageResponse {
+  organization_id: string;
+  tier: string;
+  period_start: string;
+  period_end: string;
+  metrics: Record<string, EnterpriseUsageMetric>;
+  reset_date: string;
+}
+
 interface TimeSeriesData {
   timestamp: string;
   count: number;
@@ -187,6 +206,13 @@ class ApiError extends Error {
   ) {
     super(message);
     this.name = 'ApiError';
+  }
+
+  /**
+   * Check if this error indicates an expired or invalid session
+   */
+  isAuthError(): boolean {
+    return this.statusCode === 401 || this.statusCode === 403;
   }
 }
 

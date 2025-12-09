@@ -192,25 +192,25 @@ export const defaultMetadata: Metadata = {
 export function getPublisherMetadata(): Metadata {
   return {
     title: "Publisher Content Protection & Licensing | Encypher",
-    description: "From litigation costs to licensing revenue. Court-admissible evidence with 100% accuracy. Track which sentences were used, where, and when.",
+    description: "Transform unmarked content into provably owned assets. Cryptographic watermarking that survives copy-paste. Formal notice capability for AI licensing.",
     keywords: [...keywords.core, ...keywords.publishers],
     openGraph: {
-      title: "From Litigation Costs to Licensing Revenue | Encypher",
-      description: "Court-admissible evidence. 100% accuracy. Track which sentences were used, where, and when. Join publishers defining AI licensing terms.",
+      title: "Transform Your Archive Into Revenue | Encypher",
+      description: "Cryptographic watermarking that survives copy-paste. Formal notice capability. Join publishers defining AI licensing terms.",
       images: [
         {
           url: siteConfig.images.publishers,
           width: 1200,
           height: 630,
-          alt: "Encypher for Publishers - From Litigation Costs to Licensing Revenue",
+          alt: "Encypher for Publishers - Transform Your Archive Into Revenue",
         }
       ],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: "From Litigation Costs to Licensing Revenue | Encypher",
-      description: "Court-admissible evidence. Track which sentences were used, where, and when. Join publishers defining AI licensing terms.",
+      title: "Transform Your Archive Into Revenue | Encypher",
+      description: "Cryptographic watermarking that survives copy-paste. Formal notice capability. Join publishers defining AI licensing terms.",
       images: [siteConfig.images.publishers],
     },
     alternates: {

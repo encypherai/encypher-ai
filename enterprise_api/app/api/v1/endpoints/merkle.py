@@ -3,30 +3,31 @@ API endpoints for Merkle tree operations.
 
 Enterprise tier endpoints for content attribution and plagiarism detection.
 """
-import time
 import logging
+import time
 from typing import Dict
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_organization
+from app.models.merkle import MerkleRoot
 from app.schemas.merkle import (
     DocumentEncodeRequest,
     DocumentEncodeResponse,
+    ErrorResponse,
+    HeatMapData,
     MerkleRootResponse,
-    SourceAttributionRequest,
-    SourceAttributionResponse,
-    SourceMatch,
     PlagiarismDetectionRequest,
     PlagiarismDetectionResponse,
+    SourceAttributionRequest,
+    SourceAttributionResponse,
     SourceDocumentMatch,
-    HeatMapData,
-    ErrorResponse
+    SourceMatch,
 )
 from app.services.merkle_service import MerkleService
-from app.models.merkle import MerkleRoot
+from app.utils.quota import QuotaManager, QuotaType
 
 logger = logging.getLogger(__name__)
 
@@ -91,6 +92,7 @@ router = APIRouter(prefix="/enterprise/merkle", tags=["Enterprise - Merkle Trees
 )
 async def encode_document(
     request: DocumentEncodeRequest,
+    response: Response,
     db: AsyncSession = Depends(get_db),
     organization: dict = Depends(require_merkle_feature),
 ) -> DocumentEncodeResponse:
@@ -110,6 +112,14 @@ async def encode_document(
     """
     start_time = time.time()
     organization_id = organization["organization_id"]
+    
+    # Check and increment quota (1 per document, regardless of size)
+    await QuotaManager.check_quota(
+        db=db,
+        organization_id=organization_id,
+        quota_type=QuotaType.MERKLE_ENCODING,
+        increment=1  # Per document, not per sentence
+    )
     
     try:
         logger.info(
@@ -150,6 +160,15 @@ async def encode_document(
         logger.info(
             f"Successfully encoded document {request.document_id} in {processing_time_ms:.2f}ms"
         )
+        
+        # Add quota usage headers
+        quota_headers = await QuotaManager.get_quota_headers(
+            db=db,
+            organization_id=organization_id,
+            quota_type=QuotaType.MERKLE_ENCODING,
+        )
+        for header, value in quota_headers.items():
+            response.headers[header] = value
         
         return DocumentEncodeResponse(
             success=True,
@@ -219,6 +238,15 @@ async def find_sources(
         SourceAttributionResponse with matching sources
     """
     start_time = time.time()
+    organization_id = organization["organization_id"]
+    
+    # Check and increment quota (1 per lookup request)
+    await QuotaManager.check_quota(
+        db=db,
+        organization_id=organization_id,
+        quota_type=QuotaType.MERKLE_ATTRIBUTION,
+        increment=1
+    )
     
     try:
         # Find matching sources
@@ -324,6 +352,14 @@ async def detect_plagiarism(
     """
     start_time = time.time()
     organization_id = organization["organization_id"]
+    
+    # Check and increment quota (1 per plagiarism check, regardless of document size)
+    await QuotaManager.check_quota(
+        db=db,
+        organization_id=organization_id,
+        quota_type=QuotaType.MERKLE_PLAGIARISM,
+        increment=1
+    )
     
     try:
         # Generate attribution report

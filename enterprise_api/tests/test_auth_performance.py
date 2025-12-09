@@ -1,14 +1,18 @@
 import os
+
 # Set required env vars before importing app
 os.environ["DATABASE_URL"] = "postgresql://user:pass@localhost/db"
 os.environ["KEY_ENCRYPTION_KEY"] = "00" * 32
 os.environ["ENCRYPTION_NONCE"] = "00" * 12
 os.environ["SSL_COM_API_KEY"] = "test_key"
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
-from unittest.mock import MagicMock, patch, AsyncMock
-from app.dependencies import get_current_organization
+
 from app import dependencies
+from app.dependencies import get_current_organization
+
 
 @pytest.mark.asyncio
 async def test_get_current_organization_uses_client():

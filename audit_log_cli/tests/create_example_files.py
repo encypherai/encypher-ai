@@ -1,5 +1,5 @@
 """
-Script to create example files with EncypherAI metadata for testing purposes.
+Script to create example files with Encypher metadata for testing purposes.
 """
 
 import sys
@@ -9,14 +9,13 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent.parent))
 
 try:
-    # Import from the core EncypherAI package as used in shared_commercial_libs
-    from encypher.core.unicode_metadata import UnicodeMetadata, MetadataTarget
-    from encypher.core.keys import load_public_key_from_data, load_private_key_from_data
-    
+    # Import from the core Encypher package as used in shared_commercial_libs
     # Import from our shared commercial library
-    from encypher_commercial_shared import EncypherAI
-    
     from rich.console import Console
+
+    from encypher.core.keys import load_private_key_from_data, load_public_key_from_data
+    from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+    from encypher_commercial_shared import Encypher
     console = Console()
     
     # Directory to save example files
@@ -28,8 +27,8 @@ try:
     KEY_DIR.mkdir(exist_ok=True)
     
     # Generate a test private/public key pair for signing
-    from cryptography.hazmat.primitives.asymmetric import ed25519
     from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import ed25519
     
     def generate_key_pair(private_key_path, public_key_path):
         """Generate a test Ed25519 key pair for signing and verification."""
@@ -74,7 +73,7 @@ try:
     # Create example files with metadata
     
     # Example 1: Valid metadata from test-signer
-    ea_test = EncypherAI(
+    ea_test = Encypher(
         private_key_path=str(test_signer_private_key_path),
         public_key_path=str(test_signer_public_key_path),
         signer_id="test-signer",
@@ -82,7 +81,7 @@ try:
     )
     
     # Example text content
-    example1_text = """This is an example file with valid EncypherAI metadata.
+    example1_text = """This is an example file with valid Encypher metadata.
 The metadata is embedded in this text file and can be verified
 using the test-signer public key.
 
@@ -101,7 +100,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
             "example": "valid"
         }
         
-        # Let's modify the EncypherAI.embed_metadata method to accept a timestamp parameter
+        # Let's modify the Encypher.embed_metadata method to accept a timestamp parameter
         # and pass it to UnicodeMetadata.embed_metadata
         from types import MethodType
         
@@ -154,7 +153,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
         console.print(f"[red]Error creating example1: {e}[/red]")
     
     # Example 2: Valid metadata from unknown-signer
-    ea_unknown = EncypherAI(
+    ea_unknown = Encypher(
         private_key_path=str(unknown_signer_private_key_path),
         public_key_path=str(unknown_signer_public_key_path),
         signer_id="unknown-signer",
@@ -162,7 +161,7 @@ This file should pass verification when scanned by the audit-log-cli tool.
     )
     
     # Example text content
-    example2_text = """This is an example file with valid EncypherAI metadata,
+    example2_text = """This is an example file with valid Encypher metadata,
 but from an unknown signer that is not in the trusted signers list.
 
 This file should have valid metadata but fail verification when scanned
@@ -202,7 +201,7 @@ by the audit-log-cli tool with trusted signers specified.
         console.print(f"[red]Error creating example2: {e}[/red]")
     
     # Example 3: File without any metadata
-    example3_text = """This is an example file without any EncypherAI metadata.
+    example3_text = """This is an example file without any Encypher metadata.
 
 This file should be detected as having no metadata when scanned
 by the audit-log-cli tool.
@@ -217,7 +216,7 @@ by the audit-log-cli tool.
     # Example 4: File with tampered metadata - sophisticated approach
     try:
         # Create a file with valid metadata, then modify the content to simulate tampering
-        example4_text = """This is an example file with tampered EncypherAI metadata.
+        example4_text = """This is an example file with tampered Encypher metadata.
 The metadata was originally valid, but the content has been modified
 after the metadata was embedded.
 
@@ -225,9 +224,9 @@ This file should fail verification when scanned by the audit-log-cli tool.
 """
         
         # Get current timestamp
-        from datetime import datetime, timezone
-        import json
         import copy
+        import json
+        from datetime import datetime, timezone
         current_time = datetime.now(timezone.utc)
         
         # Create original metadata

@@ -3,26 +3,31 @@ Licensing Agreement Management API Router.
 
 Endpoints for managing licensing agreements, content access, and revenue distribution.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List, Optional
 from uuid import UUID
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.database import get_db
-from app.models.licensing import (
-    AICompany, AgreementStatus, DistributionStatus
-)
+from app.middleware.licensing_auth import verify_licensing_api_key
+from app.models.licensing import AgreementStatus, AICompany, DistributionStatus
 from app.schemas.licensing import (
-    LicensingAgreementCreate, LicensingAgreementUpdate,
-    LicensingAgreementResponse, LicensingAgreementCreateResponse,
-    ContentListResponse, ContentMetadata, ContentAccessTrack,
-    ContentAccessLogResponse, RevenueDistributionCreate,
-    RevenueDistributionResponse, MemberRevenueDetail,
-    PayoutCreate, PayoutResponse, SuccessResponse
+    ContentAccessLogResponse,
+    ContentAccessTrack,
+    ContentListResponse,
+    LicensingAgreementCreate,
+    LicensingAgreementCreateResponse,
+    LicensingAgreementResponse,
+    LicensingAgreementUpdate,
+    MemberRevenueDetail,
+    PayoutCreate,
+    PayoutResponse,
+    RevenueDistributionCreate,
+    RevenueDistributionResponse,
+    SuccessResponse,
 )
 from app.services.licensing_service import LicensingService
-from app.middleware.licensing_auth import verify_licensing_api_key
-
 
 router = APIRouter(prefix="/licensing", tags=["Licensing"])
 
@@ -154,24 +159,34 @@ async def list_available_content(
     Headers:
         Authorization: Bearer lic_abc123...
     """
-    # TODO: Implement content filtering based on agreement terms
-    # For now, return mock data
-    # In production, this would query the coalition_content table
-
-    # Get active agreements for this AI company
-    await LicensingService.list_agreements(
+    # Get active agreement for this AI company
+    agreement = await LicensingService.get_active_agreement_for_company(
         db=db,
-        # TODO: Filter by ai_company_id
-        status=AgreementStatus.ACTIVE
+        ai_company_id=ai_company.id
     )
 
-    # Mock content response
-    content_list: List[ContentMetadata] = []
+    if not agreement:
+        raise HTTPException(
+            status_code=403,
+            detail="No active agreement found for this AI company"
+        )
 
+    # Query content matching agreement terms
+    content_list, total = await LicensingService.list_available_content(
+        db=db,
+        agreement=agreement,
+        content_type=content_type,
+        min_word_count=min_word_count,
+        limit=limit,
+        offset=offset
+    )
+
+    # TODO: Implement quota tracking based on agreement terms
+    # For now, quota_remaining is None (unlimited)
     return ContentListResponse(
         content=content_list,
-        total=0,
-        quota_remaining=None  # TODO: Implement quota tracking
+        total=total,
+        quota_remaining=None
     )
 
 
@@ -191,17 +206,10 @@ async def track_content_access(
         Authorization: Bearer lic_abc123...
     """
     # Get the active agreement for this AI company
-    agreements = await LicensingService.list_agreements(
+    agreement = await LicensingService.get_active_agreement_for_company(
         db=db,
-        status=AgreementStatus.ACTIVE
+        ai_company_id=ai_company.id
     )
-
-    # Find agreement for this AI company
-    agreement = None
-    for ag in agreements:
-        if ag.ai_company_id == ai_company.id and ag.is_active():
-            agreement = ag
-            break
 
     if not agreement:
         raise HTTPException(
@@ -209,17 +217,31 @@ async def track_content_access(
             detail="No active agreement found for this AI company"
         )
 
-    # TODO: Verify content_id exists and member_id is valid
-    # For now, we'll use a mock member_id
-    from uuid import uuid4
-    mock_member_id = uuid4()
+    # Look up the content owner (member_id) from the content reference
+    member_id = await LicensingService.get_content_owner(db, access_data.content_id)
+
+    if not member_id:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Content {access_data.content_id} not found"
+        )
+
+    # Convert string organization_id to UUID for storage
+    from uuid import UUID as UUIDType
+    try:
+        member_uuid = UUIDType(member_id)
+    except ValueError:
+        # If organization_id is not a valid UUID, generate a deterministic one
+        import hashlib
+        hash_bytes = hashlib.sha256(member_id.encode()).digest()[:16]
+        member_uuid = UUIDType(bytes=hash_bytes)
 
     # Track the access
     access_log = await LicensingService.track_content_access(
         db=db,
         agreement_id=agreement.id,
         content_id=access_data.content_id,
-        member_id=mock_member_id,
+        member_id=member_uuid,
         ai_company_name=ai_company.company_name,
         access_type=access_data.access_type
     )

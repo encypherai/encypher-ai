@@ -3,9 +3,9 @@ Feature flag system for tier-based feature access.
 
 Manages which features are available to which tiers.
 """
+from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Set
-from dataclasses import dataclass
 
 from app.models.organization import OrganizationTier
 
@@ -55,26 +55,26 @@ class FeatureFlagManager:
     
     # Feature configuration mapping
     FEATURE_CONFIG: Dict[Feature, FeatureConfig] = {
-        # Merkle Tree Features - Enterprise Only
+        # Merkle Tree Features - Professional+ (with quotas)
         Feature.MERKLE_ENCODING: FeatureConfig(
-            name="Document Encoding",
-            description="Encode documents into Merkle trees",
-            required_tier=OrganizationTier.ENTERPRISE
+            name="Sentence-Level Merkle Roots",
+            description="Encode documents into Merkle trees with sentence-level granularity",
+            required_tier=OrganizationTier.PROFESSIONAL
         ),
         Feature.MERKLE_ATTRIBUTION: FeatureConfig(
             name="Source Attribution",
             description="Find source documents for text segments",
-            required_tier=OrganizationTier.ENTERPRISE
+            required_tier=OrganizationTier.PROFESSIONAL
         ),
         Feature.MERKLE_PLAGIARISM: FeatureConfig(
             name="Plagiarism Detection",
             description="Detect plagiarism and generate reports",
-            required_tier=OrganizationTier.ENTERPRISE
+            required_tier=OrganizationTier.BUSINESS  # Business+ only
         ),
         Feature.MERKLE_PROOF_VERIFICATION: FeatureConfig(
             name="Proof Verification",
             description="Verify Merkle proofs",
-            required_tier=OrganizationTier.ENTERPRISE
+            required_tier=OrganizationTier.PROFESSIONAL
         ),
         
         # Advanced Features - Professional+
@@ -156,7 +156,8 @@ class FeatureFlagManager:
         tier_levels = {
             OrganizationTier.FREE: 0,
             OrganizationTier.PROFESSIONAL: 1,
-            OrganizationTier.ENTERPRISE: 2
+            OrganizationTier.BUSINESS: 2,
+            OrganizationTier.ENTERPRISE: 3,
         }
         
         current_level = tier_levels.get(tier, -1)
@@ -247,25 +248,43 @@ TIER_FEATURES: Dict[OrganizationTier, Set[Feature]] = {
     OrganizationTier.FREE: set(),
     
     OrganizationTier.PROFESSIONAL: {
-        Feature.BULK_OPERATIONS,
+        # Merkle features (with quotas)
+        Feature.MERKLE_ENCODING,
+        Feature.MERKLE_ATTRIBUTION,
+        Feature.MERKLE_PROOF_VERIFICATION,
+        # Advanced features
         Feature.ADVANCED_ANALYTICS,
         Feature.CUSTOM_SEGMENTATION,
         Feature.API_WEBHOOKS,
         Feature.PREMIUM_SUPPORT,
     },
     
-    OrganizationTier.ENTERPRISE: {
+    OrganizationTier.BUSINESS: {
         # All professional features
+        Feature.MERKLE_ENCODING,
+        Feature.MERKLE_ATTRIBUTION,
+        Feature.MERKLE_PROOF_VERIFICATION,
+        Feature.ADVANCED_ANALYTICS,
+        Feature.CUSTOM_SEGMENTATION,
+        Feature.API_WEBHOOKS,
+        Feature.PREMIUM_SUPPORT,
+        # Plus business features
+        Feature.MERKLE_PLAGIARISM,
+        Feature.BULK_OPERATIONS,
+    },
+    
+    OrganizationTier.ENTERPRISE: {
+        # All business features
+        Feature.MERKLE_ENCODING,
+        Feature.MERKLE_ATTRIBUTION,
+        Feature.MERKLE_PROOF_VERIFICATION,
+        Feature.MERKLE_PLAGIARISM,
         Feature.BULK_OPERATIONS,
         Feature.ADVANCED_ANALYTICS,
         Feature.CUSTOM_SEGMENTATION,
         Feature.API_WEBHOOKS,
         Feature.PREMIUM_SUPPORT,
         # Plus enterprise features
-        Feature.MERKLE_ENCODING,
-        Feature.MERKLE_ATTRIBUTION,
-        Feature.MERKLE_PLAGIARISM,
-        Feature.MERKLE_PROOF_VERIFICATION,
         Feature.PRIORITY_PROCESSING,
         Feature.DEDICATED_RESOURCES,
         Feature.CUSTOM_RATE_LIMITS,

@@ -4,8 +4,8 @@ Pydantic schemas for demo corpus generation.
 from __future__ import annotations
 
 from typing import List, Optional
-from pydantic import BaseModel, Field
 
+from pydantic import BaseModel, Field
 
 DEFAULT_TOPICS = ["politics", "sports", "tech", "finance", "health"]
 

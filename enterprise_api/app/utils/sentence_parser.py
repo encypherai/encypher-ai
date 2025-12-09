@@ -1,8 +1,8 @@
 """
 Sentence parsing and hashing utilities.
 """
-import re
 import hashlib
+import re
 from typing import List
 
 

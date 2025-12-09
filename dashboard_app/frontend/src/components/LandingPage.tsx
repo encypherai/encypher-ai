@@ -52,7 +52,7 @@ export default function LandingPage() {
         <div className="w-full max-w-md p-8 space-y-8 text-center">
           <Image 
             src="/horizontal-logo-nobg.png"
-            alt="EncypherAI Logo"
+            alt="Encypher Logo"
             width={300}
             height={80}
             className="mx-auto"
@@ -76,7 +76,7 @@ export default function LandingPage() {
           <div className="flex justify-center">
             <Image 
               src="/horizontal-logo-nobg.png"
-              alt="EncypherAI Logo"
+              alt="Encypher Logo"
               width={300}
               height={80}
               priority

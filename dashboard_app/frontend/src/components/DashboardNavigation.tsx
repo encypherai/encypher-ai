@@ -98,7 +98,7 @@ export default function DashboardNavigation() {
         </button>
         <div className="ml-4 flex-1 flex justify-between items-center">
           <div className="flex-1">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">EncypherAI Dashboard</h1>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Encypher Dashboard</h1>
           </div>
           {user && (
             <div className="flex items-center">
@@ -182,7 +182,7 @@ export default function DashboardNavigation() {
         <div className="flex-1 flex flex-col min-h-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700">
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex items-center flex-shrink-0 px-4">
-              <h1 className="text-lg font-bold text-gray-900 dark:text-white">EncypherAI Dashboard</h1>
+              <h1 className="text-lg font-bold text-gray-900 dark:text-white">Encypher Dashboard</h1>
             </div>
             <nav className="mt-5 flex-1 px-2 space-y-1">
               {navigation.map((item) => (

@@ -1,6 +1,6 @@
-# EncypherAI Commercial Shared Library
+# Encypher Commercial Shared Library
 
-Shared Python library for EncypherAI commercial tools and services.
+Shared Python library for Encypher commercial tools and services.
 
 > **⚠️ Auto-Sync Enabled:** Changes to this directory are automatically synced to `services/*/shared_libs/` via GitHub Actions. See `.github/workflows/sync-shared-libs.yml`.
 
@@ -11,8 +11,8 @@ shared_commercial_libs/
 ├── src/
 │   └── encypher_commercial_shared/
 │       ├── __init__.py
-│       ├── core/           # EncypherAI wrapper (CLI tools)
-│       │   ├── api.py      # EncypherAI class, VerificationResult
+│       ├── core/           # Encypher wrapper (CLI tools)
+│       │   ├── api.py      # Encypher class, VerificationResult
 │       │   └── utils.py    # scan_directory, generate_report
 │       ├── db/             # Database utilities (microservices)
 │       │   ├── __init__.py
@@ -28,14 +28,14 @@ shared_commercial_libs/
 
 ## Modules
 
-### `core` - EncypherAI Wrapper
+### `core` - Encypher Wrapper
 High-level API for CLI tools (audit_log_cli, policy_validator_cli).
 
 ```python
-from encypher_commercial_shared import EncypherAI, VerificationResult
+from encypher_commercial_shared import Encypher, VerificationResult
 from encypher_commercial_shared.core import scan_directory, generate_report
 
-encypher = EncypherAI(trusted_signers={"signer1": "key.pem"})
+encypher = Encypher(trusted_signers={"signer1": "key.pem"})
 result = encypher.verify_from_text("Text with metadata")
 ```
 

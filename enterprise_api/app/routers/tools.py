@@ -5,13 +5,13 @@ These endpoints use a demo key for the public website tools,
 allowing users to try encoding/decoding without authentication.
 """
 import logging
-from typing import Any, Dict, List, Literal, Optional
+import re
+from typing import Any, Dict, Literal, Optional
 
+from encypher.core.constants import MetadataTarget
+from encypher.core.unicode_metadata import UnicodeMetadata
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel, Field
-
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.constants import MetadataTarget
 
 from app.config import settings
 

@@ -12,6 +12,9 @@ from .db.session import engine
 from .middleware.logging import RequestLoggingMiddleware
 from .monitoring.metrics import setup_metrics
 
+# Import database startup utilities
+from encypher_commercial_shared.db import ensure_database_ready
+
 # Configure structured logging
 logger = setup_logging(settings.LOG_LEVEL)
 
@@ -19,7 +22,16 @@ logger = setup_logging(settings.LOG_LEVEL)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    Base.metadata.create_all(bind=engine)
+    
+    # Ensure database is ready and run migrations
+    ensure_database_ready(
+        database_url=settings.DATABASE_URL,
+        service_name=settings.SERVICE_NAME,
+        alembic_config_path="alembic.ini",
+        run_migrations=True,
+        exit_on_failure=True
+    )
+    
     yield
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 

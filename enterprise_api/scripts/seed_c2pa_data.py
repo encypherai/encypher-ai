@@ -11,11 +11,11 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import select
-
 from app.core.config import settings
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
 from app.models.c2pa_schema import C2PASchema
 from app.models.c2pa_template import C2PAAssertionTemplate
 from app.services.c2pa_seed_data import get_standard_schemas, get_standard_templates

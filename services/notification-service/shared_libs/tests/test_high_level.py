@@ -2,23 +2,23 @@
 Unit tests for the high-level API in the shared commercial library.
 """
 
+import os
+import tempfile
 import unittest
 from unittest.mock import patch
-import tempfile
-import os
 
-from encypher_commercial_shared import EncypherAI, VerificationResult
+from encypher_commercial_shared import Encypher, VerificationResult
 
 
-class TestEncypherAI(unittest.TestCase):
-    """Test cases for the EncypherAI high-level API."""
+class TestEncypher(unittest.TestCase):
+    """Test cases for the Encypher high-level API."""
 
     def setUp(self):
         """Set up test fixtures."""
-        self.encypher = EncypherAI()
+        self.encypher = Encypher()
 
     def test_initialization(self):
-        """Test that the EncypherAI class initializes correctly."""
+        """Test that the Encypher class initializes correctly."""
         self.assertIsNotNone(self.encypher)
         self.assertEqual(self.encypher.verbose, False)
         self.assertEqual(self.encypher.trusted_signers, {})
@@ -26,7 +26,7 @@ class TestEncypherAI(unittest.TestCase):
     def test_initialization_with_options(self):
         """Test initialization with custom options."""
         trusted_signers = {"signer1": "path/to/key1.pem", "signer2": "path/to/key2.pem"}
-        encypher = EncypherAI(verbose=True)
+        encypher = Encypher(verbose=True)
         # Manually set trusted signers for testing
         encypher.trusted_signers = trusted_signers
         
@@ -54,7 +54,7 @@ class TestEncypherAI(unittest.TestCase):
         self.assertEqual(result.signer_id, "test-signer")
         self.assertEqual(result.model_id, "test-model")
 
-    @patch('encypher_commercial_shared.high_level.EncypherAI.verify_from_text')
+    @patch('encypher_commercial_shared.high_level.Encypher.verify_from_text')
     def test_verify_from_file(self, mock_verify_from_text):
         """Test verifying metadata from a file."""
         # Create a temporary file

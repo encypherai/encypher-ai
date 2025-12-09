@@ -6,8 +6,16 @@ Stores minimal signed embeddings that link text segments to Merkle trees.
 from datetime import datetime
 
 from sqlalchemy import (
-    Column, BigInteger, String, Integer, TIMESTAMP, ForeignKey,
-    CheckConstraint, Index, JSON, Text
+    JSON,
+    TIMESTAMP,
+    BigInteger,
+    CheckConstraint,
+    Column,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
@@ -68,6 +76,12 @@ class ContentReference(Base):
     signature_hash = Column(String(64), nullable=False)
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, index=True)
     expires_at = Column(TIMESTAMP, nullable=True, index=True)
+    
+    # Status List (W3C StatusList2021) for per-document revocation
+    # TEAM_002: Added for bitstring status list support
+    status_list_index = Column(Integer, nullable=True)  # Which list (0, 1, 2...)
+    status_bit_index = Column(Integer, nullable=True)   # Position in list (0-131071)
+    status_list_url = Column(String(500), nullable=True)  # CDN URL for status list
     
     # Additional metadata
     embedding_metadata = Column(JSON, default={})

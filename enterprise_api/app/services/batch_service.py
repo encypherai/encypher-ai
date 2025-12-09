@@ -8,8 +8,8 @@ import hashlib
 import json
 import logging
 import time
-from datetime import datetime, timezone
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Sequence
 
 from fastapi import HTTPException, status
@@ -25,6 +25,7 @@ from app.models.batch import (
     BatchRequestType,
 )
 from app.models.request_models import SignRequest
+from app.observability.metrics import increment
 from app.schemas.batch import (
     BatchItemPayload,
     BatchItemResult,
@@ -34,12 +35,15 @@ from app.schemas.batch import (
     BatchSummary,
     BatchVerifyRequest,
 )
-from app.observability.metrics import increment
 from app.schemas.embeddings import EncodeWithEmbeddingsRequest
 from app.services.embedding_executor import encode_document_with_embeddings
 from app.services.idempotency_service import idempotency_service
 from app.services.signing_executor import execute_signing
-from app.services.verification_logic import build_verdict, determine_reason_code, execute_verification
+from app.services.verification_logic import (
+    build_verdict,
+    determine_reason_code,
+    execute_verification,
+)
 
 logger = logging.getLogger(__name__)
 

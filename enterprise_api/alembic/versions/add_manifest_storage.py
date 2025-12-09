@@ -5,10 +5,10 @@ Revises: add_prev_manifest
 Create Date: 2025-11-03
 
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = 'add_manifest_storage'

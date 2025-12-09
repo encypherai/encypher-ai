@@ -2,9 +2,9 @@
 Integration tests for web-service endpoints.
 Tests all demo request and analytics endpoints.
 """
-import httpx
 import asyncio
-from datetime import datetime
+
+import httpx
 
 BASE_URL = "http://localhost:8010"
 

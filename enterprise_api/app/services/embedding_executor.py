@@ -12,9 +12,9 @@ from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.embeddings import (
+    EmbeddingInfo,
     EncodeWithEmbeddingsRequest,
     EncodeWithEmbeddingsResponse,
-    EmbeddingInfo,
     MerkleTreeInfo,
 )
 from app.services.embedding_service import EmbeddingService
@@ -77,9 +77,10 @@ async def encode_document_with_embeddings(
         # Validate custom assertions if provided
         validated_assertions = None
         if request.custom_assertions and request.validate_assertions:
-            from app.services.c2pa_validator import validator
-            from app.models.c2pa_schema import C2PASchema
             from sqlalchemy import select
+
+            from app.models.c2pa_schema import C2PASchema
+            from app.services.c2pa_validator import validator
             
             # Fetch registered schemas for this organization
             registered_schemas = {}

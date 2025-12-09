@@ -8,7 +8,6 @@ Usage:
 Example:
     uv run python scripts/setup_service_alembic.py key-service
 """
-import os
 import sys
 from pathlib import Path
 
@@ -221,11 +220,11 @@ def setup_alembic(service_name: str):
     
     print(f"\n✅ Alembic setup complete for {service_name}")
     print(f"   Database: {db_name}")
-    print(f"\nNext steps:")
-    print(f"  1. Create initial migration:")
+    print("\nNext steps:")
+    print("  1. Create initial migration:")
     print(f"     cd services/{service_name}")
-    print(f"     alembic revision --autogenerate -m 'initial_schema'")
-    print(f"  2. Update Dockerfile to run migrations on startup")
+    print("     alembic revision --autogenerate -m 'initial_schema'")
+    print("  2. Update Dockerfile to run migrations on startup")
 
 
 if __name__ == "__main__":

@@ -1,12 +1,13 @@
-import pytest
 import asyncio
-import time
-import docker
 import socket
+import time
+from unittest.mock import AsyncMock, patch
+
+import docker
 import numpy as np
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+import pytest
 from sqlalchemy import text
-from unittest.mock import patch, AsyncMock
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from starlette.testclient import TestClient
 
 # Import app components

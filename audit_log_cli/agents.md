@@ -1,7 +1,7 @@
 # Audit Log CLI - Agent Development Guide
 
 ## Overview
-The Audit Log CLI is a command-line tool for scanning text assets, validating EncypherAI metadata, and generating compliance reports in CSV format.
+The Audit Log CLI is a command-line tool for scanning text assets, validating Encypher metadata, and generating compliance reports in CSV format.
 
 ## Current Status
 ✅ **Functional** - Core functionality works
@@ -45,11 +45,11 @@ audit_log_cli/
 **Problem**: Lines 1-6 and 14-42 have duplicate/conflicting imports
 ```python
 # Line 1-6: First import block
-from encypher_commercial_shared import EncypherAI, VerificationResult
+from encypher_commercial_shared import Encypher, VerificationResult
 
 # Line 14-42: Second import block with fallback
 try:
-    from encypher_ai import EncypherAI, VerificationResult
+    from encypher_ai import Encypher, VerificationResult
 except ImportError:
     # Fallback stub
 ```
@@ -105,7 +105,7 @@ uv run mypy app/
 ## Integration Points
 
 ### With shared_commercial_libs
-- Uses `EncypherAI` high-level API
+- Uses `Encypher` high-level API
 - Uses `scan_directory` utility
 - Uses `generate_report` utility
 

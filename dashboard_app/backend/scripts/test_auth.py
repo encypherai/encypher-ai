@@ -1,12 +1,14 @@
 import pytest
+
 pytestmark = pytest.mark.skip(reason="Dashboard auth script requires live API")
 """
 Test authentication endpoints to verify login functionality.
 """
 import asyncio
-import sys
-import os
 import json
+import os
+import sys
+
 import httpx
 
 # Add the parent directory to sys.path to import app modules

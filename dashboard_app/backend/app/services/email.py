@@ -2,10 +2,10 @@
 Email service for sending emails from the application.
 """
 import logging
-from typing import Optional
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from typing import Optional
 
 from app.core.config import settings
 
@@ -85,14 +85,14 @@ async def send_password_reset_email(email: str, reset_url: str) -> bool:
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
-    subject = "Password Reset - EncypherAI Dashboard"
+    subject = "Password Reset - Encypher Dashboard"
     
     html_content = f"""
     <html>
     <body>
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #4f46e5;">Reset Your Password</h2>
-            <p>You have requested to reset your password for the EncypherAI Dashboard.</p>
+            <p>You have requested to reset your password for the Encypher Dashboard.</p>
             <p>Please click the link below to reset your password. This link will expire in 24 hours.</p>
             <p>
                 <a href="{reset_url}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
@@ -100,7 +100,7 @@ async def send_password_reset_email(email: str, reset_url: str) -> bool:
                 </a>
             </p>
             <p>If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
-            <p>Thank you,<br>The EncypherAI Team</p>
+            <p>Thank you,<br>The Encypher Team</p>
         </div>
     </body>
     </html>
@@ -109,7 +109,7 @@ async def send_password_reset_email(email: str, reset_url: str) -> bool:
     text_content = f"""
     Reset Your Password
     
-    You have requested to reset your password for the EncypherAI Dashboard.
+    You have requested to reset your password for the Encypher Dashboard.
     
     Please visit the following link to reset your password. This link will expire in 24 hours.
     
@@ -118,7 +118,7 @@ async def send_password_reset_email(email: str, reset_url: str) -> bool:
     If you did not request a password reset, please ignore this email or contact support if you have concerns.
     
     Thank you,
-    The EncypherAI Team
+    The Encypher Team
     """
     
     return await send_email(

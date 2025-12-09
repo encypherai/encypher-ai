@@ -9,10 +9,10 @@ This migration adds:
 - coalition_earnings table for revenue attribution
 - coalition_payouts table for tracking payments
 """
-from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 
+from alembic import op
 
 # revision identifiers
 revision = 'add_coalition_tracking'

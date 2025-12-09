@@ -4,26 +4,26 @@ API endpoints for auto-provisioning organizations and API keys.
 Allows external services (SDK, WordPress, CLI) to automatically
 create organizations and obtain API keys.
 """
-import time
 import logging
+import time
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.models.organization import OrganizationTier
 from app.schemas.provisioning import (
-    AutoProvisionRequest,
-    AutoProvisionResponse,
-    APIKeyResponse,
     APIKeyCreateRequest,
     APIKeyListResponse,
+    APIKeyResponse,
     APIKeyRevokeRequest,
+    AutoProvisionRequest,
+    AutoProvisionResponse,
     UserAccountCreateRequest,
-    UserAccountResponse
+    UserAccountResponse,
 )
 from app.services.provisioning_service import ProvisioningService
-from app.models.organization import OrganizationTier
 
 logger = logging.getLogger(__name__)
 

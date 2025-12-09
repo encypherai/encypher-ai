@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Full-Stack Integration Test for EncypherAI Platform
+Full-Stack Integration Test for Encypher Platform
 
 Tests the complete flow:
 1. User signup/login (auth-service)
@@ -13,12 +13,12 @@ Tests the complete flow:
 Usage:
     python scripts/test_full_stack.py
 """
-import requests
-import json
-import sys
 import subprocess
+import sys
 from datetime import datetime
 from typing import Optional, Tuple
+
+import requests
 
 # Service URLs
 SERVICES = {
@@ -54,7 +54,7 @@ class TestResults:
         print(f"\n{'='*60}")
         print(f"Full-Stack Test Results: {self.passed}/{total} passed")
         if self.errors:
-            print(f"\nFailed tests:")
+            print("\nFailed tests:")
             for name, error in self.errors:
                 print(f"  - {name}: {error}")
         return self.failed == 0
@@ -379,7 +379,7 @@ def test_coalition(token: str):
 
 def main():
     print("="*60)
-    print("EncypherAI Full-Stack Integration Test")
+    print("Encypher Full-Stack Integration Test")
     print("="*60)
     print(f"Testing {len(SERVICES)} services...")
     

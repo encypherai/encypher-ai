@@ -1,8 +1,8 @@
 """
 Script to update main.py files to include metrics setup.
 """
-from pathlib import Path
 import re
+from pathlib import Path
 
 SERVICES = [
     "key-service",

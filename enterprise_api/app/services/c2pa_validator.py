@@ -4,7 +4,8 @@ C2PA Assertion Validation Service
 Validates C2PA assertions against registered schemas.
 """
 import logging
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
 import jsonschema
 from jsonschema import Draft7Validator
 

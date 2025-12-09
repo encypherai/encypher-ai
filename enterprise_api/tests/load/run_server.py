@@ -1,6 +1,7 @@
-import uvicorn
 import os
 import sys
+
+import uvicorn
 
 # Add parent directory to path (enterprise_api root)
 current_dir = os.path.dirname(os.path.abspath(__file__)) # tests/load

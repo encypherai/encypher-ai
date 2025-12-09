@@ -2,13 +2,13 @@
 
 **Date**: November 3, 2025  
 **Version**: Enterprise API v1.0  
-**Auditor**: EncypherAI Engineering Team
+**Auditor**: Encypher Engineering Team
 
 ---
 
 ## Executive Summary
 
-This document audits the EncypherAI Enterprise API's compliance with the C2PA 2.2 specification and implementation guidance.
+This document audits the Encypher Enterprise API's compliance with the C2PA 2.2 specification and implementation guidance.
 
 **Overall Compliance**: ✅ **98% COMPLIANT**
 
@@ -129,7 +129,7 @@ final_soft_binding_assertion: C2PAAssertion = {
 
 **Implementation**:
 - ✅ `claim_generator` field in manifest
-- ✅ Format: `EncypherAI Enterprise API/{organization_id}`
+- ✅ Format: `Encypher Enterprise API/{organization_id}`
 - ✅ Version tracking via encypher-ai library
 
 **Location**: `encypher-ai/encypher/core/unicode_metadata.py:793`
@@ -548,7 +548,7 @@ normalized = unicodedata.normalize("NFC", text)
 
 ## 13. Conclusion
 
-The EncypherAI Enterprise API demonstrates **excellent C2PA 2.2 compliance** at **98%**.
+The Encypher Enterprise API demonstrates **excellent C2PA 2.2 compliance** at **98%**.
 
 ### Strengths:
 - ✅ Complete cryptographic implementation

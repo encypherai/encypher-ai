@@ -4,11 +4,10 @@ Pydantic schemas for Merkle tree API endpoints.
 These schemas define request/response models for the Enterprise API.
 """
 from datetime import datetime
-from typing import List, Optional, Dict, Any
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
-
 
 # ============================================================================
 # Document Encoding Schemas

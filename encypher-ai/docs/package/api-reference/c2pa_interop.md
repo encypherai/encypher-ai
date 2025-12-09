@@ -1,6 +1,6 @@
 # C2PA Interoperability Module
 
-The ``encypher.interop.c2pa`` package groups the helpers that make EncypherAI's
+The ``encypher.interop.c2pa`` package groups the helpers that make Encypher's
 text pipeline interoperable with the Coalition for Content Provenance and
 Authenticity (C2PA) specification. These utilities are shared between the core
 ``UnicodeMetadata`` implementation, integration tests, and third-party
@@ -12,7 +12,7 @@ The module focuses on three areas:
    carries a complete C2PA manifest store inside a Unicode text asset.
 2. Normalising text and calculating the SHA-256 content hash with the exact same
    procedure during embedding and verification.
-3. Converting manifests between EncypherAI's convenience shape and the canonical
+3. Converting manifests between Encypher's convenience shape and the canonical
    C2PA structure when interoperability with external tooling is required.
 
 ## Text Wrapper Helpers
@@ -78,7 +78,7 @@ from encypher.interop.c2pa import (
 ```
 
 These functions convert between the convenience dictionaries exposed by the
-EncypherAI SDK and schema-compliant C2PA manifests. They are useful when you need
+Encypher SDK and schema-compliant C2PA manifests. They are useful when you need
 full control over the actions and assertions that will be embedded inside the
 text manifest store.
 

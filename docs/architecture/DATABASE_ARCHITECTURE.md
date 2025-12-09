@@ -1,8 +1,8 @@
-# EncypherAI Database Architecture
+# Encypher Database Architecture
 
 ## Overview
 
-EncypherAI uses a **database-per-service architecture** for maximum scalability and isolation:
+Encypher uses a **database-per-service architecture** for maximum scalability and isolation:
 
 | Service | Database | Port | Purpose |
 |---------|----------|------|---------|

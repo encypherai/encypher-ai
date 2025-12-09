@@ -8,9 +8,9 @@ import json
 import pytest
 from fastapi.testclient import TestClient
 
+from app.dependencies import require_sign_permission
 from app.main import app
 from app.models.response_models import SignResponse
-from app.dependencies import require_sign_permission
 
 
 @pytest.mark.asyncio

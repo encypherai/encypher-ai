@@ -3,17 +3,17 @@ Hierarchical text segmentation.
 
 Combines sentence, paragraph, and section segmentation into a unified structure.
 """
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
+from typing import Any, Dict, List, Optional
 
-from .sentence import segment_sentences
 from .paragraph import segment_paragraphs
 from .section import segment_sections
+from .sentence import segment_sentences
 from .word import segment_words_simple
 
 # Import default segmenter (spaCy-based with Unicode normalization)
 try:
-    from .default import segment_sentences_default, segment_words_default, SPACY_AVAILABLE
+    from .default import SPACY_AVAILABLE, segment_sentences_default, segment_words_default
     USE_DEFAULT = True
 except ImportError:
     USE_DEFAULT = False

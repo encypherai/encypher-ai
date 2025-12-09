@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Dependency Audit Script for EncypherAI Commercial
+Dependency Audit Script for Encypher Commercial
 
 Checks all services for:
 1. Outdated dependencies
@@ -10,12 +10,10 @@ Checks all services for:
 Usage:
     python scripts/audit_dependencies.py
 """
-import subprocess
-import json
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Tuple
-import sys
 
 # Minimum secure versions for critical packages
 MINIMUM_VERSIONS = {
@@ -129,7 +127,7 @@ def check_minimum_version(pkg: str, version: str) -> str:
 
 def main():
     print("=" * 60)
-    print("EncypherAI Dependency Audit")
+    print("Encypher Dependency Audit")
     print("=" * 60)
     
     pyproject_files = find_pyproject_files()

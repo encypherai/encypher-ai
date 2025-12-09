@@ -1,12 +1,13 @@
-import time
-import docker
 import os
+import signal
 import subprocess
 import sys
+import time
+
+import docker
 import httpx
 import psycopg2
 from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
-import signal
 
 # Setup paths
 current_dir = os.path.dirname(os.path.abspath(__file__))

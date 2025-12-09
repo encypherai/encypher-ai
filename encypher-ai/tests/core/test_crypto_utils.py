@@ -190,7 +190,7 @@ def manifest_payload_data() -> ManifestPayload:
     """Sample ManifestPayload data."""
     timestamp = format_timestamp()
     return ManifestPayload(
-        claim_generator="EncypherAI-Tests/1.0",
+        claim_generator="Encypher-Tests/1.0",
         timestamp=timestamp,
         assertions=[
             ManifestAction(

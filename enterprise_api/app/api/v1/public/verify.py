@@ -8,30 +8,30 @@ Now supports invisible Unicode embeddings from encypher-ai package.
 """
 import logging
 from datetime import datetime
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query, Request
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
+from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
+from app.middleware.public_rate_limiter import public_rate_limiter
+from app.models.content_reference import ContentReference
+from app.models.merkle import MerkleRoot
 from app.schemas.embeddings import (
-    VerifyEmbeddingResponse,
-    ContentInfo,
-    DocumentInfo,
-    MerkleProofInfo,
-    C2PAInfo,
-    LicensingInfo,
     BatchVerifyRequest,
     BatchVerifyResponse,
     BatchVerifyResult,
-    ErrorResponse
+    C2PAInfo,
+    ContentInfo,
+    DocumentInfo,
+    ErrorResponse,
+    LicensingInfo,
+    MerkleProofInfo,
+    VerifyEmbeddingResponse,
 )
-from app.models.content_reference import ContentReference
-from app.models.merkle import MerkleRoot
-from app.middleware.public_rate_limiter import public_rate_limiter
-from app.middleware.api_key_auth import get_api_key_from_header, authenticate_api_key
 from app.utils.c2pa_verifier import c2pa_verifier
 from app.utils.crypto_utils import load_organization_public_key
 
@@ -524,7 +524,7 @@ async def extract_and_verify_embedding(
                     error="No invisible embedding found in text"
                 )
             
-            # Extract signer_id from claim_generator (format: "EncypherAI Enterprise API/org_demo")
+            # Extract signer_id from claim_generator (format: "Encypher Enterprise API/org_demo")
             # The signer_id is the part after the last slash
             claim_generator = extracted_metadata.get('claim_generator', '')
             if '/' in claim_generator:

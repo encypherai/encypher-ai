@@ -1,14 +1,14 @@
 # Enterprise Streaming Features - Implementation Summary
 
 **Created:** 2025-10-30  
-**Status:** Planning Phase  
+**Status:** Partially Implemented  
 **Priority:** High (Enterprise Feature)
 
 ---
 
 ## Executive Summary
 
-Analysis of current streaming support reveals **partial implementation** in the SDK but **missing API endpoints** and **no Kafka/message queue integration**. This document outlines the gap analysis and implementation plan for enterprise-grade streaming features.
+Analysis of current streaming support reveals **partial implementation** across the SDK and Enterprise API (WebSocket + SSE endpoints are live), but **no Kafka/message queue integration** and **no production LLM integrations** yet. This document outlines the gap analysis and implementation plan for enterprise-grade streaming features.
 
 ---
 
@@ -17,11 +17,10 @@ Analysis of current streaming support reveals **partial implementation** in the 
 ### What We Have
 
 **Enterprise SDK (`enterprise_sdk/`):**
-- ✅ `StreamingSigner` class for real-time LLM signing
-- ✅ `AsyncStreamingSigner` for async streams
+- ✅ `StreamingSigner` and `AsyncStreamingSigner` for real-time signing
 - ✅ Sentence boundary detection and buffering
 - ✅ Helper functions: `sign_stream()`, `async_sign_stream()`
-- ✅ Example: `examples/streaming_chat.py`
+- ✅ Examples under `enterprise_sdk/examples/`
 - ✅ Unit tests: `tests/test_streaming.py`
 
 **Core Library (`encypher-ai` package):**
@@ -29,16 +28,24 @@ Analysis of current streaming support reveals **partial implementation** in the 
 - ✅ Chunk accumulation and target detection
 - ✅ Integration tested in `enterprise_api/tests/integration/test_signing_flow.py`
 
+**Enterprise API (`enterprise_api/`):**
+- ✅ Streaming router in `app/routers/streaming.py` with:
+  - `POST /api/v1/stream/sign` (SSE)
+  - `WS /api/v1/stream/sign` and `WS /api/v1/stream/chat`
+  - `POST /api/v1/stream/session/create`, `POST /api/v1/stream/session/{id}/close`
+  - `GET /api/v1/stream/events`, `GET /api/v1/stream/runs/{run_id}`, `GET /api/v1/stream/stats`, `GET /api/v1/stream/health`
+- ✅ Chat router in `app/routers/chat.py` with OpenAI-compatible streaming endpoint
+- ✅ Redis-backed session state via `session_service`
+
 ---
 
-## Missing Components ❌
+## Remaining Gaps ❌
 
 ### Enterprise API (`enterprise_api/`)
-- ❌ No WebSocket endpoints
-- ❌ No Server-Sent Events (SSE) support
-- ❌ No streaming-specific REST endpoints
-- ❌ No session management for streams
-- ❌ No connection pooling
+- ❌ Kafka or other message-queue integration for streaming pipelines
+- ❌ Production-ready chat integrations with real LLM providers (current implementation uses mock responses)
+- ❌ Deeper observability for streaming (per-org throughput, error-rate dashboards)
+- ❌ Load and soak testing at target scales (10k+ concurrent connections)
 
 ### Message Queue Integration
 - ❌ No Kafka producer/consumer
@@ -47,10 +54,10 @@ Analysis of current streaming support reveals **partial implementation** in the 
 - ❌ No event-driven architecture
 
 ### Chat Application Wrappers
-- ❌ No OpenAI-compatible streaming endpoint
+- ✅ OpenAI-compatible streaming endpoint in `enterprise_api/app/routers/chat.py`
 - ❌ No LangChain integration
 - ❌ No LlamaIndex integration
-- ❌ No chat-specific handlers
+- ❌ No production chat-specific handlers wired to real LLM backends (current implementation uses mock responses)
 
 ### Infrastructure
 - ❌ No streaming-specific rate limiting

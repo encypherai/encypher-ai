@@ -1,4 +1,4 @@
-# Template Dockerfile for EncypherAI Microservices
+# Template Dockerfile for Encypher Microservices
 # Each service should copy this and customize as needed
 
 FROM python:3.11-slim

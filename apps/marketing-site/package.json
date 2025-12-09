@@ -12,6 +12,7 @@
   "scripts": {
     "dev": "node log-analytics-env.js && npx next dev",
     "dev:webpack": "node log-analytics-env.js && npx next dev",
+    "prebuild": "node scripts/sync-pricing-config.js",
     "build": "node log-analytics-env.js && npx next build",
     "start": "npx next start -p $PORT",
     "lint": "next lint",
@@ -22,9 +23,8 @@
     "test": "jest --passWithNoTests"
   },
   "dependencies": {
+    "@auth/core": "^0.41.1",
     "@encypher/design-system": "file:./design-system",
-    "@encypher/pricing-config": "file:../../packages/pricing-config",
-    "@auth/core": "^0.34.2",
     "@headlessui/react": "^2.2.2",
     "@hookform/resolvers": "^4.1.3",
     "@next/third-parties": "^15.3.2",
@@ -55,7 +55,7 @@
     "gray-matter": "^4.0.3",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.483.0",
-    "next": "15.2.3",
+    "next": "^15.5.7",
     "next-auth": "^4.24.11",
     "next-mdx-remote": "^5.0.0",
     "next-themes": "^0.4.6",
@@ -64,7 +64,7 @@
     "react-hook-form": "^7.54.2",
     "react-intersection-observer": "^9.16.0",
     "react-pdf": "^9.2.1",
-    "react-syntax-highlighter": "^15.6.1",
+    "react-syntax-highlighter": "^16.1.0",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
     "sonner": "^2.0.1",
@@ -73,6 +73,7 @@
     "tw-animate-css": "^1.2.4",
     "tweetnacl": "^1.0.3",
     "tweetnacl-util": "^0.15.1",
+    "vanilla-cookieconsent": "^3.1.0",
     "zod": "^3.24.2",
     "zxcvbn": "^4.4.2"
   },

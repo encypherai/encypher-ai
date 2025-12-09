@@ -1,17 +1,14 @@
 """
 Tests for coalition API endpoints.
 """
+from datetime import datetime, timedelta
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
-from datetime import datetime, timedelta
 
+from app.models.coalition import CoalitionMember, ContentItem, RevenueTransaction
 from app.models.user import User
-from app.models.coalition import (
-    CoalitionMember,
-    ContentItem,
-    RevenueTransaction
-)
 
 
 @pytest.mark.asyncio

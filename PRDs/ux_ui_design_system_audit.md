@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-This PRD documents findings from a comprehensive UX/UI audit of the EncypherAI marketing site (`encypherai.com`), dashboard (`dashboard.encypherai.com`), and the shared design system package. The audit identified **critical issues** affecting user experience, brand consistency, and code maintainability.
+This PRD documents findings from a comprehensive UX/UI audit of the Encypher marketing site (`encypherai.com`), dashboard (`dashboard.encypherai.com`), and the shared design system package. The audit identified **critical issues** affecting user experience, brand consistency, and code maintainability.
 
 ### Critical Findings Summary
 

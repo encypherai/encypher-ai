@@ -5,7 +5,6 @@ Railway Environment Variable Audit Script
 Analyzes service configs to identify required environment variables
 and generates Railway CLI commands to set them.
 """
-import ast
 import re
 from pathlib import Path
 from typing import Dict, List, Tuple
