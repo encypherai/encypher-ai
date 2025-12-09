@@ -1,6 +1,7 @@
 """
 Audit log model for tracking security-critical operations.
 """
+
 from sqlalchemy import Column, String, DateTime, JSON, Integer, Index
 from datetime import datetime
 from .base import Base
@@ -9,7 +10,7 @@ from .base import Base
 class AuditLog(Base):
     """
     Audit log for tracking all security-critical operations.
-    
+
     This table records:
     - Who performed the action (user_id, organization_id)
     - What action was performed (action, resource_type, resource_id)
@@ -18,6 +19,7 @@ class AuditLog(Base):
     - How it went (result, error_message)
     - Additional context (details, request_id)
     """
+
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -46,9 +48,9 @@ class AuditLog(Base):
 
     # Indexes for common queries
     __table_args__ = (
-        Index('idx_audit_user_action', 'user_id', 'action'),
-        Index('idx_audit_org_action', 'organization_id', 'action'),
-        Index('idx_audit_timestamp_result', 'timestamp', 'result'),
+        Index("idx_audit_user_action", "user_id", "action"),
+        Index("idx_audit_org_action", "organization_id", "action"),
+        Index("idx_audit_timestamp_result", "timestamp", "result"),
     )
 
     def __repr__(self):

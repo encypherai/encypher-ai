@@ -1,6 +1,7 @@
 """
 Audit logging service for tracking security-critical operations.
 """
+
 from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, and_, or_
@@ -15,7 +16,7 @@ logger = structlog.get_logger()
 class AuditService:
     """
     Service for creating and querying audit logs.
-    
+
     Usage:
         audit = AuditService(db)
         await audit.log(
@@ -42,11 +43,11 @@ class AuditService:
         user_agent: Optional[str] = None,
         request_id: Optional[str] = None,
         details: Optional[Dict] = None,
-        error_message: Optional[str] = None
+        error_message: Optional[str] = None,
     ) -> AuditLog:
         """
         Create an audit log entry.
-        
+
         Args:
             action: Action performed (e.g., "user.login", "document.sign")
             resource_type: Type of resource (e.g., "user", "document")
@@ -59,7 +60,7 @@ class AuditService:
             request_id: Request ID for correlation
             details: Additional context as dictionary
             error_message: Error message if result is "failure"
-            
+
         Returns:
             Created AuditLog instance
         """
@@ -75,7 +76,7 @@ class AuditService:
             request_id=request_id,
             details=details,
             result=result,
-            error_message=error_message
+            error_message=error_message,
         )
 
         self.db.add(audit_log)
@@ -83,13 +84,7 @@ class AuditService:
         await self.db.refresh(audit_log)
 
         # Also log to structured logger
-        logger.info(
-            "audit_log_created",
-            audit_id=audit_log.id,
-            action=action,
-            resource_type=resource_type,
-            result=result
-        )
+        logger.info("audit_log_created", audit_id=audit_log.id, action=action, resource_type=resource_type, result=result)
 
         return audit_log
 
@@ -103,11 +98,11 @@ class AuditService:
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[AuditLog]:
         """
         Query audit logs with filters.
-        
+
         Args:
             organization_id: Filter by organization
             user_id: Filter by user
@@ -118,7 +113,7 @@ class AuditService:
             end_date: Filter by end date
             limit: Maximum number of results
             offset: Offset for pagination
-            
+
         Returns:
             List of AuditLog instances
         """
@@ -153,18 +148,14 @@ class AuditService:
         result = await self.db.execute(query)
         return result.scalars().all()
 
-    async def get_security_events(
-        self,
-        organization_id: str,
-        hours: int = 24
-    ) -> List[AuditLog]:
+    async def get_security_events(self, organization_id: str, hours: int = 24) -> List[AuditLog]:
         """
         Get recent security-critical events for an organization.
-        
+
         Args:
             organization_id: Organization ID
             hours: Number of hours to look back
-            
+
         Returns:
             List of security-critical audit logs
         """
@@ -181,16 +172,20 @@ class AuditService:
             "api_key.created",
             "api_key.revoked",
             "api_key.rotated",
-            "permission.changed"
+            "permission.changed",
         ]
 
-        query = select(AuditLog).where(
-            and_(
-                AuditLog.organization_id == organization_id,
-                AuditLog.timestamp >= start_date,
-                or_(*[AuditLog.action == action for action in security_actions])
+        query = (
+            select(AuditLog)
+            .where(
+                and_(
+                    AuditLog.organization_id == organization_id,
+                    AuditLog.timestamp >= start_date,
+                    or_(*[AuditLog.action == action for action in security_actions]),
+                )
             )
-        ).order_by(AuditLog.timestamp.desc())
+            .order_by(AuditLog.timestamp.desc())
+        )
 
         result = await self.db.execute(query)
         return result.scalars().all()

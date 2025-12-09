@@ -28,10 +28,7 @@ def _get_jinja_env() -> Environment:
     """Get or create Jinja2 environment."""
     global _jinja_env
     if _jinja_env is None:
-        _jinja_env = Environment(
-            loader=FileSystemLoader(str(TEMPLATES_DIR)),
-            autoescape=select_autoescape(["html", "xml"])
-        )
+        _jinja_env = Environment(loader=FileSystemLoader(str(TEMPLATES_DIR)), autoescape=select_autoescape(["html", "xml"]))
     return _jinja_env
 
 
@@ -39,10 +36,11 @@ def _get_jinja_env() -> Environment:
 class EmailConfig:
     """
     Email configuration.
-    
+
     Can be initialized from environment variables or passed directly.
     Services should create this once and reuse it.
     """
+
     smtp_host: str = "smtp.zoho.com"
     smtp_port: int = 587
     smtp_user: str = ""
@@ -52,7 +50,7 @@ class EmailConfig:
     email_from_name: str = "Support - Encypher"
     frontend_url: str = "http://localhost:3000"
     dashboard_url: str = ""
-    
+
     @classmethod
     def from_env(cls) -> "EmailConfig":
         """Create config from environment variables."""
@@ -77,13 +75,13 @@ def generate_token(length: int = 32) -> str:
 def render_template(template_name: str, **context) -> str:
     """
     Render an email template with the given context.
-    
+
     Automatically adds common variables like year and brand_name.
-    
+
     Args:
         template_name: Name of template file (e.g., "email_verification.html")
         **context: Template variables
-        
+
     Returns:
         Rendered HTML string
     """
@@ -92,7 +90,7 @@ def render_template(template_name: str, **context) -> str:
         "brand_name": "Encypher",
     }
     template_context = {**base_context, **context}
-    
+
     env = _get_jinja_env()
     template = env.get_template(template_name)
     return template.render(**template_context)
@@ -108,7 +106,7 @@ def send_email(
 ) -> bool:
     """
     Send an email via SMTP.
-    
+
     Args:
         config: Email configuration
         to_email: Recipient email address
@@ -116,7 +114,7 @@ def send_email(
         html_content: HTML email body
         plain_content: Plain text fallback (optional)
         logger: Optional structured logger for logging
-        
+
     Returns:
         True if successful, False otherwise
     """
@@ -125,14 +123,14 @@ def send_email(
         msg["Subject"] = subject
         msg["From"] = f"{config.email_from_name} <{config.email_from}>"
         msg["To"] = to_email
-        
+
         # Plain text fallback
         if plain_content:
             msg.attach(MIMEText(plain_content, "plain"))
-        
+
         # HTML content
         msg.attach(MIMEText(html_content, "html"))
-        
+
         # Connect and send
         with smtplib.SMTP(config.smtp_host, config.smtp_port) as server:
             if config.smtp_tls:
@@ -140,11 +138,11 @@ def send_email(
             if config.smtp_user and config.smtp_pass:
                 server.login(config.smtp_user, config.smtp_pass)
             server.sendmail(config.email_from, [to_email], msg.as_string())
-        
+
         if logger:
             logger.info("email_sent", to=to_email, subject=subject)
         return True
-        
+
     except Exception as e:
         if logger:
             logger.error("email_send_failed", to=to_email, subject=subject, error=str(e))

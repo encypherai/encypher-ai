@@ -1,35 +1,44 @@
 'use client';
 
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  Input,
-} from '@encypher/design-system';
-
-// Simple Badge component since it's not exported from design-system
-const Badge = ({ children, variant = 'default' }: { children: React.ReactNode; variant?: 'default' | 'success' | 'destructive' | 'secondary' }) => {
-  const colors: Record<string, string> = {
-    default: 'bg-muted text-muted-foreground',
-    success: 'bg-success/10 text-success',
-    destructive: 'bg-destructive/10 text-destructive',
-    secondary: 'bg-columbia-blue/10 text-columbia-blue',
-  };
-  return (
-    <span className={`px-2 py-1 text-xs rounded-full ${colors[variant] || colors.default}`}>
-      {children}
-    </span>
-  );
-};
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import apiClient from '../../lib/api';
+import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import apiClient, { PendingAccessRequest } from '../../lib/api';
+
+// Stat card component matching dashboard design
+function StatCard({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
+  return (
+    <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-6 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{label}</p>
+          <p className="text-2xl font-bold text-slate-900 dark:text-white mt-1">{value}</p>
+        </div>
+        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-ncs/10 to-delft-blue/10 flex items-center justify-center">
+          {icon}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Badge component matching dashboard design
+function Badge({ children, variant = 'default' }: { children: React.ReactNode; variant?: 'default' | 'success' | 'warning' | 'error' }) {
+  const variants = {
+    default: 'bg-slate-100 text-slate-700 dark:bg-slate-700 dark:text-slate-300',
+    success: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    warning: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
+    error: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${variants[variant]}`}>
+      {children}
+    </span>
+  );
+}
 
 type AdminStats = {
   totalUsers: number;
@@ -79,10 +88,23 @@ const normalizeAdminStats = (payload: any): AdminStats => ({
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
+  const [denyReason, setDenyReason] = useState('');
+  const [denyingUserId, setDenyingUserId] = useState<string | null>(null);
+
+  // TEAM_006: Check if user is super admin via API
+  const superAdminQuery = useQuery({
+    queryKey: ['is-super-admin'],
+    queryFn: async () => {
+      if (!accessToken) return false;
+      return apiClient.isSuperAdmin(accessToken);
+    },
+    enabled: Boolean(accessToken),
+  });
+
+  const isSuperAdmin = superAdminQuery.data === true;
 
   const statsQuery = useQuery({
     queryKey: ['admin-stats'],
@@ -91,7 +113,7 @@ export default function AdminPage() {
       const response = await apiClient.getAdminStats(accessToken);
       return normalizeAdminStats(response);
     },
-    enabled: Boolean(accessToken) && isAdmin,
+    enabled: Boolean(accessToken) && isSuperAdmin,
   });
 
   const usersQuery = useQuery({
@@ -101,7 +123,43 @@ export default function AdminPage() {
       const response = await apiClient.getAdminUsers(accessToken, search);
       return normalizeAdminUsers(response);
     },
-    enabled: Boolean(accessToken) && isAdmin,
+    enabled: Boolean(accessToken) && isSuperAdmin,
+  });
+
+  // TEAM_006: Pending API access requests
+  const pendingRequestsQuery = useQuery({
+    queryKey: ['pending-access-requests'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.getPendingAccessRequests(accessToken);
+    },
+    enabled: Boolean(accessToken) && isSuperAdmin,
+  });
+
+  const approveAccessMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      await apiClient.approveApiAccess(accessToken, userId);
+    },
+    onSuccess: () => {
+      toast.success('API access approved!');
+      queryClient.invalidateQueries({ queryKey: ['pending-access-requests'] });
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to approve access.'),
+  });
+
+  const denyAccessMutation = useMutation({
+    mutationFn: async ({ userId, reason }: { userId: string; reason: string }) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      await apiClient.denyApiAccess(accessToken, userId, reason);
+    },
+    onSuccess: () => {
+      toast.success('API access denied.');
+      setDenyingUserId(null);
+      setDenyReason('');
+      queryClient.invalidateQueries({ queryKey: ['pending-access-requests'] });
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to deny access.'),
   });
 
   const updateUserMutation = useMutation({
@@ -128,220 +186,343 @@ export default function AdminPage() {
     onError: (err: any) => toast.error(err?.message || 'Failed to update user status.'),
   });
 
-  const headerActions = useMemo(
-    () => (
-      <div className="flex items-center space-x-4">
-        <Link href="/">
-          <Button variant="ghost" size="sm">
-            Dashboard
-          </Button>
-        </Link>
-        <Link href="/api-keys">
-          <Button variant="ghost" size="sm">
-            API Keys
-          </Button>
-        </Link>
-        <Link href="/analytics">
-          <Button variant="ghost" size="sm">
-            Analytics
-          </Button>
-        </Link>
-        <Link href="/billing">
-          <Button variant="ghost" size="sm">
-            Billing
-          </Button>
-        </Link>
-        <Link href="/settings">
-          <Button variant="ghost" size="sm">
-            Settings
-          </Button>
-        </Link>
-        <div className="w-8 h-8 bg-columbia-blue rounded-full flex items-center justify-center text-white font-semibold">
-          {session?.user?.name?.charAt(0)?.toUpperCase() ?? 'A'}
-        </div>
-      </div>
-    ),
-    [session?.user?.name],
-  );
-
+  // Loading states
   if (status === 'loading') {
-    return <div className="p-10 text-muted-foreground">Loading session…</div>;
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-ncs"></div>
+        </div>
+      </DashboardLayout>
+    );
   }
 
-  if (!isAdmin) {
+  if (superAdminQuery.isLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-background text-center">
-        <h1 className="text-3xl font-bold mb-4">Admin access required</h1>
-        <p className="text-muted-foreground">
-          You need to be part of the Encypher core team to manage users and permissions. Contact support if you
-          believe this is an error.
-        </p>
-        <Link href="/">
-          <Button className="mt-6">Return to dashboard</Button>
-        </Link>
-      </div>
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-ncs mx-auto mb-4"></div>
+            <p className="text-slate-500 dark:text-slate-400">Checking permissions...</p>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <DashboardLayout>
+        <div className="flex flex-col items-center justify-center min-h-[400px] text-center px-4">
+          <div className="w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-6">
+            <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Admin Access Required</h1>
+          <p className="text-slate-500 dark:text-slate-400 max-w-md mb-6">
+            You need super admin privileges to access this page. Contact erik.svilich@encypherai.com if you believe this is an error.
+          </p>
+          <Link 
+            href="/"
+            className="inline-flex items-center px-4 py-2 bg-blue-ncs text-white rounded-lg hover:bg-delft-blue transition-colors font-medium"
+          >
+            Return to Dashboard
+          </Link>
+        </div>
+      </DashboardLayout>
     );
   }
 
   const users = usersQuery.data ?? [];
   const stats = statsQuery.data;
+  const pendingCount = pendingRequestsQuery.data?.length ?? 0;
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-white sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Link href="/">
-              <div className="w-8 h-8 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg cursor-pointer" />
-            </Link>
-            <h1 className="text-xl font-bold text-delft-blue dark:text-white">Encypher Admin</h1>
-          </div>
-          {headerActions}
-        </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8 space-y-8">
-        <div>
-          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">User management</h2>
-          <p className="text-muted-foreground">
-            Manage customer accounts, permissions, and enterprise entitlements without leaving the dashboard.
-          </p>
-        </div>
-
-        <section className="grid md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground mb-1">Total users</p>
-              <p className="text-3xl font-bold text-delft-blue dark:text-white">
-                {stats?.totalUsers?.toLocaleString() ?? '—'}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground mb-1">Active users</p>
-              <p className="text-3xl font-bold text-delft-blue dark:text-white">
-                {stats?.activeUsers?.toLocaleString() ?? '—'}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground mb-1">Paying customers</p>
-              <p className="text-3xl font-bold text-delft-blue dark:text-white">
-                {stats?.payingCustomers?.toLocaleString() ?? '—'}
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <p className="text-sm text-muted-foreground mb-1">Monthly recurring revenue</p>
-              <p className="text-3xl font-bold text-delft-blue dark:text-white">
-                {stats?.mrr ? `$${stats.mrr.toLocaleString()}` : '—'}
-              </p>
-            </CardContent>
-          </Card>
-        </section>
-
-        <Card>
-          <CardHeader className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle>Workspace directory</CardTitle>
-              <CardDescription>Search, edit roles, and suspend accounts across the tenant base.</CardDescription>
+    <DashboardLayout>
+      <div className="space-y-8">
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <div className="flex items-center gap-3 mb-2">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Admin Dashboard</h1>
+              <Badge variant="warning">Super Admin</Badge>
             </div>
-            <Input
-              placeholder="Search by name, email, or plan…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="md:w-80"
-            />
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-muted-foreground border-b border-border">
-                    <th className="py-3 px-4">User</th>
-                    <th className="py-3 px-4">Plan</th>
-                    <th className="py-3 px-4">Permissions</th>
-                    <th className="py-3 px-4">Usage (30d)</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4" />
+            <p className="text-slate-500 dark:text-slate-400">
+              Manage users, review API access requests, and monitor platform health.
+            </p>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Total Users"
+            value={stats?.totalUsers?.toLocaleString() ?? '—'}
+            icon={
+              <svg className="w-6 h-6 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Active Users"
+            value={stats?.activeUsers?.toLocaleString() ?? '—'}
+            icon={
+              <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Paying Customers"
+            value={stats?.payingCustomers?.toLocaleString() ?? '—'}
+            icon={
+              <svg className="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+            }
+          />
+          <StatCard
+            label="Monthly Revenue"
+            value={stats?.mrr ? `$${stats.mrr.toLocaleString()}` : '—'}
+            icon={
+              <svg className="w-6 h-6 text-delft-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            }
+          />
+        </div>
+
+        {/* Pending API Access Requests */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Pending API Access Requests</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Review and approve users requesting API access</p>
+                </div>
+              </div>
+              {pendingCount > 0 && (
+                <Badge variant="error">{pendingCount} pending</Badge>
+              )}
+            </div>
+          </div>
+          <div className="p-6">
+            {pendingRequestsQuery.isLoading && (
+              <div className="flex items-center justify-center py-8">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-ncs"></div>
+              </div>
+            )}
+            {!pendingRequestsQuery.isLoading && pendingCount === 0 && (
+              <div className="text-center py-8">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mx-auto mb-3">
+                  <svg className="w-6 h-6 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="text-slate-500 dark:text-slate-400">No pending requests. All caught up!</p>
+              </div>
+            )}
+            <div className="space-y-4">
+              {(pendingRequestsQuery.data ?? []).map((request: PendingAccessRequest) => (
+                <div key={request.user_id} className="bg-slate-50 dark:bg-slate-900/50 rounded-lg p-4 border border-slate-200 dark:border-slate-700">
+                  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-ncs to-delft-blue flex items-center justify-center text-white font-semibold text-sm">
+                          {(request.name || request.email).charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-slate-900 dark:text-white">{request.name || 'Unknown'}</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">{request.email}</p>
+                        </div>
+                      </div>
+                      <p className="text-xs text-slate-400 dark:text-slate-500 mb-3">
+                        Requested {new Date(request.requested_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                          hour: 'numeric',
+                          minute: '2-digit',
+                        })}
+                      </p>
+                      <div className="bg-white dark:bg-slate-800 rounded-lg p-3 border border-slate-200 dark:border-slate-700">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">Use Case</p>
+                        <p className="text-sm text-slate-700 dark:text-slate-300">{request.use_case}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-2 lg:items-end shrink-0">
+                      {denyingUserId === request.user_id ? (
+                        <div className="flex flex-col gap-2">
+                          <input
+                            type="text"
+                            placeholder="Reason for denial..."
+                            value={denyReason}
+                            onChange={(e) => setDenyReason(e.target.value)}
+                            className="w-64 px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-transparent"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                setDenyingUserId(null);
+                                setDenyReason('');
+                              }}
+                              className="px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              onClick={() => denyAccessMutation.mutate({ userId: request.user_id, reason: denyReason })}
+                              disabled={!denyReason.trim() || denyAccessMutation.isPending}
+                              className="px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                              Confirm Deny
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setDenyingUserId(request.user_id)}
+                            disabled={approveAccessMutation.isPending}
+                            className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                          >
+                            Deny
+                          </button>
+                          <button
+                            onClick={() => approveAccessMutation.mutate(request.user_id)}
+                            disabled={approveAccessMutation.isPending}
+                            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                          >
+                            {approveAccessMutation.isPending ? 'Approving...' : 'Approve'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* User Directory */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">User Directory</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Search, edit roles, and manage accounts</p>
+              </div>
+              <div className="relative">
+                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input
+                  type="text"
+                  placeholder="Search by name, email, or plan..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full sm:w-80 pl-10 pr-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-transparent"
+                />
+              </div>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-900/50">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">User</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Plan</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Usage (30d)</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+                {usersQuery.isLoading && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-ncs mx-auto"></div>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {usersQuery.isLoading && (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                        Loading users…
-                      </td>
-                    </tr>
-                  )}
-                  {!usersQuery.isLoading && users.length === 0 && (
-                    <tr>
-                      <td colSpan={6} className="py-6 text-center text-muted-foreground">
-                        No users match your filters.
-                      </td>
-                    </tr>
-                  )}
-                  {users.map((user) => (
-                    <tr key={user.id} className="border-b border-border/60 last:border-0">
-                      <td className="py-3 px-4">
-                        <div className="font-semibold text-foreground">{user.name}</div>
-                        <div className="text-muted-foreground">{user.email}</div>
-                      </td>
-                      <td className="py-3 px-4">
-                        <Badge variant={user.tier === 'enterprise' ? 'default' : 'secondary'}>
-                          {user.tier}
-                        </Badge>
-                      </td>
-                      <td className="py-3 px-4">
-                        <select
-                          className="border border-border rounded-md px-2 py-1 bg-transparent"
-                          value={user.role}
-                          onChange={(e) =>
-                            updateUserMutation.mutate({
-                              userId: user.id,
-                              updates: { role: e.target.value },
-                            })
-                          }
-                        >
-                          <option value="member">Member</option>
-                          <option value="manager">Manager</option>
-                          <option value="admin">Admin</option>
-                        </select>
-                      </td>
-                      <td className="py-3 px-4">{user.usageThisMonth.toLocaleString()} calls</td>
-                      <td className="py-3 px-4 capitalize">{user.status}</td>
-                      <td className="py-3 px-4 text-right space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() =>
-                            toggleStatusMutation.mutate({
-                              userId: user.id,
-                              enabled: user.status !== 'active',
-                            })
-                          }
+                )}
+                {!usersQuery.isLoading && users.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                      No users match your filters.
+                    </td>
+                  </tr>
+                )}
+                {users.map((user) => (
+                  <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-ncs to-delft-blue flex items-center justify-center text-white text-xs font-semibold">
+                          {user.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <p className="font-medium text-slate-900 dark:text-white">{user.name}</p>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">{user.email}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge variant={user.tier === 'enterprise' ? 'success' : 'default'}>
+                        {user.tier}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={user.role}
+                        onChange={(e) => updateUserMutation.mutate({ userId: user.id, updates: { role: e.target.value } })}
+                        className="text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-ncs"
+                      >
+                        <option value="member">Member</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
+                      {user.usageThisMonth.toLocaleString()} calls
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge variant={user.status === 'active' ? 'success' : 'error'}>
+                        {user.status}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => toggleStatusMutation.mutate({ userId: user.id, enabled: user.status !== 'active' })}
+                          className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
                         >
                           {user.status === 'active' ? 'Suspend' : 'Activate'}
-                        </Button>
+                        </button>
                         <a
                           href={`mailto:${user.email}`}
-                          className="inline-flex items-center justify-center px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors"
+                          className="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
                         >
                           Contact
                         </a>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </DashboardLayout>
   );
 }
 

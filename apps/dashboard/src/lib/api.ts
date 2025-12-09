@@ -198,6 +198,31 @@ interface CoalitionSummary {
   payout_account_url: string | null;
 }
 
+// TEAM_006: API Access Gating types
+type ApiAccessStatusType = 'not_requested' | 'pending' | 'approved' | 'denied';
+
+interface ApiAccessStatusResponse {
+  status: ApiAccessStatusType;
+  requested_at: string | null;
+  decided_at: string | null;
+  use_case: string | null;
+  denial_reason: string | null;
+  message: string | null;
+}
+
+interface ApiAccessRequestResponse {
+  status: ApiAccessStatusType;
+  message: string;
+}
+
+interface PendingAccessRequest {
+  user_id: string;
+  email: string;
+  name: string | null;
+  use_case: string;
+  requested_at: string;
+}
+
 class ApiError extends Error {
   constructor(
     message: string,
@@ -368,6 +393,90 @@ const apiClient = {
       `${AUTH_SERVICE_URL}/auth/logout`,
       accessToken,
       { method: 'POST' }
+    );
+  },
+
+  // ============================================
+  // API Access Gating (auth-service) - TEAM_006
+  // ============================================
+
+  /**
+   * Get current API access status for the authenticated user
+   */
+  async getApiAccessStatus(accessToken: string): Promise<ApiAccessStatusResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: ApiAccessStatusResponse }>(
+      `${AUTH_SERVICE_URL}/auth/api-access-status`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  /**
+   * Request API access with a use case description
+   */
+  async requestApiAccess(accessToken: string, useCase: string): Promise<ApiAccessRequestResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: ApiAccessRequestResponse }>(
+      `${AUTH_SERVICE_URL}/auth/request-api-access`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ use_case: useCase }),
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Check if current user is a super admin
+   */
+  async isSuperAdmin(accessToken: string): Promise<boolean> {
+    try {
+      const response = await fetchWithAuth<{ success: boolean; data: { is_super_admin: boolean } }>(
+        `${AUTH_SERVICE_URL}/auth/admin/is-super-admin`,
+        accessToken
+      );
+      return response.data.is_super_admin;
+    } catch {
+      return false;
+    }
+  },
+
+  /**
+   * Get pending API access requests (admin only)
+   */
+  async getPendingAccessRequests(accessToken: string): Promise<PendingAccessRequest[]> {
+    const response = await fetchWithAuth<{ success: boolean; data: { requests: PendingAccessRequest[]; total: number } }>(
+      `${AUTH_SERVICE_URL}/auth/admin/pending-access-requests`,
+      accessToken
+    );
+    return response.data.requests;
+  },
+
+  /**
+   * Approve a user's API access request (admin only)
+   */
+  async approveApiAccess(accessToken: string, userId: string): Promise<void> {
+    await fetchWithAuth(
+      `${AUTH_SERVICE_URL}/auth/admin/approve-api-access`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId }),
+      }
+    );
+  },
+
+  /**
+   * Deny a user's API access request (admin only)
+   */
+  async denyApiAccess(accessToken: string, userId: string, reason: string): Promise<void> {
+    await fetchWithAuth(
+      `${AUTH_SERVICE_URL}/auth/admin/deny-api-access`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, reason }),
+      }
     );
   },
 
@@ -707,4 +816,9 @@ export type {
   UsageMetric,
   BillingUsageStats,
   CoalitionSummary,
+  // TEAM_006: API Access Gating
+  ApiAccessStatusType,
+  ApiAccessStatusResponse,
+  ApiAccessRequestResponse,
+  PendingAccessRequest,
 };

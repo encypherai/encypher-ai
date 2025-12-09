@@ -1,6 +1,7 @@
 """
 Redis caching service for improving performance.
 """
+
 import hashlib
 from typing import Any, Optional
 from aiocache import Cache
@@ -13,16 +14,16 @@ logger = structlog.get_logger()
 class CacheService:
     """
     Redis caching service with automatic key generation and TTL management.
-    
+
     Usage:
         cache = CacheService(redis_url)
-        
+
         # Set value
         await cache.set("user", user_dict, ttl=300, user_id="123")
-        
+
         # Get value
         user = await cache.get("user", user_id="123")
-        
+
         # Delete value
         await cache.delete("user", user_id="123")
     """
@@ -30,7 +31,7 @@ class CacheService:
     def __init__(self, redis_url: str, namespace: str = "encypher"):
         """
         Initialize cache service.
-        
+
         Args:
             redis_url: Redis connection URL
             namespace: Namespace prefix for all keys
@@ -41,13 +42,7 @@ class CacheService:
 
         host, port = redis_url.split(":")
 
-        self.cache = Cache(
-            Cache.REDIS,
-            endpoint=host,
-            port=int(port),
-            serializer=JsonSerializer(),
-            namespace=namespace
-        )
+        self.cache = Cache(Cache.REDIS, endpoint=host, port=int(port), serializer=JsonSerializer(), namespace=namespace)
 
         self.namespace = namespace
         logger.info("cache_service_initialized", redis_host=host, redis_port=port)
@@ -55,12 +50,12 @@ class CacheService:
     def _make_key(self, prefix: str, *args, **kwargs) -> str:
         """
         Generate cache key from prefix and arguments.
-        
+
         Args:
             prefix: Key prefix (e.g., "user", "session")
             *args: Positional arguments to include in key
             **kwargs: Keyword arguments to include in key
-            
+
         Returns:
             Generated cache key
         """
@@ -82,12 +77,12 @@ class CacheService:
     async def get(self, prefix: str, *args, **kwargs) -> Optional[Any]:
         """
         Get value from cache.
-        
+
         Args:
             prefix: Key prefix
             *args: Positional arguments for key generation
             **kwargs: Keyword arguments for key generation
-            
+
         Returns:
             Cached value or None if not found
         """
@@ -106,24 +101,17 @@ class CacheService:
             logger.error("cache_get_error", key=key, error=str(e))
             return None
 
-    async def set(
-        self,
-        prefix: str,
-        value: Any,
-        ttl: int = 300,
-        *args,
-        **kwargs
-    ) -> bool:
+    async def set(self, prefix: str, value: Any, ttl: int = 300, *args, **kwargs) -> bool:
         """
         Set value in cache with TTL.
-        
+
         Args:
             prefix: Key prefix
             value: Value to cache (must be JSON-serializable)
             ttl: Time to live in seconds (default: 5 minutes)
             *args: Positional arguments for key generation
             **kwargs: Keyword arguments for key generation
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -140,12 +128,12 @@ class CacheService:
     async def delete(self, prefix: str, *args, **kwargs) -> bool:
         """
         Delete value from cache.
-        
+
         Args:
             prefix: Key prefix
             *args: Positional arguments for key generation
             **kwargs: Keyword arguments for key generation
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -162,10 +150,10 @@ class CacheService:
     async def clear_pattern(self, pattern: str) -> int:
         """
         Clear all keys matching a pattern.
-        
+
         Args:
             pattern: Pattern to match (e.g., "user:*")
-            
+
         Returns:
             Number of keys deleted
         """
@@ -181,12 +169,12 @@ class CacheService:
     async def exists(self, prefix: str, *args, **kwargs) -> bool:
         """
         Check if key exists in cache.
-        
+
         Args:
             prefix: Key prefix
             *args: Positional arguments for key generation
             **kwargs: Keyword arguments for key generation
-            
+
         Returns:
             True if key exists, False otherwise
         """
@@ -204,21 +192,22 @@ class CacheService:
 def cached(prefix: str, ttl: int = 300):
     """
     Decorator to cache function results.
-    
+
     Usage:
         @cached("user_profile", ttl=600)
         async def get_user_profile(user_id: str):
             # Expensive operation
             return profile
-    
+
     Args:
         prefix: Cache key prefix
         ttl: Time to live in seconds
     """
+
     def decorator(func):
         async def wrapper(*args, **kwargs):
             # Get cache service from first argument (usually self)
-            if args and hasattr(args[0], 'cache'):
+            if args and hasattr(args[0], "cache"):
                 cache = args[0].cache
 
                 # Generate cache key from function arguments
@@ -241,4 +230,5 @@ def cached(prefix: str, ttl: int = 300):
                 return await func(*args, **kwargs)
 
         return wrapper
+
     return decorator

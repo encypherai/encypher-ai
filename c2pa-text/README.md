@@ -1,12 +1,13 @@
 <div align="center">
   <a href="https://encypherai.com">
-    <img src="https://encypherai.com/assets/logo.png" alt="Encypher Corporation Logo" width="200">
+    <img src="https://encypherai.com/encypher_full_nobg.png" alt="Encypher Corporation Logo" width="200">
   </a>
 
   # c2pa-text
 
-  **The Official Reference Implementation for C2PA Text Embedding**
+  **A Reference Implementation for C2PA Text Embedding**
 
+  [![Preview](https://img.shields.io/badge/Status-Preview-orange)](https://github.com/encypherai/c2pa-text)
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![C2PA Compliant](https://img.shields.io/badge/C2PA-Compliant-blue)](https://c2pa.org)
   [![Python](https://img.shields.io/pypi/v/c2pa-text?color=3776AB&logo=python&logoColor=white)](https://pypi.org/project/c2pa-text/)
@@ -16,6 +17,8 @@
 </div>
 
 ---
+
+> **⚠️ Preview Release**: This library is in preview for C2PA working group review. The API is stable but not yet published to package registries. Install directly from GitHub (see below).
 
 This library allows you to embed and extract [C2PA](https://c2pa.org) manifests in unstructured text (UTF-8) using invisible Unicode Variation Selectors. It is compliant with the `Manifests_Text.adoc` specification.
 
@@ -55,23 +58,47 @@ While this library is free and permissively licensed (MIT), Encypher offers an *
 
 ## Installation
 
-### Python
+### Preview Installation (from GitHub)
+
+During the preview period, install directly from GitHub:
+
+#### Python
 ```bash
+pip install "git+https://github.com/encypherai/c2pa-text.git#subdirectory=python"
+```
+
+#### TypeScript / JavaScript
+```bash
+npm install github:encypherai/c2pa-text#path:typescript
+```
+
+#### Rust
+```toml
+# In Cargo.toml
+[dependencies]
+c2pa-text = { git = "https://github.com/encypherai/c2pa-text", subdirectory = "rust" }
+```
+
+#### Go
+```bash
+go get github.com/encypherai/c2pa-text/go@v1.0.0-preview.1
+```
+
+### After 1.0 Release (Package Registries)
+
+Once published to registries:
+
+```bash
+# Python
 pip install c2pa-text
-```
 
-### TypeScript / JavaScript
-```bash
+# TypeScript
 npm install c2pa-text
-```
 
-### Rust
-```bash
+# Rust
 cargo add c2pa-text
-```
 
-### Go
-```bash
+# Go
 go get github.com/encypherai/c2pa-text/go
 ```
 

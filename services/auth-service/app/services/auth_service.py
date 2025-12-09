@@ -1,6 +1,7 @@
 """
 Authentication service business logic
 """
+
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
@@ -22,6 +23,7 @@ from encypher_commercial_shared.email import (
     send_verification_email as _send_verification_email,
     send_welcome_email as _send_welcome_email,
 )
+
 
 # Create email config from settings
 def _get_email_config() -> EmailConfig:
@@ -140,10 +142,14 @@ class AuthService:
             return None
 
         # Check if token exists and is not revoked
-        db_token = db.query(RefreshToken).filter(
-            RefreshToken.token == refresh_token,
-            not RefreshToken.revoked,
-        ).first()
+        db_token = (
+            db.query(RefreshToken)
+            .filter(
+                RefreshToken.token == refresh_token,
+                not RefreshToken.revoked,
+            )
+            .first()
+        )
 
         if not db_token:
             return None
@@ -183,10 +189,14 @@ class AuthService:
     @staticmethod
     def revoke_all_refresh_tokens_for_user(db: Session, user_id: str) -> int:
         """Revoke all active refresh tokens for a user. Returns number revoked."""
-        tokens = db.query(RefreshToken).filter(
-            RefreshToken.user_id == user_id,
-            not RefreshToken.revoked,
-        ).all()
+        tokens = (
+            db.query(RefreshToken)
+            .filter(
+                RefreshToken.user_id == user_id,
+                not RefreshToken.revoked,
+            )
+            .all()
+        )
         count = 0
         for t in tokens:
             t.revoked = True
@@ -325,11 +335,15 @@ class AuthService:
         Returns the user if successful, None otherwise.
         """
         # Find valid token
-        db_token = db.query(EmailVerificationToken).filter(
-            EmailVerificationToken.token == token,
-            EmailVerificationToken.used == False,
-            EmailVerificationToken.expires_at > datetime.utcnow(),
-        ).first()
+        db_token = (
+            db.query(EmailVerificationToken)
+            .filter(
+                EmailVerificationToken.token == token,
+                EmailVerificationToken.used == False,
+                EmailVerificationToken.expires_at > datetime.utcnow(),
+            )
+            .first()
+        )
 
         if not db_token:
             return None

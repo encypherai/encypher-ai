@@ -2,10 +2,11 @@
 Configuration management for Auth Service
 
 Environment Variables:
-- Shared (from Railway shared vars): DATABASE_URL, REDIS_URL, JWT_SECRET_KEY, 
+- Shared (from Railway shared vars): DATABASE_URL, REDIS_URL, JWT_SECRET_KEY,
   ALLOWED_ORIGINS, MARKETING_SITE_URL, DASHBOARD_URL
 - Service-specific: SMTP_*, GOOGLE_*, GITHUB_*, etc.
 """
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 

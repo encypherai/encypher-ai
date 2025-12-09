@@ -2,6 +2,7 @@
 Simple in-memory rate limiting dependency for FastAPI endpoints.
 Note: For production, replace with Redis-backed limiter.
 """
+
 import time
 from typing import Callable, Dict, Tuple
 from fastapi import Request, HTTPException, status
@@ -34,4 +35,5 @@ def rate_limiter(route: str, limit: int = 10, window_sec: int = 60) -> Callable:
                 )
             timestamps.append(now)
             _store[key] = timestamps
+
     return _dep

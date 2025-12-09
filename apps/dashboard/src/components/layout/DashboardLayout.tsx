@@ -5,10 +5,12 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ReactNode, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { OrganizationSwitcher } from '../OrganizationSwitcher';
 import { MobileNav } from '../MobileNav';
 import { NotificationCenter } from '../NotificationCenter';
 import { ThemeToggleButton } from '../../contexts/ThemeContext';
+import apiClient from '../../lib/api';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -28,13 +30,26 @@ const navItems = [
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { data: session } = useSession();
   const pathname = usePathname();
-  const isAdmin = ((session?.user as any)?.role ?? '').toLowerCase() === 'admin';
+  const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const userTier = (session?.user as any)?.tier || 'starter';
   const hasTeamFeature = ['business', 'enterprise'].includes(userTier);
   const userName = session?.user?.name || session?.user?.email || 'User';
   const userInitial = userName.charAt(0).toUpperCase();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // TEAM_006: Check if user is super admin via API
+  const { data: isSuperAdmin } = useQuery({
+    queryKey: ['is-super-admin'],
+    queryFn: async () => {
+      if (!accessToken) return false;
+      return apiClient.isSuperAdmin(accessToken);
+    },
+    enabled: Boolean(accessToken),
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+
+  const isAdmin = isSuperAdmin === true;
   
     
   // Filter nav items based on tier

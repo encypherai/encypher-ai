@@ -6,6 +6,9 @@ Provides SMTP sending, template rendering, and common email types.
 """
 
 from .emails import (
+    send_api_access_approved_email,
+    send_api_access_denied_email,
+    send_api_access_request_admin_email,
     send_password_reset_email,
     send_verification_email,
     send_welcome_email,
@@ -27,4 +30,8 @@ __all__ = [
     "send_verification_email",
     "send_welcome_email",
     "send_password_reset_email",
+    # API Access emails
+    "send_api_access_approved_email",
+    "send_api_access_denied_email",
+    "send_api_access_request_admin_email",
 ]

@@ -1,6 +1,7 @@
 """
 API endpoints for Auth Service v1
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 import httpx
 from sqlalchemy.orm import Session
@@ -15,11 +16,35 @@ from ...models.schemas import (
     OAuthExchangeRequest,
     EmailVerifyRequest,
     ResendVerificationRequest,
+    # TEAM_006: API Access Gating
+    ApiAccessRequestCreate,
+    ApiAccessStatusResponse,
+    ApiAccessApproval,
+    ApiAccessDenial,
+    PendingAccessRequestList,
 )
 from ...services.auth_service import AuthService
+from ...services.api_access_service import ApiAccessService
 from ...deps.rate_limit import rate_limiter
+from ...db.models import User
 
 router = APIRouter()
+
+
+# TEAM_006: Super admin check helper
+def verify_super_admin(db: Session, user_id: str) -> bool:
+    """Check if a user is a super admin"""
+    user = db.query(User).filter(User.id == user_id).first()
+    return user is not None and user.is_super_admin
+
+
+def require_super_admin(db: Session, user_id: str) -> None:
+    """Raise 403 if user is not a super admin"""
+    if not verify_super_admin(db, user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super admin access required",
+        )
 
 
 # Standard Response Format used; returning UserResponse inside data
@@ -83,7 +108,7 @@ async def login(
 ):
     """
     Authenticate user and return access and refresh tokens
-    
+
     - **email**: User's email address
     - **password**: User's password
     """
@@ -131,6 +156,7 @@ async def login(
 # Email Verification Endpoints
 # ==========================================
 
+
 @router.post("/verify-email")
 async def verify_email(
     request: EmailVerifyRequest,
@@ -141,7 +167,7 @@ async def verify_email(
     """
     Verify a user's email address using a verification token.
     Returns tokens for auto-login after successful verification.
-    
+
     - **token**: Verification token from email
     """
     user = AuthService.verify_email(db, request.token)
@@ -185,7 +211,7 @@ async def resend_verification(
 ):
     """
     Resend verification email to a user.
-    
+
     - **email**: User's email address
     """
     # Always return success to prevent email enumeration
@@ -204,6 +230,7 @@ async def resend_verification(
 # Token Refresh Endpoint
 # ==========================================
 
+
 @router.post("/refresh")
 async def refresh_token(
     request: RefreshTokenRequest,
@@ -211,7 +238,7 @@ async def refresh_token(
 ):
     """
     Refresh an access token using a refresh token
-    
+
     - **refresh_token**: Valid refresh token
     """
     result = AuthService.refresh_access_token(db, request.refresh_token)
@@ -340,7 +367,7 @@ async def logout(
 ):
     """
     Logout user by revoking tokens.
-    
+
     Provide either:
     - refresh_token in the request body, or
     - Authorization: Bearer <access_token> header
@@ -393,9 +420,9 @@ async def verify_token(
 ):
     """
     Verify an access token and return user information
-    
+
     Used by other services to validate tokens
-    
+
     - **Authorization**: Bearer token in header
     """
     # Extract token from "Bearer <token>"
@@ -436,3 +463,364 @@ async def verify_token(
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "auth-service"}
+
+
+# ============================================
+# TEAM_006: API Access Gating Endpoints
+# ============================================
+
+
+@router.post("/request-api-access", response_model=None)
+async def request_api_access(
+    request: ApiAccessRequestCreate,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Request API access with a use case description.
+
+    Users must be approved before they can generate API keys.
+    This enables controlled rollout during preview/beta phases.
+
+    - **use_case**: Description of how you plan to use the API (min 20 chars)
+    """
+    # Verify token and get user
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+
+    try:
+        service = ApiAccessService(db)
+        result = await service.request_api_access(user_id=user_id, use_case=request.use_case)
+        return {
+            "success": True,
+            "data": result.model_dump(),
+            "error": None,
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.get("/api-access-status", response_model=None)
+async def get_api_access_status(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Get current API access status for the authenticated user.
+
+    Returns:
+    - **status**: not_requested, pending, approved, or denied
+    - **requested_at**: When access was requested
+    - **decided_at**: When admin made a decision
+    - **use_case**: The submitted use case
+    - **denial_reason**: Reason if denied
+    """
+    # Verify token and get user
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+
+    try:
+        service = ApiAccessService(db)
+        result = await service.get_api_access_status(user_id=user_id)
+        return {
+            "success": True,
+            "data": result.model_dump(),
+            "error": None,
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        )
+
+
+# ============================================
+# Admin Endpoints for API Access Management
+# ============================================
+
+
+@router.get("/admin/is-super-admin", response_model=None)
+async def check_is_super_admin(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Check if the current user is a super admin.
+
+    Returns { is_super_admin: true/false }
+    """
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+    is_admin = verify_super_admin(db, user_id)
+
+    return {
+        "success": True,
+        "data": {
+            "is_super_admin": is_admin,
+        },
+        "error": None,
+    }
+
+
+@router.get("/admin/pending-access-requests", response_model=None)
+async def list_pending_access_requests(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    List all pending API access requests for admin review.
+
+    **Super Admin only** - Requires super admin privileges
+
+    Returns list of pending requests with user info and use cases.
+    """
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+
+    # TEAM_006: Require super admin access
+    require_super_admin(db, admin_user_id)
+
+    service = ApiAccessService(db)
+    requests = await service.list_pending_requests()
+
+    return {
+        "success": True,
+        "data": {
+            "requests": [r.model_dump() for r in requests],
+            "total": len(requests),
+        },
+        "error": None,
+    }
+
+
+@router.post("/admin/approve-api-access", response_model=None)
+async def approve_api_access(
+    request: ApiAccessApproval,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Approve a user's API access request.
+
+    **Admin only** - Requires admin role (TODO: implement role check)
+
+    - **user_id**: ID of the user to approve
+    """
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+
+    # TEAM_006: Require super admin access
+    require_super_admin(db, admin_user_id)
+
+    try:
+        service = ApiAccessService(db)
+        result = await service.approve_api_access(user_id=request.user_id, admin_user_id=admin_user_id)
+        return {
+            "success": True,
+            "data": result.model_dump(),
+            "error": None,
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post("/admin/deny-api-access", response_model=None)
+async def deny_api_access(
+    request: ApiAccessDenial,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Deny a user's API access request.
+
+    **Super Admin only** - Requires super admin privileges
+
+    - **user_id**: ID of the user to deny
+    - **reason**: Reason for denial (shown to user)
+    """
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+
+    # TEAM_006: Require super admin access
+    require_super_admin(db, admin_user_id)
+
+    try:
+        service = ApiAccessService(db)
+        result = await service.deny_api_access(user_id=request.user_id, admin_user_id=admin_user_id, reason=request.reason)
+        return {
+            "success": True,
+            "data": result.model_dump(),
+            "error": None,
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.get("/admin/check-api-access/{user_id}", response_model=None)
+async def check_user_api_access(
+    user_id: str,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Check if a specific user has approved API access.
+
+    Used by key-service to gate API key generation.
+
+    - **user_id**: ID of the user to check
+
+    Returns:
+    - **approved**: True if user can generate API keys
+    """
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    service = ApiAccessService(db)
+    is_approved = await service.is_api_access_approved(user_id=user_id)
+
+    return {
+        "success": True,
+        "data": {
+            "user_id": user_id,
+            "approved": is_approved,
+        },
+        "error": None,
+    }

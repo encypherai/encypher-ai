@@ -1,6 +1,7 @@
 """
 Integration tests for authentication flow.
 """
+
 import pytest
 import httpx
 from datetime import datetime
@@ -16,52 +17,39 @@ async def test_complete_auth_flow():
         # 1. Register user
         email = f"test_{datetime.now().timestamp()}@example.com"
         register_response = await client.post(
-            f"{BASE_URL}/api/v1/auth/signup",
-            json={
-                "email": email,
-                "password": "SecurePass123!",
-                "name": "Test User"
-            }
+            f"{BASE_URL}/api/v1/auth/signup", json={"email": email, "password": "SecurePass123!", "name": "Test User"}
         )
         assert register_response.status_code == 201
-        user_data = register_response.json()
+        response_json = register_response.json()
+        # TEAM_006: API uses standardized response format { success, data, error }
+        assert response_json["success"] is True
+        user_data = response_json["data"]
         assert "id" in user_data
         assert user_data["email"] == email
 
         # 2. Login
-        login_response = await client.post(
-            f"{BASE_URL}/api/v1/auth/login",
-            json={
-                "email": email,
-                "password": "SecurePass123!"
-            }
-        )
+        login_response = await client.post(f"{BASE_URL}/api/v1/auth/login", json={"email": email, "password": "SecurePass123!"})
         assert login_response.status_code == 200
-        tokens = login_response.json()
+        login_json = login_response.json()
+        assert login_json["success"] is True
+        tokens = login_json["data"]
         assert "access_token" in tokens
         assert "refresh_token" in tokens
 
         # 3. Verify token
-        verify_response = await client.post(
-            f"{BASE_URL}/api/v1/auth/verify",
-            headers={"Authorization": f"Bearer {tokens['access_token']}"}
-        )
+        verify_response = await client.post(f"{BASE_URL}/api/v1/auth/verify", headers={"Authorization": f"Bearer {tokens['access_token']}"})
         assert verify_response.status_code == 200
 
         # 4. Refresh token
-        refresh_response = await client.post(
-            f"{BASE_URL}/api/v1/auth/refresh",
-            json={"refresh_token": tokens["refresh_token"]}
-        )
+        refresh_response = await client.post(f"{BASE_URL}/api/v1/auth/refresh", json={"refresh_token": tokens["refresh_token"]})
         assert refresh_response.status_code == 200
-        new_tokens = refresh_response.json()
+        refresh_json = refresh_response.json()
+        assert refresh_json["success"] is True
+        new_tokens = refresh_json["data"]
         assert "access_token" in new_tokens
 
         # 5. Logout
-        logout_response = await client.post(
-            f"{BASE_URL}/api/v1/auth/logout",
-            headers={"Authorization": f"Bearer {new_tokens['access_token']}"}
-        )
+        logout_response = await client.post(f"{BASE_URL}/api/v1/auth/logout", headers={"Authorization": f"Bearer {new_tokens['access_token']}"})
         assert logout_response.status_code == 200
 
 
@@ -103,13 +91,7 @@ async def test_request_id_header():
 async def test_failed_login_attempt():
     """Test failed login attempt is tracked."""
     async with httpx.AsyncClient() as client:
-        response = await client.post(
-            f"{BASE_URL}/api/v1/auth/login",
-            json={
-                "email": "nonexistent@example.com",
-                "password": "wrongpassword"
-            }
-        )
+        response = await client.post(f"{BASE_URL}/api/v1/auth/login", json={"email": "nonexistent@example.com", "password": "wrongpassword"})
         assert response.status_code == 401
 
         # Check that metrics recorded the failure

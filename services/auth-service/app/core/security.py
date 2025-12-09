@@ -1,6 +1,7 @@
 """
 Security utilities for authentication and authorization
 """
+
 import hashlib
 import base64
 from datetime import datetime, timedelta
@@ -15,7 +16,7 @@ def _prehash_password(password: str) -> bytes:
     Pre-hash password with SHA-256 to avoid bcrypt's 72-byte limit.
     Returns base64-encoded hash (44 chars) which is always < 72 bytes.
     """
-    sha256_hash = hashlib.sha256(password.encode('utf-8')).digest()
+    sha256_hash = hashlib.sha256(password.encode("utf-8")).digest()
     return base64.b64encode(sha256_hash)
 
 
@@ -23,14 +24,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a password against a hash"""
     prehashed = _prehash_password(plain_password)
     try:
-        return bcrypt.checkpw(prehashed, hashed_password.encode('utf-8'))
+        return bcrypt.checkpw(prehashed, hashed_password.encode("utf-8"))
     except Exception:
         # Fall back to trying without pre-hash for legacy passwords
         try:
-            return bcrypt.checkpw(
-                plain_password.encode('utf-8'), 
-                hashed_password.encode('utf-8')
-            )
+            return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_password.encode("utf-8"))
         except Exception:
             return False
 
@@ -40,7 +38,7 @@ def get_password_hash(password: str) -> str:
     prehashed = _prehash_password(password)
     salt = bcrypt.gensalt(rounds=12)
     hashed = bcrypt.hashpw(prehashed, salt)
-    return hashed.decode('utf-8')
+    return hashed.decode("utf-8")
 
 
 def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:

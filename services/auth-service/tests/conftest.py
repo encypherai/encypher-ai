@@ -1,6 +1,7 @@
 """
 Pytest configuration for auth-service tests
 """
+
 import sys
 from pathlib import Path
 

@@ -16,6 +16,7 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { ApiAccessGate } from '../../components/ApiAccessGate';
 import { exportApiKeys } from '../../lib/exportCsv';
 
 // Modal component for creating API keys
@@ -372,89 +373,92 @@ export default function ApiKeysPage() {
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">API Keys</h2>
-            <p className="text-muted-foreground">
-              Generate and manage API keys for your WordPress plugin, SDKs, or custom integrations.
-            </p>
+      {/* TEAM_006: Gate API key generation behind approval workflow */}
+      <ApiAccessGate>
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">API Keys</h2>
+              <p className="text-muted-foreground">
+                Generate and manage API keys for your WordPress plugin, SDKs, or custom integrations.
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              {apiKeys.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      exportApiKeys(apiKeys);
+                      toast.success('API keys exported');
+                    }}
+                  >
+                    <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={() => setIsModalOpen(true)}
+                    disabled={!accessToken || createKeyMutation.isPending}
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    {createKeyMutation.isPending ? 'Generating…' : 'Generate Key'}
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-3">
-            {apiKeys.length > 0 && (
-              <>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    exportApiKeys(apiKeys);
-                    toast.success('API keys exported');
-                  }}
-                >
-                  <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+
+          {generatedKey && (
+            <Card className="border-2 border-warning bg-warning/5 shadow-lg">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <svg className="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  Export
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => setIsModalOpen(true)}
-                  disabled={!accessToken || createKeyMutation.isPending}
-                >
-                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  {createKeyMutation.isPending ? 'Generating…' : 'Generate Key'}
-                </Button>
-              </>
-            )}
-          </div>
+                  <CardTitle className="text-lg">New API Key Created</CardTitle>
+                </div>
+                <CardDescription className="text-foreground/80 font-medium">
+                  Copy this key now — you won't be able to see it again!
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <code className="flex-1 bg-white px-4 py-3 rounded-lg border-2 border-border font-mono text-sm select-all">
+                    {generatedKey}
+                  </code>
+                  <Button variant="primary" size="sm" onClick={() => handleCopyKey(generatedKey)}>
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy
+                  </Button>
+                </div>
+                <div className="flex justify-end">
+                  <Button variant="ghost" size="sm" onClick={() => setGeneratedKey('')}>
+                    I've copied it, dismiss
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {renderKeyList()}
         </div>
 
-        {generatedKey && (
-          <Card className="border-2 border-warning bg-warning/5 shadow-lg">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <CardTitle className="text-lg">New API Key Created</CardTitle>
-              </div>
-              <CardDescription className="text-foreground/80 font-medium">
-                Copy this key now — you won't be able to see it again!
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                <code className="flex-1 bg-white px-4 py-3 rounded-lg border-2 border-border font-mono text-sm select-all">
-                  {generatedKey}
-                </code>
-                <Button variant="primary" size="sm" onClick={() => handleCopyKey(generatedKey)}>
-                  <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                  </svg>
-                  Copy
-                </Button>
-              </div>
-              <div className="flex justify-end">
-                <Button variant="ghost" size="sm" onClick={() => setGeneratedKey('')}>
-                  I've copied it, dismiss
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {renderKeyList()}
-      </div>
-
-      {/* Create Key Modal */}
-      <CreateKeyModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleCreateKey}
-        isLoading={createKeyMutation.isPending}
-      />
+        {/* Create Key Modal */}
+        <CreateKeyModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSubmit={handleCreateKey}
+          isLoading={createKeyMutation.isPending}
+        />
+      </ApiAccessGate>
     </DashboardLayout>
   );
 }

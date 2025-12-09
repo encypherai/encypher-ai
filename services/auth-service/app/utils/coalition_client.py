@@ -1,6 +1,7 @@
 """
 Coalition Service Client
 """
+
 import httpx
 from typing import Optional
 import structlog

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>New API Access Request</h1>
+
+<p>A new API access request requires your review.</p>
+
+<div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 24px 0;">
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 8px 0; color: #64748b; width: 100px;"><strong>Name:</strong></td>
+      <td style="padding: 8px 0; color: #1a1a2e;">{{ requester_name or 'Not provided' }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 0; color: #64748b;"><strong>Email:</strong></td>
+      <td style="padding: 8px 0; color: #1a1a2e;">{{ requester_email }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 0; color: #64748b; vertical-align: top;"><strong>Use Case:</strong></td>
+      <td style="padding: 8px 0; color: #1a1a2e;">{{ use_case }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 0; color: #64748b;"><strong>Requested:</strong></td>
+      <td style="padding: 8px 0; color: #1a1a2e;">{{ requested_at }}</td>
+    </tr>
+  </table>
+</div>
+
+<div class="cta-container">
+  <a href="{{ admin_url }}" class="cta-button">Review in Admin Dashboard</a>
+</div>
+
+<div class="divider"></div>
+
+<p style="font-size: 14px; color: #64748b;">You're receiving this email because you're a super admin for Encypher.</p>
+{% endblock %}

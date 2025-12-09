@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Your API Access Has Been Approved! 🎉</h1>
+
+<p>Hi{{ ' ' + user_name if user_name else '' }},</p>
+
+<p>Great news! Your request for API access has been approved. You can now generate API keys and start integrating Encypher into your applications.</p>
+
+<div class="cta-container">
+  <a href="{{ dashboard_url }}/api-keys" class="cta-button">Generate Your API Key</a>
+</div>
+
+<div class="divider"></div>
+
+<p><strong>What's next?</strong></p>
+<ul>
+  <li><strong>Generate an API key</strong> – Create your first key in the dashboard</li>
+  <li><strong>Install our SDK</strong> – Available for Python, JavaScript, and more</li>
+  <li><strong>Start signing content</strong> – Add C2PA provenance to your AI-generated content</li>
+</ul>
+
+<p>Check out our <a href="https://encypherai.com/docs" style="color: #457b9d;">documentation</a> to get started quickly.</p>
+
+<div class="link-fallback">
+  <strong>Dashboard:</strong><br>
+  <a href="{{ dashboard_url }}">{{ dashboard_url }}</a>
+</div>
+{% endblock %}
