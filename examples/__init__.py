@@ -1,5 +1,5 @@
 """
-Examples for EncypherAI package.
+Examples for Encypher package.
 """
 
 __all__: list[str] = [

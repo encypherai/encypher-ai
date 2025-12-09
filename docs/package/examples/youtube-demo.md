@@ -1,18 +1,18 @@
 # YouTube Demo Script
 
-The EncypherAI YouTube demo script is a comprehensive, visually engaging demonstration of EncypherAI's core functionality. This interactive demo is designed for creating introductory videos about the project, showcasing all major features with rich visual elements.
+The Encypher YouTube demo script is a comprehensive, visually engaging demonstration of Encypher's core functionality. This interactive demo is designed for creating introductory videos about the project, showcasing all major features with rich visual elements.
 
 > Note: Timestamps are optional across all metadata formats, including C2PA. When you omit a timestamp, C2PA action assertions that normally include a `when` field will simply omit it.
 
 ## Overview
 
-The demo script (`youtube_demo.py`) provides a step-by-step walkthrough of EncypherAI's capabilities with colorful terminal output, visual comparisons, and detailed explanations.
+The demo script (`youtube_demo.py`) provides a step-by-step walkthrough of Encypher's capabilities with colorful terminal output, visual comparisons, and detailed explanations.
 
 ![YouTube Demo Preview](../../assets/youtube-demo-preview.png)
 
 ## Features Demonstrated
 
-The demo covers all key EncypherAI functionalities:
+The demo covers all key Encypher functionalities:
 
 1. **Basic Metadata Encoding**
    - Visual comparison of original vs encoded text
@@ -41,7 +41,7 @@ The demo covers all key EncypherAI functionalities:
 To run the YouTube demo:
 
 ```bash
-# From your EncypherAI installation directory
+# From your Encypher installation directory
 python -m encypher_ai.examples.youtube_demo
 ```
 
@@ -56,8 +56,8 @@ console.print()
 
 # Informational panel
 console.print(Panel(
-    "**Digital Signature Security in EncypherAI**\n\n"
-    "EncypherAI uses Ed25519 digital signatures to ensure:\n\n"
+    "**Digital Signature Security in Encypher**\n\n"
+    "Encypher uses Ed25519 digital signatures to ensure:\n\n"
     "1. **Data Integrity** - Detect if content has been modified\n"
     "2. **Authentication** - Verify the content came from a trusted source\n"
     "3. **Tamper Protection** - Prevent unauthorized manipulation\n\n"
@@ -102,7 +102,7 @@ text = "This is a sample text that will have metadata embedded within it."
 # Create metadata
 metadata = {
     "model": "gpt-4",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": key_id  # Required for verification
@@ -194,7 +194,7 @@ console.print("\n\n[bold]Demonstrating Streaming Support:[/bold]")
 # Create streaming metadata
 streaming_metadata = {
     "model": "streaming-demo",
-    "organization": "EncypherAI",
+    "organization": "Encypher",
     "timestamp": int(time.time()),
     "version": "2.3.0",
     "key_id": key_id  # Required for verification
@@ -262,7 +262,7 @@ else:
 
 ## Tamper Detection Demonstration
 
-The tamper detection section provides a particularly clear example of EncypherAI's security features:
+The tamper detection section provides a particularly clear example of Encypher's security features:
 
 1. First, it shows normal verification of untampered content
 2. Then it simulates tampering by modifying the text content
@@ -311,4 +311,4 @@ time.sleep(custom_delay)  # Change pause duration
 
 ## Source Code
 
-You can find the full source code for the YouTube demo in the `docs/package/examples/youtube_demo.py` file in the EncypherAI repository.
+You can find the full source code for the YouTube demo in the `docs/package/examples/youtube_demo.py` file in the Encypher repository.

@@ -1,5 +1,5 @@
 """
-Unicode Metadata Embedding Utility for EncypherAI
+Unicode Metadata Embedding Utility for Encypher
 
 This module provides utilities for embedding metadata (model info, timestamps)
 into text using Unicode variation selectors without affecting readability.
