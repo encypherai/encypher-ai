@@ -430,7 +430,8 @@ class EmbeddingService:
         self,
         db: AsyncSession,
         text: str,
-        public_key_provider
+        public_key_provider=None,
+        public_key_resolver=None,
     ) -> Optional[Tuple[ContentReference, Dict[str, Any]]]:
         """
         Extract and verify invisible embedding from text using encypher-ai.
@@ -449,10 +450,15 @@ class EmbeddingService:
             Tuple of (ContentReference, verified_metadata) if valid, None otherwise
         """
         try:
+            resolver = public_key_resolver or public_key_provider
+            if resolver is None:
+                logger.warning("No public key resolver provided")
+                return None
+
             # Use encypher-ai to verify and extract metadata
             is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(
                 text=text,
-                public_key_provider=public_key_provider
+                public_key_resolver=resolver,
             )
             
             if not is_valid or not payload:
@@ -460,7 +466,22 @@ class EmbeddingService:
                 return None
             
             # Extract enterprise metadata from custom_metadata
-            custom_metadata = payload.custom_metadata or {}
+            if isinstance(payload, dict):
+                manifest_block = payload.get("manifest") if isinstance(payload.get("manifest"), dict) else {}
+                custom_metadata = (
+                    payload.get("custom_metadata")
+                    or manifest_block.get("custom_metadata")
+                    or {}
+                )
+                payload_format = payload.get("format")
+                payload_version = payload.get("version")
+                payload_timestamp = payload.get("timestamp")
+            else:
+                custom_metadata = getattr(payload, "custom_metadata", None) or {}
+                payload_format = getattr(payload, "format", None)
+                payload_version = getattr(payload, "version", None)
+                payload_timestamp = getattr(payload, "timestamp", None)
+
             document_id = custom_metadata.get('document_id')
             organization_id = custom_metadata.get('organization_id')
             leaf_index = custom_metadata.get('leaf_index')
@@ -499,10 +520,10 @@ class EmbeddingService:
             # Return reference and verified metadata
             verified_metadata = {
                 'signer_id': signer_id,
-                'timestamp': payload.timestamp,
+                'timestamp': payload_timestamp,
                 'custom_metadata': custom_metadata,
-                'format': payload.format,
-                'version': payload.version
+                'format': payload_format,
+                'version': payload_version,
             }
             
             return reference, verified_metadata

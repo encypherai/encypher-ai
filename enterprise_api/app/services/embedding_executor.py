@@ -226,7 +226,7 @@ async def encode_document_with_embeddings(
         if merkle_root:
             merkle_tree_info = MerkleTreeInfo(
                 root_hash=merkle_root.root_hash,
-                total_leaves=merkle_root.total_leaves,
+                total_leaves=merkle_root.leaf_count,
                 tree_depth=merkle_root.tree_depth
             )
         

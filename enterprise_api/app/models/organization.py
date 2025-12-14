@@ -131,10 +131,8 @@ class Organization(Base):
     )
 
     def __repr__(self) -> str:
-        return (
-            f"<Organization(id={self.organization_id}, "
-            f"name={self.organization_name}, tier={self.tier.value})>"
-        )
+        tier_value = self.tier.value if isinstance(self.tier, OrganizationTier) else self.tier
+        return f"<Organization(id={self.organization_id}, name={self.organization_name}, tier={tier_value})>"
 
     def is_feature_enabled(self, feature: str) -> bool:
         """

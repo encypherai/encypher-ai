@@ -16,6 +16,7 @@ from sqlalchemy import (
     Integer,
     LargeBinary,
     String,
+    Text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
@@ -39,12 +40,12 @@ class MerkleRoot(Base):
     organization_id = Column(String(64), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
     document_id = Column(String(64), nullable=False, index=True)
     root_hash = Column(String(64), nullable=False, index=True)
-    tree_depth = Column(Integer, nullable=False)
-    total_leaves = Column(Integer, nullable=False)
+    algorithm = Column(String(20), nullable=False, default="sha256")
+    leaf_count = Column(Integer, nullable=False)
+    tree_depth = Column(Integer, nullable=False, default=0)
     segmentation_level = Column(String(50), nullable=False)
+    doc_metadata = Column(JSONB, default={})
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
-    # Use 'doc_metadata' as attribute name since 'metadata' is reserved in SQLAlchemy
-    doc_metadata = Column("metadata", JSONB, default={})
     
     # Relationships
     subhashes = relationship("MerkleSubhash", back_populates="root", cascade="all, delete-orphan")
@@ -53,7 +54,7 @@ class MerkleRoot(Base):
     # Constraints - match migration
     __table_args__ = (
         CheckConstraint('tree_depth >= 0', name='merkle_roots_tree_depth_check'),
-        CheckConstraint('total_leaves > 0', name='merkle_roots_total_leaves_check'),
+        CheckConstraint('leaf_count > 0', name='merkle_roots_leaf_count_check'),
         CheckConstraint("segmentation_level IN ('sentence', 'paragraph', 'section')", 
                        name='merkle_roots_segmentation_level_check'),
         Index('idx_merkle_roots_org', 'organization_id'),
@@ -83,7 +84,7 @@ class MerkleSubhash(Base):
     parent_hash = Column(String(64), nullable=True, index=True)
     left_child_hash = Column(String(64), nullable=True)
     right_child_hash = Column(String(64), nullable=True)
-    text_content = Column(String, nullable=True)  # Only for leaf nodes
+    text_content = Column(Text, nullable=True)  # Only for leaf nodes
     segment_metadata = Column(JSONB, default={})
     
     # Relationships
@@ -116,11 +117,10 @@ class MerkleProofCache(Base):
     
     # Primary key
     id = Column(PGUUID(as_uuid=True), primary_key=True, default=uuid4)
-    target_hash = Column(String(64), nullable=False)
     # FK to merkle_roots.id
     root_id = Column(PGUUID(as_uuid=True), ForeignKey("merkle_roots.id", ondelete="CASCADE"), nullable=False)
+    leaf_hash = Column(String(64), nullable=False)
     proof_path = Column(JSONB, nullable=False)  # Array of {hash, position} objects
-    position_bits = Column(LargeBinary, nullable=False)  # Binary path representation
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, default=datetime.utcnow)
     expires_at = Column(TIMESTAMP(timezone=True), nullable=False)
     
@@ -129,12 +129,13 @@ class MerkleProofCache(Base):
     
     # Constraints
     __table_args__ = (
-        Index('idx_merkle_proof_cache_target_root', 'target_hash', 'root_id'),
-        Index('idx_merkle_proof_cache_expires', 'expires_at'),
+        Index('idx_proof_cache_leaf', 'leaf_hash'),
+        Index('idx_proof_cache_root', 'root_id'),
+        Index('idx_proof_cache_expires', 'expires_at'),
     )
     
     def __repr__(self):
-        return f"<MerkleProofCache(target={self.target_hash[:8]}..., expires={self.expires_at})>"
+        return f"<MerkleProofCache(leaf_hash={self.leaf_hash[:8]}..., expires={self.expires_at})>"
 
 
 class AttributionReport(Base):

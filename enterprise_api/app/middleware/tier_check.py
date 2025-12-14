@@ -94,9 +94,9 @@ class TierCheckMiddleware:
         
         required_tier = self._get_required_tier(path)
         
-        # Tier hierarchy: FREE < PROFESSIONAL < ENTERPRISE
+        # Tier hierarchy: STARTER < PROFESSIONAL < ENTERPRISE
         tier_levels = {
-            "free": 0,
+            "starter": 0,
             "professional": 1,
             "enterprise": 2
         }
@@ -116,7 +116,7 @@ class TierCheckMiddleware:
         if "/enterprise/" in path:
             return "professional"
         
-        return "free"
+        return "starter"
 
 
 def check_tier_access(

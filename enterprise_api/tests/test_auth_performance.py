@@ -36,8 +36,13 @@ async def test_get_current_organization_uses_client():
         # Mock BackgroundTasks
         mock_background_tasks = MagicMock()
 
+        # Mock Request with .state for metrics fields
+        mock_request = MagicMock()
+        mock_request.state = MagicMock()
+
         # Call the dependency (no DB arg needed now)
         result = await get_current_organization(
+            request=mock_request,
             background_tasks=mock_background_tasks,
             credentials=mock_credentials
         )

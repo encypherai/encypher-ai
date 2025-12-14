@@ -99,6 +99,7 @@ class TestEmbeddingServiceInvisible:
             segments=segments,
             leaf_hashes=leaf_hashes
         )
+        embeddings, _ = embeddings
         
         # Verify we got embeddings for all segments
         assert len(embeddings) == 3
@@ -142,6 +143,7 @@ class TestEmbeddingServiceInvisible:
             license_info=license_info,
             c2pa_manifest_url=c2pa_manifest_url
         )
+        embeddings, _ = embeddings
         
         assert len(embeddings) == 1
         
@@ -254,6 +256,8 @@ class TestInvisibleEmbeddingIntegration:
             segments=segments,
             leaf_hashes=leaf_hashes
         )
+
+        embeddings, _ = embeddings
         
         assert len(embeddings) == 2
         
@@ -269,14 +273,18 @@ class TestInvisibleEmbeddingIntegration:
             # Extract metadata from embedded text
             is_valid, signer_id, payload = UnicodeMetadata.verify_metadata(
                 text=embedding.embedded_text,
-                public_key_provider=public_key_provider
+                public_key_resolver=public_key_provider
             )
             
             assert is_valid is True
             assert signer_id == "test_org_001"
             assert payload is not None
-            assert payload.custom_metadata['document_id'] == "doc_001"
-            assert payload.custom_metadata['organization_id'] == "org_001"
+            if isinstance(payload, dict):
+                custom = payload.get("custom_metadata") or {}
+            else:
+                custom = payload.custom_metadata
+            assert custom['document_id'] == "doc_001"
+            assert custom['organization_id'] == "org_001"
 
 
 if __name__ == '__main__':

@@ -2,7 +2,7 @@
 name = "encypher-enterprise-api"
 version = "1.0.0-preview"
 description = "Enterprise API for C2PA-compliant content signing and verification"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dependencies = [
     "fastapi>=0.109.0",
     "uvicorn[standard]>=0.27.0",
@@ -31,7 +31,7 @@ dependencies = [
     "alembic>=1.13.0",
     "starlette>=0.49.1,<1.0.0",
     "requests>=2.32.4",
-    "urllib3>=1.26.0",
+    "urllib3>=2.6.0",
     "aiohttp>=3.12.14",
     "boto3>=1.34.0",
     "botocore>=1.34.0",

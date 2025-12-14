@@ -27,7 +27,7 @@ class TestMerkleRootCRUD:
             document_id="doc_123",
             root_hash="a" * 64,
             tree_depth=5,
-            total_leaves=32,
+            leaf_count=32,
             segmentation_level="sentence",
             metadata={"title": "Test Document"}
         )
@@ -37,7 +37,7 @@ class TestMerkleRootCRUD:
         assert root.document_id == "doc_123"
         assert root.root_hash == "a" * 64
         assert root.tree_depth == 5
-        assert root.total_leaves == 32
+        assert root.leaf_count == 32
         assert root.segmentation_level == "sentence"
         assert root.doc_metadata["title"] == "Test Document"
     
@@ -50,7 +50,7 @@ class TestMerkleRootCRUD:
             document_id="doc_123",
             root_hash="b" * 64,
             tree_depth=3,
-            total_leaves=8,
+            leaf_count=8,
             segmentation_level="paragraph"
         )
         
@@ -73,7 +73,7 @@ class TestMerkleRootCRUD:
             document_id=unique_doc_id,
             root_hash="c" * 64,
             tree_depth=3,
-            total_leaves=8,
+            leaf_count=8,
             segmentation_level="sentence"
         )
         
@@ -83,7 +83,7 @@ class TestMerkleRootCRUD:
             document_id=unique_doc_id,
             root_hash="d" * 64,
             tree_depth=2,
-            total_leaves=4,
+            leaf_count=4,
             segmentation_level="paragraph"
         )
         
@@ -113,7 +113,7 @@ class TestMerkleRootCRUD:
             document_id="doc_delete",
             root_hash="e" * 64,
             tree_depth=1,
-            total_leaves=2,
+            leaf_count=2,
             segmentation_level="sentence"
         )
         
@@ -139,7 +139,7 @@ class TestMerkleSubhashCRUD:
             document_id="doc_123",
             root_hash="f" * 64,
             tree_depth=2,
-            total_leaves=4,
+            leaf_count=4,
             segmentation_level="sentence"
         )
         
@@ -168,7 +168,7 @@ class TestMerkleSubhashCRUD:
             document_id="doc_bulk",
             root_hash="g" * 64,
             tree_depth=3,
-            total_leaves=8,
+            leaf_count=8,
             segmentation_level="sentence"
         )
         
@@ -201,7 +201,7 @@ class TestMerkleSubhashCRUD:
             document_id="doc_find",
             root_hash="h" * 64,
             tree_depth=1,
-            total_leaves=2,
+            leaf_count=2,
             segmentation_level="sentence"
         )
         
@@ -235,7 +235,7 @@ class TestMerkleSubhashCRUD:
             document_id="doc_batch",
             root_hash="i" * 64,
             tree_depth=2,
-            total_leaves=4,
+            leaf_count=4,
             segmentation_level="sentence"
         )
         
@@ -276,7 +276,7 @@ class TestMerkleProofCacheCRUD:
             document_id="doc_proof",
             root_hash="j" * 64,
             tree_depth=3,
-            total_leaves=8,
+            leaf_count=8,
             segmentation_level="sentence"
         )
         
@@ -287,10 +287,9 @@ class TestMerkleProofCacheCRUD:
         
         cached = await merkle_crud.create_proof_cache(
             db=db,
-            target_hash="target" + "0" * 58,
+            leaf_hash="target" + "0" * 58,
             root_id=root.id,
             proof_path=proof_path,
-            position_bits=b'\x01\x00',
             ttl_hours=24
         )
         
@@ -304,7 +303,7 @@ class TestMerkleProofCacheCRUD:
         )
         
         assert retrieved is not None
-        assert retrieved.target_hash == "target" + "0" * 58
+        assert retrieved.leaf_hash == "target" + "0" * 58
         assert len(retrieved.proof_path) == 2
     
     @pytest.mark.asyncio
@@ -316,17 +315,16 @@ class TestMerkleProofCacheCRUD:
             document_id="doc_expired",
             root_hash="k" * 64,
             tree_depth=1,
-            total_leaves=2,
+            leaf_count=2,
             segmentation_level="sentence"
         )
         
         # Create a proof that expires immediately
         await merkle_crud.create_proof_cache(
             db=db,
-            target_hash="expired" + "0" * 57,
+            leaf_hash="expired" + "0" * 57,
             root_id=root.id,
             proof_path=[],
-            position_bits=b'',
             ttl_hours=0  # Expires immediately
         )
         

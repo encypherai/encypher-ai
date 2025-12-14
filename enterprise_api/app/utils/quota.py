@@ -6,7 +6,7 @@ Tracks and enforces usage quotas based on organization tier.
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Dict
+from typing import Any, Dict
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, update
@@ -15,6 +15,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.organization import Organization, OrganizationTier
 
 logger = logging.getLogger(__name__)
+
+
+def _coerce_tier(value: Any) -> OrganizationTier:
+    if isinstance(value, OrganizationTier):
+        return value
+    if isinstance(value, str):
+        try:
+            return OrganizationTier(value)
+        except ValueError:
+            return OrganizationTier.STARTER
+    return OrganizationTier.STARTER
 
 
 class QuotaType(str, Enum):
@@ -239,8 +250,9 @@ class QuotaManager:
                 detail="Organization not found"
             )
         
-        # Get quota limit for tier
-        quota_limit = QuotaManager.get_quota_limit(org.tier, quota_type)
+        # Get quota limit for tier (DB stores tier as string)
+        tier = _coerce_tier(tier_override or org.tier)
+        quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
         
         # Quota = 0 means feature not available for this tier
         if quota_limit == 0:
@@ -248,8 +260,8 @@ class QuotaManager:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "error": "FeatureNotAvailable",
-                    "message": f"'{quota_type.value}' is not available on {org.tier.value} tier",
-                    "current_tier": org.tier.value,
+                    "message": f"'{quota_type.value}' is not available on {tier.value} tier",
+                    "current_tier": tier.value,
                     "upgrade_url": "https://dashboard.encypherai.com/billing",
                 }
             )
@@ -399,8 +411,9 @@ class QuotaManager:
         
         if not org:
             return {}
-        
-        limit = QuotaManager.get_quota_limit(org.tier, quota_type)
+
+        tier = _coerce_tier(org.tier)
+        limit = QuotaManager.get_quota_limit(tier, quota_type)
         used = QuotaManager._get_current_usage(org, quota_type)
         
         if limit == -1:
@@ -483,13 +496,13 @@ class QuotaManager:
         
         status_dict = {
             "organization_id": organization_id,
-            "tier": org.tier.value,
+            "tier": _coerce_tier(org.tier).value,
             "reset_date": QuotaManager._get_reset_date().isoformat(),
             "quotas": {}
         }
         
         for quota_type in QuotaType:
-            limit = QuotaManager.get_quota_limit(org.tier, quota_type)
+            limit = QuotaManager.get_quota_limit(_coerce_tier(org.tier), quota_type)
             usage = QuotaManager._get_current_usage(org, quota_type)
             
             status_dict["quotas"][quota_type.value] = {

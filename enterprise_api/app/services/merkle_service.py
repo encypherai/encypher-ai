@@ -74,7 +74,7 @@ class MerkleService:
                     document_id=document_id,
                     root_hash=tree.root.hash,
                     tree_depth=tree.tree_depth,
-                    total_leaves=tree.total_leaves,
+                    leaf_count=tree.total_leaves,
                     segmentation_level=level,
                     metadata=metadata
                 )
@@ -207,7 +207,7 @@ class MerkleService:
                             'organization_id': root.organization_id,
                             'segmentation_level': root.segmentation_level,
                             'matched_segments': 0,
-                            'total_leaves': root.total_leaves,
+                            'leaf_count': root.leaf_count,
                             'doc_metadata': root.doc_metadata
                         }
                     source_matches[doc_id]['matched_segments'] += 1

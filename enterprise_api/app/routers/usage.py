@@ -108,6 +108,39 @@ def _calculate_metric(used: int, limit: int, name: str) -> UsageMetric:
         )
 
 
+def _build_metric(metric_key: str, used: int, limit: int) -> UsageMetric:
+    display_names = {
+        "c2pa_signatures": "C2PA Signatures",
+        "sentences_tracked": "Sentences Tracked",
+        "batch_operations": "Batch Operations",
+        "api_calls": "API Calls",
+    }
+    return _calculate_metric(used=used, limit=limit, name=display_names.get(metric_key, metric_key))
+
+
+def _build_user_level_response(org_id: str, tier: str, limits: dict) -> UsageResponse:
+    period_start = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    period_end = period_start.replace(
+        month=period_start.month + 1 if period_start.month < 12 else 1,
+        year=period_start.year if period_start.month < 12 else period_start.year + 1,
+    )
+
+    # User-level keys are not tracked in DB; report zero usage with tier limits.
+    return UsageResponse(
+        organization_id=org_id,
+        tier=tier,
+        period_start=period_start.isoformat(),
+        period_end=period_end.isoformat(),
+        metrics={
+            "c2pa_signatures": _build_metric("c2pa_signatures", 0, limits.get("c2pa_signatures", 0)),
+            "sentences_tracked": _build_metric("sentences_tracked", 0, limits.get("sentences_tracked", 0)),
+            "batch_operations": _build_metric("batch_operations", 0, limits.get("batch_operations", 0)),
+            "api_calls": _build_metric("api_calls", 0, -1),
+        },
+        reset_date=period_end.date().isoformat(),
+    )
+
+
 @router.get("/usage", response_model=UsageResponse)
 async def get_usage_stats(
     organization: dict = Depends(require_read_permission),
@@ -129,23 +162,7 @@ async def get_usage_stats(
     if org_id.startswith("user_"):
         tier = "starter"
         limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
-        
-        # Return default usage for user-level keys (not tracked in DB)
-        return UsageResponse(
-            organization_id=org_id,
-            tier=tier,
-            period_start=datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0),
-            period_end=datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0).replace(
-                month=datetime.utcnow().month + 1 if datetime.utcnow().month < 12 else 1,
-                year=datetime.utcnow().year if datetime.utcnow().month < 12 else datetime.utcnow().year + 1
-            ),
-            metrics=[
-                _build_metric("c2pa_signatures", 0, limits["c2pa_signatures"]),
-                _build_metric("sentences_tracked", 0, limits["sentences_tracked"]),
-                _build_metric("batch_operations", 0, limits["batch_operations"]),
-                _build_metric("api_calls", 0, limits["api_calls"]),
-            ],
-        )
+        return _build_user_level_response(org_id, tier, limits)
     
     # Get organization usage data from unified schema
     result = await db.execute(

@@ -120,6 +120,37 @@ Expected response:
 
 The API detects the modification!
 
+---
+
+## Optional: Create Manifest JSON (Public Helper)
+
+If you want a file-format-independent helper that creates a manifest JSON payload from plaintext, you can use the public `create-manifest` endpoint.
+
+This endpoint is public and supports an *optional* API key for higher limits.
+
+```bash
+curl -X POST https://api.encypherai.com/api/v1/public/c2pa/create-manifest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello world. This will be signed.",
+    "document_title": "Quickstart Manifest"
+  }'
+```
+
+You can then feed the returned `signing` payload fields into `/api/v1/sign`:
+
+```bash
+curl -X POST https://api.encypherai.com/api/v1/sign \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "text": "Hello world. This will be signed.",
+    "document_title": "Quickstart Manifest",
+    "claim_generator": "encypher.public.create-manifest",
+    "actions": [{"action": "c2pa.created"}]
+  }'
+```
+
 ## 5. Look Up Sentence Provenance
 
 Look up where a sentence came from:

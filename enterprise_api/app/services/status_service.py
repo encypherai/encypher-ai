@@ -15,6 +15,7 @@ import hashlib
 import logging
 import time
 from datetime import datetime, timezone
+from inspect import isawaitable
 from typing import Dict, Optional, Tuple
 from uuid import uuid4
 
@@ -31,6 +32,12 @@ from app.models.status_list import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+async def _await_if_needed(value):
+    if isawaitable(value):
+        return await value
+    return value
 
 
 class StatusService:
@@ -135,7 +142,7 @@ class StatusService:
             .order_by(StatusListMetadata.list_index.desc())
             .limit(1)
         )
-        metadata = result.scalar_one_or_none()
+        metadata = await _await_if_needed(result.scalar_one_or_none())
         
         if metadata:
             return metadata
@@ -146,7 +153,7 @@ class StatusService:
             select(func.max(StatusListMetadata.list_index))
             .where(StatusListMetadata.organization_id == organization_id)
         )
-        max_index = result.scalar()
+        max_index = await _await_if_needed(result.scalar())
         new_index = (max_index or -1) + 1
         
         metadata = StatusListMetadata(
@@ -240,7 +247,7 @@ class StatusService:
                 StatusListEntry.document_id == document_id,
             )
         )
-        row = result.first()
+        row = await _await_if_needed(result.first())
         
         if not row:
             return False, None
@@ -321,7 +328,7 @@ class StatusService:
                 StatusListEntry.document_id == document_id,
             )
         )
-        entry = result.scalar_one_or_none()
+        entry = await _await_if_needed(result.scalar_one_or_none())
         
         if not entry:
             raise ValueError(f"Document {document_id} not found in status list")
@@ -391,7 +398,7 @@ class StatusService:
                 StatusListEntry.document_id == document_id,
             )
         )
-        entry = result.scalar_one_or_none()
+        entry = await _await_if_needed(result.scalar_one_or_none())
         
         if not entry:
             raise ValueError(f"Document {document_id} not found in status list")
@@ -459,7 +466,7 @@ class StatusService:
             )
             .order_by(StatusListEntry.bit_index)
         )
-        entries = result.all()
+        entries = await _await_if_needed(result.all())
         
         # Build bitstring
         bitstring = bytearray(BYTES_PER_LIST)
@@ -558,8 +565,9 @@ class StatusService:
                 (StatusListMetadata.last_generated_at < threshold_dt)
             )
         )
-        
-        return [(row.organization_id, row.list_index) for row in result.all()]
+
+        rows = await _await_if_needed(result.all())
+        return [(row.organization_id, row.list_index) for row in rows]
 
 
 # Shared service instance

@@ -23,6 +23,17 @@ from app.utils.quota import (
 logger = logging.getLogger(__name__)
 
 
+def _coerce_tier(value: Any) -> OrganizationTier:
+    if isinstance(value, OrganizationTier):
+        return value
+    if isinstance(value, str):
+        try:
+            return OrganizationTier(value)
+        except ValueError:
+            return OrganizationTier.STARTER
+    return OrganizationTier.STARTER
+
+
 class TierService:
     """
     Service for tier-based access control and feature enforcement.
@@ -42,7 +53,7 @@ class TierService:
         Returns:
             Dictionary of feature name -> enabled status
         """
-        return TIER_FEATURES.get(tier, TIER_FEATURES[OrganizationTier.STARTER])
+        return TIER_FEATURES.get(_coerce_tier(tier), TIER_FEATURES[OrganizationTier.STARTER])
     
     @staticmethod
     def is_feature_available(tier: OrganizationTier, feature: str) -> bool:
@@ -56,7 +67,7 @@ class TierService:
         Returns:
             True if feature is available, False otherwise
         """
-        features = TIER_FEATURES.get(tier, {})
+        features = TIER_FEATURES.get(_coerce_tier(tier), {})
         return features.get(feature, False)
     
     @staticmethod
@@ -70,7 +81,7 @@ class TierService:
         Returns:
             Rate limit in requests per second (-1 for unlimited)
         """
-        return TIER_RATE_LIMITS.get(tier, 10)
+        return TIER_RATE_LIMITS.get(_coerce_tier(tier), 10)
     
     @staticmethod
     def get_rev_share(tier: OrganizationTier) -> tuple:
@@ -83,7 +94,7 @@ class TierService:
         Returns:
             Tuple of (publisher_share, encypher_share) as percentages
         """
-        return TIER_REV_SHARE.get(tier, (65, 35))
+        return TIER_REV_SHARE.get(_coerce_tier(tier), (65, 35))
     
     @staticmethod
     def get_quota_limit(tier: OrganizationTier, quota_type: QuotaType) -> int:
@@ -97,7 +108,7 @@ class TierService:
         Returns:
             Quota limit (-1 for unlimited, 0 for not available)
         """
-        tier_quotas = TIER_QUOTAS.get(tier, {})
+        tier_quotas = TIER_QUOTAS.get(_coerce_tier(tier), {})
         return tier_quotas.get(quota_type, 0)
     
     @staticmethod
@@ -158,7 +169,8 @@ class TierService:
             return False
         
         # Check feature availability for tier
-        is_available = TierService.is_feature_available(org.tier, feature)
+        tier = _coerce_tier(org.tier)
+        is_available = TierService.is_feature_available(tier, feature)
         
         if not is_available and raise_on_denied:
             # Get upgrade tier suggestion
@@ -168,11 +180,11 @@ class TierService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "error": "FeatureNotAvailable",
-                    "message": f"The '{feature}' feature is not available on your current plan ({org.tier.value})",
-                    "current_tier": org.tier.value,
+                    "message": f"The '{feature}' feature is not available on your current plan ({tier.value})",
+                    "current_tier": tier.value,
                     "required_tier": upgrade_tier,
                     "upgrade_url": "https://dashboard.encypherai.com/billing",
-                    "features_available": TierService.get_tier_features(org.tier),
+                    "features_available": TierService.get_tier_features(tier),
                 }
             )
         
@@ -262,14 +274,16 @@ class TierService:
                 detail="Organization not found"
             )
         
+        tier = _coerce_tier(org.tier)
+
         # Get tier info
-        features = TierService.get_tier_features(org.tier)
-        rate_limit = TierService.get_rate_limit(org.tier)
+        features = TierService.get_tier_features(tier)
+        rate_limit = TierService.get_rate_limit(tier)
         
         # Build quota status
         quotas = {}
         for quota_type in QuotaType:
-            limit = TierService.get_quota_limit(org.tier, quota_type)
+            limit = TierService.get_quota_limit(tier, quota_type)
             usage = TierService._get_current_usage(org, quota_type)
             
             quotas[quota_type.value] = {
@@ -282,8 +296,8 @@ class TierService:
         return {
             "organization_id": organization_id,
             "organization_name": org.organization_name,
-            "tier": org.tier.value,
-            "tier_display_name": TierService._get_tier_display_name(org.tier),
+            "tier": tier.value,
+            "tier_display_name": TierService._get_tier_display_name(tier),
             "features": features,
             "rate_limit": rate_limit if rate_limit >= 0 else "unlimited",
             "quotas": quotas,
@@ -299,6 +313,7 @@ class TierService:
     @staticmethod
     def _get_tier_display_name(tier: OrganizationTier) -> str:
         """Get human-readable tier name."""
+        tier = _coerce_tier(tier)
         display_names = {
             OrganizationTier.STARTER: "Starter (Free)",
             OrganizationTier.PROFESSIONAL: "Professional",
@@ -367,8 +382,9 @@ class TierService:
                 detail="Organization not found"
             )
         
-        old_tier = org.tier
-        org.tier = new_tier
+        old_tier = _coerce_tier(org.tier)
+        new_tier = _coerce_tier(new_tier)
+        org.tier = new_tier.value
         
         # Update feature flags if requested
         if update_features:

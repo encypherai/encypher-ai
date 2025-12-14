@@ -148,12 +148,12 @@ async def encode_document(
                 document_id=root.document_id,
                 root_hash=root.root_hash,
                 tree_depth=root.tree_depth,
-                total_leaves=root.total_leaves,
+                total_leaves=root.leaf_count,
                 segmentation_level=root.segmentation_level,
                 created_at=root.created_at,
                 metadata=root.doc_metadata
             )
-            total_segments[level] = root.total_leaves
+            total_segments[level] = root.leaf_count
         
         processing_time_ms = (time.time() - start_time) * 1000
         
@@ -373,13 +373,13 @@ async def detect_plagiarism(
         )
         
         # Filter sources by minimum match percentage
-        filtered_sources = [
+        source_docs = [
             SourceDocumentMatch(
                 document_id=doc['document_id'],
                 organization_id=doc['organization_id'],
                 segmentation_level=doc['segmentation_level'],
                 matched_segments=doc['matched_segments'],
-                total_leaves=doc['total_leaves'],
+                total_leaves=doc.get('total_leaves', doc.get('leaf_count')),
                 match_percentage=doc['match_percentage'],
                 confidence_score=doc['confidence_score'],
                 doc_metadata=doc.get('doc_metadata')
@@ -412,7 +412,7 @@ async def detect_plagiarism(
             total_segments=report.total_segments,
             matched_segments=report.matched_segments,
             overall_match_percentage=round(overall_match_pct, 2),
-            source_documents=filtered_sources,
+            source_documents=source_docs,
             heat_map_data=heat_map,
             processing_time_ms=processing_time_ms,
             scan_timestamp=report.scan_timestamp

@@ -90,6 +90,13 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
 | `/api/v1/usage` | GET | ✅ | All | Get organization usage statistics | Key Service |
 
+### Public C2PA Utilities
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/public/c2pa/validate-manifest` | POST | ❌ | Public | Validate manifest JSON structure + assertion schema payloads (non-cryptographic). Optional API key supported for higher limits |
+| `/api/v1/public/c2pa/create-manifest` | POST | ❌ | Public | Create a manifest JSON payload from plaintext (non-cryptographic) and return a signing helper payload. Optional API key supported for higher limits |
+
 ### Enterprise Merkle Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
@@ -256,7 +263,9 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 
 ### Authentication
 
-All API requests require an API key in the `Authorization` header:
+Authenticated API requests require an API key in the `Authorization` header.
+
+Some endpoints are public (no auth required) and support an *optional* API key for higher limits.
 
 ```bash
 curl -X POST https://api.encypherai.com/api/v1/sign \

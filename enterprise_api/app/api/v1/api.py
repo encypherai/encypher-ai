@@ -7,6 +7,7 @@ from fastapi import APIRouter
 
 from app.api.v1.endpoints import embeddings, merkle, provisioning
 from app.api.v1.enterprise import c2pa
+from app.api.v1.public import c2pa as public_c2pa
 from app.api.v1.public import verify
 
 api_router = APIRouter()
@@ -25,3 +26,6 @@ api_router.include_router(c2pa.router, prefix="/enterprise/c2pa", tags=["C2PA Cu
 
 # Include public verification endpoints (no auth)
 api_router.include_router(verify.router)
+
+# Include public C2PA endpoints (no auth)
+api_router.include_router(public_c2pa.router)

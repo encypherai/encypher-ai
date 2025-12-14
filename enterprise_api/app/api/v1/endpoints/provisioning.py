@@ -126,7 +126,7 @@ async def auto_provision(
             api_key=api_key,
             key_id=f"key_{api_key[-12:]}",
             organization_id=org.organization_id,
-            tier=org.tier.value,
+            tier=str(org.tier),
             created_at=org.created_at,
             expires_at=None
         )
@@ -148,7 +148,7 @@ async def auto_provision(
             organization_name=org.name,
             user_id=user_id,
             api_key=api_key_response,
-            tier=org.tier.value,
+            tier=str(org.tier),
             features_enabled=features_enabled,
             quota_limits=quota_limits,
             next_steps=next_steps

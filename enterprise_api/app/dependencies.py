@@ -17,7 +17,7 @@ from app.config import settings
 from app.services.key_service_client import key_service_client
 
 logger = logging.getLogger(__name__)
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Demo key configurations for local testing (when Key Service unavailable)
 # These match the seeded test organizations
@@ -147,7 +147,7 @@ DEMO_KEYS = {
 async def get_current_organization(
     request: Request,
     background_tasks: BackgroundTasks,
-    credentials: HTTPAuthorizationCredentials = Security(security),
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
 ) -> Dict:
     """
     Validate API key and return organization context.
@@ -165,6 +165,13 @@ async def get_current_organization(
         - permissions (list of key permissions)
         - usage limits
     """
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     api_key = credentials.credentials
     org_context = None
 

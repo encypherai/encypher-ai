@@ -76,6 +76,8 @@ X-RateLimit-Remaining: 950
 X-RateLimit-Reset: 2025-02-01T00:00:00Z
 ```
 
+Public endpoints may also enforce IP-based rate limiting. Some public endpoints support an optional API key (via `Authorization: Bearer ...`) to bypass public rate limiting.
+
 ---
 
 ## Endpoints
@@ -196,6 +198,134 @@ curl -X POST https://api.encypherai.com/api/v1/verify \
   -d '{
     "text": "Signed content from previous step..."
   }'
+```
+
+---
+
+### POST /api/v1/public/c2pa/validate-manifest
+
+Validate a C2PA-like manifest JSON object (structure + assertion schema validation only).
+
+**Authentication:** Not required (public endpoint)
+
+If an API key is provided, the request bypasses public IP-based rate limiting.
+
+**Request:**
+```json
+{
+  "manifest": {
+    "claim_generator": "example-generator",
+    "assertions": [
+      {"label": "c2pa.location.v1", "data": {"latitude": 37.0, "longitude": -122.0}}
+    ]
+  },
+  "schemas": {
+    "com.example.custom.v1": {
+      "type": "object",
+      "properties": {"x": {"type": "integer"}},
+      "required": ["x"]
+    }
+  }
+}
+```
+
+**Response:**
+```json
+{
+  "valid": true,
+  "errors": [],
+  "warnings": [],
+  "assertions": [
+    {"label": "c2pa.location.v1", "valid": true, "errors": [], "warnings": []}
+  ]
+}
+```
+
+---
+
+### POST /api/v1/public/c2pa/create-manifest
+
+Create a non-cryptographic manifest JSON payload from plaintext inputs.
+
+**Authentication:** Not required (public endpoint)
+
+If an API key is provided, the request bypasses public IP-based rate limiting.
+
+**Payload limits:** The request is rejected with `413` if the UTF-8 encoded text exceeds 256 KiB.
+
+**Request:**
+```json
+{
+  "text": "Hello world. This will be signed.",
+  "filename": "example.txt",
+  "document_title": "Example",
+  "claim_generator": "optional-override"
+}
+```
+
+**Response:**
+```json
+{
+  "manifest": {
+    "claim_generator": "encypher.public.create-manifest",
+    "assertions": []
+  },
+  "signing": {
+    "claim_generator": "encypher.public.create-manifest",
+    "actions": [{"action": "c2pa.created"}]
+  }
+}
+```
+
+---
+
+### GET /api/v1/public/c2pa/trust-anchors/{signer_id}
+
+Lookup a trust anchor (public key) for external C2PA validators.
+
+This endpoint enables third-party validators to verify Encypher-signed content by providing the signer's public key. Implements the "Private Credential Store" model per [C2PA spec §14.4.3](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_trust_lists).
+
+**Authentication:** Not required (public endpoint)
+
+**Rate Limiting:** 100 requests per minute per IP
+
+**Path Parameters:**
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `signer_id` | string | Signer identifier from manifest (e.g., `org_abc123` or `encypher.public`) |
+
+**Special signer IDs:**
+- `encypher.public` or `org_demo`: Returns Encypher's official demo/free-tier key
+- `demo-*`: Returns demo/test keys (non-production)
+
+**Response (200 OK):**
+```json
+{
+  "signer_id": "org_abc123",
+  "signer_name": "Acme Corp",
+  "public_key": "-----BEGIN PUBLIC KEY-----\nMCo...\n-----END PUBLIC KEY-----",
+  "public_key_algorithm": "Ed25519",
+  "key_id": "key_xyz789",
+  "issued_at": "2025-01-15T00:00:00Z",
+  "expires_at": "2026-01-15T00:00:00Z",
+  "revoked": false,
+  "trust_anchor_type": "organization"
+}
+```
+
+**Response (404 Not Found):**
+```json
+{
+  "detail": {
+    "error": "SIGNER_NOT_FOUND",
+    "message": "No trust anchor found for signer_id 'unknown_signer'"
+  }
+}
+```
+
+**Example:**
+```bash
+curl https://api.encypherai.com/api/v1/public/c2pa/trust-anchors/encypher.public
 ```
 
 ---

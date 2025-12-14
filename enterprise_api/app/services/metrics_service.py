@@ -105,7 +105,7 @@ class MetricsService:
             # Start background flush task
             self._flush_task = asyncio.create_task(self._flush_loop())
             
-            logger.info(f"Metrics service connected to Redis")
+            logger.info("Metrics service connected to Redis")
             return True
             
         except Exception as e:

@@ -24,7 +24,7 @@ async def create_merkle_root(
     document_id: str,
     root_hash: str,
     tree_depth: int,
-    total_leaves: int,
+    leaf_count: int,
     segmentation_level: str,
     metadata: Optional[Dict[str, Any]] = None
 ) -> MerkleRoot:
@@ -49,7 +49,7 @@ async def create_merkle_root(
         document_id=document_id,
         root_hash=root_hash,
         tree_depth=tree_depth,
-        total_leaves=total_leaves,
+        leaf_count=leaf_count,
         segmentation_level=segmentation_level,
         doc_metadata=metadata or {}
     )
@@ -331,10 +331,9 @@ async def batch_find_subhashes(
 
 async def create_proof_cache(
     db: AsyncSession,
-    target_hash: str,
+    leaf_hash: str,
     root_id: UUID,
     proof_path: List[Dict[str, str]],
-    position_bits: bytes,
     ttl_hours: int = 24
 ) -> MerkleProofCache:
     """
@@ -354,11 +353,10 @@ async def create_proof_cache(
     expires_at = datetime.utcnow() + timedelta(hours=ttl_hours)
     
     proof = MerkleProofCache(
-        target_hash=target_hash,
+        leaf_hash=leaf_hash,
         root_id=root_id,
         proof_path=proof_path,
-        position_bits=position_bits,
-        expires_at=expires_at
+        expires_at=expires_at,
     )
     db.add(proof)
     await db.commit()
@@ -368,7 +366,7 @@ async def create_proof_cache(
 
 async def get_cached_proof(
     db: AsyncSession,
-    target_hash: str,
+    leaf_hash: str,
     root_id: UUID
 ) -> Optional[MerkleProofCache]:
     """
@@ -385,7 +383,7 @@ async def get_cached_proof(
     result = await db.execute(
         select(MerkleProofCache).where(
             and_(
-                MerkleProofCache.target_hash == target_hash,
+                MerkleProofCache.leaf_hash == leaf_hash,
                 MerkleProofCache.root_id == root_id,
                 MerkleProofCache.expires_at > datetime.utcnow()
             )

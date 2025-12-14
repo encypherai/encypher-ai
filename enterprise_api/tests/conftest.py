@@ -6,7 +6,7 @@ Two-Database Architecture:
 - Core DB: Customer/billing data
 - Content DB: Verification/content data
 """
-import importlib.util
+import asyncio
 import os
 import sys
 from pathlib import Path
@@ -15,26 +15,26 @@ from typing import AsyncGenerator
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
-def _set_enterprise_app() -> None:
-    root = Path(__file__).resolve().parents[1]
-    app_init = root / "app" / "__init__.py"
-    if str(root) not in sys.path:
-        sys.path.insert(0, str(root))
-    spec = importlib.util.spec_from_file_location(
-        "app",
-        app_init,
-        submodule_search_locations=[str(root / "app")],
-    )
-    if spec and spec.loader:
-        module = importlib.util.module_from_spec(spec)
-        sys.modules["app"] = module
-        spec.loader.exec_module(module)
+os.environ.setdefault("KEY_ENCRYPTION_KEY", "0" * 64)
+os.environ.setdefault("ENCRYPTION_NONCE", "0" * 24)
 
+os.environ.setdefault(
+    "CORE_DATABASE_URL",
+    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
+)
+os.environ.setdefault(
+    "CONTENT_DATABASE_URL",
+    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
+)
+os.environ.setdefault("DATABASE_URL", os.environ["CORE_DATABASE_URL"])
 
-_set_enterprise_app()
+root = Path(__file__).resolve().parents[1]
+if str(root) not in sys.path:
+    sys.path.insert(0, str(root))
 
 # Now import app modules after setting up the path
 from app.database import get_content_db, get_db
@@ -45,22 +45,111 @@ from app.main import app
 # Core DB: Customer/billing data (organizations, api_keys, etc.)
 TEST_CORE_DATABASE_URL = os.getenv(
     "CORE_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core"
+    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
 )
 
 # Content DB: Verification data (documents, merkle trees, etc.)
 TEST_CONTENT_DATABASE_URL = os.getenv(
     "CONTENT_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@postgres-content:5432/encypher_content"
+    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
 )
 
 # Legacy alias for backward compatibility
 TEST_DATABASE_URL = TEST_CORE_DATABASE_URL
 
 
+_SEED_LOCK = asyncio.Lock()
+_SEEDED = False
+
+
+async def _ensure_seeded() -> None:
+    global _SEEDED
+    if _SEEDED:
+        return
+
+    async with _SEED_LOCK:
+        if _SEEDED:
+            return
+
+        engine = create_async_engine(TEST_CORE_DATABASE_URL, echo=False, pool_pre_ping=True)
+        async with engine.begin() as conn:
+            # Users (used by team management and for a consistent "test user" context)
+            await conn.execute(
+                text(
+                    """
+                    INSERT INTO users (email, name, email_verified, is_active, created_at, updated_at)
+                    VALUES (:email, :name, TRUE, TRUE, NOW(), NOW())
+                    ON CONFLICT (email) DO UPDATE SET
+                        name = EXCLUDED.name,
+                        email_verified = EXCLUDED.email_verified,
+                        is_active = EXCLUDED.is_active,
+                        updated_at = NOW();
+                    """
+                ),
+                {"email": "test@encypherai.com", "name": "Test User"},
+            )
+
+            user_id = await conn.scalar(text("SELECT id FROM users WHERE email = :email"), {"email": "test@encypherai.com"})
+            if not user_id:
+                raise RuntimeError("Failed to seed or fetch test user id")
+
+            # Seed organizations expected by demo keys in app.dependencies.DEMO_KEYS
+            org_rows = [
+                ("org_demo", "Encypher Demo Organization", "seed-org-demo@tests.local", "demo"),
+                ("org_starter", "Starter Test Organization", "seed-org-starter@tests.local", "starter"),
+                ("org_professional", "Professional Test Organization", "seed-org-professional@tests.local", "professional"),
+                ("org_business", "Business Test Organization", "seed-org-business@tests.local", "business"),
+                ("org_enterprise", "Enterprise Test Organization", "seed-org-enterprise@tests.local", "enterprise"),
+            ]
+            for org_id, name, email, tier in org_rows:
+                await conn.execute(
+                    text(
+                        """
+                        INSERT INTO organizations (
+                            id, name, email, tier, monthly_api_limit, monthly_api_usage,
+                            coalition_member, coalition_rev_share, created_at, updated_at
+                        )
+                        VALUES (
+                            :id, :name, :email, :tier, :monthly_api_limit, 0,
+                            TRUE, 65, NOW(), NOW()
+                        )
+                        ON CONFLICT (id) DO UPDATE SET
+                            name = EXCLUDED.name,
+                            email = EXCLUDED.email,
+                            tier = EXCLUDED.tier,
+                            monthly_api_limit = EXCLUDED.monthly_api_limit,
+                            updated_at = NOW();
+                        """
+                    ),
+                    {
+                        "id": org_id,
+                        "name": name,
+                        "email": email,
+                        "tier": tier,
+                        "monthly_api_limit": 10000 if tier in {"starter", "demo"} else 100000,
+                    },
+                )
+
+            # Ensure the test user is an owner of the business org (team endpoints)
+            await conn.execute(
+                text(
+                    """
+                    INSERT INTO organization_members (organization_id, user_id, role, joined_at)
+                    VALUES (:org_id, :user_id, 'owner', NOW())
+                    ON CONFLICT (organization_id, user_id) DO NOTHING;
+                    """
+                ),
+                {"org_id": "org_business", "user_id": user_id},
+            )
+
+        await engine.dispose()
+        _SEEDED = True
+
+
 @pytest_asyncio.fixture(scope="function")
 async def async_engine():
     """Create an async engine for CORE database testing."""
+    await _ensure_seeded()
     engine = create_async_engine(
         TEST_CORE_DATABASE_URL,
         echo=False,
@@ -73,6 +162,7 @@ async def async_engine():
 @pytest_asyncio.fixture(scope="function")
 async def content_engine():
     """Create an async engine for CONTENT database testing."""
+    await _ensure_seeded()
     engine = create_async_engine(
         TEST_CONTENT_DATABASE_URL,
         echo=False,
@@ -227,6 +317,3 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "asyncio: mark test as an asyncio test"
     )
-
-
-_set_enterprise_app()
