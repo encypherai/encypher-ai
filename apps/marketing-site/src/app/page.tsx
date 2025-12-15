@@ -188,9 +188,9 @@ export default function HomePage() {
               <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                 <TrendingUp className="h-8 w-8 text-primary" />
               </div>
-              <h3 className="text-xl font-semibold mb-3">Proprietary Technology Moat</h3>
+              <h3 className="text-xl font-semibold mb-3">Cryptographic Watermarking</h3>
               <p className="text-muted-foreground">
-                Sentence-level tracking is exclusive to Encypher. Competitors can't replicate what took us 18+ months to perfect.
+                Invisible, tamper-proof signatures embedded at the sentence level. Survives copy-paste, scraping, and format conversion.
               </p>
             </div>
             
