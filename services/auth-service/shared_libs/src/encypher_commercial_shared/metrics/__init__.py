@@ -9,7 +9,7 @@ from .middleware import MetricsMiddleware
 
 __all__ = [
     "MetricsClient",
-    "MetricEvent",
+    "MetricEvent", 
     "MetricType",
     "MetricsMiddleware",
 ]

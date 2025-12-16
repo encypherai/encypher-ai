@@ -122,7 +122,8 @@ def check_database_connection(
 def run_migrations_if_needed(
     alembic_config_path: str = "alembic.ini",
     service_name: str = "service",
-    auto_upgrade: bool = True
+    auto_upgrade: bool = True,
+    database_url: Optional[str] = None,
 ) -> bool:
     """
     Run Alembic migrations if the database is not up to date.
@@ -160,7 +161,9 @@ def run_migrations_if_needed(
         head_revision = script.get_current_head()
         
         # Get database URL from alembic config or environment
-        database_url = os.environ.get("DATABASE_URL")
+        database_url = database_url or os.environ.get("DATABASE_URL")
+        if database_url:
+            alembic_cfg.set_main_option("sqlalchemy.url", database_url)
         if not database_url:
             # Try to get from alembic config
             database_url = alembic_cfg.get_main_option("sqlalchemy.url")
@@ -245,6 +248,7 @@ def ensure_database_ready(
         if run_migrations:
             run_migrations_if_needed(
                 alembic_config_path=alembic_config_path,
+                database_url=db_url,
                 service_name=service_name,
                 auto_upgrade=True
             )
