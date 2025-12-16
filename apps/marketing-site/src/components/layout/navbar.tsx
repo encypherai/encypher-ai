@@ -123,7 +123,7 @@ export function Navbar() {
                 size="sm"
                 className="mr-2"
               >
-                <Link href="/dashboard">Dashboard</Link>
+                <a href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}>Dashboard</a>
               </Button>
               <Button variant="outline" size="sm" onClick={() => signOut({ callbackUrl: "/" })}>Sign out</Button>
             </>
@@ -275,7 +275,7 @@ export function Navbar() {
                   className="w-full"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Link href="/dashboard">Dashboard</Link>
+                  <a href={process.env.NEXT_PUBLIC_DASHBOARD_URL || "https://dashboard.encypherai.com"}>Dashboard</a>
                 </Button>
                 <Button 
                   variant="outline" 
