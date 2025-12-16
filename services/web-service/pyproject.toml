@@ -69,4 +69,4 @@ warn_unused_ignores = true
 disallow_untyped_defs = true
 
 [tool.uv.sources]
-encypher-commercial-shared = { path = "../../shared_commercial_libs", editable = true }
+encypher-commercial-shared = { path = "shared_libs", editable = true }

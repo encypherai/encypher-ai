@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y \
 RUN pip install uv
 
 # Copy shared library (synced from /shared_commercial_libs/)
-COPY shared_libs /shared_libs
-RUN uv pip install --system /shared_libs
+COPY shared_libs ./shared_libs
+RUN uv pip install --system ./shared_libs
 
 # Copy dependency files
 COPY pyproject.toml ./
