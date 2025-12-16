@@ -12,10 +12,10 @@ Usage:
     # Core functionality (for CLI tools)
     from encypher_commercial_shared import Encypher, VerificationResult
     from encypher_commercial_shared.core import scan_directory, generate_report
-
+    
     # Email functionality (for services)
     from encypher_commercial_shared.email import EmailConfig, send_email
-
+    
     # Database startup (for microservices)
     from encypher_commercial_shared.db import ensure_database_ready
 """

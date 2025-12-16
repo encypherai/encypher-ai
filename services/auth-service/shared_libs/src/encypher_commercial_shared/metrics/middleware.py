@@ -7,13 +7,12 @@ extracting organization and user information from the request context.
 Usage:
     from fastapi import FastAPI
     from encypher_commercial_shared.metrics import MetricsMiddleware, MetricsClient
-
+    
     app = FastAPI()
     metrics_client = MetricsClient(redis_url="redis://localhost:6379/0")
-
+    
     app.add_middleware(MetricsMiddleware, metrics_client=metrics_client)
 """
-
 import logging
 import time
 from typing import Callable, Optional, Set
@@ -30,11 +29,11 @@ logger = logging.getLogger(__name__)
 class MetricsMiddleware(BaseHTTPMiddleware):
     """
     FastAPI middleware for automatic API metrics collection.
-
+    
     Records timing, status codes, and request metadata for all API calls.
     Extracts organization/user info from request state or headers.
     """
-
+    
     # Paths to exclude from metrics (health checks, static files, etc.)
     DEFAULT_EXCLUDE_PATHS: Set[str] = {
         "/health",
@@ -45,7 +44,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         "/openapi.json",
         "/favicon.ico",
     }
-
+    
     def __init__(
         self,
         app,
@@ -56,7 +55,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
     ):
         """
         Initialize metrics middleware.
-
+        
         Args:
             app: FastAPI application
             metrics_client: Metrics client instance
@@ -69,7 +68,7 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         self.exclude_paths = exclude_paths or self.DEFAULT_EXCLUDE_PATHS
         self.include_request_size = include_request_size
         self.include_response_size = include_response_size
-
+    
     async def dispatch(
         self,
         request: Request,
@@ -77,14 +76,14 @@ class MetricsMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         """Process request and record metrics."""
         path = request.url.path
-
+        
         # Skip excluded paths
         if self._should_exclude(path):
             return await call_next(request)
-
+        
         # Record start time
         start_time = time.perf_counter()
-
+        
         # Get request size if enabled
         request_size = None
         if self.include_request_size:
@@ -94,13 +93,13 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                     request_size = int(content_length)
                 except ValueError:
                     pass
-
+        
         # Process request
         response = await call_next(request)
-
+        
         # Calculate response time
         response_time_ms = (time.perf_counter() - start_time) * 1000
-
+        
         # Get response size if enabled
         response_size = None
         if self.include_response_size:
@@ -110,22 +109,22 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                     response_size = int(content_length)
                 except ValueError:
                     pass
-
+        
         # Extract organization and user info from request state
         # These are typically set by auth middleware
         organization_id = getattr(request.state, "organization_id", None)
         user_id = getattr(request.state, "user_id", None)
         api_key_id = getattr(request.state, "api_key_id", None)
-
+        
         # Fallback: try to get from request headers or path
         if not organization_id:
             organization_id = self._extract_org_from_request(request)
-
+        
         # Only record metrics if we have an organization
         if organization_id:
             # Determine metric type based on endpoint
             metric_type = self._get_metric_type(path, request.method)
-
+            
             # Emit metric (non-blocking)
             await self.metrics_client.emit(
                 metric_type=metric_type,
@@ -139,27 +138,27 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                 request_size_bytes=request_size,
                 response_size_bytes=response_size,
             )
-
+        
         return response
-
+    
     def _should_exclude(self, path: str) -> bool:
         """Check if path should be excluded from metrics."""
         # Exact match
         if path in self.exclude_paths:
             return True
-
+        
         # Prefix match for paths like /docs/*
         for exclude_path in self.exclude_paths:
             if path.startswith(exclude_path):
                 return True
-
+        
         return False
-
+    
     def _extract_org_from_request(self, request: Request) -> Optional[str]:
         """Try to extract organization ID from request."""
         # Check for organization in path (e.g., /api/v1/org/{org_id}/...)
         # This is a fallback - prefer setting request.state.organization_id
-
+        
         # Check authorization header for API key format
         auth_header = request.headers.get("authorization", "")
         if auth_header.startswith("Bearer "):
@@ -168,13 +167,13 @@ class MetricsMiddleware(BaseHTTPMiddleware):
             if token.startswith("ek_"):
                 # The auth middleware should have set this
                 return None
-
+        
         return None
-
+    
     def _get_metric_type(self, path: str, method: str) -> MetricType:
         """Determine metric type based on endpoint."""
         path_lower = path.lower()
-
+        
         if "/sign" in path_lower:
             return MetricType.DOCUMENT_SIGNED
         elif "/verify" in path_lower:
