@@ -44,11 +44,55 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
+def validate_startup_config():
+    """Validate critical configuration before app starts. Logs clear errors."""
+    errors = []
+    warnings = []
+    
+    # Check database URLs
+    if not settings.core_database_url_resolved:
+        errors.append("DATABASE_URL or CORE_DATABASE_URL is not set")
+    
+    # Check encryption keys (required for key storage)
+    if not settings.key_encryption_key:
+        errors.append("KEY_ENCRYPTION_KEY is not set (required for private key encryption)")
+    elif len(settings.key_encryption_key) != 64:
+        errors.append(f"KEY_ENCRYPTION_KEY must be 64 hex chars, got {len(settings.key_encryption_key)}")
+    
+    if not settings.encryption_nonce:
+        errors.append("ENCRYPTION_NONCE is not set (required for private key encryption)")
+    elif len(settings.encryption_nonce) != 24:
+        errors.append(f"ENCRYPTION_NONCE must be 24 hex chars, got {len(settings.encryption_nonce)}")
+    
+    # Check CORS origins for production
+    if settings.is_production and "localhost" in settings.allowed_origins:
+        warnings.append("ALLOWED_ORIGINS contains localhost in production mode")
+    
+    # Log results
+    if errors:
+        logger.error("=" * 60)
+        logger.error("STARTUP CONFIGURATION ERRORS:")
+        for err in errors:
+            logger.error(f"  ✗ {err}")
+        logger.error("=" * 60)
+        raise RuntimeError(f"Startup failed: {len(errors)} configuration error(s). Check logs above.")
+    
+    if warnings:
+        logger.warning("Startup configuration warnings:")
+        for warn in warnings:
+            logger.warning(f"  ⚠ {warn}")
+    
+    logger.info("✓ Startup configuration validated")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler replacing deprecated on_event startup/shutdown."""
     logger.info("Encypher Enterprise API starting up...")
     logger.info(f"Environment: {settings.environment}")
+    
+    # Validate configuration before proceeding
+    validate_startup_config()
     # Log database connection info (safely handle None)
     db_url = settings.core_database_url_resolved or settings.database_url or ""
     logger.info(f"Database: {db_url.split('@')[1] if '@' in db_url else 'Not configured'}")

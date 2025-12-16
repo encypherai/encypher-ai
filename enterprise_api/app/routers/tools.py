@@ -216,7 +216,7 @@ async def encode_text(request: EncodeToolRequest) -> EncodeToolResponse:
                 actions=actions if actions else None,
                 custom_assertions=custom_assertions if custom_assertions else None,
                 claim_generator=request.ai_info.get("claim_generator") if request.ai_info else "Encypher Demo UI",
-                iso_timestamp=iso_timestamp,
+                timestamp=iso_timestamp,
             )
         else:
             encoded_text = UnicodeMetadata.embed_metadata(
