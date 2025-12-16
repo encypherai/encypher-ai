@@ -1,7 +1,7 @@
 "use client";
 import { getProviders, signIn } from "next-auth/react";
 import { useEffect, useState, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import MetadataBackground from '@/components/hero/MetadataBackground';
 import { SignInForm } from '@/components/auth/SignInForm';
 import { SignUpForm } from '@/components/auth/SignUpForm';
@@ -55,9 +55,24 @@ function SignInLoading() {
   );
 }
 
+// Map NextAuth error codes to user-friendly messages
+const errorMessages: Record<string, string> = {
+  OAuthSignin: 'Error starting OAuth sign-in. Please try again or contact support.',
+  OAuthCallback: 'Error during OAuth callback. Please try again.',
+  OAuthCreateAccount: 'Could not create OAuth account. Please try again.',
+  EmailCreateAccount: 'Could not create email account. Please try again.',
+  Callback: 'Error during authentication callback.',
+  OAuthAccountNotLinked: 'This email is already associated with another account.',
+  EmailSignin: 'Error sending verification email.',
+  CredentialsSignin: 'Invalid email or password.',
+  SessionRequired: 'Please sign in to access this page.',
+  Default: 'An authentication error occurred. Please try again.',
+};
+
 // Main component that uses client-side hooks
 function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   // Use non-nullable providers state
   const [providers, setProviders] = useState<Record<string, { id: string; name: string }>>({});
   const [email, setEmail] = useState('');
@@ -85,6 +100,18 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
   useEffect(() => {
     setMode(initialMode);
   }, [initialMode]);
+
+  // Handle OAuth error from query params (e.g., ?error=OAuthSignin)
+  useEffect(() => {
+    const errorCode = searchParams.get('error');
+    if (errorCode) {
+      const errorMessage = errorMessages[errorCode] || errorMessages.Default;
+      setError(errorMessage);
+      toast({ title: 'Authentication Error', description: errorMessage, variant: 'error' });
+      // Clean up URL without reloading
+      window.history.replaceState({}, '', '/auth/signin');
+    }
+  }, [searchParams, toast]);
 
   // If already signed in, redirect to dashboard
   useEffect(() => {

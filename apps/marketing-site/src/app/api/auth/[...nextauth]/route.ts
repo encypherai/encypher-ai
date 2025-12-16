@@ -337,6 +337,13 @@ export const authOptions: NextAuthOptions = {
   // JWT Secret
   secret: process.env.NEXTAUTH_SECRET,
 
+  // Custom pages - redirect to our custom signin page instead of NextAuth default
+  pages: {
+    signIn: '/auth/signin',
+    signOut: '/auth/signin',
+    error: '/auth/signin', // Error code passed in query string as ?error=
+  },
+
   // Session strategy
   session: {
     strategy: "jwt" as const,
