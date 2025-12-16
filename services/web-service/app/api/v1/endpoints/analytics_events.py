@@ -31,7 +31,7 @@ def track_event(
         user_agent=user_agent
     )
 
-    return event
+    return schemas.AnalyticsEventResponse(success=True, event_id=event.event_id)
 
 @router.get("/session/{session_id}", response_model=list[schemas.AnalyticsEventInDB])
 def read_session_events(

@@ -4,6 +4,7 @@ Handles demo requests and analytics events from the publisher-demo page.
 """
 import hashlib
 import logging
+from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
@@ -171,7 +172,7 @@ async def track_analytics_event(
 
 @router.get("/demo-requests/{request_id}")
 async def get_demo_request(
-    request_id: str,
+    request_id: UUID,
     db: Session = Depends(deps.get_db),
 ) -> dict:
     """

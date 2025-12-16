@@ -22,6 +22,7 @@ dependencies = [
     "psycopg2-binary>=2.9.9",
     "python-slugify>=8.0.1",
     "httpx>=0.26.0",
+    "encypher-commercial-shared",
 ]
 
 [project.optional-dependencies]
@@ -66,3 +67,6 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_ignores = true
 disallow_untyped_defs = true
+
+[tool.uv.sources]
+encypher-commercial-shared = { path = "../../shared_commercial_libs", editable = true }

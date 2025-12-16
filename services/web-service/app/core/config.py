@@ -34,13 +34,24 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = "postgres"
     POSTGRES_PASSWORD: str = ""  # noqa: S105 - Must be set via env
     POSTGRES_DB: str = "encypher_web"
+    DATABASE_URL: str | None = None
     SQLALCHEMY_DATABASE_URI: PostgresDsn | None = None
 
     @field_validator("SQLALCHEMY_DATABASE_URI", mode="before")
     @classmethod
     def assemble_db_connection(cls, v: str | None, values: dict[str, Any]) -> Any:
-        if isinstance(v, str):
+        if isinstance(v, str) and v:
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+psycopg2://", 1)
             return v
+
+        database_url = values.data.get("DATABASE_URL")
+        if isinstance(database_url, str) and database_url:
+            if database_url.startswith("postgres://"):
+                return database_url.replace(
+                    "postgres://", "postgresql+psycopg2://", 1
+                )
+            return database_url
         port = values.data.get("POSTGRES_PORT", 5432)
         host = f"{values.data.get('POSTGRES_SERVER')}:{port}"
         return PostgresDsn.build(

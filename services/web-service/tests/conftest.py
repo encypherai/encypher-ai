@@ -5,7 +5,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.db.base import Base, get_db
+from app.api import deps
+from app.db.base import Base
 from app.main import app
 
 # Use SQLite for testing
@@ -28,12 +29,16 @@ def db() -> Generator:
 
 @pytest.fixture(scope="module")
 def client(db: Generator) -> Generator:
+    import app.main as main
+
+    main.ensure_database_ready = lambda *args, **kwargs: True
+
     def override_get_db():
         try:
             yield db
         finally:
             pass
 
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[deps.get_db] = override_get_db
     with TestClient(app) as c:
         yield c
