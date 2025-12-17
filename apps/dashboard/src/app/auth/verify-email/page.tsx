@@ -92,7 +92,7 @@ function VerifyEmailContent() {
   };
 
   const handleGoToDashboard = () => {
-    router.push('/login');
+    router.push('/');
   };
 
   const handleResendEmail = () => {
