@@ -68,13 +68,12 @@ http:
         - web
 
     # ============================================
-    # VERIFICATION SERVICE -> Verification Service (8005)
-    # Only routes specific verification-service endpoints
-    # The main /verify endpoint is handled by enterprise-api
+    # VERIFICATION -> Enterprise API (9000)
+    # All /verify endpoints handled by enterprise-api
     # ============================================
-    verification-service-router:
-      rule: "PathPrefix(`/api/v1/verify/signature`) || PathPrefix(`/api/v1/verify/document`) || PathPrefix(`/api/v1/verify/history`) || PathPrefix(`/api/v1/verify/stats`)"
-      service: verification-service
+    verify-router:
+      rule: "PathPrefix(`/api/v1/verify`)"
+      service: enterprise-api
       entryPoints:
         - web
 

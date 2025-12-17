@@ -12,6 +12,9 @@ import secrets
 BASE_URL = "http://localhost:8001"
 
 
+pytestmark = pytest.mark.e2e
+
+
 class TestOrganizationAPI:
     """Integration tests for organization endpoints"""
 

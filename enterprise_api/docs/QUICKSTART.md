@@ -151,6 +151,33 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
   }'
 ```
 
+## Optional: Validate Manifest JSON (Public Helper)
+
+If you want to validate the structure of a manifest JSON payload (including optional assertion schema validation), you can use the public `validate-manifest` endpoint.
+
+This endpoint is public and supports an *optional* API key for higher limits.
+
+```bash
+curl -X POST https://api.encypherai.com/api/v1/public/c2pa/validate-manifest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "manifest": {
+      "claim_generator": "example-generator",
+      "assertions": [
+        {"label": "c2pa.actions.v1", "data": {"actions": [{"action": "c2pa.created"}]}}
+      ]
+    }
+  }'
+```
+
+## Optional: Look Up Trust Anchor (Public Helper)
+
+If you are building an external verifier, you can retrieve a signer's public key via the public trust anchor endpoint.
+
+```bash
+curl https://api.encypherai.com/api/v1/public/c2pa/trust-anchors/encypher.public
+```
+
 ## 5. Look Up Sentence Provenance
 
 Look up where a sentence came from:

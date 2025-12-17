@@ -7,8 +7,8 @@
 #   /api/v1/billing/*    -> billing-service (8007)
 #   /api/v1/users/*      -> user-service (8002)
 #   /api/v1/encode/*     -> encoding-service (8004)
-#   /api/v1/verify/*     -> verification-service (8005)
-#   /api/v1/coalition/*  -> coalition-service (8009)
+#   /api/v1/verify/*     -> enterprise-api (9000)
+#   /api/v1/coalition/*  -> enterprise-api (9000)
 #   /api/v1/notifications/* -> notification-service (8008)
 #   /api/v1/auth/*       -> auth-service (8001) [default]
 
@@ -102,7 +102,7 @@ http:
 
     api-verify:
       rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/verify`)"
-      service: verification-service
+      service: enterprise-api
       entryPoints:
         - websecure
         - web
@@ -111,7 +111,7 @@ http:
 
     api-coalition:
       rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/coalition`)"
-      service: coalition-service
+      service: enterprise-api
       entryPoints:
         - websecure
         - web
@@ -121,6 +121,173 @@ http:
     api-notifications:
       rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/notifications`)"
       service: notification-service
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    # ===========================================
+    # ENTERPRISE API ROUTES (C2PA signing/verification)
+    # ===========================================
+    api-sign:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/sign`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-verify-public:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/public`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-batch:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/batch`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+
+    api-lookup:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/lookup`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-onboarding:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/onboarding`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-streaming:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/stream`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-chat:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/chat`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-licensing:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/licensing`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-usage:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/usage`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-audit:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/audit`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-org:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/org`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-status:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/status`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-tools:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/tools`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-provisioning:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/provisioning`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-enterprise:
+      rule: "Host(`s-api.encypherai.com`) && PathPrefix(`/api/v1/enterprise`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    # Health, docs, and root endpoints -> enterprise-api
+    api-health:
+      rule: "Host(`s-api.encypherai.com`) && Path(`/health`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-docs:
+      rule: "Host(`s-api.encypherai.com`) && (Path(`/docs`) || Path(`/redoc`) || Path(`/openapi.json`))"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 100
+
+    api-root:
+      rule: "Host(`s-api.encypherai.com`) && Path(`/`)"
+      service: enterprise-api
       entryPoints:
         - websecure
         - web
@@ -197,6 +364,12 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:8009"
+
+    # Enterprise API (C2PA signing/verification)
+    enterprise-api:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:9000"
 
 tls:
   certificates:

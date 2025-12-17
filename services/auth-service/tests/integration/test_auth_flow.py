@@ -10,6 +10,9 @@ from datetime import datetime
 BASE_URL = "http://localhost:8001"
 
 
+pytestmark = pytest.mark.e2e
+
+
 @pytest.mark.asyncio
 async def test_complete_auth_flow():
     """Test complete authentication flow: signup -> login -> verify -> refresh -> logout."""

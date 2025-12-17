@@ -3,8 +3,10 @@ from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import httpx
+from uuid import uuid4
 
 from ...db.session import get_db
+from ...models.enterprise_schemas import VerifyRequest, VerifyResponse, VerifyVerdict
 from ...models.schemas import (
     SignatureVerify,
     DocumentVerify,
@@ -34,6 +36,72 @@ async def get_current_user(authorization: str = Header(None)) -> Optional[dict]:
             return None
     except Exception:
         return None
+
+
+async def get_current_organization(authorization: str = Header(None)) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    api_key = authorization.split(" ", 1)[1].strip()
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.KEY_SERVICE_URL}/api/v1/keys/validate",
+                json={"key": api_key},
+                timeout=5.0,
+            )
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Key service unavailable",
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = response.json()
+    data = payload.get("data")
+    if not payload.get("success") or not isinstance(data, dict):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return data
+
+
+@router.post("", response_model=VerifyResponse)
+async def verify_text(
+    verify_request: VerifyRequest,
+    organization: dict = Depends(get_current_organization),
+):
+    correlation_id = f"req-{uuid4().hex}"
+    verdict = VerifyVerdict(
+        valid=False,
+        tampered=True,
+        reason_code="NOT_IMPLEMENTED",
+        signer_id=None,
+        signer_name=None,
+        timestamp=None,
+        details={},
+    )
+    return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
 
 
 @router.post("/signature", response_model=VerificationResponse)

@@ -9,7 +9,7 @@ Authentication and authorization microservice for the Encypher platform.
 - ✅ JWT-based authentication
 - ✅ Refresh token management
 - ✅ OAuth integration (Google, GitHub)
-- ✅ Password hashing with bcrypt_sha256 (passlib)
+- ✅ Password hashing with bcrypt (SHA-256 prehash)
 - ✅ Prometheus metrics exposed at `/metrics`
 - ✅ Token verification for other services
 - ✅ Session management
@@ -18,6 +18,8 @@ Authentication and authorization microservice for the Encypher platform.
 - ✅ **Team Management** (Organizations, Members, Invitations)
 - ✅ **Role-based Access Control** (Owner, Admin, Manager, Member, Viewer)
 - ✅ **Audit Logging** for organization actions
+- 🚧 **SAML SSO (Enterprise)** — metadata/login scaffolding; ACS currently fails closed until full validation is implemented
+- ✅ **SCIM 2.0 (Enterprise)** — Users provisioning endpoints under `/scim/v2` with org-scoped bearer tokens (tenant isolated)
 
 ## Tech Stack
 
@@ -26,7 +28,7 @@ Authentication and authorization microservice for the Encypher platform.
 - **Cache:** Redis
 - **Package Manager:** UV
 - **Authentication:** JWT (PyJWT)
-- **Password Hashing:** bcrypt_sha256 (passlib)
+- **Password Hashing:** bcrypt (with SHA-256 prehash)
 
 ## Setup
 
@@ -109,6 +111,21 @@ The service will be available at `http://localhost:8001`
 - Header: `Authorization: Bearer <token>`
 - Returns: User object
 
+### SAML SSO (Enterprise)
+
+**GET /api/v1/auth/saml/metadata**
+- Query params: `org_id`
+- Returns: SP metadata XML
+
+**GET /api/v1/auth/saml/login**
+- Query params: `org_id`, `return_to` (optional)
+- Returns: Redirect to dashboard SSO entrypoint with `SAMLRequest` + `RelayState`
+- `return_to` is allowlisted (must be a relative path or match configured frontend origins); untrusted values return 400
+
+**POST /api/v1/auth/saml/acs**
+- Form fields: `SAMLResponse`, `RelayState` (optional)
+- Currently: returns `501 Not Implemented` for base64-valid `SAMLResponse` (fail-closed until signature/conditions validation is implemented)
+
 ### Team Management (Organizations)
 
 **POST /api/v1/organizations**
@@ -186,6 +203,25 @@ The service will be available at `http://localhost:8001`
 - Get organization audit logs (any member)
 - Query params: `limit`, `offset`, `action` (filter)
 - Returns: Array of audit log entries
+
+### SCIM 2.0 (Enterprise Provisioning)
+
+All SCIM endpoints use media type `application/scim+json`.
+
+Auth:
+- Header: `Authorization: Bearer <token>`
+- Token format: `scim.<org_id>.<secret>`
+- Only a SHA-256 hash of the token is stored (in `organizations.features["scim_bearer_token_hash"]`)
+
+**GET /scim/v2/Users**
+- Returns only users who are members of the authenticated organization (tenant isolated)
+
+**POST /scim/v2/Users**
+- Creates or updates a user by `userName` (email)
+- Ensures the user is a member of the authenticated organization (default role = `member`); membership insert is idempotent
+
+**GET /scim/v2/Users/{id}**
+- Returns 404 if the user is not found or not a member of the authenticated organization
 
 ### Health
 
@@ -270,9 +306,11 @@ See `.env.example` for all available configuration options.
 ```
 app/
 ├── api/
+│   ├── scim.py                # SCIM 2.0 provisioning endpoints
 │   └── v1/
 │       ├── endpoints.py       # Auth API routes
-│       └── organizations.py   # Team management API routes
+│       ├── organizations.py   # Team management API routes
+│       └── saml.py            # SAML SSO endpoints
 ├── core/
 │   ├── config.py              # Configuration
 │   └── security.py            # Security utilities
@@ -295,9 +333,13 @@ alembic/
 
 tests/
 ├── conftest.py                # Pytest configuration
-├── test_organization_service.py # Unit tests (29 tests)
+├── test_api_access_gating.py   # Unit tests
+├── test_organization_service.py # Unit tests
+├── test_saml_contract.py       # Contract tests (SAML)
+├── test_scim_users_contract.py # Contract tests (SCIM Users)
 └── integration/
-    └── test_auth_flow.py      # Integration tests
+    ├── test_auth_flow.py      # E2E tests (requires running service)
+    └── test_organization_api.py # E2E tests (requires running service)
 ```
 
 ## Integration with Other Services
@@ -355,6 +397,11 @@ The team management system uses a 5-level role hierarchy:
 - JWT tokens are signed with HS256
 - Refresh tokens are stored in database
 - Tokens can be revoked
+- SCIM bearer tokens are stored hashed only (SHA-256) and scoped to a single organization
+- SCIM Users endpoints are tenant isolated (OrganizationMember-scoped)
+- SAML ACS fails closed (returns 501) until signature/conditions validation is implemented
+- SAML login `return_to` is allowlisted (open redirect prevention)
+- Request logs redact SAML/SCIM query params and common auth token keys
 - Rate limiting recommended at API Gateway level
 - Invitation tokens are cryptographically secure, expire after 7 days
 - All team actions are logged to audit log
