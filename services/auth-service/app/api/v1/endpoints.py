@@ -298,6 +298,35 @@ async def reset_password(
     }
 
 
+@router.get("/validate-reset-token")
+async def validate_reset_token(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Validate a password reset token without using it.
+
+    - **token**: Password reset token from email
+
+    Returns 200 if valid, 400 if invalid or expired.
+    """
+    is_valid = AuthService.validate_password_reset_token(db, token)
+
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "valid": True,
+        },
+        "error": None,
+    }
+
+
 # ==========================================
 # Token Refresh Endpoint
 # ==========================================

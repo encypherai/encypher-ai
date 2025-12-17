@@ -459,6 +459,23 @@ class AuthService:
         return True
 
     @staticmethod
+    def validate_password_reset_token(db: Session, token: str) -> bool:
+        """
+        Validate a password reset token without using it.
+        Returns True if valid, False otherwise.
+        """
+        db_token = (
+            db.query(PasswordResetToken)
+            .filter(
+                PasswordResetToken.token == token,
+                PasswordResetToken.used == False,
+                PasswordResetToken.expires_at > datetime.utcnow(),
+            )
+            .first()
+        )
+        return db_token is not None
+
+    @staticmethod
     def reset_password(db: Session, token: str, new_password: str) -> Optional[User]:
         """
         Reset a user's password using a reset token.
