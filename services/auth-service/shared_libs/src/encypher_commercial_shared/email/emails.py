@@ -120,6 +120,187 @@ Need help? Check out our documentation at https://encypherai.com/docs or email s
     )
 
 
+def send_api_access_request_admin_email(
+    config: EmailConfig,
+    admin_email: str,
+    user_email: str,
+    user_name: Optional[str],
+    admin_url: str,
+    logger: Optional[Any] = None,
+) -> bool:
+    """
+    Send notification to admin about new API access request.
+    
+    Args:
+        config: Email configuration
+        admin_email: Admin's email address
+        user_email: Requesting user's email
+        user_name: Requesting user's name (optional)
+        admin_url: URL to admin panel for approval
+        logger: Optional logger
+        
+    Returns:
+        True if sent successfully
+    """
+    plain_content = f"""
+New API Access Request
+
+A user has requested API access:
+
+User: {user_name or 'Unknown'} ({user_email})
+
+Please review and approve/deny this request at:
+{admin_url}
+
+— Encypher System
+"""
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<h2>New API Access Request</h2>
+<p>A user has requested API access:</p>
+<ul>
+<li><strong>Name:</strong> {user_name or 'Unknown'}</li>
+<li><strong>Email:</strong> {user_email}</li>
+</ul>
+<p><a href="{admin_url}" style="background: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Review Request</a></p>
+<p style="color: #666; font-size: 12px;">— Encypher System</p>
+</body>
+</html>
+"""
+    
+    return send_email(
+        config=config,
+        to_email=admin_email,
+        subject="New API Access Request - Encypher",
+        html_content=html_content,
+        plain_content=plain_content.strip(),
+        logger=logger,
+    )
+
+
+def send_api_access_approved_email(
+    config: EmailConfig,
+    to_email: str,
+    user_name: Optional[str],
+    logger: Optional[Any] = None,
+) -> bool:
+    """
+    Send API access approval notification to user.
+    
+    Args:
+        config: Email configuration
+        to_email: User's email address
+        user_name: User's name (optional)
+        logger: Optional logger
+        
+    Returns:
+        True if sent successfully
+    """
+    dashboard_url = config.dashboard_url or f"{config.frontend_url}/dashboard"
+    
+    plain_content = f"""
+Your API Access Has Been Approved!
+
+Hi{' ' + user_name if user_name else ''},
+
+Great news! Your request for API access has been approved. You can now generate API keys and start integrating Encypher into your applications.
+
+Get started:
+{dashboard_url}/api-keys
+
+Need help? Check out our documentation at https://encypherai.com/docs
+
+— The Encypher Team
+"""
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<h2>Your API Access Has Been Approved! 🎉</h2>
+<p>Hi{' ' + user_name if user_name else ''},</p>
+<p>Great news! Your request for API access has been approved. You can now generate API keys and start integrating Encypher into your applications.</p>
+<p><a href="{dashboard_url}/api-keys" style="background: #4F46E5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Generate API Keys</a></p>
+<p>Need help? Check out our <a href="https://encypherai.com/docs">documentation</a>.</p>
+<p style="color: #666;">— The Encypher Team</p>
+</body>
+</html>
+"""
+    
+    return send_email(
+        config=config,
+        to_email=to_email,
+        subject="Your API Access Has Been Approved! - Encypher",
+        html_content=html_content,
+        plain_content=plain_content.strip(),
+        logger=logger,
+    )
+
+
+def send_api_access_denied_email(
+    config: EmailConfig,
+    to_email: str,
+    user_name: Optional[str],
+    reason: Optional[str] = None,
+    logger: Optional[Any] = None,
+) -> bool:
+    """
+    Send API access denial notification to user.
+    
+    Args:
+        config: Email configuration
+        to_email: User's email address
+        user_name: User's name (optional)
+        reason: Reason for denial (optional)
+        logger: Optional logger
+        
+    Returns:
+        True if sent successfully
+    """
+    reason_text = f"\n\nReason: {reason}" if reason else ""
+    
+    plain_content = f"""
+API Access Request Update
+
+Hi{' ' + user_name if user_name else ''},
+
+Thank you for your interest in Encypher. After reviewing your request, we're unable to approve API access at this time.{reason_text}
+
+If you believe this was in error or have questions, please contact us at support@encypherai.com.
+
+— The Encypher Team
+"""
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+<h2>API Access Request Update</h2>
+<p>Hi{' ' + user_name if user_name else ''},</p>
+<p>Thank you for your interest in Encypher. After reviewing your request, we're unable to approve API access at this time.</p>
+{f'<p><strong>Reason:</strong> {reason}</p>' if reason else ''}
+<p>If you believe this was in error or have questions, please contact us at <a href="mailto:support@encypherai.com">support@encypherai.com</a>.</p>
+<p style="color: #666;">— The Encypher Team</p>
+</body>
+</html>
+"""
+    
+    return send_email(
+        config=config,
+        to_email=to_email,
+        subject="API Access Request Update - Encypher",
+        html_content=html_content,
+        plain_content=plain_content.strip(),
+        logger=logger,
+    )
+
+
 def send_password_reset_email(
     config: EmailConfig,
     to_email: str,
