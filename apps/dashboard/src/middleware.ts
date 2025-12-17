@@ -12,6 +12,8 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/signup') ||
     pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/reset-password') ||
+    pathname.startsWith('/auth/verify-email') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/assets') ||
     pathname === '/health' ||
