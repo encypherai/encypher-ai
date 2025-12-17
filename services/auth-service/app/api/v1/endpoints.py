@@ -65,34 +65,47 @@ async def signup(
     - **name**: User's full name (optional)
     """
     try:
-        user = AuthService.create_user(db, user_data)
+        user, is_new = AuthService.create_user(db, user_data)
 
-        # Send verification email for new users
-        if not user.email_verified:
-            token = AuthService.create_verification_token(db, user)
-            AuthService.send_verification_email(user, token)
+        # Handle existing user case
+        if not is_new:
+            # User already exists - return appropriate error
+            if user.email_verified:
+                # Verified user trying to sign up again
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="An account with this email already exists. Please sign in instead.",
+                )
+            else:
+                # Unverified user - resend verification email
+                token = AuthService.create_verification_token(db, user)
+                AuthService.send_verification_email(user, token)
+                return {
+                    "success": True,
+                    "data": {
+                        **UserResponse.model_validate(user).model_dump(),
+                        "verification_email_sent": True,
+                        "message": "A verification email has been resent to your email address.",
+                    },
+                    "error": None,
+                }
+
+        # New user - send verification email
+        token = AuthService.create_verification_token(db, user)
+        AuthService.send_verification_email(user, token)
 
         # Wrap in standard response format
         return {
             "success": True,
             "data": {
                 **UserResponse.model_validate(user).model_dump(),
-                "verification_email_sent": not user.email_verified,
+                "verification_email_sent": True,
             },
             "error": None,
         }
+    except HTTPException:
+        raise
     except ValueError as e:
-        # Idempotent fallback: if a ValueError occurred, try returning existing user by email
-        existing = AuthService.get_user_by_email(db, user_data.email)
-        if existing:
-            return {
-                "success": True,
-                "data": {
-                    **UserResponse.model_validate(existing).model_dump(),
-                    "verification_email_sent": False,
-                },
-                "error": None,
-            }
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e),

@@ -45,12 +45,17 @@ class AuthService:
     """Authentication service"""
 
     @staticmethod
-    def create_user(db: Session, user_data: UserCreate) -> User:
-        """Create a new user"""
-        # Idempotent: if user already exists, return it
+    def create_user(db: Session, user_data: UserCreate) -> Tuple[User, bool]:
+        """
+        Create a new user.
+        
+        Returns:
+            Tuple of (user, is_new) where is_new indicates if user was just created
+        """
+        # Check if user already exists
         existing = db.query(User).filter(User.email == user_data.email).first()
         if existing:
-            return existing
+            return existing, False
 
         # Create new user
         hashed_password = get_password_hash(user_data.password)
@@ -64,12 +69,12 @@ class AuthService:
         try:
             db.commit()
             db.refresh(db_user)
-            return db_user
+            return db_user, True
         except IntegrityError:
             db.rollback()
             existing_user = db.query(User).filter(User.email == user_data.email).first()
             if existing_user:
-                return existing_user
+                return existing_user, False
             raise ValueError("User with this email already exists")
 
     @staticmethod
