@@ -29,7 +29,9 @@ def send_verification_email(
     Returns:
         True if sent successfully
     """
-    verification_url = f"{config.frontend_url}/auth/verify-email?token={verification_token}"
+    # Use dashboard_url for auth pages, fall back to frontend_url
+    base_url = config.dashboard_url or config.frontend_url
+    verification_url = f"{base_url}/auth/verify-email?token={verification_token}"
     
     html_content = render_template(
         "email_verification.html",
@@ -142,7 +144,9 @@ def send_password_reset_email(
     Returns:
         True if sent successfully
     """
-    reset_url = f"{config.frontend_url}/auth/reset-password?token={reset_token}"
+    # Use dashboard_url for auth pages, fall back to frontend_url
+    base_url = config.dashboard_url or config.frontend_url
+    reset_url = f"{base_url}/reset-password/{reset_token}"
     
     html_content = render_template(
         "password_reset.html",
