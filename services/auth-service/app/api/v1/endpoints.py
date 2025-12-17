@@ -16,6 +16,8 @@ from ...models.schemas import (
     OAuthExchangeRequest,
     EmailVerifyRequest,
     ResendVerificationRequest,
+    PasswordResetRequest,
+    PasswordResetConfirm,
     # TEAM_006: API Access Gating
     ApiAccessRequestCreate,
     ApiAccessStatusResponse,
@@ -221,6 +223,63 @@ async def resend_verification(
         "success": True,
         "data": {
             "message": "If an account exists with this email, a verification email has been sent.",
+        },
+        "error": None,
+    }
+
+
+# ==========================================
+# Password Reset Endpoints
+# ==========================================
+
+
+@router.post("/forgot-password")
+async def forgot_password(
+    request: PasswordResetRequest,
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("auth_forgot_password", limit=3, window_sec=300)),
+):
+    """
+    Request a password reset email.
+
+    - **email**: User's email address
+
+    Always returns success to prevent email enumeration.
+    """
+    AuthService.request_password_reset(db, request.email)
+
+    return {
+        "success": True,
+        "data": {
+            "message": "If an account exists with this email, a password reset email has been sent.",
+        },
+        "error": None,
+    }
+
+
+@router.post("/reset-password")
+async def reset_password(
+    request: PasswordResetConfirm,
+    db: Session = Depends(get_db),
+):
+    """
+    Reset password using a reset token.
+
+    - **token**: Password reset token from email
+    - **new_password**: New password (min 8 characters)
+    """
+    user = AuthService.reset_password(db, request.token, request.new_password)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired reset token",
+        )
+
+    return {
+        "success": True,
+        "data": {
+            "message": "Password reset successfully. You can now log in with your new password.",
         },
         "error": None,
     }

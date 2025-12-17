@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
-from ..db.models import User, RefreshToken, EmailVerificationToken
+from ..db.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken
 from sqlalchemy.exc import IntegrityError
 from ..models.schemas import UserCreate, UserLogin
 from ..core.security import (
@@ -22,6 +22,7 @@ from encypher_commercial_shared.email import (
     generate_token,
     send_verification_email as _send_verification_email,
     send_welcome_email as _send_welcome_email,
+    send_password_reset_email as _send_password_reset_email,
 )
 
 
@@ -389,3 +390,102 @@ class AuthService:
         # Create new token and send email
         token = AuthService.create_verification_token(db, user)
         return AuthService.send_verification_email(user, token)
+
+    # ==========================================
+    # Password Reset Methods
+    # ==========================================
+
+    @staticmethod
+    def create_password_reset_token(db: Session, user: User) -> str:
+        """
+        Create a password reset token for a user.
+        Invalidates any existing tokens for this user.
+        """
+        # Invalidate existing tokens
+        db.query(PasswordResetToken).filter(
+            PasswordResetToken.user_id == user.id,
+            PasswordResetToken.used == False,
+        ).update({"used": True, "used_at": datetime.utcnow()})
+
+        # Create new token
+        token = generate_token(32)
+        expires_at = datetime.utcnow() + timedelta(hours=1)  # 1 hour expiry
+
+        db_token = PasswordResetToken(
+            user_id=user.id,
+            token=token,
+            expires_at=expires_at,
+        )
+        db.add(db_token)
+        db.commit()
+
+        return token
+
+    @staticmethod
+    def send_password_reset_email(user: User, token: str) -> bool:
+        """Send password reset email to user."""
+        config = _get_email_config()
+        return _send_password_reset_email(
+            config=config,
+            to_email=user.email,
+            user_name=user.name,
+            reset_token=token,
+        )
+
+    @staticmethod
+    def request_password_reset(db: Session, email: str) -> bool:
+        """
+        Request a password reset for a user.
+        Returns True always to prevent email enumeration.
+        """
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user:
+            # Don't reveal if user exists
+            return True
+
+        if not user.password_hash:
+            # OAuth user - can't reset password
+            return True
+
+        # Create token and send email
+        token = AuthService.create_password_reset_token(db, user)
+        AuthService.send_password_reset_email(user, token)
+        return True
+
+    @staticmethod
+    def reset_password(db: Session, token: str, new_password: str) -> Optional[User]:
+        """
+        Reset a user's password using a reset token.
+        Returns the user if successful, None otherwise.
+        """
+        # Find valid token
+        db_token = (
+            db.query(PasswordResetToken)
+            .filter(
+                PasswordResetToken.token == token,
+                PasswordResetToken.used == False,
+                PasswordResetToken.expires_at > datetime.utcnow(),
+            )
+            .first()
+        )
+
+        if not db_token:
+            return None
+
+        # Get user
+        user = db.query(User).filter(User.id == db_token.user_id).first()
+        if not user:
+            return None
+
+        # Mark token as used
+        db_token.used = True
+        db_token.used_at = datetime.utcnow()
+
+        # Update password
+        user.password_hash = get_password_hash(new_password)
+
+        db.commit()
+        db.refresh(user)
+
+        return user
