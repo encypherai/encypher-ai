@@ -78,6 +78,8 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
     EMAIL_FROM: str = "noreply@encypherai.com"
     EMAIL_FROM_NAME: str = "Encypher"
+    ADMIN_EMAIL: str = "erik.svilich@encypherai.com"
+    SEND_STARTUP_EMAIL: bool = True
 
     # ===========================================
     # SERVICE-SPECIFIC: Token Expiration
