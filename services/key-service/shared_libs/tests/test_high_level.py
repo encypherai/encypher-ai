@@ -33,8 +33,8 @@ class TestEncypher(unittest.TestCase):
         self.assertTrue(encypher.verbose)
         self.assertEqual(encypher.trusted_signers, trusted_signers)
 
-    @patch('encypher_commercial_shared.high_level.UnicodeMetadata.extract_metadata')
-    @patch('encypher_commercial_shared.high_level.UnicodeMetadata.verify_metadata')
+    @patch('encypher_commercial_shared.core.api.UnicodeMetadata.extract_metadata')
+    @patch('encypher_commercial_shared.core.api.UnicodeMetadata.verify_metadata')
     def test_verify_from_text(self, mock_verify, mock_extract):
         """Test verifying metadata from text."""
         # Set up a trusted signer for the test
@@ -54,7 +54,7 @@ class TestEncypher(unittest.TestCase):
         self.assertEqual(result.signer_id, "test-signer")
         self.assertEqual(result.model_id, "test-model")
 
-    @patch('encypher_commercial_shared.high_level.Encypher.verify_from_text')
+    @patch('encypher_commercial_shared.core.api.Encypher.verify_from_text')
     def test_verify_from_file(self, mock_verify_from_text):
         """Test verifying metadata from a file."""
         # Create a temporary file
@@ -81,7 +81,7 @@ class TestEncypher(unittest.TestCase):
             # Clean up
             os.unlink(temp_path)
 
-    @patch('encypher_commercial_shared.high_level.UnicodeMetadata.extract_metadata')
+    @patch('encypher_commercial_shared.core.api.UnicodeMetadata.extract_metadata')
     def test_extract_metadata(self, mock_extract):
         """Test extracting metadata from text."""
         # Mock the extraction result

@@ -5,7 +5,6 @@ This module provides SMTP email sending with Jinja2 template support.
 Services should use this module for all email operations.
 """
 
-import logging
 import os
 import secrets
 import smtplib
@@ -17,9 +16,6 @@ from pathlib import Path
 from typing import Any, Optional
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-
-# Module-level logger for email operations
-_logger = logging.getLogger(__name__)
 
 # Template directory (relative to this module)
 TEMPLATES_DIR = Path(__file__).parent / "templates"
@@ -124,15 +120,6 @@ def send_email(
     Returns:
         True if successful, False otherwise
     """
-    # Log config for debugging (mask password)
-    _logger.info(
-        f"Attempting to send email: to={to_email}, subject={subject}, "
-        f"smtp_host={config.smtp_host}, smtp_port={config.smtp_port}, "
-        f"smtp_user={config.smtp_user or '(empty)'}, "
-        f"smtp_pass={'***' if config.smtp_pass else '(empty)'}, "
-        f"email_from={config.email_from}"
-    )
-    
     try:
         msg = MIMEMultipart("alternative")
         msg["Subject"] = subject
@@ -147,25 +134,18 @@ def send_email(
         msg.attach(MIMEText(html_content, "html"))
         
         # Connect and send
-        _logger.info(f"Connecting to SMTP server {config.smtp_host}:{config.smtp_port}...")
         with smtplib.SMTP(config.smtp_host, config.smtp_port) as server:
             if config.smtp_tls:
-                _logger.info("Starting TLS...")
                 server.starttls()
             if config.smtp_user and config.smtp_pass:
-                _logger.info(f"Logging in as {config.smtp_user}...")
                 server.login(config.smtp_user, config.smtp_pass)
-            else:
-                _logger.warning("SMTP credentials not configured - skipping login")
             server.sendmail(config.email_from, [to_email], msg.as_string())
         
-        _logger.info(f"Email sent successfully to {to_email}")
         if logger:
             logger.info("email_sent", to=to_email, subject=subject)
         return True
         
     except Exception as e:
-        _logger.error(f"Failed to send email to {to_email}: {e}", exc_info=True)
         if logger:
             logger.error("email_send_failed", to=to_email, subject=subject, error=str(e))
         return False

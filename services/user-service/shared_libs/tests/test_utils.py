@@ -37,7 +37,7 @@ class TestUtils(unittest.TestCase):
         # Set up return values for the mock
         self.encypher.verify_from_file.side_effect = [self.mock_result1, self.mock_result2]
 
-    @patch('encypher_commercial_shared.utils.Path')
+    @patch('encypher_commercial_shared.core.utils.Path')
     def test_scan_directory(self, mock_path):
         """Test scanning a directory for files with metadata."""
         # Set up mock directory structure
@@ -115,7 +115,7 @@ class TestUtils(unittest.TestCase):
                 self.assertEqual(rows[1]["Verified"], "False")
                 self.assertEqual(rows[1]["Signer ID"], "")
 
-    @patch('encypher_commercial_shared.utils.Path')
+    @patch('encypher_commercial_shared.core.utils.Path')
     def test_load_trusted_signers(self, mock_path):
         """Test loading trusted signers from a directory."""
         # Set up mock directory structure
