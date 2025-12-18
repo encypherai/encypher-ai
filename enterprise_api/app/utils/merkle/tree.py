@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 
 from .hashing import combine_hashes, compute_hash
 from .node import MerkleNode
+from app.utils.segmentation import normalize_for_hashing
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +75,9 @@ class MerkleTree:
         # Create leaf nodes
         current_level = []
         for i, segment in enumerate(segments):
-            segment_hash = compute_hash(segment)
+            # Normalize segment before hashing for consistent lookup
+            normalized = normalize_for_hashing(segment, lowercase=True, normalize_unicode_chars=True)
+            segment_hash = compute_hash(normalized)
             node = MerkleNode(
                 hash=segment_hash,
                 content=segment,
