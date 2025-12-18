@@ -203,7 +203,7 @@ class LicensingService:
         # Convert to ContentMetadata
         content_list = [
             ContentMetadata(
-                id=ref.ref_id,  # Use ref_id as UUID-like identifier
+                id=ref.id,  # Use id as UUID-like identifier
                 content_type=ref.license_type or "unknown",
                 word_count=None,  # ContentReference doesn't store word count
                 signed_at=ref.created_at,
@@ -232,7 +232,7 @@ class LicensingService:
         """
         result = await db.execute(
             select(ContentReference.organization_id).where(
-                ContentReference.ref_id == content_id
+                ContentReference.id == content_id
             )
         )
         return result.scalar_one_or_none()

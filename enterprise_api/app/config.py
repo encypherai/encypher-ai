@@ -61,6 +61,8 @@ class Settings(BaseSettings):
     demo_organization_id: str = "org_demo"
     demo_organization_name: str = "Encypher Demo Organization"
     demo_private_key_hex: Optional[str] = None
+    # SECRET_KEY is an alias for demo_private_key_hex (used in Railway production)
+    secret_key: Optional[str] = None
 
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file=".env",

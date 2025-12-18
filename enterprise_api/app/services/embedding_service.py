@@ -187,11 +187,11 @@ class EmbeddingService:
             segment_embeddings.append((segment, minimal_metadata))
             
             # Create ContentReference object for database storage (enterprise feature)
-            # Generate collision-resistant 63-bit ref_id to avoid PK conflicts under concurrency
-            ref_id = secrets.randbits(63)
+            # Generate collision-resistant 63-bit id to avoid PK conflicts under concurrency
+            content_id = secrets.randbits(63)
             
             reference = ContentReference(
-                ref_id=ref_id,  # Use unique timestamp-based ID
+                id=content_id,  # Use unique random ID
                 merkle_root_id=merkle_root_id,
                 leaf_hash=leaf_hash,
                 leaf_index=idx,
@@ -211,10 +211,6 @@ class EmbeddingService:
                     'uses_encypher_ai': True,
                     'signer_id': self.signer_id
                 },
-                # TEAM_002: Status list fields will be populated after allocation
-                status_list_index=None,
-                status_bit_index=None,
-                status_list_url=None,
             )
             
             references_to_insert.append(reference)
@@ -383,30 +379,6 @@ class EmbeddingService:
             f"Deleted {result.rowcount} old content references for document {document_id}"
         )
         
-        # TEAM_002: Allocate status list index for this document
-        # This enables per-document revocation via bitstring status lists
-        try:
-            list_index, bit_index, status_list_url = await status_service.allocate_status_index(
-                db=db,
-                organization_id=organization_id,
-                document_id=document_id,
-            )
-            
-            # Update all references with status list info
-            for ref in references_to_insert:
-                ref.status_list_index = list_index
-                ref.status_bit_index = bit_index
-                ref.status_list_url = status_list_url
-            
-            logger.info(
-                f"Allocated status index for document {document_id}: "
-                f"list={list_index}, bit={bit_index}"
-            )
-        except Exception as e:
-            logger.warning(f"Failed to allocate status index: {e}")
-            # Continue without status list - document will still be signed
-            # but won't be revocable via bitstring
-        
         # Bulk insert all new references (enterprise feature: database tracking)
         db.add_all(references_to_insert)
         
@@ -548,7 +520,7 @@ class EmbeddingService:
             ContentReference if found, None otherwise
         """
         result = await db.execute(
-            select(ContentReference).where(ContentReference.ref_id == ref_id)
+            select(ContentReference).where(ContentReference.id == ref_id)
         )
         return result.scalar_one_or_none()
     

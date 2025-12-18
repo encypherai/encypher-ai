@@ -108,11 +108,12 @@ def _get_demo_keys():
     if _demo_private_key is not None:
         return _demo_private_key, _demo_public_key
     
-    # Try to load from settings
-    if settings.demo_private_key_hex:
+    # Try to load from settings (check both DEMO_PRIVATE_KEY_HEX and SECRET_KEY)
+    key_hex = settings.demo_private_key_hex or settings.secret_key
+    if key_hex:
         try:
             from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-            key_bytes = bytes.fromhex(settings.demo_private_key_hex)
+            key_bytes = bytes.fromhex(key_hex)
             _demo_private_key = Ed25519PrivateKey.from_private_bytes(key_bytes)
             _demo_public_key = _demo_private_key.public_key()
             logger.info("Loaded demo keys from environment")

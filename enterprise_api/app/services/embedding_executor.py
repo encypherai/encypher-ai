@@ -146,7 +146,7 @@ async def encode_document_with_embeddings(
             )
             
             merkle_root = merkle_roots[request.segmentation_level]
-            merkle_root_id = merkle_root.root_id
+            merkle_root_id = merkle_root.id
             
             # Get segments and hashes
             from app.utils.segmentation import HierarchicalSegmenter

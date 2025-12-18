@@ -36,7 +36,8 @@ class ContentReference(Base):
     __tablename__ = "content_references"
     
     # Primary identifier (64-bit integer for compact embeddings)
-    ref_id = Column(BigInteger, primary_key=True)
+    # Note: Database column is 'id', but we expose as 'ref_id' for API compatibility
+    id = Column(BigInteger, primary_key=True)
     
     # Link to Merkle tree system (nullable for free tier - no Merkle tree)
     merkle_root_id = Column(
@@ -48,10 +49,9 @@ class ContentReference(Base):
     leaf_hash = Column(String(64), nullable=False, index=True)
     leaf_index = Column(Integer, nullable=False)
     
-    # Document metadata - FK to unified schema organizations.id
+    # Document metadata - reference to organizations (not enforced at DB level)
     organization_id = Column(
         String(64),
-        ForeignKey("organizations.id", ondelete="CASCADE"),
         nullable=False,
         index=True
     )
@@ -77,12 +77,6 @@ class ContentReference(Base):
     created_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow, index=True)
     expires_at = Column(TIMESTAMP, nullable=True, index=True)
     
-    # Status List (W3C StatusList2021) for per-document revocation
-    # TEAM_002: Added for bitstring status list support
-    status_list_index = Column(Integer, nullable=True)  # Which list (0, 1, 2...)
-    status_bit_index = Column(Integer, nullable=True)   # Position in list (0-131071)
-    status_list_url = Column(String(500), nullable=True)  # CDN URL for status list
-    
     # Additional metadata
     embedding_metadata = Column(JSON, default={})
     
@@ -96,6 +90,11 @@ class ContentReference(Base):
         Index('idx_content_refs_org_created', 'organization_id', 'created_at'),
     )
     
+    @property
+    def ref_id(self) -> int:
+        """Alias for id to maintain API compatibility."""
+        return self.id
+    
     def to_compact_string(self, version: str = "v1") -> str:
         """
         Generate compact embedding string.
@@ -106,7 +105,7 @@ class ContentReference(Base):
         Returns:
             Compact string like "ency:v1/a3f9c2e1/8k3mP9xQ"
         """
-        ref_hex = format(self.ref_id, '08x')  # 8 hex characters
+        ref_hex = format(self.id, '08x')  # 8 hex characters
         sig_short = self.signature_hash[:8]  # First 8 characters
         return f"ency:{version}/{ref_hex}/{sig_short}"
     
@@ -120,7 +119,7 @@ class ContentReference(Base):
         Returns:
             URL like "https://verify.encypher.ai/a3f9c2e1"
         """
-        ref_hex = format(self.ref_id, '08x')
+        ref_hex = format(self.id, '08x')
         return f"{base_url}/{ref_hex}"
     
     def to_dict(self, include_text: bool = False) -> dict:
@@ -134,7 +133,7 @@ class ContentReference(Base):
             Dictionary representation
         """
         data = {
-            'ref_id': format(self.ref_id, '08x'),
+            'ref_id': format(self.id, '08x'),
             'leaf_hash': self.leaf_hash,
             'leaf_index': self.leaf_index,
             'document_id': self.document_id,
@@ -160,7 +159,7 @@ class ContentReference(Base):
     
     def __repr__(self) -> str:
         """String representation for debugging."""
-        ref_hex = format(self.ref_id, '08x')
+        ref_hex = format(self.id, '08x')
         return (
             f"<ContentReference("
             f"ref_id={ref_hex}, "

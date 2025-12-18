@@ -150,8 +150,24 @@ app = FastAPI(
 
 # CORS middleware - parse ALLOWED_ORIGINS env var
 def get_cors_origins():
-    """Get CORS origins from ALLOWED_ORIGINS env var."""
+    """Get CORS origins from ALLOWED_ORIGINS env var.
+    
+    Always includes localhost origins for development.
+    Use '*' in ALLOWED_ORIGINS to allow all origins.
+    """
     origins = [origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()]
+    
+    # Always allow localhost for development/demos
+    localhost_origins = [
+        "http://localhost:3000",
+        "http://localhost:3001", 
+        "http://localhost:3050",
+        "http://localhost:3051",
+    ]
+    for origin in localhost_origins:
+        if origin not in origins:
+            origins.append(origin)
+    
     logger.info(f"CORS allowed origins: {origins}")
     return origins
 
