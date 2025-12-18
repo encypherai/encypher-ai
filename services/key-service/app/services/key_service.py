@@ -173,6 +173,11 @@ class KeyService:
         if not result.organization_id:
             # User-level key - provide default starter tier context
             # Mark as demo so they can use demo signing keys for testing
+            key_permissions = result.key_permissions if isinstance(result.key_permissions, list) else ["sign", "verify"]
+            
+            # Check if key has special permissions that enable features
+            has_merkle = "merkle" in key_permissions
+            
             return {
                 "key_id": result.key_id,
                 "user_id": result.user_id,
@@ -183,7 +188,7 @@ class KeyService:
                 "features": {
                     "team_management": False,
                     "audit_logs": False,
-                    "merkle_enabled": False,
+                    "merkle_enabled": has_merkle,  # Enable if key has merkle permission
                     "bulk_operations": False,
                     "sentence_tracking": False,
                     "streaming": True,
@@ -192,7 +197,7 @@ class KeyService:
                     "custom_assertions": False,
                     "max_team_members": 1,
                 },
-                "permissions": result.key_permissions if isinstance(result.key_permissions, list) else ["sign", "verify"],
+                "permissions": key_permissions,
                 "monthly_api_limit": 10000,  # Starter tier limit
                 "monthly_api_usage": 0,
                 "coalition_member": True,
