@@ -31,6 +31,7 @@ export default function VerificationDecoder({
   const [error, setError] = useState<string | null>(null);
   const [showDiff, setShowDiff] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
+  const [displayQuote, setDisplayQuote] = useState<string>("");
 
   // Auto-verify when text is provided
   useEffect(() => {
@@ -60,6 +61,9 @@ export default function VerificationDecoder({
       const originalText = getVisibleText(markedContent);
       const quoteVisible = getVisibleText(textToVerify);
       const quoteExistsInOriginal = originalText.includes(quoteVisible);
+
+      // Store the quote for display
+      setDisplayQuote(quoteVisible);
 
       // For accurate quotes that exist in original, verify the FULL markedContent
       // The full document has the C2PA wrapper with signer_id
@@ -172,7 +176,7 @@ export default function VerificationDecoder({
             {/* Quote being verified */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="text-sm font-medium text-gray-500 mb-2">Quote Being Verified:</div>
-              <p className="text-gray-800 italic">&ldquo;{getVisibleText(textToVerify).slice(0, 300)}{getVisibleText(textToVerify).length > 300 ? '...' : ''}&rdquo;</p>
+              <p className="text-gray-800 italic">&ldquo;{displayQuote.slice(0, 300)}{displayQuote.length > 300 ? '...' : ''}&rdquo;</p>
             </div>
 
             {/* Success details */}
