@@ -177,6 +177,7 @@ class KeyService:
             
             # Check if key has special permissions that enable features
             has_merkle = "merkle" in key_permissions
+            is_super_admin = "admin" in key_permissions or "super_admin" in key_permissions
             
             return {
                 "key_id": result.key_id,
@@ -188,17 +189,18 @@ class KeyService:
                 "features": {
                     "team_management": False,
                     "audit_logs": False,
-                    "merkle_enabled": has_merkle,  # Enable if key has merkle permission
-                    "bulk_operations": False,
-                    "sentence_tracking": False,
+                    "merkle_enabled": has_merkle or is_super_admin,  # Enable if key has merkle or admin permission
+                    "bulk_operations": is_super_admin,
+                    "sentence_tracking": is_super_admin,
                     "streaming": True,
                     "byok": False,
                     "sso": False,
                     "custom_assertions": False,
                     "max_team_members": 1,
+                    "is_super_admin": is_super_admin,  # Unlimited access for super admin
                 },
                 "permissions": key_permissions,
-                "monthly_api_limit": 10000,  # Starter tier limit
+                "monthly_api_limit": -1 if is_super_admin else 10000,  # Unlimited for super admin
                 "monthly_api_usage": 0,
                 "coalition_member": True,
                 "coalition_rev_share": 65,

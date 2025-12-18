@@ -221,21 +221,12 @@ class QuotaManager:
         # Handle user-level keys (synthetic org IDs like "user_{user_id}")
         # These don't have a record in the organizations table
         if organization_id.startswith("user_"):
-            # Check if feature is explicitly enabled via permissions (e.g., merkle permission on key)
-            if features:
-                # Map quota types to feature flags
-                feature_map = {
-                    QuotaType.MERKLE_ENCODING: "merkle_enabled",
-                    QuotaType.MERKLE_ATTRIBUTION: "merkle_enabled",
-                    QuotaType.MERKLE_PLAGIARISM: "merkle_enabled",
-                }
-                feature_flag = feature_map.get(quota_type)
-                if feature_flag and features.get(feature_flag, False):
-                    # Feature explicitly enabled - allow with generous demo limit
-                    logger.debug(f"User-level key {organization_id}: allowing {quota_type.value} via {feature_flag} feature")
-                    return True
+            # Check if this is a super admin key (unlimited access)
+            if features and features.get("is_super_admin", False):
+                logger.debug(f"Super admin key {organization_id}: allowing unlimited {quota_type.value}")
+                return True
             
-            # Use starter tier limits for user-level keys without explicit feature access
+            # Use starter tier limits for user-level keys
             tier = OrganizationTier.STARTER
             quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
             
