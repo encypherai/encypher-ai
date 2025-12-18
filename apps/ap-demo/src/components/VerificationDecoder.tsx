@@ -12,6 +12,7 @@ interface VerificationDecoderProps {
   markedContent: string | null;
   onReset: () => void;
   onVerificationComplete?: (verifiedSentence: string | null) => void;
+  displayQuote?: string;
 }
 
 interface DiffHighlight {
@@ -25,13 +26,13 @@ export default function VerificationDecoder({
   markedContent,
   onReset,
   onVerificationComplete,
+  displayQuote: displayQuoteProp,
 }: VerificationDecoderProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerifyResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showDiff, setShowDiff] = useState(false);
   const [showManifest, setShowManifest] = useState(false);
-  const [displayQuote, setDisplayQuote] = useState<string>("");
 
   // Auto-verify when text is provided
   useEffect(() => {
@@ -62,8 +63,6 @@ export default function VerificationDecoder({
       const quoteVisible = getVisibleText(textToVerify);
       const quoteExistsInOriginal = originalText.includes(quoteVisible);
 
-      // Store the quote for display
-      setDisplayQuote(quoteVisible);
 
       // For accurate quotes that exist in original, verify the FULL markedContent
       // The full document has the C2PA wrapper with signer_id
@@ -176,7 +175,7 @@ export default function VerificationDecoder({
             {/* Quote being verified */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="text-sm font-medium text-gray-500 mb-2">Quote Being Verified:</div>
-              <p className="text-gray-800 italic">&ldquo;{displayQuote.slice(0, 300)}{displayQuote.length > 300 ? '...' : ''}&rdquo;</p>
+              <p className="text-gray-800 italic">&ldquo;{(displayQuoteProp || '').slice(0, 300)}{(displayQuoteProp || '').length > 300 ? '...' : ''}&rdquo;</p>
             </div>
 
             {/* Success details */}

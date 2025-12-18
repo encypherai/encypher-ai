@@ -13,7 +13,7 @@ interface Message {
 }
 
 interface AIChatSimulatorProps {
-  onQuoteSelected: (quote: string, isAccurate: boolean) => void;
+  onQuoteSelected: (quote: string, isAccurate: boolean, displayQuote?: string) => void;
   disabled?: boolean;
   markedContent?: string | null;
   embeddings?: EmbeddingInfo[];
@@ -109,7 +109,8 @@ export default function AIChatSimulator({ onQuoteSelected, disabled, markedConte
       }
     }
     
-    onQuoteSelected(quoteToVerify, quote.isAccurate);
+    // Pass both the text to verify AND the display quote
+    onQuoteSelected(quoteToVerify, quote.isAccurate, quote.text);
   };
 
   const handleSelectQuote = () => {

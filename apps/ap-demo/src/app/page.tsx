@@ -28,7 +28,9 @@ export default function APDemo() {
     setCurrentStep(2);
   };
 
-  const handleQuoteSelected = (quote: string, accurate: boolean) => {
+  const [displayQuote, setDisplayQuote] = useState<string>("");
+
+  const handleQuoteSelected = (quote: string, accurate: boolean, quoteText?: string) => {
     // Reset first to force re-verification even if same quote
     setTextToVerify(null);
     setIsAccurate(null);
@@ -36,6 +38,7 @@ export default function APDemo() {
     setTimeout(() => {
       setTextToVerify(quote);
       setIsAccurate(accurate);
+      setDisplayQuote(quoteText || quote);
       setCurrentStep(3);
     }, 10);
   };
@@ -241,6 +244,7 @@ export default function APDemo() {
             markedContent={markedContent}
             onReset={handleReset}
             onVerificationComplete={handleVerificationComplete}
+            displayQuote={displayQuote}
           />
         </section>
 
