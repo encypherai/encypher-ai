@@ -58,21 +58,31 @@ async def encode_document_with_embeddings(
         )
         
         # Load organization's private key for signing
-        try:
-            private_key = await load_organization_private_key(organization_id, db)
-            # organization_id already has "org_" prefix (e.g., "org_demo")
+        # For user-level orgs (is_demo=true), use the demo key
+        is_demo = organization.get("is_demo", False)
+        
+        if is_demo or organization_id.startswith("user_"):
+            # Use demo key for user-level orgs and demo accounts
+            from app.utils.crypto_utils import get_demo_private_key
+            private_key = get_demo_private_key()
             signer_id = organization_id
-        except ValueError as e:
-            logger.error(f"Failed to load private key for org {organization_id}: {e}")
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail={
-                    "code": "NO_PRIVATE_KEY",
-                    "message": "Organization has no private key configured. "
-                    "Please complete certificate onboarding first.",
-                    "details": str(e),
-                },
-            )
+            logger.info(f"Using demo key for org {organization_id}")
+        else:
+            try:
+                private_key = await load_organization_private_key(organization_id, db)
+                # organization_id already has "org_" prefix (e.g., "org_demo")
+                signer_id = organization_id
+            except ValueError as e:
+                logger.error(f"Failed to load private key for org {organization_id}: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={
+                        "code": "NO_PRIVATE_KEY",
+                        "message": "Organization has no private key configured. "
+                        "Please complete certificate onboarding first.",
+                        "details": str(e),
+                    },
+                )
         
         # Validate custom assertions if provided
         validated_assertions = None
