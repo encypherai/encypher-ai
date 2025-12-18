@@ -56,15 +56,16 @@ export default function VerificationDecoder({
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     try {
-      // Verify the text directly - it should contain the embedded C2PA manifest
-      // If copying from the article works in public decoder, the embeddings have valid manifests
-      const result = await verifyContent(textToVerify);
-      setVerificationResult(result);
-      
       // Check if the quote matches the original content (strip invisible chars for comparison)
       const originalText = getVisibleText(markedContent);
       const quoteVisible = getVisibleText(textToVerify);
       const quoteExistsInOriginal = originalText.includes(quoteVisible);
+
+      // For accurate quotes that exist in original, verify the FULL markedContent
+      // The full document has the C2PA wrapper with signer_id
+      const textToSend = (isAccurate && quoteExistsInOriginal) ? markedContent : textToVerify;
+      const result = await verifyContent(textToSend);
+      setVerificationResult(result);
 
       if (result.valid && quoteExistsInOriginal) {
         // Notify parent of successful verification for highlighting
