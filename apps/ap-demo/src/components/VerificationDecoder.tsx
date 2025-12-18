@@ -13,6 +13,7 @@ interface VerificationDecoderProps {
   onReset: () => void;
   onVerificationComplete?: (verifiedSentence: string | null) => void;
   displayQuote?: string;
+  modifications?: { original: string; modified: string }[];
 }
 
 interface DiffHighlight {
@@ -27,6 +28,7 @@ export default function VerificationDecoder({
   onReset,
   onVerificationComplete,
   displayQuote: displayQuoteProp,
+  modifications: modificationsProp,
 }: VerificationDecoderProps) {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<VerifyResponse | null>(null);
@@ -95,7 +97,7 @@ export default function VerificationDecoder({
 
   const getDiffHighlights = (): DiffHighlight[] => {
     if (isAccurate) return [];
-    return AI_CHAT_SCENARIOS.modified.modifications;
+    return modificationsProp || [];
   };
 
   return (

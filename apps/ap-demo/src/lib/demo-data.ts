@@ -5,7 +5,7 @@ export const AP_ARTICLE = {
   headline: "Senate advances bipartisan infrastructure bill in rare show of unity",
   byline: "By LISA MASCARO and KEVIN FREKING",
   dateline: "WASHINGTON (AP)",
-  date: "December 18, 2024",
+  date: "December 18, 2025",
   source: "Associated Press",
   url: "https://apnews.com/article/infrastructure-bill-senate-bipartisan",
   
@@ -46,6 +46,7 @@ export interface QuoteData {
   id: number;
   text: string;
   isAccurate: boolean;
+  modifications?: { original: string; modified: string }[];
 }
 
 // Simulated AI chat responses for the demo
@@ -79,8 +80,16 @@ The AP article also notes that "The $1.2 trillion package passed a key procedura
 
 The AP quoted the Senate Majority Leader saying, "This is the most significant infrastructure investment in American history, and it passed with overwhelming bipartisan support." [2]`,
     quotes: [
-      { id: 1, text: "The Senate has approved a landmark bipartisan infrastructure package worth $1.5 trillion, with unanimous support from both parties in a historic display of unity.", isAccurate: false },
-      { id: 2, text: "This is the most significant infrastructure investment in American history, and it passed with overwhelming bipartisan support.", isAccurate: false },
+      { id: 1, text: "The Senate has approved a landmark bipartisan infrastructure package worth $1.5 trillion, with unanimous support from both parties in a historic display of unity.", isAccurate: false, modifications: [
+        { original: "advanced", modified: "approved" },
+        { original: "$1.2 trillion", modified: "$1.5 trillion" },
+        { original: "rare moment of cooperation", modified: "historic display of unity" },
+        { original: "", modified: "unanimous" },
+      ]},
+      { id: 2, text: "This is the most significant infrastructure investment in American history, and it passed with overwhelming bipartisan support.", isAccurate: false, modifications: [
+        { original: "historic moment for our country", modified: "most significant infrastructure investment in American history" },
+        { original: "both parties can come together", modified: "overwhelming bipartisan support" },
+      ]},
     ] as QuoteData[],
     quotedText: "The Senate has approved a landmark bipartisan infrastructure package worth $1.5 trillion, with unanimous support from both parties in a historic display of unity.",
     citations: [
