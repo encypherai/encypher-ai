@@ -1,6 +1,7 @@
 """
 Cryptographic utilities for key management and encryption.
 """
+import logging
 from typing import Optional, cast
 
 from cryptography import x509
@@ -14,6 +15,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.utils.aws_signer import AWSSigner
+
+logger = logging.getLogger(__name__)
 
 _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
 
@@ -99,12 +102,16 @@ async def load_organization_public_key(
     # Handle demo organization - derive public key from private key
     global _DEMO_PRIVATE_KEY
     if organization_id == settings.demo_organization_id:
-        # Load the private key first (which handles demo org)
-        # Use the synchronous helper if we are in a sync context or just call the helper
-        # Actually, get_demo_private_key is synchronous.
         private_key = get_demo_private_key()
         return private_key.public_key()
     
+    # Check if this is a user-level org (starts with "user_") - they use demo key
+    if organization_id.startswith("user_"):
+        logger.info(f"User org {organization_id} uses demo key for verification")
+        private_key = get_demo_private_key()
+        return private_key.public_key()
+    
+    # Look up organization's public key from database
     result = await db.execute(
         text("SELECT public_key FROM organizations WHERE id = :org_id"),
         {"org_id": organization_id}

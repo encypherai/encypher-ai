@@ -61,17 +61,20 @@ async def execute_signing(
     )
 
     is_demo_org = organization.get("is_demo", False)
+    org_id = organization["organization_id"]
 
     # Load organization's private key
-    # For demo orgs (including user-level keys), use demo key and demo signer_id
+    # For demo orgs (including user-level keys), use demo key but keep actual org_id as signer
+    # This allows verification to look up the org and find they use the demo key
     try:
         if is_demo_org:
             private_key = get_demo_private_key()
-            # Use demo org ID as signer so verification can find the public key
-            signer_id = settings.demo_organization_id
+            # Use actual org ID as signer - verification will look up and find demo key association
+            signer_id = org_id
+            logger.info(f"Using demo key for org {org_id} (is_demo=True)")
         else:
-            private_key = await load_organization_private_key(organization["organization_id"], db)
-            signer_id = organization["organization_id"]
+            private_key = await load_organization_private_key(org_id, db)
+            signer_id = org_id
     except ValueError as exc:
         logger.error("Failed to load private key: %s", exc)
         raise HTTPException(
