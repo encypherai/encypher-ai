@@ -80,21 +80,32 @@ export default function AIChatSimulator({ onQuoteSelected, disabled, markedConte
     const quote = scenario.quotes?.find((q: QuoteData) => q.id === quoteId);
     if (!quote) return;
     
-    // For accurate quotes, find the embedded version from the embeddings array
+    // For accurate quotes, find the embedded version from markedContent
+    // The embeddings array has "basic" format, but markedContent has the full C2PA wrapper
     let quoteToVerify = quote.text;
-    if (quote.isAccurate && embeddings && embeddings.length > 0) {
-      // Find the embedding that matches this quote by comparing visible text
-      const matchingEmbedding = embeddings.find(e => {
-        if (!e.text) return false;
-        // Strip invisible chars for comparison
-        const visibleEmbedding = e.text.replace(/[\u200B-\u200D\uFEFF\uE0100-\uE01EF\uFE00-\uFE0F]/g, '');
-        return quote.text.startsWith(visibleEmbedding.slice(0, 50)) || 
-               visibleEmbedding.startsWith(quote.text.slice(0, 50));
+    if (quote.isAccurate && markedContent) {
+      // Find the sentence in markedContent that matches this quote
+      // markedContent contains the full article with embedded provenance
+      // We need to extract the exact sentence with its invisible characters
+      
+      // Split markedContent by sentence boundaries while preserving invisible chars
+      // Use a regex that matches sentence endings but keeps the invisible chars attached
+      const sentences = markedContent.split(/(?<=[.!?])\s+/);
+      
+      const matchingSentence = sentences.find(s => {
+        // Strip invisible chars for comparison only
+        const visibleSentence = s.replace(/[\u200B-\u200D\uFEFF\uE0100-\uE01EF\uFE00-\uFE0F]/g, '');
+        // Check if this sentence matches the quote
+        return quote.text.startsWith(visibleSentence.slice(0, 40)) || 
+               visibleSentence.startsWith(quote.text.slice(0, 40));
       });
       
-      if (matchingEmbedding?.text) {
-        // Use the embedded text which contains the C2PA manifest
-        quoteToVerify = matchingEmbedding.text;
+      if (matchingSentence) {
+        // Use the sentence from markedContent which has the C2PA manifest
+        quoteToVerify = matchingSentence;
+        console.log('Found matching sentence with embedded provenance:', quoteToVerify.length, 'chars');
+      } else {
+        console.log('No matching sentence found in markedContent');
       }
     }
     

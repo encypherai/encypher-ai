@@ -56,30 +56,21 @@ export default function VerificationDecoder({
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     try {
+      // Verify the text directly - it should contain the embedded C2PA manifest
+      // If copying from the article works in public decoder, the embeddings have valid manifests
+      const result = await verifyContent(textToVerify);
+      setVerificationResult(result);
+      
       // Check if the quote matches the original content (strip invisible chars for comparison)
       const originalText = getVisibleText(markedContent);
       const quoteVisible = getVisibleText(textToVerify);
       const quoteExistsInOriginal = originalText.includes(quoteVisible);
 
-      if (isAccurate && quoteExistsInOriginal) {
-        // For accurate quotes, verify the FULL markedContent (which has the C2PA manifest)
-        // The individual sentence embeddings only have "basic" format, not full C2PA
-        const result = await verifyContent(markedContent);
-        setVerificationResult(result);
-        
-        if (result.valid) {
-          // Notify parent of successful verification for highlighting
-          onVerificationComplete?.(quoteVisible);
-        }
-      } else {
-        // For modified quotes or quotes not in original, verification should fail
-        // Try to verify the quote text itself (which has no C2PA manifest)
-        const result = await verifyContent(textToVerify);
-        setVerificationResult(result);
-        
-        if (!result.valid) {
-          setShowDiff(true);
-        }
+      if (result.valid && quoteExistsInOriginal) {
+        // Notify parent of successful verification for highlighting
+        onVerificationComplete?.(quoteVisible);
+      } else if (!isAccurate) {
+        setShowDiff(true);
       }
     } catch (err) {
       console.error("Verification error:", err);
