@@ -10,10 +10,13 @@ from typing import Any, Dict, Literal, Optional
 
 from encypher.core.constants import MetadataTarget
 from encypher.core.unicode_metadata import UnicodeMetadata
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
+from app.database import get_db
+from app.utils.crypto_utils import load_organization_public_key
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tools", tags=["Public Tools"])
@@ -258,12 +261,16 @@ async def encode_text(request: EncodeToolRequest) -> EncodeToolResponse:
 
 
 @router.post("/decode", response_model=DecodeToolResponse)
-async def decode_text(request: DecodeToolRequest) -> DecodeToolResponse:
+async def decode_text(
+    request: DecodeToolRequest,
+    db: AsyncSession = Depends(get_db),
+) -> DecodeToolResponse:
     """
     Decode and verify text containing embedded metadata.
     
     This is a public endpoint for the website demo tool.
-    Verification uses the demo public key.
+    Verification uses Trust Anchor lookup - checks database for org public keys.
+    Falls back to demo key for demo-signed content.
     """
     logger.info("Decode request received")
     
@@ -286,9 +293,34 @@ async def decode_text(request: DecodeToolRequest) -> DecodeToolResponse:
                 ),
             )
         
-        # Define public key resolver
+        # Extract signer_id from metadata to do async lookup before verification
+        signer_id_from_metadata = None
+        if isinstance(decoded_metadata, dict):
+            # Try to get signer_id from manifest or directly
+            manifest = decoded_metadata.get("manifest", {})
+            if isinstance(manifest, dict):
+                signer_id_from_metadata = manifest.get("signer_id")
+            if not signer_id_from_metadata:
+                signer_id_from_metadata = decoded_metadata.get("signer_id")
+        
+        # Pre-fetch the public key for the signer (async lookup)
+        org_public_key = None
+        if signer_id_from_metadata and signer_id_from_metadata not in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
+            try:
+                org_public_key = await load_organization_public_key(signer_id_from_metadata, db)
+                logger.info(f"Found public key for signer {signer_id_from_metadata} in Trust Anchor")
+            except ValueError:
+                logger.warning(f"Signer {signer_id_from_metadata} not found in Trust Anchor database")
+            except Exception as e:
+                logger.warning(f"Error looking up signer {signer_id_from_metadata}: {e}")
+        
+        # Define synchronous public key resolver using pre-fetched keys
         def public_key_resolver(signer_id: str):
-            # Accept demo signer IDs
+            """Look up public key - uses pre-fetched org key or demo key."""
+            # Check if we have a pre-fetched org key for this signer
+            if org_public_key and signer_id == signer_id_from_metadata:
+                return org_public_key
+            # Fall back to demo key for demo signer IDs
             if signer_id in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
                 return public_key
             logger.warning(f"Unknown signer_id: {signer_id}")
@@ -318,13 +350,25 @@ async def decode_text(request: DecodeToolRequest) -> DecodeToolResponse:
             # signature_valid = False means either signature is invalid OR hard binding check failed
             reason_code = "VERIFIED" if signature_valid else "VERIFICATION_FAILED"
 
+            # Determine signer name based on whether we found an org key
+            if signer_id:
+                if org_public_key and signer_id == signer_id_from_metadata:
+                    # Verified via Trust Anchor (database lookup)
+                    signer_name = f"{signer_id} (Verified via Trust Anchor)"
+                elif signer_id in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
+                    signer_name = f"{signer_id} (Demo Key)"
+                else:
+                    signer_name = f"{signer_id} (Unknown Signer)"
+            else:
+                signer_name = None
+
             # Build verdict
             verdict = VerifyVerdict(
                 valid=signature_valid,
                 tampered=not signature_valid and decoded_metadata is not None,
                 reason_code=reason_code,
                 signer_id=signer_id,
-                signer_name=f"{signer_id} (Demo Key)" if signer_id else None,
+                signer_name=signer_name,
             )
 
             # Determine verification status
