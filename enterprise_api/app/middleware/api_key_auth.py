@@ -268,8 +268,11 @@ async def require_embedding_permission(
     Raises:
         HTTPException: If organization lacks embedding permission
     """
-    # Check tier - embeddings require Professional or Enterprise
-    if organization["tier"] not in ("professional", "enterprise", "demo"):
+    # Check tier - embeddings require Professional or Enterprise (or super admin)
+    features = organization.get("features", {})
+    is_super_admin = features.get("is_super_admin", False)
+    
+    if not is_super_admin and organization["tier"] not in ("professional", "enterprise", "demo"):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Embeddings require Professional or Enterprise tier. Please upgrade your plan."

@@ -1,5 +1,5 @@
 // API client for Encypher Enterprise API
-// Uses authenticated /sign and /verify endpoints with API key
+// Uses authenticated /encode-with-embeddings endpoint for sentence-level provenance
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
@@ -11,6 +11,19 @@ export interface EncodeRequest {
   document_url?: string;
   document_type?: 'article' | 'legal_brief' | 'contract' | 'ai_output';
   metadata?: Record<string, unknown>;
+  segmentation_level?: 'document' | 'sentence' | 'paragraph';
+}
+
+export interface EmbeddingInfo {
+  leaf_index: number;
+  text?: string;
+  leaf_hash: string;
+}
+
+export interface MerkleTreeInfo {
+  root_hash: string;
+  total_leaves: number;
+  tree_depth: number;
 }
 
 export interface EncodeResponse {
@@ -19,6 +32,9 @@ export interface EncodeResponse {
   embedded_content: string;
   verification_url?: string;
   total_sentences?: number;
+  merkle_tree?: MerkleTreeInfo;
+  embeddings?: EmbeddingInfo[];
+  metadata?: Record<string, unknown>;
 }
 
 export interface VerifyResponse {
@@ -34,37 +50,52 @@ export interface VerifyResponse {
 }
 
 /**
- * Sign content using the authenticated /sign endpoint.
- * Requires a valid API key.
+ * Encode content with sentence-level provenance using /encode-with-embeddings.
+ * Creates Merkle tree + C2PA manifest with invisible embeddings per sentence.
+ * Requires a valid API key with embedding permission.
  */
 export async function encodeContent(request: EncodeRequest): Promise<EncodeResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/sign`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/enterprise/embeddings/encode-with-embeddings`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${API_KEY}`,
     },
     body: JSON.stringify({
-      text: request.text,
       document_id: request.document_id,
-      document_title: request.document_title || 'AP News Article',
-      document_type: request.document_type || 'article',
+      text: request.text,
+      segmentation_level: request.segmentation_level || 'sentence',
+      action: 'c2pa.created',
+      metadata: {
+        title: request.document_title || 'AP News Article',
+        document_type: request.document_type || 'article',
+        source: 'AP Demo',
+        ...request.metadata,
+      },
+      embedding_options: {
+        format: 'plain',
+        method: 'data-attribute',
+        include_text: true,
+      },
     }),
   });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
-    throw new Error(error.detail?.message || error.detail || `API error: ${response.status}`);
+    throw new Error(error.detail?.message || error.detail || error.error?.message || `API error: ${response.status}`);
   }
 
   const data = await response.json();
   
+  // The embedded_content contains the text with invisible C2PA manifests per sentence
   return {
     success: data.success,
     document_id: data.document_id,
-    embedded_content: data.signed_text,
-    verification_url: data.verification_url,
-    total_sentences: data.total_sentences,
+    embedded_content: data.embedded_content,
+    total_sentences: data.statistics?.total_sentences || data.embeddings?.length,
+    merkle_tree: data.merkle_tree,
+    embeddings: data.embeddings,
+    metadata: data.metadata,
   };
 }
 
