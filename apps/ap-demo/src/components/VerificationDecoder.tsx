@@ -172,7 +172,7 @@ export default function VerificationDecoder({
             {/* Quote being verified */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="text-sm font-medium text-gray-500 mb-2">Quote Being Verified:</div>
-              <p className="text-gray-800 italic">&ldquo;{getVisibleText(textToVerify)}&rdquo;</p>
+              <p className="text-gray-800 italic">&ldquo;{getVisibleText(textToVerify).slice(0, 300)}{getVisibleText(textToVerify).length > 300 ? '...' : ''}&rdquo;</p>
             </div>
 
             {/* Success details */}
