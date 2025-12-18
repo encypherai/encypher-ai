@@ -29,9 +29,15 @@ export default function APDemo() {
   };
 
   const handleQuoteSelected = (quote: string, accurate: boolean) => {
-    setTextToVerify(quote);
-    setIsAccurate(accurate);
-    setCurrentStep(3);
+    // Reset first to force re-verification even if same quote
+    setTextToVerify(null);
+    setIsAccurate(null);
+    // Then set new values after a tick
+    setTimeout(() => {
+      setTextToVerify(quote);
+      setIsAccurate(accurate);
+      setCurrentStep(3);
+    }, 10);
   };
 
   const handleReset = () => {
