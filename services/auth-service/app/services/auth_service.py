@@ -38,6 +38,7 @@ def _get_email_config() -> EmailConfig:
         email_from_name=settings.EMAIL_FROM_NAME,
         frontend_url=settings.FRONTEND_URL,
         dashboard_url=settings.DASHBOARD_URL,
+        support_email=settings.SUPPORT_EMAIL,
     )
 
 

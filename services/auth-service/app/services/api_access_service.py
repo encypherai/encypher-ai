@@ -51,6 +51,7 @@ def _get_email_config() -> "EmailConfig":
         email_from_name=settings.EMAIL_FROM_NAME,
         frontend_url=settings.FRONTEND_URL,
         dashboard_url=settings.DASHBOARD_URL,
+        support_email=settings.SUPPORT_EMAIL,
     )
 
 
@@ -122,36 +123,44 @@ class ApiAccessService:
         )
 
     def _notify_admins_of_new_request(self, user: User) -> None:
-        """Send email notification to all super admins about new request."""
+        """Send email notification about new API access request."""
         if not EMAIL_AVAILABLE:
             logger.warning("Email not available, skipping admin notification")
             return
 
         try:
-            # Get all super admins
-            super_admins = self.db.query(User).filter(User.is_super_admin == True).all()
-
-            if not super_admins:
-                logger.warning("No super admins found to notify")
-                return
-
             config = _get_email_config()
             requested_at = user.api_access_requested_at.strftime("%B %d, %Y at %I:%M %p UTC") if user.api_access_requested_at else "Just now"
 
+            # Always send to support email if configured
+            recipients = []
+            if config.support_email:
+                recipients.append(config.support_email)
+
+            # Also send to super admins if any exist
+            super_admins = self.db.query(User).filter(User.is_super_admin == True).all()
             for admin in super_admins:
+                if admin.email not in recipients:
+                    recipients.append(admin.email)
+
+            if not recipients:
+                logger.warning("No recipients configured for API access notifications")
+                return
+
+            for recipient in recipients:
                 try:
                     send_api_access_request_admin_email(
                         config=config,
-                        to_email=admin.email,
+                        to_email=recipient,
                         requester_name=user.name,
                         requester_email=user.email,
                         use_case=user.api_access_use_case or "",
                         requested_at=requested_at,
                         logger=logger,
                     )
-                    logger.info(f"Sent new request notification to admin {admin.email}")
+                    logger.info(f"Sent new API access request notification to {recipient}")
                 except Exception as e:
-                    logger.error(f"Failed to send notification to {admin.email}: {e}")
+                    logger.error(f"Failed to send notification to {recipient}: {e}")
         except Exception as e:
             logger.error(f"Failed to notify admins of new request: {e}")
 

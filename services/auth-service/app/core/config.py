@@ -79,6 +79,7 @@ class Settings(BaseSettings):
     EMAIL_FROM: str = "noreply@encypherai.com"
     EMAIL_FROM_NAME: str = "Encypher"
     ADMIN_EMAIL: str = "erik.svilich@encypherai.com"
+    SUPPORT_EMAIL: str = "support@encypherai.com"  # BCC for signup notifications
     SEND_STARTUP_EMAIL: bool = True
 
     # ===========================================
