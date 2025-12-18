@@ -118,7 +118,8 @@ async def encode_document(
         db=db,
         organization_id=organization_id,
         quota_type=QuotaType.MERKLE_ENCODING,
-        increment=1  # Per document, not per sentence
+        increment=1,  # Per document, not per sentence
+        features=organization.get("features", {})
     )
     
     try:
@@ -245,6 +246,7 @@ async def find_sources(
         db=db,
         organization_id=organization_id,
         quota_type=QuotaType.MERKLE_ATTRIBUTION,
+        features=organization.get("features", {}),
         increment=1
     )
     
@@ -358,6 +360,7 @@ async def detect_plagiarism(
         db=db,
         organization_id=organization_id,
         quota_type=QuotaType.MERKLE_PLAGIARISM,
+        features=organization.get("features", {}),
         increment=1
     )
     

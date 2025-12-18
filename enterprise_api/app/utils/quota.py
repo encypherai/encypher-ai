@@ -198,7 +198,8 @@ class QuotaManager:
         organization_id: str,
         quota_type: QuotaType,
         increment: int = 1,
-        tier_override: str = None
+        tier_override: str = None,
+        features: dict = None
     ) -> bool:
         """
         Check if organization has quota available and increment if so.
@@ -209,6 +210,7 @@ class QuotaManager:
             quota_type: Type of quota to check
             increment: Amount to increment (default 1)
             tier_override: Optional tier to use instead of DB lookup (for user-level keys)
+            features: Optional features dict from organization context (for permission-based access)
         
         Returns:
             True if quota available, False if exceeded
@@ -219,7 +221,21 @@ class QuotaManager:
         # Handle user-level keys (synthetic org IDs like "user_{user_id}")
         # These don't have a record in the organizations table
         if organization_id.startswith("user_"):
-            # Use starter tier limits for user-level keys
+            # Check if feature is explicitly enabled via permissions (e.g., merkle permission on key)
+            if features:
+                # Map quota types to feature flags
+                feature_map = {
+                    QuotaType.MERKLE_ENCODING: "merkle_enabled",
+                    QuotaType.MERKLE_ATTRIBUTION: "merkle_enabled",
+                    QuotaType.MERKLE_PLAGIARISM: "merkle_enabled",
+                }
+                feature_flag = feature_map.get(quota_type)
+                if feature_flag and features.get(feature_flag, False):
+                    # Feature explicitly enabled - allow with generous demo limit
+                    logger.debug(f"User-level key {organization_id}: allowing {quota_type.value} via {feature_flag} feature")
+                    return True
+            
+            # Use starter tier limits for user-level keys without explicit feature access
             tier = OrganizationTier.STARTER
             quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
             
