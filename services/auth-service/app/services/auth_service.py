@@ -23,7 +23,11 @@ from encypher_commercial_shared.email import (
     send_verification_email as _send_verification_email,
     send_welcome_email as _send_welcome_email,
     send_password_reset_email as _send_password_reset_email,
+    send_new_signup_admin_email as _send_new_signup_admin_email,
 )
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # Create email config from settings
@@ -235,10 +239,13 @@ class AuthService:
         provider_id: str,
         email: Optional[str],
         name: Optional[str] = None,
-    ) -> User:
+    ) -> Tuple[User, bool]:
         """
         Create or update a user from an OAuth provider.
         Uses google_id/github_id columns per core_db schema.
+        
+        Returns:
+            Tuple of (user, is_new) where is_new indicates if user was just created
         """
         # Determine which provider column to use
         provider_column = None
@@ -259,7 +266,7 @@ class AuthService:
                 user.name = name
             db.commit()
             db.refresh(user)
-            return user
+            return user, False
 
         # Fallback: match by email if exists
         if email:
@@ -274,7 +281,7 @@ class AuthService:
                     user.name = name
                 db.commit()
                 db.refresh(user)
-                return user
+                return user, False
 
         # Create new OAuth user
         user_kwargs = {
@@ -292,7 +299,7 @@ class AuthService:
         db.add(user)
         db.commit()
         db.refresh(user)
-        return user
+        return user, True
 
     # ==========================================
     # Email Verification Methods
@@ -396,6 +403,36 @@ class AuthService:
         # Create new token and send email
         token = AuthService.create_verification_token(db, user)
         return AuthService.send_verification_email(user, token)
+
+    @staticmethod
+    def send_new_signup_notification(user: User, signup_method: str = "email") -> bool:
+        """
+        Send admin notification about new user signup.
+        
+        Args:
+            user: The newly created user
+            signup_method: How they signed up (email, google, github)
+            
+        Returns:
+            True if sent successfully
+        """
+        config = _get_email_config()
+        if not config.support_email:
+            logger.warning("No support_email configured, skipping signup notification")
+            return False
+        
+        try:
+            return _send_new_signup_admin_email(
+                config=config,
+                to_email=config.support_email,
+                user_name=user.name,
+                user_email=user.email,
+                signup_method=signup_method,
+                logger=logger,
+            )
+        except Exception as e:
+            logger.error(f"Failed to send signup notification: {e}")
+            return False
 
     # ==========================================
     # Password Reset Methods

@@ -433,13 +433,18 @@ async def oauth_exchange(
             raise HTTPException(status_code=400, detail="Unsupported provider")
 
     # Upsert user and issue tokens
-    user = AuthService.upsert_oauth_user(
+    user, is_new = AuthService.upsert_oauth_user(
         db,
         provider=provider,
         provider_id=provider_id,
         email=email,
         name=name,
     )
+    
+    # Send admin notification for new OAuth signups
+    if is_new:
+        AuthService.send_new_signup_notification(user, signup_method=provider)
+    
     access_token, refresh_token = AuthService.create_tokens(user)
     AuthService.store_refresh_token(
         db,
