@@ -296,23 +296,38 @@ async def decode_text(
         # Extract signer_id from metadata to do async lookup before verification
         signer_id_from_metadata = None
         if isinstance(decoded_metadata, dict):
-            # Try to get signer_id from manifest or directly
+            # Try multiple paths to find signer_id
+            # Path 1: manifest.signer_id
             manifest = decoded_metadata.get("manifest", {})
             if isinstance(manifest, dict):
                 signer_id_from_metadata = manifest.get("signer_id")
+            # Path 2: direct signer_id
             if not signer_id_from_metadata:
                 signer_id_from_metadata = decoded_metadata.get("signer_id")
+            # Path 3: claim_generator_info.signer_id (C2PA format)
+            if not signer_id_from_metadata:
+                claim_info = decoded_metadata.get("claim_generator_info", {})
+                if isinstance(claim_info, dict):
+                    signer_id_from_metadata = claim_info.get("signer_id")
+        
+        logger.info(f"Extracted signer_id from metadata: {signer_id_from_metadata}")
         
         # Pre-fetch the public key for the signer (async lookup)
+        # For user_ orgs, load_organization_public_key will return the demo key
         org_public_key = None
-        if signer_id_from_metadata and signer_id_from_metadata not in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
-            try:
-                org_public_key = await load_organization_public_key(signer_id_from_metadata, db)
-                logger.info(f"Found public key for signer {signer_id_from_metadata} in Trust Anchor")
-            except ValueError:
-                logger.warning(f"Signer {signer_id_from_metadata} not found in Trust Anchor database")
-            except Exception as e:
-                logger.warning(f"Error looking up signer {signer_id_from_metadata}: {e}")
+        if signer_id_from_metadata:
+            # Skip pre-fetch for known demo signers (they use the demo key directly)
+            if signer_id_from_metadata in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
+                org_public_key = public_key  # Use demo key
+                logger.info(f"Using demo key for demo signer {signer_id_from_metadata}")
+            else:
+                try:
+                    org_public_key = await load_organization_public_key(signer_id_from_metadata, db)
+                    logger.info(f"Found public key for signer {signer_id_from_metadata} in Trust Anchor")
+                except ValueError:
+                    logger.warning(f"Signer {signer_id_from_metadata} not found in Trust Anchor database")
+                except Exception as e:
+                    logger.warning(f"Error looking up signer {signer_id_from_metadata}: {e}")
         
         # Define synchronous public key resolver using pre-fetched keys
         def public_key_resolver(signer_id: str):
@@ -322,6 +337,10 @@ async def decode_text(
                 return org_public_key
             # Fall back to demo key for demo signer IDs
             if signer_id in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
+                return public_key
+            # For user_ orgs that weren't pre-fetched, use demo key
+            if signer_id.startswith("user_"):
+                logger.info(f"Using demo key for user org {signer_id}")
                 return public_key
             logger.warning(f"Unknown signer_id: {signer_id}")
             return None
