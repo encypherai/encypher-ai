@@ -16,6 +16,7 @@ export default function APArticle({ onContentMarked, markedContent, highlightedS
   const [isMarking, setIsMarking] = useState(false);
   const [isMarked, setIsMarked] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [embeddedParagraphs, setEmbeddedParagraphs] = useState<string[]>([]);
 
   const handleMarkContent = async () => {
     setIsMarking(true);
@@ -37,6 +38,9 @@ export default function APArticle({ onContentMarked, markedContent, highlightedS
       
       if (response.success && response.embedded_content) {
         onContentMarked(response.embedded_content);
+        // Split embedded content back into paragraphs for display
+        const paragraphs = response.embedded_content.split("\n\n");
+        setEmbeddedParagraphs(paragraphs);
         setIsMarked(true);
       } else {
         throw new Error("Failed to embed provenance");
@@ -48,6 +52,7 @@ export default function APArticle({ onContentMarked, markedContent, highlightedS
       // For demo purposes, use placeholder if API fails
       const fullText = AP_ARTICLE.paragraphs.join("\n\n");
       onContentMarked(fullText);
+      setEmbeddedParagraphs(AP_ARTICLE.paragraphs);
       setIsMarked(true);
     } finally {
       setIsMarking(false);
@@ -97,7 +102,7 @@ export default function APArticle({ onContentMarked, markedContent, highlightedS
             isMarked && "bg-green-50/50 -mx-4 px-4 py-4 rounded-lg border border-green-200"
           )}
         >
-          {AP_ARTICLE.paragraphs.map((paragraph, index) => {
+          {(isMarked && embeddedParagraphs.length > 0 ? embeddedParagraphs : AP_ARTICLE.paragraphs).map((paragraph, index) => {
             const isHighlighted = highlightedSentence && paragraph.includes(highlightedSentence);
             
             return (
@@ -111,7 +116,7 @@ export default function APArticle({ onContentMarked, markedContent, highlightedS
                 )}
               >
                 {isMarked ? (
-                  // Sentence-level granularity view when marked
+                  // Sentence-level granularity view when marked - use embedded content
                   <span className="relative group">
                     {paragraph.split(/(?<=[.!?])\s+/).map((sentence, sIndex) => (
                       <span 

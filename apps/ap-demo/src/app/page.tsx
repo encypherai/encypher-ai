@@ -42,15 +42,20 @@ export default function APDemo() {
     setHighlightedSentence(null);
   };
 
+  const verifyRef = useRef<HTMLDivElement>(null);
+
   const handleVerificationComplete = (verifiedSentence: string | null) => {
     setHighlightedSentence(verifiedSentence);
-    // Scroll to the article section to show the highlighted sentence
-    if (verifiedSentence && articleRef.current) {
-      setTimeout(() => {
-        articleRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 500);
-    }
   };
+
+  // Scroll to verify section when quote is selected
+  useEffect(() => {
+    if (textToVerify && verifyRef.current) {
+      setTimeout(() => {
+        verifyRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 300);
+    }
+  }, [textToVerify]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
@@ -194,11 +199,12 @@ export default function APDemo() {
           <AIChatSimulator
             onQuoteSelected={handleQuoteSelected}
             disabled={currentStep < 2}
+            markedContent={markedContent}
           />
         </section>
 
         {/* Step 3: Verification */}
-        <section className={`mb-8 transition-opacity ${currentStep < 3 ? "opacity-50" : ""}`}>
+        <section ref={verifyRef} className={`mb-8 transition-opacity scroll-mt-24 ${currentStep < 3 ? "opacity-50" : ""}`}>
           <div className="flex items-center gap-3 mb-4">
             <span
               className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
