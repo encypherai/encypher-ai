@@ -39,6 +39,11 @@ export default function VerificationDecoder({
     }
   }, [textToVerify]);
 
+  // Strip invisible Unicode characters for display
+  const getVisibleText = (text: string): string => {
+    return text.replace(/[\uFE00-\uFE0F\u{E0100}-\u{E01EF}\u200B-\u200D\uFEFF]/gu, "");
+  };
+
   const performVerification = async () => {
     if (!textToVerify || !markedContent) return;
 
@@ -51,17 +56,19 @@ export default function VerificationDecoder({
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
     try {
-      // Verify with the API using the marked content
-      const result = await verifyContent(markedContent);
+      // For accurate quotes (with embedded provenance), verify the quote itself
+      // For modified quotes (no provenance), the verification will fail
+      const result = await verifyContent(textToVerify);
       setVerificationResult(result);
       
-      // Check if the quote matches the original content
-      const originalText = markedContent.replace(/[\uFE00-\uFE0F\u{E0100}-\u{E01EF}]/gu, "");
-      const quoteExistsInOriginal = originalText.includes(textToVerify);
+      // Check if the quote matches the original content (strip invisible chars for comparison)
+      const originalText = getVisibleText(markedContent);
+      const quoteVisible = getVisibleText(textToVerify);
+      const quoteExistsInOriginal = originalText.includes(quoteVisible);
 
       if (result.valid && quoteExistsInOriginal) {
         // Notify parent of successful verification for highlighting
-        onVerificationComplete?.(textToVerify);
+        onVerificationComplete?.(quoteVisible);
       } else if (!isAccurate) {
         setShowDiff(true);
       }
@@ -164,7 +171,7 @@ export default function VerificationDecoder({
             {/* Quote being verified */}
             <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
               <div className="text-sm font-medium text-gray-500 mb-2">Quote Being Verified:</div>
-              <p className="text-gray-800 italic">&ldquo;{textToVerify}&rdquo;</p>
+              <p className="text-gray-800 italic">&ldquo;{getVisibleText(textToVerify)}&rdquo;</p>
             </div>
 
             {/* Success details */}
