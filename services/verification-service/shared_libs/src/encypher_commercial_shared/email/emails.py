@@ -356,3 +356,69 @@ If you believe this was in error or would like to provide additional information
         plain_content=plain_content.strip(),
         logger=logger,
     )
+
+
+def send_new_signup_admin_email(
+    config: EmailConfig,
+    to_email: str,
+    user_name: Optional[str],
+    user_email: str,
+    signup_method: str = "email",
+    logger: Optional[Any] = None,
+) -> bool:
+    """
+    Send notification to admin about new user signup.
+    
+    Args:
+        config: Email configuration
+        to_email: Admin/support email address
+        user_name: Name of new user
+        user_email: Email of new user
+        signup_method: How they signed up (email, google, github)
+        logger: Optional logger
+        
+    Returns:
+        True if sent successfully
+    """
+    method_display = {
+        "email": "Email/Password",
+        "google": "Google OAuth",
+        "github": "GitHub OAuth",
+    }.get(signup_method, signup_method.title())
+    
+    plain_content = f"""
+New User Signup
+
+A new user has signed up for Encypher:
+
+Name: {user_name or 'Not provided'}
+Email: {user_email}
+Method: {method_display}
+
+— Encypher System
+"""
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head><title>New User Signup</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
+    <h2 style="color: #1d3557;">🎉 New User Signup</h2>
+    <p>A new user has signed up for Encypher:</p>
+    <table style="border-collapse: collapse; margin: 20px 0;">
+        <tr><td style="padding: 8px; font-weight: bold;">Name:</td><td style="padding: 8px;">{user_name or 'Not provided'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Email:</td><td style="padding: 8px;">{user_email}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Method:</td><td style="padding: 8px;">{method_display}</td></tr>
+    </table>
+</body>
+</html>
+"""
+    
+    return send_email(
+        config=config,
+        to_email=to_email,
+        subject=f"New Signup: {user_email} ({method_display})",
+        html_content=html_content,
+        plain_content=plain_content.strip(),
+        logger=logger,
+    )
