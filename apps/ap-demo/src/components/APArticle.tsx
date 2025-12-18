@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Newspaper, Shield, Loader2, CheckCircle2, FileWarning } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AP_ARTICLE, generateDocumentId } from "@/lib/demo-data";
-import { encodeContent } from "@/lib/api";
+import { encodeContent, EmbeddingInfo } from "@/lib/api";
 
 interface APArticleProps {
-  onContentMarked: (markedContent: string) => void;
+  onContentMarked: (markedContent: string, embeddings?: EmbeddingInfo[]) => void;
   markedContent: string | null;
   highlightedSentence?: string | null;
 }
@@ -37,7 +37,7 @@ export default function APArticle({ onContentMarked, markedContent, highlightedS
       });
       
       if (response.success && response.embedded_content) {
-        onContentMarked(response.embedded_content);
+        onContentMarked(response.embedded_content, response.embeddings);
         
         // Map embedded sentences back to original paragraph structure
         // The embeddings array contains each sentence with its embedded text

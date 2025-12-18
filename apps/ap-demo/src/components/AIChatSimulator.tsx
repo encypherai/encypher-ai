@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Bot, Send, User, Sparkles, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AI_CHAT_SCENARIOS, Citation, QuoteData } from "@/lib/demo-data";
+import { EmbeddingInfo } from "@/lib/api";
 
 interface Message {
   role: "user" | "assistant";
@@ -15,9 +16,10 @@ interface AIChatSimulatorProps {
   onQuoteSelected: (quote: string, isAccurate: boolean) => void;
   disabled?: boolean;
   markedContent?: string | null;
+  embeddings?: EmbeddingInfo[];
 }
 
-export default function AIChatSimulator({ onQuoteSelected, disabled, markedContent }: AIChatSimulatorProps) {
+export default function AIChatSimulator({ onQuoteSelected, disabled, markedContent, embeddings }: AIChatSimulatorProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [activeScenario, setActiveScenario] = useState<"accurate" | "modified" | null>(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -78,18 +80,21 @@ export default function AIChatSimulator({ onQuoteSelected, disabled, markedConte
     const quote = scenario.quotes?.find((q: QuoteData) => q.id === quoteId);
     if (!quote) return;
     
-    // For accurate quotes, try to find the embedded version from markedContent
+    // For accurate quotes, find the embedded version from the embeddings array
     let quoteToVerify = quote.text;
-    if (quote.isAccurate && markedContent) {
-      // Find the sentence in markedContent that matches this quote
-      const sentences = markedContent.split(/(?<=[.!?])\s+/);
-      const matchingSentence = sentences.find(s => {
-        // Strip invisible Unicode characters for comparison but keep them in the result
-        const visibleText = s.replace(/[\u200B-\u200D\uFEFF\uE0100-\uE01EF\uFE00-\uFE0F]/g, '');
-        return quote.text.startsWith(visibleText.slice(0, 50)) || visibleText.startsWith(quote.text.slice(0, 50));
+    if (quote.isAccurate && embeddings && embeddings.length > 0) {
+      // Find the embedding that matches this quote by comparing visible text
+      const matchingEmbedding = embeddings.find(e => {
+        if (!e.text) return false;
+        // Strip invisible chars for comparison
+        const visibleEmbedding = e.text.replace(/[\u200B-\u200D\uFEFF\uE0100-\uE01EF\uFE00-\uFE0F]/g, '');
+        return quote.text.startsWith(visibleEmbedding.slice(0, 50)) || 
+               visibleEmbedding.startsWith(quote.text.slice(0, 50));
       });
-      if (matchingSentence) {
-        quoteToVerify = matchingSentence;
+      
+      if (matchingEmbedding?.text) {
+        // Use the embedded text which contains the C2PA manifest
+        quoteToVerify = matchingEmbedding.text;
       }
     }
     

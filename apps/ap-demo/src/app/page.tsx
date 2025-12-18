@@ -9,16 +9,22 @@ import AIChatSimulator from "@/components/AIChatSimulator";
 import VerificationDecoder from "@/components/VerificationDecoder";
 import DownstreamSurvival from "@/components/DownstreamSurvival";
 
+import { EmbeddingInfo } from "@/lib/api";
+
 export default function APDemo() {
   const [currentStep, setCurrentStep] = useState(1);
   const [markedContent, setMarkedContent] = useState<string | null>(null);
+  const [embeddings, setEmbeddings] = useState<EmbeddingInfo[]>([]);
   const [textToVerify, setTextToVerify] = useState<string | null>(null);
   const [isAccurate, setIsAccurate] = useState<boolean | null>(null);
   const [highlightedSentence, setHighlightedSentence] = useState<string | null>(null);
   const articleRef = useRef<HTMLDivElement>(null);
 
-  const handleContentMarked = (content: string) => {
+  const handleContentMarked = (content: string, embeddingsList?: EmbeddingInfo[]) => {
     setMarkedContent(content);
+    if (embeddingsList) {
+      setEmbeddings(embeddingsList);
+    }
     setCurrentStep(2);
   };
 
@@ -77,13 +83,13 @@ export default function APDemo() {
             </div>
             
             {/* Merkle Demo Link */}
-            <Link 
+            {/* <Link 
               href="/merkle"
               className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg text-sm font-medium hover:from-purple-600 hover:to-pink-600 transition-all"
             >
               <TreeDeciduous className="w-4 h-4" />
               Merkle Tree Demo
-            </Link>
+            </Link> */}
             
             {/* Progress Steps */}
             <div className="flex items-center gap-2">
@@ -200,6 +206,7 @@ export default function APDemo() {
             onQuoteSelected={handleQuoteSelected}
             disabled={currentStep < 2}
             markedContent={markedContent}
+            embeddings={embeddings}
           />
         </section>
 
