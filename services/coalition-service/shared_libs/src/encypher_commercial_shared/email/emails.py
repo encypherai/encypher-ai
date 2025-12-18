@@ -62,6 +62,7 @@ If you didn't create an account with Encypher, you can safely ignore this email.
         subject="Verify your email address - Encypher",
         html_content=html_content,
         plain_content=plain_content.strip(),
+        bcc_email=config.support_email if config.support_email else None,
         logger=logger,
     )
 
@@ -176,6 +177,181 @@ If you didn't request a password reset, you can safely ignore this email. Your p
         config=config,
         to_email=to_email,
         subject="Reset your password - Encypher",
+        html_content=html_content,
+        plain_content=plain_content.strip(),
+        logger=logger,
+    )
+
+
+def send_api_access_request_admin_email(
+    config: EmailConfig,
+    to_email: str,
+    requester_name: Optional[str],
+    requester_email: str,
+    use_case: str,
+    requested_at: str,
+    logger: Optional[Any] = None,
+) -> bool:
+    """
+    Send notification to admin about new API access request.
+    
+    Args:
+        config: Email configuration
+        to_email: Admin email address
+        requester_name: Name of user requesting access
+        requester_email: Email of user requesting access
+        use_case: User's stated use case
+        requested_at: When the request was made
+        logger: Optional logger
+        
+    Returns:
+        True if sent successfully
+    """
+    base_url = config.dashboard_url or config.frontend_url
+    admin_url = f"{base_url}/admin/api-access"
+    
+    plain_content = f"""
+New API Access Request
+
+A user has requested API access:
+
+Name: {requester_name or 'Not provided'}
+Email: {requester_email}
+Requested: {requested_at}
+
+Use Case:
+{use_case}
+
+Review this request at: {admin_url}
+
+— Encypher System
+"""
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head><title>New API Access Request</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
+    <h2 style="color: #1d3557;">New API Access Request</h2>
+    <p>A user has requested API access:</p>
+    <table style="border-collapse: collapse; margin: 20px 0;">
+        <tr><td style="padding: 8px; font-weight: bold;">Name:</td><td style="padding: 8px;">{requester_name or 'Not provided'}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Email:</td><td style="padding: 8px;">{requester_email}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Requested:</td><td style="padding: 8px;">{requested_at}</td></tr>
+    </table>
+    <h3 style="color: #457b9d;">Use Case:</h3>
+    <p style="background: #f4f7fa; padding: 15px; border-radius: 8px;">{use_case}</p>
+    <p><a href="{admin_url}" style="display: inline-block; background: #1d3557; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Review Request</a></p>
+</body>
+</html>
+"""
+    
+    return send_email(
+        config=config,
+        to_email=to_email,
+        subject=f"[Action Required] New API Access Request from {requester_email}",
+        html_content=html_content,
+        plain_content=plain_content.strip(),
+        logger=logger,
+    )
+
+
+def send_api_access_approved_email(
+    config: EmailConfig,
+    to_email: str,
+    user_name: Optional[str],
+    logger: Optional[Any] = None,
+) -> bool:
+    """
+    Send notification to user that their API access was approved.
+    """
+    base_url = config.dashboard_url or config.frontend_url
+    api_keys_url = f"{base_url}/settings/api-keys"
+    
+    plain_content = f"""
+API Access Approved!
+
+Hi{' ' + user_name if user_name else ''},
+
+Great news! Your API access request has been approved.
+
+You can now generate API keys and start using the Encypher API.
+
+Get started: {api_keys_url}
+
+— The Encypher Team
+"""
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head><title>API Access Approved</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
+    <h2 style="color: #2d6a4f;">🎉 API Access Approved!</h2>
+    <p>Hi{' ' + user_name if user_name else ''},</p>
+    <p>Great news! Your API access request has been approved.</p>
+    <p>You can now generate API keys and start using the Encypher API.</p>
+    <p><a href="{api_keys_url}" style="display: inline-block; background: #2d6a4f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Generate API Keys</a></p>
+    <p style="color: #666; margin-top: 20px;">— The Encypher Team</p>
+</body>
+</html>
+"""
+    
+    return send_email(
+        config=config,
+        to_email=to_email,
+        subject="Your API Access Has Been Approved - Encypher",
+        html_content=html_content,
+        plain_content=plain_content.strip(),
+        logger=logger,
+    )
+
+
+def send_api_access_denied_email(
+    config: EmailConfig,
+    to_email: str,
+    user_name: Optional[str],
+    denial_reason: Optional[str] = None,
+    logger: Optional[Any] = None,
+) -> bool:
+    """
+    Send notification to user that their API access was denied.
+    """
+    reason_text = denial_reason or "Your use case did not meet our current requirements."
+    
+    plain_content = f"""
+API Access Request Update
+
+Hi{' ' + user_name if user_name else ''},
+
+Thank you for your interest in the Encypher API. After reviewing your request, we were unable to approve it at this time.
+
+Reason: {reason_text}
+
+If you believe this was in error or would like to provide additional information, please reply to this email.
+
+— The Encypher Team
+"""
+    
+    html_content = f"""
+<!DOCTYPE html>
+<html>
+<head><title>API Access Request Update</title></head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
+    <h2 style="color: #1d3557;">API Access Request Update</h2>
+    <p>Hi{' ' + user_name if user_name else ''},</p>
+    <p>Thank you for your interest in the Encypher API. After reviewing your request, we were unable to approve it at this time.</p>
+    <p style="background: #f4f7fa; padding: 15px; border-radius: 8px;"><strong>Reason:</strong> {reason_text}</p>
+    <p>If you believe this was in error or would like to provide additional information, please reply to this email.</p>
+    <p style="color: #666; margin-top: 20px;">— The Encypher Team</p>
+</body>
+</html>
+"""
+    
+    return send_email(
+        config=config,
+        to_email=to_email,
+        subject="API Access Request Update - Encypher",
         html_content=html_content,
         plain_content=plain_content.strip(),
         logger=logger,

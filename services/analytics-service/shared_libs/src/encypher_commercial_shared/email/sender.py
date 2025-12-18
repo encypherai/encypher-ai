@@ -52,6 +52,7 @@ class EmailConfig:
     email_from_name: str = "Support - Encypher"
     frontend_url: str = "http://localhost:3000"
     dashboard_url: str = ""
+    support_email: str = ""  # BCC for notifications
     
     @classmethod
     def from_env(cls) -> "EmailConfig":
@@ -66,6 +67,7 @@ class EmailConfig:
             email_from_name=os.getenv("EMAIL_FROM_NAME", "Support - Encypher"),
             frontend_url=os.getenv("FRONTEND_URL", "http://localhost:3000"),
             dashboard_url=os.getenv("DASHBOARD_URL", ""),
+            support_email=os.getenv("SUPPORT_EMAIL", ""),
         )
 
 
@@ -104,6 +106,7 @@ def send_email(
     subject: str,
     html_content: str,
     plain_content: Optional[str] = None,
+    bcc_email: Optional[str] = None,
     logger: Optional[Any] = None,
 ) -> bool:
     """
@@ -115,6 +118,7 @@ def send_email(
         subject: Email subject
         html_content: HTML email body
         plain_content: Plain text fallback (optional)
+        bcc_email: BCC recipient (optional)
         logger: Optional structured logger for logging
         
     Returns:
@@ -133,16 +137,21 @@ def send_email(
         # HTML content
         msg.attach(MIMEText(html_content, "html"))
         
+        # Build recipient list (BCC is not in headers, just in sendmail)
+        recipients = [to_email]
+        if bcc_email:
+            recipients.append(bcc_email)
+        
         # Connect and send
         with smtplib.SMTP(config.smtp_host, config.smtp_port) as server:
             if config.smtp_tls:
                 server.starttls()
             if config.smtp_user and config.smtp_pass:
                 server.login(config.smtp_user, config.smtp_pass)
-            server.sendmail(config.email_from, [to_email], msg.as_string())
+            server.sendmail(config.email_from, recipients, msg.as_string())
         
         if logger:
-            logger.info("email_sent", to=to_email, subject=subject)
+            logger.info("email_sent", to=to_email, subject=subject, bcc=bcc_email)
         return True
         
     except Exception as e:
