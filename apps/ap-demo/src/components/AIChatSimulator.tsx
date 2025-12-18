@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Bot, Send, User, Sparkles, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { AI_CHAT_SCENARIOS, Citation } from "@/lib/demo-data";
+import { AI_CHAT_SCENARIOS, Citation, QuoteData } from "@/lib/demo-data";
 
 interface Message {
   role: "user" | "assistant";
@@ -22,6 +22,7 @@ export default function AIChatSimulator({ onQuoteSelected, disabled, markedConte
   const [activeScenario, setActiveScenario] = useState<"accurate" | "modified" | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [displayedText, setDisplayedText] = useState("");
+  const [hoveredQuoteId, setHoveredQuoteId] = useState<number | null>(null);
 
   // Typing animation effect
   useEffect(() => {
@@ -70,46 +71,99 @@ export default function AIChatSimulator({ onQuoteSelected, disabled, markedConte
     setDisplayedText("");
   };
 
-  const handleSelectQuote = () => {
+  // Handle clicking a specific quote citation
+  const handleSelectQuoteById = (quoteId: number) => {
     if (!activeScenario) return;
     const scenario = AI_CHAT_SCENARIOS[activeScenario];
+    const quote = scenario.quotes?.find((q: QuoteData) => q.id === quoteId);
+    if (!quote) return;
     
     // For accurate quotes, try to find the embedded version from markedContent
-    let quoteToVerify = scenario.quotedText;
-    if (activeScenario === "accurate" && markedContent) {
-      // The first sentence of the article should be in the markedContent with embedded provenance
-      // Find the sentence that starts with the same text (ignoring invisible characters)
+    let quoteToVerify = quote.text;
+    if (quote.isAccurate && markedContent) {
+      // Find the sentence in markedContent that matches this quote
       const sentences = markedContent.split(/(?<=[.!?])\s+/);
       const matchingSentence = sentences.find(s => {
         // Strip invisible Unicode characters for comparison but keep them in the result
         const visibleText = s.replace(/[\u200B-\u200D\uFEFF\uE0100-\uE01EF\uFE00-\uFE0F]/g, '');
-        return scenario.quotedText.startsWith(visibleText.slice(0, 50));
+        return quote.text.startsWith(visibleText.slice(0, 50)) || visibleText.startsWith(quote.text.slice(0, 50));
       });
       if (matchingSentence) {
         quoteToVerify = matchingSentence;
       }
     }
     
-    onQuoteSelected(quoteToVerify, activeScenario === "accurate");
+    onQuoteSelected(quoteToVerify, quote.isAccurate);
   };
 
-  // Render text with inline citation badges [1], [2], etc.
+  const handleSelectQuote = () => {
+    if (!activeScenario) return;
+    // Default to first quote
+    handleSelectQuoteById(1);
+  };
+
+  // Get quote by ID for highlighting
+  const getQuoteById = (quoteId: number): QuoteData | undefined => {
+    if (!activeScenario) return undefined;
+    return AI_CHAT_SCENARIOS[activeScenario].quotes?.find((q: QuoteData) => q.id === quoteId);
+  };
+
+  // Render text with inline citation badges [1], [2], etc. and highlight quoted text on hover
   const renderTextWithCitations = (text: string) => {
-    const parts = text.split(/(\[\d+\])/);
+    // First, wrap quoted text in spans that can be highlighted
+    let processedText = text;
+    const quotes = activeScenario ? AI_CHAT_SCENARIOS[activeScenario].quotes || [] : [];
+    
+    // Split by citation markers and quoted text
+    const parts = text.split(/(\[\d+\]|"[^"]+"|"[^"]+"|'[^']+')/);
+    
     return parts.map((part, index) => {
-      const match = part.match(/^\[(\d+)\]$/);
-      if (match) {
+      // Check if this is a citation badge
+      const citationMatch = part.match(/^\[(\d+)\]$/);
+      if (citationMatch) {
+        const quoteId = parseInt(citationMatch[1]);
+        const quote = getQuoteById(quoteId);
         return (
           <button
             key={index}
-            onClick={handleSelectQuote}
-            className="inline-flex items-center justify-center w-4 h-4 ml-0.5 text-[10px] font-bold text-white bg-blue-500 hover:bg-blue-600 rounded-sm align-super cursor-pointer transition-colors"
-            title="Click to verify this citation"
+            onClick={() => handleSelectQuoteById(quoteId)}
+            onMouseEnter={() => setHoveredQuoteId(quoteId)}
+            onMouseLeave={() => setHoveredQuoteId(null)}
+            className={cn(
+              "inline-flex items-center justify-center w-4 h-4 ml-0.5 text-[10px] font-bold text-white rounded-sm align-super cursor-pointer transition-colors",
+              hoveredQuoteId === quoteId ? "bg-yellow-500 scale-110" : "bg-blue-500 hover:bg-blue-600"
+            )}
+            title={`Click to verify quote ${quoteId}${quote?.isAccurate ? ' (accurate)' : ' (modified)'}`}
           >
-            {match[1]}
+            {citationMatch[1]}
           </button>
         );
       }
+      
+      // Check if this is quoted text that matches a quote
+      const isQuotedText = part.startsWith('"') || part.startsWith('"') || part.startsWith("'");
+      if (isQuotedText && activeScenario) {
+        const cleanQuote = part.replace(/^["'"']|["'"']$/g, '');
+        const matchingQuote = quotes.find((q: QuoteData) => 
+          q.text.includes(cleanQuote) || cleanQuote.includes(q.text.slice(0, 50))
+        );
+        
+        if (matchingQuote) {
+          const isHighlighted = hoveredQuoteId === matchingQuote.id;
+          return (
+            <span 
+              key={index}
+              className={cn(
+                "transition-all duration-200 rounded px-0.5",
+                isHighlighted && "bg-yellow-200 ring-2 ring-yellow-400"
+              )}
+            >
+              {part}
+            </span>
+          );
+        }
+      }
+      
       return <span key={index}>{part}</span>;
     });
   };

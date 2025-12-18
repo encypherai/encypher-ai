@@ -38,9 +38,38 @@ export default function APArticle({ onContentMarked, markedContent, highlightedS
       
       if (response.success && response.embedded_content) {
         onContentMarked(response.embedded_content);
-        // Split embedded content back into paragraphs for display
-        const paragraphs = response.embedded_content.split("\n\n");
-        setEmbeddedParagraphs(paragraphs);
+        
+        // Map embedded sentences back to original paragraph structure
+        // The embeddings array contains each sentence with its embedded text
+        if (response.embeddings && response.embeddings.length > 0) {
+          // Build a map of original sentences to embedded sentences
+          const embeddedSentences = response.embeddings
+            .filter((e: { text?: string }) => e.text)
+            .map((e: { text?: string }) => e.text as string);
+          
+          // Reconstruct paragraphs using embedded sentences
+          const reconstructedParagraphs: string[] = [];
+          let sentenceIndex = 0;
+          
+          for (const originalParagraph of AP_ARTICLE.paragraphs) {
+            const originalSentences = originalParagraph.split(/(?<=[.!?])\s+/);
+            const embeddedParagraphSentences: string[] = [];
+            
+            for (let i = 0; i < originalSentences.length && sentenceIndex < embeddedSentences.length; i++) {
+              embeddedParagraphSentences.push(embeddedSentences[sentenceIndex]);
+              sentenceIndex++;
+            }
+            
+            reconstructedParagraphs.push(embeddedParagraphSentences.join(' '));
+          }
+          
+          setEmbeddedParagraphs(reconstructedParagraphs);
+        } else {
+          // Fallback: split by double newline
+          const paragraphs = response.embedded_content.split("\n\n");
+          setEmbeddedParagraphs(paragraphs);
+        }
+        
         setIsMarked(true);
       } else {
         throw new Error("Failed to embed provenance");

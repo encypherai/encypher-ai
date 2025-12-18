@@ -41,13 +41,25 @@ export interface Citation {
   author: string;
 }
 
+// Quote data for AI responses - each quote can be verified individually
+export interface QuoteData {
+  id: number;
+  text: string;
+  isAccurate: boolean;
+}
+
 // Simulated AI chat responses for the demo
 export const AI_CHAT_SCENARIOS = {
   accurate: {
     prompt: "What did AP report about the infrastructure bill vote?",
     response: `According to the Associated Press, "The Senate has advanced a sweeping bipartisan infrastructure package, marking a rare moment of cooperation in a deeply divided Congress as lawmakers work to rebuild the nation's roads, bridges, and broadband networks." [1]
 
-The AP article also notes that "The $1.2 trillion package passed a key procedural vote Wednesday with support from both Democrats and Republicans." [1] The Senate Majority Leader was quoted saying, "This is a historic moment for our country. We're proving that both parties can come together to address the pressing needs of the American people." [1]`,
+The AP article also notes that "The $1.2 trillion package passed a key procedural vote Wednesday with support from both Democrats and Republicans." [2] The Senate Majority Leader was quoted saying, "This is a historic moment for our country. We're proving that both parties can come together to address the pressing needs of the American people." [3]`,
+    quotes: [
+      { id: 1, text: "The Senate has advanced a sweeping bipartisan infrastructure package, marking a rare moment of cooperation in a deeply divided Congress as lawmakers work to rebuild the nation's roads, bridges, and broadband networks.", isAccurate: true },
+      { id: 2, text: "The $1.2 trillion package passed a key procedural vote Wednesday with support from both Democrats and Republicans.", isAccurate: true },
+      { id: 3, text: "This is a historic moment for our country. We're proving that both parties can come together to address the pressing needs of the American people.", isAccurate: true },
+    ] as QuoteData[],
     quotedText: "The Senate has advanced a sweeping bipartisan infrastructure package, marking a rare moment of cooperation in a deeply divided Congress as lawmakers work to rebuild the nation's roads, bridges, and broadband networks.",
     citations: [
       {
@@ -65,7 +77,11 @@ The AP article also notes that "The $1.2 trillion package passed a key procedura
     prompt: "Summarize the AP coverage of the infrastructure deal",
     response: `Based on Associated Press reporting, "The Senate has approved a landmark bipartisan infrastructure package worth $1.5 trillion, with unanimous support from both parties in a historic display of unity." [1]
 
-The AP quoted the Senate Majority Leader saying, "This is the most significant infrastructure investment in American history, and it passed with overwhelming bipartisan support." [1]`,
+The AP quoted the Senate Majority Leader saying, "This is the most significant infrastructure investment in American history, and it passed with overwhelming bipartisan support." [2]`,
+    quotes: [
+      { id: 1, text: "The Senate has approved a landmark bipartisan infrastructure package worth $1.5 trillion, with unanimous support from both parties in a historic display of unity.", isAccurate: false },
+      { id: 2, text: "This is the most significant infrastructure investment in American history, and it passed with overwhelming bipartisan support.", isAccurate: false },
+    ] as QuoteData[],
     quotedText: "The Senate has approved a landmark bipartisan infrastructure package worth $1.5 trillion, with unanimous support from both parties in a historic display of unity.",
     citations: [
       {
