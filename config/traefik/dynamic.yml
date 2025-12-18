@@ -43,6 +43,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -52,6 +54,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -61,6 +65,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -70,6 +76,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -79,6 +87,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -88,6 +98,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -97,6 +109,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -106,6 +120,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -115,6 +131,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -124,6 +142,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -136,6 +156,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -145,6 +167,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -154,6 +178,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -164,6 +190,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -173,6 +201,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -182,6 +212,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -191,6 +223,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -200,6 +234,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -209,6 +245,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -218,6 +256,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -227,6 +267,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -236,6 +278,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -245,6 +289,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -254,6 +300,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -263,6 +311,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -273,6 +323,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -282,6 +334,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -291,6 +345,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 100
 
@@ -301,6 +357,8 @@ http:
       entryPoints:
         - websecure
         - web
+      middlewares:
+        - cors-api
       tls: {}
       priority: 1
 
@@ -370,6 +428,37 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:9000"
+
+  # ===========================================
+  # MIDDLEWARES
+  # ===========================================
+  middlewares:
+    # CORS middleware for API endpoints
+    cors-api:
+      headers:
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+          - "PATCH"
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "X-Request-ID"
+          - "X-API-Key"
+        accessControlAllowOriginList:
+          - "https://encypherai.com"
+          - "https://www.encypherai.com"
+          - "https://dashboard.encypherai.com"
+          - "http://localhost:3000"
+          - "http://localhost:3001"
+          - "http://localhost:3050"
+          - "http://localhost:3051"
+        accessControlMaxAge: 86400
+        accessControlAllowCredentials: true
+        addVaryHeader: true
 
 tls:
   certificates:

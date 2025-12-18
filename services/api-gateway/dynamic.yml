@@ -196,6 +196,8 @@ http:
         accessControlAllowOriginList:
           - "http://localhost:3000"
           - "http://localhost:3001"
+          - "http://localhost:3050"
+          - "http://localhost:3051"
           - "https://staging.encypherai.com"
           - "https://dashboard-staging.encypherai.com"
           - "https://encypherai.com"
