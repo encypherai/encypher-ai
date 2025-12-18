@@ -137,7 +137,13 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
         from app.config import settings
         from app.utils.crypto_utils import get_demo_private_key
         
+        # Handle demo organization
         if signer_id == settings.demo_organization_id:
+            return get_demo_private_key().public_key()
+        
+        # Handle user-level orgs (free tier) - they use the demo key
+        if signer_id.startswith("user_"):
+            logger.info(f"Using demo key for user org {signer_id}")
             return get_demo_private_key().public_key()
 
         cert = certificate_resolver.get(signer_id)

@@ -538,12 +538,13 @@ async def extract_and_verify_embedding(
                 )
             
             # Load the public key for this signer
-            # Note: signer_id format is "org_<org_id>" (e.g., "org_demo")
-            if signer_id.startswith("org_"):
+            # Note: signer_id format is "org_<org_id>" (e.g., "org_demo") or "user_<user_id>"
+            if signer_id.startswith("org_") or signer_id.startswith("user_"):
                 try:
                     # TRUST ANCHOR CHECK:
                     # We look up the public key in our database to verify the signer's identity.
                     # This implements the "Trust" part of the verification.
+                    # For user_ orgs, load_organization_public_key returns the demo key.
                     public_key = await load_organization_public_key(signer_id, db)
                 except ValueError:
                     # Signer is unknown to our Trust Anchor
