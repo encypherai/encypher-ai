@@ -11,8 +11,8 @@ async def test_docs_landing_page_is_branded_with_swagger() -> None:
     assert resp.status_code == 200
     assert "text/html" in resp.media_type
     body = resp.body.decode("utf-8")
-    # Branded header with logo
-    assert "encypher_full_logo_white.svg" in body
+    # Branded header with logo (now served from encypherai.com)
+    assert "https://encypherai.com/encypher_full_logo_white.svg" in body
     assert "Enterprise API" in body
     # Design system CSS
     assert "/docs/assets/design-system.css" in body

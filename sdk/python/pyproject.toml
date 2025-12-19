@@ -1,12 +1,13 @@
 [project]
 name = "encypher"
 version = "1.0.0a1"
-description = "Encypher Enterprise API"
+description = "Official Python SDK for Encypher Enterprise API - C2PA content signing and verification"
 authors = [
-  {name = "OpenAPI Generator Community",email = "team@openapitools.org"},
+  {name = "Encypher", email = "sdk@encypherai.com"},
 ]
+license = {text = "MIT"}
 readme = "README.md"
-keywords = ["OpenAPI", "OpenAPI-Generator", "Encypher Enterprise API"]
+keywords = ["c2pa", "content-signing", "provenance", "ai", "encypher", "verification"]
 requires-python = ">=3.9"
 
 dependencies = [
@@ -17,7 +18,10 @@ dependencies = [
 ]
 
 [project.urls]
-Repository = "https://github.com/GIT_USER_ID/GIT_REPO_ID"
+Homepage = "https://encypherai.com"
+Documentation = "https://api.encypherai.com/docs"
+Repository = "https://github.com/encypherai/sdk-python"
+Changelog = "https://github.com/encypherai/sdk-python/releases"
 
 [tool.poetry]
 requires-poetry = ">=2.0"

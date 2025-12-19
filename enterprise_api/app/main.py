@@ -441,6 +441,14 @@ _DOCS_PAGE_HTML = '''
       <h3>Getting Started</h3>
       <p>Obtain an API key from <a href="https://dashboard.encypherai.com" style="color:var(--accent);">dashboard.encypherai.com</a>, then use the endpoints below.</p>
     </div>
+    <div class="intro-card">
+      <h3>Client SDKs</h3>
+      <p>Official SDKs for <a href="https://pypi.org/project/encypher/" style="color:var(--accent);">Python</a>, <a href="https://www.npmjs.com/package/@encypher/sdk" style="color:var(--accent);">TypeScript</a>, <a href="https://github.com/encypherai/sdk-go" style="color:var(--accent);">Go</a>, and <a href="https://crates.io/crates/encypher" style="color:var(--accent);">Rust</a>.</p>
+    </div>
+    <div class="intro-card">
+      <h3>Open-Source Package</h3>
+      <p>Looking for the AGPL-licensed <code>encypher-ai</code> Python package? See <a href="https://docs.encypherai.com" style="color:var(--accent);">docs.encypherai.com</a>.</p>
+    </div>
   </section>
 
   <div class="swagger-container">

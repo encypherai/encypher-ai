@@ -1,6 +1,17 @@
-# Encypher SDK Generation
+# Encypher Enterprise SDKs
 
-Auto-generate SDKs for Python, TypeScript, Go, and Rust from the Enterprise API's OpenAPI specification.
+**CANONICAL SDK DIRECTORY** - All official Encypher SDKs are auto-generated from the Enterprise API's OpenAPI specification to ensure 100% API compatibility.
+
+## SDK Packages
+
+| Language | Package | Registry | Version |
+|----------|---------|----------|---------|
+| Python | `encypher` | [PyPI](https://pypi.org/project/encypher/) | 1.0.0a1 |
+| TypeScript | `@encypher/sdk` | [npm](https://www.npmjs.com/package/@encypher/sdk) | 1.0.0-alpha.1 |
+| Go | `github.com/encypherai/sdk-go` | Go Modules | 1.0.0-alpha.1 |
+| Rust | `encypher` | [crates.io](https://crates.io/crates/encypher) | 1.0.0-alpha.1 |
+
+> **Note**: All SDKs share the same version number, derived from the API version in `openapi.json`.
 
 ## Quick Start
 

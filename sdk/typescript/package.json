@@ -1,11 +1,13 @@
 {
   "name": "@encypher/sdk",
   "version": "1.0.0-alpha.1",
-  "description": "OpenAPI client for @encypher/sdk",
-  "author": "OpenAPI-Generator",
+  "description": "Official TypeScript SDK for Encypher Enterprise API - C2PA content signing and verification",
+  "author": "Encypher <sdk@encypherai.com>",
+  "license": "MIT",
+  "homepage": "https://encypherai.com",
   "repository": {
     "type": "git",
-    "url": "https://github.com/GIT_USER_ID/GIT_REPO_ID.git"
+    "url": "https://github.com/encypherai/sdk-typescript.git"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
