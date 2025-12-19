@@ -6,11 +6,14 @@ FastAPI application for C2PA-compliant content signing and verification.
 import logging
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 from uuid import uuid4
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from sqlalchemy import text
 
 from app.api.v1.api import api_router as api_v1_router
@@ -36,6 +39,7 @@ from app.routers import (
 from app.services.session_service import session_service
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
 from app.utils.db_startup import ensure_database_ready
+from app.dependencies import require_super_admin
 
 # Configure logging
 logging.basicConfig(
@@ -142,9 +146,9 @@ app = FastAPI(
     title="Encypher Enterprise API",
     description="C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises",
     version="1.0.0-preview",
-    docs_url="/docs" if (not settings.is_production or settings.enable_public_api_docs) else None,
-    redoc_url="/redoc" if (not settings.is_production or settings.enable_public_api_docs) else None,
-    openapi_url="/openapi.json" if (not settings.is_production or settings.enable_public_api_docs) else None,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
     lifespan=lifespan,
 )
 
@@ -253,6 +257,194 @@ async def metrics():
     """Prometheus-compatible metrics endpoint."""
 
     return PlainTextResponse(render_prometheus(), media_type="text/plain; version=0.0.4")
+
+
+_INTERNAL_DOC_TAGS = {
+    "Licensing",
+    "Kafka",
+    "Provisioning",
+    "Audit",
+    "Team Management",
+}
+
+
+def _collect_schema_refs(obj: object, out: set[str]) -> None:
+    if isinstance(obj, dict):
+        ref = obj.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+            out.add(ref.removeprefix("#/components/schemas/"))
+        for value in obj.values():
+            _collect_schema_refs(value, out)
+    elif isinstance(obj, list):
+        for item in obj:
+            _collect_schema_refs(item, out)
+
+
+def _prune_schemas(openapi: dict) -> dict:
+    components = openapi.get("components")
+    if not isinstance(components, dict):
+        return openapi
+    schemas = components.get("schemas")
+    if not isinstance(schemas, dict):
+        return openapi
+
+    referenced: set[str] = set()
+    _collect_schema_refs(openapi.get("paths", {}), referenced)
+
+    kept: dict[str, object] = {}
+    stack = list(referenced)
+    while stack:
+        name = stack.pop()
+        if name in kept:
+            continue
+        schema = schemas.get(name)
+        if schema is None:
+            continue
+        kept[name] = schema
+        before = len(referenced)
+        _collect_schema_refs(schema, referenced)
+        if len(referenced) > before:
+            for new_name in referenced:
+                if new_name not in kept:
+                    stack.append(new_name)
+
+    components["schemas"] = kept
+    return openapi
+
+
+def _filter_openapi_for_public(openapi: dict) -> dict:
+    paths = openapi.get("paths")
+    if not isinstance(paths, dict):
+        return openapi
+
+    filtered_paths: dict[str, object] = {}
+    for path, ops in paths.items():
+        if not isinstance(ops, dict):
+            continue
+        kept_ops: dict[str, object] = {}
+        for method, op in ops.items():
+            if not isinstance(op, dict):
+                continue
+            tags = op.get("tags", [])
+            if any(tag in _INTERNAL_DOC_TAGS for tag in (tags or [])):
+                continue
+            kept_ops[method] = op
+        if kept_ops:
+            filtered_paths[path] = kept_ops
+
+    openapi["paths"] = filtered_paths
+
+    tags = openapi.get("tags")
+    if isinstance(tags, list):
+        openapi["tags"] = [t for t in tags if isinstance(t, dict) and t.get("name") not in _INTERNAL_DOC_TAGS]
+
+    return _prune_schemas(openapi)
+
+
+@app.get("/docs/assets/design-system.css", include_in_schema=False)
+async def docs_design_system_css() -> Response:
+    repo_root = Path(__file__).resolve().parents[2]
+    theme_path = repo_root / "packages" / "design-system" / "src" / "styles" / "theme.css"
+    globals_path = repo_root / "packages" / "design-system" / "src" / "styles" / "globals.css"
+
+    theme_css = theme_path.read_text(encoding="utf-8")
+    globals_css = globals_path.read_text(encoding="utf-8")
+
+    # globals.css imports theme.css; since we inline theme.css first, strip that import.
+    globals_css = "\n".join(
+        line
+        for line in globals_css.splitlines()
+        if "@import './theme.css'" not in line and "@import \"./theme.css\"" not in line
+    )
+
+    bundled = f"{theme_css}\n\n{globals_css}\n"
+    return Response(content=bundled, media_type="text/css")
+
+
+@app.get("/docs", include_in_schema=False)
+async def docs_landing() -> HTMLResponse:
+    return HTMLResponse(
+        """<!doctype html>
+<html lang=\"en\">
+<head>
+  <meta charset=\"utf-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <title>Encypher Enterprise API</title>
+  <link rel=\"stylesheet\" href=\"/docs/assets/design-system.css\" />
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 40px; color: #0f172a; }
+    .card { max-width: 880px; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; }
+    h1 { margin: 0 0 6px 0; font-size: 28px; }
+    p { margin: 10px 0; line-height: 1.5; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .section { margin-top: 18px; }
+    .label { font-weight: 600; }
+    code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <div class=\"card\">
+    <h1>Encypher Enterprise API</h1>
+    <p>C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises.</p>
+
+    <div class=\"section\">
+      <div class=\"label\">Public endpoints (no authentication required)</div>
+      <p>Verify signed content, validate manifests, and perform public C2PA verification workflows.</p>
+    </div>
+
+    <div class=\"section\">
+      <div class=\"label\">Publisher endpoints (authentication required)</div>
+      <p>Sign content with C2PA manifests, batch processing, streaming signatures, and other authenticated operations.</p>
+    </div>
+
+    <div class=\"section\">
+      <a href=\"/docs/swagger\">View Full API Documentation</a>
+      <p style=\"margin-top:8px; font-size: 13px; color: #475569;\">OpenAPI JSON: <code>/docs/openapi.json</code></p>
+    </div>
+  </div>
+</body>
+</html>""",
+        media_type="text/html",
+    )
+
+
+@app.get("/docs/openapi.json", include_in_schema=False)
+async def public_openapi() -> JSONResponse:
+    base = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    return JSONResponse(_filter_openapi_for_public(base))
+
+
+@app.get("/docs/swagger", include_in_schema=False)
+async def public_swagger_ui() -> HTMLResponse:
+    return get_swagger_ui_html(
+        openapi_url="/docs/openapi.json",
+        title="Encypher Enterprise API - Docs",
+    )
+
+
+@app.get("/internal/openapi.json", include_in_schema=False, dependencies=[Depends(require_super_admin)])
+async def internal_openapi() -> JSONResponse:
+    base = get_openapi(
+        title=f"{app.title} (Internal)",
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    return JSONResponse(base)
+
+
+@app.get("/internal/docs", include_in_schema=False, dependencies=[Depends(require_super_admin)])
+async def internal_swagger_ui() -> HTMLResponse:
+    return get_swagger_ui_html(
+        openapi_url="/internal/openapi.json",
+        title="Encypher Enterprise API - Internal Docs",
+    )
 
 
 # Root endpoint

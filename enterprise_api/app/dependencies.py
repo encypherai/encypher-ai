@@ -331,3 +331,15 @@ async def require_read_permission(
     """
     # Basic authentication is sufficient - organization is already validated
     return organization
+
+
+async def require_super_admin(
+    organization: Dict = Depends(get_current_organization),
+) -> Dict:
+    features = organization.get("features", {})
+    if not isinstance(features, dict) or not features.get("is_super_admin", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Super admin access required",
+        )
+    return organization

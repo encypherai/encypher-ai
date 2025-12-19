@@ -125,7 +125,7 @@ http:
 
     # API docs (Swagger/ReDoc/OpenAPI) - handled by enterprise-api
     api-docs:
-      rule: "Path(`/docs`) || Path(`/redoc`) || Path(`/openapi.json`)"
+      rule: "PathPrefix(`/docs`) || PathPrefix(`/internal`) || Path(`/redoc`) || Path(`/openapi.json`)"
       service: enterprise-api
       entryPoints:
         - web

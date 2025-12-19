@@ -34,13 +34,18 @@ This PRD defines the work to:
 - [x] 2.1 Identify which hostname should serve docs (`api.encypherai.com`) and align routing
 - [x] 2.2 Update Traefik routing rules to serve `/docs`, `/redoc`, `/openapi.json` at the chosen public hostname
 - [x] 2.3 Ensure Enterprise API configuration allows docs in production only when explicitly enabled (secure default)
-- [ ] 2.4 Verify in the target environment and document the correct URL(s)
+- [x] 2.4 Implement public/internal docs split and marketing landing page:
+  - [x] 2.4.1 `/docs` is a marketing landing page
+  - [x] 2.4.2 Public Swagger UI at `/docs/swagger` using `/docs/openapi.json`
+  - [x] 2.4.3 Internal Swagger UI at `/internal/docs` using `/internal/openapi.json` (admin-only)
+- [ ] 2.5 Verify in the target environment and document the correct URL(s)
 
 ## Success Criteria
 
 - Metrics consumer emits no `Error parsing metric` logs for valid float latency inputs
 - Automated tests pass:
-  - [ ] 1.3 — ✅ pytest
+  - [x] 1.3 — ✅ pytest
+  - [x] 2.4 — ✅ pytest (`enterprise_api/tests/test_docs_visibility.py`)
 - `api.encypherai.com/docs` returns a non-404 response in the target environment
 
 ## Completion Notes
