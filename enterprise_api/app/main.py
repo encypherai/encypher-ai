@@ -443,7 +443,7 @@ _DOCS_PAGE_HTML = '''
     </div>
     <div class="intro-card">
       <h3>Client SDKs</h3>
-      <p>Official SDKs for <a href="https://pypi.org/project/encypher/" style="color:var(--accent);">Python</a>, <a href="https://www.npmjs.com/package/@encypher/sdk" style="color:var(--accent);">TypeScript</a>, <a href="https://github.com/encypherai/sdk-go" style="color:var(--accent);">Go</a>, and <a href="https://crates.io/crates/encypher" style="color:var(--accent);">Rust</a>.</p>
+      <p>Auto-generated from this API spec: <a href="https://github.com/encypherai/sdk-python" style="color:var(--accent);">Python</a>, <a href="https://github.com/encypherai/sdk-typescript" style="color:var(--accent);">TypeScript</a>, <a href="https://github.com/encypherai/sdk-go" style="color:var(--accent);">Go</a>, <a href="https://github.com/encypherai/sdk-rust" style="color:var(--accent);">Rust</a>. Always in sync with the API.</p>
     </div>
     <div class="intro-card">
       <h3>Open-Source Package</h3>

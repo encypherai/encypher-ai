@@ -166,9 +166,10 @@ This PRD defines how to host, publish, and cross-reference these documentation s
   - [x] 4.1.6 Updated root pyproject.toml to remove workspace reference
   - [x] 4.1.7 Added DEPRECATED.md with migration guide
 
-- [ ] 4.2 Update internal documentation
-  - [ ] 4.2.1 Update root README.md with SDK information
-  - [ ] 4.2.2 Update DOCUMENTATION_INDEX.md
+- [x] 4.2 Update internal documentation
+  - [x] 4.2.1 Update root README.md with SDK information
+  - [x] 4.2.2 Update DOCUMENTATION_INDEX.md
+  - [x] 4.2.3 Update api.encypherai.com/docs SDK links to GitHub repos
 
 ---
 

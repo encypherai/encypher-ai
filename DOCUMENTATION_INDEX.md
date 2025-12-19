@@ -330,8 +330,8 @@ Use this index to jump directly to the documentation you need.
 - [enterprise_api/](./enterprise_api/) - API key auth
 
 #### Content Signing
-- [enterprise_api/](./enterprise_api/) - C2PA signing
-- [enterprise_sdk/](./enterprise_sdk/) - SDK wrapper
+- [enterprise_api/](./enterprise_api/) - C2PA signing API
+- [sdk/](./sdk/) - Multi-language SDKs (Python/TypeScript/Go/Rust)
 - [integrations/wordpress-assurance-plugin/](./integrations/wordpress-assurance-plugin/) - WordPress
 
 #### Verification

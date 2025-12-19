@@ -56,8 +56,9 @@ This monorepo is organized by product tier and functionality:
 
 | Directory | Product | License Tier | Description |
 |-----------|---------|--------------|-------------|
-| [`enterprise_api/`](./enterprise_api/) | **Enterprise API** | Enterprise | Production C2PA API with Merkle trees, source attribution, plagiarism detection |
-| [`enterprise_sdk/`](./enterprise_sdk/) | **Enterprise SDK** | Enterprise | Python SDK with batch operations, CI/CD integration, framework wrappers |
+| [`enterprise_api/`](./enterprise_api/) | **Enterprise API** | Enterprise | Production C2PA API with Merkle trees, source attribution, plagiarism detection. [API Docs](https://api.encypherai.com/docs) |
+| [`sdk/`](./sdk/) | **Enterprise SDKs** | Enterprise | Auto-generated SDKs (Python/TypeScript/Go/Rust) always in sync with API. MIT licensed. |
+| [`archive/enterprise_sdk_deprecated/`](./archive/enterprise_sdk_deprecated/) | ~~Enterprise SDK~~ | ⚠️ Deprecated | Archived hand-crafted SDK. See [DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) |
 
 ### 🔧 Microservices Architecture
 
