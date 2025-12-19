@@ -142,9 +142,9 @@ app = FastAPI(
     title="Encypher Enterprise API",
     description="C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises",
     version="1.0.0-preview",
-    docs_url="/docs" if not settings.is_production else None,
-    redoc_url="/redoc" if not settings.is_production else None,
-    openapi_url="/openapi.json" if not settings.is_production else None,
+    docs_url="/docs" if (not settings.is_production or settings.enable_public_api_docs) else None,
+    redoc_url="/redoc" if (not settings.is_production or settings.enable_public_api_docs) else None,
+    openapi_url="/openapi.json" if (not settings.is_production or settings.enable_public_api_docs) else None,
     lifespan=lifespan,
 )
 

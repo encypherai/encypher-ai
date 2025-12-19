@@ -186,7 +186,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8002
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -245,7 +245,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8004
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -302,7 +302,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8006
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -331,7 +331,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8007
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
       API_GATEWAY_URL: http://localhost:8000
       # Stripe Configuration - Set these in .env file or override here
       STRIPE_API_KEY: ${STRIPE_API_KEY:-}
@@ -367,7 +367,7 @@ services:
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8008
       LOG_LEVEL: INFO
-      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://s-api.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
     depends_on:
       postgres:
         condition: service_healthy
@@ -400,19 +400,22 @@ services:
       # Redis
       REDIS_URL: redis://redis-cache:6379
       # Security
-      KEY_ENCRYPTION_KEY: 0000000000000000000000000000000000000000000000000000000000000000
-      ENCRYPTION_NONCE: 000000000000000000000000
+      KEY_ENCRYPTION_KEY: "0000000000000000000000000000000000000000000000000000000000000000"
+      ENCRYPTION_NONCE: "000000000000000000000000"
       # SSL.com (sandbox for dev)
       SSL_COM_API_KEY: ${SSL_COM_API_KEY:-sandbox-key}
       SSL_COM_API_URL: https://sandbox.ssl.com
       # Demo organization
       DEMO_API_KEY: demo-api-key-for-testing
       DEMO_ORGANIZATION_ID: org_demo
+      # SECRET_KEY: Set this to match Railway production for cross-verification
+      # Get the value from Railway enterprise-api > Variables > SECRET_KEY
+      SECRET_KEY: ${SECRET_KEY:-}
       # Service config
       ENVIRONMENT: development
       LOG_LEVEL: DEBUG
       SERVICE_NAME: enterprise-api
-      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,https://staging.encypherai.com,https://dashboard-staging.encypherai.com,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3050,http://localhost:3051,https://staging.encypherai.com,https://dashboard-staging.encypherai.com,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com
       # Internal service URLs (for cross-service API calls)
       AUTH_SERVICE_URL: http://auth-service:8001
       KEY_SERVICE_URL: http://key-service:8003

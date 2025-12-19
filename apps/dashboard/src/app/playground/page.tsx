@@ -18,7 +18,7 @@ import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
 
 // API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
-const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://s-api.encypherai.com/api/v1').replace(/\/$/, '');
+const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 

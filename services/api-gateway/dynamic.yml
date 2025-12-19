@@ -123,6 +123,16 @@ http:
       middlewares:
         - cors
 
+    # API docs (Swagger/ReDoc/OpenAPI) - handled by enterprise-api
+    api-docs:
+      rule: "Path(`/docs`) || Path(`/redoc`) || Path(`/openapi.json`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
   # ===========================================
   # SERVICES (Railway internal networking)
   # ===========================================

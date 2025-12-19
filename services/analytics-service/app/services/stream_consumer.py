@@ -17,8 +17,6 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
-from sqlalchemy.orm import Session
-
 from ..core.config import settings
 from ..db.models import UsageMetric
 from ..db.session import SessionLocal
@@ -248,6 +246,28 @@ class StreamConsumer:
         Returns:
             UsageMetric instance or None if invalid
         """
+        def _coerce_int(value: Any) -> Optional[int]:
+            if value is None:
+                return None
+            if isinstance(value, bool):
+                return int(value)
+            if isinstance(value, int):
+                return value
+            if isinstance(value, float):
+                return int(round(value))
+            if isinstance(value, str):
+                stripped = value.strip()
+                if not stripped:
+                    return None
+                try:
+                    return int(stripped)
+                except ValueError:
+                    try:
+                        return int(round(float(stripped)))
+                    except ValueError:
+                        return None
+            return None
+
         try:
             # Extract required fields
             metric_type = data.get("metric_type")
@@ -285,8 +305,8 @@ class StreamConsumer:
                 endpoint=data.get("endpoint"),
                 count=1,
                 value=None,
-                response_time_ms=int(data["response_time_ms"]) if data.get("response_time_ms") else None,
-                status_code=int(data["status_code"]) if data.get("status_code") else None,
+                response_time_ms=_coerce_int(data.get("response_time_ms")),
+                status_code=_coerce_int(data.get("status_code")),
                 meta=metadata,
                 date=created_at.strftime("%Y-%m-%d"),
                 hour=created_at.hour,

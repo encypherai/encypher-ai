@@ -39,6 +39,9 @@ class Settings(BaseSettings):
     # API
     api_base_url: str = "https://api.encypherai.com"
 
+    # API docs exposure
+    enable_public_api_docs: bool = False
+
     # Service URLs
     coalition_service_url: str = "http://localhost:8009"
     auth_service_url: str = "http://localhost:8001"
