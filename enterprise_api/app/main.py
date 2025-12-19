@@ -361,52 +361,113 @@ async def docs_design_system_css() -> Response:
     return Response(content=bundled, media_type="text/css")
 
 
-@app.get("/docs", include_in_schema=False)
-async def docs_landing() -> HTMLResponse:
-    return HTMLResponse(
-        """<!doctype html>
-<html lang=\"en\">
+@app.get("/docs/assets/{filename:path}", include_in_schema=False)
+async def docs_static_asset(filename: str) -> Response:
+    """Serve static assets (logos, images) from marketing-site/public."""
+    repo_root = Path(__file__).resolve().parents[2]
+    asset_path = repo_root / "apps" / "marketing-site" / "public" / filename
+
+    if not asset_path.exists() or not asset_path.is_file():
+        raise HTTPException(status_code=404, detail="Asset not found")
+
+    # Determine content type
+    suffix = asset_path.suffix.lower()
+    content_types = {
+        ".svg": "image/svg+xml",
+        ".png": "image/png",
+        ".ico": "image/x-icon",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".webp": "image/webp",
+    }
+    content_type = content_types.get(suffix, "application/octet-stream")
+
+    content = asset_path.read_bytes()
+    return Response(content=content, media_type=content_type)
+
+
+_DOCS_PAGE_HTML = '''
+<!doctype html>
+<html lang="en">
 <head>
-  <meta charset=\"utf-8\" />
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Encypher Enterprise API</title>
-  <link rel=\"stylesheet\" href=\"/docs/assets/design-system.css\" />
+  <link rel="icon" href="/docs/assets/favicon.ico" />
+  <link rel="stylesheet" href="/docs/assets/design-system.css" />
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
-    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; margin: 40px; color: #0f172a; }
-    .card { max-width: 880px; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px; }
-    h1 { margin: 0 0 6px 0; font-size: 28px; }
-    p { margin: 10px 0; line-height: 1.5; }
-    a { color: #2563eb; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    .section { margin-top: 18px; }
-    .label { font-weight: 600; }
-    code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; }
+    :root {
+      --header-bg: #1b2f50;
+      --accent: #2a87c4;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: var(--font-sans, "Roboto", system-ui, sans-serif); background: hsl(var(--background, 0 0% 100%)); color: hsl(var(--foreground, 222 47% 20%)); }
+    .header { background: var(--header-bg); color: #fff; padding: 24px 32px; }
+    .header-inner { max-width: 1400px; margin: 0 auto; display: flex; align-items: center; gap: 24px; flex-wrap: wrap; }
+    .logo { height: 40px; width: auto; }
+    .header h1 { margin: 0; font-size: 1.5rem; font-weight: 600; }
+    .header-desc { margin: 0; opacity: 0.85; font-size: 0.95rem; flex-basis: 100%; }
+    .intro { max-width: 1400px; margin: 0 auto; padding: 24px 32px; display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
+    .intro-card { background: hsl(var(--card, 0 0% 100%)); border: 1px solid hsl(var(--border, 214 32% 91%)); border-radius: 12px; padding: 20px; }
+    .intro-card h3 { margin: 0 0 8px; font-size: 1rem; color: var(--accent); }
+    .intro-card p { margin: 0; font-size: 0.9rem; line-height: 1.5; color: hsl(var(--muted-foreground, 215 16% 47%)); }
+    .swagger-container { max-width: 1400px; margin: 0 auto; padding: 0 32px 48px; }
+    .swagger-ui .topbar { display: none; }
+    .swagger-ui .info { margin: 20px 0 0; }
+    .swagger-ui .info hgroup.main { margin: 0; }
+    .swagger-ui .info .title { font-size: 1.25rem; }
   </style>
 </head>
 <body>
-  <div class=\"card\">
-    <h1>Encypher Enterprise API</h1>
-    <p>C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises.</p>
-
-    <div class=\"section\">
-      <div class=\"label\">Public endpoints (no authentication required)</div>
-      <p>Verify signed content, validate manifests, and perform public C2PA verification workflows.</p>
+  <header class="header">
+    <div class="header-inner">
+      <img src="/docs/assets/encypher_full_logo_white.svg" alt="Encypher" class="logo" />
+      <h1>Enterprise API</h1>
+      <p class="header-desc">C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises.</p>
     </div>
+  </header>
 
-    <div class=\"section\">
-      <div class=\"label\">Publisher endpoints (authentication required)</div>
+  <section class="intro">
+    <div class="intro-card">
+      <h3>Public Endpoints</h3>
+      <p>Verify signed content, validate manifests, and perform public C2PA verification workflows. No authentication required.</p>
+    </div>
+    <div class="intro-card">
+      <h3>Publisher Endpoints</h3>
       <p>Sign content with C2PA manifests, batch processing, streaming signatures, and other authenticated operations.</p>
     </div>
-
-    <div class=\"section\">
-      <a href=\"/docs/swagger\">View Full API Documentation</a>
-      <p style=\"margin-top:8px; font-size: 13px; color: #475569;\">OpenAPI JSON: <code>/docs/openapi.json</code></p>
+    <div class="intro-card">
+      <h3>Getting Started</h3>
+      <p>Obtain an API key from <a href="https://dashboard.encypherai.com" style="color:var(--accent);">dashboard.encypherai.com</a>, then use the endpoints below.</p>
     </div>
+  </section>
+
+  <div class="swagger-container">
+    <div id="swagger-ui"></div>
   </div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+  <script>
+    window.onload = () => {
+      SwaggerUIBundle({
+        url: "/docs/openapi.json",
+        dom_id: "#swagger-ui",
+        presets: [SwaggerUIBundle.presets.apis, SwaggerUIBundle.SwaggerUIStandalonePreset],
+        layout: "BaseLayout",
+        deepLinking: true,
+        defaultModelsExpandDepth: 0,
+      });
+    };
+  </script>
 </body>
-</html>""",
-        media_type="text/html",
-    )
+</html>
+'''
+
+
+@app.get("/docs", include_in_schema=False)
+async def docs_landing() -> HTMLResponse:
+    return HTMLResponse(_DOCS_PAGE_HTML, media_type="text/html")
 
 
 @app.get("/docs/openapi.json", include_in_schema=False)
