@@ -50,9 +50,9 @@ export default function SupportPage() {
   ];
 
   const resources = [
-    { title: 'Documentation', description: 'Complete API reference and guides', icon: '📚', link: 'https://docs.encypherai.com' },
-    { title: 'API Reference', description: 'Detailed endpoint documentation', icon: '🔧', link: 'https://docs.encypherai.com/api' },
-    { title: 'SDK Downloads', description: 'Python, JavaScript, and more', icon: '📦', link: 'https://docs.encypherai.com/sdks' },
+    { title: 'API Documentation', description: 'Interactive API reference with Swagger UI', icon: '📚', link: 'https://api.encypherai.com/docs' },
+    { title: 'Python SDK', description: 'Official Python client library', icon: '🐍', link: 'https://pypi.org/project/encypher/' },
+    { title: 'TypeScript SDK', description: 'Official TypeScript/Node.js client', icon: '📦', link: 'https://www.npmjs.com/package/@encypher/sdk' },
     { title: 'Status Page', description: 'Check system status', icon: '🟢', link: 'https://status.encypherai.com' },
   ];
 

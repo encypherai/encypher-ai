@@ -544,7 +544,7 @@ export default function PricingPage() {
               <div className="mt-4">
                 <p className="text-center text-muted-foreground mb-6 text-sm">
                   Every feature maps directly to our Enterprise API. See{' '}
-                  <Link href="https://docs.encypherai.com" className="text-primary hover:underline">API documentation</Link> for details.
+                  <Link href="https://api.encypherai.com/docs" className="text-primary hover:underline">API documentation</Link> for details.
                 </p>
                 <FeatureComparisonTable 
                   currentPlan={currentPlan}

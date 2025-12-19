@@ -65,7 +65,7 @@ const endpoints: ApiEndpoint[] = [
     category: 'Signing',
     requiresAuth: true,
     authType: 'apikey',
-    docsUrl: 'https://docs.encypherai.com/api/sign',
+    docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify({
       text: "Hello, this is AI-generated content that needs authentication.",
       model_id: "gpt-4",
@@ -81,7 +81,7 @@ const endpoints: ApiEndpoint[] = [
     category: 'Verification',
     requiresAuth: true,
     authType: 'apikey',
-    docsUrl: 'https://docs.encypherai.com/api/verify',
+    docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify({
       text: "Paste signed content here to verify..."
     }, null, 2),
@@ -95,7 +95,7 @@ const endpoints: ApiEndpoint[] = [
     category: 'Verification',
     requiresAuth: true,
     authType: 'apikey',
-    docsUrl: 'https://docs.encypherai.com/api/lookup',
+    docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify({
       document_id: "doc_example_id"
     }, null, 2),
@@ -114,7 +114,7 @@ const endpoints: ApiEndpoint[] = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'professional',
-    docsUrl: 'https://docs.encypherai.com/api/streaming',
+    docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify({
       model_id: "gpt-4",
       session_metadata: { conversation_id: "conv_123" }
@@ -164,7 +164,7 @@ const endpoints: ApiEndpoint[] = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'business',
-    docsUrl: 'https://docs.encypherai.com/api/batch',
+    docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify({
       documents: [
         { text: "First document to sign", document_id: "doc_1" },
@@ -204,7 +204,7 @@ const endpoints: ApiEndpoint[] = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'professional',
-    docsUrl: 'https://docs.encypherai.com/api/merkle',
+    docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify({
       text: "This is a document with multiple sentences. Each sentence gets its own hash. This enables sentence-level verification.",
       document_id: "doc_merkle_example"
@@ -252,7 +252,7 @@ const endpoints: ApiEndpoint[] = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'business',
-    docsUrl: 'https://docs.encypherai.com/api/team',
+    docsUrl: 'https://api.encypherai.com/docs',
   },
   {
     id: 'team-invite',
@@ -283,7 +283,7 @@ const endpoints: ApiEndpoint[] = [
     requiresAuth: true,
     authType: 'apikey',
     minTier: 'business',
-    docsUrl: 'https://docs.encypherai.com/api/audit',
+    docsUrl: 'https://api.encypherai.com/docs',
   },
   
   // ============================================
@@ -536,7 +536,7 @@ export default function PlaygroundPage() {
             </p>
           </div>
           <a
-            href="https://docs.encypherai.com/api"
+            href="https://api.encypherai.com/docs"
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm text-blue-ncs hover:underline flex items-center gap-1"

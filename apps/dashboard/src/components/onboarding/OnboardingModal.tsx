@@ -53,8 +53,8 @@ const onboardingSteps: OnboardingStep[] = [
       </svg>
     ),
     action: {
-      label: 'View Docs',
-      href: 'https://docs.encypherai.com',
+      label: 'View API Docs',
+      href: 'https://api.encypherai.com/docs',
     },
   },
   {

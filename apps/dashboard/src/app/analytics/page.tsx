@@ -249,7 +249,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="space-y-3">
               <a 
-                href="https://docs.encypherai.com" 
+                href="https://api.encypherai.com/docs" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"

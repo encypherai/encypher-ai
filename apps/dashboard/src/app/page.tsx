@@ -170,10 +170,10 @@ export default function DashboardPage() {
                   New API Key
                 </button>
               </Link>
-              <a href="https://docs.encypherai.com" target="_blank" rel="noopener noreferrer">
+              <a href="https://api.encypherai.com/docs" target="_blank" rel="noopener noreferrer">
                 <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-colors border border-white/20">
                   <IconBook />
-                  View Docs
+                  API Docs
                 </button>
               </a>
             </div>
@@ -381,9 +381,9 @@ export default function DashboardPage() {
                 <span className="text-white/90">Start signing content</span>
               </li>
             </ul>
-            <a href="https://docs.encypherai.com/quickstart" target="_blank" rel="noopener noreferrer">
+            <a href="https://api.encypherai.com/docs" target="_blank" rel="noopener noreferrer">
               <button className="w-full mt-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors text-sm">
-                View Quickstart Guide
+                View API Docs
               </button>
             </a>
           </div>
@@ -417,13 +417,13 @@ export default function DashboardPage() {
                 <IconArrowRight />
               </Link>
 
-              <a href="https://docs.encypherai.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
+              <a href="https://api.encypherai.com/docs" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
                 <div className="w-9 h-9 bg-columbia-blue/30 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
                   <IconBook />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-delft-blue dark:text-white text-sm">Documentation</p>
-                  <p className="text-xs text-muted-foreground">API reference & guides</p>
+                  <p className="font-medium text-delft-blue dark:text-white text-sm">API Documentation</p>
+                  <p className="text-xs text-muted-foreground">Interactive API reference</p>
                 </div>
                 <IconArrowRight />
               </a>

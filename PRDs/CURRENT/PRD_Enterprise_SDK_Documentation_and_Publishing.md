@@ -145,15 +145,15 @@ This PRD defines how to host, publish, and cross-reference these documentation s
   - [ ] 3.2.2 Add "Enterprise SDKs" section in navigation
   - [ ] 3.2.3 Update homepage to show product ecosystem
 
-- [ ] 3.3 Update marketing site (encypherai.com)
-  - [ ] 3.3.1 Update footer "Documentation" link strategy
-  - [ ] 3.3.2 Update pricing page API docs link to api.encypherai.com/docs
+- [x] 3.3 Update marketing site (encypherai.com)
+  - [ ] 3.3.1 Update footer "Documentation" link strategy (keep as docs.encypherai.com for OSS)
+  - [x] 3.3.2 Update pricing page API docs link to api.encypherai.com/docs
   - [ ] 3.3.3 Add SDK download links on relevant pages
 
-- [ ] 3.4 Update dashboard (dashboard.encypherai.com)
-  - [ ] 3.4.1 Update "Documentation" links to be contextual
-  - [ ] 3.4.2 Add SDK quickstart in onboarding flow
-  - [ ] 3.4.3 Update support page resource links
+- [x] 3.4 Update dashboard (dashboard.encypherai.com)
+  - [x] 3.4.1 Update "Documentation" links to api.encypherai.com/docs
+  - [x] 3.4.2 Update onboarding modal docs link
+  - [x] 3.4.3 Update support page resource links to SDK packages
 
 ### 4.0 Cleanup
 
@@ -162,7 +162,9 @@ This PRD defines how to host, publish, and cross-reference these documentation s
   - [x] 4.1.2 Update sdk/ README files with clear purpose statements
   - [x] 4.1.3 Remove placeholder GIT_USER_ID/GIT_REPO_ID from generated SDKs
   - [x] 4.1.4 Update sdk/ package metadata (author, URLs, license)
-  - [ ] 4.1.5 Move enterprise_sdk/ to archive/ or delete after extracting reusable code
+  - [x] 4.1.5 Moved enterprise_sdk/ to archive/enterprise_sdk_deprecated/
+  - [x] 4.1.6 Updated root pyproject.toml to remove workspace reference
+  - [x] 4.1.7 Added DEPRECATED.md with migration guide
 
 - [ ] 4.2 Update internal documentation
   - [ ] 4.2.1 Update root README.md with SDK information

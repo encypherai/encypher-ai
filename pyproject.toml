@@ -5,7 +5,6 @@ description = "Root project file for Encypher commercial tools. This primarily s
 requires-python = ">=3.9"
 dependencies = [
     "encypher-ai",
-    "encypher-enterprise",
     "comtypes>=1.4.11",
     "docx2txt>=0.9",
     "fpdf>=1.7.2",
@@ -21,12 +20,11 @@ dependencies = [
 [tool.uv]
 
 [tool.uv.workspace]
-members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "shared_commercial_libs", "enterprise_api", "enterprise_sdk"]
+members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "shared_commercial_libs", "enterprise_api"]
 
 [tool.uv.sources]
 encypher-ai = { path = "./encypher-ai", editable = true }
 c2pa-text = { path = "./c2pa-text/python", editable = true }
-encypher-enterprise = { workspace = true }
 "encypher_commercial_shared" = { workspace = true }
 
 # Ruff config is in ruff.toml at repo root
