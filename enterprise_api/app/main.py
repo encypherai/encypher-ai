@@ -393,7 +393,7 @@ _DOCS_PAGE_HTML = '''
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Encypher Enterprise API</title>
-  <link rel="icon" href="/docs/assets/favicon.ico" />
+  <link rel="icon" href="https://encypherai.com/docs/assets/favicon.ico" />
   <link rel="stylesheet" href="/docs/assets/design-system.css" />
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5/swagger-ui.css" />
   <style>
@@ -422,7 +422,7 @@ _DOCS_PAGE_HTML = '''
 <body>
   <header class="header">
     <div class="header-inner">
-      <img src="/docs/assets/encypher_full_logo_white.svg" alt="Encypher" class="logo" />
+      <img src="https://encypherai.com/docs/assets/encypher_full_logo_white.svg" alt="Encypher" class="logo" />
       <h1>Enterprise API</h1>
       <p class="header-desc">C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises.</p>
     </div>
