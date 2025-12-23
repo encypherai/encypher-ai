@@ -70,6 +70,19 @@ class Settings(BaseSettings):
     demo_private_key_pem: Optional[str] = None
     demo_public_key_pem: Optional[str] = None
 
+    # Stripe (for billing - used by other services, ignored by enterprise-api)
+    stripe_api_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+    stripe_connect_webhook_secret: Optional[str] = None
+    stripe_price_professional_monthly: Optional[str] = None
+    stripe_price_professional_annual: Optional[str] = None
+    stripe_price_business_monthly: Optional[str] = None
+    stripe_price_business_annual: Optional[str] = None
+
+    # NextAuth (for dashboard authentication - ignored by enterprise-api)
+    nextauth_secret: Optional[str] = None
+    nextauth_url: Optional[str] = None
+
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
