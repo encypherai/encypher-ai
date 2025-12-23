@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.utils.crypto_utils import load_organization_public_key
+from app.utils.multi_embedding import extract_and_verify_all_embeddings, extract_all_embeddings
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/tools", tags=["Public Tools"])
@@ -85,6 +86,18 @@ class VerifyVerdict(BaseModel):
     timestamp: Optional[str] = None
 
 
+class EmbeddingResult(BaseModel):
+    """Result for a single embedding found in text."""
+    
+    index: int = Field(..., description="Index of this embedding (0-based)")
+    metadata: Optional[Dict[str, Any]] = None
+    verification_status: Literal["Success", "Failure", "Key Not Found", "Not Attempted", "Error"] = "Not Attempted"
+    error: Optional[str] = None
+    verdict: Optional[VerifyVerdict] = None
+    text_span: Optional[tuple[int, int]] = Field(None, description="Start and end position of this embedding in the original text")
+    clean_text: Optional[str] = Field(None, description="The text covered by this embedding (without the wrapper)")
+
+
 class DecodeToolResponse(BaseModel):
     """Response model for decoding."""
     
@@ -92,6 +105,9 @@ class DecodeToolResponse(BaseModel):
     verification_status: Literal["Success", "Failure", "Key Not Found", "Not Attempted", "Error"] = "Not Attempted"
     error: Optional[str] = None
     raw_hidden_data: Optional[VerifyVerdict] = None
+    # New fields for multiple embeddings
+    embeddings_found: int = Field(0, description="Number of embeddings found in the text")
+    all_embeddings: Optional[list[EmbeddingResult]] = Field(None, description="All embeddings found, with individual verification results")
 
 
 # =============================================================================
@@ -287,6 +303,7 @@ async def decode_text(
     Decode and verify text containing embedded metadata.
     
     This is a public endpoint for the website demo tool.
+    Supports multiple embeddings in a single text (Encypher proprietary feature).
     Verification uses Trust Anchor lookup - checks database for org public keys.
     Falls back to demo key for demo-signed content.
     """
@@ -294,8 +311,99 @@ async def decode_text(
     
     try:
         _, public_key = _get_demo_keys()
+        demo_signer_ids = {_demo_signer_id, "org_demo", "demo-signer-id", "c2pa-demo-signer-001"}
         
-        # Extract metadata
+        # Check for multiple embeddings first (Encypher proprietary feature)
+        multi_result = extract_all_embeddings(request.encoded_text)
+        
+        if multi_result.total_found > 1:
+            # Multiple embeddings found - use multi-embedding verification
+            logger.info(f"Found {multi_result.total_found} embeddings in text")
+            
+            # Build public key resolver that handles all signers
+            async def resolve_public_key(signer_id: str):
+                if signer_id in demo_signer_ids:
+                    return public_key
+                if signer_id and signer_id.startswith("user_"):
+                    return public_key
+                try:
+                    return await load_organization_public_key(signer_id, db)
+                except Exception:
+                    return None
+            
+            # Create sync wrapper for the resolver
+            resolved_keys: dict = {}
+            for emb in multi_result.embeddings:
+                if emb.signer_id:
+                    if emb.signer_id in demo_signer_ids or (emb.signer_id and emb.signer_id.startswith("user_")):
+                        resolved_keys[emb.signer_id] = public_key
+                    else:
+                        try:
+                            resolved_keys[emb.signer_id] = await load_organization_public_key(emb.signer_id, db)
+                        except Exception:
+                            resolved_keys[emb.signer_id] = None
+            
+            def public_key_resolver(signer_id: str):
+                if signer_id in resolved_keys:
+                    return resolved_keys[signer_id]
+                if signer_id in demo_signer_ids:
+                    return public_key
+                if signer_id and signer_id.startswith("user_"):
+                    return public_key
+                return None
+            
+            # Verify all embeddings
+            verified_result = await extract_and_verify_all_embeddings(
+                request.encoded_text,
+                public_key_resolver,
+                demo_signer_ids,
+            )
+            
+            # Convert to response format
+            all_embeddings = []
+            for emb in verified_result.embeddings:
+                all_embeddings.append(EmbeddingResult(
+                    index=emb.index,
+                    metadata=emb.metadata,
+                    verification_status=emb.verification_status,
+                    error=emb.error,
+                    verdict=VerifyVerdict(
+                        valid=emb.signature_valid,
+                        tampered=not emb.signature_valid and emb.metadata is not None,
+                        reason_code="VERIFIED" if emb.signature_valid else "VERIFICATION_FAILED",
+                        signer_id=emb.signer_id,
+                        signer_name=emb.signer_name,
+                    ),
+                    text_span=emb.span,
+                    clean_text=emb.segment_text[:500] if emb.segment_text else None,  # Truncate for response
+                ))
+            
+            # Determine overall status
+            if verified_result.all_valid:
+                overall_status = "Success"
+                overall_error = None
+            elif verified_result.any_valid:
+                overall_status = "Failure"
+                valid_count = sum(1 for e in verified_result.embeddings if e.signature_valid)
+                overall_error = f"Found {verified_result.total_found} embeddings, but only {valid_count} verified successfully."
+            else:
+                overall_status = "Failure"
+                overall_error = f"Found {verified_result.total_found} embeddings, but none could be verified."
+            
+            # Use first embedding's metadata as primary (for backwards compatibility)
+            primary_metadata = verified_result.embeddings[0].metadata if verified_result.embeddings else None
+            primary_verdict = all_embeddings[0].verdict if all_embeddings else None
+            
+            return DecodeToolResponse(
+                metadata=primary_metadata,
+                verification_status=overall_status,
+                error=overall_error,
+                raw_hidden_data=primary_verdict,
+                embeddings_found=verified_result.total_found,
+                all_embeddings=all_embeddings,
+            )
+        
+        # Single embedding or no embeddings - use standard extraction
         decoded_metadata = UnicodeMetadata.extract_metadata(text=request.encoded_text)
         
         if not decoded_metadata:
@@ -309,20 +417,17 @@ async def decode_text(
                     tampered=False,
                     reason_code="NO_METADATA",
                 ),
+                embeddings_found=0,
             )
         
         # Extract signer_id from metadata to do async lookup before verification
         signer_id_from_metadata = None
         if isinstance(decoded_metadata, dict):
-            # Try multiple paths to find signer_id
-            # Path 1: manifest.signer_id
             manifest = decoded_metadata.get("manifest", {})
             if isinstance(manifest, dict):
                 signer_id_from_metadata = manifest.get("signer_id")
-            # Path 2: direct signer_id
             if not signer_id_from_metadata:
                 signer_id_from_metadata = decoded_metadata.get("signer_id")
-            # Path 3: claim_generator_info.signer_id (C2PA format)
             if not signer_id_from_metadata:
                 claim_info = decoded_metadata.get("claim_generator_info", {})
                 if isinstance(claim_info, dict):
@@ -330,13 +435,11 @@ async def decode_text(
         
         logger.info(f"Extracted signer_id from metadata: {signer_id_from_metadata}")
         
-        # Pre-fetch the public key for the signer (async lookup)
-        # For user_ orgs, load_organization_public_key will return the demo key
+        # Pre-fetch the public key for the signer
         org_public_key = None
         if signer_id_from_metadata:
-            # Skip pre-fetch for known demo signers (they use the demo key directly)
-            if signer_id_from_metadata in (_demo_signer_id, "org_demo", "demo-signer-id", "c2pa-demo-signer-001"):
-                org_public_key = public_key  # Use demo key
+            if signer_id_from_metadata in demo_signer_ids:
+                org_public_key = public_key
                 logger.info(f"Using demo key for demo signer {signer_id_from_metadata}")
             else:
                 try:
@@ -347,16 +450,11 @@ async def decode_text(
                 except Exception as e:
                     logger.warning(f"Error looking up signer {signer_id_from_metadata}: {e}")
         
-        # Define synchronous public key resolver using pre-fetched keys
         def public_key_resolver(signer_id: str):
-            """Look up public key - uses pre-fetched org key or demo key."""
-            # Check if we have a pre-fetched org key for this signer
             if org_public_key and signer_id == signer_id_from_metadata:
                 return org_public_key
-            # Fall back to demo key for demo signer IDs
-            if signer_id in (_demo_signer_id, "org_demo", "demo-signer-id", "c2pa-demo-signer-001"):
+            if signer_id in demo_signer_ids:
                 return public_key
-            # For user_ orgs that weren't pre-fetched, use demo key
             if signer_id.startswith("user_"):
                 logger.info(f"Using demo key for user org {signer_id}")
                 return public_key
@@ -371,7 +469,6 @@ async def decode_text(
                 return_payload_on_failure=True,
             )
             
-            # Parse verification result
             if isinstance(verification_result, tuple) and len(verification_result) == 3:
                 signature_valid, signer_id, payload = verification_result
             elif isinstance(verification_result, dict):
@@ -383,23 +480,18 @@ async def decode_text(
                 signer_id = None
                 payload = decoded_metadata
             
-            # Core library handles hard binding verification automatically
-            # signature_valid = False means either signature is invalid OR hard binding check failed
             reason_code = "VERIFIED" if signature_valid else "VERIFICATION_FAILED"
 
-            # Determine signer name based on whether we found an org key
             if signer_id:
                 if org_public_key and signer_id == signer_id_from_metadata:
-                    # Verified via Trust Anchor (database lookup)
                     signer_name = f"{signer_id} (Verified via Trust Anchor)"
-                elif signer_id in (_demo_signer_id, "org_demo", "demo-signer-id", "c2pa-demo-signer-001"):
+                elif signer_id in demo_signer_ids:
                     signer_name = f"{signer_id} (Demo Key)"
                 else:
                     signer_name = f"{signer_id} (Unknown Signer)"
             else:
                 signer_name = None
 
-            # Build verdict
             verdict = VerifyVerdict(
                 valid=signature_valid,
                 tampered=not signature_valid and decoded_metadata is not None,
@@ -408,13 +500,11 @@ async def decode_text(
                 signer_name=signer_name,
             )
 
-            # Determine verification status with descriptive messaging
             if signature_valid:
                 verification_status = "Success"
                 error_msg = None
             else:
                 verification_status = "Failure"
-                # Provide more descriptive error based on what we found
                 if signer_name and "Unknown Signer" in signer_name:
                     error_msg = f"Manifest found but signer '{signer_id}' is not in our Trust Anchor database. The signature cannot be verified."
                 elif signer_name:
@@ -427,6 +517,7 @@ async def decode_text(
                 verification_status=verification_status,
                 error=error_msg,
                 raw_hidden_data=verdict,
+                embeddings_found=1,
             )
             
         except Exception as e:
@@ -440,6 +531,7 @@ async def decode_text(
                     tampered=False,
                     reason_code="VERIFICATION_ERROR",
                 ),
+                embeddings_found=1,
             )
             
     except HTTPException:
