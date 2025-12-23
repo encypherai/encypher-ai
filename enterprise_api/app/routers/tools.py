@@ -111,18 +111,36 @@ def _get_demo_keys():
     if _demo_private_key is not None:
         return _demo_private_key, _demo_public_key
     
-    # Try to load from settings (check both DEMO_PRIVATE_KEY_HEX and SECRET_KEY)
+    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from cryptography.hazmat.primitives import serialization
+    
+    # Try to load from PEM format first (legacy keys)
+    if settings.demo_private_key_pem:
+        try:
+            pem_str = settings.demo_private_key_pem
+            # Handle escaped newlines from environment variables
+            if '\\n' in pem_str:
+                pem_str = pem_str.replace('\\n', '\n')
+            private_key = serialization.load_pem_private_key(pem_str.encode(), password=None)
+            if isinstance(private_key, Ed25519PrivateKey):
+                _demo_private_key = private_key
+                _demo_public_key = _demo_private_key.public_key()
+                logger.info("Loaded demo keys from PEM format")
+                return _demo_private_key, _demo_public_key
+        except Exception as e:
+            logger.warning(f"Failed to load demo keys from PEM: {e}")
+    
+    # Try to load from hex format (check both DEMO_PRIVATE_KEY_HEX and SECRET_KEY)
     key_hex = settings.demo_private_key_hex or settings.secret_key
     if key_hex:
         try:
-            from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
             key_bytes = bytes.fromhex(key_hex)
             _demo_private_key = Ed25519PrivateKey.from_private_bytes(key_bytes)
             _demo_public_key = _demo_private_key.public_key()
-            logger.info("Loaded demo keys from environment")
+            logger.info("Loaded demo keys from hex format")
             return _demo_private_key, _demo_public_key
         except Exception as e:
-            logger.warning(f"Failed to load demo keys from env: {e}")
+            logger.warning(f"Failed to load demo keys from hex: {e}")
     
     # Generate ephemeral keys for demo
     try:
