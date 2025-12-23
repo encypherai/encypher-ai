@@ -74,6 +74,12 @@ async def populate_demo_public_key():
         print("ERROR: No database URL configured (CORE_DATABASE_URL or DATABASE_URL)")
         return False
     
+    # Convert postgresql:// to postgresql+asyncpg:// for async support
+    if database_url.startswith('postgresql://'):
+        database_url = database_url.replace('postgresql://', 'postgresql+asyncpg://', 1)
+    elif database_url.startswith('postgres://'):
+        database_url = database_url.replace('postgres://', 'postgresql+asyncpg://', 1)
+    
     # Get public key
     demo_public_key_pem = os.getenv('DEMO_PUBLIC_KEY_PEM')
     if demo_public_key_pem:
