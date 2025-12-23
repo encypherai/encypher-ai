@@ -159,7 +159,7 @@ LOGO_URL = "https://encypherai.com/encypher_full_logo_white.svg"
 ICP_EMAIL_CONFIG = {
     "ai-demo": {
         "subject": "We received your demo request",
-        "tagline": "Real-world performance intelligence for AI",
+        "tagline": "Infrastructure for text provenance in AI pipelines",
         "cta_text": "Continue Exploring",
         "cta_url": "https://encypherai.com/ai-demo",
         "secondary_cta_text": "View Pricing",
@@ -172,7 +172,7 @@ ICP_EMAIL_CONFIG = {
     },
     "publisher-demo": {
         "subject": "We received your demo request",
-        "tagline": "Content authentication for the AI era",
+        "tagline": "Cryptographic proof of origin for your content",
         "cta_text": "Continue Exploring",
         "cta_url": "https://encypherai.com/publisher-demo",
         "secondary_cta_text": "View Pricing",
@@ -185,7 +185,7 @@ ICP_EMAIL_CONFIG = {
     },
     "enterprise": {
         "subject": "We received your inquiry",
-        "tagline": "Enterprise content authentication",
+        "tagline": "Text authentication infrastructure for enterprises",
         "cta_text": "Learn More",
         "cta_url": "https://encypherai.com/pricing?tab=enterprises",
         "secondary_cta_text": "View Solutions",
@@ -198,7 +198,7 @@ ICP_EMAIL_CONFIG = {
     },
     "general": {
         "subject": "We received your inquiry",
-        "tagline": "Cryptographic content authentication",
+        "tagline": "Proof of origin for text content",
         "cta_text": "Explore Solutions",
         "cta_url": "https://encypherai.com",
         "secondary_cta_text": "View Pricing",

@@ -91,11 +91,11 @@ async def send_password_reset_email(email: str, reset_url: str) -> bool:
     <html>
     <body>
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #4f46e5;">Reset Your Password</h2>
+            <h2 style="color: #2a87c4;">Reset Your Password</h2>
             <p>You have requested to reset your password for the Encypher Dashboard.</p>
             <p>Please click the link below to reset your password. This link will expire in 24 hours.</p>
             <p>
-                <a href="{reset_url}" style="display: inline-block; background-color: #4f46e5; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
+                <a href="{reset_url}" style="display: inline-block; background-color: #2a87c4; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px;">
                     Reset Password
                 </a>
             </p>

@@ -110,7 +110,9 @@ This library handles the **embedding layer** (text steganography). To generate t
 The [Encypher Enterprise API](https://encypherai.com) automatically handles key management, signing, and manifest generation. It returns the fully signed JUMBF bytes or the final watermarked text directly.
 
 ### 2. Use C2PA Tooling
-You can generate raw JUMBF manifests using standard C2PA tools (like `c2pa-rs` or `c2patool`) and pass the binary output to this library.
+Since standard tools (like `c2patool`) do not natively support .txt files, you cannot embed directly using the CLI.
+
+Instead, you must use the **C2PA Rust or Python SDKs** to generate a **detached manifest** (treating the text as a generic byte stream). You can then pass the resulting binary JUMBF data to this library for embedding.
 
 ## Usage (Python)
 

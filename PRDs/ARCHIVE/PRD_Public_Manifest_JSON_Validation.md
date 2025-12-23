@@ -1,7 +1,7 @@
 # Public Manifest JSON Validation
 
-**Status:** 🔄 In Progress
-**Current Goal:** Stabilize baseline tests and then add public C2PA manifest endpoints (validate + create helper) for plaintext/text workflows.
+**Status:** ✅ Complete
+**Current Goal:** Completed (validated in Docker sandbox; ready to archive).
 
 ## Overview
 
@@ -85,7 +85,7 @@ Encypher implements an **Org Trust Anchor** model:
 
 2. **Ongoing**: Keep org trust anchor model for enterprise B2B (closed ecosystems). This is explicitly endorsed by C2PA Implementation Guidance §6.3.2.2-6.3.2.3.
 
-3. **Add External Verifier API**: Expose `GET /api/v1/public/trust-anchors/{signer_id}` returning org public key for external validators. This enables third-party verifiers to validate Encypher-signed content.
+3. **Add External Verifier API**: Expose `GET /api/v1/public/c2pa/trust-anchors/{signer_id}` returning org public key for external validators. This enables third-party verifiers to validate Encypher-signed content.
 
 4. **Long-term (2027+)**: Evaluate becoming a subordinate CA if volume > 1M signatures/month.
 
@@ -192,7 +192,7 @@ Encypher implements an **Org Trust Anchor** model:
 
 ## API Design: External Verifier Endpoint
 
-### `GET /api/v1/public/trust-anchors/{signer_id}`
+### `GET /api/v1/public/c2pa/trust-anchors/{signer_id}`
 
 **Purpose:** Enable third-party C2PA validators to verify Encypher-signed content by looking up the signer's public key.
 
@@ -287,7 +287,7 @@ Add optional `include_timestamp` parameter:
 
 - [ ] Contact SSL.com for C2PA partnership pricing
 - [x] Verify `encypher-ai` NFC normalization and `exclusions` field compliance — ✅ COMPLIANT (Dec 2025)
-- [x] Design `/api/v1/public/trust-anchors/{signer_id}` endpoint — ✅ Implemented + Tested (Dec 2025)
+- [x] Design `/api/v1/public/c2pa/trust-anchors/{signer_id}` endpoint — ✅ Implemented + Tested (Dec 2025)
 - [x] Design optional TSA integration for `/api/v1/sign` — ✅ Designed (Dec 2025)
 - [x] Create new PRD for PDF signing support — ✅ Created `PRDs/CURRENT/PRD_PDF_Signing_Support.md` (Dec 2025)
 
@@ -298,7 +298,7 @@ Add optional `include_timestamp` parameter:
 - [x] 3.3 Validate-manifest tasks 1.1-1.4.3 passing — ✅ pytest
 - [x] 3.4 Create-manifest tasks 1.5.1-1.5.4.1 passing — ✅ pytest
 - [x] 3.5 Create-manifest -> sign -> verify flow passing — ✅ pytest
-- [ ] 3.6 Frontend verification — ✅ puppeteer (not applicable)
+- [ ] 3.6 Frontend verification — N/A (no frontend changes or puppeteer tests in scope)
 
 ## Success Criteria
 
@@ -309,4 +309,14 @@ Add optional `include_timestamp` parameter:
 
 ## Completion Notes
 
-(Filled when PRD is complete.)
+- **Docker sandbox verification**: Validated the manifest endpoints inside Docker using `docker-compose.full-stack.yml`.
+- **Docker services**:
+  - `docker compose -f docker-compose.full-stack.yml up -d postgres redis-cache`
+  - `docker compose -f docker-compose.full-stack.yml up -d enterprise-api`
+- **Pytest (inside container)**: Ran the public C2PA tests inside a one-off `enterprise-api` container with DB/Redis/env values set for the Docker network.
+  - Command:
+    - `docker compose -f docker-compose.full-stack.yml run --rm --no-deps -e CORE_DATABASE_URL=postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher_content -e CONTENT_DATABASE_URL=postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher_content -e DATABASE_URL=postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher_content -e KEY_ENCRYPTION_KEY=0000000000000000000000000000000000000000000000000000000000000000 -e ENCRYPTION_NONCE=000000000000000000000000 -e REDIS_URL=redis://redis-cache:6379 enterprise-api pytest -q tests/test_public_c2pa_validate_manifest.py tests/test_public_c2pa_create_manifest.py tests/test_public_trust_anchors.py`
+  - Result:
+    - ✅ `17 passed`
+- **Compose config fix**: Updated `docker-compose.full-stack.yml` to use valid hex values for `KEY_ENCRYPTION_KEY` and `ENCRYPTION_NONCE` (required by `enterprise_api/app/config.py`).
+- **Frontend verification**: Not applicable for this PRD (no frontend deliverables; no puppeteer suite present in repo).
