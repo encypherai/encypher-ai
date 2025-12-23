@@ -317,7 +317,7 @@ async def decode_text(
         org_public_key = None
         if signer_id_from_metadata:
             # Skip pre-fetch for known demo signers (they use the demo key directly)
-            if signer_id_from_metadata in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
+            if signer_id_from_metadata in (_demo_signer_id, "org_demo", "demo-signer-id", "c2pa-demo-signer-001"):
                 org_public_key = public_key  # Use demo key
                 logger.info(f"Using demo key for demo signer {signer_id_from_metadata}")
             else:
@@ -336,7 +336,7 @@ async def decode_text(
             if org_public_key and signer_id == signer_id_from_metadata:
                 return org_public_key
             # Fall back to demo key for demo signer IDs
-            if signer_id in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
+            if signer_id in (_demo_signer_id, "org_demo", "demo-signer-id", "c2pa-demo-signer-001"):
                 return public_key
             # For user_ orgs that weren't pre-fetched, use demo key
             if signer_id.startswith("user_"):
@@ -374,7 +374,7 @@ async def decode_text(
                 if org_public_key and signer_id == signer_id_from_metadata:
                     # Verified via Trust Anchor (database lookup)
                     signer_name = f"{signer_id} (Verified via Trust Anchor)"
-                elif signer_id in (_demo_signer_id, "org_demo", "c2pa-demo-signer-001"):
+                elif signer_id in (_demo_signer_id, "org_demo", "demo-signer-id", "c2pa-demo-signer-001"):
                     signer_name = f"{signer_id} (Demo Key)"
                 else:
                     signer_name = f"{signer_id} (Unknown Signer)"
