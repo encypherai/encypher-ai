@@ -390,13 +390,19 @@ async def decode_text(
                 signer_name=signer_name,
             )
 
-            # Determine verification status
+            # Determine verification status with descriptive messaging
             if signature_valid:
                 verification_status = "Success"
                 error_msg = None
             else:
                 verification_status = "Failure"
-                error_msg = "Verification failed - signature invalid or content modified"
+                # Provide more descriptive error based on what we found
+                if signer_name and "Unknown Signer" in signer_name:
+                    error_msg = f"Manifest found but signer '{signer_id}' is not in our Trust Anchor database. The signature cannot be verified."
+                elif signer_name:
+                    error_msg = f"Manifest found and signed by '{signer_name}', but the content has been modified since signing. The signature is no longer valid."
+                else:
+                    error_msg = "Manifest found but signature verification failed. The content may have been modified or the signer is unknown."
             
             return DecodeToolResponse(
                 metadata=payload if isinstance(payload, dict) else decoded_metadata,

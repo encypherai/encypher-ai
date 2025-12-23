@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     demo_private_key_hex: Optional[str] = None
     # SECRET_KEY is an alias for demo_private_key_hex (used in Railway production)
     secret_key: Optional[str] = None
+    # Legacy PEM format keys (for old content verification)
+    demo_private_key_pem: Optional[str] = None
+    demo_public_key_pem: Optional[str] = None
 
     model_config: SettingsConfigDict = SettingsConfigDict(
         env_file=".env",
