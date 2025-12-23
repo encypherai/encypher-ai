@@ -99,16 +99,18 @@ Welcome to Encypher!
 
 Hi{' ' + user_name if user_name else ''},
 
-Your email has been verified and your account is now active. You're all set to start making AI transparent and trustworthy!
+Your email has been verified and your account is now active. You're all set to start embedding cryptographic proof of origin in your content.
 
 Here's what you can do next:
-- Generate API Keys – Create keys to integrate Encypher into your applications
+- Generate API Keys – Integrate text authentication into your applications
 - Explore the Dashboard – Monitor your usage and manage your account
-- Read the Docs – Learn how to embed provenance metadata in AI-generated content
+- Read the Docs – Learn how to embed cryptographic watermarking in text content
 
 Go to Dashboard: {dashboard_url}
 
 Need help? Check out our documentation at https://encypherai.com/docs or email support@encypherai.com.
+
+Encipher provides infrastructure for text provenance—cryptographic proof of origin that survives copy-paste and distribution.
 
 — The Encypher Team
 """
