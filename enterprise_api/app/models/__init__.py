@@ -3,9 +3,12 @@ SQLAlchemy models for the Enterprise API.
 """
 from app.models.batch import BatchItem, BatchRequest
 from app.models.content_reference import ContentReference
+from app.models.error_log import ErrorLog
 from app.models.merkle import AttributionReport, MerkleProofCache, MerkleRoot, MerkleSubhash
 from app.models.organization import Organization
+from app.models.public_key import PublicKey
 from app.models.status_list import RevocationReason, StatusListEntry, StatusListMetadata
+from app.models.webhook import Webhook, WebhookDelivery, WebhookEvent
 
 __all__ = [
     "Organization",
@@ -19,4 +22,9 @@ __all__ = [
     "StatusListEntry",
     "StatusListMetadata",
     "RevocationReason",
+    "ErrorLog",
+    "PublicKey",
+    "Webhook",
+    "WebhookDelivery",
+    "WebhookEvent",
 ]

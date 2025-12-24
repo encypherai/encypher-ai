@@ -21,10 +21,14 @@ from app.config import settings
 from app.database import engine
 from app.observability.metrics import render_prometheus
 from app.routers import (
+    account,
+    admin,
     audit,
     batch,
     chat,
     coalition,
+    documents,
+    keys,
     licensing,
     lookup,
     onboarding,
@@ -35,6 +39,7 @@ from app.routers import (
     tools,
     usage,
     verification,
+    webhooks,
 )
 from app.services.session_service import session_service
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
@@ -265,6 +270,7 @@ _INTERNAL_DOC_TAGS = {
     "Provisioning",
     "Audit",
     "Team Management",
+    "Admin",
 }
 
 
@@ -535,6 +541,11 @@ async def root():
 
 
 # Include routers
+app.include_router(account.router, prefix="/api/v1", tags=["Account"])
+app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
+app.include_router(documents.router, prefix="/api/v1", tags=["Documents"])
+app.include_router(keys.router, prefix="/api/v1", tags=["API Keys"])
+app.include_router(webhooks.router, prefix="/api/v1", tags=["Webhooks"])
 app.include_router(signing.router, prefix="/api/v1", tags=["Signing"])
 app.include_router(verification.router, prefix="/api/v1", tags=["Verification"])
 app.include_router(lookup.router, prefix="/api/v1", tags=["Lookup"])

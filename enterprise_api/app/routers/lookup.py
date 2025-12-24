@@ -16,35 +16,13 @@ router = APIRouter()
 logger = logging.getLogger(__name__)
 
 
-@router.post("/lookup", response_model=LookupResponse)
-async def lookup_sentence(
-    request: LookupRequest,
-    db: AsyncSession = Depends(get_db)
-):
-    """
-    Look up sentence provenance by hash.
-
-    This endpoint allows anyone to paste a sentence and find which document
-    it originally came from, along with metadata about the publisher.
-
-    Use case: User pastes a sentence, we find which document it came from.
-
-    Note: This endpoint does NOT require authentication (public lookup).
-
-    Args:
-        request: LookupRequest containing sentence text
-        db: Database session
-
-    Returns:
-        LookupResponse with document and organization details if found
-    """
+async def _do_lookup(request: LookupRequest, db: AsyncSession) -> LookupResponse:
+    """Core lookup logic shared by both endpoints."""
     logger.info(f"Lookup request for sentence: {request.sentence_text[:50]}...")
 
-    # Compute hash of the sentence
     sentence_hash = compute_sentence_hash(request.sentence_text)
     logger.debug(f"Computed sentence hash: {sentence_hash}")
 
-    # Query database for sentence
     result = await db.execute(
         text("""
             SELECT
@@ -66,10 +44,7 @@ async def lookup_sentence(
 
     if not row:
         logger.info(f"Sentence not found in database (hash: {sentence_hash})")
-        return LookupResponse(
-            success=True,
-            found=False
-        )
+        return LookupResponse(success=True, found=False)
 
     logger.info(
         f"Sentence found: document='{row.document_title}', "
@@ -85,3 +60,39 @@ async def lookup_sentence(
         publication_date=row.publication_date,
         sentence_index=row.sentence_index
     )
+
+
+@router.post("/lookup", response_model=LookupResponse)
+async def lookup_sentence(
+    request: LookupRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Look up sentence provenance by hash.
+
+    This endpoint allows anyone to paste a sentence and find which document
+    it originally came from, along with metadata about the publisher.
+
+    Use case: User pastes a sentence, we find which document it came from.
+
+    Note: This endpoint does NOT require authentication (public lookup).
+
+    **Alias:** POST /provenance/lookup
+    """
+    return await _do_lookup(request, db)
+
+
+@router.post("/provenance/lookup", response_model=LookupResponse)
+async def provenance_lookup(
+    request: LookupRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Look up sentence provenance by hash.
+
+    This is an alias for POST /lookup with a clearer name.
+    Find which document a sentence originally came from.
+
+    Note: This endpoint does NOT require authentication (public lookup).
+    """
+    return await _do_lookup(request, db)

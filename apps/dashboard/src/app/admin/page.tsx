@@ -174,6 +174,19 @@ export default function AdminPage() {
     onError: (err: any) => toast.error(err?.message || 'Failed to update user.'),
   });
 
+  const updateTierMutation = useMutation({
+    mutationFn: async ({ userId, newTier, reason }: { userId: string; newTier: string; reason?: string }) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      await apiClient.updateUserTier(accessToken, userId, newTier, reason);
+    },
+    onSuccess: () => {
+      toast.success('User tier updated.');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to update tier.'),
+  });
+
   const toggleStatusMutation = useMutation({
     mutationFn: async ({ userId, enabled }: { userId: string; enabled: boolean }) => {
       if (!accessToken) throw new Error('You must be signed in.');
@@ -476,9 +489,17 @@ export default function AdminPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <Badge variant={user.tier === 'enterprise' ? 'success' : 'default'}>
-                        {user.tier}
-                      </Badge>
+                      <select
+                        value={user.tier}
+                        onChange={(e) => updateTierMutation.mutate({ userId: user.id, newTier: e.target.value })}
+                        className="text-sm border border-slate-300 dark:border-slate-600 rounded-md px-2 py-1 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-ncs"
+                      >
+                        <option value="starter">Starter</option>
+                        <option value="professional">Professional</option>
+                        <option value="business">Business</option>
+                        <option value="enterprise">Enterprise</option>
+                        <option value="strategic_partner">Strategic Partner</option>
+                      </select>
                     </td>
                     <td className="px-6 py-4">
                       <select

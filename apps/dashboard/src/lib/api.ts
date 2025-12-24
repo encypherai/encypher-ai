@@ -529,32 +529,163 @@ const apiClient = {
     }
   },
   // ============================================
-  // Admin (placeholder - requires admin endpoints)
+  // Admin (Enterprise API /api/v1/admin/*)
   // ============================================
 
+  /**
+   * Get platform statistics (super admin only)
+   */
   async getAdminStats(accessToken: string): Promise<unknown> {
-    // Placeholder - returns mock data until admin endpoints are implemented
-    return {
-      totalUsers: 0,
-      activeUsers: 0,
-      totalApiCalls: 0,
-      revenue: 0,
-    };
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${API_BASE_URL}/admin/stats`,
+      accessToken
+    );
+    return response.data;
   },
 
-  async getAdminUsers(accessToken: string, search?: string): Promise<unknown[]> {
-    // Placeholder - returns empty array until admin endpoints are implemented
-    return [];
+  /**
+   * List all users with optional filtering (super admin only)
+   */
+  async getAdminUsers(accessToken: string, search?: string, tier?: string, page?: number): Promise<unknown> {
+    const params = new URLSearchParams();
+    if (search) params.append('search', search);
+    if (tier) params.append('tier', tier);
+    if (page) params.append('page', page.toString());
+    
+    const queryString = params.toString();
+    const url = `${API_BASE_URL}/admin/users${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      url,
+      accessToken
+    );
+    return response.data;
   },
 
-  async updateAdminUser(accessToken: string, userId: string, data: unknown): Promise<unknown> {
-    // Placeholder
+  /**
+   * Update a user's tier (super admin only)
+   */
+  async updateUserTier(accessToken: string, userId: string, newTier: string, reason?: string): Promise<unknown> {
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${API_BASE_URL}/admin/users/update-tier`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, new_tier: newTier, reason }),
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Update a user's status (suspend/activate) - super admin only
+   */
+  async toggleUserStatus(accessToken: string, userId: string, enabled: boolean, reason?: string): Promise<unknown> {
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${API_BASE_URL}/admin/users/update-status`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ 
+          user_id: userId, 
+          status: enabled ? 'active' : 'suspended',
+          reason 
+        }),
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Get error logs (super admin only)
+   */
+  async getErrorLogs(accessToken: string, options?: {
+    userId?: string;
+    statusCode?: number;
+    page?: number;
+    pageSize?: number;
+  }): Promise<unknown> {
+    const params = new URLSearchParams();
+    if (options?.userId) params.append('user_id', options.userId);
+    if (options?.statusCode) params.append('status_code', options.statusCode.toString());
+    if (options?.page) params.append('page', options.page.toString());
+    if (options?.pageSize) params.append('page_size', options.pageSize.toString());
+    
+    const queryString = params.toString();
+    const url = `${API_BASE_URL}/admin/error-logs${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      url,
+      accessToken
+    );
+    return response.data;
+  },
+
+  /**
+   * Legacy method for backward compatibility
+   */
+  async updateAdminUser(accessToken: string, userId: string, data: { tier?: string; role?: string }): Promise<unknown> {
+    if (data.tier) {
+      return this.updateUserTier(accessToken, userId, data.tier);
+    }
     return { success: true };
   },
 
-  async toggleUserStatus(accessToken: string, userId: string, enabled?: boolean): Promise<unknown> {
-    // Placeholder
-    return { success: true };
+  // ============================================
+  // BYOK Public Key Management
+  // ============================================
+
+  /**
+   * Register a public key for BYOK verification (enterprise tier)
+   */
+  async registerPublicKey(accessToken: string, publicKeyPem: string, keyName?: string, keyAlgorithm?: string): Promise<unknown> {
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${API_BASE_URL}/admin/public-keys`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ 
+          public_key_pem: publicKeyPem, 
+          key_name: keyName,
+          key_algorithm: keyAlgorithm || 'Ed25519'
+        }),
+      }
+    );
+    return response;
+  },
+
+  /**
+   * List organization's public keys
+   */
+  async listPublicKeys(accessToken: string, includeRevoked?: boolean): Promise<unknown> {
+    const params = new URLSearchParams();
+    if (includeRevoked) params.append('include_revoked', 'true');
+    
+    const queryString = params.toString();
+    const url = `${API_BASE_URL}/admin/public-keys${queryString ? `?${queryString}` : ''}`;
+    
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      url,
+      accessToken
+    );
+    return response.data;
+  },
+
+  /**
+   * Revoke a public key
+   */
+  async revokePublicKey(accessToken: string, keyId: string, reason?: string): Promise<unknown> {
+    const params = new URLSearchParams();
+    if (reason) params.append('reason', reason);
+    
+    const queryString = params.toString();
+    const url = `${API_BASE_URL}/admin/public-keys/${keyId}${queryString ? `?${queryString}` : ''}`;
+    
+    return fetchWithAuth(
+      url,
+      accessToken,
+      { method: 'DELETE' }
+    );
   },
 
   // ============================================
