@@ -11,6 +11,9 @@ import assert from 'node:assert';
 // C2PA Text Manifest magic bytes: "C2PATXT\0"
 const C2PA_MAGIC = [0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00];
 
+// Encypher magic bytes: "ENCYPHER"
+const ENCYPHER_MAGIC = [0x45, 0x4E, 0x43, 0x59, 0x50, 0x48, 0x45, 0x52];
+
 // Unicode variation selector ranges
 const VS_RANGES = {
   VS1_START: 0xFE00,
@@ -57,6 +60,20 @@ function hasC2PAMagic(bytes) {
     if (bytes[i] !== C2PA_MAGIC[i]) return false;
   }
   return true;
+}
+
+function hasEncypherMagic(bytes) {
+  if (bytes.length < ENCYPHER_MAGIC.length) return false;
+  for (let i = 0; i < ENCYPHER_MAGIC.length; i++) {
+    if (bytes[i] !== ENCYPHER_MAGIC[i]) return false;
+  }
+  return true;
+}
+
+function detectMarkerType(bytes) {
+  if (hasC2PAMagic(bytes)) return 'c2pa';
+  if (hasEncypherMagic(bytes)) return 'encypher';
+  return null;
 }
 
 function extractVisibleText(text) {
@@ -150,6 +167,46 @@ describe('hasC2PAMagic', () => {
   it('should reject too-short content', () => {
     const bytes = new Uint8Array([0x43, 0x32, 0x50]);
     assert.strictEqual(hasC2PAMagic(bytes), false);
+  });
+});
+
+describe('hasEncypherMagic', () => {
+  it('should detect Encypher magic header', () => {
+    // "ENCYPHER" = [0x45, 0x4E, 0x43, 0x59, 0x50, 0x48, 0x45, 0x52]
+    const bytes = new Uint8Array([0x45, 0x4E, 0x43, 0x59, 0x50, 0x48, 0x45, 0x52, 0x01, 0x02]);
+    assert.strictEqual(hasEncypherMagic(bytes), true);
+  });
+
+  it('should reject non-Encypher content', () => {
+    const bytes = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
+    assert.strictEqual(hasEncypherMagic(bytes), false);
+  });
+
+  it('should reject C2PA content as non-Encypher', () => {
+    const bytes = new Uint8Array([0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00]);
+    assert.strictEqual(hasEncypherMagic(bytes), false);
+  });
+});
+
+describe('detectMarkerType', () => {
+  it('should detect C2PA marker type', () => {
+    const bytes = new Uint8Array([0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00, 0x01]);
+    assert.strictEqual(detectMarkerType(bytes), 'c2pa');
+  });
+
+  it('should detect Encypher marker type', () => {
+    const bytes = new Uint8Array([0x45, 0x4E, 0x43, 0x59, 0x50, 0x48, 0x45, 0x52, 0x01]);
+    assert.strictEqual(detectMarkerType(bytes), 'encypher');
+  });
+
+  it('should return null for unknown marker', () => {
+    const bytes = new Uint8Array([0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07]);
+    assert.strictEqual(detectMarkerType(bytes), null);
+  });
+
+  it('should return null for empty bytes', () => {
+    const bytes = new Uint8Array([]);
+    assert.strictEqual(detectMarkerType(bytes), null);
   });
 });
 

@@ -1,12 +1,19 @@
 /**
  * Encypher C2PA Content Detector
  * 
- * Scans the page for C2PA text embeddings using Unicode variation selectors.
+ * Scans the page for C2PA and Encypher text embeddings using Unicode variation selectors.
  * When found, injects verification badges and communicates with the service worker.
+ * 
+ * Supports two marker types:
+ * - C2PA Text Manifest: "C2PATXT\0" (standard C2PA format)
+ * - Encypher Marker: "ENCYPHER" (Encypher-specific format)
  */
 
 // C2PA Text Manifest magic bytes: "C2PATXT\0"
 const C2PA_MAGIC = [0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00];
+
+// Encypher magic bytes: "ENCYPHER"
+const ENCYPHER_MAGIC = [0x45, 0x4E, 0x43, 0x59, 0x50, 0x48, 0x45, 0x52];
 
 // Unicode variation selector ranges used for embedding
 const VS_RANGES = {
@@ -68,6 +75,27 @@ function hasC2PAMagic(bytes) {
     if (bytes[i] !== C2PA_MAGIC[i]) return false;
   }
   return true;
+}
+
+/**
+ * Check if bytes start with Encypher magic
+ */
+function hasEncypherMagic(bytes) {
+  if (bytes.length < ENCYPHER_MAGIC.length) return false;
+  for (let i = 0; i < ENCYPHER_MAGIC.length; i++) {
+    if (bytes[i] !== ENCYPHER_MAGIC[i]) return false;
+  }
+  return true;
+}
+
+/**
+ * Detect marker type from bytes
+ * @returns {string|null} 'c2pa', 'encypher', or null if no valid marker
+ */
+function detectMarkerType(bytes) {
+  if (hasC2PAMagic(bytes)) return 'c2pa';
+  if (hasEncypherMagic(bytes)) return 'encypher';
+  return null;
 }
 
 /**
@@ -161,10 +189,15 @@ function injectBadge(element, status, details) {
     error: '!'
   };
   
+  // Format marker type for display
+  const markerLabel = details.markerType === 'c2pa' ? 'C2PA' : 
+                      details.markerType === 'encypher' ? 'Encypher' : '';
+  
   badge.innerHTML = `
     <span class="encypher-badge__icon">${icons[status] || '?'}</span>
     <span class="encypher-badge__tooltip">
       <strong>${status === 'verified' ? 'Verified Content' : status.charAt(0).toUpperCase() + status.slice(1)}</strong>
+      ${markerLabel ? `<br>Format: ${markerLabel}` : ''}
       ${details.signer ? `<br>Signed by: ${details.signer}` : ''}
       ${details.timestamp ? `<br>Date: ${new Date(details.timestamp).toLocaleDateString()}` : ''}
       ${details.error ? `<br>Error: ${details.error}` : ''}
@@ -201,7 +234,8 @@ async function scanPage() {
     const text = node.textContent || '';
     const bytes = extractEmbeddedBytes(text);
     
-    if (hasC2PAMagic(bytes)) {
+    const markerType = detectMarkerType(bytes);
+    if (markerType) {
       const containingBlock = getContainingBlock(node);
       const visibleText = extractVisibleText(text);
       
@@ -210,11 +244,15 @@ async function scanPage() {
         node: node,
         text: text,
         visibleText: visibleText,
-        bytes: Array.from(bytes)
+        bytes: Array.from(bytes),
+        markerType: markerType
       });
       
-      // Show pending badge immediately
-      injectBadge(containingBlock, 'pending', { message: 'Verifying...' });
+      // Show pending badge immediately with marker type
+      injectBadge(containingBlock, 'pending', { 
+        message: 'Verifying...',
+        markerType: markerType
+      });
     }
   }
   

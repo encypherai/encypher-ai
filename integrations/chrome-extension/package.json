@@ -1,8 +1,9 @@
 {
   "name": "encypher-c2pa-verifier",
   "version": "1.0.0",
-  "description": "Chrome extension to verify C2PA-signed content on any webpage",
+  "description": "Chrome extension to verify C2PA and Encypher signed content on any webpage",
   "private": true,
+  "type": "module",
   "scripts": {
     "test": "node --test tests/*.test.js",
     "test:e2e": "npx puppeteer test tests/e2e/*.test.js",
