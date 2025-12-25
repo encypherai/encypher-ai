@@ -33,11 +33,23 @@ interface MetadataWithOriginalText {
   [key: string]: unknown;
 }
 
+interface EmbeddingResult {
+  index: number;
+  metadata?: MetadataWithOriginalText | null;
+  verification_status: 'Success' | 'Failure' | 'Key Not Found' | 'Not Attempted' | 'Error';
+  error?: string | null;
+  verdict?: VerifyVerdict | null;
+  text_span?: [number, number] | null;
+  clean_text?: string | null;
+}
+
 interface DecodeToolResponse {
   metadata?: MetadataWithOriginalText | null;
   verification_status: 'Success' | 'Failure' | 'Key Not Found' | 'Not Attempted' | 'Error';
   error?: string | { message: string } | null;
   raw_hidden_data?: VerifyVerdict | null;
+  embeddings_found?: number;
+  all_embeddings?: EmbeddingResult[] | null;
 }
 
 function hasOriginalText(metadata: unknown): metadata is MetadataWithOriginalText {
@@ -194,7 +206,42 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
 
   const getStatusUI = (response: DecodeToolResponse) => {
     const verdict = response.raw_hidden_data;
+    const embeddingsFound = response.embeddings_found || 0;
+    const allEmbeddings = response.all_embeddings || [];
     
+    // Multi-embedding case
+    if (embeddingsFound > 1 && allEmbeddings.length > 0) {
+      const verifiedCount = allEmbeddings.filter(e => e.verdict?.valid).length;
+      const tamperedCount = allEmbeddings.filter(e => !e.verdict?.valid && e.metadata).length;
+      
+      if (verifiedCount === embeddingsFound) {
+        return {
+          variant: "default" as const,
+          className: "border-green-900 bg-green-800 text-white",
+          title: `All ${embeddingsFound} Embeddings Verified`,
+          description: `Found ${embeddingsFound} embedded manifests. All signatures are valid.`,
+          icon: "✅"
+        };
+      } else if (verifiedCount > 0) {
+        return {
+          variant: "destructive" as const,
+          className: "border-yellow-900 bg-yellow-700 text-white",
+          title: `Partial Verification (${verifiedCount}/${embeddingsFound})`,
+          description: `Found ${embeddingsFound} embeddings: ${verifiedCount} verified, ${tamperedCount} tampered or unverified.`,
+          icon: "⚠️"
+        };
+      } else {
+        return {
+          variant: "destructive" as const,
+          className: "border-red-900 bg-red-800 text-white",
+          title: `Verification Failed (0/${embeddingsFound})`,
+          description: `Found ${embeddingsFound} embeddings but none could be verified.`,
+          icon: "❌"
+        };
+      }
+    }
+    
+    // Single embedding case
     if (verdict?.valid) {
       return {
         variant: "default" as const,
@@ -206,7 +253,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
     }
     
     // Check for manifest presence to distinguish Tampered vs Not Signed
-    // Ensure manifest is truly present and not empty
     const manifest = (response.metadata as any)?.manifest;
     const hasManifest = manifest && typeof manifest === 'object' && Object.keys(manifest).length > 0;
 
@@ -229,6 +275,18 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
         : (verdict?.reason_code || "No valid signature found."),
       icon: "❌"
     };
+  };
+
+  const getEmbeddingStatusIcon = (embedding: EmbeddingResult) => {
+    if (embedding.verdict?.valid) return "✅";
+    if (embedding.verdict?.tampered) return "⚠️";
+    return "❌";
+  };
+
+  const getEmbeddingStatusClass = (embedding: EmbeddingResult) => {
+    if (embedding.verdict?.valid) return "border-green-700 bg-green-900/30";
+    if (embedding.verdict?.tampered) return "border-yellow-700 bg-yellow-900/30";
+    return "border-red-700 bg-red-900/30";
   };
 
   return (
@@ -340,6 +398,81 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                       </div>
                     ) : (
                       <>
+                        {/* Multi-embedding summary */}
+                        {(lastDecodeResponse.embeddings_found || 0) > 1 && lastDecodeResponse.all_embeddings && (
+                          <div className="mb-4 p-3 bg-slate-800 rounded border border-slate-700">
+                            <div className="flex items-center justify-between mb-2">
+                              <strong className="text-slate-200">Embeddings Summary</strong>
+                              <span className="text-xs text-slate-400">
+                                {lastDecodeResponse.all_embeddings.filter(e => e.verdict?.valid).length} verified / {lastDecodeResponse.embeddings_found} total
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                              <div className="p-2 bg-green-900/30 rounded border border-green-700">
+                                <div className="text-lg font-bold text-green-400">
+                                  {lastDecodeResponse.all_embeddings.filter(e => e.verdict?.valid).length}
+                                </div>
+                                <div className="text-green-300">Verified</div>
+                              </div>
+                              <div className="p-2 bg-yellow-900/30 rounded border border-yellow-700">
+                                <div className="text-lg font-bold text-yellow-400">
+                                  {lastDecodeResponse.all_embeddings.filter(e => e.verdict?.tampered).length}
+                                </div>
+                                <div className="text-yellow-300">Tampered</div>
+                              </div>
+                              <div className="p-2 bg-red-900/30 rounded border border-red-700">
+                                <div className="text-lg font-bold text-red-400">
+                                  {lastDecodeResponse.all_embeddings.filter(e => !e.verdict?.valid && !e.verdict?.tampered).length}
+                                </div>
+                                <div className="text-red-300">Failed</div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Individual embeddings list */}
+                        {(lastDecodeResponse.embeddings_found || 0) > 1 && lastDecodeResponse.all_embeddings && (
+                          <div className="space-y-2 mb-4">
+                            <strong className="block text-slate-300 text-sm">Individual Embeddings:</strong>
+                            <div className="max-h-64 overflow-y-auto space-y-2">
+                              {lastDecodeResponse.all_embeddings.map((embedding, idx) => (
+                                <div 
+                                  key={idx} 
+                                  className={`p-2 rounded border text-xs ${getEmbeddingStatusClass(embedding)}`}
+                                >
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="font-medium">
+                                      {getEmbeddingStatusIcon(embedding)} Embedding #{embedding.index + 1}
+                                    </span>
+                                    <span className={`px-2 py-0.5 rounded text-xs ${
+                                      embedding.verdict?.valid ? 'bg-green-700 text-green-100' :
+                                      embedding.verdict?.tampered ? 'bg-yellow-700 text-yellow-100' :
+                                      'bg-red-700 text-red-100'
+                                    }`}>
+                                      {embedding.verification_status}
+                                    </span>
+                                  </div>
+                                  {embedding.verdict?.signer_name && (
+                                    <div className="text-slate-300">
+                                      <strong>Signer:</strong> {embedding.verdict.signer_name}
+                                    </div>
+                                  )}
+                                  {embedding.clean_text && (
+                                    <div className="text-slate-400 truncate mt-1" title={embedding.clean_text}>
+                                      <strong>Text:</strong> {embedding.clean_text.substring(0, 100)}...
+                                    </div>
+                                  )}
+                                  {embedding.error && (
+                                    <div className="text-red-300 mt-1">
+                                      <strong>Error:</strong> {embedding.error}
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
                         {lastDecodeResponse.metadata && hasOriginalText(lastDecodeResponse.metadata) && (
                           <div className="flex items-center gap-2 mb-2">
                             <span className="break-all font-mono text-sm">{lastDecodeResponse.metadata.original_text}</span>
@@ -350,7 +483,9 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                         )}
                         {lastDecodeResponse.metadata && (
                           <div className="mt-4 p-2 bg-slate-900 text-slate-50 rounded text-xs border border-slate-800 max-w-full">
-                            <strong className="block mb-1 text-slate-400">C2PA Manifest Data:</strong>
+                            <strong className="block mb-1 text-slate-400">
+                              {(lastDecodeResponse.embeddings_found || 0) > 1 ? 'Primary Manifest Data (Embedding #1):' : 'C2PA Manifest Data:'}
+                            </strong>
                             <pre className="whitespace-pre-wrap break-all overflow-x-auto text-slate-50 max-w-full">
                               {JSON.stringify(lastDecodeResponse.metadata, null, 2)}
                             </pre>
