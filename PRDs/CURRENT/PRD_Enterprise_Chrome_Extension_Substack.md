@@ -1,7 +1,7 @@
 # Browser Tools: Chrome Verifier Extension + Substack Author Workflow
 
-**Status:** 📋 Planning  
-**Current Goal:** Task 1.1 — Define privacy posture and verification UX for signed content on arbitrary web pages.
+**Status:** 🚧 In Progress  
+**Current Goal:** Task 4.1 — Testing and refinement of core extension functionality.
 
 ## Overview
 
@@ -52,34 +52,34 @@ A browser extension can make C2PA verification visible to readers anywhere on th
 
 ### 3.0 Technical Architecture (Manifest V3)
 
-- [ ] 3.1 Extension scaffolding
-  - [ ] 3.1.1 Manifest V3 configuration
-  - [ ] 3.1.2 Service worker background
-  - [ ] 3.1.3 Content scripts + isolated world
-- [ ] 3.2 Wrapper detection + extraction
-  - [ ] 3.2.1 Detect presence of variation selector ranges
-  - [ ] 3.2.2 Locate C2PA wrapper magic (`C2PATXT\0`) in decoded bytes
-  - [ ] 3.2.3 Extract clean text + wrapper span (for exclusions)
-  - [ ] 3.2.4 Handle multiple wrappers on a page
-- [ ] 3.3 Verification strategy
-  - [ ] 3.3.1 Call `POST /api/v1/verify` with extracted signed block
+- [x] 3.1 Extension scaffolding — ✅ `integrations/chrome-extension/`
+  - [x] 3.1.1 Manifest V3 configuration — ✅ `manifest.json`
+  - [x] 3.1.2 Service worker background — ✅ `background/service-worker.js`
+  - [x] 3.1.3 Content scripts + isolated world — ✅ `content/detector.js`
+- [x] 3.2 Wrapper detection + extraction — ✅ `content/detector.js`
+  - [x] 3.2.1 Detect presence of variation selector ranges
+  - [x] 3.2.2 Locate C2PA wrapper magic (`C2PATXT\0`) in decoded bytes
+  - [x] 3.2.3 Extract clean text + wrapper span (for exclusions)
+  - [x] 3.2.4 Handle multiple wrappers on a page
+- [x] 3.3 Verification strategy — ✅ `background/service-worker.js`
+  - [x] 3.3.1 Call `POST /api/v1/public/extract-and-verify` with extracted signed block
   - [ ] 3.3.2 Resolve signer identity via `GET /api/v1/public/c2pa/trust-anchors/{signer_id}` (if needed)
   - [ ] 3.3.3 Display revocation status (StatusList endpoints)
-- [ ] 3.4 Performance constraints
-  - [ ] 3.4.1 Avoid scanning the full DOM repeatedly
-  - [ ] 3.4.2 Debounce on dynamic pages
-  - [ ] 3.4.3 Cache verification results per URL + content hash
+- [x] 3.4 Performance constraints
+  - [x] 3.4.1 Avoid scanning the full DOM repeatedly — ✅ TreeWalker
+  - [x] 3.4.2 Debounce on dynamic pages — ✅ MutationObserver with 500ms debounce
+  - [x] 3.4.3 Cache verification results per URL + content hash — ✅ 5min TTL cache
 
 ### 4.0 UI Implementation
 
-- [ ] 4.1 Popup UI
-  - [ ] 4.1.1 List verified blocks with signer + time
-  - [ ] 4.1.2 Link to verification portal / shareable URL
-  - [ ] 4.1.3 “Report issue” link
-- [ ] 4.2 Inline badge
-  - [ ] 4.2.1 Attach badge near detected block
-  - [ ] 4.2.2 Click opens detail drawer
-  - [ ] 4.2.3 Accessibility (ARIA labels)
+- [x] 4.1 Popup UI — ✅ `popup/popup.html`, `popup.css`, `popup.js`
+  - [x] 4.1.1 List verified blocks with signer + time
+  - [x] 4.1.2 Link to verification portal / shareable URL
+  - [ ] 4.1.3 "Report issue" link
+- [x] 4.2 Inline badge — ✅ `content/badge.css`, `content/detector.js`
+  - [x] 4.2.1 Attach badge near detected block
+  - [x] 4.2.2 Click opens detail drawer (tooltip on hover)
+  - [x] 4.2.3 Accessibility (ARIA labels)
 - [ ] 4.3 Options page
   - [ ] 4.3.1 Opt-in auto verify
   - [ ] 4.3.2 Privacy settings (send content vs local-only)

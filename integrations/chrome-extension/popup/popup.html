@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encypher C2PA Verifier</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <header class="popup__header">
+      <div class="popup__logo">
+        <img src="../icons/icon32.png" alt="Encypher" width="24" height="24">
+        <span class="popup__title">Encypher Verifier</span>
+      </div>
+    </header>
+
+    <main class="popup__content">
+      <!-- Loading state -->
+      <div id="loading" class="popup__state popup__state--loading">
+        <div class="spinner"></div>
+        <p>Scanning page...</p>
+      </div>
+
+      <!-- No embeddings found -->
+      <div id="no-content" class="popup__state popup__state--empty" hidden>
+        <div class="popup__icon popup__icon--gray">○</div>
+        <h2>No Signed Content</h2>
+        <p>No C2PA-signed content was detected on this page.</p>
+      </div>
+
+      <!-- Embeddings found -->
+      <div id="content-found" class="popup__state" hidden>
+        <div class="popup__summary">
+          <div class="popup__stat popup__stat--verified">
+            <span class="popup__stat-value" id="verified-count">0</span>
+            <span class="popup__stat-label">Verified</span>
+          </div>
+          <div class="popup__stat popup__stat--pending">
+            <span class="popup__stat-value" id="pending-count">0</span>
+            <span class="popup__stat-label">Pending</span>
+          </div>
+          <div class="popup__stat popup__stat--invalid">
+            <span class="popup__stat-value" id="invalid-count">0</span>
+            <span class="popup__stat-label">Invalid</span>
+          </div>
+        </div>
+
+        <div class="popup__details" id="details-list">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- Error state -->
+      <div id="error" class="popup__state popup__state--error" hidden>
+        <div class="popup__icon popup__icon--red">!</div>
+        <h2>Error</h2>
+        <p id="error-message">Unable to scan page.</p>
+      </div>
+    </main>
+
+    <footer class="popup__footer">
+      <button id="rescan-btn" class="popup__btn popup__btn--secondary">
+        ↻ Rescan
+      </button>
+      <a href="https://encypherai.com/verify" target="_blank" class="popup__btn popup__btn--primary">
+        Verify Portal
+      </a>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

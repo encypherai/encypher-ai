@@ -1,0 +1,154 @@
+/**
+ * Encypher C2PA Verification Badge Styles
+ */
+
+.encypher-verified-content {
+  position: relative;
+}
+
+.encypher-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  user-select: none;
+}
+
+.encypher-badge:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.encypher-badge:focus {
+  outline: 2px solid #4A90D9;
+  outline-offset: 2px;
+}
+
+/* Status colors */
+.encypher-badge--verified {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+}
+
+.encypher-badge--pending {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+  animation: encypher-pulse 1.5s ease-in-out infinite;
+}
+
+.encypher-badge--invalid {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: white;
+}
+
+.encypher-badge--revoked {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: white;
+}
+
+.encypher-badge--error {
+  background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+  color: white;
+}
+
+/* Badge icon */
+.encypher-badge__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Tooltip */
+.encypher-badge__tooltip {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #1F2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: normal;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  z-index: 10001;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  text-align: left;
+}
+
+.encypher-badge__tooltip::before {
+  content: '';
+  position: absolute;
+  bottom: 100%;
+  right: 8px;
+  border: 6px solid transparent;
+  border-bottom-color: #1F2937;
+}
+
+.encypher-badge:hover .encypher-badge__tooltip,
+.encypher-badge:focus .encypher-badge__tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+.encypher-badge__tooltip strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #10B981;
+}
+
+.encypher-badge--invalid .encypher-badge__tooltip strong,
+.encypher-badge--error .encypher-badge__tooltip strong {
+  color: #EF4444;
+}
+
+.encypher-badge--revoked .encypher-badge__tooltip strong {
+  color: #8B5CF6;
+}
+
+.encypher-badge--pending .encypher-badge__tooltip strong {
+  color: #F59E0B;
+}
+
+/* Pulse animation for pending state */
+@keyframes encypher-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Highlight verified content block */
+.encypher-verified-content::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid transparent;
+  border-radius: 4px;
+  pointer-events: none;
+  transition: border-color 0.2s ease;
+}
+
+.encypher-verified-content:hover::after {
+  border-color: rgba(16, 185, 129, 0.3);
+}
