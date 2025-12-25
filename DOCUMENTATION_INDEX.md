@@ -117,15 +117,20 @@ Use this index to jump directly to the documentation you need.
 **Tier**: Enterprise  
 **Port**: 9000
 
-#### Enterprise SDK
+#### Enterprise SDKs
 | Document | Purpose |
 |----------|---------|
-| [enterprise_sdk/README.md](./enterprise_sdk/README.md) | **Complete SDK guide** (855 lines) |
-| [enterprise_sdk/examples/](./enterprise_sdk/examples/) | Usage examples |
+| [sdk/README.md](./sdk/README.md) | **Auto-generated SDKs** (Python/TypeScript/Go/Rust) |
+| [sdk/python/](./sdk/python/) | Python SDK (auto-generated from OpenAPI) |
+| [sdk/typescript/](./sdk/typescript/) | TypeScript SDK (auto-generated from OpenAPI) |
+| [sdk/go/](./sdk/go/) | Go SDK (auto-generated from OpenAPI) |
+| [sdk/rust/](./sdk/rust/) | Rust SDK (auto-generated from OpenAPI) |
+| [archive/enterprise_sdk_deprecated/DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) | ⚠️ Deprecated hand-crafted SDK |
 
-**Key Features**: Batch operations, CI/CD integration, LangChain/OpenAI wrappers  
-**Status**: ✅ Production Ready  
-**Tier**: Enterprise
+**Key Features**: Auto-generated from API spec, always in sync, MIT licensed  
+**Status**: ✅ Generated (not yet published to registries)  
+**Tier**: Enterprise  
+**API Docs**: [api.encypherai.com/docs](https://api.encypherai.com/docs)
 
 ---
 
@@ -330,8 +335,8 @@ Use this index to jump directly to the documentation you need.
 - [enterprise_api/](./enterprise_api/) - API key auth
 
 #### Content Signing
-- [enterprise_api/](./enterprise_api/) - C2PA signing API
-- [sdk/](./sdk/) - Multi-language SDKs (Python/TypeScript/Go/Rust)
+- [enterprise_api/](./enterprise_api/) - C2PA signing
+- [enterprise_sdk/](./enterprise_sdk/) - SDK wrapper
 - [integrations/wordpress-assurance-plugin/](./integrations/wordpress-assurance-plugin/) - WordPress
 
 #### Verification

@@ -16,7 +16,7 @@ import httpx
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import async_session_maker
+from app.database import async_session_factory
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class WebhookDispatcher:
         """
         should_close_db = db is None
         if db is None:
-            db = async_session_maker()
+            db = async_session_factory()
 
         try:
             # Get active webhooks for this event
