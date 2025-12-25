@@ -70,7 +70,7 @@ This PRD addresses critical gaps in the Enterprise API that enterprise customers
 - [x] 4.5 Implement `DELETE /api/v1/webhooks/{id}` - Remove webhook
 - [x] 4.6 Implement `POST /api/v1/webhooks/{id}/test` - Test webhook
 - [x] 4.7 Create webhook dispatcher service (`app/services/webhook_dispatcher.py`)
-- [ ] 4.8 Integrate webhook events into signing/verification flows
+- [x] 4.8 Integrate webhook events into signing/verification flows
 - [x] 4.9 Write tests for webhook system
 
 ### 5.0 Endpoint Naming Improvements

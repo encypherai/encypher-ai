@@ -4,6 +4,7 @@ API Keys router for key management.
 Provides endpoints for creating, listing, rotating, and revoking API keys.
 """
 import hashlib
+import json
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -167,14 +168,14 @@ async def list_keys(
 
     where_clause = "organization_id = :org_id"
     if not include_revoked:
-        where_clause += " AND is_revoked = false"
+        where_clause += " AND revoked_at IS NULL"
 
     result = await db.execute(
         text(f"""
             SELECT 
-                id, name, key_prefix, permissions,
+                id, name, key_prefix, scopes,
                 created_at, last_used_at, expires_at,
-                is_active, is_revoked, usage_count
+                is_active, revoked_at
             FROM api_keys
             WHERE {where_clause}
             ORDER BY created_at DESC
@@ -185,18 +186,22 @@ async def list_keys(
 
     keys = []
     for row in rows:
-        permissions = row.permissions if isinstance(row.permissions, list) else ["sign", "verify"]
+        # scopes is JSONB, parse it
+        scopes = row.scopes if row.scopes else ["sign", "verify"]
+        if isinstance(scopes, str):
+            import json
+            scopes = json.loads(scopes)
         keys.append(
             KeySummary(
                 id=row.id,
                 name=row.name,
                 prefix=row.key_prefix or "ek_...",
-                permissions=permissions,
+                permissions=scopes,
                 created_at=row.created_at.isoformat() if row.created_at else "",
                 last_used_at=row.last_used_at.isoformat() if row.last_used_at else None,
                 expires_at=row.expires_at.isoformat() if row.expires_at else None,
-                is_active=row.is_active and not row.is_revoked,
-                usage_count=row.usage_count or 0,
+                is_active=row.is_active and row.revoked_at is None,
+                usage_count=0,
             ).model_dump()
         )
 
@@ -241,7 +246,7 @@ async def create_key(
 
     if limit != -1:
         count_result = await db.execute(
-            text("SELECT COUNT(*) FROM api_keys WHERE organization_id = :org_id AND is_revoked = false"),
+            text("SELECT COUNT(*) FROM api_keys WHERE organization_id = :org_id AND revoked_at IS NULL"),
             {"org_id": org_id},
         )
         current_count = count_result.scalar() or 0
@@ -272,24 +277,24 @@ async def create_key(
     if not permissions:
         permissions = ["sign", "verify"]
 
-    # Insert key
+    # Insert key - use scopes column (JSONB)
     await db.execute(
         text("""
             INSERT INTO api_keys (
                 id, organization_id, name, key_hash, key_prefix,
-                permissions, created_at, expires_at, is_active, is_revoked, usage_count
+                scopes, created_at, expires_at, is_active
             ) VALUES (
                 :id, :org_id, :name, :key_hash, :key_prefix,
-                :permissions, :created_at, :expires_at, true, false, 0
+                CAST(:scopes AS jsonb), :created_at, :expires_at, true
             )
         """),
         {
             "id": key_id,
             "org_id": org_id,
-            "name": request.name,
+            "name": request.name or "API Key",
             "key_hash": key_hash,
             "key_prefix": key_prefix,
-            "permissions": permissions,
+            "scopes": json.dumps(permissions),
             "created_at": datetime.now(timezone.utc),
             "expires_at": expires_at,
         },
@@ -325,7 +330,7 @@ async def update_key(
 
     # Verify key exists and belongs to org
     result = await db.execute(
-        text("SELECT id, name, permissions FROM api_keys WHERE id = :key_id AND organization_id = :org_id"),
+        text("SELECT id, name, scopes FROM api_keys WHERE id = :key_id AND organization_id = :org_id"),
         {"key_id": key_id, "org_id": org_id},
     )
     row = result.fetchone()
@@ -347,8 +352,8 @@ async def update_key(
     if request.permissions is not None:
         valid_permissions = {"sign", "verify", "read", "admin", "merkle"}
         permissions = [p for p in request.permissions if p in valid_permissions]
-        updates.append("permissions = :permissions")
-        params["permissions"] = permissions
+        updates.append("scopes = CAST(:scopes AS jsonb)")
+        params["scopes"] = json.dumps(permissions)
 
     if not updates:
         raise HTTPException(
@@ -389,7 +394,7 @@ async def revoke_key(
 
     # Verify key exists
     result = await db.execute(
-        text("SELECT id, is_revoked FROM api_keys WHERE id = :key_id AND organization_id = :org_id"),
+        text("SELECT id, revoked_at FROM api_keys WHERE id = :key_id AND organization_id = :org_id"),
         {"key_id": key_id, "org_id": org_id},
     )
     row = result.fetchone()
@@ -400,7 +405,7 @@ async def revoke_key(
             detail={"code": "KEY_NOT_FOUND", "message": "API key not found"},
         )
 
-    if row.is_revoked:
+    if row.revoked_at is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"code": "KEY_ALREADY_REVOKED", "message": "Key is already revoked"},
@@ -410,7 +415,7 @@ async def revoke_key(
     await db.execute(
         text("""
             UPDATE api_keys 
-            SET is_revoked = true, is_active = false, revoked_at = :revoked_at
+            SET is_active = false, revoked_at = :revoked_at
             WHERE id = :key_id AND organization_id = :org_id
         """),
         {"key_id": key_id, "org_id": org_id, "revoked_at": datetime.now(timezone.utc)},
@@ -445,7 +450,7 @@ async def rotate_key(
     # Get existing key
     result = await db.execute(
         text("""
-            SELECT id, name, permissions, expires_at, is_revoked
+            SELECT id, name, scopes, expires_at, revoked_at
             FROM api_keys 
             WHERE id = :key_id AND organization_id = :org_id
         """),
@@ -459,7 +464,7 @@ async def rotate_key(
             detail={"code": "KEY_NOT_FOUND", "message": "API key not found"},
         )
 
-    if row.is_revoked:
+    if row.revoked_at is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"code": "KEY_ALREADY_REVOKED", "message": "Cannot rotate a revoked key"},
@@ -470,7 +475,10 @@ async def rotate_key(
     key_prefix = full_key[:12]
     new_key_id = f"key_{secrets.token_hex(8)}"
 
-    permissions = row.permissions if isinstance(row.permissions, list) else ["sign", "verify"]
+    # Parse scopes from JSONB
+    scopes = row.scopes if row.scopes else ["sign", "verify"]
+    if isinstance(scopes, str):
+        scopes = json.loads(scopes)
     now = datetime.now(timezone.utc)
 
     # Create new key
@@ -478,10 +486,10 @@ async def rotate_key(
         text("""
             INSERT INTO api_keys (
                 id, organization_id, name, key_hash, key_prefix,
-                permissions, created_at, expires_at, is_active, is_revoked, usage_count
+                scopes, created_at, expires_at, is_active
             ) VALUES (
                 :id, :org_id, :name, :key_hash, :key_prefix,
-                :permissions, :created_at, :expires_at, true, false, 0
+                CAST(:scopes AS jsonb), :created_at, :expires_at, true
             )
         """),
         {
@@ -490,7 +498,7 @@ async def rotate_key(
             "name": f"{row.name} (rotated)" if row.name else "Rotated Key",
             "key_hash": key_hash,
             "key_prefix": key_prefix,
-            "permissions": permissions,
+            "scopes": json.dumps(scopes),
             "created_at": now,
             "expires_at": row.expires_at,
         },
@@ -500,7 +508,7 @@ async def rotate_key(
     await db.execute(
         text("""
             UPDATE api_keys 
-            SET is_revoked = true, is_active = false, revoked_at = :revoked_at
+            SET is_active = false, revoked_at = :revoked_at
             WHERE id = :key_id AND organization_id = :org_id
         """),
         {"key_id": key_id, "org_id": org_id, "revoked_at": now},
@@ -516,7 +524,7 @@ async def rotate_key(
             "new_key_id": new_key_id,
             "key": full_key,
             "prefix": key_prefix,
-            "permissions": permissions,
+            "permissions": scopes,
             "created_at": now.isoformat(),
             "expires_at": row.expires_at.isoformat() if row.expires_at else None,
         }

@@ -1,4 +1,6 @@
 """Signing router for content signing with C2PA manifests."""
+import asyncio
+
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -9,6 +11,7 @@ from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
 from app.observability.metrics import increment
 from app.services.signing_executor import execute_signing
+from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.quota import QuotaManager, QuotaType
 
 router = APIRouter()
@@ -73,4 +76,15 @@ async def sign_content(
         response.headers[header] = value
     
     increment("sign_requests")
+    
+    # Emit webhook event (fire and forget - don't block response)
+    asyncio.create_task(
+        emit_document_signed(
+            organization_id=organization["organization_id"],
+            document_id=signing_result.document_id,
+            title=request.metadata.title if request.metadata else None,
+            document_type=request.metadata.content_type if request.metadata else None,
+        )
+    )
+    
     return signing_result
