@@ -5,13 +5,23 @@
  * Runs in the background and communicates with content scripts.
  */
 
-// API configuration
-const API_CONFIG = {
+// API configuration (can be overridden by settings)
+let API_CONFIG = {
   baseUrl: 'https://api.encypherai.com',
   verifyEndpoint: '/api/v1/verify',
   publicVerifyEndpoint: '/api/v1/public/extract-and-verify',
+  signEndpoint: '/api/v1/sign',
   timeout: 10000
 };
+
+// Load settings on startup
+chrome.storage.sync.get({ apiBaseUrl: 'https://api.encypherai.com', customApiUrl: '' }, (result) => {
+  if (result.apiBaseUrl === 'custom' && result.customApiUrl) {
+    API_CONFIG.baseUrl = result.customApiUrl;
+  } else if (result.apiBaseUrl) {
+    API_CONFIG.baseUrl = result.apiBaseUrl;
+  }
+});
 
 // Cache for verification results (keyed by content hash)
 const verificationCache = new Map();
@@ -180,6 +190,89 @@ async function verifyContent(text) {
 }
 
 /**
+ * Sign content using the Encypher API
+ */
+async function signContent(text, title) {
+  try {
+    // Get API key from storage
+    const { apiKey } = await chrome.storage.local.get({ apiKey: '' });
+    
+    if (!apiKey) {
+      return {
+        success: false,
+        error: 'No API key configured. Please add your API key in settings.'
+      };
+    }
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), API_CONFIG.timeout);
+
+    const requestBody = {
+      text: text,
+      document_type: 'article'
+    };
+    
+    if (title) {
+      requestBody.document_title = title;
+    }
+
+    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.signEndpoint}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      
+      if (response.status === 401) {
+        return {
+          success: false,
+          error: 'Invalid API key. Please check your settings.'
+        };
+      }
+      if (response.status === 429) {
+        return {
+          success: false,
+          error: 'Rate limit exceeded. Please try again later.'
+        };
+      }
+      
+      return {
+        success: false,
+        error: errorData.detail || `Signing failed: HTTP ${response.status}`
+      };
+    }
+
+    const data = await response.json();
+    
+    return {
+      success: true,
+      signedText: data.signed_text || data.text,
+      documentId: data.document_id,
+      signedAt: data.signed_at
+    };
+  } catch (error) {
+    if (error.name === 'AbortError') {
+      return {
+        success: false,
+        error: 'Request timed out'
+      };
+    }
+    return {
+      success: false,
+      error: error.message || 'Network error'
+    };
+  }
+}
+
+/**
  * Handle messages from content scripts and popup
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
@@ -243,6 +336,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case 'SHOW_DETAILS':
       // Could open a new tab or popup with full details
       console.log('Show details:', message.details);
+      sendResponse({ received: true });
+      break;
+
+    case 'SIGN_CONTENT':
+      signContent(message.text, message.title).then(result => {
+        sendResponse(result);
+      });
+      return true; // async response
+
+    case 'SETTINGS_UPDATED':
+      // Update API config when settings change
+      if (message.setting === 'apiBaseUrl') {
+        API_CONFIG.baseUrl = message.value;
+      } else if (message.setting === 'cacheTtl') {
+        // Could update cache TTL here
+      }
+      sendResponse({ received: true });
+      break;
+
+    case 'CLEAR_CACHE':
+      verificationCache.clear();
+      sendResponse({ received: true });
+      break;
+
+    case 'SETTINGS_RESET':
+      API_CONFIG.baseUrl = 'https://api.encypherai.com';
+      verificationCache.clear();
       sendResponse({ received: true });
       break;
 

@@ -1,12 +1,14 @@
 # Encypher C2PA Verifier - Chrome Extension
 
-A browser extension that automatically detects and verifies C2PA-signed content on any webpage, displaying trust badges for verified content.
+A browser extension that automatically detects and verifies C2PA-signed content on any webpage, displaying trust badges for verified content. Also supports signing content directly from the browser.
 
 ## Features
 
-- **Auto-Detection**: Scans pages for C2PA text embeddings using Unicode variation selectors
+- **Auto-Detection**: Scans pages for C2PA and Encypher text embeddings using Unicode variation selectors
 - **Verification Badges**: Shows inline badges on verified content blocks
 - **Popup Summary**: Quick overview of verified/pending/invalid content on the page
+- **Content Signing**: Sign text directly from the extension popup (requires API key)
+- **Options Page**: Configure API key, base URL, and verification settings
 - **Caching**: Verification results are cached to avoid redundant API calls
 - **Dynamic Content**: Observes DOM changes to detect newly loaded content
 
@@ -28,11 +30,18 @@ chrome-extension/
 │   ├── detector.js         # Content script for C2PA detection
 │   └── badge.css           # Styles for verification badges
 ├── popup/
-│   ├── popup.html          # Extension popup UI
+│   ├── popup.html          # Extension popup UI (Verify + Sign tabs)
 │   ├── popup.css           # Popup styles
 │   └── popup.js            # Popup logic
+├── options/
+│   ├── options.html        # Settings page
+│   ├── options.css         # Settings styles
+│   └── options.js          # Settings logic
 ├── icons/                  # Extension icons
-└── tests/                  # Test files
+└── tests/
+    ├── detector.test.js    # Unit tests
+    ├── e2e/                # Puppeteer E2E tests
+    └── fixtures/           # Test HTML pages
 ```
 
 ## How It Works

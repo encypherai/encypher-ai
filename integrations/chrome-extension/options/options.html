@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Encypher Verifier - Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="options">
+    <header class="options__header">
+      <img src="../icons/encypher_logo.svg" alt="Encypher" class="options__logo">
+      <h1>Settings</h1>
+    </header>
+
+    <main class="options__content">
+      <!-- API Key Section -->
+      <section class="options__section">
+        <h2>API Key</h2>
+        <p class="options__description">
+          Enter your Encypher API key to enable content signing. 
+          <a href="https://dashboard.encypherai.com/settings/api-keys" target="_blank">Get an API key</a>
+        </p>
+        
+        <div class="options__field">
+          <label for="apiKey">API Key</label>
+          <div class="options__input-group">
+            <input type="password" id="apiKey" placeholder="ency_..." autocomplete="off">
+            <button type="button" id="toggleApiKey" class="options__btn options__btn--icon" title="Show/Hide">
+              👁
+            </button>
+          </div>
+          <p class="options__hint" id="apiKeyStatus"></p>
+        </div>
+
+        <button type="button" id="saveApiKey" class="options__btn options__btn--primary">
+          Save API Key
+        </button>
+      </section>
+
+      <!-- Verification Settings -->
+      <section class="options__section">
+        <h2>Verification</h2>
+        
+        <div class="options__field options__field--checkbox">
+          <input type="checkbox" id="autoVerify">
+          <label for="autoVerify">
+            <strong>Auto-verify on page load</strong>
+            <span>Automatically verify detected signed content</span>
+          </label>
+        </div>
+
+        <div class="options__field options__field--checkbox">
+          <input type="checkbox" id="showBadges" checked>
+          <label for="showBadges">
+            <strong>Show inline badges</strong>
+            <span>Display verification badges on signed content</span>
+          </label>
+        </div>
+      </section>
+
+      <!-- Advanced Settings -->
+      <section class="options__section">
+        <h2>Advanced</h2>
+        
+        <div class="options__field">
+          <label for="apiBaseUrl">API Base URL</label>
+          <select id="apiBaseUrl">
+            <option value="https://api.encypherai.com">Production (api.encypherai.com)</option>
+            <option value="http://localhost:9000">Local Development (localhost:9000)</option>
+            <option value="custom">Custom...</option>
+          </select>
+        </div>
+
+        <div class="options__field" id="customUrlField" hidden>
+          <label for="customApiUrl">Custom API URL</label>
+          <input type="url" id="customApiUrl" placeholder="https://...">
+        </div>
+
+        <div class="options__field">
+          <label for="cacheTtl">Cache Duration (minutes)</label>
+          <input type="number" id="cacheTtl" min="1" max="60" value="5">
+        </div>
+      </section>
+
+      <!-- Actions -->
+      <section class="options__section">
+        <h2>Data</h2>
+        <button type="button" id="clearCache" class="options__btn options__btn--secondary">
+          Clear Verification Cache
+        </button>
+        <button type="button" id="resetSettings" class="options__btn options__btn--danger">
+          Reset All Settings
+        </button>
+      </section>
+    </main>
+
+    <footer class="options__footer">
+      <p>Encypher C2PA Verifier v1.0.0</p>
+      <p><a href="https://encypherai.com/privacy" target="_blank">Privacy Policy</a></p>
+    </footer>
+  </div>
+
+  <script src="options.js"></script>
+</body>
+</html>

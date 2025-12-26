@@ -288,6 +288,116 @@ body {
   background: #E5E7EB;
 }
 
+.popup__btn--icon {
+  padding: 8px 10px;
+  background: transparent;
+  font-size: 16px;
+}
+
+.popup__btn--icon:hover {
+  background: #E5E7EB;
+}
+
+.popup__btn--full {
+  width: 100%;
+}
+
+/* Tabs */
+.popup__tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.popup__tab {
+  flex: 1;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #6B7280;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.popup__tab:hover {
+  background: #F3F4F6;
+}
+
+.popup__tab--active {
+  background: #10B981;
+  color: white;
+}
+
+.popup__tab--active:hover {
+  background: #059669;
+}
+
+.popup__tab-content {
+  width: 100%;
+}
+
+/* Sign form */
+.popup__sign-form {
+  width: 100%;
+  text-align: left;
+}
+
+.popup__sign-form label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.popup__sign-form textarea,
+.popup__sign-form input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+  margin-bottom: 12px;
+}
+
+.popup__sign-form textarea:focus,
+.popup__sign-form input:focus {
+  outline: none;
+  border-color: #10B981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+.popup__sign-options {
+  margin-bottom: 8px;
+}
+
+.popup__sign-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.popup__sign-actions .popup__btn {
+  flex: 1;
+}
+
+#signed-output {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 11px;
+  font-family: monospace;
+  background: #F9FAFB;
+  resize: none;
+  margin-top: 8px;
+}
+
 /* Scrollbar */
 .popup__details::-webkit-scrollbar {
   width: 6px;

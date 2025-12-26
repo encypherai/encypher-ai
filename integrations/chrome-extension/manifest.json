@@ -2,14 +2,17 @@
   "manifest_version": 3,
   "name": "Encypher C2PA Verifier",
   "version": "1.0.0",
-  "description": "Verify C2PA-signed content authenticity on any webpage. See trust badges for verified AI-generated and human-authored content.",
+  "description": "Verify and sign C2PA content on any webpage. See trust badges for verified AI-generated and human-authored content.",
   "permissions": [
     "activeTab",
-    "storage"
+    "storage",
+    "clipboardWrite"
   ],
   "host_permissions": [
-    "https://api.encypherai.com/*"
+    "https://api.encypherai.com/*",
+    "http://localhost:9000/*"
   ],
+  "options_page": "options/options.html",
   "action": {
     "default_popup": "popup/popup.html",
     "default_icon": {

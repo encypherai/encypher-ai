@@ -13,6 +13,10 @@
         <img src="../icons/icon32.png" alt="Encypher" width="24" height="24">
         <span class="popup__title">Encypher Verifier</span>
       </div>
+      <div class="popup__tabs">
+        <button class="popup__tab popup__tab--active" data-tab="verify">Verify</button>
+        <button class="popup__tab" data-tab="sign">Sign</button>
+      </div>
     </header>
 
     <main class="popup__content">
@@ -57,15 +61,61 @@
         <h2>Error</h2>
         <p id="error-message">Unable to scan page.</p>
       </div>
+
+      <!-- Sign tab content -->
+      <div id="sign-tab" class="popup__tab-content" hidden>
+        <div id="sign-no-key" class="popup__state popup__state--empty">
+          <div class="popup__icon popup__icon--gray">🔑</div>
+          <h2>API Key Required</h2>
+          <p>Add your API key in settings to sign content.</p>
+          <button id="open-settings" class="popup__btn popup__btn--primary" style="margin-top: 12px;">
+            Open Settings
+          </button>
+        </div>
+
+        <div id="sign-ready" class="popup__state" hidden>
+          <div class="popup__sign-form">
+            <label for="sign-text">Text to Sign</label>
+            <textarea id="sign-text" placeholder="Paste or type text to sign..." rows="6"></textarea>
+            <div class="popup__sign-options">
+              <label for="sign-title">Title (optional)</label>
+              <input type="text" id="sign-title" placeholder="Document title">
+            </div>
+            <button id="sign-btn" class="popup__btn popup__btn--primary popup__btn--full">
+              ✍ Sign Content
+            </button>
+          </div>
+        </div>
+
+        <div id="sign-result" class="popup__state" hidden>
+          <div class="popup__icon popup__icon--green">✓</div>
+          <h2>Content Signed!</h2>
+          <p>Signed text copied to clipboard.</p>
+          <textarea id="signed-output" readonly rows="4"></textarea>
+          <div class="popup__sign-actions">
+            <button id="copy-signed" class="popup__btn popup__btn--secondary">📋 Copy</button>
+            <button id="sign-another" class="popup__btn popup__btn--primary">Sign Another</button>
+          </div>
+        </div>
+
+        <div id="sign-error" class="popup__state popup__state--error" hidden>
+          <div class="popup__icon popup__icon--red">!</div>
+          <h2>Signing Failed</h2>
+          <p id="sign-error-message">Unable to sign content.</p>
+          <button id="sign-retry" class="popup__btn popup__btn--secondary" style="margin-top: 12px;">
+            Try Again
+          </button>
+        </div>
+      </div>
     </main>
 
     <footer class="popup__footer">
       <button id="rescan-btn" class="popup__btn popup__btn--secondary">
         ↻ Rescan
       </button>
-      <a href="https://encypherai.com/verify" target="_blank" class="popup__btn popup__btn--primary">
-        Verify Portal
-      </a>
+      <button id="settings-btn" class="popup__btn popup__btn--icon" title="Settings">
+        ⚙
+      </button>
     </footer>
   </div>
 

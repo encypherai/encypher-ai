@@ -1,0 +1,249 @@
+/**
+ * Encypher C2PA Verifier - Options Page Styles
+ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #1F2937;
+  background: #F9FAFB;
+  min-height: 100vh;
+}
+
+.options {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Header */
+.options__header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 32px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.options__logo {
+  height: 32px;
+  width: auto;
+}
+
+.options__header h1 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Content */
+.options__content {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* Sections */
+.options__section {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.options__section h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 16px;
+}
+
+.options__description {
+  font-size: 13px;
+  color: #6B7280;
+  margin-bottom: 16px;
+}
+
+.options__description a {
+  color: #10B981;
+  text-decoration: none;
+}
+
+.options__description a:hover {
+  text-decoration: underline;
+}
+
+/* Fields */
+.options__field {
+  margin-bottom: 16px;
+}
+
+.options__field:last-child {
+  margin-bottom: 0;
+}
+
+.options__field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
+.options__field input[type="text"],
+.options__field input[type="password"],
+.options__field input[type="url"],
+.options__field input[type="number"],
+.options__field select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #1F2937;
+  background: white;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.options__field input:focus,
+.options__field select:focus {
+  outline: none;
+  border-color: #10B981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.options__input-group {
+  display: flex;
+  gap: 8px;
+}
+
+.options__input-group input {
+  flex: 1;
+}
+
+.options__hint {
+  font-size: 12px;
+  color: #6B7280;
+  margin-top: 4px;
+}
+
+.options__hint--success {
+  color: #059669;
+}
+
+.options__hint--error {
+  color: #DC2626;
+}
+
+/* Checkbox fields */
+.options__field--checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.options__field--checkbox input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  accent-color: #10B981;
+  cursor: pointer;
+}
+
+.options__field--checkbox label {
+  cursor: pointer;
+  margin-bottom: 0;
+}
+
+.options__field--checkbox label strong {
+  display: block;
+  font-weight: 500;
+  color: #1F2937;
+}
+
+.options__field--checkbox label span {
+  display: block;
+  font-size: 12px;
+  color: #6B7280;
+  font-weight: normal;
+}
+
+/* Buttons */
+.options__btn {
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.options__btn--primary {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+}
+
+.options__btn--primary:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+}
+
+.options__btn--secondary {
+  background: #F3F4F6;
+  color: #374151;
+  margin-right: 8px;
+}
+
+.options__btn--secondary:hover {
+  background: #E5E7EB;
+}
+
+.options__btn--danger {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+.options__btn--danger:hover {
+  background: #FECACA;
+}
+
+.options__btn--icon {
+  padding: 10px 12px;
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+.options__btn--icon:hover {
+  background: #E5E7EB;
+}
+
+/* Footer */
+.options__footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid #E5E7EB;
+  text-align: center;
+  font-size: 12px;
+  color: #9CA3AF;
+}
+
+.options__footer a {
+  color: #6B7280;
+  text-decoration: none;
+}
+
+.options__footer a:hover {
+  text-decoration: underline;
+}
+
+.options__footer p {
+  margin-bottom: 4px;
+}
