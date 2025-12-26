@@ -101,7 +101,7 @@
 }
 
 .encypher-badge:hover .encypher-badge__tooltip,
-.encypher-badge:focus .encypher-badge__tooltip {
+.encypher-badge:focus .encypher-badge__tooltip:hover {
   opacity: 1;
   visibility: visible;
 }

@@ -361,4 +361,85 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true; // async response
   }
+  
+  if (message.type === 'VERIFY_SELECTION') {
+    // Verify selected text via context menu
+    verifySelectedText(message.text);
+    sendResponse({ received: true });
+  }
 });
+
+/**
+ * Verify text selected via context menu
+ */
+async function verifySelectedText(text) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'VERIFY_CONTENT',
+      text: text,
+      visibleText: text
+    });
+    
+    // Show notification with result
+    if (response && response.success) {
+      showVerificationNotification('verified', {
+        signer: response.data?.signer_name || response.data?.signer_id,
+        timestamp: response.data?.signed_at
+      });
+    } else if (response && response.revoked) {
+      showVerificationNotification('revoked', {
+        error: 'This content has been revoked'
+      });
+    } else {
+      showVerificationNotification('invalid', {
+        error: response?.error || 'Verification failed'
+      });
+    }
+  } catch (error) {
+    showVerificationNotification('error', {
+      error: error.message || 'Verification error'
+    });
+  }
+}
+
+/**
+ * Show a temporary notification for verification result
+ */
+function showVerificationNotification(status, details) {
+  const notification = document.createElement('div');
+  notification.className = `encypher-notification encypher-notification--${status}`;
+  notification.setAttribute('role', 'alert');
+  
+  const icons = {
+    verified: '✓',
+    invalid: '✗',
+    revoked: '⊘',
+    error: '!'
+  };
+  
+  const messages = {
+    verified: 'Verified Content',
+    invalid: 'Invalid Signature',
+    revoked: 'Content Revoked',
+    error: 'Verification Error'
+  };
+  
+  notification.innerHTML = `
+    <div class="encypher-notification__icon">${icons[status] || '?'}</div>
+    <div class="encypher-notification__content">
+      <strong>${messages[status]}</strong>
+      ${details.signer ? `<br>Signed by: ${details.signer}` : ''}
+      ${details.error ? `<br>${details.error}` : ''}
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  // Auto-remove after 5 seconds
+  setTimeout(() => {
+    notification.style.opacity = '0';
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 5000);
+}

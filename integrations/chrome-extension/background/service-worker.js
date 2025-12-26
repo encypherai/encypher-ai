@@ -388,4 +388,28 @@ setInterval(() => {
   }
 }, 60000); // Every minute
 
+// Create context menu on install
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.contextMenus.create({
+    id: 'verify-selected-text',
+    title: 'Verify with Encypher',
+    contexts: ['selection']
+  });
+});
+
+// Handle context menu clicks
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId === 'verify-selected-text' && info.selectionText) {
+    // Send selected text to content script for verification
+    try {
+      await chrome.tabs.sendMessage(tab.id, {
+        type: 'VERIFY_SELECTION',
+        text: info.selectionText
+      });
+    } catch (error) {
+      console.error('Error verifying selection:', error);
+    }
+  }
+});
+
 console.log('Encypher C2PA Verifier service worker initialized');
