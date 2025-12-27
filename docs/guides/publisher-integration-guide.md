@@ -783,6 +783,34 @@ class EnterpriseEncypherClient:
         )
         response.raise_for_status()
         return response.json()
+
+
+    def sign_with_rights(
+        self,
+        content: str,
+        rights: Dict,
+        metadata: Optional[Dict] = None,
+        template_id: Optional[str] = None,
+    ) -> Dict:
+        """Sign with explicit rights metadata (Business+)."""
+        payload = {
+            "document_id": f"doc_{uuid.uuid4().hex[:16]}",
+            "text": content,
+            "segmentation_level": "sentence",
+            "metadata": metadata,
+            "rights": rights,
+        }
+        if template_id:
+            payload["template_id"] = template_id
+            payload["validate_assertions"] = True
+
+        response = requests.post(
+            f"{ENCYPHER_API_URL}/sign/advanced",
+            headers=self.headers,
+            json=payload,
+        )
+        response.raise_for_status()
+        return response.json()
     
     def setup_webhook(
         self, 
@@ -909,7 +937,73 @@ class EnterprisePublisher:
         article["assertions"] = custom_assertions
         
         return article
+
 ```
+
+
+### Rights / AI Licensing Templates (Business+)
+
+Business and Enterprise customers can apply **built-in** or **organization-specific** templates to embed licensing signals.
+
+Key request fields:
+- `template_id` (optional): apply a built-in or org template
+- `rights` (optional): embed explicit publisher rights metadata as `com.encypher.rights.v1`
+
+If your organization has a default template configured, you may omit `template_id` and the server will apply your org default.
+
+Built-in template IDs:
+- `tmpl_builtin_all_rights_reserved_v1`
+- `tmpl_builtin_no_ai_training_v1`
+- `tmpl_builtin_rag_allowed_with_attribution_v1`
+- `tmpl_builtin_realtime_quotes_with_attribution_v1`
+- `tmpl_builtin_cc_by_4_0_v1`
+- `tmpl_builtin_cc_by_nc_4_0_v1`
+- `tmpl_builtin_academic_open_access_v1`
+- `tmpl_builtin_news_wire_syndication_v1`
+
+Example: basic signing with a template (`/sign`):
+
+```python
+response = requests.post(
+    f"{ENCYPHER_API_URL}/sign",
+    headers=headers,
+    json={
+        "text": content,
+        "document_type": "article",
+        "template_id": "tmpl_builtin_news_wire_syndication_v1",
+        "validate_assertions": True,
+    },
+)
+response.raise_for_status()
+```
+
+Example: advanced signing with explicit rights metadata (`/sign/advanced`):
+
+```python
+response = requests.post(
+    f"{ENCYPHER_API_URL}/sign/advanced",
+    headers=headers,
+    json={
+        "document_id": f"doc_{uuid.uuid4().hex[:16]}",
+        "text": content,
+        "segmentation_level": "sentence",
+        "rights": {
+            "copyright_holder": "Example Publisher",
+            "license_url": "https://example.com/license",
+            "usage_terms": "RAG allowed with attribution.",
+            "syndication_allowed": True,
+            "contact_email": "licensing@example.com",
+        },
+    },
+)
+response.raise_for_status()
+```
+
+### Verifier Output: Rights Signals
+
+When rights signals are present in the manifest, `/verify` returns them under:
+- `data.details.rights_signals.training_mining` (from `c2pa.training-mining.v1`)
+- `data.details.rights_signals.rights` (from `com.encypher.rights.v1`)
 
 ### Multi-Embedding Verification (Enterprise Feature)
 
