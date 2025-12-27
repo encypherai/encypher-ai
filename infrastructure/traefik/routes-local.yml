@@ -4,6 +4,17 @@
 http:
   routers:
     # ============================================
+    # VERIFY PORTAL (Host-based) -> Enterprise API (9000)
+    # Supports public URLs like https://verify.encypherai.com/{document_id}
+    # ============================================
+    verify-portal-router:
+      rule: "Host(`verify.encypherai.com`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 20
+
+    # ============================================
     # API KEY MANAGEMENT -> Key Service (8003)
     # ============================================
     keys-router:

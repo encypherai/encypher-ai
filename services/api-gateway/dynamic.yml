@@ -123,6 +123,17 @@ http:
       middlewares:
         - cors
 
+    # Verify Portal (host-based)
+    # Routes public verification URLs like https://verify.encypherai.com/{document_id}
+    verify-portal:
+      rule: "Host(`verify.encypherai.com`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 110
+      middlewares:
+        - cors
+
     # API docs (Swagger/ReDoc/OpenAPI) - handled by enterprise-api
     api-docs:
       rule: "PathPrefix(`/docs`) || PathPrefix(`/internal`) || Path(`/redoc`) || Path(`/openapi.json`)"

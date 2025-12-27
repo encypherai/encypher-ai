@@ -13,7 +13,7 @@ from fastapi.responses import HTMLResponse, JSONResponse
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_content_db, get_db
 from app.middleware.public_rate_limiter import public_rate_limiter
 from app.models.request_models import VerifyRequest
 from app.models.response_models import ErrorDetail, VerifyResponse
@@ -61,6 +61,7 @@ def _render_manifest_json(execution: VerificationExecution) -> str:
 @router.get("/verify/{document_id}")
 async def verify_by_document_id(
     document_id: str,
+    content_db: AsyncSession = Depends(get_content_db),
     db: AsyncSession = Depends(get_db),
 ):
     """
@@ -69,8 +70,8 @@ async def verify_by_document_id(
     Returns an HTML page so users can preview verification state in a browser.
     """
 
-    result = await db.execute(
-        text("SELECT signed_text, title, organization_id FROM documents WHERE document_id = :doc_id"),
+    result = await content_db.execute(
+        text("SELECT signed_text, title, organization_id FROM documents WHERE id = :doc_id"),
         {"doc_id": document_id},
     )
     row = result.fetchone()
