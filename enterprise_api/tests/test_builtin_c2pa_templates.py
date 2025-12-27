@@ -26,4 +26,7 @@ async def test_builtin_c2pa_templates_are_listed(async_client: AsyncClient, busi
     assert "templates" in payload
 
     template_ids = {template["id"] for template in payload["templates"]}
+    assert "tmpl_builtin_all_rights_reserved_v1" in template_ids
     assert "tmpl_builtin_no_ai_training_v1" in template_ids
+    assert "tmpl_builtin_rag_allowed_with_attribution_v1" in template_ids
+    assert "tmpl_builtin_realtime_quotes_with_attribution_v1" in template_ids
