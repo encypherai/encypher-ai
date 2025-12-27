@@ -5,6 +5,9 @@
 .teams/TEAM_*.md
 .questions/TEAM_*.md
 
+# Legacy archive (never commit)
+archive/encypherai-backend-old/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
