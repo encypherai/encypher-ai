@@ -39,6 +39,21 @@ class ErrorDetail(BaseModel):
     hint: Optional[str] = Field(None, description="Optional remediation hint")
 
 
+class EmbeddingVerdict(BaseModel):
+    """Verification verdict for a single embedding."""
+    
+    index: int = Field(..., description="Index of this embedding (0-based)")
+    valid: bool = Field(..., description="Whether the signature is valid")
+    tampered: bool = Field(..., description="Whether the payload was tampered")
+    reason_code: str = Field(..., description="Reason code describing the verdict")
+    signer_id: Optional[str] = Field(None, description="Resolved signer/organization ID")
+    signer_name: Optional[str] = Field(None, description="Human readable signer name")
+    timestamp: Optional[datetime] = Field(None, description="Signature timestamp, if present")
+    text_span: Optional[tuple[int, int]] = Field(None, description="Start and end position in original text")
+    clean_text: Optional[str] = Field(None, description="Text covered by this embedding")
+    manifest: Optional[Dict[str, Any]] = Field(None, description="C2PA manifest for this embedding")
+
+
 class VerifyVerdict(BaseModel):
     """Detailed verification verdict data."""
 
@@ -52,6 +67,9 @@ class VerifyVerdict(BaseModel):
         default_factory=dict,
         description="Structured details (manifest, benchmarking stats, etc.)",
     )
+    # Multi-embedding support
+    embeddings_found: int = Field(0, description="Number of embeddings found in the text")
+    all_embeddings: Optional[list[EmbeddingVerdict]] = Field(None, description="All embeddings found with individual verification results")
 
 
 class VerifyResponse(BaseModel):

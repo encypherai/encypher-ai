@@ -6,7 +6,7 @@ Endpoints for managing custom C2PA schemas and templates.
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,12 +32,29 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+def require_enterprise_custom_assertion_authoring(
+    organization: dict = Depends(get_current_organization),
+) -> dict:
+    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    allowed_tiers = {"enterprise", "strategic_partner", "demo"}
+    if tier not in allowed_tiers:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_NOT_AVAILABLE",
+                "message": "Custom assertion authoring requires Enterprise tier",
+                "upgrade_url": "/billing/upgrade",
+            },
+        )
+    return organization
+
+
 # Schema Management Endpoints
 
 @router.post("/schemas", response_model=C2PASchemaResponse, status_code=201)
 async def create_schema(
     schema_data: C2PASchemaCreate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -161,7 +178,7 @@ async def get_schema(
 async def update_schema(
     schema_id: str,
     schema_update: C2PASchemaUpdate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Update a C2PA assertion schema."""
@@ -201,7 +218,7 @@ async def update_schema(
 @router.delete("/schemas/{schema_id}", status_code=204)
 async def delete_schema(
     schema_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a C2PA assertion schema."""
@@ -270,7 +287,7 @@ async def validate_assertion(
 @router.post("/templates", response_model=C2PATemplateResponse, status_code=201)
 async def create_template(
     template_data: C2PATemplateCreate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new assertion template."""
@@ -356,7 +373,7 @@ async def get_template(
 async def update_template(
     template_id: str,
     template_update: C2PATemplateUpdate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Update an assertion template."""
@@ -394,7 +411,7 @@ async def update_template(
 @router.delete("/templates/{template_id}", status_code=204)
 async def delete_template(
     template_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete an assertion template."""

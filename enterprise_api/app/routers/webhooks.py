@@ -160,6 +160,23 @@ def validate_events(events: List[str]) -> List[str]:
     return valid
 
 
+def require_webhooks_business_tier(
+    organization: dict = Depends(get_current_organization),
+) -> dict:
+    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    allowed_tiers = {"business", "enterprise", "strategic_partner", "demo"}
+    if tier not in allowed_tiers:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_NOT_AVAILABLE",
+                "message": "Webhooks require Business tier or higher",
+                "upgrade_url": "/billing/upgrade",
+            },
+        )
+    return organization
+
+
 # =============================================================================
 # Endpoints
 # =============================================================================
@@ -167,7 +184,7 @@ def validate_events(events: List[str]) -> List[str]:
 
 @router.get("", response_model=WebhookListResponse)
 async def list_webhooks(
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_webhooks_business_tier),
     db: AsyncSession = Depends(get_db),
 ) -> WebhookListResponse:
     """
@@ -217,7 +234,7 @@ async def list_webhooks(
 @router.post("", response_model=WebhookCreateResponse, status_code=status.HTTP_201_CREATED)
 async def create_webhook(
     request: WebhookCreateRequest,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_webhooks_business_tier),
     db: AsyncSession = Depends(get_db),
 ) -> WebhookCreateResponse:
     """
@@ -295,7 +312,7 @@ async def create_webhook(
 @router.get("/{webhook_id}", response_model=WebhookListResponse)
 async def get_webhook(
     webhook_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_webhooks_business_tier),
     db: AsyncSession = Depends(get_db),
 ) -> WebhookListResponse:
     """
@@ -345,7 +362,7 @@ async def get_webhook(
 async def update_webhook(
     webhook_id: str,
     request: WebhookUpdateRequest,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_webhooks_business_tier),
     db: AsyncSession = Depends(get_db),
 ) -> WebhookUpdateResponse:
     """
@@ -413,7 +430,7 @@ async def update_webhook(
 @router.delete("/{webhook_id}", response_model=WebhookDeleteResponse)
 async def delete_webhook(
     webhook_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_webhooks_business_tier),
     db: AsyncSession = Depends(get_db),
 ) -> WebhookDeleteResponse:
     """
@@ -457,7 +474,7 @@ async def delete_webhook(
 @router.post("/{webhook_id}/test", response_model=WebhookTestResponse)
 async def test_webhook(
     webhook_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_webhooks_business_tier),
     db: AsyncSession = Depends(get_db),
 ) -> WebhookTestResponse:
     """
@@ -556,7 +573,7 @@ async def get_webhook_deliveries(
     webhook_id: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_webhooks_business_tier),
     db: AsyncSession = Depends(get_db),
 ) -> WebhookDeliveriesResponse:
     """

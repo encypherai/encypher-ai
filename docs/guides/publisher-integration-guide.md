@@ -11,9 +11,9 @@ This guide walks you through integrating Encypher's C2PA content authentication 
 | Tier | Best For | Key Features | Integration Time |
 |------|----------|--------------|------------------|
 | **Starter** | Small publishers, blogs | Basic signing & verification | 1-2 hours |
-| **Professional** | News organizations | + Sentence tracking, team management | 2-4 hours |
-| **Business** | Large publishers | + Bulk operations, Merkle trees | 4-8 hours |
-| **Enterprise** | Media conglomerates | + BYOK, SSO, custom assertions | 1-2 days |
+| **Professional** | News organizations | + Advanced signing (`/sign/advanced`), sentence tracking | 2-4 hours |
+| **Business** | Large publishers | + Webhooks, bulk operations (`/batch/*`), Merkle trees, BYOK key registration, team management, audit logs | 4-8 hours |
+| **Enterprise** | Media conglomerates | + SSO/SAML, custom assertion authoring (schemas/templates), unlimited team | 1-2 days |
 
 ---
 
@@ -94,40 +94,57 @@ class EncypherClient:
             author: Author name
             
         Returns:
-            dict with signed_content and document_id
+            dict with signed_text and document_id
         """
         response = requests.post(
             f"{ENCYPHER_API_URL}/sign",
             headers=self.headers,
             json={
-                "content": content,
-                "metadata": {
-                    "title": title,
-                    "author": author,
-                    "content_type": "article"
-                }
+                "text": content,
+                "document_title": title,
+                "document_type": "article",
+                "claim_generator": f"CMS/{author}",
             }
         )
         response.raise_for_status()
-        return response.json()["data"]
+        return response.json()
     
     def verify_content(self, content: str) -> dict:
         """
         Verify if content has a valid C2PA signature.
         
+        Supports multiple embeddings automatically:
+        - If content has multiple signed sections, all are verified
+        - Returns embeddings_found count and all_embeddings array
+        - Backwards compatible with single-embedding responses
+        
         Args:
-            content: Text content to verify
+            content: Text content to verify (can contain multiple embeddings)
             
         Returns:
             dict with verification status and signer info
+            
+        Example response (multiple embeddings):
+            {
+                "valid": True,
+                "embeddings_found": 3,
+                "all_embeddings": [
+                    {"index": 0, "valid": True, "signer_name": "Acme Corp", ...},
+                    {"index": 1, "valid": True, "signer_name": "Acme Corp", ...},
+                    {"index": 2, "valid": True, "signer_name": "Acme Corp", ...}
+                ]
+            }
         """
         response = requests.post(
             f"{ENCYPHER_API_URL}/verify",
             headers=self.headers,
-            json={"content": content}
+            json={"text": content}
         )
         response.raise_for_status()
-        return response.json()["data"]
+        payload = response.json()
+        if payload.get("success") is True:
+            return payload.get("data") or {}
+        raise ValueError(payload.get("error") or "Verification failed")
 
 
 # === CMS Integration Hooks ===
@@ -151,7 +168,8 @@ def on_article_publish(article: dict) -> dict:
     
     # Store the document_id with your article
     article["encypher_document_id"] = result["document_id"]
-    article["signed_body"] = result["signed_content"]
+    article["signed_body"] = result["signed_text"]
+    article["verification_url"] = result.get("verification_url")
     
     return article
 
@@ -164,9 +182,9 @@ def on_article_display(article: dict) -> dict:
     
     verification = client.verify_content(article.get("signed_body", article["body"]))
     
-    article["is_verified"] = verification.get("verified", False)
+    article["is_verified"] = verification.get("valid", False)
     article["signer_name"] = verification.get("signer_name")
-    article["verification_url"] = verification.get("verification_url")
+    article["verification_url"] = article.get("verification_url") or f"https://verify.encypherai.com/{article.get('encypher_document_id', '')}".rstrip("/")
     
     return article
 ```
@@ -178,7 +196,7 @@ def on_article_display(article: dict) -> dict:
 {% if article.is_verified %}
 <div class="encypher-badge">
   <a href="{{ article.verification_url }}" target="_blank">
-    <img src="https://cdn.encypherai.com/badges/verified.svg" 
+    <img src="https://encypherai.com/encypher_check_color.svg" 
          alt="Verified by {{ article.signer_name }}" />
     <span>Verified Content</span>
   </a>
@@ -212,8 +230,7 @@ def on_article_display(article: dict) -> dict:
 ### What You Get
 - Unlimited C2PA signatures
 - Sentence-level tracking (plagiarism detection)
-- Team management (5 members)
-- Audit logs
+- Advanced signing (`/sign/advanced`) (Professional+)
 
 ### Integration Example: News CMS with Sentence Tracking
 
@@ -225,6 +242,7 @@ Enables plagiarism detection and content attribution.
 """
 import os
 import requests
+import uuid
 from typing import List, Optional
 from dataclasses import dataclass
 
@@ -267,25 +285,18 @@ class ProfessionalEncypherClient:
         - Attribution when your content is quoted
         """
         response = requests.post(
-            f"{ENCYPHER_API_URL}/enterprise/sign/advanced",
+            f"{ENCYPHER_API_URL}/sign",
             headers=self.headers,
             json={
-                "content": content,
-                "metadata": {
-                    "title": title,
-                    "author": author,
-                    "url": url,
-                    "publication_date": publication_date,
-                    "content_type": "news_article"
-                },
-                "options": {
-                    "track_sentences": True,  # Enable sentence tracking
-                    "generate_merkle": False  # Professional doesn't include Merkle
-                }
+                "text": content,
+                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
+                "document_title": title,
+                "document_url": url,
+                "document_type": "article",
             }
         )
         response.raise_for_status()
-        return response.json()["data"]
+        return response.json()
     
     def check_for_plagiarism(self, content: str) -> List[SentenceMatch]:
         """
@@ -299,7 +310,7 @@ class ProfessionalEncypherClient:
         matches = []
         for sentence in sentences[:50]:  # Check first 50 sentences
             response = requests.post(
-                f"{ENCYPHER_API_URL}/provenance/lookup",
+                f"{ENCYPHER_API_URL}/lookup",
                 headers=self.headers,
                 json={"sentence_text": sentence}
             )
@@ -369,8 +380,8 @@ def on_article_publish_pro(article: dict) -> dict:
     )
     
     article["encypher_document_id"] = result["document_id"]
-    article["signed_body"] = result["signed_content"]
-    article["sentences_tracked"] = result.get("sentences_tracked", 0)
+    article["signed_body"] = result["signed_text"]
+    article["sentences_tracked"] = result.get("total_sentences", 0)
     
     return article
 ```
@@ -429,7 +440,7 @@ function showPlagiarismWarnings(warnings) {
 - Everything in Professional
 - Bulk operations (sign/verify many documents at once)
 - Merkle tree indexing (advanced attribution)
-- 25 team members
+- Team management and audit logs
 
 ### Integration Example: Bulk Publishing Pipeline
 
@@ -441,6 +452,7 @@ Perfect for publishing pipelines that handle many articles.
 """
 import os
 import requests
+import uuid
 from typing import List, Dict
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -463,21 +475,33 @@ class BusinessEncypherClient:
         Sign multiple documents in a single API call.
         
         Args:
-            documents: List of dicts with 'content' and 'metadata'
+            documents: List of dicts with 'text' and optional 'metadata'
             
         Returns:
             dict with results for each document
             
         Example:
             results = client.bulk_sign([
-                {"content": "Article 1...", "metadata": {"title": "Article 1"}},
-                {"content": "Article 2...", "metadata": {"title": "Article 2"}},
+                {"text": "Article 1...", "metadata": {"title": "Article 1"}},
+                {"text": "Article 2...", "metadata": {"title": "Article 2"}},
             ])
         """
         response = requests.post(
             f"{ENCYPHER_API_URL}/batch/sign",
             headers=self.headers,
-            json={"documents": documents}
+            json={
+                "mode": "c2pa",
+                "idempotency_key": f"bulk-sign-{uuid.uuid4().hex}",
+                "items": [
+                    {
+                        "document_id": doc.get("document_id") or f"doc_{uuid.uuid4().hex[:16]}",
+                        "text": doc["text"],
+                        "title": (doc.get("metadata") or {}).get("title"),
+                        "metadata": doc.get("metadata"),
+                    }
+                    for doc in documents
+                ],
+            }
         )
         response.raise_for_status()
         return response.json()["data"]
@@ -485,11 +509,20 @@ class BusinessEncypherClient:
     def bulk_verify(self, contents: List[str]) -> Dict:
         """
         Verify multiple documents in a single API call.
+        
+        NOTE: Batch endpoints require at least 2 documents per request.
         """
         response = requests.post(
             f"{ENCYPHER_API_URL}/batch/verify",
             headers=self.headers,
-            json={"contents": contents}
+            json={
+                "mode": "c2pa",
+                "idempotency_key": f"bulk-verify-{uuid.uuid4().hex}",
+                "items": [
+                    {"document_id": f"doc_{idx}", "text": content}
+                    for idx, content in enumerate(contents)
+                ],
+            }
         )
         response.raise_for_status()
         return response.json()["data"]
@@ -511,16 +544,15 @@ class BusinessEncypherClient:
             f"{ENCYPHER_API_URL}/enterprise/merkle/encode",
             headers=self.headers,
             json={
-                "content": content,
+                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
+                "text": content,
+                "segmentation_levels": ["sentence"],
+                "include_words": False,
                 "metadata": metadata,
-                "options": {
-                    "granularity": "sentence",  # or "paragraph"
-                    "store_proofs": True
-                }
             }
         )
         response.raise_for_status()
-        return response.json()["data"]
+        return response.json()
     
     def list_documents(
         self, 
@@ -570,7 +602,7 @@ class BulkPublishingPipeline:
             # Prepare documents for bulk signing
             documents = [
                 {
-                    "content": article["body"],
+                    "text": article["body"],
                     "metadata": {
                         "title": article["title"],
                         "author": article["author"],
@@ -587,7 +619,7 @@ class BulkPublishingPipeline:
             # Merge results back into articles
             for article, result in zip(batch, sign_results["results"]):
                 article["encypher_document_id"] = result["document_id"]
-                article["signed_body"] = result["signed_content"]
+                article["signed_body"] = result["signed_text"]
                 article["signing_status"] = result["status"]
                 results.append(article)
             
@@ -617,10 +649,10 @@ def nightly_signing_job():
     
     # Save results
     for article in results:
-        if article["signing_status"] == "success":
+        if article["signing_status"] == "ok":
             save_article(article)
     
-    print(f"Signed {len([a for a in results if a['signing_status'] == 'success'])} articles")
+    print(f"Signed {len([a for a in results if a['signing_status'] == 'ok'])} articles")
 ```
 
 ---
@@ -631,9 +663,9 @@ def nightly_signing_job():
 
 ### What You Get
 - Everything in Business
-- BYOK (Bring Your Own Key) - use your own signing keys
+- BYOK (Bring Your Own Key) - register your public keys (Business+)
 - SSO/SAML integration
-- Custom C2PA assertions
+- Custom C2PA assertion authoring (schemas/templates)
 - Unlimited team members
 - Dedicated support
 
@@ -646,6 +678,7 @@ Enterprise tier integration with BYOK and custom assertions.
 """
 import os
 import requests
+import uuid
 from typing import Dict, Optional
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -678,15 +711,15 @@ class EnterpriseEncypherClient:
         Args:
             public_key_pem: PEM-encoded public key
             key_name: Friendly name for the key
-            algorithm: Key algorithm (Ed25519, ES256, RS256)
+            algorithm: Key algorithm (Ed25519, RSA-2048, RSA-4096)
         """
         response = requests.post(
-            f"{ENCYPHER_API_URL}/admin/public-keys",
+            f"{ENCYPHER_API_URL}/byok/public-keys",
             headers=self.headers,
             json={
-                "public_key": public_key_pem,
-                "name": key_name,
-                "algorithm": algorithm
+                "public_key_pem": public_key_pem,
+                "key_name": key_name,
+                "key_algorithm": algorithm,
             }
         )
         response.raise_for_status()
@@ -696,7 +729,7 @@ class EnterpriseEncypherClient:
         self,
         content: str,
         metadata: Dict,
-        custom_assertions: Dict
+        custom_assertions: list[Dict]
     ) -> Dict:
         """
         Sign content with custom C2PA assertions.
@@ -710,33 +743,46 @@ class EnterpriseEncypherClient:
             custom_assertions: Custom claims to embed
             
         Example custom_assertions:
-            {
-                "editorial_review": {
-                    "reviewed_by": "John Editor",
-                    "review_date": "2024-12-23",
-                    "fact_checked": True
-                },
-                "rights": {
-                    "license": "CC-BY-4.0",
-                    "attribution_required": True
-                }
-            }
+            [
+                {"label": "c2pa.training-mining.v1", "data": {"use": {"ai_training": False, "ai_inference": False, "data_mining": False}}}
+            ]
         """
         response = requests.post(
-            f"{ENCYPHER_API_URL}/enterprise/sign/advanced",
+            f"{ENCYPHER_API_URL}/sign/advanced",
             headers=self.headers,
             json={
-                "content": content,
+                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
+                "text": content,
+                "segmentation_level": "sentence",
                 "metadata": metadata,
-                "options": {
-                    "track_sentences": True,
-                    "generate_merkle": True,
-                    "custom_assertions": custom_assertions
-                }
+                "custom_assertions": custom_assertions,
             }
         )
         response.raise_for_status()
-        return response.json()["data"]
+        return response.json()
+
+
+    def sign_with_template(
+        self,
+        content: str,
+        template_id: str,
+        metadata: Optional[Dict] = None,
+    ) -> Dict:
+        """Sign with a server-stored assertion template (Business+)."""
+        response = requests.post(
+            f"{ENCYPHER_API_URL}/sign/advanced",
+            headers=self.headers,
+            json={
+                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
+                "text": content,
+                "segmentation_level": "sentence",
+                "metadata": metadata,
+                "template_id": template_id,
+                "validate_assertions": True,
+            },
+        )
+        response.raise_for_status()
+        return response.json()
     
     def setup_webhook(
         self, 
@@ -799,7 +845,7 @@ def setup_byok():
         algorithm="Ed25519"
     )
     
-    print(f"Public key registered: {result['key_id']}")
+    print(f"Public key registered: {result['id']}")
     print(f"\n⚠️  SAVE THIS PRIVATE KEY SECURELY:\n{private_pem}")
     
     return result
@@ -827,19 +873,25 @@ class EnterprisePublisher:
         These assertions are cryptographically bound to the content
         and can be verified by anyone.
         """
-        custom_assertions = {
-            "editorial": {
-                "reviewed_by": reviewer,
-                "review_timestamp": article.get("review_date"),
-                "fact_checked": fact_checked,
-                "editorial_standards": "AP Style Guide"
+        custom_assertions = [
+            {
+                "label": "org.publisher.editorial.v1",
+                "data": {
+                    "reviewed_by": reviewer,
+                    "review_timestamp": article.get("review_date"),
+                    "fact_checked": fact_checked,
+                    "editorial_standards": "AP Style Guide",
+                },
             },
-            "provenance": {
-                "original_source": article.get("source"),
-                "wire_service": article.get("wire_service"),
-                "embargo_lifted": article.get("embargo_date")
-            }
-        }
+            {
+                "label": "org.publisher.provenance.v1",
+                "data": {
+                    "original_source": article.get("source"),
+                    "wire_service": article.get("wire_service"),
+                    "embargo_lifted": article.get("embargo_date"),
+                },
+            },
+        ]
         
         result = self.client.sign_with_custom_assertions(
             content=article["body"],
@@ -853,11 +905,77 @@ class EnterprisePublisher:
         )
         
         article["encypher_document_id"] = result["document_id"]
-        article["signed_body"] = result["signed_content"]
+        article["signed_body"] = result["embedded_content"]
         article["assertions"] = custom_assertions
         
         return article
 ```
+
+### Multi-Embedding Verification (Enterprise Feature)
+
+**For pages with sentence-level embeddings or multiple signed sections:**
+
+```python
+def verify_entire_page(page_content: str) -> dict:
+    """
+    Verify an entire page that may contain multiple embeddings.
+    
+    The API automatically detects all embeddings and verifies each one.
+    Perfect for:
+    - Enterprise sentence-level signed content
+    - Pages with multiple articles
+    - Content aggregation from multiple sources
+    """
+    client = EnterpriseEncypherClient()
+    
+    # Send entire page content - API handles multiple embeddings automatically
+    result = client.verify_content(page_content)
+    
+    if result.get("embeddings_found", 0) > 1:
+        print(f"Found {result['embeddings_found']} embeddings")
+        
+        # Check each embedding individually
+        for embedding in result.get("all_embeddings", []):
+            print(f"Embedding {embedding['index']}: {embedding['signer_name']}")
+            print(f"  Valid: {embedding['valid']}")
+            print(f"  Text: {embedding['clean_text'][:100]}...")
+        
+        # Overall status
+        all_valid = result.get("valid", False)
+        if all_valid:
+            print("✓ All embeddings verified successfully")
+        else:
+            print("⚠ Some embeddings failed verification")
+    else:
+        # Single embedding
+        print(f"Single embedding: {result.get('signer_name')}")
+        print(f"Valid: {result.get('valid')}")
+    
+    return result
+
+
+# Example: Verify article with sentence-level embeddings
+article_html = fetch_article_from_cms(article_id)
+article_text = extract_text_from_html(article_html)
+
+verification = verify_entire_page(article_text)
+
+# Display verification badges for each verified section
+if verification.get("embeddings_found", 0) > 1:
+    for embedding in verification["all_embeddings"]:
+        if embedding["valid"]:
+            # Show badge for this text section
+            display_verification_badge(
+                text_span=embedding["text_span"],
+                signer=embedding["signer_name"]
+            )
+```
+
+**Benefits:**
+- **Single API call** verifies entire page (no need for batch endpoint)
+- **Automatic detection** of all C2PA embeddings
+- **Individual results** for each embedding with text spans
+- **Efficient** for Enterprise sentence-level verification
 
 ---
 
@@ -906,11 +1024,7 @@ def verify_signature(payload: bytes, signature: str) -> bool:
 
 @app.route("/webhooks/encypher", methods=["POST"])
 def handle_webhook():
-    # Verify signature
-    signature = request.headers.get("X-Encypher-Signature", "")
-    if not verify_signature(request.data, signature):
-        return jsonify({"error": "Invalid signature"}), 401
-    
+    # Webhook payload is JSON.
     event = request.json
     event_type = event.get("event")
     
@@ -979,8 +1093,8 @@ def handle_api_response(response):
         raise RateLimitError(f"Rate limited. Retry after {retry_after}s")
     
     if response.status_code == 403:
-        error = response.json().get("detail", {})
-        if "quota" in str(error).lower():
+        error = response.json().get("error", {})
+        if "quota" in str(error).lower() or "limit" in str(error).lower():
             raise QuotaExceededError("Monthly quota exceeded. Upgrade your plan.")
         raise AuthenticationError("Access denied. Check your API key.")
     

@@ -252,9 +252,13 @@ def build_verdict(
         else (execution.signer_id or None)
     )
 
+    tampered = False
+    if not execution.is_valid and reason_code == "SIGNATURE_INVALID":
+        tampered = True
+
     return VerifyVerdict(
         valid=execution.is_valid,
-        tampered=not execution.is_valid,
+        tampered=tampered,
         reason_code=reason_code,
         signer_id=execution.signer_id,
         signer_name=signer_name,

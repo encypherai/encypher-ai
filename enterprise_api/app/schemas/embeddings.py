@@ -81,6 +81,10 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         None,
         description="Custom C2PA assertions to include in manifest"
     )
+    template_id: Optional[str] = Field(
+        None,
+        description="Template ID to use for assertions"
+    )
     validate_assertions: bool = Field(
         True,
         description="Whether to validate custom assertions against registered schemas"

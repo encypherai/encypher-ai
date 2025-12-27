@@ -269,7 +269,7 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
 -----END PUBLIC KEY-----"""
 
     def test_register_key_requires_byok_feature(self, client, starter_org):
-        """Starter tier without BYOK should be forbidden."""
+        """Non-super-admin should be forbidden."""
         with patch("app.dependencies.get_current_organization", return_value=starter_org):
             response = client.post(
                 "/api/v1/admin/public-keys",
@@ -281,8 +281,21 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             )
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    def test_register_key_success(self, client, enterprise_org, mock_db):
-        """Enterprise tier should be able to register public keys."""
+    def test_register_key_requires_super_admin(self, client, enterprise_org):
+        """Enterprise tier without super-admin should be forbidden."""
+        with patch("app.dependencies.get_current_organization", return_value=enterprise_org):
+            response = client.post(
+                "/api/v1/admin/public-keys",
+                headers={"Authorization": "Bearer test-token"},
+                json={
+                    "public_key_pem": self.SAMPLE_ED25519_PUBLIC_KEY,
+                    "key_name": "Test Key",
+                },
+            )
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_register_key_success(self, client, super_admin_org, mock_db):
+        """Super admin should be able to register public keys."""
         mock_result = {
             "success": True,
             "data": {
@@ -297,7 +310,7 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             }
         }
         
-        with patch("app.dependencies.get_current_organization", return_value=enterprise_org), \
+        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
              patch("app.routers.admin.PublicKeyService.register_public_key", return_value=mock_result):
             response = client.post(
                 "/api/v1/admin/public-keys",
@@ -313,9 +326,9 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             assert data["success"] is True
             assert data["data"]["key_name"] == "Test Key"
 
-    def test_register_key_invalid_pem(self, client, enterprise_org):
+    def test_register_key_invalid_pem(self, client, super_admin_org):
         """Should reject invalid PEM format."""
-        with patch("app.dependencies.get_current_organization", return_value=enterprise_org):
+        with patch("app.dependencies.get_current_organization", return_value=super_admin_org):
             response = client.post(
                 "/api/v1/admin/public-keys",
                 headers={"Authorization": "Bearer test-token"},
@@ -326,8 +339,17 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             )
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
-    def test_list_public_keys(self, client, enterprise_org, mock_db):
-        """Should list organization's public keys."""
+    def test_list_public_keys_requires_super_admin(self, client, enterprise_org):
+        """Enterprise tier without super-admin should be forbidden."""
+        with patch("app.dependencies.get_current_organization", return_value=enterprise_org):
+            response = client.get(
+                "/api/v1/admin/public-keys",
+                headers={"Authorization": "Bearer test-token"},
+            )
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_list_public_keys(self, client, super_admin_org, mock_db):
+        """Super admin should be able to list organization's public keys."""
         mock_result = {
             "success": True,
             "data": {
@@ -343,7 +365,7 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             }
         }
         
-        with patch("app.dependencies.get_current_organization", return_value=enterprise_org), \
+        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
              patch("app.routers.admin.PublicKeyService.list_public_keys", return_value=mock_result):
             response = client.get(
                 "/api/v1/admin/public-keys",
@@ -354,8 +376,8 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             assert data["success"] is True
             assert len(data["data"]["keys"]) == 1
 
-    def test_revoke_public_key(self, client, enterprise_org, mock_db):
-        """Should revoke a public key."""
+    def test_revoke_public_key(self, client, super_admin_org, mock_db):
+        """Super admin should be able to revoke a public key."""
         mock_result = {
             "success": True,
             "data": {
@@ -364,7 +386,7 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             }
         }
         
-        with patch("app.dependencies.get_current_organization", return_value=enterprise_org), \
+        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
              patch("app.routers.admin.PublicKeyService.revoke_public_key", return_value=mock_result):
             response = client.delete(
                 "/api/v1/admin/public-keys/pk_123?reason=Key%20compromised",

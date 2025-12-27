@@ -6,9 +6,8 @@ Builds Merkle trees from text segments and provides proof generation.
 import logging
 from typing import Any, Dict, List, Optional
 
-from .hashing import combine_hashes, compute_hash
+from .hashing import combine_hashes, compute_leaf_hash
 from .node import MerkleNode
-from app.utils.segmentation import normalize_for_hashing
 
 logger = logging.getLogger(__name__)
 
@@ -75,9 +74,7 @@ class MerkleTree:
         # Create leaf nodes
         current_level = []
         for i, segment in enumerate(segments):
-            # Normalize segment before hashing for consistent lookup
-            normalized = normalize_for_hashing(segment, lowercase=True, normalize_unicode_chars=True)
-            segment_hash = compute_hash(normalized)
+            segment_hash = compute_leaf_hash(segment)
             node = MerkleNode(
                 hash=segment_hash,
                 content=segment,
@@ -185,7 +182,7 @@ class MerkleTree:
         Returns:
             Leaf node if found, None otherwise
         """
-        target_hash = compute_hash(content)
+        target_hash = compute_leaf_hash(content)
         return self.find_leaf(target_hash)
     
     def get_all_nodes(self) -> List[MerkleNode]:

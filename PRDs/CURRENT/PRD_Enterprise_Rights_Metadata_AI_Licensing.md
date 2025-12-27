@@ -2,6 +2,7 @@
 
 **Status:** 📋 Planning  
 **Current Goal:** Task 1.1 — Decide which C2PA assertions and Encypher custom assertions will be authoritative for rights + AI usage.
+**Related PRD:** `PRDs/CURRENT/PRD_API_Tier_Endpoint_Simplification.md` (TEAM_034) defines tier gating + public endpoint contract; this PRD remains the SSOT for rights field definitions and templates.
 
 ## Overview
 

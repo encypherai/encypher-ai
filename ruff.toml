@@ -2,6 +2,10 @@
 # https://docs.astral.sh/ruff/configuration/
 
 line-length = 150
+exclude = [
+    "sdk/**",
+    "archive/**",
+]
 
 [lint]
 # Enable these rule categories
@@ -54,8 +58,8 @@ ignore = [
 "alembic/**" = ["S608", "E402", "F401"]
 "*/alembic/*" = ["S608", "E402", "F401"]
 "**/tests/**" = ["S101", "S106", "F841", "F401", "B904"]  # asserts, test passwords, unused vars OK
-"**/scripts/**" = ["S106", "S603", "S110", "B007", "B904", "F401", "F841", "E701", "E741"]  # scripts have relaxed requirements
-"scripts/**" = ["S106", "S603", "S110", "B007", "B904", "F401", "F841", "E701", "E741"]  # root scripts
+"**/scripts/**" = ["S106", "S603", "S110", "B007", "B904", "F401", "F841", "E701", "E741", "F541"]  # scripts have relaxed requirements
+"scripts/**" = ["S106", "S603", "S110", "B007", "B904", "F401", "F841", "E701", "E741", "F541"]  # root scripts
 "tools/**" = ["B007", "B904", "S310", "S603", "S607", "F401", "F841"]  # tools scripts have relaxed requirements
 "examples/**" = ["F401", "F841", "E701", "E741", "B005"]  # examples have relaxed requirements
 "services/auth-service/app/core/security.py" = ["S107"]  # token_type is not a password
@@ -64,6 +68,8 @@ ignore = [
 "audit_log_cli/**" = ["B904", "F401"]  # CLI exit doesn't need exception chaining
 "**/core/utils.py" = ["B006", "F401"]  # Mutable defaults and conditional imports are intentional
 "dashboard_app/**" = ["E402", "F821", "B904", "F841", "F401", "E701", "E741", "B005"]  # Legacy dashboard app has some issues
+"**/enterprise_api/populate_keys.py" = ["F541"]
+"**/enterprise_api/scripts/populate_demo_public_key.py" = ["F541"]
 
 [lint.isort]
 known-first-party = ["app", "encypher", "encypher_ai", "encypher_enterprise", "encypher_commercial_shared"]

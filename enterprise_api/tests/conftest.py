@@ -39,6 +39,7 @@ if str(root) not in sys.path:
 # Now import app modules after setting up the path
 from app.database import get_content_db, get_db
 from app.main import app
+from app.middleware.public_rate_limiter import public_rate_limiter
 
 # Test database URLs - Two-Database Architecture
 # These match the docker-compose.full-stack.yml configuration
@@ -60,6 +61,17 @@ TEST_DATABASE_URL = TEST_CORE_DATABASE_URL
 
 _SEED_LOCK = asyncio.Lock()
 _SEEDED = False
+
+
+@pytest.fixture(autouse=True)
+def _reset_dependency_overrides_and_rate_limiters() -> None:
+    app.dependency_overrides.clear()
+    public_rate_limiter.requests.clear()
+    public_rate_limiter.violations.clear()
+    yield
+    app.dependency_overrides.clear()
+    public_rate_limiter.requests.clear()
+    public_rate_limiter.violations.clear()
 
 
 async def _ensure_seeded() -> None:

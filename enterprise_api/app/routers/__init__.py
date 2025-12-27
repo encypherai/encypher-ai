@@ -4,6 +4,7 @@ Routers for the Encypher Enterprise API.
 from app.routers import (
     audit,
     batch,
+    byok,
     chat,
     coalition,
     licensing,
@@ -21,6 +22,7 @@ from app.routers import (
 __all__ = [
     "audit",
     "batch",
+    "byok",
     "chat",
     "coalition",
     "licensing",

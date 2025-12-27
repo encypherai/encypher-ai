@@ -5,6 +5,8 @@ Provides SHA-256 hashing for text segments and hash combining for tree construct
 """
 import hashlib
 
+from app.utils.segmentation import normalize_for_hashing
+
 
 def compute_hash(data: str, encoding: str = 'utf-8') -> str:
     """
@@ -22,6 +24,11 @@ def compute_hash(data: str, encoding: str = 'utf-8') -> str:
         '315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3'
     """
     return hashlib.sha256(data.encode(encoding)).hexdigest()
+
+
+def compute_leaf_hash(text: str) -> str:
+    normalized = normalize_for_hashing(text, lowercase=True, normalize_unicode_chars=True)
+    return compute_hash(normalized)
 
 
 def combine_hashes(left_hash: str, right_hash: str) -> str:

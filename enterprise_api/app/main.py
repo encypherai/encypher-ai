@@ -25,6 +25,7 @@ from app.routers import (
     admin,
     audit,
     batch,
+    byok,
     chat,
     coalition,
     documents,
@@ -44,7 +45,7 @@ from app.routers import (
 from app.services.session_service import session_service
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
 from app.utils.db_startup import ensure_database_ready
-from app.dependencies import require_super_admin
+from app.dependencies import require_super_admin_dep
 
 # Configure logging
 logging.basicConfig(
@@ -503,7 +504,7 @@ async def public_swagger_ui() -> HTMLResponse:
     )
 
 
-@app.get("/internal/openapi.json", include_in_schema=False, dependencies=[Depends(require_super_admin)])
+@app.get("/internal/openapi.json", include_in_schema=False, dependencies=[Depends(require_super_admin_dep)])
 async def internal_openapi() -> JSONResponse:
     base = get_openapi(
         title=f"{app.title} (Internal)",
@@ -514,7 +515,7 @@ async def internal_openapi() -> JSONResponse:
     return JSONResponse(base)
 
 
-@app.get("/internal/docs", include_in_schema=False, dependencies=[Depends(require_super_admin)])
+@app.get("/internal/docs", include_in_schema=False, dependencies=[Depends(require_super_admin_dep)])
 async def internal_swagger_ui() -> HTMLResponse:
     return get_swagger_ui_html(
         openapi_url="/internal/openapi.json",
@@ -543,6 +544,7 @@ async def root():
 # Include routers
 app.include_router(account.router, prefix="/api/v1", tags=["Account"])
 app.include_router(admin.router, prefix="/api/v1", tags=["Admin"])
+app.include_router(byok.router, prefix="/api/v1", tags=["BYOK"])
 app.include_router(documents.router, prefix="/api/v1", tags=["Documents"])
 app.include_router(keys.router, prefix="/api/v1", tags=["API Keys"])
 app.include_router(webhooks.router, prefix="/api/v1", tags=["Webhooks"])

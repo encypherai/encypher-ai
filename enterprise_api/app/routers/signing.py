@@ -5,11 +5,13 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import require_sign_permission
+from app.dependencies import get_current_organization_dep, require_sign_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
 from app.observability.metrics import increment
+from app.schemas.embeddings import EncodeWithEmbeddingsRequest, EncodeWithEmbeddingsResponse
+from app.services.embedding_executor import encode_document_with_embeddings
 from app.services.signing_executor import execute_signing
 from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.quota import QuotaManager, QuotaType
@@ -82,9 +84,32 @@ async def sign_content(
         emit_document_signed(
             organization_id=organization["organization_id"],
             document_id=signing_result.document_id,
-            title=request.metadata.title if request.metadata else None,
-            document_type=request.metadata.content_type if request.metadata else None,
+            title=request.document_title,
+            document_type=request.document_type,
         )
     )
     
     return signing_result
+
+
+@router.post("/sign/advanced", response_model=EncodeWithEmbeddingsResponse, status_code=status.HTTP_201_CREATED)
+async def sign_advanced(
+    request: EncodeWithEmbeddingsRequest,
+    organization: dict = Depends(get_current_organization_dep),
+    db: AsyncSession = Depends(get_db),
+) -> EncodeWithEmbeddingsResponse:
+    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    allowed_tiers = {"professional", "business", "enterprise", "strategic_partner", "demo"}
+    if tier not in allowed_tiers:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Advanced signing requires Professional tier or higher. Please upgrade your plan.",
+        )
+
+    if not organization.get("can_sign", False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your API key does not have permission to sign content",
+        )
+
+    return await encode_document_with_embeddings(request=request, organization=organization, db=db)

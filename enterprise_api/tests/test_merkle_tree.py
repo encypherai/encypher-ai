@@ -16,6 +16,7 @@ from app.utils.merkle import (
     MerkleTree,
     combine_hashes,
     compute_hash,
+    compute_leaf_hash,
     verify_proof,
 )
 from app.utils.merkle.proof import generate_proof
@@ -165,7 +166,7 @@ class TestMerkleTree:
         segments = ["First.", "Second.", "Third."]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash("Second.")
+        target_hash = compute_leaf_hash("Second.")
         leaf = tree.find_leaf(target_hash)
         
         assert leaf is not None
@@ -228,7 +229,7 @@ class TestMerkleProof:
         segments = ["Only sentence."]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash(segments[0])
+        target_hash = compute_leaf_hash(segments[0])
         proof = generate_proof(tree.root, target_hash)
         
         assert proof is not None
@@ -241,20 +242,20 @@ class TestMerkleProof:
         segments = ["First.", "Second."]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash("First.")
+        target_hash = compute_leaf_hash("First.")
         proof = generate_proof(tree.root, target_hash)
         
         assert proof is not None
         assert len(proof.proof_path) == 1
         assert proof.proof_path[0].position == 'right'
-        assert proof.proof_path[0].hash == compute_hash("Second.")
+        assert proof.proof_path[0].hash == compute_leaf_hash("Second.")
     
     def test_generate_proof_many_leaves(self):
         """Generate proof for large tree."""
         segments = [f"Sentence {i}." for i in range(16)]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash("Sentence 5.")
+        target_hash = compute_leaf_hash("Sentence 5.")
         proof = generate_proof(tree.root, target_hash)
         
         assert proof is not None
@@ -266,7 +267,7 @@ class TestMerkleProof:
         segments = ["First.", "Second."]
         tree = MerkleTree(segments)
         
-        fake_hash = compute_hash("Not in tree.")
+        fake_hash = compute_leaf_hash("Not in tree.")
         proof = generate_proof(tree.root, fake_hash)
         
         assert proof is None
@@ -276,7 +277,7 @@ class TestMerkleProof:
         segments = ["First.", "Second.", "Third.", "Fourth."]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash("Third.")
+        target_hash = compute_leaf_hash("Third.")
         proof = generate_proof(tree.root, target_hash)
         
         assert proof is not None
@@ -289,7 +290,7 @@ class TestMerkleProof:
         segments = ["First.", "Second."]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash("First.")
+        target_hash = compute_leaf_hash("First.")
         proof = generate_proof(tree.root, target_hash)
         
         # Tamper with root hash
@@ -304,7 +305,7 @@ class TestMerkleProof:
         segments = ["First.", "Second.", "Third."]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash("First.")
+        target_hash = compute_leaf_hash("First.")
         proof = generate_proof(tree.root, target_hash)
         
         # Tamper with proof path
@@ -319,7 +320,7 @@ class TestMerkleProof:
         segments = ["First.", "Second."]
         tree = MerkleTree(segments)
         
-        target_hash = compute_hash("First.")
+        target_hash = compute_leaf_hash("First.")
         proof = generate_proof(tree.root, target_hash)
         
         data = proof.to_dict()
@@ -348,7 +349,7 @@ class TestMerkleProof:
         
         # Generate proof for second sentence
         target_content = segments[1]
-        target_hash = compute_hash(target_content)
+        target_hash = compute_leaf_hash(target_content)
         proof = generate_proof(tree.root, target_hash)
         
         assert proof is not None
@@ -387,7 +388,7 @@ class TestEdgeCases:
         tree = MerkleTree(segments)
         
         assert tree.total_leaves == 2
-        proof = generate_proof(tree.root, compute_hash(long_segment))
+        proof = generate_proof(tree.root, compute_leaf_hash(long_segment))
         assert proof is not None
         assert verify_proof(proof)
     
@@ -398,7 +399,7 @@ class TestEdgeCases:
         
         assert tree.total_leaves == 3
         # Both "Same." segments should have same hash but different indices
-        same_hash = compute_hash("Same.")
+        same_hash = compute_leaf_hash("Same.")
         # Find first occurrence
         leaf = tree.find_leaf(same_hash)
         assert leaf is not None
@@ -415,5 +416,5 @@ class TestEdgeCases:
         
         # All proofs should have same length
         for segment in segments:
-            proof = generate_proof(tree.root, compute_hash(segment))
+            proof = generate_proof(tree.root, compute_leaf_hash(segment))
             assert len(proof.proof_path) == 3

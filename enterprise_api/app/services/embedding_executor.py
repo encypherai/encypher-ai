@@ -84,34 +84,108 @@ async def encode_document_with_embeddings(
                     },
                 )
         
-        # Validate custom assertions if provided
+        # Validate custom assertions and/or template-based assertions if provided.
+        # Templates are meant to be usable by Business+ customers while schema/template authoring
+        # remains Enterprise-only.
+        raw_assertions = []
+
+        if request.template_id:
+            features = organization.get("features", {})
+            custom_assertions_enabled = False
+            if isinstance(features, dict):
+                custom_assertions_enabled = features.get("custom_assertions", False)
+            custom_assertions_enabled = custom_assertions_enabled or organization.get(
+                "custom_assertions_enabled", False
+            )
+
+            if not custom_assertions_enabled:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "code": "FEATURE_NOT_AVAILABLE",
+                        "message": "Custom assertion templates require Business tier or higher",
+                        "upgrade_url": "/billing/upgrade",
+                    },
+                )
+
+            from sqlalchemy import select
+
+            from app.models.c2pa_template import C2PAAssertionTemplate
+
+            stmt = (
+                select(C2PAAssertionTemplate)
+                .where(
+                    C2PAAssertionTemplate.id == request.template_id,
+                    (
+                        (C2PAAssertionTemplate.organization_id == organization_id)
+                        | (C2PAAssertionTemplate.is_public)
+                    ),
+                    C2PAAssertionTemplate.is_active,
+                )
+                .limit(1)
+            )
+            result = await db.execute(stmt)
+            template = result.scalar_one_or_none()
+            if not template:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={
+                        "code": "TEMPLATE_NOT_FOUND",
+                        "message": "Assertion template not found",
+                    },
+                )
+
+            template_data = template.template_data or {}
+            assertions_payload = []
+            if isinstance(template_data, dict):
+                assertions_payload = template_data.get("assertions") or []
+            elif isinstance(template_data, list):
+                assertions_payload = template_data
+
+            for assertion in assertions_payload:
+                if not isinstance(assertion, dict):
+                    continue
+                label = assertion.get("label")
+                if not label:
+                    continue
+                data = assertion.get("data")
+                if data is None:
+                    data = assertion.get("default_data")
+                if data is None:
+                    # Skip optional assertions with no default payload.
+                    continue
+                raw_assertions.append({"label": label, "data": data})
+
+        if request.custom_assertions:
+            raw_assertions.extend(request.custom_assertions)
+
         validated_assertions = None
-        if request.custom_assertions and request.validate_assertions:
+        if raw_assertions and request.validate_assertions:
             from sqlalchemy import select
 
             from app.models.c2pa_schema import C2PASchema
             from app.services.c2pa_validator import validator
-            
+
             # Fetch registered schemas for this organization
             registered_schemas = {}
-            for assertion in request.custom_assertions:
-                label = assertion.get('label')
-                if label:
+            for assertion in raw_assertions:
+                label = assertion.get("label")
+                if label and label not in registered_schemas:
                     stmt = select(C2PASchema).where(
                         C2PASchema.label == label,
-                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public))
+                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public)),
                     ).order_by(C2PASchema.created_at.desc())
                     result = await db.execute(stmt)
                     schema_model = result.scalar_one_or_none()
                     if schema_model:
-                        registered_schemas[label] = schema_model.schema
-            
+                        registered_schemas[label] = schema_model.json_schema
+
             # Validate all assertions
             all_valid, validation_results = validator.validate_custom_assertions(
-                request.custom_assertions,
-                registered_schemas
+                raw_assertions,
+                registered_schemas,
             )
-            
+
             if not all_valid:
                 logger.warning(f"Custom assertion validation failed for document {request.document_id}")
                 raise HTTPException(
@@ -119,15 +193,17 @@ async def encode_document_with_embeddings(
                     detail={
                         "code": "INVALID_ASSERTIONS",
                         "message": "One or more custom assertions failed validation",
-                        "validation_results": validation_results
-                    }
+                        "validation_results": validation_results,
+                    },
                 )
-            
-            validated_assertions = request.custom_assertions
-            logger.info(f"Validated {len(validated_assertions)} custom assertions for document {request.document_id}")
-        elif request.custom_assertions:
+
+            validated_assertions = raw_assertions
+            logger.info(
+                f"Validated {len(validated_assertions)} custom assertions for document {request.document_id}"
+            )
+        elif raw_assertions:
             # Use assertions without validation
-            validated_assertions = request.custom_assertions
+            validated_assertions = raw_assertions
             logger.info(f"Using {len(validated_assertions)} custom assertions without validation")
         
         # Initialize embedding service with organization's key
@@ -273,6 +349,8 @@ async def encode_document_with_embeddings(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error encoding document with embeddings: {e}", exc_info=True)
         raise HTTPException(

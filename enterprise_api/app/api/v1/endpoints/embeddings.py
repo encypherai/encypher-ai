@@ -23,6 +23,7 @@ async def _do_encode_with_embeddings(
     "/encode-with-embeddings",
     response_model=EncodeWithEmbeddingsResponse,
     status_code=status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def encode_with_embeddings(
     request: EncodeWithEmbeddingsRequest,
@@ -41,6 +42,7 @@ async def encode_with_embeddings(
     "/sign/advanced",
     response_model=EncodeWithEmbeddingsResponse,
     status_code=status.HTTP_201_CREATED,
+    deprecated=True,
 )
 async def sign_advanced(
     request: EncodeWithEmbeddingsRequest,
