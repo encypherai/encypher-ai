@@ -49,6 +49,15 @@ class LicenseInfo(BaseModel):
     contact_email: Optional[str] = Field(None, description="Contact email for licensing")
 
 
+class RightsMetadata(BaseModel):
+    copyright_holder: Optional[str] = Field(None, description="Copyright holder / publisher name")
+    license_url: Optional[str] = Field(None, description="URL to license terms")
+    usage_terms: Optional[str] = Field(None, description="Human-readable usage terms")
+    syndication_allowed: Optional[bool] = Field(None, description="Whether downstream syndication is permitted")
+    embargo_until: Optional[datetime] = Field(None, description="Optional embargo end timestamp")
+    contact_email: Optional[str] = Field(None, description="Contact email for licensing")
+
+
 class EncodeWithEmbeddingsRequest(BaseModel):
     """Request to encode document with minimal signed embeddings."""
     document_id: str = Field(..., description="Unique document identifier")
@@ -96,6 +105,10 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     license: Optional[LicenseInfo] = Field(
         None,
         description="Optional license information"
+    )
+    rights: Optional[RightsMetadata] = Field(
+        None,
+        description="Optional rights metadata to embed (Business+).",
     )
     embedding_options: EmbeddingOptions = Field(
         default_factory=EmbeddingOptions,

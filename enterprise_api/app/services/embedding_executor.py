@@ -9,6 +9,7 @@ import time
 from typing import Dict
 
 from fastapi import HTTPException, status
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.embeddings import (
@@ -89,7 +90,43 @@ async def encode_document_with_embeddings(
         # remains Enterprise-only.
         raw_assertions = []
 
-        if request.template_id:
+        effective_template_id = request.template_id
+        if effective_template_id is None:
+            row = await db.execute(
+                text(
+                    "SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"
+                ),
+                {"org_id": organization_id},
+            )
+            effective_template_id = row.scalar_one_or_none()
+
+        if request.rights:
+            features = organization.get("features", {})
+            custom_assertions_enabled = False
+            if isinstance(features, dict):
+                custom_assertions_enabled = features.get("custom_assertions", False)
+            custom_assertions_enabled = custom_assertions_enabled or organization.get(
+                "custom_assertions_enabled", False
+            )
+
+            if not custom_assertions_enabled:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "code": "FEATURE_NOT_AVAILABLE",
+                        "message": "Custom assertion templates require Business tier or higher",
+                        "upgrade_url": "/billing/upgrade",
+                    },
+                )
+
+            rights_payload = request.rights.dict(exclude_none=True)
+            embargo_until = rights_payload.get("embargo_until")
+            if embargo_until is not None and hasattr(embargo_until, "isoformat"):
+                rights_payload["embargo_until"] = embargo_until.isoformat()
+            if rights_payload:
+                raw_assertions.append({"label": "com.encypher.rights.v1", "data": rights_payload})
+
+        if effective_template_id:
             features = organization.get("features", {})
             custom_assertions_enabled = False
             if isinstance(features, dict):
@@ -115,7 +152,7 @@ async def encode_document_with_embeddings(
             stmt = (
                 select(C2PAAssertionTemplate)
                 .where(
-                    C2PAAssertionTemplate.id == request.template_id,
+                    C2PAAssertionTemplate.id == effective_template_id,
                     (
                         (C2PAAssertionTemplate.organization_id == organization_id)
                         | (C2PAAssertionTemplate.is_public)
@@ -133,7 +170,7 @@ async def encode_document_with_embeddings(
             else:
                 from app.services.c2pa_builtin_templates import get_builtin_template
 
-                builtin = get_builtin_template(template_id=request.template_id)
+                builtin = get_builtin_template(template_id=effective_template_id)
                 if builtin is not None:
                     template_data = builtin.get("template_data") or {}
 

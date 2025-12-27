@@ -91,7 +91,19 @@ async def execute_signing(
     # Embed manifest
     try:
         custom_assertions: Optional[List[Dict[str, Any]]] = None
-        if request.template_id:
+        raw_assertions: List[Dict[str, Any]] = []
+
+        effective_template_id = request.template_id
+        if effective_template_id is None:
+            row = await db.execute(
+                text(
+                    "SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"
+                ),
+                {"org_id": org_id},
+            )
+            effective_template_id = row.scalar_one_or_none()
+
+        if effective_template_id or request.rights:
             features = organization.get("features", {})
             custom_assertions_enabled = False
             if isinstance(features, dict):
@@ -110,12 +122,13 @@ async def execute_signing(
                     },
                 )
 
+        if effective_template_id:
             from app.models.c2pa_template import C2PAAssertionTemplate
 
             stmt = (
                 select(C2PAAssertionTemplate)
                 .where(
-                    C2PAAssertionTemplate.id == request.template_id,
+                    C2PAAssertionTemplate.id == effective_template_id,
                     (
                         (C2PAAssertionTemplate.organization_id == org_id)
                         | (C2PAAssertionTemplate.is_public)
@@ -133,7 +146,7 @@ async def execute_signing(
             else:
                 from app.services.c2pa_builtin_templates import get_builtin_template
 
-                builtin = get_builtin_template(template_id=request.template_id)
+                builtin = get_builtin_template(template_id=effective_template_id)
                 if builtin is not None:
                     template_data = builtin.get("template_data") or {}
 
@@ -152,7 +165,6 @@ async def execute_signing(
             elif isinstance(template_data, list):
                 assertions_payload = template_data
 
-            raw_assertions: List[Dict[str, Any]] = []
             for assertion in assertions_payload:
                 if not isinstance(assertion, dict):
                     continue
@@ -166,44 +178,49 @@ async def execute_signing(
                     continue
                 raw_assertions.append({"label": label, "data": data})
 
-            if raw_assertions and request.validate_assertions:
-                from app.models.c2pa_schema import C2PASchema
-                from app.services.c2pa_validator import validator
+        if request.rights:
+            rights_payload = request.rights.model_dump(exclude_none=True, mode="json")
+            if rights_payload:
+                raw_assertions.append({"label": "com.encypher.rights.v1", "data": rights_payload})
 
-                registered_schemas: Dict[str, Dict[str, Any]] = {}
-                for assertion in raw_assertions:
-                    label = assertion.get("label")
-                    if not label or label in registered_schemas:
-                        continue
-                    stmt = (
-                        select(C2PASchema)
-                        .where(
-                            C2PASchema.label == label,
-                            ((C2PASchema.organization_id == org_id) | (C2PASchema.is_public)),
-                        )
-                        .order_by(C2PASchema.created_at.desc())
+        if raw_assertions and request.validate_assertions:
+            from app.models.c2pa_schema import C2PASchema
+            from app.services.c2pa_validator import validator
+
+            registered_schemas: Dict[str, Dict[str, Any]] = {}
+            for assertion in raw_assertions:
+                label = assertion.get("label")
+                if not label or label in registered_schemas:
+                    continue
+                stmt = (
+                    select(C2PASchema)
+                    .where(
+                        C2PASchema.label == label,
+                        ((C2PASchema.organization_id == org_id) | (C2PASchema.is_public)),
                     )
-                    schema_result = await db.execute(stmt)
-                    schema_model = schema_result.scalar_one_or_none()
-                    if schema_model:
-                        registered_schemas[label] = schema_model.json_schema
-
-                all_valid, validation_results = validator.validate_custom_assertions(
-                    raw_assertions,
-                    registered_schemas,
+                    .order_by(C2PASchema.created_at.desc())
                 )
-                if not all_valid:
-                    raise HTTPException(
-                        status_code=400,
-                        detail={
-                            "code": "INVALID_ASSERTIONS",
-                            "message": "One or more custom assertions failed validation",
-                            "validation_results": validation_results,
-                        },
-                    )
+                schema_result = await db.execute(stmt)
+                schema_model = schema_result.scalar_one_or_none()
+                if schema_model:
+                    registered_schemas[label] = schema_model.json_schema
 
-            if raw_assertions:
-                custom_assertions = raw_assertions
+            all_valid, validation_results = validator.validate_custom_assertions(
+                raw_assertions,
+                registered_schemas,
+            )
+            if not all_valid:
+                raise HTTPException(
+                    status_code=400,
+                    detail={
+                        "code": "INVALID_ASSERTIONS",
+                        "message": "One or more custom assertions failed validation",
+                        "validation_results": validation_results,
+                    },
+                )
+
+        if raw_assertions:
+            custom_assertions = raw_assertions
 
         logger.debug("Embedding C2PA manifest for document %s", document_id)
         signed_text = UnicodeMetadata.embed_metadata(

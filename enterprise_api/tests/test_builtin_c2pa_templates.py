@@ -30,3 +30,7 @@ async def test_builtin_c2pa_templates_are_listed(async_client: AsyncClient, busi
     assert "tmpl_builtin_no_ai_training_v1" in template_ids
     assert "tmpl_builtin_rag_allowed_with_attribution_v1" in template_ids
     assert "tmpl_builtin_realtime_quotes_with_attribution_v1" in template_ids
+    assert "tmpl_builtin_cc_by_4_0_v1" in template_ids
+    assert "tmpl_builtin_cc_by_nc_4_0_v1" in template_ids
+    assert "tmpl_builtin_academic_open_access_v1" in template_ids
+    assert "tmpl_builtin_news_wire_syndication_v1" in template_ids

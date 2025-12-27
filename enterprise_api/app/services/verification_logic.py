@@ -105,6 +105,10 @@ def _extract_rights_signals(manifest: Dict[str, Any]) -> Dict[str, Any]:
                 data = assertion.get("data")
                 if isinstance(data, dict):
                     rights_signals["training_mining"] = data
+            if label == "com.encypher.rights.v1":
+                data = assertion.get("data")
+                if isinstance(data, dict):
+                    rights_signals["rights"] = data
     return rights_signals
 
 
