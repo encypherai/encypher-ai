@@ -87,6 +87,27 @@ def _find_status_assertion(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]
     return None
 
 
+def _extract_rights_signals(manifest: Dict[str, Any]) -> Dict[str, Any]:
+    rights_signals: Dict[str, Any] = {}
+
+    candidate_manifest = manifest
+    nested_manifest = manifest.get("manifest")
+    if isinstance(nested_manifest, dict):
+        candidate_manifest = nested_manifest
+
+    assertions = candidate_manifest.get("assertions", [])
+    if isinstance(assertions, list):
+        for assertion in assertions:
+            if not isinstance(assertion, dict):
+                continue
+            label = assertion.get("label")
+            if label == "c2pa.training-mining.v1":
+                data = assertion.get("data")
+                if isinstance(data, dict):
+                    rights_signals["training_mining"] = data
+    return rights_signals
+
+
 def parse_manifest_timestamp(manifest: Dict[str, Any]) -> Optional[datetime]:
     """Extract ISO8601 timestamp from manifest metadata."""
 
@@ -229,6 +250,10 @@ def build_verdict(
         "duration_ms": execution.duration_ms,
         "payload_bytes": payload_bytes,
     }
+
+    rights_signals = _extract_rights_signals(execution.manifest)
+    if rights_signals:
+        details["rights_signals"] = rights_signals
     if execution.missing_signers:
         details["missing_signers"] = sorted(execution.missing_signers)
     if execution.revoked_signers:
