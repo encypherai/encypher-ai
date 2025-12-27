@@ -52,16 +52,16 @@ We will simplify the public Enterprise API surface to a small, clear set of endp
 
 ### 4.0 Rights / License Signals (AI Licensing Workflow)
 - [ ] 4.1 Align with `PRDs/CURRENT/PRD_Enterprise_Rights_Metadata_AI_Licensing.md` (this PRD is the authoritative spec for fields)
-- [ ] 4.2 Implement built-in rights/license templates:
-  - [ ] 4.2.1 “All rights reserved”
-  - [ ] 4.2.2 “No AI training”
-  - [ ] 4.2.3 “RAG allowed with attribution”
-  - [ ] 4.2.4 “Real-time quotes allowed with attribution”
-- [ ] 4.3 Signing integration:
-  - [ ] 4.3.1 Allow selecting a rights template in `/sign` and `/sign/advanced`
-  - [ ] 4.3.2 Embed rights signals into the manifest as standards-aligned assertions (and Encypher custom assertion only if necessary)
-- [ ] 4.4 Verification integration:
-  - [ ] 4.4.1 Surface extracted rights signals in `/verify` responses
+- [x] 4.2 Implement built-in rights/license templates:
+  - [x] 4.2.1 “All rights reserved” — ✅ pytest
+  - [x] 4.2.2 “No AI training” — ✅ pytest
+  - [x] 4.2.3 “RAG allowed with attribution” — ✅ pytest
+  - [x] 4.2.4 “Real-time quotes allowed with attribution” — ✅ pytest
+- [x] 4.3 Signing integration:
+  - [x] 4.3.1 Allow selecting a rights template in `/sign` and `/sign/advanced` — ✅ pytest
+  - [x] 4.3.2 Embed rights signals into the manifest as standards-aligned assertions (and Encypher custom assertion only if necessary) — ✅ pytest
+- [x] 4.4 Verification integration:
+  - [x] 4.4.1 Surface extracted rights signals in `/verify` responses — ✅ pytest
   - [ ] 4.4.2 Ensure public verifier can return “what license applies” for AI companies
 
 ### 5.0 Revocation & Trust Anchors (Operational + Legal Requirements)
@@ -82,7 +82,7 @@ We will simplify the public Enterprise API surface to a small, clear set of endp
 
 ### 7.0 Testing & Validation
 - [x] 7.1 Tier gating tests (Starter/Professional/Business/Enterprise) — ✅ pytest
-- [ ] 7.2 Rights template embed + extract tests — ✅ pytest
+- [x] 7.2 Rights template embed + extract tests — ✅ pytest
 - [ ] 7.3 BYOK public-key lifecycle tests (register/list/revoke) — ✅ pytest
 - [ ] 7.4 Revocation verification behavior tests — ✅ pytest
 - [x] 7.5 Lint + type checks — ✅ ruff
