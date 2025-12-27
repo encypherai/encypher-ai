@@ -15,10 +15,11 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.api import api_router as api_v1_router
 from app.config import settings
-from app.database import engine
+from app.database import engine, get_content_db, get_db
 from app.observability.metrics import render_prometheus
 from app.routers import (
     account,
@@ -538,6 +539,43 @@ async def root():
         "docs": f"{settings.api_base_url}/docs" if not settings.is_production else None,
         "status": "preview"  # Will change to "production" after C2PA spec publication
     }
+
+
+def _is_verify_portal_host(request: Request) -> bool:
+    host = (request.headers.get("host") or "").split(":", 1)[0].strip().lower()
+    return host == f"verify.{settings.infrastructure_domain}".lower()
+
+
+@app.get("/demo/{document_id}", include_in_schema=False)
+async def verify_portal_demo(
+    document_id: str,
+    request: Request,
+    content_db: AsyncSession = Depends(get_content_db),
+    db: AsyncSession = Depends(get_db),
+):
+    if not _is_verify_portal_host(request):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return await verification.verify_by_document_id(
+        document_id=document_id,
+        content_db=content_db,
+        db=db,
+    )
+
+
+@app.get("/{document_id}", include_in_schema=False)
+async def verify_portal_root(
+    document_id: str,
+    request: Request,
+    content_db: AsyncSession = Depends(get_content_db),
+    db: AsyncSession = Depends(get_db),
+):
+    if not _is_verify_portal_host(request):
+        raise HTTPException(status_code=404, detail="Not Found")
+    return await verification.verify_by_document_id(
+        document_id=document_id,
+        content_db=content_db,
+        db=db,
+    )
 
 
 # Include routers

@@ -15,6 +15,19 @@
 http:
   routers:
     # ===========================================
+    # VERIFY PORTAL (Host-based) -> Enterprise API
+    # Supports public URLs like https://verify.encypherai.com/{document_id}
+    # ===========================================
+    verify-portal:
+      rule: "Host(`verify.encypherai.com`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      tls: {}
+      priority: 200
+
+    # ===========================================
     # FRONTEND APPS
     # ===========================================
     dashboard:

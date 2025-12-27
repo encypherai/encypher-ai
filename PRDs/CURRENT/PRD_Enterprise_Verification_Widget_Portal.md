@@ -30,7 +30,7 @@ Publishers need an easy way to show readers that content is signed and verifiabl
 - [ ] 2.2 Render verification verdict
 - [ ] 2.3 Render signer + trust anchor
 - [ ] 2.4 Render revocation state
-- [ ] 2.5 Provide shareable results URLs
+- [x] 2.5 Provide shareable results URLs — ✅ pytest
 
 ### 3.0 SEO + Trust
 
@@ -39,7 +39,7 @@ Publishers need an easy way to show readers that content is signed and verifiabl
 
 ### 4.0 Testing & Validation
 
-- [ ] 4.1 Unit tests passing — ✅ pytest
+- [x] 4.1 Unit tests passing — ✅ pytest
 - [ ] 4.2 Frontend verification — ✅ puppeteer
 
 ## Success Criteria
