@@ -126,7 +126,18 @@ async def encode_document_with_embeddings(
             )
             result = await db.execute(stmt)
             template = result.scalar_one_or_none()
-            if not template:
+
+            template_data = None
+            if template:
+                template_data = template.template_data or {}
+            else:
+                from app.services.c2pa_builtin_templates import get_builtin_template
+
+                builtin = get_builtin_template(template_id=request.template_id)
+                if builtin is not None:
+                    template_data = builtin.get("template_data") or {}
+
+            if template_data is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail={
@@ -135,7 +146,6 @@ async def encode_document_with_embeddings(
                     },
                 )
 
-            template_data = template.template_data or {}
             assertions_payload = []
             if isinstance(template_data, dict):
                 assertions_payload = template_data.get("assertions") or []

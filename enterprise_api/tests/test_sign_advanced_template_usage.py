@@ -162,3 +162,51 @@ async def test_sign_advanced_applies_template_assertions(
         and assertion.get("data", {}).get("use", {}).get("ai_training") is False
         for assertion in called_assertions
     )
+
+
+@pytest.mark.asyncio
+async def test_sign_advanced_applies_builtin_template_assertions(
+    async_client: AsyncClient,
+    business_auth_headers: dict,
+) -> None:
+    mock_merkle_root = SimpleNamespace(id="mrk_2", root_hash="root", leaf_count=1, tree_depth=1)
+
+    class _FakeSegmenter:
+        def __init__(self, text: str, include_words: bool = False):
+            self._text = text
+
+        def get_segments(self, level: str):
+            return [self._text]
+
+    with (
+        patch(
+            "app.services.embedding_executor.MerkleService.encode_document",
+            new=AsyncMock(return_value={"sentence": mock_merkle_root}),
+        ),
+        patch("app.utils.segmentation.HierarchicalSegmenter", new=_FakeSegmenter),
+        patch(
+            "app.services.embedding_service.EmbeddingService.create_embeddings",
+            new=AsyncMock(return_value=([], "signed")),
+        ) as mock_create,
+    ):
+        response = await async_client.post(
+            "/api/v1/sign/advanced",
+            json={
+                "document_id": "doc_adv_tpl_builtin_001",
+                "text": "Hello world.",
+                "segmentation_level": "sentence",
+                "template_id": "tmpl_builtin_no_ai_training_v1",
+                "validate_assertions": True,
+            },
+            headers=business_auth_headers,
+        )
+
+    assert response.status_code == 201
+
+    called_assertions = mock_create.call_args.kwargs.get("custom_assertions")
+    assert called_assertions is not None
+    assert any(
+        assertion.get("label") == "c2pa.training-mining.v1"
+        and assertion.get("data", {}).get("use", {}).get("ai_training") is False
+        for assertion in called_assertions
+    )
