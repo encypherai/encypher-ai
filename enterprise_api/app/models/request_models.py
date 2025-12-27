@@ -44,6 +44,16 @@ class SignRequest(BaseModel):
         description="Optional list of C2PA action assertions to include."
     )
 
+    template_id: Optional[str] = Field(
+        None,
+        description="Optional assertion template to apply (Business+).",
+    )
+
+    validate_assertions: bool = Field(
+        True,
+        description="Whether to validate template-based assertions (Business+).",
+    )
+
     @field_validator("document_type")
     @classmethod
     def validate_document_type(cls, v: str) -> str:
