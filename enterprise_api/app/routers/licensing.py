@@ -9,7 +9,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_content_db, get_db
 from app.middleware.licensing_auth import verify_licensing_api_key
 from app.models.licensing import AgreementStatus, AICompany, DistributionStatus
 from app.schemas.licensing import (
@@ -145,19 +145,18 @@ async def terminate_agreement(
 async def list_available_content(
     content_type: Optional[str] = Query(None, description="Filter by content type"),
     min_word_count: Optional[int] = Query(None, ge=0, description="Minimum word count"),
+    include_rights_signals: bool = Query(False, description="Include rights_signals extracted from manifest_data"),
     limit: int = Query(100, ge=1, le=1000, description="Results per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
     ai_company: AICompany = Depends(verify_licensing_api_key),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
 ):
     """
     List available content for licensed AI company.
 
     **Requires AI company API key** - Returns content metadata that matches
     the terms of active licensing agreements.
-
-    Headers:
-        Authorization: Bearer lic_abc123...
     """
     # Get active agreement for this AI company
     agreement = await LicensingService.get_active_agreement_for_company(
@@ -173,13 +172,26 @@ async def list_available_content(
 
     # Query content matching agreement terms
     content_list, total = await LicensingService.list_available_content(
-        db=db,
+        db=content_db,
         agreement=agreement,
         content_type=content_type,
         min_word_count=min_word_count,
+        include_rights_signals=include_rights_signals,
         limit=limit,
         offset=offset
     )
+
+    if include_rights_signals and content_list:
+        content_id = content_list[0].id
+        owner_id = await LicensingService.get_content_owner(content_db, content_id)
+        await LicensingService.track_content_access(
+            db=db,
+            agreement_id=agreement.id,
+            content_id=content_id,
+            member_id=owner_id or "unknown",
+            ai_company_name=ai_company.company_name,
+            access_type="list",
+        )
 
     # TODO: Implement quota tracking based on agreement terms
     # For now, quota_remaining is None (unlimited)
@@ -194,16 +206,14 @@ async def list_available_content(
 async def track_content_access(
     access_data: ContentAccessTrack,
     ai_company: AICompany = Depends(verify_licensing_api_key),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
 ):
     """
     Track content access by AI company.
 
     **Requires AI company API key** - Logs when content is accessed for
     revenue attribution.
-
-    Headers:
-        Authorization: Bearer lic_abc123...
     """
     # Get the active agreement for this AI company
     agreement = await LicensingService.get_active_agreement_for_company(
@@ -218,7 +228,7 @@ async def track_content_access(
         )
 
     # Look up the content owner (member_id) from the content reference
-    member_id = await LicensingService.get_content_owner(db, access_data.content_id)
+    member_id = await LicensingService.get_content_owner(content_db, access_data.content_id)
 
     if not member_id:
         raise HTTPException(
@@ -226,22 +236,12 @@ async def track_content_access(
             detail=f"Content {access_data.content_id} not found"
         )
 
-    # Convert string organization_id to UUID for storage
-    from uuid import UUID as UUIDType
-    try:
-        member_uuid = UUIDType(member_id)
-    except ValueError:
-        # If organization_id is not a valid UUID, generate a deterministic one
-        import hashlib
-        hash_bytes = hashlib.sha256(member_id.encode()).digest()[:16]
-        member_uuid = UUIDType(bytes=hash_bytes)
-
     # Track the access
     access_log = await LicensingService.track_content_access(
         db=db,
         agreement_id=agreement.id,
         content_id=access_data.content_id,
-        member_id=member_uuid,
+        member_id=member_id,
         ai_company_name=ai_company.company_name,
         access_type=access_data.access_type
     )

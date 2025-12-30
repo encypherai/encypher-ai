@@ -86,9 +86,16 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Endpoint | Method | Auth | Tier | Description | Dependencies |
 |----------|--------|------|------|-------------|--------------|
 | `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
+| `/api/v1/sign/advanced` | POST | ✅ | Enterprise | Sign content with advanced metadata controls | Key Service, Coalition Service (optional) |
 | `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
+| `/api/v1/verify/{document_id}` | GET | ❌ | Public | Verify a previously signed document by ID | None |
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
+| `/api/v1/provenance/lookup` | POST | ❌ | Public | Lookup provenance for a document (structured) | None |
+| `/api/v1/account` | GET | ✅ | All | Get account profile | Auth Service |
+| `/api/v1/account/quota` | GET | ✅ | All | Get account quota and limits | Billing Service |
 | `/api/v1/usage` | GET | ✅ | All | Get organization usage statistics | Key Service |
+| `/api/v1/usage/history` | GET | ✅ | All | Get historical usage summaries | Analytics Service |
+| `/api/v1/usage/reset` | POST | ✅ | Internal | Reset usage counters (admin) | Analytics Service |
 
 ### Public C2PA Utilities
 
@@ -106,11 +113,48 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/enterprise/merkle/attribute` | POST | ✅ | Enterprise | Find source documents via Merkle matching |
 | `/api/v1/enterprise/merkle/detect-plagiarism` | POST | ✅ | Enterprise | Detect plagiarized content |
 
+### Streaming Merkle Endpoints (NEW - Patent FIG. 5)
+
+Real-time Merkle tree construction for streaming content signing (e.g., LLM output).
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/stream/merkle/start` | POST | ✅ | Professional+ | Start streaming Merkle session |
+| `/api/v1/enterprise/stream/merkle/segment` | POST | ✅ | Professional+ | Add segment to session |
+| `/api/v1/enterprise/stream/merkle/finalize` | POST | ✅ | Professional+ | Finalize session and compute root |
+| `/api/v1/enterprise/stream/merkle/status` | POST | ✅ | Professional+ | Check session status |
+
+### Evidence Generation Endpoints (NEW - Patent FIG. 11)
+
+Generate court-ready evidence packages for content attribution.
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/evidence/generate` | POST | ✅ | Enterprise | Generate evidence package with Merkle proofs |
+
+### Fingerprint Endpoints (NEW)
+
+Robust fingerprinting that survives text modifications.
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/fingerprint/encode` | POST | ✅ | Enterprise | Encode keyed fingerprint into text |
+| `/api/v1/enterprise/fingerprint/detect` | POST | ✅ | Enterprise | Detect fingerprint in text |
+
+### Multi-Source Attribution Endpoints (NEW - Patent FIG. 8)
+
+Look up content across multiple sources with chronological ordering.
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/enterprise/attribution/multi-source` | POST | ✅ | Business+ | Multi-source hash lookup with authority ranking |
+
 ### Enterprise Embeddings Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/embeddings/encode-with-embeddings` | POST | ✅ | Professional+ | Create invisible signed embeddings |
+| `/api/v1/enterprise/embeddings/sign/advanced` | POST | ✅ | Enterprise | Advanced signing workflow for embeddings |
 | `/api/v1/public/verify/{ref_id}` | GET | ❌ | Public | Verify embedding by reference ID |
 | `/api/v1/public/verify/batch` | POST | ❌ | Public | Batch verify embeddings |
 | `/api/v1/public/extract-and-verify` | POST | ❌ | Public | Extract and verify C2PA manifest |
@@ -121,9 +165,15 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/c2pa/schemas` | POST | ✅ | Enterprise | Register custom C2PA assertion schema |
 | `/api/v1/enterprise/c2pa/schemas` | GET | ✅ | Enterprise | List custom schemas |
+| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | GET | ✅ | Enterprise | Get custom schema |
+| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | PUT | ✅ | Enterprise | Update custom schema |
+| `/api/v1/enterprise/c2pa/schemas/{schema_id}` | DELETE | ✅ | Enterprise | Delete custom schema |
 | `/api/v1/enterprise/c2pa/validate` | POST | ✅ | Enterprise | Validate assertion before embedding |
 | `/api/v1/enterprise/c2pa/templates` | POST | ✅ | Enterprise | Create assertion template |
 | `/api/v1/enterprise/c2pa/templates` | GET | ✅ | Enterprise | List assertion templates |
+| `/api/v1/enterprise/c2pa/templates/{template_id}` | GET | ✅ | Enterprise | Get assertion template |
+| `/api/v1/enterprise/c2pa/templates/{template_id}` | PUT | ✅ | Enterprise | Update assertion template |
+| `/api/v1/enterprise/c2pa/templates/{template_id}` | DELETE | ✅ | Enterprise | Delete assertion template |
 
 ### Batch Endpoints
 
@@ -139,26 +189,44 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/stream/sign` | POST/WS | ✅ | Professional+ | Real-time signing via SSE (POST) and WebSocket (WS) |
 | `/api/v1/stream/chat` | WS | ✅ | Professional+ | WebSocket chat stream (signing wrapper) |
 | `/api/v1/stream/chat/openai-compatible` | POST | ✅ | Professional+ | OpenAI-compatible SSE chat completions with signing |
+| `/api/v1/stream/chat/health` | GET | ❌ | Public | Streaming chat health check |
 | `/api/v1/stream/events` | GET | ✅ | Professional+ | Server-Sent Events (SSE) heartbeat and events |
 | `/api/v1/stream/session/create` | POST | ✅ | Professional+ | Create streaming session |
-| `/api/v1/stream/session/{id}/close` | POST | ✅ | Professional+ | Close streaming session |
+| `/api/v1/stream/session/{session_id}/close` | POST | ✅ | Professional+ | Close streaming session |
 | `/api/v1/stream/runs/{run_id}` | GET | ✅ | Professional+ | Get streaming run state |
 | `/api/v1/stream/stats` | GET | ✅ | Professional+ | Get organization streaming statistics |
 | `/api/v1/stream/health` | GET | ❌ | Internal | Streaming subsystem health check |
 
-### Team & Administration Endpoints
+### Account, Keys, BYOK, Documents, and Webhooks
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/org/members` | GET | ✅ | Business+ | List team members |
-| `/api/v1/org/members/invite` | POST | ✅ | Business+ | Invite team member |
-| `/api/v1/org/members/invites` | GET | ✅ | Business+ | List pending invites |
-| `/api/v1/org/members/invites/{invite_id}` | DELETE | ✅ | Business+ | Revoke invite |
-| `/api/v1/org/members/{member_id}/role` | PATCH | ✅ | Business+ | Update member role |
-| `/api/v1/org/members/{member_id}` | DELETE | ✅ | Business+ | Remove team member |
-| `/api/v1/audit/logs` | GET | ✅ | Business+ | Get audit logs |
-| `/api/v1/usage` | GET | ✅ | All | Get usage metrics for current period |
-| `/api/v1/usage/history` | GET | ✅ | All | Get historical usage summaries (preview) |
+| `/api/v1/keys` | GET | ✅ | All | List API keys |
+| `/api/v1/keys` | POST | ✅ | All | Create API key |
+| `/api/v1/keys/{key_id}` | PATCH | ✅ | All | Update API key (name/metadata) |
+| `/api/v1/keys/{key_id}` | DELETE | ✅ | All | Delete API key |
+| `/api/v1/keys/{key_id}/rotate` | POST | ✅ | All | Rotate API key |
+| `/api/v1/byok/public-keys` | GET | ✅ | Professional+ | List BYOK public keys |
+| `/api/v1/byok/public-keys` | POST | ✅ | Professional+ | Register BYOK public key |
+| `/api/v1/byok/public-keys/{key_id}` | DELETE | ✅ | Professional+ | Delete BYOK public key |
+| `/api/v1/documents` | GET | ✅ | Business+ | List signed documents |
+| `/api/v1/documents/{document_id}` | GET | ✅ | Business+ | Get signed document |
+| `/api/v1/documents/{document_id}/history` | GET | ✅ | Enterprise | Get document provenance history |
+| `/api/v1/documents/{document_id}` | DELETE | ✅ | Business+ | Soft-delete a document |
+| `/api/v1/webhooks` | GET | ✅ | Business+ | List webhooks |
+| `/api/v1/webhooks` | POST | ✅ | Business+ | Create webhook |
+| `/api/v1/webhooks/{webhook_id}` | GET | ✅ | Business+ | Get webhook |
+| `/api/v1/webhooks/{webhook_id}` | PATCH | ✅ | Business+ | Update webhook |
+| `/api/v1/webhooks/{webhook_id}` | DELETE | ✅ | Business+ | Delete webhook |
+| `/api/v1/webhooks/{webhook_id}/deliveries` | GET | ✅ | Business+ | List webhook deliveries |
+| `/api/v1/webhooks/{webhook_id}/test` | POST | ✅ | Business+ | Send a test delivery |
+
+### Tools
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/tools/encode` | POST | ✅ | All | Encode content into a transport-safe representation |
+| `/api/v1/tools/decode` | POST | ✅ | All | Decode previously encoded content |
 
 ### Coalition Endpoints
 
@@ -182,19 +250,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 ### Licensing Endpoints
 
-| Endpoint | Method | Auth | Tier | Description |
-|----------|--------|------|------|-------------|
-| `/api/v1/licensing/agreements` | GET | ✅ | Professional+ | List licensing agreements |
-| `/api/v1/licensing/agreements/{id}` | GET | ✅ | Professional+ | Get agreement details |
-| `/api/v1/licensing/agreements` | POST | ✅ | Professional+ | Create licensing agreement for an AI company |
-| `/api/v1/licensing/agreements/{id}` | PATCH | ✅ | Professional+ | Update licensing agreement |
-| `/api/v1/licensing/agreements/{id}` | DELETE | ✅ | Professional+ | Terminate licensing agreement |
-| `/api/v1/licensing/content` | GET | ✅ (AI key) | Professional+ | List content available under active AI-company agreements |
-| `/api/v1/licensing/track-access` | POST | ✅ (AI key) | Professional+ | Track AI-company content access for attribution |
-| `/api/v1/licensing/distributions` | POST | ✅ | Professional+ | Create revenue distribution for a period |
-| `/api/v1/licensing/distributions` | GET | ✅ | Professional+ | List revenue distributions |
-| `/api/v1/licensing/distributions/{id}` | GET | ✅ | Professional+ | Get revenue distribution details |
-| `/api/v1/licensing/payouts` | POST | ✅ | Professional+ | Process payouts for a distribution (simulated) |
+Licensing endpoints are internal-only and intentionally excluded from the public OpenAPI schema.
 
 For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 
@@ -211,7 +267,6 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 |----------|--------|------|------|-------------|
 | `/health` | GET | ❌ | Public | Health check |
 | `/readyz` | GET | ❌ | Public | Readiness probe |
-| `/metrics` | GET | ❌ | Internal | Prometheus metrics |
 | `/` | GET | ❌ | Public | API information |
 
 ### Features by Tier
@@ -229,6 +284,8 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ Invisible signed embeddings
 - ✅ Custom metadata
 - ✅ Streaming support (WebSocket/SSE)
+- ✅ **Lightweight UUID Manifest**: Smaller payload footprint (NEW)
+- ✅ **Streaming Merkle Tree**: Real-time LLM signing (NEW)
 - ✅ 100,000 requests/month
 - ✅ Priority support
 - ✅ Coalition membership (70% publisher / 30% Encypher revenue share)
@@ -241,6 +298,9 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ Team management (up to 10 members)
 - ✅ Audit logs
 - ✅ Bring Your Own Keys (BYOK)
+- ✅ **Distributed Embedding**: Resilient metadata placement (NEW)
+- ✅ **Dual-Binding Manifest**: Enhanced tamper-evidence (NEW)
+- ✅ **Multi-Source Lookup**: Content attribution across sources (NEW)
 - ✅ 500,000 requests/month
 - ✅ Coalition membership (75% publisher / 25% Encypher revenue share)
 
@@ -251,6 +311,10 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ **Schema Registry**: Custom assertion schemas
 - ✅ Source attribution
 - ✅ Plagiarism detection
+- ✅ **Evidence Generation**: Court-ready evidence packages (NEW)
+- ✅ **Robust Fingerprinting**: Survives text modifications (NEW)
+- ✅ **Authority Ranking**: Configurable source ranking (NEW)
+- ✅ **Distributed + ECC**: Error-correcting redundancy (NEW)
 - ✅ Unlimited team members
 - ✅ SSO integration
 - ✅ Unlimited requests

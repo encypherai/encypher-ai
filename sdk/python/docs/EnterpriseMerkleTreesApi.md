@@ -1,6 +1,6 @@
 # encypher.EnterpriseMerkleTreesApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -42,10 +42,10 @@ from encypher.models.plagiarism_detection_response import PlagiarismDetectionRes
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -142,10 +142,10 @@ from encypher.models.document_encode_response import DocumentEncodeResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -236,10 +236,10 @@ from encypher.models.source_attribution_response import SourceAttributionRespons
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters

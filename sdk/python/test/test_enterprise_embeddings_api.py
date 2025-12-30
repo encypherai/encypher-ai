@@ -33,6 +33,13 @@ class TestEnterpriseEmbeddingsApi(unittest.TestCase):
         """
         pass
 
+    def test_sign_advanced_api_v1_enterprise_embeddings_sign_advanced_post(self) -> None:
+        """Test case for sign_advanced_api_v1_enterprise_embeddings_sign_advanced_post
+
+        Sign Advanced
+        """
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

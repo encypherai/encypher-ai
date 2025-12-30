@@ -23,8 +23,16 @@ pub enum LookupSentenceApiV1LookupPostError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`provenance_lookup_api_v1_provenance_lookup_post`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ProvenanceLookupApiV1ProvenanceLookupPostError {
+    Status422(models::HttpValidationError),
+    UnknownValue(serde_json::Value),
+}
 
-/// Look up sentence provenance by hash.  This endpoint allows anyone to paste a sentence and find which document it originally came from, along with metadata about the publisher.  Use case: User pastes a sentence, we find which document it came from.  Note: This endpoint does NOT require authentication (public lookup).  Args:     request: LookupRequest containing sentence text     db: Database session  Returns:     LookupResponse with document and organization details if found
+
+/// Look up sentence provenance by hash.  This endpoint allows anyone to paste a sentence and find which document it originally came from, along with metadata about the publisher.  Use case: User pastes a sentence, we find which document it came from.  Note: This endpoint does NOT require authentication (public lookup).  **Alias:** POST /provenance/lookup
 pub async fn lookup_sentence_api_v1_lookup_post(configuration: &configuration::Configuration, lookup_request: models::LookupRequest) -> Result<models::LookupResponse, Error<LookupSentenceApiV1LookupPostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_lookup_request = lookup_request;
@@ -58,6 +66,44 @@ pub async fn lookup_sentence_api_v1_lookup_post(configuration: &configuration::C
     } else {
         let content = resp.text().await?;
         let entity: Option<LookupSentenceApiV1LookupPostError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Look up sentence provenance by hash.  This is an alias for POST /lookup with a clearer name. Find which document a sentence originally came from.  Note: This endpoint does NOT require authentication (public lookup).
+pub async fn provenance_lookup_api_v1_provenance_lookup_post(configuration: &configuration::Configuration, lookup_request: models::LookupRequest) -> Result<models::LookupResponse, Error<ProvenanceLookupApiV1ProvenanceLookupPostError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_lookup_request = lookup_request;
+
+    let uri_str = format!("{}/api/v1/provenance/lookup", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    req_builder = req_builder.json(&p_body_lookup_request);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::LookupResponse`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::LookupResponse`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ProvenanceLookupApiV1ProvenanceLookupPostError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

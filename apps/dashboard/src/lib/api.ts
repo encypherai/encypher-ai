@@ -198,6 +198,29 @@ interface CoalitionSummary {
   payout_account_url: string | null;
 }
 
+// C2PA Template types (TEAM_044)
+interface C2PATemplate {
+  id: string;
+  name: string;
+  description: string | null;
+  schema_id: string;
+  template_data: Record<string, unknown>;
+  category: string | null;
+  organization_id: string;
+  is_default: boolean;
+  is_active: boolean;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+interface C2PATemplateListResponse {
+  templates: C2PATemplate[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
 // TEAM_006: API Access Gating types
 type ApiAccessStatusType = 'not_requested' | 'pending' | 'approved' | 'denied';
 
@@ -632,6 +655,39 @@ const apiClient = {
   },
 
   // ============================================
+  // C2PA Templates (TEAM_044)
+  // ============================================
+
+  /**
+   * List available C2PA assertion templates (Business+ tier)
+   */
+  async getC2PATemplates(accessToken: string, options?: {
+    page?: number;
+    pageSize?: number;
+    category?: string;
+  }): Promise<C2PATemplateListResponse> {
+    const params = new URLSearchParams();
+    if (options?.page) params.append('page', options.page.toString());
+    if (options?.pageSize) params.append('page_size', options.pageSize.toString());
+    if (options?.category) params.append('category', options.category);
+    
+    const queryString = params.toString();
+    const url = `${API_BASE_URL}/enterprise/c2pa/templates${queryString ? `?${queryString}` : ''}`;
+    
+    return fetchWithAuth<C2PATemplateListResponse>(url, accessToken);
+  },
+
+  /**
+   * Get a specific C2PA template by ID (Business+ tier)
+   */
+  async getC2PATemplate(accessToken: string, templateId: string): Promise<C2PATemplate> {
+    return fetchWithAuth<C2PATemplate>(
+      `${API_BASE_URL}/enterprise/c2pa/templates/${templateId}`,
+      accessToken
+    );
+  },
+
+  // ============================================
   // BYOK Public Key Management
   // ============================================
 
@@ -952,4 +1008,7 @@ export type {
   ApiAccessStatusResponse,
   ApiAccessRequestResponse,
   PendingAccessRequest,
+  // TEAM_044: C2PA Templates
+  C2PATemplate,
+  C2PATemplateListResponse,
 };

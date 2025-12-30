@@ -50,7 +50,25 @@ class TestBatchResponseData(unittest.TestCase):
                             timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
                             details = {
                                 'key' : null
-                                }, ), 
+                                }, 
+                            embeddings_found = 56, 
+                            all_embeddings = [
+                                encypher.models.embedding_verdict.EmbeddingVerdict(
+                                    index = 56, 
+                                    valid = True, 
+                                    tampered = True, 
+                                    reason_code = '', 
+                                    signer_id = '', 
+                                    signer_name = '', 
+                                    timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                                    text_span = [
+                                        null
+                                        ], 
+                                    clean_text = '', 
+                                    manifest = {
+                                        'key' : null
+                                        }, )
+                                ], ), 
                         error_code = '', 
                         error_message = '', 
                         statistics = {
@@ -84,7 +102,25 @@ class TestBatchResponseData(unittest.TestCase):
                             timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
                             details = {
                                 'key' : null
-                                }, ), 
+                                }, 
+                            embeddings_found = 56, 
+                            all_embeddings = [
+                                encypher.models.embedding_verdict.EmbeddingVerdict(
+                                    index = 56, 
+                                    valid = True, 
+                                    tampered = True, 
+                                    reason_code = '', 
+                                    signer_id = '', 
+                                    signer_name = '', 
+                                    timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                                    text_span = [
+                                        null
+                                        ], 
+                                    clean_text = '', 
+                                    manifest = {
+                                        'key' : null
+                                        }, )
+                                ], ), 
                         error_code = '', 
                         error_message = '', 
                         statistics = {

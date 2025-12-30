@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypher Patent Application - Additional Drawing Figures (12-15)</title>
+    <style>
+        /* Using system fonts for offline rendering */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            background: #ffffff;
+            padding: 40px;
+            color: #1a1a1a;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #1B2F50;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            text-align: center;
+            color: #666;
+            margin-bottom: 50px;
+        }
+        
+        .figure-section {
+            margin-bottom: 80px;
+            page-break-inside: avoid;
+        }
+        
+        .figure-title {
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1B2F50;
+            border-bottom: 2px solid #1B2F50;
+            padding-bottom: 10px;
+        }
+        
+        .figure-container {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .figure-label {
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            color: #1a1a1a;
+            margin-top: 15px;
+        }
+        
+        .figure-description {
+            font-size: 12px;
+            text-align: center;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        /* Page break for printing */
+        @media print {
+            .figure-section {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h1>Encypher Patent Application - Additional Drawing Figures</h1>
+        <p class="subtitle">Figures 12-15 for provisional patent application - December 2025</p>
+        
+        <!-- FIG. 12: Per-Document Revocation System -->
+        <div class="figure-section">
+            <h2 class="figure-title">Per-Document Revocation System</h2>
+            <div class="figure-container">
+                <svg width="100%" height="580" viewBox="0 0 900 580">
+                    <!-- Title -->
+                    <text x="450" y="30" text-anchor="middle" font-family="Arial" font-size="14" font-weight="600" fill="#1B2F50">Per-Document Revocation System (1200)</text>
+                    
+                    <!-- Status Registry Box -->
+                    <rect x="50" y="50" width="350" height="180" rx="8" fill="#E6F7E6" stroke="#2E8B2E" stroke-width="2"/>
+                    <text x="225" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#1B5E1B">Status Registry (1210)</text>
+                    
+                    <!-- Bitstring visualization -->
+                    <rect x="70" y="95" width="310" height="50" rx="4" fill="white" stroke="#2E8B2E" stroke-width="1"/>
+                    <text x="225" y="115" text-anchor="middle" font-family="Arial" font-size="10" font-weight="500" fill="#1B5E1B">Bitstring (1212)</text>
+                    
+                    <!-- Individual bits -->
+                    <g transform="translate(80, 125)">
+                        <rect x="0" y="0" width="18" height="18" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="9" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#1B5E1B">0</text>
+                        
+                        <rect x="20" y="0" width="18" height="18" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="29" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#1B5E1B">0</text>
+                        
+                        <rect x="40" y="0" width="18" height="18" fill="#FEE2E2" stroke="#DC2626" stroke-width="1"/>
+                        <text x="49" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#DC2626">1</text>
+                        
+                        <rect x="60" y="0" width="18" height="18" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="69" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#1B5E1B">0</text>
+                        
+                        <rect x="80" y="0" width="18" height="18" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="89" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#1B5E1B">0</text>
+                        
+                        <rect x="100" y="0" width="18" height="18" fill="#FEE2E2" stroke="#DC2626" stroke-width="1"/>
+                        <text x="109" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#DC2626">1</text>
+                        
+                        <rect x="120" y="0" width="18" height="18" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="129" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#1B5E1B">0</text>
+                        
+                        <rect x="140" y="0" width="18" height="18" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="149" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#1B5E1B">0</text>
+                        
+                        <text x="170" y="13" font-family="Courier New" font-size="12" fill="#666">...</text>
+                        
+                        <rect x="195" y="0" width="18" height="18" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="204" y="13" text-anchor="middle" font-family="Courier New" font-size="10" fill="#1B5E1B">0</text>
+                    </g>
+                    
+                    <!-- Bit position labels -->
+                    <text x="89" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#666">0</text>
+                    <text x="109" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#666">1</text>
+                    <text x="129" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#DC2626" font-weight="600">2</text>
+                    <text x="149" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#666">3</text>
+                    <text x="169" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#666">4</text>
+                    <text x="189" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#DC2626" font-weight="600">5</text>
+                    <text x="209" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#666">6</text>
+                    <text x="229" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#666">7</text>
+                    <text x="284" y="160" text-anchor="middle" font-family="Courier New" font-size="8" fill="#666">n</text>
+                    
+                    <!-- Status Lists label -->
+                    <text x="225" y="190" text-anchor="middle" font-family="Arial" font-size="10" fill="#1B5E1B">Status Lists (1214): org_001/list_0, org_001/list_1, ...</text>
+                    <text x="225" y="220" text-anchor="middle" font-family="Courier New" font-size="9" fill="#666">131,072 documents per list (16 KB bitstring)</text>
+                    
+                    <!-- Process Flow - Right side -->
+                    <g transform="translate(450, 50)">
+                        <!-- Step 1220: Document Signing -->
+                        <rect x="0" y="0" width="200" height="50" rx="6" fill="#E8F4FD" stroke="#2A87C4" stroke-width="2"/>
+                        <text x="100" y="22" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#1E40AF">Document Signing</text>
+                        <text x="100" y="38" text-anchor="middle" font-family="Courier New" font-size="10" fill="#666">1220</text>
+                        
+                        <!-- Arrow -->
+                        <line x1="100" y1="50" x2="100" y2="70" stroke="#ccc" stroke-width="2"/>
+                        <polygon points="100,80 95,70 105,70" fill="#ccc"/>
+                        
+                        <!-- Step 1230: Revocation Request -->
+                        <rect x="0" y="80" width="200" height="50" rx="6" fill="#FFF3E0" stroke="#F59E0B" stroke-width="2"/>
+                        <text x="100" y="102" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#92400E">Revocation Request</text>
+                        <text x="100" y="118" text-anchor="middle" font-family="Courier New" font-size="10" fill="#666">1230</text>
+                        
+                        <!-- Arrow -->
+                        <line x1="100" y1="130" x2="100" y2="150" stroke="#ccc" stroke-width="2"/>
+                        <polygon points="100,160 95,150 105,150" fill="#ccc"/>
+                        
+                        <!-- Step 1240: Set Bit -->
+                        <rect x="0" y="160" width="200" height="50" rx="6" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+                        <text x="100" y="182" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#DC2626">Set Revocation Bit</text>
+                        <text x="100" y="198" text-anchor="middle" font-family="Courier New" font-size="10" fill="#666">1240</text>
+                        
+                        <!-- Arrow -->
+                        <line x1="100" y1="210" x2="100" y2="230" stroke="#ccc" stroke-width="2"/>
+                        <polygon points="100,240 95,230 105,230" fill="#ccc"/>
+                        
+                        <!-- Step 1250: Publish to CDN -->
+                        <rect x="0" y="240" width="200" height="50" rx="6" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="2"/>
+                        <text x="100" y="262" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#6B21A8">Publish to CDN</text>
+                        <text x="100" y="278" text-anchor="middle" font-family="Courier New" font-size="10" fill="#666">1250</text>
+                        
+                        <!-- Arrow -->
+                        <line x1="100" y1="290" x2="100" y2="310" stroke="#ccc" stroke-width="2"/>
+                        <polygon points="100,320 95,310 105,310" fill="#ccc"/>
+                        
+                        <!-- Step 1260: Verification Check -->
+                        <rect x="0" y="320" width="200" height="50" rx="6" fill="#1B2F50" stroke="#1B2F50" stroke-width="2"/>
+                        <text x="100" y="342" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="white">Verification Check</text>
+                        <text x="100" y="358" text-anchor="middle" font-family="Courier New" font-size="10" fill="rgba(255,255,255,0.7)">1260</text>
+                        
+                        <!-- Optional Step 1270: Reinstatement -->
+                        <rect x="220" y="160" width="180" height="50" rx="6" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="2" stroke-dasharray="5,3"/>
+                        <text x="310" y="182" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#1B5E1B">Reinstatement</text>
+                        <text x="310" y="198" text-anchor="middle" font-family="Courier New" font-size="10" fill="#666">1270 (optional)</text>
+                        
+                        <!-- Arrow from reinstatement -->
+                        <line x1="220" y1="185" x2="205" y2="185" stroke="#2E8B2E" stroke-width="2" stroke-dasharray="5,3"/>
+                        <polygon points="200,185 210,180 210,190" fill="#2E8B2E"/>
+                    </g>
+                    
+                    <!-- Connection from registry to process -->
+                    <line x1="400" y1="140" x2="440" y2="105" stroke="#ccc" stroke-width="2" stroke-dasharray="5,3"/>
+                    
+                    <!-- Reason Taxonomy Box -->
+                    <rect x="50" y="260" width="350" height="130" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="225" y="285" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#92400E">Revocation Reason Taxonomy</text>
+                    
+                    <text x="70" y="310" font-family="Courier New" font-size="10" fill="#666">• factual_error</text>
+                    <text x="70" y="328" font-family="Courier New" font-size="10" fill="#666">• legal_takedown</text>
+                    <text x="70" y="346" font-family="Courier New" font-size="10" fill="#666">• copyright_claim</text>
+                    <text x="70" y="364" font-family="Courier New" font-size="10" fill="#666">• privacy_request</text>
+                    
+                    <text x="220" y="310" font-family="Courier New" font-size="10" fill="#666">• publisher_request</text>
+                    <text x="220" y="328" font-family="Courier New" font-size="10" fill="#666">• security_concern</text>
+                    <text x="220" y="346" font-family="Courier New" font-size="10" fill="#666">• content_policy</text>
+                    <text x="220" y="364" font-family="Courier New" font-size="10" fill="#666">• other</text>
+                    
+                    <!-- Key advantage callout -->
+                    <rect x="50" y="410" width="800" height="60" rx="6" fill="#DBEAFE" stroke="#2A87C4" stroke-width="2"/>
+                    <text x="450" y="435" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#1E40AF">Key Advantage: Granular Revocation</text>
+                    <text x="450" y="455" text-anchor="middle" font-family="Arial" font-size="10" fill="#1E40AF">Revoke individual documents without invalidating the signing certificate or other documents signed with the same certificate</text>
+                    
+                    <!-- Legend -->
+                    <g transform="translate(50, 490)">
+                        <text x="0" y="15" font-family="Arial" font-size="10" font-weight="600" fill="#666">Legend:</text>
+                        <rect x="60" y="5" width="15" height="15" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                        <text x="80" y="16" font-family="Arial" font-size="9" fill="#666">Valid (bit=0)</text>
+                        <rect x="150" y="5" width="15" height="15" fill="#FEE2E2" stroke="#DC2626" stroke-width="1"/>
+                        <text x="170" y="16" font-family="Arial" font-size="9" fill="#666">Revoked (bit=1)</text>
+                    </g>
+                </svg>
+            </div>
+            <p class="figure-label">FIG. 12</p>
+            <p class="figure-description">Per-document revocation system with bitstring status registry enabling granular revocation without certificate invalidation</p>
+        </div>
+        
+        <!-- FIG. 13: Distributed Embedding Method -->
+        <div class="figure-section">
+            <h2 class="figure-title">Distributed Embedding with Carrier Selection</h2>
+            <div class="figure-container">
+                <svg width="100%" height="650" viewBox="0 0 900 650">
+                    <!-- Title -->
+                    <text x="450" y="30" text-anchor="middle" font-family="Arial" font-size="14" font-weight="600" fill="#1B2F50">Distributed Embedding Method (1300)</text>
+                    
+                    <!-- Step 1310: Carrier Selection -->
+                    <rect x="50" y="50" width="800" height="100" rx="8" fill="#E8F4FD" stroke="#2A87C4" stroke-width="2"/>
+                    <text x="450" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#1E40AF">Step 1310: Identify Carrier Positions</text>
+                    
+                    <!-- Sample text with carriers highlighted -->
+                    <rect x="70" y="90" width="760" height="45" rx="4" fill="white" stroke="#2A87C4" stroke-width="1"/>
+                    <text x="85" y="118" font-family="Courier New" font-size="12" fill="#333">The<tspan fill="#2A87C4" font-weight="600">␣</tspan>quick<tspan fill="#2A87C4" font-weight="600">␣</tspan>brown<tspan fill="#2A87C4" font-weight="600">␣</tspan>fox<tspan fill="#2A87C4" font-weight="600">␣</tspan>jumps<tspan fill="#2A87C4" font-weight="600">␣</tspan>over<tspan fill="#2A87C4" font-weight="600">␣</tspan>the<tspan fill="#2A87C4" font-weight="600">␣</tspan>lazy<tspan fill="#2A87C4" font-weight="600">␣</tspan>dog<tspan fill="#F59E0B" font-weight="600">.</tspan></text>
+                    <text x="620" y="118" font-family="Arial" font-size="10" fill="#666">(carriers: 8 spaces + 1 punct = 9)</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="450" y1="150" x2="450" y2="170" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="450,180 445,170 455,170" fill="#ccc"/>
+                    
+                    <!-- Step 1320: Encode Authentication Data -->
+                    <rect x="50" y="180" width="800" height="100" rx="8" fill="#FFF3E0" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="450" y="205" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#92400E">Step 1320: Encode Authentication Data as Variation Selectors</text>
+                    
+                    <text x="70" y="235" font-family="Arial" font-size="10" fill="#666">Payload bytes:</text>
+                    <rect x="160" y="220" width="30" height="25" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+                    <text x="175" y="238" text-anchor="middle" font-family="Courier New" font-size="10" fill="#92400E">0x4A</text>
+                    <rect x="195" y="220" width="30" height="25" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+                    <text x="210" y="238" text-anchor="middle" font-family="Courier New" font-size="10" fill="#92400E">0x7B</text>
+                    <rect x="230" y="220" width="30" height="25" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+                    <text x="245" y="238" text-anchor="middle" font-family="Courier New" font-size="10" fill="#92400E">0x03</text>
+                    <rect x="265" y="220" width="30" height="25" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+                    <text x="280" y="238" text-anchor="middle" font-family="Courier New" font-size="10" fill="#92400E">0xF2</text>
+                    <text x="305" y="238" font-family="Courier New" font-size="12" fill="#666">...</text>
+                    
+                    <text x="450" y="235" font-family="Arial" font-size="10" fill="#666">→</text>
+                    
+                    <text x="480" y="235" font-family="Arial" font-size="10" fill="#666">Variation Selectors:</text>
+                    <rect x="590" y="220" width="50" height="25" rx="3" fill="#E0E7FF" stroke="#6366F1" stroke-width="1"/>
+                    <text x="615" y="238" text-anchor="middle" font-family="Courier New" font-size="9" fill="#4338CA">U+E012A</text>
+                    <rect x="645" y="220" width="50" height="25" rx="3" fill="#E0E7FF" stroke="#6366F1" stroke-width="1"/>
+                    <text x="670" y="238" text-anchor="middle" font-family="Courier New" font-size="9" fill="#4338CA">U+E015B</text>
+                    <rect x="700" y="220" width="50" height="25" rx="3" fill="#E0E7FF" stroke="#6366F1" stroke-width="1"/>
+                    <text x="725" y="238" text-anchor="middle" font-family="Courier New" font-size="9" fill="#4338CA">U+FE03</text>
+                    <rect x="755" y="220" width="50" height="25" rx="3" fill="#E0E7FF" stroke="#6366F1" stroke-width="1"/>
+                    <text x="780" y="238" text-anchor="middle" font-family="Courier New" font-size="9" fill="#4338CA">U+E01D2</text>
+                    
+                    <text x="450" y="268" text-anchor="middle" font-family="Courier New" font-size="9" fill="#666">Mapping: bytes 0-15 → U+FE00-U+FE0F | bytes 16-255 → U+E0100-U+E01EF</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="450" y1="280" x2="450" y2="300" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="450,310 445,300 455,300" fill="#ccc"/>
+                    
+                    <!-- Step 1330: Distribute -->
+                    <rect x="50" y="310" width="800" height="110" rx="8" fill="#E6F7E6" stroke="#2E8B2E" stroke-width="2"/>
+                    <text x="450" y="335" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#1B5E1B">Step 1330: Distribute Code Points Across Carriers</text>
+                    
+                    <!-- Distributed result -->
+                    <rect x="70" y="350" width="760" height="55" rx="4" fill="white" stroke="#2E8B2E" stroke-width="1"/>
+                    <text x="85" y="375" font-family="Courier New" font-size="11" fill="#333">The</text>
+                    <text x="113" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS1]</text>
+                    <text x="143" y="375" font-family="Courier New" font-size="11" fill="#333">quick</text>
+                    <text x="181" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS2]</text>
+                    <text x="211" y="375" font-family="Courier New" font-size="11" fill="#333">brown</text>
+                    <text x="255" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS3]</text>
+                    <text x="285" y="375" font-family="Courier New" font-size="11" fill="#333">fox</text>
+                    <text x="308" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS4]</text>
+                    <text x="338" y="375" font-family="Courier New" font-size="11" fill="#333">jumps</text>
+                    <text x="378" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS5]</text>
+                    <text x="408" y="375" font-family="Courier New" font-size="11" fill="#333">over</text>
+                    <text x="438" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS6]</text>
+                    <text x="468" y="375" font-family="Courier New" font-size="11" fill="#333">the</text>
+                    <text x="493" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS7]</text>
+                    <text x="523" y="375" font-family="Courier New" font-size="11" fill="#333">lazy</text>
+                    <text x="553" y="375" font-family="Courier New" font-size="9" fill="#6366F1" font-weight="600">[VS8]</text>
+                    <text x="583" y="375" font-family="Courier New" font-size="11" fill="#333">dog.</text>
+                    
+                    <text x="450" y="398" text-anchor="middle" font-family="Arial" font-size="10" fill="#1B5E1B">One variation selector inserted after each carrier position (visually non-rendering)</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="450" y1="420" x2="450" y2="440" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="450,450 445,440 455,440" fill="#ccc"/>
+                    
+                    <!-- Step 1340/1350: Capacity Check and Fallback -->
+                    <rect x="50" y="450" width="380" height="90" rx="8" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="2"/>
+                    <text x="240" y="475" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#6B21A8">Step 1340: Capacity Check</text>
+                    <text x="240" y="500" text-anchor="middle" font-family="Arial" font-size="10" fill="#666">carriers ≥ payload_bytes?</text>
+                    <text x="150" y="525" text-anchor="middle" font-family="Arial" font-size="10" fill="#16A34A" font-weight="500">YES → Distributed (1330)</text>
+                    <text x="330" y="525" text-anchor="middle" font-family="Arial" font-size="10" fill="#DC2626" font-weight="500">NO → Fallback (1350)</text>
+                    
+                    <rect x="470" y="450" width="380" height="90" rx="8" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+                    <text x="660" y="475" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#DC2626">Step 1350: Single-Point Fallback</text>
+                    <text x="660" y="500" text-anchor="middle" font-family="Courier New" font-size="10" fill="#666">The[VS1][VS2][VS3]...[VSn] quick brown...</text>
+                    <text x="660" y="525" text-anchor="middle" font-family="Arial" font-size="10" fill="#666">All code points after first carrier (contiguous)</text>
+                    
+                    <!-- Resilience callout -->
+                    <rect x="50" y="560" width="800" height="70" rx="6" fill="#DBEAFE" stroke="#2A87C4" stroke-width="2"/>
+                    <text x="450" y="585" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#1E40AF">Resilience Advantage</text>
+                    <text x="450" y="605" text-anchor="middle" font-family="Arial" font-size="10" fill="#1E40AF">Partial deletion preserves code points at unaffected carrier positions.</text>
+                    <text x="450" y="620" text-anchor="middle" font-family="Arial" font-size="10" fill="#1E40AF">Example: Truncating final 30% loses only VS7-VS8; VS1-VS6 survive for partial recovery.</text>
+                </svg>
+            </div>
+            <p class="figure-label">FIG. 13</p>
+            <p class="figure-description">Distributed embedding method with carrier selection for resilient content authentication</p>
+        </div>
+        
+        <!-- FIG. 14: Two-Layer Embedding Architecture -->
+        <div class="figure-section">
+            <h2 class="figure-title">Two-Layer Embedding Architecture</h2>
+            <div class="figure-container">
+                <svg width="100%" height="600" viewBox="0 0 900 600">
+                    <!-- Title -->
+                    <text x="450" y="30" text-anchor="middle" font-family="Arial" font-size="14" font-weight="600" fill="#1B2F50">Two-Layer Embedding Architecture (1400)</text>
+                    
+                    <!-- Document with segments -->
+                    <rect x="50" y="50" width="400" height="280" rx="8" fill="white" stroke="#1B2F50" stroke-width="2"/>
+                    <text x="250" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#1B2F50">Authenticated Document</text>
+                    
+                    <!-- Segment 1 -->
+                    <rect x="70" y="90" width="360" height="45" rx="4" fill="#DBEAFE" stroke="#2A87C4" stroke-width="1"/>
+                    <text x="85" y="110" font-family="Arial" font-size="10" fill="#1E40AF" font-weight="500">Segment 1 (Sentence)</text>
+                    <text x="85" y="125" font-family="Courier New" font-size="9" fill="#666">"The quick brown fox..."<tspan fill="#6366F1" font-weight="600">[VS:id=0,doc=abc]</tspan></text>
+                    
+                    <!-- Segment 2 -->
+                    <rect x="70" y="140" width="360" height="45" rx="4" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
+                    <text x="85" y="160" font-family="Arial" font-size="10" fill="#92400E" font-weight="500">Segment 2 (Sentence)</text>
+                    <text x="85" y="175" font-family="Courier New" font-size="9" fill="#666">"It jumped over the lazy..."<tspan fill="#6366F1" font-weight="600">[VS:id=1,doc=abc]</tspan></text>
+                    
+                    <!-- Segment 3 -->
+                    <rect x="70" y="190" width="360" height="45" rx="4" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="1"/>
+                    <text x="85" y="210" font-family="Arial" font-size="10" fill="#1B5E1B" font-weight="500">Segment 3 (Sentence)</text>
+                    <text x="85" y="225" font-family="Courier New" font-size="9" fill="#666">"The dog was sleeping..."<tspan fill="#6366F1" font-weight="600">[VS:id=2,doc=abc]</tspan></text>
+                    
+                    <!-- Segment N -->
+                    <text x="250" y="255" text-anchor="middle" font-family="Courier New" font-size="12" fill="#666">...</text>
+                    
+                    <!-- Document-level manifest -->
+                    <rect x="70" y="270" width="360" height="45" rx="4" fill="#1B2F50"/>
+                    <text x="250" y="290" text-anchor="middle" font-family="Arial" font-size="10" fill="white" font-weight="500">Document-Level C2PA Manifest</text>
+                    <text x="250" y="305" text-anchor="middle" font-family="Courier New" font-size="9" fill="rgba(255,255,255,0.7)">[C2PATextManifestWrapper: full signature, Merkle root, assertions]</text>
+                    
+                    <!-- Layer Labels -->
+                    <rect x="480" y="90" width="180" height="130" rx="6" fill="#E0E7FF" stroke="#6366F1" stroke-width="2"/>
+                    <text x="570" y="115" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#4338CA">Layer 1: Segment-Level</text>
+                    <text x="570" y="135" text-anchor="middle" font-family="Arial" font-size="10" fill="#4338CA">(1410)</text>
+                    <text x="495" y="158" font-family="Arial" font-size="9" fill="#666">• Distributed VS markers</text>
+                    <text x="495" y="173" font-family="Arial" font-size="9" fill="#666">• Segment ID + Doc ref</text>
+                    <text x="495" y="188" font-family="Arial" font-size="9" fill="#666">• Minimal payload (~20 bytes)</text>
+                    <text x="495" y="203" font-family="Arial" font-size="9" fill="#666">• Within each segment</text>
+                    
+                    <rect x="480" y="235" width="180" height="95" rx="6" fill="#1B2F50"/>
+                    <text x="570" y="260" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="white">Layer 2: Document-Level</text>
+                    <text x="570" y="280" text-anchor="middle" font-family="Arial" font-size="10" fill="rgba(255,255,255,0.7)">(1420)</text>
+                    <text x="495" y="300" font-family="Arial" font-size="9" fill="rgba(255,255,255,0.8)">• Contiguous C2PA manifest</text>
+                    <text x="495" y="315" font-family="Arial" font-size="9" fill="rgba(255,255,255,0.8)">• Full signature + Merkle root</text>
+                    
+                    <!-- Arrows connecting layers to doc -->
+                    <line x1="430" y1="140" x2="475" y2="155" stroke="#6366F1" stroke-width="2"/>
+                    <line x1="430" y1="292" x2="475" y2="280" stroke="#1B2F50" stroke-width="2"/>
+                    
+                    <!-- Verification Scenarios -->
+                    <text x="450" y="370" text-anchor="middle" font-family="Arial" font-size="13" font-weight="600" fill="#1B2F50">Verification Scenarios</text>
+                    
+                    <!-- Scenario A: Full Document -->
+                    <rect x="50" y="390" width="260" height="90" rx="6" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="2"/>
+                    <text x="180" y="415" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#1B5E1B">Scenario A: Full Document</text>
+                    <text x="65" y="440" font-family="Arial" font-size="9" fill="#666">• Use document-level manifest</text>
+                    <text x="65" y="455" font-family="Arial" font-size="9" fill="#666">• Full cryptographic verification</text>
+                    <text x="65" y="470" font-family="Arial" font-size="9" fill="#666">• Standards compliant (C2PA)</text>
+                    
+                    <!-- Scenario B: Excerpt -->
+                    <rect x="320" y="390" width="260" height="90" rx="6" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="450" y="415" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#92400E">Scenario B: Excerpt Only</text>
+                    <text x="335" y="440" font-family="Arial" font-size="9" fill="#666">• Use segment-level markers</text>
+                    <text x="335" y="455" font-family="Arial" font-size="9" fill="#666">• Identify source document</text>
+                    <text x="335" y="470" font-family="Arial" font-size="9" fill="#666">• Verify individual segments</text>
+                    
+                    <!-- Scenario C: Cross-verification -->
+                    <rect x="590" y="390" width="260" height="90" rx="6" fill="#E0E7FF" stroke="#6366F1" stroke-width="2"/>
+                    <text x="720" y="415" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#4338CA">Scenario C: Cross-Verify</text>
+                    <text x="605" y="440" font-family="Arial" font-size="9" fill="#666">• Both layers available</text>
+                    <text x="605" y="455" font-family="Arial" font-size="9" fill="#666">• Confirm consistency</text>
+                    <text x="605" y="470" font-family="Arial" font-size="9" fill="#666">• Highest assurance level</text>
+                    
+                    <!-- Use Cases -->
+                    <rect x="50" y="500" width="800" height="80" rx="6" fill="#DBEAFE" stroke="#2A87C4" stroke-width="2"/>
+                    <text x="450" y="525" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#1E40AF">Key Use Cases</text>
+                    <text x="170" y="550" text-anchor="middle" font-family="Arial" font-size="10" fill="#1E40AF" font-weight="500">Publishers</text>
+                    <text x="170" y="565" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Track licensing of excerpts</text>
+                    <text x="450" y="550" text-anchor="middle" font-family="Arial" font-size="10" fill="#1E40AF" font-weight="500">AI Companies</text>
+                    <text x="450" y="565" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Sentence-level training attribution</text>
+                    <text x="730" y="550" text-anchor="middle" font-family="Arial" font-size="10" fill="#1E40AF" font-weight="500">Enterprises</text>
+                    <text x="730" y="565" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Audit trails surviving transformation</text>
+                </svg>
+            </div>
+            <p class="figure-label">FIG. 14</p>
+            <p class="figure-description">Two-layer embedding architecture with segment-level and document-level authentication for flexible verification</p>
+        </div>
+        
+        <!-- FIG. 15: Robust Fingerprinting Method -->
+        <div class="figure-section">
+            <h2 class="figure-title">Robust Fingerprinting for Semantic Similarity</h2>
+            <div class="figure-container">
+                <svg width="100%" height="700" viewBox="0 0 900 700">
+                    <!-- Title -->
+                    <text x="450" y="30" text-anchor="middle" font-family="Arial" font-size="14" font-weight="600" fill="#1B2F50">Robust Fingerprinting Method (1500)</text>
+                    
+                    <!-- Left side: Fingerprint Generation -->
+                    <rect x="30" y="50" width="400" height="380" rx="8" fill="#fafafa" stroke="#e0e0e0" stroke-width="1"/>
+                    <text x="230" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#1B2F50">Fingerprint Generation (Signing Time)</text>
+                    
+                    <!-- Step 1510: Preprocessing -->
+                    <rect x="50" y="95" width="360" height="55" rx="6" fill="#E8F4FD" stroke="#2A87C4" stroke-width="2"/>
+                    <text x="230" y="115" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#1E40AF">Step 1510: Preprocessing</text>
+                    <text x="230" y="135" text-anchor="middle" font-family="Courier New" font-size="9" fill="#666">lowercase → remove punct → stem/lemmatize</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="230" y1="150" x2="230" y2="165" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="230,175 225,165 235,165" fill="#ccc"/>
+                    
+                    <!-- Step 1520: Shingle Extraction -->
+                    <rect x="50" y="175" width="360" height="70" rx="6" fill="#FFF3E0" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="230" y="195" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#92400E">Step 1520: N-gram Shingle Extraction</text>
+                    <text x="70" y="218" font-family="Courier New" font-size="9" fill="#666">"the quick brown" → "quick brown fox" → "brown fox jump" → ...</text>
+                    <text x="230" y="235" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">(3-word shingles shown)</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="230" y1="245" x2="230" y2="260" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="230,270 225,260 235,260" fill="#ccc"/>
+                    
+                    <!-- Step 1530: LSH Computation -->
+                    <rect x="50" y="270" width="360" height="70" rx="6" fill="#E6F7E6" stroke="#2E8B2E" stroke-width="2"/>
+                    <text x="230" y="290" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#1B5E1B">Step 1530: Locality-Sensitive Hash (LSH)</text>
+                    <text x="230" y="310" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">MinHash / SimHash / Random Hyperplane</text>
+                    <text x="230" y="328" text-anchor="middle" font-family="Courier New" font-size="9" fill="#1B5E1B">fingerprint = 0x7A3F...B2C1 (64-256 bits)</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="230" y1="340" x2="230" y2="355" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="230,365 225,355 235,355" fill="#ccc"/>
+                    
+                    <!-- Step 1540: Embed -->
+                    <rect x="50" y="365" width="360" height="50" rx="6" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="2"/>
+                    <text x="230" y="390" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#6B21A8">Step 1540: Embed Fingerprint</text>
+                    <text x="230" y="405" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Distributed VS encoding with high redundancy</text>
+                    
+                    <!-- Right side: Detection -->
+                    <rect x="470" y="50" width="400" height="380" rx="8" fill="#fafafa" stroke="#e0e0e0" stroke-width="1"/>
+                    <text x="670" y="75" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#1B2F50">Detection (Verification Time)</text>
+                    
+                    <!-- Step 1550: Extract -->
+                    <rect x="490" y="95" width="360" height="55" rx="6" fill="#E8F4FD" stroke="#2A87C4" stroke-width="2"/>
+                    <text x="670" y="115" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#1E40AF">Step 1550: Extract Fingerprints</text>
+                    <text x="670" y="135" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Scan for embedded VS patterns</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="670" y1="150" x2="670" y2="165" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="670,175 665,165 675,165" fill="#ccc"/>
+                    
+                    <!-- Step 1560: Compare -->
+                    <rect x="490" y="175" width="360" height="100" rx="6" fill="#FFF3E0" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="670" y="195" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="#92400E">Step 1560: Compare Against Database</text>
+                    
+                    <!-- Database icon -->
+                    <rect x="510" y="210" width="80" height="50" rx="4" fill="#E6F7E6" stroke="#2E8B2E" stroke-width="1"/>
+                    <text x="550" y="235" text-anchor="middle" font-family="Arial" font-size="9" fill="#1B5E1B">Known</text>
+                    <text x="550" y="248" text-anchor="middle" font-family="Arial" font-size="9" fill="#1B5E1B">Fingerprints</text>
+                    
+                    <text x="620" y="240" font-family="Arial" font-size="14" fill="#666">→</text>
+                    
+                    <text x="720" y="225" font-family="Arial" font-size="9" fill="#666">Similarity Score:</text>
+                    <text x="720" y="245" font-family="Courier New" font-size="10" fill="#1B5E1B" font-weight="600">Jaccard / Cosine / Hamming</text>
+                    <text x="720" y="262" font-family="Courier New" font-size="9" fill="#666">score = 0.87</text>
+                    
+                    <!-- Arrow -->
+                    <line x1="670" y1="275" x2="670" y2="290" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="670,300 665,290 675,290" fill="#ccc"/>
+                    
+                    <!-- Step 1570: Match Decision -->
+                    <rect x="490" y="300" width="360" height="55" rx="6" fill="#1B2F50"/>
+                    <text x="670" y="325" text-anchor="middle" font-family="Arial" font-size="11" font-weight="500" fill="white">Step 1570: Match Decision</text>
+                    <text x="670" y="345" text-anchor="middle" font-family="Courier New" font-size="9" fill="rgba(255,255,255,0.8)">score > threshold → MATCH FOUND</text>
+                    
+                    <!-- Output -->
+                    <rect x="490" y="365" width="360" height="50" rx="6" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="2"/>
+                    <text x="670" y="390" text-anchor="middle" font-family="Arial" font-size="10" fill="#1B5E1B" font-weight="500">Output: Source Document ID, Confidence Score</text>
+                    
+                    <!-- Key Advantage: Tolerance -->
+                    <rect x="30" y="450" width="840" height="100" rx="8" fill="#FEF3C7" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="450" y="475" text-anchor="middle" font-family="Arial" font-size="12" font-weight="600" fill="#92400E">Key Advantage: Survives Content Modification</text>
+                    
+                    <g transform="translate(60, 490)">
+                        <rect x="0" y="0" width="180" height="45" rx="4" fill="white" stroke="#F59E0B" stroke-width="1"/>
+                        <text x="90" y="18" text-anchor="middle" font-family="Arial" font-size="10" font-weight="500" fill="#92400E">Paraphrasing</text>
+                        <text x="90" y="35" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Synonyms change some shingles</text>
+                    </g>
+                    
+                    <g transform="translate(260, 490)">
+                        <rect x="0" y="0" width="180" height="45" rx="4" fill="white" stroke="#F59E0B" stroke-width="1"/>
+                        <text x="90" y="18" text-anchor="middle" font-family="Arial" font-size="10" font-weight="500" fill="#92400E">Restructuring</text>
+                        <text x="90" y="35" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Sentence reordering tolerated</text>
+                    </g>
+                    
+                    <g transform="translate(460, 490)">
+                        <rect x="0" y="0" width="180" height="45" rx="4" fill="white" stroke="#F59E0B" stroke-width="1"/>
+                        <text x="90" y="18" text-anchor="middle" font-family="Arial" font-size="10" font-weight="500" fill="#92400E">Partial Deletion</text>
+                        <text x="90" y="35" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Remaining text still matches</text>
+                    </g>
+                    
+                    <g transform="translate(660, 490)">
+                        <rect x="0" y="0" width="180" height="45" rx="4" fill="white" stroke="#F59E0B" stroke-width="1"/>
+                        <text x="90" y="18" text-anchor="middle" font-family="Arial" font-size="10" font-weight="500" fill="#92400E">Combination</text>
+                        <text x="90" y="35" text-anchor="middle" font-family="Arial" font-size="9" fill="#666">Original detected in mixed text</text>
+                    </g>
+                    
+                    <!-- Comparison: Cryptographic vs Robust -->
+                    <rect x="30" y="570" width="400" height="110" rx="6" fill="#FEE2E2" stroke="#DC2626" stroke-width="2"/>
+                    <text x="230" y="595" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#DC2626">Standard Cryptographic Hash</text>
+                    <text x="50" y="620" font-family="Arial" font-size="9" fill="#666">• Any change → completely different hash</text>
+                    <text x="50" y="638" font-family="Arial" font-size="9" fill="#666">• Single bit flip breaks verification</text>
+                    <text x="50" y="656" font-family="Arial" font-size="9" fill="#666">• Cannot detect paraphrased content</text>
+                    <text x="50" y="674" font-family="Courier New" font-size="9" fill="#DC2626">SHA256("The quick...") ≠ SHA256("A fast...")</text>
+                    
+                    <rect x="470" y="570" width="400" height="110" rx="6" fill="#D1FAE5" stroke="#2E8B2E" stroke-width="2"/>
+                    <text x="670" y="595" text-anchor="middle" font-family="Arial" font-size="11" font-weight="600" fill="#1B5E1B">Locality-Sensitive Hash (Robust)</text>
+                    <text x="490" y="620" font-family="Arial" font-size="9" fill="#666">• Similar content → similar hash</text>
+                    <text x="490" y="638" font-family="Arial" font-size="9" fill="#666">• Tolerates moderate modifications</text>
+                    <text x="490" y="656" font-family="Arial" font-size="9" fill="#666">• Detects paraphrased/edited content</text>
+                    <text x="490" y="674" font-family="Courier New" font-size="9" fill="#1B5E1B">LSH("The quick...") ≈ LSH("A fast...") ✓</text>
+                </svg>
+            </div>
+            <p class="figure-label">FIG. 15</p>
+            <p class="figure-description">Robust fingerprinting method using locality-sensitive hashing for semantic similarity detection</p>
+        </div>
+        
+    </div>
+</body>
+</html>

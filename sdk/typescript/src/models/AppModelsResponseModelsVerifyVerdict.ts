@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { EmbeddingVerdict } from './EmbeddingVerdict';
+import {
+    EmbeddingVerdictFromJSON,
+    EmbeddingVerdictFromJSONTyped,
+    EmbeddingVerdictToJSON,
+    EmbeddingVerdictToJSONTyped,
+} from './EmbeddingVerdict';
+
 /**
  * Detailed verification verdict data.
  * @export
@@ -61,6 +69,18 @@ export interface AppModelsResponseModelsVerifyVerdict {
      * @memberof AppModelsResponseModelsVerifyVerdict
      */
     details?: { [key: string]: any; };
+    /**
+     * Number of embeddings found in the text
+     * @type {number}
+     * @memberof AppModelsResponseModelsVerifyVerdict
+     */
+    embeddingsFound?: number;
+    /**
+     * 
+     * @type {Array<EmbeddingVerdict>}
+     * @memberof AppModelsResponseModelsVerifyVerdict
+     */
+    allEmbeddings?: Array<EmbeddingVerdict> | null;
 }
 
 /**
@@ -90,6 +110,8 @@ export function AppModelsResponseModelsVerifyVerdictFromJSONTyped(json: any, ign
         'signerName': json['signer_name'] == null ? undefined : json['signer_name'],
         'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
         'details': json['details'] == null ? undefined : json['details'],
+        'embeddingsFound': json['embeddings_found'] == null ? undefined : json['embeddings_found'],
+        'allEmbeddings': json['all_embeddings'] == null ? undefined : ((json['all_embeddings'] as Array<any>).map(EmbeddingVerdictFromJSON)),
     };
 }
 
@@ -111,6 +133,8 @@ export function AppModelsResponseModelsVerifyVerdictToJSONTyped(value?: AppModel
         'signer_name': value['signerName'],
         'timestamp': value['timestamp'] == null ? value['timestamp'] : value['timestamp'].toISOString(),
         'details': value['details'],
+        'embeddings_found': value['embeddingsFound'],
+        'all_embeddings': value['allEmbeddings'] == null ? undefined : ((value['allEmbeddings'] as Array<any>).map(EmbeddingVerdictToJSON)),
     };
 }
 

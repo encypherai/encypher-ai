@@ -13,6 +13,9 @@ Name | Type | Description | Notes
 **document_type** | **str** | Document type: article | legal_brief | contract | ai_output | [optional] [default to 'article']
 **claim_generator** | **str** |  | [optional] 
 **actions** | **List[Dict[str, object]]** |  | [optional] 
+**template_id** | **str** |  | [optional] 
+**validate_assertions** | **bool** | Whether to validate template-based assertions (Business+). | [optional] [default to True]
+**rights** | [**AppModelsRequestModelsRightsMetadata**](AppModelsRequestModelsRightsMetadata.md) |  | [optional] 
 
 ## Example
 

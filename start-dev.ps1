@@ -129,6 +129,15 @@ Examples:
 $ErrorActionPreference = "Continue"
 $script:hasErrors = $false
 
+$postgresHostPort = 15432
+if ($env:POSTGRES_HOST_PORT) {
+    try {
+        $postgresHostPort = [int]$env:POSTGRES_HOST_PORT
+    } catch {
+        $postgresHostPort = 15432
+    }
+}
+
 function Write-Step {
     param([string]$Step, [string]$Message)
     Write-Host ""
@@ -452,7 +461,7 @@ Write-Step "8/8" "Verifying services..."
 Start-Sleep -Seconds 3  # Give services a moment
 
 $services = @(
-    @{Name="PostgreSQL"; Port=5432},
+    @{Name="PostgreSQL"; Port=$postgresHostPort},
     @{Name="Redis Cache"; Port=6379},
     @{Name="Redis Celery"; Port=6380},
     @{Name="Traefik Gateway"; Port=8000},
@@ -486,7 +495,7 @@ if ($script:hasErrors) {
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Infrastructure:" -ForegroundColor Yellow
-Write-Host "  PostgreSQL:         localhost:5432 (10 databases)" -ForegroundColor Gray
+Write-Host "  PostgreSQL:         localhost:$postgresHostPort (10 databases)" -ForegroundColor Gray
 Write-Host "  Redis Cache:        localhost:6379" -ForegroundColor Gray
 Write-Host "  Redis Celery:       localhost:6380" -ForegroundColor Gray
 Write-Host ""

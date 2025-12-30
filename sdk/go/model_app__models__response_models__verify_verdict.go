@@ -33,6 +33,9 @@ type AppModelsResponseModelsVerifyVerdict struct {
 	Timestamp NullableTime `json:"timestamp,omitempty"`
 	// Structured details (manifest, benchmarking stats, etc.)
 	Details map[string]interface{} `json:"details,omitempty"`
+	// Number of embeddings found in the text
+	EmbeddingsFound *int32 `json:"embeddings_found,omitempty"`
+	AllEmbeddings []EmbeddingVerdict `json:"all_embeddings,omitempty"`
 }
 
 type _AppModelsResponseModelsVerifyVerdict AppModelsResponseModelsVerifyVerdict
@@ -46,6 +49,8 @@ func NewAppModelsResponseModelsVerifyVerdict(valid bool, tampered bool, reasonCo
 	this.Valid = valid
 	this.Tampered = tampered
 	this.ReasonCode = reasonCode
+	var embeddingsFound int32 = 0
+	this.EmbeddingsFound = &embeddingsFound
 	return &this
 }
 
@@ -54,6 +59,8 @@ func NewAppModelsResponseModelsVerifyVerdict(valid bool, tampered bool, reasonCo
 // but it doesn't guarantee that properties required by API are set
 func NewAppModelsResponseModelsVerifyVerdictWithDefaults() *AppModelsResponseModelsVerifyVerdict {
 	this := AppModelsResponseModelsVerifyVerdict{}
+	var embeddingsFound int32 = 0
+	this.EmbeddingsFound = &embeddingsFound
 	return &this
 }
 
@@ -287,6 +294,71 @@ func (o *AppModelsResponseModelsVerifyVerdict) SetDetails(v map[string]interface
 	o.Details = v
 }
 
+// GetEmbeddingsFound returns the EmbeddingsFound field value if set, zero value otherwise.
+func (o *AppModelsResponseModelsVerifyVerdict) GetEmbeddingsFound() int32 {
+	if o == nil || IsNil(o.EmbeddingsFound) {
+		var ret int32
+		return ret
+	}
+	return *o.EmbeddingsFound
+}
+
+// GetEmbeddingsFoundOk returns a tuple with the EmbeddingsFound field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *AppModelsResponseModelsVerifyVerdict) GetEmbeddingsFoundOk() (*int32, bool) {
+	if o == nil || IsNil(o.EmbeddingsFound) {
+		return nil, false
+	}
+	return o.EmbeddingsFound, true
+}
+
+// HasEmbeddingsFound returns a boolean if a field has been set.
+func (o *AppModelsResponseModelsVerifyVerdict) HasEmbeddingsFound() bool {
+	if o != nil && !IsNil(o.EmbeddingsFound) {
+		return true
+	}
+
+	return false
+}
+
+// SetEmbeddingsFound gets a reference to the given int32 and assigns it to the EmbeddingsFound field.
+func (o *AppModelsResponseModelsVerifyVerdict) SetEmbeddingsFound(v int32) {
+	o.EmbeddingsFound = &v
+}
+
+// GetAllEmbeddings returns the AllEmbeddings field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *AppModelsResponseModelsVerifyVerdict) GetAllEmbeddings() []EmbeddingVerdict {
+	if o == nil {
+		var ret []EmbeddingVerdict
+		return ret
+	}
+	return o.AllEmbeddings
+}
+
+// GetAllEmbeddingsOk returns a tuple with the AllEmbeddings field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *AppModelsResponseModelsVerifyVerdict) GetAllEmbeddingsOk() ([]EmbeddingVerdict, bool) {
+	if o == nil || IsNil(o.AllEmbeddings) {
+		return nil, false
+	}
+	return o.AllEmbeddings, true
+}
+
+// HasAllEmbeddings returns a boolean if a field has been set.
+func (o *AppModelsResponseModelsVerifyVerdict) HasAllEmbeddings() bool {
+	if o != nil && !IsNil(o.AllEmbeddings) {
+		return true
+	}
+
+	return false
+}
+
+// SetAllEmbeddings gets a reference to the given []EmbeddingVerdict and assigns it to the AllEmbeddings field.
+func (o *AppModelsResponseModelsVerifyVerdict) SetAllEmbeddings(v []EmbeddingVerdict) {
+	o.AllEmbeddings = v
+}
+
 func (o AppModelsResponseModelsVerifyVerdict) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -311,6 +383,12 @@ func (o AppModelsResponseModelsVerifyVerdict) ToMap() (map[string]interface{}, e
 	}
 	if !IsNil(o.Details) {
 		toSerialize["details"] = o.Details
+	}
+	if !IsNil(o.EmbeddingsFound) {
+		toSerialize["embeddings_found"] = o.EmbeddingsFound
+	}
+	if o.AllEmbeddings != nil {
+		toSerialize["all_embeddings"] = o.AllEmbeddings
 	}
 	return toSerialize, nil
 }

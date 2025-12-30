@@ -15,9 +15,11 @@ Name | Type | Description | Notes
 **c2pa_manifest_url** | **str** |  | [optional] 
 **c2pa_manifest_hash** | **str** |  | [optional] 
 **custom_assertions** | **List[Dict[str, object]]** |  | [optional] 
+**template_id** | **str** |  | [optional] 
 **validate_assertions** | **bool** | Whether to validate custom assertions against registered schemas | [optional] [default to True]
 **digital_source_type** | **str** |  | [optional] 
 **license** | [**LicenseInfo**](LicenseInfo.md) |  | [optional] 
+**rights** | [**AppSchemasEmbeddingsRightsMetadata**](AppSchemasEmbeddingsRightsMetadata.md) |  | [optional] 
 **embedding_options** | [**EmbeddingOptions**](EmbeddingOptions.md) | Embedding generation options | [optional] 
 **expires_at** | **datetime** |  | [optional] 
 

@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Encypher Patent Application - Drawing Figures</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background: #ffffff;
+            padding: 40px;
+            color: #1a1a1a;
+        }
+        
+        .page-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            font-size: 24px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 8px;
+            color: #1B2F50;
+        }
+        
+        .subtitle {
+            font-size: 14px;
+            text-align: center;
+            color: #666;
+            margin-bottom: 50px;
+        }
+        
+        .figure-section {
+            margin-bottom: 80px;
+            page-break-inside: avoid;
+        }
+        
+        .figure-title {
+            font-size: 16px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #1B2F50;
+            border-bottom: 2px solid #1B2F50;
+            padding-bottom: 10px;
+        }
+        
+        .figure-container {
+            background: #fafafa;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .figure-label {
+            font-size: 14px;
+            font-weight: 600;
+            text-align: center;
+            color: #1a1a1a;
+            margin-top: 15px;
+        }
+        
+        .figure-description {
+            font-size: 12px;
+            text-align: center;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+        
+        /* System Architecture Styles */
+        .system-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+        
+        .system-layer {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .system-box {
+            padding: 15px 25px;
+            border-radius: 6px;
+            text-align: center;
+            min-width: 150px;
+        }
+        
+        .system-box.source {
+            background: #E8F4FD;
+            border: 2px solid #2A87C4;
+        }
+        
+        .system-box.processing {
+            background: #FFF3E0;
+            border: 2px solid #F59E0B;
+        }
+        
+        .system-box.storage {
+            background: #E6F7E6;
+            border: 2px solid #2E8B2E;
+        }
+        
+        .system-box.output {
+            background: #F3E8FF;
+            border: 2px solid #8B5CF6;
+        }
+        
+        .system-box h4 {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .system-box p {
+            font-size: 10px;
+            color: #666;
+        }
+        
+        .layer-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .arrow-down {
+            text-align: center;
+            font-size: 24px;
+            color: #ccc;
+        }
+        
+        /* Document Segmentation Styles */
+        .document-box {
+            background: white;
+            border: 2px solid #1B2F50;
+            border-radius: 8px;
+            padding: 20px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .doc-title {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .paragraph {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-left: 3px solid #2A87C4;
+        }
+        
+        .paragraph-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #2A87C4;
+            margin-bottom: 8px;
+        }
+        
+        .sentence {
+            display: inline;
+            padding: 2px 4px;
+            margin: 2px;
+            border-radius: 3px;
+            font-size: 12px;
+            line-height: 2;
+        }
+        
+        .sentence.s1 { background: #DBEAFE; }
+        .sentence.s2 { background: #FEF3C7; }
+        .sentence.s3 { background: #D1FAE5; }
+        .sentence.s4 { background: #FCE7F3; }
+        .sentence.s5 { background: #E0E7FF; }
+        .sentence.s6 { background: #FED7AA; }
+        .sentence.s7 { background: #A7F3D0; }
+        
+        .segment-annotation {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 9px;
+            color: #666;
+            vertical-align: super;
+        }
+        
+        /* Hash Table Styles */
+        .hash-table-container {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .hash-table {
+            background: white;
+            border: 2px solid #1B2F50;
+            border-radius: 8px;
+            overflow: hidden;
+            min-width: 300px;
+        }
+        
+        .table-header {
+            background: #1B2F50;
+            color: white;
+            padding: 10px 15px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .table-row {
+            display: flex;
+            border-bottom: 1px solid #e5e5e5;
+        }
+        
+        .table-row:last-child {
+            border-bottom: none;
+        }
+        
+        .table-cell {
+            padding: 10px 15px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            flex: 1;
+            border-right: 1px solid #e5e5e5;
+        }
+        
+        .table-cell:last-child {
+            border-right: none;
+        }
+        
+        .table-cell.key {
+            background: #f5f5f5;
+            font-weight: 500;
+        }
+        
+        .linked-list {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .list-node {
+            background: #E8F4FD;
+            border: 1px solid #2A87C4;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+        }
+        
+        .list-arrow {
+            color: #2A87C4;
+            font-weight: bold;
+        }
+        
+        .list-null {
+            color: #999;
+            font-style: italic;
+        }
+        
+        /* Manifest Structure Styles */
+        .manifest-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .manifest-section {
+            border: 2px solid #1B2F50;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .manifest-section:first-child {
+            border-radius: 8px 8px 0 0;
+        }
+        
+        .manifest-section:last-child {
+            border-radius: 0 0 8px 8px;
+        }
+        
+        .manifest-section:not(:last-child) {
+            border-bottom: none;
+        }
+        
+        .manifest-section.header {
+            background: #1B2F50;
+            color: white;
+        }
+        
+        .manifest-section.payload {
+            background: #E8F4FD;
+        }
+        
+        .manifest-section.signature {
+            background: #FFF3E0;
+        }
+        
+        .manifest-section h5 {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .manifest-field {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            padding: 4px 0;
+            border-bottom: 1px dashed rgba(0,0,0,0.1);
+        }
+        
+        .manifest-field:last-child {
+            border-bottom: none;
+        }
+        
+        .field-name {
+            font-weight: 500;
+        }
+        
+        .field-value {
+            font-family: 'IBM Plex Mono', monospace;
+            color: #666;
+        }
+        
+        /* Lightweight UUID Manifest */
+        .uuid-manifest {
+            display: flex;
+            gap: 0;
+            justify-content: center;
+            align-items: stretch;
+        }
+        
+        .uuid-block {
+            border: 2px solid #1B2F50;
+            padding: 15px 20px;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .uuid-block:first-child {
+            border-radius: 8px 0 0 8px;
+        }
+        
+        .uuid-block:last-child {
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .uuid-block:not(:last-child) {
+            border-right: none;
+        }
+        
+        .uuid-block.prefix {
+            background: #f5f5f5;
+        }
+        
+        .uuid-block.uuid {
+            background: #E8F4FD;
+        }
+        
+        .uuid-block.assertion {
+            background: #E6F7E6;
+        }
+        
+        .uuid-block h6 {
+            font-size: 10px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #666;
+        }
+        
+        .uuid-block .value {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+        }
+        
+        /* Comparison diagrams */
+        .comparison-row {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+        
+        .comparison-item {
+            flex: 1;
+            max-width: 450px;
+        }
+        
+        .comparison-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #1B2F50;
+        }
+        
+        /* Page break for printing */
+        @media print {
+            .figure-section {
+                page-break-after: always;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <h1>Encypher Patent Application - Drawing Figures</h1>
+        <p class="subtitle">Draft figures for provisional patent application - December 2025</p>
+        
+        <!-- FIG. 6: System Architecture -->
+        <div class="figure-section">
+            <h2 class="figure-title">System Architecture Overview</h2>
+            <div class="figure-container">
+                <div class="system-diagram">
+                    <div>
+                        <div class="layer-label">Content Sources (610)</div>
+                        <div class="system-layer">
+                            <div class="system-box source">
+                                <h4>Publisher System</h4>
+                                <p>612</p>
+                            </div>
+                            <div class="system-box source">
+                                <h4>AI Generation System</h4>
+                                <p>614</p>
+                            </div>
+                            <div class="system-box source">
+                                <h4>Enterprise System</h4>
+                                <p>616</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="arrow-down">↓</div>
+                    
+                    <div>
+                        <div class="layer-label">Processing Layer (620)</div>
+                        <div class="system-layer">
+                            <div class="system-box processing">
+                                <h4>Streaming Handler</h4>
+                                <p>622 - Buffer & Segment</p>
+                            </div>
+                            <div class="system-box processing">
+                                <h4>Merkle Tree Generator</h4>
+                                <p>624 - Hash & Build Tree</p>
+                            </div>
+                            <div class="system-box processing">
+                                <h4>Manifest Generator</h4>
+                                <p>626 - Sign & Embed</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="arrow-down">↓</div>
+                    
+                    <div>
+                        <div class="layer-label">Storage Layer (630)</div>
+                        <div class="system-layer">
+                            <div class="system-box storage">
+                                <h4>Hash Table Database</h4>
+                                <p>632 - Leaf → Root Mapping</p>
+                            </div>
+                            <div class="system-box storage">
+                                <h4>Merkle Tree Store</h4>
+                                <p>634 - Full Tree Structure</p>
+                            </div>
+                            <div class="system-box storage">
+                                <h4>Blockchain Anchor</h4>
+                                <p>636 - Immutable Timestamp</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="arrow-down">↓</div>
+                    
+                    <div>
+                        <div class="layer-label">Output & Verification Layer (640)</div>
+                        <div class="system-layer">
+                            <div class="system-box output">
+                                <h4>Authenticated Content</h4>
+                                <p>642 - Embedded Manifest</p>
+                            </div>
+                            <div class="system-box output">
+                                <h4>Evidence Generator</h4>
+                                <p>644 - Merkle Proofs</p>
+                            </div>
+                            <div class="system-box output">
+                                <h4>Attribution Reporter</h4>
+                                <p>646 - Source Identification</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p class="figure-label">FIG. 6</p>
+            <p class="figure-description">System architecture for granular content authentication and attribution</p>
+        </div>
+        
+        <!-- FIG. 7: Document Segmentation -->
+        <div class="figure-section">
+            <h2 class="figure-title">Document Segmentation with Hierarchical Structure</h2>
+            <div class="figure-container">
+                <div class="document-box">
+                    <div class="doc-title">Document 700: "A Day in the Village"</div>
+                    
+                    <div class="paragraph">
+                        <div class="paragraph-label">Paragraph P₁ (Morning) - 710</div>
+                        <span class="sentence s1">"The sun rises over the hills."<span class="segment-annotation"> T_A</span></span>
+                        <span class="sentence s2">"Birds sing in the cool air as the village wakes."<span class="segment-annotation"> T_B</span></span>
+                        <span class="sentence s3">"Farmers go to the fields, and children walk to school."<span class="segment-annotation"> T_C</span></span>
+                    </div>
+                    
+                    <div class="paragraph">
+                        <div class="paragraph-label">Paragraph P₂ (Afternoon) - 720</div>
+                        <span class="sentence s4">"The sky glows bright and warm."<span class="segment-annotation"> T_D</span></span>
+                        <span class="sentence s5">"People rest after work, and friends share tea and laughter in the small cafe."<span class="segment-annotation"> T_E</span></span>
+                    </div>
+                    
+                    <div class="paragraph">
+                        <div class="paragraph-label">Paragraph P₃ (Evening) - 730</div>
+                        <span class="sentence s6">"The sun sets, and lights appear in the windows."<span class="segment-annotation"> T_F</span></span>
+                        <span class="sentence s7">"Families gather for dinner, and soon the village falls quiet again."<span class="segment-annotation"> T_G</span></span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; text-align: center;">
+                    <div style="display: inline-flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                        <span style="font-size: 11px;"><span class="sentence s1" style="padding: 2px 8px;">T_A</span> Sentence 1</span>
+                        <span style="font-size: 11px;"><span class="sentence s2" style="padding: 2px 8px;">T_B</span> Sentence 2</span>
+                        <span style="font-size: 11px;"><span class="sentence s3" style="padding: 2px 8px;">T_C</span> Sentence 3</span>
+                        <span style="font-size: 11px;"><span class="sentence s4" style="padding: 2px 8px;">T_D</span> Sentence 4</span>
+                        <span style="font-size: 11px;"><span class="sentence s5" style="padding: 2px 8px;">T_E</span> Sentence 5</span>
+                        <span style="font-size: 11px;"><span class="sentence s6" style="padding: 2px 8px;">T_F</span> Sentence 6</span>
+                        <span style="font-size: 11px;"><span class="sentence s7" style="padding: 2px 8px;">T_G</span> Sentence 7</span>
+                    </div>
+                </div>
+            </div>
+            <p class="figure-label">FIG. 7</p>
+            <p class="figure-description">Text document segmented into hierarchical units (paragraphs and sentences)</p>
+        </div>
+        
+        <!-- FIG. 8: Hash Tables with Linked Lists -->
+        <div class="figure-section">
+            <h2 class="figure-title">Hash Table Structure with Linked Lists for Multiple Sources</h2>
+            <div class="figure-container">
+                <div class="hash-table-container">
+                    <!-- Leaf Hash to Root Mapping -->
+                    <div class="hash-table">
+                        <div class="table-header">Leaf Hash → Merkle Root(s) Mapping (810)</div>
+                        <div class="table-row">
+                            <div class="table-cell key">H_A</div>
+                            <div class="table-cell">
+                                <div class="linked-list">
+                                    <span class="list-node">Root_Doc1</span>
+                                    <span class="list-arrow">→</span>
+                                    <span class="list-null">NULL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-cell key">H_B</div>
+                            <div class="table-cell">
+                                <div class="linked-list">
+                                    <span class="list-node">Root_Doc1</span>
+                                    <span class="list-arrow">→</span>
+                                    <span class="list-null">NULL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-row" style="background: #FFF3E0;">
+                            <div class="table-cell key">H_X</div>
+                            <div class="table-cell">
+                                <div class="linked-list">
+                                    <span class="list-node">Root_Doc2</span>
+                                    <span class="list-arrow">→</span>
+                                    <span class="list-node">Root_Doc5</span>
+                                    <span class="list-arrow">→</span>
+                                    <span class="list-node">Root_Doc8</span>
+                                    <span class="list-arrow">→</span>
+                                    <span class="list-null">NULL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-cell key">H_Y</div>
+                            <div class="table-cell">
+                                <div class="linked-list">
+                                    <span class="list-node">Root_Doc3</span>
+                                    <span class="list-arrow">→</span>
+                                    <span class="list-null">NULL</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-cell key" style="color: #999;">...</div>
+                            <div class="table-cell" style="color: #999;">...</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Root to Document Mapping -->
+                    <div class="hash-table">
+                        <div class="table-header">Merkle Root → Document Metadata (820)</div>
+                        <div class="table-row">
+                            <div class="table-cell key">Root_Doc1</div>
+                            <div class="table-cell">
+                                <div style="font-size: 10px;">
+                                    <div>doc_id: "village_story"</div>
+                                    <div>author: "Publisher A"</div>
+                                    <div>timestamp: 2025-12-01</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-cell key">Root_Doc2</div>
+                            <div class="table-cell">
+                                <div style="font-size: 10px;">
+                                    <div>doc_id: "news_article"</div>
+                                    <div>author: "Publisher B"</div>
+                                    <div>timestamp: 2025-11-15</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-cell key">Root_Doc5</div>
+                            <div class="table-cell">
+                                <div style="font-size: 10px;">
+                                    <div>doc_id: "blog_post"</div>
+                                    <div>author: "Publisher C"</div>
+                                    <div>timestamp: 2025-10-20</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-row">
+                            <div class="table-cell key" style="color: #999;">...</div>
+                            <div class="table-cell" style="color: #999;">...</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; padding: 15px; background: #FFF3E0; border-radius: 6px; text-align: center;">
+                    <p style="font-size: 11px; color: #92400E;">
+                        <strong>Note:</strong> H_X appears in multiple documents (Doc2, Doc5, Doc8) - linked list preserves all source attributions. 
+                        Order may reflect chronology (earliest first) or prominence (most authoritative first).
+                    </p>
+                </div>
+            </div>
+            <p class="figure-label">FIG. 8</p>
+            <p class="figure-description">Database hash table structure with linked lists for segments appearing in multiple source documents</p>
+        </div>
+        
+        <!-- FIG. 9: Full C2PA Manifest Structure -->
+        <div class="figure-section">
+            <h2 class="figure-title">Full C2PA Manifest Structure vs. Lightweight UUID Manifest</h2>
+            <div class="figure-container">
+                <div class="comparison-row">
+                    <!-- Full Manifest -->
+                    <div class="comparison-item">
+                        <div class="comparison-label">Full C2PA Manifest (910)</div>
+                        <div class="manifest-diagram">
+                            <div class="manifest-section header">
+                                <h5>Header (912)</h5>
+                                <div class="manifest-field">
+                                    <span class="field-name">Magic</span>
+                                    <span class="field-value">C2PATXT\0</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Version</span>
+                                    <span class="field-value">1</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Length</span>
+                                    <span class="field-value">2048 bytes</span>
+                                </div>
+                            </div>
+                            <div class="manifest-section payload">
+                                <h5>Payload - JUMBF Container (914)</h5>
+                                <div class="manifest-field">
+                                    <span class="field-name">Content Hash</span>
+                                    <span class="field-value">SHA256(text)</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Merkle Root</span>
+                                    <span class="field-value">H_ABCDEFGH</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Segment Count</span>
+                                    <span class="field-value">7</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Assertions</span>
+                                    <span class="field-value">[author, date, ...]</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Claim Generator</span>
+                                    <span class="field-value">Encypher/1.0</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Merkle Tree</span>
+                                    <span class="field-value">[optional full tree]</span>
+                                </div>
+                            </div>
+                            <div class="manifest-section signature">
+                                <h5>Signature Block (916)</h5>
+                                <div class="manifest-field">
+                                    <span class="field-name">Algorithm</span>
+                                    <span class="field-value">ES256</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Certificate</span>
+                                    <span class="field-value">[X.509 cert]</span>
+                                </div>
+                                <div class="manifest-field">
+                                    <span class="field-name">Signature</span>
+                                    <span class="field-value">[digital sig]</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size: 10px; text-align: center; margin-top: 10px; color: #666;">
+                            ~2-10 KB embedded via Unicode variation selectors
+                        </p>
+                    </div>
+                    
+                    <!-- Lightweight UUID Manifest -->
+                    <div class="comparison-item">
+                        <div class="comparison-label">Lightweight UUID Manifest (920)</div>
+                        <div style="padding-top: 30px;">
+                            <div class="uuid-manifest">
+                                <div class="uuid-block prefix">
+                                    <h6>Prefix (922)</h6>
+                                    <div class="value">U+FEFF</div>
+                                    <div style="font-size: 9px; color: #888; margin-top: 4px;">BOM marker</div>
+                                </div>
+                                <div class="uuid-block uuid">
+                                    <h6>UUID (924)</h6>
+                                    <div class="value">550e8400-e29b-...</div>
+                                    <div style="font-size: 9px; color: #888; margin-top: 4px;">128-bit identifier</div>
+                                </div>
+                                <div class="uuid-block assertion">
+                                    <h6>Assertion (926)</h6>
+                                    <div class="value">[compact data]</div>
+                                    <div style="font-size: 9px; color: #888; margin-top: 4px;">Optional inline</div>
+                                </div>
+                            </div>
+                            
+                            <div style="text-align: center; margin: 20px 0; font-size: 20px; color: #ccc;">↓</div>
+                            
+                            <div style="background: #E6F7E6; border: 2px solid #2E8B2E; border-radius: 8px; padding: 15px; text-align: center;">
+                                <h5 style="font-size: 12px; margin-bottom: 10px;">External Repository (928)</h5>
+                                <div style="font-size: 11px; text-align: left; max-width: 280px; margin: 0 auto;">
+                                    <div class="manifest-field">
+                                        <span class="field-name">UUID</span>
+                                        <span class="field-value">550e8400-e29b-...</span>
+                                    </div>
+                                    <div class="manifest-field">
+                                        <span class="field-name">Content Hash</span>
+                                        <span class="field-value">SHA256(text)</span>
+                                    </div>
+                                    <div class="manifest-field">
+                                        <span class="field-name">Merkle Root</span>
+                                        <span class="field-value">H_ABCDEFGH</span>
+                                    </div>
+                                    <div class="manifest-field">
+                                        <span class="field-name">Full Merkle Tree</span>
+                                        <span class="field-value">[all nodes]</span>
+                                    </div>
+                                    <div class="manifest-field">
+                                        <span class="field-name">Full Assertions</span>
+                                        <span class="field-value">[complete data]</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="font-size: 10px; text-align: center; margin-top: 10px; color: #666;">
+                            ~50-200 bytes embedded; full data in external repository
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <p class="figure-label">FIG. 9</p>
+            <p class="figure-description">Comparison of full C2PA manifest embedding vs. lightweight UUID pointer to external repository</p>
+        </div>
+        
+        <!-- FIG. 10: Dual Binding Method -->
+        <div class="figure-section">
+            <h2 class="figure-title">Dual-Binding Manifest Construction Sequence</h2>
+            <div class="figure-container">
+                <div style="display: flex; flex-direction: column; gap: 20px; max-width: 800px; margin: 0 auto;">
+                    
+                    <!-- Step 1 -->
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="min-width: 80px; font-weight: 600; color: #1B2F50;">Step 1</div>
+                        <div style="flex: 1; background: #f5f5f5; padding: 15px; border-radius: 6px;">
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 8px;">Hash the Text Content (1010)</div>
+                            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: white; padding: 10px; border-radius: 4px;">
+                                H_text = SHA256(normalize(text))
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="min-width: 80px; font-weight: 600; color: #1B2F50;">Step 2</div>
+                        <div style="flex: 1; background: #E8F4FD; padding: 15px; border-radius: 6px;">
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 8px;">Create Preliminary Manifest with Placeholder (1020)</div>
+                            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: white; padding: 10px; border-radius: 4px;">
+                                preliminary_manifest = {<br>
+                                &nbsp;&nbsp;content_hash: H_text,<br>
+                                &nbsp;&nbsp;merkle_root: H_ABCDEFGH,<br>
+                                &nbsp;&nbsp;assertions: [...],<br>
+                                &nbsp;&nbsp;<span style="background: #FEF3C7; padding: 2px 4px;">self_hash: PLACEHOLDER</span><br>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3 -->
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="min-width: 80px; font-weight: 600; color: #1B2F50;">Step 3</div>
+                        <div style="flex: 1; background: #FFF3E0; padding: 15px; border-radius: 6px;">
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 8px;">Hash the Preliminary Manifest (1030)</div>
+                            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: white; padding: 10px; border-radius: 4px;">
+                                H_preliminary = SHA256(preliminary_manifest)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4 -->
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="min-width: 80px; font-weight: 600; color: #1B2F50;">Step 4</div>
+                        <div style="flex: 1; background: #E6F7E6; padding: 15px; border-radius: 6px;">
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 8px;">Replace Placeholder → Create Final Manifest (1040)</div>
+                            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: white; padding: 10px; border-radius: 4px;">
+                                final_manifest = {<br>
+                                &nbsp;&nbsp;content_hash: H_text,<br>
+                                &nbsp;&nbsp;merkle_root: H_ABCDEFGH,<br>
+                                &nbsp;&nbsp;assertions: [...],<br>
+                                &nbsp;&nbsp;<span style="background: #D1FAE5; padding: 2px 4px;">self_hash: H_preliminary</span><br>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 5 -->
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="min-width: 80px; font-weight: 600; color: #1B2F50;">Step 5</div>
+                        <div style="flex: 1; background: #F3E8FF; padding: 15px; border-radius: 6px;">
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 8px;">Digitally Sign the Final Manifest (1050)</div>
+                            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: white; padding: 10px; border-radius: 4px;">
+                                signed_manifest = sign(final_manifest, private_key)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 6 -->
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="min-width: 80px; font-weight: 600; color: #1B2F50;">Step 6</div>
+                        <div style="flex: 1; background: #1B2F50; color: white; padding: 15px; border-radius: 6px;">
+                            <div style="font-size: 12px; font-weight: 500; margin-bottom: 8px;">Embed Signed Manifest in Text (1060)</div>
+                            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 4px;">
+                                authenticated_text = text + encode_unicode(signed_manifest)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 25px; padding: 15px; background: #FEF3C7; border-radius: 6px; text-align: center;">
+                    <p style="font-size: 11px; color: #92400E;">
+                        <strong>Dual Binding:</strong> The manifest binds to both (1) the text content via H_text, and (2) itself via H_preliminary. 
+                        This ensures any modification to either the text OR the manifest after signing will be detected during verification.
+                    </p>
+                </div>
+            </div>
+            <p class="figure-label">FIG. 10</p>
+            <p class="figure-description">Dual-binding manifest construction method for tamper-evident content authentication</p>
+        </div>
+        
+        <!-- FIG. 11: Evidence Generation Flow -->
+        <div class="figure-section">
+            <h2 class="figure-title">Evidence Generation and Attribution Flow</h2>
+            <div class="figure-container">
+                <svg width="100%" height="500" viewBox="0 0 900 500">
+                    <!-- Input -->
+                    <rect x="50" y="30" width="200" height="60" rx="6" fill="#E8F4FD" stroke="#2A87C4" stroke-width="2"/>
+                    <text x="150" y="55" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600" fill="#1B2F50">Target Text (Unknown Source)</text>
+                    <text x="150" y="75" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#666">1110</text>
+                    
+                    <!-- Arrow down -->
+                    <line x1="150" y1="90" x2="150" y2="120" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="150,130 145,120 155,120" fill="#ccc"/>
+                    
+                    <!-- Segmentation -->
+                    <rect x="50" y="130" width="200" height="50" rx="6" fill="#FFF3E0" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="150" y="155" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="500" fill="#92400E">Segment & Normalize</text>
+                    <text x="150" y="170" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#666">1120</text>
+                    
+                    <!-- Arrow down -->
+                    <line x1="150" y1="180" x2="150" y2="210" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="150,220 145,210 155,210" fill="#ccc"/>
+                    
+                    <!-- Hashing -->
+                    <rect x="50" y="220" width="200" height="50" rx="6" fill="#FFF3E0" stroke="#F59E0B" stroke-width="2"/>
+                    <text x="150" y="245" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="500" fill="#92400E">Generate Target Hashes</text>
+                    <text x="150" y="260" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#666">1130</text>
+                    
+                    <!-- Arrow to database -->
+                    <line x1="250" y1="245" x2="350" y2="245" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="360,245 350,240 350,250" fill="#ccc"/>
+                    
+                    <!-- Database -->
+                    <rect x="360" y="180" width="180" height="130" rx="6" fill="#E6F7E6" stroke="#2E8B2E" stroke-width="2"/>
+                    <text x="450" y="210" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600" fill="#1B5E1B">Hash Table Database</text>
+                    <text x="450" y="235" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#666">Leaf → Root Mapping</text>
+                    <text x="450" y="255" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#666">Root → Document Mapping</text>
+                    <text x="450" y="275" text-anchor="middle" font-family="IBM Plex Sans" font-size="10" fill="#666">Merkle Tree Storage</text>
+                    <text x="450" y="300" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#666">1140</text>
+                    
+                    <!-- Arrow down from database -->
+                    <line x1="450" y1="310" x2="450" y2="340" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="450,350 445,340 455,340" fill="#ccc"/>
+                    
+                    <!-- Merkle Proof Generation -->
+                    <rect x="360" y="350" width="180" height="50" rx="6" fill="#F3E8FF" stroke="#8B5CF6" stroke-width="2"/>
+                    <text x="450" y="375" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="500" fill="#6B21A8">Generate Merkle Proofs</text>
+                    <text x="450" y="390" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#666">1150</text>
+                    
+                    <!-- Arrow to output -->
+                    <line x1="540" y1="375" x2="620" y2="375" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="630,375 620,370 620,380" fill="#ccc"/>
+                    
+                    <!-- Output Package -->
+                    <rect x="630" y="280" width="220" height="190" rx="6" fill="#1B2F50" stroke="#1B2F50" stroke-width="2"/>
+                    <text x="740" y="310" text-anchor="middle" font-family="IBM Plex Sans" font-size="12" font-weight="600" fill="white">Evidence Package</text>
+                    <text x="740" y="330" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="rgba(255,255,255,0.6)">1160</text>
+                    
+                    <rect x="650" y="345" width="180" height="110" rx="4" fill="rgba(255,255,255,0.1)"/>
+                    <text x="660" y="365" font-family="IBM Plex Sans" font-size="10" fill="rgba(255,255,255,0.9)">• Source Document ID</text>
+                    <text x="660" y="385" font-family="IBM Plex Sans" font-size="10" fill="rgba(255,255,255,0.9)">• Matching Segments</text>
+                    <text x="660" y="405" font-family="IBM Plex Sans" font-size="10" fill="rgba(255,255,255,0.9)">• Merkle Proofs</text>
+                    <text x="660" y="425" font-family="IBM Plex Sans" font-size="10" fill="rgba(255,255,255,0.9)">• Position Information</text>
+                    <text x="660" y="445" font-family="IBM Plex Sans" font-size="10" fill="rgba(255,255,255,0.9)">• Timestamp Evidence</text>
+                    
+                    <!-- Candidate Sources -->
+                    <rect x="630" y="30" width="220" height="100" rx="6" fill="white" stroke="#1B2F50" stroke-width="2"/>
+                    <text x="740" y="55" text-anchor="middle" font-family="IBM Plex Sans" font-size="11" font-weight="600" fill="#1B2F50">Candidate Source Documents</text>
+                    <text x="740" y="75" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#666">1170</text>
+                    <text x="660" y="95" font-family="IBM Plex Sans" font-size="10" fill="#666">✓ Doc A (NYT Article)</text>
+                    <text x="660" y="112" font-family="IBM Plex Sans" font-size="10" fill="#666">✓ Doc B (AP Wire)</text>
+                    
+                    <!-- Arrow from database to candidates -->
+                    <line x1="540" y1="220" x2="580" y2="220" stroke="#ccc" stroke-width="2"/>
+                    <line x1="580" y1="220" x2="580" y2="80" stroke="#ccc" stroke-width="2"/>
+                    <line x1="580" y1="80" x2="620" y2="80" stroke="#ccc" stroke-width="2"/>
+                    <polygon points="630,80 620,75 620,85" fill="#ccc"/>
+                </svg>
+            </div>
+            <p class="figure-label">FIG. 11</p>
+            <p class="figure-description">Evidence generation flow from unknown target text to attributed source documents with Merkle proofs</p>
+        </div>
+        
+    </div>
+</body>
+</html>

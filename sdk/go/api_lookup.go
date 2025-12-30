@@ -33,12 +33,7 @@ Use case: User pastes a sentence, we find which document it came from.
 
 Note: This endpoint does NOT require authentication (public lookup).
 
-Args:
-    request: LookupRequest containing sentence text
-    db: Database session
-
-Returns:
-    LookupResponse with document and organization details if found
+**Alias:** POST /provenance/lookup
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiLookupSentenceApiV1LookupPostRequest
@@ -48,6 +43,25 @@ Returns:
 	// LookupSentenceApiV1LookupPostExecute executes the request
 	//  @return LookupResponse
 	LookupSentenceApiV1LookupPostExecute(r ApiLookupSentenceApiV1LookupPostRequest) (*LookupResponse, *http.Response, error)
+
+	/*
+	ProvenanceLookupApiV1ProvenanceLookupPost Provenance Lookup
+
+	Look up sentence provenance by hash.
+
+This is an alias for POST /lookup with a clearer name.
+Find which document a sentence originally came from.
+
+Note: This endpoint does NOT require authentication (public lookup).
+
+	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+	@return ApiProvenanceLookupApiV1ProvenanceLookupPostRequest
+	*/
+	ProvenanceLookupApiV1ProvenanceLookupPost(ctx context.Context) ApiProvenanceLookupApiV1ProvenanceLookupPostRequest
+
+	// ProvenanceLookupApiV1ProvenanceLookupPostExecute executes the request
+	//  @return LookupResponse
+	ProvenanceLookupApiV1ProvenanceLookupPostExecute(r ApiProvenanceLookupApiV1ProvenanceLookupPostRequest) (*LookupResponse, *http.Response, error)
 }
 
 // LookupAPIService LookupAPI service
@@ -80,12 +94,7 @@ Use case: User pastes a sentence, we find which document it came from.
 
 Note: This endpoint does NOT require authentication (public lookup).
 
-Args:
-    request: LookupRequest containing sentence text
-    db: Database session
-
-Returns:
-    LookupResponse with document and organization details if found
+**Alias:** POST /provenance/lookup
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiLookupSentenceApiV1LookupPostRequest
@@ -113,6 +122,131 @@ func (a *LookupAPIService) LookupSentenceApiV1LookupPostExecute(r ApiLookupSente
 	}
 
 	localVarPath := localBasePath + "/api/v1/lookup"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := url.Values{}
+	localVarFormParams := url.Values{}
+	if r.lookupRequest == nil {
+		return localVarReturnValue, nil, reportError("lookupRequest is required and must be specified")
+	}
+
+	// to determine the Content-Type header
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// set Content-Type header
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// to determine the Accept header
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// set Accept header
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// body params
+	localVarPostBody = r.lookupRequest
+	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
+	if err != nil {
+		return localVarReturnValue, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarReturnValue, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 422 {
+			var v HTTPValidationError
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarReturnValue, localVarHTTPResponse, newErr
+			}
+					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
+					newErr.model = v
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := &GenericOpenAPIError{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return localVarReturnValue, localVarHTTPResponse, nil
+}
+
+type ApiProvenanceLookupApiV1ProvenanceLookupPostRequest struct {
+	ctx context.Context
+	ApiService LookupAPI
+	lookupRequest *LookupRequest
+}
+
+func (r ApiProvenanceLookupApiV1ProvenanceLookupPostRequest) LookupRequest(lookupRequest LookupRequest) ApiProvenanceLookupApiV1ProvenanceLookupPostRequest {
+	r.lookupRequest = &lookupRequest
+	return r
+}
+
+func (r ApiProvenanceLookupApiV1ProvenanceLookupPostRequest) Execute() (*LookupResponse, *http.Response, error) {
+	return r.ApiService.ProvenanceLookupApiV1ProvenanceLookupPostExecute(r)
+}
+
+/*
+ProvenanceLookupApiV1ProvenanceLookupPost Provenance Lookup
+
+Look up sentence provenance by hash.
+
+This is an alias for POST /lookup with a clearer name.
+Find which document a sentence originally came from.
+
+Note: This endpoint does NOT require authentication (public lookup).
+
+ @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
+ @return ApiProvenanceLookupApiV1ProvenanceLookupPostRequest
+*/
+func (a *LookupAPIService) ProvenanceLookupApiV1ProvenanceLookupPost(ctx context.Context) ApiProvenanceLookupApiV1ProvenanceLookupPostRequest {
+	return ApiProvenanceLookupApiV1ProvenanceLookupPostRequest{
+		ApiService: a,
+		ctx: ctx,
+	}
+}
+
+// Execute executes the request
+//  @return LookupResponse
+func (a *LookupAPIService) ProvenanceLookupApiV1ProvenanceLookupPostExecute(r ApiProvenanceLookupApiV1ProvenanceLookupPostRequest) (*LookupResponse, *http.Response, error) {
+	var (
+		localVarHTTPMethod   = http.MethodPost
+		localVarPostBody     interface{}
+		formFiles            []formFile
+		localVarReturnValue  *LookupResponse
+	)
+
+	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "LookupAPIService.ProvenanceLookupApiV1ProvenanceLookupPost")
+	if err != nil {
+		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
+	}
+
+	localVarPath := localBasePath + "/api/v1/provenance/lookup"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}

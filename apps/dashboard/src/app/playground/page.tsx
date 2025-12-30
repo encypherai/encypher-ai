@@ -15,6 +15,7 @@ import {
   Badge,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { TemplateSelector } from '../../components/TemplateSelector';
 import apiClient from '../../lib/api';
 
 // API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
@@ -414,6 +415,7 @@ export default function PlaygroundPage() {
 
   const [selectedApiKey, setSelectedApiKey] = useState<string>('session');
   const [customApiKey, setCustomApiKey] = useState<string>('');
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
 
   // Check if user has access to the selected endpoint
   const hasAccess = hasTierAccess(userTier, selectedEndpoint.minTier);
@@ -425,7 +427,28 @@ export default function PlaygroundPage() {
     setResponse(null);
     setResponseStatus(null);
     setResponseTime(null);
+    // Reset template selection when switching away from sign endpoint
+    if (selectedEndpoint.id !== 'sign') {
+      setSelectedTemplateId(undefined);
+    }
   }, [selectedEndpoint]);
+
+  // Update request body when template is selected (for sign endpoint)
+  useEffect(() => {
+    if (selectedEndpoint.id === 'sign' && requestBody) {
+      try {
+        const body = JSON.parse(requestBody);
+        if (selectedTemplateId) {
+          body.template_id = selectedTemplateId;
+        } else {
+          delete body.template_id;
+        }
+        setRequestBody(JSON.stringify(body, null, 2));
+      } catch {
+        // Invalid JSON, ignore
+      }
+    }
+  }, [selectedTemplateId]);
 
   const categories = [...new Set(endpoints.map(e => e.category))];
 
@@ -698,6 +721,24 @@ export default function PlaygroundPage() {
                   />
                 </div>
               </div>
+
+              {/* Template Selector (for Sign endpoint only) */}
+              {selectedEndpoint.id === 'sign' && (
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    Rights Template
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">(Business+ tier)</span>
+                  </label>
+                  <TemplateSelector
+                    value={selectedTemplateId}
+                    onValueChange={setSelectedTemplateId}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Select a template to embed rights assertions (AI training permissions, licensing terms) into your signed content.
+                  </p>
+                </div>
+              )}
 
               {/* Request Body */}
               {['POST', 'PUT'].includes(selectedEndpoint.method) && (

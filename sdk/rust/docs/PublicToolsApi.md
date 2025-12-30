@@ -1,6 +1,6 @@
 # \PublicToolsApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -16,7 +16,7 @@ Method | HTTP request | Description
 > models::DecodeToolResponse decode_text_api_v1_tools_decode_post(decode_tool_request)
 Decode Text
 
-Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
 ### Parameters
 
@@ -46,7 +46,7 @@ No authorization required
 > models::DecodeToolResponse decode_text_api_v1_tools_decode_post_0(decode_tool_request)
 Decode Text
 
-Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
 ### Parameters
 

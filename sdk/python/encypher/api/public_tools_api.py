@@ -58,7 +58,7 @@ class PublicToolsApi:
     ) -> DecodeToolResponse:
         """Decode Text
 
-        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
         :param decode_tool_request: (required)
         :type decode_tool_request: DecodeToolRequest
@@ -126,7 +126,7 @@ class PublicToolsApi:
     ) -> ApiResponse[DecodeToolResponse]:
         """Decode Text
 
-        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
         :param decode_tool_request: (required)
         :type decode_tool_request: DecodeToolRequest
@@ -194,7 +194,7 @@ class PublicToolsApi:
     ) -> RESTResponseType:
         """Decode Text
 
-        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
         :param decode_tool_request: (required)
         :type decode_tool_request: DecodeToolRequest
@@ -334,7 +334,7 @@ class PublicToolsApi:
     ) -> DecodeToolResponse:
         """Decode Text
 
-        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
         :param decode_tool_request: (required)
         :type decode_tool_request: DecodeToolRequest
@@ -402,7 +402,7 @@ class PublicToolsApi:
     ) -> ApiResponse[DecodeToolResponse]:
         """Decode Text
 
-        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
         :param decode_tool_request: (required)
         :type decode_tool_request: DecodeToolRequest
@@ -470,7 +470,7 @@ class PublicToolsApi:
     ) -> RESTResponseType:
         """Decode Text
 
-        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+        Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 
         :param decode_tool_request: (required)
         :type decode_tool_request: DecodeToolRequest

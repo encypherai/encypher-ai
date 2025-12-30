@@ -1,6 +1,6 @@
 # encypher.PublicToolsApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -18,7 +18,9 @@ Decode Text
 Decode and verify text containing embedded metadata.
 
 This is a public endpoint for the website demo tool.
-Verification uses the demo public key.
+Supports multiple embeddings in a single text (Encypher proprietary feature).
+Verification uses Trust Anchor lookup - checks database for org public keys.
+Falls back to demo key for demo-signed content.
 
 ### Example
 
@@ -30,10 +32,10 @@ from encypher.models.decode_tool_response import DecodeToolResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -91,7 +93,9 @@ Decode Text
 Decode and verify text containing embedded metadata.
 
 This is a public endpoint for the website demo tool.
-Verification uses the demo public key.
+Supports multiple embeddings in a single text (Encypher proprietary feature).
+Verification uses Trust Anchor lookup - checks database for org public keys.
+Falls back to demo key for demo-signed content.
 
 ### Example
 
@@ -103,10 +107,10 @@ from encypher.models.decode_tool_response import DecodeToolResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -176,10 +180,10 @@ from encypher.models.encode_tool_response import EncodeToolResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -249,10 +253,10 @@ from encypher.models.encode_tool_response import EncodeToolResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 

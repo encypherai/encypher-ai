@@ -105,10 +105,9 @@ pub enum ValidateAssertionApiV1EnterpriseC2paValidatePostError {
 
 
 /// Register a custom C2PA assertion schema.  Allows organizations to define custom assertion types with JSON Schema validation rules.
-pub async fn create_schema_api_v1_enterprise_c2pa_schemas_post(configuration: &configuration::Configuration, c2_pa_schema_create: models::C2PaSchemaCreate, authorization: Option<&str>) -> Result<models::C2PaSchemaResponse, Error<CreateSchemaApiV1EnterpriseC2paSchemasPostError>> {
+pub async fn create_schema_api_v1_enterprise_c2pa_schemas_post(configuration: &configuration::Configuration, c2_pa_schema_create: models::C2PaSchemaCreate) -> Result<models::C2PaSchemaResponse, Error<CreateSchemaApiV1EnterpriseC2paSchemasPostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_c2_pa_schema_create = c2_pa_schema_create;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/schemas", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -116,9 +115,9 @@ pub async fn create_schema_api_v1_enterprise_c2pa_schemas_post(configuration: &c
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
     req_builder = req_builder.json(&p_body_c2_pa_schema_create);
 
     let req = req_builder.build()?;
@@ -147,10 +146,9 @@ pub async fn create_schema_api_v1_enterprise_c2pa_schemas_post(configuration: &c
 }
 
 /// Create a new assertion template.
-pub async fn create_template_api_v1_enterprise_c2pa_templates_post(configuration: &configuration::Configuration, c2_pa_template_create: models::C2PaTemplateCreate, authorization: Option<&str>) -> Result<models::C2PaTemplateResponse, Error<CreateTemplateApiV1EnterpriseC2paTemplatesPostError>> {
+pub async fn create_template_api_v1_enterprise_c2pa_templates_post(configuration: &configuration::Configuration, c2_pa_template_create: models::C2PaTemplateCreate) -> Result<models::C2PaTemplateResponse, Error<CreateTemplateApiV1EnterpriseC2paTemplatesPostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_c2_pa_template_create = c2_pa_template_create;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/templates", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -158,9 +156,9 @@ pub async fn create_template_api_v1_enterprise_c2pa_templates_post(configuration
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
     req_builder = req_builder.json(&p_body_c2_pa_template_create);
 
     let req = req_builder.build()?;
@@ -189,10 +187,9 @@ pub async fn create_template_api_v1_enterprise_c2pa_templates_post(configuration
 }
 
 /// Delete a C2PA assertion schema.
-pub async fn delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete(configuration: &configuration::Configuration, schema_id: &str, authorization: Option<&str>) -> Result<(), Error<DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteError>> {
+pub async fn delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete(configuration: &configuration::Configuration, schema_id: &str) -> Result<(), Error<DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_schema_id = schema_id;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/schemas/{schema_id}", configuration.base_path, schema_id=crate::apis::urlencode(p_path_schema_id));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
@@ -200,9 +197,9 @@ pub async fn delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete(confi
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -219,10 +216,9 @@ pub async fn delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete(confi
 }
 
 /// Delete an assertion template.
-pub async fn delete_template_api_v1_enterprise_c2pa_templates_template_id_delete(configuration: &configuration::Configuration, template_id: &str, authorization: Option<&str>) -> Result<(), Error<DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteError>> {
+pub async fn delete_template_api_v1_enterprise_c2pa_templates_template_id_delete(configuration: &configuration::Configuration, template_id: &str) -> Result<(), Error<DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_template_id = template_id;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/templates/{template_id}", configuration.base_path, template_id=crate::apis::urlencode(p_path_template_id));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
@@ -230,9 +226,9 @@ pub async fn delete_template_api_v1_enterprise_c2pa_templates_template_id_delete
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -249,10 +245,9 @@ pub async fn delete_template_api_v1_enterprise_c2pa_templates_template_id_delete
 }
 
 /// Get a specific C2PA assertion schema.
-pub async fn get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get(configuration: &configuration::Configuration, schema_id: &str, authorization: Option<&str>) -> Result<models::C2PaSchemaResponse, Error<GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetError>> {
+pub async fn get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get(configuration: &configuration::Configuration, schema_id: &str) -> Result<models::C2PaSchemaResponse, Error<GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_schema_id = schema_id;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/schemas/{schema_id}", configuration.base_path, schema_id=crate::apis::urlencode(p_path_schema_id));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -260,9 +255,9 @@ pub async fn get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get(configurati
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -290,10 +285,9 @@ pub async fn get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get(configurati
 }
 
 /// Get a specific assertion template.
-pub async fn get_template_api_v1_enterprise_c2pa_templates_template_id_get(configuration: &configuration::Configuration, template_id: &str, authorization: Option<&str>) -> Result<models::C2PaTemplateResponse, Error<GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetError>> {
+pub async fn get_template_api_v1_enterprise_c2pa_templates_template_id_get(configuration: &configuration::Configuration, template_id: &str) -> Result<models::C2PaTemplateResponse, Error<GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_template_id = template_id;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/templates/{template_id}", configuration.base_path, template_id=crate::apis::urlencode(p_path_template_id));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -301,9 +295,9 @@ pub async fn get_template_api_v1_enterprise_c2pa_templates_template_id_get(confi
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -331,12 +325,11 @@ pub async fn get_template_api_v1_enterprise_c2pa_templates_template_id_get(confi
 }
 
 /// List available C2PA assertion schemas.  Returns schemas owned by the organization or public schemas.
-pub async fn list_schemas_api_v1_enterprise_c2pa_schemas_get(configuration: &configuration::Configuration, page: Option<i32>, page_size: Option<i32>, is_public: Option<bool>, authorization: Option<&str>) -> Result<models::C2PaSchemaListResponse, Error<ListSchemasApiV1EnterpriseC2paSchemasGetError>> {
+pub async fn list_schemas_api_v1_enterprise_c2pa_schemas_get(configuration: &configuration::Configuration, page: Option<i32>, page_size: Option<i32>, is_public: Option<bool>) -> Result<models::C2PaSchemaListResponse, Error<ListSchemasApiV1EnterpriseC2paSchemasGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_page = page;
     let p_query_page_size = page_size;
     let p_query_is_public = is_public;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/schemas", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -353,9 +346,9 @@ pub async fn list_schemas_api_v1_enterprise_c2pa_schemas_get(configuration: &con
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -383,12 +376,11 @@ pub async fn list_schemas_api_v1_enterprise_c2pa_schemas_get(configuration: &con
 }
 
 /// List available assertion templates.
-pub async fn list_templates_api_v1_enterprise_c2pa_templates_get(configuration: &configuration::Configuration, page: Option<i32>, page_size: Option<i32>, category: Option<&str>, authorization: Option<&str>) -> Result<models::C2PaTemplateListResponse, Error<ListTemplatesApiV1EnterpriseC2paTemplatesGetError>> {
+pub async fn list_templates_api_v1_enterprise_c2pa_templates_get(configuration: &configuration::Configuration, page: Option<i32>, page_size: Option<i32>, category: Option<&str>) -> Result<models::C2PaTemplateListResponse, Error<ListTemplatesApiV1EnterpriseC2paTemplatesGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_query_page = page;
     let p_query_page_size = page_size;
     let p_query_category = category;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/templates", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -405,9 +397,9 @@ pub async fn list_templates_api_v1_enterprise_c2pa_templates_get(configuration: 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -435,11 +427,10 @@ pub async fn list_templates_api_v1_enterprise_c2pa_templates_get(configuration: 
 }
 
 /// Update a C2PA assertion schema.
-pub async fn update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put(configuration: &configuration::Configuration, schema_id: &str, c2_pa_schema_update: models::C2PaSchemaUpdate, authorization: Option<&str>) -> Result<models::C2PaSchemaResponse, Error<UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutError>> {
+pub async fn update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put(configuration: &configuration::Configuration, schema_id: &str, c2_pa_schema_update: models::C2PaSchemaUpdate) -> Result<models::C2PaSchemaResponse, Error<UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_schema_id = schema_id;
     let p_body_c2_pa_schema_update = c2_pa_schema_update;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/schemas/{schema_id}", configuration.base_path, schema_id=crate::apis::urlencode(p_path_schema_id));
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
@@ -447,9 +438,9 @@ pub async fn update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put(configur
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
     req_builder = req_builder.json(&p_body_c2_pa_schema_update);
 
     let req = req_builder.build()?;
@@ -478,11 +469,10 @@ pub async fn update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put(configur
 }
 
 /// Update an assertion template.
-pub async fn update_template_api_v1_enterprise_c2pa_templates_template_id_put(configuration: &configuration::Configuration, template_id: &str, c2_pa_template_update: models::C2PaTemplateUpdate, authorization: Option<&str>) -> Result<models::C2PaTemplateResponse, Error<UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutError>> {
+pub async fn update_template_api_v1_enterprise_c2pa_templates_template_id_put(configuration: &configuration::Configuration, template_id: &str, c2_pa_template_update: models::C2PaTemplateUpdate) -> Result<models::C2PaTemplateResponse, Error<UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_template_id = template_id;
     let p_body_c2_pa_template_update = c2_pa_template_update;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/templates/{template_id}", configuration.base_path, template_id=crate::apis::urlencode(p_path_template_id));
     let mut req_builder = configuration.client.request(reqwest::Method::PUT, &uri_str);
@@ -490,9 +480,9 @@ pub async fn update_template_api_v1_enterprise_c2pa_templates_template_id_put(co
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
     req_builder = req_builder.json(&p_body_c2_pa_template_update);
 
     let req = req_builder.build()?;
@@ -521,10 +511,9 @@ pub async fn update_template_api_v1_enterprise_c2pa_templates_template_id_put(co
 }
 
 /// Validate a C2PA assertion before embedding.  Checks the assertion data against its registered schema.
-pub async fn validate_assertion_api_v1_enterprise_c2pa_validate_post(configuration: &configuration::Configuration, c2_pa_assertion_validate_request: models::C2PaAssertionValidateRequest, authorization: Option<&str>) -> Result<models::C2PaAssertionValidateResponse, Error<ValidateAssertionApiV1EnterpriseC2paValidatePostError>> {
+pub async fn validate_assertion_api_v1_enterprise_c2pa_validate_post(configuration: &configuration::Configuration, c2_pa_assertion_validate_request: models::C2PaAssertionValidateRequest) -> Result<models::C2PaAssertionValidateResponse, Error<ValidateAssertionApiV1EnterpriseC2paValidatePostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_c2_pa_assertion_validate_request = c2_pa_assertion_validate_request;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/enterprise/c2pa/validate", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -532,9 +521,9 @@ pub async fn validate_assertion_api_v1_enterprise_c2pa_validate_post(configurati
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
-    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
     req_builder = req_builder.json(&p_body_c2_pa_assertion_validate_request);
 
     let req = req_builder.build()?;

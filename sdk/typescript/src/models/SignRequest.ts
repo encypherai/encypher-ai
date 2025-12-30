@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { AppModelsRequestModelsRightsMetadata } from './AppModelsRequestModelsRightsMetadata';
+import {
+    AppModelsRequestModelsRightsMetadataFromJSON,
+    AppModelsRequestModelsRightsMetadataFromJSONTyped,
+    AppModelsRequestModelsRightsMetadataToJSON,
+    AppModelsRequestModelsRightsMetadataToJSONTyped,
+} from './AppModelsRequestModelsRightsMetadata';
+
 /**
  * Request model for signing content.
  * @export
@@ -61,6 +69,24 @@ export interface SignRequest {
      * @memberof SignRequest
      */
     actions?: Array<{ [key: string]: any; }> | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof SignRequest
+     */
+    templateId?: string | null;
+    /**
+     * Whether to validate template-based assertions (Business+).
+     * @type {boolean}
+     * @memberof SignRequest
+     */
+    validateAssertions?: boolean;
+    /**
+     * 
+     * @type {AppModelsRequestModelsRightsMetadata}
+     * @memberof SignRequest
+     */
+    rights?: AppModelsRequestModelsRightsMetadata | null;
 }
 
 /**
@@ -88,6 +114,9 @@ export function SignRequestFromJSONTyped(json: any, ignoreDiscriminator: boolean
         'documentType': json['document_type'] == null ? undefined : json['document_type'],
         'claimGenerator': json['claim_generator'] == null ? undefined : json['claim_generator'],
         'actions': json['actions'] == null ? undefined : json['actions'],
+        'templateId': json['template_id'] == null ? undefined : json['template_id'],
+        'validateAssertions': json['validate_assertions'] == null ? undefined : json['validate_assertions'],
+        'rights': json['rights'] == null ? undefined : AppModelsRequestModelsRightsMetadataFromJSON(json['rights']),
     };
 }
 
@@ -109,6 +138,9 @@ export function SignRequestToJSONTyped(value?: SignRequest | null, ignoreDiscrim
         'document_type': value['documentType'],
         'claim_generator': value['claimGenerator'],
         'actions': value['actions'],
+        'template_id': value['templateId'],
+        'validate_assertions': value['validateAssertions'],
+        'rights': AppModelsRequestModelsRightsMetadataToJSON(value['rights']),
     };
 }
 

@@ -52,7 +52,6 @@ class C2PACustomAssertionsApi:
     def create_schema_api_v1_enterprise_c2pa_schemas_post(
         self,
         c2_pa_schema_create: C2PASchemaCreate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -72,8 +71,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_schema_create: (required)
         :type c2_pa_schema_create: C2PASchemaCreate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -98,7 +95,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._create_schema_api_v1_enterprise_c2pa_schemas_post_serialize(
             c2_pa_schema_create=c2_pa_schema_create,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -124,7 +120,6 @@ class C2PACustomAssertionsApi:
     def create_schema_api_v1_enterprise_c2pa_schemas_post_with_http_info(
         self,
         c2_pa_schema_create: C2PASchemaCreate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -144,8 +139,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_schema_create: (required)
         :type c2_pa_schema_create: C2PASchemaCreate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -170,7 +163,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._create_schema_api_v1_enterprise_c2pa_schemas_post_serialize(
             c2_pa_schema_create=c2_pa_schema_create,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -196,7 +188,6 @@ class C2PACustomAssertionsApi:
     def create_schema_api_v1_enterprise_c2pa_schemas_post_without_preload_content(
         self,
         c2_pa_schema_create: C2PASchemaCreate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -216,8 +207,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_schema_create: (required)
         :type c2_pa_schema_create: C2PASchemaCreate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -242,7 +231,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._create_schema_api_v1_enterprise_c2pa_schemas_post_serialize(
             c2_pa_schema_create=c2_pa_schema_create,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -263,7 +251,6 @@ class C2PACustomAssertionsApi:
     def _create_schema_api_v1_enterprise_c2pa_schemas_post_serialize(
         self,
         c2_pa_schema_create,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -287,8 +274,6 @@ class C2PACustomAssertionsApi:
         # process the path parameters
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
         if c2_pa_schema_create is not None:
@@ -319,6 +304,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -343,7 +329,6 @@ class C2PACustomAssertionsApi:
     def create_template_api_v1_enterprise_c2pa_templates_post(
         self,
         c2_pa_template_create: C2PATemplateCreate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -363,8 +348,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_template_create: (required)
         :type c2_pa_template_create: C2PATemplateCreate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -389,7 +372,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._create_template_api_v1_enterprise_c2pa_templates_post_serialize(
             c2_pa_template_create=c2_pa_template_create,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -415,7 +397,6 @@ class C2PACustomAssertionsApi:
     def create_template_api_v1_enterprise_c2pa_templates_post_with_http_info(
         self,
         c2_pa_template_create: C2PATemplateCreate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -435,8 +416,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_template_create: (required)
         :type c2_pa_template_create: C2PATemplateCreate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -461,7 +440,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._create_template_api_v1_enterprise_c2pa_templates_post_serialize(
             c2_pa_template_create=c2_pa_template_create,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -487,7 +465,6 @@ class C2PACustomAssertionsApi:
     def create_template_api_v1_enterprise_c2pa_templates_post_without_preload_content(
         self,
         c2_pa_template_create: C2PATemplateCreate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -507,8 +484,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_template_create: (required)
         :type c2_pa_template_create: C2PATemplateCreate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -533,7 +508,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._create_template_api_v1_enterprise_c2pa_templates_post_serialize(
             c2_pa_template_create=c2_pa_template_create,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -554,7 +528,6 @@ class C2PACustomAssertionsApi:
     def _create_template_api_v1_enterprise_c2pa_templates_post_serialize(
         self,
         c2_pa_template_create,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -578,8 +551,6 @@ class C2PACustomAssertionsApi:
         # process the path parameters
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
         if c2_pa_template_create is not None:
@@ -610,6 +581,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -634,7 +606,6 @@ class C2PACustomAssertionsApi:
     def delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete(
         self,
         schema_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -654,8 +625,6 @@ class C2PACustomAssertionsApi:
 
         :param schema_id: (required)
         :type schema_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -680,7 +649,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete_serialize(
             schema_id=schema_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -706,7 +674,6 @@ class C2PACustomAssertionsApi:
     def delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete_with_http_info(
         self,
         schema_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -726,8 +693,6 @@ class C2PACustomAssertionsApi:
 
         :param schema_id: (required)
         :type schema_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -752,7 +717,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete_serialize(
             schema_id=schema_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -778,7 +742,6 @@ class C2PACustomAssertionsApi:
     def delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete_without_preload_content(
         self,
         schema_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -798,8 +761,6 @@ class C2PACustomAssertionsApi:
 
         :param schema_id: (required)
         :type schema_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -824,7 +785,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete_serialize(
             schema_id=schema_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -845,7 +805,6 @@ class C2PACustomAssertionsApi:
     def _delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete_serialize(
         self,
         schema_id,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -871,8 +830,6 @@ class C2PACustomAssertionsApi:
             _path_params['schema_id'] = schema_id
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
 
@@ -888,6 +845,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -912,7 +870,6 @@ class C2PACustomAssertionsApi:
     def delete_template_api_v1_enterprise_c2pa_templates_template_id_delete(
         self,
         template_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -932,8 +889,6 @@ class C2PACustomAssertionsApi:
 
         :param template_id: (required)
         :type template_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -958,7 +913,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._delete_template_api_v1_enterprise_c2pa_templates_template_id_delete_serialize(
             template_id=template_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -984,7 +938,6 @@ class C2PACustomAssertionsApi:
     def delete_template_api_v1_enterprise_c2pa_templates_template_id_delete_with_http_info(
         self,
         template_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1004,8 +957,6 @@ class C2PACustomAssertionsApi:
 
         :param template_id: (required)
         :type template_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1030,7 +981,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._delete_template_api_v1_enterprise_c2pa_templates_template_id_delete_serialize(
             template_id=template_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1056,7 +1006,6 @@ class C2PACustomAssertionsApi:
     def delete_template_api_v1_enterprise_c2pa_templates_template_id_delete_without_preload_content(
         self,
         template_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1076,8 +1025,6 @@ class C2PACustomAssertionsApi:
 
         :param template_id: (required)
         :type template_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1102,7 +1049,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._delete_template_api_v1_enterprise_c2pa_templates_template_id_delete_serialize(
             template_id=template_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1123,7 +1069,6 @@ class C2PACustomAssertionsApi:
     def _delete_template_api_v1_enterprise_c2pa_templates_template_id_delete_serialize(
         self,
         template_id,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -1149,8 +1094,6 @@ class C2PACustomAssertionsApi:
             _path_params['template_id'] = template_id
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
 
@@ -1166,6 +1109,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -1190,7 +1134,6 @@ class C2PACustomAssertionsApi:
     def get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get(
         self,
         schema_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1210,8 +1153,6 @@ class C2PACustomAssertionsApi:
 
         :param schema_id: (required)
         :type schema_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1236,7 +1177,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get_serialize(
             schema_id=schema_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1262,7 +1202,6 @@ class C2PACustomAssertionsApi:
     def get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get_with_http_info(
         self,
         schema_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1282,8 +1221,6 @@ class C2PACustomAssertionsApi:
 
         :param schema_id: (required)
         :type schema_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1308,7 +1245,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get_serialize(
             schema_id=schema_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1334,7 +1270,6 @@ class C2PACustomAssertionsApi:
     def get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get_without_preload_content(
         self,
         schema_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1354,8 +1289,6 @@ class C2PACustomAssertionsApi:
 
         :param schema_id: (required)
         :type schema_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1380,7 +1313,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get_serialize(
             schema_id=schema_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1401,7 +1333,6 @@ class C2PACustomAssertionsApi:
     def _get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get_serialize(
         self,
         schema_id,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -1427,8 +1358,6 @@ class C2PACustomAssertionsApi:
             _path_params['schema_id'] = schema_id
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
 
@@ -1444,6 +1373,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -1468,7 +1398,6 @@ class C2PACustomAssertionsApi:
     def get_template_api_v1_enterprise_c2pa_templates_template_id_get(
         self,
         template_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1488,8 +1417,6 @@ class C2PACustomAssertionsApi:
 
         :param template_id: (required)
         :type template_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1514,7 +1441,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._get_template_api_v1_enterprise_c2pa_templates_template_id_get_serialize(
             template_id=template_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1540,7 +1466,6 @@ class C2PACustomAssertionsApi:
     def get_template_api_v1_enterprise_c2pa_templates_template_id_get_with_http_info(
         self,
         template_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1560,8 +1485,6 @@ class C2PACustomAssertionsApi:
 
         :param template_id: (required)
         :type template_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1586,7 +1509,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._get_template_api_v1_enterprise_c2pa_templates_template_id_get_serialize(
             template_id=template_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1612,7 +1534,6 @@ class C2PACustomAssertionsApi:
     def get_template_api_v1_enterprise_c2pa_templates_template_id_get_without_preload_content(
         self,
         template_id: StrictStr,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1632,8 +1553,6 @@ class C2PACustomAssertionsApi:
 
         :param template_id: (required)
         :type template_id: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1658,7 +1577,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._get_template_api_v1_enterprise_c2pa_templates_template_id_get_serialize(
             template_id=template_id,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1679,7 +1597,6 @@ class C2PACustomAssertionsApi:
     def _get_template_api_v1_enterprise_c2pa_templates_template_id_get_serialize(
         self,
         template_id,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -1705,8 +1622,6 @@ class C2PACustomAssertionsApi:
             _path_params['template_id'] = template_id
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
 
@@ -1722,6 +1637,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -1748,7 +1664,6 @@ class C2PACustomAssertionsApi:
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None,
         is_public: Optional[StrictBool] = None,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1772,8 +1687,6 @@ class C2PACustomAssertionsApi:
         :type page_size: int
         :param is_public:
         :type is_public: bool
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1800,7 +1713,6 @@ class C2PACustomAssertionsApi:
             page=page,
             page_size=page_size,
             is_public=is_public,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1828,7 +1740,6 @@ class C2PACustomAssertionsApi:
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None,
         is_public: Optional[StrictBool] = None,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1852,8 +1763,6 @@ class C2PACustomAssertionsApi:
         :type page_size: int
         :param is_public:
         :type is_public: bool
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1880,7 +1789,6 @@ class C2PACustomAssertionsApi:
             page=page,
             page_size=page_size,
             is_public=is_public,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1908,7 +1816,6 @@ class C2PACustomAssertionsApi:
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None,
         is_public: Optional[StrictBool] = None,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1932,8 +1839,6 @@ class C2PACustomAssertionsApi:
         :type page_size: int
         :param is_public:
         :type is_public: bool
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1960,7 +1865,6 @@ class C2PACustomAssertionsApi:
             page=page,
             page_size=page_size,
             is_public=is_public,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -1983,7 +1887,6 @@ class C2PACustomAssertionsApi:
         page,
         page_size,
         is_public,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -2019,8 +1922,6 @@ class C2PACustomAssertionsApi:
             _query_params.append(('is_public', is_public))
             
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
 
@@ -2036,6 +1937,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -2062,7 +1964,6 @@ class C2PACustomAssertionsApi:
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None,
         category: Optional[StrictStr] = None,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2086,8 +1987,6 @@ class C2PACustomAssertionsApi:
         :type page_size: int
         :param category:
         :type category: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2114,7 +2013,6 @@ class C2PACustomAssertionsApi:
             page=page,
             page_size=page_size,
             category=category,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2142,7 +2040,6 @@ class C2PACustomAssertionsApi:
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None,
         category: Optional[StrictStr] = None,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2166,8 +2063,6 @@ class C2PACustomAssertionsApi:
         :type page_size: int
         :param category:
         :type category: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2194,7 +2089,6 @@ class C2PACustomAssertionsApi:
             page=page,
             page_size=page_size,
             category=category,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2222,7 +2116,6 @@ class C2PACustomAssertionsApi:
         page: Optional[Annotated[int, Field(strict=True, ge=1)]] = None,
         page_size: Optional[Annotated[int, Field(le=100, strict=True, ge=1)]] = None,
         category: Optional[StrictStr] = None,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2246,8 +2139,6 @@ class C2PACustomAssertionsApi:
         :type page_size: int
         :param category:
         :type category: str
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2274,7 +2165,6 @@ class C2PACustomAssertionsApi:
             page=page,
             page_size=page_size,
             category=category,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2297,7 +2187,6 @@ class C2PACustomAssertionsApi:
         page,
         page_size,
         category,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -2333,8 +2222,6 @@ class C2PACustomAssertionsApi:
             _query_params.append(('category', category))
             
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
 
@@ -2350,6 +2237,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -2375,7 +2263,6 @@ class C2PACustomAssertionsApi:
         self,
         schema_id: StrictStr,
         c2_pa_schema_update: C2PASchemaUpdate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2397,8 +2284,6 @@ class C2PACustomAssertionsApi:
         :type schema_id: str
         :param c2_pa_schema_update: (required)
         :type c2_pa_schema_update: C2PASchemaUpdate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2424,7 +2309,6 @@ class C2PACustomAssertionsApi:
         _param = self._update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put_serialize(
             schema_id=schema_id,
             c2_pa_schema_update=c2_pa_schema_update,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2451,7 +2335,6 @@ class C2PACustomAssertionsApi:
         self,
         schema_id: StrictStr,
         c2_pa_schema_update: C2PASchemaUpdate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2473,8 +2356,6 @@ class C2PACustomAssertionsApi:
         :type schema_id: str
         :param c2_pa_schema_update: (required)
         :type c2_pa_schema_update: C2PASchemaUpdate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2500,7 +2381,6 @@ class C2PACustomAssertionsApi:
         _param = self._update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put_serialize(
             schema_id=schema_id,
             c2_pa_schema_update=c2_pa_schema_update,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2527,7 +2407,6 @@ class C2PACustomAssertionsApi:
         self,
         schema_id: StrictStr,
         c2_pa_schema_update: C2PASchemaUpdate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2549,8 +2428,6 @@ class C2PACustomAssertionsApi:
         :type schema_id: str
         :param c2_pa_schema_update: (required)
         :type c2_pa_schema_update: C2PASchemaUpdate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2576,7 +2453,6 @@ class C2PACustomAssertionsApi:
         _param = self._update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put_serialize(
             schema_id=schema_id,
             c2_pa_schema_update=c2_pa_schema_update,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2598,7 +2474,6 @@ class C2PACustomAssertionsApi:
         self,
         schema_id,
         c2_pa_schema_update,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -2624,8 +2499,6 @@ class C2PACustomAssertionsApi:
             _path_params['schema_id'] = schema_id
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
         if c2_pa_schema_update is not None:
@@ -2656,6 +2529,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -2681,7 +2555,6 @@ class C2PACustomAssertionsApi:
         self,
         template_id: StrictStr,
         c2_pa_template_update: C2PATemplateUpdate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2703,8 +2576,6 @@ class C2PACustomAssertionsApi:
         :type template_id: str
         :param c2_pa_template_update: (required)
         :type c2_pa_template_update: C2PATemplateUpdate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2730,7 +2601,6 @@ class C2PACustomAssertionsApi:
         _param = self._update_template_api_v1_enterprise_c2pa_templates_template_id_put_serialize(
             template_id=template_id,
             c2_pa_template_update=c2_pa_template_update,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2757,7 +2627,6 @@ class C2PACustomAssertionsApi:
         self,
         template_id: StrictStr,
         c2_pa_template_update: C2PATemplateUpdate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2779,8 +2648,6 @@ class C2PACustomAssertionsApi:
         :type template_id: str
         :param c2_pa_template_update: (required)
         :type c2_pa_template_update: C2PATemplateUpdate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2806,7 +2673,6 @@ class C2PACustomAssertionsApi:
         _param = self._update_template_api_v1_enterprise_c2pa_templates_template_id_put_serialize(
             template_id=template_id,
             c2_pa_template_update=c2_pa_template_update,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2833,7 +2699,6 @@ class C2PACustomAssertionsApi:
         self,
         template_id: StrictStr,
         c2_pa_template_update: C2PATemplateUpdate,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2855,8 +2720,6 @@ class C2PACustomAssertionsApi:
         :type template_id: str
         :param c2_pa_template_update: (required)
         :type c2_pa_template_update: C2PATemplateUpdate
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2882,7 +2745,6 @@ class C2PACustomAssertionsApi:
         _param = self._update_template_api_v1_enterprise_c2pa_templates_template_id_put_serialize(
             template_id=template_id,
             c2_pa_template_update=c2_pa_template_update,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -2904,7 +2766,6 @@ class C2PACustomAssertionsApi:
         self,
         template_id,
         c2_pa_template_update,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -2930,8 +2791,6 @@ class C2PACustomAssertionsApi:
             _path_params['template_id'] = template_id
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
         if c2_pa_template_update is not None:
@@ -2962,6 +2821,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -2986,7 +2846,6 @@ class C2PACustomAssertionsApi:
     def validate_assertion_api_v1_enterprise_c2pa_validate_post(
         self,
         c2_pa_assertion_validate_request: C2PAAssertionValidateRequest,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3006,8 +2865,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_assertion_validate_request: (required)
         :type c2_pa_assertion_validate_request: C2PAAssertionValidateRequest
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3032,7 +2889,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._validate_assertion_api_v1_enterprise_c2pa_validate_post_serialize(
             c2_pa_assertion_validate_request=c2_pa_assertion_validate_request,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3058,7 +2914,6 @@ class C2PACustomAssertionsApi:
     def validate_assertion_api_v1_enterprise_c2pa_validate_post_with_http_info(
         self,
         c2_pa_assertion_validate_request: C2PAAssertionValidateRequest,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3078,8 +2933,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_assertion_validate_request: (required)
         :type c2_pa_assertion_validate_request: C2PAAssertionValidateRequest
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3104,7 +2957,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._validate_assertion_api_v1_enterprise_c2pa_validate_post_serialize(
             c2_pa_assertion_validate_request=c2_pa_assertion_validate_request,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3130,7 +2982,6 @@ class C2PACustomAssertionsApi:
     def validate_assertion_api_v1_enterprise_c2pa_validate_post_without_preload_content(
         self,
         c2_pa_assertion_validate_request: C2PAAssertionValidateRequest,
-        authorization: Optional[StrictStr] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3150,8 +3001,6 @@ class C2PACustomAssertionsApi:
 
         :param c2_pa_assertion_validate_request: (required)
         :type c2_pa_assertion_validate_request: C2PAAssertionValidateRequest
-        :param authorization:
-        :type authorization: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3176,7 +3025,6 @@ class C2PACustomAssertionsApi:
 
         _param = self._validate_assertion_api_v1_enterprise_c2pa_validate_post_serialize(
             c2_pa_assertion_validate_request=c2_pa_assertion_validate_request,
-            authorization=authorization,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -3197,7 +3045,6 @@ class C2PACustomAssertionsApi:
     def _validate_assertion_api_v1_enterprise_c2pa_validate_post_serialize(
         self,
         c2_pa_assertion_validate_request,
-        authorization,
         _request_auth,
         _content_type,
         _headers,
@@ -3221,8 +3068,6 @@ class C2PACustomAssertionsApi:
         # process the path parameters
         # process the query parameters
         # process the header parameters
-        if authorization is not None:
-            _header_params['authorization'] = authorization
         # process the form parameters
         # process the body parameter
         if c2_pa_assertion_validate_request is not None:
@@ -3253,6 +3098,7 @@ class C2PACustomAssertionsApi:
 
         # authentication setting
         _auth_settings: List[str] = [
+            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(

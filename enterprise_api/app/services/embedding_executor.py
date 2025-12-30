@@ -85,6 +85,82 @@ async def encode_document_with_embeddings(
                     },
                 )
         
+        # === API Feature Augmentation Tier Gating (TEAM_044) ===
+        # Check tier requirements for advanced features
+        tier = organization.get("tier", "starter").lower()
+        tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
+        org_tier_level = tier_levels.get(tier, 0)
+        
+        # Lightweight UUID requires Professional+
+        if request.manifest_mode == "lightweight_uuid" and org_tier_level < 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Lightweight UUID manifest mode requires Professional tier or higher",
+                    "required_tier": "professional",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Hybrid manifest mode requires Enterprise
+        if request.manifest_mode == "hybrid" and org_tier_level < 3:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Hybrid manifest mode requires Enterprise tier",
+                    "required_tier": "enterprise",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Distributed embedding requires Business+
+        if request.embedding_strategy == "distributed" and org_tier_level < 2:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Distributed embedding requires Business tier or higher",
+                    "required_tier": "business",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Distributed redundant (ECC) requires Enterprise
+        if request.embedding_strategy == "distributed_redundant" and org_tier_level < 3:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Distributed redundant embedding (ECC) requires Enterprise tier",
+                    "required_tier": "enterprise",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Dual binding requires Business+
+        if request.add_dual_binding and org_tier_level < 2:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Dual-binding manifest requires Business tier or higher",
+                    "required_tier": "business",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        logger.info(
+            f"Tier gating passed for org {organization_id} (tier={tier}): "
+            f"manifest_mode={request.manifest_mode}, embedding_strategy={request.embedding_strategy}"
+        )
+        
         # Validate custom assertions and/or template-based assertions if provided.
         # Templates are meant to be usable by Business+ customers while schema/template authoring
         # remains Enterprise-only.
@@ -313,7 +389,13 @@ async def encode_document_with_embeddings(
             action=request.action,
             previous_instance_id=request.previous_instance_id,
             custom_assertions=validated_assertions,  # Pass validated custom assertions
-            digital_source_type=request.digital_source_type  # Pass digital source type
+            digital_source_type=request.digital_source_type,  # Pass digital source type
+            # === API Feature Augmentation (TEAM_044) ===
+            manifest_mode=request.manifest_mode,
+            embedding_strategy=request.embedding_strategy,
+            distribution_target=request.distribution_target,
+            add_dual_binding=request.add_dual_binding,
+            disable_c2pa=request.disable_c2pa,
         )
         
         # Step 4: Convert embeddings to response format

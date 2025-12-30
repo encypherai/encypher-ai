@@ -30,6 +30,10 @@ type SignRequest struct {
 	DocumentType *string `json:"document_type,omitempty"`
 	ClaimGenerator NullableString `json:"claim_generator,omitempty"`
 	Actions []map[string]interface{} `json:"actions,omitempty"`
+	TemplateId NullableString `json:"template_id,omitempty"`
+	// Whether to validate template-based assertions (Business+).
+	ValidateAssertions *bool `json:"validate_assertions,omitempty"`
+	Rights NullableAppModelsRequestModelsRightsMetadata `json:"rights,omitempty"`
 }
 
 type _SignRequest SignRequest
@@ -43,6 +47,8 @@ func NewSignRequest(text string) *SignRequest {
 	this.Text = text
 	var documentType string = "article"
 	this.DocumentType = &documentType
+	var validateAssertions bool = true
+	this.ValidateAssertions = &validateAssertions
 	return &this
 }
 
@@ -53,6 +59,8 @@ func NewSignRequestWithDefaults() *SignRequest {
 	this := SignRequest{}
 	var documentType string = "article"
 	this.DocumentType = &documentType
+	var validateAssertions bool = true
+	this.ValidateAssertions = &validateAssertions
 	return &this
 }
 
@@ -313,6 +321,122 @@ func (o *SignRequest) SetActions(v []map[string]interface{}) {
 	o.Actions = v
 }
 
+// GetTemplateId returns the TemplateId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SignRequest) GetTemplateId() string {
+	if o == nil || IsNil(o.TemplateId.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.TemplateId.Get()
+}
+
+// GetTemplateIdOk returns a tuple with the TemplateId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SignRequest) GetTemplateIdOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TemplateId.Get(), o.TemplateId.IsSet()
+}
+
+// HasTemplateId returns a boolean if a field has been set.
+func (o *SignRequest) HasTemplateId() bool {
+	if o != nil && o.TemplateId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTemplateId gets a reference to the given NullableString and assigns it to the TemplateId field.
+func (o *SignRequest) SetTemplateId(v string) {
+	o.TemplateId.Set(&v)
+}
+// SetTemplateIdNil sets the value for TemplateId to be an explicit nil
+func (o *SignRequest) SetTemplateIdNil() {
+	o.TemplateId.Set(nil)
+}
+
+// UnsetTemplateId ensures that no value is present for TemplateId, not even an explicit nil
+func (o *SignRequest) UnsetTemplateId() {
+	o.TemplateId.Unset()
+}
+
+// GetValidateAssertions returns the ValidateAssertions field value if set, zero value otherwise.
+func (o *SignRequest) GetValidateAssertions() bool {
+	if o == nil || IsNil(o.ValidateAssertions) {
+		var ret bool
+		return ret
+	}
+	return *o.ValidateAssertions
+}
+
+// GetValidateAssertionsOk returns a tuple with the ValidateAssertions field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *SignRequest) GetValidateAssertionsOk() (*bool, bool) {
+	if o == nil || IsNil(o.ValidateAssertions) {
+		return nil, false
+	}
+	return o.ValidateAssertions, true
+}
+
+// HasValidateAssertions returns a boolean if a field has been set.
+func (o *SignRequest) HasValidateAssertions() bool {
+	if o != nil && !IsNil(o.ValidateAssertions) {
+		return true
+	}
+
+	return false
+}
+
+// SetValidateAssertions gets a reference to the given bool and assigns it to the ValidateAssertions field.
+func (o *SignRequest) SetValidateAssertions(v bool) {
+	o.ValidateAssertions = &v
+}
+
+// GetRights returns the Rights field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *SignRequest) GetRights() AppModelsRequestModelsRightsMetadata {
+	if o == nil || IsNil(o.Rights.Get()) {
+		var ret AppModelsRequestModelsRightsMetadata
+		return ret
+	}
+	return *o.Rights.Get()
+}
+
+// GetRightsOk returns a tuple with the Rights field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *SignRequest) GetRightsOk() (*AppModelsRequestModelsRightsMetadata, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Rights.Get(), o.Rights.IsSet()
+}
+
+// HasRights returns a boolean if a field has been set.
+func (o *SignRequest) HasRights() bool {
+	if o != nil && o.Rights.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetRights gets a reference to the given NullableAppModelsRequestModelsRightsMetadata and assigns it to the Rights field.
+func (o *SignRequest) SetRights(v AppModelsRequestModelsRightsMetadata) {
+	o.Rights.Set(&v)
+}
+// SetRightsNil sets the value for Rights to be an explicit nil
+func (o *SignRequest) SetRightsNil() {
+	o.Rights.Set(nil)
+}
+
+// UnsetRights ensures that no value is present for Rights, not even an explicit nil
+func (o *SignRequest) UnsetRights() {
+	o.Rights.Unset()
+}
+
 func (o SignRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -341,6 +465,15 @@ func (o SignRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if o.Actions != nil {
 		toSerialize["actions"] = o.Actions
+	}
+	if o.TemplateId.IsSet() {
+		toSerialize["template_id"] = o.TemplateId.Get()
+	}
+	if !IsNil(o.ValidateAssertions) {
+		toSerialize["validate_assertions"] = o.ValidateAssertions
+	}
+	if o.Rights.IsSet() {
+		toSerialize["rights"] = o.Rights.Get()
 	}
 	return toSerialize, nil
 }

@@ -35,10 +35,12 @@ type EncodeWithEmbeddingsRequest struct {
 	C2paManifestUrl NullableString `json:"c2pa_manifest_url,omitempty"`
 	C2paManifestHash NullableString `json:"c2pa_manifest_hash,omitempty"`
 	CustomAssertions []map[string]interface{} `json:"custom_assertions,omitempty"`
+	TemplateId NullableString `json:"template_id,omitempty"`
 	// Whether to validate custom assertions against registered schemas
 	ValidateAssertions *bool `json:"validate_assertions,omitempty"`
 	DigitalSourceType NullableString `json:"digital_source_type,omitempty"`
 	License NullableLicenseInfo `json:"license,omitempty"`
+	Rights NullableAppSchemasEmbeddingsRightsMetadata `json:"rights,omitempty"`
 	// Embedding generation options
 	EmbeddingOptions *EmbeddingOptions `json:"embedding_options,omitempty"`
 	ExpiresAt NullableTime `json:"expires_at,omitempty"`
@@ -381,6 +383,48 @@ func (o *EncodeWithEmbeddingsRequest) SetCustomAssertions(v []map[string]interfa
 	o.CustomAssertions = v
 }
 
+// GetTemplateId returns the TemplateId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *EncodeWithEmbeddingsRequest) GetTemplateId() string {
+	if o == nil || IsNil(o.TemplateId.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.TemplateId.Get()
+}
+
+// GetTemplateIdOk returns a tuple with the TemplateId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *EncodeWithEmbeddingsRequest) GetTemplateIdOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TemplateId.Get(), o.TemplateId.IsSet()
+}
+
+// HasTemplateId returns a boolean if a field has been set.
+func (o *EncodeWithEmbeddingsRequest) HasTemplateId() bool {
+	if o != nil && o.TemplateId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTemplateId gets a reference to the given NullableString and assigns it to the TemplateId field.
+func (o *EncodeWithEmbeddingsRequest) SetTemplateId(v string) {
+	o.TemplateId.Set(&v)
+}
+// SetTemplateIdNil sets the value for TemplateId to be an explicit nil
+func (o *EncodeWithEmbeddingsRequest) SetTemplateIdNil() {
+	o.TemplateId.Set(nil)
+}
+
+// UnsetTemplateId ensures that no value is present for TemplateId, not even an explicit nil
+func (o *EncodeWithEmbeddingsRequest) UnsetTemplateId() {
+	o.TemplateId.Unset()
+}
+
 // GetValidateAssertions returns the ValidateAssertions field value if set, zero value otherwise.
 func (o *EncodeWithEmbeddingsRequest) GetValidateAssertions() bool {
 	if o == nil || IsNil(o.ValidateAssertions) {
@@ -497,6 +541,48 @@ func (o *EncodeWithEmbeddingsRequest) UnsetLicense() {
 	o.License.Unset()
 }
 
+// GetRights returns the Rights field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *EncodeWithEmbeddingsRequest) GetRights() AppSchemasEmbeddingsRightsMetadata {
+	if o == nil || IsNil(o.Rights.Get()) {
+		var ret AppSchemasEmbeddingsRightsMetadata
+		return ret
+	}
+	return *o.Rights.Get()
+}
+
+// GetRightsOk returns a tuple with the Rights field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *EncodeWithEmbeddingsRequest) GetRightsOk() (*AppSchemasEmbeddingsRightsMetadata, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Rights.Get(), o.Rights.IsSet()
+}
+
+// HasRights returns a boolean if a field has been set.
+func (o *EncodeWithEmbeddingsRequest) HasRights() bool {
+	if o != nil && o.Rights.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetRights gets a reference to the given NullableAppSchemasEmbeddingsRightsMetadata and assigns it to the Rights field.
+func (o *EncodeWithEmbeddingsRequest) SetRights(v AppSchemasEmbeddingsRightsMetadata) {
+	o.Rights.Set(&v)
+}
+// SetRightsNil sets the value for Rights to be an explicit nil
+func (o *EncodeWithEmbeddingsRequest) SetRightsNil() {
+	o.Rights.Set(nil)
+}
+
+// UnsetRights ensures that no value is present for Rights, not even an explicit nil
+func (o *EncodeWithEmbeddingsRequest) UnsetRights() {
+	o.Rights.Unset()
+}
+
 // GetEmbeddingOptions returns the EmbeddingOptions field value if set, zero value otherwise.
 func (o *EncodeWithEmbeddingsRequest) GetEmbeddingOptions() EmbeddingOptions {
 	if o == nil || IsNil(o.EmbeddingOptions) {
@@ -604,6 +690,9 @@ func (o EncodeWithEmbeddingsRequest) ToMap() (map[string]interface{}, error) {
 	if o.CustomAssertions != nil {
 		toSerialize["custom_assertions"] = o.CustomAssertions
 	}
+	if o.TemplateId.IsSet() {
+		toSerialize["template_id"] = o.TemplateId.Get()
+	}
 	if !IsNil(o.ValidateAssertions) {
 		toSerialize["validate_assertions"] = o.ValidateAssertions
 	}
@@ -612,6 +701,9 @@ func (o EncodeWithEmbeddingsRequest) ToMap() (map[string]interface{}, error) {
 	}
 	if o.License.IsSet() {
 		toSerialize["license"] = o.License.Get()
+	}
+	if o.Rights.IsSet() {
+		toSerialize["rights"] = o.Rights.Get()
 	}
 	if !IsNil(o.EmbeddingOptions) {
 		toSerialize["embedding_options"] = o.EmbeddingOptions

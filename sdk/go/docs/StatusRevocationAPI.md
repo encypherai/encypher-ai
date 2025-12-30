@@ -1,6 +1,6 @@
 # \StatusRevocationAPI
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -34,7 +34,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -104,7 +104,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -174,7 +174,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -247,7 +247,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -320,7 +320,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -381,7 +381,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -442,7 +442,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -512,7 +512,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -582,7 +582,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
@@ -654,7 +654,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {

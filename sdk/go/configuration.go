@@ -89,12 +89,16 @@ type Configuration struct {
 func NewConfiguration() *Configuration {
 	cfg := &Configuration{
 		DefaultHeader:    make(map[string]string),
-		UserAgent:        "OpenAPI-Generator/1.0.0/go",
+		UserAgent:        "OpenAPI-Generator/1.0.0-alpha.1/go",
 		Debug:            false,
 		Servers:          ServerConfigurations{
 			{
-				URL: "",
-				Description: "No description provided",
+				URL: "https://api.encypherai.com",
+				Description: "Production",
+			},
+			{
+				URL: "http://localhost:8007",
+				Description: "Local development",
 			},
 		},
 		OperationServers: map[string]ServerConfigurations{

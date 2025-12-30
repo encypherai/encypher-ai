@@ -30,6 +30,13 @@ pub struct SignRequest {
     pub claim_generator: Option<Option<String>>,
     #[serde(rename = "actions", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub actions: Option<Option<Vec<std::collections::HashMap<String, serde_json::Value>>>>,
+    #[serde(rename = "template_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub template_id: Option<Option<String>>,
+    /// Whether to validate template-based assertions (Business+).
+    #[serde(rename = "validate_assertions", skip_serializing_if = "Option::is_none")]
+    pub validate_assertions: Option<bool>,
+    #[serde(rename = "rights", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rights: Option<Option<Box<models::AppModelsRequestModelsRightsMetadata>>>,
 }
 
 impl SignRequest {
@@ -43,6 +50,9 @@ impl SignRequest {
             document_type: None,
             claim_generator: None,
             actions: None,
+            template_id: None,
+            validate_assertions: None,
+            rights: None,
         }
     }
 }

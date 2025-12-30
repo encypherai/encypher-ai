@@ -40,6 +40,7 @@ if str(root) not in sys.path:
 from app.database import get_content_db, get_db
 from app.main import app
 from app.middleware.public_rate_limiter import public_rate_limiter
+from app.utils.db_startup import ensure_database_ready
 
 # Test database URLs - Two-Database Architecture
 # These match the docker-compose.full-stack.yml configuration
@@ -82,6 +83,14 @@ async def _ensure_seeded() -> None:
     async with _SEED_LOCK:
         if _SEEDED:
             return
+
+        await asyncio.to_thread(
+            ensure_database_ready,
+            database_url=TEST_CORE_DATABASE_URL,
+            service_name="enterprise-api-tests",
+            run_migrations=True,
+            exit_on_failure=True,
+        )
 
         engine = create_async_engine(TEST_CORE_DATABASE_URL, echo=False, pool_pre_ping=True)
         async with engine.begin() as conn:

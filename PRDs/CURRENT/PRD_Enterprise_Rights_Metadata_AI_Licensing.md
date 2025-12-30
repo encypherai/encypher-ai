@@ -66,8 +66,8 @@ Enterprise publishers require standardized licensing metadata embedded into C2PA
 
 ### 4.0 AI Company Consumption (Coalition / Licensing)
 
-- [ ] 4.1 Expose an API for AI companies to query licensing signals at scale
-- [ ] 4.2 Ensure audit logs for AI access to rights metadata
+- [x] 4.1 Expose an API for AI companies to query licensing signals at scale — ✅ pytest (`test_licensing_content_include_rights_signals_creates_audit_log`)
+- [x] 4.2 Ensure audit logs for AI access to rights metadata — ✅ pytest (`test_licensing_content_include_rights_signals_creates_audit_log`)
 - [ ] 4.3 Integrate rights metadata with existing licensing agreements
 
 ### 5.0 Testing & Validation

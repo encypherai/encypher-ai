@@ -46,7 +46,28 @@ class TestDecodeToolResponse(unittest.TestCase):
                     reason_code = 'UNKNOWN', 
                     signer_id = '', 
                     signer_name = '', 
-                    timestamp = '', )
+                    timestamp = '', ),
+                embeddings_found = 56,
+                all_embeddings = [
+                    encypher.models.embedding_result.EmbeddingResult(
+                        index = 56, 
+                        metadata = {
+                            'key' : null
+                            }, 
+                        verification_status = 'Not Attempted', 
+                        error = '', 
+                        verdict = encypher.models.verify_verdict.VerifyVerdict(
+                            valid = True, 
+                            tampered = True, 
+                            reason_code = 'UNKNOWN', 
+                            signer_id = '', 
+                            signer_name = '', 
+                            timestamp = '', ), 
+                        text_span = [
+                            null
+                            ], 
+                        clean_text = '', )
+                    ]
             )
         else:
             return DecodeToolResponse(

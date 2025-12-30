@@ -11,6 +11,8 @@ Name | Type | Description | Notes
 **signer_name** | Option<**String**> |  | [optional]
 **timestamp** | Option<**String**> |  | [optional]
 **details** | Option<[**std::collections::HashMap<String, serde_json::Value>**](serde_json::Value.md)> | Structured details (manifest, benchmarking stats, etc.) | [optional]
+**embeddings_found** | Option<**i32**> | Number of embeddings found in the text | [optional][default to 0]
+**all_embeddings** | Option<[**Vec<models::EmbeddingVerdict>**](EmbeddingVerdict.md)> |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

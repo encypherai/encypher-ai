@@ -54,63 +54,52 @@ import {
 
 export interface CreateSchemaApiV1EnterpriseC2paSchemasPostRequest {
     c2PASchemaCreate: C2PASchemaCreate;
-    authorization?: string | null;
 }
 
 export interface CreateTemplateApiV1EnterpriseC2paTemplatesPostRequest {
     c2PATemplateCreate: C2PATemplateCreate;
-    authorization?: string | null;
 }
 
 export interface DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest {
     schemaId: string;
-    authorization?: string | null;
 }
 
 export interface DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest {
     templateId: string;
-    authorization?: string | null;
 }
 
 export interface GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest {
     schemaId: string;
-    authorization?: string | null;
 }
 
 export interface GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest {
     templateId: string;
-    authorization?: string | null;
 }
 
 export interface ListSchemasApiV1EnterpriseC2paSchemasGetRequest {
     page?: number;
     pageSize?: number;
     isPublic?: boolean | null;
-    authorization?: string | null;
 }
 
 export interface ListTemplatesApiV1EnterpriseC2paTemplatesGetRequest {
     page?: number;
     pageSize?: number;
     category?: string | null;
-    authorization?: string | null;
 }
 
 export interface UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest {
     schemaId: string;
     c2PASchemaUpdate: C2PASchemaUpdate;
-    authorization?: string | null;
 }
 
 export interface UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest {
     templateId: string;
     c2PATemplateUpdate: C2PATemplateUpdate;
-    authorization?: string | null;
 }
 
 export interface ValidateAssertionApiV1EnterpriseC2paValidatePostRequest {
     c2PAAssertionValidateRequest: C2PAAssertionValidateRequest;
-    authorization?: string | null;
 }
 
 /**
@@ -124,7 +113,6 @@ export interface C2PACustomAssertionsApiInterface {
      * Register a custom C2PA assertion schema.  Allows organizations to define custom assertion types with JSON Schema validation rules.
      * @summary Create Schema
      * @param {C2PASchemaCreate} c2PASchemaCreate 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -141,7 +129,6 @@ export interface C2PACustomAssertionsApiInterface {
      * Create a new assertion template.
      * @summary Create Template
      * @param {C2PATemplateCreate} c2PATemplateCreate 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -158,7 +145,6 @@ export interface C2PACustomAssertionsApiInterface {
      * Delete a C2PA assertion schema.
      * @summary Delete Schema
      * @param {string} schemaId 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -175,7 +161,6 @@ export interface C2PACustomAssertionsApiInterface {
      * Delete an assertion template.
      * @summary Delete Template
      * @param {string} templateId 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -192,7 +177,6 @@ export interface C2PACustomAssertionsApiInterface {
      * Get a specific C2PA assertion schema.
      * @summary Get Schema
      * @param {string} schemaId 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -209,7 +193,6 @@ export interface C2PACustomAssertionsApiInterface {
      * Get a specific assertion template.
      * @summary Get Template
      * @param {string} templateId 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -228,7 +211,6 @@ export interface C2PACustomAssertionsApiInterface {
      * @param {number} [page] 
      * @param {number} [pageSize] 
      * @param {boolean} [isPublic] 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -247,7 +229,6 @@ export interface C2PACustomAssertionsApiInterface {
      * @param {number} [page] 
      * @param {number} [pageSize] 
      * @param {string} [category] 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -265,7 +246,6 @@ export interface C2PACustomAssertionsApiInterface {
      * @summary Update Schema
      * @param {string} schemaId 
      * @param {C2PASchemaUpdate} c2PASchemaUpdate 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -283,7 +263,6 @@ export interface C2PACustomAssertionsApiInterface {
      * @summary Update Template
      * @param {string} templateId 
      * @param {C2PATemplateUpdate} c2PATemplateUpdate 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -300,7 +279,6 @@ export interface C2PACustomAssertionsApiInterface {
      * Validate a C2PA assertion before embedding.  Checks the assertion data against its registered schema.
      * @summary Validate Assertion
      * @param {C2PAAssertionValidateRequest} c2PAAssertionValidateRequest 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof C2PACustomAssertionsApiInterface
@@ -338,10 +316,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         headerParameters['Content-Type'] = 'application/json';
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/schemas`;
 
@@ -383,10 +365,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         headerParameters['Content-Type'] = 'application/json';
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/templates`;
 
@@ -426,10 +412,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/schemas/{schema_id}`;
         urlPath = urlPath.replace(`{${"schema_id"}}`, encodeURIComponent(String(requestParameters['schemaId'])));
@@ -468,10 +458,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/templates/{template_id}`;
         urlPath = urlPath.replace(`{${"template_id"}}`, encodeURIComponent(String(requestParameters['templateId'])));
@@ -510,10 +504,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/schemas/{schema_id}`;
         urlPath = urlPath.replace(`{${"schema_id"}}`, encodeURIComponent(String(requestParameters['schemaId'])));
@@ -553,10 +551,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/templates/{template_id}`;
         urlPath = urlPath.replace(`{${"template_id"}}`, encodeURIComponent(String(requestParameters['templateId'])));
@@ -601,10 +603,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/schemas`;
 
@@ -648,10 +654,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/templates`;
 
@@ -699,10 +709,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         headerParameters['Content-Type'] = 'application/json';
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/schemas/{schema_id}`;
         urlPath = urlPath.replace(`{${"schema_id"}}`, encodeURIComponent(String(requestParameters['schemaId'])));
@@ -752,10 +766,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         headerParameters['Content-Type'] = 'application/json';
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/templates/{template_id}`;
         urlPath = urlPath.replace(`{${"template_id"}}`, encodeURIComponent(String(requestParameters['templateId'])));
@@ -798,10 +816,14 @@ export class C2PACustomAssertionsApi extends runtime.BaseAPI implements C2PACust
 
         headerParameters['Content-Type'] = 'application/json';
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
 
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
 
         let urlPath = `/api/v1/enterprise/c2pa/validate`;
 

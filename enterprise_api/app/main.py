@@ -266,12 +266,12 @@ async def metrics():
 
 
 _INTERNAL_DOC_TAGS = {
+    "Admin",
     "Licensing",
     "Kafka",
     "Provisioning",
     "Audit",
     "Team Management",
-    "Admin",
 }
 
 
@@ -625,6 +625,3 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         content=payload,
         headers=exc.headers,
     )
-
-
- 

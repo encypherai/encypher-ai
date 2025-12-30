@@ -2,11 +2,12 @@
 name = "encypher"
 version = "1.0.0-alpha.1"
 authors = ["Encypher <sdk@encypherai.com>"]
-description = "Official Rust SDK for Encypher Enterprise API - C2PA content signing and verification"
+description = "C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises"
+# Override this license by providing a License Object in the OpenAPI.
 license = "MIT"
 edition = "2021"
 homepage = "https://encypherai.com"
-repository = "https://github.com/encypherai/sdk-rust"
+repository = "https://github.com/encypherai/encypherai-commercial"
 documentation = "https://api.encypherai.com/docs"
 
 [dependencies]

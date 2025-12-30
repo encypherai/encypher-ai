@@ -1,6 +1,6 @@
 # C2PACustomAssertionsApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
@@ -20,7 +20,7 @@ All URIs are relative to *http://localhost*
 
 ## createSchemaApiV1EnterpriseC2paSchemasPost
 
-> C2PASchemaResponse createSchemaApiV1EnterpriseC2paSchemasPost(c2PASchemaCreate, authorization)
+> C2PASchemaResponse createSchemaApiV1EnterpriseC2paSchemasPost(c2PASchemaCreate)
 
 Create Schema
 
@@ -37,13 +37,15 @@ import type { CreateSchemaApiV1EnterpriseC2paSchemasPostRequest } from '@encyphe
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // C2PASchemaCreate
     c2PASchemaCreate: ...,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies CreateSchemaApiV1EnterpriseC2paSchemasPostRequest;
 
   try {
@@ -64,7 +66,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **c2PASchemaCreate** | [C2PASchemaCreate](C2PASchemaCreate.md) |  | |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -72,7 +73,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -91,7 +92,7 @@ No authorization required
 
 ## createTemplateApiV1EnterpriseC2paTemplatesPost
 
-> C2PATemplateResponse createTemplateApiV1EnterpriseC2paTemplatesPost(c2PATemplateCreate, authorization)
+> C2PATemplateResponse createTemplateApiV1EnterpriseC2paTemplatesPost(c2PATemplateCreate)
 
 Create Template
 
@@ -108,13 +109,15 @@ import type { CreateTemplateApiV1EnterpriseC2paTemplatesPostRequest } from '@enc
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // C2PATemplateCreate
     c2PATemplateCreate: ...,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies CreateTemplateApiV1EnterpriseC2paTemplatesPostRequest;
 
   try {
@@ -135,7 +138,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **c2PATemplateCreate** | [C2PATemplateCreate](C2PATemplateCreate.md) |  | |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -143,7 +145,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -162,7 +164,7 @@ No authorization required
 
 ## deleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete
 
-> deleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete(schemaId, authorization)
+> deleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete(schemaId)
 
 Delete Schema
 
@@ -179,13 +181,15 @@ import type { DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest } from
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // string
     schemaId: schemaId_example,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest;
 
   try {
@@ -206,7 +210,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **schemaId** | `string` |  | [Defaults to `undefined`] |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -214,7 +217,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -233,7 +236,7 @@ No authorization required
 
 ## deleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete
 
-> deleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete(templateId, authorization)
+> deleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete(templateId)
 
 Delete Template
 
@@ -250,13 +253,15 @@ import type { DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest 
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // string
     templateId: templateId_example,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest;
 
   try {
@@ -277,7 +282,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **templateId** | `string` |  | [Defaults to `undefined`] |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -285,7 +289,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -304,7 +308,7 @@ No authorization required
 
 ## getSchemaApiV1EnterpriseC2paSchemasSchemaIdGet
 
-> C2PASchemaResponse getSchemaApiV1EnterpriseC2paSchemasSchemaIdGet(schemaId, authorization)
+> C2PASchemaResponse getSchemaApiV1EnterpriseC2paSchemasSchemaIdGet(schemaId)
 
 Get Schema
 
@@ -321,13 +325,15 @@ import type { GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest } from '@enc
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // string
     schemaId: schemaId_example,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest;
 
   try {
@@ -348,7 +354,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **schemaId** | `string` |  | [Defaults to `undefined`] |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -356,7 +361,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -375,7 +380,7 @@ No authorization required
 
 ## getTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet
 
-> C2PATemplateResponse getTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet(templateId, authorization)
+> C2PATemplateResponse getTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet(templateId)
 
 Get Template
 
@@ -392,13 +397,15 @@ import type { GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest } from
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // string
     templateId: templateId_example,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest;
 
   try {
@@ -419,7 +426,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **templateId** | `string` |  | [Defaults to `undefined`] |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -427,7 +433,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -446,7 +452,7 @@ No authorization required
 
 ## listSchemasApiV1EnterpriseC2paSchemasGet
 
-> C2PASchemaListResponse listSchemasApiV1EnterpriseC2paSchemasGet(page, pageSize, isPublic, authorization)
+> C2PASchemaListResponse listSchemasApiV1EnterpriseC2paSchemasGet(page, pageSize, isPublic)
 
 List Schemas
 
@@ -463,7 +469,11 @@ import type { ListSchemasApiV1EnterpriseC2paSchemasGetRequest } from '@encypher/
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // number (optional)
@@ -472,8 +482,6 @@ async function example() {
     pageSize: 56,
     // boolean (optional)
     isPublic: true,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies ListSchemasApiV1EnterpriseC2paSchemasGetRequest;
 
   try {
@@ -496,7 +504,6 @@ example().catch(console.error);
 | **page** | `number` |  | [Optional] [Defaults to `1`] |
 | **pageSize** | `number` |  | [Optional] [Defaults to `50`] |
 | **isPublic** | `boolean` |  | [Optional] [Defaults to `undefined`] |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -504,7 +511,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -523,7 +530,7 @@ No authorization required
 
 ## listTemplatesApiV1EnterpriseC2paTemplatesGet
 
-> C2PATemplateListResponse listTemplatesApiV1EnterpriseC2paTemplatesGet(page, pageSize, category, authorization)
+> C2PATemplateListResponse listTemplatesApiV1EnterpriseC2paTemplatesGet(page, pageSize, category)
 
 List Templates
 
@@ -540,7 +547,11 @@ import type { ListTemplatesApiV1EnterpriseC2paTemplatesGetRequest } from '@encyp
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // number (optional)
@@ -549,8 +560,6 @@ async function example() {
     pageSize: 56,
     // string (optional)
     category: category_example,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies ListTemplatesApiV1EnterpriseC2paTemplatesGetRequest;
 
   try {
@@ -573,7 +582,6 @@ example().catch(console.error);
 | **page** | `number` |  | [Optional] [Defaults to `1`] |
 | **pageSize** | `number` |  | [Optional] [Defaults to `50`] |
 | **category** | `string` |  | [Optional] [Defaults to `undefined`] |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -581,7 +589,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -600,7 +608,7 @@ No authorization required
 
 ## updateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut
 
-> C2PASchemaResponse updateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut(schemaId, c2PASchemaUpdate, authorization)
+> C2PASchemaResponse updateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut(schemaId, c2PASchemaUpdate)
 
 Update Schema
 
@@ -617,15 +625,17 @@ import type { UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest } from '@
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // string
     schemaId: schemaId_example,
     // C2PASchemaUpdate
     c2PASchemaUpdate: ...,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest;
 
   try {
@@ -647,7 +657,6 @@ example().catch(console.error);
 |------------- | ------------- | ------------- | -------------|
 | **schemaId** | `string` |  | [Defaults to `undefined`] |
 | **c2PASchemaUpdate** | [C2PASchemaUpdate](C2PASchemaUpdate.md) |  | |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -655,7 +664,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -674,7 +683,7 @@ No authorization required
 
 ## updateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut
 
-> C2PATemplateResponse updateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut(templateId, c2PATemplateUpdate, authorization)
+> C2PATemplateResponse updateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut(templateId, c2PATemplateUpdate)
 
 Update Template
 
@@ -691,15 +700,17 @@ import type { UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest } f
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // string
     templateId: templateId_example,
     // C2PATemplateUpdate
     c2PATemplateUpdate: ...,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest;
 
   try {
@@ -721,7 +732,6 @@ example().catch(console.error);
 |------------- | ------------- | ------------- | -------------|
 | **templateId** | `string` |  | [Defaults to `undefined`] |
 | **c2PATemplateUpdate** | [C2PATemplateUpdate](C2PATemplateUpdate.md) |  | |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -729,7 +739,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -748,7 +758,7 @@ No authorization required
 
 ## validateAssertionApiV1EnterpriseC2paValidatePost
 
-> C2PAAssertionValidateResponse validateAssertionApiV1EnterpriseC2paValidatePost(c2PAAssertionValidateRequest, authorization)
+> C2PAAssertionValidateResponse validateAssertionApiV1EnterpriseC2paValidatePost(c2PAAssertionValidateRequest)
 
 Validate Assertion
 
@@ -765,13 +775,15 @@ import type { ValidateAssertionApiV1EnterpriseC2paValidatePostRequest } from '@e
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new C2PACustomAssertionsApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new C2PACustomAssertionsApi(config);
 
   const body = {
     // C2PAAssertionValidateRequest
     c2PAAssertionValidateRequest: ...,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies ValidateAssertionApiV1EnterpriseC2paValidatePostRequest;
 
   try {
@@ -792,7 +804,6 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **c2PAAssertionValidateRequest** | [C2PAAssertionValidateRequest](C2PAAssertionValidateRequest.md) |  | |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
@@ -800,7 +811,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 

@@ -70,6 +70,27 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         default="c2pa.created",
         description="C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)"
     )
+    # === API Feature Augmentation (TEAM_044) ===
+    manifest_mode: str = Field(
+        default="full",
+        description="Manifest mode: full (default C2PA), lightweight_uuid (minimal UUID pointer), hybrid (UUID per sentence + full C2PA at doc level). Professional+ for lightweight_uuid, Enterprise for hybrid."
+    )
+    embedding_strategy: str = Field(
+        default="single_point",
+        description="Embedding strategy: single_point (default), distributed (spread across targets), distributed_redundant (with ECC). Business+ for distributed, Enterprise for ECC."
+    )
+    distribution_target: Optional[str] = Field(
+        default=None,
+        description="Target characters for distributed embedding: whitespace, punctuation, all_chars. Only used when embedding_strategy is distributed or distributed_redundant."
+    )
+    add_dual_binding: bool = Field(
+        default=False,
+        description="Enable dual-binding manifest (content + self-hash). Business+ feature."
+    )
+    disable_c2pa: bool = Field(
+        default=False,
+        description="Opt-out of C2PA embedding. When true, only basic metadata is embedded."
+    )
     previous_instance_id: Optional[str] = Field(
         None,
         description="Previous manifest instance_id for edit provenance chain (required if action=c2pa.edited)"
@@ -124,6 +145,29 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         allowed = ['document', 'word', 'sentence', 'paragraph', 'section']
         if v not in allowed:
             raise ValueError(f"Segmentation level must be one of: {', '.join(allowed)}")
+        return v
+
+    @validator('manifest_mode')
+    def validate_manifest_mode(cls, v):
+        allowed = ['full', 'lightweight_uuid', 'hybrid']
+        if v not in allowed:
+            raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
+        return v
+
+    @validator('embedding_strategy')
+    def validate_embedding_strategy(cls, v):
+        allowed = ['single_point', 'distributed', 'distributed_redundant']
+        if v not in allowed:
+            raise ValueError(f"Embedding strategy must be one of: {', '.join(allowed)}")
+        return v
+
+    @validator('distribution_target')
+    def validate_distribution_target(cls, v):
+        if v is None:
+            return v
+        allowed = ['whitespace', 'punctuation', 'all_chars']
+        if v not in allowed:
+            raise ValueError(f"Distribution target must be one of: {', '.join(allowed)}")
         return v
 
 

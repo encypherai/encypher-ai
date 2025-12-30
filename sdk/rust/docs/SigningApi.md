@@ -1,11 +1,40 @@
 # \SigningApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**sign_advanced_api_v1_sign_advanced_post**](SigningApi.md#sign_advanced_api_v1_sign_advanced_post) | **POST** /api/v1/sign/advanced | Sign Advanced
 [**sign_content_api_v1_sign_post**](SigningApi.md#sign_content_api_v1_sign_post) | **POST** /api/v1/sign | Sign Content
 
+
+
+## sign_advanced_api_v1_sign_advanced_post
+
+> models::EncodeWithEmbeddingsResponse sign_advanced_api_v1_sign_advanced_post(encode_with_embeddings_request)
+Sign Advanced
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**encode_with_embeddings_request** | [**EncodeWithEmbeddingsRequest**](EncodeWithEmbeddingsRequest.md) |  | [required] |
+
+### Return type
+
+[**models::EncodeWithEmbeddingsResponse**](EncodeWithEmbeddingsResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
 ## sign_content_api_v1_sign_post

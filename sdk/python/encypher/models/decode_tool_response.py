@@ -17,9 +17,10 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, StrictStr, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
 from encypher.models.app_routers_tools_verify_verdict import AppRoutersToolsVerifyVerdict
+from encypher.models.embedding_result import EmbeddingResult
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -31,7 +32,9 @@ class DecodeToolResponse(BaseModel):
     verification_status: Optional[StrictStr] = 'Not Attempted'
     error: Optional[StrictStr] = None
     raw_hidden_data: Optional[AppRoutersToolsVerifyVerdict] = None
-    __properties: ClassVar[List[str]] = ["metadata", "verification_status", "error", "raw_hidden_data"]
+    embeddings_found: Optional[StrictInt] = Field(default=0, description="Number of embeddings found in the text")
+    all_embeddings: Optional[List[EmbeddingResult]] = None
+    __properties: ClassVar[List[str]] = ["metadata", "verification_status", "error", "raw_hidden_data", "embeddings_found", "all_embeddings"]
 
     @field_validator('verification_status')
     def verification_status_validate_enum(cls, value):
@@ -85,6 +88,13 @@ class DecodeToolResponse(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of raw_hidden_data
         if self.raw_hidden_data:
             _dict['raw_hidden_data'] = self.raw_hidden_data.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in all_embeddings (list)
+        _items = []
+        if self.all_embeddings:
+            for _item_all_embeddings in self.all_embeddings:
+                if _item_all_embeddings:
+                    _items.append(_item_all_embeddings.to_dict())
+            _dict['all_embeddings'] = _items
         # set to None if metadata (nullable) is None
         # and model_fields_set contains the field
         if self.metadata is None and "metadata" in self.model_fields_set:
@@ -99,6 +109,11 @@ class DecodeToolResponse(BaseModel):
         # and model_fields_set contains the field
         if self.raw_hidden_data is None and "raw_hidden_data" in self.model_fields_set:
             _dict['raw_hidden_data'] = None
+
+        # set to None if all_embeddings (nullable) is None
+        # and model_fields_set contains the field
+        if self.all_embeddings is None and "all_embeddings" in self.model_fields_set:
+            _dict['all_embeddings'] = None
 
         return _dict
 
@@ -115,7 +130,9 @@ class DecodeToolResponse(BaseModel):
             "metadata": obj.get("metadata"),
             "verification_status": obj.get("verification_status") if obj.get("verification_status") is not None else 'Not Attempted',
             "error": obj.get("error"),
-            "raw_hidden_data": AppRoutersToolsVerifyVerdict.from_dict(obj["raw_hidden_data"]) if obj.get("raw_hidden_data") is not None else None
+            "raw_hidden_data": AppRoutersToolsVerifyVerdict.from_dict(obj["raw_hidden_data"]) if obj.get("raw_hidden_data") is not None else None,
+            "embeddings_found": obj.get("embeddings_found") if obj.get("embeddings_found") is not None else 0,
+            "all_embeddings": [EmbeddingResult.from_dict(_item) for _item in obj["all_embeddings"]] if obj.get("all_embeddings") is not None else None
         })
         return _obj
 

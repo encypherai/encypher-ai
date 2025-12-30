@@ -1,6 +1,6 @@
 # \C2PaCustomAssertionsApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -20,7 +20,7 @@ Method | HTTP request | Description
 
 ## create_schema_api_v1_enterprise_c2pa_schemas_post
 
-> models::C2PaSchemaResponse create_schema_api_v1_enterprise_c2pa_schemas_post(c2_pa_schema_create, authorization)
+> models::C2PaSchemaResponse create_schema_api_v1_enterprise_c2pa_schemas_post(c2_pa_schema_create)
 Create Schema
 
 Register a custom C2PA assertion schema.  Allows organizations to define custom assertion types with JSON Schema validation rules.
@@ -31,7 +31,6 @@ Register a custom C2PA assertion schema.  Allows organizations to define custom 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **c2_pa_schema_create** | [**C2PaSchemaCreate**](C2PaSchemaCreate.md) |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -39,7 +38,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -51,7 +50,7 @@ No authorization required
 
 ## create_template_api_v1_enterprise_c2pa_templates_post
 
-> models::C2PaTemplateResponse create_template_api_v1_enterprise_c2pa_templates_post(c2_pa_template_create, authorization)
+> models::C2PaTemplateResponse create_template_api_v1_enterprise_c2pa_templates_post(c2_pa_template_create)
 Create Template
 
 Create a new assertion template.
@@ -62,7 +61,6 @@ Create a new assertion template.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **c2_pa_template_create** | [**C2PaTemplateCreate**](C2PaTemplateCreate.md) |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -70,7 +68,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -82,7 +80,7 @@ No authorization required
 
 ## delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete
 
-> delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete(schema_id, authorization)
+> delete_schema_api_v1_enterprise_c2pa_schemas_schema_id_delete(schema_id)
 Delete Schema
 
 Delete a C2PA assertion schema.
@@ -93,7 +91,6 @@ Delete a C2PA assertion schema.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **schema_id** | **String** |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -101,7 +98,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -113,7 +110,7 @@ No authorization required
 
 ## delete_template_api_v1_enterprise_c2pa_templates_template_id_delete
 
-> delete_template_api_v1_enterprise_c2pa_templates_template_id_delete(template_id, authorization)
+> delete_template_api_v1_enterprise_c2pa_templates_template_id_delete(template_id)
 Delete Template
 
 Delete an assertion template.
@@ -124,7 +121,6 @@ Delete an assertion template.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **template_id** | **String** |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -132,7 +128,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -144,7 +140,7 @@ No authorization required
 
 ## get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get
 
-> models::C2PaSchemaResponse get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get(schema_id, authorization)
+> models::C2PaSchemaResponse get_schema_api_v1_enterprise_c2pa_schemas_schema_id_get(schema_id)
 Get Schema
 
 Get a specific C2PA assertion schema.
@@ -155,7 +151,6 @@ Get a specific C2PA assertion schema.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **schema_id** | **String** |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -163,7 +158,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -175,7 +170,7 @@ No authorization required
 
 ## get_template_api_v1_enterprise_c2pa_templates_template_id_get
 
-> models::C2PaTemplateResponse get_template_api_v1_enterprise_c2pa_templates_template_id_get(template_id, authorization)
+> models::C2PaTemplateResponse get_template_api_v1_enterprise_c2pa_templates_template_id_get(template_id)
 Get Template
 
 Get a specific assertion template.
@@ -186,7 +181,6 @@ Get a specific assertion template.
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **template_id** | **String** |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -194,7 +188,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -206,7 +200,7 @@ No authorization required
 
 ## list_schemas_api_v1_enterprise_c2pa_schemas_get
 
-> models::C2PaSchemaListResponse list_schemas_api_v1_enterprise_c2pa_schemas_get(page, page_size, is_public, authorization)
+> models::C2PaSchemaListResponse list_schemas_api_v1_enterprise_c2pa_schemas_get(page, page_size, is_public)
 List Schemas
 
 List available C2PA assertion schemas.  Returns schemas owned by the organization or public schemas.
@@ -219,7 +213,6 @@ Name | Type | Description  | Required | Notes
 **page** | Option<**i32**> |  |  |[default to 1]
 **page_size** | Option<**i32**> |  |  |[default to 50]
 **is_public** | Option<**bool**> |  |  |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -227,7 +220,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -239,7 +232,7 @@ No authorization required
 
 ## list_templates_api_v1_enterprise_c2pa_templates_get
 
-> models::C2PaTemplateListResponse list_templates_api_v1_enterprise_c2pa_templates_get(page, page_size, category, authorization)
+> models::C2PaTemplateListResponse list_templates_api_v1_enterprise_c2pa_templates_get(page, page_size, category)
 List Templates
 
 List available assertion templates.
@@ -252,7 +245,6 @@ Name | Type | Description  | Required | Notes
 **page** | Option<**i32**> |  |  |[default to 1]
 **page_size** | Option<**i32**> |  |  |[default to 50]
 **category** | Option<**String**> |  |  |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -260,7 +252,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -272,7 +264,7 @@ No authorization required
 
 ## update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put
 
-> models::C2PaSchemaResponse update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put(schema_id, c2_pa_schema_update, authorization)
+> models::C2PaSchemaResponse update_schema_api_v1_enterprise_c2pa_schemas_schema_id_put(schema_id, c2_pa_schema_update)
 Update Schema
 
 Update a C2PA assertion schema.
@@ -284,7 +276,6 @@ Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **schema_id** | **String** |  | [required] |
 **c2_pa_schema_update** | [**C2PaSchemaUpdate**](C2PaSchemaUpdate.md) |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -292,7 +283,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -304,7 +295,7 @@ No authorization required
 
 ## update_template_api_v1_enterprise_c2pa_templates_template_id_put
 
-> models::C2PaTemplateResponse update_template_api_v1_enterprise_c2pa_templates_template_id_put(template_id, c2_pa_template_update, authorization)
+> models::C2PaTemplateResponse update_template_api_v1_enterprise_c2pa_templates_template_id_put(template_id, c2_pa_template_update)
 Update Template
 
 Update an assertion template.
@@ -316,7 +307,6 @@ Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **template_id** | **String** |  | [required] |
 **c2_pa_template_update** | [**C2PaTemplateUpdate**](C2PaTemplateUpdate.md) |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -324,7 +314,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -336,7 +326,7 @@ No authorization required
 
 ## validate_assertion_api_v1_enterprise_c2pa_validate_post
 
-> models::C2PaAssertionValidateResponse validate_assertion_api_v1_enterprise_c2pa_validate_post(c2_pa_assertion_validate_request, authorization)
+> models::C2PaAssertionValidateResponse validate_assertion_api_v1_enterprise_c2pa_validate_post(c2_pa_assertion_validate_request)
 Validate Assertion
 
 Validate a C2PA assertion before embedding.  Checks the assertion data against its registered schema.
@@ -347,7 +337,6 @@ Validate a C2PA assertion before embedding.  Checks the assertion data against i
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **c2_pa_assertion_validate_request** | [**C2PaAssertionValidateRequest**](C2PaAssertionValidateRequest.md) |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
@@ -355,7 +344,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 

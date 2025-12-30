@@ -195,16 +195,10 @@ type ApiCreateSchemaApiV1EnterpriseC2paSchemasPostRequest struct {
 	ctx context.Context
 	ApiService C2PACustomAssertionsAPI
 	c2PASchemaCreate *C2PASchemaCreate
-	authorization *string
 }
 
 func (r ApiCreateSchemaApiV1EnterpriseC2paSchemasPostRequest) C2PASchemaCreate(c2PASchemaCreate C2PASchemaCreate) ApiCreateSchemaApiV1EnterpriseC2paSchemasPostRequest {
 	r.c2PASchemaCreate = &c2PASchemaCreate
-	return r
-}
-
-func (r ApiCreateSchemaApiV1EnterpriseC2paSchemasPostRequest) Authorization(authorization string) ApiCreateSchemaApiV1EnterpriseC2paSchemasPostRequest {
-	r.authorization = &authorization
 	return r
 }
 
@@ -271,9 +265,6 @@ func (a *C2PACustomAssertionsAPIService) CreateSchemaApiV1EnterpriseC2paSchemasP
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	// body params
 	localVarPostBody = r.c2PASchemaCreate
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
@@ -327,16 +318,10 @@ type ApiCreateTemplateApiV1EnterpriseC2paTemplatesPostRequest struct {
 	ctx context.Context
 	ApiService C2PACustomAssertionsAPI
 	c2PATemplateCreate *C2PATemplateCreate
-	authorization *string
 }
 
 func (r ApiCreateTemplateApiV1EnterpriseC2paTemplatesPostRequest) C2PATemplateCreate(c2PATemplateCreate C2PATemplateCreate) ApiCreateTemplateApiV1EnterpriseC2paTemplatesPostRequest {
 	r.c2PATemplateCreate = &c2PATemplateCreate
-	return r
-}
-
-func (r ApiCreateTemplateApiV1EnterpriseC2paTemplatesPostRequest) Authorization(authorization string) ApiCreateTemplateApiV1EnterpriseC2paTemplatesPostRequest {
-	r.authorization = &authorization
 	return r
 }
 
@@ -400,9 +385,6 @@ func (a *C2PACustomAssertionsAPIService) CreateTemplateApiV1EnterpriseC2paTempla
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	// body params
 	localVarPostBody = r.c2PATemplateCreate
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
@@ -456,12 +438,6 @@ type ApiDeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest struct {
 	ctx context.Context
 	ApiService C2PACustomAssertionsAPI
 	schemaId string
-	authorization *string
-}
-
-func (r ApiDeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest) Authorization(authorization string) ApiDeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest {
-	r.authorization = &authorization
-	return r
 }
 
 func (r ApiDeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDeleteRequest) Execute() (*http.Response, error) {
@@ -522,9 +498,6 @@ func (a *C2PACustomAssertionsAPIService) DeleteSchemaApiV1EnterpriseC2paSchemasS
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err
@@ -567,12 +540,6 @@ type ApiDeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest struct
 	ctx context.Context
 	ApiService C2PACustomAssertionsAPI
 	templateId string
-	authorization *string
-}
-
-func (r ApiDeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest) Authorization(authorization string) ApiDeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest {
-	r.authorization = &authorization
-	return r
 }
 
 func (r ApiDeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDeleteRequest) Execute() (*http.Response, error) {
@@ -633,9 +600,6 @@ func (a *C2PACustomAssertionsAPIService) DeleteTemplateApiV1EnterpriseC2paTempla
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return nil, err
@@ -678,12 +642,6 @@ type ApiGetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest struct {
 	ctx context.Context
 	ApiService C2PACustomAssertionsAPI
 	schemaId string
-	authorization *string
-}
-
-func (r ApiGetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest) Authorization(authorization string) ApiGetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest {
-	r.authorization = &authorization
-	return r
 }
 
 func (r ApiGetSchemaApiV1EnterpriseC2paSchemasSchemaIdGetRequest) Execute() (*C2PASchemaResponse, *http.Response, error) {
@@ -746,9 +704,6 @@ func (a *C2PACustomAssertionsAPIService) GetSchemaApiV1EnterpriseC2paSchemasSche
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -800,12 +755,6 @@ type ApiGetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest struct {
 	ctx context.Context
 	ApiService C2PACustomAssertionsAPI
 	templateId string
-	authorization *string
-}
-
-func (r ApiGetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest) Authorization(authorization string) ApiGetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest {
-	r.authorization = &authorization
-	return r
 }
 
 func (r ApiGetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGetRequest) Execute() (*C2PATemplateResponse, *http.Response, error) {
@@ -868,9 +817,6 @@ func (a *C2PACustomAssertionsAPIService) GetTemplateApiV1EnterpriseC2paTemplates
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -924,7 +870,6 @@ type ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest struct {
 	page *int32
 	pageSize *int32
 	isPublic *bool
-	authorization *string
 }
 
 func (r ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest) Page(page int32) ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest {
@@ -939,11 +884,6 @@ func (r ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest) PageSize(pageSize in
 
 func (r ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest) IsPublic(isPublic bool) ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest {
 	r.isPublic = &isPublic
-	return r
-}
-
-func (r ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest) Authorization(authorization string) ApiListSchemasApiV1EnterpriseC2paSchemasGetRequest {
-	r.authorization = &authorization
 	return r
 }
 
@@ -1023,9 +963,6 @@ func (a *C2PACustomAssertionsAPIService) ListSchemasApiV1EnterpriseC2paSchemasGe
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1079,7 +1016,6 @@ type ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest struct {
 	page *int32
 	pageSize *int32
 	category *string
-	authorization *string
 }
 
 func (r ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest) Page(page int32) ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest {
@@ -1094,11 +1030,6 @@ func (r ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest) PageSize(pageSiz
 
 func (r ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest) Category(category string) ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest {
 	r.category = &category
-	return r
-}
-
-func (r ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest) Authorization(authorization string) ApiListTemplatesApiV1EnterpriseC2paTemplatesGetRequest {
-	r.authorization = &authorization
 	return r
 }
 
@@ -1176,9 +1107,6 @@ func (a *C2PACustomAssertionsAPIService) ListTemplatesApiV1EnterpriseC2paTemplat
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -1231,16 +1159,10 @@ type ApiUpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest struct {
 	ApiService C2PACustomAssertionsAPI
 	schemaId string
 	c2PASchemaUpdate *C2PASchemaUpdate
-	authorization *string
 }
 
 func (r ApiUpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest) C2PASchemaUpdate(c2PASchemaUpdate C2PASchemaUpdate) ApiUpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest {
 	r.c2PASchemaUpdate = &c2PASchemaUpdate
-	return r
-}
-
-func (r ApiUpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest) Authorization(authorization string) ApiUpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPutRequest {
-	r.authorization = &authorization
 	return r
 }
 
@@ -1307,9 +1229,6 @@ func (a *C2PACustomAssertionsAPIService) UpdateSchemaApiV1EnterpriseC2paSchemasS
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	// body params
 	localVarPostBody = r.c2PASchemaUpdate
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
@@ -1364,16 +1283,10 @@ type ApiUpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest struct {
 	ApiService C2PACustomAssertionsAPI
 	templateId string
 	c2PATemplateUpdate *C2PATemplateUpdate
-	authorization *string
 }
 
 func (r ApiUpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest) C2PATemplateUpdate(c2PATemplateUpdate C2PATemplateUpdate) ApiUpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest {
 	r.c2PATemplateUpdate = &c2PATemplateUpdate
-	return r
-}
-
-func (r ApiUpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest) Authorization(authorization string) ApiUpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPutRequest {
-	r.authorization = &authorization
 	return r
 }
 
@@ -1440,9 +1353,6 @@ func (a *C2PACustomAssertionsAPIService) UpdateTemplateApiV1EnterpriseC2paTempla
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	// body params
 	localVarPostBody = r.c2PATemplateUpdate
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
@@ -1496,16 +1406,10 @@ type ApiValidateAssertionApiV1EnterpriseC2paValidatePostRequest struct {
 	ctx context.Context
 	ApiService C2PACustomAssertionsAPI
 	c2PAAssertionValidateRequest *C2PAAssertionValidateRequest
-	authorization *string
 }
 
 func (r ApiValidateAssertionApiV1EnterpriseC2paValidatePostRequest) C2PAAssertionValidateRequest(c2PAAssertionValidateRequest C2PAAssertionValidateRequest) ApiValidateAssertionApiV1EnterpriseC2paValidatePostRequest {
 	r.c2PAAssertionValidateRequest = &c2PAAssertionValidateRequest
-	return r
-}
-
-func (r ApiValidateAssertionApiV1EnterpriseC2paValidatePostRequest) Authorization(authorization string) ApiValidateAssertionApiV1EnterpriseC2paValidatePostRequest {
-	r.authorization = &authorization
 	return r
 }
 
@@ -1570,9 +1474,6 @@ func (a *C2PACustomAssertionsAPIService) ValidateAssertionApiV1EnterpriseC2paVal
 	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
 	}
 	// body params
 	localVarPostBody = r.c2PAAssertionValidateRequest

@@ -1,6 +1,6 @@
 # encypher.StatusRevocationApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -33,10 +33,10 @@ from encypher.models.document_status_response import DocumentStatusResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -112,10 +112,10 @@ from encypher.models.document_status_response import DocumentStatusResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -194,10 +194,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -269,10 +269,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -340,10 +340,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -413,10 +413,10 @@ import encypher
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -489,10 +489,10 @@ from encypher.models.revocation_response import RevocationResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -570,10 +570,10 @@ from encypher.models.revocation_response import RevocationResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -663,10 +663,10 @@ from encypher.models.revoke_request import RevokeRequest
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters
@@ -758,10 +758,10 @@ from encypher.models.revoke_request import RevokeRequest
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 # The client must configure the authentication and authorization parameters

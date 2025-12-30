@@ -13,7 +13,7 @@
  */
 
 
-export const BASE_PATH = "http://localhost".replace(/\/+$/, "");
+export const BASE_PATH = "https://api.encypherai.com".replace(/\/+$/, "");
 
 export interface ConfigurationParameters {
     basePath?: string; // override base path

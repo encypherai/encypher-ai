@@ -111,26 +111,28 @@ impl From<&str> for ContentType {
     }
 }
 
-pub mod audit_api;
+pub mod api_keys_api;
+pub mod account_api;
+pub mod byok_api;
 pub mod batch_api;
 pub mod c2_pa_custom_assertions_api;
 pub mod chat_api;
 pub mod coalition_api;
+pub mod documents_api;
 pub mod enterprise_embeddings_api;
 pub mod enterprise_merkle_trees_api;
 pub mod health_api;
 pub mod info_api;
-pub mod licensing_api;
 pub mod lookup_api;
 pub mod onboarding_api;
-pub mod provisioning_api;
+pub mod public_c2_pa_api;
 pub mod public_tools_api;
 pub mod public_verification_api;
 pub mod signing_api;
 pub mod status_revocation_api;
 pub mod streaming_api;
-pub mod team_management_api;
 pub mod usage_api;
 pub mod verification_api;
+pub mod webhooks_api;
 
 pub mod configuration;
