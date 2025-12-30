@@ -736,7 +736,7 @@ class UnicodeMetadata:
             return embedded_text
 
     @staticmethod
-    def _compute_text_hash(text: str, algorithm: str = "sha256") -> str:
+    def _compute_text_hash(cls, text: str, algorithm: str = "sha256") -> str:
         """Compute hex digest of *text* using *algorithm* after NFC normalization."""
         import hashlib
         import unicodedata
