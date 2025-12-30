@@ -1787,7 +1787,8 @@
         "tags": [
           "Signing"
         ],
-        "summary": "Sign Advanced",
+        "summary": "Sign with advanced embedding controls",
+        "description": "Sign a document while enabling advanced embedding controls (manifest mode, distribution strategy, ECC, and other enterprise features).\n\nTier requirements are enforced server-side (typically Professional+ depending on selected options).",
         "operationId": "sign_advanced_api_v1_sign_advanced_post",
         "requestBody": {
           "content": {
@@ -2272,7 +2273,8 @@
     "/api/v1/stream/health": {
       "get": {
         "tags": [
-          "Streaming"
+          "Streaming",
+          "Admin"
         ],
         "summary": "Streaming Health Check",
         "description": "Health check endpoint for streaming service.\n\nReturns:\n    Health status of streaming components",
@@ -2286,7 +2288,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/api/v1/stream/runs/{run_id}": {
@@ -3087,10 +3094,11 @@
     "/api/v1/usage/reset": {
       "post": {
         "tags": [
-          "Usage"
+          "Usage",
+          "Admin"
         ],
         "summary": "Reset Monthly Usage",
-        "description": "Reset monthly usage counters.\n\nThis is typically called by a scheduled job at the start of each billing period.\nRequires admin permissions.",
+        "description": "Reset monthly usage counters.\n\nThis is typically called by a scheduled job at the start of each billing period.\nRequires super admin permissions.",
         "operationId": "reset_monthly_usage_api_v1_usage_reset_post",
         "responses": {
           "200": {
@@ -5474,6 +5482,382 @@
         }
       }
     },
+    "/api/v1/enterprise/stream/merkle/start": {
+      "post": {
+        "tags": [
+          "Streaming Merkle"
+        ],
+        "summary": "Start Streaming Merkle Session",
+        "description": "Start a new streaming Merkle tree construction session.\n\nThis initiates a session that allows segments to be added incrementally,\nideal for real-time LLM output signing where content is generated token-by-token.\n\n**Tier Requirement:** Professional+\n\nPatent Reference: FIG. 5 - Streaming Merkle Tree Construction",
+        "operationId": "start_streaming_merkle_session_api_v1_enterprise_stream_merkle_start_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamMerkleStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamMerkleStartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/stream/merkle/segment": {
+      "post": {
+        "tags": [
+          "Streaming Merkle"
+        ],
+        "summary": "Add Segment To Session",
+        "description": "Add a segment to an active streaming Merkle session.\n\nSegments are buffered and combined into the Merkle tree incrementally.\nThe tree is constructed using a bounded buffer approach for memory efficiency.\n\nSet `is_final=true` to finalize the session after adding this segment.",
+        "operationId": "add_segment_to_session_api_v1_enterprise_stream_merkle_segment_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamMerkleSegmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamMerkleSegmentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/stream/merkle/finalize": {
+      "post": {
+        "tags": [
+          "Streaming Merkle"
+        ],
+        "summary": "Finalize Streaming Session",
+        "description": "Finalize a streaming Merkle session and compute the final root.\n\nThis completes the tree construction, computes the final root hash,\nand optionally embeds a C2PA manifest into the full document.",
+        "operationId": "finalize_streaming_session_api_v1_enterprise_stream_merkle_finalize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamMerkleFinalizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamMerkleFinalizeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/stream/merkle/status": {
+      "post": {
+        "tags": [
+          "Streaming Merkle"
+        ],
+        "summary": "Get Session Status",
+        "description": "Check the status of a streaming Merkle session.",
+        "operationId": "get_session_status_api_v1_enterprise_stream_merkle_status_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StreamMerkleStatusRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamMerkleStatusResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/evidence/generate": {
+      "post": {
+        "tags": [
+          "Evidence Generation"
+        ],
+        "summary": "Generate Evidence",
+        "description": "Generate an evidence package for content attribution.\n\nThis endpoint creates a comprehensive evidence package containing:\n- Content hash verification\n- Merkle proof (if available)\n- Signature verification chain\n- Timestamp verification\n- Source attribution details\n\n**Tier Requirement:** Enterprise\n\nPatent Reference: FIG. 11 - Evidence Generation & Attribution Flow",
+        "operationId": "generate_evidence_api_v1_enterprise_evidence_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceGenerateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/fingerprint/encode": {
+      "post": {
+        "tags": [
+          "Fingerprint"
+        ],
+        "summary": "Encode Fingerprint",
+        "description": "Encode a robust fingerprint into text.\n\nFingerprints use secret-seeded placement of invisible markers\nthat survive text modifications like paraphrasing or truncation.\n\n**Tier Requirement:** Enterprise",
+        "operationId": "encode_fingerprint_api_v1_enterprise_fingerprint_encode_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FingerprintEncodeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FingerprintEncodeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/fingerprint/detect": {
+      "post": {
+        "tags": [
+          "Fingerprint"
+        ],
+        "summary": "Detect Fingerprint",
+        "description": "Detect a fingerprint in text.\n\nDetection uses score-based matching with confidence threshold\nto identify fingerprinted content even after modifications.\n\n**Tier Requirement:** Enterprise",
+        "operationId": "detect_fingerprint_api_v1_enterprise_fingerprint_detect_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FingerprintDetectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FingerprintDetectResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/enterprise/attribution/multi-source": {
+      "post": {
+        "tags": [
+          "Multi-Source Attribution"
+        ],
+        "summary": "Multi Source Lookup",
+        "description": "Look up content across multiple sources.\n\nReturns all matching sources with linked-list tracking,\nchronological ordering, and optional authority ranking.\n\n**Tier Requirement:** Business+ (Authority ranking requires Enterprise)\n\nPatent Reference: FIG. 8 - Multi-Source Hash Table Lookup",
+        "operationId": "multi_source_lookup_api_v1_enterprise_attribution_multi_source_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MultiSourceLookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MultiSourceLookupResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/public/verify/{ref_id}": {
       "get": {
         "tags": [
@@ -5750,6 +6134,7 @@
           "Public - C2PA"
         ],
         "summary": "Validate C2PA-like manifest JSON (Public - Non-Cryptographic)",
+        "description": "Validate a manifest JSON payload and (optionally) validate assertion payloads against provided JSON Schemas. This endpoint performs structural/schema validation only and does not verify cryptographic signatures.\n\nAuthentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits.",
         "operationId": "validate_manifest_api_v1_public_c2pa_validate_manifest_post",
         "parameters": [
           {
@@ -5809,6 +6194,7 @@
           "Public - C2PA"
         ],
         "summary": "Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)",
+        "description": "Create a C2PA-like manifest JSON payload from plaintext. This endpoint is intended for client-side workflows that want a server-generated starting point for a manifest before cryptographic signing.\n\nAuthentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits.",
         "operationId": "create_manifest_api_v1_public_c2pa_create_manifest_post",
         "parameters": [
           {
@@ -7965,6 +8351,53 @@
         "title": "ContentListResponse",
         "description": "Schema for listing available content."
       },
+      "ContentMatch": {
+        "properties": {
+          "segment_text": {
+            "type": "string",
+            "title": "Segment Text",
+            "description": "Matched text segment"
+          },
+          "segment_hash": {
+            "type": "string",
+            "title": "Segment Hash",
+            "description": "Hash of the segment"
+          },
+          "leaf_index": {
+            "type": "integer",
+            "title": "Leaf Index",
+            "description": "Index in Merkle tree"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "description": "Match confidence (0-1)"
+          },
+          "source_document_id": {
+            "type": "string",
+            "title": "Source Document Id",
+            "description": "Source document ID"
+          },
+          "source_organization_id": {
+            "type": "string",
+            "title": "Source Organization Id",
+            "description": "Source organization ID"
+          }
+        },
+        "type": "object",
+        "required": [
+          "segment_text",
+          "segment_hash",
+          "leaf_index",
+          "confidence",
+          "source_document_id",
+          "source_organization_id"
+        ],
+        "title": "ContentMatch",
+        "description": "Details of matched content."
+      },
       "ContentMetadata": {
         "properties": {
           "id": {
@@ -9237,6 +9670,42 @@
             "description": "C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)",
             "default": "c2pa.created"
           },
+          "manifest_mode": {
+            "type": "string",
+            "title": "Manifest Mode",
+            "description": "Manifest mode: full (default C2PA), lightweight_uuid (minimal UUID pointer), hybrid (UUID per sentence + full C2PA at doc level). Professional+ for lightweight_uuid, Enterprise for hybrid.",
+            "default": "full"
+          },
+          "embedding_strategy": {
+            "type": "string",
+            "title": "Embedding Strategy",
+            "description": "Embedding strategy: single_point (default), distributed (spread across targets), distributed_redundant (with ECC). Business+ for distributed, Enterprise for ECC.",
+            "default": "single_point"
+          },
+          "distribution_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distribution Target",
+            "description": "Target characters for distributed embedding: whitespace, punctuation, all_chars. Only used when embedding_strategy is distributed or distributed_redundant."
+          },
+          "add_dual_binding": {
+            "type": "boolean",
+            "title": "Add Dual Binding",
+            "description": "Enable dual-binding manifest (content + self-hash). Business+ feature.",
+            "default": false
+          },
+          "disable_c2pa": {
+            "type": "boolean",
+            "title": "Disable C2Pa",
+            "description": "Opt-out of C2PA embedding. When true, only basic metadata is embedded.",
+            "default": false
+          },
           "previous_instance_id": {
             "anyOf": [
               {
@@ -9512,6 +9981,301 @@
           "success": true
         }
       },
+      "EvidenceGenerateRequest": {
+        "properties": {
+          "target_text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Target Text",
+            "description": "Text content to generate evidence for"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id",
+            "description": "Optional known document ID to verify against"
+          },
+          "include_merkle_proof": {
+            "type": "boolean",
+            "title": "Include Merkle Proof",
+            "description": "Include Merkle proof in evidence package",
+            "default": true
+          },
+          "include_signature_chain": {
+            "type": "boolean",
+            "title": "Include Signature Chain",
+            "description": "Include full signature verification chain",
+            "default": true
+          },
+          "include_timestamp_proof": {
+            "type": "boolean",
+            "title": "Include Timestamp Proof",
+            "description": "Include timestamp verification",
+            "default": true
+          },
+          "export_format": {
+            "type": "string",
+            "title": "Export Format",
+            "description": "Export format: json, pdf, or both",
+            "default": "json"
+          }
+        },
+        "type": "object",
+        "required": [
+          "target_text"
+        ],
+        "title": "EvidenceGenerateRequest",
+        "description": "Request to generate an evidence package for content attribution.\n\nPatent Reference: FIG. 11 - Evidence Generation & Attribution Flow"
+      },
+      "EvidenceGenerateResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether evidence generation succeeded"
+          },
+          "evidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidencePackage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The evidence package"
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "title": "Processing Time Ms",
+            "description": "Processing time in milliseconds"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "processing_time_ms",
+          "message"
+        ],
+        "title": "EvidenceGenerateResponse",
+        "description": "Response containing the generated evidence package."
+      },
+      "EvidencePackage": {
+        "properties": {
+          "evidence_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Evidence Id",
+            "description": "Unique evidence package ID"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At",
+            "description": "When evidence was generated"
+          },
+          "target_text_hash": {
+            "type": "string",
+            "title": "Target Text Hash",
+            "description": "Hash of target text"
+          },
+          "target_text_preview": {
+            "type": "string",
+            "title": "Target Text Preview",
+            "description": "Preview of target text (first 200 chars)"
+          },
+          "attribution_found": {
+            "type": "boolean",
+            "title": "Attribution Found",
+            "description": "Whether attribution was found"
+          },
+          "attribution_confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Attribution Confidence",
+            "description": "Overall confidence score"
+          },
+          "source_document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Document Id",
+            "description": "Source document ID"
+          },
+          "source_organization_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Organization Id",
+            "description": "Source organization ID"
+          },
+          "source_organization_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Organization Name",
+            "description": "Source organization name"
+          },
+          "merkle_root_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merkle Root Hash",
+            "description": "Merkle root hash"
+          },
+          "merkle_proof": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/MerkleProofItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merkle Proof",
+            "description": "Merkle proof path"
+          },
+          "merkle_proof_valid": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merkle Proof Valid",
+            "description": "Whether Merkle proof is valid"
+          },
+          "signature_verification": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SignatureVerification"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Signature verification details"
+          },
+          "content_matches": {
+            "items": {
+              "$ref": "#/components/schemas/ContentMatch"
+            },
+            "type": "array",
+            "title": "Content Matches",
+            "description": "List of matched content segments"
+          },
+          "original_timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Timestamp",
+            "description": "Original signing timestamp"
+          },
+          "timestamp_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp Verified",
+            "description": "Whether timestamp is verified"
+          },
+          "json_export_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Json Export Url",
+            "description": "URL to download JSON export"
+          },
+          "pdf_export_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pdf Export Url",
+            "description": "URL to download PDF export"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Additional metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "evidence_id",
+          "generated_at",
+          "target_text_hash",
+          "target_text_preview",
+          "attribution_found",
+          "attribution_confidence"
+        ],
+        "title": "EvidencePackage",
+        "description": "Complete evidence package for content attribution.\n\nThis package contains all cryptographic proofs needed to verify\ncontent provenance in legal or compliance contexts."
+      },
       "ExtractAndVerifyRequest": {
         "properties": {
           "text": {
@@ -9701,6 +10465,281 @@
         "type": "object",
         "title": "FeatureFlags",
         "description": "Organization feature flags."
+      },
+      "FingerprintDetectRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Text",
+            "description": "Text to scan for fingerprint"
+          },
+          "fingerprint_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fingerprint Key",
+            "description": "Fingerprint key to search for (searches all if not provided)"
+          },
+          "confidence_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence Threshold",
+            "description": "Minimum confidence threshold for detection (0.0-1.0)",
+            "default": 0.6
+          },
+          "return_positions": {
+            "type": "boolean",
+            "title": "Return Positions",
+            "description": "Return positions of detected markers",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "FingerprintDetectRequest",
+        "description": "Request to detect a fingerprint in text.\n\nDetection uses score-based matching with confidence threshold\nto identify fingerprinted content even after modifications."
+      },
+      "FingerprintDetectResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether detection succeeded"
+          },
+          "fingerprint_detected": {
+            "type": "boolean",
+            "title": "Fingerprint Detected",
+            "description": "Whether a fingerprint was detected"
+          },
+          "matches": {
+            "items": {
+              "$ref": "#/components/schemas/FingerprintMatch"
+            },
+            "type": "array",
+            "title": "Matches",
+            "description": "List of fingerprint matches"
+          },
+          "best_match": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FingerprintMatch"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Best matching fingerprint (highest confidence)"
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "title": "Processing Time Ms",
+            "description": "Processing time in milliseconds"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "fingerprint_detected",
+          "processing_time_ms",
+          "message"
+        ],
+        "title": "FingerprintDetectResponse",
+        "description": "Response after fingerprint detection."
+      },
+      "FingerprintEncodeRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Unique document identifier"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 10,
+            "title": "Text",
+            "description": "Text to fingerprint"
+          },
+          "fingerprint_density": {
+            "type": "number",
+            "maximum": 0.5,
+            "minimum": 0.01,
+            "title": "Fingerprint Density",
+            "description": "Density of fingerprint markers (0.01-0.5)",
+            "default": 0.1
+          },
+          "fingerprint_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fingerprint Key",
+            "description": "Optional custom fingerprint key (auto-generated if not provided)"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional metadata to associate with fingerprint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "text"
+        ],
+        "title": "FingerprintEncodeRequest",
+        "description": "Request to encode a robust fingerprint into text.\n\nFingerprints use secret-seeded placement of invisible markers\nthat survive text modifications like paraphrasing or truncation."
+      },
+      "FingerprintEncodeResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether encoding succeeded"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Document identifier"
+          },
+          "fingerprint_id": {
+            "type": "string",
+            "title": "Fingerprint Id",
+            "description": "Unique fingerprint identifier"
+          },
+          "fingerprinted_text": {
+            "type": "string",
+            "title": "Fingerprinted Text",
+            "description": "Text with embedded fingerprint"
+          },
+          "fingerprint_key_hash": {
+            "type": "string",
+            "title": "Fingerprint Key Hash",
+            "description": "Hash of fingerprint key (for verification)"
+          },
+          "markers_embedded": {
+            "type": "integer",
+            "title": "Markers Embedded",
+            "description": "Number of markers embedded"
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "title": "Processing Time Ms",
+            "description": "Processing time in milliseconds"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "document_id",
+          "fingerprint_id",
+          "fingerprinted_text",
+          "fingerprint_key_hash",
+          "markers_embedded",
+          "processing_time_ms",
+          "message"
+        ],
+        "title": "FingerprintEncodeResponse",
+        "description": "Response after encoding a fingerprint."
+      },
+      "FingerprintMatch": {
+        "properties": {
+          "fingerprint_id": {
+            "type": "string",
+            "title": "Fingerprint Id",
+            "description": "Matched fingerprint ID"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Source document ID"
+          },
+          "organization_id": {
+            "type": "string",
+            "title": "Organization Id",
+            "description": "Source organization ID"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "description": "Detection confidence (0-1)"
+          },
+          "markers_found": {
+            "type": "integer",
+            "title": "Markers Found",
+            "description": "Number of markers detected"
+          },
+          "markers_expected": {
+            "type": "integer",
+            "title": "Markers Expected",
+            "description": "Number of markers expected"
+          },
+          "marker_positions": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Marker Positions",
+            "description": "Positions of detected markers (if requested)"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When fingerprint was created"
+          }
+        },
+        "type": "object",
+        "required": [
+          "fingerprint_id",
+          "document_id",
+          "organization_id",
+          "confidence",
+          "markers_found",
+          "markers_expected",
+          "created_at"
+        ],
+        "title": "FingerprintMatch",
+        "description": "Details of a detected fingerprint match."
       },
       "HTTPValidationError": {
         "properties": {
@@ -10621,6 +11660,33 @@
         "title": "MerkleProofInfo",
         "description": "Merkle proof information."
       },
+      "MerkleProofItem": {
+        "properties": {
+          "hash": {
+            "type": "string",
+            "title": "Hash",
+            "description": "Hash value at this node"
+          },
+          "position": {
+            "type": "string",
+            "title": "Position",
+            "description": "Position: 'left' or 'right'"
+          },
+          "level": {
+            "type": "integer",
+            "title": "Level",
+            "description": "Tree level (0 = leaf)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hash",
+          "position",
+          "level"
+        ],
+        "title": "MerkleProofItem",
+        "description": "A single item in a Merkle proof path."
+      },
       "MerkleRootResponse": {
         "properties": {
           "root_id": {
@@ -10713,6 +11779,118 @@
         ],
         "title": "MerkleTreeInfo",
         "description": "Merkle tree information."
+      },
+      "MultiSourceLookupRequest": {
+        "properties": {
+          "text_segment": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text Segment",
+            "description": "Text segment to search for"
+          },
+          "include_all_sources": {
+            "type": "boolean",
+            "title": "Include All Sources",
+            "description": "Return all matching sources (not just first)",
+            "default": true
+          },
+          "order_by": {
+            "type": "string",
+            "title": "Order By",
+            "description": "Ordering: chronological (earliest first), authority, or confidence",
+            "default": "chronological"
+          },
+          "include_authority_score": {
+            "type": "boolean",
+            "title": "Include Authority Score",
+            "description": "Include authority ranking scores (Enterprise feature)",
+            "default": false
+          },
+          "max_results": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Max Results",
+            "description": "Maximum number of sources to return",
+            "default": 10
+          }
+        },
+        "type": "object",
+        "required": [
+          "text_segment"
+        ],
+        "title": "MultiSourceLookupRequest",
+        "description": "Request to look up content across multiple sources.\n\nPatent Reference: FIG. 8 - Multi-Source Hash Table Lookup"
+      },
+      "MultiSourceLookupResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether lookup succeeded"
+          },
+          "query_hash": {
+            "type": "string",
+            "title": "Query Hash",
+            "description": "Hash of the queried text"
+          },
+          "total_sources": {
+            "type": "integer",
+            "title": "Total Sources",
+            "description": "Total number of matching sources"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/SourceRecord"
+            },
+            "type": "array",
+            "title": "Sources",
+            "description": "List of matching sources"
+          },
+          "original_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SourceRecord"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The original/earliest source"
+          },
+          "has_chain": {
+            "type": "boolean",
+            "title": "Has Chain",
+            "description": "Whether sources form a linked chain"
+          },
+          "chain_length": {
+            "type": "integer",
+            "title": "Chain Length",
+            "description": "Length of the source chain",
+            "default": 0
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "title": "Processing Time Ms",
+            "description": "Processing time in milliseconds"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "query_hash",
+          "total_sources",
+          "has_chain",
+          "processing_time_ms",
+          "message"
+        ],
+        "title": "MultiSourceLookupResponse",
+        "description": "Response containing multi-source lookup results."
       },
       "PayoutCreate": {
         "properties": {
@@ -11654,6 +12832,64 @@
           }
         ]
       },
+      "SignatureVerification": {
+        "properties": {
+          "signer_id": {
+            "type": "string",
+            "title": "Signer Id",
+            "description": "Signer identifier"
+          },
+          "signer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Name",
+            "description": "Human-readable signer name"
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm",
+            "description": "Signature algorithm used"
+          },
+          "public_key_fingerprint": {
+            "type": "string",
+            "title": "Public Key Fingerprint",
+            "description": "Public key fingerprint"
+          },
+          "signature_valid": {
+            "type": "boolean",
+            "title": "Signature Valid",
+            "description": "Whether signature is valid"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At",
+            "description": "Timestamp when signed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "signer_id",
+          "algorithm",
+          "public_key_fingerprint",
+          "signature_valid"
+        ],
+        "title": "SignatureVerification",
+        "description": "Signature verification details."
+      },
       "SourceAttributionRequest": {
         "properties": {
           "text_segment": {
@@ -11846,6 +13082,559 @@
         ],
         "title": "SourceMatch",
         "description": "Schema for a single source match."
+      },
+      "SourceRecord": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Source document ID"
+          },
+          "organization_id": {
+            "type": "string",
+            "title": "Organization Id",
+            "description": "Source organization ID"
+          },
+          "organization_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Name",
+            "description": "Organization name"
+          },
+          "segment_hash": {
+            "type": "string",
+            "title": "Segment Hash",
+            "description": "Hash of the matched segment"
+          },
+          "leaf_index": {
+            "type": "integer",
+            "title": "Leaf Index",
+            "description": "Index in source Merkle tree"
+          },
+          "merkle_root_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merkle Root Hash",
+            "description": "Merkle root hash"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When content was first registered"
+          },
+          "signed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed At",
+            "description": "When content was signed"
+          },
+          "confidence": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "description": "Match confidence (0-1)"
+          },
+          "authority_score": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1.0,
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Authority Score",
+            "description": "Authority ranking score (0-1)"
+          },
+          "is_original": {
+            "type": "boolean",
+            "title": "Is Original",
+            "description": "Whether this is the original source"
+          },
+          "previous_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Source Id",
+            "description": "Previous source in chain"
+          },
+          "next_source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Source Id",
+            "description": "Next source in chain"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Additional metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "organization_id",
+          "segment_hash",
+          "leaf_index",
+          "created_at",
+          "confidence",
+          "is_original"
+        ],
+        "title": "SourceRecord",
+        "description": "A single source record in the lookup results."
+      },
+      "StreamMerkleFinalizeRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Session ID to finalize"
+          },
+          "embed_manifest": {
+            "type": "boolean",
+            "title": "Embed Manifest",
+            "description": "Whether to embed C2PA manifest into the final document",
+            "default": true
+          },
+          "manifest_mode": {
+            "type": "string",
+            "title": "Manifest Mode",
+            "description": "Manifest mode: full, lightweight_uuid, hybrid",
+            "default": "full"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "C2PA action type: c2pa.created or c2pa.edited",
+            "default": "c2pa.created"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id"
+        ],
+        "title": "StreamMerkleFinalizeRequest",
+        "description": "Request to finalize a streaming Merkle session and compute the final root.\n\nThis completes the tree construction, computes the final root hash,\nand optionally embeds a C2PA manifest into the full document."
+      },
+      "StreamMerkleFinalizeResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether finalization was successful"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Session identifier"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Document identifier"
+          },
+          "root_hash": {
+            "type": "string",
+            "title": "Root Hash",
+            "description": "Final Merkle root hash"
+          },
+          "tree_depth": {
+            "type": "integer",
+            "title": "Tree Depth",
+            "description": "Depth of the Merkle tree"
+          },
+          "total_segments": {
+            "type": "integer",
+            "title": "Total Segments",
+            "description": "Total number of segments in tree"
+          },
+          "embedded_content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedded Content",
+            "description": "Full document with embedded manifest (if embed_manifest=true)"
+          },
+          "instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance Id",
+            "description": "C2PA manifest instance ID (if embedded)"
+          },
+          "processing_time_ms": {
+            "type": "number",
+            "title": "Processing Time Ms",
+            "description": "Total processing time in milliseconds"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "session_id",
+          "document_id",
+          "root_hash",
+          "tree_depth",
+          "total_segments",
+          "processing_time_ms",
+          "message"
+        ],
+        "title": "StreamMerkleFinalizeResponse",
+        "description": "Response after finalizing a streaming Merkle session."
+      },
+      "StreamMerkleSegmentRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Session ID from StreamMerkleStartResponse"
+          },
+          "segment_text": {
+            "type": "string",
+            "title": "Segment Text",
+            "description": "Text segment to add to the tree"
+          },
+          "segment_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segment Index",
+            "description": "Optional explicit segment index (auto-incremented if not provided)"
+          },
+          "is_final": {
+            "type": "boolean",
+            "title": "Is Final",
+            "description": "If true, this is the last segment and session should finalize",
+            "default": false
+          },
+          "flush_buffer": {
+            "type": "boolean",
+            "title": "Flush Buffer",
+            "description": "If true, flush the current buffer to compute intermediate hashes",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "segment_text"
+        ],
+        "title": "StreamMerkleSegmentRequest",
+        "description": "Request to add a segment to an active streaming Merkle session.\n\nSegments are buffered and combined into the Merkle tree incrementally.\nThe tree is constructed using a bounded buffer approach for memory efficiency."
+      },
+      "StreamMerkleSegmentResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether segment was added successfully"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Session identifier"
+          },
+          "segment_index": {
+            "type": "integer",
+            "title": "Segment Index",
+            "description": "Index of the added segment"
+          },
+          "segment_hash": {
+            "type": "string",
+            "title": "Segment Hash",
+            "description": "SHA-256 hash of the segment"
+          },
+          "buffer_count": {
+            "type": "integer",
+            "title": "Buffer Count",
+            "description": "Current number of segments in buffer"
+          },
+          "total_segments": {
+            "type": "integer",
+            "title": "Total Segments",
+            "description": "Total segments added to session"
+          },
+          "intermediate_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intermediate Root",
+            "description": "Intermediate root hash (available after flush)"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "session_id",
+          "segment_index",
+          "segment_hash",
+          "buffer_count",
+          "total_segments",
+          "message"
+        ],
+        "title": "StreamMerkleSegmentResponse",
+        "description": "Response after adding a segment to the streaming Merkle tree."
+      },
+      "StreamMerkleStartRequest": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Unique document identifier"
+          },
+          "segmentation_level": {
+            "type": "string",
+            "title": "Segmentation Level",
+            "description": "Segmentation level: sentence, paragraph, section",
+            "default": "sentence"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional document metadata (title, author, etc.)"
+          },
+          "buffer_size": {
+            "type": "integer",
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Buffer Size",
+            "description": "Maximum number of segments to buffer before forcing a flush",
+            "default": 100
+          },
+          "auto_finalize_timeout_seconds": {
+            "type": "integer",
+            "maximum": 3600.0,
+            "minimum": 30.0,
+            "title": "Auto Finalize Timeout Seconds",
+            "description": "Timeout in seconds after which session auto-finalizes if idle",
+            "default": 300
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id"
+        ],
+        "title": "StreamMerkleStartRequest",
+        "description": "Request to start a streaming Merkle tree construction session.\n\nPatent Reference: FIG. 5 - Streaming Merkle Tree Construction\n\nThis initiates a session that allows segments to be added incrementally,\nideal for real-time LLM output signing where content is generated token-by-token."
+      },
+      "StreamMerkleStartResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether session was created successfully"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Unique session identifier for subsequent calls"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Document identifier"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At",
+            "description": "When the session will expire if idle"
+          },
+          "buffer_size": {
+            "type": "integer",
+            "title": "Buffer Size",
+            "description": "Maximum buffer size before auto-flush"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Status message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "session_id",
+          "document_id",
+          "expires_at",
+          "buffer_size",
+          "message"
+        ],
+        "title": "StreamMerkleStartResponse",
+        "description": "Response after starting a streaming Merkle session."
+      },
+      "StreamMerkleStatusRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Session ID to check"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id"
+        ],
+        "title": "StreamMerkleStatusRequest",
+        "description": "Request to check status of a streaming Merkle session."
+      },
+      "StreamMerkleStatusResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Whether status check was successful"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id",
+            "description": "Session identifier"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id",
+            "description": "Document identifier"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status",
+            "description": "Session status: active, finalized, expired"
+          },
+          "total_segments": {
+            "type": "integer",
+            "title": "Total Segments",
+            "description": "Total segments added"
+          },
+          "buffer_count": {
+            "type": "integer",
+            "title": "Buffer Count",
+            "description": "Segments currently in buffer"
+          },
+          "intermediate_root": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Intermediate Root",
+            "description": "Current intermediate root hash"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "description": "When session was created"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At",
+            "description": "When session will expire"
+          },
+          "last_activity": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Activity",
+            "description": "Last activity timestamp"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "session_id",
+          "document_id",
+          "status",
+          "total_segments",
+          "buffer_count",
+          "created_at",
+          "expires_at",
+          "last_activity"
+        ],
+        "title": "StreamMerkleStatusResponse",
+        "description": "Response with streaming Merkle session status."
       },
       "StreamSignRequest": {
         "properties": {

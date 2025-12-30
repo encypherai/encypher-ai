@@ -7,7 +7,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
-from app.dependencies import require_read_permission
+from app.dependencies import require_read_permission, require_super_admin_dep
 
 router = APIRouter()
 
@@ -250,16 +250,20 @@ async def get_usage_stats(
     )
 
 
-@router.post("/usage/reset", response_model=UsageResetResponse)
+@router.post(
+    "/usage/reset",
+    response_model=UsageResetResponse,
+    tags=["Admin"],
+)
 async def reset_monthly_usage(
-    organization: dict = Depends(require_read_permission),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> UsageResetResponse:
     """
     Reset monthly usage counters.
     
     This is typically called by a scheduled job at the start of each billing period.
-    Requires admin permissions.
+    Requires super admin permissions.
     """
     org_id = organization["organization_id"]
     now = datetime.now(timezone.utc)

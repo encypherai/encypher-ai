@@ -86,7 +86,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Endpoint | Method | Auth | Tier | Description | Dependencies |
 |----------|--------|------|------|-------------|--------------|
 | `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
-| `/api/v1/sign/advanced` | POST | ✅ | Enterprise | Sign content with advanced metadata controls | Key Service, Coalition Service (optional) |
+| `/api/v1/sign/advanced` | POST | ✅ | Professional+ | Sign content with advanced embedding controls (manifest mode, distribution, ECC) | Key Service, Coalition Service (optional) |
 | `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
 | `/api/v1/verify/{document_id}` | GET | ❌ | Public | Verify a previously signed document by ID | None |
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
@@ -95,7 +95,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/account/quota` | GET | ✅ | All | Get account quota and limits | Billing Service |
 | `/api/v1/usage` | GET | ✅ | All | Get organization usage statistics | Key Service |
 | `/api/v1/usage/history` | GET | ✅ | All | Get historical usage summaries | Analytics Service |
-| `/api/v1/usage/reset` | POST | ✅ | Internal | Reset usage counters (admin) | Analytics Service |
+| `/api/v1/usage/reset` | POST | ✅ | Internal | Reset usage counters (super admin) | Analytics Service |
 
 ### Public C2PA Utilities
 
@@ -195,7 +195,7 @@ Look up content across multiple sources with chronological ordering.
 | `/api/v1/stream/session/{session_id}/close` | POST | ✅ | Professional+ | Close streaming session |
 | `/api/v1/stream/runs/{run_id}` | GET | ✅ | Professional+ | Get streaming run state |
 | `/api/v1/stream/stats` | GET | ✅ | Professional+ | Get organization streaming statistics |
-| `/api/v1/stream/health` | GET | ❌ | Internal | Streaming subsystem health check |
+| `/api/v1/stream/health` | GET | ✅ | Internal | Streaming subsystem health check (super admin) |
 
 ### Account, Keys, BYOK, Documents, and Webhooks
 
@@ -357,13 +357,20 @@ curl -X POST https://api.encypherai.com/api/v1/sign \
 
 The API exposes interactive OpenAPI documentation:
 
-**Via Traefik Gateway (recommended):**
-- Local: `http://localhost:8000/docs` (Swagger UI), `http://localhost:8000/redoc` (ReDoc)
-- Staging: `https://api.staging.encypherai.com/docs`
-- Production: `https://api.encypherai.com/docs`
+**Public Docs (recommended):**
+- Production: `https://api.encypherai.com/docs` (branded docs landing page)
+- Swagger UI: `https://api.encypherai.com/docs/swagger`
+- OpenAPI JSON: `https://api.encypherai.com/docs/openapi.json`
 
-**Direct to Enterprise API (development only):**
-- `http://localhost:9000/docs`, `http://localhost:9000/redoc`
+**Internal Docs (super admin only):**
+- Swagger UI: `https://api.encypherai.com/internal/docs`
+- OpenAPI JSON: `https://api.encypherai.com/internal/openapi.json`
+
+**Local development (direct to Enterprise API):**
+- `http://localhost:9000/docs`
+- `http://localhost:9000/docs/swagger`
+- `http://localhost:9000/docs/openapi.json`
+- `http://localhost:9000/internal/docs` (requires super admin)
 
 The gateway URL is what you should give to external developers—it's the single entry point for all API operations.
 

@@ -39,6 +39,9 @@ def _extract_readme_endpoints(readme_text: str) -> set[tuple[str, str]]:
         if len(cells) < 1:
             continue
 
+        if any(cell.strip().lower() == "internal" for cell in cells):
+            continue
+
         # Skip table header rows
         if any(cell.lower() == "endpoint" for cell in cells[:2]):
             continue

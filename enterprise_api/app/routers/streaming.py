@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.websocket_manager import connection_manager
 from app.database import get_db
-from app.dependencies import get_current_organization, require_sign_permission
+from app.dependencies import get_current_organization, require_sign_permission, require_super_admin_dep
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.middleware.rate_limiter import streaming_rate_limiter
 from app.middleware.websocket_auth import authenticate_websocket, require_streaming_permission
@@ -468,14 +468,18 @@ async def get_streaming_stats(
     }
 
 
-@router.get("/stream/health")
-async def streaming_health_check():
+@router.get("/stream/health", tags=["Admin"])
+async def streaming_health_check(
+    organization: dict = Depends(require_super_admin_dep),
+):
     """
     Health check endpoint for streaming service.
     
     Returns:
         Health status of streaming components
     """
+    _ = organization
+
     health_status = {
         "status": "healthy",
         "service": "streaming",

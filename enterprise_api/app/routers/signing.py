@@ -92,7 +92,16 @@ async def sign_content(
     return signing_result
 
 
-@router.post("/sign/advanced", response_model=EncodeWithEmbeddingsResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/sign/advanced",
+    response_model=EncodeWithEmbeddingsResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Sign with advanced embedding controls",
+    description=(
+        "Sign a document while enabling advanced embedding controls (manifest mode, distribution strategy, ECC, and other enterprise features).\n\n"
+        "Tier requirements are enforced server-side (typically Professional+ depending on selected options)."
+    ),
+)
 async def sign_advanced(
     request: EncodeWithEmbeddingsRequest,
     organization: dict = Depends(get_current_organization_dep),

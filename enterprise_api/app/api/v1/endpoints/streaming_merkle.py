@@ -84,7 +84,7 @@ async def start_streaming_merkle_session(
             document_id=session.document_id,
             expires_at=session.expires_at,
             buffer_size=session.buffer_size,
-            message=f"Streaming session started. Add segments using /stream/merkle/segment",
+            message="Streaming session started. Add segments using /stream/merkle/segment",
         )
         
     except Exception as e:

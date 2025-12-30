@@ -57,20 +57,17 @@ class TestUsageEndpoints:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_reset_usage_success(self, async_client: AsyncClient, auth_headers: dict):
-        """Test resetting monthly usage counters."""
+    async def test_reset_usage_requires_super_admin(self, async_client: AsyncClient, auth_headers: dict):
+        """Test resetting monthly usage counters requires super admin."""
         response = await async_client.post(
             "/api/v1/usage/reset",
             headers=auth_headers,
         )
         
-        assert response.status_code == 200
+        assert response.status_code == 403
         data = response.json()
-        
-        assert data["success"] is True
-        assert "message" in data
-        assert "organization_id" in data
-        assert "reset_at" in data
+        assert data.get("success") is False
+        assert (data.get("error") or {}).get("message") == "Super admin access required"
 
     @pytest.mark.asyncio
     async def test_get_usage_history(self, async_client: AsyncClient, auth_headers: dict):

@@ -27,16 +27,16 @@ api_router.include_router(c2pa.router, prefix="/enterprise/c2pa", tags=["C2PA Cu
 
 # === API Feature Augmentation (TEAM_044) ===
 # Include streaming Merkle tree endpoints (Professional+)
-api_router.include_router(streaming_merkle.router, prefix="/enterprise", tags=["Streaming Merkle"])
+api_router.include_router(streaming_merkle.router, prefix="/enterprise")
 
 # Include evidence generation endpoints (Enterprise)
-api_router.include_router(evidence.router, prefix="/enterprise", tags=["Evidence Generation"])
+api_router.include_router(evidence.router, prefix="/enterprise")
 
 # Include fingerprint endpoints (Enterprise)
-api_router.include_router(fingerprint.router, prefix="/enterprise", tags=["Fingerprint"])
+api_router.include_router(fingerprint.router, prefix="/enterprise")
 
 # Include multi-source lookup endpoints (Business+)
-api_router.include_router(multi_source.router, prefix="/enterprise", tags=["Multi-Source Attribution"])
+api_router.include_router(multi_source.router, prefix="/enterprise")
 
 # Include public verification endpoints (no auth)
 api_router.include_router(verify.router)
