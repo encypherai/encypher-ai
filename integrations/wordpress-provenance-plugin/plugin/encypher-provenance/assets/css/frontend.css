@@ -56,8 +56,12 @@
     background: #00a32a;
 }
 
-.encypher-c2pa-badge.encypher-tier-pro {
+.encypher-c2pa-badge.encypher-tier-professional {
     border-color: #2A87C4;
+}
+
+.encypher-c2pa-badge.encypher-tier-business {
+    border-color: #135e96;
 }
 
 .encypher-c2pa-badge.encypher-tier-enterprise {

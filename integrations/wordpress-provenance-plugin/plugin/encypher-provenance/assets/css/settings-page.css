@@ -79,13 +79,18 @@
     margin-left: 10px;
 }
 
-.tier-badge.tier-free {
+.tier-badge.tier-starter {
     background: #f0f0f1;
     color: #50575e;
 }
 
-.tier-badge.tier-pro {
+.tier-badge.tier-professional {
     background: #2271b1;
+    color: #fff;
+}
+
+.tier-badge.tier-business {
+    background: #135e96;
     color: #fff;
 }
 

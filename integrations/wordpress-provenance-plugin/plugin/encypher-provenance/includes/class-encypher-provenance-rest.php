@@ -244,12 +244,12 @@ class Rest
         }
         
         // Get tier from settings (default to free)
-        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
         
         $organization_id = ! empty($settings['organization_id']) ? sanitize_text_field((string) $settings['organization_id']) : 'org_demo';
         $organization_name = ! empty($settings['organization_name']) ? sanitize_text_field((string) $settings['organization_name']) : '';
         $signing_mode = isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed';
-        if ($tier === 'free') {
+        if ($tier === 'starter') {
             $signing_mode = 'managed';
         }
         $signing_profile_id = '';
@@ -266,7 +266,7 @@ class Rest
             'previous_instance_id' => $previous_instance_id,
             // Free tier: document-level only (no segmentation, one C2PA wrapper)
             // Pro/Enterprise: sentence-level segmentation + one C2PA wrapper
-            'segmentation_level' => ($tier === 'free') ? 'document' : 'sentence',
+            'segmentation_level' => ($tier === 'starter') ? 'document' : 'sentence',
             'metadata' => [
                 'title' => $post->post_title,
                 'author' => get_the_author_meta('display_name', $post->post_author),
@@ -452,7 +452,7 @@ class Rest
             'sentences' => $sentences['items'],
             'sentences_total' => $sentences['total'],
             'merkle' => $merkle_snapshot,
-            'tier' => isset($settings['tier']) ? $settings['tier'] : 'free',
+            'tier' => isset($settings['tier']) ? $settings['tier'] : 'starter',
             'signing_mode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
         ]);
     }
@@ -463,6 +463,10 @@ class Rest
         $post = get_post($post_id);
         if (! $post) {
             return new WP_Error('invalid_post', __('Invalid post.', 'encypher-provenance'), ['status' => 400]);
+        }
+
+        if ('publish' !== $post->post_status) {
+            return new WP_Error('invalid_post_status', __('Post not found or not published.', 'encypher-provenance'), ['status' => 404]);
         }
 
         // Get raw post content to preserve invisible Unicode characters
@@ -645,7 +649,7 @@ class Rest
 
         // Check if auto-signing is enabled
         $settings = get_option('encypher_assurance_settings', []);
-        $auto_sign = isset($settings['auto_sign_on_publish']) ? (bool) $settings['auto_sign_on_publish'] : true;
+        $auto_sign = isset($settings['auto_mark_on_publish']) ? (bool) $settings['auto_mark_on_publish'] : true;
         
         if (!$auto_sign) {
             return;
@@ -1129,7 +1133,7 @@ class Rest
         $result['organization'] = [
             'organization_id' => 'org_demo',
             'name' => 'Demo Organization',
-            'tier' => 'free'
+            'tier' => 'starter'
         ];
 
         // Check if API key is configured
@@ -1141,7 +1145,7 @@ class Rest
                 $result['organization'] = [
                     'organization_id' => 'org_demo',
                     'name' => 'Demo Organization',
-                    'tier' => 'free'
+                    'tier' => 'starter'
                 ];
             } else {
                 $account = $this->fetch_remote_account($api_base_url, $api_key);
@@ -1168,14 +1172,14 @@ class Rest
             return new \WP_Error('invalid_configuration', __('Missing API base URL or API key.', 'encypher-provenance'));
         }
 
-        $stats_url = $base . '/stats';
+        $account_url = $base . '/account';
         $cache_key = 'encypher_account_' . md5(strtolower($base) . '|' . substr(hash('sha256', $api_key), 0, 16));
         $cached = get_site_transient($cache_key);
         if (is_array($cached)) {
             return $cached;
         }
 
-        $response = wp_remote_get($stats_url, [
+        $response = wp_remote_get($account_url, [
             'timeout' => 15,
             'headers' => [
                 'Accept' => 'application/json',
@@ -1194,18 +1198,19 @@ class Rest
 
         $body = json_decode(wp_remote_retrieve_body($response), true);
         if (! is_array($body)) {
-            return new \WP_Error('stats_parse_error', __('Unable to parse stats response.', 'encypher-provenance'));
+            return new \WP_Error('account_parse_error', __('Unable to parse account response.', 'encypher-provenance'));
         }
 
-        $tier = $body['tier'] ?? ($body['organization']['tier'] ?? 'free');
-        if (! in_array($tier, ['free', 'pro', 'enterprise'], true)) {
-            $tier = 'free';
+        $data = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
+        $tier = $data['tier'] ?? 'starter';
+        if (! in_array($tier, ['starter', 'professional', 'business', 'enterprise'], true)) {
+            $tier = 'starter';
         }
 
         $account = [
             'tier' => $tier,
-            'organization_id' => isset($body['organization_id']) ? sanitize_text_field((string) $body['organization_id']) : sanitize_text_field((string) ($body['organization']['organization_id'] ?? '')),
-            'organization_name' => isset($body['organization_name']) ? sanitize_text_field((string) $body['organization_name']) : sanitize_text_field((string) ($body['organization']['organization_name'] ?? '')),
+            'organization_id' => isset($data['organization_id']) ? sanitize_text_field((string) $data['organization_id']) : '',
+            'organization_name' => isset($data['organization_name']) ? sanitize_text_field((string) $data['organization_name']) : '',
         ];
 
         set_site_transient($cache_key, $account, 15 * MINUTE_IN_SECONDS);

@@ -157,11 +157,11 @@ class Frontend
     private function get_badge_html(int $post_id, string $size = 'large'): string
     {
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
         $show_branding = isset($settings['show_branding']) ? (bool) $settings['show_branding'] : true;
         
         // Force branding on Free tier (double check)
-        if ('free' === $tier) {
+        if ('starter' === $tier) {
             $show_branding = true;
         }
 
@@ -200,7 +200,7 @@ class Frontend
         }
 
         $tier_pill = '';
-        if (in_array($tier, ['pro', 'enterprise'], true) && $is_verified) {
+        if (in_array($tier, ['professional', 'business', 'enterprise'], true) && $is_verified) {
             $tier_pill = '<span class="badge-tier">' . esc_html(ucfirst($tier)) . '</span>';
         }
 

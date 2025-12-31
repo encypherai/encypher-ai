@@ -23,7 +23,7 @@
         const [merkleSummary, setMerkleSummary] = useState(null);
         const [showAllSentences, setShowAllSentences] = useState(false);
         const [copyingRoot, setCopyingRoot] = useState(false);
-        const tier = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.tier) ? EncypherAssuranceConfig.tier : 'free';
+        const tier = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.tier) ? EncypherAssuranceConfig.tier : 'starter';
         const upgradeUrl = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.upgradeUrl) ? EncypherAssuranceConfig.upgradeUrl : 'https://dashboard.encypherai.com/billing';
 
         const renderUpgradeCallout = (message) => {
@@ -78,7 +78,7 @@
             if (!postId || !isSigned) {
                 return;
             }
-            if (tier === 'free') {
+            if (tier === 'starter') {
                 if (upgradeUrl) {
                     window.open(upgradeUrl, '_blank', 'noopener,noreferrer');
                 }
@@ -145,7 +145,7 @@
             }
 
             const items = [];
-            const canViewManifest = tier !== 'free';
+            const canViewManifest = tier !== 'starter';
             const pushUpgradeItem = (message, key) => {
                 items.push(
                     wp.element.createElement(
@@ -178,7 +178,7 @@
                         totalSentences
                     )
                 );
-            } else if (tier === 'free') {
+            } else if (tier === 'starter') {
                 pushUpgradeItem('Unlock sentence-level analytics with Encypher Pro.', 'upgrade-sentences');
             }
 
@@ -231,7 +231,7 @@
         };
 
         const renderManifestViewer = () => {
-            if (!showManifest || !manifestData || tier === 'free') {
+            if (!showManifest || !manifestData || tier === 'starter') {
                 return null;
             }
 
@@ -288,7 +288,7 @@
                 return null;
             }
 
-            if (tier === 'free') {
+            if (tier === 'starter') {
                 return renderUpgradeCallout('Unlock sentence-level verification with Encypher Pro.');
             }
 
@@ -356,7 +356,7 @@
             }
 
             if (!merkleSummary || !merkleSummary.root_hash) {
-                if (tier === 'free') {
+                if (tier === 'starter') {
                     return null;
                 }
                 return wp.element.createElement(

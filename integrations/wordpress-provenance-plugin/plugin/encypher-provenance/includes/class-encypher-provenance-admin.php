@@ -11,6 +11,7 @@ if (! defined('ABSPATH')) {
 class Admin
 {
     private const ACCOUNT_CACHE_TTL = 900; // 15 minutes
+
     public function register_hooks(): void
     {
         add_action('admin_menu', [$this, 'register_settings_page']);
@@ -74,7 +75,7 @@ class Admin
                 'auto_mark_on_update' => true,
                 'metadata_format' => 'c2pa',
                 'add_hard_binding' => true,
-                'tier' => 'free',
+                'tier' => 'starter',
                 'signing_mode' => 'managed',
                 'signing_profile_id' => '',
                 'organization_id' => '',
@@ -278,7 +279,7 @@ class Admin
         $sanitized['post_types'] = isset($settings['post_types']) && is_array($settings['post_types']) ? array_map('sanitize_text_field', $settings['post_types']) : ['post', 'page'];
 
         $account = null;
-        $previous_tier = isset($current_settings['tier']) ? $current_settings['tier'] : 'free';
+        $previous_tier = isset($current_settings['tier']) ? $current_settings['tier'] : 'starter';
         $previous_org_id = isset($current_settings['organization_id']) ? $current_settings['organization_id'] : '';
         $previous_org_name = isset($current_settings['organization_name']) ? $current_settings['organization_name'] : '';
         if (!empty($sanitized['api_key'])) {
@@ -303,7 +304,7 @@ class Admin
             $sanitized['organization_id'] = $account['organization_id'];
             $sanitized['organization_name'] = $account['organization_name'];
             $sanitized['features'] = $account['features'] ?? [];
-        } elseif (!empty($sanitized['api_key']) && $previous_tier !== 'free') {
+        } elseif (!empty($sanitized['api_key']) && $previous_tier !== 'starter') {
             // Keep last-known tier if dashboard lookup failed but we have a previous subscription
             $sanitized['tier'] = $previous_tier;
             $sanitized['organization_id'] = $previous_org_id;
@@ -316,13 +317,13 @@ class Admin
                 'warning'
             );
         } else {
-            $sanitized['tier'] = 'free';
+            $sanitized['tier'] = 'starter';
             $sanitized['organization_id'] = '';
             $sanitized['organization_name'] = '';
         }
 
         $requested_mode = isset($settings['signing_mode']) && in_array($settings['signing_mode'], ['managed', 'byok'], true) ? $settings['signing_mode'] : 'managed';
-        if ('free' === $sanitized['tier']) {
+        if ('starter' === $sanitized['tier']) {
             $sanitized['signing_mode'] = 'managed';
             $sanitized['signing_profile_id'] = '';
         } else {
@@ -347,7 +348,7 @@ class Admin
         }
         
         // Free tier: badge must always be shown, coalition always enabled
-        if ($sanitized['tier'] === 'free') {
+        if ($sanitized['tier'] === 'starter') {
             $sanitized['show_badge'] = true;
             $sanitized['badge_position'] = 'bottom-right';
             $sanitized['coalition_enabled'] = true; // Always enabled for free tier
@@ -367,7 +368,7 @@ class Admin
         $base = rtrim((string) $api_base_url, '/');
         if ('' === $base || '' === trim($api_key)) {
             return [
-                'tier' => 'free',
+                'tier' => 'starter',
                 'organization_id' => '',
                 'organization_name' => '',
             ];
@@ -379,8 +380,8 @@ class Admin
             return $cached;
         }
 
-        $stats_url = $base . '/stats';
-        $response = wp_remote_get($stats_url, [
+        $account_url = $base . '/account';
+        $response = wp_remote_get($account_url, [
             'timeout' => 15,
             'headers' => [
                 'Accept' => 'application/json',
@@ -409,21 +410,18 @@ class Admin
             return new \WP_Error('tier_parse_error', __('Received an unexpected response while determining subscription tier.', 'encypher-provenance'));
         }
 
-        $tier = $body['tier'] ?? ($body['organization']['tier'] ?? 'free');
-        if (! in_array($tier, ['free', 'pro', 'enterprise'], true)) {
-            $tier = 'free';
+        $data = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
+        $tier = $data['tier'] ?? 'starter';
+        if (! in_array($tier, ['starter', 'professional', 'business', 'enterprise'], true)) {
+            $tier = 'starter';
         }
 
-        $features = $body['features'] ?? ($body['organization']['features'] ?? []);
-        // Fallback if features dict not present but fields are in organization
-        if (empty($features) && isset($body['organization']['advanced_analytics_enabled'])) {
-            $features['advanced_analytics'] = (bool) $body['organization']['advanced_analytics_enabled'];
-        }
+        $features = isset($data['features']) && is_array($data['features']) ? $data['features'] : [];
 
         $account = [
             'tier' => $tier,
-            'organization_id' => isset($body['organization_id']) ? sanitize_text_field((string) $body['organization_id']) : sanitize_text_field((string) ($body['organization']['organization_id'] ?? '')),
-            'organization_name' => isset($body['organization_name']) ? sanitize_text_field((string) $body['organization_name']) : sanitize_text_field((string) ($body['organization']['organization_name'] ?? '')),
+            'organization_id' => isset($data['organization_id']) ? sanitize_text_field((string) $data['organization_id']) : '',
+            'organization_name' => isset($data['organization_name']) ? sanitize_text_field((string) $data['organization_name']) : '',
             'features' => $features,
         ];
 
@@ -489,11 +487,12 @@ class Admin
         );
 
         $options = get_option('encypher_assurance_settings', []);
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         wp_localize_script(
             'encypher-provenance-settings',
             'EncypherSettingsData',
             [
-                'tier' => isset($options['tier']) ? $options['tier'] : 'free',
+                'tier' => $tier,
                 'signingMode' => isset($options['signing_mode']) ? $options['signing_mode'] : 'managed',
                 'byokEnabled' => isset($options['signing_mode']) && 'byok' === $options['signing_mode'],
                 'dashboardUrls' => [
@@ -560,10 +559,10 @@ class Admin
     public function render_signing_mode_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         $value = isset($options['signing_mode']) ? $options['signing_mode'] : 'managed';
 
-        if ('free' === $tier) {
+        if ('starter' === $tier) {
             ?>
             <p class="description">
                 <?php esc_html_e('Free workspaces use Encypher-managed certificates. Upgrade to Pro for Bring Your Own Key support.', 'encypher-provenance'); ?>
@@ -590,11 +589,11 @@ class Admin
     public function render_signing_profile_id_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         $mode = isset($options['signing_mode']) ? $options['signing_mode'] : 'managed';
         $value = isset($options['signing_profile_id']) ? $options['signing_profile_id'] : '';
 
-        if ('free' === $tier) {
+        if ('starter' === $tier) {
             ?>
             <p class="description">
                 <?php esc_html_e('Upgrade to Pro to configure custom signing profiles from your Encypher dashboard.', 'encypher-provenance'); ?>
@@ -636,6 +635,7 @@ class Admin
         );
 
         $settings = get_option('encypher_assurance_settings', []);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
         wp_localize_script(
             'encypher-provenance-editor-sidebar',
             'EncypherAssuranceConfig',
@@ -643,7 +643,7 @@ class Admin
                 'restUrl' => esc_url_raw(rest_url('encypher-provenance/v1/')),
                 'nonce' => wp_create_nonce('wp_rest'),
                 'autoVerify' => ! empty($settings['auto_verify']),
-                'tier' => isset($settings['tier']) ? $settings['tier'] : 'free',
+                'tier' => $tier,
                 'signingMode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
                 'byokEnabled' => isset($settings['signing_mode']) && 'byok' === $settings['signing_mode'],
                 'upgradeUrl' => 'https://dashboard.encypherai.com/billing',
@@ -936,30 +936,37 @@ class Admin
     public function render_tier_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         
         $tier_names = [
-            'free' => __('Free', 'encypher-provenance'),
-            'pro' => __('Pro', 'encypher-provenance'),
+            'starter' => __('Starter', 'encypher-provenance'),
+            'professional' => __('Professional', 'encypher-provenance'),
+            'business' => __('Business', 'encypher-provenance'),
             'enterprise' => __('Enterprise', 'encypher-provenance'),
         ];
         
         $tier_features = [
-            'free' => [
+            'starter' => [
                 __('Auto-mark on publish', 'encypher-provenance'),
                 __('Manual marking', 'encypher-provenance'),
                 __('Bulk mark up to 100 posts', 'encypher-provenance'),
                 __('Shared Encypher signature', 'encypher-provenance'),
             ],
-            'pro' => [
-                __('All Free features', 'encypher-provenance'),
+            'professional' => [
+                __('All Starter features', 'encypher-provenance'),
                 __('Custom signature (BYOK)', 'encypher-provenance'),
                 __('Unlimited bulk marking', 'encypher-provenance'),
                 __('Advanced analytics', 'encypher-provenance'),
                 __('Priority support', 'encypher-provenance'),
             ],
+            'business' => [
+                __('All Professional features', 'encypher-provenance'),
+                __('Audit logs', 'encypher-provenance'),
+                __('Team management', 'encypher-provenance'),
+                __('Priority support (24hr SLA)', 'encypher-provenance'),
+            ],
             'enterprise' => [
-                __('All Pro features', 'encypher-provenance'),
+                __('All Business features', 'encypher-provenance'),
                 __('HSM-backed Signing (AWS KMS)', 'encypher-provenance'),
                 __('Legal Non-Repudiation', 'encypher-provenance'),
                 __('Multi-site Network Support', 'encypher-provenance'),
@@ -969,25 +976,25 @@ class Admin
         ?>
         <div class="encypher-tier-display">
             <p style="font-size:18px; font-weight:bold; color:#1B2F50;">
-                <?php echo esc_html($tier_names[$tier]); ?>
+                <?php echo esc_html(isset($tier_names[$tier]) ? $tier_names[$tier] : $tier_names['starter']); ?>
             </p>
             
             <div style="background:#f0f6fc; padding:15px; border-left:4px solid #2A87C4; margin:10px 0;">
                 <strong><?php esc_html_e('Features:', 'encypher-provenance'); ?></strong>
                 <ul style="margin:10px 0;">
-                    <?php foreach ($tier_features[$tier] as $feature): ?>
+                    <?php foreach ((isset($tier_features[$tier]) ? $tier_features[$tier] : $tier_features['starter']) as $feature): ?>
                         <li><?php echo esc_html($feature); ?></li>
                     <?php endforeach; ?>
                 </ul>
             </div>
             
-            <?php if ('free' === $tier): ?>
+            <?php if ('starter' === $tier): ?>
                 <p>
                     <a href="https://encypherai.com/pricing" class="button button-primary" target="_blank">
                         <?php esc_html_e('Upgrade to Pro - $99/month', 'encypher-provenance'); ?>
                     </a>
                 </p>
-            <?php elseif ('pro' === $tier): ?>
+            <?php elseif ('professional' === $tier || 'business' === $tier): ?>
                 <p>
                     <a href="https://encypherai.com/enterprise" class="button button-primary" target="_blank">
                         <?php esc_html_e('Upgrade to Enterprise', 'encypher-provenance'); ?>
@@ -1000,17 +1007,13 @@ class Admin
         <?php
     }
 
-    /**
-     * Render show badge field.
-     */
     public function render_show_badge_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         $checked = isset($options['show_badge']) ? (bool) $options['show_badge'] : true; // Default ON
         
-        // Free tier: always enabled, cannot be disabled
-        if ('free' === $tier) {
+        if ('starter' === $tier) {
             ?>
             <label>
                 <input type="checkbox" name="encypher_assurance_settings[show_badge]" value="1" checked disabled />
@@ -1027,7 +1030,6 @@ class Admin
             </p>
             <?php
         } else {
-            // Pro/Enterprise: customizable
             ?>
             <label>
                 <input type="checkbox" name="encypher_assurance_settings[show_badge]" value="1" <?php checked($checked); ?> />
@@ -1044,11 +1046,11 @@ class Admin
     public function render_badge_position_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         $value = isset($options['badge_position']) ? $options['badge_position'] : 'bottom-right';
         
         // Free tier: always bottom-right
-        if ('free' === $tier) {
+        if ('starter' === $tier) {
             ?>
             <p>
                 <strong><?php esc_html_e('Bottom-right corner (floating)', 'encypher-provenance'); ?></strong>
@@ -1079,10 +1081,10 @@ class Admin
     public function render_show_branding_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         $checked = isset($options['show_branding']) ? (bool) $options['show_branding'] : true; // Default ON
         
-        if ('free' === $tier) {
+        if ('starter' === $tier) {
             ?>
             <label>
                 <input type="checkbox" name="encypher_assurance_settings[show_branding]" value="1" checked disabled />
@@ -1111,11 +1113,11 @@ class Admin
     public function render_coalition_enabled_field(): void
     {
         $options = get_option('encypher_assurance_settings', []);
-        $tier = isset($options['tier']) ? $options['tier'] : 'free';
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
         $enabled = isset($options['coalition_enabled']) ? (bool) $options['coalition_enabled'] : true;
         
         // Free tier: always enabled, cannot be disabled
-        if ('free' === $tier) {
+        if ('starter' === $tier) {
             ?>
             <div style="background:#e7f5fe; padding:15px; border-left:4px solid #2271b1; margin:10px 0;">
                 <p style="margin:0 0 10px 0;">
@@ -1152,14 +1154,16 @@ class Admin
                 </p>
                 <p style="margin:0; font-size:13px;">
                     <strong><?php esc_html_e('Your Revenue Split:', 'encypher-provenance'); ?></strong>
-                    <?php if ('pro' === $tier): ?>
+                    <?php if ('professional' === $tier): ?>
                         70% to you, 30% to Encypher
-                    <?php else: ?>
+                    <?php elseif ('business' === $tier): ?>
                         75% to you, 25% to Encypher
+                    <?php else: ?>
+                        80% to you, 20% to Encypher
                     <?php endif; ?>
                     <br>
                     <strong><?php esc_html_e('Payout Threshold:', 'encypher-provenance'); ?></strong>
-                    <?php if ('pro' === $tier): ?>
+                    <?php if ('professional' === $tier): ?>
                         $10 minimum
                     <?php else: ?>
                         <?php esc_html_e('No minimum (monthly automatic payout)', 'encypher-provenance'); ?>
@@ -1217,7 +1221,8 @@ class Admin
 
         $stats = $this->gather_analytics_stats(true);
         $settings = get_option('encypher_assurance_settings', []);
-        $advanced_analytics = !empty($settings['features']['advanced_analytics']) || in_array($settings['tier'], ['pro', 'enterprise'], true);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
+        $advanced_analytics = !empty($settings['features']['advanced_analytics']) || in_array($tier, ['professional', 'business', 'enterprise'], true);
         ?>
         <div class="wrap encypher-analytics-page">
             <h1><?php esc_html_e('Encypher Analytics', 'encypher-provenance'); ?></h1>
@@ -1376,7 +1381,7 @@ class Admin
         }
 
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
 
         $stats = [
             'total_posts' => $total_posts,

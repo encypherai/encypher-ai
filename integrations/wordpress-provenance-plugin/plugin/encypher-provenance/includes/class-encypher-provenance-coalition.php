@@ -73,7 +73,7 @@ class Coalition
     {
         $stats = $this->get_coalition_stats();
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = $settings['tier'] ?? 'free';
+        $tier = $settings['tier'] ?? 'starter';
 
         include ENCYPHER_ASSURANCE_PLUGIN_DIR . 'admin/partials/coalition-widget.php';
     }
@@ -85,7 +85,7 @@ class Coalition
     {
         $stats = $this->get_coalition_stats();
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = $settings['tier'] ?? 'free';
+        $tier = $settings['tier'] ?? 'starter';
 
         include ENCYPHER_ASSURANCE_PLUGIN_DIR . 'admin/partials/coalition-page.php';
     }
@@ -160,24 +160,29 @@ class Coalition
     public function get_revenue_split(string $tier): array
     {
         $splits = [
-            'free' => [
+            'starter' => [
                 'member_percent' => 65,
                 'encypher_percent' => 35,
                 'payout_threshold' => 50,
             ],
-            'pro' => [
+            'professional' => [
                 'member_percent' => 70,
                 'encypher_percent' => 30,
                 'payout_threshold' => 10,
             ],
-            'enterprise' => [
+            'business' => [
                 'member_percent' => 75,
                 'encypher_percent' => 25,
+                'payout_threshold' => 0,
+            ],
+            'enterprise' => [
+                'member_percent' => 80,
+                'encypher_percent' => 20,
                 'payout_threshold' => 0, // No minimum
             ],
         ];
 
-        return $splits[$tier] ?? $splits['free'];
+        return $splits[$tier] ?? $splits['starter'];
     }
 
     /**
@@ -187,17 +192,17 @@ class Coalition
      * @param string $current_tier Current tier
      * @return array ROI calculation
      */
-    public function calculate_pro_upgrade_roi(float $current_earnings, string $current_tier = 'free'): array
+    public function calculate_pro_upgrade_roi(float $current_earnings, string $current_tier = 'starter'): array
     {
-        if ($current_tier !== 'free') {
+        if ($current_tier !== 'starter') {
             return [
                 'show_upgrade' => false,
                 'message' => '',
             ];
         }
 
-        $free_split = $this->get_revenue_split('free');
-        $pro_split = $this->get_revenue_split('pro');
+        $free_split = $this->get_revenue_split('starter');
+        $pro_split = $this->get_revenue_split('professional');
 
         $free_payout = $current_earnings * ($free_split['member_percent'] / 100);
         $pro_payout = $current_earnings * ($pro_split['member_percent'] / 100);

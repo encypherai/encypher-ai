@@ -134,14 +134,14 @@
 
         applyTierConstraints() {
             const data = this.getData();
-            const tier = data.tier || 'free';
+            const tier = data.tier || 'starter';
             const $modeSelect = $('#encypher-signing-mode');
 
             if (!$modeSelect.length) {
                 return;
             }
 
-            if (tier === 'free') {
+            if (tier === 'starter') {
                 $modeSelect.prop('disabled', true);
                 this.toggleSigningProfileField('managed');
                 if (data.strings && data.strings.byokDisabled) {
