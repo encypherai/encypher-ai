@@ -8,20 +8,40 @@ import { ArrowRight, FileText, Zap, Shield, TrendingUp, Users, CheckCircle2 } fr
 import MetadataBackground from '@/components/hero/MetadataBackground';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import AISummary from '@/components/seo/AISummary';
-import Script from 'next/script';
-import { faqSchema } from '@/lib/seo';
 
 export default function HomePage() {
   return (
     <>
       <AISummary
         title="Encypher – Content Intelligence Infrastructure"
-        whatWeDo="Authors of the C2PA text standard; we provide sentence-level content authentication and licensing infrastructure."
-        whoItsFor="Publishers needing court-admissible proof and AI labs needing performance intelligence and compliance."
-        keyDifferentiator="Cryptographic proof with 100% accuracy at sentence-level vs. probabilistic AI detection."
-        primaryValue="Transform litigation into licensing and turn R&D guesswork into data-driven optimization."
+        whatWeDo="Co-Chair of the C2PA Text Provenance Task Force. We provide API and SDKs in Python, TypeScript, Go, and Rust for sentence-level content authentication and licensing infrastructure. Standard publishes January 8, 2026."
+        whoItsFor="Publishers needing content licensing revenue and provable ownership. AI labs needing performance intelligence and compliance. Enterprises requiring EU AI Act and China watermarking mandate compliance."
+        keyDifferentiator="Cryptographic watermarking with 100% accuracy that survives copy-paste, B2B distribution, and scraping. Enables content attribution and licensing."
+        primaryValue="Enable content licensing across the AI ecosystem. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
+        pagePath="/"
+        faq={[
+          {
+            question: "What is Encypher?",
+            answer: "Encypher is Co-Chair of the C2PA Text Provenance Task Force (c2pa.org), working with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. We provide API and SDKs for sentence-level content authentication that enables content licensing and attribution infrastructure. Standard publishes January 8, 2026."
+          },
+          {
+            question: "What is the C2PA text standard?",
+            answer: "The C2PA text standard defines how text content is cryptographically authenticated. Encypher co-chairs the task force and authored the specification. It enables verification of content origin with mathematical certainty. Publishing January 8, 2026."
+          },
+          {
+            question: "How is Encypher different from AI detection tools?",
+            answer: "AI detection tools provide statistical guessing with ~26% accuracy. Encypher provides cryptographic proof with 100% accuracy at sentence-level. Our watermarking survives copy-paste and distribution, enabling content licensing and attribution across the AI ecosystem."
+          },
+          {
+            question: "Who uses Encypher?",
+            answer: "Publishers seeking content licensing revenue and provable ownership. AI labs needing publisher ecosystem compatibility, quote integrity verification, and performance intelligence. Enterprises requiring EU AI Act and China watermarking compliance."
+          },
+          {
+            question: "Does Encypher have an API and SDKs?",
+            answer: "Yes. Encypher provides a REST API and SDKs in Python, TypeScript, Go, and Rust. Publishers can integrate sentence-level tracking in 30 days. AI labs get one integration for the entire publisher ecosystem. Sign up at encypherai.com to access the API, documentation, and dashboard."
+          }
+        ]}
       />
-      <Script id="schema-faq-home" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       
       {/* Hero Section */}
       <section className="relative w-full min-h-screen flex items-center justify-center overflow-hidden" style={{ minHeight: '100vh' }}>
