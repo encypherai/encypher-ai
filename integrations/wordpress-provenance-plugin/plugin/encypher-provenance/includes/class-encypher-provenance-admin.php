@@ -18,6 +18,8 @@ class Admin
     private function get_icon(string $name, string $class = 'encypher-icon'): string
     {
         $icons = [
+            // Encypher brand logo - simplified version of encypher_check_color.svg
+            'encypher-logo' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="45" fill="#1b2f50"/><circle cx="50" cy="50" r="38" fill="none" stroke="#fff" stroke-width="3"/><path d="M35 50l10 10 20-20" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
             'shield' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
             'shield-check' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
             'document' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
@@ -54,10 +56,9 @@ class Admin
         // add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
         // add_action('add_meta_boxes', [$this, 'register_classic_meta_box']);
         
-        // Auto-mark on publish/update hooks
-        add_action('publish_post', [$this, 'auto_mark_on_publish'], 10, 2);
-        add_action('publish_page', [$this, 'auto_mark_on_publish'], 10, 2);
-        add_action('post_updated', [$this, 'auto_mark_on_update'], 10, 3);
+        // Note: Auto-sign hooks are handled by the REST class (class-encypher-provenance-rest.php)
+        // which has the proper implementation that calls the Enterprise API.
+        // Do NOT add duplicate hooks here.
     }
 
     public function register_dashboard_widget(): void
@@ -542,7 +543,7 @@ class Admin
         <div class="wrap encypher-dashboard">
             <div class="encypher-header">
                 <h1>
-                    <span class="encypher-logo"><?php echo $this->get_icon('shield-check', 'encypher-icon encypher-icon-lg'); ?></span>
+                    <span class="encypher-logo"><?php echo $this->get_icon('encypher-logo', 'encypher-icon encypher-icon-brand'); ?></span>
                     <?php esc_html_e('Encypher', 'encypher-provenance'); ?>
                 </h1>
                 <?php if ($is_connected && $org_name): ?>
@@ -616,6 +617,7 @@ class Admin
             .encypher-logo { display: flex; align-items: center; }
             .encypher-org-badge { background: #1B3A5F; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 13px; }
             .encypher-icon { width: 24px; height: 24px; stroke: currentColor; }
+            .encypher-icon-brand { width: 36px; height: 36px; }
             .encypher-icon-lg { width: 32px; height: 32px; color: #2271b1; }
             .encypher-icon-stat { width: 28px; height: 28px; color: #1B3A5F; }
             .encypher-icon-action { width: 24px; height: 24px; color: #2271b1; }
