@@ -12,6 +12,36 @@ class Admin
 {
     private const ACCOUNT_CACHE_TTL = 900; // 15 minutes
 
+    /**
+     * Get SVG icon markup. Uses material-style stroke icons matching the design system.
+     */
+    private function get_icon(string $name, string $class = 'encypher-icon'): string
+    {
+        $icons = [
+            'shield' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            'shield-check' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
+            'document' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
+            'chart' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>',
+            'check-circle' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+            'star' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>',
+            'file-text' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>',
+            'zap' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
+            'trending-up' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+            'settings' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+            'key' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
+            'link' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>',
+            'users' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+            'credit-card' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>',
+            'external-link' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>',
+            'check' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+            'arrow-up-right' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"/><polyline points="7 7 17 7 17 17"/></svg>',
+            'award' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="7"/><polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"/></svg>',
+            'layers' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>',
+        ];
+
+        return $icons[$name] ?? '';
+    }
+
     public function register_hooks(): void
     {
         add_action('admin_menu', [$this, 'register_admin_menu']);
@@ -512,7 +542,7 @@ class Admin
         <div class="wrap encypher-dashboard">
             <div class="encypher-header">
                 <h1>
-                    <span class="encypher-logo">🛡️</span>
+                    <span class="encypher-logo"><?php echo $this->get_icon('shield-check', 'encypher-icon encypher-icon-lg'); ?></span>
                     <?php esc_html_e('Encypher', 'encypher-provenance'); ?>
                 </h1>
                 <?php if ($is_connected && $org_name): ?>
@@ -527,22 +557,22 @@ class Admin
             <!-- Quick Stats -->
             <div class="encypher-stats-grid">
                 <div class="encypher-stat-card">
-                    <div class="stat-icon">📝</div>
+                    <div class="stat-icon"><?php echo $this->get_icon('document', 'encypher-icon encypher-icon-stat'); ?></div>
                     <div class="stat-value"><?php echo esc_html($stats['signed_posts']); ?></div>
                     <div class="stat-label"><?php esc_html_e('Signed Content', 'encypher-provenance'); ?></div>
                 </div>
                 <div class="encypher-stat-card">
-                    <div class="stat-icon">📊</div>
+                    <div class="stat-icon"><?php echo $this->get_icon('chart', 'encypher-icon encypher-icon-stat'); ?></div>
                     <div class="stat-value"><?php echo esc_html($stats['coverage']); ?>%</div>
                     <div class="stat-label"><?php esc_html_e('Coverage', 'encypher-provenance'); ?></div>
                 </div>
                 <div class="encypher-stat-card">
-                    <div class="stat-icon">✅</div>
+                    <div class="stat-icon"><?php echo $this->get_icon('check-circle', 'encypher-icon encypher-icon-stat'); ?></div>
                     <div class="stat-value"><?php echo esc_html($stats['total_posts']); ?></div>
                     <div class="stat-label"><?php esc_html_e('Total Posts', 'encypher-provenance'); ?></div>
                 </div>
                 <div class="encypher-stat-card encypher-tier-card tier-<?php echo esc_attr($tier); ?>">
-                    <div class="stat-icon">⭐</div>
+                    <div class="stat-icon"><?php echo $this->get_icon('award', 'encypher-icon encypher-icon-stat'); ?></div>
                     <div class="stat-value"><?php echo esc_html(ucfirst($tier)); ?></div>
                     <div class="stat-label"><?php esc_html_e('Current Tier', 'encypher-provenance'); ?></div>
                 </div>
@@ -553,22 +583,22 @@ class Admin
                 <h2><?php esc_html_e('Quick Actions', 'encypher-provenance'); ?></h2>
                 <div class="encypher-actions-grid">
                     <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-content')); ?>" class="encypher-action-card">
-                        <span class="action-icon">📄</span>
+                        <span class="action-icon"><?php echo $this->get_icon('file-text', 'encypher-icon encypher-icon-action'); ?></span>
                         <span class="action-title"><?php esc_html_e('Manage Content', 'encypher-provenance'); ?></span>
                         <span class="action-desc"><?php esc_html_e('View and sign your content', 'encypher-provenance'); ?></span>
                     </a>
                     <a href="<?php echo esc_url(admin_url('tools.php?page=encypher-bulk-mark')); ?>" class="encypher-action-card">
-                        <span class="action-icon">⚡</span>
+                        <span class="action-icon"><?php echo $this->get_icon('zap', 'encypher-icon encypher-icon-action'); ?></span>
                         <span class="action-title"><?php esc_html_e('Bulk Sign', 'encypher-provenance'); ?></span>
                         <span class="action-desc"><?php esc_html_e('Sign multiple posts at once', 'encypher-provenance'); ?></span>
                     </a>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-analytics')); ?>" class="encypher-action-card">
-                        <span class="action-icon">📈</span>
+                        <span class="action-icon"><?php echo $this->get_icon('trending-up', 'encypher-icon encypher-icon-action'); ?></span>
                         <span class="action-title"><?php esc_html_e('View Analytics', 'encypher-provenance'); ?></span>
                         <span class="action-desc"><?php esc_html_e('Track signing activity', 'encypher-provenance'); ?></span>
                     </a>
                     <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="encypher-action-card">
-                        <span class="action-icon">⚙️</span>
+                        <span class="action-icon"><?php echo $this->get_icon('settings', 'encypher-icon encypher-icon-action'); ?></span>
                         <span class="action-title"><?php esc_html_e('Settings', 'encypher-provenance'); ?></span>
                         <span class="action-desc"><?php esc_html_e('Configure API and options', 'encypher-provenance'); ?></span>
                     </a>
@@ -582,24 +612,32 @@ class Admin
         <style>
             .encypher-dashboard { max-width: 1200px; }
             .encypher-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
-            .encypher-header h1 { display: flex; align-items: center; gap: 8px; margin: 0; }
-            .encypher-logo { font-size: 28px; }
+            .encypher-header h1 { display: flex; align-items: center; gap: 12px; margin: 0; }
+            .encypher-logo { display: flex; align-items: center; }
             .encypher-org-badge { background: #1B3A5F; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 13px; }
+            .encypher-icon { width: 24px; height: 24px; stroke: currentColor; }
+            .encypher-icon-lg { width: 32px; height: 32px; color: #2271b1; }
+            .encypher-icon-stat { width: 28px; height: 28px; color: #1B3A5F; }
+            .encypher-icon-action { width: 24px; height: 24px; color: #2271b1; }
             .encypher-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
             .encypher-stat-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 20px; text-align: center; }
-            .encypher-stat-card .stat-icon { font-size: 24px; margin-bottom: 8px; }
+            .encypher-stat-card .stat-icon { display: flex; justify-content: center; margin-bottom: 12px; }
             .encypher-stat-card .stat-value { font-size: 32px; font-weight: 700; color: #1B3A5F; }
             .encypher-stat-card .stat-label { color: #646970; font-size: 13px; margin-top: 4px; }
             .encypher-tier-card.tier-starter { border-color: #8c8f94; }
+            .encypher-tier-card.tier-starter .stat-icon .encypher-icon { color: #8c8f94; }
             .encypher-tier-card.tier-professional { border-color: #2271b1; background: linear-gradient(135deg, #f0f6fc 0%, #fff 100%); }
+            .encypher-tier-card.tier-professional .stat-icon .encypher-icon { color: #2271b1; }
             .encypher-tier-card.tier-business { border-color: #00a32a; background: linear-gradient(135deg, #edfaef 0%, #fff 100%); }
+            .encypher-tier-card.tier-business .stat-icon .encypher-icon { color: #00a32a; }
             .encypher-tier-card.tier-enterprise { border-color: #dba617; background: linear-gradient(135deg, #fcf9e8 0%, #fff 100%); }
+            .encypher-tier-card.tier-enterprise .stat-icon .encypher-icon { color: #dba617; }
             .encypher-section { margin-bottom: 32px; }
             .encypher-section h2 { font-size: 18px; margin-bottom: 16px; }
             .encypher-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
             .encypher-action-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 20px; text-decoration: none; transition: all 0.2s; }
             .encypher-action-card:hover { border-color: #2271b1; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-            .encypher-action-card .action-icon { font-size: 24px; margin-bottom: 8px; }
+            .encypher-action-card .action-icon { margin-bottom: 12px; }
             .encypher-action-card .action-title { font-weight: 600; color: #1d2327; margin-bottom: 4px; }
             .encypher-action-card .action-desc { font-size: 13px; color: #646970; }
         </style>
@@ -614,7 +652,7 @@ class Admin
         ?>
         <div class="encypher-onboarding-banner">
             <div class="onboarding-content">
-                <h2><?php esc_html_e('Welcome to Encypher! 🎉', 'encypher-provenance'); ?></h2>
+                <h2><?php esc_html_e('Welcome to Encypher', 'encypher-provenance'); ?></h2>
                 <p><?php esc_html_e('Protect your content with C2PA-compliant cryptographic signatures. Get started in 3 easy steps:', 'encypher-provenance'); ?></p>
                 <ol class="onboarding-steps">
                     <li>
@@ -724,7 +762,7 @@ class Admin
                 </div>
                 <ul class="upsell-features">
                     <?php foreach ($upgrade['features'] as $feature): ?>
-                        <li>✓ <?php echo esc_html($feature); ?></li>
+                        <li><span class="feature-check"><?php echo $this->get_icon('check', 'encypher-icon encypher-icon-check'); ?></span> <?php echo esc_html($feature); ?></li>
                     <?php endforeach; ?>
                 </ul>
                 <a href="<?php echo esc_url($upgrade['cta_url']); ?>" class="button button-primary button-hero" target="_blank">
@@ -739,8 +777,10 @@ class Admin
             .encypher-upsell .upsell-header h3 { margin: 8px 0 4px 0; font-size: 24px; }
             .encypher-upsell .upsell-price { font-size: 18px; color: #1B3A5F; font-weight: 600; }
             .encypher-upsell .upsell-features { list-style: none; padding: 0; margin: 0 0 20px 0; }
-            .encypher-upsell .upsell-features li { padding: 8px 0; border-bottom: 1px solid #e0e0e0; color: #1d2327; }
+            .encypher-upsell .upsell-features li { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #e0e0e0; color: #1d2327; }
             .encypher-upsell .upsell-features li:last-child { border-bottom: none; }
+            .encypher-upsell .feature-check { display: flex; }
+            .encypher-upsell .encypher-icon-check { width: 16px; height: 16px; color: #00a32a; }
             .encypher-upsell .button-hero { display: block; text-align: center; padding: 12px 24px; font-size: 15px; }
         </style>
         <?php
