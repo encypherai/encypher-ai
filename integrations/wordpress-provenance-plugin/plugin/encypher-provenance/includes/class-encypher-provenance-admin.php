@@ -14,12 +14,12 @@ class Admin
 
     public function register_hooks(): void
     {
-        add_action('admin_menu', [$this, 'register_settings_page']);
-        add_action('admin_menu', [$this, 'register_analytics_page']);
+        add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_settings_page_assets']);
         add_action('enqueue_block_editor_assets', [$this, 'enqueue_block_editor_assets']);
         add_action('wp_dashboard_setup', [$this, 'register_dashboard_widget']);
+        add_action('wp_ajax_encypher_dismiss_onboarding', [$this, 'ajax_dismiss_onboarding']);
         // Classic editor meta box disabled - using Gutenberg sidebar instead
         // add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
         // add_action('add_meta_boxes', [$this, 'register_classic_meta_box']);
@@ -39,20 +39,76 @@ class Admin
         );
     }
 
-    public function register_analytics_page(): void
+    /**
+     * Register top-level Encypher admin menu with submenu pages.
+     */
+    public function register_admin_menu(): void
     {
+        // SVG icon for Encypher (base64 encoded)
+        $icon_svg = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>');
+
+        // Main menu page (Dashboard)
+        add_menu_page(
+            __('Encypher', 'encypher-provenance'),
+            __('Encypher', 'encypher-provenance'),
+            'manage_options',
+            'encypher',
+            [$this, 'render_dashboard_page'],
+            $icon_svg,
+            30 // Position after Comments
+        );
+
+        // Dashboard submenu (same as parent)
         add_submenu_page(
-            'tools.php',
-            __('Encypher Analytics', 'encypher-provenance'),
-            __('Encypher Analytics', 'encypher-provenance'),
+            'encypher',
+            __('Dashboard', 'encypher-provenance'),
+            __('Dashboard', 'encypher-provenance'),
+            'manage_options',
+            'encypher',
+            [$this, 'render_dashboard_page']
+        );
+
+        // Content submenu
+        add_submenu_page(
+            'encypher',
+            __('Content', 'encypher-provenance'),
+            __('Content', 'encypher-provenance'),
+            'manage_options',
+            'encypher-content',
+            [$this, 'render_content_page']
+        );
+
+        // Settings submenu
+        add_submenu_page(
+            'encypher',
+            __('Settings', 'encypher-provenance'),
+            __('Settings', 'encypher-provenance'),
+            'manage_options',
+            'encypher-settings',
+            [$this, 'render_settings_page']
+        );
+
+        // Analytics submenu
+        add_submenu_page(
+            'encypher',
+            __('Analytics', 'encypher-provenance'),
+            __('Analytics', 'encypher-provenance'),
             'manage_options',
             'encypher-analytics',
             [$this, 'render_analytics_page']
         );
-    }
 
-    public function register_settings_page(): void
-    {
+        // Account submenu
+        add_submenu_page(
+            'encypher',
+            __('Account', 'encypher-provenance'),
+            __('Account', 'encypher-provenance'),
+            'manage_options',
+            'encypher-account',
+            [$this, 'render_account_page']
+        );
+
+        // Keep legacy settings page for backward compatibility (hidden)
         add_options_page(
             __('Encypher Provenance', 'encypher-provenance'),
             __('Encypher Provenance', 'encypher-provenance'),
@@ -435,6 +491,460 @@ class Admin
         return 'encypher_account_' . md5(strtolower($api_base_url) . '|' . substr(hash('sha256', $api_key), 0, 16));
     }
 
+    /**
+     * Render the main Dashboard page.
+     */
+    public function render_dashboard_page(): void
+    {
+        if (! current_user_can('manage_options')) {
+            return;
+        }
+
+        $settings = get_option('encypher_assurance_settings', []);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
+        $org_name = isset($settings['organization_name']) ? $settings['organization_name'] : '';
+        $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
+        $is_connected = !empty($api_key);
+        $stats = $this->gather_analytics_stats();
+        $show_onboarding = get_option('encypher_show_onboarding', true) && !$is_connected;
+
+        ?>
+        <div class="wrap encypher-dashboard">
+            <div class="encypher-header">
+                <h1>
+                    <span class="encypher-logo">🛡️</span>
+                    <?php esc_html_e('Encypher', 'encypher-provenance'); ?>
+                </h1>
+                <?php if ($is_connected && $org_name): ?>
+                    <span class="encypher-org-badge"><?php echo esc_html($org_name); ?></span>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($show_onboarding): ?>
+                <?php $this->render_onboarding_banner(); ?>
+            <?php endif; ?>
+
+            <!-- Quick Stats -->
+            <div class="encypher-stats-grid">
+                <div class="encypher-stat-card">
+                    <div class="stat-icon">📝</div>
+                    <div class="stat-value"><?php echo esc_html($stats['signed_posts']); ?></div>
+                    <div class="stat-label"><?php esc_html_e('Signed Content', 'encypher-provenance'); ?></div>
+                </div>
+                <div class="encypher-stat-card">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value"><?php echo esc_html($stats['coverage']); ?>%</div>
+                    <div class="stat-label"><?php esc_html_e('Coverage', 'encypher-provenance'); ?></div>
+                </div>
+                <div class="encypher-stat-card">
+                    <div class="stat-icon">✅</div>
+                    <div class="stat-value"><?php echo esc_html($stats['total_posts']); ?></div>
+                    <div class="stat-label"><?php esc_html_e('Total Posts', 'encypher-provenance'); ?></div>
+                </div>
+                <div class="encypher-stat-card encypher-tier-card tier-<?php echo esc_attr($tier); ?>">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value"><?php echo esc_html(ucfirst($tier)); ?></div>
+                    <div class="stat-label"><?php esc_html_e('Current Tier', 'encypher-provenance'); ?></div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="encypher-section">
+                <h2><?php esc_html_e('Quick Actions', 'encypher-provenance'); ?></h2>
+                <div class="encypher-actions-grid">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-content')); ?>" class="encypher-action-card">
+                        <span class="action-icon">📄</span>
+                        <span class="action-title"><?php esc_html_e('Manage Content', 'encypher-provenance'); ?></span>
+                        <span class="action-desc"><?php esc_html_e('View and sign your content', 'encypher-provenance'); ?></span>
+                    </a>
+                    <a href="<?php echo esc_url(admin_url('tools.php?page=encypher-bulk-mark')); ?>" class="encypher-action-card">
+                        <span class="action-icon">⚡</span>
+                        <span class="action-title"><?php esc_html_e('Bulk Sign', 'encypher-provenance'); ?></span>
+                        <span class="action-desc"><?php esc_html_e('Sign multiple posts at once', 'encypher-provenance'); ?></span>
+                    </a>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-analytics')); ?>" class="encypher-action-card">
+                        <span class="action-icon">📈</span>
+                        <span class="action-title"><?php esc_html_e('View Analytics', 'encypher-provenance'); ?></span>
+                        <span class="action-desc"><?php esc_html_e('Track signing activity', 'encypher-provenance'); ?></span>
+                    </a>
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="encypher-action-card">
+                        <span class="action-icon">⚙️</span>
+                        <span class="action-title"><?php esc_html_e('Settings', 'encypher-provenance'); ?></span>
+                        <span class="action-desc"><?php esc_html_e('Configure API and options', 'encypher-provenance'); ?></span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Upsell Module -->
+            <?php $this->render_upsell_module($tier); ?>
+
+        </div>
+        <style>
+            .encypher-dashboard { max-width: 1200px; }
+            .encypher-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+            .encypher-header h1 { display: flex; align-items: center; gap: 8px; margin: 0; }
+            .encypher-logo { font-size: 28px; }
+            .encypher-org-badge { background: #1B3A5F; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 13px; }
+            .encypher-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+            .encypher-stat-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 20px; text-align: center; }
+            .encypher-stat-card .stat-icon { font-size: 24px; margin-bottom: 8px; }
+            .encypher-stat-card .stat-value { font-size: 32px; font-weight: 700; color: #1B3A5F; }
+            .encypher-stat-card .stat-label { color: #646970; font-size: 13px; margin-top: 4px; }
+            .encypher-tier-card.tier-starter { border-color: #8c8f94; }
+            .encypher-tier-card.tier-professional { border-color: #2271b1; background: linear-gradient(135deg, #f0f6fc 0%, #fff 100%); }
+            .encypher-tier-card.tier-business { border-color: #00a32a; background: linear-gradient(135deg, #edfaef 0%, #fff 100%); }
+            .encypher-tier-card.tier-enterprise { border-color: #dba617; background: linear-gradient(135deg, #fcf9e8 0%, #fff 100%); }
+            .encypher-section { margin-bottom: 32px; }
+            .encypher-section h2 { font-size: 18px; margin-bottom: 16px; }
+            .encypher-actions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+            .encypher-action-card { display: flex; flex-direction: column; background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 20px; text-decoration: none; transition: all 0.2s; }
+            .encypher-action-card:hover { border-color: #2271b1; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+            .encypher-action-card .action-icon { font-size: 24px; margin-bottom: 8px; }
+            .encypher-action-card .action-title { font-weight: 600; color: #1d2327; margin-bottom: 4px; }
+            .encypher-action-card .action-desc { font-size: 13px; color: #646970; }
+        </style>
+        <?php
+    }
+
+    /**
+     * Render onboarding banner for new users.
+     */
+    private function render_onboarding_banner(): void
+    {
+        ?>
+        <div class="encypher-onboarding-banner">
+            <div class="onboarding-content">
+                <h2><?php esc_html_e('Welcome to Encypher! 🎉', 'encypher-provenance'); ?></h2>
+                <p><?php esc_html_e('Protect your content with C2PA-compliant cryptographic signatures. Get started in 3 easy steps:', 'encypher-provenance'); ?></p>
+                <ol class="onboarding-steps">
+                    <li>
+                        <strong><?php esc_html_e('Get your API key', 'encypher-provenance'); ?></strong>
+                        <a href="https://dashboard.encypherai.com/register" target="_blank" class="button button-small"><?php esc_html_e('Sign Up Free', 'encypher-provenance'); ?></a>
+                    </li>
+                    <li>
+                        <strong><?php esc_html_e('Configure your settings', 'encypher-provenance'); ?></strong>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button button-small"><?php esc_html_e('Go to Settings', 'encypher-provenance'); ?></a>
+                    </li>
+                    <li>
+                        <strong><?php esc_html_e('Start signing content', 'encypher-provenance'); ?></strong>
+                        <span class="step-note"><?php esc_html_e('Auto-signs on publish!', 'encypher-provenance'); ?></span>
+                    </li>
+                </ol>
+            </div>
+            <button type="button" class="onboarding-dismiss" onclick="jQuery.post(ajaxurl, {action: 'encypher_dismiss_onboarding', _wpnonce: '<?php echo wp_create_nonce('encypher_dismiss_onboarding'); ?>'}, function() { jQuery('.encypher-onboarding-banner').fadeOut(); });">
+                <?php esc_html_e('Dismiss', 'encypher-provenance'); ?>
+            </button>
+        </div>
+        <style>
+            .encypher-onboarding-banner { background: linear-gradient(135deg, #1B3A5F 0%, #2E6DB4 100%); color: #fff; border-radius: 8px; padding: 24px; margin-bottom: 24px; position: relative; }
+            .encypher-onboarding-banner h2 { color: #fff; margin: 0 0 12px 0; }
+            .encypher-onboarding-banner p { margin: 0 0 16px 0; opacity: 0.9; }
+            .encypher-onboarding-banner .onboarding-steps { margin: 0; padding-left: 20px; }
+            .encypher-onboarding-banner .onboarding-steps li { margin-bottom: 12px; }
+            .encypher-onboarding-banner .onboarding-steps strong { display: inline-block; min-width: 180px; }
+            .encypher-onboarding-banner .step-note { font-size: 12px; opacity: 0.8; }
+            .encypher-onboarding-banner .onboarding-dismiss { position: absolute; top: 12px; right: 12px; background: transparent; border: 1px solid rgba(255,255,255,0.3); color: #fff; padding: 4px 12px; border-radius: 4px; cursor: pointer; }
+            .encypher-onboarding-banner .onboarding-dismiss:hover { background: rgba(255,255,255,0.1); }
+        </style>
+        <?php
+    }
+
+    /**
+     * AJAX handler for dismissing onboarding banner.
+     */
+    public function ajax_dismiss_onboarding(): void
+    {
+        check_ajax_referer('encypher_dismiss_onboarding');
+        
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('Unauthorized', 403);
+        }
+        
+        update_option('encypher_show_onboarding', false);
+        wp_send_json_success();
+    }
+
+    /**
+     * Render upsell module based on current tier.
+     */
+    private function render_upsell_module(string $current_tier): void
+    {
+        if ($current_tier === 'enterprise') {
+            return; // No upsell for enterprise
+        }
+
+        $upgrades = [
+            'starter' => [
+                'next_tier' => 'Professional',
+                'price' => '$99/mo',
+                'features' => [
+                    __('Bring Your Own Keys (BYOK)', 'encypher-provenance'),
+                    __('Sentence-level tracking', 'encypher-provenance'),
+                    __('Invisible embeddings', 'encypher-provenance'),
+                    __('Remove Encypher branding', 'encypher-provenance'),
+                    __('70/30 revenue share', 'encypher-provenance'),
+                ],
+                'cta_url' => 'https://dashboard.encypherai.com/billing?upgrade=professional',
+            ],
+            'professional' => [
+                'next_tier' => 'Business',
+                'price' => '$499/mo',
+                'features' => [
+                    __('Batch operations (100 docs)', 'encypher-provenance'),
+                    __('Team management (10 users)', 'encypher-provenance'),
+                    __('Audit logs', 'encypher-provenance'),
+                    __('Priority support (24hr SLA)', 'encypher-provenance'),
+                    __('75/25 revenue share', 'encypher-provenance'),
+                ],
+                'cta_url' => 'https://dashboard.encypherai.com/billing?upgrade=business',
+            ],
+            'business' => [
+                'next_tier' => 'Enterprise',
+                'price' => 'Custom',
+                'features' => [
+                    __('Unlimited everything', 'encypher-provenance'),
+                    __('Custom C2PA assertions', 'encypher-provenance'),
+                    __('SSO/SCIM integration', 'encypher-provenance'),
+                    __('Dedicated support & SLA', 'encypher-provenance'),
+                    __('80/20 revenue share', 'encypher-provenance'),
+                ],
+                'cta_url' => 'https://encypherai.com/enterprise',
+            ],
+        ];
+
+        $upgrade = $upgrades[$current_tier] ?? $upgrades['starter'];
+        ?>
+        <div class="encypher-section encypher-upsell">
+            <h2><?php esc_html_e('Unlock More Features', 'encypher-provenance'); ?></h2>
+            <div class="upsell-card">
+                <div class="upsell-header">
+                    <span class="upsell-badge"><?php esc_html_e('Upgrade', 'encypher-provenance'); ?></span>
+                    <h3><?php echo esc_html($upgrade['next_tier']); ?></h3>
+                    <span class="upsell-price"><?php echo esc_html($upgrade['price']); ?></span>
+                </div>
+                <ul class="upsell-features">
+                    <?php foreach ($upgrade['features'] as $feature): ?>
+                        <li>✓ <?php echo esc_html($feature); ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <a href="<?php echo esc_url($upgrade['cta_url']); ?>" class="button button-primary button-hero" target="_blank">
+                    <?php printf(esc_html__('Upgrade to %s', 'encypher-provenance'), esc_html($upgrade['next_tier'])); ?>
+                </a>
+            </div>
+        </div>
+        <style>
+            .encypher-upsell .upsell-card { background: linear-gradient(135deg, #f0f6fc 0%, #fff 100%); border: 2px solid #2271b1; border-radius: 12px; padding: 24px; max-width: 400px; }
+            .encypher-upsell .upsell-header { text-align: center; margin-bottom: 16px; }
+            .encypher-upsell .upsell-badge { background: #2271b1; color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 11px; text-transform: uppercase; }
+            .encypher-upsell .upsell-header h3 { margin: 8px 0 4px 0; font-size: 24px; }
+            .encypher-upsell .upsell-price { font-size: 18px; color: #1B3A5F; font-weight: 600; }
+            .encypher-upsell .upsell-features { list-style: none; padding: 0; margin: 0 0 20px 0; }
+            .encypher-upsell .upsell-features li { padding: 8px 0; border-bottom: 1px solid #e0e0e0; color: #1d2327; }
+            .encypher-upsell .upsell-features li:last-child { border-bottom: none; }
+            .encypher-upsell .button-hero { display: block; text-align: center; padding: 12px 24px; font-size: 15px; }
+        </style>
+        <?php
+    }
+
+    /**
+     * Render the Content management page.
+     */
+    public function render_content_page(): void
+    {
+        if (! current_user_can('manage_options')) {
+            return;
+        }
+
+        global $wpdb;
+
+        // Get posts with their signing status
+        $posts = get_posts([
+            'post_type' => ['post', 'page'],
+            'post_status' => 'publish',
+            'posts_per_page' => 50,
+            'orderby' => 'date',
+            'order' => 'DESC',
+        ]);
+
+        ?>
+        <div class="wrap encypher-content-page">
+            <h1><?php esc_html_e('Content Management', 'encypher-provenance'); ?></h1>
+            <p class="description"><?php esc_html_e('View and manage the signing status of your content.', 'encypher-provenance'); ?></p>
+
+            <div class="tablenav top">
+                <div class="alignleft actions">
+                    <a href="<?php echo esc_url(admin_url('tools.php?page=encypher-bulk-mark')); ?>" class="button button-primary">
+                        <?php esc_html_e('Bulk Sign Content', 'encypher-provenance'); ?>
+                    </a>
+                </div>
+            </div>
+
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th scope="col" class="column-title"><?php esc_html_e('Title', 'encypher-provenance'); ?></th>
+                        <th scope="col" class="column-type"><?php esc_html_e('Type', 'encypher-provenance'); ?></th>
+                        <th scope="col" class="column-status"><?php esc_html_e('Signing Status', 'encypher-provenance'); ?></th>
+                        <th scope="col" class="column-signed"><?php esc_html_e('Last Signed', 'encypher-provenance'); ?></th>
+                        <th scope="col" class="column-actions"><?php esc_html_e('Actions', 'encypher-provenance'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($posts)): ?>
+                        <tr>
+                            <td colspan="5"><?php esc_html_e('No published content found.', 'encypher-provenance'); ?></td>
+                        </tr>
+                    <?php else: ?>
+                        <?php foreach ($posts as $post): 
+                            $is_marked = get_post_meta($post->ID, '_encypher_marked', true);
+                            $last_signed = get_post_meta($post->ID, '_encypher_assurance_last_signed', true);
+                            $status = get_post_meta($post->ID, '_encypher_assurance_status', true);
+                            $document_id = get_post_meta($post->ID, '_encypher_assurance_document_id', true);
+                        ?>
+                            <tr>
+                                <td class="column-title">
+                                    <strong><a href="<?php echo esc_url(get_edit_post_link($post->ID)); ?>"><?php echo esc_html(get_the_title($post)); ?></a></strong>
+                                </td>
+                                <td class="column-type"><?php echo esc_html(get_post_type_object($post->post_type)->labels->singular_name); ?></td>
+                                <td class="column-status">
+                                    <?php if ($is_marked): ?>
+                                        <span class="encypher-status-badge status-signed">✓ <?php esc_html_e('Signed', 'encypher-provenance'); ?></span>
+                                    <?php else: ?>
+                                        <span class="encypher-status-badge status-unsigned"><?php esc_html_e('Not Signed', 'encypher-provenance'); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="column-signed">
+                                    <?php echo $last_signed ? esc_html($last_signed) : '—'; ?>
+                                </td>
+                                <td class="column-actions">
+                                    <?php if ($document_id): ?>
+                                        <a href="https://encypherai.com/verify/<?php echo esc_attr($document_id); ?>" target="_blank" class="button button-small">
+                                            <?php esc_html_e('Verify', 'encypher-provenance'); ?>
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="<?php echo esc_url(get_edit_post_link($post->ID)); ?>" class="button button-small">
+                                        <?php esc_html_e('Edit', 'encypher-provenance'); ?>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <style>
+            .encypher-content-page .encypher-status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+            .encypher-content-page .status-signed { background: #d1e7dd; color: #0a3622; }
+            .encypher-content-page .status-unsigned { background: #f8d7da; color: #58151c; }
+        </style>
+        <?php
+    }
+
+    /**
+     * Render the Account page.
+     */
+    public function render_account_page(): void
+    {
+        if (! current_user_can('manage_options')) {
+            return;
+        }
+
+        $settings = get_option('encypher_assurance_settings', []);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
+        $org_id = isset($settings['organization_id']) ? $settings['organization_id'] : '';
+        $org_name = isset($settings['organization_name']) ? $settings['organization_name'] : '';
+        $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
+        $is_connected = !empty($api_key);
+
+        $tier_info = [
+            'starter' => ['name' => 'Starter', 'price' => 'Free', 'color' => '#8c8f94'],
+            'professional' => ['name' => 'Professional', 'price' => '$99/mo', 'color' => '#2271b1'],
+            'business' => ['name' => 'Business', 'price' => '$499/mo', 'color' => '#00a32a'],
+            'enterprise' => ['name' => 'Enterprise', 'price' => 'Custom', 'color' => '#dba617'],
+        ];
+        $current_tier_info = $tier_info[$tier] ?? $tier_info['starter'];
+
+        ?>
+        <div class="wrap encypher-account-page">
+            <h1><?php esc_html_e('Account', 'encypher-provenance'); ?></h1>
+
+            <div class="encypher-account-grid">
+                <!-- Subscription Card -->
+                <div class="account-card">
+                    <h2><?php esc_html_e('Subscription', 'encypher-provenance'); ?></h2>
+                    <div class="subscription-info">
+                        <div class="tier-badge" style="background: <?php echo esc_attr($current_tier_info['color']); ?>">
+                            <?php echo esc_html($current_tier_info['name']); ?>
+                        </div>
+                        <div class="tier-price"><?php echo esc_html($current_tier_info['price']); ?></div>
+                    </div>
+                    <?php if ($org_name): ?>
+                        <p><strong><?php esc_html_e('Organization:', 'encypher-provenance'); ?></strong> <?php echo esc_html($org_name); ?></p>
+                    <?php endif; ?>
+                    <p>
+                        <a href="https://dashboard.encypherai.com/billing" class="button" target="_blank">
+                            <?php esc_html_e('Manage Subscription', 'encypher-provenance'); ?>
+                        </a>
+                    </p>
+                </div>
+
+                <!-- API Key Card -->
+                <div class="account-card">
+                    <h2><?php esc_html_e('API Connection', 'encypher-provenance'); ?></h2>
+                    <?php if ($is_connected): ?>
+                        <p class="connection-status connected">
+                            <span class="status-dot"></span>
+                            <?php esc_html_e('Connected', 'encypher-provenance'); ?>
+                        </p>
+                        <p><strong><?php esc_html_e('API Key:', 'encypher-provenance'); ?></strong> ••••••••<?php echo esc_html(substr($api_key, -4)); ?></p>
+                    <?php else: ?>
+                        <p class="connection-status disconnected">
+                            <span class="status-dot"></span>
+                            <?php esc_html_e('Not Connected', 'encypher-provenance'); ?>
+                        </p>
+                    <?php endif; ?>
+                    <p>
+                        <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-settings')); ?>" class="button">
+                            <?php esc_html_e('Configure API', 'encypher-provenance'); ?>
+                        </a>
+                        <a href="https://dashboard.encypherai.com/api-keys" class="button" target="_blank">
+                            <?php esc_html_e('Manage API Keys', 'encypher-provenance'); ?>
+                        </a>
+                    </p>
+                </div>
+
+                <!-- Quick Links Card -->
+                <div class="account-card">
+                    <h2><?php esc_html_e('Quick Links', 'encypher-provenance'); ?></h2>
+                    <ul class="quick-links">
+                        <li><a href="https://dashboard.encypherai.com" target="_blank"><?php esc_html_e('Encypher Dashboard', 'encypher-provenance'); ?> →</a></li>
+                        <li><a href="https://api.encypherai.com/docs" target="_blank"><?php esc_html_e('API Documentation', 'encypher-provenance'); ?> →</a></li>
+                        <li><a href="https://encypherai.com/support" target="_blank"><?php esc_html_e('Support Center', 'encypher-provenance'); ?> →</a></li>
+                        <li><a href="https://encypherai.com/coalition" target="_blank"><?php esc_html_e('Coalition Program', 'encypher-provenance'); ?> →</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <style>
+            .encypher-account-page .encypher-account-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 20px; }
+            .encypher-account-page .account-card { background: #fff; border: 1px solid #dcdcde; border-radius: 8px; padding: 20px; }
+            .encypher-account-page .account-card h2 { margin-top: 0; font-size: 16px; border-bottom: 1px solid #f0f0f1; padding-bottom: 12px; }
+            .encypher-account-page .subscription-info { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+            .encypher-account-page .tier-badge { color: #fff; padding: 6px 16px; border-radius: 4px; font-weight: 600; }
+            .encypher-account-page .tier-price { font-size: 18px; font-weight: 600; color: #1d2327; }
+            .encypher-account-page .connection-status { display: flex; align-items: center; gap: 8px; font-weight: 500; }
+            .encypher-account-page .connection-status .status-dot { width: 10px; height: 10px; border-radius: 50%; }
+            .encypher-account-page .connection-status.connected .status-dot { background: #00a32a; }
+            .encypher-account-page .connection-status.disconnected .status-dot { background: #d63638; }
+            .encypher-account-page .quick-links { list-style: none; padding: 0; margin: 0; }
+            .encypher-account-page .quick-links li { padding: 8px 0; border-bottom: 1px solid #f0f0f1; }
+            .encypher-account-page .quick-links li:last-child { border-bottom: none; }
+            .encypher-account-page .quick-links a { text-decoration: none; color: #2271b1; }
+            .encypher-account-page .quick-links a:hover { color: #135e96; }
+        </style>
+        <?php
+    }
+
     public function render_settings_page(): void
     {
         if (! current_user_can('manage_options')) {
@@ -443,7 +953,7 @@ class Admin
 
         ?>
         <div class="wrap">
-            <h1><?php esc_html_e('Encypher Provenance Settings', 'encypher-provenance'); ?></h1>
+            <h1><?php esc_html_e('Encypher Settings', 'encypher-provenance'); ?></h1>
             <form method="post" action="options.php">
                 <?php
                 settings_fields('encypher_assurance_settings_group');
@@ -457,8 +967,17 @@ class Admin
 
     public function enqueue_settings_page_assets(string $hook_suffix): void
     {
-        // Only load on our settings page
-        if ('settings_page_encypher-provenance-settings' !== $hook_suffix) {
+        // Load on all Encypher admin pages
+        $encypher_pages = [
+            'toplevel_page_encypher',
+            'encypher_page_encypher-content',
+            'encypher_page_encypher-settings',
+            'encypher_page_encypher-analytics',
+            'encypher_page_encypher-account',
+            'settings_page_encypher-provenance-settings', // Legacy
+        ];
+        
+        if (!in_array($hook_suffix, $encypher_pages, true)) {
             return;
         }
 
