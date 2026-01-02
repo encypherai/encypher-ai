@@ -408,9 +408,9 @@ services:
       # Demo organization
       DEMO_API_KEY: demo-api-key-for-testing
       DEMO_ORGANIZATION_ID: org_demo
-      # SECRET_KEY: Set this to match Railway production for cross-verification
-      # Get the value from Railway enterprise-api > Variables > SECRET_KEY
-      SECRET_KEY: ${SECRET_KEY:-}
+      # SECRET_KEY: Demo private key (32 bytes hex) for consistent signing/verification
+      # This ensures the same key is used across container restarts for local dev
+      SECRET_KEY: ${SECRET_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
       # Service config
       ENVIRONMENT: development
       LOG_LEVEL: DEBUG
