@@ -83,8 +83,8 @@ export function TemplateSelector({
 
   return (
     <Select
-      value={value || ''}
-      onValueChange={(val) => onValueChange(val || undefined)}
+      value={value || 'none'}
+      onValueChange={(val) => onValueChange(val === 'none' ? undefined : val)}
       disabled={disabled || isLoading}
     >
       <SelectTrigger className={className}>
@@ -99,7 +99,7 @@ export function TemplateSelector({
       </SelectTrigger>
       <SelectContent>
         {/* No template option */}
-        <SelectItem value="">
+        <SelectItem value="none">
           <span className="text-muted-foreground">No template (default)</span>
         </SelectItem>
 

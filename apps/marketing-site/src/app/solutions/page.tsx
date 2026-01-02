@@ -9,10 +9,10 @@ const SolutionsPage: NextPage = () => {
     <div className="container mx-auto py-12">
       <AISummary
         title="Encypher Solutions"
-        whatWeDo="Provide sentence-level content authentication, licensing, and performance intelligence."
-        whoItsFor="Publishers, AI labs, and enterprises needing provenance, licensing, and optimization."
-        keyDifferentiator="Cryptographic proof with 100% accuracy authored by C2PA text standard leaders."
-        primaryValue="Turn litigation into licensing and R&D into data-driven market advantage."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. API and SDKs in Python, TypeScript, Go, and Rust for content authentication. Standard publishes January 8, 2026."
+        whoItsFor="Publishers seeking provable content ownership. AI labs needing quote integrity verification. Enterprises requiring EU AI Act compliance."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste and distribution. Enables content attribution and licensing. Building with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
+        primaryValue="Enable content licensing across the AI ecosystem. Working with industry leaders to define licensing frameworks."
       />
       <h1 className="text-4xl font-bold text-center">Our Solutions</h1>
       <p className="mt-4 text-lg text-center text-muted-foreground">We provide tailored solutions to meet the unique challenges of your industry.</p>

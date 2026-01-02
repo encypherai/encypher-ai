@@ -117,11 +117,9 @@ class Plugin
     {
         // Check if this is a c2pa-verify URL by parsing the request URI
         $request_uri = $_SERVER['REQUEST_URI'] ?? '';
-        error_log('Encypher: REQUEST_URI=' . $request_uri);
         
         if (preg_match('#^/c2pa-verify/([^/]+)/?$#', $request_uri, $matches)) {
             $instance_id = $matches[1];
-            error_log('Encypher: Matched c2pa-verify URL with instance_id: ' . $instance_id);
             
             // Create REST request
             $request = new \WP_REST_Request('GET', '/encypher-provenance/v1/provenance');
@@ -140,8 +138,6 @@ class Plugin
         $instance_id_qv = get_query_var('instance_id');
         
         if ($c2pa_verify && $instance_id_qv) {
-            error_log('Encypher: Query var method - Loading provenance report for instance_id: ' . $instance_id_qv);
-            
             // Create REST request
             $request = new \WP_REST_Request('GET', '/encypher-provenance/v1/provenance');
             $request->set_param('instance_id', $instance_id_qv);

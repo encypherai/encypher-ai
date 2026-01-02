@@ -12,15 +12,15 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 ## Features
 
 ### Core Features
-- ? **C2PA-Compliant:** Full adherence to C2PA Manifests_Text.adoc specification
-- ? **Auto-Mark on Publish:** Automatically embed C2PA manifests when publishing posts
-- ? **Auto-Mark on Update:** Re-sign manifests when content is updated
-- ? **Manual Marking:** Mark individual posts with a button in the editor
-- ? **Gutenberg Integration:** Sidebar panel in block editor
-- ? **Classic Editor Support:** Meta box for classic editor users
-- ? **Public Verification:** Verification links for readers to check authenticity
-- ? **Sentence & Merkle Insights:** Pro/Enterprise tiers expose per-sentence verifier chips, upgrade prompts, and Merkle snapshot cards directly in Gutenberg.
-- ? **Analytics Dashboard:** Built-in dashboard widget and Tools ? Encypher Analytics summarize coverage, sentence-level adoption, and recent signing activity.
+- **C2PA-Compliant:** Full adherence to C2PA Manifests_Text.adoc specification
+- **Auto-Mark on Publish:** Automatically embed C2PA manifests when publishing posts
+- **Auto-Mark on Update:** Re-sign manifests when content is updated
+- **Manual Marking:** Mark individual posts with a button in the editor
+- **Gutenberg Integration:** Sidebar panel in block editor
+- **Classic Editor Support:** Meta box for classic editor users
+- **Public Verification:** Verification links for readers to check authenticity
+- **Sentence & Merkle Insights:** Pro/Enterprise tiers expose per-sentence verifier chips, upgrade prompts, and Merkle snapshot cards directly in Gutenberg.
+- **Analytics Dashboard:** Built-in dashboard widget and **Encypher > Analytics** summarize coverage, sentence-level adoption, and recent signing activity.
 
 ### C2PA Compliance
 - **C2PATextManifestWrapper:** Full manifest structure with magic number, version, JUMBF container
@@ -78,7 +78,7 @@ Tokens issued by the dashboard contain a `tier` claim that the plugin reads to a
 2. Activate the plugin through the **Plugins** menu in WordPress
 
 ### Configuration
-1. Go to **Settings → Encypher C2PA**
+1. Go to **Encypher > Settings**
 2. Click **Get API Key / Manage Account** to open [dashboard.encypherai.com](https://dashboard.encypherai.com) and either create a free workspace or sign in to your Pro/Enterprise account
 3. Configure your settings:
    - **API Base URL:** `https://api.encypherai.com/api/v1` (default)
@@ -129,7 +129,7 @@ The route proxies to Encypher's `POST /api/v1/public/extract-and-verify` so publ
 ### Analytics & Dashboard Coverage
 
 - WordPress Dashboard now includes an **Encypher Provenance Coverage** widget showing signed counts, coverage percentage, and quick access links.
-- Tools ? **Encypher Analytics** provides a detailed view with sentence-level adoption, tampering alerts, and the five most recently signed posts.
+- **Encypher > Analytics** provides a detailed view with sentence-level adoption, tampering alerts, and the five most recently signed posts.
 - Editors can use the analytics page during audits to prove that enterprise tiers are meeting their provenance SLAs.
 
 
@@ -153,7 +153,7 @@ You can also manually mark posts using the editor panel:
 
 Mark existing WordPress archives programmatically:
 
-1. Go to **Tools → Encypher C2PA**
+1. Go to **Encypher > Bulk Sign**
 2. Select post types to mark (Posts, Pages, etc.)
 3. Choose filters:
    - Date range (all time, last month, 3/6/12 months, custom)
@@ -175,7 +175,7 @@ Mark existing WordPress archives programmatically:
 
 Optional C2PA badge on marked posts:
 
-1. Go to **Settings → Encypher C2PA**
+1. Go to **Encypher > Settings**
 2. Enable **Show C2PA badge**
 3. Choose badge position:
    - Top of post
@@ -196,10 +196,10 @@ Optional C2PA badge on marked posts:
 ### Status Indicators
 
 The plugin shows the current C2PA status:
-- ✅ **C2PA Protected:** Content is marked and up-to-date
-- ⚠️ **Outdated:** Content changed since last marking (re-mark recommended)
-- ❌ **Failed:** Marking failed (check API key and try again)
-- ⏳ **Processing:** Marking in progress
+- **C2PA Protected:** Content is marked and up-to-date
+- **Outdated:** Content changed since last marking (re-mark recommended)
+- **Failed:** Marking failed (check API key and try again)
+- **Processing:** Marking in progress
 
 ### Per-Post Control
 

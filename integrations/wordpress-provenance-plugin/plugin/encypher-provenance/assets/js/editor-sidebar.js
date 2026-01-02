@@ -111,29 +111,29 @@
 
         const verificationInfo = () => {
             if (isDraft && !isSigned) {
-                return '✏️ Draft - Will be auto-signed when published';
+                return 'Draft - Will be auto-signed when published';
             }
             
             switch (status) {
                 case 'c2pa_protected':
                 case 'signed':
-                    return '✓ Signed with C2PA - Auto-updates on publish';
+                    return 'Signed with C2PA - Auto-updates on publish';
                 case 'c2pa_verified':
                 case 'verified':
-                    return '✓ Verified - Content authenticity confirmed';
+                    return 'Verified - Content authenticity confirmed';
                 case 'tampered':
-                    return '⚠️ Warning - Possible tampering detected';
+                    return 'Warning - Possible tampering detected';
                 case 'modified':
-                    return '📝 Modified - Will re-sign on next publish';
+                    return 'Modified - Will re-sign on next publish';
                 case 'not_signed':
                     if (isPublished) {
-                        return '⚠️ Published but not signed - Will sign on next update';
+                        return 'Published but not signed - Will sign on next update';
                     }
-                    return '✏️ Not yet signed - Will sign on publish';
+                    return 'Not yet signed - Will sign on publish';
                 case 'loading':
                     return 'Loading status...';
                 case 'error':
-                    return '❌ Error loading status';
+                    return 'Error loading status';
                 default:
                     return 'Status unavailable';
             }
@@ -219,7 +219,7 @@
                                 disabled: verifying,
                                 style: { width: '100%' }
                             },
-                            verifying ? 'Loading...' : '?? View C2PA Manifest'
+                            verifying ? 'Loading...' : 'View C2PA Manifest'
                         )
                     )
                 );
@@ -248,7 +248,7 @@
                             isSmall: true,
                             onClick: () => setShowManifest(false)
                         },
-                        '✕'
+                        'Close'
                     )
                 ),
                 wp.element.createElement(
@@ -272,18 +272,20 @@
                     Button,
                     {
                         variant: 'secondary',
-                        isSmall: true,
-                        onClick: () => {
-                            navigator.clipboard.writeText(JSON.stringify(manifestData, null, 2));
-                        },
-                        style: { marginTop: '8px', width: '100%' }
+                        onClick: fetchManifest,
+                        disabled: verifying,
+                        style: { width: '100%' }
                     },
-                    '📋 Copy to Clipboard'
+                    verifying ? 'Loading...' : 'View C2PA Manifest'
                 )
-            );
-        };
+            )
+        );
+    } else if (isSigned && !canViewManifest) {
+        pushUpgradeItem('Upgrade to view the underlying C2PA manifest.', 'upgrade-manifest');
+    }
 
-        const renderSentenceVerification = () => {
+    return wp.element.createElement('ul', { className: 'verification-meta', style: { listStyle: 'none', padding: 0, marginTop: '12px' } }, items);
+};
             if (!isSigned) {
                 return null;
             }
@@ -465,8 +467,8 @@
                     'p',
                     { style: { margin: '0 0 12px 0', fontSize: '13px', lineHeight: '1.5' } },
                     isDraft 
-                        ? '🔒 This content will be automatically signed with C2PA when published.'
-                        : '🔒 This content will be re-signed with C2PA to reflect your changes.'
+                        ? 'This content will be automatically signed with C2PA when published.'
+                        : 'This content will be re-signed with C2PA to reflect your changes.'
                 ),
                 wp.element.createElement(
                     'ul',

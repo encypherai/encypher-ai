@@ -18,10 +18,10 @@ export default function AIDetectorPage() {
     <>
       <AISummary
         title="Better Than AI Detectors"
-        whatWeDo="Provide cryptographic content authentication with 100% accuracy as a superior alternative to statistical AI detectors."
-        whoItsFor="Enterprises, publishers, and platforms needing reliable AI content verification without false positives."
-        keyDifferentiator="Cryptographic proof (100% accuracy, zero false positives) vs. statistical detection (26% accuracy, high false positives)."
-        primaryValue="Eliminate false positives while providing court-admissible proof of content origin and authenticity."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. API and SDKs for cryptographic authentication with 100% accuracy. Standard publishes January 8, 2026."
+        whoItsFor="Publishers needing provable content ownership. AI labs needing quote integrity verification. Enterprises requiring EU AI Act compliance."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste and distribution. Zero false positives. Enables content attribution and licensing."
+        primaryValue="Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org). Court-admissible proof, not statistical guessing."
       />
 
       {/* Hero Section */}

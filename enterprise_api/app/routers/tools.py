@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.utils.crypto_utils import load_organization_public_key
+from app.utils.crypto_utils import get_demo_private_key, load_organization_public_key
 from app.utils.multi_embedding import extract_and_verify_all_embeddings, extract_all_embeddings
 
 logger = logging.getLogger(__name__)
@@ -158,15 +158,13 @@ def _get_demo_keys():
         except Exception as e:
             logger.warning(f"Failed to load demo keys from hex: {e}")
     
-    # Generate ephemeral keys for demo
     try:
-        from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-        _demo_private_key = Ed25519PrivateKey.generate()
+        _demo_private_key = get_demo_private_key()
         _demo_public_key = _demo_private_key.public_key()
-        logger.info("Generated ephemeral demo keys")
+        logger.info("Loaded demo keys from enterprise_api demo key configuration")
         return _demo_private_key, _demo_public_key
     except Exception as e:
-        logger.error(f"Failed to generate demo keys: {e}")
+        logger.error(f"Failed to load demo keys: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Demo keys not available"

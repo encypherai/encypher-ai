@@ -2,7 +2,7 @@
   "name": "@encypher/sdk",
   "version": "1.0.0-alpha.1",
   "description": "OpenAPI client for @encypher/sdk",
-  "author": "OpenAPI-Generator",
+  "author": "Encypher",
   "repository": {
     "type": "git",
     "url": "https://github.com/encypherai/encypherai-commercial.git",
@@ -18,5 +18,14 @@
   },
   "devDependencies": {
     "typescript": "^4.0 || ^5.0"
-  }
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ]
 }

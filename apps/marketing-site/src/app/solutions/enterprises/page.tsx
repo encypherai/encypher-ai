@@ -15,10 +15,10 @@ export default function EnterprisePage() {
     <div className="bg-background text-foreground">
       <AISummary
         title="Encypher for Enterprise"
-        whatWeDo="Authors of the C2PA text standard providing enterprise AI governance infrastructure with sentence-level content tracking."
-        whoItsFor="Fortune 500 companies deploying AI at scale needing EU AI Act compliance and competitive intelligence."
-        keyDifferentiator="Compliance baseline (C2PA standard we authored) + intelligence upside (sentence-level performance data)."
-        primaryValue="Turn regulatory requirement into competitive advantage through cryptographic content tracking."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force (c2pa.org) with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. Enterprise API and SDKs in Python, TypeScript, Go, and Rust. Standard publishes January 8, 2026."
+        whoItsFor="Fortune 500 companies deploying AI at scale needing EU AI Act and China watermarking compliance plus competitive intelligence."
+        keyDifferentiator="Compliance baseline + performance intelligence upside. Cryptographic watermarking survives copy-paste and distribution."
+        primaryValue="Turn regulatory requirement into competitive advantage. Working with industry leaders to define content licensing frameworks."
       />
 
       {/* Hero Section */}

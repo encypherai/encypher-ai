@@ -6,6 +6,7 @@ authors = [
   {name = "Encypher", email = "sdk@encypherai.com"},
 ]
 readme = "README.md"
+license = { text = \"MIT\" }
 keywords = ["OpenAPI", "OpenAPI-Generator", "Encypher Enterprise API"]
 requires-python = ">=3.9"
 
@@ -17,10 +18,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://encypherai.com"
-Documentation = "https://api.encypherai.com/docs"
-Repository = "https://github.com/encypherai/encypherai-commercial"
 Changelog = "https://github.com/encypherai/encypherai-commercial/releases"
+Documentation = "https://api.encypherai.com/docs"
+Homepage = "https://encypherai.com"
+Repository = "https://github.com/encypherai/encypherai-commercial"
 [tool.poetry]
 requires-poetry = ">=2.0"
 

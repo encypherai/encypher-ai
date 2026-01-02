@@ -331,8 +331,8 @@ class Frontend
                         const badge = document.querySelector('.encypher-c2pa-badge[data-post-id="' + postId + '"]');
                         if (badge) {
                             const textSpan = badge.querySelector('span');
-                            if (textSpan && !textSpan.textContent.includes('✓')) {
-                                textSpan.innerHTML = '✓ <?php esc_html_e('Verified', 'encypher-provenance'); ?>';
+                            if (textSpan && !textSpan.textContent.includes('<?php esc_html_e('Verified', 'encypher-provenance'); ?>')) {
+                                textSpan.innerHTML = '<?php esc_html_e('Verified', 'encypher-provenance'); ?>';
                                 textSpan.style.color = '#2e7d32';
                             }
                         }
@@ -357,7 +357,7 @@ class Frontend
                 }
                 
                 let html = '<div class="encypher-verification-success">';
-                html += '<div class="encypher-status-badge encypher-status-verified">✓ <?php esc_html_e('Verified', 'encypher-provenance'); ?></div>';
+                html += '<div class="encypher-status-badge encypher-status-verified"><?php esc_html_e('Verified', 'encypher-provenance'); ?></div>';
                 
                 // Show cache status
                 if (data.cached) {
@@ -438,7 +438,7 @@ class Frontend
                 // Add provenance chain viewer (if ingredients exist)
                 if (data.metadata && data.metadata.ingredients && data.metadata.ingredients.length > 0) {
                     html += '<details style="margin: 15px 0;">';
-                    html += '<summary style="cursor: pointer; padding: 10px; background: #28a745; color: white; border-radius: 4px; font-weight: 600;">🔗 <?php esc_html_e('View Provenance Chain', 'encypher-provenance'); ?></summary>';
+                    html += '<summary style="cursor: pointer; padding: 10px; background: #28a745; color: white; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Provenance Chain', 'encypher-provenance'); ?></summary>';
                     html += '<div style="padding: 15px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px; background: #f8f9fa;">';
                     html += '<p style="margin-bottom: 15px; color: #666;"><?php esc_html_e('This content has been edited. View the complete edit history:', 'encypher-provenance'); ?></p>';
                     
@@ -464,11 +464,10 @@ class Frontend
                     for (let i = 0; i < chain.length; i++) {
                         const item = chain[i];
                         const indent = '  '.repeat(item.depth);
-                        const icon = item.action === 'c2pa.created' ? '🌱' : '✏️';
                         const label = item.action === 'c2pa.created' ? 'Created' : 'Edited';
                         const color = item.action === 'c2pa.created' ? '#28a745' : '#ffc107';
                         html += '<div style="padding: 8px; margin: 5px 0; background: white; border-left: 3px solid ' + color + '; border-radius: 4px;">';
-                        html += indent + icon + ' <strong>' + label + '</strong> at ' + item.when;
+                        html += indent + '<strong>' + label + '</strong> at ' + item.when;
                         html += '<br>' + indent + '   <span style="color: #999; font-size: 11px;">Instance: ' + item.instance_id.substring(0, 8) + '...</span>';
                         html += '</div>';
                     }
@@ -485,7 +484,7 @@ class Frontend
                     html += escapeHtml(JSON.stringify(data.metadata, null, 2));
                     html += '</pre>';
                     html += '<p style="margin-top: 15px; font-size: 12px; color: #666; text-align: center;">';
-                    html += '<button id="copy-manifest-btn" style="padding: 8px 16px; background: #2A87C4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500;">📋 Copy to Clipboard</button>';
+                    html += '<button id="copy-manifest-btn" style="padding: 8px 16px; background: #2A87C4; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 500;">Copy to Clipboard</button>';
                     html += '</p>';
                     html += '</div></details>';
                     
@@ -496,15 +495,15 @@ class Frontend
                             copyBtn.onclick = function() {
                                 const json = JSON.stringify(data.metadata, null, 2);
                                 navigator.clipboard.writeText(json).then(function() {
-                                    copyBtn.textContent = '✓ Copied!';
+                                    copyBtn.textContent = 'Copied';
                                     setTimeout(function() {
-                                        copyBtn.textContent = '📋 Copy to Clipboard';
+                                        copyBtn.textContent = 'Copy to Clipboard';
                                     }, 2000);
                                 }).catch(function(err) {
                                     console.error('Failed to copy:', err);
-                                    copyBtn.textContent = '❌ Failed';
+                                    copyBtn.textContent = 'Copy failed';
                                     setTimeout(function() {
-                                        copyBtn.textContent = '📋 Copy to Clipboard';
+                                        copyBtn.textContent = 'Copy to Clipboard';
                                     }, 2000);
                                 });
                             };

@@ -50,6 +50,34 @@ def test_plugin_uses_account_endpoint_for_tier_lookup() -> None:
     assert "$base . '/stats'" not in rest_src
 
 
+def test_plugin_uses_supported_sign_and_verify_endpoints() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    assert "'/enterprise/embeddings/encode-with-embeddings'" not in src
+    assert "'/sign'" in src
+    assert "'/sign/advanced'" in src
+    assert "'/verify'" in src
+
+
+def test_tools_router_does_not_generate_ephemeral_demo_keys() -> None:
+    repo_root = _repo_root()
+    tools_py = repo_root / "enterprise_api" / "app" / "routers" / "tools.py"
+    src = tools_py.read_text(encoding="utf-8")
+
+    assert "get_demo_private_key" in src
+    assert "Generated ephemeral demo keys" not in src
+
+
 def test_plugin_accepts_canonical_tier_ids() -> None:
     repo_root = _repo_root()
     admin_php = (
@@ -107,3 +135,158 @@ def test_auto_mark_on_publish_setting_key_used() -> None:
 
     assert "['auto_mark_on_publish']" in src
     assert "['auto_sign_on_publish']" not in src
+
+
+def test_plugin_has_no_legacy_settings_menu_artifacts() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    admin_src = admin_php.read_text(encoding="utf-8")
+    assert "add_options_page" not in admin_src
+
+
+def test_plugin_bulk_mark_is_not_registered_under_wp_tools_menu() -> None:
+    repo_root = _repo_root()
+    bulk_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-bulk.php"
+    )
+    bulk_src = bulk_php.read_text(encoding="utf-8")
+
+    assert "'tools.php'" not in bulk_src
+
+
+def test_plugin_bulk_mark_links_do_not_point_to_wp_tools_menu() -> None:
+    repo_root = _repo_root()
+    admin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-admin.php"
+    )
+    admin_src = admin_php.read_text(encoding="utf-8")
+
+    assert "tools.php?page=encypher-bulk-mark" not in admin_src
+
+
+def test_plugin_coalition_page_is_under_encypher_menu() -> None:
+    repo_root = _repo_root()
+    coalition_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-coalition.php"
+    )
+    coalition_src = coalition_php.read_text(encoding="utf-8")
+
+    assert "add_submenu_page" in coalition_src
+    assert "'encypher'" in coalition_src
+
+
+def test_plugin_sign_endpoint_does_not_block_resigning_marked_posts() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    assert "already_signed" not in src
+
+
+def test_plugin_auto_sign_does_not_delete_marked_meta_as_a_bypass() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    assert "delete_post_meta($post_id, '_encypher_marked')" not in src
+
+
+def test_plugin_does_not_log_request_uri_on_every_request() -> None:
+    repo_root = _repo_root()
+    plugin_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance.php"
+    )
+    src = plugin_php.read_text(encoding="utf-8")
+
+    assert "Encypher: REQUEST_URI=" not in src
+
+
+def test_plugin_provenance_handler_uses_global_wp_query() -> None:
+    repo_root = _repo_root()
+    rest_php = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "includes"
+        / "class-encypher-provenance-rest.php"
+    )
+    src = rest_php.read_text(encoding="utf-8")
+
+    assert "new \\WP_Query" in src or "use WP_Query;" in src
+
+
+def test_plugin_ui_does_not_use_emoji_status_glyphs() -> None:
+    repo_root = _repo_root()
+    plugin_root = (
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+    )
+
+    targets = [
+        plugin_root / "includes" / "class-encypher-provenance-admin.php",
+        plugin_root / "includes" / "class-encypher-provenance-frontend.php",
+        plugin_root / "assets" / "js" / "editor-sidebar.js",
+        plugin_root / "assets" / "js" / "settings-page.js",
+        plugin_root / "admin" / "partials" / "coalition-page.php",
+        plugin_root / "admin" / "partials" / "coalition-widget.php",
+        plugin_root / "templates" / "provenance-report.php",
+    ]
+
+    forbidden = ["✅", "❌", "✓", "✗"]
+    for path in targets:
+        src = path.read_text(encoding="utf-8")
+        for glyph in forbidden:
+            assert glyph not in src

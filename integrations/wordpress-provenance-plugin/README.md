@@ -84,7 +84,7 @@ For local development without dashboard access you can run the Enterprise API se
 
 1. Copy `plugin/encypher-provenance` into a WordPress installation under `wp-content/plugins/`.
 2. Activate **Encypher Provenance** in the WordPress admin dashboard.
-3. Go to **Settings > Encypher Provenance** and set:
+3. Go to **Encypher > Settings** and set:
    - **API Base URL:** `https://api.encypherai.com/api/v1` (or your self-hosted Enterprise API endpoint).
    - **API Key:** paste the key generated during onboarding.
 4. In the Gutenberg editor, open the **Encypher Provenance** panel to sign your draft. The Classic Editor uses the provided meta box. Each signing request produces C2PA-compliant wrapped text that replaces the post body contents.
@@ -114,7 +114,7 @@ A `docker-compose.yml` is provided so you can run WordPress, MySQL, PostgreSQL, 
    ```bash
    docker compose run --rm wp-cli plugin activate encypher-provenance
    ```
-4. Sign in at `http://localhost:8080/wp-admin`, choose **Settings > Encypher Provenance**, and configure:
+4. Sign in at `http://localhost:8080/wp-admin`, choose **Encypher > Settings**, and configure:
    - **API Base URL:** `http://enterprise-api:8000/api/v1`
    - **API Key:** `demo-local-key`
    - Enable automatic verification if desired.

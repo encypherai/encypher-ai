@@ -21,10 +21,10 @@ export default function CompanyPage() {
     <div className="container py-12 md:py-20">
       <AISummary
         title="About Encypher"
-        whatWeDo="Authors of the C2PA text standard delivering sentence-level content authentication and licensing infrastructure."
-        whoItsFor="Publishers, AI labs, and enterprises needing cryptographic provenance and performance intelligence."
-        keyDifferentiator="Court-admissible, standards-authored cryptographic proof with sentence-level granularity."
-        primaryValue="Trusted, verifiable content with measurable business outcomes and ecosystem compliance."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force (c2pa.org) with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. API and SDKs in Python, TypeScript, Go, and Rust. Standard publishes January 8, 2026."
+        whoItsFor="Publishers seeking content licensing and provable ownership. AI labs needing quote integrity verification and performance intelligence. Enterprises requiring EU AI Act compliance."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste, B2B distribution, and scraping. Enables content attribution and licensing."
+        primaryValue="Building collaborative infrastructure for the AI content economy. Working with industry leaders to define content licensing frameworks."
       />
       <Script id="schema-faq" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Script

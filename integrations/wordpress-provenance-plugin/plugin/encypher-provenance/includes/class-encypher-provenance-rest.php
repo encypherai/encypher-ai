@@ -177,16 +177,6 @@ class Rest
             );
         }
 
-        // Check if already signed (prevent duplicate signing)
-        $is_marked = get_post_meta($post_id, '_encypher_marked', true);
-        if ($is_marked) {
-            return new WP_Error(
-                'already_signed',
-                __('This post is already signed with C2PA. To update the signature, edit and re-publish the post.', 'encypher-provenance'),
-                ['status' => 400]
-            );
-        }
-
         $metadata = $request->get_param('metadata');
         if (! is_array($metadata)) {
             $metadata = [];
@@ -246,7 +236,6 @@ class Rest
         // Get tier from settings (default to free)
         $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
         
-        $organization_id = ! empty($settings['organization_id']) ? sanitize_text_field((string) $settings['organization_id']) : 'org_demo';
         $organization_name = ! empty($settings['organization_name']) ? sanitize_text_field((string) $settings['organization_name']) : '';
         $signing_mode = isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed';
         if ($tier === 'starter') {
@@ -257,68 +246,67 @@ class Rest
             $signing_profile_id = sanitize_text_field((string) $settings['signing_profile_id']);
         }
         
-        // Build Enterprise API payload for /enterprise/embeddings/encode-with-embeddings
-        $payload = [
-            'text' => $clean_content,
-            'document_id' => 'wp_post_' . $post_id,
-            'organization_id' => $organization_id,
-            'action' => $action_type,
-            'previous_instance_id' => $previous_instance_id,
-            // Free tier: document-level only (no segmentation, one C2PA wrapper)
-            // Pro/Enterprise: sentence-level segmentation + one C2PA wrapper
-            'segmentation_level' => ($tier === 'starter') ? 'document' : 'sentence',
-            'metadata' => [
-                'title' => $post->post_title,
-                'author' => get_the_author_meta('display_name', $post->post_author),
-                'published_at' => $post->post_date,
-                'url' => get_permalink($post),
-                'wordpress_post_id' => $post_id,
-                'tier' => $tier,
-                'organization_name' => $organization_name,
-            ],
-            'embedding_options' => [
-                'metadata_format' => $metadata_format,
-                'add_hard_binding' => $add_hard_binding,
-                'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_ASSURANCE_VERSION,
-            ],
-        ];
-        
-        if ($signing_profile_id) {
-            $payload['signing_profile_id'] = $signing_profile_id;
-        }
-        $payload['metadata']['signing_mode'] = $signing_mode;
-        
-        // Add license info if available
-        if (isset($metadata['license_type'])) {
-            $payload['license_info'] = [
-                'type' => sanitize_text_field($metadata['license_type']),
-                'url' => isset($metadata['license_url']) ? esc_url_raw($metadata['license_url']) : '',
-            ];
-        }
+        $is_starter = ($tier === 'starter');
 
-        $response = $this->call_backend('/enterprise/embeddings/encode-with-embeddings', $payload, true);
+        if ($is_starter) {
+            $payload = [
+                'text' => $clean_content,
+                'document_id' => 'wp_post_' . $post_id,
+                'document_title' => $post->post_title,
+                'document_url' => get_permalink($post),
+                'document_type' => 'article',
+                'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_ASSURANCE_VERSION,
+            ];
+            $response = $this->call_backend('/sign', $payload, true);
+        } else {
+            $payload = [
+                'document_id' => 'wp_post_' . $post_id,
+                'text' => $clean_content,
+                'segmentation_level' => 'sentence',
+                'action' => $action_type,
+                'previous_instance_id' => $previous_instance_id,
+                'metadata' => [
+                    'title' => $post->post_title,
+                    'author' => get_the_author_meta('display_name', $post->post_author),
+                    'published_at' => $post->post_date,
+                    'url' => get_permalink($post),
+                    'wordpress_post_id' => $post_id,
+                    'tier' => $tier,
+                    'organization_name' => $organization_name,
+                    'signing_mode' => $signing_mode,
+                ],
+            ];
+
+            if (isset($metadata['license_type'])) {
+                $payload['license'] = [
+                    'type' => sanitize_text_field($metadata['license_type']),
+                    'url' => isset($metadata['license_url']) ? esc_url_raw($metadata['license_url']) : '',
+                ];
+            }
+
+            $response = $this->call_backend('/sign/advanced', $payload, true);
+        }
         if (is_wp_error($response)) {
             return $response;
         }
 
         // Extract embedded content from Enterprise API response
-        $embedded_content = $response['embedded_content'] ?? null;
+        $embedded_content = $response['embedded_content'] ?? ($response['signed_text'] ?? null);
         if (! is_string($embedded_content) || '' === $embedded_content) {
             return new WP_Error('invalid_response', __('Unexpected response from Enterprise API.', 'encypher-provenance'), ['status' => 502]);
         }
 
-        // Verify the embedded content has exactly ONE C2PA wrapper (spec compliant)
         $final_check = $this->detect_c2pa_embeddings($embedded_content);
-        if ($final_check['count'] !== 1) {
+        if ($final_check['count'] < 1) {
             error_log(sprintf(
-                'Encypher: C2PA compliance violation! Expected 1 wrapper, found %d in post %d',
+                'Encypher: C2PA compliance violation! Expected at least 1 wrapper, found %d in post %d',
                 $final_check['count'],
                 $post_id
             ));
             return new WP_Error(
                 'c2pa_compliance_violation',
                 sprintf(
-                    __('C2PA compliance check failed: Expected 1 wrapper, found %d. Please contact support.', 'encypher-provenance'),
+                    __('C2PA compliance check failed: Expected at least 1 wrapper, found %d. Please contact support.', 'encypher-provenance'),
                     $final_check['count']
                 ),
                 ['status' => 500]
@@ -333,18 +321,19 @@ class Rest
         $document_id = isset($response['document_id']) ? sanitize_text_field((string) $response['document_id']) : '';
         $merkle_tree = $response['merkle_tree'] ?? [];
         $statistics = $response['statistics'] ?? [];
-        $total_sentences = isset($statistics['total_sentences']) ? (int) $statistics['total_sentences'] : 0;
-        
-        // Generate verification URL using instance_id from embedded content
-        // Extract instance_id from the C2PA manifest in embedded_content
-        $instance_id = null;
-        if ($embedded_content) {
-            // The instance_id will be available after verification
-            // For now, use document_id as fallback
-            $verification_url = home_url('/c2pa-verify/') . urlencode($document_id);
-        } else {
-            $verification_url = home_url('/c2pa-verify/') . urlencode($document_id);
+        $total_sentences = 0;
+        if (isset($response['total_sentences'])) {
+            $total_sentences = (int) $response['total_sentences'];
+        } elseif (isset($statistics['total_sentences'])) {
+            $total_sentences = (int) $statistics['total_sentences'];
         }
+
+        $instance_id = '';
+        if (!empty($response['metadata']['instance_id'])) {
+            $instance_id = sanitize_text_field((string) $response['metadata']['instance_id']);
+        }
+        $verification_id = $instance_id ?: $document_id;
+        $verification_url = $verification_id ? home_url('/c2pa-verify/') . urlencode($verification_id) : '';
 
         $this->is_signing = true;
         $updated = wp_update_post([
@@ -364,7 +353,7 @@ class Rest
         }
         
         // Store metadata about the C2PA marking
-        update_post_meta($post_id, '_encypher_marked', true); // Mark as signed
+        update_post_meta($post_id, '_encypher_marked', true);
         update_post_meta($post_id, '_encypher_assurance_cached_content_hash', md5((string) $embedded_content));
         update_post_meta($post_id, '_encypher_assurance_status', 'c2pa_protected');
         update_post_meta($post_id, '_encypher_assurance_document_id', $document_id);
@@ -488,44 +477,76 @@ class Rest
             error_log(sprintf('Encypher: Cache disabled (WP_DEBUG=true), performing fresh verification for post %d', $post_id));
         }
 
-        // Use public verification API endpoint (no auth required)
         $payload = [
             'text' => $raw_content,
         ];
 
-        error_log(sprintf('Encypher: Calling /public/extract-and-verify for post %d (content length: %d)', $post_id, strlen($raw_content)));
-        $response = $this->call_backend('/public/extract-and-verify', $payload, false);
+        error_log(sprintf('Encypher: Calling /verify for post %d (content length: %d)', $post_id, strlen($raw_content)));
+        $response = $this->call_backend('/verify', $payload, false);
         if (is_wp_error($response)) {
             error_log(sprintf('Encypher: Verification API error for post %d: %s', $post_id, $response->get_error_message()));
             return $response;
         }
-        error_log(sprintf('Encypher: Verification response for post %d: valid=%s', $post_id, isset($response['valid']) ? ($response['valid'] ? 'true' : 'false') : 'null'));
+
+        $normalized = [
+            'valid' => false,
+            'tampered' => false,
+            'reason_code' => null,
+            'signer_id' => null,
+            'signer_name' => null,
+            'verified_at' => null,
+            'metadata' => null,
+            'error' => null,
+            'cached' => false,
+        ];
+
+        if (isset($response['success']) && $response['success'] && isset($response['data']) && is_array($response['data'])) {
+            $verdict = $response['data'];
+            $normalized['valid'] = !empty($verdict['valid']);
+            $normalized['tampered'] = !empty($verdict['tampered']);
+            $normalized['reason_code'] = isset($verdict['reason_code']) ? (string) $verdict['reason_code'] : null;
+            $normalized['signer_id'] = isset($verdict['signer_id']) ? (string) $verdict['signer_id'] : null;
+            $normalized['signer_name'] = isset($verdict['signer_name']) ? (string) $verdict['signer_name'] : null;
+            $normalized['verified_at'] = isset($verdict['timestamp']) ? (string) $verdict['timestamp'] : null;
+            if (isset($verdict['details']) && is_array($verdict['details']) && isset($verdict['details']['manifest']) && is_array($verdict['details']['manifest'])) {
+                $normalized['metadata'] = $verdict['details']['manifest'];
+            }
+            if (!$normalized['valid']) {
+                $normalized['error'] = $normalized['tampered']
+                    ? __('Manifest found but signature verification failed. The content may have been modified.', 'encypher-provenance')
+                    : __('Manifest found but could not be verified.', 'encypher-provenance');
+            }
+        } elseif (isset($response['error']) && is_array($response['error']) && isset($response['error']['message'])) {
+            $normalized['error'] = (string) $response['error']['message'];
+        }
+
+        error_log(sprintf('Encypher: Verification response for post %d: valid=%s', $post_id, $normalized['valid'] ? 'true' : 'false'));
 
         // Cache the verification result for 5 minutes (only if caching is enabled)
         if ($cache_enabled) {
-            set_transient($cache_key, $response, 5 * MINUTE_IN_SECONDS);
+            set_transient($cache_key, $normalized, 5 * MINUTE_IN_SECONDS);
         }
 
         // Store verification result in post meta
-        update_post_meta($post_id, '_encypher_assurance_verification', $response);
+        update_post_meta($post_id, '_encypher_assurance_verification', $normalized);
         update_post_meta($post_id, '_encypher_assurance_last_verified', current_time('mysql'));
         
         // Store instance_id for public provenance lookup
-        if (!empty($response['metadata']['instance_id'])) {
-            update_post_meta($post_id, '_encypher_assurance_instance_id', $response['metadata']['instance_id']);
+        if (!empty($normalized['metadata']['instance_id'])) {
+            update_post_meta($post_id, '_encypher_assurance_instance_id', $normalized['metadata']['instance_id']);
         }
         
         // Update status based on verification
         $status = 'not_signed';
-        if (!empty($response['valid'])) {
+        if (!empty($normalized['valid'])) {
             $status = 'c2pa_verified';
-        } elseif (!empty($response['error'])) {
+        } elseif (!empty($normalized['error'])) {
             $status = 'verification_failed';
         }
         update_post_meta($post_id, '_encypher_assurance_status', $status);
 
-        $response['cached'] = false;
-        return new WP_REST_Response($response);
+        $normalized['cached'] = false;
+        return new WP_REST_Response($normalized);
     }
 
     public function handle_provenance_request(WP_REST_Request $request)
@@ -548,7 +569,7 @@ class Rest
                     ]
                 ]
             ];
-            $query = new WP_Query($args);
+            $query = new \WP_Query($args);
             if (!$query->have_posts()) {
                 return new WP_Error('not_found', __('No content found with this C2PA instance ID.', 'encypher-provenance'), ['status' => 404]);
             }
@@ -775,12 +796,7 @@ class Rest
             $request = new WP_REST_Request('POST', '/encypher-provenance/v1/sign');
             $request->set_param('post_id', $post_id);
             $request->set_param('metadata', []);
-            
-            // Temporarily bypass the "already signed" check for updates
-            if ($is_update) {
-                delete_post_meta($post_id, '_encypher_marked');
-            }
-            
+
             // Call the sign handler
             $response = $this->handle_sign_request($request);
             
@@ -833,25 +849,49 @@ class Rest
         // Look for sequences of variation selectors (indicators of C2PA embedding)
         // C2PA magic bytes: C2PATXT\0 (0x43 0x32 0x50 0x41 0x54 0x58 0x54 0x00)
         // When encoded as variation selectors, this creates a detectable pattern
-        
-        $variation_selector_pattern = '/[\x{FE00}-\x{FE0F}\x{E0100}-\x{E01EF}]+/u';
-        preg_match_all($variation_selector_pattern, $text, $matches, PREG_OFFSET_CAPTURE);
-        
-        // Count sequences that are long enough to be C2PA wrappers (minimum ~100 chars for header + small manifest)
+
+        $pattern = '/\x{FEFF}([\x{FE00}-\x{FE0F}\x{E0100}-\x{E01EF}]+)/u';
+        preg_match_all($pattern, $text, $matches, PREG_OFFSET_CAPTURE);
+
+        $magic = [0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00];
         $embedding_count = 0;
         $positions = [];
-        
-        foreach ($matches[0] as $match) {
-            $sequence_length = mb_strlen($match[0], 'UTF-8');
-            if ($sequence_length >= 50) { // Minimum size for a C2PA wrapper
+
+        foreach ($matches[1] as $index => $match) {
+            $vs_sequence = $match[0];
+            $chars = preg_split('//u', $vs_sequence, -1, PREG_SPLIT_NO_EMPTY);
+            if (!is_array($chars) || count($chars) < 8) {
+                continue;
+            }
+
+            $decoded = [];
+            for ($i = 0; $i < 8; $i++) {
+                $codepoint = mb_ord($chars[$i], 'UTF-8');
+                $byte = null;
+
+                if ($codepoint >= 0xFE00 && $codepoint <= 0xFE0F) {
+                    $byte = $codepoint - 0xFE00;
+                } elseif ($codepoint >= 0xE0100 && $codepoint <= 0xE01EF) {
+                    $byte = ($codepoint - 0xE0100) + 16;
+                }
+
+                if ($byte === null) {
+                    $decoded = [];
+                    break;
+                }
+
+                $decoded[] = $byte;
+            }
+
+            if ($decoded === $magic) {
                 $embedding_count++;
-                $positions[] = $match[1];
+                $positions[] = $matches[0][$index][1];
             }
         }
-        
+
         return [
             'count' => $embedding_count,
-            'positions' => $positions
+            'positions' => $positions,
         ];
     }
 

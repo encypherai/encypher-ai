@@ -110,12 +110,12 @@
         <div class="content">
             <?php if (is_wp_error($data)): ?>
                 <div class="status-badge" style="background: #f8d7da; color: #721c24; border-color: #f5c6cb;">
-                    ❌ Not Found
+                    Not Found
                 </div>
                 <p><?php echo esc_html($data->get_error_message()); ?></p>
             <?php else: ?>
                 <div class="status-badge status-verified">
-                    ✓ Verified Content
+                    Verified Content
                 </div>
                 
                 <?php $report = $data->get_data(); ?>

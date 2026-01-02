@@ -24,10 +24,10 @@ export default function PublisherDemoPage() {
     <>
       <AISummary
         title="Publisher Demo | Encypher"
-        whatWeDo="Interactive walk-through of sentence-level content authentication and licensing for publishers."
-        whoItsFor="Publishing executives and legal teams evaluating AI-era licensing and enforcement."
-        keyDifferentiator="Court-admissible, cryptographic proof at sentence-level, authored by C2PA text standard leaders."
-        primaryValue="Shift from litigation costs to predictable licensing revenue with mathematical certainty."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. Interactive demo of cryptographic watermarking that survives copy-paste and B2B distribution. API and SDKs available. Standard publishes January 8, 2026."
+        whoItsFor="Publishing executives and legal teams seeking provable content ownership and licensing revenue."
+        keyDifferentiator="Cryptographic proof enables content attribution and licensing. Sentence-level tracking proves exactly which content was used."
+        primaryValue="Transform litigation costs into licensing revenue. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
       />
       <PublisherDemo />
     </>

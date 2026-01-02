@@ -32,9 +32,9 @@ class Bulk
     public function register_bulk_page(): void
     {
         add_submenu_page(
-            'tools.php',
-            __('Encypher C2PA - Bulk Mark', 'encypher-provenance'),
-            __('Encypher C2PA', 'encypher-provenance'),
+            'encypher',
+            __('Bulk Sign', 'encypher-provenance'),
+            __('Bulk Sign', 'encypher-provenance'),
             'manage_options',
             'encypher-bulk-mark',
             [$this, 'render_bulk_page']
@@ -46,7 +46,7 @@ class Bulk
      */
     public function enqueue_bulk_assets(string $hook_suffix): void
     {
-        if ('tools_page_encypher-bulk-mark' !== $hook_suffix) {
+        if ('encypher_page_encypher-bulk-mark' !== $hook_suffix) {
             return;
         }
 

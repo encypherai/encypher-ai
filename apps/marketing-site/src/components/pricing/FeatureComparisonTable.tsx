@@ -457,7 +457,7 @@ export default function FeatureComparisonTable({
                     </Button>
                   ) : tier.id === 'enterprise' ? (
                     <Button variant="outline" className="w-full" asChild>
-                      <Link href="/contact?type=enterprise">Contact Sales</Link>
+                      <Link href="/company#contact">Contact Sales</Link>
                     </Button>
                   ) : (
                     <Button 

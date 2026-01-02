@@ -1,0 +1,114 @@
+# Encypher - Content Intelligence Infrastructure
+# https://encypherai.com
+# Last Updated: December 2025
+
+## About Encypher
+
+Encypher is the company that authored the C2PA text authentication standard. We provide sentence-level content tracking infrastructure for publishers and AI labs.
+
+### What We Do
+- Authors of the C2PA text standard (publishing January 8, 2026)
+- Sentence-level content authentication with cryptographic proof
+- Court-admissible evidence generation for AI copyright litigation
+- Content licensing infrastructure for the AI economy
+- Performance intelligence for AI model optimization
+
+### Who We Serve
+
+**Publishers**: Transform unmarked content into provably owned assets. Generate court-admissible evidence for AI copyright litigation. Create new licensing revenue streams when AI companies use your content.
+
+**AI Labs**: Get performance intelligence on your models across the internet. Track which parameters drive viral content. One integration covers the entire publisher ecosystem. EU AI Act and China watermarking mandate compliance.
+
+**Enterprises**: Implement AI governance with sentence-level audit trails. EU AI Act compliance infrastructure. Competitive intelligence on AI content usage.
+
+### Key Differentiators
+- 100% accuracy (cryptographic proof vs 26% accuracy of probabilistic AI detection)
+- Sentence-level granularity (not just document-level)
+- Court-admissible evidence (mathematical certainty, not statistical inference)
+- Standards authority (we wrote the C2PA text standard)
+- Two-sided market (serves both publishers and AI labs)
+
+### Standards & Affiliations
+- C2PA (Coalition for Content Provenance and Authenticity) - Text Standard Co-Authors
+- CAI (Content Authenticity Initiative) - Members
+- Working alongside Adobe, Microsoft, Google, OpenAI, BBC
+
+## Products & Pricing
+
+### For Publishers
+- **Starter (Free)**: Unlimited C2PA signing, 2 API keys, 65% revenue share
+- **Professional ($99/mo)**: Sentence-level tracking, 10 API keys, 70% revenue share
+- **Business ($499/mo)**: Enterprise features, team collaboration, 75% revenue share
+- **Enterprise (Custom)**: White-glove implementation, custom SLAs, 80% revenue share
+
+### For AI Labs
+- Performance intelligence dashboard
+- Model parameter tracking
+- Publisher ecosystem integration
+- Regulatory compliance (EU AI Act, China mandate)
+
+## Technical Overview
+
+### C2PA Text Standard
+The C2PA text standard defines how text content is cryptographically authenticated. Key features:
+- Unicode variation selector encoding (invisible to humans)
+- Ed25519 cryptographic signatures
+- Sentence-level Merkle tree hashing
+- Tamper-evident chain of custody
+
+### API Capabilities
+- `/sign` - Sign content with C2PA-compliant metadata
+- `/verify` - Verify signed content and extract metadata
+- `/merkle/encode` - Sentence-level Merkle tree encoding
+- `/merkle/attribution` - Check content against registered sentences
+- `/streaming/*` - Real-time content signing for LLM outputs
+
+### SDKs Available
+- Python SDK (PyPI)
+- TypeScript SDK (npm)
+- Go SDK
+- Rust SDK
+
+## Contact
+
+- Website: https://encypherai.com
+- API Documentation: https://api.encypherai.com/docs
+- GitHub: https://github.com/encypherai/encypher-ai
+- Email: contact@encypherai.com
+- LinkedIn: https://linkedin.com/company/encypherai
+
+## Frequently Asked Questions
+
+Q: What is Encypher?
+A: Encypher authored the C2PA text authentication standard and provides sentence-level content tracking infrastructure for publishers and AI labs. We enable litigation evidence and content licensing through cryptographic proof with 100% accuracy.
+
+Q: What is the C2PA text standard?
+A: The C2PA text standard, authored by Encypher, defines how text content is cryptographically authenticated. It enables verification of content origin, modifications, and usage with mathematical certainty. Publishing January 8, 2026.
+
+Q: How is Encypher different from AI detection tools?
+A: AI detection tools provide statistical guessing with ~26% accuracy and high false positive rates. Encypher provides cryptographic proof with 100% accuracy and sentence-level granularity. Our evidence is court-admissible.
+
+Q: What is sentence-level tracking?
+A: Sentence-level tracking identifies and authenticates content at individual sentence granularity. Instead of proving "a document was accessed," we prove "sentences 47, 103, and 289 from this specific article were used."
+
+Q: Who uses Encypher?
+A: Publishers seeking court-admissible evidence for AI copyright litigation and content licensing revenue. AI labs requiring publisher ecosystem integration, model performance intelligence, and compliance infrastructure.
+
+Q: Is Encypher an AI detection tool?
+A: No. Encypher is infrastructure that enables content authentication. Once AI companies adopt our technology, detection becomes trivial because content carries cryptographic proof of origin. We're building the infrastructure layer, not a detection product.
+
+Q: What regulations does Encypher help with?
+A: EU AI Act (requires AI-generated content identification), China watermarking mandate, and general AI governance requirements. Our C2PA-compliant infrastructure satisfies these regulatory requirements.
+
+## Page Index
+
+- / - Homepage: Cryptographic Proof for the AI Economy
+- /solutions/publishers - Publisher content protection and licensing
+- /solutions/ai-companies - AI lab performance intelligence
+- /solutions/enterprises - Enterprise AI governance
+- /pricing - Pricing and plans
+- /company - About Encypher and team
+- /blog - Insights from the C2PA text standard authors
+- /tools - Free encoding/decoding tools
+- /publisher-demo - Interactive publisher demonstration
+- /ai-demo - Interactive AI lab demonstration

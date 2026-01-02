@@ -11,15 +11,9 @@ if (! defined('ABSPATH')) {
 class Admin
 {
     private const ACCOUNT_CACHE_TTL = 900; // 15 minutes
-
-    /**
-     * Get SVG icon markup. Uses material-style stroke icons matching the design system.
-     */
     private function get_icon(string $name, string $class = 'encypher-icon'): string
     {
         $icons = [
-            // Encypher brand logo - simplified version of encypher_check_color.svg
-            'encypher-logo' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 100 100" fill="none"><circle cx="50" cy="50" r="45" fill="#1b2f50"/><circle cx="50" cy="50" r="38" fill="none" stroke="#fff" stroke-width="3"/><path d="M35 50l10 10 20-20" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>',
             'shield' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
             'shield-check' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>',
             'document' => '<svg class="' . esc_attr($class) . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>',
@@ -49,16 +43,22 @@ class Admin
         add_action('admin_menu', [$this, 'register_admin_menu']);
         add_action('admin_init', [$this, 'register_settings']);
         add_action('admin_enqueue_scripts', [$this, 'enqueue_settings_page_assets']);
+        add_action('admin_head', [$this, 'output_admin_menu_icon_css']);
         add_action('enqueue_block_editor_assets', [$this, 'enqueue_block_editor_assets']);
         add_action('wp_dashboard_setup', [$this, 'register_dashboard_widget']);
         add_action('wp_ajax_encypher_dismiss_onboarding', [$this, 'ajax_dismiss_onboarding']);
         // Classic editor meta box disabled - using Gutenberg sidebar instead
         // add_action('admin_enqueue_scripts', [$this, 'enqueue_classic_assets']);
         // add_action('add_meta_boxes', [$this, 'register_classic_meta_box']);
-        
-        // Note: Auto-sign hooks are handled by the REST class (class-encypher-provenance-rest.php)
-        // which has the proper implementation that calls the Enterprise API.
-        // Do NOT add duplicate hooks here.
+    }
+
+    public function output_admin_menu_icon_css(): void
+    {
+        echo '<style>';
+        echo '#adminmenu #toplevel_page_encypher .wp-menu-image img{width:20px;height:20px;max-width:20px;max-height:20px;padding:7px 0;box-sizing:content-box;filter:brightness(0) invert(.65);}';
+        echo '#adminmenu #toplevel_page_encypher:hover .wp-menu-image img{filter:brightness(0) invert(1);}';
+        echo '#adminmenu .wp-has-current-submenu#toplevel_page_encypher .wp-menu-image img{filter:brightness(0) invert(1);}';
+        echo '</style>';
     }
 
     public function register_dashboard_widget(): void
@@ -75,8 +75,7 @@ class Admin
      */
     public function register_admin_menu(): void
     {
-        // SVG icon for Encypher (base64 encoded)
-        $icon_svg = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>');
+        $icon_svg = ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/images/encypher_check_color.svg';
 
         // Main menu page (Dashboard)
         add_menu_page(
@@ -137,15 +136,6 @@ class Admin
             'manage_options',
             'encypher-account',
             [$this, 'render_account_page']
-        );
-
-        // Keep legacy settings page for backward compatibility (hidden)
-        add_options_page(
-            __('Encypher Provenance', 'encypher-provenance'),
-            __('Encypher Provenance', 'encypher-provenance'),
-            'manage_options',
-            'encypher-provenance-settings',
-            [$this, 'render_settings_page']
         );
     }
 
@@ -532,6 +522,7 @@ class Admin
         }
 
         $settings = get_option('encypher_assurance_settings', []);
+
         $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
         $org_name = isset($settings['organization_name']) ? $settings['organization_name'] : '';
         $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
@@ -543,7 +534,13 @@ class Admin
         <div class="wrap encypher-dashboard">
             <div class="encypher-header">
                 <h1>
-                    <span class="encypher-logo"><?php echo $this->get_icon('encypher-logo', 'encypher-icon encypher-icon-brand'); ?></span>
+                    <span class="encypher-logo">
+                        <img
+                            class="encypher-brand-mark"
+                            src="<?php echo esc_url(ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/images/encypher_check_color.svg'); ?>"
+                            alt="<?php echo esc_attr__('Encypher', 'encypher-provenance'); ?>"
+                        />
+                    </span>
                     <?php esc_html_e('Encypher', 'encypher-provenance'); ?>
                 </h1>
                 <?php if ($is_connected && $org_name): ?>
@@ -588,7 +585,7 @@ class Admin
                         <span class="action-title"><?php esc_html_e('Manage Content', 'encypher-provenance'); ?></span>
                         <span class="action-desc"><?php esc_html_e('View and sign your content', 'encypher-provenance'); ?></span>
                     </a>
-                    <a href="<?php echo esc_url(admin_url('tools.php?page=encypher-bulk-mark')); ?>" class="encypher-action-card">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-bulk-mark')); ?>" class="encypher-action-card">
                         <span class="action-icon"><?php echo $this->get_icon('zap', 'encypher-icon encypher-icon-action'); ?></span>
                         <span class="action-title"><?php esc_html_e('Bulk Sign', 'encypher-provenance'); ?></span>
                         <span class="action-desc"><?php esc_html_e('Sign multiple posts at once', 'encypher-provenance'); ?></span>
@@ -615,9 +612,9 @@ class Admin
             .encypher-header { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
             .encypher-header h1 { display: flex; align-items: center; gap: 12px; margin: 0; }
             .encypher-logo { display: flex; align-items: center; }
+            .encypher-brand-mark { width: 36px; height: 36px; display: block; }
             .encypher-org-badge { background: #1B3A5F; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 13px; }
             .encypher-icon { width: 24px; height: 24px; stroke: currentColor; }
-            .encypher-icon-brand { width: 36px; height: 36px; }
             .encypher-icon-lg { width: 32px; height: 32px; color: #2271b1; }
             .encypher-icon-stat { width: 28px; height: 28px; color: #1B3A5F; }
             .encypher-icon-action { width: 24px; height: 24px; color: #2271b1; }
@@ -815,7 +812,7 @@ class Admin
 
             <div class="tablenav top">
                 <div class="alignleft actions">
-                    <a href="<?php echo esc_url(admin_url('tools.php?page=encypher-bulk-mark')); ?>" class="button button-primary">
+                    <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-bulk-mark')); ?>" class="button button-primary">
                         <?php esc_html_e('Bulk Sign Content', 'encypher-provenance'); ?>
                     </a>
                 </div>
@@ -842,6 +839,7 @@ class Admin
                             $last_signed = get_post_meta($post->ID, '_encypher_assurance_last_signed', true);
                             $status = get_post_meta($post->ID, '_encypher_assurance_status', true);
                             $document_id = get_post_meta($post->ID, '_encypher_assurance_document_id', true);
+                            $verification_url = get_post_meta($post->ID, '_encypher_assurance_verification_url', true);
                         ?>
                             <tr>
                                 <td class="column-title">
@@ -850,7 +848,7 @@ class Admin
                                 <td class="column-type"><?php echo esc_html(get_post_type_object($post->post_type)->labels->singular_name); ?></td>
                                 <td class="column-status">
                                     <?php if ($is_marked): ?>
-                                        <span class="encypher-status-badge status-signed">✓ <?php esc_html_e('Signed', 'encypher-provenance'); ?></span>
+                                        <span class="encypher-status-badge status-signed"><?php esc_html_e('Signed', 'encypher-provenance'); ?></span>
                                     <?php else: ?>
                                         <span class="encypher-status-badge status-unsigned"><?php esc_html_e('Not Signed', 'encypher-provenance'); ?></span>
                                     <?php endif; ?>
@@ -859,8 +857,8 @@ class Admin
                                     <?php echo $last_signed ? esc_html($last_signed) : '—'; ?>
                                 </td>
                                 <td class="column-actions">
-                                    <?php if ($document_id): ?>
-                                        <a href="https://encypherai.com/verify/<?php echo esc_attr($document_id); ?>" target="_blank" class="button button-small">
+                                    <?php if ($verification_url): ?>
+                                        <a href="<?php echo esc_url($verification_url); ?>" target="_blank" class="button button-small">
                                             <?php esc_html_e('Verify', 'encypher-provenance'); ?>
                                         </a>
                                     <?php endif; ?>
@@ -1016,7 +1014,6 @@ class Admin
             'encypher_page_encypher-settings',
             'encypher_page_encypher-analytics',
             'encypher_page_encypher-account',
-            'settings_page_encypher-provenance-settings', // Legacy
         ];
         
         if (!in_array($hook_suffix, $encypher_pages, true)) {
@@ -1682,7 +1679,7 @@ class Admin
             ?>
             <div style="background:#e7f5fe; padding:15px; border-left:4px solid #2271b1; margin:10px 0;">
                 <p style="margin:0 0 10px 0;">
-                    <strong style="color:#2271b1;">✓ <?php esc_html_e('Active Coalition Member', 'encypher-provenance'); ?></strong>
+                    <strong style="color:#2271b1;"><span class="dashicons dashicons-yes-alt" style="vertical-align: middle;"></span> <?php esc_html_e('Active Coalition Member', 'encypher-provenance'); ?></strong>
                 </p>
                 <p style="margin:0; font-size:13px;">
                     <?php esc_html_e('Coalition membership is required for free tier users. Your content is pooled with other members for bulk licensing to AI companies.', 'encypher-provenance'); ?>
@@ -1766,7 +1763,7 @@ class Admin
                 </li>
             </ul>
             <p style="margin-top:12px;">
-                <a href="<?php echo esc_url(admin_url('tools.php?page=encypher-analytics')); ?>" class="button button-small">
+                <a href="<?php echo esc_url(admin_url('admin.php?page=encypher-analytics')); ?>" class="button button-small">
                     <?php esc_html_e('Open analytics', 'encypher-provenance'); ?>
                 </a>
             </p>
@@ -1892,31 +1889,70 @@ class Admin
     {
         global $wpdb;
 
-        $counts = wp_count_posts();
-        $total_posts = isset($counts->publish) ? (int) $counts->publish : 0;
+        $settings = get_option('encypher_assurance_settings', []);
+        $post_types = isset($settings['post_types']) && is_array($settings['post_types'])
+            ? array_values(array_filter(array_map('sanitize_text_field', $settings['post_types'])))
+            : ['post', 'page'];
+        if (empty($post_types)) {
+            $post_types = ['post', 'page'];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($post_types), '%s'));
+
+        $total_posts = (int) $wpdb->get_var(
+            $wpdb->prepare(
+                "SELECT COUNT(ID) FROM {$wpdb->posts} WHERE post_status = 'publish' AND post_type IN ($placeholders)",
+                ...$post_types
+            )
+        );
 
         $signed_posts = (int) $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+                "SELECT COUNT(DISTINCT pm.post_id)
+                 FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                 WHERE pm.meta_key = %s
+                   AND pm.meta_value = %s
+                   AND p.post_status = 'publish'
+                   AND p.post_type IN ($placeholders)",
                 '_encypher_marked',
-                '1'
+                '1',
+                ...$post_types
             )
         );
 
         $sentence_posts = (int) $wpdb->get_var(
-            "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta}
-             WHERE meta_key = '_encypher_assurance_total_sentences' AND CAST(meta_value AS UNSIGNED) > 0"
+            $wpdb->prepare(
+                "SELECT COUNT(DISTINCT pm.post_id)
+                 FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                 WHERE pm.meta_key = '_encypher_assurance_total_sentences'
+                   AND CAST(pm.meta_value AS UNSIGNED) > 0
+                   AND p.post_status = 'publish'
+                   AND p.post_type IN ($placeholders)",
+                ...$post_types
+            )
         );
 
         $tampered_posts = (int) $wpdb->get_var(
             $wpdb->prepare(
-                "SELECT COUNT(DISTINCT post_id) FROM {$wpdb->postmeta} WHERE meta_key = %s AND meta_value = %s",
+                "SELECT COUNT(DISTINCT pm.post_id)
+                 FROM {$wpdb->postmeta} pm
+                 INNER JOIN {$wpdb->posts} p ON p.ID = pm.post_id
+                 WHERE pm.meta_key = %s
+                   AND pm.meta_value = %s
+                   AND p.post_status = 'publish'
+                   AND p.post_type IN ($placeholders)",
                 '_encypher_assurance_status',
-                'tampered'
+                'tampered',
+                ...$post_types
             )
         );
 
         $coverage = $total_posts > 0 ? round(($signed_posts / $total_posts) * 100) : 0;
+        if ($coverage > 100) {
+            $coverage = 100;
+        }
 
         $recent_posts = [];
         if ($with_recent) {

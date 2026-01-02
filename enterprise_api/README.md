@@ -95,7 +95,6 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/account/quota` | GET | ✅ | All | Get account quota and limits | Billing Service |
 | `/api/v1/usage` | GET | ✅ | All | Get organization usage statistics | Key Service |
 | `/api/v1/usage/history` | GET | ✅ | All | Get historical usage summaries | Analytics Service |
-| `/api/v1/usage/reset` | POST | ✅ | Internal | Reset usage counters (super admin) | Analytics Service |
 
 ### Public C2PA Utilities
 
@@ -195,7 +194,6 @@ Look up content across multiple sources with chronological ordering.
 | `/api/v1/stream/session/{session_id}/close` | POST | ✅ | Professional+ | Close streaming session |
 | `/api/v1/stream/runs/{run_id}` | GET | ✅ | Professional+ | Get streaming run state |
 | `/api/v1/stream/stats` | GET | ✅ | Professional+ | Get organization streaming statistics |
-| `/api/v1/stream/health` | GET | ✅ | Internal | Streaming subsystem health check (super admin) |
 
 ### Account, Keys, BYOK, Documents, and Webhooks
 

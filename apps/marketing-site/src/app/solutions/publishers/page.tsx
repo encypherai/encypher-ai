@@ -24,10 +24,10 @@ export default function PublishersPage() {
     <div className="bg-background text-foreground">
       <AISummary
         title="Encypher for Publishers"
-        whatWeDo="Authors of the C2PA text standard providing sentence-level content tracking for AI litigation and licensing."
-        whoItsFor="Publishers in active AI copyright litigation seeking court-admissible evidence and licensing revenue."
-        keyDifferentiator="Proprietary Technology sentence-level tracking proves exactly which sentences were used, not just document access."
-        primaryValue="Transform litigation costs into licensing revenue with mathematical proof instead of statistical detection."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. API and SDKs for cryptographic watermarking that survives copy-paste, B2B distribution, and scraping. Standard publishes January 8, 2026."
+        whoItsFor="Publishers seeking provable content ownership and licensing revenue. Cryptographic proof enables content attribution across the AI ecosystem."
+        keyDifferentiator="Sentence-level tracking proves exactly which sentences were used. Quote integrity verification protects brand from AI hallucinations."
+        primaryValue="Transform content into licensing revenue. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
       />
       <Script id="schema-faq-publishers" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       {/* Hero Section */}

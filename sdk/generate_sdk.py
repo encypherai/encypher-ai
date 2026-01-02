@@ -133,9 +133,10 @@ def log_warning(msg: str):
 
 
 def _write_if_changed(path: Path, content: str) -> None:
-    existing = path.read_text(encoding="utf-8")
+    existing = path.read_text(encoding="utf-8") if path.exists() else None
     if existing == content:
         return
+    path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(content, encoding="utf-8")
 
 
@@ -144,6 +145,21 @@ def _patch_python_metadata(output_dir: Path) -> None:
     if pyproject_path.exists():
         text = pyproject_path.read_text(encoding="utf-8")
         text = re.sub(r'"([^"\s]+) \(([^\)]+)\)"', r'"\1\2"', text)
+
+        if not re.search(r"(?m)^license\s*=", text):
+            updated = re.sub(
+                r"(?m)^(readme\s*=\s*\".*\"\s*)$",
+                r"\1\nlicense = { text = \"MIT\" }",
+                text,
+                count=1,
+            )
+            if updated == text:
+                match = re.search(r"(?ms)^\[project\]\n", text)
+                if match:
+                    insert_at = match.end(0)
+                    text = text[:insert_at] + 'license = { text = "MIT" }\n' + text[insert_at:]
+            else:
+                text = updated
 
         authors_block = (
             'authors = [\n'
@@ -182,6 +198,9 @@ def _patch_python_metadata(output_dir: Path) -> None:
         upsert_project_url("Changelog", f"{MONOREPO_URL}/releases")
         _write_if_changed(pyproject_path, text)
 
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
+
     setup_path = output_dir / "setup.py"
     if setup_path.exists():
         text = setup_path.read_text(encoding="utf-8")
@@ -214,6 +233,10 @@ def _patch_typescript_metadata(output_dir: Path) -> None:
     if not package_json.exists():
         return
     data = json.loads(package_json.read_text(encoding="utf-8"))
+
+    data["author"] = "Encypher"
+    data["license"] = "MIT"
+
     repo = data.get("repository")
     if not isinstance(repo, dict):
         repo = {}
@@ -221,7 +244,19 @@ def _patch_typescript_metadata(output_dir: Path) -> None:
     repo["type"] = "git"
     repo["url"] = MONOREPO_GIT_URL
     repo["directory"] = "sdk/typescript"
+
+    data["publishConfig"] = {"access": "public"}
+    data["files"] = ["dist", "README.md", "LICENSE"]
+
     _write_if_changed(package_json, json.dumps(data, indent=2) + "\n")
+
+    npmignore = output_dir / ".npmignore"
+    if npmignore.exists():
+        lines = [line for line in npmignore.read_text(encoding="utf-8").splitlines() if line.strip() != "README.md"]
+        _write_if_changed(npmignore, "\n".join(lines) + ("\n" if lines else ""))
+
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
 
     runtime_path = output_dir / "src" / "runtime.ts"
     if runtime_path.exists():
@@ -268,6 +303,9 @@ def _patch_go_metadata(output_dir: Path) -> None:
             text = text.replace(placeholder_import, GO_MODULE_PATH)
             _write_if_changed(doc_file, text)
 
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
+
 
 def _patch_rust_metadata(output_dir: Path) -> None:
     cargo_toml = output_dir / "Cargo.toml"
@@ -309,6 +347,7 @@ def _patch_rust_metadata(output_dir: Path) -> None:
         upsert_package_field("repository", MONOREPO_URL)
         upsert_package_field("documentation", f"{PRODUCTION_BASE_URL}/docs")
         upsert_package_field("license", "MIT")
+        upsert_package_field("readme", "README.md")
         upsert_package_array("authors", '"Encypher <sdk@encypherai.com>"')
 
         text = text[: package_block.start(1)] + header + body + tail + text[package_block.end(3) :]
@@ -320,6 +359,31 @@ def _patch_rust_metadata(output_dir: Path) -> None:
         text = config_rs.read_text(encoding="utf-8")
         text = text.replace('base_path: "http://localhost".to_owned(),', f'base_path: "{PRODUCTION_BASE_URL}".to_owned(),')
         _write_if_changed(config_rs, text)
+
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
+
+
+def _mit_license_text() -> str:
+    return (
+        "MIT License\n\n"
+        "Copyright (c) Encypher\n\n"
+        "Permission is hereby granted, free of charge, to any person obtaining a copy\n"
+        "of this software and associated documentation files (the \"Software\"), to deal\n"
+        "in the Software without restriction, including without limitation the rights\n"
+        "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n"
+        "copies of the Software, and to permit persons to whom the Software is\n"
+        "furnished to do so, subject to the following conditions:\n\n"
+        "The above copyright notice and this permission notice shall be included in all\n"
+        "copies or substantial portions of the Software.\n\n"
+        "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+        "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n"
+        "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n"
+        "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
+        "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
+        "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
+        "SOFTWARE.\n"
+    )
 
 
 def run_cmd(cmd: list, capture: bool = True, stream_output: bool = False) -> subprocess.CompletedProcess:

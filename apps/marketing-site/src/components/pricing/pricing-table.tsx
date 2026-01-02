@@ -21,7 +21,7 @@ const TIER_CTAS: Record<string, { text: string; link: string }> = {
   starter: { text: 'Get Started Free', link: `${DASHBOARD_URL}/signup` },
   professional: { text: 'Start Free Trial', link: `${DASHBOARD_URL}/signup?plan=professional` },
   business: { text: 'Start Free Trial', link: `${DASHBOARD_URL}/signup?plan=business` },
-  enterprise: { text: 'Contact Sales', link: '/about#contact' },
+  enterprise: { text: 'Contact Sales', link: '/company#contact' },
 };
 
 // Get tiers from shared config

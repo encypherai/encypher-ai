@@ -22,10 +22,10 @@ export default function AICopyrightInfringementPage() {
     <>
       <AISummary
         title="AI Copyright Infringement Solution"
-        whatWeDo="Provide cryptographic proof of AI copyright infringement with 100% accuracy through sentence-level tracking."
-        whoItsFor="Publishers facing AI copyright infringement who need court-admissible evidence and licensing infrastructure."
-        keyDifferentiator="Mathematical certainty (100% accuracy) vs. statistical AI detection (26% accuracy)."
-        primaryValue="Transform AI copyright infringement litigation costs into licensing revenue through provable evidence."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. API and SDKs for cryptographic proof of content ownership and usage. Standard publishes January 8, 2026."
+        whoItsFor="Publishers facing AI content usage challenges who need provable ownership and licensing infrastructure. Legal teams seeking court-admissible evidence."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste and B2B distribution. Sentence-level tracking enables content attribution and licensing."
+        primaryValue="Transform litigation costs into licensing revenue. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
       />
 
       {/* Hero Section */}

@@ -25,10 +25,10 @@ export default function AIDemoPage() {
     <>
       <AISummary
         title="AI Lab Demo | Encypher"
-        whatWeDo="Interactive demonstration of sentence-level performance intelligence and compliance for AI labs."
-        whoItsFor="AI product and research teams needing real-world performance analytics and regulatory compliance."
-        keyDifferentiator="Cryptographic provenance with 100% accuracy vs statistical detection—trace outputs back to parameters."
-        primaryValue="Optimize models with data-driven insights while ensuring ecosystem compliance."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force (c2pa.org). API and SDKs for performance intelligence and quote integrity verification. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. Standard publishes January 8, 2026."
+        whoItsFor="AI labs needing publisher ecosystem compatibility, performance intelligence, and EU AI Act/China watermarking compliance."
+        keyDifferentiator="Sentence-level attribution traces viral content to exact parameters. Quote integrity verification proves 'According to AP...' is accurate vs. hallucinated."
+        primaryValue="One API integration for entire publisher ecosystem. Collaborative infrastructure, not adversarial compliance."
       />
       <AIDemo />
     </>

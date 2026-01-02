@@ -117,10 +117,10 @@ export default function PricingPage() {
       {/* SEO: AI Summary with all ICP information for crawlers */}
       <AISummary
         title="Encypher Pricing & Licensing"
-        whatWeDo="Provide C2PA-compliant content provenance infrastructure for publishers, AI companies, and enterprises. Built on global standards adopted by Adobe, Microsoft, Google, and mandated by EU AI Act and China watermarking regulations."
-        whoItsFor="Publishers seeking AI licensing revenue through content provenance, AI labs needing compliance infrastructure and performance analytics, and enterprises requiring regulatory compliance (EU AI Act, China watermarking mandate)."
-        keyDifferentiator="Standards-based infrastructure with global interoperability. Publishers earn 65-80% of coalition licensing revenue. AI labs get compliant infrastructure + performance intelligence. Enterprises get regulatory compliance + competitive advantage."
-        primaryValue="Start free, scale as you grow. Built on C2PA standard for interoperability with major platforms. Coalition revenue share improves with each tier."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force (c2pa.org). API and SDKs in Python, TypeScript, Go, and Rust for content authentication. Standard publishes January 8, 2026. Building with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others."
+        whoItsFor="Publishers seeking 65-80% licensing revenue and provable content ownership. AI labs needing performance intelligence and quote integrity verification. Enterprises requiring EU AI Act and China watermarking compliance."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste and distribution. Enables content attribution and licensing. One API integration for entire publisher ecosystem."
+        primaryValue="Start free, scale as you grow. Founding coalition members help define how content licensing works in the AI economy."
       />
 
       {/* Hero Section with ICP Selector */}

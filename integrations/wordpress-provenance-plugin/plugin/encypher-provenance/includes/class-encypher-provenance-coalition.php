@@ -39,7 +39,7 @@ class Coalition
     public function add_coalition_page(): void
     {
         add_submenu_page(
-            'encypher-provenance',
+            'encypher',
             __('Coalition Dashboard', 'encypher-provenance'),
             __('Coalition', 'encypher-provenance'),
             'manage_options',

@@ -33,11 +33,11 @@
             const apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
 
             if (!apiUrl) {
-                $status.html('<span class="status-indicator status-unknown">⚪</span> <span>No API URL configured</span>');
+                $status.html('<span class="status-indicator dashicons dashicons-minus"></span> <span>No API URL configured</span>');
                 return;
             }
 
-            $status.html('<span class="status-indicator status-checking">🔄</span> <span>Checking...</span>');
+            $status.html('<span class="status-indicator dashicons dashicons-update status-checking"></span> <span>Checking...</span>');
 
             try {
                 // Use server-side check via WordPress REST API
@@ -52,12 +52,12 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    $status.html('<span class="status-indicator status-connected">✅</span> <span class="status-text-success">Connected</span>');
+                    $status.html('<span class="status-indicator dashicons dashicons-yes-alt"></span> <span class="status-text-success">Connected</span>');
                 } else {
-                    $status.html('<span class="status-indicator status-error">❌</span> <span class="status-text-error">Not connected</span>');
+                    $status.html('<span class="status-indicator dashicons dashicons-dismiss"></span> <span class="status-text-error">Not connected</span>');
                 }
             } catch (error) {
-                $status.html('<span class="status-indicator status-error">❌</span> <span class="status-text-error">Check failed</span>');
+                $status.html('<span class="status-indicator dashicons dashicons-dismiss"></span> <span class="status-text-error">Check failed</span>');
             }
         },
 
@@ -102,11 +102,11 @@
                 }
 
                 // Build success message
-                let message = '<div class="notice notice-success"><p><strong>✅ Connection successful!</strong></p>';
+                let message = '<div class="notice notice-success"><p><strong>Connection successful!</strong></p>';
                 message += '<ul style="margin-left: 20px;">';
                 message += `<li><strong>API URL:</strong> ${data.api_url}</li>`;
                 message += `<li><strong>API Status:</strong> ${data.health?.status || 'OK'}</li>`;
-                message += `<li><strong>API Key:</strong> ${data.api_key_configured ? '✅ Configured' : '⚠️ Not configured (using demo mode)'}</li>`;
+                message += `<li><strong>API Key:</strong> ${data.api_key_configured ? 'Configured' : 'Not configured (using demo mode)'}</li>`;
                 
                 if (data.auth_note) {
                     message += `<li><strong>Note:</strong> ${data.auth_note}</li>`;
@@ -126,7 +126,7 @@
                 this.checkConnection();
 
             } catch (error) {
-                $result.html(`<div class="notice notice-error"><p><strong>❌ Connection failed:</strong> ${error.message}</p></div>`);
+                $result.html(`<div class="notice notice-error"><p><strong>Connection failed:</strong> ${error.message}</p></div>`);
             } finally {
                 $btn.prop('disabled', false).text('Test Connection');
             }

@@ -41,6 +41,15 @@ async def test_patch_typescript_metadata_sets_monorepo_repository(tmp_path: Path
     assert data["repository"]["type"] == "git"
     assert data["repository"]["url"] == mod.MONOREPO_GIT_URL
     assert data["repository"]["directory"] == "sdk/typescript"
+    assert data["author"] == "Encypher"
+    assert data["license"] == "MIT"
+    assert data["publishConfig"]["access"] == "public"
+    assert "dist" in data["files"]
+
+    npmignore = tmp_path / ".npmignore"
+    npmignore.write_text("README.md\ndist\n", encoding="utf-8")
+    mod._patch_typescript_metadata(tmp_path)
+    assert "README.md" not in npmignore.read_text(encoding="utf-8")
 
     runtime_ts = tmp_path / "src" / "runtime.ts"
     runtime_ts.parent.mkdir(parents=True, exist_ok=True)
@@ -116,6 +125,8 @@ Repository = "https://github.com/encypherai/sdk-python"
     assert "\"urllib3>=2.1.0,<3.0.0\"" in text
     assert "{name = \"Encypher\"" in text
     assert "email = \"sdk@encypherai.com\"" in text
+    assert "license" in text
+    assert "MIT" in text
     assert "Homepage = \"https://encypherai.com\"" in text
     assert f"Documentation = \"{mod.PRODUCTION_BASE_URL}/docs\"" in text
     assert f"Repository = \"{mod.MONOREPO_URL}\"" in text
@@ -164,6 +175,7 @@ license = \"Unlicense\"
     assert "homepage = \"https://encypherai.com\"" in patched
     assert f"documentation = \"{mod.PRODUCTION_BASE_URL}/docs\"" in patched
     assert "license = \"MIT\"" in patched
+    assert "readme = \"README.md\"" in patched
     assert "authors = [\"Encypher <sdk@encypherai.com>\"]" in patched
 
     rust_cfg = tmp_path / "src" / "apis" / "configuration.rs"

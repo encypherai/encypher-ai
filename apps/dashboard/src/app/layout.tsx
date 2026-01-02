@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import '@encypher/design-system/styles';
 import './globals.css';
 import Providers from '../components/providers';
@@ -7,6 +7,12 @@ import { ScriptsContainer } from '../components/ScriptsContainer';
 import CookieConsentBanner from '../components/CookieConsent';
 
 const isProd = process.env.NEXT_PUBLIC_ENV === 'production';
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 export const metadata: Metadata = {
   title: 'Dashboard - Encypher',

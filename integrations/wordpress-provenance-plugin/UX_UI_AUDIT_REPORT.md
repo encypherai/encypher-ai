@@ -58,7 +58,7 @@ The WordPress Provenance Plugin UX/UI was audited using Puppeteer automation aga
 
 ## Page-by-Page Audit Results
 
-### 1. Settings Page (`/wp-admin/options-general.php?page=encypher-provenance-settings`)
+### 1. Settings Page (`/wp-admin/admin.php?page=encypher-settings`)
 
 **Sections Audited:**
 - ✅ API Configuration (Base URL, API Key, Test Connection)
@@ -73,7 +73,7 @@ The WordPress Provenance Plugin UX/UI was audited using Puppeteer automation aga
 - ✅ "Connected" state with green checkmark after successful test
 - ✅ Connection details show API URL, Status, Organization, Tier
 
-### 2. Bulk Mark Page (`/wp-admin/tools.php?page=encypher-bulk-mark`)
+### 2. Bulk Mark Page (`/wp-admin/admin.php?page=encypher-bulk-mark`)
 
 **Features Audited:**
 - ✅ Post type selection with counts
@@ -84,7 +84,7 @@ The WordPress Provenance Plugin UX/UI was audited using Puppeteer automation aga
 - ✅ Start Bulk Marking button
 - ✅ Tier-based limit notice (Starter only)
 
-### 3. Analytics Page (`/wp-admin/tools.php?page=encypher-analytics`)
+### 3. Analytics Page (`/wp-admin/admin.php?page=encypher-analytics`)
 
 **Features Audited:**
 - ✅ Dashboard cards (Published, Signed, Coverage, Sentence-level)
