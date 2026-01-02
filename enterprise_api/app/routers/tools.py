@@ -405,6 +405,7 @@ async def decode_text(
         # First, try to find the wrapper and extract just the signed segment
         # This handles the case where user copy-pastes entire page with extra content
         import c2pa_text
+        import unicodedata
         text_to_verify = request.encoded_text
         wrapper_info = None
         content_extraction_note = None
@@ -413,12 +414,11 @@ async def decode_text(
             wrapper_info = c2pa_text.find_wrapper_info(request.encoded_text)
             if wrapper_info:
                 manifest_bytes, wrapper_start, wrapper_end = wrapper_info
-                logger.info(f"Found wrapper at [{wrapper_start}:{wrapper_end}]")
+                logger.info(f"Found wrapper at char positions [{wrapper_start}:{wrapper_end}]")
                 
                 # Try to extract the exclusion info from the manifest to determine
                 # how much content should be before the wrapper
                 try:
-                    from encypher.interop.c2pa.text_wrapper import find_and_decode
                     from encypher.core.payloads import deserialize_jumbf_payload, deserialize_c2pa_payload_from_cbor
                     from encypher.core.signing import extract_payload_from_cose_sign1
                     import base64
@@ -434,30 +434,55 @@ async def decode_text(
                             if hard_binding:
                                 exclusions = hard_binding.get("data", {}).get("exclusions", [])
                                 if exclusions and isinstance(exclusions[0], dict):
-                                    expected_start = exclusions[0].get("start", 0)
-                                    # The exclusion start tells us how many bytes should be before the wrapper
-                                    # in the original signed text. Calculate how much extra content was added.
-                                    wrapper_start_bytes = len(request.encoded_text[:wrapper_start].encode("utf-8"))
-                                    if wrapper_start_bytes > expected_start:
-                                        # There's extra content before the signed segment
-                                        # Try to extract just the signed portion
-                                        extra_bytes = wrapper_start_bytes - expected_start
-                                        # Find the character position that corresponds to expected_start bytes
-                                        byte_count = 0
-                                        char_pos = 0
-                                        for i, char in enumerate(request.encoded_text):
-                                            if byte_count >= extra_bytes:
-                                                char_pos = i
-                                                break
-                                            byte_count += len(char.encode("utf-8"))
+                                    expected_exclusion_start = exclusions[0].get("start", 0)
+                                    
+                                    # Normalize the text first (C2PA requires NFC normalization)
+                                    normalized_text = unicodedata.normalize("NFC", request.encoded_text)
+                                    
+                                    # Find wrapper position in normalized text
+                                    wrapper_segment = request.encoded_text[wrapper_start:wrapper_end]
+                                    normalized_wrapper_pos = normalized_text.find(wrapper_segment)
+                                    
+                                    if normalized_wrapper_pos >= 0:
+                                        # Calculate actual bytes before wrapper in normalized text
+                                        text_before_wrapper = normalized_text[:normalized_wrapper_pos]
+                                        actual_bytes_before_wrapper = len(text_before_wrapper.encode("utf-8"))
                                         
-                                        text_to_verify = request.encoded_text[char_pos:wrapper_end]
-                                        content_extraction_note = f"Extracted signed segment (removed {extra_bytes} bytes of page chrome before signed content)"
-                                        logger.info(content_extraction_note)
-                                    else:
-                                        text_to_verify = request.encoded_text[:wrapper_end]
+                                        logger.info(f"Exclusion in manifest: start={expected_exclusion_start}")
+                                        logger.info(f"Actual bytes before wrapper: {actual_bytes_before_wrapper}")
+                                        
+                                        if actual_bytes_before_wrapper > expected_exclusion_start:
+                                            # There's extra content before the signed segment
+                                            # We need to extract text starting from the correct byte position
+                                            extra_bytes = actual_bytes_before_wrapper - expected_exclusion_start
+                                            logger.info(f"Detected {extra_bytes} extra bytes of page chrome")
+                                            
+                                            # Find the character position that corresponds to skipping extra_bytes
+                                            byte_count = 0
+                                            char_start = 0
+                                            for i, char in enumerate(normalized_text):
+                                                if byte_count >= extra_bytes:
+                                                    char_start = i
+                                                    break
+                                                byte_count += len(char.encode("utf-8"))
+                                            
+                                            # Find where wrapper ends in normalized text
+                                            wrapper_end_normalized = normalized_wrapper_pos + len(wrapper_segment)
+                                            
+                                            # Extract the signed segment
+                                            text_to_verify = normalized_text[char_start:wrapper_end_normalized]
+                                            content_extraction_note = f"Extracted signed segment: removed {extra_bytes} bytes of page chrome"
+                                            logger.info(content_extraction_note)
+                                            
+                                            # Verify the extraction is correct
+                                            new_bytes_before = len(text_to_verify[:text_to_verify.find(wrapper_segment)].encode("utf-8"))
+                                            logger.info(f"After extraction: bytes before wrapper = {new_bytes_before}, expected = {expected_exclusion_start}")
+                                        else:
+                                            # No extra content, use normalized text up to wrapper end
+                                            wrapper_end_normalized = normalized_wrapper_pos + len(wrapper_segment)
+                                            text_to_verify = normalized_text[:wrapper_end_normalized]
                 except Exception as e:
-                    logger.warning(f"Could not extract exclusion info from manifest: {e}")
+                    logger.warning(f"Could not extract exclusion info from manifest: {e}", exc_info=True)
                     # Fall back to using text up to wrapper end
                     text_to_verify = request.encoded_text[:wrapper_end]
         
@@ -565,7 +590,15 @@ async def decode_text(
                 if signer_name and "Unknown Signer" in signer_name:
                     error_msg = f"Manifest found but signer '{signer_id}' is not in our Trust Anchor database. The signature cannot be verified."
                 elif signer_name:
-                    error_msg = f"Manifest found and signed by '{signer_name}', but the content has been modified since signing. The signature is no longer valid."
+                    # Check if we detected extra page chrome - provide helpful message
+                    if content_extraction_note:
+                        error_msg = (
+                            f"Manifest found and signed by '{signer_name}', but verification failed. "
+                            f"It appears you may have copied extra content (like page headers/footers) along with the signed text. "
+                            f"Please copy only the article content, not the entire page."
+                        )
+                    else:
+                        error_msg = f"Manifest found and signed by '{signer_name}', but the content has been modified since signing. The signature is no longer valid."
                 else:
                     error_msg = "Manifest found but signature verification failed. The content may have been modified or the signer is unknown."
             
