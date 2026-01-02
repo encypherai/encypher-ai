@@ -402,7 +402,66 @@ async def decode_text(
             )
         
         # Single embedding or no embeddings - use standard extraction
-        decoded_metadata = UnicodeMetadata.extract_metadata(text=request.encoded_text)
+        # First, try to find the wrapper and extract just the signed segment
+        # This handles the case where user copy-pastes entire page with extra content
+        import c2pa_text
+        text_to_verify = request.encoded_text
+        wrapper_info = None
+        content_extraction_note = None
+        
+        if hasattr(c2pa_text, "find_wrapper_info"):
+            wrapper_info = c2pa_text.find_wrapper_info(request.encoded_text)
+            if wrapper_info:
+                manifest_bytes, wrapper_start, wrapper_end = wrapper_info
+                logger.info(f"Found wrapper at [{wrapper_start}:{wrapper_end}]")
+                
+                # Try to extract the exclusion info from the manifest to determine
+                # how much content should be before the wrapper
+                try:
+                    from encypher.interop.c2pa.text_wrapper import find_and_decode
+                    from encypher.core.payloads import deserialize_jumbf_payload, deserialize_c2pa_payload_from_cbor
+                    from encypher.core.signing import extract_payload_from_cose_sign1
+                    import base64
+                    
+                    manifest_store = deserialize_jumbf_payload(manifest_bytes)
+                    if isinstance(manifest_store, dict) and manifest_store.get("cose_sign1"):
+                        cose_bytes = base64.b64decode(manifest_store["cose_sign1"])
+                        cbor_payload = extract_payload_from_cose_sign1(cose_bytes)
+                        if cbor_payload:
+                            c2pa_manifest = deserialize_c2pa_payload_from_cbor(cbor_payload)
+                            assertions = c2pa_manifest.get("assertions", [])
+                            hard_binding = next((a for a in assertions if a.get("label") == "c2pa.hash.data.v1"), None)
+                            if hard_binding:
+                                exclusions = hard_binding.get("data", {}).get("exclusions", [])
+                                if exclusions and isinstance(exclusions[0], dict):
+                                    expected_start = exclusions[0].get("start", 0)
+                                    # The exclusion start tells us how many bytes should be before the wrapper
+                                    # in the original signed text. Calculate how much extra content was added.
+                                    wrapper_start_bytes = len(request.encoded_text[:wrapper_start].encode("utf-8"))
+                                    if wrapper_start_bytes > expected_start:
+                                        # There's extra content before the signed segment
+                                        # Try to extract just the signed portion
+                                        extra_bytes = wrapper_start_bytes - expected_start
+                                        # Find the character position that corresponds to expected_start bytes
+                                        byte_count = 0
+                                        char_pos = 0
+                                        for i, char in enumerate(request.encoded_text):
+                                            if byte_count >= extra_bytes:
+                                                char_pos = i
+                                                break
+                                            byte_count += len(char.encode("utf-8"))
+                                        
+                                        text_to_verify = request.encoded_text[char_pos:wrapper_end]
+                                        content_extraction_note = f"Extracted signed segment (removed {extra_bytes} bytes of page chrome before signed content)"
+                                        logger.info(content_extraction_note)
+                                    else:
+                                        text_to_verify = request.encoded_text[:wrapper_end]
+                except Exception as e:
+                    logger.warning(f"Could not extract exclusion info from manifest: {e}")
+                    # Fall back to using text up to wrapper end
+                    text_to_verify = request.encoded_text[:wrapper_end]
+        
+        decoded_metadata = UnicodeMetadata.extract_metadata(text=text_to_verify)
         
         if not decoded_metadata:
             logger.warning("No metadata found in text")
@@ -459,10 +518,10 @@ async def decode_text(
             logger.warning(f"Unknown signer_id: {signer_id}")
             return None
         
-        # Verify metadata signature
+        # Verify metadata signature using the extracted segment (not full pasted text)
         try:
             verification_result = UnicodeMetadata.verify_metadata(
-                text=request.encoded_text,
+                text=text_to_verify,
                 public_key_resolver=public_key_resolver,
                 return_payload_on_failure=True,
             )
