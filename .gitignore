@@ -191,6 +191,7 @@ dashboard_app/backend/demo_corpus/
 
 # local-only files
 docs/patent_ideas/
+docs/company_internal_strategy/patents/
 
 # Large dataset downloads and outputs (local only)
 datasets/
