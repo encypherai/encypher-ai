@@ -404,6 +404,8 @@ async def decode_text(
         # Single embedding or no embeddings - use standard extraction
         # First, try to find the wrapper and extract just the signed segment
         # This handles the case where user copy-pastes entire page with extra content
+        # Per C2PA spec (Manifests_Text.adoc), the exclusions field tells us exactly
+        # how many bytes of content should precede the wrapper in the original signed text.
         import c2pa_text
         import unicodedata
         text_to_verify = request.encoded_text
@@ -414,10 +416,9 @@ async def decode_text(
             wrapper_info = c2pa_text.find_wrapper_info(request.encoded_text)
             if wrapper_info:
                 manifest_bytes, wrapper_start, wrapper_end = wrapper_info
-                logger.info(f"Found wrapper at char positions [{wrapper_start}:{wrapper_end}]")
+                logger.info(f"Found C2PA wrapper at char positions [{wrapper_start}:{wrapper_end}]")
                 
-                # Try to extract the exclusion info from the manifest to determine
-                # how much content should be before the wrapper
+                # Per C2PA spec: use exclusions to determine the exact content that was hashed
                 try:
                     from encypher.core.payloads import deserialize_jumbf_payload, deserialize_c2pa_payload_from_cbor
                     from encypher.core.signing import extract_payload_from_cose_sign1
@@ -434,53 +435,57 @@ async def decode_text(
                             if hard_binding:
                                 exclusions = hard_binding.get("data", {}).get("exclusions", [])
                                 if exclusions and isinstance(exclusions[0], dict):
-                                    expected_exclusion_start = exclusions[0].get("start", 0)
+                                    # Per C2PA spec: exclusion.start = byte offset where wrapper begins
+                                    # This tells us exactly how many UTF-8 bytes of content preceded the wrapper
+                                    original_content_bytes = exclusions[0].get("start", 0)
+                                    wrapper_byte_length = exclusions[0].get("length", 0)
                                     
-                                    # Normalize the text first (C2PA requires NFC normalization)
+                                    logger.info(f"C2PA exclusion: original content was {original_content_bytes} bytes before wrapper")
+                                    
+                                    # Normalize text per C2PA spec (NFC normalization required)
                                     normalized_text = unicodedata.normalize("NFC", request.encoded_text)
                                     
-                                    # Find wrapper position in normalized text
+                                    # Find wrapper in normalized text
                                     wrapper_segment = request.encoded_text[wrapper_start:wrapper_end]
                                     normalized_wrapper_pos = normalized_text.find(wrapper_segment)
                                     
                                     if normalized_wrapper_pos >= 0:
-                                        # Calculate actual bytes before wrapper in normalized text
-                                        text_before_wrapper = normalized_text[:normalized_wrapper_pos]
-                                        actual_bytes_before_wrapper = len(text_before_wrapper.encode("utf-8"))
+                                        # Work BACKWARDS from wrapper position to extract exactly
+                                        # original_content_bytes worth of UTF-8 content
+                                        text_before_wrapper_normalized = normalized_text[:normalized_wrapper_pos]
                                         
-                                        logger.info(f"Exclusion in manifest: start={expected_exclusion_start}")
-                                        logger.info(f"Actual bytes before wrapper: {actual_bytes_before_wrapper}")
+                                        # Convert to UTF-8 bytes to work with byte offsets
+                                        bytes_before_wrapper = text_before_wrapper_normalized.encode("utf-8")
+                                        actual_bytes_before = len(bytes_before_wrapper)
                                         
-                                        if actual_bytes_before_wrapper > expected_exclusion_start:
-                                            # There's extra content before the signed segment
-                                            # We need to extract text starting from the correct byte position
-                                            extra_bytes = actual_bytes_before_wrapper - expected_exclusion_start
-                                            logger.info(f"Detected {extra_bytes} extra bytes of page chrome")
+                                        logger.info(f"Actual bytes before wrapper in pasted text: {actual_bytes_before}")
+                                        
+                                        if actual_bytes_before > original_content_bytes:
+                                            # Extra page chrome detected - extract only the signed portion
+                                            # Take the LAST original_content_bytes bytes before the wrapper
+                                            signed_content_bytes = bytes_before_wrapper[-original_content_bytes:]
                                             
-                                            # Find the character position that corresponds to skipping extra_bytes
-                                            byte_count = 0
-                                            char_start = 0
-                                            for i, char in enumerate(normalized_text):
-                                                if byte_count >= extra_bytes:
-                                                    char_start = i
-                                                    break
-                                                byte_count += len(char.encode("utf-8"))
+                                            # Decode back to string and append wrapper
+                                            signed_content = signed_content_bytes.decode("utf-8")
+                                            text_to_verify = signed_content + wrapper_segment
                                             
-                                            # Find where wrapper ends in normalized text
-                                            wrapper_end_normalized = normalized_wrapper_pos + len(wrapper_segment)
-                                            
-                                            # Extract the signed segment
-                                            text_to_verify = normalized_text[char_start:wrapper_end_normalized]
-                                            content_extraction_note = f"Extracted signed segment: removed {extra_bytes} bytes of page chrome"
+                                            extra_bytes = actual_bytes_before - original_content_bytes
+                                            content_extraction_note = f"Extracted {original_content_bytes} bytes of signed content (removed {extra_bytes} bytes of page chrome)"
                                             logger.info(content_extraction_note)
                                             
-                                            # Verify the extraction is correct
-                                            new_bytes_before = len(text_to_verify[:text_to_verify.find(wrapper_segment)].encode("utf-8"))
-                                            logger.info(f"After extraction: bytes before wrapper = {new_bytes_before}, expected = {expected_exclusion_start}")
-                                        else:
-                                            # No extra content, use normalized text up to wrapper end
+                                            # Verify extraction
+                                            verify_bytes = len(text_to_verify[:text_to_verify.find(wrapper_segment)].encode("utf-8"))
+                                            logger.info(f"Verification: extracted content is {verify_bytes} bytes, expected {original_content_bytes}")
+                                        elif actual_bytes_before < original_content_bytes:
+                                            # Less content than expected - content may have been truncated
+                                            logger.warning(f"Content appears truncated: {actual_bytes_before} bytes found, {original_content_bytes} expected")
                                             wrapper_end_normalized = normalized_wrapper_pos + len(wrapper_segment)
                                             text_to_verify = normalized_text[:wrapper_end_normalized]
+                                        else:
+                                            # Exact match - use as-is (truncate after wrapper)
+                                            wrapper_end_normalized = normalized_wrapper_pos + len(wrapper_segment)
+                                            text_to_verify = normalized_text[:wrapper_end_normalized]
+                                            logger.info("Content length matches expected - no extraction needed")
                 except Exception as e:
                     logger.warning(f"Could not extract exclusion info from manifest: {e}", exc_info=True)
                     # Fall back to using text up to wrapper end
