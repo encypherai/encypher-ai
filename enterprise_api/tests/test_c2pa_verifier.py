@@ -1,7 +1,10 @@
 """
 Tests for C2PA manifest verification utility.
 """
-from unittest.mock import Mock, patch
+from __future__ import annotations
+
+import socket
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -56,6 +59,30 @@ class TestC2PAVerificationResult:
 
 class TestC2PAVerifier:
     """Test C2PAVerifier class."""
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_rejects_http_scheme(self):
+        # No mocks needed - early return before any network call
+        verifier = C2PAVerifier()
+        result = await verifier.verify_manifest_url("http://example.com/manifest.json")
+        assert result.valid is False
+        assert any("untrusted" in err.lower() for err in result.errors)
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_rejects_localhost(self):
+        # No mocks needed - early return before any network call
+        verifier = C2PAVerifier()
+        result = await verifier.verify_manifest_url("https://localhost/manifest.json")
+        assert result.valid is False
+        assert any("untrusted" in err.lower() for err in result.errors)
+
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_rejects_private_ip(self):
+        # No mocks needed - early return before any network call
+        verifier = C2PAVerifier()
+        result = await verifier.verify_manifest_url("https://127.0.0.1/manifest.json")
+        assert result.valid is False
+        assert any("untrusted" in err.lower() for err in result.errors)
     
     def test_verify_structure_valid(self):
         """Test structure verification with valid manifest."""
@@ -171,49 +198,75 @@ class TestC2PAVerifier:
         assert len(result.signatures) == 1
         assert result.manifest_hash is not None
     
-    @patch('app.utils.c2pa_verifier.requests.get')
-    def test_verify_manifest_url_success(self, mock_get):
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_success(self):
         """Test verifying manifest from URL."""
+        import httpx
+        from contextlib import asynccontextmanager
+        
         verifier = C2PAVerifier()
-        
-        manifest = {
-            "claim_generator": "Test Generator 1.0",
-            "assertions": []
-        }
-        
-        # Mock successful HTTP response
+        payload = b'{"claim_generator": "Test Generator 1.0", "assertions": []}'
+
+        async def _aiter_bytes(chunk_size=8192):
+            yield payload
+
         mock_response = Mock()
-        mock_response.json.return_value = manifest
-        mock_response.content = b'{"claim_generator": "Test Generator 1.0", "assertions": []}'
         mock_response.raise_for_status = Mock()
-        mock_get.return_value = mock_response
-        
-        result = verifier.verify_manifest_url("https://example.com/manifest.json")
-        
+        mock_response.aiter_bytes = _aiter_bytes
+
+        @asynccontextmanager
+        async def mock_stream(*args, **kwargs):
+            yield mock_response
+
+        @asynccontextmanager
+        async def mock_client_cm(*args, **kwargs):
+            client = Mock()
+            client.stream = mock_stream
+            yield client
+
+        with patch.object(httpx, "AsyncClient", mock_client_cm):
+            with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+                mock_getaddrinfo.return_value = [
+                    (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+                ]
+                result = await verifier.verify_manifest_url("https://example.com/manifest.json")
+
         assert result.valid is True
         assert result.manifest_url == "https://example.com/manifest.json"
         assert result.manifest_hash is not None
     
-    @patch('app.utils.c2pa_verifier.requests.get')
-    def test_verify_manifest_url_http_error(self, mock_get):
+    @pytest.mark.asyncio
+    async def test_verify_manifest_url_http_error(self):
         """Test verifying manifest with HTTP error."""
+        import httpx
+        from contextlib import asynccontextmanager
+        
         verifier = C2PAVerifier()
-        
-        # Mock HTTP error
-        mock_get.side_effect = Exception("Connection error")
-        
-        result = verifier.verify_manifest_url("https://example.com/manifest.json")
+
+        @asynccontextmanager
+        async def mock_client_cm(*args, **kwargs):
+            client = Mock()
+            client.stream.side_effect = httpx.RequestError("Connection error")
+            yield client
+
+        with patch.object(httpx, "AsyncClient", mock_client_cm):
+            with patch("app.utils.c2pa_verifier.socket.getaddrinfo") as mock_getaddrinfo:
+                mock_getaddrinfo.return_value = [
+                    (socket.AF_INET, socket.SOCK_STREAM, 6, "", ("93.184.216.34", 443))
+                ]
+                result = await verifier.verify_manifest_url("https://example.com/manifest.json")
         
         assert result.valid is False
         assert len(result.errors) > 0
-        assert "Connection error" in result.errors[0]
+        assert "connection error" in result.errors[0].lower()
     
-    def test_convenience_function(self):
+    @pytest.mark.asyncio
+    async def test_convenience_function(self):
         """Test convenience function."""
-        with patch('app.utils.c2pa_verifier.c2pa_verifier.verify_manifest_url') as mock_verify:
+        with patch('app.utils.c2pa_verifier.c2pa_verifier.verify_manifest_url', new_callable=AsyncMock) as mock_verify:
             mock_verify.return_value = C2PAVerificationResult(valid=True)
-            
-            result = verify_c2pa_manifest("https://example.com/manifest.json")
+
+            result = await verify_c2pa_manifest("https://example.com/manifest.json")
             
             assert result.valid is True
             mock_verify.assert_called_once_with("https://example.com/manifest.json")

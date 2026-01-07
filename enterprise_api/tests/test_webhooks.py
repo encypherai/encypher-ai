@@ -54,6 +54,39 @@ class TestCreateWebhook:
         )
         assert response.status_code == 400
 
+    async def test_create_webhook_localhost_rejected(self, client: AsyncClient, auth_headers: dict):
+        response = await client.post(
+            "/api/v1/webhooks",
+            json={
+                "url": "https://localhost/webhook",
+                "events": ["document.signed"],
+            },
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+
+    async def test_create_webhook_private_ip_rejected(self, client: AsyncClient, auth_headers: dict):
+        response = await client.post(
+            "/api/v1/webhooks",
+            json={
+                "url": "https://127.0.0.1/webhook",
+                "events": ["document.signed"],
+            },
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+
+    async def test_create_webhook_nonstandard_port_rejected(self, client: AsyncClient, auth_headers: dict):
+        response = await client.post(
+            "/api/v1/webhooks",
+            json={
+                "url": "https://93.184.216.34:8443/webhook",
+                "events": ["document.signed"],
+            },
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+
     async def test_create_webhook_invalid_events(self, client: AsyncClient, auth_headers: dict):
         """Test that invalid events are rejected."""
         response = await client.post(
@@ -87,6 +120,32 @@ class TestUpdateWebhook:
             headers=auth_headers
         )
         assert response.status_code == 404
+
+    async def test_update_webhook_rejects_private_ip_url(self, client: AsyncClient, auth_headers: dict):
+        # First, clean up any existing webhooks to avoid hitting the limit
+        list_response = await client.get("/api/v1/webhooks", headers=auth_headers)
+        if list_response.status_code == 200:
+            webhooks = list_response.json().get("data", {}).get("webhooks", [])
+            for wh in webhooks:
+                await client.delete(f"/api/v1/webhooks/{wh['id']}", headers=auth_headers)
+
+        create_response = await client.post(
+            "/api/v1/webhooks",
+            json={"url": "https://example.com/webhook", "events": ["document.signed"]},
+            headers=auth_headers,
+        )
+        assert create_response.status_code == 201, f"Create failed: {create_response.json()}"
+        webhook_id = create_response.json()["data"]["id"]
+
+        response = await client.patch(
+            f"/api/v1/webhooks/{webhook_id}",
+            json={"url": "https://127.0.0.1/webhook"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+
+        # Clean up
+        await client.delete(f"/api/v1/webhooks/{webhook_id}", headers=auth_headers)
 
 
 @pytest.mark.asyncio

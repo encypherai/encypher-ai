@@ -148,12 +148,10 @@ Look up content across multiple sources with chronological ordering.
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/attribution/multi-source` | POST | ✅ | Business+ | Multi-source hash lookup with authority ranking |
 
-### Enterprise Embeddings Endpoints
+### Public Verification Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/embeddings/encode-with-embeddings` | POST | ✅ | Professional+ | Create invisible signed embeddings |
-| `/api/v1/enterprise/embeddings/sign/advanced` | POST | ✅ | Enterprise | Advanced signing workflow for embeddings |
 | `/api/v1/public/verify/{ref_id}` | GET | ❌ | Public | Verify embedding by reference ID |
 | `/api/v1/public/verify/batch` | POST | ❌ | Public | Batch verify embeddings |
 | `/api/v1/public/extract-and-verify` | POST | ❌ | Public | Extract and verify C2PA manifest |
@@ -207,6 +205,8 @@ Look up content across multiple sources with chronological ordering.
 | `/api/v1/byok/public-keys` | GET | ✅ | Professional+ | List BYOK public keys |
 | `/api/v1/byok/public-keys` | POST | ✅ | Professional+ | Register BYOK public key |
 | `/api/v1/byok/public-keys/{key_id}` | DELETE | ✅ | Professional+ | Delete BYOK public key |
+| `/api/v1/byok/trusted-cas` | GET | ❌ | Public | List C2PA trusted Certificate Authorities |
+| `/api/v1/byok/certificates` | POST | ✅ | Business+ | Upload CA-signed certificate (validated against C2PA trust list) |
 | `/api/v1/documents` | GET | ✅ | Business+ | List signed documents |
 | `/api/v1/documents/{document_id}` | GET | ✅ | Business+ | Get signed document |
 | `/api/v1/documents/{document_id}/history` | GET | ✅ | Enterprise | Get document provenance history |
@@ -702,11 +702,11 @@ Detect if content is plagiarized from signed documents.
 
 ---
 
-### Minimal Signed Embeddings (Professional+)
+### Invisible Signed Embeddings (Professional+)
 
 Invisibly embed cryptographically signed references directly into content using Unicode variation selectors. The embeddings are completely invisible to readers but can be extracted and verified by third parties without requiring API keys.
 
-**Endpoint:** `POST /api/v1/enterprise/embeddings/encode-with-embeddings`
+**Endpoint:** `POST /api/v1/sign/advanced`
 
 **Request:**
 

@@ -132,6 +132,15 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"Failed to initialize metrics service: {e}. Running without metrics.")
     
+    # Load C2PA trust list for BYOK certificate validation
+    try:
+        from app.utils.c2pa_trust_list import fetch_trust_list, set_trust_anchors_pem
+        trust_pem = await fetch_trust_list()
+        count = set_trust_anchors_pem(trust_pem)
+        logger.info(f"C2PA trust list loaded: {count} trust anchors")
+    except Exception as e:
+        logger.warning(f"Failed to load C2PA trust list: {e}. BYOK certificate validation may not work.")
+    
     try:
         yield
     finally:

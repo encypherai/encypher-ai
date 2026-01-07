@@ -16,9 +16,11 @@ import logging
 import time
 from datetime import datetime, timezone
 from inspect import isawaitable
+from urllib.parse import urlparse
 from typing import Dict, Optional, Tuple
 from uuid import uuid4
 
+import httpx
 from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -56,6 +58,10 @@ class StatusService:
         """
         self.cache_ttl = cache_ttl_seconds
         self._list_cache: Dict[str, Tuple[bytes, float]] = {}
+
+        # TEAM_056: Basic SSRF hardening - only allow fetching from these hosts.
+        # TEAM_056: Intentionally strict; expand only with explicit security review.
+        self._allowed_status_list_hosts = {"status.encypherai.com"}
     
     # -------------------------------------------------------------------------
     # Status Allocation (used during signing)
@@ -189,7 +195,7 @@ class StatusService:
         self,
         status_list_url: str,
         bit_index: int,
-    ) -> bool:
+    ) -> Tuple[Optional[bool], Optional[str]]:
         """
         Check if a document is revoked.
         
@@ -200,7 +206,9 @@ class StatusService:
             bit_index: Bit position in the list
         
         Returns:
-            True if revoked, False if active
+            Tuple of (is_revoked, error).
+            - is_revoked=True/False when status could be determined.
+            - is_revoked=None when status could not be determined.
         """
         try:
             bitstring = await self._get_status_list(status_list_url)
@@ -210,15 +218,13 @@ class StatusService:
             bit_position = 7 - (bit_index % 8)  # MSB first per W3C spec
             
             if byte_index >= len(bitstring):
-                return False  # Index out of range = not revoked
+                return False, None  # Index out of range = not revoked
             
-            return bool(bitstring[byte_index] & (1 << bit_position))
+            return bool(bitstring[byte_index] & (1 << bit_position)), None
             
         except Exception as e:
             logger.warning(f"Failed to check revocation status: {e}")
-            # Fail open - if we can't check, assume not revoked
-            # This is a policy decision; could also fail closed
-            return False
+            return None, str(e)
     
     async def check_revocation_from_db(
         self,
@@ -258,7 +264,8 @@ class StatusService:
         """
         Fetch and cache a status list.
         
-        In production, this fetches from CDN. For now, returns empty bitstring.
+        Fetches a W3C StatusList2021Credential JSON-LD and decodes the compressed
+        `credentialSubject.encodedList` bitstring.
         """
         now = time.time()
         
@@ -267,18 +274,43 @@ class StatusService:
             data, expires = self._list_cache[url]
             if now < expires:
                 return data
-        
-        # TODO: Implement CDN fetch
-        # For now, return empty bitstring (all documents active)
-        # This will be replaced with actual HTTP fetch in production
-        logger.debug(f"Status list cache miss for {url}, returning empty bitstring")
-        bitstring = bytes(BYTES_PER_LIST)
-        
+
+        parsed = urlparse(url)
+        if parsed.scheme != "https" or not parsed.netloc:
+            raise ValueError("Untrusted status list url")
+
+        host = parsed.hostname
+        if host not in self._allowed_status_list_hosts:
+            raise ValueError("Untrusted status list url")
+
+        logger.debug("Status list cache miss for %s, fetching", url)
+
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
+            resp = await client.get(url)
+            resp.raise_for_status()
+            payload = resp.json()
+
+        credential_subject = payload.get("credentialSubject") if isinstance(payload, dict) else None
+        if not isinstance(credential_subject, dict):
+            raise ValueError("Invalid status list credential")
+
+        encoded_list = credential_subject.get("encodedList")
+        if not isinstance(encoded_list, str) or not encoded_list.strip():
+            raise ValueError("Invalid status list credential")
+
+        try:
+            compressed = base64.b64decode(encoded_list, validate=True)
+            bitstring = gzip.decompress(compressed)
+        except Exception as exc:
+            raise ValueError(f"Invalid status list encoding: {exc}") from exc
+
+        if len(bitstring) != BYTES_PER_LIST:
+            raise ValueError("Invalid status list length")
+
         # Cache the result
-        self._list_cache[url] = (bitstring, now + self.cache_ttl)
-        
-        return bitstring
-    
+        self._list_cache[url] = (bytes(bitstring), now + self.cache_ttl)
+        return bytes(bitstring)
+
     def invalidate_cache(self, url: Optional[str] = None) -> None:
         """
         Invalidate cached status lists.

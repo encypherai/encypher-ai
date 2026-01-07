@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_organization
+from app.utils.outbound_url import validate_https_public_url
 
 router = APIRouter(prefix="/webhooks", tags=["Webhooks"])
 logger = logging.getLogger(__name__)
@@ -245,8 +246,9 @@ async def create_webhook(
     """
     org_id = organization.get("organization_id")
 
-    # Validate URL is HTTPS
-    if not request.url.startswith("https://"):
+    try:
+        validate_https_public_url(request.url)
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"code": "INVALID_URL", "message": "Webhook URL must use HTTPS"},
@@ -339,6 +341,14 @@ async def get_webhook(
             detail={"code": "WEBHOOK_NOT_FOUND", "message": "Webhook not found"},
         )
 
+    try:
+        validate_https_public_url(row.url, resolve_dns=True)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_URL", "message": "Webhook URL must use HTTPS"},
+        )
+
     events = row.events if isinstance(row.events, list) else []
 
     return WebhookListResponse(
@@ -386,7 +396,9 @@ async def update_webhook(
     params = {"webhook_id": webhook_id, "org_id": org_id}
 
     if request.url is not None:
-        if not request.url.startswith("https://"):
+        try:
+            validate_https_public_url(request.url)
+        except ValueError:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail={"code": "INVALID_URL", "message": "Webhook URL must use HTTPS"},
@@ -497,6 +509,14 @@ async def test_webhook(
             detail={"code": "WEBHOOK_NOT_FOUND", "message": "Webhook not found"},
         )
 
+    try:
+        validate_https_public_url(row.url, resolve_dns=True)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_URL", "message": "Webhook URL must use HTTPS"},
+        )
+
     # Build test payload
     import httpx
     import json
@@ -513,7 +533,7 @@ async def test_webhook(
 
     # Send test request
     try:
-        async with httpx.AsyncClient(timeout=10.0) as client:
+        async with httpx.AsyncClient(timeout=10.0, follow_redirects=False) as client:
             headers = {
                 "Content-Type": "application/json",
                 "User-Agent": "Encypher-Webhook/1.0",

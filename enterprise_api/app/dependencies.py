@@ -283,6 +283,28 @@ async def require_sign_permission(
     return organization
 
 
+async def require_embedding_permission(
+    organization: Dict = Depends(get_current_organization),
+) -> Dict:
+    features = organization.get("features", {})
+    is_super_admin = isinstance(features, dict) and features.get("is_super_admin", False)
+
+    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    if not is_super_admin and tier not in {"professional", "business", "enterprise", "demo"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Embeddings require Professional or Enterprise tier. Please upgrade your plan.",
+        )
+
+    if not organization.get("can_sign"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your API key does not have permission to sign content",
+        )
+
+    return organization
+
+
 async def require_verify_permission(
     organization: Dict = Depends(get_current_organization),
 ) -> Dict:

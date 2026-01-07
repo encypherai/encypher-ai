@@ -820,6 +820,77 @@
         }
       }
     },
+    "/api/v1/byok/trusted-cas": {
+      "get": {
+        "tags": [
+          "BYOK",
+          "BYOK"
+        ],
+        "summary": "List trusted Certificate Authorities",
+        "description": "Returns the list of C2PA-trusted CAs that can issue signing certificates.",
+        "operationId": "list_trusted_cas_api_v1_byok_trusted_cas_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrustListResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/byok/certificates": {
+      "post": {
+        "tags": [
+          "BYOK",
+          "BYOK"
+        ],
+        "summary": "Upload a CA-signed certificate",
+        "description": "Upload an X.509 certificate signed by a C2PA-trusted CA for BYOK signing.",
+        "operationId": "upload_certificate_api_v1_byok_certificates_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CertificateUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertificateUploadResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/documents": {
       "get": {
         "tags": [
@@ -2196,6 +2267,11 @@
         "summary": "Sse Events Endpoint",
         "description": "Server-Sent Events (SSE) endpoint for unidirectional streaming.\n\nArgs:\n    session_id: Session identifier\n    api_key: API key for authentication\n    \nReturns:\n    StreamingResponse with SSE events",
         "operationId": "sse_events_endpoint_api_v1_stream_events_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "session_id",
@@ -2304,6 +2380,11 @@
         "summary": "Get Stream Run",
         "description": "Return persisted streaming run state.",
         "operationId": "get_stream_run_api_v1_stream_runs__run_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "run_id",
@@ -4612,26 +4693,6 @@
       }
     },
     "/api/v1/provisioning/api-keys": {
-      "get": {
-        "tags": [
-          "Provisioning"
-        ],
-        "summary": "List API Keys",
-        "description": "List all API keys for an organization",
-        "operationId": "list_api_keys_api_v1_provisioning_api_keys_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/APIKeyListResponse"
-                }
-              }
-            }
-          }
-        }
-      },
       "post": {
         "tags": [
           "Provisioning"
@@ -4639,15 +4700,28 @@
         "summary": "Create API Key",
         "description": "Create a new API key for an organization",
         "operationId": "create_api_key_api_v1_provisioning_api_keys_post",
+        "parameters": [
+          {
+            "name": "x-provisioning-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Provisioning token (optional)",
+              "title": "X-Provisioning-Token"
+            },
+            "description": "Provisioning token (optional)"
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/APIKeyCreateRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -4656,6 +4730,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/APIKeyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Provisioning"
+        ],
+        "summary": "List API Keys",
+        "description": "List all API keys for an organization",
+        "operationId": "list_api_keys_api_v1_provisioning_api_keys_get",
+        "parameters": [
+          {
+            "name": "x-provisioning-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Provisioning token (optional)",
+              "title": "X-Provisioning-Token"
+            },
+            "description": "Provisioning token (optional)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIKeyListResponse"
                 }
               }
             }
@@ -4690,6 +4807,17 @@
               "type": "string",
               "title": "Key Id"
             }
+          },
+          {
+            "name": "x-provisioning-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Provisioning token (optional)",
+              "title": "X-Provisioning-Token"
+            },
+            "description": "Provisioning token (optional)"
           }
         ],
         "requestBody": {
@@ -4727,15 +4855,28 @@
         "summary": "Create User Account",
         "description": "Create a new user account",
         "operationId": "create_user_account_api_v1_provisioning_users_post",
+        "parameters": [
+          {
+            "name": "x-provisioning-token",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Provisioning token (optional)",
+              "title": "X-Provisioning-Token"
+            },
+            "description": "Provisioning token (optional)"
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/UserAccountCreateRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -4775,128 +4916,6 @@
             "content": {
               "application/json": {
                 "schema": {}
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/enterprise/embeddings/encode-with-embeddings": {
-      "post": {
-        "tags": [
-          "Enterprise - Embeddings"
-        ],
-        "summary": "Encode With Embeddings",
-        "description": "Encode a document with invisible embeddings.\n\n**Alias:** POST /enterprise/sign/advanced",
-        "operationId": "encode_with_embeddings_api_v1_enterprise_embeddings_encode_with_embeddings_post",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EncodeWithEmbeddingsRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EncodeWithEmbeddingsResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/enterprise/embeddings/sign/advanced": {
-      "post": {
-        "tags": [
-          "Enterprise - Embeddings"
-        ],
-        "summary": "Sign Advanced",
-        "description": "Sign a document with advanced invisible embeddings.\n\nThis is an alias for POST /enterprise/embeddings/encode-with-embeddings\nwith a clearer name. Creates C2PA-compliant invisible signatures.\n\nRequires Professional or Enterprise tier.",
-        "operationId": "sign_advanced_api_v1_enterprise_embeddings_sign_advanced_post",
-        "deprecated": true,
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EncodeWithEmbeddingsRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EncodeWithEmbeddingsResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
               }
             }
           }
@@ -7480,12 +7499,17 @@
             "title": "Manifest Hash",
             "description": "Manifest hash"
           },
-          "verified": {
+          "validated": {
             "type": "boolean",
-            "title": "Verified",
-            "description": "Whether manifest is verified"
+            "title": "Validated",
+            "description": "Whether the manifest passed validation"
           },
-          "verification_details": {
+          "validation_type": {
+            "type": "string",
+            "title": "Validation Type",
+            "description": "Validation semantics. Currently always 'non_cryptographic'."
+          },
+          "validation_details": {
             "anyOf": [
               {
                 "additionalProperties": true,
@@ -7495,14 +7519,15 @@
                 "type": "null"
               }
             ],
-            "title": "Verification Details",
-            "description": "Detailed verification results (assertions, signatures, errors)"
+            "title": "Validation Details",
+            "description": "Detailed validation results (assertions, signatures, errors)"
           }
         },
         "type": "object",
         "required": [
           "manifest_url",
-          "verified"
+          "validated",
+          "validation_type"
         ],
         "title": "C2PAInfo",
         "description": "C2PA manifest information with verification details."
@@ -7976,6 +8001,81 @@
         "type": "object",
         "title": "C2PATemplateUpdate",
         "description": "Request schema for updating an assertion template."
+      },
+      "CertificateUploadRequest": {
+        "properties": {
+          "certificate_pem": {
+            "type": "string",
+            "minLength": 100,
+            "title": "Certificate Pem",
+            "description": "PEM-encoded X.509 certificate (must chain to C2PA trusted CA)"
+          },
+          "chain_pem": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Chain Pem",
+            "description": "PEM-encoded intermediate certificates (if not included in certificate_pem)"
+          },
+          "key_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key Name",
+            "description": "Friendly name for this certificate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "certificate_pem"
+        ],
+        "title": "CertificateUploadRequest",
+        "description": "Request to upload a CA-signed certificate for BYOK."
+      },
+      "CertificateUploadResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "data": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Data"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          }
+        },
+        "type": "object",
+        "title": "CertificateUploadResponse",
+        "description": "Response for certificate upload."
       },
       "ChatCompletionRequest": {
         "properties": {
@@ -13979,6 +14079,30 @@
         ],
         "title": "TrustAnchorResponse",
         "description": "Response for trust anchor lookup.\n\nEnables external C2PA validators to verify Encypher-signed content\nby providing the signer's public key.\n\nSee: https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_trust_lists"
+      },
+      "TrustListResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "default": true
+          },
+          "trusted_cas": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Trusted Cas"
+          },
+          "trust_list_url": {
+            "type": "string",
+            "title": "Trust List Url",
+            "default": "https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem"
+          }
+        },
+        "type": "object",
+        "title": "TrustListResponse",
+        "description": "Response listing trusted CAs."
       },
       "UpdateRoleRequest": {
         "properties": {

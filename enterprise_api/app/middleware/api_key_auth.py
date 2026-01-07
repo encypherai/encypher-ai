@@ -253,41 +253,6 @@ async def authenticate_api_key(
         )
 
 
-async def require_embedding_permission(
-    organization: Dict = Depends(authenticate_api_key)
-) -> Dict:
-    """
-    Verify organization has permission to create embeddings.
-    
-    Args:
-        organization: Organization details from authentication
-    
-    Returns:
-        Organization details
-    
-    Raises:
-        HTTPException: If organization lacks embedding permission
-    """
-    # Check tier - embeddings require Professional or Enterprise (or super admin)
-    features = organization.get("features", {})
-    is_super_admin = features.get("is_super_admin", False)
-    
-    if not is_super_admin and organization["tier"] not in ("professional", "enterprise", "demo"):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Embeddings require Professional or Enterprise tier. Please upgrade your plan."
-        )
-    
-    # Check sign permission
-    if not organization["can_sign"]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="API key does not have permission to sign content"
-        )
-    
-    return organization
-
-
 async def require_verification_permission(
     organization: Dict = Depends(authenticate_api_key)
 ) -> Dict:

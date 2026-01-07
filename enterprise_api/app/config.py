@@ -38,6 +38,8 @@ class Settings(BaseSettings):
     ssl_com_api_url: str = "https://api.ssl.com/v1"
     ssl_com_product_id: Optional[str] = None
 
+    provisioning_token: Optional[str] = None
+
     # API
     api_base_url: str = "https://api.encypherai.com"
 
