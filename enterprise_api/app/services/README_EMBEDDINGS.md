@@ -1,27 +1,64 @@
-# Invisible Signed Embeddings System
+# C2PA Content Signing System
 
 ## Overview
 
-The **Invisible Signed Embeddings** system provides cryptographically signed, invisible references embedded directly into text content using Unicode variation selectors. These embeddings are:
+The Encypher Enterprise API provides **C2PA-compliant content signing** with two endpoints:
 
-- **Completely invisible** to readers
-- **Portable** - travel with content when copied/pasted
-- **Verifiable** by third parties without API keys
-- **C2PA-compliant** using the `encypher-ai` package
+| Endpoint | Tier | Description |
+|----------|------|-------------|
+| `POST /api/v1/sign` | All | Document-level C2PA manifest embedding |
+| `POST /api/v1/sign/advanced` | Professional+ | Sentence-level Merkle tree + per-sentence embeddings |
 
-## How It Works
+Both endpoints use the `encypher-ai` package to embed **invisible C2PA manifests** using Unicode variation selectors.
 
-Embeddings use **Unicode variation selectors (U+FE00-FE0F, U+E0100-E01EF)** attached to characters in the text. These selectors are:
+## How Signing Works
 
+### `/sign` - Document-Level Signing (All Tiers)
+
+Embeds a **single C2PA manifest** into the document:
+
+1. Load organization's **pre-existing** Ed25519 private key
+2. Create C2PA manifest with metadata, assertions, and digital signature
+3. Embed manifest at a **single point** using Unicode variation selectors
+4. Store document record in database
+5. Return signed text
+
+**Use case:** Simple content authentication for articles, blog posts, AI outputs.
+
+### `/sign/advanced` - Sentence-Level Signing (Professional+)
+
+Creates **per-sentence embeddings** with Merkle tree integration:
+
+1. Parse document into sentences
+2. Build Merkle tree from sentence hashes
+3. Sign each sentence with organization's **pre-existing** Ed25519 key
+4. Embed manifest at a **single point per sentence**
+5. Store each sentence in `content_references` table
+6. Return embedded content with Merkle tree info
+
+**Use case:** Granular plagiarism detection, sentence-level attribution, quote verification.
+
+**Future:** Distributed embedding strategy (spreading manifest across multiple characters for resilience) is planned but not yet implemented.
+
+## Key Management
+
+| User Type | Signing Key |
+|-----------|-------------|
+| **Free/Starter users** | Encypher demo key (shared) |
+| **Professional+ (BYOK)** | Organization's own Ed25519 key pair |
+
+**Note:** Free users currently use a shared demo key. A future enhancement would be to obtain a root CA certificate for Encypher to sign free user content with proper PKI chain.
+
+## Invisible Embedding Technology
+
+Both endpoints use **Unicode variation selectors** to embed manifests invisibly:
+
+- **Single-point embedding** - Manifest embedded at one location in the text
 - **Invisible** - Rendering engines display only the base character
 - **Standards-compliant** - Using Unicode variation selectors as designed
 - **Portable** - Preserved during copy/paste operations
-- **Distributed** - Spread across multiple characters for resilience
 
-```
-"Hello world" → "H[VS]e[VS]l[VS]l[VS]o[VS] w[VS]o[VS]r[VS]l[VS]d"
-                 (variation selectors are invisible)
-```
+The `encypher-ai` package handles the low-level embedding using the C2PA Text Manifest specification.
 
 ## Architecture
 
@@ -33,20 +70,18 @@ Embeddings use **Unicode variation selectors (U+FE00-FE0F, U+E0100-E01EF)** atta
          ▼
 ┌─────────────────────────────────────┐
 │  Enterprise API                     │
-│  POST /api/v1/sign/advanced         │
 │                                     │
-│  1. Build Merkle tree               │
-│  2. Generate Ed25519 signatures     │
-│  3. Embed using Unicode VS          │
-│  4. Store in content_references     │
+│  /sign          → Document manifest │
+│  /sign/advanced → Per-sentence +    │
+│                   Merkle tree       │
 └────────┬────────────────────────────┘
-         │ 2. Returns embedded content
+         │ 2. Returns signed content
          ▼
 ┌─────────────────┐
 │  Published      │
 │  Content        │
 │  (invisible     │
-│   embeddings)   │
+│   C2PA manifest)│
 └────────┬────────┘
          │ 3. Content copied/scraped
          ▼
@@ -57,11 +92,11 @@ Embeddings use **Unicode variation selectors (U+FE00-FE0F, U+E0100-E01EF)** atta
          │ 4. Extract & verify
          ▼
 ┌─────────────────────────────────────┐
-│  Public Verification API            │
-│  POST /api/v1/public/extract-and-   │
-│       verify                        │
+│  Verification API                   │
+│  POST /api/v1/verify                │
 │                                     │
-│  Returns: metadata, C2PA, license   │
+│  Returns: signer, validity, tamper  │
+│           detection, metadata       │
 └─────────────────────────────────────┘
 ```
 

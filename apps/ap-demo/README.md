@@ -92,8 +92,8 @@ Based on Paul Cheung's concerns and priorities:
 - **Styling**: TailwindCSS
 - **Icons**: Lucide React
 - **API**: Encypher Enterprise API
-  - `POST /api/v1/enterprise/embeddings/encode-with-embeddings` - Embed provenance
-  - `POST /api/v1/public/extract-and-verify` - Verify provenance
+  - `POST /api/v1/sign/advanced` - Embed provenance (Professional+ tier)
+  - `POST /api/v1/verify` - Verify provenance
 
 ## Files Structure
 

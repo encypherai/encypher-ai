@@ -1,5 +1,5 @@
 // API client for Encypher Enterprise API
-// Uses authenticated /encode-with-embeddings endpoint for sentence-level provenance
+// Uses authenticated /sign/advanced endpoint for sentence-level provenance
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
@@ -50,12 +50,12 @@ export interface VerifyResponse {
 }
 
 /**
- * Encode content with sentence-level provenance using /encode-with-embeddings.
+ * Encode content with sentence-level provenance using /sign/advanced.
  * Creates Merkle tree + C2PA manifest with invisible embeddings per sentence.
- * Requires a valid API key with embedding permission.
+ * Requires a valid API key with sign permission (Professional+ tier).
  */
 export async function encodeContent(request: EncodeRequest): Promise<EncodeResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/enterprise/embeddings/encode-with-embeddings`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/sign/advanced`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
