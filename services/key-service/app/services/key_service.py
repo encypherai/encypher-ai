@@ -209,6 +209,18 @@ class KeyService:
             has_merkle = "merkle" in key_permissions
             is_super_admin = "admin" in key_permissions or "super_admin" in key_permissions
             
+            # Check if user is a known superadmin by querying users table
+            # This ensures superadmins always get full access regardless of key permissions
+            if not is_super_admin and result.user_id:
+                try:
+                    superadmin_check = db.execute(text("""
+                        SELECT is_super_admin FROM users WHERE id = :user_id
+                    """), {"user_id": result.user_id}).fetchone()
+                    if superadmin_check and superadmin_check.is_super_admin:
+                        is_super_admin = True
+                except Exception:
+                    pass  # If users table doesn't exist in this DB, skip
+            
             return {
                 "key_id": result.key_id,
                 "user_id": result.user_id,
