@@ -7,6 +7,8 @@ Unified Authentication Architecture:
 - Features are used for tier-gating (team_management, audit_logs, etc.)
 - Demo keys are supported for local development when Key Service is unavailable
 """
+
+import inspect
 import logging
 from typing import Dict
 
@@ -18,6 +20,19 @@ from app.services.key_service_client import key_service_client
 
 logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
+
+
+async def get_current_organization_dep(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
+) -> Dict:
+    maybe_org = get_current_organization(
+        request=request,
+        background_tasks=background_tasks,
+        credentials=credentials,
+    )
+    return await maybe_org if inspect.isawaitable(maybe_org) else maybe_org
 
 # Demo key configurations for local testing (when Key Service unavailable)
 # These match the seeded test organizations
@@ -268,6 +283,28 @@ async def require_sign_permission(
     return organization
 
 
+async def require_embedding_permission(
+    organization: Dict = Depends(get_current_organization),
+) -> Dict:
+    features = organization.get("features", {})
+    is_super_admin = isinstance(features, dict) and features.get("is_super_admin", False)
+
+    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    if not is_super_admin and tier not in {"professional", "business", "enterprise", "demo"}:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Embeddings require Professional or Enterprise tier. Please upgrade your plan.",
+        )
+
+    if not organization.get("can_sign"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your API key does not have permission to sign content",
+        )
+
+    return organization
+
+
 async def require_verify_permission(
     organization: Dict = Depends(get_current_organization),
 ) -> Dict:
@@ -334,7 +371,7 @@ async def require_read_permission(
 
 
 async def require_super_admin(
-    organization: Dict = Depends(get_current_organization),
+    organization: Dict,
 ) -> Dict:
     features = organization.get("features", {})
     if not isinstance(features, dict) or not features.get("is_super_admin", False):
@@ -343,3 +380,9 @@ async def require_super_admin(
             detail="Super admin access required",
         )
     return organization
+
+
+async def require_super_admin_dep(
+    organization: Dict = Depends(get_current_organization_dep),
+) -> Dict:
+    return await require_super_admin(organization)

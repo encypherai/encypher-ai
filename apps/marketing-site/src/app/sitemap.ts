@@ -17,6 +17,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/ai`, lastModified: now },
     { url: `${base}/publishers`, lastModified: now },
     { url: `${base}/enterprises`, lastModified: now },
+    { url: `${base}/pricing`, lastModified: now },
     { url: `${base}/company`, lastModified: now },
     { url: `${base}/privacy`, lastModified: now },
     { url: `${base}/terms`, lastModified: now },
@@ -25,6 +26,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${base}/ai-detector`, lastModified: now },
     { url: `${base}/deepfake-detection`, lastModified: now },
     { url: `${base}/ai-copyright-infringement`, lastModified: now },
+    { url: `${base}/solutions/publishers`, lastModified: now },
+    { url: `${base}/solutions/ai-companies`, lastModified: now },
+    { url: `${base}/solutions/enterprises`, lastModified: now },
   ];
 
   const posts = getAllPostSlugs();

@@ -11,6 +11,8 @@ Name | Type
 `verificationStatus` | string
 `error` | string
 `rawHiddenData` | [AppRoutersToolsVerifyVerdict](AppRoutersToolsVerifyVerdict.md)
+`embeddingsFound` | number
+`allEmbeddings` | [Array&lt;EmbeddingResult&gt;](EmbeddingResult.md)
 
 ## Example
 
@@ -23,6 +25,8 @@ const example = {
   "verificationStatus": null,
   "error": null,
   "rawHiddenData": null,
+  "embeddingsFound": null,
+  "allEmbeddings": null,
 } satisfies DecodeToolResponse
 
 console.log(example)

@@ -49,6 +49,15 @@ class LicenseInfo(BaseModel):
     contact_email: Optional[str] = Field(None, description="Contact email for licensing")
 
 
+class RightsMetadata(BaseModel):
+    copyright_holder: Optional[str] = Field(None, description="Copyright holder / publisher name")
+    license_url: Optional[str] = Field(None, description="URL to license terms")
+    usage_terms: Optional[str] = Field(None, description="Human-readable usage terms")
+    syndication_allowed: Optional[bool] = Field(None, description="Whether downstream syndication is permitted")
+    embargo_until: Optional[datetime] = Field(None, description="Optional embargo end timestamp")
+    contact_email: Optional[str] = Field(None, description="Contact email for licensing")
+
+
 class EncodeWithEmbeddingsRequest(BaseModel):
     """Request to encode document with minimal signed embeddings."""
     document_id: str = Field(..., description="Unique document identifier")
@@ -60,6 +69,27 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     action: str = Field(
         default="c2pa.created",
         description="C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)"
+    )
+    # === API Feature Augmentation (TEAM_044) ===
+    manifest_mode: str = Field(
+        default="full",
+        description="Manifest mode: full (default C2PA), lightweight_uuid (minimal UUID pointer), hybrid (UUID per sentence + full C2PA at doc level). Professional+ for lightweight_uuid, Enterprise for hybrid."
+    )
+    embedding_strategy: str = Field(
+        default="single_point",
+        description="Embedding strategy: single_point (default), distributed (spread across targets), distributed_redundant (with ECC). Business+ for distributed, Enterprise for ECC."
+    )
+    distribution_target: Optional[str] = Field(
+        default=None,
+        description="Target characters for distributed embedding: whitespace, punctuation, all_chars. Only used when embedding_strategy is distributed or distributed_redundant."
+    )
+    add_dual_binding: bool = Field(
+        default=False,
+        description="Enable dual-binding manifest (content + self-hash). Business+ feature."
+    )
+    disable_c2pa: bool = Field(
+        default=False,
+        description="Opt-out of C2PA embedding. When true, only basic metadata is embedded."
     )
     previous_instance_id: Optional[str] = Field(
         None,
@@ -81,6 +111,10 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         None,
         description="Custom C2PA assertions to include in manifest"
     )
+    template_id: Optional[str] = Field(
+        None,
+        description="Template ID to use for assertions"
+    )
     validate_assertions: bool = Field(
         True,
         description="Whether to validate custom assertions against registered schemas"
@@ -92,6 +126,10 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     license: Optional[LicenseInfo] = Field(
         None,
         description="Optional license information"
+    )
+    rights: Optional[RightsMetadata] = Field(
+        None,
+        description="Optional rights metadata to embed (Business+).",
     )
     embedding_options: EmbeddingOptions = Field(
         default_factory=EmbeddingOptions,
@@ -107,6 +145,29 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         allowed = ['document', 'word', 'sentence', 'paragraph', 'section']
         if v not in allowed:
             raise ValueError(f"Segmentation level must be one of: {', '.join(allowed)}")
+        return v
+
+    @validator('manifest_mode')
+    def validate_manifest_mode(cls, v):
+        allowed = ['full', 'lightweight_uuid', 'hybrid']
+        if v not in allowed:
+            raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
+        return v
+
+    @validator('embedding_strategy')
+    def validate_embedding_strategy(cls, v):
+        allowed = ['single_point', 'distributed', 'distributed_redundant']
+        if v not in allowed:
+            raise ValueError(f"Embedding strategy must be one of: {', '.join(allowed)}")
+        return v
+
+    @validator('distribution_target')
+    def validate_distribution_target(cls, v):
+        if v is None:
+            return v
+        allowed = ['whitespace', 'punctuation', 'all_chars']
+        if v not in allowed:
+            raise ValueError(f"Distribution target must be one of: {', '.join(allowed)}")
         return v
 
 
@@ -184,10 +245,13 @@ class C2PAInfo(BaseModel):
     """C2PA manifest information with verification details."""
     manifest_url: str = Field(..., description="C2PA manifest URL")
     manifest_hash: Optional[str] = Field(None, description="Manifest hash")
-    verified: bool = Field(..., description="Whether manifest is verified")
-    verification_details: Optional[Dict[str, Any]] = Field(
+    validated: bool = Field(..., description="Whether the manifest passed validation")
+    validation_type: str = Field(
+        ..., description="Validation semantics. Currently always 'non_cryptographic'."
+    )
+    validation_details: Optional[Dict[str, Any]] = Field(
         None,
-        description="Detailed verification results (assertions, signatures, errors)"
+        description="Detailed validation results (assertions, signatures, errors)"
     )
 
 

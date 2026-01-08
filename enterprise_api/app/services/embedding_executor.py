@@ -9,6 +9,7 @@ import time
 from typing import Dict
 
 from fastapi import HTTPException, status
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.schemas.embeddings import (
@@ -84,34 +85,230 @@ async def encode_document_with_embeddings(
                     },
                 )
         
-        # Validate custom assertions if provided
+        # === API Feature Augmentation Tier Gating (TEAM_044) ===
+        # Check tier requirements for advanced features
+        tier = organization.get("tier", "starter").lower()
+        tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
+        org_tier_level = tier_levels.get(tier, 0)
+        
+        # Lightweight UUID requires Professional+
+        if request.manifest_mode == "lightweight_uuid" and org_tier_level < 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Lightweight UUID manifest mode requires Professional tier or higher",
+                    "required_tier": "professional",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Hybrid manifest mode requires Enterprise
+        if request.manifest_mode == "hybrid" and org_tier_level < 3:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Hybrid manifest mode requires Enterprise tier",
+                    "required_tier": "enterprise",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Distributed embedding requires Business+
+        if request.embedding_strategy == "distributed" and org_tier_level < 2:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Distributed embedding requires Business tier or higher",
+                    "required_tier": "business",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Distributed redundant (ECC) requires Enterprise
+        if request.embedding_strategy == "distributed_redundant" and org_tier_level < 3:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Distributed redundant embedding (ECC) requires Enterprise tier",
+                    "required_tier": "enterprise",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        # Dual binding requires Business+
+        if request.add_dual_binding and org_tier_level < 2:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Dual-binding manifest requires Business tier or higher",
+                    "required_tier": "business",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+        
+        logger.info(
+            f"Tier gating passed for org {organization_id} (tier={tier}): "
+            f"manifest_mode={request.manifest_mode}, embedding_strategy={request.embedding_strategy}"
+        )
+        
+        # Validate custom assertions and/or template-based assertions if provided.
+        # Templates are meant to be usable by Business+ customers while schema/template authoring
+        # remains Enterprise-only.
+        raw_assertions = []
+
+        effective_template_id = request.template_id
+        if effective_template_id is None:
+            row = await db.execute(
+                text(
+                    "SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"
+                ),
+                {"org_id": organization_id},
+            )
+            effective_template_id = row.scalar_one_or_none()
+
+        if request.rights:
+            features = organization.get("features", {})
+            custom_assertions_enabled = False
+            if isinstance(features, dict):
+                custom_assertions_enabled = features.get("custom_assertions", False)
+            custom_assertions_enabled = custom_assertions_enabled or organization.get(
+                "custom_assertions_enabled", False
+            )
+
+            if not custom_assertions_enabled:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "code": "FEATURE_NOT_AVAILABLE",
+                        "message": "Custom assertion templates require Business tier or higher",
+                        "upgrade_url": "/billing/upgrade",
+                    },
+                )
+
+            rights_payload = request.rights.dict(exclude_none=True)
+            embargo_until = rights_payload.get("embargo_until")
+            if embargo_until is not None and hasattr(embargo_until, "isoformat"):
+                rights_payload["embargo_until"] = embargo_until.isoformat()
+            if rights_payload:
+                raw_assertions.append({"label": "com.encypher.rights.v1", "data": rights_payload})
+
+        if effective_template_id:
+            features = organization.get("features", {})
+            custom_assertions_enabled = False
+            if isinstance(features, dict):
+                custom_assertions_enabled = features.get("custom_assertions", False)
+            custom_assertions_enabled = custom_assertions_enabled or organization.get(
+                "custom_assertions_enabled", False
+            )
+
+            if not custom_assertions_enabled:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "code": "FEATURE_NOT_AVAILABLE",
+                        "message": "Custom assertion templates require Business tier or higher",
+                        "upgrade_url": "/billing/upgrade",
+                    },
+                )
+
+            from sqlalchemy import select
+
+            from app.models.c2pa_template import C2PAAssertionTemplate
+
+            stmt = (
+                select(C2PAAssertionTemplate)
+                .where(
+                    C2PAAssertionTemplate.id == effective_template_id,
+                    (
+                        (C2PAAssertionTemplate.organization_id == organization_id)
+                        | (C2PAAssertionTemplate.is_public)
+                    ),
+                    C2PAAssertionTemplate.is_active,
+                )
+                .limit(1)
+            )
+            result = await db.execute(stmt)
+            template = result.scalar_one_or_none()
+
+            template_data = None
+            if template:
+                template_data = template.template_data or {}
+            else:
+                from app.services.c2pa_builtin_templates import get_builtin_template
+
+                builtin = get_builtin_template(template_id=effective_template_id)
+                if builtin is not None:
+                    template_data = builtin.get("template_data") or {}
+
+            if template_data is None:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail={
+                        "code": "TEMPLATE_NOT_FOUND",
+                        "message": "Assertion template not found",
+                    },
+                )
+
+            assertions_payload = []
+            if isinstance(template_data, dict):
+                assertions_payload = template_data.get("assertions") or []
+            elif isinstance(template_data, list):
+                assertions_payload = template_data
+
+            for assertion in assertions_payload:
+                if not isinstance(assertion, dict):
+                    continue
+                label = assertion.get("label")
+                if not label:
+                    continue
+                data = assertion.get("data")
+                if data is None:
+                    data = assertion.get("default_data")
+                if data is None:
+                    # Skip optional assertions with no default payload.
+                    continue
+                raw_assertions.append({"label": label, "data": data})
+
+        if request.custom_assertions:
+            raw_assertions.extend(request.custom_assertions)
+
         validated_assertions = None
-        if request.custom_assertions and request.validate_assertions:
+        if raw_assertions and request.validate_assertions:
             from sqlalchemy import select
 
             from app.models.c2pa_schema import C2PASchema
             from app.services.c2pa_validator import validator
-            
+
             # Fetch registered schemas for this organization
             registered_schemas = {}
-            for assertion in request.custom_assertions:
-                label = assertion.get('label')
-                if label:
+            for assertion in raw_assertions:
+                label = assertion.get("label")
+                if label and label not in registered_schemas:
                     stmt = select(C2PASchema).where(
                         C2PASchema.label == label,
-                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public))
+                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public)),
                     ).order_by(C2PASchema.created_at.desc())
                     result = await db.execute(stmt)
                     schema_model = result.scalar_one_or_none()
                     if schema_model:
-                        registered_schemas[label] = schema_model.schema
-            
+                        registered_schemas[label] = schema_model.json_schema
+
             # Validate all assertions
             all_valid, validation_results = validator.validate_custom_assertions(
-                request.custom_assertions,
-                registered_schemas
+                raw_assertions,
+                registered_schemas,
             )
-            
+
             if not all_valid:
                 logger.warning(f"Custom assertion validation failed for document {request.document_id}")
                 raise HTTPException(
@@ -119,15 +316,17 @@ async def encode_document_with_embeddings(
                     detail={
                         "code": "INVALID_ASSERTIONS",
                         "message": "One or more custom assertions failed validation",
-                        "validation_results": validation_results
-                    }
+                        "validation_results": validation_results,
+                    },
                 )
-            
-            validated_assertions = request.custom_assertions
-            logger.info(f"Validated {len(validated_assertions)} custom assertions for document {request.document_id}")
-        elif request.custom_assertions:
+
+            validated_assertions = raw_assertions
+            logger.info(
+                f"Validated {len(validated_assertions)} custom assertions for document {request.document_id}"
+            )
+        elif raw_assertions:
             # Use assertions without validation
-            validated_assertions = request.custom_assertions
+            validated_assertions = raw_assertions
             logger.info(f"Using {len(validated_assertions)} custom assertions without validation")
         
         # Initialize embedding service with organization's key
@@ -190,7 +389,13 @@ async def encode_document_with_embeddings(
             action=request.action,
             previous_instance_id=request.previous_instance_id,
             custom_assertions=validated_assertions,  # Pass validated custom assertions
-            digital_source_type=request.digital_source_type  # Pass digital source type
+            digital_source_type=request.digital_source_type,  # Pass digital source type
+            # === API Feature Augmentation (TEAM_044) ===
+            manifest_mode=request.manifest_mode,
+            embedding_strategy=request.embedding_strategy,
+            distribution_target=request.distribution_target,
+            add_dual_binding=request.add_dual_binding,
+            disable_c2pa=request.disable_c2pa,
         )
         
         # Step 4: Convert embeddings to response format
@@ -273,6 +478,8 @@ async def encode_document_with_embeddings(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e)
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error encoding document with embeddings: {e}", exc_info=True)
         raise HTTPException(

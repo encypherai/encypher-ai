@@ -64,10 +64,10 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 | Language | Package Name | Registry | Repository |
 |----------|--------------|----------|------------|
-| Python | `encypher-enterprise` | PyPI | encypherai/enterprise-sdk |
-| TypeScript | `@encypher/sdk` | npm | encypherai/sdk-typescript |
-| Go | `github.com/encypherai/sdk-go` | Go Modules | encypherai/sdk-go |
-| Rust | `encypher` | crates.io | encypherai/sdk-rust |
+| Python | `encypher` | PyPI | encypherai/encypherai-commercial (sdk/python) |
+| TypeScript | `@encypher/sdk` | npm | encypherai/encypherai-commercial (sdk/typescript) |
+| Go | `github.com/encypherai/encypherai-commercial/sdk/go` | Go Modules | encypherai/encypherai-commercial (sdk/go) |
+| Rust | `encypher` | crates.io | encypherai/encypherai-commercial (sdk/rust) |
 
 ---
 
@@ -112,27 +112,27 @@ This PRD defines how to host, publish, and cross-reference these documentation s
 
 ### 2.0 SDK Publishing
 
-- [ ] 2.1 Python SDK (`encypher-enterprise`)
-  - [ ] 2.1.1 Update `enterprise_sdk/pyproject.toml` metadata
+- [ ] 2.1 Python SDK (`encypher`)
+  - [x] 2.1.1 Update `sdk/python/` metadata
   - [ ] 2.1.2 Set up PyPI account and API token
-  - [ ] 2.1.3 Create GitHub Actions workflow for publishing
+  - [x] 2.1.3 Create GitHub Actions workflow for publishing
   - [ ] 2.1.4 Publish v1.0.0 to PyPI
 
 - [ ] 2.2 TypeScript SDK (`@encypher/sdk`)
-  - [ ] 2.2.1 Update `sdk/typescript/package.json` metadata
+  - [x] 2.2.1 Update `sdk/typescript/package.json` metadata
   - [ ] 2.2.2 Set up npm organization (@encypher)
-  - [ ] 2.2.3 Create GitHub Actions workflow for publishing
+  - [x] 2.2.3 Create GitHub Actions workflow for publishing
   - [ ] 2.2.4 Publish v1.0.0-alpha.1 to npm
 
 - [ ] 2.3 Go SDK
-  - [ ] 2.3.1 Create `encypherai/sdk-go` repository
-  - [ ] 2.3.2 Set up Go module with proper versioning
-  - [ ] 2.3.3 Tag v1.0.0-alpha.1
+  - [x] 2.3.1 Ensure Go module path matches monorepo subdirectory (`sdk/go`)
+  - [ ] 2.3.2 Tag releases using subdir tag prefix (e.g. `sdk/go/v1.0.0-alpha.1`)
 
 - [ ] 2.4 Rust SDK
-  - [ ] 2.4.1 Update `sdk/rust/Cargo.toml` metadata
+  - [x] 2.4.1 Update `sdk/rust/Cargo.toml` metadata
   - [ ] 2.4.2 Set up crates.io account
-  - [ ] 2.4.3 Publish v1.0.0-alpha.1 to crates.io
+  - [x] 2.4.3 Create GitHub Actions workflow for publishing
+  - [ ] 2.4.4 Publish v1.0.0-alpha.1 to crates.io
 
 ### 3.0 Cross-Referencing
 

@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.websocket_manager import connection_manager
 from app.database import get_db
-from app.dependencies import get_current_organization, require_sign_permission
+from app.dependencies import get_current_organization, require_sign_permission, require_super_admin_dep
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.middleware.rate_limiter import streaming_rate_limiter
 from app.middleware.websocket_auth import authenticate_websocket, require_streaming_permission
@@ -61,6 +61,8 @@ async def stream_signing(
     document_id = stream_request.document_id or f"doc_{uuid4().hex[:16]}"
 
     async def event_stream():
+        org_id = organization["organization_id"]
+
         start_payload = {
             "run_id": run_id,
             "document_id": document_id,
@@ -68,7 +70,7 @@ async def stream_signing(
             "pct": 0,
             "correlation_id": correlation_id,
         }
-        await session_service.save_stream_state(run_id, start_payload)
+        await session_service.save_stream_state(run_id, {**start_payload, "organization_id": org_id})
         yield _sse_event("start", start_payload)
         try:
             progress_payload = {
@@ -77,7 +79,7 @@ async def stream_signing(
                 "status": "progress",
                 "pct": 10,
             }
-            await session_service.save_stream_state(run_id, progress_payload)
+            await session_service.save_stream_state(run_id, {**progress_payload, "organization_id": org_id})
             yield _sse_event("progress", progress_payload)
 
             sign_request = SignRequest(
@@ -101,7 +103,7 @@ async def stream_signing(
                 "pct": 90,
                 "preview": response.signed_text[:512],
             }
-            await session_service.save_stream_state(run_id, partial_payload)
+            await session_service.save_stream_state(run_id, {**partial_payload, "organization_id": org_id})
             yield _sse_event("partial", partial_payload)
 
             final_payload = {
@@ -113,7 +115,7 @@ async def stream_signing(
                 "verification_url": response.verification_url,
                 "duration_ms": duration_ms,
             }
-            await session_service.save_stream_state(run_id, final_payload)
+            await session_service.save_stream_state(run_id, {**final_payload, "organization_id": org_id})
             yield _sse_event("final", final_payload)
         except HTTPException as exc:
             detail = exc.detail if isinstance(exc.detail, dict) else {"message": exc.detail}
@@ -124,7 +126,7 @@ async def stream_signing(
                 "code": detail.get("code", "E_STREAM_SIGN"),
                 "message": detail.get("message", "Streaming signing failed"),
             }
-            await session_service.save_stream_state(run_id, error_payload)
+            await session_service.save_stream_state(run_id, {**error_payload, "organization_id": org_id})
             yield _sse_event("error", error_payload)
 
     allowed, retry_after, remaining, limit = api_rate_limiter.check(
@@ -405,7 +407,9 @@ async def websocket_chat_endpoint(
 @router.get("/stream/events")
 async def sse_events_endpoint(
     session_id: str = Query(...),
-    api_key: Optional[str] = Query(None)
+    initial_only: bool = Query(False, include_in_schema=False),
+    api_key: Optional[str] = Query(None),
+    organization: dict = Depends(require_sign_permission),
 ):
     """
     Server-Sent Events (SSE) endpoint for unidirectional streaming.
@@ -417,10 +421,19 @@ async def sse_events_endpoint(
     Returns:
         StreamingResponse with SSE events
     """
+    if not organization.get("streaming_enabled"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Streaming requires Professional or Enterprise tier",
+        )
+
     async def event_generator():
         """Generate SSE events."""
         # Send initial connection event
         yield f"event: connected\ndata: {json.dumps({'session_id': session_id})}\n\n"
+
+        if initial_only:
+            return
         
         # Heartbeat loop
         import asyncio
@@ -468,14 +481,18 @@ async def get_streaming_stats(
     }
 
 
-@router.get("/stream/health")
-async def streaming_health_check():
+@router.get("/stream/health", tags=["Admin"])
+async def streaming_health_check(
+    organization: dict = Depends(require_super_admin_dep),
+):
     """
     Health check endpoint for streaming service.
     
     Returns:
         Health status of streaming components
     """
+    _ = organization
+
     health_status = {
         "status": "healthy",
         "service": "streaming",
@@ -534,10 +551,19 @@ async def streaming_health_check():
 
 
 @router.get("/stream/runs/{run_id}")
-async def get_stream_run(run_id: str):
+async def get_stream_run(
+    run_id: str,
+    organization: dict = Depends(require_sign_permission),
+):
     """Return persisted streaming run state."""
 
     state = await session_service.get_stream_state(run_id)
     if not state:
         raise HTTPException(status_code=404, detail="Run not found")
-    return {"run_id": run_id, "state": state}
+
+    state_org_id = state.get("organization_id")
+    if not state_org_id or state_org_id != organization["organization_id"]:
+        raise HTTPException(status_code=404, detail="Run not found")
+
+    state_for_response = {k: v for k, v in state.items() if k != "organization_id"}
+    return {"run_id": run_id, "state": state_for_response}

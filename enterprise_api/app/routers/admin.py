@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
-from app.dependencies import get_current_organization, require_super_admin
+from app.dependencies import get_current_organization_dep, require_super_admin_dep
 from app.schemas.admin import (
     AdminStatsResponse,
     AdminUserListResponse,
@@ -49,7 +49,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
     description="Get platform-wide statistics including user counts, revenue, and usage metrics.",
 )
 async def get_platform_stats(
-    organization: dict = Depends(require_super_admin),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> AdminStatsResponse:
     """Get platform statistics for admin dashboard."""
@@ -72,7 +72,7 @@ async def list_users(
     tier: Optional[str] = Query(None, description="Filter by tier"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
-    organization: dict = Depends(require_super_admin),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> AdminUserListResponse:
     """List users with optional filtering."""
@@ -94,7 +94,7 @@ async def list_users(
 )
 async def update_user_tier(
     request: TierUpdateRequest,
-    organization: dict = Depends(require_super_admin),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> TierUpdateResponse:
     """Update a user's tier."""
@@ -125,7 +125,7 @@ async def update_user_tier(
 )
 async def update_user_status(
     request: UserStatusUpdateRequest,
-    organization: dict = Depends(require_super_admin),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> UserStatusUpdateResponse:
     """Update a user's status (suspend/activate)."""
@@ -165,7 +165,7 @@ async def get_error_logs(
     end_date: Optional[datetime] = Query(None, description="Filter by end date"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(50, ge=1, le=100, description="Items per page"),
-    organization: dict = Depends(require_super_admin),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> ErrorLogsResponse:
     """Get error logs with optional filtering."""
@@ -194,7 +194,7 @@ async def get_error_logs(
 )
 async def register_public_key(
     request: PublicKeyRegisterRequest,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> PublicKeyRegisterResponse:
     """
@@ -245,7 +245,7 @@ async def register_public_key(
 )
 async def list_public_keys(
     include_revoked: bool = Query(False, description="Include revoked keys"),
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ) -> PublicKeyListResponse:
     """List public keys for the organization."""
@@ -268,7 +268,7 @@ async def list_public_keys(
 async def revoke_public_key(
     key_id: str,
     reason: Optional[str] = Query(None, description="Reason for revocation"),
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_super_admin_dep),
     db: AsyncSession = Depends(get_db),
 ):
     """Revoke a public key."""

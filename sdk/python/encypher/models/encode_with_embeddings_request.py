@@ -20,6 +20,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from encypher.models.app_schemas_embeddings_rights_metadata import AppSchemasEmbeddingsRightsMetadata
 from encypher.models.embedding_options import EmbeddingOptions
 from encypher.models.license_info import LicenseInfo
 from typing import Optional, Set
@@ -38,12 +39,14 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     c2pa_manifest_url: Optional[StrictStr] = None
     c2pa_manifest_hash: Optional[StrictStr] = None
     custom_assertions: Optional[List[Dict[str, Any]]] = None
+    template_id: Optional[StrictStr] = None
     validate_assertions: Optional[StrictBool] = Field(default=True, description="Whether to validate custom assertions against registered schemas")
     digital_source_type: Optional[StrictStr] = None
     license: Optional[LicenseInfo] = None
+    rights: Optional[AppSchemasEmbeddingsRightsMetadata] = None
     embedding_options: Optional[EmbeddingOptions] = Field(default=None, description="Embedding generation options")
     expires_at: Optional[datetime] = None
-    __properties: ClassVar[List[str]] = ["document_id", "text", "segmentation_level", "action", "previous_instance_id", "metadata", "c2pa_manifest_url", "c2pa_manifest_hash", "custom_assertions", "validate_assertions", "digital_source_type", "license", "embedding_options", "expires_at"]
+    __properties: ClassVar[List[str]] = ["document_id", "text", "segmentation_level", "action", "previous_instance_id", "metadata", "c2pa_manifest_url", "c2pa_manifest_hash", "custom_assertions", "template_id", "validate_assertions", "digital_source_type", "license", "rights", "embedding_options", "expires_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -87,6 +90,9 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of license
         if self.license:
             _dict['license'] = self.license.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of rights
+        if self.rights:
+            _dict['rights'] = self.rights.to_dict()
         # override the default output from pydantic by calling `to_dict()` of embedding_options
         if self.embedding_options:
             _dict['embedding_options'] = self.embedding_options.to_dict()
@@ -115,6 +121,11 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         if self.custom_assertions is None and "custom_assertions" in self.model_fields_set:
             _dict['custom_assertions'] = None
 
+        # set to None if template_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.template_id is None and "template_id" in self.model_fields_set:
+            _dict['template_id'] = None
+
         # set to None if digital_source_type (nullable) is None
         # and model_fields_set contains the field
         if self.digital_source_type is None and "digital_source_type" in self.model_fields_set:
@@ -124,6 +135,11 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         # and model_fields_set contains the field
         if self.license is None and "license" in self.model_fields_set:
             _dict['license'] = None
+
+        # set to None if rights (nullable) is None
+        # and model_fields_set contains the field
+        if self.rights is None and "rights" in self.model_fields_set:
+            _dict['rights'] = None
 
         # set to None if expires_at (nullable) is None
         # and model_fields_set contains the field
@@ -151,9 +167,11 @@ class EncodeWithEmbeddingsRequest(BaseModel):
             "c2pa_manifest_url": obj.get("c2pa_manifest_url"),
             "c2pa_manifest_hash": obj.get("c2pa_manifest_hash"),
             "custom_assertions": obj.get("custom_assertions"),
+            "template_id": obj.get("template_id"),
             "validate_assertions": obj.get("validate_assertions") if obj.get("validate_assertions") is not None else True,
             "digital_source_type": obj.get("digital_source_type"),
             "license": LicenseInfo.from_dict(obj["license"]) if obj.get("license") is not None else None,
+            "rights": AppSchemasEmbeddingsRightsMetadata.from_dict(obj["rights"]) if obj.get("rights") is not None else None,
             "embedding_options": EmbeddingOptions.from_dict(obj["embedding_options"]) if obj.get("embedding_options") is not None else None,
             "expires_at": obj.get("expires_at")
         })

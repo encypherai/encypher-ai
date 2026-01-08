@@ -1,9 +1,9 @@
 # Encypher Corporation: Brand & Marketing Standards Guide
 ## From Technology Vendor to Standards Infrastructure Authority
 
-**Last Updated:** December 21, 2025  
-**Status:** Pre-Standard Publication Update  
-**Version:** 3.0  
+**Last Updated:** January 8, 2026  
+**Status:** Post-Standard Publication (C2PA 2.3 Released)  
+**Version:** 3.1  
 **Distribution:** Internal Marketing & Sales Teams
 
 ---
@@ -20,7 +20,7 @@ Encypher has transcended product status to become **the infrastructure standard*
 
 **Critical Positioning (Validated by ICP Publishers):**
 - We are Co-Chair of C2PA Text Provenance Task Force (lead with this)
-- C2PA text standard publishes **January 8, 2026** (hard date)
+- C2PA text standard **published January 8, 2026** — [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text)
 - Syracuse Symposium **February 25, 2026** for market standards development
 - Unmarked text = no proof of origin (core problem statement)
 - Cryptographic watermarking that survives copy-paste, B2B distribution, and scraping (solution)
@@ -34,13 +34,13 @@ Encypher has transcended product status to become **the infrastructure standard*
 ## Core Brand Positioning
 
 ### The One-Liner:
-"Text on the open web has no proof of origin. We're changing that through standards we're building with industry leaders—publishing January 8, 2026."
+"Text on the open web has no proof of origin. We changed that—the C2PA 2.3 standard published January 8, 2026, and we wrote Section A.7."
 
 ### The Elevator Pitch:
-"As Co-Chair of the C2PA Text Provenance Task Force, Encypher works with Google, BBC, OpenAI, Adobe, and Microsoft to establish text authentication as the global standard—publishing January 8, 2026. We didn't just write the specification—we built the infrastructure to implement it. Our patent-pending cryptographic watermarking embeds proof of origin directly into text, surviving copy-paste, B2B distribution, and data processing. Once publishers notify AI companies that content carries signatures, continued unauthorized use becomes provable willful infringement—transforming 'we didn't know it was yours' into '3x damages territory.'"
+"As Co-Chair of the C2PA Text Provenance Task Force, Encypher works with Google, BBC, OpenAI, Adobe, and Microsoft to establish text authentication as the global standard—published January 8, 2026. We wrote Section A.7 of the specification and built the infrastructure to implement it. Our patent-pending granular content attribution (ENC0100, 83 claims filed January 7, 2026) with Merkle tree authentication embeds proof of origin directly into text, surviving copy-paste, B2B distribution, and data processing. Once publishers notify AI companies that content carries signatures, continued unauthorized use becomes provable willful infringement—transforming 'we didn't know it was yours' into '3x damages territory.'"
 
 ### The Value Architecture:
-- **Standards Layer:** "Co-Chair, C2PA Text Provenance Task Force—Standard publishes January 8, 2026"
+- **Standards Layer:** "Co-Chair, C2PA Text Provenance Task Force—Standard published January 8, 2026 (Section A.7)"
 - **Technical Layer:** "Cryptographic watermarking embedded in text that survives downstream distribution"
 - **Legal Layer:** "Eliminate the 'we didn't know' defense—enable willful infringement proof"
 - **Economic Layer:** "Transform unmarked content into provably owned, licensable assets"
@@ -53,7 +53,7 @@ Encypher has transcended product status to become **the infrastructure standard*
 ### Primary Traits:
 
 **1. Standards Authority**
-We don't advocate—we establish. As Co-Chair of the C2PA Text Provenance Task Force, we work with industry leaders to define how text authentication works globally. The standard publishes January 8, 2026.
+We don't advocate—we establish. As Co-Chair of the C2PA Text Provenance Task Force, we work with industry leaders to define how text authentication works globally. The standard published January 8, 2026.
 
 **2. Collaborative Infrastructure**
 We build WITH the ecosystem, not against it. OpenAI is in C2PA. Google is implementing provenance. We're creating standards together.
@@ -85,10 +85,10 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 - "Willful infringement after notification—3x damages territory"
 - "Quote integrity verification—prove AI accuracy vs. hallucination"
 - "Shape market licensing standards at the Syracuse Symposium"
-- "Co-Chair, C2PA Text Provenance Task Force—standard publishes January 8, 2026"
+- "Co-Chair, C2PA Text Provenance Task Force—standard published January 8, 2026"
 
 **Example Message:**
-"Text on the open web has no cryptographic proof of origin. When your content flows through B2B licensees, gets scraped by aggregators, or trains AI models, the connection to your organization disappears. As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this—publishing January 8, 2026. Our cryptographic watermarking embeds proof directly into text at sentence-level granularity. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement—not 'we didn't know it was yours.' Join the founding coalition and help define market licensing standards at our February 25th symposium."
+"Text on the open web has no cryptographic proof of origin. When your content flows through B2B licensees, gets scraped by aggregators, or trains AI models, the connection to your organization disappears. As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this—published January 8, 2026. Our cryptographic watermarking embeds proof directly into text at sentence-level granularity. Once you notify AI companies that your content carries these signatures, continued unauthorized use becomes provable willful infringement—not 'we didn't know it was yours.' Join the founding coalition and help define market licensing standards at our February 25th symposium."
 
 ### For AI Labs (Kenji Persona)
 **Tone:** Collaborative, Standards-Based, Infrastructure-Focused, Value-Creating
@@ -101,10 +101,10 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 - "Compatible infrastructure for provenance data"
 - "Performance intelligence from sentence-level attribution"
 - "Quote integrity verification—protect your brand from hallucination claims"
-- "Standard publishes January 8, 2026"
+- "Standard published January 8, 2026"
 
 **Example Message:**
-"The publisher ecosystem is implementing cryptographic watermarking at scale. Your training pipeline will increasingly encounter marked content with embedded proof of origin—you need compatible infrastructure to handle it properly. As Co-Chair of the C2PA Text Provenance Task Force, we're building this WITH you. OpenAI is a C2PA member. Google is implementing SynthID. This isn't about restriction—it's infrastructure for proper content licensing, unprecedented model insights, and quote integrity verification that protects your brand when models claim 'According to AP...' The standard publishes January 8, 2026."
+"The publisher ecosystem is implementing cryptographic watermarking at scale. Your training pipeline will increasingly encounter marked content with embedded proof of origin—you need compatible infrastructure to handle it properly. As Co-Chair of the C2PA Text Provenance Task Force, we're building this WITH you. OpenAI is a C2PA member. Google is implementing SynthID. This isn't about restriction—it's infrastructure for proper content licensing, unprecedented model insights, and quote integrity verification that protects your brand when models claim 'According to AP...' The standard published January 8, 2026."
 
 **Never Say:**
 - "Comply or continue bleeding"
@@ -117,21 +117,21 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 **Tone:** Professional, Standards-Focused, Opportunity-Oriented
 
 **Power Phrases:**
-- "C2PA text authentication standard—publishes January 8, 2026"
+- "C2PA text authentication standard—published January 8, 2026"
 - "Cryptographic proof of origin"
 - "Governance infrastructure for AI content"
 - "Performance intelligence from attribution"
 - "Industry standard we're building with leaders"
 
 **Example Message:**
-"Text authentication is becoming the enterprise standard through C2PA—publishing January 8, 2026. As Co-Chair of the task force, we're building this infrastructure with Google, BBC, OpenAI, Adobe, and Microsoft. Our implementation includes patent-pending enhancements for governance and intelligence. Standards compliance is the baseline. Competitive advantage comes from performance intelligence showing which content drives results."
+"Text authentication is becoming the enterprise standard through C2PA—published January 8, 2026. As Co-Chair of the task force, we're building this infrastructure with Google, BBC, OpenAI, Adobe, and Microsoft. Our implementation includes patent-pending enhancements for governance and intelligence. Standards compliance is the baseline. Competitive advantage comes from performance intelligence showing which content drives results."
 
 ---
 
 ## Messaging Pillars
 
 ### Pillar 1: Standards Leadership
-**The Message:** We're Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft. The standard publishes January 8, 2026. The Syracuse Symposium on February 25, 2026 convenes stakeholders to define market licensing frameworks.
+**The Message:** We're Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. The Syracuse Symposium on February 25, 2026 convenes stakeholders to define market licensing frameworks.
 
 **Supporting Points:**
 - Co-Chair role with major tech leaders
@@ -178,7 +178,7 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 - Gives AI companies hallucination detection
 
 ### Pillar 5: Market Standards Development (NEW - Validated by AP)
-**The Message:** The C2PA technical standard publishes January 8, 2026. The Syracuse Symposium on February 25, 2026 convenes publisher GCs and AI company commercial leads to translate technical standards into market licensing frameworks. Founding coalition members shape the terms others will accept.
+**The Message:** The C2PA technical standard published January 8, 2026. The Syracuse Symposium on February 25, 2026 convenes publisher GCs and AI company commercial leads to translate technical standards into market licensing frameworks. Founding coalition members shape the terms others will accept.
 
 **Supporting Points:**
 - Industry lacks standard licensing terminology (per Paul Sarkis, AP)
@@ -207,7 +207,7 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 
 ### ✅ We Say:
 - "Co-Chair, C2PA Text Provenance Task Force"
-- "Standard publishes January 8, 2026"
+- "Standard published January 8, 2026"
 - "Syracuse Symposium February 25, 2026 for market standards"
 - "Working with Google, BBC, OpenAI, Adobe, Microsoft"
 - "Unmarked text has no proof of origin"
@@ -228,7 +228,7 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 
 ### 🎯 Power Phrases That Define Us:
 - "Unmarked text = unprovable origin"
-- "Standard publishes January 8, 2026"
+- "Standard published January 8, 2026"
 - "Willful infringement, not 'we didn't know'"
 - "Quote integrity verification"
 - "Shape market standards at Syracuse"
@@ -296,7 +296,7 @@ We're infrastructure, not applications. We're the protocol layer for text proven
 ### LinkedIn (Publisher Focus):
 "Text on the open web has no cryptographic proof of origin. When content flows through B2B licensees, gets scraped, or trains AI models, ownership becomes unprovable.
 
-The C2PA text standard publishes January 8, 2026. As Co-Chair of the task force, we're changing that—working with Google, BBC, OpenAI, Adobe, and Microsoft.
+The C2PA text standard published January 8, 2026. As Co-Chair of the task force, we're changing that—working with Google, BBC, OpenAI, Adobe, and Microsoft.
 
 Our cryptographic watermarking embeds proof directly into text. Survives copy-paste. Survives distribution. Enables formal notice.
 
@@ -310,14 +310,14 @@ See the demo: encypherai.com/publisher-demo
 
 ### Website Hero:
 **Headline:** "Unmarked Text Has No Proof of Origin. We're Changing That."
-**Subhead:** "Co-Chair of the C2PA Text Provenance Task Force. Standard publishes January 8, 2026. Building text authentication standards with Google, BBC, OpenAI, Adobe, and Microsoft."
+**Subhead:** "Authors of C2PA Section A.7. Standard published January 8, 2026. Building text authentication standards with Google, BBC, OpenAI, Adobe, and Microsoft."
 **CTA:** "See Publisher Demo" → encypherai.com/publisher-demo
 
 ### Email Subject Lines:
-- Publishers: "Eliminate the 'we didn't know' defense—C2PA standard publishes January 8"
+- Publishers: "Eliminate the 'we didn't know' defense—C2PA standard now live"
 - Publishers: "Shape market licensing standards—Syracuse Symposium February 25"
 - AI Companies: "C2PA text provenance infrastructure—building it together"
-- Enterprises: "Text authentication standard publishes January 8, 2026"
+- Enterprises: "Text authentication standard published January 8, 2026"
 
 ### Case Study Titles:
 - "How Publishers Eliminate the 'We Didn't Know' Defense"
@@ -336,7 +336,7 @@ See the demo: encypherai.com/publisher-demo
 "The standard provides document-level authentication. Our patent-pending enhancements enable sentence-level tracking, willful infringement proof, quote integrity verification, and performance intelligence."
 
 ### vs. Build Internal:
-"18 months and $5M to build what we've already perfected as reference implementation. We co-chair the standards task force—leverage our infrastructure. The standard publishes January 8, 2026."
+"18 months and $5M to build what we've already perfected as reference implementation. We co-chair the standards task force—leverage our infrastructure. The standard published January 8, 2026."
 
 ### vs. Wait and See:
 "Standards markets converge quickly. The publisher coalition implementing marked content creates network effects. Founding members shape market licensing frameworks at the February 25th symposium. Later adopters accept terms others defined."
@@ -346,13 +346,13 @@ See the demo: encypherai.com/publisher-demo
 ## Standards Leadership Messaging
 
 ### The C2PA Story:
-"Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair of the task force alongside Google, BBC, OpenAI, Adobe, and Microsoft. The standard publishes January 8, 2026. We built the first production implementation. This isn't vendor lock-in—it's collaborative infrastructure building that benefits the entire ecosystem."
+"Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair of the task force alongside Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. We built the first production implementation. This isn't vendor lock-in—it's collaborative infrastructure building that benefits the entire ecosystem."
 
 ### The Collaborative Approach:
 "OpenAI is a C2PA member. Google is implementing SynthID for text. The AI industry recognizes that text provenance infrastructure benefits everyone—publishers gain proof of origin and willful infringement leverage, AI companies gain attribution data and quote verification, enterprises gain governance capabilities. We're building this together, not in opposition."
 
 ### The Market Standards Story (NEW):
-"The technical standard publishes January 8, 2026. But technical standards alone don't create markets. The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company commercial leads to translate C2PA into practical licensing frameworks—exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. Founding coalition members shape the terms. Later adopters accept them."
+"The technical standard published January 8, 2026. But technical standards alone don't create markets. The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company commercial leads to translate C2PA into practical licensing frameworks—exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. Founding coalition members shape the terms. Later adopters accept them."
 
 ### The Network Effect:
 "Each publisher implementing marked content strengthens the ecosystem. Each AI company integrating provenance infrastructure validates the standard. Each enterprise adopting text authentication accelerates convergence. We're not creating a closed system—we're establishing the open protocol layer for text provenance."
@@ -389,7 +389,7 @@ See the demo: encypherai.com/publisher-demo
 ## Crisis Communication Guidelines
 
 ### If Standards Authority Questioned:
-"We serve as Co-Chair of the C2PA Text Provenance Task Force. Erik Svilich authored the technical specification. Our collaboration with Google, BBC, OpenAI, Adobe, and Microsoft is public and ongoing. The standard publishes January 8, 2026. This is verifiable and transparent."
+"We serve as Co-Chair of the C2PA Text Provenance Task Force. Erik Svilich authored the technical specification. Our collaboration with Google, BBC, OpenAI, Adobe, and Microsoft is public and ongoing. The standard published January 8, 2026. This is verifiable and transparent."
 
 ### If Collaboration Questioned:
 "OpenAI is a C2PA member actively participating in standards development. Google is implementing text provenance through SynthID. This isn't adversarial—it's collaborative infrastructure building. We're working WITH AI companies to create interoperable systems."
@@ -408,16 +408,16 @@ See the demo: encypherai.com/publisher-demo
 ## Industry-Specific Messaging
 
 ### Legal Industry:
-"Text on the open web has no cryptographic proof of origin. We provide sentence-level, tamper-evident proof with cryptographic certainty. Serve formal notice. Eliminate the 'we didn't know' defense. Transform innocent infringement into willful infringement. The standard publishes January 8, 2026."
+"Text on the open web has no cryptographic proof of origin. We provide sentence-level, tamper-evident proof with cryptographic certainty. Serve formal notice. Eliminate the 'we didn't know' defense. Transform innocent infringement into willful infringement. The standard published January 8, 2026."
 
 ### Publishing Industry:
 "Unmarked content can't be tracked or monetized—and AI companies can claim they didn't know it was yours. Our infrastructure embeds proof of origin directly into text—survives copy-paste, B2B distribution, and scraping. Serve formal notice. Prove willful infringement. Transform unmarked assets into licensing opportunities. Shape market standards at the February 25th Syracuse Symposium."
 
 ### AI Industry:
-"Publishers are implementing cryptographic watermarking at scale. Your training pipeline needs compatible infrastructure to handle marked content properly. We're building text provenance standards WITH you through C2PA—OpenAI is a member. Plus, quote integrity verification protects your brand when models claim 'According to AP...' Standard publishes January 8, 2026."
+"Publishers are implementing cryptographic watermarking at scale. Your training pipeline needs compatible infrastructure to handle marked content properly. We're building text provenance standards WITH you through C2PA—OpenAI is a member. Plus, quote integrity verification protects your brand when models claim 'According to AP...' Standard published January 8, 2026."
 
 ### Enterprise:
-"Text authentication is becoming the enterprise standard through C2PA—publishing January 8, 2026. Our implementation provides compliance baseline plus performance intelligence showing which content drives results. Governance infrastructure for the AI content economy."
+"Text authentication is becoming the enterprise standard through C2PA—published January 8, 2026. Our implementation provides compliance baseline plus performance intelligence showing which content drives results. Governance infrastructure for the AI content economy."
 
 ---
 
@@ -447,7 +447,7 @@ When Erik speaks for Encypher:
 - Reference January 8, 2026 publication date
 
 **Example Erik Quote:**
-"I authored the C2PA text provenance specification and co-chair the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard publishes January 8, 2026. We're not just implementing a standard—we built the reference implementation of the specification I wrote. The patent-pending sentence-level tracking extends the baseline C2PA standard to enable formal notice, willful infringement proof, and quote integrity verification that the public specification doesn't define. This is collaborative infrastructure—the open standard I authored provides the foundation, and our enhancements enable the legal transformation and business value publishers and AI companies need."
+"I authored the C2PA text provenance specification and co-chair the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. We're not just implementing a standard—we built the reference implementation of the specification I wrote. The patent-pending sentence-level tracking extends the baseline C2PA standard to enable formal notice, willful infringement proof, and quote integrity verification that the public specification doesn't define. This is collaborative infrastructure—the open standard I authored provides the foundation, and our enhancements enable the legal transformation and business value publishers and AI companies need."
 
 **Key Erik Credentials:**
 - Author of C2PA text provenance specification
@@ -461,15 +461,15 @@ When Erik speaks for Encypher:
 ## Elevator Pitch Variations
 
 ### 10-Second (Introduction):
-"We're Co-Chair of the C2PA Text Provenance Task Force—the standard publishes January 8, 2026. We built the infrastructure that eliminates the 'we didn't know it was yours' defense."
+"We authored C2PA Section A.7—the standard published January 8, 2026. We built the infrastructure that eliminates the 'we didn't know it was yours' defense."
 
 ### 30-Second (Elevator):
-"Text on the open web has no cryptographic proof of origin. As Co-Chair of the C2PA Text Provenance Task Force, we're changing that—the standard publishes January 8, 2026. Our cryptographic watermarking embeds proof directly into text, survives copy-paste and distribution, and enables publishers to serve formal notice. Once AI companies are notified your content is marked, continued unauthorized use is provable willful infringement—not 'we didn't know it was yours.'"
+"Text on the open web has no cryptographic proof of origin. As Co-Chair of the C2PA Text Provenance Task Force, we changed that—the standard published January 8, 2026. Our cryptographic watermarking embeds proof directly into text, survives copy-paste and distribution, and enables publishers to serve formal notice. Once AI companies are notified your content is marked, continued unauthorized use is provable willful infringement—not 'we didn't know it was yours.'"
 
 ### 60-Second (Meeting):
 "Text on the open web has no cryptographic proof of origin. When content is distributed through B2B licensees, scraped by aggregators, or used to train AI models, ownership becomes unprovable. AI companies can claim 'we didn't know it was yours.'
 
-As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this—publishing January 8, 2026—with Google, BBC, OpenAI, Adobe, and Microsoft. I authored the specification and we built the reference implementation.
+As Co-Chair of the C2PA Text Provenance Task Force, we're building the standard that changes this—published January 8, 2026—with Google, BBC, OpenAI, Adobe, and Microsoft. I authored the specification and we built the reference implementation.
 
 Our patent-pending cryptographic watermarking embeds proof directly into text at sentence-level granularity. It survives copy-paste, B2B distribution, and data processing. Publishers can serve formal notice that content is marked. Once notified, continued unauthorized use becomes provable willful infringement—transforming 'prove they used your content' into 'prove they ignored your notice.' That's 3x damages territory.
 
@@ -525,7 +525,7 @@ The founding coalition is forming now. The Syracuse Symposium on February 25, 20
 
 **AI Demo Page:**
 - Headline: "Infrastructure for Marked Content in Training Pipelines"
-- Subhead: "We're building text provenance standards WITH you through C2PA—publishing January 8, 2026"
+- Subhead: "We're building text provenance standards WITH you through C2PA—published January 8, 2026"
 - CTA: "Explore Technical Integration"
 
 ---
@@ -534,7 +534,7 @@ The founding coalition is forming now. The Syracuse Symposium on February 25, 20
 
 ### We Don't Compete—We Collaborate
 - Not: "Better than alternatives"
-- But: "Building the standard WITH industry leaders—publishing January 8, 2026"
+- But: "Building the standard WITH industry leaders—published January 8, 2026"
 
 ### We Prove—We Don't Guess
 - Not: "Probably from this source"
@@ -550,7 +550,7 @@ The founding coalition is forming now. The Syracuse Symposium on February 25, 20
 
 ### We Don't Claim Authority—We Demonstrate It
 - Not: "We're the best solution"
-- But: "We co-chair the C2PA task force with Google, BBC, OpenAI, Adobe, Microsoft—standard publishes January 8, 2026"
+- But: "We co-chair the C2PA task force with Google, BBC, OpenAI, Adobe, Microsoft—standard published January 8, 2026"
 
 ---
 
@@ -558,7 +558,7 @@ The founding coalition is forming now. The Syracuse Symposium on February 25, 20
 
 Our brand reflects our reality as collaborative infrastructure builders establishing text provenance standards WITH the industry—not against it. Every communication should reflect:
 
-1. **Standards Authority:** Co-Chair of C2PA Text Provenance Task Force—standard publishes January 8, 2026
+1. **Standards Authority:** Authors of C2PA Section A.7—standard published January 8, 2026
 2. **Collaborative Approach:** Building WITH Google, BBC, OpenAI, Adobe, Microsoft
 3. **Technical Reality:** Unmarked text = no proof; cryptographic watermarking = proof that survives distribution
 4. **Legal Transformation:** Formal notice + cryptographic proof = willful infringement (eliminates "we didn't know")
@@ -572,7 +572,7 @@ Remember the core positioning shifts:
 - From "compliance demands" → to "collaborative standards"
 - From "litigation weapon" → to "licensing enablement + market standards development"
 
-The standard publishes January 8, 2026. The symposium convenes February 25, 2026. The collaboration is real. The infrastructure is here.
+The standard published January 8, 2026. The symposium convenes February 25, 2026. The collaboration is real. The infrastructure is here.
 
 **We are Encypher. We are building text provenance infrastructure WITH the industry.**
 

@@ -110,7 +110,13 @@ class EmbeddingService:
         action: str = "c2pa.created",  # C2PA action type
         previous_instance_id: Optional[str] = None,  # Previous manifest for edit provenance
         custom_assertions: Optional[List[Dict[str, Any]]] = None,  # Custom C2PA assertions
-        digital_source_type: Optional[str] = None  # IPTC digital source type
+        digital_source_type: Optional[str] = None,  # IPTC digital source type
+        # === API Feature Augmentation (TEAM_044) ===
+        manifest_mode: str = "full",  # full, lightweight_uuid, hybrid
+        embedding_strategy: str = "single_point",  # single_point, distributed, distributed_redundant
+        distribution_target: Optional[str] = None,  # whitespace, punctuation, all_chars
+        add_dual_binding: bool = False,  # Enable dual-binding manifest
+        disable_c2pa: bool = False,  # Opt-out of C2PA embedding
     ) -> List[EmbeddingReference]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
@@ -310,26 +316,126 @@ class EmbeddingService:
         if custom_assertions:
             final_custom_assertions.extend(custom_assertions)
         
-        # Embed ONE C2PA wrapper for the entire document
-        try:
-            logger.info(f"Adding C2PA wrapper for document {document_id} ({len(segments)} segments) with action {action}")
-            embedded_document = UnicodeMetadata.embed_metadata(
-                text=full_document,
-                private_key=self.private_key,
-                signer_id=self.signer_id,
-                timestamp=current_timestamp,
-                custom_metadata=document_metadata, # Still pass it, though likely ignored by _embed_c2pa
-                metadata_format=metadata_format,  # C2PA-compliant wrapper
-                add_hard_binding=add_hard_binding,
-                claim_generator=f"Encypher Enterprise API/{organization_id}",
-                actions=c2pa_actions,  # Pass C2PA actions
-                ingredients=c2pa_ingredients,  # Pass ingredient references
-                custom_assertions=final_custom_assertions  # Pass custom assertions including metadata
-            )
-            logger.info(f"Successfully added C2PA wrapper to document {document_id}")
-        except Exception as e:
-            logger.error(f"Failed to add C2PA wrapper to document: {e}")
-            raise ValueError(f"C2PA wrapper embedding failed: {e}")
+        # === API Feature Augmentation (TEAM_044) ===
+        # Handle different manifest modes and embedding strategies
+        
+        # Determine if we should use distributed embedding
+        use_distributed = embedding_strategy in ("distributed", "distributed_redundant")
+        target_for_embedding = distribution_target if use_distributed else None
+        
+        # Log the embedding configuration
+        logger.info(
+            f"Embedding config for document {document_id}: "
+            f"manifest_mode={manifest_mode}, embedding_strategy={embedding_strategy}, "
+            f"disable_c2pa={disable_c2pa}, add_dual_binding={add_dual_binding}"
+        )
+        
+        # Handle C2PA opt-out
+        if disable_c2pa:
+            # Use basic metadata format instead of C2PA
+            logger.info(f"C2PA disabled for document {document_id}, using basic metadata format")
+            try:
+                embedded_document = UnicodeMetadata.embed_metadata(
+                    text=full_document,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    timestamp=current_timestamp,
+                    custom_metadata=document_metadata,
+                    metadata_format="basic",  # Basic format when C2PA disabled
+                    add_hard_binding=False,
+                    distribute_across_targets=use_distributed,
+                    target=target_for_embedding,
+                )
+                logger.info(f"Successfully added basic metadata to document {document_id}")
+            except Exception as e:
+                logger.error(f"Failed to add basic metadata to document: {e}")
+                raise ValueError(f"Basic metadata embedding failed: {e}")
+        
+        # Handle lightweight_uuid manifest mode (Professional+ feature)
+        elif manifest_mode == "lightweight_uuid":
+            import uuid as uuid_module
+            manifest_uuid = str(uuid_module.uuid4())
+            logger.info(f"Using lightweight UUID manifest mode for document {document_id}, uuid={manifest_uuid}")
+            
+            # Store full manifest data in database for later retrieval
+            # The embedded payload only contains the UUID pointer
+            try:
+                embedded_document = UnicodeMetadata.embed_lightweight_uuid(
+                    text=full_document,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    manifest_uuid=manifest_uuid,
+                    timestamp=current_timestamp,
+                    assertion_hint={
+                        "document_id": document_id,
+                        "organization_id": organization_id,
+                        "action": action,
+                    },
+                    distribute_across_targets=use_distributed,
+                    target=target_for_embedding,
+                )
+                # Store the full manifest data in document_metadata for database storage
+                document_metadata['manifest_uuid'] = manifest_uuid
+                document_metadata['manifest_mode'] = 'lightweight_uuid'
+                logger.info(f"Successfully embedded lightweight UUID for document {document_id}")
+            except Exception as e:
+                logger.error(f"Failed to embed lightweight UUID: {e}")
+                raise ValueError(f"Lightweight UUID embedding failed: {e}")
+        
+        # Handle hybrid manifest mode (Enterprise feature)
+        elif manifest_mode == "hybrid":
+            import uuid as uuid_module
+            manifest_uuid = str(uuid_module.uuid4())
+            logger.info(f"Using hybrid manifest mode for document {document_id}")
+            
+            # First, embed lightweight UUID per sentence (already done in embedded_segments)
+            # Then add full C2PA wrapper at document level
+            try:
+                embedded_document = UnicodeMetadata.embed_metadata(
+                    text=full_document,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    timestamp=current_timestamp,
+                    custom_metadata=document_metadata,
+                    metadata_format=metadata_format,
+                    add_hard_binding=add_hard_binding,
+                    claim_generator=f"Encypher Enterprise API/{organization_id}",
+                    actions=c2pa_actions,
+                    ingredients=c2pa_ingredients,
+                    custom_assertions=final_custom_assertions,
+                    distribute_across_targets=use_distributed,
+                    target=target_for_embedding,
+                )
+                document_metadata['manifest_mode'] = 'hybrid'
+                document_metadata['manifest_uuid'] = manifest_uuid
+                logger.info(f"Successfully added hybrid manifest to document {document_id}")
+            except Exception as e:
+                logger.error(f"Failed to add hybrid manifest: {e}")
+                raise ValueError(f"Hybrid manifest embedding failed: {e}")
+        
+        # Default: full C2PA manifest mode
+        else:
+            try:
+                logger.info(f"Adding C2PA wrapper for document {document_id} ({len(segments)} segments) with action {action}")
+                embedded_document = UnicodeMetadata.embed_metadata(
+                    text=full_document,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    timestamp=current_timestamp,
+                    custom_metadata=document_metadata,
+                    metadata_format=metadata_format,
+                    add_hard_binding=add_hard_binding,
+                    claim_generator=f"Encypher Enterprise API/{organization_id}",
+                    actions=c2pa_actions,
+                    ingredients=c2pa_ingredients,
+                    custom_assertions=final_custom_assertions,
+                    distribute_across_targets=use_distributed,
+                    target=target_for_embedding,
+                )
+                logger.info(f"Successfully added C2PA wrapper to document {document_id}")
+            except Exception as e:
+                logger.error(f"Failed to add C2PA wrapper to document: {e}")
+                raise ValueError(f"C2PA wrapper embedding failed: {e}")
         
         # Extract the C2PA manifest from embedded document for storage
         extracted_manifest = None

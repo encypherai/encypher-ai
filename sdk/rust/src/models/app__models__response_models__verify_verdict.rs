@@ -32,6 +32,11 @@ pub struct AppModelsResponseModelsVerifyVerdict {
     /// Structured details (manifest, benchmarking stats, etc.)
     #[serde(rename = "details", skip_serializing_if = "Option::is_none")]
     pub details: Option<std::collections::HashMap<String, serde_json::Value>>,
+    /// Number of embeddings found in the text
+    #[serde(rename = "embeddings_found", skip_serializing_if = "Option::is_none")]
+    pub embeddings_found: Option<i32>,
+    #[serde(rename = "all_embeddings", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub all_embeddings: Option<Option<Vec<models::EmbeddingVerdict>>>,
 }
 
 impl AppModelsResponseModelsVerifyVerdict {
@@ -45,6 +50,8 @@ impl AppModelsResponseModelsVerifyVerdict {
             signer_name: None,
             timestamp: None,
             details: None,
+            embeddings_found: None,
+            all_embeddings: None,
         }
     }
 }

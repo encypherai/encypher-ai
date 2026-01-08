@@ -9,7 +9,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
 
-from sqlalchemy import ARRAY, DATE, DECIMAL, TIMESTAMP, Column, ForeignKey, Integer, String
+from sqlalchemy import ARRAY, DATE, DECIMAL, TIMESTAMP, BigInteger, Column, ForeignKey, Integer, String
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -70,7 +70,13 @@ class AICompany(Base):
 
     # Status
     status = Column(
-        SQLEnum(AgreementStatus),
+        SQLEnum(
+            AgreementStatus,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            validate_strings=True,
+        ),
         nullable=False,
         default=AgreementStatus.ACTIVE
     )
@@ -104,7 +110,13 @@ class LicensingAgreement(Base):
 
     # Agreement type and pricing
     agreement_type = Column(
-        SQLEnum(AgreementType),
+        SQLEnum(
+            AgreementType,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            validate_strings=True,
+        ),
         nullable=False,
         default=AgreementType.SUBSCRIPTION
     )
@@ -121,7 +133,13 @@ class LicensingAgreement(Base):
 
     # Status
     status = Column(
-        SQLEnum(AgreementStatus),
+        SQLEnum(
+            AgreementStatus,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            validate_strings=True,
+        ),
         nullable=False,
         default=AgreementStatus.ACTIVE
     )
@@ -172,8 +190,8 @@ class ContentAccessLog(Base):
 
     # References
     agreement_id = Column(UUID(as_uuid=True), ForeignKey("licensing_agreements.id"), nullable=False)
-    content_id = Column(UUID(as_uuid=True), nullable=False)  # References coalition_content.id
-    member_id = Column(UUID(as_uuid=True), nullable=False)   # References coalition_members.id
+    content_id = Column(BigInteger, nullable=False)
+    member_id = Column(String(64), nullable=False)
 
     # Access details
     accessed_at = Column(TIMESTAMP, nullable=False, default=datetime.utcnow)
@@ -213,7 +231,13 @@ class RevenueDistribution(Base):
 
     # Status
     status = Column(
-        SQLEnum(DistributionStatus),
+        SQLEnum(
+            DistributionStatus,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            validate_strings=True,
+        ),
         nullable=False,
         default=DistributionStatus.PENDING
     )
@@ -244,7 +268,7 @@ class MemberRevenue(Base):
 
     # References
     distribution_id = Column(UUID(as_uuid=True), ForeignKey("revenue_distributions.id"), nullable=False)
-    member_id = Column(UUID(as_uuid=True), nullable=False)  # References coalition_members.id
+    member_id = Column(String(64), nullable=False)
 
     # Contribution metrics
     content_count = Column(Integer, nullable=False, default=0)
@@ -255,7 +279,13 @@ class MemberRevenue(Base):
 
     # Status
     status = Column(
-        SQLEnum(PayoutStatus),
+        SQLEnum(
+            PayoutStatus,
+            native_enum=False,
+            create_constraint=False,
+            values_callable=lambda enum_cls: [member.value for member in enum_cls],
+            validate_strings=True,
+        ),
         nullable=False,
         default=PayoutStatus.PENDING
     )

@@ -36,6 +36,8 @@ pub struct EncodeWithEmbeddingsRequest {
     pub c2pa_manifest_hash: Option<Option<String>>,
     #[serde(rename = "custom_assertions", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub custom_assertions: Option<Option<Vec<std::collections::HashMap<String, serde_json::Value>>>>,
+    #[serde(rename = "template_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub template_id: Option<Option<String>>,
     /// Whether to validate custom assertions against registered schemas
     #[serde(rename = "validate_assertions", skip_serializing_if = "Option::is_none")]
     pub validate_assertions: Option<bool>,
@@ -43,6 +45,8 @@ pub struct EncodeWithEmbeddingsRequest {
     pub digital_source_type: Option<Option<String>>,
     #[serde(rename = "license", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub license: Option<Option<Box<models::LicenseInfo>>>,
+    #[serde(rename = "rights", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub rights: Option<Option<Box<models::AppSchemasEmbeddingsRightsMetadata>>>,
     /// Embedding generation options
     #[serde(rename = "embedding_options", skip_serializing_if = "Option::is_none")]
     pub embedding_options: Option<Box<models::EmbeddingOptions>>,
@@ -63,9 +67,11 @@ impl EncodeWithEmbeddingsRequest {
             c2pa_manifest_url: None,
             c2pa_manifest_hash: None,
             custom_assertions: None,
+            template_id: None,
             validate_assertions: None,
             digital_source_type: None,
             license: None,
+            rights: None,
             embedding_options: None,
             expires_at: None,
         }

@@ -1,28 +1,27 @@
 [project]
 name = "encypher"
 version = "1.0.0a1"
-description = "Official Python SDK for Encypher Enterprise API - C2PA content signing and verification"
+description = "Encypher Enterprise API"
 authors = [
   {name = "Encypher", email = "sdk@encypherai.com"},
 ]
-license = {text = "MIT"}
 readme = "README.md"
-keywords = ["c2pa", "content-signing", "provenance", "ai", "encypher", "verification"]
+license = { text = \"MIT\" }
+keywords = ["OpenAPI", "OpenAPI-Generator", "Encypher Enterprise API"]
 requires-python = ">=3.9"
 
 dependencies = [
-  "urllib3 (>=2.1.0,<3.0.0)",
-  "python-dateutil (>=2.8.2)",
-  "pydantic (>=2)",
-  "typing-extensions (>=4.7.1)",
+  "urllib3>=2.1.0,<3.0.0",
+  "python-dateutil>=2.8.2",
+  "pydantic>=2",
+  "typing-extensions>=4.7.1",
 ]
 
 [project.urls]
-Homepage = "https://encypherai.com"
+Changelog = "https://github.com/encypherai/encypherai-commercial/releases"
 Documentation = "https://api.encypherai.com/docs"
-Repository = "https://github.com/encypherai/sdk-python"
-Changelog = "https://github.com/encypherai/sdk-python/releases"
-
+Homepage = "https://encypherai.com"
+Repository = "https://github.com/encypherai/encypherai-commercial"
 [tool.poetry]
 requires-poetry = ">=2.0"
 

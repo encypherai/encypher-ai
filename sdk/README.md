@@ -8,10 +8,10 @@
 |----------|---------|----------|---------|
 | Python | `encypher` | [PyPI](https://pypi.org/project/encypher/) | 1.0.0a1 |
 | TypeScript | `@encypher/sdk` | [npm](https://www.npmjs.com/package/@encypher/sdk) | 1.0.0-alpha.1 |
-| Go | `github.com/encypherai/sdk-go` | Go Modules | 1.0.0-alpha.1 |
+| Go | `github.com/encypherai/encypherai-commercial/sdk/go` | Go Modules | 1.0.0-alpha.1 |
 | Rust | `encypher` | [crates.io](https://crates.io/crates/encypher) | 1.0.0-alpha.1 |
 
-> **Note**: All SDKs share the same version number, derived from the API version in `openapi.json`.
+> **Note**: All SDKs share the same version number, derived from the API version in `openapi.public.json`.
 
 ## Quick Start
 
@@ -36,7 +36,8 @@ uv run python sdk/generate_sdk.py all --verbose
 
 ```
 sdk/
-├── openapi.json          # Generated OpenAPI 3.1 spec (source of truth)
+├── openapi.public.json   # Generated OpenAPI 3.1 public spec (SDK source of truth)
+├── openapi.internal.json # Generated OpenAPI 3.1 internal spec (admin/internal tooling)
 ├── generate_openapi.py   # Script to regenerate spec from API
 ├── generate_sdk.py       # SDK generation script with rich logging
 ├── python/               # Generated Python SDK
@@ -65,13 +66,13 @@ sdk/
 
 ## OpenAPI Spec
 
-The `openapi.json` file is auto-generated from the Enterprise API's FastAPI routes:
+The OpenAPI specs are auto-generated from the Enterprise API's FastAPI routes:
 
 - **68 endpoints** across 21 tags
 - **113 schemas** for request/response models
 - Bearer token authentication
 
-### Regenerating the Spec
+### Regenerating the Specs
 
 ```bash
 uv run python sdk/generate_openapi.py
@@ -102,7 +103,7 @@ console.log(result.signedText);
 ### Go
 
 ```go
-import "github.com/encypherai/sdk-go"
+import "github.com/encypherai/encypherai-commercial/sdk/go"
 
 client := encypher.NewClient("ency_...")
 result, err := client.Sign(ctx, "Hello, world!")
@@ -159,8 +160,8 @@ npm publish --access public
 
 ```bash
 cd sdk/go
-git tag v1.0.0-alpha.1
-git push origin v1.0.0-alpha.1
+git tag sdk/go/v1.0.0-alpha.1
+git push origin sdk/go/v1.0.0-alpha.1
 ```
 
 ### Rust (crates.io)

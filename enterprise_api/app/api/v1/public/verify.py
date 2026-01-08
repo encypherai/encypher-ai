@@ -39,6 +39,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/public", tags=["Public - Verification"])
 
+MAX_EXTRACT_AND_VERIFY_BYTES = 2 * 1024 * 1024
+MAX_VERIFY_BATCH_BYTES = 256 * 1024
+
 
 # ============================================================================
 # Request/Response Schemas for Invisible Embeddings
@@ -170,7 +173,7 @@ async def verify_embedding(
             )
         
         result = await db.execute(
-            select(ContentReference).where(ContentReference.ref_id == ref_id_int)
+            select(ContentReference).where(ContentReference.id == ref_id_int)
         )
         reference = result.scalar_one_or_none()
         
@@ -184,7 +187,7 @@ async def verify_embedding(
         
         # Get associated Merkle root
         result = await db.execute(
-            select(MerkleRoot).where(MerkleRoot.root_id == reference.merkle_root_id)
+            select(MerkleRoot).where(MerkleRoot.id == reference.merkle_root_id)
         )
         merkle_root = result.scalar_one_or_none()
         
@@ -223,14 +226,15 @@ async def verify_embedding(
         # C2PA info (if available) - Now with actual verification!
         c2pa_info = None
         if reference.c2pa_manifest_url:
-            # Verify the C2PA manifest
-            c2pa_result = c2pa_verifier.verify_manifest_url(reference.c2pa_manifest_url)
+            # Verify the C2PA manifest (async)
+            c2pa_result = await c2pa_verifier.verify_manifest_url(reference.c2pa_manifest_url)
             
             c2pa_info = C2PAInfo(
                 manifest_url=reference.c2pa_manifest_url,
                 manifest_hash=reference.c2pa_manifest_hash or c2pa_result.manifest_hash,
-                verified=c2pa_result.valid,
-                verification_details=c2pa_result.to_dict() if c2pa_result else None
+                validated=c2pa_result.valid,
+                validation_type="non_cryptographic",
+                validation_details=c2pa_result.to_dict() if c2pa_result else None
             )
         
         # Licensing info (if available)
@@ -335,6 +339,16 @@ async def batch_verify_embeddings(
         await public_rate_limiter(request, endpoint_type="verify_batch")
     
     try:
+        payload_bytes = 0
+        for ref_req in batch_request.references:
+            payload_bytes += len(ref_req.ref_id.encode("utf-8"))
+            payload_bytes += len(ref_req.signature.encode("utf-8"))
+        if payload_bytes > MAX_VERIFY_BATCH_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Batch verification payload too large",
+            )
+
         # Validate batch size
         if len(batch_request.references) > 50:
             raise HTTPException(
@@ -363,7 +377,7 @@ async def batch_verify_embeddings(
                     continue
                 
                 result = await db.execute(
-                    select(ContentReference).where(ContentReference.ref_id == ref_id_int)
+                    select(ContentReference).where(ContentReference.id == ref_id_int)
                 )
                 reference = result.scalar_one_or_none()
                 
@@ -493,6 +507,13 @@ async def extract_and_verify_embedding(
         await public_rate_limiter(request, endpoint_type="verify_single")
     
     try:
+        payload_bytes = len(extract_request.text.encode("utf-8"))
+        if payload_bytes > MAX_EXTRACT_AND_VERIFY_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Extract-and-verify payload too large",
+            )
+
         logger.info("Extract-and-verify request for invisible embedding")
         
         # Import encypher-ai for extraction
@@ -684,7 +705,7 @@ async def extract_and_verify_embedding(
         
         # Get associated Merkle root
         merkle_result = await db.execute(
-            select(MerkleRoot).where(MerkleRoot.root_id == reference.merkle_root_id)
+            select(MerkleRoot).where(MerkleRoot.id == reference.merkle_root_id)
         )
         merkle_root = merkle_result.scalar_one_or_none()
         
@@ -717,12 +738,13 @@ async def extract_and_verify_embedding(
         # C2PA info (if available)
         c2pa_info = None
         if reference.c2pa_manifest_url:
-            c2pa_result = c2pa_verifier.verify_manifest_url(reference.c2pa_manifest_url)
+            c2pa_result = await c2pa_verifier.verify_manifest_url(reference.c2pa_manifest_url)
             c2pa_info = C2PAInfo(
                 manifest_url=reference.c2pa_manifest_url,
                 manifest_hash=reference.c2pa_manifest_hash or c2pa_result.manifest_hash,
-                verified=c2pa_result.valid,
-                verification_details=c2pa_result.to_dict() if c2pa_result else None
+                validated=c2pa_result.valid,
+                validation_type="non_cryptographic",
+                validation_details=c2pa_result.to_dict() if c2pa_result else None
             )
         
         # Licensing info

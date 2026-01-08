@@ -17,9 +17,10 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import BaseModel, ConfigDict, Field, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
+from encypher.models.app_models_request_models_rights_metadata import AppModelsRequestModelsRightsMetadata
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -34,7 +35,10 @@ class SignRequest(BaseModel):
     document_type: Optional[StrictStr] = Field(default='article', description="Document type: article | legal_brief | contract | ai_output")
     claim_generator: Optional[StrictStr] = None
     actions: Optional[List[Dict[str, Any]]] = None
-    __properties: ClassVar[List[str]] = ["text", "document_id", "document_title", "document_url", "document_type", "claim_generator", "actions"]
+    template_id: Optional[StrictStr] = None
+    validate_assertions: Optional[StrictBool] = Field(default=True, description="Whether to validate template-based assertions (Business+).")
+    rights: Optional[AppModelsRequestModelsRightsMetadata] = None
+    __properties: ClassVar[List[str]] = ["text", "document_id", "document_title", "document_url", "document_type", "claim_generator", "actions", "template_id", "validate_assertions", "rights"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -75,6 +79,9 @@ class SignRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of rights
+        if self.rights:
+            _dict['rights'] = self.rights.to_dict()
         # set to None if document_id (nullable) is None
         # and model_fields_set contains the field
         if self.document_id is None and "document_id" in self.model_fields_set:
@@ -100,6 +107,16 @@ class SignRequest(BaseModel):
         if self.actions is None and "actions" in self.model_fields_set:
             _dict['actions'] = None
 
+        # set to None if template_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.template_id is None and "template_id" in self.model_fields_set:
+            _dict['template_id'] = None
+
+        # set to None if rights (nullable) is None
+        # and model_fields_set contains the field
+        if self.rights is None and "rights" in self.model_fields_set:
+            _dict['rights'] = None
+
         return _dict
 
     @classmethod
@@ -118,7 +135,10 @@ class SignRequest(BaseModel):
             "document_url": obj.get("document_url"),
             "document_type": obj.get("document_type") if obj.get("document_type") is not None else 'article',
             "claim_generator": obj.get("claim_generator"),
-            "actions": obj.get("actions")
+            "actions": obj.get("actions"),
+            "template_id": obj.get("template_id"),
+            "validate_assertions": obj.get("validate_assertions") if obj.get("validate_assertions") is not None else True,
+            "rights": AppModelsRequestModelsRightsMetadata.from_dict(obj["rights"]) if obj.get("rights") is not None else None
         })
         return _obj
 

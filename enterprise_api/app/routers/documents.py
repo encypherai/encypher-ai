@@ -9,7 +9,7 @@ from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from sqlalchemy import text
+from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
@@ -106,6 +106,7 @@ async def list_documents(
     to_date: Optional[str] = Query(None, description="Filter to date (ISO format)"),
     organization: dict = Depends(get_current_organization),
     content_db: AsyncSession = Depends(get_content_db),
+    db: AsyncSession = Depends(get_db),
 ) -> DocumentListResponse:
     """
     List signed documents for the organization.
@@ -116,17 +117,14 @@ async def list_documents(
     offset = (page - 1) * page_size
 
     # Build query with filters
-    where_clauses = ["organization_id = :org_id"]
+    where_clauses = ["organization_id = :org_id", "COALESCE(deleted, false) = false"]
     params = {"org_id": org_id, "limit": page_size, "offset": offset}
 
     if search:
         where_clauses.append("title ILIKE :search")
         params["search"] = f"%{search}%"
 
-    if status_filter == "revoked":
-        where_clauses.append("revoked = true")
-    elif status_filter == "active":
-        where_clauses.append("(revoked = false OR revoked IS NULL)")
+    _ = status_filter
 
     if from_date:
         where_clauses.append("created_at >= :from_date")
@@ -149,9 +147,8 @@ async def list_documents(
     result = await content_db.execute(
         text(f"""
             SELECT 
-                document_id, title, document_type, 
-                created_at, word_count,
-                COALESCE(revoked, false) as revoked
+                id AS document_id, title, document_type,
+                created_at
             FROM documents
             WHERE {where_sql}
             ORDER BY created_at DESC
@@ -161,9 +158,28 @@ async def list_documents(
     )
     rows = result.fetchall()
 
+    revocation_lookup = {}
+    doc_ids = [row.document_id for row in rows if getattr(row, "document_id", None)]
+    if doc_ids:
+        revocation_result = await db.execute(
+            text(
+                """
+                SELECT document_id, revoked, revoked_at, revoked_reason
+                FROM status_list_entries
+                WHERE organization_id = :org_id
+                  AND document_id IN :doc_ids
+                """
+            ).bindparams(bindparam("doc_ids", expanding=True)),
+            {"org_id": org_id, "doc_ids": doc_ids},
+        )
+        for row in revocation_result.fetchall():
+            revocation_lookup[row.document_id] = row
+
     documents = []
     for row in rows:
-        doc_status = "revoked" if row.revoked else "active"
+        revocation = revocation_lookup.get(row.document_id)
+        is_revoked = bool(revocation.revoked) if revocation is not None else False
+        doc_status = "revoked" if is_revoked else "active"
         documents.append(
             DocumentSummary(
                 document_id=row.document_id,
@@ -172,7 +188,7 @@ async def list_documents(
                 status=doc_status,
                 signed_at=row.created_at.isoformat() if row.created_at else "",
                 verification_url=f"https://api.encypherai.com/api/v1/verify/{row.document_id}",
-                word_count=row.word_count,
+                word_count=None,
             ).model_dump()
         )
 
@@ -194,6 +210,7 @@ async def get_document(
     document_id: str,
     organization: dict = Depends(get_current_organization),
     content_db: AsyncSession = Depends(get_content_db),
+    db: AsyncSession = Depends(get_db),
 ) -> DocumentDetailResponse:
     """
     Get detailed information about a specific document.
@@ -201,15 +218,17 @@ async def get_document(
     org_id = organization.get("organization_id")
 
     result = await content_db.execute(
-        text("""
+        text(
+            """
             SELECT 
-                document_id, title, document_type, url,
-                created_at, word_count, signer_id,
-                COALESCE(revoked, false) as revoked,
-                revoked_at, revoked_reason
+                id AS document_id, title, document_type, url,
+                created_at
             FROM documents
-            WHERE document_id = :doc_id AND organization_id = :org_id
-        """),
+            WHERE id = :doc_id
+              AND organization_id = :org_id
+              AND COALESCE(deleted, false) = false
+            """
+        ),
         {"doc_id": document_id, "org_id": org_id},
     )
     row = result.fetchone()
@@ -220,7 +239,19 @@ async def get_document(
             detail={"code": "DOCUMENT_NOT_FOUND", "message": "Document not found"},
         )
 
-    doc_status = "revoked" if row.revoked else "active"
+    revocation = await db.execute(
+        text(
+            """
+            SELECT revoked, revoked_at, revoked_reason
+            FROM status_list_entries
+            WHERE organization_id = :org_id AND document_id = :doc_id
+            """
+        ),
+        {"org_id": org_id, "doc_id": document_id},
+    )
+    revocation_row = revocation.fetchone()
+    is_revoked = bool(revocation_row.revoked) if revocation_row is not None else False
+    doc_status = "revoked" if is_revoked else "active"
 
     return DocumentDetailResponse(
         data=DocumentDetail(
@@ -230,11 +261,11 @@ async def get_document(
             status=doc_status,
             signed_at=row.created_at.isoformat() if row.created_at else "",
             verification_url=f"https://api.encypherai.com/api/v1/verify/{row.document_id}",
-            word_count=row.word_count,
+            word_count=None,
             url=row.url,
-            signer_id=row.signer_id,
-            revoked_at=row.revoked_at.isoformat() if row.revoked_at else None,
-            revoked_reason=row.revoked_reason,
+            signer_id=None,
+            revoked_at=revocation_row.revoked_at.isoformat() if getattr(revocation_row, "revoked_at", None) else None,
+            revoked_reason=revocation_row.revoked_reason if getattr(revocation_row, "revoked_reason", None) else None,
         )
     )
 
@@ -255,7 +286,7 @@ async def get_document_history(
 
     # Verify document exists and belongs to org
     doc_result = await content_db.execute(
-        text("SELECT document_id, created_at FROM documents WHERE document_id = :doc_id AND organization_id = :org_id"),
+        text("SELECT id AS document_id, created_at FROM documents WHERE id = :doc_id AND organization_id = :org_id"),
         {"doc_id": document_id, "org_id": org_id},
     )
     doc_row = doc_result.fetchone()
@@ -281,10 +312,11 @@ async def get_document_history(
         text("""
             SELECT revoked_at, revoked_reason, revoked_by, reinstated_at
             FROM status_list_entries
-            WHERE document_id = :doc_id AND organization_id = :org_id
+            WHERE organization_id = :org_id
+              AND document_id = :doc_id
             ORDER BY revoked_at DESC
         """),
-        {"doc_id": document_id, "org_id": org_id},
+        {"org_id": org_id, "doc_id": document_id},
     )
     revoke_rows = revoke_result.fetchall()
 
@@ -335,7 +367,7 @@ async def delete_document(
 
     # Verify document exists
     doc_result = await content_db.execute(
-        text("SELECT document_id FROM documents WHERE document_id = :doc_id AND organization_id = :org_id"),
+        text("SELECT id AS document_id FROM documents WHERE id = :doc_id AND organization_id = :org_id"),
         {"doc_id": document_id, "org_id": org_id},
     )
     doc_row = doc_result.fetchone()
@@ -365,7 +397,7 @@ async def delete_document(
         text("""
             UPDATE documents 
             SET deleted = true, deleted_at = :now
-            WHERE document_id = :doc_id AND organization_id = :org_id
+            WHERE id = :doc_id AND organization_id = :org_id
         """),
         {"doc_id": document_id, "org_id": org_id, "now": datetime.utcnow()},
     )

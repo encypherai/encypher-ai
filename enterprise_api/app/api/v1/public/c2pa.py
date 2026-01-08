@@ -101,6 +101,11 @@ async def _optional_authenticate(api_key: Optional[str], db: AsyncSession) -> Op
     "/validate-manifest",
     response_model=ValidateManifestResponse,
     summary="Validate C2PA-like manifest JSON (Public - Non-Cryptographic)",
+    description=(
+        "Validate a manifest JSON payload and (optionally) validate assertion payloads against provided JSON Schemas. "
+        "This endpoint performs structural/schema validation only and does not verify cryptographic signatures.\n\n"
+        "Authentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits."
+    ),
 )
 async def validate_manifest(
     request: Request,
@@ -176,6 +181,11 @@ async def validate_manifest(
     "/create-manifest",
     response_model=CreateManifestResponse,
     summary="Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)",
+    description=(
+        "Create a C2PA-like manifest JSON payload from plaintext. This endpoint is intended for client-side workflows "
+        "that want a server-generated starting point for a manifest before cryptographic signing.\n\n"
+        "Authentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits."
+    ),
 )
 async def create_manifest(
     request: Request,

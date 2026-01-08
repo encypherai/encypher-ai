@@ -13,9 +13,11 @@ Name | Type | Description | Notes
 **C2paManifestUrl** | Pointer to **NullableString** |  | [optional] 
 **C2paManifestHash** | Pointer to **NullableString** |  | [optional] 
 **CustomAssertions** | Pointer to **[]map[string]interface{}** |  | [optional] 
+**TemplateId** | Pointer to **NullableString** |  | [optional] 
 **ValidateAssertions** | Pointer to **bool** | Whether to validate custom assertions against registered schemas | [optional] [default to true]
 **DigitalSourceType** | Pointer to **NullableString** |  | [optional] 
 **License** | Pointer to [**NullableLicenseInfo**](LicenseInfo.md) |  | [optional] 
+**Rights** | Pointer to [**NullableAppSchemasEmbeddingsRightsMetadata**](AppSchemasEmbeddingsRightsMetadata.md) |  | [optional] 
 **EmbeddingOptions** | Pointer to [**EmbeddingOptions**](EmbeddingOptions.md) | Embedding generation options | [optional] 
 **ExpiresAt** | Pointer to **NullableTime** |  | [optional] 
 
@@ -303,6 +305,41 @@ HasCustomAssertions returns a boolean if a field has been set.
 `func (o *EncodeWithEmbeddingsRequest) UnsetCustomAssertions()`
 
 UnsetCustomAssertions ensures that no value is present for CustomAssertions, not even an explicit nil
+### GetTemplateId
+
+`func (o *EncodeWithEmbeddingsRequest) GetTemplateId() string`
+
+GetTemplateId returns the TemplateId field if non-nil, zero value otherwise.
+
+### GetTemplateIdOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetTemplateIdOk() (*string, bool)`
+
+GetTemplateIdOk returns a tuple with the TemplateId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTemplateId
+
+`func (o *EncodeWithEmbeddingsRequest) SetTemplateId(v string)`
+
+SetTemplateId sets TemplateId field to given value.
+
+### HasTemplateId
+
+`func (o *EncodeWithEmbeddingsRequest) HasTemplateId() bool`
+
+HasTemplateId returns a boolean if a field has been set.
+
+### SetTemplateIdNil
+
+`func (o *EncodeWithEmbeddingsRequest) SetTemplateIdNil(b bool)`
+
+ SetTemplateIdNil sets the value for TemplateId to be an explicit nil
+
+### UnsetTemplateId
+`func (o *EncodeWithEmbeddingsRequest) UnsetTemplateId()`
+
+UnsetTemplateId ensures that no value is present for TemplateId, not even an explicit nil
 ### GetValidateAssertions
 
 `func (o *EncodeWithEmbeddingsRequest) GetValidateAssertions() bool`
@@ -398,6 +435,41 @@ HasLicense returns a boolean if a field has been set.
 `func (o *EncodeWithEmbeddingsRequest) UnsetLicense()`
 
 UnsetLicense ensures that no value is present for License, not even an explicit nil
+### GetRights
+
+`func (o *EncodeWithEmbeddingsRequest) GetRights() AppSchemasEmbeddingsRightsMetadata`
+
+GetRights returns the Rights field if non-nil, zero value otherwise.
+
+### GetRightsOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetRightsOk() (*AppSchemasEmbeddingsRightsMetadata, bool)`
+
+GetRightsOk returns a tuple with the Rights field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRights
+
+`func (o *EncodeWithEmbeddingsRequest) SetRights(v AppSchemasEmbeddingsRightsMetadata)`
+
+SetRights sets Rights field to given value.
+
+### HasRights
+
+`func (o *EncodeWithEmbeddingsRequest) HasRights() bool`
+
+HasRights returns a boolean if a field has been set.
+
+### SetRightsNil
+
+`func (o *EncodeWithEmbeddingsRequest) SetRightsNil(b bool)`
+
+ SetRightsNil sets the value for Rights to be an explicit nil
+
+### UnsetRights
+`func (o *EncodeWithEmbeddingsRequest) UnsetRights()`
+
+UnsetRights ensures that no value is present for Rights, not even an explicit nil
 ### GetEmbeddingOptions
 
 `func (o *EncodeWithEmbeddingsRequest) GetEmbeddingOptions() EmbeddingOptions`

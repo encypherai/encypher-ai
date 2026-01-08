@@ -11,6 +11,8 @@ Name | Type | Description | Notes
 **SignerName** | Pointer to **NullableString** |  | [optional] 
 **Timestamp** | Pointer to **NullableTime** |  | [optional] 
 **Details** | Pointer to **map[string]interface{}** | Structured details (manifest, benchmarking stats, etc.) | [optional] 
+**EmbeddingsFound** | Pointer to **int32** | Number of embeddings found in the text | [optional] [default to 0]
+**AllEmbeddings** | Pointer to [**[]EmbeddingVerdict**](EmbeddingVerdict.md) |  | [optional] 
 
 ## Methods
 
@@ -221,6 +223,66 @@ SetDetails sets Details field to given value.
 
 HasDetails returns a boolean if a field has been set.
 
+### GetEmbeddingsFound
+
+`func (o *AppModelsResponseModelsVerifyVerdict) GetEmbeddingsFound() int32`
+
+GetEmbeddingsFound returns the EmbeddingsFound field if non-nil, zero value otherwise.
+
+### GetEmbeddingsFoundOk
+
+`func (o *AppModelsResponseModelsVerifyVerdict) GetEmbeddingsFoundOk() (*int32, bool)`
+
+GetEmbeddingsFoundOk returns a tuple with the EmbeddingsFound field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetEmbeddingsFound
+
+`func (o *AppModelsResponseModelsVerifyVerdict) SetEmbeddingsFound(v int32)`
+
+SetEmbeddingsFound sets EmbeddingsFound field to given value.
+
+### HasEmbeddingsFound
+
+`func (o *AppModelsResponseModelsVerifyVerdict) HasEmbeddingsFound() bool`
+
+HasEmbeddingsFound returns a boolean if a field has been set.
+
+### GetAllEmbeddings
+
+`func (o *AppModelsResponseModelsVerifyVerdict) GetAllEmbeddings() []EmbeddingVerdict`
+
+GetAllEmbeddings returns the AllEmbeddings field if non-nil, zero value otherwise.
+
+### GetAllEmbeddingsOk
+
+`func (o *AppModelsResponseModelsVerifyVerdict) GetAllEmbeddingsOk() (*[]EmbeddingVerdict, bool)`
+
+GetAllEmbeddingsOk returns a tuple with the AllEmbeddings field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAllEmbeddings
+
+`func (o *AppModelsResponseModelsVerifyVerdict) SetAllEmbeddings(v []EmbeddingVerdict)`
+
+SetAllEmbeddings sets AllEmbeddings field to given value.
+
+### HasAllEmbeddings
+
+`func (o *AppModelsResponseModelsVerifyVerdict) HasAllEmbeddings() bool`
+
+HasAllEmbeddings returns a boolean if a field has been set.
+
+### SetAllEmbeddingsNil
+
+`func (o *AppModelsResponseModelsVerifyVerdict) SetAllEmbeddingsNil(b bool)`
+
+ SetAllEmbeddingsNil sets the value for AllEmbeddings to be an explicit nil
+
+### UnsetAllEmbeddings
+`func (o *AppModelsResponseModelsVerifyVerdict) UnsetAllEmbeddings()`
+
+UnsetAllEmbeddings ensures that no value is present for AllEmbeddings, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -11,6 +11,9 @@ Name | Type | Description | Notes
 **DocumentType** | Pointer to **string** | Document type: article | legal_brief | contract | ai_output | [optional] [default to "article"]
 **ClaimGenerator** | Pointer to **NullableString** |  | [optional] 
 **Actions** | Pointer to **[]map[string]interface{}** |  | [optional] 
+**TemplateId** | Pointer to **NullableString** |  | [optional] 
+**ValidateAssertions** | Pointer to **bool** | Whether to validate template-based assertions (Business+). | [optional] [default to true]
+**Rights** | Pointer to [**NullableAppModelsRequestModelsRightsMetadata**](AppModelsRequestModelsRightsMetadata.md) |  | [optional] 
 
 ## Methods
 
@@ -251,6 +254,101 @@ HasActions returns a boolean if a field has been set.
 `func (o *SignRequest) UnsetActions()`
 
 UnsetActions ensures that no value is present for Actions, not even an explicit nil
+### GetTemplateId
+
+`func (o *SignRequest) GetTemplateId() string`
+
+GetTemplateId returns the TemplateId field if non-nil, zero value otherwise.
+
+### GetTemplateIdOk
+
+`func (o *SignRequest) GetTemplateIdOk() (*string, bool)`
+
+GetTemplateIdOk returns a tuple with the TemplateId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetTemplateId
+
+`func (o *SignRequest) SetTemplateId(v string)`
+
+SetTemplateId sets TemplateId field to given value.
+
+### HasTemplateId
+
+`func (o *SignRequest) HasTemplateId() bool`
+
+HasTemplateId returns a boolean if a field has been set.
+
+### SetTemplateIdNil
+
+`func (o *SignRequest) SetTemplateIdNil(b bool)`
+
+ SetTemplateIdNil sets the value for TemplateId to be an explicit nil
+
+### UnsetTemplateId
+`func (o *SignRequest) UnsetTemplateId()`
+
+UnsetTemplateId ensures that no value is present for TemplateId, not even an explicit nil
+### GetValidateAssertions
+
+`func (o *SignRequest) GetValidateAssertions() bool`
+
+GetValidateAssertions returns the ValidateAssertions field if non-nil, zero value otherwise.
+
+### GetValidateAssertionsOk
+
+`func (o *SignRequest) GetValidateAssertionsOk() (*bool, bool)`
+
+GetValidateAssertionsOk returns a tuple with the ValidateAssertions field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetValidateAssertions
+
+`func (o *SignRequest) SetValidateAssertions(v bool)`
+
+SetValidateAssertions sets ValidateAssertions field to given value.
+
+### HasValidateAssertions
+
+`func (o *SignRequest) HasValidateAssertions() bool`
+
+HasValidateAssertions returns a boolean if a field has been set.
+
+### GetRights
+
+`func (o *SignRequest) GetRights() AppModelsRequestModelsRightsMetadata`
+
+GetRights returns the Rights field if non-nil, zero value otherwise.
+
+### GetRightsOk
+
+`func (o *SignRequest) GetRightsOk() (*AppModelsRequestModelsRightsMetadata, bool)`
+
+GetRightsOk returns a tuple with the Rights field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetRights
+
+`func (o *SignRequest) SetRights(v AppModelsRequestModelsRightsMetadata)`
+
+SetRights sets Rights field to given value.
+
+### HasRights
+
+`func (o *SignRequest) HasRights() bool`
+
+HasRights returns a boolean if a field has been set.
+
+### SetRightsNil
+
+`func (o *SignRequest) SetRightsNil(b bool)`
+
+ SetRightsNil sets the value for Rights to be an explicit nil
+
+### UnsetRights
+`func (o *SignRequest) UnsetRights()`
+
+UnsetRights ensures that no value is present for Rights, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -15,7 +15,7 @@ export const siteConfig = {
   name: "Encypher",
   url: "https://encypherai.com",
   tagline: "From the Authors of the C2PA Text Standard",
-  description: "Authors of the C2PA text authentication standard. Building infrastructure for AI content authentication and licensing through sentence-level tracking.",
+  description: "Authors of the C2PA text authentication standard. Patent-pending granular content attribution with Merkle tree authentication for court-admissible evidence generation.",
   
   // OG Images by audience
   images: {

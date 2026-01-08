@@ -18,27 +18,29 @@ __version__ = "1.0.0a1"
 
 # Define package exports
 __all__ = [
-    "AuditApi",
+    "APIKeysApi",
+    "AccountApi",
+    "BYOKApi",
     "BatchApi",
     "C2PACustomAssertionsApi",
     "ChatApi",
     "CoalitionApi",
+    "DocumentsApi",
     "EnterpriseEmbeddingsApi",
     "EnterpriseMerkleTreesApi",
     "HealthApi",
     "InfoApi",
-    "LicensingApi",
     "LookupApi",
     "OnboardingApi",
-    "ProvisioningApi",
     "PublicToolsApi",
+    "PublicC2PAApi",
     "PublicVerificationApi",
     "SigningApi",
     "StatusRevocationApi",
     "StreamingApi",
-    "TeamManagementApi",
     "UsageApi",
     "VerificationApi",
+    "WebhooksApi",
     "ApiResponse",
     "ApiClient",
     "Configuration",
@@ -48,22 +50,16 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
-    "APIKeyCreateRequest",
-    "APIKeyListResponse",
-    "APIKeyResponse",
-    "APIKeyRevokeRequest",
-    "AgreementStatus",
-    "AgreementType",
+    "AccountInfo",
+    "AccountResponse",
+    "AppModelsRequestModelsRightsMetadata",
     "AppModelsResponseModelsVerifyVerdict",
     "AppRoutersToolsVerifyVerdict",
     "AppSchemasBatchBatchVerifyRequest",
     "AppSchemasEmbeddingsBatchVerifyRequest",
     "AppSchemasEmbeddingsErrorResponse",
+    "AppSchemasEmbeddingsRightsMetadata",
     "AppSchemasMerkleErrorResponse",
-    "AuditLogEntry",
-    "AuditLogResponse",
-    "AutoProvisionRequest",
-    "AutoProvisionResponse",
     "BatchItemPayload",
     "BatchItemResult",
     "BatchResponseData",
@@ -88,22 +84,27 @@ __all__ = [
     "ChatCompletionRequest",
     "ChatMessage",
     "CoalitionDashboardResponse",
-    "ContentAccessLogResponse",
-    "ContentAccessTrack",
     "ContentInfo",
-    "ContentListResponse",
-    "ContentMetadata",
     "ContentStats",
+    "CreateManifestRequest",
+    "CreateManifestResponse",
+    "CreateManifestSigningPayload",
     "DecodeToolRequest",
     "DecodeToolResponse",
-    "DistributionStatus",
+    "DocumentDeleteResponse",
+    "DocumentDetail",
+    "DocumentDetailResponse",
     "DocumentEncodeRequest",
     "DocumentEncodeResponse",
+    "DocumentHistoryResponse",
     "DocumentInfo",
+    "DocumentListResponse",
     "DocumentStatusResponse",
     "EarningsSummary",
     "EmbeddingInfo",
     "EmbeddingOptions",
+    "EmbeddingResult",
+    "EmbeddingVerdict",
     "EncodeToolRequest",
     "EncodeToolResponse",
     "EncodeWithEmbeddingsRequest",
@@ -111,31 +112,33 @@ __all__ = [
     "ErrorDetail",
     "ExtractAndVerifyRequest",
     "ExtractAndVerifyResponse",
+    "FeatureFlags",
     "HTTPValidationError",
     "HeatMapData",
-    "InviteRequest",
-    "InviteResponse",
+    "KeyCreateRequest",
+    "KeyCreateResponse",
+    "KeyListResponse",
+    "KeyRevokeResponse",
+    "KeyRotateResponse",
+    "KeyUpdateRequest",
+    "KeyUpdateResponse",
     "LicenseInfo",
-    "LicensingAgreementCreate",
-    "LicensingAgreementCreateResponse",
-    "LicensingAgreementResponse",
-    "LicensingAgreementUpdate",
     "LicensingInfo",
     "LookupRequest",
     "LookupResponse",
-    "MemberRevenueDetail",
     "MerkleProofInfo",
     "MerkleRootResponse",
     "MerkleTreeInfo",
-    "PayoutCreate",
-    "PayoutResponse",
-    "PayoutStatus",
     "PayoutSummary",
-    "PendingInvite",
     "PlagiarismDetectionRequest",
     "PlagiarismDetectionResponse",
-    "RevenueDistributionCreate",
-    "RevenueDistributionResponse",
+    "PublicKeyInfo",
+    "PublicKeyListResponse",
+    "PublicKeyRegisterRequest",
+    "PublicKeyRegisterResponse",
+    "QuotaInfo",
+    "QuotaMetric",
+    "QuotaResponse",
     "RevocationReason",
     "RevocationResponse",
     "RevokeRequest",
@@ -146,48 +149,52 @@ __all__ = [
     "SourceDocumentMatch",
     "SourceMatch",
     "StreamSignRequest",
-    "SuccessResponse",
-    "TeamMember",
-    "TeamMemberListResponse",
-    "TeamRole",
-    "TotalValue",
-    "TotalValue1",
-    "UpdateRoleRequest",
+    "TrustAnchorResponse",
     "UsageMetric",
     "UsageResetResponse",
     "UsageResponse",
-    "UserAccountCreateRequest",
-    "UserAccountResponse",
+    "ValidateManifestRequest",
+    "ValidateManifestResponse",
     "ValidationError",
     "ValidationErrorLocInner",
     "VerifyEmbeddingRequest",
     "VerifyEmbeddingResponse",
     "VerifyRequest",
     "VerifyResponse",
+    "WebhookCreateRequest",
+    "WebhookCreateResponse",
+    "WebhookDeleteResponse",
+    "WebhookDeliveriesResponse",
+    "WebhookListResponse",
+    "WebhookTestResponse",
+    "WebhookUpdateRequest",
+    "WebhookUpdateResponse",
 ]
 
 # import apis into sdk package
-from encypher.api.audit_api import AuditApi as AuditApi
+from encypher.api.api_keys_api import APIKeysApi as APIKeysApi
+from encypher.api.account_api import AccountApi as AccountApi
+from encypher.api.byok_api import BYOKApi as BYOKApi
 from encypher.api.batch_api import BatchApi as BatchApi
 from encypher.api.c2_pa_custom_assertions_api import C2PACustomAssertionsApi as C2PACustomAssertionsApi
 from encypher.api.chat_api import ChatApi as ChatApi
 from encypher.api.coalition_api import CoalitionApi as CoalitionApi
+from encypher.api.documents_api import DocumentsApi as DocumentsApi
 from encypher.api.enterprise_embeddings_api import EnterpriseEmbeddingsApi as EnterpriseEmbeddingsApi
 from encypher.api.enterprise_merkle_trees_api import EnterpriseMerkleTreesApi as EnterpriseMerkleTreesApi
 from encypher.api.health_api import HealthApi as HealthApi
 from encypher.api.info_api import InfoApi as InfoApi
-from encypher.api.licensing_api import LicensingApi as LicensingApi
 from encypher.api.lookup_api import LookupApi as LookupApi
 from encypher.api.onboarding_api import OnboardingApi as OnboardingApi
-from encypher.api.provisioning_api import ProvisioningApi as ProvisioningApi
 from encypher.api.public_tools_api import PublicToolsApi as PublicToolsApi
+from encypher.api.public_c2_pa_api import PublicC2PAApi as PublicC2PAApi
 from encypher.api.public_verification_api import PublicVerificationApi as PublicVerificationApi
 from encypher.api.signing_api import SigningApi as SigningApi
 from encypher.api.status_revocation_api import StatusRevocationApi as StatusRevocationApi
 from encypher.api.streaming_api import StreamingApi as StreamingApi
-from encypher.api.team_management_api import TeamManagementApi as TeamManagementApi
 from encypher.api.usage_api import UsageApi as UsageApi
 from encypher.api.verification_api import VerificationApi as VerificationApi
+from encypher.api.webhooks_api import WebhooksApi as WebhooksApi
 
 # import ApiClient
 from encypher.api_response import ApiResponse as ApiResponse
@@ -201,22 +208,16 @@ from encypher.exceptions import ApiAttributeError as ApiAttributeError
 from encypher.exceptions import ApiException as ApiException
 
 # import models into sdk package
-from encypher.models.api_key_create_request import APIKeyCreateRequest as APIKeyCreateRequest
-from encypher.models.api_key_list_response import APIKeyListResponse as APIKeyListResponse
-from encypher.models.api_key_response import APIKeyResponse as APIKeyResponse
-from encypher.models.api_key_revoke_request import APIKeyRevokeRequest as APIKeyRevokeRequest
-from encypher.models.agreement_status import AgreementStatus as AgreementStatus
-from encypher.models.agreement_type import AgreementType as AgreementType
+from encypher.models.account_info import AccountInfo as AccountInfo
+from encypher.models.account_response import AccountResponse as AccountResponse
+from encypher.models.app_models_request_models_rights_metadata import AppModelsRequestModelsRightsMetadata as AppModelsRequestModelsRightsMetadata
 from encypher.models.app_models_response_models_verify_verdict import AppModelsResponseModelsVerifyVerdict as AppModelsResponseModelsVerifyVerdict
 from encypher.models.app_routers_tools_verify_verdict import AppRoutersToolsVerifyVerdict as AppRoutersToolsVerifyVerdict
 from encypher.models.app_schemas_batch_batch_verify_request import AppSchemasBatchBatchVerifyRequest as AppSchemasBatchBatchVerifyRequest
 from encypher.models.app_schemas_embeddings_batch_verify_request import AppSchemasEmbeddingsBatchVerifyRequest as AppSchemasEmbeddingsBatchVerifyRequest
 from encypher.models.app_schemas_embeddings_error_response import AppSchemasEmbeddingsErrorResponse as AppSchemasEmbeddingsErrorResponse
+from encypher.models.app_schemas_embeddings_rights_metadata import AppSchemasEmbeddingsRightsMetadata as AppSchemasEmbeddingsRightsMetadata
 from encypher.models.app_schemas_merkle_error_response import AppSchemasMerkleErrorResponse as AppSchemasMerkleErrorResponse
-from encypher.models.audit_log_entry import AuditLogEntry as AuditLogEntry
-from encypher.models.audit_log_response import AuditLogResponse as AuditLogResponse
-from encypher.models.auto_provision_request import AutoProvisionRequest as AutoProvisionRequest
-from encypher.models.auto_provision_response import AutoProvisionResponse as AutoProvisionResponse
 from encypher.models.batch_item_payload import BatchItemPayload as BatchItemPayload
 from encypher.models.batch_item_result import BatchItemResult as BatchItemResult
 from encypher.models.batch_response_data import BatchResponseData as BatchResponseData
@@ -241,22 +242,27 @@ from encypher.models.c2_pa_template_update import C2PATemplateUpdate as C2PATemp
 from encypher.models.chat_completion_request import ChatCompletionRequest as ChatCompletionRequest
 from encypher.models.chat_message import ChatMessage as ChatMessage
 from encypher.models.coalition_dashboard_response import CoalitionDashboardResponse as CoalitionDashboardResponse
-from encypher.models.content_access_log_response import ContentAccessLogResponse as ContentAccessLogResponse
-from encypher.models.content_access_track import ContentAccessTrack as ContentAccessTrack
 from encypher.models.content_info import ContentInfo as ContentInfo
-from encypher.models.content_list_response import ContentListResponse as ContentListResponse
-from encypher.models.content_metadata import ContentMetadata as ContentMetadata
 from encypher.models.content_stats import ContentStats as ContentStats
+from encypher.models.create_manifest_request import CreateManifestRequest as CreateManifestRequest
+from encypher.models.create_manifest_response import CreateManifestResponse as CreateManifestResponse
+from encypher.models.create_manifest_signing_payload import CreateManifestSigningPayload as CreateManifestSigningPayload
 from encypher.models.decode_tool_request import DecodeToolRequest as DecodeToolRequest
 from encypher.models.decode_tool_response import DecodeToolResponse as DecodeToolResponse
-from encypher.models.distribution_status import DistributionStatus as DistributionStatus
+from encypher.models.document_delete_response import DocumentDeleteResponse as DocumentDeleteResponse
+from encypher.models.document_detail import DocumentDetail as DocumentDetail
+from encypher.models.document_detail_response import DocumentDetailResponse as DocumentDetailResponse
 from encypher.models.document_encode_request import DocumentEncodeRequest as DocumentEncodeRequest
 from encypher.models.document_encode_response import DocumentEncodeResponse as DocumentEncodeResponse
+from encypher.models.document_history_response import DocumentHistoryResponse as DocumentHistoryResponse
 from encypher.models.document_info import DocumentInfo as DocumentInfo
+from encypher.models.document_list_response import DocumentListResponse as DocumentListResponse
 from encypher.models.document_status_response import DocumentStatusResponse as DocumentStatusResponse
 from encypher.models.earnings_summary import EarningsSummary as EarningsSummary
 from encypher.models.embedding_info import EmbeddingInfo as EmbeddingInfo
 from encypher.models.embedding_options import EmbeddingOptions as EmbeddingOptions
+from encypher.models.embedding_result import EmbeddingResult as EmbeddingResult
+from encypher.models.embedding_verdict import EmbeddingVerdict as EmbeddingVerdict
 from encypher.models.encode_tool_request import EncodeToolRequest as EncodeToolRequest
 from encypher.models.encode_tool_response import EncodeToolResponse as EncodeToolResponse
 from encypher.models.encode_with_embeddings_request import EncodeWithEmbeddingsRequest as EncodeWithEmbeddingsRequest
@@ -264,31 +270,33 @@ from encypher.models.encode_with_embeddings_response import EncodeWithEmbeddings
 from encypher.models.error_detail import ErrorDetail as ErrorDetail
 from encypher.models.extract_and_verify_request import ExtractAndVerifyRequest as ExtractAndVerifyRequest
 from encypher.models.extract_and_verify_response import ExtractAndVerifyResponse as ExtractAndVerifyResponse
+from encypher.models.feature_flags import FeatureFlags as FeatureFlags
 from encypher.models.http_validation_error import HTTPValidationError as HTTPValidationError
 from encypher.models.heat_map_data import HeatMapData as HeatMapData
-from encypher.models.invite_request import InviteRequest as InviteRequest
-from encypher.models.invite_response import InviteResponse as InviteResponse
+from encypher.models.key_create_request import KeyCreateRequest as KeyCreateRequest
+from encypher.models.key_create_response import KeyCreateResponse as KeyCreateResponse
+from encypher.models.key_list_response import KeyListResponse as KeyListResponse
+from encypher.models.key_revoke_response import KeyRevokeResponse as KeyRevokeResponse
+from encypher.models.key_rotate_response import KeyRotateResponse as KeyRotateResponse
+from encypher.models.key_update_request import KeyUpdateRequest as KeyUpdateRequest
+from encypher.models.key_update_response import KeyUpdateResponse as KeyUpdateResponse
 from encypher.models.license_info import LicenseInfo as LicenseInfo
-from encypher.models.licensing_agreement_create import LicensingAgreementCreate as LicensingAgreementCreate
-from encypher.models.licensing_agreement_create_response import LicensingAgreementCreateResponse as LicensingAgreementCreateResponse
-from encypher.models.licensing_agreement_response import LicensingAgreementResponse as LicensingAgreementResponse
-from encypher.models.licensing_agreement_update import LicensingAgreementUpdate as LicensingAgreementUpdate
 from encypher.models.licensing_info import LicensingInfo as LicensingInfo
 from encypher.models.lookup_request import LookupRequest as LookupRequest
 from encypher.models.lookup_response import LookupResponse as LookupResponse
-from encypher.models.member_revenue_detail import MemberRevenueDetail as MemberRevenueDetail
 from encypher.models.merkle_proof_info import MerkleProofInfo as MerkleProofInfo
 from encypher.models.merkle_root_response import MerkleRootResponse as MerkleRootResponse
 from encypher.models.merkle_tree_info import MerkleTreeInfo as MerkleTreeInfo
-from encypher.models.payout_create import PayoutCreate as PayoutCreate
-from encypher.models.payout_response import PayoutResponse as PayoutResponse
-from encypher.models.payout_status import PayoutStatus as PayoutStatus
 from encypher.models.payout_summary import PayoutSummary as PayoutSummary
-from encypher.models.pending_invite import PendingInvite as PendingInvite
 from encypher.models.plagiarism_detection_request import PlagiarismDetectionRequest as PlagiarismDetectionRequest
 from encypher.models.plagiarism_detection_response import PlagiarismDetectionResponse as PlagiarismDetectionResponse
-from encypher.models.revenue_distribution_create import RevenueDistributionCreate as RevenueDistributionCreate
-from encypher.models.revenue_distribution_response import RevenueDistributionResponse as RevenueDistributionResponse
+from encypher.models.public_key_info import PublicKeyInfo as PublicKeyInfo
+from encypher.models.public_key_list_response import PublicKeyListResponse as PublicKeyListResponse
+from encypher.models.public_key_register_request import PublicKeyRegisterRequest as PublicKeyRegisterRequest
+from encypher.models.public_key_register_response import PublicKeyRegisterResponse as PublicKeyRegisterResponse
+from encypher.models.quota_info import QuotaInfo as QuotaInfo
+from encypher.models.quota_metric import QuotaMetric as QuotaMetric
+from encypher.models.quota_response import QuotaResponse as QuotaResponse
 from encypher.models.revocation_reason import RevocationReason as RevocationReason
 from encypher.models.revocation_response import RevocationResponse as RevocationResponse
 from encypher.models.revoke_request import RevokeRequest as RevokeRequest
@@ -299,22 +307,24 @@ from encypher.models.source_attribution_response import SourceAttributionRespons
 from encypher.models.source_document_match import SourceDocumentMatch as SourceDocumentMatch
 from encypher.models.source_match import SourceMatch as SourceMatch
 from encypher.models.stream_sign_request import StreamSignRequest as StreamSignRequest
-from encypher.models.success_response import SuccessResponse as SuccessResponse
-from encypher.models.team_member import TeamMember as TeamMember
-from encypher.models.team_member_list_response import TeamMemberListResponse as TeamMemberListResponse
-from encypher.models.team_role import TeamRole as TeamRole
-from encypher.models.total_value import TotalValue as TotalValue
-from encypher.models.total_value1 import TotalValue1 as TotalValue1
-from encypher.models.update_role_request import UpdateRoleRequest as UpdateRoleRequest
+from encypher.models.trust_anchor_response import TrustAnchorResponse as TrustAnchorResponse
 from encypher.models.usage_metric import UsageMetric as UsageMetric
 from encypher.models.usage_reset_response import UsageResetResponse as UsageResetResponse
 from encypher.models.usage_response import UsageResponse as UsageResponse
-from encypher.models.user_account_create_request import UserAccountCreateRequest as UserAccountCreateRequest
-from encypher.models.user_account_response import UserAccountResponse as UserAccountResponse
+from encypher.models.validate_manifest_request import ValidateManifestRequest as ValidateManifestRequest
+from encypher.models.validate_manifest_response import ValidateManifestResponse as ValidateManifestResponse
 from encypher.models.validation_error import ValidationError as ValidationError
 from encypher.models.validation_error_loc_inner import ValidationErrorLocInner as ValidationErrorLocInner
 from encypher.models.verify_embedding_request import VerifyEmbeddingRequest as VerifyEmbeddingRequest
 from encypher.models.verify_embedding_response import VerifyEmbeddingResponse as VerifyEmbeddingResponse
 from encypher.models.verify_request import VerifyRequest as VerifyRequest
 from encypher.models.verify_response import VerifyResponse as VerifyResponse
+from encypher.models.webhook_create_request import WebhookCreateRequest as WebhookCreateRequest
+from encypher.models.webhook_create_response import WebhookCreateResponse as WebhookCreateResponse
+from encypher.models.webhook_delete_response import WebhookDeleteResponse as WebhookDeleteResponse
+from encypher.models.webhook_deliveries_response import WebhookDeliveriesResponse as WebhookDeliveriesResponse
+from encypher.models.webhook_list_response import WebhookListResponse as WebhookListResponse
+from encypher.models.webhook_test_response import WebhookTestResponse as WebhookTestResponse
+from encypher.models.webhook_update_request import WebhookUpdateRequest as WebhookUpdateRequest
+from encypher.models.webhook_update_response import WebhookUpdateResponse as WebhookUpdateResponse
 

@@ -58,7 +58,7 @@ export interface EncodeTextApiV1ToolsEncodePost0Request {
  */
 export interface PublicToolsApiInterface {
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * @summary Decode Text
      * @param {DecodeToolRequest} decodeToolRequest 
      * @param {*} [options] Override http request option.
@@ -68,13 +68,13 @@ export interface PublicToolsApiInterface {
     decodeTextApiV1ToolsDecodePostRaw(requestParameters: DecodeTextApiV1ToolsDecodePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DecodeToolResponse>>;
 
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * Decode Text
      */
     decodeTextApiV1ToolsDecodePost(requestParameters: DecodeTextApiV1ToolsDecodePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DecodeToolResponse>;
 
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * @summary Decode Text
      * @param {DecodeToolRequest} decodeToolRequest 
      * @param {*} [options] Override http request option.
@@ -84,7 +84,7 @@ export interface PublicToolsApiInterface {
     decodeTextApiV1ToolsDecodePost_1Raw(requestParameters: DecodeTextApiV1ToolsDecodePost0Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DecodeToolResponse>>;
 
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * Decode Text
      */
     decodeTextApiV1ToolsDecodePost_1(requestParameters: DecodeTextApiV1ToolsDecodePost0Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DecodeToolResponse>;
@@ -129,7 +129,7 @@ export interface PublicToolsApiInterface {
 export class PublicToolsApi extends runtime.BaseAPI implements PublicToolsApiInterface {
 
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * Decode Text
      */
     async decodeTextApiV1ToolsDecodePostRaw(requestParameters: DecodeTextApiV1ToolsDecodePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DecodeToolResponse>> {
@@ -161,7 +161,7 @@ export class PublicToolsApi extends runtime.BaseAPI implements PublicToolsApiInt
     }
 
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * Decode Text
      */
     async decodeTextApiV1ToolsDecodePost(requestParameters: DecodeTextApiV1ToolsDecodePostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DecodeToolResponse> {
@@ -170,7 +170,7 @@ export class PublicToolsApi extends runtime.BaseAPI implements PublicToolsApiInt
     }
 
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * Decode Text
      */
     async decodeTextApiV1ToolsDecodePost_1Raw(requestParameters: DecodeTextApiV1ToolsDecodePost0Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<DecodeToolResponse>> {
@@ -202,7 +202,7 @@ export class PublicToolsApi extends runtime.BaseAPI implements PublicToolsApiInt
     }
 
     /**
-     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+     * Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
      * Decode Text
      */
     async decodeTextApiV1ToolsDecodePost_1(requestParameters: DecodeTextApiV1ToolsDecodePost0Request, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<DecodeToolResponse> {

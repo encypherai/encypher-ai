@@ -22,13 +22,15 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 os.environ.setdefault("KEY_ENCRYPTION_KEY", "0" * 64)
 os.environ.setdefault("ENCRYPTION_NONCE", "0" * 24)
 
+_postgres_host_port = os.environ.get("POSTGRES_HOST_PORT", "15432")
+
 os.environ.setdefault(
     "CORE_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
+    f"postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:{_postgres_host_port}/encypher_content",
 )
 os.environ.setdefault(
     "CONTENT_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
+    f"postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:{_postgres_host_port}/encypher_content",
 )
 os.environ.setdefault("DATABASE_URL", os.environ["CORE_DATABASE_URL"])
 
@@ -39,19 +41,21 @@ if str(root) not in sys.path:
 # Now import app modules after setting up the path
 from app.database import get_content_db, get_db
 from app.main import app
+from app.middleware.public_rate_limiter import public_rate_limiter
+from app.utils.db_startup import ensure_database_ready
 
 # Test database URLs - Two-Database Architecture
 # These match the docker-compose.full-stack.yml configuration
 # Core DB: Customer/billing data (organizations, api_keys, etc.)
 TEST_CORE_DATABASE_URL = os.getenv(
     "CORE_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
+    f"postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:{_postgres_host_port}/encypher_content",
 )
 
 # Content DB: Verification data (documents, merkle trees, etc.)
 TEST_CONTENT_DATABASE_URL = os.getenv(
     "CONTENT_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:55432/encypher_content",
+    f"postgresql+asyncpg://encypher:encypher_dev_password@127.0.0.1:{_postgres_host_port}/encypher_content",
 )
 
 # Legacy alias for backward compatibility
@@ -62,6 +66,17 @@ _SEED_LOCK = asyncio.Lock()
 _SEEDED = False
 
 
+@pytest.fixture(autouse=True)
+def _reset_dependency_overrides_and_rate_limiters() -> None:
+    app.dependency_overrides.clear()
+    public_rate_limiter.requests.clear()
+    public_rate_limiter.violations.clear()
+    yield
+    app.dependency_overrides.clear()
+    public_rate_limiter.requests.clear()
+    public_rate_limiter.violations.clear()
+
+
 async def _ensure_seeded() -> None:
     global _SEEDED
     if _SEEDED:
@@ -70,6 +85,14 @@ async def _ensure_seeded() -> None:
     async with _SEED_LOCK:
         if _SEEDED:
             return
+
+        await asyncio.to_thread(
+            ensure_database_ready,
+            database_url=TEST_CORE_DATABASE_URL,
+            service_name="enterprise-api-tests",
+            run_migrations=True,
+            exit_on_failure=True,
+        )
 
         engine = create_async_engine(TEST_CORE_DATABASE_URL, echo=False, pool_pre_ping=True)
         async with engine.begin() as conn:

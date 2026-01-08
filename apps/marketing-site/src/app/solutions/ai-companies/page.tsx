@@ -25,10 +25,10 @@ export default function AiCompaniesPage() {
     <div className="bg-background text-foreground">
       <AISummary
         title="Encypher for AI Labs"
-        whatWeDo="We provide sentence-level performance intelligence for AI outputs, authored by the creators of the C2PA text standard."
-        whoItsFor="AI labs needing model performance insights and compliance across the publisher ecosystem."
-        keyDifferentiator="Trace viral content back to exact parameters with cryptographic proof—no probabilistic guessing."
-        primaryValue="Turn R&D guesswork into data-driven optimization with court-grade provenance."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force (c2pa.org). API and SDKs for performance intelligence and quote integrity verification. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. Standard publishes January 8, 2026."
+        whoItsFor="AI labs needing publisher ecosystem compatibility, performance intelligence, quote integrity verification, and EU AI Act/China watermarking compliance."
+        keyDifferentiator="One API integration for entire publisher ecosystem. Quote integrity proves 'According to AP...' is accurate vs. hallucinated."
+        primaryValue="Collaborative infrastructure for the AI ecosystem. Sentence-level attribution traces viral content to exact parameters."
       />
       <Script id="schema-faq-ai" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       {/* Hero Section */}
@@ -46,11 +46,16 @@ export default function AiCompaniesPage() {
                 Get Your Performance Intelligence Demo <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+            <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg shadow-lg">
+              <Link href="/auth/signin?mode=signup&source=ai-companies">
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
             <Button 
               onClick={() => setShowContactModal(true)}
               size="lg" 
-              variant="outline"
-              className="font-semibold py-3 px-6 rounded-lg shadow-lg"
+              variant="ghost"
+              className="font-semibold"
             >
               Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

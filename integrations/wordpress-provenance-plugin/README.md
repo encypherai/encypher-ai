@@ -33,8 +33,10 @@ wordpress-provenance-plugin/
 
 The plugin targets the production Enterprise API hosted at `https://api.encypherai.com`:
 
-- `POST /api/v1/enterprise/embeddings/encode-with-embeddings` signs a post by embedding a C2PA manifest with full provenance chain support. The plugin sends the post body, action type (`c2pa.created` or `c2pa.edited`), and previous instance ID for edit tracking.
-- `POST /api/v1/public/extract-and-verify` validates stored content and extracts the complete C2PA manifest including ingredient references, displaying the full provenance chain in the WordPress UI.
+- `POST /api/v1/sign` signs a post with a document-level C2PA manifest (Starter tier).
+- `POST /api/v1/sign/advanced` signs a post with sentence-level Merkle tree embeddings and provenance chain support (Professional+ tiers).
+- `POST /api/v1/verify` verifies a signed post and returns validity + signer details.
+- `POST /api/v1/public/extract-and-verify` provides public extraction + verification for third parties (no auth).
 
 Both endpoints and their request/response shapes are described in detail in the [Enterprise API README](../../enterprise_api/README.md) and [C2PA Provenance Chain documentation](../../docs/c2pa/C2PA_PROVENANCE_CHAIN.md). API failures are surfaced in the editor so authors can retry or contact support.
 
@@ -84,7 +86,7 @@ For local development without dashboard access you can run the Enterprise API se
 
 1. Copy `plugin/encypher-provenance` into a WordPress installation under `wp-content/plugins/`.
 2. Activate **Encypher Provenance** in the WordPress admin dashboard.
-3. Go to **Settings > Encypher Provenance** and set:
+3. Go to **Encypher > Settings** and set:
    - **API Base URL:** `https://api.encypherai.com/api/v1` (or your self-hosted Enterprise API endpoint).
    - **API Key:** paste the key generated during onboarding.
 4. In the Gutenberg editor, open the **Encypher Provenance** panel to sign your draft. The Classic Editor uses the provided meta box. Each signing request produces C2PA-compliant wrapped text that replaces the post body contents.
@@ -114,7 +116,7 @@ A `docker-compose.yml` is provided so you can run WordPress, MySQL, PostgreSQL, 
    ```bash
    docker compose run --rm wp-cli plugin activate encypher-provenance
    ```
-4. Sign in at `http://localhost:8080/wp-admin`, choose **Settings > Encypher Provenance**, and configure:
+4. Sign in at `http://localhost:8080/wp-admin`, choose **Encypher > Settings**, and configure:
    - **API Base URL:** `http://enterprise-api:8000/api/v1`
    - **API Key:** `demo-local-key`
    - Enable automatic verification if desired.

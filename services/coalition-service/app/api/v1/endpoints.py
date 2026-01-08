@@ -1,14 +1,16 @@
 """
 Coalition Service API Endpoints
 """
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from typing import Optional
 from uuid import UUID
 from datetime import datetime, date
 import structlog
+import httpx
 
 from ...db.session import get_db
+from ...core.config import settings
 from ...models.schemas import (
     CoalitionJoinRequest,
     CoalitionLeaveRequest,
@@ -29,13 +31,75 @@ logger = structlog.get_logger()
 router = APIRouter()
 
 
+async def get_current_context(authorization: str = Header(None)) -> dict:
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    api_key = authorization.split(" ", 1)[1].strip()
+    if not api_key:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.KEY_SERVICE_URL}/api/v1/keys/validate",
+                json={"key": api_key},
+                timeout=5.0,
+            )
+    except httpx.RequestError:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Key service unavailable",
+        )
+
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = response.json()
+    data = payload.get("data")
+    if not payload.get("success") or not isinstance(data, dict):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid API key",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    return data
+
+
+def _enforce_user_match(*, context: dict, user_id: UUID) -> None:
+    context_user_id = context.get("user_id")
+    if not context_user_id or str(context_user_id) != str(user_id):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden",
+        )
+
+
 # Coalition Member Endpoints
 @router.post("/join", response_model=SuccessResponse, status_code=status.HTTP_201_CREATED)
-async def join_coalition(request: CoalitionJoinRequest, db: Session = Depends(get_db)):
+async def join_coalition(
+    request: CoalitionJoinRequest,
+    db: Session = Depends(get_db),
+    context: dict = Depends(get_current_context),
+):
     """
     Join the coalition (or auto-join on signup)
     """
     try:
+        _enforce_user_match(context=context, user_id=request.user_id)
         member = CoalitionService.join_coalition(db, request)
 
         return SuccessResponse(
@@ -57,11 +121,16 @@ async def join_coalition(request: CoalitionJoinRequest, db: Session = Depends(ge
 
 
 @router.post("/leave", response_model=SuccessResponse)
-async def leave_coalition(request: CoalitionLeaveRequest, db: Session = Depends(get_db)):
+async def leave_coalition(
+    request: CoalitionLeaveRequest,
+    db: Session = Depends(get_db),
+    context: dict = Depends(get_current_context),
+):
     """
     Leave the coalition (opt-out)
     """
     try:
+        _enforce_user_match(context=context, user_id=request.user_id)
         success = CoalitionService.leave_coalition(db, request.user_id, request.reason)
 
         if not success:
@@ -85,11 +154,16 @@ async def leave_coalition(request: CoalitionLeaveRequest, db: Session = Depends(
 
 
 @router.get("/status/{user_id}", response_model=SuccessResponse)
-async def get_coalition_status(user_id: UUID, db: Session = Depends(get_db)):
+async def get_coalition_status(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    context: dict = Depends(get_current_context),
+):
     """
     Get coalition membership status
     """
     try:
+        _enforce_user_match(context=context, user_id=user_id)
         from ...db.models import CoalitionMember
 
         member = db.query(CoalitionMember).filter(CoalitionMember.user_id == user_id).first()
@@ -121,11 +195,16 @@ async def get_coalition_status(user_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/stats/{user_id}", response_model=SuccessResponse)
-async def get_coalition_stats(user_id: UUID, db: Session = Depends(get_db)):
+async def get_coalition_stats(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    context: dict = Depends(get_current_context),
+):
     """
     Get coalition statistics for a member
     """
     try:
+        _enforce_user_match(context=context, user_id=user_id)
         stats = CoalitionService.get_member_stats(db, user_id)
 
         if not stats:
@@ -149,11 +228,16 @@ async def get_coalition_stats(user_id: UUID, db: Session = Depends(get_db)):
 
 
 @router.get("/revenue/{user_id}", response_model=SuccessResponse)
-async def get_member_revenue(user_id: UUID, db: Session = Depends(get_db)):
+async def get_member_revenue(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+    context: dict = Depends(get_current_context),
+):
     """
     Get detailed revenue breakdown for a member
     """
     try:
+        _enforce_user_match(context=context, user_id=user_id)
         revenue = CoalitionService.get_member_revenue(db, user_id)
 
         if not revenue:

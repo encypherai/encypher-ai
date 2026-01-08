@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""
-Generate OpenAPI spec from the Enterprise API.
+"""Generate OpenAPI specs from the Enterprise API.
 
-This script extracts the OpenAPI schema from FastAPI without starting the server.
+This script extracts OpenAPI schemas from FastAPI without starting the server.
 It sets minimal environment variables to satisfy config requirements.
 """
+import copy
 import json
 import os
 import sys
 from pathlib import Path
+
+from fastapi.openapi.utils import get_openapi
 
 # Clear any existing env vars that might conflict, and set minimal required ones
 # This must happen BEFORE any imports that load pydantic-settings
@@ -17,6 +19,7 @@ env_vars_to_set = {
     "KEY_ENCRYPTION_KEY": "0" * 64,  # 32 bytes hex
     "ENCRYPTION_NONCE": "0" * 24,  # 12 bytes hex
     "ENVIRONMENT": "development",
+    "API_BASE_URL": "https://api.encypherai.com",
 }
 
 # Remove conflicting vars that aren't in Settings
@@ -50,39 +53,60 @@ def patched_init(self, **kwargs):
 
 BaseSettings.__init__ = patched_init
 
-from app.main import app
+from app.main import _filter_openapi_for_public, app
+
+
+def _with_servers(schema: dict, *, api_base_url: str) -> dict:
+    schema["servers"] = [
+        {"url": api_base_url, "description": "Production"},
+        {"url": "http://localhost:8007", "description": "Local development"},
+    ]
+    return schema
 
 
 def main():
-    """Generate and save OpenAPI spec."""
-    schema = app.openapi()
-    
-    # Output path
+    """Generate and save OpenAPI specs."""
     output_dir = Path(__file__).parent
-    output_path = output_dir / "openapi.json"
-    
-    # Write spec
-    with open(output_path, "w") as f:
-        json.dump(schema, f, indent=2)
-    
-    # Stats
-    paths = schema.get("paths", {})
-    print(f"✅ Generated OpenAPI spec: {output_path}")
-    print(f"   Version: {schema.get('info', {}).get('version', 'unknown')}")
-    print(f"   Endpoints: {len(paths)}")
-    print(f"   Schemas: {len(schema.get('components', {}).get('schemas', {}))}")
-    
-    # List endpoints by tag
-    tags = {}
-    for path, methods in paths.items():
-        for method, details in methods.items():
-            if method in ("get", "post", "put", "delete", "patch"):
-                for tag in details.get("tags", ["Untagged"]):
-                    tags.setdefault(tag, []).append(f"{method.upper()} {path}")
-    
-    print("\n📋 Endpoints by tag:")
-    for tag, endpoints in sorted(tags.items()):
-        print(f"   {tag}: {len(endpoints)}")
+    public_path = output_dir / "openapi.public.json"
+    internal_path = output_dir / "openapi.internal.json"
+
+    api_base_url = os.environ.get("API_BASE_URL", "https://api.encypherai.com")
+
+    base_public = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    public_schema = _with_servers(
+        _filter_openapi_for_public(copy.deepcopy(base_public)),
+        api_base_url=api_base_url,
+    )
+
+    internal_schema = get_openapi(
+        title=f"{app.title} (Internal)",
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    internal_schema = _with_servers(internal_schema, api_base_url=api_base_url)
+
+    with open(public_path, "w") as f:
+        json.dump(public_schema, f, indent=2)
+
+    with open(internal_path, "w") as f:
+        json.dump(internal_schema, f, indent=2)
+
+    print(f"✅ Generated OpenAPI specs:")
+    print(f"   Public:   {public_path}")
+    print(f"   Internal: {internal_path}")
+
+    for label, schema in (("Public", public_schema), ("Internal", internal_schema)):
+        paths = schema.get("paths", {})
+        print(f"\n{label} Stats")
+        print(f"   Version: {schema.get('info', {}).get('version', 'unknown')}")
+        print(f"   Endpoints: {len(paths)}")
+        print(f"   Schemas: {len(schema.get('components', {}).get('schemas', {}))}")
 
 
 if __name__ == "__main__":

@@ -52,14 +52,14 @@ $revenue_split = $this->get_revenue_split($tier);
     </div>
 
     <!-- Pro Upgrade CTA (if free tier) -->
-    <?php if ($tier === 'free' && isset($stats['revenue_stats']['pending'])): ?>
+    <?php if ($tier === 'starter' && isset($stats['revenue_stats']['pending'])): ?>
         <?php
         $pending = $stats['revenue_stats']['pending'] ?? 0;
         $roi = $this->calculate_pro_upgrade_roi($pending, $tier);
         ?>
         <?php if ($roi['show_upgrade'] && $pending > 50): ?>
         <div class="coalition-upgrade-cta">
-            <h4><?php esc_html_e('💡 Upgrade to Pro', 'encypher-provenance'); ?></h4>
+            <h4><?php esc_html_e('Upgrade to Pro', 'encypher-provenance'); ?></h4>
             <p>
                 <?php
                 printf(
@@ -69,10 +69,10 @@ $revenue_split = $this->get_revenue_split($tier);
                 ?>
             </p>
             <ul class="upgrade-benefits">
-                <li>✓ <?php esc_html_e('70/30 revenue split (vs 65/35)', 'encypher-provenance'); ?></li>
-                <li>✓ <?php esc_html_e('$10 payout threshold (vs $50)', 'encypher-provenance'); ?></li>
-                <li>✓ <?php esc_html_e('Priority content placement', 'encypher-provenance'); ?></li>
-                <li>✓ <?php esc_html_e('Advanced analytics', 'encypher-provenance'); ?></li>
+                <li><?php esc_html_e('70/30 revenue split (vs 65/35)', 'encypher-provenance'); ?></li>
+                <li><?php esc_html_e('$10 payout threshold (vs $50)', 'encypher-provenance'); ?></li>
+                <li><?php esc_html_e('Priority content placement', 'encypher-provenance'); ?></li>
+                <li><?php esc_html_e('Advanced analytics', 'encypher-provenance'); ?></li>
             </ul>
             <a href="https://encypherai.com/pricing" class="button button-primary" target="_blank">
                 <?php esc_html_e('Upgrade to Pro - $99/month', 'encypher-provenance'); ?>

@@ -1,6 +1,6 @@
 # encypher.PublicVerificationApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -37,10 +37,10 @@ from encypher.models.batch_verify_response import BatchVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -135,10 +135,10 @@ from encypher.models.extract_and_verify_response import ExtractAndVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -232,10 +232,10 @@ from encypher.models.verify_embedding_response import VerifyEmbeddingResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 

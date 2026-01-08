@@ -48,7 +48,7 @@ pub enum EncodeTextApiV1ToolsEncodePost0Error {
 }
 
 
-/// Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+/// Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 pub async fn decode_text_api_v1_tools_decode_post(configuration: &configuration::Configuration, decode_tool_request: models::DecodeToolRequest) -> Result<models::DecodeToolResponse, Error<DecodeTextApiV1ToolsDecodePostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_decode_tool_request = decode_tool_request;
@@ -86,7 +86,7 @@ pub async fn decode_text_api_v1_tools_decode_post(configuration: &configuration:
     }
 }
 
-/// Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Verification uses the demo public key.
+/// Decode and verify text containing embedded metadata.  This is a public endpoint for the website demo tool. Supports multiple embeddings in a single text (Encypher proprietary feature). Verification uses Trust Anchor lookup - checks database for org public keys. Falls back to demo key for demo-signed content.
 pub async fn decode_text_api_v1_tools_decode_post_0(configuration: &configuration::Configuration, decode_tool_request: models::DecodeToolRequest) -> Result<models::DecodeToolResponse, Error<DecodeTextApiV1ToolsDecodePost0Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_decode_tool_request = decode_tool_request;

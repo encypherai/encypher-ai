@@ -27,7 +27,9 @@ type PublicToolsAPI interface {
 	Decode and verify text containing embedded metadata.
 
 This is a public endpoint for the website demo tool.
-Verification uses the demo public key.
+Supports multiple embeddings in a single text (Encypher proprietary feature).
+Verification uses Trust Anchor lookup - checks database for org public keys.
+Falls back to demo key for demo-signed content.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiDecodeTextApiV1ToolsDecodePostRequest
@@ -44,7 +46,9 @@ Verification uses the demo public key.
 	Decode and verify text containing embedded metadata.
 
 This is a public endpoint for the website demo tool.
-Verification uses the demo public key.
+Supports multiple embeddings in a single text (Encypher proprietary feature).
+Verification uses Trust Anchor lookup - checks database for org public keys.
+Falls back to demo key for demo-signed content.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiDecodeTextApiV1ToolsDecodePost_0Request
@@ -114,7 +118,9 @@ DecodeTextApiV1ToolsDecodePost Decode Text
 Decode and verify text containing embedded metadata.
 
 This is a public endpoint for the website demo tool.
-Verification uses the demo public key.
+Supports multiple embeddings in a single text (Encypher proprietary feature).
+Verification uses Trust Anchor lookup - checks database for org public keys.
+Falls back to demo key for demo-signed content.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiDecodeTextApiV1ToolsDecodePostRequest
@@ -237,7 +243,9 @@ DecodeTextApiV1ToolsDecodePost_0 Decode Text
 Decode and verify text containing embedded metadata.
 
 This is a public endpoint for the website demo tool.
-Verification uses the demo public key.
+Supports multiple embeddings in a single text (Encypher proprietary feature).
+Verification uses Trust Anchor lookup - checks database for org public keys.
+Falls back to demo key for demo-signed content.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiDecodeTextApiV1ToolsDecodePost_0Request

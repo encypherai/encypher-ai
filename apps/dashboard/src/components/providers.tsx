@@ -13,12 +13,57 @@ interface ProvidersProps {
   children: ReactNode;
 }
 
-// Helper to check if error is an auth error
-function isAuthError(error: unknown): boolean {
+/**
+ * Check if an error indicates a true session expiry vs a permission/tier error.
+ * 
+ * - 401 with session-related messages = session expired
+ * - 401 from tier-gated endpoints = NOT session expired (don't logout)
+ * - 403 = permission denied, NOT session expired
+ */
+function isSessionExpiredError(error: unknown): boolean {
+  let statusCode: number | undefined;
+  let errorMessage = '';
+  
   if (error instanceof Error && 'statusCode' in error) {
-    const statusCode = (error as { statusCode: number }).statusCode;
-    return statusCode === 401 || statusCode === 403;
+    statusCode = (error as { statusCode: number }).statusCode;
+    errorMessage = error.message.toLowerCase();
   }
+  
+  // 403 is always "forbidden" (permission denied), not session expiry
+  if (statusCode === 403) {
+    return false;
+  }
+  
+  // 401 could be session expiry OR tier-gated endpoint
+  if (statusCode === 401) {
+    // Check for tier-related error messages (not session expiry)
+    const tierRelatedMessages = [
+      'tier', 'upgrade', 'plan', 'subscription', 'business', 'enterprise',
+      'professional', 'feature', 'access denied', 'permission', 'template'
+    ];
+    
+    if (tierRelatedMessages.some(msg => errorMessage.includes(msg))) {
+      return false; // Tier-gated, not session expiry
+    }
+    
+    // Check for true session expiry messages
+    const sessionExpiredMessages = [
+      'expired', 'invalid token', 'not authenticated', 'session invalid',
+      'jwt', 'token invalid'
+    ];
+    
+    // Only treat as session expiry if message explicitly indicates it
+    if (sessionExpiredMessages.some(msg => errorMessage.includes(msg))) {
+      return true;
+    }
+    
+    // Generic 401 without specific message - could be either
+    // Be conservative: don't logout unless we're sure it's session expiry
+    if (!errorMessage) {
+      return false;
+    }
+  }
+  
   return false;
 }
 
@@ -41,10 +86,10 @@ export function Providers({ children }: ProvidersProps) {
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        // Retry once on failure, but not on auth errors
+        // Retry once on failure, but not on session expiry errors
         retry: (failureCount, error) => {
-          if (isAuthError(error)) {
-            // Trigger logout on auth error
+          if (isSessionExpiredError(error)) {
+            // Trigger logout on session expiry
             handleAuthError();
             return false;
           }
@@ -54,9 +99,9 @@ export function Providers({ children }: ProvidersProps) {
         staleTime: 30 * 1000,
       },
       mutations: {
-        // Handle auth errors globally for mutations
+        // Handle session expiry errors globally for mutations
         onError: async (error) => {
-          if (isAuthError(error)) {
+          if (isSessionExpiredError(error)) {
             await handleAuthError();
           }
         },

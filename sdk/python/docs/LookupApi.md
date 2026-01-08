@@ -1,10 +1,11 @@
 # encypher.LookupApi
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**lookup_sentence_api_v1_lookup_post**](LookupApi.md#lookup_sentence_api_v1_lookup_post) | **POST** /api/v1/lookup | Lookup Sentence
+[**provenance_lookup_api_v1_provenance_lookup_post**](LookupApi.md#provenance_lookup_api_v1_provenance_lookup_post) | **POST** /api/v1/provenance/lookup | Provenance Lookup
 
 
 # **lookup_sentence_api_v1_lookup_post**
@@ -21,12 +22,7 @@ Use case: User pastes a sentence, we find which document it came from.
 
 Note: This endpoint does NOT require authentication (public lookup).
 
-Args:
-    request: LookupRequest containing sentence text
-    db: Database session
-
-Returns:
-    LookupResponse with document and organization details if found
+**Alias:** POST /provenance/lookup
 
 ### Example
 
@@ -38,10 +34,10 @@ from encypher.models.lookup_response import LookupResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
-# Defining the host is optional and defaults to http://localhost
+# Defining the host is optional and defaults to https://api.encypherai.com
 # See configuration.py for a list of all supported configuration parameters.
 configuration = encypher.Configuration(
-    host = "http://localhost"
+    host = "https://api.encypherai.com"
 )
 
 
@@ -58,6 +54,81 @@ with encypher.ApiClient(configuration) as api_client:
         pprint(api_response)
     except Exception as e:
         print("Exception when calling LookupApi->lookup_sentence_api_v1_lookup_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **lookup_request** | [**LookupRequest**](LookupRequest.md)|  | 
+
+### Return type
+
+[**LookupResponse**](LookupResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **provenance_lookup_api_v1_provenance_lookup_post**
+> LookupResponse provenance_lookup_api_v1_provenance_lookup_post(lookup_request)
+
+Provenance Lookup
+
+Look up sentence provenance by hash.
+
+This is an alias for POST /lookup with a clearer name.
+Find which document a sentence originally came from.
+
+Note: This endpoint does NOT require authentication (public lookup).
+
+### Example
+
+
+```python
+import encypher
+from encypher.models.lookup_request import LookupRequest
+from encypher.models.lookup_response import LookupResponse
+from encypher.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to https://api.encypherai.com
+# See configuration.py for a list of all supported configuration parameters.
+configuration = encypher.Configuration(
+    host = "https://api.encypherai.com"
+)
+
+
+# Enter a context with an instance of the API client
+with encypher.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = encypher.LookupApi(api_client)
+    lookup_request = encypher.LookupRequest() # LookupRequest | 
+
+    try:
+        # Provenance Lookup
+        api_response = api_instance.provenance_lookup_api_v1_provenance_lookup_post(lookup_request)
+        print("The response of LookupApi->provenance_lookup_api_v1_provenance_lookup_post:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling LookupApi->provenance_lookup_api_v1_provenance_lookup_post: %s\n" % e)
 ```
 
 

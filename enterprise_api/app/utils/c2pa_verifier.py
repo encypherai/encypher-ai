@@ -7,13 +7,16 @@ manifest verification capabilities. It can be used both server-side and in the S
 C2PA manifests provide cryptographic proof of content provenance and authenticity.
 """
 import hashlib
+import ipaddress
 import json
 import logging
+import socket
+from urllib.parse import urlparse
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-import requests
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -100,10 +103,12 @@ class C2PAVerifier:
             timeout: Request timeout in seconds
         """
         self.timeout = timeout
+
+        self._max_manifest_bytes = 1024 * 1024
     
-    def verify_manifest_url(self, manifest_url: str) -> C2PAVerificationResult:
+    async def verify_manifest_url(self, manifest_url: str) -> C2PAVerificationResult:
         """
-        Verify a C2PA manifest from a URL.
+        Verify a C2PA manifest from a URL (async).
         
         Args:
             manifest_url: URL to the C2PA manifest
@@ -112,12 +117,91 @@ class C2PAVerifier:
             C2PAVerificationResult with verification details
         """
         try:
-            # Fetch manifest
-            response = requests.get(manifest_url, timeout=self.timeout)
-            response.raise_for_status()
-            
-            manifest_data = response.json()
-            manifest_hash = hashlib.sha256(response.content).hexdigest()
+            parsed = urlparse(manifest_url)
+            if parsed.scheme != "https" or not parsed.netloc:
+                return C2PAVerificationResult(
+                    valid=False,
+                    manifest_url=manifest_url,
+                    errors=["Untrusted manifest URL"],
+                )
+
+            host = (parsed.hostname or "").lower()
+            if not host or host == "localhost":
+                return C2PAVerificationResult(
+                    valid=False,
+                    manifest_url=manifest_url,
+                    errors=["Untrusted manifest URL"],
+                )
+
+            if parsed.port not in (None, 443):
+                return C2PAVerificationResult(
+                    valid=False,
+                    manifest_url=manifest_url,
+                    errors=["Untrusted manifest URL"],
+                )
+
+            try:
+                ip = ipaddress.ip_address(host)
+                if (
+                    ip.is_loopback
+                    or ip.is_private
+                    or ip.is_link_local
+                    or ip.is_reserved
+                    or ip.is_multicast
+                    or ip.is_unspecified
+                ):
+                    return C2PAVerificationResult(
+                        valid=False,
+                        manifest_url=manifest_url,
+                        errors=["Untrusted manifest URL"],
+                    )
+            except ValueError:
+                addrs = socket.getaddrinfo(host, 443, proto=socket.IPPROTO_TCP)
+                for _family, _socktype, _proto, _canon, sockaddr in addrs:
+                    ip_str = sockaddr[0]
+                    ip = ipaddress.ip_address(ip_str)
+                    if (
+                        ip.is_loopback
+                        or ip.is_private
+                        or ip.is_link_local
+                        or ip.is_reserved
+                        or ip.is_multicast
+                        or ip.is_unspecified
+                    ):
+                        return C2PAVerificationResult(
+                            valid=False,
+                            manifest_url=manifest_url,
+                            errors=["Untrusted manifest URL"],
+                        )
+
+            async with httpx.AsyncClient(
+                timeout=self.timeout,
+                follow_redirects=False,
+            ) as client:
+                async with client.stream(
+                    "GET",
+                    manifest_url,
+                    headers={"Accept": "application/json"},
+                ) as response:
+                    response.raise_for_status()
+
+                    total = 0
+                    chunks: list[bytes] = []
+                    async for chunk in response.aiter_bytes(chunk_size=8192):
+                        if not chunk:
+                            continue
+                        total += len(chunk)
+                        if total > self._max_manifest_bytes:
+                            return C2PAVerificationResult(
+                                valid=False,
+                                manifest_url=manifest_url,
+                                errors=["Manifest payload too large"],
+                            )
+                        chunks.append(chunk)
+
+            raw = b"".join(chunks)
+            manifest_data = json.loads(raw.decode("utf-8"))
+            manifest_hash = hashlib.sha256(raw).hexdigest()
             
             return self._verify_manifest_data(
                 manifest_data=manifest_data,
@@ -125,12 +209,19 @@ class C2PAVerifier:
                 manifest_hash=manifest_hash
             )
         
-        except requests.exceptions.RequestException as e:
+        except httpx.RequestError as e:
             logger.error(f"Error fetching C2PA manifest from {manifest_url}: {e}")
             return C2PAVerificationResult(
                 valid=False,
                 manifest_url=manifest_url,
                 errors=[f"Failed to fetch manifest: {str(e)}"]
+            )
+        except httpx.HTTPStatusError as e:
+            logger.error(f"HTTP error fetching C2PA manifest from {manifest_url}: {e}")
+            return C2PAVerificationResult(
+                valid=False,
+                manifest_url=manifest_url,
+                errors=[f"HTTP error: {str(e)}"]
             )
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in C2PA manifest: {e}")
@@ -386,9 +477,9 @@ class C2PAVerifier:
 c2pa_verifier = C2PAVerifier()
 
 
-def verify_c2pa_manifest(manifest_url: str) -> C2PAVerificationResult:
+async def verify_c2pa_manifest(manifest_url: str) -> C2PAVerificationResult:
     """
-    Convenience function to verify a C2PA manifest.
+    Convenience function to verify a C2PA manifest (async).
     
     Args:
         manifest_url: URL to the C2PA manifest
@@ -396,4 +487,4 @@ def verify_c2pa_manifest(manifest_url: str) -> C2PAVerificationResult:
     Returns:
         C2PAVerificationResult
     """
-    return c2pa_verifier.verify_manifest_url(manifest_url)
+    return await c2pa_verifier.verify_manifest_url(manifest_url)

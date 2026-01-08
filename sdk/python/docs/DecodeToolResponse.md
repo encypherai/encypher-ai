@@ -10,6 +10,8 @@ Name | Type | Description | Notes
 **verification_status** | **str** |  | [optional] [default to 'Not Attempted']
 **error** | **str** |  | [optional] 
 **raw_hidden_data** | [**AppRoutersToolsVerifyVerdict**](AppRoutersToolsVerifyVerdict.md) |  | [optional] 
+**embeddings_found** | **int** | Number of embeddings found in the text | [optional] [default to 0]
+**all_embeddings** | [**List[EmbeddingResult]**](EmbeddingResult.md) |  | [optional] 
 
 ## Example
 

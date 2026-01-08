@@ -21,6 +21,7 @@ const navItems = [
   { href: '/api-keys', label: 'API Keys' },
   { href: '/playground', label: 'Playground' },
   { href: '/analytics', label: 'Analytics' },
+  { href: '/docs', label: 'Docs' },
   { href: '/webhooks', label: 'Webhooks', businessOnly: true },
   { href: '/team', label: 'Team', businessOnly: true },
   { href: '/settings', label: 'Settings' },

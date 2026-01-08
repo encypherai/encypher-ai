@@ -17,7 +17,7 @@
         isPaused: false,
         isCancelled: false,
         startTime: null,
-        tier: 'free'
+        tier: 'starter'
     };
 
     /**
@@ -104,8 +104,8 @@
         }
 
         // Check tier limits
-        const tier = $('body').data('tier') || 'free';
-        if (tier === 'free' && bulkMarkState.postIds.length > 100) {
+        const tier = $('body').data('tier') || 'starter';
+        if (tier === 'starter' && bulkMarkState.postIds.length > 100) {
             if (!confirm('Free tier limit: 100 posts. Only the first 100 posts will be marked. Upgrade to Pro for unlimited marking. Continue?')) {
                 return;
             }

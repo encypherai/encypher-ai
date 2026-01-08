@@ -18,8 +18,9 @@ import re  # noqa: F401
 import json
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from encypher.models.embedding_verdict import EmbeddingVerdict
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -34,7 +35,9 @@ class AppModelsResponseModelsVerifyVerdict(BaseModel):
     signer_name: Optional[StrictStr] = None
     timestamp: Optional[datetime] = None
     details: Optional[Dict[str, Any]] = Field(default=None, description="Structured details (manifest, benchmarking stats, etc.)")
-    __properties: ClassVar[List[str]] = ["valid", "tampered", "reason_code", "signer_id", "signer_name", "timestamp", "details"]
+    embeddings_found: Optional[StrictInt] = Field(default=0, description="Number of embeddings found in the text")
+    all_embeddings: Optional[List[EmbeddingVerdict]] = None
+    __properties: ClassVar[List[str]] = ["valid", "tampered", "reason_code", "signer_id", "signer_name", "timestamp", "details", "embeddings_found", "all_embeddings"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -75,6 +78,13 @@ class AppModelsResponseModelsVerifyVerdict(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in all_embeddings (list)
+        _items = []
+        if self.all_embeddings:
+            for _item_all_embeddings in self.all_embeddings:
+                if _item_all_embeddings:
+                    _items.append(_item_all_embeddings.to_dict())
+            _dict['all_embeddings'] = _items
         # set to None if signer_id (nullable) is None
         # and model_fields_set contains the field
         if self.signer_id is None and "signer_id" in self.model_fields_set:
@@ -89,6 +99,11 @@ class AppModelsResponseModelsVerifyVerdict(BaseModel):
         # and model_fields_set contains the field
         if self.timestamp is None and "timestamp" in self.model_fields_set:
             _dict['timestamp'] = None
+
+        # set to None if all_embeddings (nullable) is None
+        # and model_fields_set contains the field
+        if self.all_embeddings is None and "all_embeddings" in self.model_fields_set:
+            _dict['all_embeddings'] = None
 
         return _dict
 
@@ -108,7 +123,9 @@ class AppModelsResponseModelsVerifyVerdict(BaseModel):
             "signer_id": obj.get("signer_id"),
             "signer_name": obj.get("signer_name"),
             "timestamp": obj.get("timestamp"),
-            "details": obj.get("details")
+            "details": obj.get("details"),
+            "embeddings_found": obj.get("embeddings_found") if obj.get("embeddings_found") is not None else 0,
+            "all_embeddings": [EmbeddingVerdict.from_dict(_item) for _item in obj["all_embeddings"]] if obj.get("all_embeddings") is not None else None
         })
         return _obj
 

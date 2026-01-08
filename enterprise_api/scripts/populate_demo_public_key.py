@@ -126,7 +126,7 @@ async def populate_demo_public_key():
                     }
                 )
                 await session.commit()
-                print(f"✅ Created demo organization with public key")
+                print("✅ Created demo organization with public key")
                 return True
             
             print(f"Found demo organization: {org.name}")
@@ -138,7 +138,7 @@ async def populate_demo_public_key():
             )
             await session.commit()
             
-            print(f"✅ Updated public key for demo organization")
+            print("✅ Updated public key for demo organization")
             
             # Verify
             result = await session.execute(
@@ -149,15 +149,15 @@ async def populate_demo_public_key():
             if row and row[0]:
                 stored_key = bytes(row[0])
                 if stored_key == public_key_bytes:
-                    print(f"✅ Verification successful - public key matches")
+                    print("✅ Verification successful - public key matches")
                     return True
                 else:
-                    print(f"❌ ERROR: Stored key doesn't match!")
+                    print("❌ ERROR: Stored key doesn't match!")
                     print(f"   Expected: {public_key_bytes.hex()}")
                     print(f"   Got:      {stored_key.hex()}")
                     return False
             else:
-                print(f"❌ ERROR: Public key not found after update")
+                print("❌ ERROR: Public key not found after update")
                 return False
                 
         except Exception as e:

@@ -22,10 +22,10 @@ export default function DeepfakeDetectionPage() {
     <>
       <AISummary
         title="Beyond Deepfake Detection"
-        whatWeDo="Provide cryptographic content authentication that proves origin with 100% accuracy, superior to statistical deepfake detection."
-        whoItsFor="Platforms, publishers, and enterprises needing verifiable content authenticity beyond deepfake detection capabilities."
-        keyDifferentiator="Cryptographic proof at creation vs. post-hoc statistical analysis. Mathematical certainty vs. probabilistic guessing."
-        primaryValue="Eliminate false positives and provide court-admissible proof of content authenticity."
+        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. API and SDKs for cryptographic authentication at creation, not post-hoc analysis. Standard publishes January 8, 2026."
+        whoItsFor="Publishers needing provable content ownership. AI labs needing quote integrity verification. Enterprises requiring EU AI Act compliance."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste and distribution. Zero false positives. Mathematical certainty vs. statistical guessing."
+        primaryValue="Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org). Court-admissible proof of content authenticity."
       />
 
       {/* Hero Section */}

@@ -6,7 +6,7 @@ Endpoints for managing custom C2PA schemas and templates.
 import logging
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -26,10 +26,52 @@ from app.schemas.c2pa_schemas import (
     C2PATemplateResponse,
     C2PATemplateUpdate,
 )
+from app.services.c2pa_builtin_templates import BUILTIN_TEMPLATES, get_builtin_template
 from app.services.c2pa_validator import validator
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+
+def require_enterprise_custom_assertion_authoring(
+    organization: dict = Depends(get_current_organization),
+) -> dict:
+    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    allowed_tiers = {"enterprise", "strategic_partner", "demo"}
+    if tier not in allowed_tiers:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_NOT_AVAILABLE",
+                "message": "Custom assertion authoring requires Enterprise tier",
+                "upgrade_url": "/billing/upgrade",
+            },
+        )
+    return organization
+
+
+def require_custom_assertion_templates_access(
+    organization: dict = Depends(get_current_organization),
+) -> dict:
+    features = organization.get("features", {})
+    custom_assertions_enabled = False
+    if isinstance(features, dict):
+        custom_assertions_enabled = features.get("custom_assertions", False)
+    custom_assertions_enabled = custom_assertions_enabled or organization.get(
+        "custom_assertions_enabled", False
+    )
+
+    if not custom_assertions_enabled:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "code": "FEATURE_NOT_AVAILABLE",
+                "message": "Custom assertion templates require Business tier or higher",
+                "upgrade_url": "/billing/upgrade",
+            },
+        )
+
+    return organization
 
 
 # Schema Management Endpoints
@@ -37,7 +79,7 @@ router = APIRouter()
 @router.post("/schemas", response_model=C2PASchemaResponse, status_code=201)
 async def create_schema(
     schema_data: C2PASchemaCreate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -161,7 +203,7 @@ async def get_schema(
 async def update_schema(
     schema_id: str,
     schema_update: C2PASchemaUpdate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Update a C2PA assertion schema."""
@@ -201,7 +243,7 @@ async def update_schema(
 @router.delete("/schemas/{schema_id}", status_code=204)
 async def delete_schema(
     schema_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete a C2PA assertion schema."""
@@ -270,7 +312,7 @@ async def validate_assertion(
 @router.post("/templates", response_model=C2PATemplateResponse, status_code=201)
 async def create_template(
     template_data: C2PATemplateCreate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Create a new assertion template."""
@@ -299,11 +341,12 @@ async def list_templates(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     category: Optional[str] = None,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_custom_assertion_templates_access),
     db: AsyncSession = Depends(get_db)
 ):
     """List available assertion templates."""
     organization_id = organization["organization_id"]
+
     stmt = select(C2PAAssertionTemplate).where(
         (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public)
     )
@@ -311,34 +354,43 @@ async def list_templates(
     if category:
         stmt = stmt.where(C2PAAssertionTemplate.category == category)
     
-    # Get total count
-    count_stmt = select(func.count()).select_from(stmt.subquery())
-    total_result = await db.execute(count_stmt)
-    total = total_result.scalar()
-    
-    # Paginate
-    offset = (page - 1) * page_size
-    stmt = stmt.offset(offset).limit(page_size)
-    
+
     result = await db.execute(stmt)
-    templates = result.scalars().all()
-    
+    db_templates = [C2PATemplateResponse(**t.to_dict()) for t in result.scalars().all()]
+
+    builtin_templates = []
+    for template in BUILTIN_TEMPLATES.values():
+        if category and template.get("category") != category:
+            continue
+        builtin_templates.append(C2PATemplateResponse(**template))
+
+    all_templates = builtin_templates + db_templates
+
+    total = len(all_templates)
+    offset = (page - 1) * page_size
+    paged = all_templates[offset : offset + page_size]
+
     return C2PATemplateListResponse(
-        templates=[C2PATemplateResponse(**t.to_dict()) for t in templates],
+        templates=paged,
         total=total,
         page=page,
-        page_size=page_size
+        page_size=page_size,
     )
 
 
 @router.get("/templates/{template_id}", response_model=C2PATemplateResponse)
 async def get_template(
     template_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_custom_assertion_templates_access),
     db: AsyncSession = Depends(get_db)
 ):
     """Get a specific assertion template."""
     organization_id = organization["organization_id"]
+
+    builtin = get_builtin_template(template_id=template_id)
+    if builtin is not None:
+        return C2PATemplateResponse(**builtin)
+
     stmt = select(C2PAAssertionTemplate).where(
         C2PAAssertionTemplate.id == template_id,
         (C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public)
@@ -356,7 +408,7 @@ async def get_template(
 async def update_template(
     template_id: str,
     template_update: C2PATemplateUpdate,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Update an assertion template."""
@@ -394,7 +446,7 @@ async def update_template(
 @router.delete("/templates/{template_id}", status_code=204)
 async def delete_template(
     template_id: str,
-    organization: dict = Depends(get_current_organization),
+    organization: dict = Depends(require_enterprise_custom_assertion_authoring),
     db: AsyncSession = Depends(get_db)
 ):
     """Delete an assertion template."""

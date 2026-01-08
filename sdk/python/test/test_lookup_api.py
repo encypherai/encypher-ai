@@ -33,6 +33,13 @@ class TestLookupApi(unittest.TestCase):
         """
         pass
 
+    def test_provenance_lookup_api_v1_provenance_lookup_post(self) -> None:
+        """Test case for provenance_lookup_api_v1_provenance_lookup_post
+
+        Provenance Lookup
+        """
+        pass
+
 
 if __name__ == '__main__':
     unittest.main()

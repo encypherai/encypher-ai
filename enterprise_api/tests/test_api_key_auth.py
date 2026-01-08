@@ -10,9 +10,9 @@ from fastapi import HTTPException
 from app.middleware.api_key_auth import (
     authenticate_api_key,
     get_api_key_from_header,
-    require_embedding_permission,
     require_verification_permission,
 )
+from app.dependencies import require_embedding_permission
 
 
 class TestGetAPIKeyFromHeader:

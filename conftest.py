@@ -30,10 +30,16 @@ def _ensure_workspace_paths() -> None:
 
 
 def _set_app_module(*paths: Path) -> None:
+    existing = sys.modules.get("app")
+    desired_locations = [str(path) for path in paths if path.exists()]
+    if existing is not None:
+        existing_locations = list(getattr(existing, "__path__", []))
+        if existing_locations == desired_locations:
+            return
     for key in list(sys.modules.keys()):
         if key.startswith("app."):
             sys.modules.pop(key, None)
-    search_locations = [str(path) for path in paths if path.exists()]
+    search_locations = desired_locations
     app_module = types.ModuleType("app")
     app_module.__package__ = "app"
     app_module.__path__ = search_locations  # type: ignore[attr-defined]
@@ -43,7 +49,7 @@ def _set_app_module(*paths: Path) -> None:
 
 
 _ensure_workspace_paths()
-_set_app_module(ENTERPRISE_APP_PATH, DASHBOARD_APP_PATH)
+_set_app_module(ENTERPRISE_APP_PATH)
 
 
 def pytest_collectstart(collector) -> None:

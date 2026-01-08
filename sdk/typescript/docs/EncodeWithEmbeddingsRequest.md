@@ -16,9 +16,11 @@ Name | Type
 `c2paManifestUrl` | string
 `c2paManifestHash` | string
 `customAssertions` | Array&lt;{ [key: string]: any; }&gt;
+`templateId` | string
 `validateAssertions` | boolean
 `digitalSourceType` | string
 `license` | [LicenseInfo](LicenseInfo.md)
+`rights` | [AppSchemasEmbeddingsRightsMetadata](AppSchemasEmbeddingsRightsMetadata.md)
 `embeddingOptions` | [EmbeddingOptions](EmbeddingOptions.md)
 `expiresAt` | Date
 
@@ -38,9 +40,11 @@ const example = {
   "c2paManifestUrl": null,
   "c2paManifestHash": null,
   "customAssertions": null,
+  "templateId": null,
   "validateAssertions": null,
   "digitalSourceType": null,
   "license": null,
+  "rights": null,
   "embeddingOptions": null,
   "expiresAt": null,
 } satisfies EncodeWithEmbeddingsRequest

@@ -14,6 +14,8 @@ Name | Type
 `signerName` | string
 `timestamp` | Date
 `details` | { [key: string]: any; }
+`embeddingsFound` | number
+`allEmbeddings` | [Array&lt;EmbeddingVerdict&gt;](EmbeddingVerdict.md)
 
 ## Example
 
@@ -29,6 +31,8 @@ const example = {
   "signerName": null,
   "timestamp": null,
   "details": null,
+  "embeddingsFound": null,
+  "allEmbeddings": null,
 } satisfies AppModelsResponseModelsVerifyVerdict
 
 console.log(example)

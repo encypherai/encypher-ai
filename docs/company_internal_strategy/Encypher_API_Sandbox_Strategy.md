@@ -2,9 +2,9 @@
 
 ## Standards-Based Text Provenance Demonstration
 
-**Last Updated:** October 31, 2025  
-**Status:** Implementation-Ready Update  
-**Version:** 3.0  
+**Last Updated:** January 8, 2026  
+**Status:** Post-Standard Publication (C2PA 2.3 Released)  
+**Version:** 3.1  
 **Distribution:** Product & Engineering Teams
 
 ---

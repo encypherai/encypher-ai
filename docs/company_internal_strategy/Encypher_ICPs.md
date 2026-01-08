@@ -1,16 +1,16 @@
 # Encypher Corporation: Ideal Customer Profile Framework 3.0
 ## Standards-Driven Infrastructure Strategy
 
-**Last Updated:** December 21, 2025  
-**Status:** Pre-Standard Publication Update  
-**Version:** 3.0  
+**Last Updated:** January 8, 2026  
+**Status:** Post-Standard Publication (C2PA 2.3 Released)  
+**Version:** 3.1  
 **Distribution:** Sales & Marketing Leadership
 
 ---
 
 ## Executive Summary
 
-As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, Encypher has evolved from technology vendor to **infrastructure standard**. The C2PA text specification publishes **January 8, 2026**. Our ICP strategy reflects this reality: we're not selling a product competing with alternatives—we're implementing the standard we're building collaboratively, with exclusive capabilities that extend the baseline.
+As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, Encypher has evolved from technology vendor to **infrastructure standard**. The C2PA text specification **published January 8, 2026** — [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). Our ICP strategy reflects this reality: we're not selling a product competing with alternatives—we're implementing the standard we're building collaboratively, with exclusive capabilities that extend the baseline.
 
 **Strategic Evolution:**
 - **From:** Dual-value proposition (performance + legal)
@@ -74,7 +74,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
    - Premium content exists as unmarked, unmonetizable assets
 
 **Why Encypher Wins:**
-- **Standards Authority:** Erik Svilich authored C2PA text spec and co-chairs task force (Google, BBC, OpenAI, Adobe, Microsoft)—standard publishes January 8, 2026
+- **Standards Authority:** Erik Svilich authored C2PA text spec and co-chairs task force (Google, BBC, OpenAI, Adobe, Microsoft)—standard published January 8, 2026
 - **Not Vendor Lock-in:** We wrote the open standard, built the reference implementation
 - **Willful Infringement Enablement:** Formal notice + cryptographic proof transforms "we didn't know" into "you ignored our notice" = 3x damages territory
 - **Quote Integrity Verification:** Prove whether AI attributions are accurate or hallucinated
@@ -89,7 +89,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - Quote integrity verification capability
 - Formal notice infrastructure
 - Opportunity to shape market licensing standards
-- Industry standard adoption (C2PA publishes January 8, 2026)
+- Industry standard adoption (C2PA published January 8, 2026)
 - Success-based pricing (no risk)
 
 **Key Messaging (Validated by AP):**
@@ -98,7 +98,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - "Cryptographic watermarking that survives B2B distribution, wire services, and scrapers"
 - "Prove whether 'According to [Your Publication]...' is accurate or hallucinated"
 - "Shape market licensing standards at the February 25th Syracuse Symposium"
-- "Co-Chair of C2PA Text Provenance Task Force—standard publishes January 8, 2026"
+- "Co-Chair of C2PA Text Provenance Task Force—standard published January 8, 2026"
 
 **Sales Approach (Led by Nate):**
 1. Open with standards authority (C2PA co-chair, January 8 publication)
@@ -141,7 +141,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 4. **Standards Alignment:**
    - Need to work WITH C2PA standards (OpenAI is member)
-   - Standard publishes January 8, 2026
+   - Standard published January 8, 2026
    - Opportunity to shape infrastructure vs. react to it
 
 **Why Encypher Wins (Collaborative Framing):**
@@ -161,7 +161,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - Total value (not just cost)
 
 **Key Messaging (Collaborative):**
-- "We're building text provenance standards WITH you through C2PA—OpenAI is a member, standard publishes January 8, 2026"
+- "We're building text provenance standards WITH you through C2PA—OpenAI is a member, standard published January 8, 2026"
 - "Publisher ecosystem implementing marked content—you need compatible infrastructure"
 - "Quote integrity verification—prove when 'According to AP...' is accurate vs. hallucinated"
 - "Performance intelligence from sentence-level attribution—see which content drives viral success"
@@ -191,7 +191,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 **Strategic Importance:** Validates Encypher as reference implementation through platform adoption
 
 **Key Messaging:**
-- "Co-Chair of C2PA Text Provenance Task Force—standard publishes January 8, 2026"
+- "Co-Chair of C2PA Text Provenance Task Force—standard published January 8, 2026"
 - "Production-ready, standards-compliant infrastructure"
 - "Enterprise features that extend baseline C2PA"
 
@@ -208,7 +208,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 **Strategic Importance:** Drives enterprise adoption beyond publishers/AI companies
 
 **Key Messaging:**
-- "C2PA text authentication standard publishes January 8, 2026"
+- "C2PA text authentication standard published January 8, 2026"
 - "Compliance baseline with performance intelligence upside"
 - "Sentence-level tracking for governance and attribution"
 
@@ -244,7 +244,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 "Text without cryptographic proof enables the 'we didn't know it was yours' defense. Our watermarking survives B2B distribution and enables formal notice. Continued unauthorized use after notification = willful infringement, not innocent."
 
 **vs. Build Internal:** 
-"$30k in 30 days vs. $5M in 18 months. Erik Svilich authored the C2PA text specification—you'd be implementing what he wrote. Standard publishes January 8, 2026. Founding members shape market standards at the February 25th symposium."
+"$30k in 30 days vs. $5M in 18 months. Erik Svilich authored the C2PA text specification—you'd be implementing what he wrote. Standard published January 8, 2026. Founding members shape market standards at the February 25th symposium."
 
 **vs. Wait and See:** 
 "First movers define how market licensing frameworks work. The Syracuse Symposium February 25, 2026 will establish the terms. Later adopters accept standards others defined."
@@ -265,7 +265,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 ## Value Messaging Framework (Updated)
 
 ### The Standards Authority Story
-"Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard publishes January 8, 2026. We didn't just write the specification—Erik wrote it, and we built the reference implementation. This is collaborative infrastructure, not vendor lock-in."
+"Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. We didn't just write the specification—Erik wrote it, and we built the reference implementation. This is collaborative infrastructure, not vendor lock-in."
 
 ### The Willful Infringement Story (NEW - Validated by AP)
 "AI companies have claimed 'we didn't know it was yours' as an innocent infringement defense. Our infrastructure changes that equation. Cryptographic signatures embedded at sentence-level. Formal notification that content is marked. Public API for verification. Once notified, continued unauthorized use is provable willful infringement—not 'we didn't know.' That's the difference between uncertain litigation and 3x damages territory."
@@ -274,7 +274,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 "When an AI outputs 'According to AP...' but the quote is modified or hallucinated, your brand takes the hit. Our quote integrity verification proves whether attributions are accurate. Accurate quote: verified ✓. Modified or hallucinated: flagged ✗. Protect your brand from AI hallucination liability."
 
 ### The Market Standards Story (NEW - Validated by AP)
-"The technical standard publishes January 8, 2026. But the industry still lacks standard licensing terminology—exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company commercial leads to define these frameworks. Founding coalition members shape the terms. Later adopters accept them."
+"The technical standard published January 8, 2026. But the industry still lacks standard licensing terminology—exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company commercial leads to define these frameworks. Founding coalition members shape the terms. Later adopters accept them."
 
 ### The Collaboration Story
 "This isn't publishers vs. AI companies. OpenAI is in C2PA. Google is implementing text provenance. We're building standards collaboratively because text authentication benefits everyone: publishers gain willful infringement proof for licensing, AI companies gain attribution intelligence and quote verification, enterprises gain governance capabilities."
@@ -424,7 +424,7 @@ With C2PA co-chair authority, patent-pending sentence-level capabilities, and va
 - "Shape market licensing standards" (Syracuse Symposium)
 - "Building infrastructure together" (collaborative, not adversarial)
 
-This isn't a sales process competing with alternatives. It's infrastructure adoption with inevitable convergence through standards—publishing January 8, 2026.
+This isn't a sales process competing with alternatives. It's infrastructure adoption with inevitable convergence through standards—published January 8, 2026.
 
 **Website:** **encypherai.com**
 **Demos:** **encypherai.com/publisher-demo** and **encypherai.com/ai-demo**

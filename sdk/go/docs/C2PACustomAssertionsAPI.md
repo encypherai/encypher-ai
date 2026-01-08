@@ -1,6 +1,6 @@
 # \C2PACustomAssertionsAPI
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
@@ -20,7 +20,7 @@ Method | HTTP request | Description
 
 ## CreateSchemaApiV1EnterpriseC2paSchemasPost
 
-> C2PASchemaResponse CreateSchemaApiV1EnterpriseC2paSchemasPost(ctx).C2PASchemaCreate(c2PASchemaCreate).Authorization(authorization).Execute()
+> C2PASchemaResponse CreateSchemaApiV1EnterpriseC2paSchemasPost(ctx).C2PASchemaCreate(c2PASchemaCreate).Execute()
 
 Create Schema
 
@@ -35,16 +35,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	c2PASchemaCreate := *openapiclient.NewC2PASchemaCreate("Name_example", "Label_example", map[string]interface{}{"key": interface{}(123)}) // C2PASchemaCreate | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.CreateSchemaApiV1EnterpriseC2paSchemasPost(context.Background()).C2PASchemaCreate(c2PASchemaCreate).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.CreateSchemaApiV1EnterpriseC2paSchemasPost(context.Background()).C2PASchemaCreate(c2PASchemaCreate).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.CreateSchemaApiV1EnterpriseC2paSchemasPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -66,7 +65,6 @@ Other parameters are passed through a pointer to a apiCreateSchemaApiV1Enterpris
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **c2PASchemaCreate** | [**C2PASchemaCreate**](C2PASchemaCreate.md) |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -74,7 +72,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -88,7 +86,7 @@ No authorization required
 
 ## CreateTemplateApiV1EnterpriseC2paTemplatesPost
 
-> C2PATemplateResponse CreateTemplateApiV1EnterpriseC2paTemplatesPost(ctx).C2PATemplateCreate(c2PATemplateCreate).Authorization(authorization).Execute()
+> C2PATemplateResponse CreateTemplateApiV1EnterpriseC2paTemplatesPost(ctx).C2PATemplateCreate(c2PATemplateCreate).Execute()
 
 Create Template
 
@@ -103,16 +101,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	c2PATemplateCreate := *openapiclient.NewC2PATemplateCreate("Name_example", "SchemaId_example", map[string]interface{}{"key": interface{}(123)}) // C2PATemplateCreate | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.CreateTemplateApiV1EnterpriseC2paTemplatesPost(context.Background()).C2PATemplateCreate(c2PATemplateCreate).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.CreateTemplateApiV1EnterpriseC2paTemplatesPost(context.Background()).C2PATemplateCreate(c2PATemplateCreate).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.CreateTemplateApiV1EnterpriseC2paTemplatesPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -134,7 +131,6 @@ Other parameters are passed through a pointer to a apiCreateTemplateApiV1Enterpr
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **c2PATemplateCreate** | [**C2PATemplateCreate**](C2PATemplateCreate.md) |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -142,7 +138,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -156,7 +152,7 @@ No authorization required
 
 ## DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete
 
-> DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete(ctx, schemaId).Authorization(authorization).Execute()
+> DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete(ctx, schemaId).Execute()
 
 Delete Schema
 
@@ -171,16 +167,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	schemaId := "schemaId_example" // string | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.C2PACustomAssertionsAPI.DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete(context.Background(), schemaId).Authorization(authorization).Execute()
+	r, err := apiClient.C2PACustomAssertionsAPI.DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete(context.Background(), schemaId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.DeleteSchemaApiV1EnterpriseC2paSchemasSchemaIdDelete``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -204,7 +199,6 @@ Other parameters are passed through a pointer to a apiDeleteSchemaApiV1Enterpris
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -212,7 +206,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -226,7 +220,7 @@ No authorization required
 
 ## DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete
 
-> DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete(ctx, templateId).Authorization(authorization).Execute()
+> DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete(ctx, templateId).Execute()
 
 Delete Template
 
@@ -241,16 +235,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	templateId := "templateId_example" // string | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	r, err := apiClient.C2PACustomAssertionsAPI.DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete(context.Background(), templateId).Authorization(authorization).Execute()
+	r, err := apiClient.C2PACustomAssertionsAPI.DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete(context.Background(), templateId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.DeleteTemplateApiV1EnterpriseC2paTemplatesTemplateIdDelete``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -274,7 +267,6 @@ Other parameters are passed through a pointer to a apiDeleteTemplateApiV1Enterpr
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -282,7 +274,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -296,7 +288,7 @@ No authorization required
 
 ## GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGet
 
-> C2PASchemaResponse GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGet(ctx, schemaId).Authorization(authorization).Execute()
+> C2PASchemaResponse GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGet(ctx, schemaId).Execute()
 
 Get Schema
 
@@ -311,16 +303,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	schemaId := "schemaId_example" // string | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGet(context.Background(), schemaId).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGet(context.Background(), schemaId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.GetSchemaApiV1EnterpriseC2paSchemasSchemaIdGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -346,7 +337,6 @@ Other parameters are passed through a pointer to a apiGetSchemaApiV1EnterpriseC2
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -354,7 +344,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -368,7 +358,7 @@ No authorization required
 
 ## GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet
 
-> C2PATemplateResponse GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet(ctx, templateId).Authorization(authorization).Execute()
+> C2PATemplateResponse GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet(ctx, templateId).Execute()
 
 Get Template
 
@@ -383,16 +373,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	templateId := "templateId_example" // string | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet(context.Background(), templateId).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet(context.Background(), templateId).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.GetTemplateApiV1EnterpriseC2paTemplatesTemplateIdGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -418,7 +407,6 @@ Other parameters are passed through a pointer to a apiGetTemplateApiV1Enterprise
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -426,7 +414,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -440,7 +428,7 @@ No authorization required
 
 ## ListSchemasApiV1EnterpriseC2paSchemasGet
 
-> C2PASchemaListResponse ListSchemasApiV1EnterpriseC2paSchemasGet(ctx).Page(page).PageSize(pageSize).IsPublic(isPublic).Authorization(authorization).Execute()
+> C2PASchemaListResponse ListSchemasApiV1EnterpriseC2paSchemasGet(ctx).Page(page).PageSize(pageSize).IsPublic(isPublic).Execute()
 
 List Schemas
 
@@ -455,18 +443,17 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	page := int32(56) // int32 |  (optional) (default to 1)
 	pageSize := int32(56) // int32 |  (optional) (default to 50)
 	isPublic := true // bool |  (optional)
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.ListSchemasApiV1EnterpriseC2paSchemasGet(context.Background()).Page(page).PageSize(pageSize).IsPublic(isPublic).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.ListSchemasApiV1EnterpriseC2paSchemasGet(context.Background()).Page(page).PageSize(pageSize).IsPublic(isPublic).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.ListSchemasApiV1EnterpriseC2paSchemasGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -490,7 +477,6 @@ Name | Type | Description  | Notes
  **page** | **int32** |  | [default to 1]
  **pageSize** | **int32** |  | [default to 50]
  **isPublic** | **bool** |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -498,7 +484,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -512,7 +498,7 @@ No authorization required
 
 ## ListTemplatesApiV1EnterpriseC2paTemplatesGet
 
-> C2PATemplateListResponse ListTemplatesApiV1EnterpriseC2paTemplatesGet(ctx).Page(page).PageSize(pageSize).Category(category).Authorization(authorization).Execute()
+> C2PATemplateListResponse ListTemplatesApiV1EnterpriseC2paTemplatesGet(ctx).Page(page).PageSize(pageSize).Category(category).Execute()
 
 List Templates
 
@@ -527,18 +513,17 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	page := int32(56) // int32 |  (optional) (default to 1)
 	pageSize := int32(56) // int32 |  (optional) (default to 50)
 	category := "category_example" // string |  (optional)
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.ListTemplatesApiV1EnterpriseC2paTemplatesGet(context.Background()).Page(page).PageSize(pageSize).Category(category).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.ListTemplatesApiV1EnterpriseC2paTemplatesGet(context.Background()).Page(page).PageSize(pageSize).Category(category).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.ListTemplatesApiV1EnterpriseC2paTemplatesGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -562,7 +547,6 @@ Name | Type | Description  | Notes
  **page** | **int32** |  | [default to 1]
  **pageSize** | **int32** |  | [default to 50]
  **category** | **string** |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -570,7 +554,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -584,7 +568,7 @@ No authorization required
 
 ## UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut
 
-> C2PASchemaResponse UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut(ctx, schemaId).C2PASchemaUpdate(c2PASchemaUpdate).Authorization(authorization).Execute()
+> C2PASchemaResponse UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut(ctx, schemaId).C2PASchemaUpdate(c2PASchemaUpdate).Execute()
 
 Update Schema
 
@@ -599,17 +583,16 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	schemaId := "schemaId_example" // string | 
 	c2PASchemaUpdate := *openapiclient.NewC2PASchemaUpdate() // C2PASchemaUpdate | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut(context.Background(), schemaId).C2PASchemaUpdate(c2PASchemaUpdate).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut(context.Background(), schemaId).C2PASchemaUpdate(c2PASchemaUpdate).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.UpdateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -636,7 +619,6 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
  **c2PASchemaUpdate** | [**C2PASchemaUpdate**](C2PASchemaUpdate.md) |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -644,7 +626,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -658,7 +640,7 @@ No authorization required
 
 ## UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut
 
-> C2PATemplateResponse UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut(ctx, templateId).C2PATemplateUpdate(c2PATemplateUpdate).Authorization(authorization).Execute()
+> C2PATemplateResponse UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut(ctx, templateId).C2PATemplateUpdate(c2PATemplateUpdate).Execute()
 
 Update Template
 
@@ -673,17 +655,16 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	templateId := "templateId_example" // string | 
 	c2PATemplateUpdate := *openapiclient.NewC2PATemplateUpdate() // C2PATemplateUpdate | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut(context.Background(), templateId).C2PATemplateUpdate(c2PATemplateUpdate).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut(context.Background(), templateId).C2PATemplateUpdate(c2PATemplateUpdate).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.UpdateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -710,7 +691,6 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
 
  **c2PATemplateUpdate** | [**C2PATemplateUpdate**](C2PATemplateUpdate.md) |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -718,7 +698,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -732,7 +712,7 @@ No authorization required
 
 ## ValidateAssertionApiV1EnterpriseC2paValidatePost
 
-> C2PAAssertionValidateResponse ValidateAssertionApiV1EnterpriseC2paValidatePost(ctx).C2PAAssertionValidateRequest(c2PAAssertionValidateRequest).Authorization(authorization).Execute()
+> C2PAAssertionValidateResponse ValidateAssertionApiV1EnterpriseC2paValidatePost(ctx).C2PAAssertionValidateRequest(c2PAAssertionValidateRequest).Execute()
 
 Validate Assertion
 
@@ -747,16 +727,15 @@ import (
 	"context"
 	"fmt"
 	"os"
-	openapiclient "github.com/GIT_USER_ID/GIT_REPO_ID"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
 )
 
 func main() {
 	c2PAAssertionValidateRequest := *openapiclient.NewC2PAAssertionValidateRequest("Label_example", map[string]interface{}{"key": interface{}(123)}) // C2PAAssertionValidateRequest | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.C2PACustomAssertionsAPI.ValidateAssertionApiV1EnterpriseC2paValidatePost(context.Background()).C2PAAssertionValidateRequest(c2PAAssertionValidateRequest).Authorization(authorization).Execute()
+	resp, r, err := apiClient.C2PACustomAssertionsAPI.ValidateAssertionApiV1EnterpriseC2paValidatePost(context.Background()).C2PAAssertionValidateRequest(c2PAAssertionValidateRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `C2PACustomAssertionsAPI.ValidateAssertionApiV1EnterpriseC2paValidatePost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -778,7 +757,6 @@ Other parameters are passed through a pointer to a apiValidateAssertionApiV1Ente
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **c2PAAssertionValidateRequest** | [**C2PAAssertionValidateRequest**](C2PAAssertionValidateRequest.md) |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
@@ -786,7 +764,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 

@@ -148,6 +148,7 @@ class LicensingService:
         agreement: LicensingAgreement,
         content_type: Optional[str] = None,
         min_word_count: Optional[int] = None,
+        include_rights_signals: bool = False,
         limit: int = 100,
         offset: int = 0
     ) -> tuple[List[ContentMetadata], int]:
@@ -171,10 +172,14 @@ class LicensingService:
         from sqlalchemy import func
 
         # Build base query for content references
+        created_at_date = func.date(ContentReference.created_at)
         query = select(ContentReference).where(
-            ContentReference.created_at >= agreement.start_date,
-            ContentReference.created_at <= agreement.end_date,
+            created_at_date >= agreement.start_date,
+            created_at_date <= agreement.end_date,
         )
+
+        if include_rights_signals:
+            query = query.where(ContentReference.manifest_data.is_not(None))
 
         # Apply agreement content type filters if specified
         # Note: ContentReference doesn't have content_type directly,
@@ -200,18 +205,39 @@ class LicensingService:
         result = await db.execute(query)
         references = list(result.scalars().all())
 
-        # Convert to ContentMetadata
-        content_list = [
-            ContentMetadata(
-                id=ref.id,  # Use id as UUID-like identifier
-                content_type=ref.license_type or "unknown",
-                word_count=None,  # ContentReference doesn't store word count
-                signed_at=ref.created_at,
-                content_hash=ref.signature_hash,
-                verification_url=ref.to_verification_url(),
+        extractor = None
+        if include_rights_signals:
+            from app.services.verification_logic import _extract_rights_signals
+
+            extractor = _extract_rights_signals
+
+        content_list: List[ContentMetadata] = []
+        for ref in references:
+            rights_signals = None
+            if extractor and ref.manifest_data is not None:
+                candidate_manifest = ref.manifest_data
+                if isinstance(candidate_manifest, str):
+                    import json
+
+                    try:
+                        candidate_manifest = json.loads(candidate_manifest)
+                    except json.JSONDecodeError:
+                        candidate_manifest = None
+
+                if isinstance(candidate_manifest, dict):
+                    rights_signals = extractor(candidate_manifest)
+
+            content_list.append(
+                ContentMetadata(
+                    id=ref.id,
+                    content_type=ref.license_type or "unknown",
+                    word_count=None,
+                    signed_at=ref.created_at,
+                    content_hash=ref.signature_hash,
+                    verification_url=ref.to_verification_url(),
+                    rights_signals=rights_signals,
+                )
             )
-            for ref in references
-        ]
 
         return content_list, total
 
@@ -293,7 +319,7 @@ class LicensingService:
         """
         # Get all active AI companies
         result = await db.execute(
-            select(AICompany).where(AICompany.status == AgreementStatus.ACTIVE)
+            select(AICompany).where(AICompany.status == AgreementStatus.ACTIVE.value)
         )
         companies = result.scalars().all()
 
@@ -308,8 +334,8 @@ class LicensingService:
     async def track_content_access(
         db: AsyncSession,
         agreement_id: UUID,
-        content_id: UUID,
-        member_id: UUID,
+        content_id: int,
+        member_id: str,
         ai_company_name: str,
         access_type: Optional[str] = "view"
     ) -> ContentAccessLog:

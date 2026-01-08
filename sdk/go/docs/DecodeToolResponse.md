@@ -8,6 +8,8 @@ Name | Type | Description | Notes
 **VerificationStatus** | Pointer to **string** |  | [optional] [default to "Not Attempted"]
 **Error** | Pointer to **NullableString** |  | [optional] 
 **RawHiddenData** | Pointer to [**NullableAppRoutersToolsVerifyVerdict**](AppRoutersToolsVerifyVerdict.md) |  | [optional] 
+**EmbeddingsFound** | Pointer to **int32** | Number of embeddings found in the text | [optional] [default to 0]
+**AllEmbeddings** | Pointer to [**[]EmbeddingResult**](EmbeddingResult.md) |  | [optional] 
 
 ## Methods
 
@@ -158,6 +160,66 @@ HasRawHiddenData returns a boolean if a field has been set.
 `func (o *DecodeToolResponse) UnsetRawHiddenData()`
 
 UnsetRawHiddenData ensures that no value is present for RawHiddenData, not even an explicit nil
+### GetEmbeddingsFound
+
+`func (o *DecodeToolResponse) GetEmbeddingsFound() int32`
+
+GetEmbeddingsFound returns the EmbeddingsFound field if non-nil, zero value otherwise.
+
+### GetEmbeddingsFoundOk
+
+`func (o *DecodeToolResponse) GetEmbeddingsFoundOk() (*int32, bool)`
+
+GetEmbeddingsFoundOk returns a tuple with the EmbeddingsFound field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetEmbeddingsFound
+
+`func (o *DecodeToolResponse) SetEmbeddingsFound(v int32)`
+
+SetEmbeddingsFound sets EmbeddingsFound field to given value.
+
+### HasEmbeddingsFound
+
+`func (o *DecodeToolResponse) HasEmbeddingsFound() bool`
+
+HasEmbeddingsFound returns a boolean if a field has been set.
+
+### GetAllEmbeddings
+
+`func (o *DecodeToolResponse) GetAllEmbeddings() []EmbeddingResult`
+
+GetAllEmbeddings returns the AllEmbeddings field if non-nil, zero value otherwise.
+
+### GetAllEmbeddingsOk
+
+`func (o *DecodeToolResponse) GetAllEmbeddingsOk() (*[]EmbeddingResult, bool)`
+
+GetAllEmbeddingsOk returns a tuple with the AllEmbeddings field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAllEmbeddings
+
+`func (o *DecodeToolResponse) SetAllEmbeddings(v []EmbeddingResult)`
+
+SetAllEmbeddings sets AllEmbeddings field to given value.
+
+### HasAllEmbeddings
+
+`func (o *DecodeToolResponse) HasAllEmbeddings() bool`
+
+HasAllEmbeddings returns a boolean if a field has been set.
+
+### SetAllEmbeddingsNil
+
+`func (o *DecodeToolResponse) SetAllEmbeddingsNil(b bool)`
+
+ SetAllEmbeddingsNil sets the value for AllEmbeddings to be an explicit nil
+
+### UnsetAllEmbeddings
+`func (o *DecodeToolResponse) UnsetAllEmbeddings()`
+
+UnsetAllEmbeddings ensures that no value is present for AllEmbeddings, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

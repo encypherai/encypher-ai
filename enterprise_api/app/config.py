@@ -5,6 +5,8 @@ Uses Pydantic Settings for environment variable management.
 from functools import lru_cache
 from typing import Optional
 
+import re
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -35,6 +37,8 @@ class Settings(BaseSettings):
     ssl_com_account_key: Optional[str] = None
     ssl_com_api_url: str = "https://api.ssl.com/v1"
     ssl_com_product_id: Optional[str] = None
+
+    provisioning_token: Optional[str] = None
 
     # API
     api_base_url: str = "https://api.encypherai.com"
@@ -127,13 +131,27 @@ class Settings(BaseSettings):
     @property
     def demo_private_key_bytes(self) -> Optional[bytes]:
         """Return demo private key bytes if configured."""
-        if not self.demo_private_key_hex:
+        key_hex = self.demo_private_key_hex or self.secret_key
+        if not key_hex:
             return None
-        # Strip whitespace and validate hex string
-        hex_str = self.demo_private_key_hex.strip()
+
+        hex_str = key_hex.strip()
         if not hex_str:
             return None
-        return bytes.fromhex(hex_str)
+
+        if not re.fullmatch(r"[0-9a-fA-F]+", hex_str):
+            return None
+        if len(hex_str) % 2 != 0:
+            return None
+
+        try:
+            value = bytes.fromhex(hex_str)
+        except ValueError:
+            return None
+        if len(value) != 32:
+            return None
+
+        return value
 
 
 @lru_cache()

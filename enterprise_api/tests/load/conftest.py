@@ -21,9 +21,14 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 # Mark all tests in this directory as stress tests (excluded by default)
 def pytest_collection_modifyitems(items):
     """Mark all load tests as stress tests."""
+    load_tests_enabled = os.getenv("LOAD_TESTS", "").lower() == "true"
     for item in items:
         if "load" in str(item.fspath):
             item.add_marker(pytest.mark.stress)
+            if not load_tests_enabled:
+                item.add_marker(
+                    pytest.mark.skip(reason="Load tests are opt-in. Set LOAD_TESTS=true to run.")
+                )
 
 
 # Ensure app is importable

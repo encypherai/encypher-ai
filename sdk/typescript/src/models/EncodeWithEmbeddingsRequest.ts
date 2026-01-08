@@ -27,6 +27,13 @@ import {
     EmbeddingOptionsToJSON,
     EmbeddingOptionsToJSONTyped,
 } from './EmbeddingOptions';
+import type { AppSchemasEmbeddingsRightsMetadata } from './AppSchemasEmbeddingsRightsMetadata';
+import {
+    AppSchemasEmbeddingsRightsMetadataFromJSON,
+    AppSchemasEmbeddingsRightsMetadataFromJSONTyped,
+    AppSchemasEmbeddingsRightsMetadataToJSON,
+    AppSchemasEmbeddingsRightsMetadataToJSONTyped,
+} from './AppSchemasEmbeddingsRightsMetadata';
 
 /**
  * Request to encode document with minimal signed embeddings.
@@ -89,6 +96,12 @@ export interface EncodeWithEmbeddingsRequest {
      */
     customAssertions?: Array<{ [key: string]: any; }> | null;
     /**
+     * 
+     * @type {string}
+     * @memberof EncodeWithEmbeddingsRequest
+     */
+    templateId?: string | null;
+    /**
      * Whether to validate custom assertions against registered schemas
      * @type {boolean}
      * @memberof EncodeWithEmbeddingsRequest
@@ -106,6 +119,12 @@ export interface EncodeWithEmbeddingsRequest {
      * @memberof EncodeWithEmbeddingsRequest
      */
     license?: LicenseInfo | null;
+    /**
+     * 
+     * @type {AppSchemasEmbeddingsRightsMetadata}
+     * @memberof EncodeWithEmbeddingsRequest
+     */
+    rights?: AppSchemasEmbeddingsRightsMetadata | null;
     /**
      * Embedding generation options
      * @type {EmbeddingOptions}
@@ -148,9 +167,11 @@ export function EncodeWithEmbeddingsRequestFromJSONTyped(json: any, ignoreDiscri
         'c2paManifestUrl': json['c2pa_manifest_url'] == null ? undefined : json['c2pa_manifest_url'],
         'c2paManifestHash': json['c2pa_manifest_hash'] == null ? undefined : json['c2pa_manifest_hash'],
         'customAssertions': json['custom_assertions'] == null ? undefined : json['custom_assertions'],
+        'templateId': json['template_id'] == null ? undefined : json['template_id'],
         'validateAssertions': json['validate_assertions'] == null ? undefined : json['validate_assertions'],
         'digitalSourceType': json['digital_source_type'] == null ? undefined : json['digital_source_type'],
         'license': json['license'] == null ? undefined : LicenseInfoFromJSON(json['license']),
+        'rights': json['rights'] == null ? undefined : AppSchemasEmbeddingsRightsMetadataFromJSON(json['rights']),
         'embeddingOptions': json['embedding_options'] == null ? undefined : EmbeddingOptionsFromJSON(json['embedding_options']),
         'expiresAt': json['expires_at'] == null ? undefined : (new Date(json['expires_at'])),
     };
@@ -176,9 +197,11 @@ export function EncodeWithEmbeddingsRequestToJSONTyped(value?: EncodeWithEmbeddi
         'c2pa_manifest_url': value['c2paManifestUrl'],
         'c2pa_manifest_hash': value['c2paManifestHash'],
         'custom_assertions': value['customAssertions'],
+        'template_id': value['templateId'],
         'validate_assertions': value['validateAssertions'],
         'digital_source_type': value['digitalSourceType'],
         'license': LicenseInfoToJSON(value['license']),
+        'rights': AppSchemasEmbeddingsRightsMetadataToJSON(value['rights']),
         'embedding_options': EmbeddingOptionsToJSON(value['embeddingOptions']),
         'expires_at': value['expiresAt'] == null ? value['expiresAt'] : value['expiresAt'].toISOString(),
     };

@@ -103,6 +103,8 @@ class Organization(Base):
     sso_enabled = Column(Boolean, default=False)
     custom_assertions_enabled = Column(Boolean, default=False)
 
+    default_c2pa_template_id = Column(String(64), nullable=True)
+
     # Coalition settings
     coalition_member = Column(Boolean, default=True)  # Auto-join on free tier
     coalition_rev_share_publisher = Column(Integer, default=65)  # Publisher's share (65-85%)

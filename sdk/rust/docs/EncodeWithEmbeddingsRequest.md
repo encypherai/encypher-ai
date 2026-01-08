@@ -13,9 +13,11 @@ Name | Type | Description | Notes
 **c2pa_manifest_url** | Option<**String**> |  | [optional]
 **c2pa_manifest_hash** | Option<**String**> |  | [optional]
 **custom_assertions** | Option<[**Vec<std::collections::HashMap<String, serde_json::Value>>**](std::collections::HashMap.md)> |  | [optional]
+**template_id** | Option<**String**> |  | [optional]
 **validate_assertions** | Option<**bool**> | Whether to validate custom assertions against registered schemas | [optional][default to true]
 **digital_source_type** | Option<**String**> |  | [optional]
 **license** | Option<[**models::LicenseInfo**](LicenseInfo.md)> |  | [optional]
+**rights** | Option<[**models::AppSchemasEmbeddingsRightsMetadata**](app__schemas__embeddings__RightsMetadata.md)> |  | [optional]
 **embedding_options** | Option<[**models::EmbeddingOptions**](EmbeddingOptions.md)> | Embedding generation options | [optional]
 **expires_at** | Option<**String**> |  | [optional]
 

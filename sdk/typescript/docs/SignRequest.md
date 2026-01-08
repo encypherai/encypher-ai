@@ -14,6 +14,9 @@ Name | Type
 `documentType` | string
 `claimGenerator` | string
 `actions` | Array&lt;{ [key: string]: any; }&gt;
+`templateId` | string
+`validateAssertions` | boolean
+`rights` | [AppModelsRequestModelsRightsMetadata](AppModelsRequestModelsRightsMetadata.md)
 
 ## Example
 
@@ -29,6 +32,9 @@ const example = {
   "documentType": null,
   "claimGenerator": null,
   "actions": null,
+  "templateId": null,
+  "validateAssertions": null,
+  "rights": null,
 } satisfies SignRequest
 
 console.log(example)

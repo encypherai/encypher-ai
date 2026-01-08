@@ -11,6 +11,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.models.organization import OrganizationTier
 from app.schemas.provisioning import (
@@ -28,6 +29,25 @@ from app.services.provisioning_service import ProvisioningService
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/provisioning", tags=["Provisioning"])
+
+
+def _require_provisioning_token(x_provisioning_token: str | None) -> None:
+    if settings.environment != "production":
+        return
+
+    expected = (settings.provisioning_token or "").strip()
+    if not expected:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Provisioning is not configured for production",
+        )
+
+    token = (x_provisioning_token or "").strip()
+    if token != expected:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid provisioning token",
+        )
 
 
 # ============================================================================
@@ -97,6 +117,8 @@ async def auto_provision(
         logger.info(
             f"Auto-provisioning request from {request.source} for {request.email}"
         )
+
+        _require_provisioning_token(x_provisioning_token)
         
         # TODO: Validate provisioning token in production
         # if x_provisioning_token:
@@ -153,7 +175,8 @@ async def auto_provision(
             quota_limits=quota_limits,
             next_steps=next_steps
         )
-        
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error auto-provisioning: {e}", exc_info=True)
         raise HTTPException(
@@ -176,6 +199,7 @@ async def auto_provision(
 async def create_api_key(
     request: APIKeyCreateRequest,
     db: AsyncSession = Depends(get_db),
+    x_provisioning_token: str = Header(None, description="Provisioning token (optional)"),
     # TODO: Add authentication dependency
     # current_org: Organization = Depends(get_current_organization)
 ) -> APIKeyResponse:
@@ -189,6 +213,8 @@ async def create_api_key(
     Returns:
         Created API key details
     """
+    _require_provisioning_token(x_provisioning_token)
+
     # Generate API key
     api_key = ProvisioningService.generate_api_key()
     
@@ -212,6 +238,7 @@ async def create_api_key(
 )
 async def list_api_keys(
     db: AsyncSession = Depends(get_db),
+    x_provisioning_token: str = Header(None, description="Provisioning token (optional)"),
     # TODO: Add authentication dependency
 ) -> APIKeyListResponse:
     """
@@ -223,6 +250,8 @@ async def list_api_keys(
     Returns:
         List of API keys
     """
+    _require_provisioning_token(x_provisioning_token)
+
     # TODO: Get organization from auth
     organization_id = "org_demo"
     
@@ -244,6 +273,7 @@ async def revoke_api_key(
     key_id: str,
     request: APIKeyRevokeRequest,
     db: AsyncSession = Depends(get_db),
+    x_provisioning_token: str = Header(None, description="Provisioning token (optional)"),
     # TODO: Add authentication dependency
 ):
     """
@@ -254,6 +284,8 @@ async def revoke_api_key(
         request: Revocation request
         db: Database session
     """
+    _require_provisioning_token(x_provisioning_token)
+
     success = await ProvisioningService.revoke_api_key(
         db=db,
         key_id=key_id,
@@ -280,7 +312,8 @@ async def revoke_api_key(
 )
 async def create_user_account(
     request: UserAccountCreateRequest,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    x_provisioning_token: str = Header(None, description="Provisioning token (optional)"),
 ) -> UserAccountResponse:
     """
     Create a new user account.
@@ -292,6 +325,8 @@ async def create_user_account(
     Returns:
         Created user account details
     """
+    _require_provisioning_token(x_provisioning_token)
+
     # Generate user ID
     user_id = ProvisioningService.generate_user_id(request.email)
     

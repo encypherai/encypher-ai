@@ -139,6 +139,18 @@ class C2PAValidator:
             },
             "required": ["format", "thumbnail"]
         }
+
+        self.schema_cache['com.encypher.rights.v1'] = {
+            "type": "object",
+            "properties": {
+                "copyright_holder": {"type": "string"},
+                "license_url": {"type": "string", "format": "uri"},
+                "usage_terms": {"type": "string"},
+                "syndication_allowed": {"type": "boolean"},
+                "embargo_until": {"type": "string", "format": "date-time"},
+                "contact_email": {"type": "string", "format": "email"},
+            },
+        }
     
     def validate_action(self, action: str) -> Tuple[bool, Optional[str]]:
         """

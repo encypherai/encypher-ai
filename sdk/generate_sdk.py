@@ -12,6 +12,7 @@ Usage:
 import argparse
 import json
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -28,7 +29,18 @@ except ImportError:
     RICH_AVAILABLE = False
 
 SDK_DIR = Path(__file__).parent
-OPENAPI_SPEC = SDK_DIR / "openapi.json"
+OPENAPI_PUBLIC_SPEC = SDK_DIR / "openapi.public.json"
+OPENAPI_INTERNAL_SPEC = SDK_DIR / "openapi.internal.json"
+OPENAPI_SPEC = OPENAPI_PUBLIC_SPEC
+
+MONOREPO_URL = "https://github.com/encypherai/encypherai-commercial"
+MONOREPO_GIT_URL = "https://github.com/encypherai/encypherai-commercial.git"
+GO_MODULE_PATH = "github.com/encypherai/encypherai-commercial/sdk/go"
+
+PRODUCTION_BASE_URL = "https://api.encypherai.com"
+LOCAL_DEV_BASE_URL = "http://localhost:8007"
+GO_VERSION = "1.21"
+HOMEPAGE_URL = "https://encypherai.com"
 
 # Windows needs shell=True for npx
 IS_WINDOWS = platform.system() == "Windows"
@@ -46,7 +58,7 @@ SDK_CONFIGS = {
         "additional_properties": {
             "packageName": "encypher",
             "projectName": "encypher",
-            "packageUrl": "https://github.com/encypherai/sdk",
+            "packageUrl": "https://github.com/encypherai/encypherai-commercial/tree/main/sdk/python",
             "generateSourceCodeOnly": "false",
             "library": "urllib3",
         },
@@ -120,6 +132,260 @@ def log_warning(msg: str):
         print(f"⚠ {msg}")
 
 
+def _write_if_changed(path: Path, content: str) -> None:
+    existing = path.read_text(encoding="utf-8") if path.exists() else None
+    if existing == content:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def _patch_python_metadata(output_dir: Path) -> None:
+    pyproject_path = output_dir / "pyproject.toml"
+    if pyproject_path.exists():
+        text = pyproject_path.read_text(encoding="utf-8")
+        text = re.sub(r'"([^"\s]+) \(([^\)]+)\)"', r'"\1\2"', text)
+
+        if not re.search(r"(?m)^license\s*=", text):
+            updated = re.sub(
+                r"(?m)^(readme\s*=\s*\".*\"\s*)$",
+                r"\1\nlicense = { text = \"MIT\" }",
+                text,
+                count=1,
+            )
+            if updated == text:
+                match = re.search(r"(?ms)^\[project\]\n", text)
+                if match:
+                    insert_at = match.end(0)
+                    text = text[:insert_at] + 'license = { text = "MIT" }\n' + text[insert_at:]
+            else:
+                text = updated
+
+        authors_block = (
+            'authors = [\n'
+            '  {name = "Encypher", email = "sdk@encypherai.com"},\n'
+            ']'
+        )
+        if re.search(r"(?ms)^authors\s*=\s*\[.*?\n\]\s*$", text):
+            text = re.sub(r"(?ms)^authors\s*=\s*\[.*?\n\]\s*$", authors_block, text)
+        else:
+            match = re.search(r"(?ms)^\[project\]\n", text)
+            if match:
+                insert_at = match.end(0)
+                text = text[:insert_at] + authors_block + "\n" + text[insert_at:]
+
+        if "[project.urls]" not in text:
+            text = text.rstrip() + "\n\n[project.urls]\n"
+
+        def upsert_project_url(key: str, value: str) -> None:
+            nonlocal text
+            if re.search(rf"(?m)^{re.escape(key)}\s*=\s*\".*\"\s*$", text):
+                text = re.sub(
+                    rf"(?m)^{re.escape(key)}\s*=\s*\".*\"\s*$",
+                    f'{key} = "{value}"',
+                    text,
+                )
+                return
+
+            match = re.search(r"(?ms)(\[project\.urls\]\n)", text)
+            if match:
+                insert_at = match.end(1)
+                text = text[:insert_at] + f'{key} = "{value}"\n' + text[insert_at:]
+
+        upsert_project_url("Homepage", HOMEPAGE_URL)
+        upsert_project_url("Documentation", f"{PRODUCTION_BASE_URL}/docs")
+        upsert_project_url("Repository", MONOREPO_URL)
+        upsert_project_url("Changelog", f"{MONOREPO_URL}/releases")
+        _write_if_changed(pyproject_path, text)
+
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
+
+    setup_path = output_dir / "setup.py"
+    if setup_path.exists():
+        text = setup_path.read_text(encoding="utf-8")
+        text = re.sub(r'(?m)^\s*author\s*=\s*".*"\s*,\s*$', '    author="Encypher",', text)
+        text = re.sub(r'(?m)^\s*author_email\s*=\s*".*"\s*,\s*$', '    author_email="sdk@encypherai.com",', text)
+        text = re.sub(r'(?m)^\s*url\s*=\s*".*"\s*,\s*$', f'    url="{MONOREPO_URL}",', text)
+        _write_if_changed(setup_path, text)
+
+    config_path = output_dir / "encypher" / "configuration.py"
+    if config_path.exists():
+        text = config_path.read_text(encoding="utf-8")
+        text = text.replace('"http://localhost" if host is None else host', f'"{PRODUCTION_BASE_URL}" if host is None else host')
+        pattern = r"(def get_host_settings\(self\)(?: -> List\[HostSetting\])?:\n(?:[ \t]+\"\"\"[\s\S]*?\"\"\"\n)?[ \t]+return \[)([\s\S]*?)(\n[ \t]+\]\n)"
+        replacement_body = (
+            "\n            {\n"
+            f"                'url': \"{PRODUCTION_BASE_URL}\",\n"
+            "                'description': \"Production\",\n"
+            "            },\n"
+            "            {\n"
+            f"                'url': \"{LOCAL_DEV_BASE_URL}\",\n"
+            "                'description': \"Local development\",\n"
+            "            }"
+        )
+        text = re.sub(pattern, r"\1" + replacement_body + r"\3", text)
+        _write_if_changed(config_path, text)
+
+
+def _patch_typescript_metadata(output_dir: Path) -> None:
+    package_json = output_dir / "package.json"
+    if not package_json.exists():
+        return
+    data = json.loads(package_json.read_text(encoding="utf-8"))
+
+    data["author"] = "Encypher"
+    data["license"] = "MIT"
+
+    repo = data.get("repository")
+    if not isinstance(repo, dict):
+        repo = {}
+        data["repository"] = repo
+    repo["type"] = "git"
+    repo["url"] = MONOREPO_GIT_URL
+    repo["directory"] = "sdk/typescript"
+
+    data["publishConfig"] = {"access": "public"}
+    data["files"] = ["dist", "README.md", "LICENSE"]
+
+    _write_if_changed(package_json, json.dumps(data, indent=2) + "\n")
+
+    npmignore = output_dir / ".npmignore"
+    if npmignore.exists():
+        lines = [line for line in npmignore.read_text(encoding="utf-8").splitlines() if line.strip() != "README.md"]
+        _write_if_changed(npmignore, "\n".join(lines) + ("\n" if lines else ""))
+
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
+
+    runtime_path = output_dir / "src" / "runtime.ts"
+    if runtime_path.exists():
+        text = runtime_path.read_text(encoding="utf-8")
+        text = text.replace('"http://localhost"', f'"{PRODUCTION_BASE_URL}"')
+        _write_if_changed(runtime_path, text)
+
+
+def _patch_go_metadata(output_dir: Path) -> None:
+    go_mod = output_dir / "go.mod"
+    if go_mod.exists():
+        text = go_mod.read_text(encoding="utf-8")
+        text = re.sub(r'(?m)^module\s+\S+\s*$', f"module {GO_MODULE_PATH}", text)
+        text = re.sub(r'(?m)^go\s+\S+\s*$', f"go {GO_VERSION}", text)
+        _write_if_changed(go_mod, text)
+
+    readme = output_dir / "README.md"
+    if readme.exists():
+        text = readme.read_text(encoding="utf-8")
+        text = text.replace("github.com/encypherai/sdk-go", GO_MODULE_PATH)
+        _write_if_changed(readme, text)
+
+    main_go = output_dir / "cmd" / "encypher" / "main.go"
+    if main_go.exists():
+        text = main_go.read_text(encoding="utf-8")
+        text = text.replace("github.com/encypherai/sdk-go", GO_MODULE_PATH)
+        if not text.strip():
+            text = "package main\n\nfunc main() {}\n"
+        _write_if_changed(main_go, text)
+
+    placeholder_import = "github.com/GIT_USER_ID/GIT_REPO_ID/encypher"
+    test_dir = output_dir / "test"
+    if test_dir.exists():
+        for test_file in test_dir.rglob("*.go"):
+            text = test_file.read_text(encoding="utf-8")
+            text = text.replace(placeholder_import, GO_MODULE_PATH)
+            text = re.sub(r"(?m)^package\s+encypher\s*$", "package encypher_test", text)
+            _write_if_changed(test_file, text)
+
+    docs_dir = output_dir / "docs"
+    if docs_dir.exists():
+        for doc_file in docs_dir.rglob("*.md"):
+            text = doc_file.read_text(encoding="utf-8")
+            text = text.replace(placeholder_import, GO_MODULE_PATH)
+            _write_if_changed(doc_file, text)
+
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
+
+
+def _patch_rust_metadata(output_dir: Path) -> None:
+    cargo_toml = output_dir / "Cargo.toml"
+    if not cargo_toml.exists():
+        return
+    text = cargo_toml.read_text(encoding="utf-8")
+
+    package_block = re.search(r"(?ms)(^\[package\]\s*\n)(.*?)(^\[|\Z)", text)
+    if package_block:
+        header, body, tail = package_block.group(1), package_block.group(2), package_block.group(3)
+
+        def upsert_package_field(key: str, value: str) -> None:
+            nonlocal body
+            if re.search(rf"(?m)^{re.escape(key)}\s*=\s*\".*\"\s*$", body):
+                body = re.sub(
+                    rf"(?m)^{re.escape(key)}\s*=\s*\".*\"\s*$",
+                    f'{key} = "{value}"',
+                    body,
+                )
+            else:
+                if body and not body.endswith("\n"):
+                    body += "\n"
+                body += f'{key} = "{value}"\n'
+
+        def upsert_package_array(key: str, value: str) -> None:
+            nonlocal body
+            if re.search(rf"(?m)^{re.escape(key)}\s*=\s*\[.*\]\s*$", body):
+                body = re.sub(
+                    rf"(?m)^{re.escape(key)}\s*=\s*\[.*\]\s*$",
+                    f"{key} = [{value}]",
+                    body,
+                )
+            else:
+                if body and not body.endswith("\n"):
+                    body += "\n"
+                body += f"{key} = [{value}]\n"
+
+        upsert_package_field("homepage", HOMEPAGE_URL)
+        upsert_package_field("repository", MONOREPO_URL)
+        upsert_package_field("documentation", f"{PRODUCTION_BASE_URL}/docs")
+        upsert_package_field("license", "MIT")
+        upsert_package_field("readme", "README.md")
+        upsert_package_array("authors", '"Encypher <sdk@encypherai.com>"')
+
+        text = text[: package_block.start(1)] + header + body + tail + text[package_block.end(3) :]
+
+    _write_if_changed(cargo_toml, text)
+
+    config_rs = output_dir / "src" / "apis" / "configuration.rs"
+    if config_rs.exists():
+        text = config_rs.read_text(encoding="utf-8")
+        text = text.replace('base_path: "http://localhost".to_owned(),', f'base_path: "{PRODUCTION_BASE_URL}".to_owned(),')
+        _write_if_changed(config_rs, text)
+
+    license_path = output_dir / "LICENSE"
+    _write_if_changed(license_path, _mit_license_text())
+
+
+def _mit_license_text() -> str:
+    return (
+        "MIT License\n\n"
+        "Copyright (c) Encypher\n\n"
+        "Permission is hereby granted, free of charge, to any person obtaining a copy\n"
+        "of this software and associated documentation files (the \"Software\"), to deal\n"
+        "in the Software without restriction, including without limitation the rights\n"
+        "to use, copy, modify, merge, publish, distribute, sublicense, and/or sell\n"
+        "copies of the Software, and to permit persons to whom the Software is\n"
+        "furnished to do so, subject to the following conditions:\n\n"
+        "The above copyright notice and this permission notice shall be included in all\n"
+        "copies or substantial portions of the Software.\n\n"
+        "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\n"
+        "IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,\n"
+        "FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE\n"
+        "AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER\n"
+        "LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,\n"
+        "OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE\n"
+        "SOFTWARE.\n"
+    )
+
+
 def run_cmd(cmd: list, capture: bool = True, stream_output: bool = False) -> subprocess.CompletedProcess:
     """Run a command, handling Windows shell requirements.
     
@@ -186,7 +452,7 @@ def run_cmd(cmd: list, capture: bool = True, stream_output: bool = False) -> sub
 def check_openapi_generator() -> Optional[str]:
     """Check if openapi-generator-cli is installed. Returns version or None."""
     log_info("Checking openapi-generator-cli...")
-    result = run_cmd(["npx", "@openapitools/openapi-generator-cli", "version"])
+    result = run_cmd(["npx", "--yes", "@openapitools/openapi-generator-cli", "version"])
     if result.returncode != 0:
         log_error("openapi-generator-cli not found")
         log_info("Install with: npm install -g @openapitools/openapi-generator-cli")
@@ -268,6 +534,8 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
         props["packageVersion"] = version
     elif language == "typescript":
         props["npmVersion"] = version
+    else:
+        props["packageVersion"] = version
     
     props_str = ",".join(f"{k}={v}" for k, v in props.items())
     
@@ -276,7 +544,7 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
     out_path = str(output_dir).replace("\\", "/")
     
     cmd = [
-        "npx", "@openapitools/openapi-generator-cli", "generate",
+        "npx", "--yes", "@openapitools/openapi-generator-cli", "generate",
         "-i", spec_path,
         "-g", config["generator"],
         "-o", out_path,
@@ -304,12 +572,16 @@ def generate_sdk(language: str, api_info: dict, verbose: bool = False) -> bool:
     # Create language-specific wrappers
     if language == "python":
         create_python_wrapper(output_dir)
+        _patch_python_metadata(output_dir)
     elif language == "typescript":
         create_typescript_wrapper(output_dir)
+        _patch_typescript_metadata(output_dir)
     elif language == "go":
         create_go_wrapper(output_dir)
+        _patch_go_metadata(output_dir)
     elif language == "rust":
         create_rust_wrapper(output_dir)
+        _patch_rust_metadata(output_dir)
     
     return True
 
@@ -514,17 +786,17 @@ func NewClientWithURL(apiKey, baseURL string) *Client {
 // Sign signs content with a C2PA manifest.
 func (c *Client) Sign(ctx context.Context, text string) (*SignResponse, error) {
 	req := NewSignRequest(text)
-	return c.api.SigningApi.SignContentApiV1SignPost(ctx).SignRequest(*req).Execute()
+	return c.api.SigningAPI.SignContentApiV1SignPost(ctx).SignRequest(*req).Execute()
 }
 
 // Verify verifies signed content.
 func (c *Client) Verify(ctx context.Context, text string) (*VerifyResponse, error) {
 	req := NewVerifyRequest(text)
-	return c.api.VerificationApi.VerifyContentApiV1VerifyPost(ctx).VerifyRequest(*req).Execute()
+	return c.api.VerificationAPI.VerifyContentApiV1VerifyPost(ctx).VerifyRequest(*req).Execute()
 }
 '''
     
-    wrapper_path = output_dir / "client.go"
+    wrapper_path = output_dir / "client_wrapper.go"
     wrapper_path.parent.mkdir(parents=True, exist_ok=True)
     wrapper_path.write_text(wrapper_content)
     log_info(f"Created wrapper: {wrapper_path.name}")
@@ -636,10 +908,21 @@ Examples:
         """,
     )
     parser.add_argument(
-        "targets",
+        "languages",
         nargs="+",
-        choices=["python", "typescript", "go", "rust", "all"],
-        help="SDK(s) to generate",
+        choices=list(SDK_CONFIGS.keys()) + ["all"],
+        help="SDKs to generate",
+    )
+    parser.add_argument(
+        "--spec",
+        choices=["public", "internal"],
+        default="public",
+        help="Which OpenAPI spec to generate from (default: public)",
+    )
+    parser.add_argument(
+        "--openapi-path",
+        default=None,
+        help="Override OpenAPI spec path (advanced)",
     )
     parser.add_argument(
         "--skip-check",
@@ -653,6 +936,14 @@ Examples:
     )
     
     args = parser.parse_args()
+
+    global OPENAPI_SPEC
+    if args.openapi_path:
+        OPENAPI_SPEC = Path(args.openapi_path)
+    elif args.spec == "internal":
+        OPENAPI_SPEC = OPENAPI_INTERNAL_SPEC
+    else:
+        OPENAPI_SPEC = OPENAPI_PUBLIC_SPEC
     
     # Show header
     if RICH_AVAILABLE:
@@ -681,10 +972,10 @@ Examples:
             sys.exit(1)
     
     # Determine targets
-    if "all" in args.targets:
+    if "all" in args.languages:
         targets = list(SDK_CONFIGS.keys())
     else:
-        targets = args.targets
+        targets = args.languages
     
     # Generate SDKs
     results = {}

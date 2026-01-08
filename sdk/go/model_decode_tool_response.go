@@ -23,6 +23,9 @@ type DecodeToolResponse struct {
 	VerificationStatus *string `json:"verification_status,omitempty"`
 	Error NullableString `json:"error,omitempty"`
 	RawHiddenData NullableAppRoutersToolsVerifyVerdict `json:"raw_hidden_data,omitempty"`
+	// Number of embeddings found in the text
+	EmbeddingsFound *int32 `json:"embeddings_found,omitempty"`
+	AllEmbeddings []EmbeddingResult `json:"all_embeddings,omitempty"`
 }
 
 // NewDecodeToolResponse instantiates a new DecodeToolResponse object
@@ -33,6 +36,8 @@ func NewDecodeToolResponse() *DecodeToolResponse {
 	this := DecodeToolResponse{}
 	var verificationStatus string = "Not Attempted"
 	this.VerificationStatus = &verificationStatus
+	var embeddingsFound int32 = 0
+	this.EmbeddingsFound = &embeddingsFound
 	return &this
 }
 
@@ -43,6 +48,8 @@ func NewDecodeToolResponseWithDefaults() *DecodeToolResponse {
 	this := DecodeToolResponse{}
 	var verificationStatus string = "Not Attempted"
 	this.VerificationStatus = &verificationStatus
+	var embeddingsFound int32 = 0
+	this.EmbeddingsFound = &embeddingsFound
 	return &this
 }
 
@@ -195,6 +202,71 @@ func (o *DecodeToolResponse) UnsetRawHiddenData() {
 	o.RawHiddenData.Unset()
 }
 
+// GetEmbeddingsFound returns the EmbeddingsFound field value if set, zero value otherwise.
+func (o *DecodeToolResponse) GetEmbeddingsFound() int32 {
+	if o == nil || IsNil(o.EmbeddingsFound) {
+		var ret int32
+		return ret
+	}
+	return *o.EmbeddingsFound
+}
+
+// GetEmbeddingsFoundOk returns a tuple with the EmbeddingsFound field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+func (o *DecodeToolResponse) GetEmbeddingsFoundOk() (*int32, bool) {
+	if o == nil || IsNil(o.EmbeddingsFound) {
+		return nil, false
+	}
+	return o.EmbeddingsFound, true
+}
+
+// HasEmbeddingsFound returns a boolean if a field has been set.
+func (o *DecodeToolResponse) HasEmbeddingsFound() bool {
+	if o != nil && !IsNil(o.EmbeddingsFound) {
+		return true
+	}
+
+	return false
+}
+
+// SetEmbeddingsFound gets a reference to the given int32 and assigns it to the EmbeddingsFound field.
+func (o *DecodeToolResponse) SetEmbeddingsFound(v int32) {
+	o.EmbeddingsFound = &v
+}
+
+// GetAllEmbeddings returns the AllEmbeddings field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *DecodeToolResponse) GetAllEmbeddings() []EmbeddingResult {
+	if o == nil {
+		var ret []EmbeddingResult
+		return ret
+	}
+	return o.AllEmbeddings
+}
+
+// GetAllEmbeddingsOk returns a tuple with the AllEmbeddings field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *DecodeToolResponse) GetAllEmbeddingsOk() ([]EmbeddingResult, bool) {
+	if o == nil || IsNil(o.AllEmbeddings) {
+		return nil, false
+	}
+	return o.AllEmbeddings, true
+}
+
+// HasAllEmbeddings returns a boolean if a field has been set.
+func (o *DecodeToolResponse) HasAllEmbeddings() bool {
+	if o != nil && !IsNil(o.AllEmbeddings) {
+		return true
+	}
+
+	return false
+}
+
+// SetAllEmbeddings gets a reference to the given []EmbeddingResult and assigns it to the AllEmbeddings field.
+func (o *DecodeToolResponse) SetAllEmbeddings(v []EmbeddingResult) {
+	o.AllEmbeddings = v
+}
+
 func (o DecodeToolResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -216,6 +288,12 @@ func (o DecodeToolResponse) ToMap() (map[string]interface{}, error) {
 	}
 	if o.RawHiddenData.IsSet() {
 		toSerialize["raw_hidden_data"] = o.RawHiddenData.Get()
+	}
+	if !IsNil(o.EmbeddingsFound) {
+		toSerialize["embeddings_found"] = o.EmbeddingsFound
+	}
+	if o.AllEmbeddings != nil {
+		toSerialize["all_embeddings"] = o.AllEmbeddings
 	}
 	return toSerialize, nil
 }

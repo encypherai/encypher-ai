@@ -5,7 +5,7 @@ Request and response models for licensing endpoints.
 """
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field, validator
@@ -115,6 +115,7 @@ class ContentMetadata(BaseModel):
     signed_at: datetime
     content_hash: str
     verification_url: str
+    rights_signals: Optional[Dict[str, Any]] = None
 
 
 class ContentListResponse(BaseModel):
@@ -134,8 +135,8 @@ class ContentAccessLogResponse(BaseModel):
     """Schema for content access log response."""
     id: UUID
     agreement_id: UUID
-    content_id: UUID
-    member_id: UUID
+    content_id: int
+    member_id: str
     accessed_at: datetime
     access_type: Optional[str]
     ai_company_name: str
@@ -165,7 +166,7 @@ class RevenueDistributionCreate(BaseModel):
 class MemberRevenueDetail(BaseModel):
     """Schema for member revenue detail."""
     id: UUID
-    member_id: UUID
+    member_id: str
     content_count: int
     access_count: int
     revenue_amount: Decimal

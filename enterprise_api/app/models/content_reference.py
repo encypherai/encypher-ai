@@ -21,6 +21,7 @@ from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import relationship
 
 from app.database import Base
+from app.models.merkle import MerkleRoot
 
 
 class ContentReference(Base):
@@ -81,7 +82,7 @@ class ContentReference(Base):
     embedding_metadata = Column(JSON, default={})
     
     # Relationships
-    merkle_root = relationship("MerkleRoot", backref="content_references")
+    merkle_root = relationship(MerkleRoot, backref="content_references")
     
     # Constraints
     __table_args__ = (

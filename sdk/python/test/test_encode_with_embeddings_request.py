@@ -50,11 +50,19 @@ class TestEncodeWithEmbeddingsRequest(unittest.TestCase):
                         'key' : null
                         }
                     ],
+                template_id = '',
                 validate_assertions = True,
                 digital_source_type = '',
                 license = encypher.models.license_info.LicenseInfo(
                     type = '', 
                     url = '', 
+                    contact_email = '', ),
+                rights = encypher.models.rights_metadata.RightsMetadata(
+                    copyright_holder = '', 
+                    license_url = '', 
+                    usage_terms = '', 
+                    syndication_allowed = True, 
+                    embargo_until = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
                     contact_email = '', ),
                 embedding_options = encypher.models.embedding_options.EmbeddingOptions(
                     format = 'html', 

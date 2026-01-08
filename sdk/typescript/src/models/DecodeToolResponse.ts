@@ -20,6 +20,13 @@ import {
     AppRoutersToolsVerifyVerdictToJSON,
     AppRoutersToolsVerifyVerdictToJSONTyped,
 } from './AppRoutersToolsVerifyVerdict';
+import type { EmbeddingResult } from './EmbeddingResult';
+import {
+    EmbeddingResultFromJSON,
+    EmbeddingResultFromJSONTyped,
+    EmbeddingResultToJSON,
+    EmbeddingResultToJSONTyped,
+} from './EmbeddingResult';
 
 /**
  * Response model for decoding.
@@ -51,6 +58,18 @@ export interface DecodeToolResponse {
      * @memberof DecodeToolResponse
      */
     rawHiddenData?: AppRoutersToolsVerifyVerdict | null;
+    /**
+     * Number of embeddings found in the text
+     * @type {number}
+     * @memberof DecodeToolResponse
+     */
+    embeddingsFound?: number;
+    /**
+     * 
+     * @type {Array<EmbeddingResult>}
+     * @memberof DecodeToolResponse
+     */
+    allEmbeddings?: Array<EmbeddingResult> | null;
 }
 
 
@@ -88,6 +107,8 @@ export function DecodeToolResponseFromJSONTyped(json: any, ignoreDiscriminator: 
         'verificationStatus': json['verification_status'] == null ? undefined : json['verification_status'],
         'error': json['error'] == null ? undefined : json['error'],
         'rawHiddenData': json['raw_hidden_data'] == null ? undefined : AppRoutersToolsVerifyVerdictFromJSON(json['raw_hidden_data']),
+        'embeddingsFound': json['embeddings_found'] == null ? undefined : json['embeddings_found'],
+        'allEmbeddings': json['all_embeddings'] == null ? undefined : ((json['all_embeddings'] as Array<any>).map(EmbeddingResultFromJSON)),
     };
 }
 
@@ -106,6 +127,8 @@ export function DecodeToolResponseToJSONTyped(value?: DecodeToolResponse | null,
         'verification_status': value['verificationStatus'],
         'error': value['error'],
         'raw_hidden_data': AppRoutersToolsVerifyVerdictToJSON(value['rawHiddenData']),
+        'embeddings_found': value['embeddingsFound'],
+        'all_embeddings': value['allEmbeddings'] == null ? undefined : ((value['allEmbeddings'] as Array<any>).map(EmbeddingResultToJSON)),
     };
 }
 

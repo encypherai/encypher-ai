@@ -45,7 +45,16 @@ class TestSignRequest(unittest.TestCase):
                     {
                         'key' : null
                         }
-                    ]
+                    ],
+                template_id = '',
+                validate_assertions = True,
+                rights = encypher.models.rights_metadata.RightsMetadata(
+                    copyright_holder = '', 
+                    license_url = '', 
+                    usage_terms = '', 
+                    syndication_allowed = True, 
+                    embargo_until = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                    contact_email = '', )
             )
         else:
             return SignRequest(

@@ -15,11 +15,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  EncodeWithEmbeddingsRequest,
+  EncodeWithEmbeddingsResponse,
   HTTPValidationError,
   SignRequest,
   SignResponse,
 } from '../models/index';
 import {
+    EncodeWithEmbeddingsRequestFromJSON,
+    EncodeWithEmbeddingsRequestToJSON,
+    EncodeWithEmbeddingsResponseFromJSON,
+    EncodeWithEmbeddingsResponseToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
     SignRequestFromJSON,
@@ -27,6 +33,10 @@ import {
     SignResponseFromJSON,
     SignResponseToJSON,
 } from '../models/index';
+
+export interface SignAdvancedApiV1SignAdvancedPostRequest {
+    encodeWithEmbeddingsRequest: EncodeWithEmbeddingsRequest;
+}
 
 export interface SignContentApiV1SignPostRequest {
     signRequest: SignRequest;
@@ -39,6 +49,21 @@ export interface SignContentApiV1SignPostRequest {
  * @interface SigningApiInterface
  */
 export interface SigningApiInterface {
+    /**
+     * 
+     * @summary Sign Advanced
+     * @param {EncodeWithEmbeddingsRequest} encodeWithEmbeddingsRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof SigningApiInterface
+     */
+    signAdvancedApiV1SignAdvancedPostRaw(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>>;
+
+    /**
+     * Sign Advanced
+     */
+    signAdvancedApiV1SignAdvancedPost(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse>;
+
     /**
      * Sign content with a C2PA manifest.
      * @summary Sign Content
@@ -61,6 +86,53 @@ export interface SigningApiInterface {
  * 
  */
 export class SigningApi extends runtime.BaseAPI implements SigningApiInterface {
+
+    /**
+     * Sign Advanced
+     */
+    async signAdvancedApiV1SignAdvancedPostRaw(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>> {
+        if (requestParameters['encodeWithEmbeddingsRequest'] == null) {
+            throw new runtime.RequiredError(
+                'encodeWithEmbeddingsRequest',
+                'Required parameter "encodeWithEmbeddingsRequest" was null or undefined when calling signAdvancedApiV1SignAdvancedPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/v1/sign/advanced`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: EncodeWithEmbeddingsRequestToJSON(requestParameters['encodeWithEmbeddingsRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EncodeWithEmbeddingsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Sign Advanced
+     */
+    async signAdvancedApiV1SignAdvancedPost(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse> {
+        const response = await this.signAdvancedApiV1SignAdvancedPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
 
     /**
      * Sign content with a C2PA manifest.

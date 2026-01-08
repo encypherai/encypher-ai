@@ -13,6 +13,8 @@ Name | Type | Description | Notes
 **signer_name** | **str** |  | [optional] 
 **timestamp** | **datetime** |  | [optional] 
 **details** | **Dict[str, object]** | Structured details (manifest, benchmarking stats, etc.) | [optional] 
+**embeddings_found** | **int** | Number of embeddings found in the text | [optional] [default to 0]
+**all_embeddings** | [**List[EmbeddingVerdict]**](EmbeddingVerdict.md) |  | [optional] 
 
 ## Example
 

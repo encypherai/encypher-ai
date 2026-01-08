@@ -16,13 +16,15 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_content_db, get_db
 from app.middleware.public_rate_limiter import public_rate_limiter
 from app.models.request_models import VerifyRequest
-from app.models.response_models import ErrorDetail, VerifyResponse
+from app.models.response_models import EmbeddingVerdict, ErrorDetail, VerifyResponse
 from app.services.verification_logic import (
     VerificationExecution,
     build_verdict,
     determine_reason_code,
     execute_verification,
 )
+from app.utils.multi_embedding import extract_all_embeddings, extract_and_verify_all_embeddings
+from app.utils.crypto_utils import load_organization_public_key
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -208,6 +210,89 @@ async def verify_content(
             hint="Submit smaller payloads or use the batch endpoint.",
         )
 
+    # Check for multiple embeddings first (Enterprise feature)
+    multi_result = extract_all_embeddings(verify_request.text)
+    
+    if multi_result.total_found > 1:
+        # Multiple embeddings found - verify each independently
+        logger.info(f"Found {multi_result.total_found} embeddings in verification request")
+        
+        # Build public key resolver for all signers
+        resolved_keys: dict = {}
+        for emb in multi_result.embeddings:
+            if emb.signer_id:
+                try:
+                    resolved_keys[emb.signer_id] = await load_organization_public_key(emb.signer_id, db)
+                except Exception:
+                    resolved_keys[emb.signer_id] = None
+        
+        def public_key_resolver(signer_id: str):
+            return resolved_keys.get(signer_id)
+        
+        # Verify all embeddings
+        verified_result = await extract_and_verify_all_embeddings(
+            verify_request.text,
+            public_key_resolver,
+        )
+        
+        # Convert to response format
+        all_embeddings = []
+        for emb in verified_result.embeddings:
+            all_embeddings.append(EmbeddingVerdict(
+                index=emb.index,
+                valid=emb.signature_valid,
+                tampered=not emb.signature_valid and emb.metadata is not None,
+                reason_code="VERIFIED" if emb.signature_valid else "VERIFICATION_FAILED",
+                signer_id=emb.signer_id,
+                signer_name=emb.signer_name,
+                timestamp=None,  # TODO: Extract from manifest
+                text_span=emb.span,
+                clean_text=emb.segment_text[:500] if emb.segment_text else None,
+                manifest=emb.metadata,
+            ))
+        
+        # Build primary verdict from first embedding (backwards compatibility)
+        primary_emb = verified_result.embeddings[0] if verified_result.embeddings else None
+        verdict = build_verdict(
+            execution=VerificationExecution(
+                is_valid=primary_emb.signature_valid if primary_emb else False,
+                signer_id=primary_emb.signer_id if primary_emb else None,
+                manifest=primary_emb.metadata if primary_emb else {},
+                missing_signers=set(),
+                revoked_signers=set(),
+                resolved_cert=None,
+                duration_ms=0,
+                exception_message=None,
+            ),
+            reason_code="VERIFIED" if (primary_emb and primary_emb.signature_valid) else "VERIFICATION_FAILED",
+            payload_bytes=payload_bytes,
+        )
+        
+        # Add multi-embedding data
+        verdict.embeddings_found = verified_result.total_found
+        verdict.all_embeddings = all_embeddings
+        
+        # Update overall status based on all embeddings
+        if verified_result.all_valid:
+            verdict.valid = True
+            verdict.reason_code = "VERIFIED"
+        elif verified_result.any_valid:
+            verdict.valid = False
+            valid_count = sum(1 for e in verified_result.embeddings if e.signature_valid)
+            verdict.reason_code = "PARTIAL_VERIFICATION"
+            verdict.details["warning"] = f"Found {verified_result.total_found} embeddings, but only {valid_count} verified successfully."
+        else:
+            verdict.valid = False
+            verdict.reason_code = "VERIFICATION_FAILED"
+        
+        return VerifyResponse(
+            success=True,
+            data=verdict,
+            error=None,
+            correlation_id=correlation_id,
+        )
+    
+    # Single embedding - use standard verification
     execution = await execute_verification(payload_text=verify_request.text, db=db)
     reason_code = determine_reason_code(execution=execution)
 
@@ -216,6 +301,9 @@ async def verify_content(
         reason_code=reason_code,
         payload_bytes=payload_bytes,
     )
+    
+    # Set embeddings_found for consistency
+    verdict.embeddings_found = 1 if execution.manifest else 0
 
     response = VerifyResponse(
         success=True,

@@ -15,10 +15,10 @@ export default function EnterprisePage() {
     <div className="bg-background text-foreground">
       <AISummary
         title="Encypher for Enterprise"
-        whatWeDo="Authors of the C2PA text standard providing enterprise AI governance infrastructure with sentence-level content tracking."
-        whoItsFor="Fortune 500 companies deploying AI at scale needing EU AI Act compliance and competitive intelligence."
-        keyDifferentiator="Compliance baseline (C2PA standard we authored) + intelligence upside (sentence-level performance data)."
-        primaryValue="Turn regulatory requirement into competitive advantage through cryptographic content tracking."
+        whatWeDo="Authors of C2PA Section A.7. Patent-pending API and SDKs with 83 claims covering granular content attribution and evidence generation. Standard published January 8, 2026."
+        whoItsFor="Fortune 500 companies deploying AI at scale needing EU AI Act and China watermarking compliance plus competitive intelligence."
+        keyDifferentiator="Compliance baseline + performance intelligence upside. Patent-pending Merkle tree authentication enables court-admissible evidence generation."
+        primaryValue="Turn regulatory requirement into competitive advantage. Working with industry leaders to define content licensing frameworks."
       />
 
       {/* Hero Section */}
@@ -28,7 +28,7 @@ export default function EnterprisePage() {
             Compliance is the Baseline.<br />Intelligence is the Advantage.
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
-            From the authors of the C2PA text standard. EU AI Act compliance through content authentication. Performance intelligence through sentence-level tracking. One infrastructure, dual value.
+            From the authors of the C2PA text standard. EU AI Act compliance through content authentication. Performance intelligence through patent-pending granular attribution. One infrastructure, dual value.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button 
@@ -39,6 +39,11 @@ export default function EnterprisePage() {
               Schedule Architecture Review <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
             <Button asChild variant="outline" size="lg">
+              <Link href="/auth/signin?mode=signup&source=enterprises">
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="ghost" size="lg">
               <Link href="/demo">
                 See the Platform <ArrowRight className="ml-2 h-4 w-4" />
               </Link>

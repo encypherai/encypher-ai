@@ -96,10 +96,26 @@ function SignInContent({ initialMode = 'signin' }: SignInPageProps) {
   const [unverifiedEmail, setUnverifiedEmail] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
 
-  // Effect to update mode when initialMode prop changes
+  // Effect to update mode from URL params or initialMode prop
   useEffect(() => {
-    setMode(initialMode);
-  }, [initialMode]);
+    const modeParam = searchParams.get('mode');
+    if (modeParam === 'signup') {
+      setMode('signup');
+    } else if (modeParam === 'signin') {
+      setMode('signin');
+    } else {
+      setMode(initialMode);
+    }
+  }, [initialMode, searchParams]);
+
+  // Track source for analytics (from URL param like ?source=publishers)
+  useEffect(() => {
+    const source = searchParams.get('source');
+    if (source && typeof window !== 'undefined') {
+      // Store source in sessionStorage for analytics tracking after signup
+      sessionStorage.setItem('signup_source', source);
+    }
+  }, [searchParams]);
 
   // Handle OAuth error from query params (e.g., ?error=OAuthSignin)
   useEffect(() => {

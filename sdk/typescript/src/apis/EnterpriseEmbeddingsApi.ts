@@ -33,6 +33,11 @@ export interface EncodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddin
     authorization?: string | null;
 }
 
+export interface SignAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRequest {
+    encodeWithEmbeddingsRequest: EncodeWithEmbeddingsRequest;
+    authorization?: string | null;
+}
+
 /**
  * EnterpriseEmbeddingsApi - interface
  * 
@@ -41,21 +46,42 @@ export interface EncodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddin
  */
 export interface EnterpriseEmbeddingsApiInterface {
     /**
-     * Encode a document with invisible embeddings.
+     * Encode a document with invisible embeddings.  **Alias:** POST /enterprise/sign/advanced
      * @summary Encode With Embeddings
      * @param {EncodeWithEmbeddingsRequest} encodeWithEmbeddingsRequest 
      * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
+     * @deprecated
      * @throws {RequiredError}
      * @memberof EnterpriseEmbeddingsApiInterface
      */
     encodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPostRaw(requestParameters: EncodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>>;
 
     /**
-     * Encode a document with invisible embeddings.
+     * Encode a document with invisible embeddings.  **Alias:** POST /enterprise/sign/advanced
      * Encode With Embeddings
+     * @deprecated
      */
     encodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPost(requestParameters: EncodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse>;
+
+    /**
+     * Sign a document with advanced invisible embeddings.  This is an alias for POST /enterprise/embeddings/encode-with-embeddings with a clearer name. Creates C2PA-compliant invisible signatures.  Requires Professional or Enterprise tier.
+     * @summary Sign Advanced
+     * @param {EncodeWithEmbeddingsRequest} encodeWithEmbeddingsRequest 
+     * @param {string} [authorization] 
+     * @param {*} [options] Override http request option.
+     * @deprecated
+     * @throws {RequiredError}
+     * @memberof EnterpriseEmbeddingsApiInterface
+     */
+    signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRaw(requestParameters: SignAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>>;
+
+    /**
+     * Sign a document with advanced invisible embeddings.  This is an alias for POST /enterprise/embeddings/encode-with-embeddings with a clearer name. Creates C2PA-compliant invisible signatures.  Requires Professional or Enterprise tier.
+     * Sign Advanced
+     * @deprecated
+     */
+    signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPost(requestParameters: SignAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse>;
 
 }
 
@@ -65,8 +91,9 @@ export interface EnterpriseEmbeddingsApiInterface {
 export class EnterpriseEmbeddingsApi extends runtime.BaseAPI implements EnterpriseEmbeddingsApiInterface {
 
     /**
-     * Encode a document with invisible embeddings.
+     * Encode a document with invisible embeddings.  **Alias:** POST /enterprise/sign/advanced
      * Encode With Embeddings
+     * @deprecated
      */
     async encodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPostRaw(requestParameters: EncodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>> {
         if (requestParameters['encodeWithEmbeddingsRequest'] == null) {
@@ -101,11 +128,59 @@ export class EnterpriseEmbeddingsApi extends runtime.BaseAPI implements Enterpri
     }
 
     /**
-     * Encode a document with invisible embeddings.
+     * Encode a document with invisible embeddings.  **Alias:** POST /enterprise/sign/advanced
      * Encode With Embeddings
+     * @deprecated
      */
     async encodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPost(requestParameters: EncodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse> {
         const response = await this.encodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPostRaw(requestParameters, initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Sign a document with advanced invisible embeddings.  This is an alias for POST /enterprise/embeddings/encode-with-embeddings with a clearer name. Creates C2PA-compliant invisible signatures.  Requires Professional or Enterprise tier.
+     * Sign Advanced
+     * @deprecated
+     */
+    async signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRaw(requestParameters: SignAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>> {
+        if (requestParameters['encodeWithEmbeddingsRequest'] == null) {
+            throw new runtime.RequiredError(
+                'encodeWithEmbeddingsRequest',
+                'Required parameter "encodeWithEmbeddingsRequest" was null or undefined when calling signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (requestParameters['authorization'] != null) {
+            headerParameters['authorization'] = String(requestParameters['authorization']);
+        }
+
+
+        let urlPath = `/api/v1/enterprise/embeddings/sign/advanced`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: EncodeWithEmbeddingsRequestToJSON(requestParameters['encodeWithEmbeddingsRequest']),
+        }, initOverrides);
+
+        return new runtime.JSONApiResponse(response, (jsonValue) => EncodeWithEmbeddingsResponseFromJSON(jsonValue));
+    }
+
+    /**
+     * Sign a document with advanced invisible embeddings.  This is an alias for POST /enterprise/embeddings/encode-with-embeddings with a clearer name. Creates C2PA-compliant invisible signatures.  Requires Professional or Enterprise tier.
+     * Sign Advanced
+     * @deprecated
+     */
+    async signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPost(requestParameters: SignAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse> {
+        const response = await this.signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

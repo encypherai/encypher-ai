@@ -122,13 +122,13 @@ $revenue_split = $this->get_revenue_split($tier);
         </div>
 
         <!-- Pro Upgrade Section (if free tier) -->
-        <?php if ($tier === 'free'): ?>
+        <?php if ($tier === 'starter'): ?>
             <?php
             $pending = $stats['revenue_stats']['pending'] ?? 0;
             $roi = $this->calculate_pro_upgrade_roi($pending, $tier);
             ?>
             <div class="coalition-revenue-section">
-                <h2><?php esc_html_e('💡 Maximize Your Earnings', 'encypher-provenance'); ?></h2>
+                <h2><?php esc_html_e('Maximize Your Earnings', 'encypher-provenance'); ?></h2>
                 
                 <div class="coalition-upgrade-cta" style="margin: 0;">
                     <h4><?php esc_html_e('Upgrade to Pro Tier', 'encypher-provenance'); ?></h4>
@@ -149,10 +149,10 @@ $revenue_split = $this->get_revenue_split($tier);
                         <div>
                             <strong><?php esc_html_e('Pro Tier', 'encypher-provenance'); ?></strong>
                             <ul class="upgrade-benefits">
-                                <li>✓ 70/30 revenue split (+5%)</li>
-                                <li>✓ $10 payout threshold</li>
-                                <li>✓ Priority placement</li>
-                                <li>✓ Advanced analytics</li>
+                                <li>70/30 revenue split (+5%)</li>
+                                <li>$10 payout threshold</li>
+                                <li>Priority placement</li>
+                                <li>Advanced analytics</li>
                             </ul>
                         </div>
                     </div>

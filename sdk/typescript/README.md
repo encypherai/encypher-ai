@@ -1,6 +1,6 @@
 # @encypher/sdk@1.0.0-alpha.1
 
-A TypeScript SDK client for the localhost API.
+A TypeScript SDK client for the api.encypherai.com API.
 
 ## Usage
 
@@ -16,9 +16,9 @@ Next, try it out.
 ```ts
 import {
   Configuration,
-  AuditApi,
+  APIKeysApi,
 } from '@encypher/sdk';
-import type { ExportAuditLogsApiV1AuditLogsExportGetRequest } from '@encypher/sdk';
+import type { CreateKeyApiV1KeysPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -26,19 +26,15 @@ async function example() {
     // Configure HTTP bearer authorization: HTTPBearer
     accessToken: "YOUR BEARER TOKEN",
   });
-  const api = new AuditApi(config);
+  const api = new APIKeysApi(config);
 
   const body = {
-    // string (optional)
-    format: format_example,
-    // string (optional)
-    startDate: startDate_example,
-    // string (optional)
-    endDate: endDate_example,
-  } satisfies ExportAuditLogsApiV1AuditLogsExportGetRequest;
+    // KeyCreateRequest
+    keyCreateRequest: ...,
+  } satisfies CreateKeyApiV1KeysPostRequest;
 
   try {
-    const data = await api.exportAuditLogsApiV1AuditLogsExportGet(body);
+    const data = await api.createKeyApiV1KeysPost(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -54,12 +50,30 @@ example().catch(console.error);
 
 ### API Endpoints
 
-All URIs are relative to *http://localhost*
+All URIs are relative to *https://api.encypherai.com*
 
 | Class | Method | HTTP request | Description
 | ----- | ------ | ------------ | -------------
-*AuditApi* | [**exportAuditLogsApiV1AuditLogsExportGet**](docs/AuditApi.md#exportauditlogsapiv1auditlogsexportget) | **GET** /api/v1/audit-logs/export | Export Audit Logs
-*AuditApi* | [**getAuditLogsApiV1AuditLogsGet**](docs/AuditApi.md#getauditlogsapiv1auditlogsget) | **GET** /api/v1/audit-logs | Get Audit Logs
+*APIKeysApi* | [**createKeyApiV1KeysPost**](docs/APIKeysApi.md#createkeyapiv1keyspost) | **POST** /api/v1/keys | Create Key
+*APIKeysApi* | [**createKeyApiV1KeysPost_0**](docs/APIKeysApi.md#createkeyapiv1keyspost_0) | **POST** /api/v1/keys | Create Key
+*APIKeysApi* | [**listKeysApiV1KeysGet**](docs/APIKeysApi.md#listkeysapiv1keysget) | **GET** /api/v1/keys | List Keys
+*APIKeysApi* | [**listKeysApiV1KeysGet_0**](docs/APIKeysApi.md#listkeysapiv1keysget_0) | **GET** /api/v1/keys | List Keys
+*APIKeysApi* | [**revokeKeyApiV1KeysKeyIdDelete**](docs/APIKeysApi.md#revokekeyapiv1keyskeyiddelete) | **DELETE** /api/v1/keys/{key_id} | Revoke Key
+*APIKeysApi* | [**revokeKeyApiV1KeysKeyIdDelete_0**](docs/APIKeysApi.md#revokekeyapiv1keyskeyiddelete_0) | **DELETE** /api/v1/keys/{key_id} | Revoke Key
+*APIKeysApi* | [**rotateKeyApiV1KeysKeyIdRotatePost**](docs/APIKeysApi.md#rotatekeyapiv1keyskeyidrotatepost) | **POST** /api/v1/keys/{key_id}/rotate | Rotate Key
+*APIKeysApi* | [**rotateKeyApiV1KeysKeyIdRotatePost_0**](docs/APIKeysApi.md#rotatekeyapiv1keyskeyidrotatepost_0) | **POST** /api/v1/keys/{key_id}/rotate | Rotate Key
+*APIKeysApi* | [**updateKeyApiV1KeysKeyIdPatch**](docs/APIKeysApi.md#updatekeyapiv1keyskeyidpatch) | **PATCH** /api/v1/keys/{key_id} | Update Key
+*APIKeysApi* | [**updateKeyApiV1KeysKeyIdPatch_0**](docs/APIKeysApi.md#updatekeyapiv1keyskeyidpatch_0) | **PATCH** /api/v1/keys/{key_id} | Update Key
+*AccountApi* | [**getAccountInfoApiV1AccountGet**](docs/AccountApi.md#getaccountinfoapiv1accountget) | **GET** /api/v1/account | Get Account Info
+*AccountApi* | [**getAccountInfoApiV1AccountGet_0**](docs/AccountApi.md#getaccountinfoapiv1accountget_0) | **GET** /api/v1/account | Get Account Info
+*AccountApi* | [**getAccountQuotaApiV1AccountQuotaGet**](docs/AccountApi.md#getaccountquotaapiv1accountquotaget) | **GET** /api/v1/account/quota | Get Account Quota
+*AccountApi* | [**getAccountQuotaApiV1AccountQuotaGet_0**](docs/AccountApi.md#getaccountquotaapiv1accountquotaget_0) | **GET** /api/v1/account/quota | Get Account Quota
+*BYOKApi* | [**listPublicKeysApiV1ByokPublicKeysGet**](docs/BYOKApi.md#listpublickeysapiv1byokpublickeysget) | **GET** /api/v1/byok/public-keys | List public keys
+*BYOKApi* | [**listPublicKeysApiV1ByokPublicKeysGet_0**](docs/BYOKApi.md#listpublickeysapiv1byokpublickeysget_0) | **GET** /api/v1/byok/public-keys | List public keys
+*BYOKApi* | [**registerPublicKeyApiV1ByokPublicKeysPost**](docs/BYOKApi.md#registerpublickeyapiv1byokpublickeyspost) | **POST** /api/v1/byok/public-keys | Register a public key
+*BYOKApi* | [**registerPublicKeyApiV1ByokPublicKeysPost_0**](docs/BYOKApi.md#registerpublickeyapiv1byokpublickeyspost_0) | **POST** /api/v1/byok/public-keys | Register a public key
+*BYOKApi* | [**revokePublicKeyApiV1ByokPublicKeysKeyIdDelete**](docs/BYOKApi.md#revokepublickeyapiv1byokpublickeyskeyiddelete) | **DELETE** /api/v1/byok/public-keys/{key_id} | Revoke a public key
+*BYOKApi* | [**revokePublicKeyApiV1ByokPublicKeysKeyIdDelete_0**](docs/BYOKApi.md#revokepublickeyapiv1byokpublickeyskeyiddelete_0) | **DELETE** /api/v1/byok/public-keys/{key_id} | Revoke a public key
 *BatchApi* | [**batchSignApiV1BatchSignPost**](docs/BatchApi.md#batchsignapiv1batchsignpost) | **POST** /api/v1/batch/sign | Batch Sign
 *BatchApi* | [**batchVerifyApiV1BatchVerifyPost**](docs/BatchApi.md#batchverifyapiv1batchverifypost) | **POST** /api/v1/batch/verify | Batch Verify
 *C2PACustomAssertionsApi* | [**createSchemaApiV1EnterpriseC2paSchemasPost**](docs/C2PACustomAssertionsApi.md#createschemaapiv1enterprisec2paschemaspost) | **POST** /api/v1/enterprise/c2pa/schemas | Create Schema
@@ -85,44 +99,29 @@ All URIs are relative to *http://localhost*
 *CoalitionApi* | [**optInToCoalitionApiV1CoalitionOptInPost_0**](docs/CoalitionApi.md#optintocoalitionapiv1coalitionoptinpost_0) | **POST** /api/v1/coalition/opt-in | Opt In To Coalition
 *CoalitionApi* | [**optOutOfCoalitionApiV1CoalitionOptOutPost**](docs/CoalitionApi.md#optoutofcoalitionapiv1coalitionoptoutpost) | **POST** /api/v1/coalition/opt-out | Opt Out Of Coalition
 *CoalitionApi* | [**optOutOfCoalitionApiV1CoalitionOptOutPost_0**](docs/CoalitionApi.md#optoutofcoalitionapiv1coalitionoptoutpost_0) | **POST** /api/v1/coalition/opt-out | Opt Out Of Coalition
+*DocumentsApi* | [**deleteDocumentApiV1DocumentsDocumentIdDelete**](docs/DocumentsApi.md#deletedocumentapiv1documentsdocumentiddelete) | **DELETE** /api/v1/documents/{document_id} | Delete Document
+*DocumentsApi* | [**deleteDocumentApiV1DocumentsDocumentIdDelete_0**](docs/DocumentsApi.md#deletedocumentapiv1documentsdocumentiddelete_0) | **DELETE** /api/v1/documents/{document_id} | Delete Document
+*DocumentsApi* | [**getDocumentApiV1DocumentsDocumentIdGet**](docs/DocumentsApi.md#getdocumentapiv1documentsdocumentidget) | **GET** /api/v1/documents/{document_id} | Get Document
+*DocumentsApi* | [**getDocumentApiV1DocumentsDocumentIdGet_0**](docs/DocumentsApi.md#getdocumentapiv1documentsdocumentidget_0) | **GET** /api/v1/documents/{document_id} | Get Document
+*DocumentsApi* | [**getDocumentHistoryApiV1DocumentsDocumentIdHistoryGet**](docs/DocumentsApi.md#getdocumenthistoryapiv1documentsdocumentidhistoryget) | **GET** /api/v1/documents/{document_id}/history | Get Document History
+*DocumentsApi* | [**getDocumentHistoryApiV1DocumentsDocumentIdHistoryGet_0**](docs/DocumentsApi.md#getdocumenthistoryapiv1documentsdocumentidhistoryget_0) | **GET** /api/v1/documents/{document_id}/history | Get Document History
+*DocumentsApi* | [**listDocumentsApiV1DocumentsGet**](docs/DocumentsApi.md#listdocumentsapiv1documentsget) | **GET** /api/v1/documents | List Documents
+*DocumentsApi* | [**listDocumentsApiV1DocumentsGet_0**](docs/DocumentsApi.md#listdocumentsapiv1documentsget_0) | **GET** /api/v1/documents | List Documents
 *EnterpriseEmbeddingsApi* | [**encodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPost**](docs/EnterpriseEmbeddingsApi.md#encodewithembeddingsapiv1enterpriseembeddingsencodewithembeddingspost) | **POST** /api/v1/enterprise/embeddings/encode-with-embeddings | Encode With Embeddings
+*EnterpriseEmbeddingsApi* | [**signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPost**](docs/EnterpriseEmbeddingsApi.md#signadvancedapiv1enterpriseembeddingssignadvancedpost) | **POST** /api/v1/enterprise/embeddings/sign/advanced | Sign Advanced
 *EnterpriseMerkleTreesApi* | [**detectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost**](docs/EnterpriseMerkleTreesApi.md#detectplagiarismapiv1enterprisemerkledetectplagiarismpost) | **POST** /api/v1/enterprise/merkle/detect-plagiarism | Detect Plagiarism
 *EnterpriseMerkleTreesApi* | [**encodeDocumentApiV1EnterpriseMerkleEncodePost**](docs/EnterpriseMerkleTreesApi.md#encodedocumentapiv1enterprisemerkleencodepost) | **POST** /api/v1/enterprise/merkle/encode | Encode Document into Merkle Trees
 *EnterpriseMerkleTreesApi* | [**findSourcesApiV1EnterpriseMerkleAttributePost**](docs/EnterpriseMerkleTreesApi.md#findsourcesapiv1enterprisemerkleattributepost) | **POST** /api/v1/enterprise/merkle/attribute | Find Source Documents
 *HealthApi* | [**healthCheckHealthGet**](docs/HealthApi.md#healthcheckhealthget) | **GET** /health | Health Check
 *HealthApi* | [**readinessCheckReadyzGet**](docs/HealthApi.md#readinesscheckreadyzget) | **GET** /readyz | Readiness Check
 *InfoApi* | [**rootGet**](docs/InfoApi.md#rootget) | **GET** / | Root
-*LicensingApi* | [**createAgreementApiV1LicensingAgreementsPost**](docs/LicensingApi.md#createagreementapiv1licensingagreementspost) | **POST** /api/v1/licensing/agreements | Create Agreement
-*LicensingApi* | [**createAgreementApiV1LicensingAgreementsPost_0**](docs/LicensingApi.md#createagreementapiv1licensingagreementspost_0) | **POST** /api/v1/licensing/agreements | Create Agreement
-*LicensingApi* | [**createRevenueDistributionApiV1LicensingDistributionsPost**](docs/LicensingApi.md#createrevenuedistributionapiv1licensingdistributionspost) | **POST** /api/v1/licensing/distributions | Create Revenue Distribution
-*LicensingApi* | [**createRevenueDistributionApiV1LicensingDistributionsPost_0**](docs/LicensingApi.md#createrevenuedistributionapiv1licensingdistributionspost_0) | **POST** /api/v1/licensing/distributions | Create Revenue Distribution
-*LicensingApi* | [**getAgreementApiV1LicensingAgreementsAgreementIdGet**](docs/LicensingApi.md#getagreementapiv1licensingagreementsagreementidget) | **GET** /api/v1/licensing/agreements/{agreement_id} | Get Agreement
-*LicensingApi* | [**getAgreementApiV1LicensingAgreementsAgreementIdGet_0**](docs/LicensingApi.md#getagreementapiv1licensingagreementsagreementidget_0) | **GET** /api/v1/licensing/agreements/{agreement_id} | Get Agreement
-*LicensingApi* | [**getDistributionApiV1LicensingDistributionsDistributionIdGet**](docs/LicensingApi.md#getdistributionapiv1licensingdistributionsdistributionidget) | **GET** /api/v1/licensing/distributions/{distribution_id} | Get Distribution
-*LicensingApi* | [**getDistributionApiV1LicensingDistributionsDistributionIdGet_0**](docs/LicensingApi.md#getdistributionapiv1licensingdistributionsdistributionidget_0) | **GET** /api/v1/licensing/distributions/{distribution_id} | Get Distribution
-*LicensingApi* | [**listAgreementsApiV1LicensingAgreementsGet**](docs/LicensingApi.md#listagreementsapiv1licensingagreementsget) | **GET** /api/v1/licensing/agreements | List Agreements
-*LicensingApi* | [**listAgreementsApiV1LicensingAgreementsGet_0**](docs/LicensingApi.md#listagreementsapiv1licensingagreementsget_0) | **GET** /api/v1/licensing/agreements | List Agreements
-*LicensingApi* | [**listAvailableContentApiV1LicensingContentGet**](docs/LicensingApi.md#listavailablecontentapiv1licensingcontentget) | **GET** /api/v1/licensing/content | List Available Content
-*LicensingApi* | [**listAvailableContentApiV1LicensingContentGet_0**](docs/LicensingApi.md#listavailablecontentapiv1licensingcontentget_0) | **GET** /api/v1/licensing/content | List Available Content
-*LicensingApi* | [**listDistributionsApiV1LicensingDistributionsGet**](docs/LicensingApi.md#listdistributionsapiv1licensingdistributionsget) | **GET** /api/v1/licensing/distributions | List Distributions
-*LicensingApi* | [**listDistributionsApiV1LicensingDistributionsGet_0**](docs/LicensingApi.md#listdistributionsapiv1licensingdistributionsget_0) | **GET** /api/v1/licensing/distributions | List Distributions
-*LicensingApi* | [**processPayoutsApiV1LicensingPayoutsPost**](docs/LicensingApi.md#processpayoutsapiv1licensingpayoutspost) | **POST** /api/v1/licensing/payouts | Process Payouts
-*LicensingApi* | [**processPayoutsApiV1LicensingPayoutsPost_0**](docs/LicensingApi.md#processpayoutsapiv1licensingpayoutspost_0) | **POST** /api/v1/licensing/payouts | Process Payouts
-*LicensingApi* | [**terminateAgreementApiV1LicensingAgreementsAgreementIdDelete**](docs/LicensingApi.md#terminateagreementapiv1licensingagreementsagreementiddelete) | **DELETE** /api/v1/licensing/agreements/{agreement_id} | Terminate Agreement
-*LicensingApi* | [**terminateAgreementApiV1LicensingAgreementsAgreementIdDelete_0**](docs/LicensingApi.md#terminateagreementapiv1licensingagreementsagreementiddelete_0) | **DELETE** /api/v1/licensing/agreements/{agreement_id} | Terminate Agreement
-*LicensingApi* | [**trackContentAccessApiV1LicensingTrackAccessPost**](docs/LicensingApi.md#trackcontentaccessapiv1licensingtrackaccesspost) | **POST** /api/v1/licensing/track-access | Track Content Access
-*LicensingApi* | [**trackContentAccessApiV1LicensingTrackAccessPost_0**](docs/LicensingApi.md#trackcontentaccessapiv1licensingtrackaccesspost_0) | **POST** /api/v1/licensing/track-access | Track Content Access
-*LicensingApi* | [**updateAgreementApiV1LicensingAgreementsAgreementIdPatch**](docs/LicensingApi.md#updateagreementapiv1licensingagreementsagreementidpatch) | **PATCH** /api/v1/licensing/agreements/{agreement_id} | Update Agreement
-*LicensingApi* | [**updateAgreementApiV1LicensingAgreementsAgreementIdPatch_0**](docs/LicensingApi.md#updateagreementapiv1licensingagreementsagreementidpatch_0) | **PATCH** /api/v1/licensing/agreements/{agreement_id} | Update Agreement
 *LookupApi* | [**lookupSentenceApiV1LookupPost**](docs/LookupApi.md#lookupsentenceapiv1lookuppost) | **POST** /api/v1/lookup | Lookup Sentence
+*LookupApi* | [**provenanceLookupApiV1ProvenanceLookupPost**](docs/LookupApi.md#provenancelookupapiv1provenancelookuppost) | **POST** /api/v1/provenance/lookup | Provenance Lookup
 *OnboardingApi* | [**getCertificateStatusApiV1OnboardingCertificateStatusGet**](docs/OnboardingApi.md#getcertificatestatusapiv1onboardingcertificatestatusget) | **GET** /api/v1/onboarding/certificate-status | Get Certificate Status
 *OnboardingApi* | [**requestCertificateApiV1OnboardingRequestCertificatePost**](docs/OnboardingApi.md#requestcertificateapiv1onboardingrequestcertificatepost) | **POST** /api/v1/onboarding/request-certificate | Request Certificate
-*ProvisioningApi* | [**autoProvisionApiV1ProvisioningAutoProvisionPost**](docs/ProvisioningApi.md#autoprovisionapiv1provisioningautoprovisionpost) | **POST** /api/v1/provisioning/auto-provision | Auto-provision Organization and API Key
-*ProvisioningApi* | [**createApiKeyApiV1ProvisioningApiKeysPost**](docs/ProvisioningApi.md#createapikeyapiv1provisioningapikeyspost) | **POST** /api/v1/provisioning/api-keys | Create API Key
-*ProvisioningApi* | [**createUserAccountApiV1ProvisioningUsersPost**](docs/ProvisioningApi.md#createuseraccountapiv1provisioninguserspost) | **POST** /api/v1/provisioning/users | Create User Account
-*ProvisioningApi* | [**listApiKeysApiV1ProvisioningApiKeysGet**](docs/ProvisioningApi.md#listapikeysapiv1provisioningapikeysget) | **GET** /api/v1/provisioning/api-keys | List API Keys
-*ProvisioningApi* | [**provisioningHealthApiV1ProvisioningHealthGet**](docs/ProvisioningApi.md#provisioninghealthapiv1provisioninghealthget) | **GET** /api/v1/provisioning/health | Provisioning Service Health
-*ProvisioningApi* | [**revokeApiKeyApiV1ProvisioningApiKeysKeyIdDelete**](docs/ProvisioningApi.md#revokeapikeyapiv1provisioningapikeyskeyiddelete) | **DELETE** /api/v1/provisioning/api-keys/{key_id} | Revoke API Key
+*PublicC2PAApi* | [**createManifestApiV1PublicC2paCreateManifestPost**](docs/PublicC2PAApi.md#createmanifestapiv1publicc2pacreatemanifestpost) | **POST** /api/v1/public/c2pa/create-manifest | Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)
+*PublicC2PAApi* | [**getTrustAnchorApiV1PublicC2paTrustAnchorsSignerIdGet**](docs/PublicC2PAApi.md#gettrustanchorapiv1publicc2patrustanchorssigneridget) | **GET** /api/v1/public/c2pa/trust-anchors/{signer_id} | Lookup trust anchor for C2PA verification (Public)
+*PublicC2PAApi* | [**validateManifestApiV1PublicC2paValidateManifestPost**](docs/PublicC2PAApi.md#validatemanifestapiv1publicc2pavalidatemanifestpost) | **POST** /api/v1/public/c2pa/validate-manifest | Validate C2PA-like manifest JSON (Public - Non-Cryptographic)
 *PublicToolsApi* | [**decodeTextApiV1ToolsDecodePost**](docs/PublicToolsApi.md#decodetextapiv1toolsdecodepost) | **POST** /api/v1/tools/decode | Decode Text
 *PublicToolsApi* | [**decodeTextApiV1ToolsDecodePost_0**](docs/PublicToolsApi.md#decodetextapiv1toolsdecodepost_0) | **POST** /api/v1/tools/decode | Decode Text
 *PublicToolsApi* | [**encodeTextApiV1ToolsEncodePost**](docs/PublicToolsApi.md#encodetextapiv1toolsencodepost) | **POST** /api/v1/tools/encode | Encode Text
@@ -130,6 +129,7 @@ All URIs are relative to *http://localhost*
 *PublicVerificationApi* | [**batchVerifyEmbeddingsApiV1PublicVerifyBatchPost**](docs/PublicVerificationApi.md#batchverifyembeddingsapiv1publicverifybatchpost) | **POST** /api/v1/public/verify/batch | Batch Verify Embeddings (Public - No Auth Required)
 *PublicVerificationApi* | [**extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost**](docs/PublicVerificationApi.md#extractandverifyembeddingapiv1publicextractandverifypost) | **POST** /api/v1/public/extract-and-verify | Extract and Verify Invisible Embedding (Public - No Auth Required)
 *PublicVerificationApi* | [**verifyEmbeddingApiV1PublicVerifyRefIdGet**](docs/PublicVerificationApi.md#verifyembeddingapiv1publicverifyrefidget) | **GET** /api/v1/public/verify/{ref_id} | Verify Embedding (Public - No Auth Required)
+*SigningApi* | [**signAdvancedApiV1SignAdvancedPost**](docs/SigningApi.md#signadvancedapiv1signadvancedpost) | **POST** /api/v1/sign/advanced | Sign Advanced
 *SigningApi* | [**signContentApiV1SignPost**](docs/SigningApi.md#signcontentapiv1signpost) | **POST** /api/v1/sign | Sign Content
 *StatusRevocationApi* | [**getDocumentStatusApiV1StatusDocumentsDocumentIdGet**](docs/StatusRevocationApi.md#getdocumentstatusapiv1statusdocumentsdocumentidget) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
 *StatusRevocationApi* | [**getDocumentStatusApiV1StatusDocumentsDocumentIdGet_0**](docs/StatusRevocationApi.md#getdocumentstatusapiv1statusdocumentsdocumentidget_0) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
@@ -148,45 +148,39 @@ All URIs are relative to *http://localhost*
 *StreamingApi* | [**sseEventsEndpointApiV1StreamEventsGet**](docs/StreamingApi.md#sseeventsendpointapiv1streameventsget) | **GET** /api/v1/stream/events | Sse Events Endpoint
 *StreamingApi* | [**streamSigningApiV1StreamSignPost**](docs/StreamingApi.md#streamsigningapiv1streamsignpost) | **POST** /api/v1/stream/sign | Stream Signing
 *StreamingApi* | [**streamingHealthCheckApiV1StreamHealthGet**](docs/StreamingApi.md#streaminghealthcheckapiv1streamhealthget) | **GET** /api/v1/stream/health | Streaming Health Check
-*TeamManagementApi* | [**acceptInviteApiV1OrgMembersAcceptInvitePost**](docs/TeamManagementApi.md#acceptinviteapiv1orgmembersacceptinvitepost) | **POST** /api/v1/org/members/accept-invite | Accept Invite
-*TeamManagementApi* | [**acceptInviteApiV1OrgMembersAcceptInvitePost_0**](docs/TeamManagementApi.md#acceptinviteapiv1orgmembersacceptinvitepost_0) | **POST** /api/v1/org/members/accept-invite | Accept Invite
-*TeamManagementApi* | [**inviteMemberApiV1OrgMembersInvitePost**](docs/TeamManagementApi.md#invitememberapiv1orgmembersinvitepost) | **POST** /api/v1/org/members/invite | Invite Member
-*TeamManagementApi* | [**inviteMemberApiV1OrgMembersInvitePost_0**](docs/TeamManagementApi.md#invitememberapiv1orgmembersinvitepost_0) | **POST** /api/v1/org/members/invite | Invite Member
-*TeamManagementApi* | [**listPendingInvitesApiV1OrgMembersInvitesGet**](docs/TeamManagementApi.md#listpendinginvitesapiv1orgmembersinvitesget) | **GET** /api/v1/org/members/invites | List Pending Invites
-*TeamManagementApi* | [**listPendingInvitesApiV1OrgMembersInvitesGet_0**](docs/TeamManagementApi.md#listpendinginvitesapiv1orgmembersinvitesget_0) | **GET** /api/v1/org/members/invites | List Pending Invites
-*TeamManagementApi* | [**listTeamMembersApiV1OrgMembersGet**](docs/TeamManagementApi.md#listteammembersapiv1orgmembersget) | **GET** /api/v1/org/members | List Team Members
-*TeamManagementApi* | [**listTeamMembersApiV1OrgMembersGet_0**](docs/TeamManagementApi.md#listteammembersapiv1orgmembersget_0) | **GET** /api/v1/org/members | List Team Members
-*TeamManagementApi* | [**removeMemberApiV1OrgMembersMemberIdDelete**](docs/TeamManagementApi.md#removememberapiv1orgmembersmemberiddelete) | **DELETE** /api/v1/org/members/{member_id} | Remove Member
-*TeamManagementApi* | [**removeMemberApiV1OrgMembersMemberIdDelete_0**](docs/TeamManagementApi.md#removememberapiv1orgmembersmemberiddelete_0) | **DELETE** /api/v1/org/members/{member_id} | Remove Member
-*TeamManagementApi* | [**revokeInviteApiV1OrgMembersInvitesInviteIdDelete**](docs/TeamManagementApi.md#revokeinviteapiv1orgmembersinvitesinviteiddelete) | **DELETE** /api/v1/org/members/invites/{invite_id} | Revoke Invite
-*TeamManagementApi* | [**revokeInviteApiV1OrgMembersInvitesInviteIdDelete_0**](docs/TeamManagementApi.md#revokeinviteapiv1orgmembersinvitesinviteiddelete_0) | **DELETE** /api/v1/org/members/invites/{invite_id} | Revoke Invite
-*TeamManagementApi* | [**updateMemberRoleApiV1OrgMembersMemberIdRolePatch**](docs/TeamManagementApi.md#updatememberroleapiv1orgmembersmemberidrolepatch) | **PATCH** /api/v1/org/members/{member_id}/role | Update Member Role
-*TeamManagementApi* | [**updateMemberRoleApiV1OrgMembersMemberIdRolePatch_0**](docs/TeamManagementApi.md#updatememberroleapiv1orgmembersmemberidrolepatch_0) | **PATCH** /api/v1/org/members/{member_id}/role | Update Member Role
 *UsageApi* | [**getUsageHistoryApiV1UsageHistoryGet**](docs/UsageApi.md#getusagehistoryapiv1usagehistoryget) | **GET** /api/v1/usage/history | Get Usage History
 *UsageApi* | [**getUsageStatsApiV1UsageGet**](docs/UsageApi.md#getusagestatsapiv1usageget) | **GET** /api/v1/usage | Get Usage Stats
 *UsageApi* | [**resetMonthlyUsageApiV1UsageResetPost**](docs/UsageApi.md#resetmonthlyusageapiv1usageresetpost) | **POST** /api/v1/usage/reset | Reset Monthly Usage
 *VerificationApi* | [**verifyByDocumentIdApiV1VerifyDocumentIdGet**](docs/VerificationApi.md#verifybydocumentidapiv1verifydocumentidget) | **GET** /api/v1/verify/{document_id} | Verify By Document Id
 *VerificationApi* | [**verifyContentApiV1VerifyPost**](docs/VerificationApi.md#verifycontentapiv1verifypost) | **POST** /api/v1/verify | Verify Content
+*WebhooksApi* | [**createWebhookApiV1WebhooksPost**](docs/WebhooksApi.md#createwebhookapiv1webhookspost) | **POST** /api/v1/webhooks | Create Webhook
+*WebhooksApi* | [**createWebhookApiV1WebhooksPost_0**](docs/WebhooksApi.md#createwebhookapiv1webhookspost_0) | **POST** /api/v1/webhooks | Create Webhook
+*WebhooksApi* | [**deleteWebhookApiV1WebhooksWebhookIdDelete**](docs/WebhooksApi.md#deletewebhookapiv1webhookswebhookiddelete) | **DELETE** /api/v1/webhooks/{webhook_id} | Delete Webhook
+*WebhooksApi* | [**deleteWebhookApiV1WebhooksWebhookIdDelete_0**](docs/WebhooksApi.md#deletewebhookapiv1webhookswebhookiddelete_0) | **DELETE** /api/v1/webhooks/{webhook_id} | Delete Webhook
+*WebhooksApi* | [**getWebhookApiV1WebhooksWebhookIdGet**](docs/WebhooksApi.md#getwebhookapiv1webhookswebhookidget) | **GET** /api/v1/webhooks/{webhook_id} | Get Webhook
+*WebhooksApi* | [**getWebhookApiV1WebhooksWebhookIdGet_0**](docs/WebhooksApi.md#getwebhookapiv1webhookswebhookidget_0) | **GET** /api/v1/webhooks/{webhook_id} | Get Webhook
+*WebhooksApi* | [**getWebhookDeliveriesApiV1WebhooksWebhookIdDeliveriesGet**](docs/WebhooksApi.md#getwebhookdeliveriesapiv1webhookswebhookiddeliveriesget) | **GET** /api/v1/webhooks/{webhook_id}/deliveries | Get Webhook Deliveries
+*WebhooksApi* | [**getWebhookDeliveriesApiV1WebhooksWebhookIdDeliveriesGet_0**](docs/WebhooksApi.md#getwebhookdeliveriesapiv1webhookswebhookiddeliveriesget_0) | **GET** /api/v1/webhooks/{webhook_id}/deliveries | Get Webhook Deliveries
+*WebhooksApi* | [**listWebhooksApiV1WebhooksGet**](docs/WebhooksApi.md#listwebhooksapiv1webhooksget) | **GET** /api/v1/webhooks | List Webhooks
+*WebhooksApi* | [**listWebhooksApiV1WebhooksGet_0**](docs/WebhooksApi.md#listwebhooksapiv1webhooksget_0) | **GET** /api/v1/webhooks | List Webhooks
+*WebhooksApi* | [**testWebhookApiV1WebhooksWebhookIdTestPost**](docs/WebhooksApi.md#testwebhookapiv1webhookswebhookidtestpost) | **POST** /api/v1/webhooks/{webhook_id}/test | Test Webhook
+*WebhooksApi* | [**testWebhookApiV1WebhooksWebhookIdTestPost_0**](docs/WebhooksApi.md#testwebhookapiv1webhookswebhookidtestpost_0) | **POST** /api/v1/webhooks/{webhook_id}/test | Test Webhook
+*WebhooksApi* | [**updateWebhookApiV1WebhooksWebhookIdPatch**](docs/WebhooksApi.md#updatewebhookapiv1webhookswebhookidpatch) | **PATCH** /api/v1/webhooks/{webhook_id} | Update Webhook
+*WebhooksApi* | [**updateWebhookApiV1WebhooksWebhookIdPatch_0**](docs/WebhooksApi.md#updatewebhookapiv1webhookswebhookidpatch_0) | **PATCH** /api/v1/webhooks/{webhook_id} | Update Webhook
 
 
 ### Models
 
-- [APIKeyCreateRequest](docs/APIKeyCreateRequest.md)
-- [APIKeyListResponse](docs/APIKeyListResponse.md)
-- [APIKeyResponse](docs/APIKeyResponse.md)
-- [APIKeyRevokeRequest](docs/APIKeyRevokeRequest.md)
-- [AgreementStatus](docs/AgreementStatus.md)
-- [AgreementType](docs/AgreementType.md)
+- [AccountInfo](docs/AccountInfo.md)
+- [AccountResponse](docs/AccountResponse.md)
+- [AppModelsRequestModelsRightsMetadata](docs/AppModelsRequestModelsRightsMetadata.md)
 - [AppModelsResponseModelsVerifyVerdict](docs/AppModelsResponseModelsVerifyVerdict.md)
 - [AppRoutersToolsVerifyVerdict](docs/AppRoutersToolsVerifyVerdict.md)
 - [AppSchemasBatchBatchVerifyRequest](docs/AppSchemasBatchBatchVerifyRequest.md)
 - [AppSchemasEmbeddingsBatchVerifyRequest](docs/AppSchemasEmbeddingsBatchVerifyRequest.md)
 - [AppSchemasEmbeddingsErrorResponse](docs/AppSchemasEmbeddingsErrorResponse.md)
+- [AppSchemasEmbeddingsRightsMetadata](docs/AppSchemasEmbeddingsRightsMetadata.md)
 - [AppSchemasMerkleErrorResponse](docs/AppSchemasMerkleErrorResponse.md)
-- [AuditLogEntry](docs/AuditLogEntry.md)
-- [AuditLogResponse](docs/AuditLogResponse.md)
-- [AutoProvisionRequest](docs/AutoProvisionRequest.md)
-- [AutoProvisionResponse](docs/AutoProvisionResponse.md)
 - [BatchItemPayload](docs/BatchItemPayload.md)
 - [BatchItemResult](docs/BatchItemResult.md)
 - [BatchResponseData](docs/BatchResponseData.md)
@@ -211,22 +205,27 @@ All URIs are relative to *http://localhost*
 - [ChatCompletionRequest](docs/ChatCompletionRequest.md)
 - [ChatMessage](docs/ChatMessage.md)
 - [CoalitionDashboardResponse](docs/CoalitionDashboardResponse.md)
-- [ContentAccessLogResponse](docs/ContentAccessLogResponse.md)
-- [ContentAccessTrack](docs/ContentAccessTrack.md)
 - [ContentInfo](docs/ContentInfo.md)
-- [ContentListResponse](docs/ContentListResponse.md)
-- [ContentMetadata](docs/ContentMetadata.md)
 - [ContentStats](docs/ContentStats.md)
+- [CreateManifestRequest](docs/CreateManifestRequest.md)
+- [CreateManifestResponse](docs/CreateManifestResponse.md)
+- [CreateManifestSigningPayload](docs/CreateManifestSigningPayload.md)
 - [DecodeToolRequest](docs/DecodeToolRequest.md)
 - [DecodeToolResponse](docs/DecodeToolResponse.md)
-- [DistributionStatus](docs/DistributionStatus.md)
+- [DocumentDeleteResponse](docs/DocumentDeleteResponse.md)
+- [DocumentDetail](docs/DocumentDetail.md)
+- [DocumentDetailResponse](docs/DocumentDetailResponse.md)
 - [DocumentEncodeRequest](docs/DocumentEncodeRequest.md)
 - [DocumentEncodeResponse](docs/DocumentEncodeResponse.md)
+- [DocumentHistoryResponse](docs/DocumentHistoryResponse.md)
 - [DocumentInfo](docs/DocumentInfo.md)
+- [DocumentListResponse](docs/DocumentListResponse.md)
 - [DocumentStatusResponse](docs/DocumentStatusResponse.md)
 - [EarningsSummary](docs/EarningsSummary.md)
 - [EmbeddingInfo](docs/EmbeddingInfo.md)
 - [EmbeddingOptions](docs/EmbeddingOptions.md)
+- [EmbeddingResult](docs/EmbeddingResult.md)
+- [EmbeddingVerdict](docs/EmbeddingVerdict.md)
 - [EncodeToolRequest](docs/EncodeToolRequest.md)
 - [EncodeToolResponse](docs/EncodeToolResponse.md)
 - [EncodeWithEmbeddingsRequest](docs/EncodeWithEmbeddingsRequest.md)
@@ -234,31 +233,33 @@ All URIs are relative to *http://localhost*
 - [ErrorDetail](docs/ErrorDetail.md)
 - [ExtractAndVerifyRequest](docs/ExtractAndVerifyRequest.md)
 - [ExtractAndVerifyResponse](docs/ExtractAndVerifyResponse.md)
+- [FeatureFlags](docs/FeatureFlags.md)
 - [HTTPValidationError](docs/HTTPValidationError.md)
 - [HeatMapData](docs/HeatMapData.md)
-- [InviteRequest](docs/InviteRequest.md)
-- [InviteResponse](docs/InviteResponse.md)
+- [KeyCreateRequest](docs/KeyCreateRequest.md)
+- [KeyCreateResponse](docs/KeyCreateResponse.md)
+- [KeyListResponse](docs/KeyListResponse.md)
+- [KeyRevokeResponse](docs/KeyRevokeResponse.md)
+- [KeyRotateResponse](docs/KeyRotateResponse.md)
+- [KeyUpdateRequest](docs/KeyUpdateRequest.md)
+- [KeyUpdateResponse](docs/KeyUpdateResponse.md)
 - [LicenseInfo](docs/LicenseInfo.md)
-- [LicensingAgreementCreate](docs/LicensingAgreementCreate.md)
-- [LicensingAgreementCreateResponse](docs/LicensingAgreementCreateResponse.md)
-- [LicensingAgreementResponse](docs/LicensingAgreementResponse.md)
-- [LicensingAgreementUpdate](docs/LicensingAgreementUpdate.md)
 - [LicensingInfo](docs/LicensingInfo.md)
 - [LookupRequest](docs/LookupRequest.md)
 - [LookupResponse](docs/LookupResponse.md)
-- [MemberRevenueDetail](docs/MemberRevenueDetail.md)
 - [MerkleProofInfo](docs/MerkleProofInfo.md)
 - [MerkleRootResponse](docs/MerkleRootResponse.md)
 - [MerkleTreeInfo](docs/MerkleTreeInfo.md)
-- [PayoutCreate](docs/PayoutCreate.md)
-- [PayoutResponse](docs/PayoutResponse.md)
-- [PayoutStatus](docs/PayoutStatus.md)
 - [PayoutSummary](docs/PayoutSummary.md)
-- [PendingInvite](docs/PendingInvite.md)
 - [PlagiarismDetectionRequest](docs/PlagiarismDetectionRequest.md)
 - [PlagiarismDetectionResponse](docs/PlagiarismDetectionResponse.md)
-- [RevenueDistributionCreate](docs/RevenueDistributionCreate.md)
-- [RevenueDistributionResponse](docs/RevenueDistributionResponse.md)
+- [PublicKeyInfo](docs/PublicKeyInfo.md)
+- [PublicKeyListResponse](docs/PublicKeyListResponse.md)
+- [PublicKeyRegisterRequest](docs/PublicKeyRegisterRequest.md)
+- [PublicKeyRegisterResponse](docs/PublicKeyRegisterResponse.md)
+- [QuotaInfo](docs/QuotaInfo.md)
+- [QuotaMetric](docs/QuotaMetric.md)
+- [QuotaResponse](docs/QuotaResponse.md)
 - [RevocationReason](docs/RevocationReason.md)
 - [RevocationResponse](docs/RevocationResponse.md)
 - [RevokeRequest](docs/RevokeRequest.md)
@@ -269,24 +270,26 @@ All URIs are relative to *http://localhost*
 - [SourceDocumentMatch](docs/SourceDocumentMatch.md)
 - [SourceMatch](docs/SourceMatch.md)
 - [StreamSignRequest](docs/StreamSignRequest.md)
-- [SuccessResponse](docs/SuccessResponse.md)
-- [TeamMember](docs/TeamMember.md)
-- [TeamMemberListResponse](docs/TeamMemberListResponse.md)
-- [TeamRole](docs/TeamRole.md)
-- [TotalValue](docs/TotalValue.md)
-- [TotalValue1](docs/TotalValue1.md)
-- [UpdateRoleRequest](docs/UpdateRoleRequest.md)
+- [TrustAnchorResponse](docs/TrustAnchorResponse.md)
 - [UsageMetric](docs/UsageMetric.md)
 - [UsageResetResponse](docs/UsageResetResponse.md)
 - [UsageResponse](docs/UsageResponse.md)
-- [UserAccountCreateRequest](docs/UserAccountCreateRequest.md)
-- [UserAccountResponse](docs/UserAccountResponse.md)
+- [ValidateManifestRequest](docs/ValidateManifestRequest.md)
+- [ValidateManifestResponse](docs/ValidateManifestResponse.md)
 - [ValidationError](docs/ValidationError.md)
 - [ValidationErrorLocInner](docs/ValidationErrorLocInner.md)
 - [VerifyEmbeddingRequest](docs/VerifyEmbeddingRequest.md)
 - [VerifyEmbeddingResponse](docs/VerifyEmbeddingResponse.md)
 - [VerifyRequest](docs/VerifyRequest.md)
 - [VerifyResponse](docs/VerifyResponse.md)
+- [WebhookCreateRequest](docs/WebhookCreateRequest.md)
+- [WebhookCreateResponse](docs/WebhookCreateResponse.md)
+- [WebhookDeleteResponse](docs/WebhookDeleteResponse.md)
+- [WebhookDeliveriesResponse](docs/WebhookDeliveriesResponse.md)
+- [WebhookListResponse](docs/WebhookListResponse.md)
+- [WebhookTestResponse](docs/WebhookTestResponse.md)
+- [WebhookUpdateRequest](docs/WebhookUpdateRequest.md)
+- [WebhookUpdateResponse](docs/WebhookUpdateResponse.md)
 
 ### Authorization
 

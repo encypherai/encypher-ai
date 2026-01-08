@@ -79,13 +79,18 @@
     margin-left: 10px;
 }
 
-.tier-badge.tier-free {
+.tier-badge.tier-starter {
     background: #f0f0f1;
     color: #50575e;
 }
 
-.tier-badge.tier-pro {
+.tier-badge.tier-professional {
     background: #2271b1;
+    color: #fff;
+}
+
+.tier-badge.tier-business {
+    background: #135e96;
     color: #fff;
 }
 
@@ -96,28 +101,16 @@
 
 /* Feature List */
 .feature-list {
-    list-style: none;
-    padding: 0;
+    list-style: disc;
+    padding-left: 20px;
     margin: 15px 0;
 }
 
 .feature-list li {
     padding: 8px 0;
-    padding-left: 30px;
-    position: relative;
 }
 
-.feature-list li:before {
-    content: "✓";
-    position: absolute;
-    left: 0;
-    color: #00a32a;
-    font-weight: bold;
-    font-size: 18px;
-}
-
-.feature-list li.feature-disabled:before {
-    content: "✗";
+.feature-list li.feature-disabled {
     color: #d63638;
 }
 

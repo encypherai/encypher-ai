@@ -17,6 +17,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import async_session_factory
+from app.utils.outbound_url import validate_https_public_url
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class WebhookDispatcher:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
                 timeout=httpx.Timeout(self.TIMEOUT_SECONDS),
-                follow_redirects=True,
+                follow_redirects=False,
             )
         return self._client
 
@@ -237,6 +238,12 @@ class WebhookDispatcher:
         Returns:
             True if delivery succeeded
         """
+        try:
+            validate_https_public_url(url, resolve_dns=True)
+        except ValueError:
+            await self._record_failure(db, delivery_id, webhook_id, "Untrusted webhook URL")
+            return False
+
         client = await self.get_client()
 
         # Build headers

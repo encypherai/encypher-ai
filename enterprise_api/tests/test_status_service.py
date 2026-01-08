@@ -5,7 +5,7 @@ TEAM_002: Tests for per-document revocation at internet scale.
 """
 import base64
 import gzip
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -217,12 +217,13 @@ class TestStatusServiceBitstring:
         url = "https://status.encypherai.com/v1/org_test/list/0"
         service._list_cache[url] = (bytes(BYTES_PER_LIST), float('inf'))
         
-        is_revoked = await service.check_revocation(
+        is_revoked, error = await service.check_revocation(
             status_list_url=url,
             bit_index=42,
         )
         
         assert is_revoked is False
+        assert error is None
     
     @pytest.mark.asyncio
     async def test_check_revocation_revoked(self):
@@ -238,12 +239,26 @@ class TestStatusServiceBitstring:
         url = "https://status.encypherai.com/v1/org_test/list/0"
         service._list_cache[url] = (bytes(bitstring), float('inf'))
         
-        is_revoked = await service.check_revocation(
+        is_revoked, error = await service.check_revocation(
             status_list_url=url,
             bit_index=42,
         )
         
         assert is_revoked is True
+        assert error is None
+
+    @pytest.mark.asyncio
+    async def test_check_revocation_failure_returns_unknown(self):
+        service = StatusService()
+
+        with patch.object(service, "_get_status_list", new=AsyncMock(side_effect=ValueError("boom"))):
+            is_revoked, error = await service.check_revocation(
+                status_list_url="https://status.encypherai.com/v1/org_test/list/0",
+                bit_index=42,
+            )
+
+        assert is_revoked is None
+        assert isinstance(error, str)
 
 
 class TestStatusServiceCache:
@@ -312,3 +327,48 @@ class TestBitstringOperations:
         assert BITS_PER_LIST == 131072
         assert BYTES_PER_LIST == 16384
         assert BITS_PER_LIST == BYTES_PER_LIST * 8
+
+
+class TestStatusServiceFetch:
+    """Tests for fetching and decoding status lists from CDN URLs."""
+
+    @pytest.mark.asyncio
+    async def test_get_status_list_fetches_and_decodes_encoded_list(self):
+        service = StatusService(cache_ttl_seconds=300)
+
+        # Create bitstring with bit 42 set
+        bitstring = bytearray(BYTES_PER_LIST)
+        byte_index = 42 // 8
+        bit_position = 7 - (42 % 8)
+        bitstring[byte_index] |= (1 << bit_position)
+
+        encoded = base64.b64encode(gzip.compress(bytes(bitstring), compresslevel=9)).decode("ascii")
+        credential = {
+            "credentialSubject": {
+                "encodedList": encoded,
+            }
+        }
+
+        url = "https://status.encypherai.com/v1/org_test/list/0"
+
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = credential
+        mock_response.raise_for_status = MagicMock()
+
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(return_value=mock_response)
+        mock_client.__aenter__.return_value = mock_client
+        mock_client.__aexit__.return_value = None
+
+        with patch("app.services.status_service.httpx.AsyncClient", return_value=mock_client):
+            fetched = await service._get_status_list(url)
+
+        assert len(fetched) == BYTES_PER_LIST
+        assert fetched[byte_index] & (1 << bit_position)
+
+    @pytest.mark.asyncio
+    async def test_get_status_list_rejects_untrusted_url(self):
+        service = StatusService(cache_ttl_seconds=300)
+        with pytest.raises(ValueError, match="Untrusted status list url"):
+            await service._get_status_list("https://example.com/status/list")

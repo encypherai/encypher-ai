@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { getAllPosts, getAllTags, getPostsByTag } from '@/lib/blog';
 import { getSiteUrl } from '@/lib/env';
 import { generateMetadata as buildMetadata } from '@/lib/seo';
+import AISummary from '@/components/seo/AISummary';
 
 export async function generateMetadata({ searchParams }: { searchParams: { tag?: string } }): Promise<Metadata> {
   const siteUrl = getSiteUrl();
@@ -38,6 +39,15 @@ export default async function BlogPage({ searchParams }: { searchParams: { tag?:
 
   return (
     <div className="container mx-auto px-4 py-12 md:py-16">
+      <AISummary
+        title="Encypher Blog – Content Intelligence Insights"
+        whatWeDo="Insights from the Co-Chair of the C2PA Text Provenance Task Force on AI content authentication, content attribution, and licensing infrastructure. Standard publishes January 8, 2026."
+        whoItsFor="Publishers seeking licensing strategies, AI labs exploring compliance, legal professionals interested in content attribution, and developers building with our API and SDKs."
+        keyDifferentiator="Written by the team co-chairing C2PA (c2pa.org) with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others - insider perspective on standards development."
+        primaryValue="Stay informed on market licensing frameworks, regulatory developments, and technical innovations in cryptographic watermarking."
+        pagePath="/blog"
+        pageType="CollectionPage"
+      />
       <header className="mb-12 text-center">
         <h1 className="text-4xl md:text-5xl font-bold mb-4"> Encypher Blog</h1>
         <p className="text-xl text-muted-foreground">

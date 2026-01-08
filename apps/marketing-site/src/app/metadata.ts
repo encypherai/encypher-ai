@@ -5,7 +5,7 @@ export const metadata: Metadata = {
   title: "Encypher | Content Intelligence Infrastructure",
   
   // Meta Description - Search Results Preview
-  description: "Authors of the C2PA text authentication standard. Sentence-level tracking transforms AI litigation into licensing revenue. Mathematical proof for publishers, performance intelligence for AI labs.",
+  description: "Authors of C2PA Section A.7. Patent-pending granular content attribution (83 claims) with Merkle tree authentication. Court-admissible evidence for publishers, performance intelligence for AI labs.",
   
   // Keywords Array (not string)
   keywords: [
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
   // Open Graph (LinkedIn, Facebook, etc.)
   openGraph: {
     title: "Turn Content Intelligence Into Market Advantage",
-    description: "Authors of the C2PA text standard. Sentence-level tracking provides court-admissible evidence for publishers and performance intelligence for AI labs. Mathematical certainty, not statistical guessing.",
+    description: "Authors of C2PA Section A.7. Patent-pending Merkle tree authentication provides court-admissible evidence. 83 claims filed January 7, 2026.",
     images: ['/og-image.png'],
     type: 'website',
     url: 'https://encypherai.com',
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Content Intelligence Infrastructure | Encypher",
-    description: "C2PA text standard authors. Sentence-level tracking transforms litigation into licensing. Evidence for publishers, intelligence for AI labs.",
+    description: "C2PA text standard authors. Patent-pending granular attribution transforms litigation into licensing. 83 claims covering evidence generation.",
     images: ['/og-image.png'],
     creator: '@encypherai',
   },
