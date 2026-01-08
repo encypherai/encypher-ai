@@ -244,6 +244,7 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
         wrapper_text = text[start:end]
         metadata = None
         
+        signer_id_from_outer = None
         try:
             if embedding_type == "c2pa":
                 # For C2PA, use UnicodeMetadata to extract
@@ -251,9 +252,12 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
                 metadata = UnicodeMetadata.extract_metadata(test_text)
             else:
                 # For basic format, parse the JSON payload directly
+                # Structure: {"payload": {...}, "signature": "...", "signer_id": "...", "format": "basic"}
                 json_str = payload_bytes.decode("utf-8").lstrip("\ufeff")
                 outer_payload = json.loads(json_str)
                 if isinstance(outer_payload, dict):
+                    # signer_id is at the outer level, not inside payload
+                    signer_id_from_outer = outer_payload.get("signer_id")
                     metadata = outer_payload.get("payload", outer_payload)
         except Exception as e:
             logger.warning(f"Failed to extract metadata from embedding {i}: {e}")
@@ -268,8 +272,10 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
             metadata=metadata,
         )
         
-        # Extract signer_id from metadata if available
-        if metadata and isinstance(metadata, dict):
+        # Extract signer_id - for basic format it's in outer payload, for C2PA it's in metadata
+        if signer_id_from_outer:
+            embedding.signer_id = signer_id_from_outer
+        elif metadata and isinstance(metadata, dict):
             signer_id = _extract_signer_id(metadata)
             embedding.signer_id = signer_id
         
