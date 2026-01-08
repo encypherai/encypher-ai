@@ -22,53 +22,20 @@ class KeyService:
     @staticmethod
     def _ensure_user_has_organization(db: Session, user_id: str) -> Optional[str]:
         """
-        Ensure a user has an organization. Creates one if they don't.
-        This handles backfill for existing users who signed up before auto-org creation.
+        Try to find or create an organization for the user.
         
-        Returns the organization_id or None if user not found.
+        Note: The key-service may be on a different database than auth-service,
+        so organization_members table may not exist here. In that case, we
+        return None and the key will be user-level only.
+        
+        Returns the organization_id or None if not available.
         """
         from sqlalchemy import text
-        import secrets
         
-        # Get user email
-        user_result = db.execute(text("""
-            SELECT id, email FROM users WHERE id = :user_id
-        """), {"user_id": user_id}).fetchone()
-        
-        if not user_result:
-            return None
-        
-        user_email = user_result.email
-        
-        # Create organization with defaults
-        org_id = f"org_{secrets.token_hex(8)}"
-        
-        db.execute(text("""
-            INSERT INTO organizations (id, name, email, tier, max_seats, monthly_api_limit, monthly_api_usage, features, coalition_member, coalition_rev_share, created_at, updated_at)
-            VALUES (:org_id, '', :email, 'starter', 1, 10000, 0, :features, true, 65, NOW(), NOW())
-        """), {
-            "org_id": org_id,
-            "email": user_email,
-            "features": '{"team_management": false, "audit_logs": false, "merkle_enabled": false, "bulk_operations": false, "sentence_tracking": false, "streaming": true, "byok": false, "sso": false, "custom_assertions": false}',
-        })
-        
-        # Add user as owner
-        member_id = f"mem_{secrets.token_hex(8)}"
-        db.execute(text("""
-            INSERT INTO organization_members (id, organization_id, user_id, role, status, accepted_at, created_at, updated_at)
-            VALUES (:member_id, :org_id, :user_id, 'owner', 'active', NOW(), NOW(), NOW())
-        """), {
-            "member_id": member_id,
-            "org_id": org_id,
-            "user_id": user_id,
-        })
-        
-        # Update user's default org
-        db.execute(text("""
-            UPDATE users SET default_organization_id = :org_id WHERE id = :user_id
-        """), {"org_id": org_id, "user_id": user_id})
-        
-        return org_id
+        # The key-service database may not have the organization tables
+        # (they're managed by auth-service on a different DB)
+        # Just return None - the key will work as a user-level key
+        return None
 
     @staticmethod
     def create_key(db: Session, user_id: str, key_data: ApiKeyCreate, organization_id: str = None) -> Tuple[ApiKey, str]:
@@ -88,20 +55,10 @@ class KeyService:
         # Create key prefix for display (first 12 chars)
         key_prefix = api_key[:12] + "..."
         
-        # If no org provided, look up user's organization or create one
-        if not organization_id:
-            result = db.execute(text("""
-                SELECT om.organization_id 
-                FROM organization_members om
-                WHERE om.user_id = :user_id AND om.status = 'active'
-                ORDER BY om.role = 'owner' DESC, om.created_at ASC
-                LIMIT 1
-            """), {"user_id": user_id}).fetchone()
-            if result:
-                organization_id = result.organization_id
-            else:
-                # User has no organization - create one for them (backfill for existing users)
-                organization_id = KeyService._ensure_user_has_organization(db, user_id)
+        # If no org provided, the key will be user-level only
+        # Note: Key-service uses a separate database from auth-service,
+        # so we can't query organization_members here. User-level keys
+        # are handled by verify_key_with_org() which returns a synthetic org context.
 
         # Create database record
         db_key = ApiKey(
