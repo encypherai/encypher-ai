@@ -1270,19 +1270,24 @@ class UnicodeMetadata:
                     except (TypeError, ValueError):
                         expected_exclusion = None
 
-            if wrapper_exclusion is not None:
-                if expected_exclusion != wrapper_exclusion:
-                    logger.warning(
-                        "C2PA verification: Hard binding exclusion range mismatch. Expected %s, got %s.",
+            # Use the exclusion range from the manifest (expected_exclusion) as the authoritative source.
+            # The manifest's exclusion was calculated at signing time relative to the signed text.
+            # For sentence-level embeddings, wrapper_exclusion (calculated from current text position)
+            # may differ from expected_exclusion, but the manifest's value is what matters for verification.
+            if expected_exclusion is not None:
+                exclusion_ranges = [expected_exclusion]
+                if wrapper_exclusion is not None and expected_exclusion != wrapper_exclusion:
+                    logger.debug(
+                        "C2PA verification: Using manifest exclusion %s (wrapper position was %s).",
                         expected_exclusion,
                         wrapper_exclusion,
                     )
-                    return False, signer_id, c2pa_manifest
-            elif expected_exclusion:
-                logger.warning("C2PA verification: Manifest recorded exclusions but none were detected in text.")
-                return False, signer_id, c2pa_manifest
+            elif wrapper_exclusion is not None:
+                # Fallback to wrapper exclusion if manifest doesn't specify one
+                exclusion_ranges = [wrapper_exclusion]
+            else:
+                exclusion_ranges = []
 
-            exclusion_ranges = [wrapper_exclusion] if wrapper_exclusion is not None else []
             hard_hash_result = compute_normalized_hash(original_text, exclusion_ranges)
             actual_hard_hash = hard_hash_result.hexdigest
 
