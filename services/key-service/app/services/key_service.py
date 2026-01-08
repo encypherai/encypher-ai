@@ -141,8 +141,7 @@ class KeyService:
                 o.monthly_api_limit,
                 o.monthly_api_usage,
                 o.coalition_member,
-                o.coalition_rev_share,
-                o.certificate_pem
+                o.coalition_rev_share
             FROM api_keys k
             LEFT JOIN organizations o ON k.organization_id = o.id
             WHERE k.key_hash = :key_hash
@@ -220,7 +219,6 @@ class KeyService:
             "monthly_api_usage": result.monthly_api_usage,
             "coalition_member": result.coalition_member,
             "coalition_rev_share": result.coalition_rev_share,
-            "certificate_pem": result.certificate_pem,
         }
 
     @staticmethod
