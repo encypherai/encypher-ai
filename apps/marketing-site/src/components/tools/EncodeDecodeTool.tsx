@@ -483,7 +483,14 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                             <div className="max-h-96 overflow-y-auto space-y-2">
                               {lastDecodeResponse.all_embeddings.map((embedding, idx) => {
                                 const isExpanded = expandedEmbeddings.has(idx);
-                                const isC2PAManifest = idx === 0;
+                                // Check if this is a C2PA manifest by looking for C2PA-specific fields
+                                const hasC2PAStructure = embedding.metadata && (
+                                  '@context' in embedding.metadata || 
+                                  'assertions' in embedding.metadata ||
+                                  'instance_id' in embedding.metadata
+                                );
+                                const isBasicFormat = embedding.metadata?.format === 'basic';
+                                const isC2PAManifest = hasC2PAStructure && !isBasicFormat;
                                 const manifestType = isC2PAManifest ? 'C2PA Document Manifest' : `Sentence Embedding #${embedding.index}`;
                                 
                                 return (
