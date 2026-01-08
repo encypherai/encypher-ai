@@ -209,38 +209,30 @@ class KeyService:
             has_merkle = "merkle" in key_permissions
             is_super_admin = "admin" in key_permissions or "super_admin" in key_permissions
             
-            # Check if user is a known superadmin by querying users table
-            # This ensures superadmins always get full access regardless of key permissions
-            if not is_super_admin and result.user_id:
-                try:
-                    superadmin_check = db.execute(text("""
-                        SELECT is_super_admin FROM users WHERE id = :user_id
-                    """), {"user_id": result.user_id}).fetchone()
-                    if superadmin_check and superadmin_check.is_super_admin:
-                        is_super_admin = True
-                except Exception:
-                    pass  # If users table doesn't exist in this DB, skip
+            # Note: Key-service uses a separate database from auth-service,
+            # so we can't query the users table here. Superadmin status must be
+            # indicated via key permissions (admin or super_admin).
             
             return {
                 "key_id": result.key_id,
                 "user_id": result.user_id,
                 "organization_id": f"user_{result.user_id}",  # Synthetic org ID
                 "organization_name": "Personal Account",
-                "tier": "starter",  # Default tier for user keys
+                "tier": "enterprise" if is_super_admin else "starter",  # Superadmins get enterprise tier
                 "is_demo": True,  # Allow using demo private key for signing
                 "certificate_pem": None,
                 "features": {
-                    "team_management": False,
-                    "audit_logs": False,
-                    "merkle_enabled": has_merkle or is_super_admin,  # Enable if key has merkle or admin permission
+                    "team_management": is_super_admin,
+                    "audit_logs": is_super_admin,
+                    "merkle_enabled": has_merkle or is_super_admin,
                     "bulk_operations": is_super_admin,
                     "sentence_tracking": is_super_admin,
                     "streaming": True,
-                    "byok": False,
-                    "sso": False,
-                    "custom_assertions": False,
-                    "max_team_members": 1,
-                    "is_super_admin": is_super_admin,  # Unlimited access for super admin
+                    "byok": is_super_admin,
+                    "sso": is_super_admin,
+                    "custom_assertions": is_super_admin,
+                    "max_team_members": -1 if is_super_admin else 1,
+                    "is_super_admin": is_super_admin,
                 },
                 "permissions": key_permissions,
                 "monthly_api_limit": -1 if is_super_admin else 10000,  # Unlimited for super admin

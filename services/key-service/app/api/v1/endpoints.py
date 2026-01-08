@@ -79,6 +79,13 @@ async def generate_key(
     - **expires_at**: Optional expiration date
     """
     try:
+        # If user is a superadmin, ensure the key has super_admin permission
+        if current_user.get("is_super_admin"):
+            if key_data.permissions is None:
+                key_data.permissions = ["sign", "verify", "super_admin"]
+            elif "super_admin" not in key_data.permissions:
+                key_data.permissions = list(key_data.permissions) + ["super_admin"]
+        
         db_key, api_key = KeyService.create_key(db, current_user["id"], key_data)
 
         return ApiKeyResponse(
