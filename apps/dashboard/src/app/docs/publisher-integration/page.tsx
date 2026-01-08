@@ -1,74 +1,82 @@
-import { readFile, stat } from 'node:fs/promises';
-import path from 'node:path';
-
 import { DashboardLayout } from '../../../components/layout/DashboardLayout';
 import { PublisherIntegrationGuideClient } from './PublisherIntegrationGuideClient';
 
-async function isDirectory(dirPath: string): Promise<boolean> {
-  try {
-    const info = await stat(dirPath);
-    return info.isDirectory();
-  } catch {
-    return false;
-  }
-}
+// Skip static generation - this page reads from filesystem which isn't available in isolated builds
+export const dynamic = 'force-dynamic';
 
-async function isFile(filePath: string): Promise<boolean> {
-  try {
-    const info = await stat(filePath);
-    return info.isFile();
-  } catch {
-    return false;
-  }
-}
+// Inline guide content for production builds where filesystem access is limited
+const GUIDE_CONTENT = `# Publisher Integration Guide
 
-async function findRepoRoot(startDir: string): Promise<string> {
-  let current = path.resolve(startDir);
-  const { root } = path.parse(current);
+This guide covers integrating Encypher's content provenance API into your publishing workflow.
 
-  // Look for the monorepo root markers.
-  while (true) {
-    const appsDir = path.join(current, 'apps');
-    const gitDir = path.join(current, '.git');
-    const pyproject = path.join(current, 'pyproject.toml');
+## Overview
 
-    // Use file existence checks to avoid throwing if permissions or missing.
-    const hasApps = await isDirectory(appsDir);
-    const hasGit = await isDirectory(gitDir);
-    const hasPyproject = await isFile(pyproject);
+Encypher provides cryptographic content attribution that:
+- Embeds invisible provenance markers in your text
+- Survives copy-paste and distribution
+- Enables formal notice to AI companies
+- Creates court-admissible proof of ownership
 
-    if (hasApps && hasGit && hasPyproject) return current;
+## Quick Start
 
-    if (current === root) {
-      throw new Error(`Could not locate repo root from ${startDir}`);
-    }
+1. **Get API Key**: Visit the [API Keys](/api-keys) page to create your key
+2. **Install SDK**: \`pip install encypher-ai\` or use our REST API
+3. **Sign Content**: Call the \`/sign\` endpoint with your text
+4. **Verify Content**: Use \`/verify\` to check provenance
 
-    current = path.dirname(current);
-  }
-}
+## API Endpoints
 
-async function getGuidePath(): Promise<string> {
-  const guessRoot = path.resolve(process.cwd(), '..', '..', '..');
-  const guessPath = path.join(guessRoot, 'docs', 'guides', 'publisher-integration-guide.md');
-  if (await isFile(guessPath)) return guessPath;
+### Sign Content
+\`\`\`bash
+curl -X POST https://api.encypherai.com/v1/sign \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"content": "Your article text here..."}'
+\`\`\`
 
-  const repoRoot = await findRepoRoot(process.cwd());
-  return path.join(repoRoot, 'docs', 'guides', 'publisher-integration-guide.md');
-}
+### Verify Content
+\`\`\`bash
+curl -X POST https://api.encypherai.com/v1/verify \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"content": "Text to verify..."}'
+\`\`\`
 
-export default async function PublisherIntegrationGuidePage() {
-  const guidePath = await getGuidePath();
-  let markdown = '';
-  try {
-    markdown = await readFile(guidePath, 'utf8');
-  } catch {
-    markdown = `# Publisher Integration Guide\n\nGuide file not found. Expected at: \`${guidePath}\`\n`;
-  }
+## Python SDK
 
+\`\`\`python
+from encypher import Encypher
+
+client = Encypher(api_key="YOUR_API_KEY")
+
+# Sign content
+result = client.sign("Your article text here...")
+signed_text = result.embedded_text
+
+# Verify content
+verification = client.verify(signed_text)
+print(f"Verified: {verification.is_valid}")
+print(f"Signer: {verification.signer_name}")
+\`\`\`
+
+## WordPress Integration
+
+Install our WordPress plugin for automatic content signing:
+
+1. Download from the WordPress plugin directory
+2. Activate and enter your API key in Settings > Encypher
+3. All new posts will be automatically signed
+
+## Support
+
+For detailed integration support, contact us at support@encypherai.com or visit the [Support](/support) page.
+`;
+
+export default function PublisherIntegrationGuidePage() {
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
-        <PublisherIntegrationGuideClient markdown={markdown} />
+        <PublisherIntegrationGuideClient markdown={GUIDE_CONTENT} />
       </div>
     </DashboardLayout>
   );
