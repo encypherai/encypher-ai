@@ -116,7 +116,7 @@ http:
 
     api-verify:
       rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/verify`)"
-      service: enterprise-api
+      service: verification-service
       entryPoints:
         - websecure
         - web
@@ -127,7 +127,7 @@ http:
 
     api-coalition:
       rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/coalition`)"
-      service: enterprise-api
+      service: coalition-service
       entryPoints:
         - websecure
         - web

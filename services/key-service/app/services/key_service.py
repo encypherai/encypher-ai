@@ -141,7 +141,8 @@ class KeyService:
                 o.monthly_api_limit,
                 o.monthly_api_usage,
                 o.coalition_member,
-                o.coalition_rev_share
+                o.coalition_rev_share,
+                o.certificate_pem
             FROM api_keys k
             LEFT JOIN organizations o ON k.organization_id = o.id
             WHERE k.key_hash = :key_hash
@@ -186,6 +187,7 @@ class KeyService:
                 "organization_name": "Personal Account",
                 "tier": "starter",  # Default tier for user keys
                 "is_demo": True,  # Allow using demo private key for signing
+                "certificate_pem": None,
                 "features": {
                     "team_management": False,
                     "audit_logs": False,
@@ -218,6 +220,7 @@ class KeyService:
             "monthly_api_usage": result.monthly_api_usage,
             "coalition_member": result.coalition_member,
             "coalition_rev_share": result.coalition_rev_share,
+            "certificate_pem": result.certificate_pem,
         }
 
     @staticmethod

@@ -24,9 +24,9 @@ export default function PublishersPage() {
     <div className="bg-background text-foreground">
       <AISummary
         title="Encypher for Publishers"
-        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. API and SDKs for cryptographic watermarking that survives copy-paste, B2B distribution, and scraping. Standard publishes January 8, 2026."
+        whatWeDo="Authors of C2PA Section A.7. Patent-pending API and SDKs for granular content attribution with Merkle tree authentication. Survives copy-paste, B2B distribution, and scraping. Standard published January 8, 2026."
         whoItsFor="Publishers seeking provable content ownership and licensing revenue. Cryptographic proof enables content attribution across the AI ecosystem."
-        keyDifferentiator="Sentence-level tracking proves exactly which sentences were used. Quote integrity verification protects brand from AI hallucinations."
+        keyDifferentiator="Patent-pending Merkle tree authentication proves exactly which sentences were used. Court-admissible evidence generation. Quote integrity verification protects brand from AI hallucinations."
         primaryValue="Transform content into licensing revenue. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
       />
       <Script id="schema-faq-publishers" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
@@ -45,11 +45,16 @@ export default function PublishersPage() {
                 Get Your Content Protection Demo <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+            <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg shadow-lg">
+              <Link href="/auth/signin?mode=signup&source=publishers">
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
             <Button 
               onClick={() => setShowContactModal(true)}
               size="lg" 
-              variant="outline"
-              className="font-semibold py-3 px-6 rounded-lg shadow-lg"
+              variant="ghost"
+              className="font-semibold"
             >
               Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

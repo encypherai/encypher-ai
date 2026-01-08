@@ -1,16 +1,16 @@
 # Encypher Corporation Marketing Plan
 ## Standards-Driven Text Provenance Infrastructure
 
-**Last Updated:** December 21, 2025  
-**Status:** Pre-Standard Publication Update  
-**Version:** 3.0  
+**Last Updated:** January 8, 2026  
+**Status:** Post-Standard Publication (C2PA 2.3 Released)  
+**Version:** 3.1  
 **Distribution:** Marketing & Sales Leadership
 
 ---
 
 ## Executive Summary
 
-Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Provenance Task Force. We're not marketing a product competing with alternatives—we're evangelizing the standard we're building collaboratively with Google, BBC, OpenAI, Adobe, and Microsoft, while showcasing exclusive enhancements only we can provide. The standard publishes **January 8, 2026**. The Syracuse Symposium on **February 25, 2026** will define market licensing frameworks.
+Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Provenance Task Force. We're not marketing a product competing with alternatives—we're evangelizing the standard we're building collaboratively with Google, BBC, OpenAI, Adobe, and Microsoft, while showcasing exclusive enhancements only we can provide. The standard **published January 8, 2026** — [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). The Syracuse Symposium on **February 25, 2026** will define market licensing frameworks.
 
 **Core Strategic Positioning:**
 - **What We Are:** Co-Chair of C2PA Text Provenance Task Force building infrastructure WITH industry leaders
@@ -40,12 +40,12 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 ### Primary Narrative: "Building Text Provenance Standards Together"
 
 **Core Message:**
-"Text on the open web has no cryptographic proof of origin. AI companies can claim 'we didn't know it was yours' as an innocent infringement defense. As Co-Chair of the C2PA Text Provenance Task Force, we're changing that—the standard publishes January 8, 2026. Our cryptographic watermarking survives distribution, and formal notification transforms innocent infringement into willful. The Syracuse Symposium on February 25, 2026 will define market licensing frameworks. Founding members shape the terms."
+"Text on the open web has no cryptographic proof of origin. AI companies can claim 'we didn't know it was yours' as an innocent infringement defense. As Co-Chair of the C2PA Text Provenance Task Force, we changed that—the standard published January 8, 2026. Our cryptographic watermarking survives distribution, and formal notification transforms innocent infringement into willful. The Syracuse Symposium on February 25, 2026 defined market licensing frameworks. Founding members shaped the terms."
 
 ### The Four-Layer Value Architecture
 
 **Layer 1: Standards Foundation** (Collaborative)
-"C2PA text provenance standard publishes January 8, 2026—we co-chair the task force"
+"C2PA text provenance standard published January 8, 2026—we co-chaired the task force"
 
 **Layer 2: Technical Proof** (Technical)
 "Cryptographic watermarking embedded in text, survives B2B distribution, provides mathematical certainty"
@@ -54,7 +54,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 "Formal notice + cryptographic proof = willful infringement. Eliminate the 'we didn't know' defense."
 
 **Layer 4: Market Standards** (Economic)
-"Syracuse Symposium February 25, 2026 defines licensing frameworks. Shape the terms or accept them."
+"Syracuse Symposium February 25, 2026 defined licensing frameworks. Founding members shaped the terms."
 
 ---
 
@@ -63,15 +63,15 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 ### Campaign 1: "Founding Coalition Formation" (Now → January 7, 2026)
 
 **Target:** Tier 1 Publishers (AP, BBC, Springer Nature, Taylor & Francis, News Corp, NYT)
-**Hook:** "Standard publishes January 8. Shape market standards at Syracuse. Eliminate the 'we didn't know' defense."
+**Hook:** "Standard published January 8. Shape market standards at Syracuse. Eliminate the 'we didn't know' defense."
 
 **Messaging Pillars:**
-- "C2PA text standard publishes January 8, 2026—we authored it"
+- "C2PA text standard published January 8, 2026—we authored it"
 - "Cryptographic watermarking that survives B2B distribution"
 - "Formal notice + cryptographic proof = willful infringement (3x damages)"
 - "Quote integrity verification—protect your brand from AI hallucinations"
-- "Syracuse Symposium February 25, 2026—define market licensing frameworks"
-- "Founding members get locked 25% rate + market standards seats"
+- "Syracuse Symposium February 25, 2026—defined market licensing frameworks"
+- "Founding members got locked 25% rate + market standards seats"
 
 **Tactics:**
 - Direct executive outreach (Nate leading with willful infringement frame)
@@ -215,7 +215,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 
 ### Key Messages for Media
 
-**Tier 1 Message:** "C2PA Text Provenance Standard Publishes January 8, 2026—Encypher Co-Chairs Task Force and Built Reference Implementation"
+**Tier 1 Message:** "C2PA Text Provenance Standard Published January 8, 2026—Encypher Co-Chairs Task Force and Built Reference Implementation"
 
 **Tier 2 Message:** "Formal Notice + Cryptographic Proof = Willful Infringement—Eliminating the 'We Didn't Know' Defense"
 
@@ -320,7 +320,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 
 **LinkedIn Campaign:**
 - Target: Publisher GCs, AI CTOs, Enterprise risk officers
-- Message: "C2PA text standard publishes January 8. Eliminate the 'we didn't know' defense."
+- Message: "C2PA text standard published January 8. Eliminate the 'we didn't know' defense."
 - Budget: $75k/quarter
 
 **Google Ads:**
@@ -430,7 +430,7 @@ Encypher's marketing strategy reflects our role as Co-Chair of the C2PA Text Pro
 
 ### Risk: AI Companies Perceive as Adversarial
 **Response (CRITICAL):**
-- Lead with C2PA collaboration (OpenAI member, standard publishes January 8)
+- Lead with C2PA collaboration (OpenAI member, standard published January 8)
 - Quote integrity protects their brand from hallucination claims
 - Performance intelligence provides model optimization value
 - Frame as infrastructure building (not compliance)
@@ -455,7 +455,7 @@ The formula:
 
 We're not marketing a product competing with alternatives. We're establishing the protocol layer for text provenance that enables licensing, attribution, and content economics that didn't exist before.
 
-**The standard publishes January 8, 2026. The symposium convenes February 25, 2026. The collaboration is real. The infrastructure is here.**
+**The standard published January 8, 2026. The symposium convenes February 25, 2026. The collaboration is real. The infrastructure is here.**
 
 Website: **encypherai.com**
 Demos: **encypherai.com/publisher-demo** and **encypherai.com/ai-demo**

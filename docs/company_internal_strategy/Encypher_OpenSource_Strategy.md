@@ -1,16 +1,16 @@
 # Encypher Corporation: Open Source Strategy
 ## C2PA Reference Implementation Proliferation
 
-**Last Updated:** December 21, 2025  
-**Status:** Pre-Standard Publication Update  
-**Version:** 3.0  
+**Last Updated:** January 8, 2026  
+**Status:** Post-Standard Publication (C2PA 2.3 Released)  
+**Version:** 3.1  
 **Distribution:** Engineering & Strategy Leadership
 
 ---
 
 ## Executive Summary
 
-As Co-Chair of the C2PA Text Provenance Task Force, our open-source strategy drives global standards adoption through reference implementation proliferation. The C2PA text specification publishes **January 8, 2026**. We provide the production-ready implementation of the standard we're building with Google, BBC, OpenAI, Adobe, and Microsoft—while keeping patent-pending enhancements (sentence-level tracking, willful infringement enablement, quote integrity verification) exclusively commercial.
+As Co-Chair of the C2PA Text Provenance Task Force, our open-source strategy drives global standards adoption through reference implementation proliferation. The C2PA text specification **published January 8, 2026** — [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). We provide the production-ready implementation of the standard we're building with Google, BBC, OpenAI, Adobe, and Microsoft—while keeping patent-pending enhancements (sentence-level tracking, willful infringement enablement, quote integrity verification) exclusively commercial.
 
 **Strategic Evolution:**
 - **From:** Community building for credibility
@@ -20,7 +20,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, our open-source strategy dri
 
 **The Moat Architecture:**
 - **Open Source:** C2PA text standard reference implementation (document-level)
-- **Commercial Only:** Sentence-level tracking, willful infringement enablement, quote integrity verification, formal notice infrastructure, performance intelligence
+- **Commercial Only (Patent-Pending ENC0100):** Granular content attribution (Claims 1-20), evidence generation (Claims 38-52), distributed embedding (Claims 56-66), quote integrity verification, formal notice infrastructure
 - **Result:** Everyone implements our standard, enterprises need our enhancements for legal transformation
 
 **Key Dates:**
@@ -32,7 +32,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, our open-source strategy dri
 ## Strategic Objectives
 
 ### Primary: Become THE C2PA Text Reference Implementation
-Every developer implementing C2PA text provenance starts with our code. The specification publishes January 8, 2026. This creates ecosystem lock-in even for basic implementations and establishes Encypher as the standards authority.
+Every developer implementing C2PA text provenance starts with our code. The specification published January 8, 2026. This creates ecosystem lock-in even for basic implementations and establishes Encypher as the standards authority.
 
 ### Secondary: Demonstrate Standards Leadership
 Open-sourcing the reference implementation proves our role as Co-Chair of the C2PA task force and specification author. This isn't vendor lock-in—it's collaborative infrastructure building with industry leaders.
@@ -102,7 +102,7 @@ This implementation embeds cryptographic watermarking directly into text.
 ## Enterprise Features (Commercial License):
 Why publishers need more than basic C2PA:
 
-- ⭐ Sentence-level tracking (patent-pending)
+- ⭐ Granular content attribution (patent-pending ENC0100, Claims 1-20)
 - ⭐ **Willful infringement enablement** (formal notice + proof = 3x damages)
 - ⭐ **Quote integrity verification** (prove AI accuracy vs. hallucination)
 - ⭐ Downstream survival (B2B distribution, wire services, aggregators)
@@ -218,7 +218,7 @@ def prepare_evidence_package(content, notification_record):
 ### Content Strategy (Updated Timeline):
 
 **Pre-Publication (Now → January 7, 2026):**
-- Blog: "C2PA Text Standard Publishes January 8—Reference Implementation Ready"
+- Blog: "C2PA Text Standard Published January 8—Reference Implementation Ready"
 - GitHub: Prepare repository for public launch
 - Documentation: Complete with enterprise upgrade path
 
@@ -383,7 +383,7 @@ def prepare_evidence_package(content, notification_record):
 
 ### Against Alternative Implementations:
 - First-mover advantage as specification author and co-chair
-- Standard publishes January 8, 2026—we're ready day one
+- Standard published January 8, 2026—we're ready day one
 - Most complete documentation
 - Largest community
 - Industry partnerships (Google, BBC, OpenAI, Adobe, Microsoft)
@@ -396,7 +396,7 @@ def prepare_evidence_package(content, notification_record):
 ## Key Messages for Developers (Updated)
 
 ### The Authority Message:
-"Erik Svilich authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard publishes January 8, 2026. This is the reference implementation from the specification author."
+"Erik Svilich authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. This is the reference implementation from the specification author."
 
 ### The Transformation Message:
 "Text on the open web has no proof of origin. AI companies can claim 'we didn't know it was yours.' Three lines of code embeds cryptographic watermarking that survives copy-paste."
@@ -408,7 +408,7 @@ def prepare_evidence_package(content, notification_record):
 "When AI outputs 'According to [Publisher]...' how do you verify it's accurate? Quote integrity verification proves accuracy vs. hallucination. That's enterprise."
 
 ### The Community Message:
-"Join developers building the text provenance infrastructure. The standard publishes January 8, 2026. Your implementation could become part of the ecosystem standard."
+"Join developers building the text provenance infrastructure. The standard published January 8, 2026. Your implementation could become part of the ecosystem standard."
 
 ---
 

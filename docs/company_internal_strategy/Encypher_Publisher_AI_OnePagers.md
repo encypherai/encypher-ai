@@ -1,9 +1,9 @@
 # Encypher Corporation: Infrastructure for Text Provenance
 ## One-Page Overviews for Publishers and AI Companies
 
-**Last Updated:** December 21, 2025  
-**Status:** Pre-Standard Publication Update  
-**Version:** 3.0  
+**Last Updated:** January 8, 2026  
+**Status:** Post-Standard Publication (C2PA 2.3 Released)  
+**Version:** 3.1  
 **Distribution:** Sales & Business Development Teams
 
 ---
@@ -27,7 +27,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 
 **What This Enables:**
 - **Publisher Compatibility:** One integration handles marked content from growing publisher coalition (AP, BBC, Springer Nature, Taylor & Francis actively engaged)
-- **Performance Intelligence:** Our patent-pending sentence-level tracking reveals which content drives model success—temperature settings that go viral, prompts that resonate, training data that improves outputs
+- **Performance Intelligence:** Our patent-pending granular content attribution (83 claims filed Jan 7, 2026) reveals which content drives model success—temperature settings that go viral, prompts that resonate, training data that improves outputs
 - **Quote Integrity Verification:** When your model outputs "According to AP..." our infrastructure proves whether that quote is accurate or hallucinated—protecting both publisher brands and your reputation
 - **Provenance Infrastructure:** Handle cryptographically signed text in training pipelines with mathematical certainty
 - **Attribution Foundation:** Technical infrastructure for content partnerships and licensing frameworks
@@ -76,7 +76,7 @@ Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification
 
 **Our Publisher-Specific Capabilities (Patent-Pending):**
 - **Cryptographic Watermarking:** Invisible to readers, embedded directly into text—survives copy-paste, B2B distribution, aggregator syndication, web scraping, and data processing
-- **Sentence-Level Tracking:** Prove EXACTLY which sentences were used, not just which documents were accessed
+- **Patent-Pending Merkle Tree Authentication:** Prove EXACTLY which sentences were used with court-admissible evidence (Claims 1-20, 38-52)
 - **Quote Integrity Verification:** When an AI claims "According to [Your Publication]..." prove whether that quote is accurate or a hallucination damaging your brand
 - **Downstream Survival:** Provenance persists through wire services, B2B licensees, news aggregators, and content scrapers—you can assert ownership wherever your content appears
 - **Formal Notice Capability:** Serve cryptographically-backed formal notice that your content is marked and owned
@@ -125,7 +125,7 @@ We take 25-30% of revenue that doesn't exist today. You keep 70-75% of new money
 As Paul Sarkis (VP & Associate General Counsel, Associated Press—architect of the AP-OpenAI deal) noted: *"I would really like to see [us] develop market standards... in typical licensing, you have exclusive or non-exclusive, perpetual or term limited—these things are understood. That's not the case right now in this market."*
 
 **The Syracuse Symposium (February 25, 2026):**
-We're convening 20-30 publisher general counsels and AI company commercial leads at Syracuse University's journalism school in DC to translate the C2PA technical standard (publishing January 8, 2026) into practical licensing frameworks.
+We're convening 20-30 publisher general counsels and AI company commercial leads at Syracuse University's journalism school in DC to translate the C2PA technical standard (published January 8, 2026) into practical licensing frameworks.
 
 **Why First Movers Define the Terms:**
 - Publishers implementing cryptographic watermarking first will establish how content licensing works with AI companies
@@ -134,7 +134,7 @@ We're convening 20-30 publisher general counsels and AI company commercial leads
 - Founding coalition members get seats at the table when standards are written
 
 **Already In Motion:**
-- C2PA text standard publishes January 8, 2026 (hard date)
+- C2PA text standard published January 8, 2026 ✅
 - Syracuse Symposium confirmed February 25, 2026
 - Active pilot discussions: AP, BBC Studios US, Springer Nature, Taylor & Francis
 - News Media Alliance partnership discussions for preferred vendor status
@@ -174,7 +174,7 @@ Technical demonstration showing how sentence-level tracking, quote integrity ver
 ## Standards Leadership
 
 **C2PA Text Provenance Task Force:**
-Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair alongside Google, BBC, OpenAI, Adobe, and Microsoft. The specification publishes **January 8, 2026**. We built the first production implementation of Erik's specification. This collaborative standards work ensures interoperability across the ecosystem while our patent-pending enhancements provide competitive advantages.
+Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair alongside Google, BBC, OpenAI, Adobe, and Microsoft. The specification **published January 8, 2026**. We built the first production implementation of Erik's specification. This collaborative standards work ensures interoperability across the ecosystem while our patent-pending enhancements provide competitive advantages.
 
 **Building Standards Together:**
 OpenAI is a C2PA member. Google is implementing SynthID for text provenance. The AI industry recognizes that text authentication benefits everyone—publishers gain proof of origin, AI companies gain attribution data, enterprises gain governance capabilities. We're establishing the protocol layer collaboratively.
@@ -265,7 +265,7 @@ nate@encypherai.com
 
 Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and serves as Co-Chair of the task force, establishing text authentication as the global standard through collaboration with Google, BBC, OpenAI, Adobe, and Microsoft. Our patent-pending cryptographic watermarking embeds proof of origin directly into text at sentence-level granularity, enabling publishers to serve formal notice, prove willful infringement, verify quote integrity, and AI companies to gain performance intelligence. We're building the transaction layer for the AI content economy—not as a product, but as collaborative infrastructure that benefits the entire ecosystem.
 
-**The standard publishes January 8, 2026. The symposium convenes February 25, 2026. The infrastructure is here.**
+**The standard published January 8, 2026. The symposium convenes February 25, 2026. The infrastructure is here.**
 
 **Leadership:** Erik Svilich - Author of C2PA text specification, Co-Chair of C2PA Text Provenance Task Force, Founder & CEO
 

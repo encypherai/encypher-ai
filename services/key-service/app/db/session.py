@@ -7,12 +7,17 @@ from typing import Generator
 from ..core.config import settings
 
 # Create database engine
-engine = create_engine(
-    settings.DATABASE_URL,
-    pool_size=settings.DATABASE_POOL_SIZE,
-    max_overflow=settings.DATABASE_MAX_OVERFLOW,
-    pool_pre_ping=True,
-)
+database_url = settings.DATABASE_URL
+engine_kwargs: dict = {"pool_pre_ping": True}
+if not database_url.startswith("sqlite"):
+    engine_kwargs.update(
+        {
+            "pool_size": settings.DATABASE_POOL_SIZE,
+            "max_overflow": settings.DATABASE_MAX_OVERFLOW,
+        }
+    )
+
+engine = create_engine(database_url, **engine_kwargs)
 
 # Create session factory
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

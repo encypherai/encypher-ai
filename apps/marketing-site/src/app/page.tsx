@@ -14,19 +14,19 @@ export default function HomePage() {
     <>
       <AISummary
         title="Encypher – Content Intelligence Infrastructure"
-        whatWeDo="Co-Chair of the C2PA Text Provenance Task Force. We provide API and SDKs in Python, TypeScript, Go, and Rust for sentence-level content authentication and licensing infrastructure. Standard publishes January 8, 2026."
+        whatWeDo="Authors of C2PA Section A.7 (Embedding Manifests into Unstructured Text). We provide API and SDKs in Python, TypeScript, Go, and Rust for patent-pending granular content attribution and licensing infrastructure. Standard published January 8, 2026. 83 claims filed covering Merkle tree authentication, evidence generation, and distributed embedding."
         whoItsFor="Publishers needing content licensing revenue and provable ownership. AI labs needing performance intelligence and compliance. Enterprises requiring EU AI Act and China watermarking mandate compliance."
-        keyDifferentiator="Cryptographic watermarking with 100% accuracy that survives copy-paste, B2B distribution, and scraping. Enables content attribution and licensing."
+        keyDifferentiator="Patent-pending cryptographic watermarking with 100% accuracy. Merkle tree authentication enables court-admissible evidence generation. Survives copy-paste, B2B distribution, and scraping."
         primaryValue="Enable content licensing across the AI ecosystem. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
         pagePath="/"
         faq={[
           {
             question: "What is Encypher?",
-            answer: "Encypher is Co-Chair of the C2PA Text Provenance Task Force (c2pa.org), working with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. We provide API and SDKs for sentence-level content authentication that enables content licensing and attribution infrastructure. Standard publishes January 8, 2026."
+            answer: "Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text), working with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. We provide API and SDKs for patent-pending granular content attribution that enables content licensing and court-admissible evidence generation. Standard published January 8, 2026. Patent filed January 7, 2026 with 83 claims."
           },
           {
             question: "What is the C2PA text standard?",
-            answer: "The C2PA text standard defines how text content is cryptographically authenticated. Encypher co-chairs the task force and authored the specification. It enables verification of content origin with mathematical certainty. Publishing January 8, 2026."
+            answer: "The C2PA text standard (Section A.7) defines how text content is cryptographically authenticated using Unicode variation selectors. Encypher authored this section of the specification. It enables verification of content origin with mathematical certainty. Published January 8, 2026."
           },
           {
             question: "How is Encypher different from AI detection tools?",

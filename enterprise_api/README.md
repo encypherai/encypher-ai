@@ -23,7 +23,7 @@
 
 ## 🎯 Overview
 
-The Encypher Enterprise API provides cryptographic content signing and verification infrastructure for publishers, news organizations, legal firms, and content platforms. Built on **C2PA 2.2 standards** with enterprise-grade features for sentence-level tracking and source attribution.
+The Encypher Enterprise API provides cryptographic content signing and verification infrastructure for publishers, news organizations, legal firms, and content platforms. Built on **C2PA 2.3 standards** (Section A.7 authored by Encypher) with **patent-pending** enterprise-grade features for granular content attribution and court-admissible evidence generation.
 
 **Part of the Encypher Microservices Ecosystem** - This API integrates with multiple backend microservices for authentication, key management, and coalition features.
 
@@ -32,7 +32,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - **🔒 C2PA 2.2 Compliant**: Industry-standard content authenticity
 - **⚡ High Performance**: <100ms verification, 1000+ req/s capacity
 - **🔗 Microservices Architecture**: Scalable, resilient, database-per-service design
-- **📊 Enterprise Features**: Merkle trees, source attribution, plagiarism detection
+- **📊 Patent-Pending Features**: Merkle tree authentication, evidence generation, granular attribution (83 claims filed)
 - **🔐 SSL.com Integration**: Automated certificate lifecycle management
 - **⚖️ Court-Admissible**: Tamper-evident manifests for legal evidence
 
@@ -45,7 +45,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 #### Core Capabilities
 - ✅ **C2PA-Compliant Signing**: Full C2PA 2.2 text manifest support
 - ✅ **Content Verification**: Cryptographic verification with tamper detection
-- ✅ **Sentence-Level Tracking**: Track provenance of individual sentences
+- ✅ **Patent-Pending Granular Attribution**: Track provenance of individual sentences (Claims 1-20)
 - ✅ **Public Verification Pages**: Shareable verification URLs
 - ✅ **Batch Operations**: Sign/verify up to 100 documents at once
 - ✅ **Streaming Support**: WebSocket and SSE for real-time operations
@@ -53,7 +53,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ **API Key Management**: Via integrated Key Service
 
 #### Enterprise Features
-- ✅ **Merkle Tree Encoding**: Hierarchical content fingerprinting
+- ✅ **Patent-Pending Merkle Tree Encoding**: Hierarchical content fingerprinting with court-admissible evidence generation (Claims 38-52)
 - ✅ **Source Attribution**: Find original sources of quoted content
 - ✅ **Plagiarism Detection**: Detect unauthorized content reuse
 - ✅ **Invisible Embeddings**: Unicode-based portable content tracking

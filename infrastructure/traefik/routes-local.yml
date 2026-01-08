@@ -73,7 +73,13 @@ http:
     # ============================================
     verify-router:
       rule: "PathPrefix(`/api/v1/verify`)"
-      service: enterprise-api
+      service: verification-service
+      entryPoints:
+        - web
+
+    coalition-router:
+      rule: "PathPrefix(`/api/v1/coalition`)"
+      service: coalition-service
       entryPoints:
         - web
 
@@ -154,6 +160,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:8005"
+
+    coalition-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8009"
 
     analytics-service:
       loadBalancer:

@@ -22,9 +22,9 @@ export default function AICopyrightInfringementPage() {
     <>
       <AISummary
         title="AI Copyright Infringement Solution"
-        whatWeDo="Co-Chair of C2PA Text Provenance Task Force. API and SDKs for cryptographic proof of content ownership and usage. Standard publishes January 8, 2026."
+        whatWeDo="Authors of C2PA Section A.7. Patent-pending API and SDKs for granular content attribution with Merkle tree authentication. Court-admissible evidence generation with 83 claims filed. Standard published January 8, 2026."
         whoItsFor="Publishers facing AI content usage challenges who need provable ownership and licensing infrastructure. Legal teams seeking court-admissible evidence."
-        keyDifferentiator="Cryptographic watermarking survives copy-paste and B2B distribution. Sentence-level tracking enables content attribution and licensing."
+        keyDifferentiator="Patent-pending Merkle tree authentication generates court-admissible evidence. Cryptographic watermarking survives copy-paste and B2B distribution. 83 claims covering granular content attribution."
         primaryValue="Transform litigation costs into licensing revenue. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
       />
 
@@ -50,7 +50,14 @@ export default function AICopyrightInfringementPage() {
                   </span>
                 </Link>
               </Button>
-              <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+              <Button asChild size="lg" variant="outline" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base">
+                <Link href="/auth/signin?mode=signup&source=ai-copyright">
+                  <span className="flex items-center justify-center">
+                    Get Started Free <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </span>
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="ghost" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 text-sm sm:text-base">
                 <Link href="/solutions/publishers">
                   <span className="flex items-center justify-center">
                     For Publishers <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />

@@ -55,7 +55,7 @@ http:
     # Note: verification-service is for future advanced verification features
     api-verify:
       rule: "PathPrefix(`/api/v1/verify`)"
-      service: enterprise-api
+      service: verification-service
       entryPoints:
         - web
       priority: 100

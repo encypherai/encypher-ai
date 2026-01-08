@@ -1,12 +1,18 @@
 """API endpoints for Verification Service v1"""
+import time
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import httpx
 from uuid import uuid4
 
+from encypher.core.keys import load_public_key_from_data
+from encypher.core.unicode_metadata import UnicodeMetadata
+
 from ...db.session import get_db
-from ...models.enterprise_schemas import VerifyRequest, VerifyResponse, VerifyVerdict
+from ...models.enterprise_schemas import ErrorDetail, VerifyRequest, VerifyResponse, VerifyVerdict
 from ...models.schemas import (
     SignatureVerify,
     DocumentVerify,
@@ -18,6 +24,25 @@ from ...services.verification_service import VerificationService
 from ...core.config import settings
 
 router = APIRouter()
+
+MAX_VERIFY_BYTES = 2 * 1024 * 1024
+
+
+def _error_response(
+    status_code: int,
+    *,
+    correlation_id: str,
+    code: str,
+    message: str,
+    hint: str | None = None,
+) -> JSONResponse:
+    payload = VerifyResponse(
+        success=False,
+        data=None,
+        error=ErrorDetail(code=code, message=message, hint=hint),
+        correlation_id=correlation_id,
+    )
+    return JSONResponse(status_code=status_code, content=payload.model_dump())
 
 
 async def get_current_user(authorization: str = Header(None)) -> Optional[dict]:
@@ -92,15 +117,78 @@ async def verify_text(
     organization: dict = Depends(get_current_organization),
 ):
     correlation_id = f"req-{uuid4().hex}"
+    payload_bytes = len(verify_request.text.encode("utf-8"))
+    if payload_bytes > MAX_VERIFY_BYTES:
+        return _error_response(
+            status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            correlation_id=correlation_id,
+            code="ERR_VERIFY_PAYLOAD_TOO_LARGE",
+            message="Verification payload exceeds the 2 MB limit.",
+            hint="Submit smaller payloads.",
+        )
+
+    organization_id = organization.get("organization_id")
+    organization_name = organization.get("organization_name")
+    certificate_pem = organization.get("certificate_pem")
+
+    public_key = None
+    if certificate_pem:
+        try:
+            public_key = load_public_key_from_data(certificate_pem)
+        except Exception:
+            public_key = None
+
+    def public_key_resolver(signer_id: str):
+        if organization_id and signer_id == organization_id:
+            return public_key
+        return None
+
+    start = time.perf_counter()
+    try:
+        is_valid, signer_id, manifest = UnicodeMetadata.verify_metadata(
+            text=verify_request.text,
+            public_key_resolver=public_key_resolver,
+        )
+    except Exception as exc:
+        duration_ms = int((time.perf_counter() - start) * 1000)
+        verdict = VerifyVerdict(
+            valid=False,
+            tampered=False,
+            reason_code="VERIFY_EXCEPTION",
+            signer_id=None,
+            signer_name=None,
+            timestamp=None,
+            details={
+                "manifest": {},
+                "duration_ms": duration_ms,
+                "payload_bytes": payload_bytes,
+                "exception": str(exc),
+            },
+        )
+        return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+
+    duration_ms = int((time.perf_counter() - start) * 1000)
+
+    reason_code = "OK" if is_valid else "SIGNATURE_INVALID"
+    if not signer_id:
+        reason_code = "SIGNER_UNKNOWN"
+    elif public_key_resolver(signer_id) is None:
+        reason_code = "CERT_NOT_FOUND"
+
     verdict = VerifyVerdict(
-        valid=False,
-        tampered=True,
-        reason_code="NOT_IMPLEMENTED",
-        signer_id=None,
-        signer_name=None,
+        valid=is_valid,
+        tampered=(not is_valid and reason_code == "SIGNATURE_INVALID"),
+        reason_code=reason_code,
+        signer_id=signer_id,
+        signer_name=(organization_name if (signer_id and signer_id == organization_id) else signer_id),
         timestamp=None,
-        details={},
+        details={
+            "manifest": manifest or {},
+            "duration_ms": duration_ms,
+            "payload_bytes": payload_bytes,
+        },
     )
+
     return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
 
 

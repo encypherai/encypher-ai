@@ -354,7 +354,7 @@ export default function PricingPage() {
                       </Button>
                     ) : (
                       <Button asChild className="w-full" variant={marketing.cta.variant}>
-                        <Link href={tier.price.monthly === 0 ? `${DASHBOARD_URL}/signup` : `${DASHBOARD_URL}/signup?plan=${tier.id}`}>
+                        <Link href={`/auth/signin?mode=signup&source=pricing-${tier.id}`}>
                           {marketing.cta.text} <ArrowRight className="ml-2 h-4 w-4" />
                         </Link>
                       </Button>

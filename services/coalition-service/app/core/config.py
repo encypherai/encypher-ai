@@ -44,6 +44,7 @@ class Settings(BaseSettings):
     # SHARED: Internal Service URLs (from shared vars)
     # ===========================================
     AUTH_SERVICE_URL: str = "http://localhost:8001"
+    KEY_SERVICE_URL: str = "http://localhost:8003"
 
     # ===========================================
     # SERVICE-SPECIFIC: Coalition Settings

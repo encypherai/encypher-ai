@@ -46,11 +46,16 @@ export default function AiCompaniesPage() {
                 Get Your Performance Intelligence Demo <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+            <Button asChild size="lg" variant="outline" className="font-semibold py-3 px-6 rounded-lg shadow-lg">
+              <Link href="/auth/signin?mode=signup&source=ai-companies">
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
             <Button 
               onClick={() => setShowContactModal(true)}
               size="lg" 
-              variant="outline"
-              className="font-semibold py-3 px-6 rounded-lg shadow-lg"
+              variant="ghost"
+              className="font-semibold"
             >
               Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
             </Button>

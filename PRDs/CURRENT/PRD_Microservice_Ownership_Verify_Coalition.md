@@ -26,26 +26,26 @@ We currently have overlapping ownership for verification and coalition APIs betw
 
 - [x] 1.1 Add request/response schemas matching Enterprise API envelope (VerifyRequest/VerifyResponse)
 - [x] 1.2 Implement API key auth via Key Service `/api/v1/keys/validate`
-- [ ] 1.3 Implement C2PA verification using `encypher-ai` `UnicodeMetadata.verify_metadata`
+- [x] 1.3 Implement C2PA verification using `encypher-ai` `UnicodeMetadata.verify_metadata` — ✅ pytest
 - [ ] 1.4 Add tests for:
   - [x] 1.4.1 Missing/invalid API key → 401 — ✅ pytest
-  - [ ] 1.4.2 Payload too large → 413
-  - [ ] 1.4.3 Valid signed text → 200 with structured verdict
+  - [x] 1.4.2 Payload too large → 413 — ✅ pytest
+  - [x] 1.4.3 Valid signed text → 200 with structured verdict — ✅ pytest
 
 ### 2.0 Coalition Service — Auth hardening
 
-- [ ] 2.1 Add API key auth via Key Service `/api/v1/keys/validate`
-- [ ] 2.2 Update member-scoped endpoints to derive identity from token (no trusting `user_id` from request alone)
-- [ ] 2.3 Add tests for:
-  - [ ] 2.3.1 Unauthorized access → 401
-  - [ ] 2.3.2 Cross-user access attempts → 403
+- [x] 2.1 Add API key auth via Key Service `/api/v1/keys/validate` — ✅ pytest
+- [x] 2.2 Update member-scoped endpoints to derive identity from token (no trusting `user_id` from request alone) — ✅ pytest
+- [x] 2.3 Add tests for:
+  - [x] 2.3.1 Unauthorized access → 401 — ✅ pytest
+  - [x] 2.3.2 Cross-user access attempts → 403 — ✅ pytest
 
 ### 3.0 Traefik routing alignment
 
-- [ ] 3.1 Production: route `/api/v1/verify*` → `verification-service`
-- [ ] 3.2 Production: route `/api/v1/coalition*` → `coalition-service`
-- [ ] 3.3 Local: update `config/traefik/dynamic.yml` to match production routing
-- [ ] 3.4 Local: update `infrastructure/traefik/routes-local.yml` to match production routing
+- [x] 3.1 Production: route `/api/v1/verify*` → `verification-service`
+- [x] 3.2 Production: route `/api/v1/coalition*` → `coalition-service`
+- [x] 3.3 Local: update `config/traefik/dynamic.yml` to match production routing
+- [x] 3.4 Local: update `infrastructure/traefik/routes-local.yml` to match production routing
 
 ### 4.0 Verification Protocol
 
