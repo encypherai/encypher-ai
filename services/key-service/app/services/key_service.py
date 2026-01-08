@@ -209,9 +209,14 @@ class KeyService:
             has_merkle = "merkle" in key_permissions
             is_super_admin = "admin" in key_permissions or "super_admin" in key_permissions
             
-            # Note: Key-service uses a separate database from auth-service,
-            # so we can't query the users table here. Superadmin status must be
-            # indicated via key permissions (admin or super_admin).
+            # SHORT-TERM FIX: Hardcoded superadmin user IDs
+            # TODO: Remove after shared core DB migration (see PRD_Shared_Core_DB.md)
+            # These users get full enterprise access regardless of key permissions
+            SUPERADMIN_USER_IDS = {
+                "a1621dd6-3298-473f-b2ad-232ca72c3df5",  # erik.svilich@encypherai.com
+            }
+            if result.user_id in SUPERADMIN_USER_IDS:
+                is_super_admin = True
             
             return {
                 "key_id": result.key_id,
