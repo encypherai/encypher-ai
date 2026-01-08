@@ -103,6 +103,7 @@ services:
       - key-service
       - encoding-service
       - verification-service
+      - coalition-service
       - analytics-service
       - billing-service
       - notification-service
@@ -272,6 +273,9 @@ services:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_verification
       REDIS_URL: redis://redis-cache:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      KEY_SERVICE_URL: http://key-service:8003
+      ENCODING_SERVICE_URL: http://encoding-service:8004
       SERVICE_NAME: verification-service
       SERVICE_HOST: 0.0.0.0
       SERVICE_PORT: 8005
@@ -282,8 +286,42 @@ services:
         condition: service_healthy
       redis-cache:
         condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      key-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  coalition-service:
+    build: ./services/coalition-service
+    container_name: encypher-coalition-service
+    ports:
+      - "8009:8009"
+    environment:
+      DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_coalition
+      REDIS_URL: redis://redis-cache:6379
+      AUTH_SERVICE_URL: http://auth-service:8001
+      KEY_SERVICE_URL: http://key-service:8003
+      SERVICE_NAME: coalition-service
+      SERVICE_HOST: 0.0.0.0
+      SERVICE_PORT: 8009
+      LOG_LEVEL: INFO
+      ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis-cache:
+        condition: service_healthy
+      auth-service:
+        condition: service_healthy
+      key-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8009/health"]
       interval: 30s
       timeout: 10s
       retries: 3
