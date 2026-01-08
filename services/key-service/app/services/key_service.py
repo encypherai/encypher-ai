@@ -247,7 +247,6 @@ class KeyService:
             }
 
         # Return organization context for org-level keys
-        # Note: certificate_pem will be available after auth-service migration 005 deploys
         return {
             "key_id": result.key_id,
             "organization_id": result.organization_id,
@@ -259,6 +258,7 @@ class KeyService:
             "monthly_api_usage": result.monthly_api_usage,
             "coalition_member": result.coalition_member,
             "coalition_rev_share": result.coalition_rev_share,
+            "certificate_pem": result.certificate_pem,
         }
 
     @staticmethod
