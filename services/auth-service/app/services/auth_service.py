@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
-from ..db.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken
+from ..db.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken, Organization, OrganizationMember
 from sqlalchemy.exc import IntegrityError
 from ..models.schemas import UserCreate, UserLogin
 from ..core.security import (
@@ -52,7 +52,7 @@ class AuthService:
     @staticmethod
     def create_user(db: Session, user_data: UserCreate) -> Tuple[User, bool]:
         """
-        Create a new user.
+        Create a new user with an auto-created personal organization.
         
         Returns:
             Tuple of (user, is_new) where is_new indicates if user was just created
@@ -72,6 +72,13 @@ class AuthService:
 
         db.add(db_user)
         try:
+            db.flush()  # Get user ID before creating org
+            
+            # Auto-create personal organization for the user
+            # Free tier uses Encypher's signing keys; paid tiers can BYOK
+            org = AuthService._create_personal_organization(db, db_user)
+            db_user.default_organization_id = org.id
+            
             db.commit()
             db.refresh(db_user)
             return db_user, True
@@ -81,6 +88,66 @@ class AuthService:
             if existing_user:
                 return existing_user, False
             raise ValueError("User with this email already exists")
+
+    @staticmethod
+    def _create_personal_organization(db: Session, user: User) -> Organization:
+        """
+        Create a personal organization for a new user.
+        
+        - Free/starter tier: Uses Encypher's signing keys (no certificate_pem)
+        - Paid tiers: Can bring their own keys (BYOK) via certificate_pem
+        
+        The organization is created with minimal info - user fills in company name later.
+        """
+        import secrets
+        
+        # Generate unique org ID
+        org_id = f"org_{secrets.token_hex(8)}"
+        
+        # Create organization with defaults
+        # Name is empty - user will fill in later
+        # Email matches user email for now
+        org = Organization(
+            id=org_id,
+            name="",  # User fills in later
+            slug=None,  # Will be set when user provides company name
+            email=user.email,
+            tier="starter",  # Default free tier - uses Encypher signing keys
+            max_seats=1,
+            monthly_api_limit=10000,  # Starter tier limit
+            monthly_api_usage=0,
+            features={
+                "team_management": False,
+                "audit_logs": False,
+                "merkle_enabled": False,
+                "bulk_operations": False,
+                "sentence_tracking": False,
+                "streaming": True,
+                "byok": False,  # Free tier uses Encypher's keys
+                "sso": False,
+                "custom_assertions": False,
+            },
+            coalition_member=True,
+            coalition_rev_share=65,
+            # certificate_pem is NULL - free tier uses Encypher's signing keys
+        )
+        db.add(org)
+        db.flush()
+        
+        # Add user as owner
+        member_id = f"mem_{secrets.token_hex(8)}"
+        member = OrganizationMember(
+            id=member_id,
+            organization_id=org.id,
+            user_id=user.id,
+            role="owner",
+            status="active",
+            accepted_at=datetime.utcnow(),
+        )
+        db.add(member)
+        
+        logger.info(f"Created personal organization {org.id} for user {user.id}")
+        return org
 
     @staticmethod
     def authenticate_user(db: Session, credentials: UserLogin) -> Optional[User]:
@@ -297,6 +364,13 @@ class AuthService:
 
         user = User(**user_kwargs)
         db.add(user)
+        db.flush()  # Get user ID before creating org
+        
+        # Auto-create personal organization for the user
+        # Free tier uses Encypher's signing keys; paid tiers can BYOK
+        org = AuthService._create_personal_organization(db, user)
+        user.default_organization_id = org.id
+        
         db.commit()
         db.refresh(user)
         return user, True
