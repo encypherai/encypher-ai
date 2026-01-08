@@ -237,13 +237,33 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
     result.total_found = len(all_raw)
     
     # Build clean text by removing all embeddings
+    # For basic format embeddings, the segment_text should be the FULL sentence
+    # (text from previous embedding end to NEXT embedding start, excluding the VS block)
     clean_parts = []
     prev_end = 0
     
     for i, (embedding_type, payload_bytes, start, end) in enumerate(all_raw):
         # Get the text segment before this embedding
-        segment_text = text[prev_end:start]
-        clean_parts.append(segment_text)
+        text_before = text[prev_end:start]
+        clean_parts.append(text_before)
+        
+        # For basic format, segment_text should be the full sentence:
+        # text_before + text_after (up to next embedding or end)
+        if embedding_type == "basic":
+            # Find where the next embedding starts (or end of text)
+            if i + 1 < len(all_raw):
+                next_start = all_raw[i + 1][2]  # start of next embedding
+                text_after = text[end:next_start]
+            else:
+                # Last basic embedding - text after goes to end or C2PA wrapper
+                text_after = text[end:]
+                # Remove any trailing C2PA wrapper from text_after
+                # (C2PA wrappers are already in all_raw, so this handles the case
+                # where there's text between last basic and C2PA)
+            segment_text = text_before + text_after
+        else:
+            # For C2PA, segment_text is just the text before (for hard binding verification)
+            segment_text = text_before
         
         # Extract metadata from this embedding
         wrapper_text = text[start:end]
@@ -388,21 +408,35 @@ async def extract_and_verify_all_embeddings(
             
             # Merkle tree content verification for basic format embeddings
             # This detects per-sentence tampering by comparing leaf hashes
+            # NOTE: We need to re-segment the clean text to get proper sentence boundaries
+            # because segment_text doesn't align with original sentences due to embedding placement
             if embedding.embedding_type == "basic" and embedding.metadata:
                 custom_meta = embedding.metadata.get("custom_metadata", {})
                 expected_leaf_hash = custom_meta.get("leaf_hash")
-                if expected_leaf_hash and embedding.segment_text:
-                    # Compute hash of current text content
-                    computed_hash = compute_leaf_hash(embedding.segment_text)
-                    embedding.leaf_hash = expected_leaf_hash
-                    embedding.computed_hash = computed_hash
-                    embedding.content_hash_valid = (expected_leaf_hash == computed_hash)
+                leaf_index = custom_meta.get("leaf_index")
+                
+                if expected_leaf_hash is not None and leaf_index is not None:
+                    # Re-segment clean text to get proper sentence boundaries
+                    from app.utils.segmentation.sentence import segment_sentences
+                    clean_sentences = segment_sentences(result.clean_text)
                     
-                    if not embedding.content_hash_valid:
-                        logger.info(
-                            f"Content hash mismatch for embedding {embedding.index}: "
-                            f"expected {expected_leaf_hash[:16]}..., got {computed_hash[:16]}..."
-                        )
+                    if 0 <= leaf_index < len(clean_sentences):
+                        # Get the sentence at this leaf_index
+                        sentence_text = clean_sentences[leaf_index]
+                        computed_hash = compute_leaf_hash(sentence_text)
+                        embedding.leaf_hash = expected_leaf_hash
+                        embedding.computed_hash = computed_hash
+                        embedding.content_hash_valid = (expected_leaf_hash == computed_hash)
+                        # Update segment_text to be the actual sentence
+                        embedding.segment_text = sentence_text
+                        
+                        if not embedding.content_hash_valid:
+                            logger.info(
+                                f"Content hash mismatch for embedding {embedding.index} (leaf {leaf_index}): "
+                                f"expected {expected_leaf_hash[:16]}..., got {computed_hash[:16]}..."
+                            )
+                    else:
+                        logger.warning(f"Leaf index {leaf_index} out of range for {len(clean_sentences)} sentences")
             
             if signature_valid:
                 embedding.verification_status = "Success"
