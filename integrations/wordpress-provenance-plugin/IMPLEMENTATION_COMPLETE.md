@@ -57,7 +57,7 @@ The WordPress C2PA plugin implementation is **complete** per the PRD specificati
 1. User publishes/updates post
 2. Plugin checks auto-mark settings
 3. Plugin calls REST API `/sign` endpoint
-4. REST API calls Enterprise API `/enterprise/embeddings/encode-with-embeddings`
+4. REST API calls Enterprise API `/sign` (Starter) or `/sign/advanced` (Professional+)
 5. Enterprise API returns embedded content
 6. Plugin updates post content and metadata
 
@@ -66,7 +66,9 @@ The WordPress C2PA plugin implementation is **complete** per the PRD specificati
 **Description:** Full integration with Enterprise API microservices.
 
 **Endpoints Used:**
-- `POST /api/v1/enterprise/embeddings/encode-with-embeddings` (authenticated)
+- `POST /api/v1/sign` (authenticated)
+- `POST /api/v1/sign/advanced` (authenticated)
+- `POST /api/v1/verify` (authenticated)
 - `POST /api/v1/public/extract-and-verify` (public)
 
 **Implementation:**
@@ -296,7 +298,7 @@ wp_ajax_encypher_get_bulk_status
 
 **Embedding:**
 ```
-POST /api/v1/enterprise/embeddings/encode-with-embeddings
+POST /api/v1/sign/advanced
 Authorization: Bearer {api_key}
 
 Request:
@@ -304,12 +306,8 @@ Request:
   "text": "Post content...",
   "document_id": "wp_post_123",
   "segmentation_level": "sentence",
-  "doc_metadata": {...},
-  "embedding_options": {
-    "metadata_format": "c2pa",
-    "add_hard_binding": true,
-    "claim_generator": "WordPress/Encypher Plugin v1.0"
-  }
+  "action": "c2pa.created",
+  "metadata": {...}
 }
 
 Response:

@@ -129,17 +129,14 @@ Expected response:
 
 ```powershell
 # Test embedding endpoint
-curl -X POST http://localhost:8000/api/v1/enterprise/embeddings/encode-with-embeddings `
+curl -X POST http://localhost:8000/api/v1/sign/advanced `
   -H "Authorization: Bearer demo-local-key" `
   -H "Content-Type: application/json" `
   -d '{
     "text": "This is a test blog post about AI and content authentication.",
     "document_id": "test_post_1",
     "segmentation_level": "sentence",
-    "embedding_options": {
-      "metadata_format": "c2pa",
-      "add_hard_binding": true
-    }
+    "action": "c2pa.created"
   }'
 ```
 

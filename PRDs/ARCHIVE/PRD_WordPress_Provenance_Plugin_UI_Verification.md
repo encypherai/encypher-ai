@@ -1,6 +1,6 @@
 # PRD: WordPress Provenance Plugin UI + Verification
 
-**Status:** In Progress  
+**Status:** Complete  
 **Current Goal:** Complete menu consolidation + branding, then validate bulk signing + verification end-to-end against Enterprise API  
 **Team:** TEAM_054
 
@@ -41,7 +41,7 @@ Refine the Encypher WordPress Provenance Plugin admin experience to use a single
 
 ### 5.0 Finalization
 - [x] 5.1 Update docs referencing legacy menu locations (Tools/Settings)
-- [ ] 5.2 Commit changes
+- [x] 5.2 Commit changes — ✅ pytest ✅ ruff
 
 ## Success Criteria
 - All WP plugin admin pages exist only under top-level **Encypher** menu.
@@ -53,4 +53,7 @@ Refine the Encypher WordPress Provenance Plugin admin experience to use a single
 - ✅ E2E flow validated with Puppeteer.
 
 ## Completion Notes
-To be filled when complete.
+- Updated WordPress provenance plugin documentation to reference current Enterprise API endpoints (`/sign`, `/sign/advanced`, `/verify`, `/public/extract-and-verify`) and removed references to the removed legacy embeddings endpoint.
+- Added contract test to prevent doc regressions (`enterprise_api/tests/test_wordpress_provenance_plugin_contract.py`).
+- ✅ `uv run ruff check .`
+- ✅ `uv run pytest`

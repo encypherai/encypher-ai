@@ -323,23 +323,23 @@ JUMBF Container: [full C2PA manifest]
 
 The plugin communicates with the Encypher Enterprise API:
 
-**Endpoint:** `https://api.encypherai.com/api/v1/wordpress/embed`
+**Endpoints:**
+- `POST /api/v1/sign` (Starter tier)
+- `POST /api/v1/sign/advanced` (Professional+ tiers)
+- `POST /api/v1/verify` (verification)
 
 **Request:**
 ```json
 {
-  "content": "Blog post text...",
+  "document_id": "wp_post_123",
+  "text": "Blog post text...",
+  "segmentation_level": "sentence",
+  "action": "c2pa.created",
   "metadata": {
-    "post_id": 123,
-    "post_title": "My Blog Post",
-    "post_author": "John Doe",
-    "post_url": "https://example.com/my-post",
-    "action": "c2pa.created"
-  },
-  "options": {
-    "metadata_format": "c2pa",
-    "add_hard_binding": true,
-    "claim_generator": "WordPress/Encypher Plugin v1.0"
+    "title": "My Blog Post",
+    "author": "John Doe",
+    "url": "https://example.com/my-post",
+    "wordpress_post_id": 123
   }
 }
 ```
@@ -348,9 +348,9 @@ The plugin communicates with the Encypher Enterprise API:
 ```json
 {
   "success": true,
-  "marked_content": "Blog post text with invisible C2PA manifest...",
-  "manifest_id": "uuid-here",
-  "verification_url": "https://verify.encypherai.com/uuid-here"
+  "document_id": "wp_post_123",
+  "embedded_content": "Blog post text with invisible C2PA manifest...",
+  "merkle_tree": { "root_hash": "..." }
 }
 ```
 

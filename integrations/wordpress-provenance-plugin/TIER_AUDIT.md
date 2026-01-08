@@ -54,11 +54,11 @@ The plugin codebase (`encypher-provenance`) implements distinct features for Fre
 The plugin correctly utilizes the Enterprise microservices architecture:
 
 *   **Authentication:** Uses `Authorization: Bearer {api_key}` for all requests.
-*   **Embeddings Service:** Calls `POST /enterprise/embeddings/encode-with-embeddings` for signing.
-    *   Sends `segmentation_level` to trigger appropriate microservice workflow (Merkle vs Simple).
+*   **Signing Service:** Calls `POST /sign` (Starter) or `POST /sign/advanced` (Professional+) for signing.
+    *   Sends `segmentation_level` to trigger document vs sentence workflow.
     *   Preserves provenance chain via `previous_instance_id` and `action` (`c2pa.created` vs `c2pa.edited`).
-*   **Verification Service:** Calls `POST /public/extract-and-verify` for frontend badges.
-    *   Displays Merkle proof data if available.
+*   **Verification Service:** Calls `POST /verify` for editor / admin verification.
+*   **Public Verification:** Calls `POST /public/extract-and-verify` for unauthenticated third-party extraction + verification.
 
 ## Recommendations
 *   **Update README:** Clarify the features available per tier in the public documentation.

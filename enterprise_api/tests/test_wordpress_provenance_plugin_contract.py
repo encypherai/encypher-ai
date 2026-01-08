@@ -69,6 +69,33 @@ def test_plugin_uses_supported_sign_and_verify_endpoints() -> None:
     assert "'/verify'" in src
 
 
+def test_wordpress_plugin_docs_do_not_reference_legacy_embeddings_endpoints() -> None:
+    repo_root = _repo_root()
+    docs = [
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "README.md",
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "INTEGRATION_SUMMARY.md",
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "IMPLEMENTATION_COMPLETE.md",
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "LOCAL_TESTING_GUIDE.md",
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "TIER_AUDIT.md",
+        repo_root
+        / "integrations"
+        / "wordpress-provenance-plugin"
+        / "plugin"
+        / "encypher-provenance"
+        / "README.md",
+    ]
+
+    forbidden = [
+        "/api/v1/enterprise/embeddings/encode-with-embeddings",
+        "/enterprise/embeddings/encode-with-embeddings",
+    ]
+
+    for path in docs:
+        src = path.read_text(encoding="utf-8")
+        for legacy in forbidden:
+            assert legacy not in src
+
+
 def test_tools_router_does_not_generate_ephemeral_demo_keys() -> None:
     repo_root = _repo_root()
     tools_py = repo_root / "enterprise_api" / "app" / "routers" / "tools.py"
