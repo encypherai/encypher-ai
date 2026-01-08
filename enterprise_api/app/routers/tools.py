@@ -288,35 +288,32 @@ async def decode_text(
             # Multiple embeddings found - use multi-embedding verification
             logger.info(f"Found {multi_result.total_found} embeddings in text")
             
-            # Build public key resolver that handles all signers
-            async def resolve_public_key(signer_id: str):
-                if signer_id in demo_signer_ids:
-                    return public_key
-                if signer_id and signer_id.startswith("user_"):
-                    return public_key
-                try:
-                    return await load_organization_public_key(signer_id, db)
-                except Exception:
-                    return None
-            
-            # Create sync wrapper for the resolver
+            # Pre-resolve all signer keys from Trust Anchor database
+            # This checks the FULL trust anchor list, not just demo keys
             resolved_keys: dict = {}
             for emb in multi_result.embeddings:
-                if emb.signer_id:
-                    if emb.signer_id in demo_signer_ids or (emb.signer_id and emb.signer_id.startswith("user_")):
-                        resolved_keys[emb.signer_id] = public_key
-                    else:
-                        try:
-                            resolved_keys[emb.signer_id] = await load_organization_public_key(emb.signer_id, db)
-                        except Exception:
+                if emb.signer_id and emb.signer_id not in resolved_keys:
+                    try:
+                        # load_organization_public_key handles:
+                        # - org_demo -> demo key
+                        # - user_* -> demo key  
+                        # - org_* -> database lookup
+                        resolved_keys[emb.signer_id] = await load_organization_public_key(emb.signer_id, db)
+                        logger.debug(f"Resolved key for {emb.signer_id} from Trust Anchor")
+                    except Exception as e:
+                        logger.warning(f"Failed to resolve key for {emb.signer_id}: {e}")
+                        # Fall back to demo key for known demo signer IDs
+                        if emb.signer_id in demo_signer_ids:
+                            resolved_keys[emb.signer_id] = public_key
+                        else:
                             resolved_keys[emb.signer_id] = None
             
             def public_key_resolver(signer_id: str):
+                """Resolve public key from pre-fetched Trust Anchor results."""
                 if signer_id in resolved_keys:
                     return resolved_keys[signer_id]
+                # Final fallback for demo signer IDs not in database
                 if signer_id in demo_signer_ids:
-                    return public_key
-                if signer_id and signer_id.startswith("user_"):
                     return public_key
                 return None
             
@@ -492,34 +489,32 @@ async def decode_text(
         
         logger.info(f"Extracted signer_id from metadata: {signer_id_from_metadata}")
         
-        # Pre-fetch the public key for the signer
+        # Pre-fetch the public key for the signer from Trust Anchor database
+        # load_organization_public_key handles all cases:
+        # - org_demo -> demo key
+        # - user_* -> demo key
+        # - org_* -> database lookup
         org_public_key = None
-        is_user_signer = False
         if signer_id_from_metadata:
-            if signer_id_from_metadata in demo_signer_ids:
-                org_public_key = public_key
-                logger.info(f"Using demo key for demo signer {signer_id_from_metadata}")
-            elif signer_id_from_metadata.startswith("user_"):
-                # User-level signers use the demo key (they signed with it via the demo tools)
-                org_public_key = public_key
-                is_user_signer = True
-                logger.info(f"Using demo key for user signer {signer_id_from_metadata}")
-            else:
-                try:
-                    org_public_key = await load_organization_public_key(signer_id_from_metadata, db)
-                    logger.info(f"Found public key for signer {signer_id_from_metadata} in Trust Anchor")
-                except ValueError:
-                    logger.warning(f"Signer {signer_id_from_metadata} not found in Trust Anchor database")
-                except Exception as e:
-                    logger.warning(f"Error looking up signer {signer_id_from_metadata}: {e}")
+            try:
+                org_public_key = await load_organization_public_key(signer_id_from_metadata, db)
+                logger.info(f"Resolved key for {signer_id_from_metadata} from Trust Anchor")
+            except ValueError:
+                logger.warning(f"Signer {signer_id_from_metadata} not found in Trust Anchor database")
+                # Fall back to demo key for known demo signer IDs
+                if signer_id_from_metadata in demo_signer_ids:
+                    org_public_key = public_key
+            except Exception as e:
+                logger.warning(f"Error looking up signer {signer_id_from_metadata}: {e}")
+                if signer_id_from_metadata in demo_signer_ids:
+                    org_public_key = public_key
         
         def public_key_resolver(signer_id: str):
+            """Resolve public key - use pre-fetched key or fall back to demo."""
             if org_public_key and signer_id == signer_id_from_metadata:
                 return org_public_key
+            # Fallback for demo signer IDs
             if signer_id in demo_signer_ids:
-                return public_key
-            if signer_id.startswith("user_"):
-                logger.info(f"Using demo key for user org {signer_id}")
                 return public_key
             logger.warning(f"Unknown signer_id: {signer_id}")
             return None
@@ -547,14 +542,9 @@ async def decode_text(
 
             if signer_id:
                 if org_public_key and signer_id == signer_id_from_metadata:
-                    if is_user_signer:
-                        signer_name = f"{signer_id} (Verified via Trust Anchor)"
-                    else:
-                        signer_name = f"{signer_id} (Verified via Trust Anchor)"
+                    signer_name = f"{signer_id} (Verified via Trust Anchor)"
                 elif signer_id in demo_signer_ids:
                     signer_name = f"{signer_id} (Demo Key)"
-                elif signer_id.startswith("user_"):
-                    signer_name = f"{signer_id} (Verified via Trust Anchor)"
                 else:
                     signer_name = f"{signer_id} (Unknown Signer)"
             else:
