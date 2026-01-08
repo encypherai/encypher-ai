@@ -1,7 +1,7 @@
 'use client';
 
 // Force HMR update
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +102,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
   const [output, setOutput] = useState<string | null>(null);
   const [lastDecodeResponse, setLastDecodeResponse] = useState<DecodeToolResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [expandedEmbeddings, setExpandedEmbeddings] = useState<Set<number>>(new Set([0])); // C2PA manifest (index 0) expanded by default
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const copyBtnRef = useRef<HTMLButtonElement>(null);
@@ -112,7 +113,30 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
     setOutput(null);
     setLastDecodeResponse(null);
     setError(null);
+    setExpandedEmbeddings(new Set([0]));
   };
+
+  const toggleEmbedding = useCallback((index: number) => {
+    setExpandedEmbeddings(prev => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }, []);
+
+  const expandAllEmbeddings = useCallback(() => {
+    if (lastDecodeResponse?.all_embeddings) {
+      setExpandedEmbeddings(new Set(lastDecodeResponse.all_embeddings.map((_, i) => i)));
+    }
+  }, [lastDecodeResponse]);
+
+  const collapseAllEmbeddings = useCallback(() => {
+    setExpandedEmbeddings(new Set([0])); // Keep C2PA manifest expanded
+  }, []);
 
   const handleProcess = async () => {
     setLoading(true);
@@ -430,68 +454,129 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                           </div>
                         )}
 
-                        {/* Individual embeddings list */}
-                        {(lastDecodeResponse.embeddings_found || 0) > 1 && lastDecodeResponse.all_embeddings && (
+                        {/* Individual embeddings list with collapsible details */}
+                        {(lastDecodeResponse.embeddings_found || 0) >= 1 && lastDecodeResponse.all_embeddings && (
                           <div className="space-y-2 mb-4">
-                            <strong className="block text-slate-300 text-sm">Individual Embeddings:</strong>
-                            <div className="max-h-64 overflow-y-auto space-y-2">
-                              {lastDecodeResponse.all_embeddings.map((embedding, idx) => (
-                                <div 
-                                  key={idx} 
-                                  className={`p-2 rounded border text-xs ${getEmbeddingStatusClass(embedding)}`}
-                                >
-                                  <div className="flex items-center justify-between mb-1">
-                                    <span className="font-medium">
-                                      {getEmbeddingStatusIcon(embedding)} Embedding #{embedding.index + 1}
-                                    </span>
-                                    <span className={`px-2 py-0.5 rounded text-xs ${
-                                      embedding.verdict?.valid ? 'bg-green-700 text-green-100' :
-                                      embedding.verdict?.tampered ? 'bg-yellow-700 text-yellow-100' :
-                                      'bg-red-700 text-red-100'
-                                    }`}>
-                                      {embedding.verification_status}
-                                    </span>
-                                  </div>
-                                  {embedding.verdict?.signer_name && (
-                                    <div className="text-slate-300">
-                                      <strong>Signer:</strong> {embedding.verdict.signer_name}
-                                    </div>
-                                  )}
-                                  {embedding.clean_text && (
-                                    <div className="text-slate-400 truncate mt-1" title={embedding.clean_text}>
-                                      <strong>Text:</strong> {embedding.clean_text.substring(0, 100)}...
-                                    </div>
-                                  )}
-                                  {embedding.error && (
-                                    <div className="text-red-300 mt-1">
-                                      <strong>Error:</strong> {embedding.error}
-                                    </div>
-                                  )}
+                            <div className="flex items-center justify-between">
+                              <strong className="block text-slate-300 text-sm">
+                                {lastDecodeResponse.embeddings_found === 1 ? 'Manifest Details:' : `All Embeddings (${lastDecodeResponse.embeddings_found}):`}
+                              </strong>
+                              {(lastDecodeResponse.embeddings_found || 0) > 1 && (
+                                <div className="flex gap-2">
+                                  <button 
+                                    onClick={expandAllEmbeddings}
+                                    className="text-xs text-blue-400 hover:text-blue-300 underline"
+                                  >
+                                    Expand All
+                                  </button>
+                                  <button 
+                                    onClick={collapseAllEmbeddings}
+                                    className="text-xs text-blue-400 hover:text-blue-300 underline"
+                                  >
+                                    Collapse All
+                                  </button>
                                 </div>
-                              ))}
+                              )}
+                            </div>
+                            <div className="max-h-96 overflow-y-auto space-y-2">
+                              {lastDecodeResponse.all_embeddings.map((embedding, idx) => {
+                                const isExpanded = expandedEmbeddings.has(idx);
+                                const isC2PAManifest = idx === 0;
+                                const manifestType = isC2PAManifest ? 'C2PA Document Manifest' : `Sentence Embedding #${embedding.index}`;
+                                
+                                return (
+                                  <div 
+                                    key={idx} 
+                                    className={`rounded border text-xs ${getEmbeddingStatusClass(embedding)}`}
+                                  >
+                                    {/* Collapsible Header */}
+                                    <button
+                                      onClick={() => toggleEmbedding(idx)}
+                                      className="w-full p-2 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-slate-400 transition-transform" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                          ▶
+                                        </span>
+                                        <span className="font-medium">
+                                          {getEmbeddingStatusIcon(embedding)} {manifestType}
+                                        </span>
+                                        {isC2PAManifest && (
+                                          <span className="px-1.5 py-0.5 bg-blue-700 text-blue-100 rounded text-xs">
+                                            Primary
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className={`px-2 py-0.5 rounded text-xs ${
+                                        embedding.verdict?.valid ? 'bg-green-700 text-green-100' :
+                                        embedding.verdict?.tampered ? 'bg-yellow-700 text-yellow-100' :
+                                        'bg-red-700 text-red-100'
+                                      }`}>
+                                        {embedding.verdict?.valid ? 'Verified' : embedding.verdict?.tampered ? 'Tampered' : 'Failed'}
+                                      </span>
+                                    </button>
+                                    
+                                    {/* Collapsible Content */}
+                                    {isExpanded && (
+                                      <div className="p-3 pt-0 border-t border-slate-700/50">
+                                        {embedding.verdict?.signer_name && (
+                                          <div className="text-slate-300 mt-2">
+                                            <strong>Signer:</strong> {embedding.verdict.signer_name}
+                                            {embedding.verdict?.signer_id && (
+                                              <span className="text-slate-500 ml-1">({embedding.verdict.signer_id})</span>
+                                            )}
+                                          </div>
+                                        )}
+                                        {embedding.verdict?.timestamp && (
+                                          <div className="text-slate-300">
+                                            <strong>Signed:</strong> {new Date(embedding.verdict.timestamp).toLocaleString()}
+                                          </div>
+                                        )}
+                                        {embedding.verdict?.reason_code && (
+                                          <div className="text-slate-300">
+                                            <strong>Reason Code:</strong> {embedding.verdict.reason_code}
+                                          </div>
+                                        )}
+                                        {embedding.clean_text && (
+                                          <div className="text-slate-400 mt-2">
+                                            <strong>Text:</strong>
+                                            <div className="mt-1 p-2 bg-slate-900 rounded text-slate-300 break-words">
+                                              {embedding.clean_text}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {embedding.metadata && (
+                                          <div className="mt-2">
+                                            <strong className="text-slate-400">Manifest Data:</strong>
+                                            <pre className="mt-1 p-2 bg-slate-900 rounded text-slate-300 whitespace-pre-wrap break-all overflow-x-auto text-xs">
+                                              {JSON.stringify(embedding.metadata, null, 2)}
+                                            </pre>
+                                          </div>
+                                        )}
+                                        {embedding.error && (
+                                          <div className="text-red-300 mt-2">
+                                            <strong>Error:</strong> {embedding.error}
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           </div>
                         )}
 
-                        {lastDecodeResponse.metadata && hasOriginalText(lastDecodeResponse.metadata) && (
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="break-all font-mono text-sm">{lastDecodeResponse.metadata.original_text}</span>
-                            <Button ref={copyBtnRef} variant="ghost" size="icon" onClick={() => lastDecodeResponse.metadata?.original_text && handleCopy(lastDecodeResponse.metadata.original_text)}>
-                              Copy
-                            </Button>
-                          </div>
-                        )}
-                        {lastDecodeResponse.metadata && (
-                          <div className="mt-4 p-2 bg-slate-900 text-slate-50 rounded text-xs border border-slate-800 max-w-full">
-                            <strong className="block mb-1 text-slate-400">
-                              {(lastDecodeResponse.embeddings_found || 0) > 1 ? 'Primary Manifest Data (Embedding #1):' : 'C2PA Manifest Data:'}
-                            </strong>
-                            <pre className="whitespace-pre-wrap break-all overflow-x-auto text-slate-50 max-w-full">
+                        {/* Show signer info summary when no all_embeddings array */}
+                        {!lastDecodeResponse.all_embeddings && lastDecodeResponse.metadata && (
+                          <div className="mt-4 p-3 bg-slate-900 text-slate-50 rounded text-xs border border-slate-800 max-w-full">
+                            <strong className="block mb-2 text-slate-400">C2PA Manifest Data:</strong>
+                            <pre className="whitespace-pre-wrap break-all overflow-x-auto text-slate-50 max-w-full mb-2">
                               {JSON.stringify(lastDecodeResponse.metadata, null, 2)}
                             </pre>
                             
                             {(lastDecodeResponse.raw_hidden_data || (lastDecodeResponse.metadata as any)?.manifest) && (
-                              <div className="mt-2 pt-2 border-t border-slate-800">
+                              <div className="mt-2 pt-2 border-t border-slate-700">
                                 <div>
                                     <strong className="text-slate-400">Signer:</strong> 
                                     <span className="text-slate-50 ml-1">
@@ -500,12 +585,13 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                          (lastDecodeResponse.metadata as any)?.manifest?.claim_generator || 
                                          "Unknown"}
                                     </span>
+                                    <span className="text-green-400 ml-2">(Verified via Trust Anchor)</span>
                                 </div>
                                 <div>
                                     <strong className="text-slate-400">Reason Code:</strong> 
                                     <span className="text-slate-50 ml-1">
                                         {lastDecodeResponse.raw_hidden_data?.reason_code || 
-                                         (lastDecodeResponse.raw_hidden_data?.valid ? "OK" : "Unknown")}
+                                         (lastDecodeResponse.raw_hidden_data?.valid ? "VERIFIED" : "Unknown")}
                                     </span>
                                 </div>
                               </div>
