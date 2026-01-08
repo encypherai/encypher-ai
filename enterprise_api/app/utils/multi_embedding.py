@@ -14,6 +14,7 @@ This feature is NOT available in the open-source encypher-ai library.
 """
 import json
 import logging
+import unicodedata
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
@@ -70,6 +71,16 @@ def _vs_to_byte(code_point: int) -> Optional[int]:
     elif VS_SUPPLEMENT_START <= code_point <= VS_SUPPLEMENT_END:
         return code_point - VS_SUPPLEMENT_START + 16
     return None
+
+
+def normalize_text(text: str) -> str:
+    """Normalize text to NFC form for consistent embedding/verification.
+    
+    This ensures that text is normalized the same way during both
+    embedding and verification, avoiding signature mismatches due to
+    different Unicode representations of the same characters.
+    """
+    return unicodedata.normalize("NFC", text)
 
 
 def find_all_vs_blocks(text: str, min_length: int = 16) -> list[tuple[int, int, bytes]]:
@@ -200,6 +211,7 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
     """Extract ALL embeddings from text without verification.
     
     Finds both C2PA wrappers and basic format embeddings from /sign/advanced.
+    Text is normalized to NFC form for consistent processing.
     
     Args:
         text: The text containing one or more embedded manifests.
@@ -207,6 +219,9 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
     Returns:
         MultiEmbeddingResult with all found embeddings and their metadata.
     """
+    # Normalize text to NFC for consistent processing
+    text = normalize_text(text)
+    
     result = MultiEmbeddingResult()
     all_raw = find_all_embeddings_raw(text)
     
@@ -297,6 +312,7 @@ async def extract_and_verify_all_embeddings(
     
     This is the main entry point for multi-embedding extraction and verification.
     Each embedding is verified independently against its signer's public key.
+    Text is normalized to NFC form for consistent verification.
     
     Args:
         text: The text containing one or more embedded manifests.
@@ -306,10 +322,13 @@ async def extract_and_verify_all_embeddings(
     Returns:
         MultiEmbeddingResult with all embeddings and their verification status.
     """
+    # Normalize text to NFC for consistent verification (must match embedding normalization)
+    text = normalize_text(text)
+    
     if demo_signer_ids is None:
         demo_signer_ids = {"org_demo", "demo-signer-id", "c2pa-demo-signer-001"}
     
-    # First extract all embeddings
+    # First extract all embeddings (also normalizes internally)
     result = extract_all_embeddings(text)
     
     if result.total_found == 0:
@@ -322,7 +341,7 @@ async def extract_and_verify_all_embeddings(
     # without any other embeddings' wrappers interfering with the hash calculation.
     for embedding in result.embeddings:
         try:
-            # Get the wrapper text for this embedding
+            # Get the wrapper text for this embedding (from normalized text)
             wrapper_text = text[embedding.span[0]:embedding.span[1]]
             
             # The segment_text is already clean (text between previous wrapper end and this wrapper start)
