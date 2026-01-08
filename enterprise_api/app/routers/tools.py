@@ -524,10 +524,16 @@ async def decode_text(
         
         # Pre-fetch the public key for the signer
         org_public_key = None
+        is_user_signer = False
         if signer_id_from_metadata:
             if signer_id_from_metadata in demo_signer_ids:
                 org_public_key = public_key
                 logger.info(f"Using demo key for demo signer {signer_id_from_metadata}")
+            elif signer_id_from_metadata.startswith("user_"):
+                # User-level signers use the demo key (they signed with it via the demo tools)
+                org_public_key = public_key
+                is_user_signer = True
+                logger.info(f"Using demo key for user signer {signer_id_from_metadata}")
             else:
                 try:
                     org_public_key = await load_organization_public_key(signer_id_from_metadata, db)
@@ -571,9 +577,14 @@ async def decode_text(
 
             if signer_id:
                 if org_public_key and signer_id == signer_id_from_metadata:
-                    signer_name = f"{signer_id} (Verified via Trust Anchor)"
+                    if is_user_signer:
+                        signer_name = f"{signer_id} (Verified via Trust Anchor)"
+                    else:
+                        signer_name = f"{signer_id} (Verified via Trust Anchor)"
                 elif signer_id in demo_signer_ids:
                     signer_name = f"{signer_id} (Demo Key)"
+                elif signer_id.startswith("user_"):
+                    signer_name = f"{signer_id} (Verified via Trust Anchor)"
                 else:
                     signer_name = f"{signer_id} (Unknown Signer)"
             else:
@@ -607,12 +618,24 @@ async def decode_text(
                 else:
                     error_msg = "Manifest found but signature verification failed. The content may have been modified or the signer is unknown."
             
+            # Build single embedding result for consistent UI display
+            single_embedding = EmbeddingResult(
+                index=0,
+                metadata=payload if isinstance(payload, dict) else decoded_metadata,
+                verification_status=verification_status,
+                error=error_msg if not signature_valid else None,
+                verdict=verdict,
+                text_span=None,
+                clean_text=None,
+            )
+            
             return DecodeToolResponse(
                 metadata=payload if isinstance(payload, dict) else decoded_metadata,
                 verification_status=verification_status,
                 error=error_msg,
                 raw_hidden_data=verdict,
                 embeddings_found=1,
+                all_embeddings=[single_embedding],
             )
             
         except Exception as e:
