@@ -327,15 +327,28 @@ async def decode_text(
             # Convert to response format
             all_embeddings = []
             for emb in verified_result.embeddings:
+                # Determine tampered status - check both signature and content hash
+                is_tampered = (
+                    (not emb.signature_valid and emb.metadata is not None) or
+                    emb.content_hash_valid is False
+                )
+                # Determine reason code
+                if emb.signature_valid and emb.content_hash_valid is not False:
+                    reason_code = "VERIFIED"
+                elif emb.content_hash_valid is False:
+                    reason_code = "CONTENT_MODIFIED"
+                else:
+                    reason_code = "VERIFICATION_FAILED"
+                
                 all_embeddings.append(EmbeddingResult(
                     index=emb.index,
                     metadata=emb.metadata,
                     verification_status=emb.verification_status,
                     error=emb.error,
                     verdict=VerifyVerdict(
-                        valid=emb.signature_valid,
-                        tampered=not emb.signature_valid and emb.metadata is not None,
-                        reason_code="VERIFIED" if emb.signature_valid else "VERIFICATION_FAILED",
+                        valid=emb.signature_valid and emb.content_hash_valid is not False,
+                        tampered=is_tampered,
+                        reason_code=reason_code,
                         signer_id=emb.signer_id,
                         signer_name=emb.signer_name,
                     ),

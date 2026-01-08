@@ -20,6 +20,7 @@ from typing import Any, Callable, Optional
 
 import c2pa_text
 from encypher.core.unicode_metadata import UnicodeMetadata
+from app.utils.merkle.hashing import compute_leaf_hash
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,10 @@ class EmbeddingInfo:
     signer_id: Optional[str] = None
     signer_name: Optional[str] = None
     signature_valid: bool = False
+    # Merkle tree content verification (per-sentence tamper detection)
+    leaf_hash: Optional[str] = None  # Expected hash from metadata
+    computed_hash: Optional[str] = None  # Hash of current text
+    content_hash_valid: Optional[bool] = None  # True if hashes match (content not modified)
 
 
 @dataclass
@@ -381,6 +386,24 @@ async def extract_and_verify_all_embeddings(
             embedding.signature_valid = signature_valid
             embedding.signer_id = signer_id or embedding.signer_id
             
+            # Merkle tree content verification for basic format embeddings
+            # This detects per-sentence tampering by comparing leaf hashes
+            if embedding.embedding_type == "basic" and embedding.metadata:
+                custom_meta = embedding.metadata.get("custom_metadata", {})
+                expected_leaf_hash = custom_meta.get("leaf_hash")
+                if expected_leaf_hash and embedding.segment_text:
+                    # Compute hash of current text content
+                    computed_hash = compute_leaf_hash(embedding.segment_text)
+                    embedding.leaf_hash = expected_leaf_hash
+                    embedding.computed_hash = computed_hash
+                    embedding.content_hash_valid = (expected_leaf_hash == computed_hash)
+                    
+                    if not embedding.content_hash_valid:
+                        logger.info(
+                            f"Content hash mismatch for embedding {embedding.index}: "
+                            f"expected {expected_leaf_hash[:16]}..., got {computed_hash[:16]}..."
+                        )
+            
             if signature_valid:
                 embedding.verification_status = "Success"
                 embedding.metadata = payload if isinstance(payload, dict) else embedding.metadata
@@ -391,6 +414,11 @@ async def extract_and_verify_all_embeddings(
                     embedding.signer_name = f"{signer_id} (Demo Key)"
                 else:
                     embedding.signer_name = f"{signer_id} (Verified via Trust Anchor)"
+                
+                # Override status if content hash doesn't match (tampered content)
+                if embedding.content_hash_valid is False:
+                    embedding.verification_status = "Tampered"
+                    embedding.error = "Content has been modified. The text no longer matches the signed hash."
             else:
                 embedding.verification_status = "Failure"
                 if signer_id in demo_signer_ids:
