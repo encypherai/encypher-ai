@@ -303,13 +303,15 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
 
   const getEmbeddingStatusIcon = (embedding: EmbeddingResult) => {
     if (embedding.verdict?.valid) return "✅";
-    if (embedding.verdict?.tampered) return "⚠️";
+    // Show tampered if explicitly tampered OR if verification failed but metadata exists
+    if (embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata)) return "⚠️";
     return "❌";
   };
 
   const getEmbeddingStatusClass = (embedding: EmbeddingResult) => {
     if (embedding.verdict?.valid) return "border-green-700 bg-green-900/30";
-    if (embedding.verdict?.tampered) return "border-yellow-700 bg-yellow-900/30";
+    // Show tampered styling if explicitly tampered OR if verification failed but metadata exists
+    if (embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata)) return "border-yellow-700 bg-yellow-900/30";
     return "border-red-700 bg-red-900/30";
   };
 
@@ -440,13 +442,13 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                               </div>
                               <div className="p-2 bg-yellow-900/30 rounded border border-yellow-700">
                                 <div className="text-lg font-bold text-yellow-400">
-                                  {lastDecodeResponse.all_embeddings.filter(e => e.verdict?.tampered).length}
+                                  {lastDecodeResponse.all_embeddings.filter(e => e.verdict?.tampered || (!e.verdict?.valid && e.metadata)).length}
                                 </div>
                                 <div className="text-yellow-300">Tampered</div>
                               </div>
                               <div className="p-2 bg-red-900/30 rounded border border-red-700">
                                 <div className="text-lg font-bold text-red-400">
-                                  {lastDecodeResponse.all_embeddings.filter(e => !e.verdict?.valid && !e.verdict?.tampered).length}
+                                  {lastDecodeResponse.all_embeddings.filter(e => !e.verdict?.valid && !e.verdict?.tampered && !e.metadata).length}
                                 </div>
                                 <div className="text-red-300">Failed</div>
                               </div>
@@ -509,10 +511,10 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                       </div>
                                       <span className={`px-2 py-0.5 rounded text-xs ${
                                         embedding.verdict?.valid ? 'bg-green-700 text-green-100' :
-                                        embedding.verdict?.tampered ? 'bg-yellow-700 text-yellow-100' :
+                                        (embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata)) ? 'bg-yellow-700 text-yellow-100' :
                                         'bg-red-700 text-red-100'
                                       }`}>
-                                        {embedding.verdict?.valid ? 'Verified' : embedding.verdict?.tampered ? 'Tampered' : 'Failed'}
+                                        {embedding.verdict?.valid ? 'Verified' : (embedding.verdict?.tampered || (!embedding.verdict?.valid && embedding.metadata)) ? 'Tampered' : 'Failed'}
                                       </span>
                                     </button>
                                     
@@ -520,41 +522,41 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                     {isExpanded && (
                                       <div className="p-3 pt-0 border-t border-slate-700/50">
                                         {embedding.verdict?.signer_name && (
-                                          <div className="text-slate-300 mt-2">
+                                          <div className="text-white mt-2">
                                             <strong>Signer:</strong> {embedding.verdict.signer_name}
                                             {embedding.verdict?.signer_id && (
-                                              <span className="text-slate-500 ml-1">({embedding.verdict.signer_id})</span>
+                                              <span className="text-slate-300 ml-1">({embedding.verdict.signer_id})</span>
                                             )}
                                           </div>
                                         )}
                                         {embedding.verdict?.timestamp && (
-                                          <div className="text-slate-300">
+                                          <div className="text-white">
                                             <strong>Signed:</strong> {new Date(embedding.verdict.timestamp).toLocaleString()}
                                           </div>
                                         )}
                                         {embedding.verdict?.reason_code && (
-                                          <div className="text-slate-300">
+                                          <div className="text-white">
                                             <strong>Reason Code:</strong> {embedding.verdict.reason_code}
                                           </div>
                                         )}
                                         {embedding.clean_text && (
-                                          <div className="text-slate-400 mt-2">
+                                          <div className="text-white mt-2">
                                             <strong>Text:</strong>
-                                            <div className="mt-1 p-2 bg-slate-900 rounded text-slate-300 break-words">
+                                            <div className="mt-1 p-2 bg-slate-900 rounded text-slate-200 break-words">
                                               {embedding.clean_text}
                                             </div>
                                           </div>
                                         )}
                                         {embedding.metadata && (
                                           <div className="mt-2">
-                                            <strong className="text-slate-400">Manifest Data:</strong>
-                                            <pre className="mt-1 p-2 bg-slate-900 rounded text-slate-300 whitespace-pre-wrap break-all overflow-x-auto text-xs">
+                                            <strong className="text-white">Manifest Data:</strong>
+                                            <pre className="mt-1 p-2 bg-slate-900 rounded text-slate-200 whitespace-pre-wrap break-all overflow-x-auto text-xs">
                                               {JSON.stringify(embedding.metadata, null, 2)}
                                             </pre>
                                           </div>
                                         )}
                                         {embedding.error && (
-                                          <div className="text-red-300 mt-2">
+                                          <div className="text-red-200 mt-2">
                                             <strong>Error:</strong> {embedding.error}
                                           </div>
                                         )}
