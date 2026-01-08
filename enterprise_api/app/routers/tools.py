@@ -121,54 +121,24 @@ _demo_signer_id = "org_demo"
 
 
 def _get_demo_keys():
-    """Get or generate demo keys for public tools."""
+    """Get demo keys for public tools.
+    
+    IMPORTANT: This MUST use the same key source as embedding_executor.py
+    to ensure content signed with user API keys can be verified.
+    Both use crypto_utils.get_demo_private_key() which loads from
+    settings.demo_private_key_bytes (hex format).
+    """
     global _demo_private_key, _demo_public_key
     
     if _demo_private_key is not None:
         return _demo_private_key, _demo_public_key
     
-    from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
-    from cryptography.hazmat.primitives import serialization
-    
-    # Try to load from PEM format first (legacy keys)
-    if settings.demo_private_key_pem:
-        try:
-            pem_str = settings.demo_private_key_pem
-            # Handle escaped newlines from environment variables
-            if '\\n' in pem_str:
-                pem_str = pem_str.replace('\\n', '\n')
-            private_key = serialization.load_pem_private_key(pem_str.encode(), password=None)
-            if isinstance(private_key, Ed25519PrivateKey):
-                _demo_private_key = private_key
-                _demo_public_key = _demo_private_key.public_key()
-                logger.info("Loaded demo keys from PEM format")
-                return _demo_private_key, _demo_public_key
-        except Exception as e:
-            logger.warning(f"Failed to load demo keys from PEM: {e}")
-    
-    # Try to load from hex format (check both DEMO_PRIVATE_KEY_HEX and SECRET_KEY)
-    key_hex = settings.demo_private_key_hex or settings.secret_key
-    if key_hex:
-        try:
-            key_bytes = bytes.fromhex(key_hex)
-            _demo_private_key = Ed25519PrivateKey.from_private_bytes(key_bytes)
-            _demo_public_key = _demo_private_key.public_key()
-            logger.info("Loaded demo keys from hex format")
-            return _demo_private_key, _demo_public_key
-        except Exception as e:
-            logger.warning(f"Failed to load demo keys from hex: {e}")
-    
-    try:
-        _demo_private_key = get_demo_private_key()
-        _demo_public_key = _demo_private_key.public_key()
-        logger.info("Loaded demo keys from enterprise_api demo key configuration")
-        return _demo_private_key, _demo_public_key
-    except Exception as e:
-        logger.error(f"Failed to load demo keys: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Demo keys not available"
-        )
+    # Use the SAME key loading function as embedding_executor.py
+    # This ensures signing and verification use the same key
+    _demo_private_key = get_demo_private_key()
+    _demo_public_key = _demo_private_key.public_key()
+    logger.info("Loaded demo keys from crypto_utils.get_demo_private_key()")
+    return _demo_private_key, _demo_public_key
 
 
 def _get_target_enum(target_str: str) -> MetadataTarget:
