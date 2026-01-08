@@ -336,22 +336,26 @@ async def extract_and_verify_all_embeddings(
     
     valid_count = 0
     
-    # Verify each embedding independently against its own normalized text segment
-    # Each embedding should be verified against ONLY its segment + its wrapper,
-    # without any other embeddings' wrappers interfering with the hash calculation.
+    # Verify each embedding independently
+    # - Basic format: signature is over payload bytes only, text doesn't matter
+    # - C2PA format: signature includes hard binding hash of full text, must use full text
     for embedding in result.embeddings:
         try:
             # Get the wrapper text for this embedding (from normalized text)
             wrapper_text = text[embedding.span[0]:embedding.span[1]]
             
-            # The segment_text is already clean (text between previous wrapper end and this wrapper start)
-            # We need to verify against: clean_segment + this_wrapper
-            # This matches what was signed: the original sentence text + its wrapper
-            segment_with_wrapper = embedding.segment_text + wrapper_text
+            if embedding.embedding_type == "c2pa":
+                # C2PA embeddings have hard binding that requires the FULL original text
+                # The exclusion range in the manifest is relative to the full document
+                text_to_verify = text
+            else:
+                # Basic format embeddings: signature is over payload bytes only
+                # We can verify with just the wrapper (text content doesn't affect signature)
+                text_to_verify = wrapper_text
             
             # Verify using UnicodeMetadata
             verification_result = UnicodeMetadata.verify_metadata(
-                text=segment_with_wrapper,
+                text=text_to_verify,
                 public_key_resolver=public_key_resolver,
                 return_payload_on_failure=True,
             )
