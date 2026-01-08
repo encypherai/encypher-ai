@@ -180,6 +180,15 @@ class Organization(Base):
     coalition_rev_share = Column(Integer, default=65)
     coalition_opted_out = Column(Boolean, default=False)
 
+    # BYOK (Bring Your Own Key) Certificate Support
+    certificate_pem = Column(Text, nullable=True)
+    certificate_chain = Column(Text, nullable=True)
+    certificate_status = Column(String(20), default="none")  # none, pending, active, expired
+    certificate_rotated_at = Column(DateTime(timezone=True), nullable=True)
+    certificate_expiry = Column(DateTime(timezone=True), nullable=True)
+    kms_key_id = Column(String(255), nullable=True)
+    kms_region = Column(String(50), nullable=True)
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

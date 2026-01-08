@@ -126,6 +126,8 @@ class KeyService:
         key_hash = hash_api_key(api_key)
 
         # First try: Query key with organization join (org-level keys)
+        # Note: certificate_pem column will be added by auth-service migration 005
+        # For now, we query without it and fetch separately if needed
         result = db.execute(text("""
             SELECT 
                 k.id as key_id,
@@ -208,6 +210,7 @@ class KeyService:
             }
 
         # Return organization context for org-level keys
+        # Note: certificate_pem will be available after auth-service migration 005 deploys
         return {
             "key_id": result.key_id,
             "organization_id": result.organization_id,
