@@ -11,7 +11,11 @@ from uuid import uuid4
 from encypher.core.keys import load_public_key_from_data
 from encypher.core.payloads import deserialize_jumbf_payload
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import find_wrapper_info_bytes
+try:
+    from encypher.interop.c2pa import find_wrapper_info_bytes
+except ImportError:  # pragma: no cover
+    def find_wrapper_info_bytes(_text: str):
+        return None
 
 from ...db.session import get_db
 from ...models.enterprise_schemas import ErrorDetail, VerifyRequest, VerifyResponse, VerifyVerdict
