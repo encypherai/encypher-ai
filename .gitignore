@@ -106,6 +106,8 @@ celerybeat.pid
 
 # Environments
 .env
+**/.env.local
+**/.env.*.local
 .venv
 env/
 venv/
@@ -131,13 +133,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
 
 # IDEs and editors
 .idea/
@@ -203,6 +198,7 @@ tools/.cache/
 *.bench.example
 test_*.txt
 *_test.txt
+/test_*.py
 enterprise_api/scripts/.env.bench*
 
 # Duplicate middleware files
