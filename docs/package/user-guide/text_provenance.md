@@ -4,7 +4,7 @@
 
 As digital content becomes increasingly sophisticated, establishing the provenance and authenticity of text content is becoming as critical as it is for images and videos. Text provenance presents unique challenges due to the fluid nature of text, its ease of modification, and the lack of established standards specifically designed for text content.
 
-EncypherAI's text provenance solution extends C2PA principles to text content, providing a robust framework for verifying the origin and integrity of textual information.
+Encypher's text provenance solution extends C2PA principles to text content, providing a robust framework for verifying the origin and integrity of textual information.
 
 ## The Challenge of Text Provenance
 
@@ -19,7 +19,7 @@ These challenges require innovative approaches that can maintain provenance info
 
 ## C2PA and Text Content
 
-The Coalition for Content Provenance and Authenticity (C2PA) has established standards for tracking the origin and history of digital content, primarily focusing on images and videos. EncypherAI extends these principles to text content by:
+The Coalition for Content Provenance and Authenticity (C2PA) has established standards for tracking the origin and history of digital content, primarily focusing on images and videos. Encypher extends these principles to text content by:
 
 1. Creating C2PA-compliant manifests for text
 2. Embedding these manifests directly into the text using Unicode variation selectors
@@ -37,9 +37,13 @@ Our approach uses Unicode variation selectors (ranges U+FE00-FE0F and U+E0100-E0
 - The embedded data travels with the text as part of the content itself
 - The visual appearance of the text remains unchanged
 
+When you embed a full C2PA manifest (`metadata_format="c2pa"`), the bytes follow the `C2PATextManifestWrapper` layout. The
+wrapper is prefixed with `U+FEFF`, contains a JUMBF manifest store, and is appended to the end of the text as a contiguous run
+of variation selectors.
+
 ### Single-Point Embedding
 
-The default embedding strategy places all metadata after a single target character (typically the first whitespace or the first letter):
+For legacy formats, the default embedding strategy places all metadata after a single target character (typically the first whitespace or the first letter):
 
 ```
 Original: This is example text.
@@ -48,14 +52,16 @@ Embedded: This⁠︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ is example tex
 
 The variation selectors (represented by ⁠︀︁︂︃︄︅︆︇︈︉︊︋︌︍︎️ above, though invisible in actual use) are attached to the first character, encoding the entire manifest.
 
+When using the C2PA format we instead append the FEFF-prefixed wrapper to the end of the text so validators can easily locate it and remove the wrapper before hashing.
+
 ### Content Hash Coverage
 
 A critical component of our implementation is the content hash assertion:
 
-- The hash covers the plain text content (all paragraphs concatenated)
-- It does not include HTML markup or the variation selectors themselves
-- SHA-256 is used as the hashing algorithm
-- The hash is computed before embedding the metadata
+- The text is normalised to NFC before hashing.
+- The hash covers the plain text content (all paragraphs concatenated) with the wrapper bytes excluded.
+- SHA-256 is used as the hashing algorithm.
+- The hash is computed before embedding the metadata, and the wrapper byte range is recorded in the manifest `exclusions` list.
 
 This content hash enables tamper detection - if the text is modified after embedding, the current hash will no longer match the stored hash.
 
@@ -121,8 +127,7 @@ A robust verification process should:
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
-import hashlib
+from encypher.interop.c2pa import compute_normalized_hash
 from datetime import datetime
 
 # 1. Generate keys (or load existing keys)
@@ -134,97 +139,74 @@ article_text = """This is the full article text.
 It contains multiple paragraphs.
 All of this text will be hashed for the content hash assertion."""
 
-# 3. Calculate content hash
-content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
 
-# 4. Create C2PA manifest
-c2pa_manifest = {
-    "claim_generator": "EncypherAI/2.3.0",
-    "timestamp": datetime.now().isoformat(),
-    "assertions": [
-        {
-            "label": "stds.schema-org.CreativeWork",
-            "data": {
-                "@context": "https://schema.org/",
-                "@type": "CreativeWork",
-                "headline": "Example Article",
-                "author": {"@type": "Person", "name": "John Doe"},
-                "publisher": {"@type": "Organization", "name": "Example Publisher"},
-                "datePublished": "2025-06-15"
-            }
-        },
-        {
-            "label": "stds.c2pa.content.hash",
-            "data": {
-                "hash": content_hash,
-                "alg": "sha256"
-            },
-            "kind": "ContentHash"
-        }
-    ]
-}
+# 3. (Optional) Inspect the baseline hash before embedding
+baseline_hash = compute_normalized_hash(article_text).hexdigest
+print("Baseline NFC hash:", baseline_hash)
 
-# 5. Convert to EncypherAI format
-encypher_manifest = c2pa_like_dict_to_encypher_manifest(c2pa_manifest)
+# 4. Define optional action entries that will appear in c2pa.actions.v1
+custom_actions = [
+    {
+        "label": "c2pa.created",
+        "softwareAgent": "Encypher/guide",
+        "when": datetime.now().isoformat(),
+    }
+]
 
-# 6. Extract first paragraph for embedding
-first_paragraph = article_text.split('\n')[0]
+# 5. Embed the manifest as a FEFF-prefixed wrapper at the end of the article
+custom_actions = [
+    {
+        "label": "c2pa.created",
+        "softwareAgent": "Encypher/guide",
+        "when": datetime.now().isoformat(),
+    }
+]
 
-# 7. Embed into first paragraph
-embedded_paragraph = UnicodeMetadata.embed_metadata(
-    text=first_paragraph,
+embedded_article = UnicodeMetadata.embed_metadata(
+    text=article_text,
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='cbor_manifest',
-    claim_generator=encypher_manifest.get("claim_generator"),
-    actions=encypher_manifest.get("assertions"),
-    timestamp=encypher_manifest.get("timestamp")
+    metadata_format="c2pa",
+    claim_generator="Encypher/guide",
+    actions=custom_actions,
+    add_hard_binding=True,
 )
-
-# 8. Replace first paragraph in article
-embedded_article = article_text.replace(first_paragraph, embedded_paragraph)
 ```
 
 ### Verification Example
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import encypher_manifest_to_c2pa_like_dict
-import hashlib
+from encypher.interop.c2pa import compute_normalized_hash
 
-# Define key provider function
-def key_provider(kid):
-    if kid == signer_id:
+
+def key_provider(requested_signer_id: str):
+    if requested_signer_id == signer_id:
         return public_key
     return None
 
-# Extract first paragraph (which contains the embedded metadata)
-first_paragraph = embedded_article.split('\n')[0]
 
-# Verify and extract metadata
-is_verified, extracted_signer_id, extracted_manifest = UnicodeMetadata.verify_and_extract_metadata(
-    text=first_paragraph,
-    public_key_provider=key_provider
+is_verified, extracted_signer_id, manifest = UnicodeMetadata.verify_metadata(
+    text=embedded_article,
+    public_key_resolver=key_provider,
 )
 
-if is_verified:
-    # Convert back to C2PA format
-    c2pa_extracted = encypher_manifest_to_c2pa_like_dict(extracted_manifest)
-
-    # Verify content hash
-    current_content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
-
-    # Find content hash assertion
-    stored_hash = None
-    for assertion in c2pa_extracted.get("assertions", []):
-        if assertion.get("label") == "stds.c2pa.content.hash":
-            stored_hash = assertion["data"]["hash"]
-            break
-
-    if stored_hash == current_content_hash:
+if is_verified and manifest is not None:
+    # Locate the hard-binding assertion
+    content_hash_assertion = next(
+        assertion
+        for assertion in manifest.get("assertions", [])
+        if assertion.get("label") == "c2pa.hash.data.v1"
+    )
+    exclusions = [
+        (item["start"], item["length"])
+        for item in content_hash_assertion["data"].get("exclusions", [])
+    ]
+    current_hash = compute_normalized_hash(embedded_article, exclusions).hexdigest
+    if current_hash == content_hash_assertion["data"]["hash"]:
         print("Content hash verification successful!")
     else:
-        print("Content hash verification failed - content may have been tampered with.")
+        print("Content hash verification failed – content may have been tampered with.")
 else:
     print("Signature verification failed!")
 ```
@@ -239,4 +221,4 @@ As text provenance technology evolves, several promising directions are emerging
 4. **Integration with Publishing Platforms**: Automatic embedding in content management systems
 5. **User-Friendly Verification**: Simplified tools for readers to verify content
 
-EncypherAI is actively contributing to these developments, pushing the boundaries of what's possible in text provenance while maintaining compatibility with emerging standards.
+Encypher is actively contributing to these developments, pushing the boundaries of what's possible in text provenance while maintaining compatibility with emerging standards.

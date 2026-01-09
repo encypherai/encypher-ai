@@ -1,6 +1,6 @@
 # ruff: noqa: E501
 from datetime import datetime, timezone
-from typing import Callable, Optional
+from typing import Callable, Optional, cast
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
@@ -23,7 +23,7 @@ def public_key_provider(key_pair) -> Callable[[str], Optional[PublicKeyTypes]]:
 
     def provider(signer: str) -> Optional[PublicKeyTypes]:
         if signer == signer_id:
-            return _pub
+            return cast(PublicKeyTypes, _pub)
         return None
 
     provider.signer_id = signer_id  # type: ignore[attr-defined]

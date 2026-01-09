@@ -1,6 +1,6 @@
 import hashlib
 import unicodedata
-from typing import Any, Dict, Literal, Optional, cast
+from typing import Any, Literal, Optional, cast
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
@@ -106,7 +106,7 @@ def test_extract_and_verify_file_end_success(metadata_format: Literal["cbor_mani
     assert len(instances) >= 1, _diag_msg(encoded, metadata_format, bom, newline, inject_markers, "No instances extracted")
     meta = instances[-1]
     assert isinstance(meta, dict), _diag_msg(encoded, metadata_format, bom, newline, inject_markers, f"Instance not a dict payload: {type(meta)}")
-    meta_dict: Dict[str, Any] = cast(Dict[str, Any], meta)
+    meta_dict: dict[str, Any] = cast(dict[str, Any], meta)
     custom_md = meta_dict.get("custom_metadata")
     if not isinstance(custom_md, dict):
         custom_md = {}
@@ -213,11 +213,11 @@ def _diag_msg(
     }
     head = encoded_text[:200]
     tail = encoded_text[-200:]
-    keys_snapshot: Dict[str, bool] = {}
+    keys_snapshot: dict[str, bool] = {}
     try:
         extracted = UnicodeMetadata.extract_metadata(text=encoded_text)
         if isinstance(extracted, list):
-            payload: Dict[str, Any] = extracted[-1] if extracted else {}  # type: ignore[assignment]
+            payload: dict[str, Any] = extracted[-1] if extracted else {}  # type: ignore[assignment]
         else:
             payload = extracted or {}  # type: ignore[assignment]
         if isinstance(payload, dict):

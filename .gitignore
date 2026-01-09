@@ -21,6 +21,7 @@ var/
 */node_modules/
 *.lock
 .windsurf/
+.teams/
 
 # Virtual Environment
 venv/
@@ -98,3 +99,12 @@ poetry.lock
 
 # Pytype
 .pytype/
+
+# Keys and Certificates
+*.pem
+*.key
+*.p12
+*.cer
+*.crt
+*.der
+*.pfx

@@ -224,7 +224,8 @@ def main():
         # 2. Convert C2PA-like manifest to EncypherAI ManifestPayload with nested data structure
         # Note: use_nested_data=True is required for cbor_manifest format
         encypher_ai_payload_cbor_manifest = c2pa_like_dict_to_encypher_manifest(
-            demo_manifest_c2pa_like, use_nested_data=True  # Important: use nested data structure for cbor_manifest
+            demo_manifest_c2pa_like,
+            use_nested_data=True,  # Important: use nested data structure for cbor_manifest
         )
         print("\n2. Converted EncypherAI ManifestPayload (for full CBOR manifest):", flush=True)
         print(json.dumps(encypher_ai_payload_cbor_manifest, indent=2), flush=True)

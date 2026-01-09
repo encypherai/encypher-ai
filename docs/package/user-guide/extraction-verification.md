@@ -1,6 +1,6 @@
 # Extraction and Verification
 
-Verifying embedded metadata is a critical step to ensure the authenticity and integrity of text content. The EncypherAI SDK provides a robust verification process that handles both legacy formats and the latest C2PA v2.2 standard.
+Verifying embedded metadata is a critical step to ensure the authenticity and integrity of text content. The Encypher SDK provides a robust verification process that handles both legacy formats and the latest C2PA v2.2 standard.
 
 > Note: The `timestamp` parameter is optional across all formats. Verification succeeds with or without a timestamp. For C2PA, if no timestamp was provided during embedding, action assertions that normally include a `when` field will omit it.
 

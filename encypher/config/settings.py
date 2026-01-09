@@ -1,5 +1,5 @@
 """
-Configuration settings for EncypherAI.
+Configuration settings for Encypher.
 
 This module provides a centralized configuration system that supports
 loading from environment variables and configuration files.
@@ -8,14 +8,14 @@ loading from environment variables and configuration files.
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 from encypher.core.unicode_metadata import MetadataTarget
 
 
 class Settings:
     """
-    Settings class for EncypherAI configuration.
+    Settings class for Encypher configuration.
 
     This class handles loading configuration from environment variables
     and configuration files, with sensible defaults.
@@ -63,10 +63,10 @@ class Settings:
         config_path = Path(config_file)
         if config_path.exists() and config_path.is_file():
             try:
-                with open(config_path, "r") as f:
+                with open(config_path) as f:
                     file_config = json.load(f)
                     self.config.update(file_config)
-            except (json.JSONDecodeError, IOError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 print(f"Error loading config file: {e}")
 
     def _load_from_env(self) -> None:
@@ -175,7 +175,7 @@ class Settings:
         """
         return bool(self.config.get("report_usage_metrics", False))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Get the configuration as a dictionary.
 

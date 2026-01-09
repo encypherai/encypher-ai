@@ -1,4 +1,4 @@
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
@@ -7,7 +7,7 @@ from .exceptions import EncypherError, PrivateKeyLoadingError, PublicKeyLoadingE
 from .logging_config import logger
 
 
-def generate_ed25519_key_pair() -> Tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
+def generate_ed25519_key_pair() -> tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:
     """
     Generates an Ed25519 key pair.
 
@@ -42,13 +42,13 @@ def load_ed25519_private_key(filepath: str) -> ed25519.Ed25519PrivateKey:
         return private_key
     except FileNotFoundError:
         logger.error(f"Private key file not found: {filepath}")
-        raise PrivateKeyLoadingError(f"Private key file not found: {filepath}")
+        raise PrivateKeyLoadingError(f"Private key file not found: {filepath}") from None
     except ValueError as e:  # Catches issues from load_pem_private_key like bad format
         logger.error(f"Error loading PEM private key from {filepath}: {e}", exc_info=True)
-        raise PrivateKeyLoadingError(f"Invalid PEM format or key type in {filepath}: {e}")
+        raise PrivateKeyLoadingError(f"Invalid PEM format or key type in {filepath}: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error loading private key from {filepath}: {e}", exc_info=True)
-        raise PrivateKeyLoadingError(f"Could not load private key from {filepath}: {e}")
+        raise PrivateKeyLoadingError(f"Could not load private key from {filepath}: {e}") from e
 
 
 def load_ed25519_public_key(filepath: str) -> ed25519.Ed25519PublicKey:
@@ -64,13 +64,13 @@ def load_ed25519_public_key(filepath: str) -> ed25519.Ed25519PublicKey:
         return public_key
     except FileNotFoundError:
         logger.error(f"Public key file not found: {filepath}")
-        raise PublicKeyLoadingError(f"Public key file not found: {filepath}")
+        raise PublicKeyLoadingError(f"Public key file not found: {filepath}") from None
     except ValueError as e:  # Catches issues from load_pem_public_key
         logger.error(f"Error loading PEM public key from {filepath}: {e}", exc_info=True)
-        raise PublicKeyLoadingError(f"Invalid PEM format or key type in {filepath}: {e}")
+        raise PublicKeyLoadingError(f"Invalid PEM format or key type in {filepath}: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error loading public key from {filepath}: {e}", exc_info=True)
-        raise PublicKeyLoadingError(f"Could not load public key from {filepath}: {e}")
+        raise PublicKeyLoadingError(f"Could not load public key from {filepath}: {e}") from e
 
 
 def save_ed25519_key_pair_to_files(
@@ -91,9 +91,9 @@ def save_ed25519_key_pair_to_files(
                 )
             )
         logger.info(f"Private key successfully saved to {private_key_path}.")
-    except IOError as e:
+    except OSError as e:
         logger.error(f"Failed to write private key to {private_key_path}: {e}", exc_info=True)
-        raise EncypherError(f"Could not write private key to file: {e}")
+        raise EncypherError(f"Could not write private key to file: {e}") from e
 
     logger.debug(f"Attempting to save public key to: {public_key_path}")
     try:
@@ -105,9 +105,9 @@ def save_ed25519_key_pair_to_files(
                 )
             )
         logger.info(f"Public key successfully saved to {public_key_path}.")
-    except IOError as e:
+    except OSError as e:
         logger.error(f"Failed to write public key to {public_key_path}: {e}", exc_info=True)
-        raise EncypherError(f"Could not write public key to file: {e}")
+        raise EncypherError(f"Could not write public key to file: {e}") from e
 
 
 def load_private_key_from_data(key_data: Union[bytes, str], password: Optional[bytes] = None) -> ed25519.Ed25519PrivateKey:
@@ -135,7 +135,7 @@ def load_private_key_from_data(key_data: Union[bytes, str], password: Optional[b
             key_data_bytes = key_data.encode("ascii")  # type: ignore
         except UnicodeEncodeError:
             logger.error("Failed to encode private key string to ASCII.")
-            raise ValueError("Private key string contains non-ASCII characters, expected PEM format.")
+            raise ValueError("Private key string contains non-ASCII characters, expected PEM format.") from None
     elif isinstance(key_data, bytes):
         key_data_bytes = key_data
     else:
@@ -161,7 +161,7 @@ def load_private_key_from_data(key_data: Union[bytes, str], password: Optional[b
                 raise ValueError("PEM data did not yield an Ed25519 private key")
         except Exception as e:
             logger.error(f"Failed to load unencrypted PEM private key: {e}", exc_info=True)
-            raise ValueError(f"Failed to load unencrypted PEM private key: {e}")
+            raise ValueError(f"Failed to load unencrypted PEM private key: {e}") from e
 
     elif b"-----BEGIN ENCRYPTED PRIVATE KEY-----" in key_data_bytes:
         logger.debug("Detected encrypted PKCS8 PEM format.")
@@ -181,7 +181,7 @@ def load_private_key_from_data(key_data: Union[bytes, str], password: Optional[b
                 raise ValueError("Encrypted PEM data did not yield an Ed25519 private key")
         except Exception as e:
             logger.error(f"Failed to load encrypted PEM private key: {e}", exc_info=True)
-            raise ValueError(f"Failed to load encrypted PEM private key: {e}")
+            raise ValueError(f"Failed to load encrypted PEM private key: {e}") from e
 
     # Check for raw bytes (only if input wasn't a string)
     elif not input_was_string and len(key_data_bytes) == 32:
@@ -192,7 +192,7 @@ def load_private_key_from_data(key_data: Union[bytes, str], password: Optional[b
             return key
         except Exception as e:
             logger.error(f"Failed to load raw private key bytes: {e}", exc_info=True)
-            raise ValueError(f"Failed to load raw private key bytes: {e}")
+            raise ValueError(f"Failed to load raw private key bytes: {e}") from e
 
     # If none of the above matched
     logger.error("Private key data does not match expected PEM formats or raw byte length.")
@@ -239,7 +239,7 @@ def load_public_key_from_data(key_data: Union[bytes, str]) -> ed25519.Ed25519Pub
                 raise ValueError("PEM data is not an Ed25519 public key")
         except Exception as e:
             logger.error(f"Failed to load PEM public key: {e}", exc_info=True)
-            raise ValueError(f"Failed to load PEM public key: {e}")
+            raise ValueError(f"Failed to load PEM public key: {e}") from e
     elif len(key_data_bytes) == 32:  # Ed25519 public key is 32 bytes
         logger.debug("Detected potential raw Ed25519 public key (32 bytes).")
         try:
@@ -248,7 +248,7 @@ def load_public_key_from_data(key_data: Union[bytes, str]) -> ed25519.Ed25519Pub
             return key
         except Exception as e:
             logger.error(f"Failed to load raw public key bytes: {e}", exc_info=True)
-            raise ValueError(f"Failed to load raw public key bytes: {e}")
+            raise ValueError(f"Failed to load raw public key bytes: {e}") from e
     else:
         logger.error(f"Invalid public key byte length or format: {len(key_data_bytes)} bytes.")
         raise ValueError("Invalid public key byte length or format")

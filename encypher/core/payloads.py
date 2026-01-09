@@ -1,6 +1,6 @@
 import json
 import struct
-from typing import Any, Dict, List, Literal, Optional, TypedDict, Union, cast
+from typing import Any, Literal, Optional, TypedDict, Union, cast
 
 import cbor2
 
@@ -15,7 +15,7 @@ class BasicPayload(TypedDict):
 
     model_id: Optional[str]
     timestamp: Optional[str]  # Recommended: ISO 8601 UTC format string
-    custom_metadata: Dict[str, Any]
+    custom_metadata: dict[str, Any]
 
 
 class ManifestAction(TypedDict):
@@ -44,9 +44,9 @@ class ManifestPayload(TypedDict):
     """
 
     claim_generator: str
-    assertions: List[ManifestAction]
+    assertions: list[ManifestAction]
     ai_assertion: Optional[ManifestAiInfo]
-    custom_claims: Dict[str, Any]
+    custom_claims: dict[str, Any]
     timestamp: Optional[str]  # ISO 8601 UTC format string
 
 
@@ -57,7 +57,7 @@ class C2PAAssertion(TypedDict):
     """Structure for a C2PA assertion."""
 
     label: str
-    data: Dict[str, Any]
+    data: dict[str, Any]
     kind: Optional[str]
 
 
@@ -67,20 +67,22 @@ C2PAPayload = TypedDict(
         "@context": str,
         "instance_id": str,
         "claim_generator": str,
-        "assertions": List[C2PAAssertion],
+        "assertions": list[C2PAAssertion],
+        "ingredients": list[dict[str, Any]],
     },
+    total=False,
 )
 
 
 # Specific assertion data TypedDicts for clarity
 class C2PAActionsAssertionData(TypedDict):
-    actions: List[Dict[str, Any]]
+    actions: list[dict[str, Any]]
 
 
 class C2PAHashDataAssertionData(TypedDict):
     hash: str
     alg: str
-    exclusions: List[Any]
+    exclusions: list[Any]
 
 
 class C2PASoftBindingAssertionData(TypedDict):
@@ -93,7 +95,7 @@ class C2PASoftBindingAssertionData(TypedDict):
 InnerPayloadTypes = Union[BasicPayload, ManifestPayload, C2PAPayload]
 
 
-class OuterPayload(TypedDict):
+class OuterPayload(TypedDict, total=False):
     """
     The complete outer structure embedded into the text.
     This structure is designed to be backward-compatible and extensible.
@@ -106,6 +108,7 @@ class OuterPayload(TypedDict):
     # base64-encoded string for binary formats like CBOR.
     payload: Union[BasicPayload, ManifestPayload, str]
     signature: str  # Base64 encoded signature string
+    cose_sign1: str
 
 
 # --- End TypedDict Definitions ---
@@ -114,7 +117,7 @@ class OuterPayload(TypedDict):
 # --- Serialization Functions ---
 
 
-def serialize_payload(payload: Dict[str, Any]) -> bytes:
+def serialize_payload(payload: dict[str, Any]) -> bytes:
     """
     Serializes the metadata payload dictionary into canonical JSON bytes.
     This is used for 'basic' and 'manifest' formats.
@@ -129,13 +132,13 @@ def serialize_payload(payload: Dict[str, Any]) -> bytes:
         return serialized_data
     except TypeError as e:
         logger.error(f"Serialization failed for payload type {payload_type} due to non-serializable content: {e}", exc_info=True)
-        raise TypeError(f"Payload of type {payload_type} is not JSON serializable: {e}")
+        raise TypeError(f"Payload of type {payload_type} is not JSON serializable: {e}") from e
     except Exception as e:
         logger.error(
             f"Unexpected error during serialization of {payload_type}: {e}",
             exc_info=True,
         )
-        raise RuntimeError(f"Unexpected error serializing payload of type {payload_type}: {e}")
+        raise RuntimeError(f"Unexpected error serializing payload of type {payload_type}: {e}") from e
 
 
 # New serialization functions for C2PA
@@ -148,7 +151,7 @@ def serialize_c2pa_payload_to_cbor(payload: C2PAPayload) -> bytes:
         return bytes(cbor_bytes)
     except Exception as e:
         logger.error(f"Unexpected error during C2PA CBOR serialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error serializing C2PA payload to CBOR: {e}")
+        raise RuntimeError(f"Unexpected error serializing C2PA payload to CBOR: {e}") from e
 
 
 def deserialize_c2pa_payload_from_cbor(cbor_bytes: bytes) -> C2PAPayload:
@@ -164,13 +167,13 @@ def deserialize_c2pa_payload_from_cbor(cbor_bytes: bytes) -> C2PAPayload:
         return cast(C2PAPayload, payload)  # Ensure type safety with explicit cast
     except cbor2.CBORDecodeError as e:
         logger.error(f"CBOR decoding failed: {e}", exc_info=True)
-        raise ValueError(f"Failed to decode CBOR bytes: {e}")
+        raise ValueError(f"Failed to decode CBOR bytes: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error during C2PA CBOR deserialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error deserializing C2PA payload from CBOR: {e}")
+        raise RuntimeError(f"Unexpected error deserializing C2PA payload from CBOR: {e}") from e
 
 
-def serialize_jumbf_payload(payload: Dict[str, Any]) -> bytes:
+def serialize_jumbf_payload(payload: dict[str, Any]) -> bytes:
     """Serializes a payload dictionary into a minimal JUMBF box.
 
     The function creates a single JUMBF box with a 4 byte length field and a
@@ -188,10 +191,10 @@ def serialize_jumbf_payload(payload: Dict[str, Any]) -> bytes:
         return jumbf_bytes
     except Exception as e:
         logger.error(f"Unexpected error during JUMBF serialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error serializing payload to JUMBF: {e}")
+        raise RuntimeError(f"Unexpected error serializing payload to JUMBF: {e}") from e
 
 
-def deserialize_jumbf_payload(jumbf_bytes: bytes) -> Dict[str, Any]:
+def deserialize_jumbf_payload(jumbf_bytes: bytes) -> dict[str, Any]:
     """Deserializes bytes produced by :func:`serialize_jumbf_payload`."""
     logger.debug(f"Attempting to deserialize {len(jumbf_bytes)} bytes from JUMBF.")
     try:
@@ -210,7 +213,7 @@ def deserialize_jumbf_payload(jumbf_bytes: bytes) -> Dict[str, Any]:
         return payload
     except json.JSONDecodeError as e:
         logger.error(f"JUMBF JSON decoding failed: {e}", exc_info=True)
-        raise ValueError(f"Failed to decode JUMBF bytes: {e}")
+        raise ValueError(f"Failed to decode JUMBF bytes: {e}") from e
     except Exception as e:
         logger.error(f"Unexpected error during JUMBF deserialization: {e}", exc_info=True)
-        raise RuntimeError(f"Unexpected error deserializing JUMBF payload: {e}")
+        raise RuntimeError(f"Unexpected error deserializing JUMBF payload: {e}") from e

@@ -1,6 +1,44 @@
 # Changelog
 
-This document provides a chronological list of notable changes for each version of EncypherAI.
+This document provides a chronological list of notable changes for each version of Encypher.
+
+## Unreleased
+
+## 3.0.1 (2026-01-09)
+
+### Added
+- Introduced a shared `text_hashing` helper in `encypher.interop.c2pa` that performs NFC normalisation, exclusion filtering, and SHA-256 hashing so embedding and verification reuse the exact same pipeline.
+- Documented the end-of-text `C2PATextManifestWrapper` flow, including the FEFF prefix, contiguous variation selector block, and wrapper exclusion handling mandated by the latest C2PA text embedding proposal.
+ - Implemented native COSE_Sign1 EdDSA (Ed25519) signing/verification using `cbor2` + `cryptography` (no external COSE runtime required).
+
+### Changed
+- Updated the C2PA embedding path to always append a single FEFF-prefixed wrapper containing a JUMBF manifest store encoded with the `magic | version | length | payload` layout.
+- Refactored hard-binding exclusion tracking to record `{start, length}` byte ranges derived from the NFC-normalised text and to stabilise those offsets prior to signing.
+ - Removed `pycose` usage and replaced with a minimal COSE_Sign1 EdDSA implementation (Ed25519). Behaviour is unchanged for EdDSA-based claims; X.509 x5chain handling preserved.
+
+### Fixed
+- Ensured validators normalise text, remove wrapper exclusions, and recompute the content hash using the shared helper, eliminating discrepancies between embedding and verification.
+
+### Documentation
+- Refreshed C2PA API references, tutorials, and provenance guides to explain the FEFF-prefixed wrapper workflow, normalised hashing routine, and the new helper utilities.
+ - Noted release plan: 3.0 will target C2PA 2.3 alignment and include the native COSE path.
+
+### Security
+- Dependency hygiene: Eliminated transitive `python-ecdsa` (GHSA-wj6h-64fc-37mp) by removing `pycose` and using a native COSE EdDSA implementation.
+
+## 3.0.0 (2025-11-23)
+
+### Breaking Changes
+- **Dependency Optimization:** Removed `litellm` from core dependencies. If you relied on `encypher-ai` to install `litellm`, you must now install it explicitly or use `encypher-ai[dev]` for examples.
+- **Standardization:** Refactored core C2PA embedding logic to rely on the new `c2pa-text` reference library.
+
+### Added
+- **Dependency:** Added `c2pa-text` as a core dependency for low-level C2PA compliance.
+- **Dependency:** Added `requests` as a core dependency (required for timestamping).
+
+### Changed
+- **Developer Experience:** Replaced `black`, `flake8`, and `isort` with `ruff` for faster and more unified linting/formatting.
+- **Typing:** Modernized type hints across the codebase.
 
 ## 2.8.1 (2025-01-03)
 
@@ -183,7 +221,7 @@ This document provides a chronological list of notable changes for each version 
 - Improved API for metadata embedding and verification
 - Updated documentation with digital signature examples
 - C2PA-inspired manifest structure for enhanced content provenance
-- Interoperability module (`encypher.interop.c2pa`) for conversion between EncypherAI and C2PA-like structures
+- Interoperability module (`encypher.interop.c2pa`) for conversion between Encypher and C2PA-like structures
 - Comprehensive documentation on C2PA relationship and alignment
 
 ### Changed
@@ -213,7 +251,7 @@ This document provides a chronological list of notable changes for each version 
 ## 1.0.0 (03-22-2025)
 
 ### Added
-- Initial stable release of EncypherAI
+- Initial stable release of Encypher
 - Core metadata encoding and decoding functionality
 - HMAC verification for tamper detection
 - Support for multiple embedding targets:

@@ -1,15 +1,15 @@
-# EncypherAI
+# Encypher
 
 <div align="center">
-  <img src="../../assets/horizontal-logo.png" alt="EncypherAI Logo" width="600"/>
+  <img src="../../assets/horizontal-logo.png" alt="Encypher Logo" width="600"/>
   <h2>Invisible Metadata for AI-Generated Text</h2>
 </div>
 
 ## Overview
 
-EncypherAI is an open-source Python package that enables invisible metadata embedding in AI-generated text using zero-width characters.
+Encypher is an open-source Python package that enables invisible metadata embedding in AI-generated text using zero-width characters.
 
-With EncypherAI, you can:
+With Encypher, you can:
 
 - **Embed invisible metadata** in AI-generated text without altering its visible appearance
 - **Verify content authenticity** using digital signatures
@@ -35,10 +35,10 @@ With EncypherAI, you can:
 - [Migration Guide](user-guide/migration-guide.md)
 - [GitHub Repository](https://github.com/encypherai/encypher-ai)
 
-## Why EncypherAI?
+## Why Encypher?
 
-As AI-generated content becomes more prevalent, establishing provenance and ensuring integrity becomes critical. EncypherAI addresses these needs by providing a simple way to invisibly embed metadata that can later be verified.
+As AI-generated content becomes more prevalent, establishing provenance and ensuring integrity becomes critical. Encypher addresses these needs by providing a simple way to invisibly embed metadata that can later be verified.
 
 ## License
 
-EncypherAI is released under the GNU Affero General Public License v3.0 (AGPL-3.0).
+Encypher is released under the GNU Affero General Public License v3.0 (AGPL-3.0).
