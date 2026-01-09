@@ -21,9 +21,20 @@ Unicode variation selectors (ranges U+FE00-FE0F and U+E0100-E01EF) are special c
 - These selectors are invisible when rendered in text
 - The encoded data travels with the content as part of the text itself
 
+### C2PA Text Wrapper
+
+When `metadata_format="c2pa"`, the module emits a `C2PATextManifestWrapper` as defined by the latest text-embedding
+specification. The wrapper:
+
+- Is prefixed with a single Zero-Width No-Break Space (`U+FEFF`).
+- Stores the manifest inside a JUMBF container following the `magic | version | length | payload` layout.
+- Appears as a single block of variation selectors appended to the end of the visible text.
+
+This behaviour is specific to the C2PA format—legacy formats continue to use the legacy targets described below.
+
 ### Embedding Targets
 
-The module supports several embedding targets:
+The module supports several embedding targets for legacy formats (`basic`, `manifest`, and `cbor_manifest`):
 
 | Target | Description | Use Case |
 |--------|-------------|----------|
@@ -35,23 +46,31 @@ The module supports several embedding targets:
 | `FILE_END` | Appends variation selectors at the very end of the text | Useful when you prefer not to alter in-text positions |
 | `FILE_END_ZWNBSP` | Appends a zero-width no-break space (U+FEFF) followed by variation selectors at the end | Improves robustness in some pipelines that trim trailing selectors |
 
+> **Note:** C2PA manifests always use the wrapper block described above and ignore the legacy target configuration.
+
 ### Embedding Approaches
 
-The module supports two embedding approaches:
+The module supports two embedding approaches for legacy formats:
 
 1. **Single-Point Embedding** (default): All metadata is embedded after a single target character (typically the first whitespace)
 2. **Distributed Embedding**: Metadata is distributed across multiple target characters throughout the text
 
-Single-point embedding is generally recommended as it minimizes the impact on text processing and is easier to manage.
+Single-point embedding is generally recommended as it minimizes the impact on text processing and is easier to manage. When
+embedding C2PA manifests we always append a single wrapper block instead of inserting selectors inside the visible content.
 
 ## Content Hash Coverage
 
-When using the C2PA manifest format, a content hash assertion is included in the manifest:
+When using the C2PA manifest format, a content hash assertion (`c2pa.hash.data.v1`) is included in the manifest:
 
-- The hash covers the plain text content only (not HTML markup or other formatting)
-- SHA-256 is used as the hashing algorithm
-- The hash is computed before embedding the metadata
-- This creates a cryptographic fingerprint of the original content
+- The text is normalised to NFC before hashing.
+- SHA-256 is used as the hashing algorithm.
+- The hash is computed on the UTF-8 bytes of the normalised text **after removing the wrapper span** recorded in the
+  `exclusions` list.
+- Exclusions are expressed as byte offsets `{ "start": <offset>, "length": <byte_count> }` so validators can strip the same
+  region before recomputing the digest.
+
+This creates a cryptographic fingerprint of the original, human-visible content while keeping the wrapper bytes outside the hash
+coverage.
 
 This content hash enables tamper detection - if the text is modified after embedding, the current hash will no longer match the stored hash.
 
@@ -66,8 +85,7 @@ def embed_metadata(
     text: str,
     private_key: PrivateKeyTypes,
     signer_id: str,
-    metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa"] = "basic",
-    c2pa_manifest: Optional[Dict[str, Any]] = None,
+    metadata_format: Literal["basic", "manifest", "cbor_manifest", "c2pa"] = "manifest",
     model_id: Optional[str] = None,
     timestamp: Optional[Union[str, datetime, date, int, float]] = None,
     target: Optional[Union[str, MetadataTarget]] = None,
@@ -76,7 +94,9 @@ def embed_metadata(
     actions: Optional[List[Dict[str, Any]]] = None,
     ai_info: Optional[Dict[str, Any]] = None,
     custom_claims: Optional[Dict[str, Any]] = None,
+    omit_keys: Optional[List[str]] = None,
     distribute_across_targets: bool = False,
+    add_hard_binding: bool = True,
 ) -> str:
 ```
 
@@ -90,14 +110,21 @@ Embeds metadata into text using Unicode variation selectors, signing with a priv
   - `basic`: A simple key-value payload.
   - `manifest`: A legacy C2PA-like manifest.
   - `cbor_manifest`: A CBOR-encoded version of the legacy manifest.
-  - `c2pa`: The C2PA-compliant format using COSE Sign1.
-- `c2pa_manifest`: A dictionary representing the full C2PA manifest. Required when `metadata_format` is `c2pa`.
+  - `c2pa`: The C2PA-compliant format using COSE Sign1. This mode builds the
+    manifest internally using the provided `claim_generator` and `actions`.
 - `model_id`: Model identifier (used in 'basic' payload).
 - `timestamp`: Optional timestamp (datetime, ISO string, int/float epoch). When omitted, the outer payload omits `timestamp`, and C2PA action assertions that normally include `when` will omit that field.
 - `target`: Where to embed metadata. Options: `"whitespace"`, `"punctuation"`, `"first_letter"`, `"last_letter"`, `"all_characters"`, `"file_end"`, `"file_end_zwnbsp"`.
   - `file_end` and `file_end_zwnbsp` append the encoded selectors at the end of the text (the latter prefixes a zero-width no-break space U+FEFF before the selectors).
+  - This parameter is ignored when `metadata_format="c2pa"`; C2PA manifests always append a wrapper block at end-of-file.
 - `custom_metadata`: Dictionary for custom fields (used in 'basic' payload).
-- `claim_generator`, `actions`, `ai_info`, `custom_claims`: Used for legacy 'manifest' formats.
+- `claim_generator`: Optional identifier for the software agent.
+- `actions`: Optional list of action dictionaries to seed `c2pa.actions.v1`.
+- `ai_info`, `custom_claims`: Used for legacy 'manifest' formats.
+- `omit_keys`: List of metadata keys to remove from legacy payloads before signing.
+- `distribute_across_targets`: If True, distribute bits across multiple targets (legacy formats only).
+- `add_hard_binding`: When `metadata_format="c2pa"`, controls whether the
+  `c2pa.hash.data.v1` assertion is included.
 - `omit_keys`: List of metadata keys to remove from the payload before signing.
 - `distribute_across_targets`: If True, distribute bits across multiple targets.
 
@@ -201,7 +228,7 @@ This example demonstrates embedding a full C2PA v2.2 manifest.
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.keys import generate_ed25519_key_pair
-import hashlib
+from encypher.interop.c2pa import compute_normalized_hash
 
 # 1. Generate keys
 private_key, public_key = generate_ed25519_key_pair()
@@ -209,48 +236,42 @@ signer_id = "example-c2pa-key-001"
 
 # 2. Define the text content and create its hash
 clean_text = "This is the article content that we want to protect."
-clean_text_hash = hashlib.sha256(clean_text.encode('utf-8')).hexdigest()
+hash_result = compute_normalized_hash(clean_text)
+clean_text_hash = hash_result.hexdigest
+print("Baseline NFC hash:", clean_text_hash)
 
-# 3. Create the C2PA manifest
-c2pa_manifest = {
-    "claim_generator": "EncypherAI/2.3.0",
-    "assertions": [
-        {
-            "label": "stds.schema-org.CreativeWork",
-            "data": {
-                "@context": "https://schema.org/",
-                "@type": "CreativeWork",
-                "headline": "Example Article",
-                "author": {"@type": "Person", "name": "Jane Doe"}
-            }
-        },
-        {
-            "label": "c2pa.hash.data.v1",
-            "data": {
-                "hash": clean_text_hash,
-                "alg": "sha256"
-            },
-            "kind": "ContentHash"
-        }
-    ]
-}
+# 3. Provide optional custom actions (the library adds c2pa.watermarked automatically)
+custom_actions = [
+    {
+        "label": "c2pa.created",
+        "softwareAgent": "Encypher/examples",
+        "when": datetime.now().isoformat(),
+    }
+]
 
 # 4. Embed the manifest into the text
 embedded_text = UnicodeMetadata.embed_metadata(
     text=clean_text,
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='c2pa',
-    c2pa_manifest=c2pa_manifest,
+    metadata_format="c2pa",
+    claim_generator="Encypher/examples",
+    actions=custom_actions,
 )
 
 # 5. Verify the embedded manifest
-is_verified, _, payload = UnicodeMetadata.verify_metadata(
+is_verified, _, manifest = UnicodeMetadata.verify_metadata(
     text=embedded_text,
     public_key_resolver=lambda kid: public_key if kid == signer_id else None
 )
 
 print(f"C2PA Verification: {is_verified}")
+
+content_hash_assertion = next(
+    assertion for assertion in manifest["assertions"] if assertion["label"] == "c2pa.hash.data.v1"
+)
+print(content_hash_assertion["data"])
+# Validators remove the recorded exclusion span before recomputing the hash.
 ```
 
 ### Embedding without a timestamp
@@ -278,7 +299,7 @@ embedded_text = UnicodeMetadata.embed_metadata(
 
 ## C2PA Binding Mechanisms
 
-The EncypherAI SDK leverages C2PA's multi-layered approach to ensure content integrity and authenticity. This involves two primary types of cryptographic bindings within the manifest itself, which is then embedded in the text using our Unicode variation selector technique.
+The Encypher SDK leverages C2PA's multi-layered approach to ensure content integrity and authenticity. This involves two primary types of cryptographic bindings within the manifest itself, which is then embedded in the text using our Unicode variation selector technique.
 
 ### Hard Binding (Content Integrity)
 

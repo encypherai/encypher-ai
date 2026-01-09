@@ -1,6 +1,6 @@
-# Contributing to EncypherAI Core
+# Contributing to Encypher Core
 
-Thank you for your interest in contributing to EncypherAI Core! This document provides guidelines and instructions for contributing to this project.
+Thank you for your interest in contributing to Encypher Core! This document provides guidelines and instructions for contributing to this project.
 
 ## Code of Conduct
 

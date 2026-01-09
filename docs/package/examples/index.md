@@ -1,6 +1,6 @@
-# EncypherAI SDK: Practical Examples
+# Encypher SDK: Practical Examples
 
-This directory contains a collection of practical examples demonstrating how to use the EncypherAI SDK for various use cases. Each example is a self-contained guide with runnable code snippets.
+This directory contains a collection of practical examples demonstrating how to use the Encypher SDK for various use cases. Each example is a self-contained guide with runnable code snippets.
 
 ## Core Concepts
 
@@ -15,6 +15,6 @@ This directory contains a collection of practical examples demonstrating how to 
 
 ## Application Integrations
 
--   **[FastAPI Integration](./fastapi.md)**: Learn how to integrate EncypherAI into a FastAPI backend to sign and verify content on the fly.
+-   **[FastAPI Integration](./fastapi.md)**: Learn how to integrate Encypher into a FastAPI backend to sign and verify content on the fly.
 -   **[Streamlit Integration](./streamlit.md)**: A guide to building an interactive web application with Streamlit to demonstrate metadata embedding and verification.
 -   **[Jupyter/Colab Notebook](./jupyter.md)**: An interactive notebook for experimenting with the SDK's features, perfect for data scientists and researchers.

@@ -1,5 +1,5 @@
 """
-Streaming support for EncypherAI metadata encoding.
+Streaming support for Encypher metadata encoding.
 """
 
 from encypher.streaming.handlers import StreamingHandler

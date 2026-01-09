@@ -1,6 +1,6 @@
 # Installation
 
-EncypherAI is available on PyPI and can be installed using uv.
+Encypher is available on PyPI and can be installed using uv.
 
 ## Requirements
 
@@ -13,11 +13,11 @@ EncypherAI is available on PyPI and can be installed using uv.
 uv pip install encypher-ai
 ```
 
-This installs the core EncypherAI package with all required dependencies.
+This installs the core Encypher package with all required dependencies.
 
 ## Development Installation
 
-For development purposes, you can install EncypherAI with additional development dependencies:
+For development purposes, you can install Encypher with additional development dependencies:
 
 ```bash
 # Clone the repository
@@ -30,7 +30,7 @@ uv pip install -e ".[dev]"
 
 ## Dependencies
 
-EncypherAI has the following core dependencies:
+Encypher has the following core dependencies:
 
 - `cryptography`: For Ed25519 digital signatures and key management.
 - `cbor2`: For CBOR encoding/decoding of C2PA-inspired manifests.
@@ -46,7 +46,7 @@ For development, additional dependencies include:
 
 ## Verifying Installation
 
-You can verify that EncypherAI is installed correctly by running:
+You can verify that Encypher is installed correctly by running:
 
 ```python
 import encypher
@@ -57,7 +57,7 @@ If the installation was successful, this will print the version number of the in
 
 ## Key Management
 
-EncypherAI uses Ed25519 digital signatures for secure metadata verification. You will need a private key for signing and a corresponding public key for verification.
+Encypher uses Ed25519 digital signatures for secure metadata verification. You will need a private key for signing and a corresponding public key for verification.
 
 You can generate key pairs in several ways:
 
@@ -91,4 +91,4 @@ For more information on key management, see the [Tamper Detection](../user-guide
 
 ## Next Steps
 
-Once you have EncypherAI installed, continue to the [Quick Start Guide](quickstart.md) to learn how to use the package.
+Once you have Encypher installed, continue to the [Quick Start Guide](quickstart.md) to learn how to use the package.

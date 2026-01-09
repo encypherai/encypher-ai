@@ -1,6 +1,6 @@
 # Streaming Support
 
-EncypherAI provides robust support for embedding metadata in streaming content, such as text generated chunk-by-chunk from Large Language Models (LLMs). This is essential for real-time applications where you cannot wait for the full response to be generated before sending it to the user.
+Encypher provides robust support for embedding metadata in streaming content, such as text generated chunk-by-chunk from Large Language Models (LLMs). This is essential for real-time applications where you cannot wait for the full response to be generated before sending it to the user.
 
 > Note: The `timestamp` parameter is optional across all formats. Verification works with or without a timestamp. For C2PA, actions that normally include a `when` field will omit it when no timestamp is provided.
 

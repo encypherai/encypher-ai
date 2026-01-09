@@ -1,12 +1,12 @@
 # Basic Usage Guide
 
-This guide provides a detailed walkthrough of the fundamental concepts in EncypherAI, expanding on the examples from the [Quick Start Guide](../getting-started/quickstart.md). Here, we'll dive deeper into key management, the embedding process, and verification.
+This guide provides a detailed walkthrough of the fundamental concepts in Encypher, expanding on the examples from the [Quick Start Guide](../getting-started/quickstart.md). Here, we'll dive deeper into key management, the embedding process, and verification.
 
 > Note: The `timestamp` parameter is optional across all formats (basic, manifest, cbor_manifest, c2pa). If omitted, verification still works. For C2PA, action assertions (e.g., `c2pa.created`, `c2pa.watermarked`) omit the `when` field when no timestamp is supplied.
 
 ## The Core Workflow
 
-The basic workflow in EncypherAI follows three main steps:
+The basic workflow in Encypher follows three main steps:
 1.  **Key Management**: Securely manage the cryptographic keys used for signing and verification.
 2.  **Embedding**: Create a metadata payload, sign it with a private key, and embed it invisibly into the text.
 3.  **Verification**: Extract the metadata payload from the text and verify its integrity and authenticity using a public key.
@@ -104,4 +104,4 @@ print(f"Valid: {is_valid2}; Timestamp present: {bool(getattr(payload2, 'timestam
 Now that you understand the basic usage, you can explore more advanced topics:
 - **[Metadata Encoding](./metadata-encoding.md)**: Learn about the different payload formats (`basic` vs. `cbor_manifest`).
 - **[Tamper Detection](./tamper-detection.md)**: See how verification fails when content is modified.
-- **[Streaming Support](./streaming.md)**: Integrate EncypherAI with streaming LLM responses.
+- **[Streaming Support](./streaming.md)**: Integrate Encypher with streaming LLM responses.

@@ -10,7 +10,7 @@ import tempfile
 import unittest
 import uuid
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Optional, cast
 
 from cryptography.hazmat.primitives.asymmetric import ed25519
 
@@ -113,7 +113,7 @@ class TestC2PAIntegration(unittest.TestCase):
         # Define a public key resolver function
         def public_key_resolver(signer_id: str) -> Optional[ed25519.Ed25519PublicKey]:
             if signer_id == self.signer_id:
-                return self.public_key
+                return cast(ed25519.Ed25519PublicKey, self.public_key)
             return None
 
         # Verify the metadata
@@ -128,7 +128,7 @@ class TestC2PAIntegration(unittest.TestCase):
         wrong_public_key = ed25519.Ed25519PrivateKey.generate().public_key()
 
         def wrong_key_resolver(signer_id: str) -> Optional[ed25519.Ed25519PublicKey]:
-            return wrong_public_key
+            return cast(ed25519.Ed25519PublicKey, wrong_public_key)
 
         is_verified, _, _ = UnicodeMetadata.verify_metadata(embedded_text, wrong_key_resolver)
         self.assertFalse(is_verified)
@@ -152,7 +152,7 @@ class TestC2PAIntegration(unittest.TestCase):
         # Define a public key resolver function
         def public_key_resolver(signer_id: str) -> Optional[ed25519.Ed25519PublicKey]:
             if signer_id == self.signer_id:
-                return self.public_key
+                return cast(ed25519.Ed25519PublicKey, self.public_key)
             return None
 
         # Verify the tampered text

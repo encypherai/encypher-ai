@@ -1,6 +1,6 @@
 # C2PA Integration for Text Content
 
-The EncypherAI SDK provides a robust, C2PA-compliant solution for embedding provenance and authenticity metadata directly into plain text. While the official C2PA standard primarily focuses on container-based media files (like JPEG or MP4), our SDK extends these principles to the text domain, which traditionally lacks a standard embedding mechanism.
+The Encypher SDK provides a robust, C2PA-compliant solution for embedding provenance and authenticity metadata directly into plain text. While the official C2PA standard primarily focuses on container-based media files (like JPEG or MP4), our SDK extends these principles to the text domain, which traditionally lacks a standard embedding mechanism.
 
 > Note: Timestamps are optional in C2PA text embeddings. When omitted, C2PA action assertions that normally include a `when` field (e.g., `c2pa.created`, `c2pa.watermarked`) will simply omit it.
 
@@ -28,9 +28,9 @@ Our implementation fully supports the core security features of the C2PA standar
 This self-contained example demonstrates the end-to-end workflow: creating a manifest, embedding it, and verifying it.
 
 ```python
-import hashlib
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.interop.c2pa import compute_normalized_hash
 
 def run_c2pa_text_demo():
     """Demonstrates embedding and verifying a C2PA manifest in text."""
@@ -44,8 +44,10 @@ def run_c2pa_text_demo():
 
     # 3. Create a C2PA manifest dictionary
     # This includes a hard-binding content hash to protect against tampering.
+    hash_result = compute_normalized_hash(original_text)
+
     c2pa_manifest = {
-        "claim_generator": "EncypherAI-SDK/1.1.0",
+        "claim_generator": "Encypher-SDK/1.1.0",
         "assertions": [
             {
                 "label": "stds.schema-org.CreativeWork",
@@ -61,7 +63,7 @@ def run_c2pa_text_demo():
             {
                 "label": "c2pa.hash.data.v1",
                 "data": {
-                    "hash": hashlib.sha256(original_text.encode("utf-8")).hexdigest(),
+                    "hash": hash_result.hexdigest,
                     "alg": "sha256",
                 },
                 "kind": "ContentHash",

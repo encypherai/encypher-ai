@@ -1,6 +1,6 @@
 # Streaming Handlers
 
-The streaming module in EncypherAI provides specialized handlers for working with streaming content from LLMs and other sources. These handlers make it easy to embed metadata in content that arrives chunk by chunk.
+The streaming module in Encypher provides specialized handlers for working with streaming content from LLMs and other sources. These handlers make it easy to embed metadata in content that arrives chunk by chunk.
 
 ## StreamingHandler
 
@@ -346,7 +346,7 @@ else:
 
 ## LiteLLM Integration
 
-EncypherAI works seamlessly with [LiteLLM](https://github.com/BerriAI/litellm), which provides a unified interface for multiple LLM providers:
+Encypher works seamlessly with [LiteLLM](https://github.com/BerriAI/litellm), which provides a unified interface for multiple LLM providers:
 
 ```python
 import litellm

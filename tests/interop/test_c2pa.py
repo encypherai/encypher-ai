@@ -1,7 +1,7 @@
 """
 Tests for the C2PA interoperability module.
 
-This module tests the conversion functions between EncypherAI's manifest format
+This module tests the conversion functions between Encypher's manifest format
 and C2PA-like dictionary structures.
 """
 
@@ -18,9 +18,9 @@ class TestC2PAInterop(unittest.TestCase):
         # Sample timestamp for consistent testing
         self.timestamp = "2025-04-13T12:00:00Z"
 
-        # Sample EncypherAI manifest
+        # Sample Encypher manifest
         self.encypher_manifest = {
-            "claim_generator": "EncypherAI/1.1.0",
+            "claim_generator": "Encypher/1.1.0",
             "assertions": [
                 {"label": "c2pa.created", "when": self.timestamp},
                 {
@@ -57,8 +57,8 @@ class TestC2PAInterop(unittest.TestCase):
         }
 
     def test_encypher_to_c2pa_conversion(self):
-        """Test conversion from EncypherAI manifest to C2PA-like dictionary."""
-        # Convert EncypherAI manifest to C2PA-like dict
+        """Test conversion from Encypher manifest to C2PA-like dictionary."""
+        # Convert Encypher manifest to C2PA-like dict
         c2pa_result = encypher_manifest_to_c2pa_like_dict(self.encypher_manifest)
 
         # Debug output to understand the issue
@@ -108,8 +108,8 @@ class TestC2PAInterop(unittest.TestCase):
         self.assertEqual(c2pa_result["custom_claims"], self.encypher_manifest["custom_claims"])
 
     def test_c2pa_to_encypher_conversion(self):
-        """Test conversion from C2PA-like dictionary to EncypherAI manifest."""
-        # Convert C2PA-like dict to EncypherAI manifest
+        """Test conversion from C2PA-like dictionary to Encypher manifest."""
+        # Convert C2PA-like dict to Encypher manifest
         manifest_result = c2pa_like_dict_to_encypher_manifest(self.c2pa_dict)
 
         # Verify core fields
@@ -145,11 +145,11 @@ class TestC2PAInterop(unittest.TestCase):
         self.assertEqual(manifest_result["custom_claims"], self.c2pa_dict["custom_claims"])
 
     def test_roundtrip_conversion(self):
-        """Test roundtrip conversion (EncypherAI -> C2PA -> EncypherAI)."""
-        # Convert EncypherAI manifest to C2PA-like dict
+        """Test roundtrip conversion (Encypher -> C2PA -> Encypher)."""
+        # Convert Encypher manifest to C2PA-like dict
         c2pa_result = encypher_manifest_to_c2pa_like_dict(self.encypher_manifest)
 
-        # Convert back to EncypherAI manifest
+        # Convert back to Encypher manifest
         manifest_result = c2pa_like_dict_to_encypher_manifest(c2pa_result)
 
         # Verify core fields remain the same

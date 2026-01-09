@@ -1,12 +1,9 @@
-Supported targets:
+> **Note:** Legacy embedding targets (``whitespace``, ``punctuation`` and similar)
+> remain available for the ``basic``, ``manifest``, and ``cbor_manifest`` formats.
+> When ``metadata_format="c2pa"`` the library automatically appends a
+> FEFF-prefixed ``C2PATextManifestWrapper`` to the end of the visible text so the
+> manifest stays contiguous, satisfying the latest specification.
 
-- `whitespace` — embed after whitespace characters (default)
-- `punctuation` — embed after punctuation marks
-- `first_letter` — embed after the first letter of words
-- `last_letter` — embed after the last letter of words
-- `all_characters` — embed after any character
-- `file_end` — append variation selectors at the very end of the text
-- `file_end_zwnbsp` — append a zero-width no-break space (U+FEFF) followed by the variation selectors at the end; improves robustness in some pipelines that trim trailing selectors
 # Advanced C2PA Text Demo
 
 This guide provides a comprehensive walkthrough of the C2PA text demo located in `demos/c2pa_demo/`. The demo showcases how to embed C2PA manifests into HTML articles and implement a verification UI with visual indicators.
@@ -54,35 +51,39 @@ Before running the demo:
 
 ### Embedding Process
 
-The embedding process uses BeautifulSoup for robust HTML parsing and embeds the C2PA manifest into the first paragraph of the article:
+The embedding process uses BeautifulSoup for robust HTML parsing and appends the C2PA wrapper to the first paragraph of the article:
 
 ```python
 # From embed_manifest_improved.py
 from bs4 import BeautifulSoup
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest
+from encypher.interop.c2pa import compute_normalized_hash, normalize_text
 
 # Parse HTML
-soup = BeautifulSoup(html_content, 'html.parser')
+soup = BeautifulSoup(html_content, "html.parser")
 
 # Find first paragraph within content column
-first_p = soup.select_one('.content-column p')
+first_p = soup.select_one(".content-column p")
 
-# Create C2PA manifest
-c2pa_manifest = create_c2pa_manifest(article_text)
+# Prepare optional custom actions for the c2pa.actions.v1 assertion
+custom_actions = [
+    {
+        "label": "c2pa.created",
+        "when": datetime.now().isoformat(),
+        "softwareAgent": "encypher-ai/demo",
+    }
+]
 
-# Convert to EncypherAI format
-encypher_manifest = c2pa_like_dict_to_encypher_manifest(c2pa_manifest)
-
-# Embed metadata into paragraph text
+# Embed metadata into paragraph text (wrapper appended to the end)
+paragraph_text = normalize_text(first_p.get_text())
 embedded_text = UnicodeMetadata.embed_metadata(
-    text=first_p.get_text(),
+    text=paragraph_text,
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='cbor_manifest',
-    claim_generator=encypher_manifest.get("claim_generator"),
-    actions=encypher_manifest.get("assertions"),
-    timestamp=encypher_manifest.get("timestamp")
+    metadata_format="c2pa",
+    claim_generator="encypher-ai/demo",
+    actions=custom_actions,
+    add_hard_binding=True,
 )
 
 # Replace paragraph text with embedded text
@@ -91,43 +92,18 @@ first_p.string = embedded_text
 
 ### Content Hash Calculation
 
-The content hash covers the plain text content of the article:
+``UnicodeMetadata`` normalises the paragraph, appends the wrapper, and records the
+wrapper's byte span in the ``c2pa.hash.data.v1`` assertion automatically. If you
+need to pre-compute the digest for auditing or logging, use the shared helper:
 
 ```python
-# From embed_manifest_improved.py
-def create_c2pa_manifest(article_text):
-    # Calculate content hash
-    content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
-
-    # Create C2PA manifest with content hash assertion
-    c2pa_manifest = {
-        "claim_generator": "EncypherAI/2.3.0",
-        "timestamp": datetime.now().isoformat(),
-        "assertions": [
-            {
-                "label": "stds.schema-org.CreativeWork",
-                "data": {
-                    "@context": "https://schema.org/",
-                    "@type": "CreativeWork",
-                    "headline": "The Future of AI",
-                    "author": {"@type": "Person", "name": "Dr. Jane Smith"},
-                    "publisher": {"@type": "Organization", "name": "Tech Insights"},
-                    "datePublished": "2025-06-15"
-                }
-            },
-            {
-                "label": "stds.c2pa.content.hash",
-                "data": {
-                    "hash": content_hash,
-                    "alg": "sha256"
-                },
-                "kind": "ContentHash"
-            }
-        ]
-    }
-
-    return c2pa_manifest
+paragraph_hash = compute_normalized_hash(paragraph_text)
+print("Pre-embed NFC hash:", paragraph_hash.hexdigest)
 ```
+
+After embedding you can reproduce the recorded digest by removing the wrapper
+bytes from the normalised text and re-running ``compute_normalized_hash`` (see
+the basic tutorial for a standalone example).
 
 ### UI Integration
 
@@ -136,7 +112,7 @@ The demo includes a Streamlit dashboard that displays the article with verificat
 ```python
 # From demo_dashboard.py
 def enhance_html_with_logo_and_popup(html_content, manifest_data):
-    """Add EncypherAI logo badge and manifest popup to the HTML content."""
+    """Add Encypher logo badge and manifest popup to the HTML content."""
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Find first paragraph (which contains embedded metadata)
@@ -152,7 +128,7 @@ def enhance_html_with_logo_and_popup(html_content, manifest_data):
     badge_img = soup.new_tag('img')
     badge_img['src'] = 'icon-logo-nobg.png'
     badge_img['class'] = 'encypher-badge'
-    badge_img['alt'] = 'EncypherAI Verified'
+    badge_img['alt'] = 'Encypher Verified'
     badge_img['title'] = 'Click to view provenance information'
     badge_img['onclick'] = 'toggleManifestPopup()'
 
@@ -224,7 +200,7 @@ def test_content_tampering():
     article_text = '\n'.join([p.get_text() for p in paragraphs])
 
     print("1. Original content hash calculation:")
-    original_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
+    original_hash = compute_normalized_hash(article_text).hexdigest
     print(f"   Original hash: {original_hash[:10]}...{original_hash[-10:]}")
 
     # Tamper with content (change second paragraph)
@@ -242,7 +218,7 @@ def test_content_tampering():
     # Calculate new hash
     tampered_paragraphs = soup.find_all('p')
     tampered_article_text = '\n'.join([p.get_text() for p in tampered_paragraphs])
-    tampered_hash = hashlib.sha256(tampered_article_text.encode('utf-8')).hexdigest()
+    tampered_hash = compute_normalized_hash(tampered_article_text).hexdigest
 
     print("\n3. New content hash after tampering:")
     print(f"   Tampered hash: {tampered_hash[:10]}...{tampered_hash[-10:]}")
@@ -346,27 +322,27 @@ The original `article.html` is a simple HTML article with a title, author, and m
 
 ### Step 2: Embed the C2PA Manifest
 
-Running `embed_manifest_improved.py` embeds a C2PA manifest into the first paragraph of the article:
+Running `embed_manifest_improved.py` appends a C2PA text wrapper to the article:
 
-1. The script extracts the text content of the article
-2. Calculates a SHA-256 hash of the content
-3. Creates a C2PA manifest with the content hash and metadata
-4. Embeds the manifest into the first paragraph using Unicode variation selectors
-5. Saves the result as `encoded_article.html`
+1. The script extracts and normalises the text content of the article.
+2. Calculates a SHA-256 hash of the normalised content.
+3. Creates a C2PA manifest with the content hash and metadata (including the wrapper exclusion offsets).
+4. Packages the manifest store into a JUMBF box and encodes it as a FEFF-prefixed block of variation selectors.
+5. Appends the wrapper block to the end of the visible text and saves the result as `encoded_article.html`.
 
 ### Step 3: View the Encoded Article
 
-The encoded article looks visually identical to the original, but the first paragraph now contains invisible Unicode variation selectors that encode the C2PA manifest.
+The encoded article looks visually identical to the original, but it now terminates with an invisible block of Unicode variation selectors that contains the C2PA manifest.
 
 ### Step 4: Verify the Encoded Article
 
 Running `temp_verify.py` verifies the embedded metadata and content hash:
 
-1. Extracts the embedded metadata from the first paragraph
-2. Verifies the digital signature using the public key
-3. Extracts the stored content hash from the manifest
-4. Calculates the current content hash
-5. Compares the stored and current hashes
+1. Locates the FEFF-prefixed wrapper at the end of the text and decodes the JUMBF manifest store.
+2. Verifies the COSE signature using the public key.
+3. Reads the recorded exclusion offsets and removes the wrapper bytes from the normalised text.
+4. Calculates the current content hash.
+5. Compares the stored and current hashes.
 
 If the verification is successful, you'll see:
 
@@ -391,62 +367,48 @@ Running `enhanced_tamper_test.py` demonstrates two tamper scenarios:
 
 The Streamlit dashboard displays:
 
-1. The encoded article with an EncypherAI badge next to the first paragraph
+1. The encoded article with an Encypher badge next to the first paragraph
 2. A verification notice under the author line
 3. A popup that shows the manifest details when clicking the badge
 4. Verification results showing the signature and content hash status
 
 ## Customization Options
 
-### Embedding Target
+### Embedding Location
 
-You can customize where the metadata is embedded by modifying the target parameter:
+C2PA manifests always append a FEFF-prefixed wrapper to the end of the text.
+The ``target`` parameter is ignored for ``metadata_format="c2pa"`` because the
+specification requires the wrapper to remain contiguous.
+
+### Manifest Content
+
+Customise the manifest by adjusting the ``claim_generator`` string, providing
+pre-existing action entries, or toggling ``add_hard_binding``. The library
+constructs the remaining assertions automatically.
 
 ```python
+custom_actions = [
+    {
+        "label": "c2pa.created",
+        "softwareAgent": "YourApp/1.0.0",
+        "when": datetime.now().isoformat(),
+    },
+    {
+        "label": "c2pa.captured",
+        "softwareAgent": "YourApp/1.0.0",
+        "description": "Article prepared with Encypher",
+    },
+]
+
 embedded_text = UnicodeMetadata.embed_metadata(
     text=first_p.get_text(),
     private_key=private_key,
     signer_id=signer_id,
-    metadata_format='cbor_manifest',
-    target="whitespace",  # Options: "whitespace", "punctuation", "first_letter", "last_letter",
-                           # "all_characters", "file_end", "file_end_zwnbsp"
-    # Other parameters...
+    metadata_format="c2pa",
+    claim_generator="YourApp/1.0.0",
+    actions=custom_actions,
+    add_hard_binding=True,
 )
-```
-
-### Manifest Content
-
-You can customize the C2PA manifest by modifying the `create_c2pa_manifest` function:
-
-```python
-def create_c2pa_manifest(article_text):
-    # Calculate content hash
-    content_hash = hashlib.sha256(article_text.encode('utf-8')).hexdigest()
-
-    # Create C2PA manifest with custom assertions
-    c2pa_manifest = {
-        "claim_generator": "YourApp/1.0.0",
-        "timestamp": datetime.now().isoformat(),
-        "assertions": [
-            # Add your custom assertions here
-            {
-                "label": "stds.schema-org.CreativeWork",
-                "data": {
-                    # Your metadata here
-                }
-            },
-            {
-                "label": "stds.c2pa.content.hash",
-                "data": {
-                    "hash": content_hash,
-                    "alg": "sha256"
-                },
-                "kind": "ContentHash"
-            }
-        ]
-    }
-
-    return c2pa_manifest
 ```
 
 ### UI Customization
@@ -511,7 +473,7 @@ def add_css_and_js(soup):
 
 ## Conclusion
 
-The C2PA text demo showcases a complete implementation of text provenance using EncypherAI's Unicode variation selector approach. It demonstrates:
+The C2PA text demo showcases a complete implementation of text provenance using Encypher's Unicode variation selector approach. It demonstrates:
 
 1. How to embed C2PA manifests into HTML articles
 2. How to verify embedded metadata and detect tampering

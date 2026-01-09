@@ -7,8 +7,9 @@ to encode metadata into LLM responses.
 
 import json
 import os
+from collections.abc import AsyncGenerator
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict, List, Optional, Union
+from typing import Any, Optional, Union
 
 import litellm
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
@@ -122,7 +123,7 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     """Request model for chat completions."""
 
-    messages: List[ChatMessage] = Field(description="List of chat messages in the conversation")
+    messages: list[ChatMessage] = Field(description="List of chat messages in the conversation")
     model: str = Field(description="LLM model to use", example="gpt-3.5-turbo")
     temperature: Optional[float] = Field(0.7, description="Sampling temperature (0.0 to 1.0)", ge=0.0, le=1.0)
     max_tokens: Optional[int] = Field(None, description="Maximum tokens to generate", gt=0)
@@ -139,7 +140,7 @@ class ChatResponse(BaseModel):
 
     model: str = Field(description="Model used for generation", example="gpt-3.5-turbo")
     content: str = Field(description="Generated content with embedded metadata")
-    custom_metadata_embedded: Dict[str, Any] = Field(description="Custom metadata that was embedded in the response")
+    custom_metadata_embedded: dict[str, Any] = Field(description="Custom metadata that was embedded in the response")
 
 
 @app.post("/v1/chat/completions", response_model=ChatResponse, tags=["chat"])
@@ -202,10 +203,10 @@ async def chat_completions(
         return ChatResponse(model=request.model, content=encoded_content, custom_metadata_embedded=custom_metadata_payload)
     except Exception as e:
         print(f"Error in /v1/chat/completions: {e}")
-        raise HTTPException(status_code=500, detail=f"Error generating completion: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error generating completion: {str(e)}") from e
 
 
-async def stream_chat_completion(request: ChatRequest, messages: List[Dict[str, str]], actual_signer_id: str) -> AsyncGenerator[str, None]:
+async def stream_chat_completion(request: ChatRequest, messages: list[dict[str, str]], actual_signer_id: str) -> AsyncGenerator[str, None]:
     """
     Stream a chat completion with metadata encoding.
     Assumes StreamingHandler is updated to handle private_key, signer_id, and internal timestamping for signatures.
@@ -270,7 +271,7 @@ async def stream_chat_completion(request: ChatRequest, messages: List[Dict[str, 
 
 
 @app.get("/status", tags=["status"])
-async def get_status() -> Dict[str, Any]:
+async def get_status() -> dict[str, Any]:
     """
     Get the current status of the API.
 

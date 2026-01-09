@@ -1,12 +1,17 @@
+import struct
+import unicodedata
 import unittest
 
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.interop.c2pa import c2pa_like_dict_to_encypher_manifest, encypher_manifest_to_c2pa_like_dict
+from encypher.interop.c2pa import (
+    c2pa_like_dict_to_encypher_manifest,
+    encypher_manifest_to_c2pa_like_dict,
+)
+from encypher.interop.c2pa.text_wrapper import find_and_decode
 
 
 class TestC2PATextEmbedding(unittest.TestCase):
-
     def assertDictsAlmostEqual(self, d1, d2, msg=None):
         """Compares two dictionaries, allowing for minor float differences if needed in future."""
         # For this specific C2PA test, direct equality should be fine as no floats are involved.
@@ -17,7 +22,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         """Tests the full round-trip of embedding and extracting a C2PA-like manifest in text."""
         # 1. Define the original C2PA-like manifest (as in the demo script)
         original_c2pa_like_manifest = {
-            "claim_generator": "EncypherAI/2.1.0",
+            "claim_generator": "Encypher/2.1.0",
             "timestamp": "2025-06-16T10:30:00Z",
             "assertions": [
                 {
@@ -25,11 +30,11 @@ class TestC2PATextEmbedding(unittest.TestCase):
                     "data": {
                         "@context": "http://schema.org/",
                         "@type": "CreativeWork",
-                        "author": {"@type": "Person", "name": "Erik EncypherAI"},
-                        "publisher": {"@type": "Organization", "name": "Encypher AI"},
-                        "copyrightHolder": {"name": "Encypher AI"},
+                        "author": {"@type": "Person", "name": "Erik Encypher"},
+                        "publisher": {"@type": "Organization", "name": "Encypher Corporation"},
+                        "copyrightHolder": {"name": "Encypher Corporation"},
                         "copyrightYear": 2025,
-                        "copyrightNotice": "© 2025 Encypher AI. All Rights Reserved.",
+                        "copyrightNotice": "© 2025 Encypher Corporation. All Rights Reserved.",
                     },
                 }
             ],
@@ -39,12 +44,12 @@ class TestC2PATextEmbedding(unittest.TestCase):
         private_key, public_key = generate_ed25519_key_pair()
         key_id = "test-c2pa-key-001"
 
-        # 3. Convert C2PA-like manifest to EncypherAI ManifestPayload
+        # 3. Convert C2PA-like manifest to Encypher ManifestPayload
         encypher_ai_payload_to_embed = c2pa_like_dict_to_encypher_manifest(original_c2pa_like_manifest)
         self.assertIsNotNone(encypher_ai_payload_to_embed)
         self.assertEqual(encypher_ai_payload_to_embed["claim_generator"], original_c2pa_like_manifest["claim_generator"])
 
-        # 4. Embed the EncypherAI ManifestPayload into sample text
+        # 4. Embed the Encypher ManifestPayload into sample text
         sample_text = "This is a sample document that will have C2PA-like metadata embedded."
 
         text_with_embedded_metadata = UnicodeMetadata.embed_metadata(
@@ -76,7 +81,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         self.assertIsNotNone(extracted_payload_outer, "Extracted payload is None.")
         self.assertIn("manifest", extracted_payload_outer, "'manifest' key missing in extracted payload.")
 
-        # 6. Convert the extracted EncypherAI ManifestPayload back to a C2PA-like dictionary
+        # 6. Convert the extracted Encypher ManifestPayload back to a C2PA-like dictionary
         inner_manifest = extracted_payload_outer["manifest"]
         manifest_for_conversion = {
             "claim_generator": inner_manifest.get("claim_generator"),
@@ -128,7 +133,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         """Tests the full round-trip of embedding and extracting a C2PA-like manifest with CBOR assertion data."""
         # 1. Define the original C2PA-like manifest
         original_c2pa_like_manifest = {
-            "claim_generator": "EncypherAI/CBORTest/1.0",
+            "claim_generator": "Encypher/CBORTest/1.0",
             "timestamp": "2025-07-04T12:00:00Z",
             "assertions": [
                 {
@@ -152,7 +157,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         private_key, public_key = generate_ed25519_key_pair()
         key_id = "test-c2pa-cbor-key-001"
 
-        # 3. Convert C2PA-like manifest to EncypherAI ManifestPayload with CBOR encoding
+        # 3. Convert C2PA-like manifest to Encypher ManifestPayload with CBOR encoding
         encypher_ai_payload_to_embed = c2pa_like_dict_to_encypher_manifest(original_c2pa_like_manifest, encode_assertion_data_as_cbor=True)
         self.assertIsNotNone(encypher_ai_payload_to_embed)
         self.assertEqual(encypher_ai_payload_to_embed["claim_generator"], original_c2pa_like_manifest["claim_generator"])
@@ -161,7 +166,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
             self.assertIsInstance(assertion.get("data"), str)
             self.assertEqual(assertion.get("data_encoding"), "cbor_base64")
 
-        # 4. Embed the EncypherAI ManifestPayload into sample text
+        # 4. Embed the Encypher ManifestPayload into sample text
         sample_text = "This document contains CBOR-encoded C2PA-like metadata."
 
         text_with_embedded_metadata = UnicodeMetadata.embed_metadata(
@@ -192,7 +197,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         self.assertIsNotNone(extracted_payload_outer, "Extracted payload is None for CBOR data.")
         self.assertIn("manifest", extracted_payload_outer, "'manifest' key missing in extracted CBOR payload.")
 
-        # 6. Convert the extracted EncypherAI ManifestPayload back to a C2PA-like dictionary
+        # 6. Convert the extracted Encypher ManifestPayload back to a C2PA-like dictionary
         inner_manifest = extracted_payload_outer["manifest"]
         manifest_for_conversion = {
             "claim_generator": inner_manifest.get("claim_generator"),
@@ -216,7 +221,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         self.assertDictsAlmostEqual(
             comparison_dict,
             original_c2pa_like_manifest,
-            "Round-tripped CBOR manifest does not match original " "(after accounting for 'format' field).",
+            "Round-tripped CBOR manifest does not match original (after accounting for 'format' field).",
         )
 
     def test_c2pa_full_cbor_manifest_text_embedding_round_trip(self):
@@ -225,7 +230,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         """Tests the full round-trip of embedding and extracting a C2PA-like manifest using metadata_format='cbor_manifest'."""
         # 1. Define the original C2PA-like manifest
         original_c2pa_like_manifest = {
-            "claim_generator": "EncypherAI/FullCBOR/0.1",
+            "claim_generator": "Encypher/FullCBOR/0.1",
             "timestamp": "2025-08-15T18:00:00Z",
             "assertions": [
                 {
@@ -245,7 +250,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         private_key, public_key = generate_ed25519_key_pair()
         key_id = "test-c2pa-full-cbor-key-001"
 
-        # 3. Convert C2PA-like manifest to EncypherAI ManifestPayload
+        # 3. Convert C2PA-like manifest to Encypher ManifestPayload
         # For 'cbor_manifest' format, assertion data remains as dicts, not pre-encoded to CBOR strings.
         # We use use_nested_data=True to keep assertion data in nested 'data' fields
         encypher_ai_manifest_to_embed = c2pa_like_dict_to_encypher_manifest(
@@ -259,7 +264,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
             self.assertIsInstance(assertion.get("data"), dict)  # Data should be a dict
             self.assertNotIn("data_encoding", assertion)  # No data_encoding field for individual assertions
 
-        # 4. Embed the EncypherAI ManifestPayload into sample text using 'cbor_manifest' format
+        # 4. Embed the Encypher ManifestPayload into sample text using 'cbor_manifest' format
         sample_text = "This document contains a fully CBOR-encoded C2PA-like manifest."
 
         text_with_embedded_metadata = UnicodeMetadata.embed_metadata(
@@ -295,8 +300,8 @@ class TestC2PATextEmbedding(unittest.TestCase):
         # For 'cbor_manifest', the extracted payload IS the manifest dictionary itself, not nested.
         self.assertEqual(extracted_manifest_dict.get("claim_generator"), original_c2pa_like_manifest.get("claim_generator"))
 
-        # 6. Convert the extracted EncypherAI ManifestPayload (which is extracted_manifest_dict) back to a C2PA-like dictionary
-        # The extracted_manifest_dict should already be in the EncypherAI manifest structure.
+        # 6. Convert the extracted Encypher ManifestPayload (which is extracted_manifest_dict) back to a C2PA-like dictionary
+        # The extracted_manifest_dict should already be in the Encypher manifest structure.
 
         # Add timestamp to extracted manifest if missing
         if "timestamp" not in extracted_manifest_dict and "timestamp" in original_c2pa_like_manifest:
@@ -333,7 +338,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         """Tests the full round-trip of embedding and extracting a single-assertion C2PA-like manifest in CBOR format."""
         # 1. Define the C2PA-like manifest with a single assertion
         original_c2pa_like_manifest = {
-            "claim_generator": "EncypherAI/2.1.0",
+            "claim_generator": "Encypher/2.1.0",
             "timestamp": "2025-06-16T10:30:00Z",
             "assertions": [
                 {
@@ -341,11 +346,11 @@ class TestC2PATextEmbedding(unittest.TestCase):
                     "data": {
                         "@context": "http://schema.org/",
                         "@type": "CreativeWork",
-                        "author": {"@type": "Person", "name": "Erik EncypherAI"},
-                        "publisher": {"@type": "Organization", "name": "Encypher AI"},
-                        "copyrightHolder": {"name": "Encypher AI"},
+                        "author": {"@type": "Person", "name": "Erik Encypher"},
+                        "publisher": {"@type": "Organization", "name": "Encypher Corporation"},
+                        "copyrightHolder": {"name": "Encypher Corporation"},
                         "copyrightYear": 2025,
-                        "copyrightNotice": " 2025 Encypher AI. All Rights Reserved.",
+                        "copyrightNotice": " 2025 Encypher Corporation. All Rights Reserved.",
                     },
                 }
             ],
@@ -355,7 +360,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
         private_key, public_key = generate_ed25519_key_pair()
         key_id = "test-c2pa-single-cbor-key-001"
 
-        # 3. Convert C2PA-like manifest to EncypherAI ManifestPayload
+        # 3. Convert C2PA-like manifest to Encypher ManifestPayload
         # For 'cbor_manifest' format, assertion data remains as dicts, not pre-encoded to CBOR strings.
         # We use use_nested_data=True to keep assertion data in nested 'data' fields
         encypher_ai_manifest_to_embed = c2pa_like_dict_to_encypher_manifest(
@@ -369,7 +374,7 @@ class TestC2PATextEmbedding(unittest.TestCase):
             self.assertIsInstance(assertion.get("data"), dict)  # Data should be a dict
             self.assertNotIn("data_encoding", assertion)  # No data_encoding field for individual assertions
 
-        # 4. Embed the EncypherAI ManifestPayload into sample text using 'cbor_manifest' format
+        # 4. Embed the Encypher ManifestPayload into sample text using 'cbor_manifest' format
         sample_text = "This document contains a single-assertion CBOR-encoded C2PA-like manifest."
 
         text_with_embedded_metadata = UnicodeMetadata.embed_metadata(
@@ -427,6 +432,55 @@ class TestC2PATextEmbedding(unittest.TestCase):
 
         # Compare the dictionaries (excluding timestamp)
         self.assertEqual(comparison_dict, original_comparison, "Round-trip conversion with single-assertion CBOR manifest does not match original.")
+
+    def test_c2pa_text_wrapper_appended_with_feff(self):
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-wrapper-key"
+        sample_text = "Café document for wrapper"
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=sample_text,
+            private_key=private_key,
+            signer_id=key_id,
+            metadata_format="c2pa",
+            claim_generator="Encypher/WrapperTest/1.0",
+        )
+
+        self.assertNotEqual(embedded_text, sample_text)
+
+        manifest_bytes, clean_text, span = find_and_decode(embedded_text)
+        self.assertIsNotNone(manifest_bytes)
+        self.assertEqual(clean_text, unicodedata.normalize("NFC", sample_text))
+        self.assertIsNotNone(span)
+        self.assertEqual(span[1], len(embedded_text))
+
+        wrapper_segment = embedded_text[span[0] : span[1]]
+        self.assertTrue(wrapper_segment.startswith("﻿"))
+
+        self.assertGreaterEqual(len(manifest_bytes), 8)
+        length, box_type = struct.unpack(">I4s", manifest_bytes[:8])
+        self.assertEqual(box_type, b"jumb")
+        self.assertEqual(length, len(manifest_bytes))
+
+        def resolver(kid: str):
+            return public_key if kid == key_id else None
+
+        verified, extracted_signer, manifest = UnicodeMetadata.verify_metadata(
+            text=embedded_text,
+            public_key_resolver=resolver,
+            return_payload_on_failure=True,
+        )
+
+        self.assertTrue(verified)
+        self.assertEqual(extracted_signer, key_id)
+        self.assertIsNotNone(manifest)
+
+        hard_binding = next((a for a in manifest["assertions"] if a.get("label") == "c2pa.hash.data.v1"), None)
+        self.assertIsNotNone(hard_binding)
+        exclusions = hard_binding["data"].get("exclusions")
+        expected_start = len(unicodedata.normalize("NFC", sample_text).encode("utf-8"))
+        expected_length = len(wrapper_segment.encode("utf-8"))
+        self.assertEqual(exclusions, [{"start": expected_start, "length": expected_length}])
 
 
 if __name__ == "__main__":

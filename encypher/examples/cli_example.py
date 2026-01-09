@@ -106,7 +106,7 @@ def encode_text(args):
     """Encode metadata into text using UnicodeMetadata and digital signatures."""
     if args.input_file:
         try:
-            with open(args.input_file, "r", encoding="utf-8") as f:
+            with open(args.input_file, encoding="utf-8") as f:
                 text = f.read()
         except Exception as e:
             console.print(f"[bold red]Error reading input file:[/] {e}")
@@ -130,7 +130,7 @@ def encode_text(args):
     custom_metadata_dict = {}
     if args.custom_metadata:
         try:
-            with open(args.custom_metadata, "r", encoding="utf-8") as f:
+            with open(args.custom_metadata, encoding="utf-8") as f:
                 custom_metadata_dict = json.load(f)
         except FileNotFoundError:
             console.print(f"[bold red]Error: Custom metadata file not found: {args.custom_metadata}[/]")
@@ -186,7 +186,7 @@ def decode_text(args):
     """Decode and verify metadata from text using UnicodeMetadata."""
     if args.input_file:
         try:
-            with open(args.input_file, "r", encoding="utf-8") as f:
+            with open(args.input_file, encoding="utf-8") as f:
                 encoded_text = f.read()
         except Exception as e:
             console.print(f"[bold red]Error reading input file:[/] {e}")

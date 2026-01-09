@@ -1,17 +1,14 @@
 """
-Streaming handlers for EncypherAI metadata encoding.
+Streaming handlers for Encypher metadata encoding.
 
 This module provides utilities for handling streaming responses from LLMs
 and encoding metadata into the streaming chunks.
 """
 
 from datetime import date, datetime, timezone
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
-from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, ed25519, rsa, x448, x25519
-
-# Import necessary types for signature handling
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
+from cryptography.hazmat.primitives.asymmetric import ed25519
 
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 
@@ -29,16 +26,16 @@ class StreamingHandler:
 
     def __init__(
         self,
-        custom_metadata: Optional[Dict[str, Any]] = None,
+        custom_metadata: Optional[dict[str, Any]] = None,
         timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Union[str, MetadataTarget] = "whitespace",
         encode_first_chunk_only: bool = True,
-        private_key: Optional[PrivateKeyTypes] = None,
+        private_key: Optional[ed25519.Ed25519PrivateKey] = None,
         signer_id: Optional[str] = None,
         metadata_format: Literal["basic", "manifest", "c2pa"] = "c2pa",
-        omit_keys: Optional[List[str]] = None,
+        omit_keys: Optional[list[str]] = None,
         # For backward compatibility
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """
         Initialize the streaming handler.
@@ -78,17 +75,8 @@ class StreamingHandler:
             raise TypeError("If provided, 'custom_metadata' must be a dictionary.")
         if not isinstance(encode_first_chunk_only, bool):
             raise TypeError("'encode_first_chunk_only' must be a boolean.")
-        if private_key is not None and not (
-            isinstance(private_key, ed25519.Ed25519PrivateKey)
-            or isinstance(private_key, rsa.RSAPrivateKey)
-            or isinstance(private_key, dsa.DSAPrivateKey)
-            or isinstance(private_key, dh.DHPrivateKey)
-            or isinstance(private_key, ec.EllipticCurvePrivateKey)
-            or isinstance(private_key, x25519.X25519PrivateKey)
-            or isinstance(private_key, x448.X448PrivateKey)
-            or isinstance(private_key, ed448.Ed448PrivateKey)
-        ):
-            raise TypeError("If provided, 'private_key' must be a valid private key type (e.g., Ed25519PrivateKey).")
+        if private_key is not None and not isinstance(private_key, ed25519.Ed25519PrivateKey):
+            raise TypeError("If provided, 'private_key' must be an Ed25519PrivateKey.")
         if signer_id is not None and not isinstance(signer_id, str):
             raise TypeError("If provided, 'signer_id' must be a string.")
         if omit_keys is not None and (not isinstance(omit_keys, list) or not all(isinstance(k, str) for k in omit_keys)):
@@ -99,7 +87,7 @@ class StreamingHandler:
             raise ValueError("If metadata is provided for embedding, private_key and signer_id must also be provided.")
 
         # --- Prepare metadata for embedding ---
-        self.metadata: Dict[str, Any] = {}
+        self.metadata: dict[str, Any] = {}
 
         # Handle the deprecated 'metadata' parameter
         if metadata is not None:
@@ -162,7 +150,7 @@ class StreamingHandler:
         except Exception:
             return False
 
-    def process_chunk(self, chunk: Union[str, Dict[str, Any]]) -> Union[str, Dict[str, Any]]:
+    def process_chunk(self, chunk: Union[str, dict[str, Any]]) -> Union[str, dict[str, Any]]:
         """
         Process a streaming chunk and encode metadata if needed.
 
@@ -351,7 +339,7 @@ class StreamingHandler:
             logger.error(f"Error embedding metadata in streaming chunk: {e}", exc_info=True)
             return chunk
 
-    def _process_dict_chunk(self, chunk: Dict[str, Any]) -> Dict[str, Any]:
+    def _process_dict_chunk(self, chunk: dict[str, Any]) -> dict[str, Any]:
         """
         Process a dictionary chunk and encode metadata if needed.
 
@@ -373,7 +361,7 @@ class StreamingHandler:
 
         # --- Common logic for finding content to process ---
         content_to_process: Optional[str] = None
-        content_location: Optional[List[Union[str, int]]] = None  # To update the dict later
+        content_location: Optional[list[Union[str, int]]] = None  # To update the dict later
 
         # Handle OpenAI-style chat completions delta format
         if "choices" in processed_chunk and isinstance(processed_chunk["choices"], list) and processed_chunk["choices"]:
