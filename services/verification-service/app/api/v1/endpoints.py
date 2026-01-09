@@ -9,7 +9,9 @@ import httpx
 from uuid import uuid4
 
 from encypher.core.keys import load_public_key_from_data
+from encypher.core.payloads import deserialize_jumbf_payload
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.interop.c2pa import find_wrapper_info_bytes
 
 from ...db.session import get_db
 from ...models.enterprise_schemas import ErrorDetail, VerifyRequest, VerifyResponse, VerifyVerdict
@@ -150,22 +152,93 @@ async def verify_text(
             public_key_resolver=public_key_resolver,
         )
     except Exception as exc:
-        duration_ms = int((time.perf_counter() - start) * 1000)
-        verdict = VerifyVerdict(
-            valid=False,
-            tampered=False,
-            reason_code="VERIFY_EXCEPTION",
-            signer_id=None,
-            signer_name=None,
-            timestamp=None,
-            details={
-                "manifest": {},
-                "duration_ms": duration_ms,
-                "payload_bytes": payload_bytes,
-                "exception": str(exc),
-            },
-        )
-        return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+        # Fallback: Attempt C2PA wrapper-only verification.
+        # This avoids failures when non-JSON VS blocks (e.g. mixed multi-embeddings)
+        # break the legacy outer-payload extraction logic.
+        try:
+            info = find_wrapper_info_bytes(verify_request.text)
+        except Exception:  # pragma: no cover - defensive
+            info = None
+
+        if info:
+            manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
+            try:
+                manifest_store = deserialize_jumbf_payload(manifest_bytes)
+                if isinstance(manifest_store, dict):
+                    fallback_signer_id = manifest_store.get("signer_id")
+                    cose_sign1 = manifest_store.get("cose_sign1")
+                else:
+                    fallback_signer_id = None
+                    cose_sign1 = None
+
+                if isinstance(fallback_signer_id, str) and isinstance(cose_sign1, str):
+                    outer_payload = {
+                        "format": "c2pa",
+                        "signer_id": fallback_signer_id,
+                        "cose_sign1": cose_sign1,
+                    }
+                    is_valid, signer_id, manifest = UnicodeMetadata._verify_c2pa(
+                        original_text=verify_request.text,
+                        outer_payload=outer_payload,
+                        public_key_resolver=public_key_resolver,
+                        return_payload_on_failure=True,
+                        require_hard_binding=True,
+                        wrapper_exclusion=(wrapper_start_byte, wrapper_length_byte),
+                    )
+                else:
+                    is_valid, signer_id, manifest = False, None, None
+            except Exception:  # pragma: no cover - defensive
+                is_valid, signer_id, manifest = False, None, None
+        else:
+            duration_ms = int((time.perf_counter() - start) * 1000)
+            verdict = VerifyVerdict(
+                valid=False,
+                tampered=False,
+                reason_code="VERIFY_EXCEPTION",
+                signer_id=None,
+                signer_name=None,
+                timestamp=None,
+                details={
+                    "manifest": {},
+                    "duration_ms": duration_ms,
+                    "payload_bytes": payload_bytes,
+                    "exception": str(exc),
+                },
+            )
+            return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+
+    # Fallback: no exception, but no signer_id extracted.
+    if not signer_id:
+        try:
+            info = find_wrapper_info_bytes(verify_request.text)
+        except Exception:  # pragma: no cover - defensive
+            info = None
+        if info:
+            manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
+            try:
+                manifest_store = deserialize_jumbf_payload(manifest_bytes)
+                if isinstance(manifest_store, dict):
+                    fallback_signer_id = manifest_store.get("signer_id")
+                    cose_sign1 = manifest_store.get("cose_sign1")
+                else:
+                    fallback_signer_id = None
+                    cose_sign1 = None
+                if isinstance(fallback_signer_id, str) and isinstance(cose_sign1, str):
+                    outer_payload = {
+                        "format": "c2pa",
+                        "signer_id": fallback_signer_id,
+                        "cose_sign1": cose_sign1,
+                    }
+                    is_valid, signer_id, manifest = UnicodeMetadata._verify_c2pa(
+                        original_text=verify_request.text,
+                        outer_payload=outer_payload,
+                        public_key_resolver=public_key_resolver,
+                        return_payload_on_failure=True,
+                        require_hard_binding=True,
+                        wrapper_exclusion=(wrapper_start_byte, wrapper_length_byte),
+                    )
+            except Exception:  # pragma: no cover - defensive
+                pass
 
     duration_ms = int((time.perf_counter() - start) * 1000)
 

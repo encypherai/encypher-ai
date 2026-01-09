@@ -18,8 +18,8 @@ import unicodedata
 from dataclasses import dataclass, field
 from typing import Any, Callable, Optional
 
-import c2pa_text
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.interop.c2pa.text_wrapper import find_and_decode
 from app.utils.merkle.hashing import compute_leaf_hash
 
 logger = logging.getLogger(__name__)
@@ -144,30 +144,10 @@ def find_all_c2pa_wrappers(text: str) -> list[tuple[bytes, int, int]]:
         List of tuples (manifest_bytes, start_index, end_index) for each
         wrapper found, in order of appearance. Empty list if no wrappers found.
     """
-    if not hasattr(c2pa_text, "find_wrapper_info"):
-        logger.warning("c2pa_text.find_wrapper_info not available")
+    manifest_bytes, _clean_text, span = find_and_decode(text)
+    if manifest_bytes is None or span is None:
         return []
-    
-    results = []
-    remaining_text = text
-    offset = 0
-    
-    while True:
-        info = c2pa_text.find_wrapper_info(remaining_text)
-        if not info:
-            break
-            
-        manifest_bytes, start, end = info
-        # Adjust indices to account for offset from previous iterations
-        absolute_start = offset + start
-        absolute_end = offset + end
-        results.append((manifest_bytes, absolute_start, absolute_end))
-        
-        # Move past this wrapper and continue searching
-        remaining_text = remaining_text[end:]
-        offset = absolute_end
-    
-    return results
+    return [(manifest_bytes, span[0], span[1])]
 
 
 def find_all_embeddings_raw(text: str) -> list[tuple[str, bytes, int, int]]:
@@ -445,7 +425,6 @@ async def extract_and_verify_all_embeddings(
             if signature_valid:
                 embedding.verification_status = "Success"
                 embedding.metadata = payload if isinstance(payload, dict) else embedding.metadata
-                valid_count += 1
                 
                 # Determine signer name
                 if signer_id in demo_signer_ids:
@@ -455,8 +434,10 @@ async def extract_and_verify_all_embeddings(
                 
                 # Override status if content hash doesn't match (tampered content)
                 if embedding.content_hash_valid is False:
-                    embedding.verification_status = "Tampered"
+                    embedding.verification_status = "Failure"
                     embedding.error = "Content has been modified. The text no longer matches the signed hash."
+                else:
+                    valid_count += 1
             else:
                 embedding.verification_status = "Failure"
                 if signer_id in demo_signer_ids:
