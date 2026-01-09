@@ -45,14 +45,49 @@ def _normalize(text: str) -> str:
     return unicodedata.normalize("NFC", text)
 
 
-def find_and_decode(text: str) -> tuple[bytes | None, str, tuple[int, int] | None]:
-    if hasattr(c2pa_text, "find_wrapper_info"):
-        info = c2pa_text.find_wrapper_info(text)
-        if info:
-            manifest_bytes, start, end = info
-            # Reconstruct clean text as per legacy behavior (NFC)
-            clean_text = _normalize(text[:start] + text[end:])
-            return manifest_bytes, clean_text, (start, end)
+def _byte_offset_to_char_index(value: str, byte_offset: int) -> int:
+    """Convert a UTF-8 byte offset into a Python string character index."""
+    if byte_offset <= 0:
+        return 0
+    consumed = 0
+    for idx, ch in enumerate(value):
+        ch_len = len(ch.encode("utf-8"))
+        if consumed + ch_len > byte_offset:
+            return idx
+        consumed += ch_len
+    return len(value)
 
-    return None, _normalize(text), None
+
+def find_wrapper_info_bytes(text: str) -> tuple[bytes, int, int] | None:
+    """Return wrapper info using c2pa-text byte offsets.
+
+    c2pa-text reports wrapper offsets as UTF-8 byte offsets (start byte + length).
+    Downstream callers that need to verify hard-binding exclusions should use
+    this function rather than importing c2pa_text directly.
+    """
+
+    normalized_text = _normalize(text)
+    if hasattr(c2pa_text, "find_wrapper_info"):
+        info = c2pa_text.find_wrapper_info(normalized_text)
+        if info:
+            manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
+            return manifest_bytes, wrapper_start_byte, wrapper_length_byte
+    return None
+
+
+def find_and_decode(text: str) -> tuple[bytes | None, str, tuple[int, int] | None]:
+    normalized_text = _normalize(text)
+    if hasattr(c2pa_text, "find_wrapper_info"):
+        info = c2pa_text.find_wrapper_info(normalized_text)
+        if info:
+            manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
+            wrapper_end_byte = wrapper_start_byte + wrapper_length_byte
+
+            start_char = _byte_offset_to_char_index(normalized_text, wrapper_start_byte)
+            end_char = _byte_offset_to_char_index(normalized_text, wrapper_end_byte)
+
+            clean_text = normalized_text[:start_char] + normalized_text[end_char:]
+            return manifest_bytes, clean_text, (start_char, end_char)
+
+    return None, normalized_text, None
 
