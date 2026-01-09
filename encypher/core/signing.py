@@ -1,5 +1,5 @@
 """
-Cryptographic signing and verification utilities for EncypherAI.
+Cryptographic signing and verification utilities for Encypher.
 
 This module provides functions for signing payloads and verifying signatures
 using Ed25519 keys, as well as X.509 certificate validation and trust list
@@ -9,49 +9,97 @@ management for C2PA v2.2 compliance.
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import List, Optional, Set, cast
+from typing import Optional, Protocol, Union, cast
 
+import cbor2
 import requests
 from cryptography import x509
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519, padding, rsa
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from cryptography.x509 import Certificate, NameOID
-from pycose.algorithms import EdDSA
-from pycose.headers import X5chain
-from pycose.keys import OKPKey
-from pycose.messages import CoseMessage, Sign1Message
 
 from .logging_config import logger
 
+ALG_HEADER = 1
+ALG_EDDSA = -8
+X5CHAIN_HEADER = 33
 
-def sign_payload(private_key: PrivateKeyTypes, payload_bytes: bytes) -> bytes:
+
+class Signer(Protocol):
+    """Protocol for abstract signing implementations (e.g., AWS KMS, Azure Key Vault)."""
+
+    def sign(self, data: bytes) -> bytes: ...
+
+
+SigningKey = Union[ed25519.Ed25519PrivateKey, Signer]
+
+
+def _encode_protected(headers: dict) -> bytes:
+    return cbor2.dumps(headers)
+
+
+def _sig_structure(protected_bstr: bytes, payload: bytes) -> bytes:
+    return cbor2.dumps(["Signature1", protected_bstr, b"", payload])
+
+
+def _build_sign1(protected_bstr: bytes, unprotected: dict, payload: bytes, signature: bytes) -> bytes:
+    return cbor2.dumps([protected_bstr, unprotected, payload, signature])
+
+
+def _parse_sign1(cose_bytes: bytes) -> tuple[bytes, dict, Optional[bytes], bytes]:
+    arr = cbor2.loads(cose_bytes)
+    if not isinstance(arr, list) or len(arr) != 4:
+        raise ValueError("Invalid COSE_Sign1 structure")
+    protected_bstr, unprotected, payload, signature = arr
+    if not isinstance(protected_bstr, (bytes, bytearray)):
+        raise ValueError("Protected header must be bstr")
+    if not isinstance(unprotected, dict):
+        raise ValueError("Unprotected header must be map")
+    if not isinstance(payload, (bytes, bytearray)) and payload is not None:
+        raise ValueError("Payload must be bstr or null")
+    if not isinstance(signature, (bytes, bytearray)):
+        raise ValueError("Signature must be bstr")
+    return bytes(protected_bstr), unprotected, None if payload is None else bytes(payload), bytes(signature)
+
+
+def sign_payload(private_key: SigningKey, payload_bytes: bytes) -> bytes:
     """
-    Signs the payload bytes using the private key (Ed25519).
+    Signs the payload bytes using the private key (Ed25519 or Signer).
 
     Args:
-        private_key: The Ed25519 private key object.
+        private_key: The Ed25519 private key object or Signer implementation.
         payload_bytes: The canonical bytes of the payload to sign.
 
     Returns:
         The signature bytes.
 
     Raises:
-        TypeError: If the provided key is not an Ed25519 private key.
+        TypeError: If the provided key is invalid.
     """
-    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
-        logger.error(f"Signing aborted: Incorrect private key type provided " f"({type(private_key)}). Expected Ed25519PrivateKey.")
-        raise TypeError("Signing requires an Ed25519PrivateKey instance.")
+    logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes).")
 
-    logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes) with Ed25519 key.")
+    if hasattr(private_key, "sign") and callable(private_key.sign):
+        try:
+            signature = private_key.sign(payload_bytes)
+            logger.info(f"Successfully signed payload (signature length: {len(signature)} bytes).")
+            return cast(bytes, signature)
+        except Exception as e:
+            logger.error(f"Signing operation failed: {e}", exc_info=True)
+            raise RuntimeError(f"Signing failed: {e}") from e
+
+    if not isinstance(private_key, ed25519.Ed25519PrivateKey):
+        logger.error(f"Signing aborted: Incorrect private key type provided ({type(private_key)}). Expected Ed25519PrivateKey or Signer.")
+        raise TypeError("Signing requires an Ed25519PrivateKey instance or Signer implementation.")
+
     try:
         signature = private_key.sign(payload_bytes)
         logger.info(f"Successfully signed payload (signature length: {len(signature)} bytes).")
         return cast(bytes, signature)
     except Exception as e:
         logger.error(f"Signing operation failed: {e}", exc_info=True)
-        raise RuntimeError(f"Signing failed: {e}")
+        raise RuntimeError(f"Signing failed: {e}") from e
 
 
 def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature: bytes) -> bool:
@@ -70,10 +118,10 @@ def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature
         TypeError: If the provided key is not an Ed25519 public key.
     """
     if not isinstance(public_key, ed25519.Ed25519PublicKey):
-        logger.error(f"Verification aborted: Incorrect public key type provided " f"({type(public_key)}). Expected Ed25519PublicKey.")
+        logger.error(f"Verification aborted: Incorrect public key type provided ({type(public_key)}). Expected Ed25519PublicKey.")
         raise TypeError("Verification requires an Ed25519PublicKey instance.")
 
-    logger.debug(f"Attempting to verify signature (len={len(signature)}) against payload (len={len(payload_bytes)}) " f"using Ed25519 public key.")
+    logger.debug(f"Attempting to verify signature (len={len(signature)}) against payload (len={len(payload_bytes)}) using Ed25519 public key.")
     try:
         public_key.verify(signature, payload_bytes)
         logger.info("Signature verification successful.")
@@ -87,10 +135,10 @@ def verify_signature(public_key: PublicKeyTypes, payload_bytes: bytes, signature
 
 
 def sign_c2pa_cose(
-    private_key: ed25519.Ed25519PrivateKey,
+    private_key: SigningKey,
     payload_bytes: bytes,
     timestamp_authority_url: Optional[str] = None,
-    certificates: Optional[List[Certificate]] = None,
+    certificates: Optional[list[Certificate]] = None,
 ) -> bytes:
     """
     Signs a C2PA payload using a COSE_Sign1 structure with optional timestamp and certificates.
@@ -101,7 +149,7 @@ def sign_c2pa_cose(
     an RFC 3161 Time-Stamp Authority and a certificate chain.
 
     Args:
-        private_key: The Ed25519 private key for signing.
+        private_key: The Ed25519 private key or Signer for signing.
         payload_bytes: The CBOR-encoded C2PA manifest to be signed.
         timestamp_authority_url: Optional URL of an RFC 3161 Time-Stamp Authority.
         certificates: Optional list of X.509 certificates to include in the signature.
@@ -114,36 +162,25 @@ def sign_c2pa_cose(
     """
     logger.debug(f"Attempting to sign payload ({len(payload_bytes)} bytes) with COSE_Sign1 structure.")
     try:
-        # Create protected header
-        # Use integer 1 for ALG header parameter as per COSE spec
-        protected_header = {1: EdDSA}
-
-        # Create unprotected header
+        protected_header = {ALG_HEADER: ALG_EDDSA}
         unprotected_header = {}
 
         # Add certificates if provided
         if certificates and len(certificates) > 0:
-            # Convert certificates to DER format for x5chain
             x5chain = [cert.public_bytes(serialization.Encoding.DER) for cert in certificates]
-            # Use the integer header label 33 for X5CHAIN as per COSE spec
-            unprotected_header[33] = x5chain
+            unprotected_header[X5CHAIN_HEADER] = x5chain
             logger.debug(f"Added {len(x5chain)} certificates to COSE unprotected header")
 
-        # Create and prepare the COSE message
-        # Extract raw private key bytes from the cryptography Ed25519PrivateKey
-        private_bytes = private_key.private_bytes(
-            encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw, encryption_algorithm=serialization.NoEncryption()
-        )
+        protected_bstr = _encode_protected(protected_header)
+        to_sign = _sig_structure(protected_bstr, payload_bytes)
 
-        # Create OKPKey for Ed25519
-        cose_key = OKPKey(crv="ED25519", d=private_bytes, optional_params={"ALG": "EDDSA"})
+        # Use the generalized signing logic
+        if hasattr(private_key, "sign") and callable(private_key.sign):
+            signature = private_key.sign(to_sign)
+        else:
+            signature = private_key.sign(to_sign)
 
-        # Create the COSE message
-        msg = Sign1Message(phdr=protected_header, uhdr=unprotected_header, payload=payload_bytes)
-        msg.key = cose_key
-
-        # Sign the message
-        encoded_cose = msg.encode()
+        encoded_cose = _build_sign1(protected_bstr, unprotected_header, payload_bytes, cast(bytes, signature))
 
         # If timestamp authority URL is provided, request a timestamp
         if timestamp_authority_url:
@@ -153,7 +190,7 @@ def sign_c2pa_cose(
         return bytes(encoded_cose)
     except Exception as e:
         logger.error(f"COSE signing operation failed: {e}", exc_info=True)
-        raise RuntimeError(f"COSE signing failed: {e}")
+        raise RuntimeError(f"COSE signing failed: {e}") from e
 
 
 def add_timestamp_to_cose(cose_bytes: bytes, tsa_url: str) -> bytes:
@@ -171,9 +208,8 @@ def add_timestamp_to_cose(cose_bytes: bytes, tsa_url: str) -> bytes:
         RuntimeError: If the timestamp request fails.
     """
     try:
-        # Decode the COSE message
-        msg = CoseMessage.decode(cose_bytes)
-        if not isinstance(msg, Sign1Message):
+        protected_bstr, unprotected, payload, signature = _parse_sign1(cose_bytes)
+        if payload is None:
             raise ValueError("Message is not a COSE_Sign1 structure.")
 
         # Calculate hash of the COSE message for the timestamp request
@@ -188,23 +224,10 @@ def add_timestamp_to_cose(cose_bytes: bytes, tsa_url: str) -> bytes:
         timestamp_token = request_timestamp(timestamp_request, tsa_url)
 
         # Add the timestamp to the unprotected header
-        if not msg.uhdr:
-            msg.uhdr = {}
-
-        # Store the timestamp token in the unprotected header using a custom header
-        # C2PA uses a custom header for timestamps
-        # Use a custom header parameter ID for timestamps (8 is typically used for timestamps)
-        # This avoids using Reserved.value which is not a valid attribute
         TIMESTAMP_HEADER_PARAM = 8
-        msg.uhdr[TIMESTAMP_HEADER_PARAM] = timestamp_token
-        # Use a custom header parameter ID for timestamps (8 is typically used for timestamps)
-        # This avoids using Reserved.value which is not a valid attribute
-        TIMESTAMP_HEADER_PARAM = 8
-        msg.uhdr[TIMESTAMP_HEADER_PARAM] = timestamp_token
-
-        # Re-encode the message with the timestamp
+        unprotected[TIMESTAMP_HEADER_PARAM] = timestamp_token
         logger.info("Added RFC 3161 timestamp to COSE message")
-        return bytes(msg.encode())
+        return _build_sign1(protected_bstr, unprotected, payload, signature)
     except Exception as e:
         logger.error(f"Failed to add timestamp to COSE message: {e}", exc_info=True)
         # Return the original message if timestamping fails
@@ -286,7 +309,7 @@ def request_timestamp(timestamp_request: bytes, tsa_url: str) -> bytes:
         return bytes(response.content)
     except requests.RequestException as e:
         logger.error(f"Timestamp request failed: {e}", exc_info=True)
-        raise RuntimeError(f"Timestamp request failed: {e}")
+        raise RuntimeError(f"Timestamp request failed: {e}") from e
 
 
 def extract_payload_from_cose_sign1(cose_bytes: bytes) -> Optional[bytes]:
@@ -307,22 +330,11 @@ def extract_payload_from_cose_sign1(cose_bytes: bytes) -> Optional[bytes]:
     """
     try:
         logger.debug(f"Attempting to extract payload from COSE_Sign1 message ({len(cose_bytes)} bytes).")
-        decoded_msg = CoseMessage.decode(cose_bytes)
-
-        if not isinstance(decoded_msg, Sign1Message):
-            logger.warning("Message is not a COSE_Sign1 structure.")
-            return None
-
-        # Extract payload without verification
-        if decoded_msg.payload is None:
+        _protected_bstr, _unprotected, payload, _signature = _parse_sign1(cose_bytes)
+        if payload is None:
             logger.warning("COSE_Sign1 message has no payload")
             return None
-
-        if decoded_msg.payload is None:
-            logger.warning("COSE_Sign1 message has no payload")
-            return None
-
-        payload = bytes(decoded_msg.payload)
+        payload = bytes(payload)
         logger.debug(f"Successfully extracted payload ({len(payload)} bytes) from COSE_Sign1 message.")
         return payload
     except Exception as e:
@@ -346,28 +358,20 @@ def verify_c2pa_cose(public_key: ed25519.Ed25519PublicKey, cose_bytes: bytes) ->
         ValueError: If the message is not a valid COSE_Sign1 structure.
     """
     logger.debug(f"Attempting to verify COSE_Sign1 message ({len(cose_bytes)} bytes).")
-    decoded_msg = CoseMessage.decode(cose_bytes)
-    if not isinstance(decoded_msg, Sign1Message):
+    protected_bstr, _unprotected, payload, signature = _parse_sign1(cose_bytes)
+    if payload is None:
         raise ValueError("Message is not a COSE_Sign1 structure.")
-
-    # Extract raw public key bytes from the cryptography Ed25519PublicKey
-    public_bytes = public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
-
-    # Create OKPKey for Ed25519 verification
-    cose_key = OKPKey(crv="ED25519", x=public_bytes, optional_params={"ALG": "EDDSA"})
-    decoded_msg.key = cose_key
-
-    if decoded_msg.verify_signature():
+    # Optional: validate alg is EdDSA
+    protected_map = cbor2.loads(protected_bstr)
+    if protected_map.get(ALG_HEADER) != ALG_EDDSA:
+        raise ValueError("Unsupported or missing alg in protected header")
+    to_verify = _sig_structure(protected_bstr, payload)
+    try:
+        public_key.verify(signature, to_verify)
         logger.info("COSE_Sign1 signature verification successful.")
-        if decoded_msg.payload is None:
-            raise ValueError("COSE_Sign1 message has no payload after verification")
-        if decoded_msg.payload is None:
-            raise ValueError("COSE_Sign1 message has no payload after verification")
-        return bytes(decoded_msg.payload)
-    else:
-        # This path is often not hit as verify_signature raises on failure,
-        # but it's here for completeness.
-        raise InvalidSignature("COSE signature verification failed.")
+        return bytes(payload)
+    except InvalidSignature:
+        raise InvalidSignature("COSE signature verification failed.") from None
 
 
 # --- X.509 Certificate Validation for C2PA ---
@@ -390,7 +394,7 @@ class TrustStore:
             trust_store_path: Path to a directory containing trusted root certificates in PEM format.
                              If None, uses the default trust store path.
         """
-        self.trusted_roots: Set[Certificate] = set()
+        self.trusted_roots: set[Certificate] = set()
         self.trust_store_path = trust_store_path or self._get_default_trust_store_path()
         self._load_trust_store()
 
@@ -457,7 +461,7 @@ class TrustStore:
         return file_path
 
 
-def validate_certificate_chain(cert_chain: List[Certificate], trust_store: TrustStore) -> bool:
+def validate_certificate_chain(cert_chain: list[Certificate], trust_store: TrustStore) -> bool:
     """
     Validate a certificate chain against a trust store.
 
@@ -526,14 +530,14 @@ def validate_certificate_chain(cert_chain: List[Certificate], trust_store: Trust
                 raise CertificateValidationError(f"Unsupported public key type: {type(issuer_public_key)}")
 
         except InvalidSignature:
-            raise CertificateValidationError(f"Invalid signature on certificate: {subject.subject}")
+            raise CertificateValidationError(f"Invalid signature on certificate: {subject.subject}") from None
         except Exception as e:
-            raise CertificateValidationError(f"Certificate validation error: {e}")
+            raise CertificateValidationError(f"Certificate validation error: {e}") from e
 
     return True
 
 
-def extract_certificates_from_cose(cose_bytes: bytes) -> List[Certificate]:
+def extract_certificates_from_cose(cose_bytes: bytes) -> list[Certificate]:
     """
     Extract X.509 certificates from a COSE_Sign1 message.
 
@@ -546,13 +550,13 @@ def extract_certificates_from_cose(cose_bytes: bytes) -> List[Certificate]:
     Raises:
         ValueError: If the message is not a valid COSE_Sign1 structure or contains no certificates.
     """
-    decoded_msg = CoseMessage.decode(cose_bytes)
-    if not isinstance(decoded_msg, Sign1Message):
+    protected_bstr, unprotected, payload, _signature = _parse_sign1(cose_bytes)
+    if payload is None:
         raise ValueError("Message is not a COSE_Sign1 structure.")
 
     # Extract certificates from the unprotected header (x5chain)
     certificates = []
-    x5chain = decoded_msg.uhdr.get(X5chain.identifier)
+    x5chain = unprotected.get(X5CHAIN_HEADER)
 
     if not x5chain:
         raise ValueError("No X.509 certificates found in COSE message.")

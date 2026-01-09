@@ -2,7 +2,7 @@
 import json
 import zlib
 from datetime import datetime, timedelta, timezone
-from typing import Any, Callable, Dict, Optional, Tuple, cast
+from typing import Any, Callable, Optional, cast
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
@@ -14,13 +14,13 @@ from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 
 
 @pytest.fixture(scope="module")
-def key_pair_1() -> Tuple[PrivateKeyTypes, PublicKeyTypes]:
+def key_pair_1() -> tuple[PrivateKeyTypes, PublicKeyTypes]:
     """Generate first key pair for tests."""
     return generate_key_pair()
 
 
 @pytest.fixture(scope="module")
-def key_pair_2() -> Tuple[PrivateKeyTypes, PublicKeyTypes]:
+def key_pair_2() -> tuple[PrivateKeyTypes, PublicKeyTypes]:
     """Generate a second, different key pair for tests."""
     return generate_key_pair()
 
@@ -52,7 +52,7 @@ def sample_text() -> str:
 
 
 @pytest.fixture
-def basic_metadata() -> Dict[str, Any]:
+def basic_metadata() -> dict[str, Any]:
     """Sample basic metadata."""
     return {
         "model_id": "test_basic_model_v1",
@@ -62,7 +62,7 @@ def basic_metadata() -> Dict[str, Any]:
 
 
 @pytest.fixture
-def manifest_metadata() -> Dict[str, Any]:
+def manifest_metadata() -> dict[str, Any]:
     """Sample manifest metadata."""
     now = datetime.now(timezone.utc)
     return {
@@ -107,7 +107,7 @@ def public_key_provider(key_pair_1, key_pair_2) -> Callable[[str], Optional[Publ
 # --- Helper Function ---
 
 
-def decode_and_deserialize(text: str) -> Optional[Dict[str, Any]]:
+def decode_and_deserialize(text: str) -> Optional[dict[str, Any]]:
     """Helper to extract bytes, decompress, and deserialize for inspection."""
     raw_bytes = UnicodeMetadata.extract_bytes(text)
     if not raw_bytes:
@@ -120,7 +120,7 @@ def decode_and_deserialize(text: str) -> Optional[Dict[str, Any]]:
             decompressed_bytes = raw_bytes
         # Cast the result of json.loads to Dict[str, Any] to satisfy mypy
         deserialized_data = json.loads(decompressed_bytes.decode("utf-8"))
-        return cast(Dict[str, Any], deserialized_data)
+        return cast(dict[str, Any], deserialized_data)
     except (zlib.error, json.JSONDecodeError, UnicodeDecodeError):
         return None
 
@@ -599,19 +599,19 @@ class TestUnicodeMetadata:
         assert "user_id" not in custom_meta
         assert "session_id" not in custom_meta
 
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible " "with new signature-based method."))
+    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
     def test_embed_extract_metadata(self):
         pass
 
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible " "with new signature-based method."))
+    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
     def test_custom_metadata(self):
         pass
 
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible " "with new signature-based method."))
+    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
     def test_no_metadata_target(self):
         pass
 
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible " "with new signature-based method."))
+    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
     def test_datetime_timestamp(self):
         pass
 

@@ -1,6 +1,6 @@
-# Migration Guide: EncypherAI Core Package
+# Migration Guide: Encypher Core Package
 
-This guide helps users transition between different versions of the EncypherAI Core package.
+This guide helps users transition between different versions of the Encypher Core package.
 
 ## Version 2.4.0 Updates
 
@@ -34,7 +34,7 @@ This section helps users transition from the previous module structure to the ne
 
 ## Overview of Changes
 
-The EncypherAI core package has been refactored to improve code organization, clarity, and maintainability. The main changes include:
+The Encypher core package has been refactored to improve code organization, clarity, and maintainability. The main changes include:
 
 1. **Module Restructuring**: The `crypto_utils.py` module has been split into three specialized modules:
    - `keys.py`: Key generation, loading, and saving functions

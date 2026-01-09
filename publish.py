@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 """Script to build and publish the package to PyPI using UV."""
+
+import glob
+import os
+import shutil
 import subprocess
 import sys
 
@@ -14,7 +18,12 @@ def run_command(command: str) -> subprocess.CompletedProcess:
 def main() -> None:
     """Build and publish the package using UV."""
     # Clean previous builds
-    run_command("rm -rf dist/ build/ *.egg-info")
+    for path in ("dist", "build"):
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+    for egg_info in glob.glob("*.egg-info"):
+        if os.path.isdir(egg_info):
+            shutil.rmtree(egg_info)
 
     # Build the package using UV
     run_command("uv pip build .")
@@ -22,7 +31,10 @@ def main() -> None:
     # Check if we should upload to PyPI
     if len(sys.argv) > 1 and sys.argv[1] == "--publish":
         # Upload to PyPI using UV
-        run_command("uv pip publish dist/*")
+        dist_files = glob.glob(os.path.join("dist", "*"))
+        if not dist_files:
+            raise RuntimeError("No dist artifacts found to publish")
+        run_command("uv pip publish " + " ".join(dist_files))
     else:
         print("Package built successfully. Run with --publish to upload to PyPI.")
 

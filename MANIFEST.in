@@ -7,8 +7,8 @@ include pytest.ini
 
 recursive-include encypher *.py
 recursive-include examples *.py
-recursive-include tests *.py
 
+recursive-exclude tests *
 recursive-exclude * __pycache__
 recursive-exclude * *.py[cod]
 recursive-exclude * .git

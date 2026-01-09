@@ -1,10 +1,10 @@
 # ruff: noqa: E501
 """
-Integration tests for EncypherAI with sample LLM outputs.
+Integration tests for Encypher with sample LLM outputs.
 """
 
 from datetime import datetime, timezone
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes, PublicKeyTypes
@@ -26,7 +26,7 @@ SAMPLE_OUTPUTS = {
 
 
 @pytest.fixture(scope="class")  # Use class scope if multiple tests in class need it
-def test_key_pair() -> Tuple[PrivateKeyTypes, PublicKeyTypes]:
+def test_key_pair() -> tuple[PrivateKeyTypes, PublicKeyTypes]:
     """Generate a key pair for integration tests."""
     return generate_key_pair()
 
@@ -53,7 +53,7 @@ class TestLLMOutputsIntegration:
 
     # Skip this test: The static LLM output examples are often too short
     # to embed the full signature payload (~300 bytes) reliably.
-    @pytest.mark.skip(reason="Static LLM output snippets are too short for signature metadata " "embedding.")
+    @pytest.mark.skip(reason="Static LLM output snippets are too short for signature metadata embedding.")
     @pytest.mark.parametrize("provider,sample_text", SAMPLE_OUTPUTS.items())
     def test_unicode_metadata_with_llm_outputs(self, provider, sample_text, test_key_pair, test_public_key_provider):
         """Test UnicodeMetadata with various LLM outputs using signatures."""
@@ -105,9 +105,9 @@ class TestLLMOutputsIntegration:
             assert inner_payload.get("model_id") == basic_metadata["model_id"], f"Model ID mismatch for {provider} with {target.name}"
             # Timestamp comparison can be tricky due to potential slight format diffs,
             # comparing the core custom data is usually sufficient for integration tests
-            assert (
-                inner_payload.get("custom_metadata") == basic_metadata["custom_metadata"]
-            ), f"Custom metadata mismatch for {provider} with {target.name}"
+            assert inner_payload.get("custom_metadata") == basic_metadata["custom_metadata"], (
+                f"Custom metadata mismatch for {provider} with {target.name}"
+            )
 
 
 # Sample streaming chunks for different providers

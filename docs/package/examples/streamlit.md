@@ -1,6 +1,6 @@
 # Streamlit Demo App
 
-The EncypherAI Streamlit demo provides an interactive web-based interface for exploring and testing EncypherAI's functionality. This demo allows users to experiment with metadata embedding, extraction, and verification in real-time through a user-friendly interface.
+The Encypher Streamlit demo provides an interactive web-based interface for exploring and testing Encypher's functionality. This demo allows users to experiment with metadata embedding, extraction, and verification in real-time through a user-friendly interface.
 
 ![Streamlit Demo Preview](../../assets/streamlit-demo-preview.png)
 
@@ -8,7 +8,7 @@ The EncypherAI Streamlit demo provides an interactive web-based interface for ex
 
 ## Features
 
-The Streamlit demo showcases all key EncypherAI capabilities:
+The Streamlit demo showcases all key Encypher capabilities:
 
 1. **Interactive Metadata Embedding**
    - Embed custom metadata into text
@@ -39,14 +39,14 @@ To run the Streamlit demo:
 pip install encypher-ai==2.3.0 streamlit
 
 # Run the demo app
-streamlit run https://raw.githubusercontent.com/EncypherAI/encypher/main/examples/streamlit_app.py
+streamlit run https://raw.githubusercontent.com/Encypher/encypher/main/examples/streamlit_app.py
 ```
 
 Alternatively, you can run it from a local copy:
 
 ```bash
 # Clone the repository
-git clone https://github.com/EncypherAI/encypher.git
+git clone https://github.com/Encypher/encypher.git
 cd encypher
 
 # Run the demo app
@@ -134,7 +134,7 @@ def basic_embedding():
 
         with col1:
             model = st.text_input("Model Name:", value="gpt-4")
-            org = st.text_input("Organization:", value="EncypherAI")
+            org = st.text_input("Organization:", value="Encypher")
             timestamp = st.text_input(
                 "Timestamp:",
                 value=str(int(time.time()))
@@ -261,7 +261,7 @@ def basic_embedding():
 
 ## Complete Streamlit App
 
-Here's a more complete example of a Streamlit app that demonstrates EncypherAI's capabilities:
+Here's a more complete example of a Streamlit app that demonstrates Encypher's capabilities:
 
 ```python
 import streamlit as st
@@ -272,14 +272,14 @@ from encypher.streaming.handlers import StreamingHandler
 
 # App title and description
 st.set_page_config(
-    page_title="EncypherAI Demo",
+    page_title="Encypher Demo",
     page_icon="🔐",
     layout="wide"
 )
 
-st.title("EncypherAI Demo")
+st.title("Encypher Demo")
 st.markdown(
-    "This demo showcases the capabilities of EncypherAI for embedding, "
+    "This demo showcases the capabilities of Encypher for embedding, "
     "extracting, and verifying metadata in text."
 )
 
@@ -650,4 +650,4 @@ with tabs[3]:
 if 'key_id' not in st.session_state:
     st.session_state.key_id = 'streamlit-default-key'
 
-# This demo provides a comprehensive overview of EncypherAI's features. For more detailed examples and API documentation, refer to the respective sections in this documentation.
+# This demo provides a comprehensive overview of Encypher's features. For more detailed examples and API documentation, refer to the respective sections in this documentation.
