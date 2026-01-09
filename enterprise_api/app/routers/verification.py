@@ -212,6 +212,7 @@ async def verify_content(
 
     # Check for multiple embeddings first (Enterprise feature)
     multi_result = extract_all_embeddings(verify_request.text)
+    logger.info(f"Verification: extract_all_embeddings found {multi_result.total_found} embeddings")
     
     if multi_result.total_found > 1:
         # Multiple embeddings found - verify each independently

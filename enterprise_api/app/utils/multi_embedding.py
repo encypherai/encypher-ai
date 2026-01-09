@@ -184,11 +184,13 @@ def find_all_embeddings_raw(text: str) -> list[tuple[str, bytes, int, int]]:
     
     # Find C2PA wrappers
     c2pa_wrappers = find_all_c2pa_wrappers(text)
+    logger.info(f"find_all_embeddings_raw: found {len(c2pa_wrappers)} C2PA wrappers")
     for manifest_bytes, start, end in c2pa_wrappers:
         all_embeddings.append(("c2pa", manifest_bytes, start, end))
     
     # Find basic format VS blocks
     vs_blocks = find_all_vs_blocks(text)
+    logger.info(f"find_all_embeddings_raw: found {len(vs_blocks)} VS blocks")
     for start, end, decoded_bytes in vs_blocks:
         # Check if this VS block overlaps with any C2PA wrapper
         # (C2PA wrappers also use VS, so we need to exclude them)
@@ -229,6 +231,8 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
     
     result = MultiEmbeddingResult()
     all_raw = find_all_embeddings_raw(text)
+    
+    logger.info(f"extract_all_embeddings: find_all_embeddings_raw returned {len(all_raw)} raw embeddings")
     
     if not all_raw:
         result.clean_text = text
