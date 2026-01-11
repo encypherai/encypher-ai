@@ -16,10 +16,11 @@ You can create custom handlers that build upon the `UnicodeMetadata` class to ad
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict, Any, Tuple
 from encypher.interop.c2pa import compute_normalized_hash
+import re
 import time
 import json
 
@@ -36,7 +37,7 @@ class EnhancedMetadataHandler:
         """
         # Generate a key pair if not provided
         if private_key is None:
-            self.private_key, self.public_key = generate_key_pair()
+            self.private_key, self.public_key = generate_ed25519_key_pair()
         else:
             self.private_key = private_key
 
@@ -46,7 +47,7 @@ class EnhancedMetadataHandler:
         # In a real application, you would store this more securely
         self.public_keys = {self.key_id: self.public_key}
 
-    def resolve_public_key(self, key_id: str) -> Optional[PublicKeyTypes]:
+    def resolve_public_key(self, key_id: str) -> Optional[Ed25519PublicKey]:
         """Resolve a public key by its ID."""
         return self.public_keys.get(key_id)
 
@@ -63,6 +64,7 @@ class EnhancedMetadataHandler:
             custom_metadata=metadata,
             private_key=self.private_key,
             signer_id=self.key_id,
+            metadata_format="basic",
             # timestamp is optional; passing None will omit it
             timestamp=metadata.get("timestamp"),
             target=target
@@ -73,23 +75,26 @@ class EnhancedMetadataHandler:
         # Standard verification with digital signature
         is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
             text=text,
-            public_key_provider=self.resolve_public_key
+            public_key_resolver=self.resolve_public_key,
+            return_payload_on_failure=True,
         )
 
         if not is_valid or not verified_payload_dict:
             return False, signer_id, None
 
         # Optionally verify content hash
-        if verify_hash and self.include_hash and verified_payload_dict.get("content_hash"):
+        custom_metadata = verified_payload_dict.get("custom_metadata", {})
+        if verify_hash and self.include_hash and custom_metadata.get("content_hash"):
             # Extract the original text (without metadata)
             # This is a simplified approach - in practice you'd need to strip the metadata
-            original_text_for_hash_check = UnicodeMetadata.extract_original_text(text)
+            strip_vs = re.compile(r"[\uFE00-\uFE0F\U000E0100-\U000E01EF]")
+            original_text_for_hash_check = strip_vs.sub("", text)
 
             # Calculate hash of original text
             current_hash = compute_normalized_hash(original_text_for_hash_check).hexdigest
 
             # Compare with stored hash
-            hash_verification = current_hash == verified_payload_dict.get("content_hash")
+            hash_verification = current_hash == custom_metadata.get("content_hash")
 
             # Both verifications must pass
             return hash_verification, signer_id, verified_payload_dict if hash_verification else None
@@ -108,7 +113,7 @@ text = "This is a sample text for advanced encoding."
 metadata = {
     "model": "gpt-4",
     "organization": "Encypher",
-    "version": "2.3.0"
+    "version": "3.0.2"
 }
 
 # Encode with enhanced metadata
@@ -128,8 +133,8 @@ For processing large volumes of text, you can implement batch processing:
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict, List
 import time
 import concurrent.futures
@@ -139,16 +144,14 @@ def process_batch(texts, metadata_template, private_key=None, key_id="batch-key"
     """Process a batch of texts with metadata embedding."""
     # Generate a key pair if not provided
     if private_key is None:
-        private_key, public_key = generate_key_pair()
+        private_key, public_key = generate_ed25519_key_pair()
     else:
-        # In a real application, you would have a way to get the public key
-        # corresponding to the private key
-        _, public_key = generate_key_pair()  # This is just a placeholder
+        public_key = private_key.public_key()
 
     # Store the public key (in a real app, this would be in a secure database)
     public_keys = {key_id: public_key}
 
-    def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+    def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
         return public_keys.get(key_id)
 
     results = []
@@ -159,7 +162,6 @@ def process_batch(texts, metadata_template, private_key=None, key_id="batch-key"
         # Create a copy of the template and add item-specific fields
         metadata = metadata_template.copy()
         metadata["item_id"] = item.get("id", f"item_{len(results)}")
-        metadata["key_id"] = key_id  # Required for verification
 
         try:
             # Encode metadata
@@ -168,6 +170,7 @@ def process_batch(texts, metadata_template, private_key=None, key_id="batch-key"
                 custom_metadata=metadata,
                 private_key=private_key,
                 signer_id=key_id,
+                metadata_format="basic",
                 # timestamp optional; omit to skip
                 timestamp=metadata.get("timestamp")
             )
@@ -208,7 +211,7 @@ texts = [
 metadata_template = {
     "model": "gpt-4",
     "organization": "Encypher",
-    "version": "2.3.0"
+    "version": "3.0.2"
 }
 
 # Process batch
@@ -224,11 +227,13 @@ for result in results:
         # Verify the encoded text
         is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
             text=result["encoded_text"],
-            public_key_provider=resolver
+            public_key_resolver=resolver,
+            return_payload_on_failure=True,
         )
 
         if is_valid and verified_payload_dict:
-            print(f"  Verification successful for signer {signer_id}: {verified_payload_dict.get('item_id')}")
+            custom_metadata = verified_payload_dict.get("custom_metadata", {})
+            print(f"  Verification successful for signer {signer_id}: {custom_metadata.get('item_id')}")
         else:
             print(f"  Verification failed")
     else:
@@ -243,8 +248,8 @@ You can create a custom streaming handler with specialized behavior:
 ```python
 from encypher.streaming.handlers import StreamingHandler
 from encypher.core.unicode_metadata import MetadataTarget
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict, Any
 import time
 import json
@@ -252,20 +257,18 @@ import json
 class EnhancedStreamingHandler(StreamingHandler):
     """Enhanced streaming handler with additional features."""
 
-    def __init__(self, metadata=None, private_key=None, target=MetadataTarget.WHITESPACE,
+    def __init__(self, custom_metadata=None, private_key=None, signer_id="enhanced-stream-key", target=MetadataTarget.WHITESPACE,
                  chunk_threshold=100, log_chunks=False):
         # Generate a key pair if not provided
         if private_key is None:
-            private_key, public_key = generate_key_pair()
+            private_key, public_key = generate_ed25519_key_pair()
+        else:
+            public_key = private_key.public_key()
 
-        # Ensure metadata has a key_id
-        if metadata is None:
-            metadata = {}
+        if custom_metadata is None:
+            custom_metadata = {}
 
-        if "key_id" not in metadata:
-            metadata["key_id"] = "enhanced-stream-key"
-
-        super().__init__(metadata=metadata, private_key=private_key, target=target)
+        super().__init__(custom_metadata=custom_metadata, private_key=private_key, signer_id=signer_id, target=target, metadata_format="basic")
         self.chunk_threshold = chunk_threshold
         self.log_chunks = log_chunks
         self.chunks_processed = 0
@@ -273,9 +276,9 @@ class EnhancedStreamingHandler(StreamingHandler):
 
         # Store public key for verification (in a real app, use a secure store)
         self.public_key = public_key
-        self.public_keys = {metadata["key_id"]: self.public_key}
+        self.public_keys = {signer_id: self.public_key}
 
-    def resolve_public_key(self, key_id: str) -> Optional[PublicKeyTypes]:
+    def resolve_public_key(self, key_id: str) -> Optional[Ed25519PublicKey]:
         """Resolve a public key by its ID."""
         return self.public_keys.get(key_id)
 
@@ -319,16 +322,18 @@ metadata = {
     "model": "streaming-demo",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": "enhanced-stream-example"  # Required for verification
+    "version": "3.0.2",
 }
 
+signer_id = "enhanced-stream-example"
+
 # Generate a key pair for this example
-private_key, public_key = generate_key_pair()
+private_key, public_key = generate_ed25519_key_pair()
 
 handler = EnhancedStreamingHandler(
-    metadata=metadata,
+    custom_metadata=metadata,
     private_key=private_key,
+    signer_id=signer_id,
     log_chunks=True,
     chunk_threshold=50
 )
@@ -363,7 +368,9 @@ print(f"Extracted metadata (unverified): {json.dumps(extracted, indent=2)}")
 # Verify the metadata
 is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
     text=full_text,
-    public_key_provider=handler.resolve_public_key
+    public_key_resolver=handler.resolve_public_key,
+    require_hard_binding=False,
+    return_payload_on_failure=True,
 )
 
 if is_valid and verified_payload_dict:
@@ -376,8 +383,8 @@ You can implement custom verification logic for specific use cases:
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict, Any
 import time
 
@@ -397,7 +404,8 @@ def verify_content_with_custom_logic(text, resolver, expected_organization=None,
     # Standard digital signature verification
     is_valid, signer_id, verified_payload_dict = UnicodeMetadata.verify_metadata(
         text=text,
-        public_key_provider=resolver
+        public_key_resolver=resolver,
+        return_payload_on_failure=True,
     )
 
     # Initialize results
@@ -413,7 +421,8 @@ def verify_content_with_custom_logic(text, resolver, expected_organization=None,
     if is_valid and verified_payload_dict:
         # Check organization if specified
         if expected_organization:
-            org_match = verified_payload_dict.get("organization") == expected_organization
+            custom_metadata = verified_payload_dict.get("custom_metadata", {})
+            org_match = custom_metadata.get("organization") == expected_organization
             results["custom_checks"]["organization_match"] = org_match
 
         # Check age if timestamp is present
@@ -446,12 +455,12 @@ def verify_content_with_custom_logic(text, resolver, expected_organization=None,
 
 # Example usage
 # Generate a key pair
-private_key, public_key = generate_key_pair()
+private_key, public_key = generate_ed25519_key_pair()
 key_id = "verification-example-key"
 
 # Create a resolver function
 public_keys = {key_id: public_key}
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
     return public_keys.get(key_id)
 
 text = "This is a sample text for verification."
@@ -459,8 +468,7 @@ metadata = {
     "model": "gpt-4",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": key_id  # Required for verification
+    "version": "3.0.2",
 }
 
 # Embed metadata with digital signature
@@ -469,6 +477,7 @@ encoded_text = UnicodeMetadata.embed_metadata(
     custom_metadata=metadata,
     private_key=private_key,
     signer_id=key_id,
+    metadata_format="basic",
     timestamp=metadata.get("timestamp")
 )
 

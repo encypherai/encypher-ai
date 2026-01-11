@@ -3,6 +3,12 @@
 This document explains how Encypher embeds Coalition for Content Provenance and Authenticity (C2PA) manifests inside plain
 text while respecting the updated `C2PATextManifestWrapper` specification. It focuses on two critical implementation details:
 
+Specification reference:
+https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text
+
+Reference implementation (MIT):
+https://github.com/encypherai/c2pa-text
+
 1. **How we compute and record the hard-binding content hash**
 2. **How the manifest store is wrapped, encoded as Unicode variation selectors, and appended to the text**
 
@@ -117,8 +123,8 @@ fails part-way through the block we emit `manifest.text.corruptedWrapper`.
 
 ## Advantages of the Updated Flow
 
-- **Specification alignment**: The wrapper structure, FEFF prefix, and exclusion handling match the proposed C2PA text
-  embedding rules.
+- **Specification alignment**: The wrapper structure, FEFF prefix, and exclusion handling match the C2PA v2.3 text
+  embedding specification (Appendix A.7).
 - **Copy/paste resilience**: The wrapper stays attached to the text while remaining invisible to readers.
 - **Deterministic hashing**: NFC normalisation and explicit exclusion offsets guarantee that hard-binding hashes are stable
   across producers and consumers.

@@ -1,13 +1,13 @@
 # FastAPI Integration
 
-This guide explains how to integrate Encypher with FastAPI to build robust web applications that can embed and verify metadata in AI-generated content. We will use the modern `Encypher` and `StreamingEncypher` classes for this integration.
+This guide explains how to integrate Encypher with FastAPI to build robust web applications that can embed and verify metadata in AI-generated content. We will use `UnicodeMetadata` for embedding and verification, and `StreamingHandler` for streaming responses.
 
 ## Prerequisites
 
 Before you begin, ensure you have installed the required packages:
 
 ```bash
-uv pip install encypher-ai fastapi uvicorn
+uv add encypher-ai fastapi uvicorn
 ```
 
 ## Complete Example
@@ -24,14 +24,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from encypher.core.encypher import Encypher
-from encypher.streaming.encypher import StreamingEncypher
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.streaming import StreamingHandler
 from encypher.core.keys import generate_ed25519_key_pair
 
 # --- 1. Initialization and Key Management ---
 app = FastAPI(
     title="Encypher FastAPI Integration",
-    description="An example of embedding and verifying metadata in API responses using Encypher and StreamingEncypher.",
+    description="An example of embedding and verifying metadata in API responses using UnicodeMetadata and StreamingHandler.",
 )
 
 # For demonstration, we generate keys in memory.
@@ -43,12 +43,9 @@ signer_id = "fastapi-server-signer-001"
 # In production, this would be a database or a call to a key management service.
 public_keys_store: Dict[str, object] = {signer_id: public_key}
 
-# Initialize the core Encypher class for non-streaming and verification
-encypher = Encypher(
-    private_key=private_key,
-    signer_id=signer_id,
-    public_key_provider=public_keys_store.get,
-)
+# Public key resolver used during verification.
+def public_key_resolver(key_id: str):
+    return public_keys_store.get(key_id)
 
 # --- 2. Pydantic Models for Requests ---
 class EmbedRequest(BaseModel):
@@ -70,9 +67,12 @@ async def embed_metadata(request: EmbedRequest) -> Dict[str, str]:
     Embeds the provided custom metadata into the text and returns the encoded text.
     """
     try:
-        encoded_text = encypher.embed(
+        encoded_text = UnicodeMetadata.embed_metadata(
             text=request.text,
+            private_key=private_key,
+            signer_id=signer_id,
             custom_metadata=request.custom_metadata,
+            metadata_format="basic",
         )
         return {"encoded_text": encoded_text}
     except Exception as e:
@@ -87,18 +87,16 @@ async def verify_metadata(request: VerifyRequest) -> Dict[str, Any]:
     """
     try:
         # For streamed content, hard binding is not present and must be disabled.
-        verification_result = encypher.verify(
-            text=request.text, require_hard_binding=not request.from_stream
+        is_valid, extracted_signer_id, payload = UnicodeMetadata.verify_metadata(
+            text=request.text,
+            public_key_resolver=public_key_resolver,
+            require_hard_binding=not request.from_stream,
         )
 
-        if not verification_result.payload:
+        if payload is None:
             return {"is_valid": False, "message": "No metadata found in text."}
 
-        return {
-            "is_valid": verification_result.is_valid,
-            "signer_id": verification_result.payload.signer_id,
-            "payload": verification_result.payload.to_dict(),
-        }
+        return {"is_valid": is_valid, "signer_id": extracted_signer_id, "payload": payload}
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Verification failed: {e}")
 
@@ -109,12 +107,13 @@ async def stream_response(request: StreamRequest):
     """
     Generates a streaming response from a simulated source and embeds metadata.
     """
-    # Initialize StreamingEncypher for this specific stream
-    streaming_encypher = StreamingEncypher(
+    streaming_handler = StreamingHandler(
         private_key=private_key,
         signer_id=signer_id,
-        public_key_provider=public_keys_store.get,
+        timestamp=None,
         custom_metadata=request.custom_metadata or {},
+        metadata_format="basic",
+        encode_first_chunk_only=True,
     )
 
     async def stream_generator():
@@ -127,13 +126,13 @@ async def stream_response(request: StreamRequest):
         ]
 
         for chunk in simulated_llm_chunks:
-            encoded_chunk = streaming_encypher.process_chunk(chunk=chunk)
+            encoded_chunk = streaming_handler.process_chunk(chunk=chunk)
             if encoded_chunk:
                 yield encoded_chunk
             await asyncio.sleep(0.1)  # Simulate network delay
 
         # Finalize the stream to process any buffered content and embed the signature
-        final_chunk = streaming_encypher.finalize()
+        final_chunk = streaming_handler.finalize()
         if final_chunk:
             yield final_chunk
 
@@ -150,19 +149,18 @@ if __name__ == "__main__":
 
 ## How It Works
 
-1.  **Key Management**: We generate an Ed25519 key pair and set up a simple `public_keys_store` dictionary to act as our public key provider. An `Encypher` instance is initialized once and reused for non-streaming and verification tasks.
+1.  **Key Management**: We generate an Ed25519 key pair and set up a simple `public_keys_store` dictionary to act as our `public_key_resolver`.
 
-2.  **/embed Endpoint**: This endpoint uses the `encypher.embed()` method to sign and embed metadata into a given text. It's a standard, non-streaming operation.
+2.  **/embed Endpoint**: This endpoint calls `UnicodeMetadata.embed_metadata()` to sign and embed metadata into a given text.
 
-3.  **/verify Endpoint**: This endpoint uses the `encypher.verify()` method. It now accepts a `from_stream` flag. If `True`, it disables the hard binding check (`require_hard_binding=False`), which is necessary for content generated via streaming.
+3.  **/verify Endpoint**: This endpoint calls `UnicodeMetadata.verify_metadata()`. It accepts a `from_stream` flag. If `True`, it disables the hard binding check (`require_hard_binding=False`), which is required for content generated via streaming.
 
-4.  **/stream Endpoint**: For streaming, we instantiate `StreamingEncypher` for each request.
+4.  **/stream Endpoint**: For streaming, we instantiate a `StreamingHandler` for each request.
     - `process_chunk()`: Each chunk of the incoming stream is processed. The handler buffers content to optimize for the Unicode encoding space.
     - `finalize()`: Once the source stream is complete, `finalize()` is called to process any remaining buffered content and append the final metadata payload and signature.
     - `StreamingResponse`: FastAPI's `StreamingResponse` is used to send the processed chunks to the client as they become available.
 
 This setup provides a robust and modern way to handle content integrity in a FastAPI application.
-        yield final_chunk
 ```
 
 ## Authentication and Security
@@ -291,7 +289,7 @@ WORKDIR /app
 
 # Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN uv sync --frozen --no-dev
 
 # Copy application code
 COPY . .
@@ -321,6 +319,7 @@ Using environment variables for configuration:
 ```python
 from fastapi import FastAPI
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_ed25519_key_pair
 import os
 from dotenv import load_dotenv
 
@@ -344,7 +343,7 @@ try:
         )
 except FileNotFoundError:
     print("Warning: private_key.pem not found. Using generated key for demo.")
-    private_key, _ = generate_key_pair() # Fallback for demo
+    private_key, _ = generate_ed25519_key_pair() # Fallback for demo
 
 # Load public keys for resolver (e.g., from DB or config file)
 # public_keys_store = load_public_keys_from_db(DB_URL)
@@ -386,7 +385,7 @@ except FileNotFoundError:
 
 4. **Streaming Issues**: Ensure the `finalize()` method of `StreamingHandler` is called after the loop to process any buffered content. Check for errors in the async generator logic.
 
-5. **Dependencies**: Make sure `cryptography` is installed (`uv pip install cryptography`).
+5. **Dependencies**: Make sure `cryptography` is installed (it is included as a dependency of `encypher-ai`).
 
 ## Related Documentation
 
