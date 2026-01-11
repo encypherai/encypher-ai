@@ -9,7 +9,7 @@ This page provides examples of using Encypher in Jupyter Notebooks, allowing you
 If you don't already have Jupyter installed, you can install it along with Encypher:
 
 ```bash
-uv pip install encypher-ai==2.3.0 jupyter
+uv add encypher-ai jupyter
 ```
 
 ## Basic Example Notebook
@@ -20,8 +20,8 @@ Below is a basic example of using Encypher in a Jupyter notebook. You can copy t
 # Import necessary libraries
 import encypher
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict
 import time
 import json
@@ -30,14 +30,14 @@ import json
 print(f"Encypher version: {encypher.__version__}")
 
 # Generate a key pair for digital signatures
-private_key, public_key = generate_key_pair()
-key_id = "jupyter-example-key"
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "jupyter-example-signer"
 
 # Store public key (in a real application, use a secure database)
-public_keys = {key_id: public_key}
+public_keys = {signer_id: public_key}
 
 # Create a resolver function
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
     return public_keys.get(key_id)
 
 # Sample text
@@ -54,8 +54,7 @@ metadata = {
     "model": "example-model",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": key_id  # Required for verification
+    "version": "3.0.2",
 }
 
 # Display the metadata
@@ -67,7 +66,8 @@ encoded_text = UnicodeMetadata.embed_metadata(
     text=original_text,
     custom_metadata=metadata,
     private_key=private_key,
-    signer_id=key_id,
+    signer_id=signer_id,
+    metadata_format="basic",
     timestamp=metadata.get("timestamp"),
     target="whitespace"
 )
@@ -89,7 +89,8 @@ print(json.dumps(extracted_metadata, indent=2))
 # Verify the text hasn't been tampered with
 is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_provider=resolve_public_key
+    public_key_resolver=resolve_public_key,
+    return_payload_on_failure=True,
 )
 
 print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
@@ -111,8 +112,8 @@ This more advanced notebook demonstrates how to visualize the embedded metadata:
 # Import necessary libraries
 import encypher
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict
 import matplotlib.pyplot as plt
 import numpy as np
@@ -122,14 +123,14 @@ import time
 import json
 
 # Generate a key pair for digital signatures
-private_key, public_key = generate_key_pair()
-key_id = "jupyter-viz-key"
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "jupyter-viz-signer"
 
 # Store public key (in a real application, use a secure database)
-public_keys = {key_id: public_key}
+public_keys = {signer_id: public_key}
 
 # Create a resolver function
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
     return public_keys.get(key_id)
 
 # Sample text
@@ -140,8 +141,7 @@ metadata = {
     "model": "example-model",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": key_id  # Required for verification
+    "version": "3.0.2",
 }
 
 # Embed metadata with different targets
@@ -159,7 +159,8 @@ for target in targets:
         text=original_text,
         custom_metadata=metadata,
         private_key=private_key,
-        signer_id=key_id,
+        signer_id=signer_id,
+        metadata_format="basic",
         timestamp=metadata.get("timestamp"),
         target=target
     )
@@ -224,7 +225,8 @@ for target in targets:
     extracted = UnicodeMetadata.extract_metadata(encoded_texts[target.name])
     is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
         text=encoded_texts[target.name],
-        public_key_provider=resolve_public_key
+        public_key_resolver=resolve_public_key,
+        return_payload_on_failure=True,
     )
 
     print(f"\nTarget: {target.name}")
@@ -244,22 +246,22 @@ This notebook demonstrates how to use Encypher with streaming content:
 import encypher
 from encypher.streaming.handlers import StreamingHandler
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict
 import json
 import time
 from IPython.display import clear_output
 
 # Generate a key pair for digital signatures
-private_key, public_key = generate_key_pair()
-key_id = "jupyter-stream-key"
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "jupyter-stream-signer"
 
 # Store public key (in a real application, use a secure database)
-public_keys = {key_id: public_key}
+public_keys = {signer_id: public_key}
 
 # Create a resolver function
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
     return public_keys.get(key_id)
 
 # Create metadata
@@ -267,18 +269,18 @@ metadata = {
     "model": "streaming-example",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": key_id  # Required for verification
+    "version": "3.0.2",
 }
 
 # Create a streaming handler
 streaming_handler = StreamingHandler(
     custom_metadata=metadata, # Changed from metadata
     private_key=private_key,
-    signer_id=key_id, # Added signer_id
+    signer_id=signer_id, # Added signer_id
     timestamp=metadata.get("timestamp"), # Added timestamp
     target=MetadataTarget.WHITESPACE,
-    encode_first_chunk_only=True
+    encode_first_chunk_only=True,
+    metadata_format="basic",
 )
 
 # Simulate a streaming response
@@ -323,7 +325,9 @@ print(full_text)
 # Verify the complete response
 is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=full_text,
-    public_key_provider=resolve_public_key
+    public_key_resolver=resolve_public_key,
+    require_hard_binding=False,
+    return_payload_on_failure=True,
 )
 
 print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
@@ -341,9 +345,9 @@ This notebook demonstrates how Encypher can detect tampering:
 ```python
 # Import necessary libraries
 import encypher
-from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict
 import json
 import time
@@ -351,14 +355,14 @@ import pandas as pd
 from IPython.display import display, HTML
 
 # Generate a key pair for digital signatures
-private_key, public_key = generate_key_pair()
-key_id = "jupyter-tamper-key"
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "jupyter-tamper-signer"
 
 # Store public key (in a real application, use a secure database)
-public_keys = {key_id: public_key}
+public_keys = {signer_id: public_key}
 
 # Create a resolver function
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
     return public_keys.get(key_id)
 
 # Sample text
@@ -369,8 +373,7 @@ metadata = {
     "model": "tamper-detection-demo",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": key_id  # Required for verification
+    "version": "3.0.2",
 }
 
 # Embed metadata
@@ -378,7 +381,8 @@ encoded_text = UnicodeMetadata.embed_metadata(
     text=original_text,
     custom_metadata=metadata,
     private_key=private_key,
-    signer_id=key_id,
+    signer_id=signer_id,
+    metadata_format="basic",
     timestamp=metadata.get("timestamp"),
     target=MetadataTarget.WHITESPACE # Added target for clarity
 )
@@ -406,7 +410,8 @@ for name, text in tampered_versions.items():
     try:
         is_valid, signer_id_val, payload_dict_val = UnicodeMetadata.verify_metadata(
             text=text,
-            public_key_provider=resolve_public_key
+            public_key_resolver=resolve_public_key,
+            return_payload_on_failure=True,
         )
     except:
         is_valid = False
@@ -436,8 +441,8 @@ This notebook demonstrates how to create a custom metadata encoder:
 # Import necessary libraries
 import encypher
 from encypher.core.unicode_metadata import UnicodeMetadata
-from encypher.core.keys import generate_key_pair
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional, Dict
 import time
 import json
@@ -445,8 +450,9 @@ from encypher.interop.c2pa import compute_normalized_hash
 
 # Create a custom metadata encoder class
 class CustomMetadataEncoder:
-    def __init__(self, private_key, custom_prefix="custom"):
+    def __init__(self, private_key, signer_id: str, custom_prefix="custom"):
         self.private_key = private_key
+        self.signer_id = signer_id
         self.custom_prefix = custom_prefix
 
     def encode_metadata(self, text, metadata, target="whitespace"):
@@ -466,23 +472,30 @@ class CustomMetadataEncoder:
             text=text,
             custom_metadata=metadata,
             private_key=self.private_key,
-            signer_id=None,
+            signer_id=self.signer_id,
+            metadata_format="basic",
             timestamp=metadata.get(f"{self.custom_prefix}_timestamp"),
             target=target
         )
 
     def decode_metadata(self, text):
         # Extract metadata using parent class
-        metadata = UnicodeMetadata.extract_metadata(text)
+        payload = UnicodeMetadata.extract_metadata(text)
+        if not payload:
+            return {}
+
+        custom = payload.get("custom_metadata", {})
 
         # Filter out non-custom fields
-        return {k.replace(f"{self.custom_prefix}_", ""): v
-                for k, v in metadata.items()
-                if k.startswith(f"{self.custom_prefix}_")}
+        return {
+            k.replace(f"{self.custom_prefix}_", ""): v
+            for k, v in custom.items()
+            if k.startswith(f"{self.custom_prefix}_")
+        }
 
 # Create an instance of the custom encoder
-private_key, _ = generate_key_pair()
-custom_encoder = CustomMetadataEncoder(private_key, custom_prefix="myapp")
+private_key, _ = generate_ed25519_key_pair()
+custom_encoder = CustomMetadataEncoder(private_key, signer_id="myapp-signer", custom_prefix="myapp")
 
 # Sample text
 text = "This text will have custom metadata embedded."
@@ -491,7 +504,7 @@ text = "This text will have custom metadata embedded."
 metadata = {
     "model": "custom-example",
     "user_id": "user123",
-    "version": "2.3.0"
+    "version": "3.0.2"
 }
 
 # Embed metadata

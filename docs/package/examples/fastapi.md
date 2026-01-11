@@ -11,7 +11,7 @@ Before you begin, make sure you have:
 3. (Optional) An LLM provider API key if you're integrating with an LLM
 
 ```bash
-uv pip install encypher-ai==2.3.0 fastapi uvicorn python-multipart
+uv add encypher-ai fastapi uvicorn python-multipart
 ```
 
 ## Complete FastAPI Application
@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Dict, Any, Optional, List, Callable
+from typing import Dict, Any, Optional, List, Callable, Literal
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 from encypher.streaming.handlers import StreamingHandler
 from cryptography.hazmat.primitives import serialization
@@ -92,7 +92,7 @@ public_pem = public_key.public_bytes(
 app = FastAPI(
     title="Encypher Demo",
     description="API for embedding and extracting metadata in text using Digital Signatures",
-    version="2.3.0"
+    version="3.0.2"
 )
 
 # Add CORS middleware
@@ -179,7 +179,7 @@ with open("templates/index.html", "w") as f:
     "model": "gpt-4",
     "organization": "Encypher",
     "timestamp": 1742713200,
-    "version": "2.3.0"
+    "version": "3.0.2"
 }</textarea>
                         </div>
                         <div class="mb-3">
@@ -335,6 +335,7 @@ async def encode_text(request: EncodeRequest):
             custom_metadata=metadata_to_embed,  # Changed from metadata
             private_key=private_key, # Use the globally generated private key
             signer_id=EXAMPLE_KEY_ID, # Added signer_id
+            metadata_format="basic",
             timestamp=metadata_to_embed.get("timestamp"), # Added timestamp
             target=target_enum
         )
@@ -353,7 +354,8 @@ async def verify_text(request: VerifyRequest):
         # Verify metadata using the provider
         is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
             text=request.text,
-            public_key_provider=public_key_resolver # Changed from public_key_resolver
+            public_key_resolver=public_key_resolver, # Changed from public_key_resolver
+            return_payload_on_failure=True,
         )
 
         if is_valid and payload_dict is not None:
@@ -422,7 +424,7 @@ async def generate_with_openai(
             "organization": "Encypher",
             "timestamp": int(time.time()),
             "prompt": prompt,
-            "version": "2.3.0"
+            "version": "3.0.2"
         }
 
         # Handle streaming
@@ -469,7 +471,7 @@ async def generate_with_openai(
     except ImportError:
         return JSONResponse(
             status_code=400,
-            content={"error": "OpenAI package not installed. Install it with 'uv pip install openai'."}
+            content={"error": "OpenAI package not installed. Install it with 'uv add openai'."}
         )
     except Exception as e:
         return JSONResponse(
@@ -486,7 +488,8 @@ async def generate_stream(client, model, prompt, metadata):
             private_key=private_key, # Use the globally generated private key
             signer_id=EXAMPLE_KEY_ID, # Added signer_id
             timestamp=metadata.get("timestamp"), # Added timestamp
-            target=MetadataTarget.WHITESPACE # Or get from request if needed
+            target=MetadataTarget.WHITESPACE, # Or get from request if needed
+            metadata_format="basic",
         )
 
         # Create a streaming completion
@@ -567,7 +570,7 @@ data = {
         "model": "gpt-4",
         "organization": "Encypher",
         "timestamp": int(time.time()),
-        "version": "2.3.0"
+        "version": "3.0.2"
     },
     "target": "whitespace"
 }

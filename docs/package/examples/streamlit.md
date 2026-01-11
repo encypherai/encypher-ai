@@ -36,21 +36,10 @@ To run the Streamlit demo:
 
 ```bash
 # Install required dependencies
-pip install encypher-ai==2.3.0 streamlit
+uv add encypher-ai streamlit
 
-# Run the demo app
-streamlit run https://raw.githubusercontent.com/Encypher/encypher/main/examples/streamlit_app.py
-```
-
-Alternatively, you can run it from a local copy:
-
-```bash
-# Clone the repository
-git clone https://github.com/Encypher/encypher.git
-cd encypher
-
-# Run the demo app
-streamlit run examples/streamlit_app.py
+# Save the example app below as streamlit_app.py, then run it
+streamlit run streamlit_app.py
 ```
 
 ## Demo Structure
@@ -139,7 +128,7 @@ def basic_embedding():
                 "Timestamp:",
                 value=str(int(time.time()))
             )
-            version = st.text_input("Version:", value="2.3.0")
+            version = st.text_input("Version:", value="3.0.2")
 
         with col2:
             # Additional custom fields
@@ -156,16 +145,15 @@ def basic_embedding():
     st.subheader("Digital Signature Keys")
     private_key_input = st.text_input("Private Key (PEM Format)", type="password", help="Enter the Ed25519 private key in PEM format.")
     public_key_input = st.text_input("Public Key (PEM Format)", help="Enter the corresponding Ed25519 public key in PEM format.")
-    key_id_input = st.text_input("Key ID", value="streamlit-key-1", help="A unique identifier for this key pair.")
+    signer_id_input = st.text_input("Signer ID", value="streamlit-signer-1", help="A unique identifier for this key pair.")
 
-    # Add key_id to metadata
+    # Custom metadata to embed (signer_id is provided separately)
     metadata = {
         "model": model,
         "organization": org,
         "timestamp": int(timestamp) if timestamp.isdigit() else timestamp,
         "version": version,
         **custom_fields,
-        "key_id": key_id_input
     }
 
     # Target selection
@@ -186,35 +174,29 @@ def basic_embedding():
     # Embed metadata
     if st.button("Embed Metadata"):
         from encypher.core.unicode_metadata import UnicodeMetadata
-        from encypher.core.keys import load_private_key_pem, load_public_key_pem
+        from encypher.core.keys import load_private_key_from_data, load_public_key_from_data
 
         try:
-            private_key = load_private_key_pem(private_key_input.encode())
+            private_key = load_private_key_from_data(private_key_input)
         except Exception as e:
             st.error(f"Invalid Private Key: {e}")
             private_key = None
 
         try:
             with st.spinner("Embedding metadata..."):
-                if private_key:
-                    encoded_text = UnicodeMetadata.embed_metadata(
-                        text=sample_text,
-                        custom_metadata=metadata,
-                        private_key=private_key,
-                        signer_id=key_id_input,
-                        timestamp=metadata.get("timestamp"),
-                        target=target_options[target]
-                    )
-                else:
-                    st.warning("Embedding without signature due to invalid private key.")
-                    encoded_text = UnicodeMetadata.embed_metadata(
-                        text=sample_text,
-                        custom_metadata=metadata,
-                        private_key=None,
-                        signer_id=None,
-                        timestamp=metadata.get("timestamp"),
-                        target=target_options[target]
-                    )
+                if not private_key:
+                    st.error("Embedding requires a valid Ed25519 private key.")
+                    st.stop()
+
+                encoded_text = UnicodeMetadata.embed_metadata(
+                    text=sample_text,
+                    custom_metadata=metadata,
+                    private_key=private_key,
+                    signer_id=signer_id_input,
+                    metadata_format="basic",
+                    timestamp=metadata.get("timestamp"),
+                    target=target_options[target],
+                )
 
             # Display results
             col1, col2 = st.columns(2)
@@ -244,7 +226,8 @@ def basic_embedding():
             from encypher.core.unicode_metadata import UnicodeMetadata
             is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                 encoded_text,
-                public_key_provider=lambda key_id: load_public_key_pem(public_key_input.encode()) if key_id == key_id_input else None
+                public_key_resolver=lambda key_id: load_public_key_from_data(public_key_input) if key_id == signer_id_input else None,
+                return_payload_on_failure=True,
             )
 
             if is_valid:
@@ -309,23 +292,22 @@ with tabs[0]:
         model_id = st.text_input("Model ID:", value="gpt-4-demo")
         org = st.text_input("Organization:", value="StreamlitApp")
         timestamp = st.number_input("Timestamp:", value=int(time.time()))
-        version = st.text_input("Version:", value="2.3.0")
+        version = st.text_input("Version:", value="3.0.2")
 
     with col2:
-        key_id_input = st.text_input("Key ID:", value=st.session_state.key_id)
+        signer_id_input = st.text_input("Signer ID:", value=st.session_state.signer_id)
 
     # Key Pair for Digital Signatures
     st.subheader("Digital Signature Keys")
     private_key_input = st.text_input("Private Key (PEM Format)", type="password", help="Enter the Ed25519 private key in PEM format.")
     public_key_input = st.text_input("Public Key (PEM Format)", help="Enter the corresponding Ed25519 public key in PEM format.")
 
-    # Add key_id to metadata
+    # Custom metadata to embed (signer_id is provided separately)
     metadata = {
         "model_id": model_id,
         "organization": org,
         "timestamp": int(timestamp),
         "version": version,
-        "key_id": key_id_input
     }
 
     # Target selection
@@ -338,21 +320,26 @@ with tabs[0]:
     # Embed button
     if st.button("Embed Metadata", key="embed_btn"):
         from encypher.core.unicode_metadata import UnicodeMetadata
-        from encypher.core.keys import load_private_key_pem, load_public_key_pem
+        from encypher.core.keys import load_private_key_from_data, load_public_key_from_data
 
         try:
-            private_key = load_private_key_pem(private_key_input.encode())
+            private_key = load_private_key_from_data(private_key_input)
         except Exception as e:
             st.error(f"Invalid Private Key: {e}")
             private_key = None
 
         try:
             # Embed metadata
+            if not private_key:
+                st.error("Embedding requires a valid Ed25519 private key.")
+                st.stop()
+
             encoded_text = UnicodeMetadata.embed_metadata(
                 text=sample_text,
                 custom_metadata=metadata,
                 private_key=private_key,
-                signer_id=key_id_input,
+                signer_id=signer_id_input,
+                metadata_format="basic",
                 timestamp=metadata.get("timestamp"),
                 target=target
             )
@@ -363,16 +350,17 @@ with tabs[0]:
 
             # Verification
             def resolve_public_key(key_id_to_resolve):
-                if key_id_to_resolve == key_id_input and public_key_input:
+                if key_id_to_resolve == signer_id_input and public_key_input:
                     try:
-                        return load_public_key_pem(public_key_input.encode())
+                        return load_public_key_from_data(public_key_input)
                     except Exception as e:
                         st.error(f"Invalid Public Key for verification: {e}")
                 return None
 
             is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                 encoded_text,
-                public_key_provider=resolve_public_key
+                public_key_resolver=resolve_public_key,
+                return_payload_on_failure=True,
             )
 
             if is_valid:
@@ -396,7 +384,7 @@ with tabs[1]:
     # Extract button
     if st.button("Extract Metadata", key="extract_btn") and encoded_text:
         from encypher.core.unicode_metadata import UnicodeMetadata
-        from encypher.core.keys import load_public_key_pem
+        from encypher.core.keys import load_public_key_from_data
 
         try:
             # Extract metadata
@@ -410,20 +398,21 @@ with tabs[1]:
                 verify = st.checkbox("Verify metadata")
                 if verify:
                     public_key_input_verify = st.text_input("Public Key (PEM) for Verification", key="verify_public_key")
-                    key_id_verify = metadata.get("key_id", "unknown")
+                    key_id_verify = st.text_input("Signer ID (for verification)", value="your-signer-id")
 
                     # Create a simple resolver function
                     def resolve_public_key(key_id_to_resolve):
                         if key_id_to_resolve == key_id_verify and public_key_input_verify:
                             try:
-                                return load_public_key_pem(public_key_input_verify.encode())
+                                return load_public_key_from_data(public_key_input_verify)
                             except Exception as e:
                                 st.error(f"Invalid Public Key for verification: {e}")
                         return None
 
                     is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                         text=encoded_text,
-                        public_key_provider=resolve_public_key
+                        public_key_resolver=resolve_public_key,
+                        return_payload_on_failure=True,
                     )
 
                     if is_valid:
@@ -462,17 +451,18 @@ with tabs[2]:
     metadata = {
         "model": "verification-demo",
         "timestamp": int(time.time()),
-        "version": "2.3.0",
-        "key_id": st.session_state.key_id,
+        "version": "3.0.2",
     }
+
+    signer_id = st.text_input("Signer ID", value=st.session_state.signer_id, key="verify_signer_id")
 
     # Embed and verify
     if st.button("Embed and Verify", key="verify_btn"):
         from encypher.core.unicode_metadata import UnicodeMetadata
-        from encypher.core.keys import load_private_key_pem, load_public_key_pem
+        from encypher.core.keys import load_private_key_from_data, load_public_key_from_data
 
         try:
-            private_key = load_private_key_pem(private_key.encode())
+            private_key = load_private_key_from_data(private_key)
         except Exception as e:
             st.error(f"Invalid Private Key: {e}")
             private_key = None
@@ -483,7 +473,8 @@ with tabs[2]:
                 text=text,
                 custom_metadata=metadata,
                 private_key=private_key,
-                signer_id=metadata.get("key_id"),
+                signer_id=signer_id,
+                metadata_format="basic",
                 timestamp=metadata.get("timestamp"),
                 target="whitespace"
             )
@@ -503,16 +494,17 @@ with tabs[2]:
             with col1:
                 st.subheader("Original Verification")
                 def resolve_public_key(key_id_to_resolve):
-                    if key_id_to_resolve == metadata.get("key_id") and public_key:
+                    if key_id_to_resolve == signer_id and public_key:
                         try:
-                            return load_public_key_pem(public_key.encode())
+                            return load_public_key_from_data(public_key)
                         except Exception as e:
                             st.error(f"Invalid Public Key for verification: {e}")
                     return None
 
                 is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                     encoded_text,
-                    public_key_provider=resolve_public_key
+                    public_key_resolver=resolve_public_key,
+                    return_payload_on_failure=True,
                 )
                 if is_valid:
                     st.success(f"✅ Verification successful! Signer ID: {signer_id}")
@@ -523,7 +515,8 @@ with tabs[2]:
                 st.subheader("Tampered Verification")
                 is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                     tampered_text,
-                    public_key_provider=resolve_public_key
+                    public_key_resolver=resolve_public_key,
+                    return_payload_on_failure=True,
                 )
                 if is_valid:
                     st.success(f"✅ Verification successful! Signer ID: {signer_id}") # Should ideally fail for tampered
@@ -550,14 +543,13 @@ with tabs[3]:
         model_id = st.text_input("Model ID:", value="gpt-4-stream-demo")
         org = st.text_input("Organization:", value="StreamlitApp")
         timestamp = st.number_input("Timestamp:", value=int(time.time()))
-        version = st.text_input("Version:", value="2.3.0")
-        key_id_input = st.text_input("Key ID:", value=st.session_state.key_id, key="stream_key_id")
+        version = st.text_input("Version:", value="3.0.2")
+        signer_id_input = st.text_input("Signer ID:", value=st.session_state.signer_id, key="stream_key_id")
         metadata = {
             "model_id": model_id,
             "organization": org,
             "timestamp": int(timestamp),
             "version": version,
-            "key_id": key_id_input
         }
         st.json(metadata)
 
@@ -579,10 +571,11 @@ with tabs[3]:
         handler = StreamingHandler(
             custom_metadata=metadata,
             private_key=private_key,
-            signer_id=metadata.get("key_id"),
+            signer_id=signer_id_input,
             timestamp=metadata.get("timestamp"),
             target="whitespace",
             encode_first_chunk_only=False,
+            metadata_format="basic",
         )
 
         # Display streaming progress
@@ -596,10 +589,7 @@ with tabs[3]:
         # Process chunks
         for i, chunk in enumerate(chunks):
             # Process chunk
-            processed_chunk = handler.process_chunk(
-                chunk=chunk,
-                private_key=private_key
-            )
+            processed_chunk = handler.process_chunk(chunk)
             accumulated_text += processed_chunk
 
             # Update display
@@ -620,16 +610,18 @@ with tabs[3]:
         try:
             extracted_metadata = UnicodeMetadata.extract_metadata(accumulated_text)
             def resolve_public_key(key_id_to_resolve):
-                if key_id_to_resolve == metadata.get("key_id") and public_key:
+                if key_id_to_resolve == signer_id_input and public_key:
                     try:
-                        return load_public_key_pem(public_key.encode())
+                        return load_public_key_from_data(public_key)
                     except Exception as e:
                         st.error(f"Invalid Public Key for verification: {e}")
                 return None
 
             is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
                 accumulated_text,
-                public_key_provider=resolve_public_key
+                public_key_resolver=resolve_public_key,
+                require_hard_binding=False,
+                return_payload_on_failure=True,
             )
 
             st.subheader("Streaming Results")
@@ -646,8 +638,8 @@ with tabs[3]:
         except Exception as e:
             st.error(f"Error verifying/extracting streaming metadata: {str(e)}")
 
-# Ensure st.session_state is initialized for key_id if not already
-if 'key_id' not in st.session_state:
-    st.session_state.key_id = 'streamlit-default-key'
+# Ensure st.session_state is initialized for signer_id if not already
+if 'signer_id' not in st.session_state:
+    st.session_state.signer_id = 'streamlit-default-signer'
 
 # This demo provides a comprehensive overview of Encypher's features. For more detailed examples and API documentation, refer to the respective sections in this documentation.

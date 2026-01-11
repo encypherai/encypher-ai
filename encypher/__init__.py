@@ -6,7 +6,7 @@ variation selectors.
 This package provides tools for invisible metadata encoding in AI-generated text.
 """
 
-__version__ = "3.0.1"
+__version__ = "3.0.2"
 
 from encypher.config.settings import Settings
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
