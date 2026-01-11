@@ -2,6 +2,8 @@ import struct
 import unicodedata
 import unittest
 
+import c2pa_text
+
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.interop.c2pa import (
@@ -452,9 +454,10 @@ class TestC2PATextEmbedding(unittest.TestCase):
         self.assertIsNotNone(manifest_bytes)
         self.assertEqual(clean_text, unicodedata.normalize("NFC", sample_text))
         self.assertIsNotNone(span)
-        self.assertEqual(span[1], len(embedded_text))
 
-        wrapper_segment = embedded_text[span[0] : span[1]]
+        start_byte, length_byte = span
+        embedded_bytes = embedded_text.encode("utf-8")
+        wrapper_segment = embedded_bytes[start_byte : start_byte + length_byte].decode("utf-8")
         self.assertTrue(wrapper_segment.startswith("﻿"))
 
         self.assertGreaterEqual(len(manifest_bytes), 8)
@@ -481,6 +484,35 @@ class TestC2PATextEmbedding(unittest.TestCase):
         expected_start = len(unicodedata.normalize("NFC", sample_text).encode("utf-8"))
         expected_length = len(wrapper_segment.encode("utf-8"))
         self.assertEqual(exclusions, [{"start": expected_start, "length": expected_length}])
+
+    def test_verify_metadata_c2pa_multiple_valid_wrappers_fails_strict(self):
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-wrapper-key"
+        sample_text = "Hello world"
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=sample_text,
+            private_key=private_key,
+            signer_id=key_id,
+            metadata_format="c2pa",
+            claim_generator="Encypher/WrapperTest/1.0",
+        )
+        first_manifest_bytes, _clean_text, _span = find_and_decode(embedded_text)
+        self.assertIsNotNone(first_manifest_bytes)
+        text_with_two_wrappers = embedded_text + c2pa_text.encode_wrapper(first_manifest_bytes)
+
+        def resolver(kid: str):
+            return public_key if kid == key_id else None
+
+        verified, extracted_signer, manifest = UnicodeMetadata.verify_metadata(
+            text=text_with_two_wrappers,
+            public_key_resolver=resolver,
+            return_payload_on_failure=True,
+        )
+
+        self.assertFalse(verified)
+        self.assertEqual(extracted_signer, key_id)
+        self.assertIsNone(manifest)
 
 
 if __name__ == "__main__":

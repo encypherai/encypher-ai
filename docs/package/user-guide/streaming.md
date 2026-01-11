@@ -19,7 +19,7 @@ import time
 from typing import Dict, Optional, Any
 
 from encypher import UnicodeMetadata
-from encypher.keys import generate_ed25519_key_pair
+from encypher.core.keys import generate_ed25519_key_pair
 from encypher.streaming import StreamingHandler
 
 # --- 1. Key Management ---
@@ -28,7 +28,7 @@ private_key, public_key = generate_ed25519_key_pair()
 signer_id = "streaming-guide-signer-001"
 public_keys_store: Dict[str, object] = {signer_id: public_key}
 
-def public_key_provider(kid: str) -> Optional[object]:
+def public_key_resolver(kid: str) -> Optional[object]:
     """A simple function to retrieve a public key by its ID."""
     return public_keys_store.get(kid)
 
@@ -76,7 +76,7 @@ print("\n--- End of Stream ---")
 # Since hard binding is not added to streamed content, we must disable it during verification.
 is_valid, _, payload = UnicodeMetadata.verify_metadata(
     text=full_encoded_response,
-    public_key_provider=public_key_provider,
+    public_key_resolver=public_key_resolver,
     require_hard_binding=False  # Disable for streaming
 )
 

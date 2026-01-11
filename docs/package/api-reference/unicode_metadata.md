@@ -2,6 +2,14 @@
 
 The `UnicodeMetadata` module provides utilities for embedding and extracting metadata in text using Unicode variation selectors. This approach enables C2PA-compliant provenance information to be embedded directly within text content while maintaining visual integrity.
 
+Specification reference:
+https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text
+
+This project is maintained by Encypher. The maintainers of this codebase are co-chairs of the C2PA Text Task Force and authors of the linked specification.
+
+Wrapper encoding/decoding uses the MIT-licensed reference implementation:
+https://github.com/encypherai/c2pa-text
+
 ## Overview
 
 The Unicode variation selector embedding technique is a form of hard binding that embeds metadata directly into text content. This approach:
@@ -144,18 +152,22 @@ def verify_metadata(
 ) -> Tuple[bool, Optional[str], Union[BasicPayload, ManifestPayload, C2PAPayload, None]]:
 ```
 
-Extracts embedded metadata, verifies its signature, and returns the payload. This method automatically detects the metadata format (legacy vs. C2PA v2.2).
+Extracts embedded metadata, verifies its signature, and returns the payload. This method automatically detects the metadata format (legacy vs. C2PA v2.3).
 
-For C2PA v2.2 manifests, it performs full cryptographic verification, including:
+For C2PA v2.3 manifests, it performs full cryptographic verification, including:
 - COSE signature validation.
 - Soft-binding hash comparison.
 - Hard-binding (content hash) comparison.
 - X.509 certificate chain validation against provided `trust_anchors`.
 
+Strictness note:
+
+- Verification is strict-by-default and returns `False` if more than one valid `C2PATextManifestWrapper` is present.
+
 **Parameters:**
 - `text`: Text potentially containing embedded metadata.
 - `public_key_resolver`: A callable that takes a `signer_id` and returns the corresponding public key (as a `PublicKeyTypes` object) or a certificate (as `bytes`).
-- `trust_anchors`: A list of trusted root CA certificates (in PEM format as bytes) for validating certificate chains in C2PA v2.2 manifests.
+- `trust_anchors`: A list of trusted root CA certificates (in PEM format as bytes) for validating certificate chains in C2PA v2.3 manifests.
 - `allow_fallback_extraction`: If True, attempts to extract data from the end of the string if standard extraction fails.
 
 **Returns:**
@@ -177,7 +189,7 @@ Extracts embedded metadata from text without verifying its signature.
 - `text`: The text containing potentially embedded metadata.
 
 **Returns:**
-- The extracted outer payload dictionary if found, otherwise `None`. Note: For C2PA v2.2, this will be a COSE structure.
+- The extracted outer payload dictionary if found, otherwise `None`. Note: For C2PA v2.3, this will be a COSE structure.
 
 ## Example Usage
 
@@ -221,9 +233,9 @@ print(f"Signer ID: {extracted_signer_id}")
 print(f"Payload: {payload}")
 ```
 
-### C2PA v2.2 Manifest Embedding
+### C2PA v2.3 Manifest Embedding
 
-This example demonstrates embedding a full C2PA v2.2 manifest.
+This example demonstrates embedding a full C2PA v2.3 manifest.
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata

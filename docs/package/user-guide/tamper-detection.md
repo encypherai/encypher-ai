@@ -29,15 +29,15 @@ import time
 from typing import Dict, Optional
 
 from encypher import UnicodeMetadata
-from encypher.keys import generate_ed25519_key_pair
+from encypher.core.keys import generate_ed25519_key_pair
 
 # --- 1. Setup ---
-# Generate keys and define a public key provider.
+# Generate keys and define a public key resolver.
 private_key, public_key = generate_ed25519_key_pair()
 signer_id = "tamper-demo-signer-001"
 public_keys_store: Dict[str, object] = {signer_id: public_key}
 
-def public_key_provider(kid: str) -> Optional[object]:
+def public_key_resolver(kid: str) -> Optional[object]:
     """A simple function to retrieve a public key by its ID."""
     return public_keys_store.get(kid)
 
@@ -56,7 +56,7 @@ encoded_text = UnicodeMetadata.embed_metadata(
 # Verification on the untouched text should always pass.
 is_valid_original, _, _ = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_provider=public_key_provider
+    public_key_resolver=public_key_resolver
 )
 
 print(f"Verification of original text: {'✅ Passed' if is_valid_original else '🚨 Failed'}")
@@ -71,7 +71,7 @@ print(f"Tampered text: '{tampered_text.strip()}'")
 # Verification on the tampered text will fail because the content hash no longer matches.
 is_valid_tampered, _, _ = UnicodeMetadata.verify_metadata(
     text=tampered_text,
-    public_key_provider=public_key_provider
+    public_key_resolver=public_key_resolver
 )
 
 print(f"Verification of tampered text: {'✅ Passed' if is_valid_tampered else '🚨 Failed'}")
@@ -79,4 +79,4 @@ print(f"Verification of tampered text: {'✅ Passed' if is_valid_tampered else '
 
 ### C2PA and Tamper Detection
 
-This mechanism is fundamental to C2PA compliance. When you use the `cbor_manifest` format, the content hash is stored in a standardized `c2pa.hash.data` assertion, making the tamper-detection mechanism interoperable with other C2PA-compliant tools.
+This mechanism is fundamental to C2PA compliance. When you use the `c2pa` format, the content hash is stored in a standardized `c2pa.hash.data.v1` assertion (with NFC normalisation and wrapper exclusions), making the tamper-detection mechanism interoperable with other C2PA-compliant tools.

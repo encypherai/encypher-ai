@@ -18,7 +18,7 @@ import time
 from typing import Dict, Optional, Any
 
 from encypher import UnicodeMetadata
-from encypher.keys import generate_ed25519_key_pair
+from encypher.core.keys import generate_ed25519_key_pair
 
 # --- 1. Key Management ---
 # In a real application, you would load a securely stored private key and have a robust
@@ -27,12 +27,12 @@ from encypher.keys import generate_ed25519_key_pair
 private_key, public_key = generate_ed25519_key_pair()
 signer_id = "user-guide-signer-001"
 
-# The public_key_provider is a function that takes a key identifier (signer_id) and
+# The public_key_resolver is a function that takes a key identifier (signer_id) and
 # returns the corresponding public key. This allows the verification function to find
 # the correct key to use.
 public_keys_store: Dict[str, object] = {signer_id: public_key}
 
-def public_key_provider(kid: str) -> Optional[object]:
+def public_key_resolver(kid: str) -> Optional[object]:
     """A simple function to retrieve a public key by its ID."""
     return public_keys_store.get(kid)
 
@@ -68,7 +68,7 @@ extracted_signer_id: Optional[str]
 verified_payload: Optional[Any]
 is_valid, extracted_signer_id, verified_payload = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_provider=public_key_provider
+    public_key_resolver=public_key_resolver
 )
 
 print(f"\nSignature valid: {is_valid}")
@@ -94,7 +94,7 @@ encoded_text_no_ts = UnicodeMetadata.embed_metadata(
 
 is_valid2, _, payload2 = UnicodeMetadata.verify_metadata(
     text=encoded_text_no_ts,
-    public_key_provider=public_key_provider
+    public_key_resolver=public_key_resolver
 )
 print(f"Valid: {is_valid2}; Timestamp present: {bool(getattr(payload2, 'timestamp', None))}")
 ```

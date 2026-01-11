@@ -11,7 +11,6 @@ import copy
 import hashlib
 import json
 import re
-import unicodedata
 import uuid
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Literal, Optional, Union, cast
@@ -23,7 +22,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 
 from encypher import __version__
 from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
-from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode
+from encypher.interop.c2pa.text_wrapper import count_valid_wrappers, encode_wrapper, find_and_decode
 
 from .constants import MetadataTarget
 from .logging_config import logger
@@ -994,6 +993,9 @@ class UnicodeMetadata:
 
         # --- Format-Specific Verification Dispatch ---
         if payload_format == "c2pa":
+            if count_valid_wrappers(text) > 1:
+                logger.warning("Multiple valid C2PA wrappers detected; strict verification failed.")
+                return False, signer_id, None
             try:
                 manifest_bytes, clean_text, span = find_and_decode(text)
             except ValueError as err:
@@ -1004,15 +1006,7 @@ class UnicodeMetadata:
                 logger.warning("C2PA format indicated but no text wrapper found.")
                 return False, signer_id, None
 
-            wrapper_segment = text[span[0] : span[1]]
-            normalized_full_text = unicodedata.normalize("NFC", text)
-            normalized_index = normalized_full_text.rfind(wrapper_segment)
-            if normalized_index < 0:
-                logger.warning("Unable to locate wrapper segment in normalized text during verification.")
-                return False, signer_id, None
-
-            exclusion_start = len(normalized_full_text[:normalized_index].encode("utf-8"))
-            exclusion_length = len(wrapper_segment.encode("utf-8"))
+            exclusion_start, exclusion_length = span
 
             return cls._verify_c2pa(
                 original_text=text,

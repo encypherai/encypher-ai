@@ -4,6 +4,16 @@ This document provides a chronological list of notable changes for each version 
 
 ## Unreleased
 
+## 3.0.2 (2026-01-10)
+
+### Changed
+- C2PA text verification is strict-by-default: verification fails when more than one valid `C2PATextManifestWrapper` is present.
+- C2PA text extraction is best-effort: when multiple valid wrappers are detected, the EOF-most wrapper is selected and a warning is emitted.
+
+### Documentation
+- Linked the published C2PA v2.3 specification section for text embeddings:
+  https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text
+
 ## 3.0.1 (2026-01-09)
 
 ### Added
@@ -192,8 +202,7 @@ This document provides a chronological list of notable changes for each version 
         - Now requires `signer_id` as a direct parameter (replacing `key_id` within a `metadata` dictionary).
         - Accepts other metadata components (`model_id`, `timestamp`, `organization`, `version`, `custom_metadata`, `metadata_format`) as direct parameters. The generic `metadata` dictionary parameter has been removed for clarity and type safety.
     - `verify_metadata`:
-        - The `public_key_resolver` parameter has been renamed to `public_key_provider` for consistency.
-        - The `public_key_provider` function now receives `signer_id` as its argument.
+        - Expects a `public_key_resolver` callable that receives `signer_id` and returns the corresponding Ed25519 public key.
         - Returns a tuple: `(is_valid: bool, signer_id: Optional[str], payload: Union[BasicPayload, ManifestPayload, None])`.
     - `extract_metadata`:
         - Now consistently returns a `BasicPayload` or `ManifestPayload` object (or `None`), rather than a raw dictionary.
