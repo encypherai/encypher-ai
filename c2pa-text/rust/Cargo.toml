@@ -1,0 +1,14 @@
+[package]
+name = "c2pa-text"
+version = "1.0.2"
+edition = "2021"
+description = "Reference implementation for embedding C2PA manifests in text using Unicode variation selectors"
+authors = ["Encypher Corporation <contact@encypherai.com>"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/encypherai/c2pa-text"
+keywords = ["c2pa", "text", "steganography", "unicode", "provenance"]
+categories = ["text-processing", "encoding"]
+
+[dependencies]
+unicode-normalization = "0.1"
