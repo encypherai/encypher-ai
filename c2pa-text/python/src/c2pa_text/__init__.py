@@ -55,6 +55,18 @@ def _vs_to_byte(codepoint: int) -> Optional[int]:
     return None
 
 
+def _byte_offset_to_char_index(value: str, byte_offset: int) -> int:
+    if byte_offset <= 0:
+        return 0
+    consumed = 0
+    for idx, ch in enumerate(value):
+        ch_len = len(ch.encode("utf-8"))
+        if consumed + ch_len > byte_offset:
+            return idx
+        consumed += ch_len
+    return len(value)
+
+
 def encode_wrapper(manifest_bytes: bytes) -> str:
     """
     Encode raw bytes into a C2PA Text Manifest Wrapper string.
@@ -147,7 +159,9 @@ def find_wrapper_info(text: str) -> Optional[Tuple[bytes, int, int]]:
         return None
 
     manifest_bytes = raw[_HEADER_SIZE : _HEADER_SIZE + length]
-    return manifest_bytes, m.start(), m.end()
+    wrapper_start_byte = len(text[: m.start()].encode("utf-8"))
+    wrapper_length_byte = len(text[m.start() : m.end()].encode("utf-8"))
+    return manifest_bytes, wrapper_start_byte, wrapper_length_byte
 
 
 def extract_manifest(text: str) -> Tuple[Optional[bytes], str]:
@@ -168,10 +182,11 @@ def extract_manifest(text: str) -> Tuple[Optional[bytes], str]:
     if not info:
         return None, unicodedata.normalize("NFC", text)
 
-    manifest_bytes, start, end = info
-
-    # Remove wrapper from text
-    clean_text = text[:start] + text[end:]
+    manifest_bytes, wrapper_start_byte, wrapper_length_byte = info
+    wrapper_end_byte = wrapper_start_byte + wrapper_length_byte
+    start_char = _byte_offset_to_char_index(text, wrapper_start_byte)
+    end_char = _byte_offset_to_char_index(text, wrapper_end_byte)
+    clean_text = text[:start_char] + text[end_char:]
 
     return manifest_bytes, unicodedata.normalize("NFC", clean_text)
 
