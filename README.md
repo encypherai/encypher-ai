@@ -269,6 +269,21 @@ git clone https://github.com/encypherai/encypherai-commercial.git
 cd encypherai-commercial
 ```
 
+#### 1a. Start the Full Dev Stack (Linux)
+
+```bash
+chmod +x ./start-dev.sh ./stop-dev.sh
+./start-dev.sh
+```
+
+This starts `docker-compose.full-stack.yml` plus both Next.js frontends and streams both frontend logs in one terminal (prefixed).
+
+Stop everything with:
+
+```bash
+./stop-dev.sh
+```
+
 #### 2. Set Up Python Environment
 
 ```bash
