@@ -16,6 +16,8 @@ Method | HTTP request | Description
 
 Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)
 
+
+
 ### Example
 
 ```go
@@ -151,6 +153,8 @@ No authorization required
 > ValidateManifestResponse ValidateManifestApiV1PublicC2paValidateManifestPost(ctx).ValidateManifestRequest(validateManifestRequest).Authorization(authorization).Execute()
 
 Validate C2PA-like manifest JSON (Public - Non-Cryptographic)
+
+
 
 ### Example
 

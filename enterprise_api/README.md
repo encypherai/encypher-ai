@@ -23,7 +23,7 @@
 
 ## 🎯 Overview
 
-The Encypher Enterprise API provides cryptographic content signing and verification infrastructure for publishers, news organizations, legal firms, and content platforms. Built on **C2PA 2.3 standards** (Section A.7 authored by Encypher) with **patent-pending** enterprise-grade features for granular content attribution and court-admissible evidence generation.
+The Encypher Enterprise API provides cryptographic content signing and verification infrastructure for publishers, news organizations, legal firms, and content platforms. Built on C2PA standards with enterprise-grade features for granular content attribution and court-admissible evidence generation.
 
 **Part of the Encypher Microservices Ecosystem** - This API integrates with multiple backend microservices for authentication, key management, and coalition features.
 
@@ -32,7 +32,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - **🔒 C2PA 2.2 Compliant**: Industry-standard content authenticity
 - **⚡ High Performance**: <100ms verification, 1000+ req/s capacity
 - **🔗 Microservices Architecture**: Scalable, resilient, database-per-service design
-- **📊 Patent-Pending Features**: Merkle tree authentication, evidence generation, granular attribution (83 claims filed)
+- **📊 Advanced Features**: Merkle tree authentication, evidence generation, granular attribution
 - **🔐 SSL.com Integration**: Automated certificate lifecycle management
 - **⚖️ Court-Admissible**: Tamper-evident manifests for legal evidence
 
@@ -45,7 +45,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 #### Core Capabilities
 - ✅ **C2PA-Compliant Signing**: Full C2PA 2.2 text manifest support
 - ✅ **Content Verification**: Cryptographic verification with tamper detection
-- ✅ **Patent-Pending Granular Attribution**: Track provenance of individual sentences (Claims 1-20)
+- ✅ **Granular Attribution**: Track provenance of individual sentences
 - ✅ **Public Verification Pages**: Shareable verification URLs
 - ✅ **Batch Operations**: Sign/verify up to 100 documents at once
 - ✅ **Streaming Support**: WebSocket and SSE for real-time operations
@@ -53,7 +53,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ **API Key Management**: Via integrated Key Service
 
 #### Enterprise Features
-- ✅ **Patent-Pending Merkle Tree Encoding**: Hierarchical content fingerprinting with court-admissible evidence generation (Claims 38-52)
+- ✅ **Merkle Tree Encoding**: Hierarchical content fingerprinting with court-admissible evidence generation
 - ✅ **Source Attribution**: Find original sources of quoted content
 - ✅ **Plagiarism Detection**: Detect unauthorized content reuse
 - ✅ **Invisible Embeddings**: Unicode-based portable content tracking
@@ -86,9 +86,14 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Endpoint | Method | Auth | Tier | Description | Dependencies |
 |----------|--------|------|------|-------------|--------------|
 | `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
-| `/api/v1/sign/advanced` | POST | ✅ | Professional+ | Sign content with advanced embedding controls (manifest mode, distribution, ECC) | Key Service, Coalition Service (optional) |
+| `/api/v1/sign/advanced` | POST | ✅ | Professional+ | Sign content with advanced embedding controls | Key Service, Coalition Service (optional) |
 | `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
 | `/api/v1/verify/{document_id}` | GET | ❌ | Public | Verify a previously signed document by ID | None |
+| `/api/v1/verify/signature` | POST | ❌ | Public | Verify a signature payload | None |
+| `/api/v1/verify/document` | POST | ❌ | Public | Verify a document payload by document id | None |
+| `/api/v1/verify/history/{document_id}` | GET | ❌ | Public | Get verification history for a document | None |
+| `/api/v1/verify/stats` | GET | ❌ | Public | Get verification statistics | None |
+| `/api/v1/verify/health` | GET | ❌ | Public | Verification service health check | None |
 | `/api/v1/lookup` | POST | ❌ | Public | Lookup sentence provenance | None |
 | `/api/v1/provenance/lookup` | POST | ❌ | Public | Lookup provenance for a document (structured) | None |
 | `/api/v1/account` | GET | ✅ | All | Get account profile | Auth Service |
@@ -219,13 +224,6 @@ Look up content across multiple sources with chronological ordering.
 | `/api/v1/webhooks/{webhook_id}/deliveries` | GET | ✅ | Business+ | List webhook deliveries |
 | `/api/v1/webhooks/{webhook_id}/test` | POST | ✅ | Business+ | Send a test delivery |
 
-### Tools
-
-| Endpoint | Method | Auth | Tier | Description |
-|----------|--------|------|------|-------------|
-| `/api/v1/tools/encode` | POST | ✅ | All | Encode content into a transport-safe representation |
-| `/api/v1/tools/decode` | POST | ✅ | All | Decode previously encoded content |
-
 ### Coalition Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
@@ -273,7 +271,6 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ C2PA-compliant signing
 - ✅ Content verification
 - ✅ Public verification pages
-- ✅ 10,000 requests/month
 - ✅ Coalition membership (65% publisher / 35% Encypher revenue share)
 
 #### Professional Tier ($99/month)
@@ -284,7 +281,6 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ Streaming support (WebSocket/SSE)
 - ✅ **Lightweight UUID Manifest**: Smaller payload footprint (NEW)
 - ✅ **Streaming Merkle Tree**: Real-time LLM signing (NEW)
-- ✅ 100,000 requests/month
 - ✅ Priority support
 - ✅ Coalition membership (70% publisher / 30% Encypher revenue share)
 
@@ -299,14 +295,13 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ **Distributed Embedding**: Resilient metadata placement (NEW)
 - ✅ **Dual-Binding Manifest**: Enhanced tamper-evidence (NEW)
 - ✅ **Multi-Source Lookup**: Content attribution across sources (NEW)
-- ✅ 500,000 requests/month
 - ✅ Coalition membership (75% publisher / 25% Encypher revenue share)
 
 #### Enterprise Tier (Custom pricing)
 - ✅ All Business features
 - ✅ **C2PA Provenance Chain**: Full edit history
 - ✅ **Assertion Templates**: Pre-built industry templates
-- ✅ **Schema Registry**: Custom assertion schemas
+- ✅ **Schema Registry**: Manage custom JSON schemas
 - ✅ Source attribution
 - ✅ Plagiarism detection
 - ✅ **Evidence Generation**: Court-ready evidence packages (NEW)
@@ -407,14 +402,14 @@ Sign content with C2PA-compliant manifest.
 {
   "success": true,
   "document_id": "doc_abc123xyz",
-  "signed_text": "Your content here\u{FEFF}C2PATXT...",
+  "signed_text": "Your content here...",
   "verification_url": "https://encypherai.com/verify/doc_abc123xyz",
   "manifest": {
     "version": "2.2",
     "claim_generator": "Encypher Enterprise API v1.0",
     "assertions": [
       {
-        "label": "c2pa.hash.data",
+        "label": "c2pa.hash",
         "data": {
           "hash": "sha256:...",
           "algorithm": "sha256"
@@ -443,7 +438,7 @@ Verify signed content and detect tampering.
 
 ```json
 {
-  "text": "Your content here\uFEFFC2PATXT..."
+  "text": "Your content here..."
 }
 ```
 
@@ -466,7 +461,7 @@ Verify signed content and detect tampering.
         "claim_generator": "encypher-ai/2.4.2",
         "assertions": [
           {"label": "c2pa.actions.v1", "kind": "Actions"},
-          {"label": "c2pa.hash.data.v1", "kind": "ContentHash"}
+          {"label": "c2pa.hash.v1", "kind": "ContentHash"}
         ]
       },
       "duration_ms": 41,
@@ -548,7 +543,7 @@ Lookup sentence provenance (Professional+ tier).
 
 ### GET /api/v1/usage
 
-Get usage statistics for your organizations current billing period.
+Get usage statistics for your organization's current billing period.
 
 **Dependencies**: Key Service (required)
 
@@ -704,7 +699,7 @@ Detect if content is plagiarized from signed documents.
 
 ### Invisible Signed Embeddings (Professional+)
 
-Invisibly embed cryptographically signed references directly into content using Unicode variation selectors. The embeddings are completely invisible to readers but can be extracted and verified by third parties without requiring API keys.
+Embed signed references directly into content so it can be extracted and verified later.
 
 **Endpoint:** `POST /api/v1/sign/advanced`
 
@@ -752,19 +747,6 @@ Invisibly embed cryptographically signed references directly into content using 
 }
 ```
 
-**How It Works:**
-
-The embedding uses **Unicode variation selectors (U+FE00-FE0F)** attached to characters in the text. These selectors are:
-- **Completely invisible** - Rendering engines ignore them and display only the base character
-- **Standards-compliant** - Using Unicode variation selectors as designed
-- **Portable** - Preserved during copy/paste operations
-- **Distributed** - Spread across multiple characters for resilience
-
-Example (conceptual - actual variation selectors are invisible):
-```
-"Hello world" → "H[VS]e[VS]l[VS]l[VS]o[VS] w[VS]o[VS]r[VS]l[VS]d"
-```
-
 **Public Verification (No Auth Required):**
 
 Extract embeddings from content and verify them:
@@ -778,13 +760,9 @@ curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
   }'
 ```
 
-**Key Features:**
-- ✅ **Invisible**: Zero visible footprint - readers see only the original text
-- ✅ **Portable**: Travels with content when copied/scraped across the web
-- ✅ **Verifiable**: Public API for third-party verification (no auth required)
-- ✅ **Secure**: Cryptographic signatures prevent forgery
-- ✅ **Resilient**: Distributed embedding survives partial text extraction
-- ✅ **Standards-compliant**: Uses Unicode variation selectors as designed
+**How It Works:**
+
+Signed references are embedded in a transport-safe form that is designed to survive common copy/paste and publishing workflows.
 
 **Use Cases:**
 - Invisible content tracking across the web
@@ -792,98 +770,6 @@ curl -X POST https://api.encypherai.com/api/v1/public/extract-and-verify \
 - Portable proof of origin that travels with text
 - Legal evidence embedded directly in content
 - AI-generated content authentication
-
-**Documentation:** See [README_EMBEDDINGS.md](./app/services/README_EMBEDDINGS.md) for complete details.
-
----
-
-### Document Revocation (Enterprise) ⭐ NEW
-
-Revoke individual documents without affecting your entire signing certificate. Uses W3C StatusList2021 bitstrings for internet-scale revocation (10+ billion documents).
-
-**Revoke a Document:**
-
-```bash
-curl -X POST https://api.encypherai.com/api/v1/status/documents/doc_abc123/revoke \
-  -H "Authorization: Bearer encypher_..." \
-  -H "Content-Type: application/json" \
-  -d '{
-    "reason": "factual_error",
-    "reason_detail": "Article contained incorrect statistics"
-  }'
-```
-
-**Response:**
-
-```json
-{
-  "success": true,
-  "document_id": "doc_abc123",
-  "action": "revoked",
-  "timestamp": "2025-12-01T19:00:00Z",
-  "message": "Document doc_abc123 has been revoked. Verification will fail within 5 minutes."
-}
-```
-
-**Revocation Reasons:**
-
-| Reason | Description |
-|--------|-------------|
-| `factual_error` | Content contains factual errors |
-| `legal_takedown` | Legal request (DMCA, court order) |
-| `copyright_claim` | Copyright infringement claim |
-| `privacy_request` | Privacy/GDPR request |
-| `publisher_request` | Publisher-initiated takedown |
-| `security_concern` | Security vulnerability in content |
-| `content_policy` | Violates content policy |
-| `other` | Other reason (specify in reason_detail) |
-
-**Verification of Revoked Documents:**
-
-When a revoked document is verified, the response includes:
-
-```json
-{
-  "success": true,
-  "data": {
-    "valid": false,
-    "tampered": false,
-    "reason_code": "DOC_REVOKED",
-    "signer_id": "org_publisher",
-    "signer_name": "Acme News",
-    "details": {
-      "document_revoked": true,
-      "revocation_reason": "Document has been revoked by publisher"
-    }
-  }
-}
-```
-
-**How It Works:**
-
-1. **Signing**: Each document is assigned a position in a bitstring status list
-2. **Revocation**: Setting the bit marks the document as revoked
-3. **Verification**: Verifiers fetch the cached status list and check the bit
-4. **Propagation**: Changes propagate within 5 minutes (CDN cache TTL)
-
-**Scale:**
-
-| Metric | Capacity |
-|--------|----------|
-| Documents per list | 131,072 |
-| Storage per 1B docs | ~120 MB |
-| Lookup time | O(1) |
-| Revocation latency | <5 minutes |
-
-**Public Status List Endpoint:**
-
-Status lists are served publicly for third-party verification:
-
-```
-GET https://status.encypherai.com/v1/{org_id}/list/{index}
-```
-
-Returns a W3C StatusList2021Credential (JSON-LD) with 5-minute cache headers.
 
 ---
 
@@ -1080,13 +966,7 @@ If Coalition Service is unavailable, content signing continues successfully. Coa
 
 ### C2PA Compliance
 
-Our implementation follows **C2PA 2.3 Text Manifest Specification**:
-
-- **Wrapper Format**: `C2PATXT\0` header with Unicode variation selectors
-- **Prefix**: Single zero-width no-break space (U+FEFF)
-- **Hash Algorithm**: SHA-256 with NFC normalization
-- **Assertions**: `c2pa.hash.data`, `c2pa.claim.generator`, custom assertions
-- **Validation**: Rejects malformed/duplicate wrappers per spec
+Signed text is produced in a C2PA-compatible form and can be verified using `POST /api/v1/verify`.
 
 **Reference:** [docs/c2pa/Manifests_Text.adoc](../docs/c2pa/Manifests_Text.adoc)
 

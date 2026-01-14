@@ -4,7 +4,7 @@ All URIs are relative to *https://api.encypherai.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**signAdvancedApiV1SignAdvancedPost**](SigningApi.md#signadvancedapiv1signadvancedpost) | **POST** /api/v1/sign/advanced | Sign Advanced |
+| [**signAdvancedApiV1SignAdvancedPost**](SigningApi.md#signadvancedapiv1signadvancedpost) | **POST** /api/v1/sign/advanced | Sign with advanced embedding controls |
 | [**signContentApiV1SignPost**](SigningApi.md#signcontentapiv1signpost) | **POST** /api/v1/sign | Sign Content |
 
 
@@ -13,7 +13,9 @@ All URIs are relative to *https://api.encypherai.com*
 
 > EncodeWithEmbeddingsResponse signAdvancedApiV1SignAdvancedPost(encodeWithEmbeddingsRequest)
 
-Sign Advanced
+Sign with advanced embedding controls
+
+Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
 
 ### Example
 

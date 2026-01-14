@@ -8,6 +8,11 @@ Name | Type | Description | Notes
 **text** | **String** | Full document text to encode | 
 **segmentation_level** | Option<**String**> | Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word | [optional][default to sentence]
 **action** | Option<**String**> | C2PA action type: c2pa.created (new content) or c2pa.edited (modified content) | [optional][default to c2pa.created]
+**manifest_mode** | Option<**String**> | Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier. | [optional][default to full]
+**embedding_strategy** | Option<**String**> | Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier. | [optional][default to single_point]
+**distribution_target** | Option<**String**> |  | [optional]
+**add_dual_binding** | Option<**bool**> | Enable additional integrity binding. Availability depends on plan tier. | [optional][default to false]
+**disable_c2pa** | Option<**bool**> | Opt-out of C2PA embedding. When true, only basic metadata is embedded. | [optional][default to false]
 **previous_instance_id** | Option<**String**> |  | [optional]
 **metadata** | Option<[**std::collections::HashMap<String, serde_json::Value>**](serde_json::Value.md)> |  | [optional]
 **c2pa_manifest_url** | Option<**String**> |  | [optional]

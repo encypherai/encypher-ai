@@ -1,7 +1,7 @@
 
 # EmbeddingInfo
 
-Information about a single invisible embedding.  Uses encypher-ai package for invisible Unicode variation selector embeddings. No visible ref_id, signature, or embedding string - all embedded invisibly.
+Information about a single embedding.
 
 ## Properties
 

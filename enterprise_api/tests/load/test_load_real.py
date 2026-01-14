@@ -26,6 +26,12 @@ DEMO_API_KEY = os.getenv("DEMO_API_KEY", "demo-api-key-for-testing")
 ENTERPRISE_API_KEY = os.getenv("ENTERPRISE_API_KEY", "enterprise-api-key-for-testing")
 
 
+pytestmark = pytest.mark.skipif(
+    os.environ.get("REAL_LOAD_TESTS", "").lower() != "true",
+    reason="Real load tests require Docker infrastructure; set REAL_LOAD_TESTS=true to run.",
+)
+
+
 class TestRealLoadPerformance:
     """
     Real load tests using actual Docker infrastructure.

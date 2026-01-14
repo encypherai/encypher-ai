@@ -11,9 +11,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 
-// Enterprise API URL for encode/decode tools
-const ENTERPRISE_API_URL = process.env.NEXT_PUBLIC_ENTERPRISE_API_URL || 'https://enterprise-api-staging.up.railway.app';
-
 // Temporary replacement for Copy icon to debug import issue
 const Copy = (props: any) => <span {...props}>📋</span>;
 
@@ -76,9 +73,7 @@ function getErrorMessage(error: string | { message: string } | null | undefined,
  * Call the Enterprise API for tools endpoints
  */
 async function toolsApiCall<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const url = `${ENTERPRISE_API_URL}${path}`;
-  
-  const response = await fetch(url, {
+  const response = await fetch(path, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -156,7 +151,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
           }
         };
 
-        const response = await toolsApiCall<{ encoded_text: string, metadata?: any }>("/api/v1/tools/encode", {
+        const response = await toolsApiCall<{ encoded_text: string, metadata?: any }>("/api/tools/sign", {
           method: "POST",
           body: JSON.stringify(body),
         });
@@ -166,7 +161,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
           
           // Automatically verify to get full manifest details for consistent display
           try {
-            const verifyResponse = await toolsApiCall<DecodeToolResponse>("/api/v1/tools/decode", {
+            const verifyResponse = await toolsApiCall<DecodeToolResponse>("/api/tools/verify", {
               method: "POST",
               body: JSON.stringify({ encoded_text: response.encoded_text }),
             });
@@ -194,7 +189,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
         }
       } else { // decode
         const body = { encoded_text: inputText };
-        const response = await toolsApiCall<DecodeToolResponse>("/api/v1/tools/decode", {
+        const response = await toolsApiCall<DecodeToolResponse>("/api/tools/verify", {
           method: "POST",
           body: JSON.stringify(body),
         });

@@ -10,7 +10,6 @@ Method | HTTP request | Description
 [**get_streaming_stats_api_v1_stream_stats_get**](StreamingApi.md#get_streaming_stats_api_v1_stream_stats_get) | **GET** /api/v1/stream/stats | Get Streaming Stats
 [**sse_events_endpoint_api_v1_stream_events_get**](StreamingApi.md#sse_events_endpoint_api_v1_stream_events_get) | **GET** /api/v1/stream/events | Sse Events Endpoint
 [**stream_signing_api_v1_stream_sign_post**](StreamingApi.md#stream_signing_api_v1_stream_sign_post) | **POST** /api/v1/stream/sign | Stream Signing
-[**streaming_health_check_api_v1_stream_health_get**](StreamingApi.md#streaming_health_check_api_v1_stream_health_get) | **GET** /api/v1/stream/health | Streaming Health Check
 
 
 # **close_streaming_session_api_v1_stream_session_session_id_close_post**
@@ -199,6 +198,7 @@ Return persisted streaming run state.
 
 ### Example
 
+* Bearer Authentication (HTTPBearer):
 
 ```python
 import encypher
@@ -211,6 +211,15 @@ configuration = encypher.Configuration(
     host = "https://api.encypherai.com"
 )
 
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: HTTPBearer
+configuration = encypher.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
 
 # Enter a context with an instance of the API client
 with encypher.ApiClient(configuration) as api_client:
@@ -242,7 +251,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -353,6 +362,7 @@ Returns:
 
 ### Example
 
+* Bearer Authentication (HTTPBearer):
 
 ```python
 import encypher
@@ -365,6 +375,15 @@ configuration = encypher.Configuration(
     host = "https://api.encypherai.com"
 )
 
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure Bearer authorization: HTTPBearer
+configuration = encypher.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
 
 # Enter a context with an instance of the API client
 with encypher.ApiClient(configuration) as api_client:
@@ -398,7 +417,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -488,72 +507,6 @@ void (empty response body)
 |-------------|-------------|------------------|
 **200** | Successful Response |  -  |
 **422** | Validation Error |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **streaming_health_check_api_v1_stream_health_get**
-> object streaming_health_check_api_v1_stream_health_get()
-
-Streaming Health Check
-
-Health check endpoint for streaming service.
-
-Returns:
-    Health status of streaming components
-
-### Example
-
-
-```python
-import encypher
-from encypher.rest import ApiException
-from pprint import pprint
-
-# Defining the host is optional and defaults to https://api.encypherai.com
-# See configuration.py for a list of all supported configuration parameters.
-configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
-)
-
-
-# Enter a context with an instance of the API client
-with encypher.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = encypher.StreamingApi(api_client)
-
-    try:
-        # Streaming Health Check
-        api_response = api_instance.streaming_health_check_api_v1_stream_health_get()
-        print("The response of StreamingApi->streaming_health_check_api_v1_stream_health_get:\n")
-        pprint(api_response)
-    except Exception as e:
-        print("Exception when calling StreamingApi->streaming_health_check_api_v1_stream_health_get: %s\n" % e)
-```
-
-
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-**object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-**200** | Successful Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

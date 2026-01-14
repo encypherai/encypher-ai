@@ -1,14 +1,13 @@
 
 # VerifyResponse
 
-Envelope returned by the verification endpoint.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
 `success` | boolean
-`data` | [AppModelsResponseModelsVerifyVerdict](AppModelsResponseModelsVerifyVerdict.md)
+`data` | [VerifyVerdict](VerifyVerdict.md)
 `error` | [ErrorDetail](ErrorDetail.md)
 `correlationId` | string
 

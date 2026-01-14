@@ -222,11 +222,17 @@ Expected response:
     "documents_signed": 1,
     "sentences_signed": 2,
     "api_calls_this_month": 3,
-    "monthly_quota": 10000,
-    "quota_remaining": 9997
+    "quota": {
+      "limit": "...",
+      "remaining": "..."
+    }
   }
 }
 ```
+
+For up-to-date limits and remaining quota for your organization, use:
+
+- `GET /api/v1/account/quota`
 
 ---
 

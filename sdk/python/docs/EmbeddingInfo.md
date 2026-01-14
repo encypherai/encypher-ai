@@ -1,6 +1,6 @@
 # EmbeddingInfo
 
-Information about a single invisible embedding.  Uses encypher-ai package for invisible Unicode variation selector embeddings. No visible ref_id, signature, or embedding string - all embedded invisibly.
+Information about a single embedding.
 
 ## Properties
 
@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 **signature** | **str** |  | [optional] 
 **embedding** | **str** |  | [optional] 
 **verification_url** | **str** |  | [optional] 
-**leaf_hash** | **str** | SHA-256 hash of text segment | 
+**leaf_hash** | **str** | Cryptographic hash of the signed text segment | 
 
 ## Example
 

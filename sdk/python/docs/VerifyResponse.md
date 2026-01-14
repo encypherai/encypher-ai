@@ -1,15 +1,14 @@
 # VerifyResponse
 
-Envelope returned by the verification endpoint.
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**success** | **bool** | Indicates if the request was processed successfully | 
-**data** | [**AppModelsResponseModelsVerifyVerdict**](AppModelsResponseModelsVerifyVerdict.md) |  | [optional] 
+**success** | **bool** |  | 
+**data** | [**VerifyVerdict**](VerifyVerdict.md) |  | [optional] 
 **error** | [**ErrorDetail**](ErrorDetail.md) |  | [optional] 
-**correlation_id** | **str** | Request correlation identifier for tracing | 
+**correlation_id** | **str** |  | 
 
 ## Example
 

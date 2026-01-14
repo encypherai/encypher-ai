@@ -21,10 +21,10 @@ export default function CompanyPage() {
     <div className="container py-12 md:py-20">
       <AISummary
         title="About Encypher"
-        whatWeDo="Co-Chair of C2PA Text Provenance Task Force (c2pa.org) with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. API and SDKs in Python, TypeScript, Go, and Rust. Standard publishes January 8, 2026."
-        whoItsFor="Publishers seeking content licensing and provable ownership. AI labs needing quote integrity verification and performance intelligence. Enterprises requiring EU AI Act compliance."
-        keyDifferentiator="Cryptographic watermarking survives copy-paste, B2B distribution, and scraping. Enables content attribution and licensing."
-        primaryValue="Building collaborative infrastructure for the AI content economy. Working with industry leaders to define content licensing frameworks."
+        whatWeDo="Encypher serves as Co-Chair of C2PA Text Provenance Task Force (c2pa.org). API and SDKs in Python, TypeScript, Go, and Rust. Standard published January 8, 2026. Technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
+        whoItsFor="Publishers seeking content licensing infrastructure and provable ownership. AI labs needing quote integrity verification and performance intelligence. Enterprises requiring EU AI Act compliance."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste, B2B distribution, and scraping. Provides technical infrastructure for content attribution and licensing."
+        primaryValue="Building collaborative infrastructure for the AI content economy. Enterprise partners help shape industry-standard licensing frameworks."
       />
       <Script id="schema-faq" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <Script
@@ -33,10 +33,10 @@ export default function CompanyPage() {
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(
             getAISearchSummary({
-              whatWeDo: 'Sentence-level content authentication and licensing infrastructure authored by the C2PA text standard creators.',
-              whoItsFor: 'Publishers seeking licensing revenue and AI labs optimizing performance and compliance.',
-              keyDifferentiator: 'Cryptographic proof with 100% accuracy at sentence-level vs probabilistic detection.',
-              primaryValue: 'Transforms litigation into licensing with court-admissible evidence and ecosystem integration.'
+              whatWeDo: 'Sentence-level content authentication and licensing infrastructure. Encypher authored the C2PA text provenance specification.',
+              whoItsFor: 'Publishers seeking licensing infrastructure and AI labs optimizing performance and compliance.',
+              keyDifferentiator: 'Cryptographic verification at sentence-level vs probabilistic detection.',
+              primaryValue: 'Provides technical infrastructure for content licensing with tamper-evident documentation and ecosystem integration.'
             })
           ),
         }}

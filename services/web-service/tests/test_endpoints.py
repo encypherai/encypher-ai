@@ -187,3 +187,21 @@ def test_legacy_analytics(client: TestClient):
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["success"] is True
+
+
+def test_tools_encode_is_deprecated(client: TestClient):
+    response = client.post(
+        "/api/v1/tools/encode",
+        json={"original_text": "payload"},
+    )
+    assert response.status_code == 410
+    assert response.json()["detail"] == "Deprecated endpoint. Use /api/v1/sign instead."
+
+
+def test_tools_decode_is_deprecated(client: TestClient):
+    response = client.post(
+        "/api/v1/tools/decode",
+        json={"encoded_text": "payload"},
+    )
+    assert response.status_code == 410
+    assert response.json()["detail"] == "Deprecated endpoint. Use /api/v1/verify instead."

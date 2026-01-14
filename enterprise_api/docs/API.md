@@ -15,11 +15,9 @@ The Encypher Enterprise API provides C2PA-compliant content signing and verifica
 
 ## SDK Integration
 
-Python teams can call the Enterprise API through the official SDK that ships with this repository.
+Python teams can call the Enterprise API through the official SDKs generated from the public OpenAPI schema.
 
-```bash
-pip install encypher-enterprise
-```
+SDKs are available in this repository under `sdk/`.
 
 ```python
 from encypher_enterprise import EncypherClient
@@ -37,18 +35,13 @@ sign_response = client.sign(
 verify_response = client.verify(sign_response.signed_text)
 ```
 
-See `enterprise_sdk/README.md` for streaming, async, and framework integrations, and track upcoming milestones in `enterprise_sdk/SDK_WBS.md`.
+See `sdk/README.md` for installation and usage.
 
-## C2PA Text Embedding Compliance
+## C2PA Compatibility
 
-The `POST /api/v1/sign` endpoint produces text that follows the [`C2PATextManifestWrapper`](../../docs/c2pa/Manifests_Text.adoc) guidance. Key guarantees:
+The Enterprise API produces signed text that is verifiable using standard C2PA-compatible workflows.
 
-- Each response appends a single zero-width no-break space (U+FEFF) followed by one contiguous block of variation selectors encoding the manifest store.
-- The wrapper header contains the literal `C2PATXT\0` magic value, wrapper version `1`, and the manifest length before the JUMBF payload.
-- Text is NFC-normalised prior to hashing and the wrapper byte-range is recorded in the `c2pa.hash.data` assertion `exclusions`, enabling deterministic validation.
-- Verification (`POST /api/v1/verify`) rejects malformed wrappers and multiple wrappers, returning the spec-aligned `manifest.text.corruptedWrapper` or `manifest.text.multipleWrappers` statuses.
-
-These behaviours allow any downstream validator that implements the C2PA unstructured text spec to parse and trust our basic embedding format.
+Use `POST /api/v1/verify` to validate signed text and detect tampering.
 
 ## Authentication
 
@@ -61,22 +54,20 @@ Authorization: Bearer encypher_<your_api_key>
 **Getting an API Key:**
 - Preview phase: Contact sales@encypherai.com for beta access
 - Production: Sign up at https://dashboard.encypherai.com
-- Local development: set `DEMO_API_KEY` in `.env` to enable a sandbox key that bypasses database lookups
 
 ## Rate Limiting
 
-Rate limits vary by tier:
-- **Free**: 1,000 requests/month
-- **Business**: 10,000 requests/month
-- **Enterprise**: Unlimited
+Rate limits vary by plan and are enforced per organization.
+
+For up-to-date limits and remaining quota for your organization, use:
+
+- `GET /api/v1/account/quota`
 
 Rate limit headers are included in responses:
 ```
 X-RateLimit-Remaining: 950
 X-RateLimit-Reset: 2025-02-01T00:00:00Z
 ```
-
-Public endpoints may also enforce IP-based rate limiting. Some public endpoints support an optional API key (via `Authorization: Bearer ...`) to bypass public rate limiting.
 
 ---
 
@@ -283,7 +274,7 @@ If an API key is provided, the request bypasses public IP-based rate limiting.
 
 Lookup a trust anchor (public key) for external C2PA validators.
 
-This endpoint enables third-party validators to verify Encypher-signed content by providing the signer's public key. Implements the "Private Credential Store" model per [C2PA spec §14.4.3](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_trust_lists).
+This endpoint enables third-party validators to verify Encypher-signed content by providing the signer's public key.
 
 **Authentication:** Not required (public endpoint)
 

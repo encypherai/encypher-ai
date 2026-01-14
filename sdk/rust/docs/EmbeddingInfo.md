@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **signature** | Option<**String**> |  | [optional]
 **embedding** | Option<**String**> |  | [optional]
 **verification_url** | Option<**String**> |  | [optional]
-**leaf_hash** | **String** | SHA-256 hash of text segment | 
+**leaf_hash** | **String** | Cryptographic hash of the signed text segment | 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -10,7 +10,6 @@ All URIs are relative to *https://api.encypherai.com*
 | [**getStreamingStatsApiV1StreamStatsGet**](StreamingApi.md#getstreamingstatsapiv1streamstatsget) | **GET** /api/v1/stream/stats | Get Streaming Stats |
 | [**sseEventsEndpointApiV1StreamEventsGet**](StreamingApi.md#sseeventsendpointapiv1streameventsget) | **GET** /api/v1/stream/events | Sse Events Endpoint |
 | [**streamSigningApiV1StreamSignPost**](StreamingApi.md#streamsigningapiv1streamsignpost) | **POST** /api/v1/stream/sign | Stream Signing |
-| [**streamingHealthCheckApiV1StreamHealthGet**](StreamingApi.md#streaminghealthcheckapiv1streamhealthget) | **GET** /api/v1/stream/health | Streaming Health Check |
 
 
 
@@ -180,7 +179,11 @@ import type { GetStreamRunApiV1StreamRunsRunIdGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new StreamingApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new StreamingApi(config);
 
   const body = {
     // string
@@ -212,7 +215,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -311,7 +314,11 @@ import type { SseEventsEndpointApiV1StreamEventsGetRequest } from '@encypher/sdk
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new StreamingApi();
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new StreamingApi(config);
 
   const body = {
     // string
@@ -346,7 +353,7 @@ example().catch(console.error);
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -431,65 +438,6 @@ example().catch(console.error);
 |-------------|-------------|------------------|
 | **200** | Successful Response |  -  |
 | **422** | Validation Error |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## streamingHealthCheckApiV1StreamHealthGet
-
-> any streamingHealthCheckApiV1StreamHealthGet()
-
-Streaming Health Check
-
-Health check endpoint for streaming service.  Returns:     Health status of streaming components
-
-### Example
-
-```ts
-import {
-  Configuration,
-  StreamingApi,
-} from '@encypher/sdk';
-import type { StreamingHealthCheckApiV1StreamHealthGetRequest } from '@encypher/sdk';
-
-async function example() {
-  console.log("🚀 Testing @encypher/sdk SDK...");
-  const api = new StreamingApi();
-
-  try {
-    const data = await api.streamingHealthCheckApiV1StreamHealthGet();
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-**any**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: `application/json`
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Successful Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 

@@ -1,6 +1,6 @@
 [project]
 name = "encypher-enterprise-api"
-version = "1.0.0-preview"
+version = "1.0.1"
 description = "Enterprise API for C2PA-compliant content signing and verification"
 requires-python = ">=3.10"
 dependencies = [
@@ -89,5 +89,6 @@ dev = [
     "pytest>=8.3.5",
     "pytest-asyncio>=1.0.0",
     "pytest-cov>=6.1.1",
+    "ruff>=0.14.11",
     "websockets>=15.0.1",
 ]

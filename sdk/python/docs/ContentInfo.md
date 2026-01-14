@@ -7,7 +7,7 @@ Content information from verification.
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **text_preview** | **str** | First 200 characters of content | 
-**leaf_hash** | **str** | SHA-256 hash of full content | 
+**leaf_hash** | **str** | Cryptographic hash of full content | 
 **leaf_index** | **int** | Position in document | 
 
 ## Example

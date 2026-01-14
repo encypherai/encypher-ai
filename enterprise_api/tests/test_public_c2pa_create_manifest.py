@@ -151,10 +151,10 @@ async def test_create_manifest_output_works_with_sign_and_verify(
         "/api/v1/verify",
         json={"text": sign_data["signed_text"]},
     )
-    assert verify_response.status_code == 200
+    assert verify_response.status_code == 410
     verify_data = verify_response.json()
-    assert verify_data["success"] is True
-    assert verify_data["data"]["valid"] is True
+    assert verify_data["success"] is False
+    assert verify_data["error"]["code"] == "ENDPOINT_DEPRECATED"
 
 
 @pytest.mark.asyncio

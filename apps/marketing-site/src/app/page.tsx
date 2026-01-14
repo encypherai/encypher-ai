@@ -14,15 +14,15 @@ export default function HomePage() {
     <>
       <AISummary
         title="Encypher – Content Intelligence Infrastructure"
-        whatWeDo="Authors of C2PA Section A.7 (Embedding Manifests into Unstructured Text). We provide API and SDKs in Python, TypeScript, Go, and Rust for patent-pending granular content attribution and licensing infrastructure. Standard published January 8, 2026. 83 claims filed covering Merkle tree authentication, evidence generation, and distributed embedding."
-        whoItsFor="Publishers needing content licensing revenue and provable ownership. AI labs needing performance intelligence and compliance. Enterprises requiring EU AI Act and China watermarking mandate compliance."
-        keyDifferentiator="Patent-pending cryptographic watermarking with 100% accuracy. Merkle tree authentication enables court-admissible evidence generation. Survives copy-paste, B2B distribution, and scraping."
-        primaryValue="Enable content licensing across the AI ecosystem. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
+        whatWeDo="Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text). We provide API and SDKs in Python, TypeScript, Go, and Rust for patent-pending granular content attribution and licensing infrastructure. Standard published January 8, 2026."
+        whoItsFor="Publishers needing content licensing infrastructure and provable ownership. AI labs needing performance intelligence and compliance. Enterprises requiring EU AI Act and China watermarking mandate compliance."
+        keyDifferentiator="Patent-pending cryptographic watermarking with tamper-evident verification. Merkle tree authentication provides documentation designed for legal proceedings. Survives copy-paste, B2B distribution, and scraping."
+        primaryValue="Provide technical infrastructure for content licensing across the AI ecosystem. Encypher serves as Co-Chair of the C2PA Text Provenance Task Force, with technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
         pagePath="/"
         faq={[
           {
             question: "What is Encypher?",
-            answer: "Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text), working with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others. We provide API and SDKs for patent-pending granular content attribution that enables content licensing and court-admissible evidence generation. Standard published January 8, 2026. Patent filed January 7, 2026 with 83 claims."
+            answer: "Encypher authored C2PA Section A.7 (Embedding Manifests into Unstructured Text) and serves as Co-Chair of the C2PA Text Provenance Task Force. We provide API and SDKs for patent-pending granular content attribution that enables content licensing infrastructure. Standard published January 8, 2026. Technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
           },
           {
             question: "What is the C2PA text standard?",
@@ -30,7 +30,7 @@ export default function HomePage() {
           },
           {
             question: "How is Encypher different from AI detection tools?",
-            answer: "AI detection tools provide statistical guessing with ~26% accuracy. Encypher provides cryptographic proof with 100% accuracy at sentence-level. Our watermarking survives copy-paste and distribution, enabling content licensing and attribution across the AI ecosystem."
+            answer: "AI detection tools provide statistical guessing with variable accuracy. Encypher provides cryptographic verification at sentence-level. Our watermarking survives copy-paste and distribution, enabling content licensing infrastructure and attribution across the AI ecosystem."
           },
           {
             question: "Who uses Encypher?",

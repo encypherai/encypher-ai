@@ -11,21 +11,21 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Play, Loader2 } from 'lucide-react';
 
-const sampleBodies = {
+const sampleBodies: Record<'sign' | 'verify', string> = {
   sign: JSON.stringify({ text: "This is a test document to be signed." }, null, 2),
   verify: JSON.stringify({ text: "This is a test document to be verified with its signature..." }, null, 2),
 };
 
 export default function ApiSandbox() {
-  const [endpoint, setEndpoint] = useState('sign');
+  const [endpoint, setEndpoint] = useState<'sign' | 'verify'>('sign');
   const [apiKey, setApiKey] = useState('');
   const [requestBody, setRequestBody] = useState(sampleBodies.sign);
   const [response, setResponse] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleEndpointChange = (value: string) => {
+    if (value !== 'sign' && value !== 'verify') return;
     setEndpoint(value);
-    // @ts-ignore
     setRequestBody(sampleBodies[value]);
     setResponse('');
   };

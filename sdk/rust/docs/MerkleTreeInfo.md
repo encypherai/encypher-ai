@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**root_hash** | **String** | Merkle tree root hash | 
+**root_hash** | **String** | Root hash for the integrity proof | 
 **total_leaves** | **i32** | Number of leaf nodes | 
 **tree_depth** | **i32** | Height of the tree | 
 

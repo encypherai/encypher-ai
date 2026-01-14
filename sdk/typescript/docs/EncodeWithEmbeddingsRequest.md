@@ -11,6 +11,11 @@ Name | Type
 `text` | string
 `segmentationLevel` | string
 `action` | string
+`manifestMode` | string
+`embeddingStrategy` | string
+`distributionTarget` | string
+`addDualBinding` | boolean
+`disableC2pa` | boolean
 `previousInstanceId` | string
 `metadata` | { [key: string]: any; }
 `c2paManifestUrl` | string
@@ -35,6 +40,11 @@ const example = {
   "text": null,
   "segmentationLevel": null,
   "action": null,
+  "manifestMode": null,
+  "embeddingStrategy": null,
+  "distributionTarget": null,
+  "addDualBinding": null,
+  "disableC2pa": null,
   "previousInstanceId": null,
   "metadata": null,
   "c2paManifestUrl": null,

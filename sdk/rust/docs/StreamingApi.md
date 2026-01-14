@@ -10,7 +10,6 @@ Method | HTTP request | Description
 [**get_streaming_stats_api_v1_stream_stats_get**](StreamingApi.md#get_streaming_stats_api_v1_stream_stats_get) | **GET** /api/v1/stream/stats | Get Streaming Stats
 [**sse_events_endpoint_api_v1_stream_events_get**](StreamingApi.md#sse_events_endpoint_api_v1_stream_events_get) | **GET** /api/v1/stream/events | Sse Events Endpoint
 [**stream_signing_api_v1_stream_sign_post**](StreamingApi.md#stream_signing_api_v1_stream_sign_post) | **POST** /api/v1/stream/sign | Stream Signing
-[**streaming_health_check_api_v1_stream_health_get**](StreamingApi.md#streaming_health_check_api_v1_stream_health_get) | **GET** /api/v1/stream/health | Streaming Health Check
 
 
 
@@ -95,7 +94,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -153,7 +152,7 @@ Name | Type | Description  | Required | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -188,33 +187,6 @@ Name | Type | Description  | Required | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-
-## streaming_health_check_api_v1_stream_health_get
-
-> serde_json::Value streaming_health_check_api_v1_stream_health_get()
-Streaming Health Check
-
-Health check endpoint for streaming service.  Returns:     Health status of streaming components
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**serde_json::Value**](serde_json::Value.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

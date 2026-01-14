@@ -11,7 +11,8 @@ export default function CTAButton({ onClick }: CTAButtonProps) {
   return (
     <motion.button
       onClick={onClick}
-      className="group relative px-12 py-6 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg text-white font-bold text-xl overflow-hidden shadow-2xl"
+      // TEAM_061: Remove blue/purple gradients; use design-system token colors.
+      className="group relative px-12 py-6 bg-blue-ncs rounded-lg text-white font-bold text-xl overflow-hidden shadow-2xl transition-all duration-200 hover:bg-blue-ncs/90 active:bg-blue-ncs/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-ncs"
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.98 }}
       initial={{ opacity: 0, y: 20 }}
@@ -20,7 +21,7 @@ export default function CTAButton({ onClick }: CTAButtonProps) {
     >
       {/* Glow effect */}
       <motion.div
-        className="absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 opacity-0 group-hover:opacity-30 transition-opacity duration-300"
+        className="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"
         animate={{
           scale: [1, 1.2, 1],
         }}

@@ -49,7 +49,10 @@ class EmbeddingVerdict(BaseModel):
     signer_id: Optional[str] = Field(None, description="Resolved signer/organization ID")
     signer_name: Optional[str] = Field(None, description="Human readable signer name")
     timestamp: Optional[datetime] = Field(None, description="Signature timestamp, if present")
-    text_span: Optional[tuple[int, int]] = Field(None, description="Start and end position in original text")
+    text_span: Optional[tuple[int, int]] = Field(
+        None,
+        description="Start and end UTF-8 byte offsets in the input text",
+    )
     clean_text: Optional[str] = Field(None, description="Text covered by this embedding")
     manifest: Optional[Dict[str, Any]] = Field(None, description="C2PA manifest for this embedding")
 

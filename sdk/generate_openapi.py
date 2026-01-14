@@ -7,6 +7,7 @@ It sets minimal environment variables to satisfy config requirements.
 import copy
 import json
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -56,6 +57,87 @@ BaseSettings.__init__ = patched_init
 from app.main import _filter_openapi_for_public, app
 
 
+def _load_verification_service_openapi(*, api_base_url: str) -> dict:
+    verification_service_root = Path(__file__).parent.parent / "services" / "verification-service"
+    cmd = [
+        sys.executable,
+        "-c",
+        (
+            "import json, os, sys; "
+            f"sys.path.insert(0, {json.dumps(str(verification_service_root))}); "
+            "os.environ.setdefault('_PYDANTIC_SETTINGS_SKIP_ENV_FILE', '1'); "
+            "os.environ.setdefault('DATABASE_URL', 'postgresql://localhost/encypher'); "
+            "from fastapi import FastAPI; "
+            "from fastapi.openapi.utils import get_openapi; "
+            "from app.api.v1 import endpoints as v1_endpoints; "
+            "app = FastAPI(title='Encypher Verification Service', version='1.0.1', description='Document verification microservice'); "
+            "app.include_router(v1_endpoints.router, prefix='/api/v1/verify', tags=['verification']); "
+            "spec = get_openapi(title=app.title, version=app.version, description=app.description, routes=app.routes); "
+            "spec['servers'] = [{'url': os.environ.get('API_BASE_URL', 'https://api.encypherai.com'), 'description': 'Production'}, {'url': 'http://localhost:8005', 'description': 'Local development'}]; "
+            "print(json.dumps(spec))"
+        ),
+    ]
+    env = os.environ.copy()
+    env["API_BASE_URL"] = api_base_url
+    payload = subprocess.check_output(cmd, env=env, text=True)
+    return json.loads(payload)
+
+
+def _rewrite_refs(obj: object, mapping: dict[str, str]) -> object:
+    if isinstance(obj, dict):
+        out: dict = {}
+        for k, v in obj.items():
+            if k == "$ref" and isinstance(v, str):
+                out[k] = mapping.get(v, v)
+            else:
+                out[k] = _rewrite_refs(v, mapping)
+        return out
+    if isinstance(obj, list):
+        return [_rewrite_refs(v, mapping) for v in obj]
+    return obj
+
+
+def _merge_openapi_specs(*, base: dict, extra: dict) -> dict:
+    merged = copy.deepcopy(base)
+
+    merged.setdefault("paths", {})
+    for path, methods in (extra.get("paths") or {}).items():
+        if path in merged["paths"]:
+            raise RuntimeError(f"OpenAPI merge conflict: path already exists: {path}")
+        merged["paths"][path] = methods
+
+    merged.setdefault("tags", [])
+    seen_tags = {t.get("name") for t in merged["tags"] if isinstance(t, dict)}
+    for tag in extra.get("tags") or []:
+        name = tag.get("name") if isinstance(tag, dict) else None
+        if name and name not in seen_tags:
+            merged["tags"].append(tag)
+            seen_tags.add(name)
+
+    merged.setdefault("components", {})
+    extra_components = extra.get("components") or {}
+
+    schema_map: dict[str, str] = {}
+    base_schemas = merged["components"].setdefault("schemas", {})
+    extra_schemas = extra_components.get("schemas") or {}
+    for name, schema in extra_schemas.items():
+        if name not in base_schemas:
+            base_schemas[name] = schema
+            continue
+        if base_schemas[name] == schema:
+            continue
+        new_name = f"VerificationService__{name}"
+        while new_name in base_schemas:
+            new_name = f"{new_name}_"
+        schema_map[f"#/components/schemas/{name}"] = f"#/components/schemas/{new_name}"
+        base_schemas[new_name] = schema
+
+    if schema_map:
+        merged["paths"] = _rewrite_refs(merged["paths"], schema_map)
+
+    return merged
+
+
 def _with_servers(schema: dict, *, api_base_url: str) -> dict:
     schema["servers"] = [
         {"url": api_base_url, "description": "Production"},
@@ -69,6 +151,7 @@ def main():
     output_dir = Path(__file__).parent
     public_path = output_dir / "openapi.public.json"
     internal_path = output_dir / "openapi.internal.json"
+    legacy_path = output_dir / "openapi.json"
 
     api_base_url = os.environ.get("API_BASE_URL", "https://api.encypherai.com")
 
@@ -83,6 +166,9 @@ def main():
         api_base_url=api_base_url,
     )
 
+    verification_public = _load_verification_service_openapi(api_base_url=api_base_url)
+    public_schema = _merge_openapi_specs(base=public_schema, extra=verification_public)
+
     internal_schema = get_openapi(
         title=f"{app.title} (Internal)",
         version=app.version,
@@ -91,15 +177,22 @@ def main():
     )
     internal_schema = _with_servers(internal_schema, api_base_url=api_base_url)
 
+    verification_internal = _load_verification_service_openapi(api_base_url=api_base_url)
+    internal_schema = _merge_openapi_specs(base=internal_schema, extra=verification_internal)
+
     with open(public_path, "w") as f:
+        json.dump(public_schema, f, indent=2)
+
+    with open(legacy_path, "w") as f:
         json.dump(public_schema, f, indent=2)
 
     with open(internal_path, "w") as f:
         json.dump(internal_schema, f, indent=2)
 
-    print(f"✅ Generated OpenAPI specs:")
+    print("✅ Generated OpenAPI specs:")
     print(f"   Public:   {public_path}")
     print(f"   Internal: {internal_path}")
+    print(f"   Legacy:   {legacy_path}")
 
     for label, schema in (("Public", public_schema), ("Internal", internal_schema)):
         paths = schema.get("paths", {})

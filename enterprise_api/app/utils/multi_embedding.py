@@ -31,7 +31,8 @@ class EmbeddingInfo:
     
     index: int
     manifest_bytes: bytes
-    span: tuple[int, int]  # (start, end) in original text
+    span: tuple[int, int]  # (start, end) char indices in NFC-normalized text
+    byte_span: tuple[int, int]  # (start, end) UTF-8 byte offsets in NFC-normalized text
     segment_text: str  # The text content associated with this embedding
     embedding_type: str = "c2pa"  # "c2pa" or "basic"
     metadata: Optional[dict] = None
@@ -276,6 +277,10 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
             index=i,
             manifest_bytes=payload_bytes,
             span=(start, end),
+            byte_span=(
+                len(text[:start].encode("utf-8")),
+                len(text[:end].encode("utf-8")),
+            ),
             segment_text=segment_text,
             embedding_type=embedding_type,
             metadata=metadata,

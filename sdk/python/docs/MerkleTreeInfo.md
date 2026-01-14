@@ -6,7 +6,7 @@ Merkle tree information.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**root_hash** | **str** | Merkle tree root hash | 
+**root_hash** | **str** | Root hash for the integrity proof | 
 **total_leaves** | **int** | Number of leaf nodes | 
 **tree_depth** | **int** | Height of the tree | 
 

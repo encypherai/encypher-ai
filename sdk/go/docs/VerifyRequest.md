@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Text** | **string** | Text with embedded C2PA manifest | 
+**Text** | **string** |  | 
 
 ## Methods
 

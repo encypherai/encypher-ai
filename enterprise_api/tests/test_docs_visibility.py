@@ -46,6 +46,24 @@ async def test_internal_openapi_exists_and_full_spec_includes_licensing() -> Non
 
 
 @pytest.mark.asyncio
+async def test_openapi_does_not_advertise_deprecated_tools_endpoints() -> None:
+    public_resp = await public_openapi()
+    assert public_resp.status_code == 200
+    public_text = public_resp.body.decode("utf-8")
+    assert "/api/v1/tools/encode" not in public_text
+    assert "/api/v1/tools/decode" not in public_text
+
+    internal = get_openapi(
+        title=f"{app.title} (Internal)",
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
+    assert "/api/v1/tools/encode" not in internal.get("paths", {})
+    assert "/api/v1/tools/decode" not in internal.get("paths", {})
+
+
+@pytest.mark.asyncio
 async def test_require_super_admin_enforces_feature_flag() -> None:
     with pytest.raises(HTTPException):
         await require_super_admin({"organization_id": "org_test", "features": {"is_super_admin": False}})

@@ -1,6 +1,6 @@
 [project]
 name = "encypher"
-version = "1.0.0a1"
+version = "1.0.1"
 description = "Encypher Enterprise API"
 authors = [
   {name = "Encypher", email = "sdk@encypherai.com"},

@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **status** | **str** | Processing outcome for the document | 
 **signed_text** | **str** |  | [optional] 
 **embedded_content** | **str** |  | [optional] 
-**verdict** | [**AppModelsResponseModelsVerifyVerdict**](AppModelsResponseModelsVerifyVerdict.md) |  | [optional] 
+**verdict** | [**VerifyVerdict**](VerifyVerdict.md) |  | [optional] 
 **error_code** | **str** |  | [optional] 
 **error_message** | **str** |  | [optional] 
 **statistics** | **Dict[str, object]** | Timing and segmentation statistics for the item | [optional] 

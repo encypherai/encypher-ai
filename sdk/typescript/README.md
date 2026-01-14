@@ -1,4 +1,4 @@
-# @encypher/sdk@1.0.0-alpha.1
+# @encypher/sdk@1.0.1
 
 A TypeScript SDK client for the api.encypherai.com API.
 
@@ -70,10 +70,14 @@ All URIs are relative to *https://api.encypherai.com*
 *AccountApi* | [**getAccountQuotaApiV1AccountQuotaGet_0**](docs/AccountApi.md#getaccountquotaapiv1accountquotaget_0) | **GET** /api/v1/account/quota | Get Account Quota
 *BYOKApi* | [**listPublicKeysApiV1ByokPublicKeysGet**](docs/BYOKApi.md#listpublickeysapiv1byokpublickeysget) | **GET** /api/v1/byok/public-keys | List public keys
 *BYOKApi* | [**listPublicKeysApiV1ByokPublicKeysGet_0**](docs/BYOKApi.md#listpublickeysapiv1byokpublickeysget_0) | **GET** /api/v1/byok/public-keys | List public keys
+*BYOKApi* | [**listTrustedCasApiV1ByokTrustedCasGet**](docs/BYOKApi.md#listtrustedcasapiv1byoktrustedcasget) | **GET** /api/v1/byok/trusted-cas | List trusted Certificate Authorities
+*BYOKApi* | [**listTrustedCasApiV1ByokTrustedCasGet_0**](docs/BYOKApi.md#listtrustedcasapiv1byoktrustedcasget_0) | **GET** /api/v1/byok/trusted-cas | List trusted Certificate Authorities
 *BYOKApi* | [**registerPublicKeyApiV1ByokPublicKeysPost**](docs/BYOKApi.md#registerpublickeyapiv1byokpublickeyspost) | **POST** /api/v1/byok/public-keys | Register a public key
 *BYOKApi* | [**registerPublicKeyApiV1ByokPublicKeysPost_0**](docs/BYOKApi.md#registerpublickeyapiv1byokpublickeyspost_0) | **POST** /api/v1/byok/public-keys | Register a public key
 *BYOKApi* | [**revokePublicKeyApiV1ByokPublicKeysKeyIdDelete**](docs/BYOKApi.md#revokepublickeyapiv1byokpublickeyskeyiddelete) | **DELETE** /api/v1/byok/public-keys/{key_id} | Revoke a public key
 *BYOKApi* | [**revokePublicKeyApiV1ByokPublicKeysKeyIdDelete_0**](docs/BYOKApi.md#revokepublickeyapiv1byokpublickeyskeyiddelete_0) | **DELETE** /api/v1/byok/public-keys/{key_id} | Revoke a public key
+*BYOKApi* | [**uploadCertificateApiV1ByokCertificatesPost**](docs/BYOKApi.md#uploadcertificateapiv1byokcertificatespost) | **POST** /api/v1/byok/certificates | Upload a CA-signed certificate
+*BYOKApi* | [**uploadCertificateApiV1ByokCertificatesPost_0**](docs/BYOKApi.md#uploadcertificateapiv1byokcertificatespost_0) | **POST** /api/v1/byok/certificates | Upload a CA-signed certificate
 *BatchApi* | [**batchSignApiV1BatchSignPost**](docs/BatchApi.md#batchsignapiv1batchsignpost) | **POST** /api/v1/batch/sign | Batch Sign
 *BatchApi* | [**batchVerifyApiV1BatchVerifyPost**](docs/BatchApi.md#batchverifyapiv1batchverifypost) | **POST** /api/v1/batch/verify | Batch Verify
 *C2PACustomAssertionsApi* | [**createSchemaApiV1EnterpriseC2paSchemasPost**](docs/C2PACustomAssertionsApi.md#createschemaapiv1enterprisec2paschemaspost) | **POST** /api/v1/enterprise/c2pa/schemas | Create Schema
@@ -107,29 +111,27 @@ All URIs are relative to *https://api.encypherai.com*
 *DocumentsApi* | [**getDocumentHistoryApiV1DocumentsDocumentIdHistoryGet_0**](docs/DocumentsApi.md#getdocumenthistoryapiv1documentsdocumentidhistoryget_0) | **GET** /api/v1/documents/{document_id}/history | Get Document History
 *DocumentsApi* | [**listDocumentsApiV1DocumentsGet**](docs/DocumentsApi.md#listdocumentsapiv1documentsget) | **GET** /api/v1/documents | List Documents
 *DocumentsApi* | [**listDocumentsApiV1DocumentsGet_0**](docs/DocumentsApi.md#listdocumentsapiv1documentsget_0) | **GET** /api/v1/documents | List Documents
-*EnterpriseEmbeddingsApi* | [**encodeWithEmbeddingsApiV1EnterpriseEmbeddingsEncodeWithEmbeddingsPost**](docs/EnterpriseEmbeddingsApi.md#encodewithembeddingsapiv1enterpriseembeddingsencodewithembeddingspost) | **POST** /api/v1/enterprise/embeddings/encode-with-embeddings | Encode With Embeddings
-*EnterpriseEmbeddingsApi* | [**signAdvancedApiV1EnterpriseEmbeddingsSignAdvancedPost**](docs/EnterpriseEmbeddingsApi.md#signadvancedapiv1enterpriseembeddingssignadvancedpost) | **POST** /api/v1/enterprise/embeddings/sign/advanced | Sign Advanced
 *EnterpriseMerkleTreesApi* | [**detectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost**](docs/EnterpriseMerkleTreesApi.md#detectplagiarismapiv1enterprisemerkledetectplagiarismpost) | **POST** /api/v1/enterprise/merkle/detect-plagiarism | Detect Plagiarism
 *EnterpriseMerkleTreesApi* | [**encodeDocumentApiV1EnterpriseMerkleEncodePost**](docs/EnterpriseMerkleTreesApi.md#encodedocumentapiv1enterprisemerkleencodepost) | **POST** /api/v1/enterprise/merkle/encode | Encode Document into Merkle Trees
 *EnterpriseMerkleTreesApi* | [**findSourcesApiV1EnterpriseMerkleAttributePost**](docs/EnterpriseMerkleTreesApi.md#findsourcesapiv1enterprisemerkleattributepost) | **POST** /api/v1/enterprise/merkle/attribute | Find Source Documents
+*EvidenceGenerationApi* | [**generateEvidenceApiV1EnterpriseEvidenceGeneratePost**](docs/EvidenceGenerationApi.md#generateevidenceapiv1enterpriseevidencegeneratepost) | **POST** /api/v1/enterprise/evidence/generate | Generate Evidence
+*FingerprintApi* | [**detectFingerprintApiV1EnterpriseFingerprintDetectPost**](docs/FingerprintApi.md#detectfingerprintapiv1enterprisefingerprintdetectpost) | **POST** /api/v1/enterprise/fingerprint/detect | Detect Fingerprint
+*FingerprintApi* | [**encodeFingerprintApiV1EnterpriseFingerprintEncodePost**](docs/FingerprintApi.md#encodefingerprintapiv1enterprisefingerprintencodepost) | **POST** /api/v1/enterprise/fingerprint/encode | Encode Fingerprint
 *HealthApi* | [**healthCheckHealthGet**](docs/HealthApi.md#healthcheckhealthget) | **GET** /health | Health Check
 *HealthApi* | [**readinessCheckReadyzGet**](docs/HealthApi.md#readinesscheckreadyzget) | **GET** /readyz | Readiness Check
 *InfoApi* | [**rootGet**](docs/InfoApi.md#rootget) | **GET** / | Root
 *LookupApi* | [**lookupSentenceApiV1LookupPost**](docs/LookupApi.md#lookupsentenceapiv1lookuppost) | **POST** /api/v1/lookup | Lookup Sentence
 *LookupApi* | [**provenanceLookupApiV1ProvenanceLookupPost**](docs/LookupApi.md#provenancelookupapiv1provenancelookuppost) | **POST** /api/v1/provenance/lookup | Provenance Lookup
+*MultiSourceAttributionApi* | [**multiSourceLookupApiV1EnterpriseAttributionMultiSourcePost**](docs/MultiSourceAttributionApi.md#multisourcelookupapiv1enterpriseattributionmultisourcepost) | **POST** /api/v1/enterprise/attribution/multi-source | Multi Source Lookup
 *OnboardingApi* | [**getCertificateStatusApiV1OnboardingCertificateStatusGet**](docs/OnboardingApi.md#getcertificatestatusapiv1onboardingcertificatestatusget) | **GET** /api/v1/onboarding/certificate-status | Get Certificate Status
 *OnboardingApi* | [**requestCertificateApiV1OnboardingRequestCertificatePost**](docs/OnboardingApi.md#requestcertificateapiv1onboardingrequestcertificatepost) | **POST** /api/v1/onboarding/request-certificate | Request Certificate
 *PublicC2PAApi* | [**createManifestApiV1PublicC2paCreateManifestPost**](docs/PublicC2PAApi.md#createmanifestapiv1publicc2pacreatemanifestpost) | **POST** /api/v1/public/c2pa/create-manifest | Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)
 *PublicC2PAApi* | [**getTrustAnchorApiV1PublicC2paTrustAnchorsSignerIdGet**](docs/PublicC2PAApi.md#gettrustanchorapiv1publicc2patrustanchorssigneridget) | **GET** /api/v1/public/c2pa/trust-anchors/{signer_id} | Lookup trust anchor for C2PA verification (Public)
 *PublicC2PAApi* | [**validateManifestApiV1PublicC2paValidateManifestPost**](docs/PublicC2PAApi.md#validatemanifestapiv1publicc2pavalidatemanifestpost) | **POST** /api/v1/public/c2pa/validate-manifest | Validate C2PA-like manifest JSON (Public - Non-Cryptographic)
-*PublicToolsApi* | [**decodeTextApiV1ToolsDecodePost**](docs/PublicToolsApi.md#decodetextapiv1toolsdecodepost) | **POST** /api/v1/tools/decode | Decode Text
-*PublicToolsApi* | [**decodeTextApiV1ToolsDecodePost_0**](docs/PublicToolsApi.md#decodetextapiv1toolsdecodepost_0) | **POST** /api/v1/tools/decode | Decode Text
-*PublicToolsApi* | [**encodeTextApiV1ToolsEncodePost**](docs/PublicToolsApi.md#encodetextapiv1toolsencodepost) | **POST** /api/v1/tools/encode | Encode Text
-*PublicToolsApi* | [**encodeTextApiV1ToolsEncodePost_0**](docs/PublicToolsApi.md#encodetextapiv1toolsencodepost_0) | **POST** /api/v1/tools/encode | Encode Text
 *PublicVerificationApi* | [**batchVerifyEmbeddingsApiV1PublicVerifyBatchPost**](docs/PublicVerificationApi.md#batchverifyembeddingsapiv1publicverifybatchpost) | **POST** /api/v1/public/verify/batch | Batch Verify Embeddings (Public - No Auth Required)
 *PublicVerificationApi* | [**extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost**](docs/PublicVerificationApi.md#extractandverifyembeddingapiv1publicextractandverifypost) | **POST** /api/v1/public/extract-and-verify | Extract and Verify Invisible Embedding (Public - No Auth Required)
 *PublicVerificationApi* | [**verifyEmbeddingApiV1PublicVerifyRefIdGet**](docs/PublicVerificationApi.md#verifyembeddingapiv1publicverifyrefidget) | **GET** /api/v1/public/verify/{ref_id} | Verify Embedding (Public - No Auth Required)
-*SigningApi* | [**signAdvancedApiV1SignAdvancedPost**](docs/SigningApi.md#signadvancedapiv1signadvancedpost) | **POST** /api/v1/sign/advanced | Sign Advanced
+*SigningApi* | [**signAdvancedApiV1SignAdvancedPost**](docs/SigningApi.md#signadvancedapiv1signadvancedpost) | **POST** /api/v1/sign/advanced | Sign with advanced embedding controls
 *SigningApi* | [**signContentApiV1SignPost**](docs/SigningApi.md#signcontentapiv1signpost) | **POST** /api/v1/sign | Sign Content
 *StatusRevocationApi* | [**getDocumentStatusApiV1StatusDocumentsDocumentIdGet**](docs/StatusRevocationApi.md#getdocumentstatusapiv1statusdocumentsdocumentidget) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
 *StatusRevocationApi* | [**getDocumentStatusApiV1StatusDocumentsDocumentIdGet_0**](docs/StatusRevocationApi.md#getdocumentstatusapiv1statusdocumentsdocumentidget_0) | **GET** /api/v1/status/documents/{document_id} | Get Document Status
@@ -147,12 +149,19 @@ All URIs are relative to *https://api.encypherai.com*
 *StreamingApi* | [**getStreamingStatsApiV1StreamStatsGet**](docs/StreamingApi.md#getstreamingstatsapiv1streamstatsget) | **GET** /api/v1/stream/stats | Get Streaming Stats
 *StreamingApi* | [**sseEventsEndpointApiV1StreamEventsGet**](docs/StreamingApi.md#sseeventsendpointapiv1streameventsget) | **GET** /api/v1/stream/events | Sse Events Endpoint
 *StreamingApi* | [**streamSigningApiV1StreamSignPost**](docs/StreamingApi.md#streamsigningapiv1streamsignpost) | **POST** /api/v1/stream/sign | Stream Signing
-*StreamingApi* | [**streamingHealthCheckApiV1StreamHealthGet**](docs/StreamingApi.md#streaminghealthcheckapiv1streamhealthget) | **GET** /api/v1/stream/health | Streaming Health Check
+*StreamingMerkleApi* | [**addSegmentToSessionApiV1EnterpriseStreamMerkleSegmentPost**](docs/StreamingMerkleApi.md#addsegmenttosessionapiv1enterprisestreammerklesegmentpost) | **POST** /api/v1/enterprise/stream/merkle/segment | Add Segment To Session
+*StreamingMerkleApi* | [**finalizeStreamingSessionApiV1EnterpriseStreamMerkleFinalizePost**](docs/StreamingMerkleApi.md#finalizestreamingsessionapiv1enterprisestreammerklefinalizepost) | **POST** /api/v1/enterprise/stream/merkle/finalize | Finalize Streaming Session
+*StreamingMerkleApi* | [**getSessionStatusApiV1EnterpriseStreamMerkleStatusPost**](docs/StreamingMerkleApi.md#getsessionstatusapiv1enterprisestreammerklestatuspost) | **POST** /api/v1/enterprise/stream/merkle/status | Get Session Status
+*StreamingMerkleApi* | [**startStreamingMerkleSessionApiV1EnterpriseStreamMerkleStartPost**](docs/StreamingMerkleApi.md#startstreamingmerklesessionapiv1enterprisestreammerklestartpost) | **POST** /api/v1/enterprise/stream/merkle/start | Start Streaming Merkle Session
 *UsageApi* | [**getUsageHistoryApiV1UsageHistoryGet**](docs/UsageApi.md#getusagehistoryapiv1usagehistoryget) | **GET** /api/v1/usage/history | Get Usage History
 *UsageApi* | [**getUsageStatsApiV1UsageGet**](docs/UsageApi.md#getusagestatsapiv1usageget) | **GET** /api/v1/usage | Get Usage Stats
-*UsageApi* | [**resetMonthlyUsageApiV1UsageResetPost**](docs/UsageApi.md#resetmonthlyusageapiv1usageresetpost) | **POST** /api/v1/usage/reset | Reset Monthly Usage
+*VerificationApi* | [**getStatsApiV1VerifyStatsGet**](docs/VerificationApi.md#getstatsapiv1verifystatsget) | **GET** /api/v1/verify/stats | Get Stats
+*VerificationApi* | [**getVerificationHistoryApiV1VerifyHistoryDocumentIdGet**](docs/VerificationApi.md#getverificationhistoryapiv1verifyhistorydocumentidget) | **GET** /api/v1/verify/history/{document_id} | Get Verification History
+*VerificationApi* | [**healthCheckApiV1VerifyHealthGet**](docs/VerificationApi.md#healthcheckapiv1verifyhealthget) | **GET** /api/v1/verify/health | Health Check
 *VerificationApi* | [**verifyByDocumentIdApiV1VerifyDocumentIdGet**](docs/VerificationApi.md#verifybydocumentidapiv1verifydocumentidget) | **GET** /api/v1/verify/{document_id} | Verify By Document Id
-*VerificationApi* | [**verifyContentApiV1VerifyPost**](docs/VerificationApi.md#verifycontentapiv1verifypost) | **POST** /api/v1/verify | Verify Content
+*VerificationApi* | [**verifyDocumentApiV1VerifyDocumentPost**](docs/VerificationApi.md#verifydocumentapiv1verifydocumentpost) | **POST** /api/v1/verify/document | Verify Document
+*VerificationApi* | [**verifySignatureApiV1VerifySignaturePost**](docs/VerificationApi.md#verifysignatureapiv1verifysignaturepost) | **POST** /api/v1/verify/signature | Verify Signature
+*VerificationApi* | [**verifyTextApiV1VerifyPost**](docs/VerificationApi.md#verifytextapiv1verifypost) | **POST** /api/v1/verify | Verify Text
 *WebhooksApi* | [**createWebhookApiV1WebhooksPost**](docs/WebhooksApi.md#createwebhookapiv1webhookspost) | **POST** /api/v1/webhooks | Create Webhook
 *WebhooksApi* | [**createWebhookApiV1WebhooksPost_0**](docs/WebhooksApi.md#createwebhookapiv1webhookspost_0) | **POST** /api/v1/webhooks | Create Webhook
 *WebhooksApi* | [**deleteWebhookApiV1WebhooksWebhookIdDelete**](docs/WebhooksApi.md#deletewebhookapiv1webhookswebhookiddelete) | **DELETE** /api/v1/webhooks/{webhook_id} | Delete Webhook
@@ -173,12 +182,7 @@ All URIs are relative to *https://api.encypherai.com*
 
 - [AccountInfo](docs/AccountInfo.md)
 - [AccountResponse](docs/AccountResponse.md)
-- [AppModelsRequestModelsRightsMetadata](docs/AppModelsRequestModelsRightsMetadata.md)
-- [AppModelsResponseModelsVerifyVerdict](docs/AppModelsResponseModelsVerifyVerdict.md)
-- [AppRoutersToolsVerifyVerdict](docs/AppRoutersToolsVerifyVerdict.md)
-- [AppSchemasBatchBatchVerifyRequest](docs/AppSchemasBatchBatchVerifyRequest.md)
 - [AppSchemasEmbeddingsBatchVerifyRequest](docs/AppSchemasEmbeddingsBatchVerifyRequest.md)
-- [AppSchemasEmbeddingsErrorResponse](docs/AppSchemasEmbeddingsErrorResponse.md)
 - [AppSchemasEmbeddingsRightsMetadata](docs/AppSchemasEmbeddingsRightsMetadata.md)
 - [AppSchemasMerkleErrorResponse](docs/AppSchemasMerkleErrorResponse.md)
 - [BatchItemPayload](docs/BatchItemPayload.md)
@@ -187,6 +191,7 @@ All URIs are relative to *https://api.encypherai.com*
 - [BatchResponseEnvelope](docs/BatchResponseEnvelope.md)
 - [BatchSignRequest](docs/BatchSignRequest.md)
 - [BatchSummary](docs/BatchSummary.md)
+- [BatchVerifyRequest](docs/BatchVerifyRequest.md)
 - [BatchVerifyResponse](docs/BatchVerifyResponse.md)
 - [BatchVerifyResult](docs/BatchVerifyResult.md)
 - [BodyCreateStreamingSessionApiV1StreamSessionCreatePost](docs/BodyCreateStreamingSessionApiV1StreamSessionCreatePost.md)
@@ -202,16 +207,17 @@ All URIs are relative to *https://api.encypherai.com*
 - [C2PATemplateListResponse](docs/C2PATemplateListResponse.md)
 - [C2PATemplateResponse](docs/C2PATemplateResponse.md)
 - [C2PATemplateUpdate](docs/C2PATemplateUpdate.md)
+- [CertificateUploadRequest](docs/CertificateUploadRequest.md)
+- [CertificateUploadResponse](docs/CertificateUploadResponse.md)
 - [ChatCompletionRequest](docs/ChatCompletionRequest.md)
 - [ChatMessage](docs/ChatMessage.md)
 - [CoalitionDashboardResponse](docs/CoalitionDashboardResponse.md)
 - [ContentInfo](docs/ContentInfo.md)
+- [ContentMatch](docs/ContentMatch.md)
 - [ContentStats](docs/ContentStats.md)
 - [CreateManifestRequest](docs/CreateManifestRequest.md)
 - [CreateManifestResponse](docs/CreateManifestResponse.md)
 - [CreateManifestSigningPayload](docs/CreateManifestSigningPayload.md)
-- [DecodeToolRequest](docs/DecodeToolRequest.md)
-- [DecodeToolResponse](docs/DecodeToolResponse.md)
 - [DocumentDeleteResponse](docs/DocumentDeleteResponse.md)
 - [DocumentDetail](docs/DocumentDetail.md)
 - [DocumentDetailResponse](docs/DocumentDetailResponse.md)
@@ -221,19 +227,26 @@ All URIs are relative to *https://api.encypherai.com*
 - [DocumentInfo](docs/DocumentInfo.md)
 - [DocumentListResponse](docs/DocumentListResponse.md)
 - [DocumentStatusResponse](docs/DocumentStatusResponse.md)
+- [DocumentVerify](docs/DocumentVerify.md)
 - [EarningsSummary](docs/EarningsSummary.md)
 - [EmbeddingInfo](docs/EmbeddingInfo.md)
 - [EmbeddingOptions](docs/EmbeddingOptions.md)
-- [EmbeddingResult](docs/EmbeddingResult.md)
 - [EmbeddingVerdict](docs/EmbeddingVerdict.md)
-- [EncodeToolRequest](docs/EncodeToolRequest.md)
-- [EncodeToolResponse](docs/EncodeToolResponse.md)
 - [EncodeWithEmbeddingsRequest](docs/EncodeWithEmbeddingsRequest.md)
 - [EncodeWithEmbeddingsResponse](docs/EncodeWithEmbeddingsResponse.md)
 - [ErrorDetail](docs/ErrorDetail.md)
+- [ErrorResponse](docs/ErrorResponse.md)
+- [EvidenceGenerateRequest](docs/EvidenceGenerateRequest.md)
+- [EvidenceGenerateResponse](docs/EvidenceGenerateResponse.md)
+- [EvidencePackage](docs/EvidencePackage.md)
 - [ExtractAndVerifyRequest](docs/ExtractAndVerifyRequest.md)
 - [ExtractAndVerifyResponse](docs/ExtractAndVerifyResponse.md)
 - [FeatureFlags](docs/FeatureFlags.md)
+- [FingerprintDetectRequest](docs/FingerprintDetectRequest.md)
+- [FingerprintDetectResponse](docs/FingerprintDetectResponse.md)
+- [FingerprintEncodeRequest](docs/FingerprintEncodeRequest.md)
+- [FingerprintEncodeResponse](docs/FingerprintEncodeResponse.md)
+- [FingerprintMatch](docs/FingerprintMatch.md)
 - [HTTPValidationError](docs/HTTPValidationError.md)
 - [HeatMapData](docs/HeatMapData.md)
 - [KeyCreateRequest](docs/KeyCreateRequest.md)
@@ -248,8 +261,11 @@ All URIs are relative to *https://api.encypherai.com*
 - [LookupRequest](docs/LookupRequest.md)
 - [LookupResponse](docs/LookupResponse.md)
 - [MerkleProofInfo](docs/MerkleProofInfo.md)
+- [MerkleProofItem](docs/MerkleProofItem.md)
 - [MerkleRootResponse](docs/MerkleRootResponse.md)
 - [MerkleTreeInfo](docs/MerkleTreeInfo.md)
+- [MultiSourceLookupRequest](docs/MultiSourceLookupRequest.md)
+- [MultiSourceLookupResponse](docs/MultiSourceLookupResponse.md)
 - [PayoutSummary](docs/PayoutSummary.md)
 - [PlagiarismDetectionRequest](docs/PlagiarismDetectionRequest.md)
 - [PlagiarismDetectionResponse](docs/PlagiarismDetectionResponse.md)
@@ -263,25 +279,43 @@ All URIs are relative to *https://api.encypherai.com*
 - [RevocationReason](docs/RevocationReason.md)
 - [RevocationResponse](docs/RevocationResponse.md)
 - [RevokeRequest](docs/RevokeRequest.md)
+- [RightsMetadata](docs/RightsMetadata.md)
 - [SignRequest](docs/SignRequest.md)
 - [SignResponse](docs/SignResponse.md)
+- [SignatureVerification](docs/SignatureVerification.md)
+- [SignatureVerify](docs/SignatureVerify.md)
 - [SourceAttributionRequest](docs/SourceAttributionRequest.md)
 - [SourceAttributionResponse](docs/SourceAttributionResponse.md)
 - [SourceDocumentMatch](docs/SourceDocumentMatch.md)
 - [SourceMatch](docs/SourceMatch.md)
+- [SourceRecord](docs/SourceRecord.md)
+- [StreamMerkleFinalizeRequest](docs/StreamMerkleFinalizeRequest.md)
+- [StreamMerkleFinalizeResponse](docs/StreamMerkleFinalizeResponse.md)
+- [StreamMerkleSegmentRequest](docs/StreamMerkleSegmentRequest.md)
+- [StreamMerkleSegmentResponse](docs/StreamMerkleSegmentResponse.md)
+- [StreamMerkleStartRequest](docs/StreamMerkleStartRequest.md)
+- [StreamMerkleStartResponse](docs/StreamMerkleStartResponse.md)
+- [StreamMerkleStatusRequest](docs/StreamMerkleStatusRequest.md)
+- [StreamMerkleStatusResponse](docs/StreamMerkleStatusResponse.md)
 - [StreamSignRequest](docs/StreamSignRequest.md)
 - [TrustAnchorResponse](docs/TrustAnchorResponse.md)
+- [TrustListResponse](docs/TrustListResponse.md)
 - [UsageMetric](docs/UsageMetric.md)
-- [UsageResetResponse](docs/UsageResetResponse.md)
 - [UsageResponse](docs/UsageResponse.md)
 - [ValidateManifestRequest](docs/ValidateManifestRequest.md)
 - [ValidateManifestResponse](docs/ValidateManifestResponse.md)
 - [ValidationError](docs/ValidationError.md)
 - [ValidationErrorLocInner](docs/ValidationErrorLocInner.md)
+- [VerificationHistory](docs/VerificationHistory.md)
+- [VerificationResponse](docs/VerificationResponse.md)
+- [VerificationServiceErrorDetail](docs/VerificationServiceErrorDetail.md)
+- [VerificationServiceVerifyVerdict](docs/VerificationServiceVerifyVerdict.md)
+- [VerificationStats](docs/VerificationStats.md)
 - [VerifyEmbeddingRequest](docs/VerifyEmbeddingRequest.md)
 - [VerifyEmbeddingResponse](docs/VerifyEmbeddingResponse.md)
 - [VerifyRequest](docs/VerifyRequest.md)
 - [VerifyResponse](docs/VerifyResponse.md)
+- [VerifyVerdict](docs/VerifyVerdict.md)
 - [WebhookCreateRequest](docs/WebhookCreateRequest.md)
 - [WebhookCreateResponse](docs/WebhookCreateResponse.md)
 - [WebhookDeleteResponse](docs/WebhookDeleteResponse.md)
@@ -307,8 +341,8 @@ This TypeScript SDK client supports the [Fetch API](https://fetch.spec.whatwg.or
 and is automatically generated by the
 [OpenAPI Generator](https://openapi-generator.tech) project:
 
-- API version: `1.0.0-preview`
-- Package version: `1.0.0-alpha.1`
+- API version: `1.0.1`
+- Package version: `1.0.1`
 - Generator version: `7.17.0`
 - Build package: `org.openapitools.codegen.languages.TypeScriptFetchClientCodegen`
 

@@ -11,7 +11,7 @@ Name | Type
 `status` | string
 `signedText` | string
 `embeddedContent` | string
-`verdict` | [AppModelsResponseModelsVerifyVerdict](AppModelsResponseModelsVerifyVerdict.md)
+`verdict` | [VerifyVerdict](VerifyVerdict.md)
 `errorCode` | string
 `errorMessage` | string
 `statistics` | { [key: string]: any; }

@@ -21,6 +21,44 @@ func Test_encypher_VerificationAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
+	t.Run("Test VerificationAPIService GetStatsApiV1VerifyStatsGet", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.VerificationAPI.GetStatsApiV1VerifyStatsGet(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test VerificationAPIService GetVerificationHistoryApiV1VerifyHistoryDocumentIdGet", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		var documentId string
+
+		resp, httpRes, err := apiClient.VerificationAPI.GetVerificationHistoryApiV1VerifyHistoryDocumentIdGet(context.Background(), documentId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test VerificationAPIService HealthCheckApiV1VerifyHealthGet", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.VerificationAPI.HealthCheckApiV1VerifyHealthGet(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test VerificationAPIService VerifyByDocumentIdApiV1VerifyDocumentIdGet", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
@@ -35,11 +73,35 @@ func Test_encypher_VerificationAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test VerificationAPIService VerifyContentApiV1VerifyPost", func(t *testing.T) {
+	t.Run("Test VerificationAPIService VerifyDocumentApiV1VerifyDocumentPost", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
-		resp, httpRes, err := apiClient.VerificationAPI.VerifyContentApiV1VerifyPost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.VerificationAPI.VerifyDocumentApiV1VerifyDocumentPost(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test VerificationAPIService VerifySignatureApiV1VerifySignaturePost", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.VerificationAPI.VerifySignatureApiV1VerifySignaturePost(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test VerificationAPIService VerifyTextApiV1VerifyPost", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.VerificationAPI.VerifyTextApiV1VerifyPost(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

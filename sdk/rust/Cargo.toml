@@ -1,6 +1,6 @@
 [package]
 name = "encypher"
-version = "1.0.0-alpha.1"
+version = "1.0.1"
 authors = ["Encypher <sdk@encypherai.com>"]
 description = "C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises"
 # Override this license by providing a License Object in the OpenAPI.

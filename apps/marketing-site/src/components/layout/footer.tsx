@@ -177,6 +177,10 @@ export function Footer() {
         </div>
 
         <div className="mt-8 pt-6 border-t">
+          {/* Legal Disclaimer */}
+          <p className="text-xs text-muted-foreground text-center mb-4 max-w-4xl mx-auto">
+            Encypher provides technical infrastructure for content provenance and licensing. Legal outcomes depend on jurisdiction, specific circumstances, and qualified legal counsel. Consult qualified legal counsel for advice specific to your situation.
+          </p>
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 pb-4">
             <p className="text-sm text-muted-foreground">
               &copy; {new Date().getFullYear()} Encypher Corporation. All rights reserved.

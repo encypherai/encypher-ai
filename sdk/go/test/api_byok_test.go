@@ -45,6 +45,30 @@ func Test_encypher_BYOKAPIService(t *testing.T) {
 
 	})
 
+	t.Run("Test BYOKAPIService ListTrustedCasApiV1ByokTrustedCasGet", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.BYOKAPI.ListTrustedCasApiV1ByokTrustedCasGet(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test BYOKAPIService ListTrustedCasApiV1ByokTrustedCasGet_2", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.BYOKAPI.ListTrustedCasApiV1ByokTrustedCasGet_0(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
 	t.Run("Test BYOKAPIService RegisterPublicKeyApiV1ByokPublicKeysPost", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
@@ -57,7 +81,7 @@ func Test_encypher_BYOKAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test BYOKAPIService RegisterPublicKeyApiV1ByokPublicKeysPost_2", func(t *testing.T) {
+	t.Run("Test BYOKAPIService RegisterPublicKeyApiV1ByokPublicKeysPost_3", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
@@ -83,13 +107,37 @@ func Test_encypher_BYOKAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test BYOKAPIService RevokePublicKeyApiV1ByokPublicKeysKeyIdDelete_3", func(t *testing.T) {
+	t.Run("Test BYOKAPIService RevokePublicKeyApiV1ByokPublicKeysKeyIdDelete_4", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
 		var keyId string
 
 		resp, httpRes, err := apiClient.BYOKAPI.RevokePublicKeyApiV1ByokPublicKeysKeyIdDelete_0(context.Background(), keyId).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test BYOKAPIService UploadCertificateApiV1ByokCertificatesPost", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.BYOKAPI.UploadCertificateApiV1ByokCertificatesPost(context.Background()).Execute()
+
+		require.Nil(t, err)
+		require.NotNil(t, resp)
+		assert.Equal(t, 200, httpRes.StatusCode)
+
+	})
+
+	t.Run("Test BYOKAPIService UploadCertificateApiV1ByokCertificatesPost_5", func(t *testing.T) {
+
+		t.Skip("skip test")  // remove to run test
+
+		resp, httpRes, err := apiClient.BYOKAPI.UploadCertificateApiV1ByokCertificatesPost_0(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 **actions** | **List[Dict[str, object]]** |  | [optional] 
 **template_id** | **str** |  | [optional] 
 **validate_assertions** | **bool** | Whether to validate template-based assertions (Business+). | [optional] [default to True]
-**rights** | [**AppModelsRequestModelsRightsMetadata**](AppModelsRequestModelsRightsMetadata.md) |  | [optional] 
+**rights** | [**RightsMetadata**](RightsMetadata.md) |  | [optional] 
 
 ## Example
 

@@ -6,7 +6,6 @@ All URIs are relative to *https://api.encypherai.com*
 |------------- | ------------- | -------------|
 | [**getUsageHistoryApiV1UsageHistoryGet**](UsageApi.md#getusagehistoryapiv1usagehistoryget) | **GET** /api/v1/usage/history | Get Usage History |
 | [**getUsageStatsApiV1UsageGet**](UsageApi.md#getusagestatsapiv1usageget) | **GET** /api/v1/usage | Get Usage Stats |
-| [**resetMonthlyUsageApiV1UsageResetPost**](UsageApi.md#resetmonthlyusageapiv1usageresetpost) | **POST** /api/v1/usage/reset | Reset Monthly Usage |
 
 
 
@@ -126,69 +125,6 @@ This endpoint does not need any parameter.
 ### Return type
 
 [**UsageResponse**](UsageResponse.md)
-
-### Authorization
-
-[HTTPBearer](../README.md#HTTPBearer)
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
-- **Accept**: `application/json`
-
-
-### HTTP response details
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-| **200** | Successful Response |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-
-## resetMonthlyUsageApiV1UsageResetPost
-
-> UsageResetResponse resetMonthlyUsageApiV1UsageResetPost()
-
-Reset Monthly Usage
-
-Reset monthly usage counters.  This is typically called by a scheduled job at the start of each billing period. Requires admin permissions.
-
-### Example
-
-```ts
-import {
-  Configuration,
-  UsageApi,
-} from '@encypher/sdk';
-import type { ResetMonthlyUsageApiV1UsageResetPostRequest } from '@encypher/sdk';
-
-async function example() {
-  console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
-    // Configure HTTP bearer authorization: HTTPBearer
-    accessToken: "YOUR BEARER TOKEN",
-  });
-  const api = new UsageApi(config);
-
-  try {
-    const data = await api.resetMonthlyUsageApiV1UsageResetPost();
-    console.log(data);
-  } catch (error) {
-    console.error(error);
-  }
-}
-
-// Run the test
-example().catch(console.error);
-```
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**UsageResetResponse**](UsageResetResponse.md)
 
 ### Authorization
 

@@ -8,8 +8,9 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **manifest_url** | **str** | C2PA manifest URL | 
 **manifest_hash** | **str** |  | [optional] 
-**verified** | **bool** | Whether manifest is verified | 
-**verification_details** | **Dict[str, object]** |  | [optional] 
+**validated** | **bool** | Whether the manifest passed validation | 
+**validation_type** | **str** | Validation semantics. | 
+**validation_details** | **Dict[str, object]** |  | [optional] 
 
 ## Example
 

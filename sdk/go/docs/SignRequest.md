@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 **Actions** | Pointer to **[]map[string]interface{}** |  | [optional] 
 **TemplateId** | Pointer to **NullableString** |  | [optional] 
 **ValidateAssertions** | Pointer to **bool** | Whether to validate template-based assertions (Business+). | [optional] [default to true]
-**Rights** | Pointer to [**NullableAppModelsRequestModelsRightsMetadata**](AppModelsRequestModelsRightsMetadata.md) |  | [optional] 
+**Rights** | Pointer to [**NullableRightsMetadata**](RightsMetadata.md) |  | [optional] 
 
 ## Methods
 
@@ -316,20 +316,20 @@ HasValidateAssertions returns a boolean if a field has been set.
 
 ### GetRights
 
-`func (o *SignRequest) GetRights() AppModelsRequestModelsRightsMetadata`
+`func (o *SignRequest) GetRights() RightsMetadata`
 
 GetRights returns the Rights field if non-nil, zero value otherwise.
 
 ### GetRightsOk
 
-`func (o *SignRequest) GetRightsOk() (*AppModelsRequestModelsRightsMetadata, bool)`
+`func (o *SignRequest) GetRightsOk() (*RightsMetadata, bool)`
 
 GetRightsOk returns a tuple with the Rights field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetRights
 
-`func (o *SignRequest) SetRights(v AppModelsRequestModelsRightsMetadata)`
+`func (o *SignRequest) SetRights(v RightsMetadata)`
 
 SetRights sets Rights field to given value.
 

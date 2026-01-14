@@ -4,10 +4,10 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Success** | **bool** | Indicates if the request was processed successfully | 
-**Data** | Pointer to [**NullableAppModelsResponseModelsVerifyVerdict**](AppModelsResponseModelsVerifyVerdict.md) |  | [optional] 
+**Success** | **bool** |  | 
+**Data** | Pointer to [**NullableVerifyVerdict**](VerifyVerdict.md) |  | [optional] 
 **Error** | Pointer to [**NullableErrorDetail**](ErrorDetail.md) |  | [optional] 
-**CorrelationId** | **string** | Request correlation identifier for tracing | 
+**CorrelationId** | **string** |  | 
 
 ## Methods
 
@@ -50,20 +50,20 @@ SetSuccess sets Success field to given value.
 
 ### GetData
 
-`func (o *VerifyResponse) GetData() AppModelsResponseModelsVerifyVerdict`
+`func (o *VerifyResponse) GetData() VerifyVerdict`
 
 GetData returns the Data field if non-nil, zero value otherwise.
 
 ### GetDataOk
 
-`func (o *VerifyResponse) GetDataOk() (*AppModelsResponseModelsVerifyVerdict, bool)`
+`func (o *VerifyResponse) GetDataOk() (*VerifyVerdict, bool)`
 
 GetDataOk returns a tuple with the Data field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetData
 
-`func (o *VerifyResponse) SetData(v AppModelsResponseModelsVerifyVerdict)`
+`func (o *VerifyResponse) SetData(v VerifyVerdict)`
 
 SetData sets Data field to given value.
 

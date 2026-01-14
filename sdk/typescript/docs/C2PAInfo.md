@@ -9,8 +9,9 @@ Name | Type
 ------------ | -------------
 `manifestUrl` | string
 `manifestHash` | string
-`verified` | boolean
-`verificationDetails` | { [key: string]: any; }
+`validated` | boolean
+`validationType` | string
+`validationDetails` | { [key: string]: any; }
 
 ## Example
 
@@ -21,8 +22,9 @@ import type { C2PAInfo } from '@encypher/sdk'
 const example = {
   "manifestUrl": null,
   "manifestHash": null,
-  "verified": null,
-  "verificationDetails": null,
+  "validated": null,
+  "validationType": null,
+  "validationDetails": null,
 } satisfies C2PAInfo
 
 console.log(example)

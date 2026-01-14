@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import '@encypher/design-system/styles';
+import '@encypher/design-system/theme';
 import './globals.css';
 import Providers from '../components/providers';
 import { GoogleTagManager } from '@next/third-parties/google';

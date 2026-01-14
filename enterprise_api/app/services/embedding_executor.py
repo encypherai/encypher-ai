@@ -8,6 +8,8 @@ import logging
 import time
 from typing import Dict
 
+import unicodedata
+
 from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,6 +50,8 @@ async def encode_document_with_embeddings(
     """
     start_time = time.time()
     organization_id = organization["organization_id"]
+
+    document_text = unicodedata.normalize("NFC", request.text)
 
     try:
         logger.info(
@@ -336,9 +340,9 @@ async def encode_document_with_embeddings(
         # Just create ONE C2PA wrapper for the entire document
         if request.segmentation_level == 'document':
             logger.info("Document-level signing (free tier) - no segmentation")
-            from app.utils.merkle import compute_hash
-            segments = [request.text]  # Single segment = entire document
-            leaf_hashes = [compute_hash(request.text)]  # Single hash for entire document
+            from app.utils.merkle import compute_leaf_hash
+            segments = [document_text]  # Single segment = entire document
+            leaf_hashes = [compute_leaf_hash(document_text)]  # Single hash for entire document
             merkle_root_id = None  # No Merkle tree for free tier
             merkle_root = None
         else:
@@ -348,7 +352,7 @@ async def encode_document_with_embeddings(
                 db=db,
                 organization_id=organization_id,
                 document_id=request.document_id,
-                text=request.text,
+                text=document_text,
                 segmentation_levels=[request.segmentation_level],
                 metadata=request.metadata,
                 include_words=False
@@ -359,12 +363,12 @@ async def encode_document_with_embeddings(
             
             # Get segments and hashes
             from app.utils.segmentation import HierarchicalSegmenter
-            segmenter = HierarchicalSegmenter(request.text, include_words=False)
+            segmenter = HierarchicalSegmenter(document_text, include_words=False)
             segments = segmenter.get_segments(request.segmentation_level)
             
             # Compute leaf hashes
-            from app.utils.merkle import compute_hash
-            leaf_hashes = [compute_hash(segment) for segment in segments]
+            from app.utils.merkle import compute_leaf_hash
+            leaf_hashes = [compute_leaf_hash(segment) for segment in segments]
         
         # Step 3: Generate minimal signed embeddings
         license_info = None

@@ -15,6 +15,8 @@ Method | HTTP request | Description
 > models::CreateManifestResponse create_manifest_api_v1_public_c2pa_create_manifest_post(create_manifest_request, authorization)
 Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)
 
+Create a C2PA-like manifest JSON payload from plaintext. This endpoint is intended for client-side workflows that want a server-generated starting point for a manifest before cryptographic signing.  Authentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits.
+
 ### Parameters
 
 
@@ -73,6 +75,8 @@ No authorization required
 
 > models::ValidateManifestResponse validate_manifest_api_v1_public_c2pa_validate_manifest_post(validate_manifest_request, authorization)
 Validate C2PA-like manifest JSON (Public - Non-Cryptographic)
+
+Validate a manifest JSON payload and (optionally) validate assertion payloads against provided JSON Schemas. This endpoint performs structural/schema validation only and does not verify cryptographic signatures.  Authentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits.
 
 ### Parameters
 

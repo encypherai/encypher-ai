@@ -11,6 +11,7 @@ Uses invisible Unicode variation selector embeddings with enterprise features:
 import logging
 import secrets
 import time
+import unicodedata
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
@@ -22,6 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 # Import from free encypher-ai package (foundation)
 try:
     from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+    from encypher.core.constants import MetadataTarget
     from encypher.core.unicode_metadata import UnicodeMetadata
 except ImportError:
     raise ImportError(
@@ -160,6 +162,9 @@ class EmbeddingService:
                 f"Segments ({len(segments)}) and leaf_hashes ({len(leaf_hashes)}) "
                 f"must have same length"
             )
+
+        # TEAM_056: Enforce NFC normalization so all embedding modes operate on the same text representation.
+        segments = [unicodedata.normalize("NFC", segment) for segment in segments]
         
         embeddings = []
         references_to_insert = []
@@ -360,19 +365,23 @@ class EmbeddingService:
             # Store full manifest data in database for later retrieval
             # The embedded payload only contains the UUID pointer
             try:
-                embedded_document = UnicodeMetadata.embed_lightweight_uuid(
+                embedded_document = UnicodeMetadata.embed_metadata(
                     text=full_document,
                     private_key=self.private_key,
                     signer_id=self.signer_id,
-                    manifest_uuid=manifest_uuid,
                     timestamp=current_timestamp,
-                    assertion_hint={
+                    custom_metadata={
+                        "manifest_uuid": manifest_uuid,
                         "document_id": document_id,
                         "organization_id": organization_id,
                         "action": action,
                     },
+                    metadata_format="manifest",
+                    add_hard_binding=False,
+                    claim_generator=f"Encypher Enterprise API/{organization_id}",
+                    actions=c2pa_actions,
                     distribute_across_targets=use_distributed,
-                    target=target_for_embedding,
+                    target=MetadataTarget.FILE_END,
                 )
                 # Store the full manifest data in document_metadata for database storage
                 document_metadata['manifest_uuid'] = manifest_uuid

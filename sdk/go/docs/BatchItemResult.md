@@ -8,7 +8,7 @@ Name | Type | Description | Notes
 **Status** | **string** | Processing outcome for the document | 
 **SignedText** | Pointer to **NullableString** |  | [optional] 
 **EmbeddedContent** | Pointer to **NullableString** |  | [optional] 
-**Verdict** | Pointer to [**NullableAppModelsResponseModelsVerifyVerdict**](AppModelsResponseModelsVerifyVerdict.md) |  | [optional] 
+**Verdict** | Pointer to [**NullableVerifyVerdict**](VerifyVerdict.md) |  | [optional] 
 **ErrorCode** | Pointer to **NullableString** |  | [optional] 
 **ErrorMessage** | Pointer to **NullableString** |  | [optional] 
 **Statistics** | Pointer to **map[string]interface{}** | Timing and segmentation statistics for the item | [optional] 
@@ -144,20 +144,20 @@ HasEmbeddedContent returns a boolean if a field has been set.
 UnsetEmbeddedContent ensures that no value is present for EmbeddedContent, not even an explicit nil
 ### GetVerdict
 
-`func (o *BatchItemResult) GetVerdict() AppModelsResponseModelsVerifyVerdict`
+`func (o *BatchItemResult) GetVerdict() VerifyVerdict`
 
 GetVerdict returns the Verdict field if non-nil, zero value otherwise.
 
 ### GetVerdictOk
 
-`func (o *BatchItemResult) GetVerdictOk() (*AppModelsResponseModelsVerifyVerdict, bool)`
+`func (o *BatchItemResult) GetVerdictOk() (*VerifyVerdict, bool)`
 
 GetVerdictOk returns a tuple with the Verdict field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
 ### SetVerdict
 
-`func (o *BatchItemResult) SetVerdict(v AppModelsResponseModelsVerifyVerdict)`
+`func (o *BatchItemResult) SetVerdict(v VerifyVerdict)`
 
 SetVerdict sets Verdict field to given value.
 

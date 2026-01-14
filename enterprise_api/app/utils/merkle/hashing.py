@@ -4,8 +4,7 @@ Hashing utilities for Merkle trees.
 Provides SHA-256 hashing for text segments and hash combining for tree construction.
 """
 import hashlib
-
-from app.utils.segmentation import normalize_for_hashing
+import unicodedata
 
 
 def compute_hash(data: str, encoding: str = 'utf-8') -> str:
@@ -27,7 +26,7 @@ def compute_hash(data: str, encoding: str = 'utf-8') -> str:
 
 
 def compute_leaf_hash(text: str) -> str:
-    normalized = normalize_for_hashing(text, lowercase=True, normalize_unicode_chars=True)
+    normalized = unicodedata.normalize("NFC", text)
     return compute_hash(normalized)
 
 

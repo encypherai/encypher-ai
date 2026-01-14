@@ -6,14 +6,15 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **ManifestUrl** | **string** | C2PA manifest URL | 
 **ManifestHash** | Pointer to **NullableString** |  | [optional] 
-**Verified** | **bool** | Whether manifest is verified | 
-**VerificationDetails** | Pointer to **map[string]interface{}** |  | [optional] 
+**Validated** | **bool** | Whether the manifest passed validation | 
+**ValidationType** | **string** | Validation semantics. | 
+**ValidationDetails** | Pointer to **map[string]interface{}** |  | [optional] 
 
 ## Methods
 
 ### NewC2PAInfo
 
-`func NewC2PAInfo(manifestUrl string, verified bool, ) *C2PAInfo`
+`func NewC2PAInfo(manifestUrl string, validated bool, validationType string, ) *C2PAInfo`
 
 NewC2PAInfo instantiates a new C2PAInfo object
 This constructor will assign default values to properties that have it defined,
@@ -83,61 +84,81 @@ HasManifestHash returns a boolean if a field has been set.
 `func (o *C2PAInfo) UnsetManifestHash()`
 
 UnsetManifestHash ensures that no value is present for ManifestHash, not even an explicit nil
-### GetVerified
+### GetValidated
 
-`func (o *C2PAInfo) GetVerified() bool`
+`func (o *C2PAInfo) GetValidated() bool`
 
-GetVerified returns the Verified field if non-nil, zero value otherwise.
+GetValidated returns the Validated field if non-nil, zero value otherwise.
 
-### GetVerifiedOk
+### GetValidatedOk
 
-`func (o *C2PAInfo) GetVerifiedOk() (*bool, bool)`
+`func (o *C2PAInfo) GetValidatedOk() (*bool, bool)`
 
-GetVerifiedOk returns a tuple with the Verified field if it's non-nil, zero value otherwise
+GetValidatedOk returns a tuple with the Validated field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetVerified
+### SetValidated
 
-`func (o *C2PAInfo) SetVerified(v bool)`
+`func (o *C2PAInfo) SetValidated(v bool)`
 
-SetVerified sets Verified field to given value.
+SetValidated sets Validated field to given value.
 
 
-### GetVerificationDetails
+### GetValidationType
 
-`func (o *C2PAInfo) GetVerificationDetails() map[string]interface{}`
+`func (o *C2PAInfo) GetValidationType() string`
 
-GetVerificationDetails returns the VerificationDetails field if non-nil, zero value otherwise.
+GetValidationType returns the ValidationType field if non-nil, zero value otherwise.
 
-### GetVerificationDetailsOk
+### GetValidationTypeOk
 
-`func (o *C2PAInfo) GetVerificationDetailsOk() (*map[string]interface{}, bool)`
+`func (o *C2PAInfo) GetValidationTypeOk() (*string, bool)`
 
-GetVerificationDetailsOk returns a tuple with the VerificationDetails field if it's non-nil, zero value otherwise
+GetValidationTypeOk returns a tuple with the ValidationType field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetVerificationDetails
+### SetValidationType
 
-`func (o *C2PAInfo) SetVerificationDetails(v map[string]interface{})`
+`func (o *C2PAInfo) SetValidationType(v string)`
 
-SetVerificationDetails sets VerificationDetails field to given value.
+SetValidationType sets ValidationType field to given value.
 
-### HasVerificationDetails
 
-`func (o *C2PAInfo) HasVerificationDetails() bool`
+### GetValidationDetails
 
-HasVerificationDetails returns a boolean if a field has been set.
+`func (o *C2PAInfo) GetValidationDetails() map[string]interface{}`
 
-### SetVerificationDetailsNil
+GetValidationDetails returns the ValidationDetails field if non-nil, zero value otherwise.
 
-`func (o *C2PAInfo) SetVerificationDetailsNil(b bool)`
+### GetValidationDetailsOk
 
- SetVerificationDetailsNil sets the value for VerificationDetails to be an explicit nil
+`func (o *C2PAInfo) GetValidationDetailsOk() (*map[string]interface{}, bool)`
 
-### UnsetVerificationDetails
-`func (o *C2PAInfo) UnsetVerificationDetails()`
+GetValidationDetailsOk returns a tuple with the ValidationDetails field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
 
-UnsetVerificationDetails ensures that no value is present for VerificationDetails, not even an explicit nil
+### SetValidationDetails
+
+`func (o *C2PAInfo) SetValidationDetails(v map[string]interface{})`
+
+SetValidationDetails sets ValidationDetails field to given value.
+
+### HasValidationDetails
+
+`func (o *C2PAInfo) HasValidationDetails() bool`
+
+HasValidationDetails returns a boolean if a field has been set.
+
+### SetValidationDetailsNil
+
+`func (o *C2PAInfo) SetValidationDetailsNil(b bool)`
+
+ SetValidationDetailsNil sets the value for ValidationDetails to be an explicit nil
+
+### UnsetValidationDetails
+`func (o *C2PAInfo) UnsetValidationDetails()`
+
+UnsetValidationDetails ensures that no value is present for ValidationDetails, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

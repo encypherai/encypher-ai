@@ -79,8 +79,8 @@ http:
         - web
 
     # ============================================
-    # VERIFICATION -> Enterprise API (9000)
-    # All /verify endpoints handled by enterprise-api
+    # VERIFICATION -> Verification Service (8005)
+    # All /api/v1/verify endpoints handled by verification-service
     # ============================================
     verify-router:
       rule: "PathPrefix(`/api/v1/verify`)"

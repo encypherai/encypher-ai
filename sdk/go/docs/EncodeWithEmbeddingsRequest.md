@@ -8,6 +8,11 @@ Name | Type | Description | Notes
 **Text** | **string** | Full document text to encode | 
 **SegmentationLevel** | Pointer to **string** | Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word | [optional] [default to "sentence"]
 **Action** | Pointer to **string** | C2PA action type: c2pa.created (new content) or c2pa.edited (modified content) | [optional] [default to "c2pa.created"]
+**ManifestMode** | Pointer to **string** | Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier. | [optional] [default to "full"]
+**EmbeddingStrategy** | Pointer to **string** | Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier. | [optional] [default to "single_point"]
+**DistributionTarget** | Pointer to **NullableString** |  | [optional] 
+**AddDualBinding** | Pointer to **bool** | Enable additional integrity binding. Availability depends on plan tier. | [optional] [default to false]
+**DisableC2pa** | Pointer to **bool** | Opt-out of C2PA embedding. When true, only basic metadata is embedded. | [optional] [default to false]
 **PreviousInstanceId** | Pointer to **NullableString** |  | [optional] 
 **Metadata** | Pointer to **map[string]interface{}** |  | [optional] 
 **C2paManifestUrl** | Pointer to **NullableString** |  | [optional] 
@@ -129,6 +134,141 @@ SetAction sets Action field to given value.
 `func (o *EncodeWithEmbeddingsRequest) HasAction() bool`
 
 HasAction returns a boolean if a field has been set.
+
+### GetManifestMode
+
+`func (o *EncodeWithEmbeddingsRequest) GetManifestMode() string`
+
+GetManifestMode returns the ManifestMode field if non-nil, zero value otherwise.
+
+### GetManifestModeOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetManifestModeOk() (*string, bool)`
+
+GetManifestModeOk returns a tuple with the ManifestMode field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetManifestMode
+
+`func (o *EncodeWithEmbeddingsRequest) SetManifestMode(v string)`
+
+SetManifestMode sets ManifestMode field to given value.
+
+### HasManifestMode
+
+`func (o *EncodeWithEmbeddingsRequest) HasManifestMode() bool`
+
+HasManifestMode returns a boolean if a field has been set.
+
+### GetEmbeddingStrategy
+
+`func (o *EncodeWithEmbeddingsRequest) GetEmbeddingStrategy() string`
+
+GetEmbeddingStrategy returns the EmbeddingStrategy field if non-nil, zero value otherwise.
+
+### GetEmbeddingStrategyOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetEmbeddingStrategyOk() (*string, bool)`
+
+GetEmbeddingStrategyOk returns a tuple with the EmbeddingStrategy field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetEmbeddingStrategy
+
+`func (o *EncodeWithEmbeddingsRequest) SetEmbeddingStrategy(v string)`
+
+SetEmbeddingStrategy sets EmbeddingStrategy field to given value.
+
+### HasEmbeddingStrategy
+
+`func (o *EncodeWithEmbeddingsRequest) HasEmbeddingStrategy() bool`
+
+HasEmbeddingStrategy returns a boolean if a field has been set.
+
+### GetDistributionTarget
+
+`func (o *EncodeWithEmbeddingsRequest) GetDistributionTarget() string`
+
+GetDistributionTarget returns the DistributionTarget field if non-nil, zero value otherwise.
+
+### GetDistributionTargetOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetDistributionTargetOk() (*string, bool)`
+
+GetDistributionTargetOk returns a tuple with the DistributionTarget field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDistributionTarget
+
+`func (o *EncodeWithEmbeddingsRequest) SetDistributionTarget(v string)`
+
+SetDistributionTarget sets DistributionTarget field to given value.
+
+### HasDistributionTarget
+
+`func (o *EncodeWithEmbeddingsRequest) HasDistributionTarget() bool`
+
+HasDistributionTarget returns a boolean if a field has been set.
+
+### SetDistributionTargetNil
+
+`func (o *EncodeWithEmbeddingsRequest) SetDistributionTargetNil(b bool)`
+
+ SetDistributionTargetNil sets the value for DistributionTarget to be an explicit nil
+
+### UnsetDistributionTarget
+`func (o *EncodeWithEmbeddingsRequest) UnsetDistributionTarget()`
+
+UnsetDistributionTarget ensures that no value is present for DistributionTarget, not even an explicit nil
+### GetAddDualBinding
+
+`func (o *EncodeWithEmbeddingsRequest) GetAddDualBinding() bool`
+
+GetAddDualBinding returns the AddDualBinding field if non-nil, zero value otherwise.
+
+### GetAddDualBindingOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetAddDualBindingOk() (*bool, bool)`
+
+GetAddDualBindingOk returns a tuple with the AddDualBinding field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetAddDualBinding
+
+`func (o *EncodeWithEmbeddingsRequest) SetAddDualBinding(v bool)`
+
+SetAddDualBinding sets AddDualBinding field to given value.
+
+### HasAddDualBinding
+
+`func (o *EncodeWithEmbeddingsRequest) HasAddDualBinding() bool`
+
+HasAddDualBinding returns a boolean if a field has been set.
+
+### GetDisableC2pa
+
+`func (o *EncodeWithEmbeddingsRequest) GetDisableC2pa() bool`
+
+GetDisableC2pa returns the DisableC2pa field if non-nil, zero value otherwise.
+
+### GetDisableC2paOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetDisableC2paOk() (*bool, bool)`
+
+GetDisableC2paOk returns a tuple with the DisableC2pa field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDisableC2pa
+
+`func (o *EncodeWithEmbeddingsRequest) SetDisableC2pa(v bool)`
+
+SetDisableC2pa sets DisableC2pa field to given value.
+
+### HasDisableC2pa
+
+`func (o *EncodeWithEmbeddingsRequest) HasDisableC2pa() bool`
+
+HasDisableC2pa returns a boolean if a field has been set.
 
 ### GetPreviousInstanceId
 

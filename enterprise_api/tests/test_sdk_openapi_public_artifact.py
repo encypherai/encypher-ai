@@ -1,4 +1,7 @@
 import json
+import os
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -12,6 +15,41 @@ def _load_public_openapi_artifact() -> dict:
     artifact_path = Path(__file__).resolve().parents[2] / "sdk" / "openapi.public.json"
     payload = artifact_path.read_text(encoding="utf-8")
     return json.loads(payload)
+
+
+def _load_verification_service_openapi(*, api_base_url: str) -> dict:
+    verification_service_root = Path(__file__).resolve().parents[2] / "services" / "verification-service"
+    cmd = [
+        sys.executable,
+        "-c",
+        (
+            "import json, os, sys; "
+            f"sys.path.insert(0, {json.dumps(str(verification_service_root))}); "
+            "os.environ.setdefault('_PYDANTIC_SETTINGS_SKIP_ENV_FILE', '1'); "
+            "os.environ.setdefault('DATABASE_URL', 'postgresql://localhost/encypher'); "
+            "from fastapi import FastAPI; "
+            "from fastapi.openapi.utils import get_openapi; "
+            "from app.api.v1 import endpoints as v1_endpoints; "
+            "app = FastAPI(title='Encypher Verification Service', version='1.0.0', description='Document verification microservice'); "
+            "app.include_router(v1_endpoints.router, prefix='/api/v1/verify', tags=['verification']); "
+            "spec = get_openapi(title=app.title, version=app.version, description=app.description, routes=app.routes); "
+            "print(json.dumps(spec))"
+        ),
+    ]
+    env = dict(**os.environ)
+    env["API_BASE_URL"] = api_base_url
+    payload = subprocess.check_output(cmd, env=env, text=True)
+    return json.loads(payload)
+
+
+def _merge_openapi_specs(*, base: dict, extra: dict) -> dict:
+    merged = json.loads(json.dumps(base))
+    merged.setdefault("paths", {})
+    for path, methods in (extra.get("paths") or {}).items():
+        if path in merged["paths"]:
+            continue
+        merged["paths"][path] = methods
+    return merged
 
 
 def _iter_operations(spec: dict):
@@ -80,6 +118,9 @@ async def test_sdk_public_openapi_artifact_matches_runtime_paths_and_security() 
         routes=app.routes,
     )
     runtime = jsonable_encoder(_filter_openapi_for_public(base))
+
+    verification_runtime = _load_verification_service_openapi(api_base_url="https://api.encypherai.com")
+    runtime = _merge_openapi_specs(base=runtime, extra=verification_runtime)
 
     assert _iter_http_operation_keys(artifact) == _iter_http_operation_keys(runtime)
 

@@ -16,7 +16,7 @@ Name | Type
 `actions` | Array&lt;{ [key: string]: any; }&gt;
 `templateId` | string
 `validateAssertions` | boolean
-`rights` | [AppModelsRequestModelsRightsMetadata](AppModelsRequestModelsRightsMetadata.md)
+`rights` | [RightsMetadata](RightsMetadata.md)
 
 ## Example
 

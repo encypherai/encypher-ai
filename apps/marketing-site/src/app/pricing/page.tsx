@@ -55,7 +55,7 @@ const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta
     bestFor: 'Regional newspapers, digital magazines, trade publications',
     cta: { text: 'Start Free Trial', variant: 'default' },
     showPrice: true,
-    highlight: 'Invisible embeddings + 70% revenue share',
+    highlight: 'Invisible embeddings + enhanced revenue share',
   },
   business: {
     description: 'For major digital publishers needing enterprise features',
@@ -65,11 +65,11 @@ const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta
     highlight: 'Plagiarism detection + source attribution',
   },
   enterprise: {
-    description: '$30k implementation in 30 days',
+    description: 'White-glove implementation',
     bestFor: 'NYT, Guardian, News Corp, major media conglomerates',
     cta: { text: 'Contact Sales', variant: 'default' },
     showPrice: false,
-    highlight: 'Founding members lock 80% you / 20% Encypher',
+    highlight: 'Shape industry licensing standards',
   },
 };
 
@@ -117,10 +117,10 @@ export default function PricingPage() {
       {/* SEO: AI Summary with all ICP information for crawlers */}
       <AISummary
         title="Encypher Pricing & Licensing"
-        whatWeDo="Co-Chair of C2PA Text Provenance Task Force (c2pa.org). API and SDKs in Python, TypeScript, Go, and Rust for content authentication. Standard publishes January 8, 2026. Building with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others."
-        whoItsFor="Publishers seeking 65-80% licensing revenue and provable content ownership. AI labs needing performance intelligence and quote integrity verification. Enterprises requiring EU AI Act and China watermarking compliance."
-        keyDifferentiator="Cryptographic watermarking survives copy-paste and distribution. Enables content attribution and licensing. One API integration for entire publisher ecosystem."
-        primaryValue="Start free, scale as you grow. Founding coalition members help define how content licensing works in the AI economy."
+        whatWeDo="Encypher serves as Co-Chair of C2PA Text Provenance Task Force (c2pa.org). API and SDKs in Python, TypeScript, Go, and Rust for content authentication. Standard published January 8, 2026. Technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
+        whoItsFor="Publishers seeking content licensing infrastructure and provable ownership. AI labs needing performance intelligence and quote integrity verification. Enterprises requiring EU AI Act and China watermarking compliance."
+        keyDifferentiator="Cryptographic watermarking survives copy-paste and distribution. Provides technical infrastructure for content attribution and licensing. One API integration for entire publisher ecosystem."
+        primaryValue="Start free, scale as you grow. Enterprise partners help shape industry-standard licensing frameworks for AI content usage."
       />
 
       {/* Hero Section with ICP Selector */}
@@ -313,7 +313,12 @@ export default function PricingPage() {
                   {/* Coalition Rev Share Badge - Fixed height */}
                   <div className="h-[60px] bg-primary/10 rounded-lg p-3 mb-4 flex flex-col justify-center items-center text-center">
                     <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                    <p className="text-sm font-semibold text-primary">{formatRevShare(tier)}</p>
+                    <p className="text-sm font-semibold text-primary">
+                      {tier.enterprise ? 'Best terms available' : 
+                       tier.id === 'business' ? 'Premium revenue share' :
+                       tier.id === 'professional' ? 'Enhanced revenue share' :
+                       'Standard revenue share'}
+                    </p>
                   </div>
 
                   {/* Features List - Fixed height */}
@@ -458,15 +463,15 @@ export default function PricingPage() {
             </p>
           </div>
 
-          {/* Founding Member Benefits - Enterprise */}
+          {/* Enterprise Engagement - Shape Industry Standards */}
           <div className="max-w-3xl mx-auto bg-muted/50 border border-border rounded-lg p-6 mb-12 text-center">
-            <Badge variant="outline" className="mb-3">Limited Time</Badge>
-            <h4 className="font-bold text-lg mb-2">Founding Coalition Members</h4>
+            <Badge variant="outline" className="mb-3">Enterprise</Badge>
+            <h4 className="font-bold text-lg mb-2">Shape Industry Licensing Standards</h4>
             <p className="text-sm text-muted-foreground mb-4">
-              Founding members lock in an 80% (publisher) / 20% (Encypher) revenue share and help define how text provenance standards work.
+              Enterprise partners work with Encypher to establish industry-standard licensing frameworks for AI content usage. The organizations engaged today are setting the standards others will follow.
             </p>
             <Button onClick={() => setShowPublisherModal(true)} variant="outline" size="sm">
-              Learn About Founding Benefits <ArrowRight className="ml-2 h-4 w-4" />
+              Discuss Enterprise Engagement <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
 
@@ -513,17 +518,17 @@ export default function PricingPage() {
                     <td className="text-center py-3 px-2 md:px-4">White-label</td>
                   </tr>
                   <tr className="border-b border-border/50 bg-muted/30">
-                    <td className="py-3 px-2 md:px-4 font-bold whitespace-nowrap">Revenue</td>
-                    <td className="text-center py-3 px-2 md:px-4 font-bold">65%</td>
-                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5 font-bold text-primary">70%</td>
-                    <td className="text-center py-3 px-2 md:px-4 font-bold">75%</td>
-                    <td className="text-center py-3 px-2 md:px-4 font-bold">80%</td>
+                    <td className="py-3 px-2 md:px-4 font-bold whitespace-nowrap">Revenue Share</td>
+                    <td className="text-center py-3 px-2 md:px-4 font-medium text-sm">Standard</td>
+                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5 font-medium text-primary text-sm">Enhanced</td>
+                    <td className="text-center py-3 px-2 md:px-4 font-medium text-sm">Premium</td>
+                    <td className="text-center py-3 px-2 md:px-4 font-medium text-sm">Best</td>
                   </tr>
                 </tbody>
               </table>
             </div>
             <p className="text-xs text-muted-foreground mt-3 text-center max-w-3xl mx-auto">
-              Coalition revenue is paid when AI companies license the corpus. Your percentage (65-80%) reflects how much of those licensing fees flow back to you; Encypher keeps the remainder to operate the infrastructure.
+              Coalition revenue is paid when AI companies license the corpus. Your share increases with higher tiers. Specific terms discussed during consultation.
             </p>
           </div>
 

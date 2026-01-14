@@ -15,7 +15,7 @@ export const siteConfig = {
   name: "Encypher",
   url: "https://encypherai.com",
   tagline: "From the Authors of the C2PA Text Standard",
-  description: "Authors of the C2PA text authentication standard. Patent-pending granular content attribution with Merkle tree authentication for court-admissible evidence generation.",
+  description: "Encypher authored the C2PA text authentication standard. Patent-pending granular content attribution with Merkle tree authentication for tamper-evident documentation.",
   
   // OG Images by audience
   images: {
@@ -57,8 +57,8 @@ export const keywords = {
   publishers: [
     "publisher content protection",
     "AI copyright litigation",
-    "court-admissible evidence",
-    "content licensing revenue",
+    "tamper-evident documentation",
+    "content licensing infrastructure",
     "AI content usage tracking",
     "publisher AI licensing",
     "copyright enforcement",
@@ -66,7 +66,7 @@ export const keywords = {
     "AI art copyright",
     "publisher licensing",
     "AI training data copyright",
-    "prove AI copyright infringement",
+    "content provenance verification",
   ],
   
   // AI Lab-focused keywords
@@ -346,7 +346,7 @@ export const organizationSchema = {
         "itemOffered": {
           "@type": "Service",
           "name": "Publisher Content Authentication",
-          "description": "Sentence-level tracking and court-admissible evidence for content licensing"
+          "description": "Sentence-level tracking and tamper-evident documentation for content licensing"
         }
       },
       {
@@ -389,8 +389,8 @@ export const softwareSchema = {
   "featureList": [
     "C2PA text standard implementation",
     "Sentence-level content tracking",
-    "Cryptographic proof generation",
-    "Court-admissible evidence packages",
+    "Cryptographic verification",
+    "Tamper-evident documentation",
     "Performance intelligence analytics"
   ]
 };
@@ -407,7 +407,7 @@ export const faqSchema = {
       "name": "What is Encypher?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Encypher authored the C2PA text authentication standard and provides sentence-level content tracking infrastructure for publishers and AI labs. We enable litigation evidence and content licensing through cryptographic proof with 100% accuracy."
+        "text": "Encypher authored the C2PA text authentication standard and provides sentence-level content tracking infrastructure for publishers and AI labs. We provide technical infrastructure for content licensing through cryptographic verification."
       }
     },
     {
@@ -423,7 +423,7 @@ export const faqSchema = {
       "name": "How is Encypher different from AI detection tools?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "AI detection tools provide statistical guessing with 26% accuracy and high false positive rates. Encypher provides cryptographic proof with 100% accuracy and sentence-level granularity. Our evidence is court-admissible and eliminates false positives through mathematical certainty, not statistical inference."
+        "text": "AI detection tools provide statistical guessing with variable accuracy and high false positive rates. Encypher provides cryptographic verification with sentence-level granularity. Our tamper-evident documentation is designed for legal proceedings and eliminates false positives through mathematical certainty, not statistical inference."
       }
     },
     {
@@ -439,7 +439,7 @@ export const faqSchema = {
       "name": "Who uses Encypher?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "Encypher serves two primary markets: (1) Publishers seeking court-admissible evidence for AI copyright litigation and content licensing revenue, and (2) AI labs requiring publisher ecosystem integration, model performance intelligence, and compliance infrastructure. Our infrastructure enables both litigation resolution and key competitive intelligence on how your models are performing across the internet."
+        "text": "Encypher serves two primary markets: (1) Publishers seeking tamper-evident documentation for content licensing infrastructure, and (2) AI labs requiring publisher ecosystem integration, model performance intelligence, and compliance infrastructure. Our infrastructure provides technical foundation for content licensing and performance intelligence on how your models are performing across the internet."
       }
     }
   ]

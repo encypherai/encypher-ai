@@ -3,6 +3,7 @@ Sentence parsing and hashing utilities.
 """
 import hashlib
 import re
+import unicodedata
 from typing import List
 
 
@@ -38,7 +39,8 @@ def compute_sentence_hash(sentence: str) -> str:
     Returns:
         Hexadecimal hash string
     """
-    return hashlib.sha256(sentence.encode('utf-8')).hexdigest()
+    normalized = unicodedata.normalize("NFC", sentence)
+    return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
 
 
 def compute_text_hash(text: str) -> str:
@@ -51,4 +53,5 @@ def compute_text_hash(text: str) -> str:
     Returns:
         Hexadecimal hash string
     """
-    return hashlib.sha256(text.encode('utf-8')).hexdigest()
+    normalized = unicodedata.normalize("NFC", text)
+    return hashlib.sha256(normalized.encode('utf-8')).hexdigest()

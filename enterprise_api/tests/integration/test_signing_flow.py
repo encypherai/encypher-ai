@@ -104,14 +104,10 @@ async def test_verify_endpoint():
                 "text": "Some text without a manifest"
             }
         )
-        # Should return 200 even for invalid content
-        assert response.status_code == 200
+        assert response.status_code == 410
         data = response.json()
-        assert data["success"] is True
-        assert data["error"] is None
-        assert data["data"]["valid"] is False  # No manifest, so invalid
-        assert data["data"]["reason_code"] in {"SIGNATURE_INVALID", "SIGNER_UNKNOWN"}
-        assert isinstance(data["correlation_id"], str) and data["correlation_id"]
+        assert data["success"] is False
+        assert data["error"]["code"] == "ENDPOINT_DEPRECATED"
 
 
 @pytest.mark.asyncio
@@ -384,14 +380,10 @@ async def _perform_sign_verify_lookup(
             "/api/v1/verify",
             json={"text": signed_text},
         )
-        assert verify_response.status_code == 200
-        verify_payload = verify_response.json()
-        assert verify_payload["success"] is True
-        verdict = verify_payload["data"]
-        assert verdict["valid"] is True
-        assert verdict["tampered"] is False
-        assert verdict["signer_id"] == organization["organization_id"]
-        assert verdict["signer_name"] == organization_name
+        assert verify_response.status_code == 410
+        verify_data = verify_response.json()
+        assert verify_data["success"] is False
+        assert verify_data["error"]["code"] == "ENDPOINT_DEPRECATED"
 
         lookup_response = await client.post(
             "/api/v1/lookup",
@@ -610,22 +602,9 @@ async def test_streaming_text_verification(real_db_session_factory):
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         verify_response = await client.post("/api/v1/verify", json={"text": streamed_text})
-        assert verify_response.status_code == 200
+        assert verify_response.status_code == 410
         verify_data = verify_response.json()
+        assert verify_data["success"] is False
+        assert verify_data["error"]["code"] == "ENDPOINT_DEPRECATED"
 
-    assert verify_data["success"] is True
-    verdict = verify_data["data"]
-    assert verdict["signer_id"] == organization["organization_id"]
-    assert verdict["signer_name"] == organization["organization_name"]
-    manifest = verdict["details"]["manifest"]
-    assert isinstance(manifest, dict) and manifest
-    assert manifest.get("claim_generator") == "encypher-ai/2.4.2"
-    assertion_labels = {
-        assertion.get("label")
-        for assertion in manifest.get("assertions", [])
-        if isinstance(assertion, dict)
-    }
-    assert "c2pa.actions.v1" in assertion_labels
-    assert "c2pa.soft_binding.v1" in assertion_labels
-    assert verdict["valid"] is False
-    assert verdict["tampered"] is True
+    return

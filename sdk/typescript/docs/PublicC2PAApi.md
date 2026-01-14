@@ -16,6 +16,8 @@ All URIs are relative to *https://api.encypherai.com*
 
 Create C2PA-like manifest JSON from plaintext (Public - Non-Cryptographic)
 
+Create a C2PA-like manifest JSON payload from plaintext. This endpoint is intended for client-side workflows that want a server-generated starting point for a manifest before cryptographic signing.  Authentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits.
+
 ### Example
 
 ```ts
@@ -153,6 +155,8 @@ No authorization required
 > ValidateManifestResponse validateManifestApiV1PublicC2paValidateManifestPost(validateManifestRequest, authorization)
 
 Validate C2PA-like manifest JSON (Public - Non-Cryptographic)
+
+Validate a manifest JSON payload and (optionally) validate assertion payloads against provided JSON Schemas. This endpoint performs structural/schema validation only and does not verify cryptographic signatures.  Authentication is optional: unauthenticated requests are IP rate-limited; providing an API key may grant higher limits.
 
 ### Example
 

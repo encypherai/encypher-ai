@@ -15,12 +15,12 @@
 http:
   routers:
     # ===========================================
-    # VERIFY PORTAL (Host-based) -> Enterprise API
+    # VERIFY PORTAL (Host-based) -> Verification Service
     # Supports public URLs like https://verify.encypherai.com/{document_id}
     # ===========================================
     verify-portal:
       rule: "Host(`verify.encypherai.com`)"
-      service: enterprise-api
+      service: verification-service
       entryPoints:
         - websecure
         - web
@@ -127,6 +127,8 @@ http:
       tls: {}
       priority: 100
 
+    # Verification Service - ALL verification endpoints
+    # Routes all /api/v1/verify* to verification-service for independent scaling
     api-verify:
       rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/verify`)"
       service: verification-service

@@ -10,6 +10,11 @@ Name | Type | Description | Notes
 **text** | **str** | Full document text to encode | 
 **segmentation_level** | **str** | Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word | [optional] [default to 'sentence']
 **action** | **str** | C2PA action type: c2pa.created (new content) or c2pa.edited (modified content) | [optional] [default to 'c2pa.created']
+**manifest_mode** | **str** | Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier. | [optional] [default to 'full']
+**embedding_strategy** | **str** | Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier. | [optional] [default to 'single_point']
+**distribution_target** | **str** |  | [optional] 
+**add_dual_binding** | **bool** | Enable additional integrity binding. Availability depends on plan tier. | [optional] [default to False]
+**disable_c2pa** | **bool** | Opt-out of C2PA embedding. When true, only basic metadata is embedded. | [optional] [default to False]
 **previous_instance_id** | **str** |  | [optional] 
 **metadata** | **Dict[str, object]** |  | [optional] 
 **c2pa_manifest_url** | **str** |  | [optional] 

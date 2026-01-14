@@ -73,11 +73,11 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     # === API Feature Augmentation (TEAM_044) ===
     manifest_mode: str = Field(
         default="full",
-        description="Manifest mode: full (default C2PA), lightweight_uuid (minimal UUID pointer), hybrid (UUID per sentence + full C2PA at doc level). Professional+ for lightweight_uuid, Enterprise for hybrid."
+        description="Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier."
     )
     embedding_strategy: str = Field(
         default="single_point",
-        description="Embedding strategy: single_point (default), distributed (spread across targets), distributed_redundant (with ECC). Business+ for distributed, Enterprise for ECC."
+        description="Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier."
     )
     distribution_target: Optional[str] = Field(
         default=None,
@@ -85,7 +85,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     )
     add_dual_binding: bool = Field(
         default=False,
-        description="Enable dual-binding manifest (content + self-hash). Business+ feature."
+        description="Enable additional integrity binding. Availability depends on plan tier."
     )
     disable_c2pa: bool = Field(
         default=False,
@@ -173,23 +173,20 @@ class EncodeWithEmbeddingsRequest(BaseModel):
 
 class EmbeddingInfo(BaseModel):
     """
-    Information about a single invisible embedding.
-    
-    Uses encypher-ai package for invisible Unicode variation selector embeddings.
-    No visible ref_id, signature, or embedding string - all embedded invisibly.
+    Information about a single embedding.
     """
     leaf_index: int = Field(..., description="Position in document (0-indexed)")
-    text: Optional[str] = Field(None, description="Text with invisible embedding (if include_text=true)")
-    ref_id: Optional[str] = Field(None, description="Deprecated: No visible ref_id with invisible embeddings")
-    signature: Optional[str] = Field(None, description="Deprecated: No visible signature with invisible embeddings")
-    embedding: Optional[str] = Field(None, description="Deprecated: No visible embedding string with invisible embeddings")
-    verification_url: Optional[str] = Field(None, description="Deprecated: Verification by extracting from text")
-    leaf_hash: str = Field(..., description="SHA-256 hash of text segment")
+    text: Optional[str] = Field(None, description="Text containing the embedding (if include_text=true)")
+    ref_id: Optional[str] = Field(None, description="Deprecated")
+    signature: Optional[str] = Field(None, description="Deprecated")
+    embedding: Optional[str] = Field(None, description="Deprecated")
+    verification_url: Optional[str] = Field(None, description="Deprecated")
+    leaf_hash: str = Field(..., description="Cryptographic hash of the signed text segment")
 
 
 class MerkleTreeInfo(BaseModel):
     """Merkle tree information."""
-    root_hash: str = Field(..., description="Merkle tree root hash")
+    root_hash: str = Field(..., description="Root hash for the integrity proof")
     total_leaves: int = Field(..., description="Number of leaf nodes")
     tree_depth: int = Field(..., description="Height of the tree")
 
@@ -221,7 +218,7 @@ class VerifyEmbeddingRequest(BaseModel):
 class ContentInfo(BaseModel):
     """Content information from verification."""
     text_preview: str = Field(..., description="First 200 characters of content")
-    leaf_hash: str = Field(..., description="SHA-256 hash of full content")
+    leaf_hash: str = Field(..., description="Cryptographic hash of full content")
     leaf_index: int = Field(..., description="Position in document")
 
 
@@ -247,7 +244,7 @@ class C2PAInfo(BaseModel):
     manifest_hash: Optional[str] = Field(None, description="Manifest hash")
     validated: bool = Field(..., description="Whether the manifest passed validation")
     validation_type: str = Field(
-        ..., description="Validation semantics. Currently always 'non_cryptographic'."
+        ..., description="Validation semantics."
     )
     validation_details: Optional[Dict[str, Any]] = Field(
         None,

@@ -4,7 +4,7 @@ All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**SignAdvancedApiV1SignAdvancedPost**](SigningAPI.md#SignAdvancedApiV1SignAdvancedPost) | **Post** /api/v1/sign/advanced | Sign Advanced
+[**SignAdvancedApiV1SignAdvancedPost**](SigningAPI.md#SignAdvancedApiV1SignAdvancedPost) | **Post** /api/v1/sign/advanced | Sign with advanced embedding controls
 [**SignContentApiV1SignPost**](SigningAPI.md#SignContentApiV1SignPost) | **Post** /api/v1/sign | Sign Content
 
 
@@ -13,7 +13,9 @@ Method | HTTP request | Description
 
 > EncodeWithEmbeddingsResponse SignAdvancedApiV1SignAdvancedPost(ctx).EncodeWithEmbeddingsRequest(encodeWithEmbeddingsRequest).Execute()
 
-Sign Advanced
+Sign with advanced embedding controls
+
+
 
 ### Example
 

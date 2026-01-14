@@ -45,16 +45,4 @@ func Test_encypher_UsageAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test UsageAPIService ResetMonthlyUsageApiV1UsageResetPost", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		resp, httpRes, err := apiClient.UsageAPI.ResetMonthlyUsageApiV1UsageResetPost(context.Background()).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
 }

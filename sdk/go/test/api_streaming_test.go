@@ -96,16 +96,4 @@ func Test_encypher_StreamingAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test StreamingAPIService StreamingHealthCheckApiV1StreamHealthGet", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		resp, httpRes, err := apiClient.StreamingAPI.StreamingHealthCheckApiV1StreamHealthGet(context.Background()).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
 }

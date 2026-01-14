@@ -1,12 +1,11 @@
 # VerifyRequest
 
-Request model for verifying signed content.
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**text** | **str** | Text with embedded C2PA manifest | 
+**text** | **str** |  | 
 
 ## Example
 

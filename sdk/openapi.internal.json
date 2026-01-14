@@ -3,7 +3,7 @@
   "info": {
     "title": "Encypher Enterprise API (Internal)",
     "description": "C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises",
-    "version": "1.0.0-preview"
+    "version": "1.0.1"
   },
   "paths": {
     "/health": {
@@ -1859,7 +1859,7 @@
           "Signing"
         ],
         "summary": "Sign with advanced embedding controls",
-        "description": "Sign a document while enabling advanced embedding controls (manifest mode, distribution strategy, ECC, and other enterprise features).\n\nTier requirements are enforced server-side (typically Professional+ depending on selected options).",
+        "description": "Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).\n\nTier requirements are enforced server-side (typically Professional+ depending on selected options).",
         "operationId": "sign_advanced_api_v1_sign_advanced_post",
         "requestBody": {
           "content": {
@@ -1898,89 +1898,6 @@
             "HTTPBearer": []
           }
         ]
-      }
-    },
-    "/api/v1/verify/{document_id}": {
-      "get": {
-        "tags": [
-          "Verification"
-        ],
-        "summary": "Verify By Document Id",
-        "description": "Verify a document by its ID (for clickable verification links).\n\nReturns an HTML page so users can preview verification state in a browser.",
-        "operationId": "verify_by_document_id_api_v1_verify__document_id__get",
-        "parameters": [
-          {
-            "name": "document_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Document Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {}
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/verify": {
-      "post": {
-        "tags": [
-          "Verification"
-        ],
-        "summary": "Verify Content",
-        "description": "Verify C2PA manifest in signed content using the encypher-ai library.\n\nThis endpoint is public, rate limited, and returns structured machine-friendly\nverdicts that SDKs consume.",
-        "operationId": "verify_content_api_v1_verify_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VerifyRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VerifyResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/lookup": {
@@ -4266,7 +4183,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__schemas__batch__BatchVerifyRequest"
+                "$ref": "#/components/schemas/BatchVerifyRequest"
               }
             }
           },
@@ -4299,92 +4216,6 @@
             "HTTPBearer": []
           }
         ]
-      }
-    },
-    "/api/v1/tools/encode": {
-      "post": {
-        "tags": [
-          "Public Tools",
-          "Public Tools"
-        ],
-        "summary": "Encode Text",
-        "description": "Encode text with embedded metadata using the demo key.\n\nThis is a public endpoint for the website demo tool.\nAll encoding uses a server-side demo key.",
-        "operationId": "encode_text_api_v1_tools_encode_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EncodeToolRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EncodeToolResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tools/decode": {
-      "post": {
-        "tags": [
-          "Public Tools",
-          "Public Tools"
-        ],
-        "summary": "Decode Text",
-        "description": "Decode and verify text containing embedded metadata.\n\nThis is a public endpoint for the website demo tool.\nSupports multiple embeddings in a single text (Encypher proprietary feature).\nVerification uses Trust Anchor lookup - checks database for org public keys.\nFalls back to demo key for demo-signed content.",
-        "operationId": "decode_text_api_v1_tools_decode_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DecodeToolRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DecodeToolResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
       }
     },
     "/api/v1/enterprise/merkle/encode": {
@@ -5939,7 +5770,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5949,7 +5780,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5959,7 +5790,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -6029,7 +5860,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -6039,7 +5870,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -6109,7 +5940,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -6119,7 +5950,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -6129,7 +5960,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -6309,6 +6140,390 @@
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify": {
+      "post": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Verify Text",
+        "description": "Verify signed content and return a structured verdict.",
+        "operationId": "verify_text_api_v1_verify_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerifyResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/{document_id}": {
+      "get": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Verify By Document Id",
+        "description": "Verify a document by its ID (for clickable verification links).\n\nReturns an HTML page so users can preview verification state in a browser.\nThis endpoint queries the content database for the signed document.",
+        "operationId": "verify_by_document_id_api_v1_verify__document_id__get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/signature": {
+      "post": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Verify Signature",
+        "description": "Verify a signature (public endpoint)\n\n- **content**: Original content\n- **signature**: Hex-encoded signature\n- **public_key_pem**: PEM-encoded public key",
+        "operationId": "verify_signature_api_v1_verify_signature_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-For"
+            }
+          },
+          {
+            "name": "user-agent",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User-Agent"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignatureVerify"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/document": {
+      "post": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Verify Document",
+        "description": "Complete document verification (public endpoint)\n\n- **document_id**: Document ID from encoding service\n- **content**: Current content to verify",
+        "operationId": "verify_document_api_v1_verify_document_post",
+        "parameters": [
+          {
+            "name": "x-forwarded-for",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forwarded-For"
+            }
+          },
+          {
+            "name": "user-agent",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "User-Agent"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentVerify"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/history/{document_id}": {
+      "get": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Get Verification History",
+        "description": "Get verification history for a document (public endpoint)\n\n- **document_id**: Document ID\n- **limit**: Maximum number of results",
+        "operationId": "get_verification_history_api_v1_verify_history__document_id__get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VerificationHistory"
+                  },
+                  "title": "Response Get Verification History Api V1 Verify History  Document Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/stats": {
+      "get": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Get Stats",
+        "description": "Get verification statistics",
+        "operationId": "get_stats_api_v1_verify_stats_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VerificationStats"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/verify/health": {
+      "get": {
+        "tags": [
+          "verification"
+        ],
+        "summary": "Health Check",
+        "description": "Health check endpoint",
+        "operationId": "health_check_api_v1_verify_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           }
@@ -7019,7 +7234,7 @@
           "verdict": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/app__models__response_models__VerifyVerdict"
+                "$ref": "#/components/schemas/VerifyVerdict"
               },
               {
                 "type": "null"
@@ -7280,6 +7495,68 @@
         "title": "BatchSummary",
         "description": "Aggregated stats for the batch."
       },
+      "BatchVerifyRequest": {
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "c2pa",
+              "embeddings"
+            ],
+            "title": "Mode",
+            "description": "Processing mode: 'c2pa' or 'embeddings'"
+          },
+          "segmentation_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "document",
+                  "paragraph",
+                  "sentence"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmentation Level",
+            "description": "Segmentation level (embeddings mode only)",
+            "default": "sentence"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "description": "Caller-supplied key used to deduplicate retries"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BatchItemPayload"
+            },
+            "type": "array",
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Items",
+            "description": "Documents to process (max 100)"
+          },
+          "fail_fast": {
+            "type": "boolean",
+            "title": "Fail Fast",
+            "description": "Abort remaining items upon the first error when set to true",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "mode",
+          "idempotency_key",
+          "items"
+        ],
+        "title": "BatchVerifyRequest",
+        "description": "Batch verification request (shares schema for now)."
+      },
       "BatchVerifyResponse": {
         "properties": {
           "results": {
@@ -7507,7 +7784,7 @@
           "validation_type": {
             "type": "string",
             "title": "Validation Type",
-            "description": "Validation semantics. Currently always 'non_cryptographic'."
+            "description": "Validation semantics."
           },
           "validation_details": {
             "anyOf": [
@@ -8401,7 +8678,7 @@
           "leaf_hash": {
             "type": "string",
             "title": "Leaf Hash",
-            "description": "SHA-256 hash of full content"
+            "description": "Cryptographic hash of full content"
           },
           "leaf_index": {
             "type": "integer",
@@ -8697,96 +8974,6 @@
           "claim_generator"
         ],
         "title": "CreateManifestSigningPayload"
-      },
-      "DecodeToolRequest": {
-        "properties": {
-          "encoded_text": {
-            "type": "string",
-            "maxLength": 100000,
-            "minLength": 1,
-            "title": "Encoded Text",
-            "description": "The text containing embedded metadata."
-          }
-        },
-        "type": "object",
-        "required": [
-          "encoded_text"
-        ],
-        "title": "DecodeToolRequest",
-        "description": "Request model for decoding text."
-      },
-      "DecodeToolResponse": {
-        "properties": {
-          "metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata"
-          },
-          "verification_status": {
-            "type": "string",
-            "enum": [
-              "Success",
-              "Failure",
-              "Key Not Found",
-              "Not Attempted",
-              "Error"
-            ],
-            "title": "Verification Status",
-            "default": "Not Attempted"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          },
-          "raw_hidden_data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__routers__tools__VerifyVerdict"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "embeddings_found": {
-            "type": "integer",
-            "title": "Embeddings Found",
-            "description": "Number of embeddings found in the text",
-            "default": 0
-          },
-          "all_embeddings": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/EmbeddingResult"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "All Embeddings",
-            "description": "All embeddings found, with individual verification results"
-          }
-        },
-        "type": "object",
-        "title": "DecodeToolResponse",
-        "description": "Response model for decoding."
       },
       "DistributionStatus": {
         "type": "string",
@@ -9326,7 +9513,7 @@
               }
             ],
             "title": "Text",
-            "description": "Text with invisible embedding (if include_text=true)"
+            "description": "Text containing the embedding (if include_text=true)"
           },
           "ref_id": {
             "anyOf": [
@@ -9338,7 +9525,7 @@
               }
             ],
             "title": "Ref Id",
-            "description": "Deprecated: No visible ref_id with invisible embeddings"
+            "description": "Deprecated"
           },
           "signature": {
             "anyOf": [
@@ -9350,7 +9537,7 @@
               }
             ],
             "title": "Signature",
-            "description": "Deprecated: No visible signature with invisible embeddings"
+            "description": "Deprecated"
           },
           "embedding": {
             "anyOf": [
@@ -9362,7 +9549,7 @@
               }
             ],
             "title": "Embedding",
-            "description": "Deprecated: No visible embedding string with invisible embeddings"
+            "description": "Deprecated"
           },
           "verification_url": {
             "anyOf": [
@@ -9374,12 +9561,12 @@
               }
             ],
             "title": "Verification Url",
-            "description": "Deprecated: Verification by extracting from text"
+            "description": "Deprecated"
           },
           "leaf_hash": {
             "type": "string",
             "title": "Leaf Hash",
-            "description": "SHA-256 hash of text segment"
+            "description": "Cryptographic hash of the signed text segment"
           }
         },
         "type": "object",
@@ -9388,7 +9575,7 @@
           "leaf_hash"
         ],
         "title": "EmbeddingInfo",
-        "description": "Information about a single invisible embedding.\n\nUses encypher-ai package for invisible Unicode variation selector embeddings.\nNo visible ref_id, signature, or embedding string - all embedded invisibly."
+        "description": "Information about a single embedding."
       },
       "EmbeddingOptions": {
         "properties": {
@@ -9414,100 +9601,6 @@
         "type": "object",
         "title": "EmbeddingOptions",
         "description": "Options for embedding generation."
-      },
-      "EmbeddingResult": {
-        "properties": {
-          "index": {
-            "type": "integer",
-            "title": "Index",
-            "description": "Index of this embedding (0-based)"
-          },
-          "metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata"
-          },
-          "verification_status": {
-            "type": "string",
-            "enum": [
-              "Success",
-              "Failure",
-              "Key Not Found",
-              "Not Attempted",
-              "Error"
-            ],
-            "title": "Verification Status",
-            "default": "Not Attempted"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          },
-          "verdict": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__routers__tools__VerifyVerdict"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "text_span": {
-            "anyOf": [
-              {
-                "prefixItems": [
-                  {
-                    "type": "integer"
-                  },
-                  {
-                    "type": "integer"
-                  }
-                ],
-                "type": "array",
-                "maxItems": 2,
-                "minItems": 2
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text Span",
-            "description": "Start and end position of this embedding in the original text"
-          },
-          "clean_text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Clean Text",
-            "description": "The text covered by this embedding (without the wrapper)"
-          }
-        },
-        "type": "object",
-        "required": [
-          "index"
-        ],
-        "title": "EmbeddingResult",
-        "description": "Result for a single embedding found in text."
       },
       "EmbeddingVerdict": {
         "properties": {
@@ -9588,7 +9681,7 @@
               }
             ],
             "title": "Text Span",
-            "description": "Start and end position in original text"
+            "description": "Start and end UTF-8 byte offsets in the input text"
           },
           "clean_text": {
             "anyOf": [
@@ -9626,126 +9719,6 @@
         "title": "EmbeddingVerdict",
         "description": "Verification verdict for a single embedding."
       },
-      "EncodeToolRequest": {
-        "properties": {
-          "original_text": {
-            "type": "string",
-            "maxLength": 100000,
-            "minLength": 1,
-            "title": "Original Text",
-            "description": "The original text to embed metadata into."
-          },
-          "target": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "whitespace",
-                  "punctuation",
-                  "first_letter",
-                  "last_letter",
-                  "all_characters"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target",
-            "description": "Where to embed metadata.",
-            "default": "first_letter"
-          },
-          "metadata_format": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "basic",
-                  "manifest",
-                  "c2pa_v2_2"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata Format",
-            "description": "Format of metadata to embed.",
-            "default": "c2pa_v2_2"
-          },
-          "ai_info": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ai Info",
-            "description": "AI model information for C2PA manifest."
-          },
-          "custom_metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Custom Metadata",
-            "description": "Custom key-value pairs to embed."
-          }
-        },
-        "type": "object",
-        "required": [
-          "original_text"
-        ],
-        "title": "EncodeToolRequest",
-        "description": "Request model for encoding text with metadata."
-      },
-      "EncodeToolResponse": {
-        "properties": {
-          "encoded_text": {
-            "type": "string",
-            "title": "Encoded Text",
-            "description": "Text with embedded metadata."
-          },
-          "metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata",
-            "description": "Metadata that was embedded."
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error"
-          }
-        },
-        "type": "object",
-        "required": [
-          "encoded_text"
-        ],
-        "title": "EncodeToolResponse",
-        "description": "Response model for encoding."
-      },
       "EncodeWithEmbeddingsRequest": {
         "properties": {
           "document_id": {
@@ -9773,13 +9746,13 @@
           "manifest_mode": {
             "type": "string",
             "title": "Manifest Mode",
-            "description": "Manifest mode: full (default C2PA), lightweight_uuid (minimal UUID pointer), hybrid (UUID per sentence + full C2PA at doc level). Professional+ for lightweight_uuid, Enterprise for hybrid.",
+            "description": "Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier.",
             "default": "full"
           },
           "embedding_strategy": {
             "type": "string",
             "title": "Embedding Strategy",
-            "description": "Embedding strategy: single_point (default), distributed (spread across targets), distributed_redundant (with ECC). Business+ for distributed, Enterprise for ECC.",
+            "description": "Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier.",
             "default": "single_point"
           },
           "distribution_target": {
@@ -9797,7 +9770,7 @@
           "add_dual_binding": {
             "type": "boolean",
             "title": "Add Dual Binding",
-            "description": "Enable dual-binding manifest (content + self-hash). Business+ feature.",
+            "description": "Enable additional integrity binding. Availability depends on plan tier.",
             "default": false
           },
           "disable_c2pa": {
@@ -10080,6 +10053,51 @@
           },
           "success": true
         }
+      },
+      "ErrorResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always false for errors",
+            "default": false
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error message"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail",
+            "description": "Detailed error information"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code",
+            "description": "Error code for programmatic handling"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Error response."
       },
       "EvidenceGenerateRequest": {
         "properties": {
@@ -11858,7 +11876,7 @@
           "root_hash": {
             "type": "string",
             "title": "Root Hash",
-            "description": "Merkle tree root hash"
+            "description": "Root hash for the integrity proof"
           },
           "total_leaves": {
             "type": "integer",
@@ -12757,6 +12775,89 @@
         "title": "RevokeRequest",
         "description": "Request to revoke a document."
       },
+      "RightsMetadata": {
+        "properties": {
+          "copyright_holder": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Copyright Holder",
+            "description": "Copyright holder / publisher name"
+          },
+          "license_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Url",
+            "description": "URL to license terms"
+          },
+          "usage_terms": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 2000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usage Terms",
+            "description": "Human-readable usage terms"
+          },
+          "syndication_allowed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Syndication Allowed",
+            "description": "Whether downstream syndication is permitted"
+          },
+          "embargo_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embargo Until",
+            "description": "Optional embargo end timestamp"
+          },
+          "contact_email": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 320
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Email",
+            "description": "Contact email for licensing"
+          }
+        },
+        "type": "object",
+        "title": "RightsMetadata"
+      },
       "SignRequest": {
         "properties": {
           "text": {
@@ -12861,7 +12962,7 @@
           "rights": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/app__models__request_models__RightsMetadata"
+                "$ref": "#/components/schemas/RightsMetadata"
               },
               {
                 "type": "null"
@@ -14655,88 +14756,96 @@
         "title": "VerifyEmbeddingResponse",
         "description": "Response from verifying an embedding."
       },
-      "VerifyRequest": {
+      "VerifyVerdict": {
         "properties": {
-          "text": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Text",
-            "description": "Text with embedded C2PA manifest"
-          }
-        },
-        "type": "object",
-        "required": [
-          "text"
-        ],
-        "title": "VerifyRequest",
-        "description": "Request model for verifying signed content.",
-        "examples": [
-          {
-            "text": "Signed content with invisible C2PA manifest..."
-          }
-        ]
-      },
-      "VerifyResponse": {
-        "properties": {
-          "success": {
+          "valid": {
             "type": "boolean",
-            "title": "Success",
-            "description": "Indicates if the request was processed successfully"
+            "title": "Valid",
+            "description": "Whether the signature is valid"
           },
-          "data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__models__response_models__VerifyVerdict"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Verification verdict payload when success is true"
+          "tampered": {
+            "type": "boolean",
+            "title": "Tampered",
+            "description": "Whether the payload was tampered"
           },
-          "error": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ErrorDetail"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Error payload when success is false"
-          },
-          "correlation_id": {
+          "reason_code": {
             "type": "string",
-            "title": "Correlation Id",
-            "description": "Request correlation identifier for tracing"
+            "title": "Reason Code",
+            "description": "Reason code describing the verdict"
+          },
+          "signer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Id",
+            "description": "Resolved signer/organization ID"
+          },
+          "signer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Name",
+            "description": "Human readable signer name"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp",
+            "description": "Signature timestamp, if present"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details",
+            "description": "Structured details (manifest, benchmarking stats, etc.)"
+          },
+          "embeddings_found": {
+            "type": "integer",
+            "title": "Embeddings Found",
+            "description": "Number of embeddings found in the text",
+            "default": 0
+          },
+          "all_embeddings": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/EmbeddingVerdict"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "All Embeddings",
+            "description": "All embeddings found with individual verification results"
           }
         },
         "type": "object",
         "required": [
-          "success",
-          "correlation_id"
+          "valid",
+          "tampered",
+          "reason_code"
         ],
-        "title": "VerifyResponse",
-        "description": "Envelope returned by the verification endpoint.",
-        "examples": [
-          {
-            "correlation_id": "req-123",
-            "data": {
-              "details": {
-                "manifest": {
-                  "document_id": "doc-1"
-                }
-              },
-              "reason_code": "OK",
-              "signer_id": "org_demo",
-              "signer_name": "Demo Org",
-              "tampered": false,
-              "timestamp": "2025-01-15T10:30:00Z",
-              "valid": true
-            },
-            "success": true
-          }
-        ]
+        "title": "VerifyVerdict",
+        "description": "Detailed verification verdict data."
       },
       "WebhookCreateRequest": {
         "properties": {
@@ -14944,297 +15053,6 @@
         "title": "WebhookUpdateResponse",
         "description": "Response after updating a webhook."
       },
-      "app__models__request_models__RightsMetadata": {
-        "properties": {
-          "copyright_holder": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 255
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Copyright Holder",
-            "description": "Copyright holder / publisher name"
-          },
-          "license_url": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 1000
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "License Url",
-            "description": "URL to license terms"
-          },
-          "usage_terms": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 2000
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Usage Terms",
-            "description": "Human-readable usage terms"
-          },
-          "syndication_allowed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Syndication Allowed",
-            "description": "Whether downstream syndication is permitted"
-          },
-          "embargo_until": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Embargo Until",
-            "description": "Optional embargo end timestamp"
-          },
-          "contact_email": {
-            "anyOf": [
-              {
-                "type": "string",
-                "maxLength": 320
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Contact Email",
-            "description": "Contact email for licensing"
-          }
-        },
-        "type": "object",
-        "title": "RightsMetadata"
-      },
-      "app__models__response_models__VerifyVerdict": {
-        "properties": {
-          "valid": {
-            "type": "boolean",
-            "title": "Valid",
-            "description": "Whether the signature is valid"
-          },
-          "tampered": {
-            "type": "boolean",
-            "title": "Tampered",
-            "description": "Whether the payload was tampered"
-          },
-          "reason_code": {
-            "type": "string",
-            "title": "Reason Code",
-            "description": "Reason code describing the verdict"
-          },
-          "signer_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signer Id",
-            "description": "Resolved signer/organization ID"
-          },
-          "signer_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signer Name",
-            "description": "Human readable signer name"
-          },
-          "timestamp": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Timestamp",
-            "description": "Signature timestamp, if present"
-          },
-          "details": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Details",
-            "description": "Structured details (manifest, benchmarking stats, etc.)"
-          },
-          "embeddings_found": {
-            "type": "integer",
-            "title": "Embeddings Found",
-            "description": "Number of embeddings found in the text",
-            "default": 0
-          },
-          "all_embeddings": {
-            "anyOf": [
-              {
-                "items": {
-                  "$ref": "#/components/schemas/EmbeddingVerdict"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "All Embeddings",
-            "description": "All embeddings found with individual verification results"
-          }
-        },
-        "type": "object",
-        "required": [
-          "valid",
-          "tampered",
-          "reason_code"
-        ],
-        "title": "VerifyVerdict",
-        "description": "Detailed verification verdict data."
-      },
-      "app__routers__tools__VerifyVerdict": {
-        "properties": {
-          "valid": {
-            "type": "boolean",
-            "title": "Valid",
-            "default": false
-          },
-          "tampered": {
-            "type": "boolean",
-            "title": "Tampered",
-            "default": false
-          },
-          "reason_code": {
-            "type": "string",
-            "title": "Reason Code",
-            "default": "UNKNOWN"
-          },
-          "signer_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signer Id"
-          },
-          "signer_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signer Name"
-          },
-          "timestamp": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Timestamp"
-          }
-        },
-        "type": "object",
-        "title": "VerifyVerdict",
-        "description": "Verification verdict details."
-      },
-      "app__schemas__batch__BatchVerifyRequest": {
-        "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "c2pa",
-              "embeddings"
-            ],
-            "title": "Mode",
-            "description": "Processing mode: 'c2pa' or 'embeddings'"
-          },
-          "segmentation_level": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "document",
-                  "paragraph",
-                  "sentence"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmentation Level",
-            "description": "Segmentation level (embeddings mode only)",
-            "default": "sentence"
-          },
-          "idempotency_key": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Idempotency Key",
-            "description": "Caller-supplied key used to deduplicate retries"
-          },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/BatchItemPayload"
-            },
-            "type": "array",
-            "maxItems": 100,
-            "minItems": 1,
-            "title": "Items",
-            "description": "Documents to process (max 100)"
-          },
-          "fail_fast": {
-            "type": "boolean",
-            "title": "Fail Fast",
-            "description": "Abort remaining items upon the first error when set to true",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "mode",
-          "idempotency_key",
-          "items"
-        ],
-        "title": "BatchVerifyRequest",
-        "description": "Batch verification request (shares schema for now)."
-      },
       "app__schemas__embeddings__BatchVerifyRequest": {
         "properties": {
           "references": {
@@ -15252,51 +15070,6 @@
         ],
         "title": "BatchVerifyRequest",
         "description": "Request to verify multiple embeddings."
-      },
-      "app__schemas__embeddings__ErrorResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Always false for errors",
-            "default": false
-          },
-          "error": {
-            "type": "string",
-            "title": "Error",
-            "description": "Error message"
-          },
-          "detail": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Detail",
-            "description": "Detailed error information"
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code",
-            "description": "Error code for programmatic handling"
-          }
-        },
-        "type": "object",
-        "required": [
-          "error"
-        ],
-        "title": "ErrorResponse",
-        "description": "Error response."
       },
       "app__schemas__embeddings__RightsMetadata": {
         "properties": {
@@ -15416,6 +15189,357 @@
         ],
         "title": "ErrorResponse",
         "description": "Standard error response schema."
+      },
+      "DocumentVerify": {
+        "properties": {
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_id",
+          "content"
+        ],
+        "title": "DocumentVerify",
+        "description": "Schema for complete document verification"
+      },
+      "VerificationService__ErrorDetail": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorDetail"
+      },
+      "SignatureVerify": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Content"
+          },
+          "signature": {
+            "type": "string",
+            "title": "Signature"
+          },
+          "public_key_pem": {
+            "type": "string",
+            "title": "Public Key Pem"
+          }
+        },
+        "type": "object",
+        "required": [
+          "content",
+          "signature",
+          "public_key_pem"
+        ],
+        "title": "SignatureVerify",
+        "description": "Schema for signature verification"
+      },
+      "VerificationHistory": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "document_id": {
+            "type": "string",
+            "title": "Document Id"
+          },
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid"
+          },
+          "is_tampered": {
+            "type": "boolean",
+            "title": "Is Tampered"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "document_id",
+          "is_valid",
+          "is_tampered",
+          "confidence_score",
+          "created_at"
+        ],
+        "title": "VerificationHistory",
+        "description": "Schema for verification history"
+      },
+      "VerificationResponse": {
+        "properties": {
+          "is_valid": {
+            "type": "boolean",
+            "title": "Is Valid"
+          },
+          "is_tampered": {
+            "type": "boolean",
+            "title": "Is Tampered"
+          },
+          "signature_valid": {
+            "type": "boolean",
+            "title": "Signature Valid"
+          },
+          "hash_valid": {
+            "type": "boolean",
+            "title": "Hash Valid"
+          },
+          "confidence_score": {
+            "type": "number",
+            "title": "Confidence Score"
+          },
+          "similarity_score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Similarity Score"
+          },
+          "signer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Id"
+          },
+          "warnings": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Warnings"
+          },
+          "verification_time_ms": {
+            "type": "integer",
+            "title": "Verification Time Ms"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_valid",
+          "is_tampered",
+          "signature_valid",
+          "hash_valid",
+          "confidence_score",
+          "similarity_score",
+          "signer_id",
+          "warnings",
+          "verification_time_ms",
+          "created_at"
+        ],
+        "title": "VerificationResponse",
+        "description": "Schema for verification response"
+      },
+      "VerificationStats": {
+        "properties": {
+          "total_verifications": {
+            "type": "integer",
+            "title": "Total Verifications"
+          },
+          "valid_verifications": {
+            "type": "integer",
+            "title": "Valid Verifications"
+          },
+          "invalid_verifications": {
+            "type": "integer",
+            "title": "Invalid Verifications"
+          },
+          "tampered_documents": {
+            "type": "integer",
+            "title": "Tampered Documents"
+          },
+          "average_confidence_score": {
+            "type": "number",
+            "title": "Average Confidence Score"
+          },
+          "average_verification_time_ms": {
+            "type": "number",
+            "title": "Average Verification Time Ms"
+          }
+        },
+        "type": "object",
+        "required": [
+          "total_verifications",
+          "valid_verifications",
+          "invalid_verifications",
+          "tampered_documents",
+          "average_confidence_score",
+          "average_verification_time_ms"
+        ],
+        "title": "VerificationStats",
+        "description": "Schema for verification statistics"
+      },
+      "VerifyRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "VerifyRequest"
+      },
+      "VerifyResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success"
+          },
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerifyVerdict"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "correlation_id": {
+            "type": "string",
+            "title": "Correlation Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "success",
+          "correlation_id"
+        ],
+        "title": "VerifyResponse"
+      },
+      "VerificationService__VerifyVerdict": {
+        "properties": {
+          "valid": {
+            "type": "boolean",
+            "title": "Valid"
+          },
+          "tampered": {
+            "type": "boolean",
+            "title": "Tampered"
+          },
+          "reason_code": {
+            "type": "string",
+            "title": "Reason Code"
+          },
+          "signer_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Id"
+          },
+          "signer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Name"
+          },
+          "timestamp": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timestamp"
+          },
+          "details": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "valid",
+          "tampered",
+          "reason_code"
+        ],
+        "title": "VerifyVerdict"
       }
     },
     "securitySchemes": {
@@ -15434,5 +15558,6 @@
       "url": "http://localhost:8007",
       "description": "Local development"
     }
-  ]
+  ],
+  "tags": []
 }

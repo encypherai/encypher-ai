@@ -124,6 +124,8 @@ export default function BillingPage() {
   const usage = billingQuery.data?.usage;
   const coalition = billingQuery.data?.coalition;
   const currentTier = subscription?.tier || 'starter';
+  // TEAM_061: Enterprise pricing terms (rev share) should not be displayed in the dashboard UI.
+  const isEnterpriseTier = subscription?.tier === 'enterprise';
   const isLoading = status === 'loading' || billingQuery.isLoading || plansQuery.isLoading;
 
   // Get price based on billing cycle
@@ -161,7 +163,7 @@ export default function BillingPage() {
               {isLoading ? 'Loading plan information…' : subscription?.plan_name || 'Starter (Free)'}
             </CardDescription>
           </CardHeader>
-          <CardContent className="grid md:grid-cols-4 gap-6">
+          <CardContent className={isEnterpriseTier ? 'grid md:grid-cols-3 gap-6' : 'grid md:grid-cols-4 gap-6'}>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Plan</p>
               <p className="text-2xl font-bold text-delft-blue dark:text-white">
@@ -181,14 +183,16 @@ export default function BillingPage() {
                 {subscription?.current_period_end ? formatDate(subscription.current_period_end) : '—'}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Coalition Rev Share</p>
-              <p className="text-foreground">
-                {subscription?.coalition_rev_share 
-                  ? `${subscription.coalition_rev_share.publisher}% you / ${subscription.coalition_rev_share.encypher}% Encypher`
-                  : '65% you / 35% Encypher'}
-              </p>
-            </div>
+            {!isEnterpriseTier && (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Coalition Rev Share</p>
+                <p className="text-foreground">
+                  {subscription?.coalition_rev_share 
+                    ? `${subscription.coalition_rev_share.publisher}% you / ${subscription.coalition_rev_share.encypher}% Encypher`
+                    : '65% you / 35% Encypher'}
+                </p>
+              </div>
+            )}
           </CardContent>
           {subscription && (
             <div className="px-6 pb-6">
@@ -273,7 +277,7 @@ export default function BillingPage() {
                 {isLoading ? (
                   <span className="inline-block h-4 w-32 bg-muted animate-pulse rounded" />
                 ) : coalition ? (
-                  `${coalition.publisher_share_percent}% revenue share`
+                  isEnterpriseTier ? 'Coalition earnings summary' : `${coalition.publisher_share_percent}% revenue share`
                 ) : (
                   'Join the coalition to earn'
                 )}
@@ -485,12 +489,6 @@ export default function BillingPage() {
               <div className="mb-4 text-center">
                 <div className="text-4xl font-bold text-foreground">Custom</div>
                 <p className="text-sm text-muted-foreground">Contact for pricing</p>
-              </div>
-
-              {/* Coalition Rev Share Badge */}
-              <div className="bg-blue-ncs/10 rounded-lg p-3 mb-4 text-center">
-                <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                <p className="text-sm font-semibold text-blue-ncs">80% you / 20% Encypher</p>
               </div>
               
               {/* Features List */}

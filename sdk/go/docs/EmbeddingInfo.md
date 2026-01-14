@@ -10,7 +10,7 @@ Name | Type | Description | Notes
 **Signature** | Pointer to **NullableString** |  | [optional] 
 **Embedding** | Pointer to **NullableString** |  | [optional] 
 **VerificationUrl** | Pointer to **NullableString** |  | [optional] 
-**LeafHash** | **string** | SHA-256 hash of text segment | 
+**LeafHash** | **string** | Cryptographic hash of the signed text segment | 
 
 ## Methods
 

@@ -13,7 +13,7 @@ Name | Type | Description | Notes
 **actions** | Option<[**Vec<std::collections::HashMap<String, serde_json::Value>>**](std::collections::HashMap.md)> |  | [optional]
 **template_id** | Option<**String**> |  | [optional]
 **validate_assertions** | Option<**bool**> | Whether to validate template-based assertions (Business+). | [optional][default to true]
-**rights** | Option<[**models::AppModelsRequestModelsRightsMetadata**](app__models__request_models__RightsMetadata.md)> |  | [optional]
+**rights** | Option<[**models::RightsMetadata**](RightsMetadata.md)> |  | [optional]
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -194,7 +194,18 @@ export function formatPrice(tier: TierConfig, period: 'monthly' | 'annual' = 'mo
 
 /**
  * Format revenue share for display
+ * Note: Per PRD, specific percentages are removed from public marketing pages.
+ * Actual terms are discussed during sales consultation.
  */
 export function formatRevShare(tier: TierConfig): string {
-  return `${tier.revShare.publisher}% you / ${tier.revShare.encypher}% Encypher`;
+  if (tier.enterprise) {
+    return 'Best terms available';
+  }
+  if (tier.id === 'business') {
+    return 'Premium revenue share';
+  }
+  if (tier.id === 'professional') {
+    return 'Enhanced revenue share';
+  }
+  return 'Standard revenue share';
 }

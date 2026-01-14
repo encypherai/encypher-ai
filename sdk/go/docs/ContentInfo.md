@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **TextPreview** | **string** | First 200 characters of content | 
-**LeafHash** | **string** | SHA-256 hash of full content | 
+**LeafHash** | **string** | Cryptographic hash of full content | 
 **LeafIndex** | **int32** | Position in document | 
 
 ## Methods

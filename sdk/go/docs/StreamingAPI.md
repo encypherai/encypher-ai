@@ -10,7 +10,6 @@ Method | HTTP request | Description
 [**GetStreamingStatsApiV1StreamStatsGet**](StreamingAPI.md#GetStreamingStatsApiV1StreamStatsGet) | **Get** /api/v1/stream/stats | Get Streaming Stats
 [**SseEventsEndpointApiV1StreamEventsGet**](StreamingAPI.md#SseEventsEndpointApiV1StreamEventsGet) | **Get** /api/v1/stream/events | Sse Events Endpoint
 [**StreamSigningApiV1StreamSignPost**](StreamingAPI.md#StreamSigningApiV1StreamSignPost) | **Post** /api/v1/stream/sign | Stream Signing
-[**StreamingHealthCheckApiV1StreamHealthGet**](StreamingAPI.md#StreamingHealthCheckApiV1StreamHealthGet) | **Get** /api/v1/stream/health | Streaming Health Check
 
 
 
@@ -210,7 +209,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -339,7 +338,7 @@ Name | Type | Description  | Notes
 
 ### Authorization
 
-No authorization required
+[HTTPBearer](../README.md#HTTPBearer)
 
 ### HTTP request headers
 
@@ -408,67 +407,6 @@ Name | Type | Description  | Notes
 ### HTTP request headers
 
 - **Content-Type**: application/json
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
-[[Back to Model list]](../README.md#documentation-for-models)
-[[Back to README]](../README.md)
-
-
-## StreamingHealthCheckApiV1StreamHealthGet
-
-> interface{} StreamingHealthCheckApiV1StreamHealthGet(ctx).Execute()
-
-Streaming Health Check
-
-
-
-### Example
-
-```go
-package main
-
-import (
-	"context"
-	"fmt"
-	"os"
-	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
-)
-
-func main() {
-
-	configuration := openapiclient.NewConfiguration()
-	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.StreamingAPI.StreamingHealthCheckApiV1StreamHealthGet(context.Background()).Execute()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `StreamingAPI.StreamingHealthCheckApiV1StreamHealthGet``: %v\n", err)
-		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
-	}
-	// response from `StreamingHealthCheckApiV1StreamHealthGet`: interface{}
-	fmt.Fprintf(os.Stdout, "Response from `StreamingAPI.StreamingHealthCheckApiV1StreamHealthGet`: %v\n", resp)
-}
-```
-
-### Path Parameters
-
-This endpoint does not need any parameter.
-
-### Other Parameters
-
-Other parameters are passed through a pointer to a apiStreamingHealthCheckApiV1StreamHealthGetRequest struct via the builder pattern
-
-
-### Return type
-
-**interface{}**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
-- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

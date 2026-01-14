@@ -98,7 +98,7 @@ async def sign_content(
     status_code=status.HTTP_201_CREATED,
     summary="Sign with advanced embedding controls",
     description=(
-        "Sign a document while enabling advanced embedding controls (manifest mode, distribution strategy, ECC, and other enterprise features).\n\n"
+        "Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).\n\n"
         "Tier requirements are enforced server-side (typically Professional+ depending on selected options)."
     ),
 )

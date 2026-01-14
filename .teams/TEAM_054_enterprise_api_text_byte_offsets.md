@@ -9,3 +9,10 @@ Align `enterprise_api` /sign, /sign/advanced, and /verify behavior with `docs/c2
 - Fix: Updated `c2pa-text` Python `find_wrapper_info` to return UTF-8 byte offsets (start + length) and adjusted wrapper removal. This aligned with `encypher-ai` expectations.
 - Verification: `uv run ruff check .` (enterprise_api) => OK
 - Verification: `uv run pytest` (enterprise_api) => 566 passed, 62 skipped
+
+## Offset Audit
+
+- Audit: Completed endpoint inventory + offset semantics audit for enterprise_api signing/verification entry points (see `PRDs/CURRENT/PRD_Enterprise_API_Offset_Semantics_Audit.md`).
+- Verification: `uv run ruff check .` (enterprise_api) => OK
+- Verification: `uv run pytest` (enterprise_api) => 563 passed, 62 skipped
+- Blocker: `manifest_mode=lightweight_uuid`/`hybrid` references missing `UnicodeMetadata.embed_lightweight_uuid` (see `.questions/TEAM_054_lightweight_uuid_manifest_mode.md`).

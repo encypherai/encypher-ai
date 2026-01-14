@@ -6,7 +6,6 @@ Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**get_usage_history_api_v1_usage_history_get**](UsageApi.md#get_usage_history_api_v1_usage_history_get) | **GET** /api/v1/usage/history | Get Usage History
 [**get_usage_stats_api_v1_usage_get**](UsageApi.md#get_usage_stats_api_v1_usage_get) | **GET** /api/v1/usage | Get Usage Stats
-[**reset_monthly_usage_api_v1_usage_reset_post**](UsageApi.md#reset_monthly_usage_api_v1_usage_reset_post) | **POST** /api/v1/usage/reset | Reset Monthly Usage
 
 
 # **get_usage_history_api_v1_usage_history_get**
@@ -151,83 +150,6 @@ This endpoint does not need any parameter.
 ### Return type
 
 [**UsageResponse**](UsageResponse.md)
-
-### Authorization
-
-[HTTPBearer](../README.md#HTTPBearer)
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-### HTTP response details
-
-| Status code | Description | Response headers |
-|-------------|-------------|------------------|
-**200** | Successful Response |  -  |
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **reset_monthly_usage_api_v1_usage_reset_post**
-> UsageResetResponse reset_monthly_usage_api_v1_usage_reset_post()
-
-Reset Monthly Usage
-
-Reset monthly usage counters.
-
-This is typically called by a scheduled job at the start of each billing period.
-Requires admin permissions.
-
-### Example
-
-* Bearer Authentication (HTTPBearer):
-
-```python
-import encypher
-from encypher.models.usage_reset_response import UsageResetResponse
-from encypher.rest import ApiException
-from pprint import pprint
-
-# Defining the host is optional and defaults to https://api.encypherai.com
-# See configuration.py for a list of all supported configuration parameters.
-configuration = encypher.Configuration(
-    host = "https://api.encypherai.com"
-)
-
-# The client must configure the authentication and authorization parameters
-# in accordance with the API server security policy.
-# Examples for each auth method are provided below, use the example that
-# satisfies your auth use case.
-
-# Configure Bearer authorization: HTTPBearer
-configuration = encypher.Configuration(
-    access_token = os.environ["BEARER_TOKEN"]
-)
-
-# Enter a context with an instance of the API client
-with encypher.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = encypher.UsageApi(api_client)
-
-    try:
-        # Reset Monthly Usage
-        api_response = api_instance.reset_monthly_usage_api_v1_usage_reset_post()
-        print("The response of UsageApi->reset_monthly_usage_api_v1_usage_reset_post:\n")
-        pprint(api_response)
-    except Exception as e:
-        print("Exception when calling UsageApi->reset_monthly_usage_api_v1_usage_reset_post: %s\n" % e)
-```
-
-
-
-### Parameters
-
-This endpoint does not need any parameter.
-
-### Return type
-
-[**UsageResetResponse**](UsageResetResponse.md)
 
 ### Authorization
 

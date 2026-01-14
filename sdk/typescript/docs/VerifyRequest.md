@@ -1,7 +1,6 @@
 
 # VerifyRequest
 
-Request model for verifying signed content.
 
 ## Properties
 

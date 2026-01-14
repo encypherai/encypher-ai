@@ -51,8 +51,8 @@ http:
       middlewares:
         - cors
 
-    # Verification - C2PA content verification (handled by enterprise-api)
-    # Note: verification-service is for future advanced verification features
+    # Verification Service - ALL verification endpoints
+    # Routes all /api/v1/verify* to verification-service for independent scaling
     api-verify:
       rule: "PathPrefix(`/api/v1/verify`)"
       service: verification-service
@@ -127,7 +127,7 @@ http:
     # Routes public verification URLs like https://verify.encypherai.com/{document_id}
     verify-portal:
       rule: "Host(`verify.encypherai.com`)"
-      service: enterprise-api
+      service: verification-service
       entryPoints:
         - web
       priority: 110

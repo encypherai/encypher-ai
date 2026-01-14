@@ -6,10 +6,14 @@ All URIs are relative to *https://api.encypherai.com*
 |------------- | ------------- | -------------|
 | [**listPublicKeysApiV1ByokPublicKeysGet**](BYOKApi.md#listpublickeysapiv1byokpublickeysget) | **GET** /api/v1/byok/public-keys | List public keys |
 | [**listPublicKeysApiV1ByokPublicKeysGet_0**](BYOKApi.md#listpublickeysapiv1byokpublickeysget_0) | **GET** /api/v1/byok/public-keys | List public keys |
+| [**listTrustedCasApiV1ByokTrustedCasGet**](BYOKApi.md#listtrustedcasapiv1byoktrustedcasget) | **GET** /api/v1/byok/trusted-cas | List trusted Certificate Authorities |
+| [**listTrustedCasApiV1ByokTrustedCasGet_0**](BYOKApi.md#listtrustedcasapiv1byoktrustedcasget_0) | **GET** /api/v1/byok/trusted-cas | List trusted Certificate Authorities |
 | [**registerPublicKeyApiV1ByokPublicKeysPost**](BYOKApi.md#registerpublickeyapiv1byokpublickeyspost) | **POST** /api/v1/byok/public-keys | Register a public key |
 | [**registerPublicKeyApiV1ByokPublicKeysPost_0**](BYOKApi.md#registerpublickeyapiv1byokpublickeyspost_0) | **POST** /api/v1/byok/public-keys | Register a public key |
 | [**revokePublicKeyApiV1ByokPublicKeysKeyIdDelete**](BYOKApi.md#revokepublickeyapiv1byokpublickeyskeyiddelete) | **DELETE** /api/v1/byok/public-keys/{key_id} | Revoke a public key |
 | [**revokePublicKeyApiV1ByokPublicKeysKeyIdDelete_0**](BYOKApi.md#revokepublickeyapiv1byokpublickeyskeyiddelete_0) | **DELETE** /api/v1/byok/public-keys/{key_id} | Revoke a public key |
+| [**uploadCertificateApiV1ByokCertificatesPost**](BYOKApi.md#uploadcertificateapiv1byokcertificatespost) | **POST** /api/v1/byok/certificates | Upload a CA-signed certificate |
+| [**uploadCertificateApiV1ByokCertificatesPost_0**](BYOKApi.md#uploadcertificateapiv1byokcertificatespost_0) | **POST** /api/v1/byok/certificates | Upload a CA-signed certificate |
 
 
 
@@ -153,6 +157,124 @@ example().catch(console.error);
 |-------------|-------------|------------------|
 | **200** | Successful Response |  -  |
 | **422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## listTrustedCasApiV1ByokTrustedCasGet
+
+> TrustListResponse listTrustedCasApiV1ByokTrustedCasGet()
+
+List trusted Certificate Authorities
+
+Returns the list of C2PA-trusted CAs that can issue signing certificates.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  BYOKApi,
+} from '@encypher/sdk';
+import type { ListTrustedCasApiV1ByokTrustedCasGetRequest } from '@encypher/sdk';
+
+async function example() {
+  console.log("🚀 Testing @encypher/sdk SDK...");
+  const api = new BYOKApi();
+
+  try {
+    const data = await api.listTrustedCasApiV1ByokTrustedCasGet();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**TrustListResponse**](TrustListResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Successful Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## listTrustedCasApiV1ByokTrustedCasGet_0
+
+> TrustListResponse listTrustedCasApiV1ByokTrustedCasGet_0()
+
+List trusted Certificate Authorities
+
+Returns the list of C2PA-trusted CAs that can issue signing certificates.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  BYOKApi,
+} from '@encypher/sdk';
+import type { ListTrustedCasApiV1ByokTrustedCasGet0Request } from '@encypher/sdk';
+
+async function example() {
+  console.log("🚀 Testing @encypher/sdk SDK...");
+  const api = new BYOKApi();
+
+  try {
+    const data = await api.listTrustedCasApiV1ByokTrustedCasGet_0();
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+[**TrustListResponse**](TrustListResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+- **Content-Type**: Not defined
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Successful Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
@@ -446,6 +568,150 @@ example().catch(console.error);
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Successful Response |  -  |
+| **422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## uploadCertificateApiV1ByokCertificatesPost
+
+> CertificateUploadResponse uploadCertificateApiV1ByokCertificatesPost(certificateUploadRequest)
+
+Upload a CA-signed certificate
+
+Upload an X.509 certificate signed by a C2PA-trusted CA for BYOK signing.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  BYOKApi,
+} from '@encypher/sdk';
+import type { UploadCertificateApiV1ByokCertificatesPostRequest } from '@encypher/sdk';
+
+async function example() {
+  console.log("🚀 Testing @encypher/sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new BYOKApi(config);
+
+  const body = {
+    // CertificateUploadRequest
+    certificateUploadRequest: ...,
+  } satisfies UploadCertificateApiV1ByokCertificatesPostRequest;
+
+  try {
+    const data = await api.uploadCertificateApiV1ByokCertificatesPost(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **certificateUploadRequest** | [CertificateUploadRequest](CertificateUploadRequest.md) |  | |
+
+### Return type
+
+[**CertificateUploadResponse**](CertificateUploadResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **201** | Successful Response |  -  |
+| **422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## uploadCertificateApiV1ByokCertificatesPost_0
+
+> CertificateUploadResponse uploadCertificateApiV1ByokCertificatesPost_0(certificateUploadRequest)
+
+Upload a CA-signed certificate
+
+Upload an X.509 certificate signed by a C2PA-trusted CA for BYOK signing.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  BYOKApi,
+} from '@encypher/sdk';
+import type { UploadCertificateApiV1ByokCertificatesPost0Request } from '@encypher/sdk';
+
+async function example() {
+  console.log("🚀 Testing @encypher/sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new BYOKApi(config);
+
+  const body = {
+    // CertificateUploadRequest
+    certificateUploadRequest: ...,
+  } satisfies UploadCertificateApiV1ByokCertificatesPost0Request;
+
+  try {
+    const data = await api.uploadCertificateApiV1ByokCertificatesPost_0(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **certificateUploadRequest** | [CertificateUploadRequest](CertificateUploadRequest.md) |  | |
+
+### Return type
+
+[**CertificateUploadResponse**](CertificateUploadResponse.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **201** | Successful Response |  -  |
 | **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

@@ -24,10 +24,10 @@ export default function PublishersPage() {
     <div className="bg-background text-foreground">
       <AISummary
         title="Encypher for Publishers"
-        whatWeDo="Authors of C2PA Section A.7. Patent-pending API and SDKs for granular content attribution with Merkle tree authentication. Survives copy-paste, B2B distribution, and scraping. Standard published January 8, 2026."
-        whoItsFor="Publishers seeking provable content ownership and licensing revenue. Cryptographic proof enables content attribution across the AI ecosystem."
-        keyDifferentiator="Patent-pending Merkle tree authentication proves exactly which sentences were used. Court-admissible evidence generation. Quote integrity verification protects brand from AI hallucinations."
-        primaryValue="Transform content into licensing revenue. Building standards with NYT, BBC, AP, Google, OpenAI, Adobe, Microsoft and others through C2PA (c2pa.org)."
+        whatWeDo="Encypher authored C2PA Section A.7. Patent-pending API and SDKs for granular content attribution with Merkle tree authentication. Survives copy-paste, B2B distribution, and scraping. Standard published January 8, 2026."
+        whoItsFor="Publishers seeking provable content ownership and licensing infrastructure. Cryptographic verification enables content attribution across the AI ecosystem."
+        keyDifferentiator="Patent-pending Merkle tree authentication documents exactly which sentences were used. Tamper-evident documentation designed for legal proceedings. Quote integrity verification protects brand from AI hallucinations."
+        primaryValue="Provide technical infrastructure for content licensing. Encypher serves as Co-Chair of the C2PA Text Provenance Task Force, with technology reviewed by C2PA members including Google, OpenAI, Adobe, and Microsoft."
       />
       <Script id="schema-faq-publishers" type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       {/* Hero Section */}
@@ -37,7 +37,7 @@ export default function PublishersPage() {
             Cryptographic Content Protection That Generates Revenue
           </h1>
           <p className="text-lg md:text-xl max-w-3xl mx-auto text-muted-foreground mb-8">
-            Stop absorbing litigation costs. Start generating new licensing revenue with court-admissible proof of content ownership and usage.
+            Stop absorbing litigation costs. Start generating new licensing revenue with tamper-evident documentation of content ownership and usage.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Button asChild size="lg" className="font-semibold py-3 px-6 rounded-lg shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
@@ -107,7 +107,7 @@ export default function PublishersPage() {
               <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                 <h3 className="text-xl font-semibold mb-2">Starter</h3>
                 <p className="text-3xl font-bold mb-1">Free</p>
-                <p className="text-sm text-muted-foreground mb-4">65% you / 35% Encypher</p>
+                <p className="text-sm text-muted-foreground mb-4">Standard revenue share</p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -124,7 +124,7 @@ export default function PublishersPage() {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full">Most Popular</div>
                 <h3 className="text-xl font-semibold mb-2">Professional</h3>
                 <p className="text-3xl font-bold mb-1">$99<span className="text-lg font-normal">/mo</span></p>
-                <p className="text-sm text-muted-foreground mb-4">70% you / 30% Encypher</p>
+                <p className="text-sm text-muted-foreground mb-4">Enhanced revenue share</p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
@@ -140,15 +140,15 @@ export default function PublishersPage() {
               <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                 <h3 className="text-xl font-semibold mb-2">Enterprise</h3>
                 <p className="text-3xl font-bold mb-1">Custom</p>
-                <p className="text-sm text-muted-foreground mb-4">80% you / 20% Encypher</p>
+                <p className="text-sm text-muted-foreground mb-4">Best terms available</p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>$30k implementation</span>
+                    <span>White-glove implementation</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Founding members lock 80/20</span>
+                    <span>Shape industry licensing standards</span>
                   </li>
                 </ul>
               </div>
@@ -180,7 +180,7 @@ export default function PublishersPage() {
               <DollarSign className="h-12 w-12 text-primary mb-4 mx-auto" />
               <h3 className="text-2xl font-semibold mb-3">Transform Litigation Costs</h3>
               <p className="text-muted-foreground">
-                Turn your biggest cost center into a strategic asset. Our cryptographic proof is designed for legal admissibility, winning cases and deterring infringement.
+                Turn your biggest cost center into a strategic asset. Our cryptographic verification provides tamper-evident documentation designed to support stronger legal positioning.
               </p>
             </div>
             <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
@@ -192,9 +192,9 @@ export default function PublishersPage() {
             </div>
             <div className="bg-card p-6 md:p-8 rounded-lg shadow-md border border-border text-center">
               <Scale className="h-12 w-12 text-primary mb-4 mx-auto" />
-              <h3 className="text-2xl font-semibold mb-3">Court-Admissible Evidence</h3>
+              <h3 className="text-2xl font-semibold mb-3">Tamper-Evident Documentation</h3>
               <p className="text-muted-foreground">
-                Provide undeniable proof of provenance that stands up in court, protecting your intellectual property with mathematical certainty.
+                Provide cryptographic verification of provenance designed for legal proceedings, protecting your intellectual property with mathematical certainty.
               </p>
             </div>
           </div>
@@ -229,7 +229,7 @@ export default function PublishersPage() {
               <AccordionItem value="item-3">
                 <AccordionTrigger>Step 3: Revenue & Compliance Reports</AccordionTrigger>
                 <AccordionContent>
-                  Receive detailed, court-admissible reports that you can use to stop infringement or negotiate performance-based licensing deals. Turn your content archive into a revenue-generating asset.
+                  Receive detailed, tamper-evident reports that you can use to support infringement claims or negotiate performance-based licensing deals. Turn your content archive into a revenue-generating asset.
                 </AccordionContent>
               </AccordionItem>
             </Accordion>

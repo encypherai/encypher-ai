@@ -139,7 +139,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                   required
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-blue-ncs"
                   placeholder="Jane Smith"
                 />
               </div>
@@ -156,7 +156,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-blue-ncs"
                   placeholder="jane.smith@publisher.com"
                 />
               </div>
@@ -173,7 +173,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                   required
                   value={formData.organization}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-blue-ncs"
                   placeholder="The New York Times"
                 />
               </div>
@@ -189,7 +189,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                   required
                   value={formData.role}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-blue-ncs"
                 >
                   <option value="">Select your role</option>
                   <option value="c-suite">C-Suite Executive</option>
@@ -215,7 +215,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                   maxLength={500}
                   value={formData.message}
                   onChange={handleChange}
-                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-blue-ncs resize-none"
                   placeholder="Tell us about your content protection challenges..."
                 />
                 <p className="text-xs text-slate-500 mt-1">{formData.message.length}/500 characters</p>
@@ -230,7 +230,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                   required
                   checked={formData.consent}
                   onChange={handleChange}
-                  className="mt-1 w-4 h-4 bg-white border-slate-300 rounded focus:ring-2 focus:ring-blue-500"
+                  className="mt-1 w-4 h-4 bg-white border-slate-300 rounded focus:ring-2 focus:ring-blue-ncs"
                 />
                 <label htmlFor="consent" className="text-sm text-slate-600">
                   I agree to receive communications from Encypher about this demo and related products. You can unsubscribe at any time.
@@ -248,7 +248,8 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-semibold transition-all flex items-center justify-center gap-2"
+                // TEAM_061: Remove blue/purple gradients; use design-system token colors.
+                className="w-full px-6 py-3 bg-blue-ncs hover:bg-blue-ncs/90 active:bg-blue-ncs/80 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg text-white font-semibold transition-all flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-ncs"
               >
                 {isSubmitting ? (
                   <>
