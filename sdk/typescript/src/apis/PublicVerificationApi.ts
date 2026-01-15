@@ -16,8 +16,8 @@
 import * as runtime from '../runtime';
 import type {
   AppSchemasEmbeddingsBatchVerifyRequest,
+  AppSchemasEmbeddingsErrorResponse,
   BatchVerifyResponse,
-  ErrorResponse,
   ExtractAndVerifyRequest,
   ExtractAndVerifyResponse,
   HTTPValidationError,
@@ -26,10 +26,10 @@ import type {
 import {
     AppSchemasEmbeddingsBatchVerifyRequestFromJSON,
     AppSchemasEmbeddingsBatchVerifyRequestToJSON,
+    AppSchemasEmbeddingsErrorResponseFromJSON,
+    AppSchemasEmbeddingsErrorResponseToJSON,
     BatchVerifyResponseFromJSON,
     BatchVerifyResponseToJSON,
-    ErrorResponseFromJSON,
-    ErrorResponseToJSON,
     ExtractAndVerifyRequestFromJSON,
     ExtractAndVerifyRequestToJSON,
     ExtractAndVerifyResponseFromJSON,

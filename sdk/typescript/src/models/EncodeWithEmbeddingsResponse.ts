@@ -13,6 +13,13 @@
  */
 
 import { mapValues } from '../runtime';
+import type { MerkleTreeLevelInfo } from './MerkleTreeLevelInfo';
+import {
+    MerkleTreeLevelInfoFromJSON,
+    MerkleTreeLevelInfoFromJSONTyped,
+    MerkleTreeLevelInfoToJSON,
+    MerkleTreeLevelInfoToJSONTyped,
+} from './MerkleTreeLevelInfo';
 import type { EmbeddingInfo } from './EmbeddingInfo';
 import {
     EmbeddingInfoFromJSON,
@@ -52,6 +59,12 @@ export interface EncodeWithEmbeddingsResponse {
      * @memberof EncodeWithEmbeddingsResponse
      */
     merkleTree?: MerkleTreeInfo | null;
+    /**
+     * 
+     * @type {{ [key: string]: MerkleTreeLevelInfo; }}
+     * @memberof EncodeWithEmbeddingsResponse
+     */
+    merkleTrees?: { [key: string]: MerkleTreeLevelInfo; } | null;
     /**
      * List of generated embeddings
      * @type {Array<EmbeddingInfo>}
@@ -101,6 +114,7 @@ export function EncodeWithEmbeddingsResponseFromJSONTyped(json: any, ignoreDiscr
         'success': json['success'] == null ? undefined : json['success'],
         'documentId': json['document_id'],
         'merkleTree': json['merkle_tree'] == null ? undefined : MerkleTreeInfoFromJSON(json['merkle_tree']),
+        'merkleTrees': json['merkle_trees'] == null ? undefined : (mapValues(json['merkle_trees'], MerkleTreeLevelInfoFromJSON)),
         'embeddings': ((json['embeddings'] as Array<any>).map(EmbeddingInfoFromJSON)),
         'embeddedContent': json['embedded_content'] == null ? undefined : json['embedded_content'],
         'statistics': json['statistics'],
@@ -122,6 +136,7 @@ export function EncodeWithEmbeddingsResponseToJSONTyped(value?: EncodeWithEmbedd
         'success': value['success'],
         'document_id': value['documentId'],
         'merkle_tree': MerkleTreeInfoToJSON(value['merkleTree']),
+        'merkle_trees': value['merkleTrees'] == null ? undefined : (mapValues(value['merkleTrees'], MerkleTreeLevelInfoToJSON)),
         'embeddings': ((value['embeddings'] as Array<any>).map(EmbeddingInfoToJSON)),
         'embedded_content': value['embeddedContent'],
         'statistics': value['statistics'],

@@ -23,6 +23,10 @@ pub struct EncodeWithEmbeddingsRequest {
     /// Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word
     #[serde(rename = "segmentation_level", skip_serializing_if = "Option::is_none")]
     pub segmentation_level: Option<String>,
+    #[serde(rename = "segmentation_levels", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub segmentation_levels: Option<Option<Vec<String>>>,
+    #[serde(rename = "index_for_attribution", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub index_for_attribution: Option<Option<bool>>,
     /// C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)
     #[serde(rename = "action", skip_serializing_if = "Option::is_none")]
     pub action: Option<String>,
@@ -75,6 +79,8 @@ impl EncodeWithEmbeddingsRequest {
             document_id,
             text,
             segmentation_level: None,
+            segmentation_levels: None,
+            index_for_attribution: None,
             action: None,
             manifest_mode: None,
             embedding_strategy: None,

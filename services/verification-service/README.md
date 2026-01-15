@@ -35,6 +35,7 @@ Service at: http://localhost:8005
 |--------|----------|-------------|
 | POST | `/api/v1/verify/signature` | Verify signature |
 | POST | `/api/v1/verify/document` | Verify document |
+| POST | `/api/v1/verify/advanced` | Served by enterprise-api (advanced attribution/plagiarism workflows) |
 | GET | `/api/v1/verify/history/{id}` | Verification history |
 | GET | `/api/v1/verify/stats` | Statistics |
 | GET | `/health` | Health check |

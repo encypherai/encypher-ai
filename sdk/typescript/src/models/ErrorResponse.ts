@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * Error response.
+ * Standard error response schema.
  * @export
  * @interface ErrorResponse
  */
@@ -26,23 +26,23 @@ export interface ErrorResponse {
      */
     success?: boolean;
     /**
-     * Error message
+     * Error type
      * @type {string}
      * @memberof ErrorResponse
      */
     error: string;
     /**
-     * 
+     * Human-readable error message
      * @type {string}
      * @memberof ErrorResponse
      */
-    detail?: string | null;
+    message: string;
     /**
      * 
-     * @type {string}
+     * @type {{ [key: string]: any; }}
      * @memberof ErrorResponse
      */
-    errorCode?: string | null;
+    details?: { [key: string]: any; } | null;
 }
 
 /**
@@ -50,6 +50,7 @@ export interface ErrorResponse {
  */
 export function instanceOfErrorResponse(value: object): value is ErrorResponse {
     if (!('error' in value) || value['error'] === undefined) return false;
+    if (!('message' in value) || value['message'] === undefined) return false;
     return true;
 }
 
@@ -65,8 +66,8 @@ export function ErrorResponseFromJSONTyped(json: any, ignoreDiscriminator: boole
         
         'success': json['success'] == null ? undefined : json['success'],
         'error': json['error'],
-        'detail': json['detail'] == null ? undefined : json['detail'],
-        'errorCode': json['error_code'] == null ? undefined : json['error_code'],
+        'message': json['message'],
+        'details': json['details'] == null ? undefined : json['details'],
     };
 }
 
@@ -83,8 +84,8 @@ export function ErrorResponseToJSONTyped(value?: ErrorResponse | null, ignoreDis
         
         'success': value['success'],
         'error': value['error'],
-        'detail': value['detail'],
-        'error_code': value['errorCode'],
+        'message': value['message'],
+        'details': value['details'],
     };
 }
 

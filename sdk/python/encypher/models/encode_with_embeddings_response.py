@@ -21,6 +21,7 @@ from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
 from encypher.models.embedding_info import EmbeddingInfo
 from encypher.models.merkle_tree_info import MerkleTreeInfo
+from encypher.models.merkle_tree_level_info import MerkleTreeLevelInfo
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -31,11 +32,12 @@ class EncodeWithEmbeddingsResponse(BaseModel):
     success: Optional[StrictBool] = Field(default=True, description="Whether encoding succeeded")
     document_id: StrictStr = Field(description="Document identifier")
     merkle_tree: Optional[MerkleTreeInfo] = None
+    merkle_trees: Optional[Dict[str, MerkleTreeLevelInfo]] = None
     embeddings: List[EmbeddingInfo] = Field(description="List of generated embeddings")
     embedded_content: Optional[StrictStr] = None
     statistics: Dict[str, Any] = Field(description="Processing statistics")
     metadata: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["success", "document_id", "merkle_tree", "embeddings", "embedded_content", "statistics", "metadata"]
+    __properties: ClassVar[List[str]] = ["success", "document_id", "merkle_tree", "merkle_trees", "embeddings", "embedded_content", "statistics", "metadata"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -79,6 +81,13 @@ class EncodeWithEmbeddingsResponse(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of merkle_tree
         if self.merkle_tree:
             _dict['merkle_tree'] = self.merkle_tree.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each value in merkle_trees (dict)
+        _field_dict = {}
+        if self.merkle_trees:
+            for _key_merkle_trees in self.merkle_trees:
+                if self.merkle_trees[_key_merkle_trees]:
+                    _field_dict[_key_merkle_trees] = self.merkle_trees[_key_merkle_trees].to_dict()
+            _dict['merkle_trees'] = _field_dict
         # override the default output from pydantic by calling `to_dict()` of each item in embeddings (list)
         _items = []
         if self.embeddings:
@@ -90,6 +99,11 @@ class EncodeWithEmbeddingsResponse(BaseModel):
         # and model_fields_set contains the field
         if self.merkle_tree is None and "merkle_tree" in self.model_fields_set:
             _dict['merkle_tree'] = None
+
+        # set to None if merkle_trees (nullable) is None
+        # and model_fields_set contains the field
+        if self.merkle_trees is None and "merkle_trees" in self.model_fields_set:
+            _dict['merkle_trees'] = None
 
         # set to None if embedded_content (nullable) is None
         # and model_fields_set contains the field
@@ -116,6 +130,12 @@ class EncodeWithEmbeddingsResponse(BaseModel):
             "success": obj.get("success") if obj.get("success") is not None else True,
             "document_id": obj.get("document_id"),
             "merkle_tree": MerkleTreeInfo.from_dict(obj["merkle_tree"]) if obj.get("merkle_tree") is not None else None,
+            "merkle_trees": dict(
+                (_k, MerkleTreeLevelInfo.from_dict(_v))
+                for _k, _v in obj["merkle_trees"].items()
+            )
+            if obj.get("merkle_trees") is not None
+            else None,
             "embeddings": [EmbeddingInfo.from_dict(_item) for _item in obj["embeddings"]] if obj.get("embeddings") is not None else None,
             "embedded_content": obj.get("embedded_content"),
             "statistics": obj.get("statistics"),

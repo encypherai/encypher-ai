@@ -38,6 +38,10 @@ class TestEncodeWithEmbeddingsRequest(unittest.TestCase):
                 document_id = '',
                 text = '',
                 segmentation_level = 'sentence',
+                segmentation_levels = [
+                    ''
+                    ],
+                index_for_attribution = True,
                 action = 'c2pa.created',
                 manifest_mode = 'full',
                 embedding_strategy = 'single_point',

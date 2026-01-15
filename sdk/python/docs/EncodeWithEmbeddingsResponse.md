@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **success** | **bool** | Whether encoding succeeded | [optional] [default to True]
 **document_id** | **str** | Document identifier | 
 **merkle_tree** | [**MerkleTreeInfo**](MerkleTreeInfo.md) |  | [optional] 
+**merkle_trees** | [**Dict[str, MerkleTreeLevelInfo]**](MerkleTreeLevelInfo.md) |  | [optional] 
 **embeddings** | [**List[EmbeddingInfo]**](EmbeddingInfo.md) | List of generated embeddings | 
 **embedded_content** | **str** |  | [optional] 
 **statistics** | **Dict[str, object]** | Processing statistics | 

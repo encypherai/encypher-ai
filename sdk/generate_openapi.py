@@ -60,11 +60,12 @@ from app.main import _filter_openapi_for_public, app
 def _load_verification_service_openapi(*, api_base_url: str) -> dict:
     verification_service_root = Path(__file__).parent.parent / "services" / "verification-service"
     cmd = [
-        sys.executable,
+        "uv",
+        "run",
+        "python",
         "-c",
         (
-            "import json, os, sys; "
-            f"sys.path.insert(0, {json.dumps(str(verification_service_root))}); "
+            "import json, os; "
             "os.environ.setdefault('_PYDANTIC_SETTINGS_SKIP_ENV_FILE', '1'); "
             "os.environ.setdefault('DATABASE_URL', 'postgresql://localhost/encypher'); "
             "from fastapi import FastAPI; "
@@ -79,7 +80,7 @@ def _load_verification_service_openapi(*, api_base_url: str) -> dict:
     ]
     env = os.environ.copy()
     env["API_BASE_URL"] = api_base_url
-    payload = subprocess.check_output(cmd, env=env, text=True)
+    payload = subprocess.check_output(cmd, env=env, text=True, cwd=verification_service_root)
     return json.loads(payload)
 
 

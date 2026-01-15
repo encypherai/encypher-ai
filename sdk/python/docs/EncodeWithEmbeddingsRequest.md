@@ -9,6 +9,8 @@ Name | Type | Description | Notes
 **document_id** | **str** | Unique document identifier | 
 **text** | **str** | Full document text to encode | 
 **segmentation_level** | **str** | Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word | [optional] [default to 'sentence']
+**segmentation_levels** | **List[str]** |  | [optional] 
+**index_for_attribution** | **bool** |  | [optional] 
 **action** | **str** | C2PA action type: c2pa.created (new content) or c2pa.edited (modified content) | [optional] [default to 'c2pa.created']
 **manifest_mode** | **str** | Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier. | [optional] [default to 'full']
 **embedding_strategy** | **str** | Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier. | [optional] [default to 'single_point']

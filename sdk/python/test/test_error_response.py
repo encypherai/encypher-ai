@@ -37,12 +37,15 @@ class TestErrorResponse(unittest.TestCase):
             return ErrorResponse(
                 success = True,
                 error = '',
-                detail = '',
-                error_code = ''
+                message = '',
+                details = {
+                    'key' : null
+                    }
             )
         else:
             return ErrorResponse(
                 error = '',
+                message = '',
         )
         """
 

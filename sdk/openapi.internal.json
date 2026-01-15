@@ -1900,6 +1900,51 @@
         ]
       }
     },
+    "/api/v1/verify/advanced": {
+      "post": {
+        "tags": [
+          "Verification"
+        ],
+        "summary": "Advanced verification",
+        "description": "Verify signed content and optionally run attribution/plagiarism analysis.",
+        "operationId": "verify_advanced_api_v1_verify_advanced_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyAdvancedRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/lookup": {
       "post": {
         "tags": [
@@ -4252,7 +4297,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -4262,7 +4307,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -4272,7 +4317,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -4282,161 +4327,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/enterprise/merkle/attribute": {
-      "post": {
-        "tags": [
-          "Enterprise - Merkle Trees"
-        ],
-        "summary": "Find Source Documents",
-        "description": "Find source documents that contain a specific text segment.\n    \n    This endpoint searches the Merkle tree index to find which documents\n    contain the provided text segment.\n    \n    **Use Cases:**\n    - Verify if a text segment appears in your document repository\n    - Find the original source of a quote or passage\n    - Check if content has been previously published\n    \n    **Enterprise Tier Only**",
-        "operationId": "find_sources_api_v1_enterprise_merkle_attribute_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SourceAttributionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Search completed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SourceAttributionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
-      }
-    },
-    "/api/v1/enterprise/merkle/detect-plagiarism": {
-      "post": {
-        "tags": [
-          "Enterprise - Merkle Trees"
-        ],
-        "summary": "Detect Plagiarism",
-        "description": "Analyze text for potential plagiarism by comparing against indexed documents.\n    \n    This endpoint:\n    1. Segments the target text\n    2. Checks each segment against the Merkle tree index\n    3. Identifies matching source documents\n    4. Calculates match percentages and confidence scores\n    5. Generates a heat map showing which parts match\n    \n    **Use Cases:**\n    - Academic plagiarism detection\n    - Content originality verification\n    - Copyright infringement detection\n    - Duplicate content identification\n    \n    **Enterprise Tier Only**",
-        "operationId": "detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PlagiarismDetectionRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "Analysis completed successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PlagiarismDetectionResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5770,7 +5661,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -5780,7 +5671,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -5790,7 +5681,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -5860,7 +5751,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -5870,7 +5761,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -5940,7 +5831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -5950,7 +5841,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -5960,7 +5851,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
                 }
               }
             }
@@ -9737,6 +9628,33 @@
             "description": "Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word",
             "default": "sentence"
           },
+          "segmentation_levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmentation Levels",
+            "description": "Optional list of Merkle segmentation levels to build/index (sentence, paragraph, section). Defaults to [segmentation_level]."
+          },
+          "index_for_attribution": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Index For Attribution",
+            "description": "Whether to enforce Merkle indexing quotas for attribution workflows. Defaults to true for paid tiers."
+          },
           "action": {
             "type": "string",
             "title": "Action",
@@ -9946,6 +9864,21 @@
             ],
             "description": "Merkle tree information (None for free tier)"
           },
+          "merkle_trees": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "$ref": "#/components/schemas/MerkleTreeLevelInfo"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Merkle Trees",
+            "description": "Optional mapping of segmentation level to Merkle tree metadata."
+          },
           "embeddings": {
             "items": {
               "$ref": "#/components/schemas/EmbeddingInfo"
@@ -10065,39 +9998,34 @@
           "error": {
             "type": "string",
             "title": "Error",
-            "description": "Error message"
+            "description": "Error type"
           },
-          "detail": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable error message"
+          },
+          "details": {
             "anyOf": [
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Detail",
-            "description": "Detailed error information"
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code",
-            "description": "Error code for programmatic handling"
+            "title": "Details",
+            "description": "Additional error details"
           }
         },
         "type": "object",
         "required": [
-          "error"
+          "error",
+          "message"
         ],
         "title": "ErrorResponse",
-        "description": "Error response."
+        "description": "Standard error response schema."
       },
       "EvidenceGenerateRequest": {
         "properties": {
@@ -10871,39 +10799,6 @@
         },
         "type": "object",
         "title": "HTTPValidationError"
-      },
-      "HeatMapData": {
-        "properties": {
-          "positions": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "type": "array",
-            "title": "Positions"
-          },
-          "total_segments": {
-            "type": "integer",
-            "title": "Total Segments"
-          },
-          "matched_segments": {
-            "type": "integer",
-            "title": "Matched Segments"
-          },
-          "match_percentage": {
-            "type": "number",
-            "title": "Match Percentage"
-          }
-        },
-        "type": "object",
-        "required": [
-          "positions",
-          "total_segments",
-          "matched_segments",
-          "match_percentage"
-        ],
-        "title": "HeatMapData",
-        "description": "Schema for heat map visualization data."
       },
       "InviteRequest": {
         "properties": {
@@ -11898,6 +11793,38 @@
         "title": "MerkleTreeInfo",
         "description": "Merkle tree information."
       },
+      "MerkleTreeLevelInfo": {
+        "properties": {
+          "root_hash": {
+            "type": "string",
+            "title": "Root Hash",
+            "description": "Root hash for the integrity proof"
+          },
+          "total_leaves": {
+            "type": "integer",
+            "title": "Total Leaves",
+            "description": "Number of leaf nodes"
+          },
+          "tree_depth": {
+            "type": "integer",
+            "title": "Tree Depth",
+            "description": "Height of the tree"
+          },
+          "indexed": {
+            "type": "boolean",
+            "title": "Indexed",
+            "description": "Whether the Merkle tree was indexed for attribution workflows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "root_hash",
+          "total_leaves",
+          "tree_depth",
+          "indexed"
+        ],
+        "title": "MerkleTreeLevelInfo"
+      },
       "MultiSourceLookupRequest": {
         "properties": {
           "text_segment": {
@@ -12174,131 +12101,6 @@
         ],
         "title": "PendingInvite",
         "description": "Pending team invitation."
-      },
-      "PlagiarismDetectionRequest": {
-        "properties": {
-          "target_text": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Target Text",
-            "description": "Text to check for plagiarism"
-          },
-          "target_document_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Document Id",
-            "description": "Optional identifier for the target document"
-          },
-          "segmentation_level": {
-            "type": "string",
-            "title": "Segmentation Level",
-            "description": "Segmentation level to analyze",
-            "default": "sentence"
-          },
-          "include_heat_map": {
-            "type": "boolean",
-            "title": "Include Heat Map",
-            "description": "Whether to generate heat map visualization data",
-            "default": true
-          },
-          "min_match_percentage": {
-            "type": "number",
-            "maximum": 100.0,
-            "minimum": 0.0,
-            "title": "Min Match Percentage",
-            "description": "Minimum match percentage to include in results",
-            "default": 0.0
-          }
-        },
-        "type": "object",
-        "required": [
-          "target_text"
-        ],
-        "title": "PlagiarismDetectionRequest",
-        "description": "Request schema for plagiarism detection."
-      },
-      "PlagiarismDetectionResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success"
-          },
-          "report_id": {
-            "type": "string",
-            "format": "uuid",
-            "title": "Report Id"
-          },
-          "target_document_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Target Document Id"
-          },
-          "total_segments": {
-            "type": "integer",
-            "title": "Total Segments"
-          },
-          "matched_segments": {
-            "type": "integer",
-            "title": "Matched Segments"
-          },
-          "overall_match_percentage": {
-            "type": "number",
-            "title": "Overall Match Percentage"
-          },
-          "source_documents": {
-            "items": {
-              "$ref": "#/components/schemas/SourceDocumentMatch"
-            },
-            "type": "array",
-            "title": "Source Documents"
-          },
-          "heat_map_data": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/HeatMapData"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "processing_time_ms": {
-            "type": "number",
-            "title": "Processing Time Ms"
-          },
-          "scan_timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Scan Timestamp"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success",
-          "report_id",
-          "target_document_id",
-          "total_segments",
-          "matched_segments",
-          "overall_match_percentage",
-          "source_documents",
-          "heat_map_data",
-          "processing_time_ms",
-          "scan_timestamp"
-        ],
-        "title": "PlagiarismDetectionResponse",
-        "description": "Response schema for plagiarism detection."
       },
       "PublicKeyInfo": {
         "properties": {
@@ -13090,199 +12892,6 @@
         ],
         "title": "SignatureVerification",
         "description": "Signature verification details."
-      },
-      "SourceAttributionRequest": {
-        "properties": {
-          "text_segment": {
-            "type": "string",
-            "minLength": 1,
-            "title": "Text Segment",
-            "description": "Text segment to search for",
-            "example": "This is a sentence to find."
-          },
-          "segmentation_level": {
-            "type": "string",
-            "title": "Segmentation Level",
-            "description": "Segmentation level to search at",
-            "default": "sentence",
-            "example": "sentence"
-          },
-          "normalize": {
-            "type": "boolean",
-            "title": "Normalize",
-            "description": "Whether to normalize text before hashing",
-            "default": true
-          },
-          "include_proof": {
-            "type": "boolean",
-            "title": "Include Proof",
-            "description": "Whether to include Merkle proof in response",
-            "default": false
-          }
-        },
-        "type": "object",
-        "required": [
-          "text_segment"
-        ],
-        "title": "SourceAttributionRequest",
-        "description": "Request schema for finding source documents."
-      },
-      "SourceAttributionResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Whether search was successful"
-          },
-          "query_hash": {
-            "type": "string",
-            "title": "Query Hash",
-            "description": "Hash of the queried text segment"
-          },
-          "matches_found": {
-            "type": "integer",
-            "title": "Matches Found",
-            "description": "Number of matching sources found"
-          },
-          "sources": {
-            "items": {
-              "$ref": "#/components/schemas/SourceMatch"
-            },
-            "type": "array",
-            "title": "Sources",
-            "description": "List of matching sources"
-          },
-          "processing_time_ms": {
-            "type": "number",
-            "title": "Processing Time Ms",
-            "description": "Processing time in milliseconds"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success",
-          "query_hash",
-          "matches_found",
-          "sources",
-          "processing_time_ms"
-        ],
-        "title": "SourceAttributionResponse",
-        "description": "Response schema for source attribution."
-      },
-      "SourceDocumentMatch": {
-        "properties": {
-          "document_id": {
-            "type": "string",
-            "title": "Document Id"
-          },
-          "organization_id": {
-            "type": "string",
-            "title": "Organization Id"
-          },
-          "segmentation_level": {
-            "type": "string",
-            "title": "Segmentation Level"
-          },
-          "matched_segments": {
-            "type": "integer",
-            "title": "Matched Segments"
-          },
-          "total_leaves": {
-            "type": "integer",
-            "title": "Total Leaves"
-          },
-          "match_percentage": {
-            "type": "number",
-            "title": "Match Percentage"
-          },
-          "confidence_score": {
-            "type": "number",
-            "title": "Confidence Score"
-          },
-          "doc_metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Doc Metadata"
-          }
-        },
-        "type": "object",
-        "required": [
-          "document_id",
-          "organization_id",
-          "segmentation_level",
-          "matched_segments",
-          "total_leaves",
-          "match_percentage",
-          "confidence_score"
-        ],
-        "title": "SourceDocumentMatch",
-        "description": "Schema for a source document match in plagiarism report."
-      },
-      "SourceMatch": {
-        "properties": {
-          "document_id": {
-            "type": "string",
-            "title": "Document Id",
-            "description": "Source document identifier"
-          },
-          "organization_id": {
-            "type": "string",
-            "title": "Organization Id",
-            "description": "Organization that owns the document"
-          },
-          "root_hash": {
-            "type": "string",
-            "title": "Root Hash",
-            "description": "Merkle root hash"
-          },
-          "segmentation_level": {
-            "type": "string",
-            "title": "Segmentation Level",
-            "description": "Segmentation level"
-          },
-          "matched_hash": {
-            "type": "string",
-            "title": "Matched Hash",
-            "description": "Hash that matched"
-          },
-          "text_content": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text Content",
-            "description": "Original text content"
-          },
-          "confidence": {
-            "type": "number",
-            "maximum": 1.0,
-            "minimum": 0.0,
-            "title": "Confidence",
-            "description": "Confidence score (0-1)"
-          }
-        },
-        "type": "object",
-        "required": [
-          "document_id",
-          "organization_id",
-          "root_hash",
-          "segmentation_level",
-          "matched_hash",
-          "confidence"
-        ],
-        "title": "SourceMatch",
-        "description": "Schema for a single source match."
       },
       "SourceRecord": {
         "properties": {
@@ -14622,6 +14231,52 @@
         ],
         "title": "ValidationError"
       },
+      "VerifyAdvancedRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Text"
+          },
+          "include_attribution": {
+            "type": "boolean",
+            "title": "Include Attribution",
+            "default": false
+          },
+          "detect_plagiarism": {
+            "type": "boolean",
+            "title": "Detect Plagiarism",
+            "default": false
+          },
+          "include_heat_map": {
+            "type": "boolean",
+            "title": "Include Heat Map",
+            "default": false
+          },
+          "min_match_percentage": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Min Match Percentage",
+            "default": 0.0
+          },
+          "segmentation_level": {
+            "type": "string",
+            "title": "Segmentation Level",
+            "default": "sentence"
+          },
+          "search_scope": {
+            "type": "string",
+            "title": "Search Scope",
+            "default": "organization"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "VerifyAdvancedRequest"
+      },
       "VerifyEmbeddingRequest": {
         "properties": {
           "ref_id": {
@@ -15071,6 +14726,51 @@
         "title": "BatchVerifyRequest",
         "description": "Request to verify multiple embeddings."
       },
+      "app__schemas__embeddings__ErrorResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always false for errors",
+            "default": false
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error message"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail",
+            "description": "Detailed error information"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code",
+            "description": "Error code for programmatic handling"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorResponse",
+        "description": "Error response."
+      },
       "app__schemas__embeddings__RightsMetadata": {
         "properties": {
           "copyright_holder": {
@@ -15149,46 +14849,6 @@
         },
         "type": "object",
         "title": "RightsMetadata"
-      },
-      "app__schemas__merkle__ErrorResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Always false for errors",
-            "default": false
-          },
-          "error": {
-            "type": "string",
-            "title": "Error",
-            "description": "Error type"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "Human-readable error message"
-          },
-          "details": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Details",
-            "description": "Additional error details"
-          }
-        },
-        "type": "object",
-        "required": [
-          "error",
-          "message"
-        ],
-        "title": "ErrorResponse",
-        "description": "Standard error response schema."
       },
       "DocumentVerify": {
         "properties": {

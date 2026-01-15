@@ -28,6 +28,8 @@ type EncodeWithEmbeddingsRequest struct {
 	Text string `json:"text"`
 	// Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word
 	SegmentationLevel *string `json:"segmentation_level,omitempty"`
+	SegmentationLevels []string `json:"segmentation_levels,omitempty"`
+	IndexForAttribution NullableBool `json:"index_for_attribution,omitempty"`
 	// C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)
 	Action *string `json:"action,omitempty"`
 	// Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier.
@@ -182,6 +184,81 @@ func (o *EncodeWithEmbeddingsRequest) HasSegmentationLevel() bool {
 // SetSegmentationLevel gets a reference to the given string and assigns it to the SegmentationLevel field.
 func (o *EncodeWithEmbeddingsRequest) SetSegmentationLevel(v string) {
 	o.SegmentationLevel = &v
+}
+
+// GetSegmentationLevels returns the SegmentationLevels field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *EncodeWithEmbeddingsRequest) GetSegmentationLevels() []string {
+	if o == nil {
+		var ret []string
+		return ret
+	}
+	return o.SegmentationLevels
+}
+
+// GetSegmentationLevelsOk returns a tuple with the SegmentationLevels field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *EncodeWithEmbeddingsRequest) GetSegmentationLevelsOk() ([]string, bool) {
+	if o == nil || IsNil(o.SegmentationLevels) {
+		return nil, false
+	}
+	return o.SegmentationLevels, true
+}
+
+// HasSegmentationLevels returns a boolean if a field has been set.
+func (o *EncodeWithEmbeddingsRequest) HasSegmentationLevels() bool {
+	if o != nil && !IsNil(o.SegmentationLevels) {
+		return true
+	}
+
+	return false
+}
+
+// SetSegmentationLevels gets a reference to the given []string and assigns it to the SegmentationLevels field.
+func (o *EncodeWithEmbeddingsRequest) SetSegmentationLevels(v []string) {
+	o.SegmentationLevels = v
+}
+
+// GetIndexForAttribution returns the IndexForAttribution field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *EncodeWithEmbeddingsRequest) GetIndexForAttribution() bool {
+	if o == nil || IsNil(o.IndexForAttribution.Get()) {
+		var ret bool
+		return ret
+	}
+	return *o.IndexForAttribution.Get()
+}
+
+// GetIndexForAttributionOk returns a tuple with the IndexForAttribution field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *EncodeWithEmbeddingsRequest) GetIndexForAttributionOk() (*bool, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.IndexForAttribution.Get(), o.IndexForAttribution.IsSet()
+}
+
+// HasIndexForAttribution returns a boolean if a field has been set.
+func (o *EncodeWithEmbeddingsRequest) HasIndexForAttribution() bool {
+	if o != nil && o.IndexForAttribution.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetIndexForAttribution gets a reference to the given NullableBool and assigns it to the IndexForAttribution field.
+func (o *EncodeWithEmbeddingsRequest) SetIndexForAttribution(v bool) {
+	o.IndexForAttribution.Set(&v)
+}
+// SetIndexForAttributionNil sets the value for IndexForAttribution to be an explicit nil
+func (o *EncodeWithEmbeddingsRequest) SetIndexForAttributionNil() {
+	o.IndexForAttribution.Set(nil)
+}
+
+// UnsetIndexForAttribution ensures that no value is present for IndexForAttribution, not even an explicit nil
+func (o *EncodeWithEmbeddingsRequest) UnsetIndexForAttribution() {
+	o.IndexForAttribution.Unset()
 }
 
 // GetAction returns the Action field value if set, zero value otherwise.
@@ -866,6 +943,12 @@ func (o EncodeWithEmbeddingsRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize["text"] = o.Text
 	if !IsNil(o.SegmentationLevel) {
 		toSerialize["segmentation_level"] = o.SegmentationLevel
+	}
+	if o.SegmentationLevels != nil {
+		toSerialize["segmentation_levels"] = o.SegmentationLevels
+	}
+	if o.IndexForAttribution.IsSet() {
+		toSerialize["index_for_attribution"] = o.IndexForAttribution.Get()
 	}
 	if !IsNil(o.Action) {
 		toSerialize["action"] = o.Action

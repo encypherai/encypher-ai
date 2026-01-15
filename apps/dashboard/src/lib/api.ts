@@ -13,6 +13,10 @@
 // e.g., http://localhost:8000/api/v1 or https://api.encypherai.com/api/v1
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1';
 
+if (process.env.NODE_ENV === 'development') {
+  console.info(`[dashboard] Using API base URL: ${API_BASE_URL}`);
+}
+
 // All services use the same base URL - Traefik routes based on path:
 //   /keys/*       -> key-service
 //   /auth/*       -> auth-service

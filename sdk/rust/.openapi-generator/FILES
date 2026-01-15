@@ -8,8 +8,8 @@ docs/AccountInfo.md
 docs/AccountResponse.md
 docs/ApiKeysApi.md
 docs/AppSchemasEmbeddingsBatchVerifyRequest.md
+docs/AppSchemasEmbeddingsErrorResponse.md
 docs/AppSchemasEmbeddingsRightsMetadata.md
-docs/AppSchemasMerkleErrorResponse.md
 docs/BatchApi.md
 docs/BatchItemPayload.md
 docs/BatchItemResult.md
@@ -82,7 +82,6 @@ docs/FingerprintEncodeRequest.md
 docs/FingerprintEncodeResponse.md
 docs/FingerprintMatch.md
 docs/HealthApi.md
-docs/HeatMapData.md
 docs/HttpValidationError.md
 docs/InfoApi.md
 docs/KeyCreateRequest.md
@@ -101,13 +100,12 @@ docs/MerkleProofInfo.md
 docs/MerkleProofItem.md
 docs/MerkleRootResponse.md
 docs/MerkleTreeInfo.md
+docs/MerkleTreeLevelInfo.md
 docs/MultiSourceAttributionApi.md
 docs/MultiSourceLookupRequest.md
 docs/MultiSourceLookupResponse.md
 docs/OnboardingApi.md
 docs/PayoutSummary.md
-docs/PlagiarismDetectionRequest.md
-docs/PlagiarismDetectionResponse.md
 docs/PublicC2PaApi.md
 docs/PublicKeyInfo.md
 docs/PublicKeyListResponse.md
@@ -126,10 +124,6 @@ docs/SignResponse.md
 docs/SignatureVerification.md
 docs/SignatureVerify.md
 docs/SigningApi.md
-docs/SourceAttributionRequest.md
-docs/SourceAttributionResponse.md
-docs/SourceDocumentMatch.md
-docs/SourceMatch.md
 docs/SourceRecord.md
 docs/StatusRevocationApi.md
 docs/StreamMerkleFinalizeRequest.md
@@ -158,6 +152,7 @@ docs/VerificationResponse.md
 docs/VerificationServiceErrorDetail.md
 docs/VerificationServiceVerifyVerdict.md
 docs/VerificationStats.md
+docs/VerifyAdvancedRequest.md
 docs/VerifyEmbeddingRequest.md
 docs/VerifyEmbeddingResponse.md
 docs/VerifyRequest.md
@@ -204,8 +199,8 @@ src/lib.rs
 src/models/account_info.rs
 src/models/account_response.rs
 src/models/app__schemas__embeddings__batch_verify_request.rs
+src/models/app__schemas__embeddings__error_response.rs
 src/models/app__schemas__embeddings__rights_metadata.rs
-src/models/app__schemas__merkle__error_response.rs
 src/models/batch_item_payload.rs
 src/models/batch_item_result.rs
 src/models/batch_response_data.rs
@@ -268,7 +263,6 @@ src/models/fingerprint_detect_response.rs
 src/models/fingerprint_encode_request.rs
 src/models/fingerprint_encode_response.rs
 src/models/fingerprint_match.rs
-src/models/heat_map_data.rs
 src/models/http_validation_error.rs
 src/models/key_create_request.rs
 src/models/key_create_response.rs
@@ -285,12 +279,11 @@ src/models/merkle_proof_info.rs
 src/models/merkle_proof_item.rs
 src/models/merkle_root_response.rs
 src/models/merkle_tree_info.rs
+src/models/merkle_tree_level_info.rs
 src/models/mod.rs
 src/models/multi_source_lookup_request.rs
 src/models/multi_source_lookup_response.rs
 src/models/payout_summary.rs
-src/models/plagiarism_detection_request.rs
-src/models/plagiarism_detection_response.rs
 src/models/public_key_info.rs
 src/models/public_key_list_response.rs
 src/models/public_key_register_request.rs
@@ -306,10 +299,6 @@ src/models/sign_request.rs
 src/models/sign_response.rs
 src/models/signature_verification.rs
 src/models/signature_verify.rs
-src/models/source_attribution_request.rs
-src/models/source_attribution_response.rs
-src/models/source_document_match.rs
-src/models/source_match.rs
 src/models/source_record.rs
 src/models/stream_merkle_finalize_request.rs
 src/models/stream_merkle_finalize_response.rs
@@ -333,6 +322,7 @@ src/models/verification_response.rs
 src/models/verification_service__error_detail.rs
 src/models/verification_service__verify_verdict.rs
 src/models/verification_stats.rs
+src/models/verify_advanced_request.rs
 src/models/verify_embedding_request.rs
 src/models/verify_embedding_response.rs
 src/models/verify_request.rs

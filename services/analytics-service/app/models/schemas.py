@@ -35,7 +35,9 @@ class UsageStats(BaseModel):
     total_api_calls: int
     total_documents_signed: int
     total_verifications: int
-    total_keys_generated: int
+    success_rate: float
+    avg_response_time_ms: float
+    total_keys_generated: int = 0
     period_start: datetime
     period_end: datetime
 

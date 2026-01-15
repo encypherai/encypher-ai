@@ -60,6 +60,18 @@ export interface EncodeWithEmbeddingsRequest {
      */
     segmentationLevel?: string;
     /**
+     * 
+     * @type {Array<string>}
+     * @memberof EncodeWithEmbeddingsRequest
+     */
+    segmentationLevels?: Array<string> | null;
+    /**
+     * 
+     * @type {boolean}
+     * @memberof EncodeWithEmbeddingsRequest
+     */
+    indexForAttribution?: boolean | null;
+    /**
      * C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)
      * @type {string}
      * @memberof EncodeWithEmbeddingsRequest
@@ -191,6 +203,8 @@ export function EncodeWithEmbeddingsRequestFromJSONTyped(json: any, ignoreDiscri
         'documentId': json['document_id'],
         'text': json['text'],
         'segmentationLevel': json['segmentation_level'] == null ? undefined : json['segmentation_level'],
+        'segmentationLevels': json['segmentation_levels'] == null ? undefined : json['segmentation_levels'],
+        'indexForAttribution': json['index_for_attribution'] == null ? undefined : json['index_for_attribution'],
         'action': json['action'] == null ? undefined : json['action'],
         'manifestMode': json['manifest_mode'] == null ? undefined : json['manifest_mode'],
         'embeddingStrategy': json['embedding_strategy'] == null ? undefined : json['embedding_strategy'],
@@ -226,6 +240,8 @@ export function EncodeWithEmbeddingsRequestToJSONTyped(value?: EncodeWithEmbeddi
         'document_id': value['documentId'],
         'text': value['text'],
         'segmentation_level': value['segmentationLevel'],
+        'segmentation_levels': value['segmentationLevels'],
+        'index_for_attribution': value['indexForAttribution'],
         'action': value['action'],
         'manifest_mode': value['manifestMode'],
         'embedding_strategy': value['embeddingStrategy'],

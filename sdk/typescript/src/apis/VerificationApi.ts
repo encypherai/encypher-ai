@@ -21,6 +21,7 @@ import type {
   VerificationHistory,
   VerificationResponse,
   VerificationStats,
+  VerifyAdvancedRequest,
   VerifyRequest,
   VerifyResponse,
 } from '../models/index';
@@ -37,6 +38,8 @@ import {
     VerificationResponseToJSON,
     VerificationStatsFromJSON,
     VerificationStatsToJSON,
+    VerifyAdvancedRequestFromJSON,
+    VerifyAdvancedRequestToJSON,
     VerifyRequestFromJSON,
     VerifyRequestToJSON,
     VerifyResponseFromJSON,
@@ -50,6 +53,10 @@ export interface GetStatsApiV1VerifyStatsGetRequest {
 export interface GetVerificationHistoryApiV1VerifyHistoryDocumentIdGetRequest {
     documentId: string;
     limit?: number;
+}
+
+export interface VerifyAdvancedApiV1VerifyAdvancedPostRequest {
+    verifyAdvancedRequest: VerifyAdvancedRequest;
 }
 
 export interface VerifyByDocumentIdApiV1VerifyDocumentIdGetRequest {
@@ -129,6 +136,22 @@ export interface VerificationApiInterface {
      * Health Check
      */
     healthCheckApiV1VerifyHealthGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any>;
+
+    /**
+     * Verify signed content and optionally run attribution/plagiarism analysis.
+     * @summary Advanced verification
+     * @param {VerifyAdvancedRequest} verifyAdvancedRequest 
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VerificationApiInterface
+     */
+    verifyAdvancedApiV1VerifyAdvancedPostRaw(requestParameters: VerifyAdvancedApiV1VerifyAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>>;
+
+    /**
+     * Verify signed content and optionally run attribution/plagiarism analysis.
+     * Advanced verification
+     */
+    verifyAdvancedApiV1VerifyAdvancedPost(requestParameters: VerifyAdvancedApiV1VerifyAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any>;
 
     /**
      * Verify a document by its ID (for clickable verification links).  Returns an HTML page so users can preview verification state in a browser. This endpoint queries the content database for the signed document.
@@ -318,6 +341,59 @@ export class VerificationApi extends runtime.BaseAPI implements VerificationApiI
      */
     async healthCheckApiV1VerifyHealthGet(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
         const response = await this.healthCheckApiV1VerifyHealthGetRaw(initOverrides);
+        return await response.value();
+    }
+
+    /**
+     * Verify signed content and optionally run attribution/plagiarism analysis.
+     * Advanced verification
+     */
+    async verifyAdvancedApiV1VerifyAdvancedPostRaw(requestParameters: VerifyAdvancedApiV1VerifyAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+        if (requestParameters['verifyAdvancedRequest'] == null) {
+            throw new runtime.RequiredError(
+                'verifyAdvancedRequest',
+                'Required parameter "verifyAdvancedRequest" was null or undefined when calling verifyAdvancedApiV1VerifyAdvancedPost().'
+            );
+        }
+
+        const queryParameters: any = {};
+
+        const headerParameters: runtime.HTTPHeaders = {};
+
+        headerParameters['Content-Type'] = 'application/json';
+
+        if (this.configuration && this.configuration.accessToken) {
+            const token = this.configuration.accessToken;
+            const tokenString = await token("HTTPBearer", []);
+
+            if (tokenString) {
+                headerParameters["Authorization"] = `Bearer ${tokenString}`;
+            }
+        }
+
+        let urlPath = `/api/v1/verify/advanced`;
+
+        const response = await this.request({
+            path: urlPath,
+            method: 'POST',
+            headers: headerParameters,
+            query: queryParameters,
+            body: VerifyAdvancedRequestToJSON(requestParameters['verifyAdvancedRequest']),
+        }, initOverrides);
+
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<any>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
+    }
+
+    /**
+     * Verify signed content and optionally run attribution/plagiarism analysis.
+     * Advanced verification
+     */
+    async verifyAdvancedApiV1VerifyAdvancedPost(requestParameters: VerifyAdvancedApiV1VerifyAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+        const response = await this.verifyAdvancedApiV1VerifyAdvancedPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 

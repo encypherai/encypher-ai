@@ -1,11 +1,11 @@
 """Verification Service - Main Application"""
-import logging
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlalchemy.orm import Session
 
 from .core.config import settings
+from .core.logging_config import setup_logging
 from .api.v1 import endpoints as v1_endpoints
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
@@ -14,11 +14,7 @@ from .db.session import get_db
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
 
-logging.basicConfig(
-    level=getattr(logging, settings.LOG_LEVEL),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-)
-logger = logging.getLogger(__name__)
+logger = setup_logging(settings.LOG_LEVEL).bind(service=settings.SERVICE_NAME)
 
 
 @asynccontextmanager

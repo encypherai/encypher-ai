@@ -7,6 +7,8 @@ Name | Type | Description | Notes
 **DocumentId** | **string** | Unique document identifier | 
 **Text** | **string** | Full document text to encode | 
 **SegmentationLevel** | Pointer to **string** | Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word | [optional] [default to "sentence"]
+**SegmentationLevels** | Pointer to **[]string** |  | [optional] 
+**IndexForAttribution** | Pointer to **NullableBool** |  | [optional] 
 **Action** | Pointer to **string** | C2PA action type: c2pa.created (new content) or c2pa.edited (modified content) | [optional] [default to "c2pa.created"]
 **ManifestMode** | Pointer to **string** | Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier. | [optional] [default to "full"]
 **EmbeddingStrategy** | Pointer to **string** | Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier. | [optional] [default to "single_point"]
@@ -110,6 +112,76 @@ SetSegmentationLevel sets SegmentationLevel field to given value.
 
 HasSegmentationLevel returns a boolean if a field has been set.
 
+### GetSegmentationLevels
+
+`func (o *EncodeWithEmbeddingsRequest) GetSegmentationLevels() []string`
+
+GetSegmentationLevels returns the SegmentationLevels field if non-nil, zero value otherwise.
+
+### GetSegmentationLevelsOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetSegmentationLevelsOk() (*[]string, bool)`
+
+GetSegmentationLevelsOk returns a tuple with the SegmentationLevels field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetSegmentationLevels
+
+`func (o *EncodeWithEmbeddingsRequest) SetSegmentationLevels(v []string)`
+
+SetSegmentationLevels sets SegmentationLevels field to given value.
+
+### HasSegmentationLevels
+
+`func (o *EncodeWithEmbeddingsRequest) HasSegmentationLevels() bool`
+
+HasSegmentationLevels returns a boolean if a field has been set.
+
+### SetSegmentationLevelsNil
+
+`func (o *EncodeWithEmbeddingsRequest) SetSegmentationLevelsNil(b bool)`
+
+ SetSegmentationLevelsNil sets the value for SegmentationLevels to be an explicit nil
+
+### UnsetSegmentationLevels
+`func (o *EncodeWithEmbeddingsRequest) UnsetSegmentationLevels()`
+
+UnsetSegmentationLevels ensures that no value is present for SegmentationLevels, not even an explicit nil
+### GetIndexForAttribution
+
+`func (o *EncodeWithEmbeddingsRequest) GetIndexForAttribution() bool`
+
+GetIndexForAttribution returns the IndexForAttribution field if non-nil, zero value otherwise.
+
+### GetIndexForAttributionOk
+
+`func (o *EncodeWithEmbeddingsRequest) GetIndexForAttributionOk() (*bool, bool)`
+
+GetIndexForAttributionOk returns a tuple with the IndexForAttribution field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetIndexForAttribution
+
+`func (o *EncodeWithEmbeddingsRequest) SetIndexForAttribution(v bool)`
+
+SetIndexForAttribution sets IndexForAttribution field to given value.
+
+### HasIndexForAttribution
+
+`func (o *EncodeWithEmbeddingsRequest) HasIndexForAttribution() bool`
+
+HasIndexForAttribution returns a boolean if a field has been set.
+
+### SetIndexForAttributionNil
+
+`func (o *EncodeWithEmbeddingsRequest) SetIndexForAttributionNil(b bool)`
+
+ SetIndexForAttributionNil sets the value for IndexForAttribution to be an explicit nil
+
+### UnsetIndexForAttribution
+`func (o *EncodeWithEmbeddingsRequest) UnsetIndexForAttribution()`
+
+UnsetIndexForAttribution ensures that no value is present for IndexForAttribution, not even an explicit nil
 ### GetAction
 
 `func (o *EncodeWithEmbeddingsRequest) GetAction() string`

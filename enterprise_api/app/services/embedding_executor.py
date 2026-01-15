@@ -19,10 +19,12 @@ from app.schemas.embeddings import (
     EncodeWithEmbeddingsRequest,
     EncodeWithEmbeddingsResponse,
     MerkleTreeInfo,
+    MerkleTreeLevelInfo,
 )
 from app.services.embedding_service import EmbeddingService
 from app.services.merkle_service import MerkleService
 from app.utils.crypto_utils import load_organization_private_key
+from app.utils.quota import QuotaManager, QuotaType
 
 logger = logging.getLogger(__name__)
 
@@ -345,21 +347,54 @@ async def encode_document_with_embeddings(
             leaf_hashes = [compute_leaf_hash(document_text)]  # Single hash for entire document
             merkle_root_id = None  # No Merkle tree for free tier
             merkle_root = None
+            merkle_roots: Dict[str, object] = {}
+            merkle_trees = None
         else:
-            # Enterprise tier: Build Merkle tree and segment
-            logger.info(f"Enterprise tier - building Merkle tree at {request.segmentation_level} level")
+            merkle_levels = request.segmentation_levels
+            if not merkle_levels:
+                merkle_levels = [request.segmentation_level]
+
+            index_for_attribution = request.index_for_attribution
+            if index_for_attribution is None:
+                index_for_attribution = org_tier_level >= 1
+
+            if index_for_attribution:
+                await QuotaManager.check_quota(
+                    db=db,
+                    organization_id=organization_id,
+                    quota_type=QuotaType.MERKLE_ENCODING,
+                    increment=len(merkle_levels),
+                    features=organization.get("features", {}),
+                )
+
+            logger.info(
+                "Enterprise tier - building Merkle trees at levels=%s (indexed=%s)",
+                merkle_levels,
+                index_for_attribution,
+            )
+
             merkle_roots = await MerkleService.encode_document(
                 db=db,
                 organization_id=organization_id,
                 document_id=request.document_id,
                 text=document_text,
-                segmentation_levels=[request.segmentation_level],
+                segmentation_levels=merkle_levels,
                 metadata=request.metadata,
-                include_words=False
+                include_words=False,
             )
-            
-            merkle_root = merkle_roots[request.segmentation_level]
+
+            merkle_root = merkle_roots.get(request.segmentation_level) or next(iter(merkle_roots.values()))
             merkle_root_id = merkle_root.id
+
+            merkle_trees = {
+                level: MerkleTreeLevelInfo(
+                    root_hash=root.root_hash,
+                    total_leaves=root.leaf_count,
+                    tree_depth=root.tree_depth,
+                    indexed=index_for_attribution,
+                )
+                for level, root in merkle_roots.items()
+            }
             
             # Get segments and hashes
             from app.utils.segmentation import HierarchicalSegmenter
@@ -463,6 +498,7 @@ async def encode_document_with_embeddings(
             success=True,
             document_id=request.document_id,
             merkle_tree=merkle_tree_info,
+            merkle_trees=merkle_trees,
             embeddings=embedding_infos,
             embedded_content=embedded_content,
             statistics={

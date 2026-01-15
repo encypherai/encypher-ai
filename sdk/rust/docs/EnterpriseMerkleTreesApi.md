@@ -4,40 +4,8 @@ All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post**](EnterpriseMerkleTreesApi.md#detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post) | **POST** /api/v1/enterprise/merkle/detect-plagiarism | Detect Plagiarism
 [**encode_document_api_v1_enterprise_merkle_encode_post**](EnterpriseMerkleTreesApi.md#encode_document_api_v1_enterprise_merkle_encode_post) | **POST** /api/v1/enterprise/merkle/encode | Encode Document into Merkle Trees
-[**find_sources_api_v1_enterprise_merkle_attribute_post**](EnterpriseMerkleTreesApi.md#find_sources_api_v1_enterprise_merkle_attribute_post) | **POST** /api/v1/enterprise/merkle/attribute | Find Source Documents
 
-
-
-## detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post
-
-> models::PlagiarismDetectionResponse detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post(plagiarism_detection_request)
-Detect Plagiarism
-
-Analyze text for potential plagiarism by comparing against indexed documents.          This endpoint:     1. Segments the target text     2. Checks each segment against the Merkle tree index     3. Identifies matching source documents     4. Calculates match percentages and confidence scores     5. Generates a heat map showing which parts match          **Use Cases:**     - Academic plagiarism detection     - Content originality verification     - Copyright infringement detection     - Duplicate content identification          **Enterprise Tier Only**
-
-### Parameters
-
-
-Name | Type | Description  | Required | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-**plagiarism_detection_request** | [**PlagiarismDetectionRequest**](PlagiarismDetectionRequest.md) |  | [required] |
-
-### Return type
-
-[**models::PlagiarismDetectionResponse**](PlagiarismDetectionResponse.md)
-
-### Authorization
-
-[HTTPBearer](../README.md#HTTPBearer)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 
 ## encode_document_api_v1_enterprise_merkle_encode_post
@@ -57,36 +25,6 @@ Name | Type | Description  | Required | Notes
 ### Return type
 
 [**models::DocumentEncodeResponse**](DocumentEncodeResponse.md)
-
-### Authorization
-
-[HTTPBearer](../README.md#HTTPBearer)
-
-### HTTP request headers
-
-- **Content-Type**: application/json
-- **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-
-## find_sources_api_v1_enterprise_merkle_attribute_post
-
-> models::SourceAttributionResponse find_sources_api_v1_enterprise_merkle_attribute_post(source_attribution_request)
-Find Source Documents
-
-Find source documents that contain a specific text segment.          This endpoint searches the Merkle tree index to find which documents     contain the provided text segment.          **Use Cases:**     - Verify if a text segment appears in your document repository     - Find the original source of a quote or passage     - Check if content has been previously published          **Enterprise Tier Only**
-
-### Parameters
-
-
-Name | Type | Description  | Required | Notes
-------------- | ------------- | ------------- | ------------- | -------------
-**source_attribution_request** | [**SourceAttributionRequest**](SourceAttributionRequest.md) |  | [required] |
-
-### Return type
-
-[**models::SourceAttributionResponse**](SourceAttributionResponse.md)
 
 ### Authorization
 

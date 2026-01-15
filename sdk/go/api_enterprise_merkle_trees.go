@@ -22,35 +22,6 @@ import (
 type EnterpriseMerkleTreesAPI interface {
 
 	/*
-	DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost Detect Plagiarism
-
-	Analyze text for potential plagiarism by comparing against indexed documents.
-    
-    This endpoint:
-    1. Segments the target text
-    2. Checks each segment against the Merkle tree index
-    3. Identifies matching source documents
-    4. Calculates match percentages and confidence scores
-    5. Generates a heat map showing which parts match
-    
-    **Use Cases:**
-    - Academic plagiarism detection
-    - Content originality verification
-    - Copyright infringement detection
-    - Duplicate content identification
-    
-    **Enterprise Tier Only**
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest
-	*/
-	DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost(ctx context.Context) ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest
-
-	// DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostExecute executes the request
-	//  @return PlagiarismDetectionResponse
-	DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostExecute(r ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest) (*PlagiarismDetectionResponse, *http.Response, error)
-
-	/*
 	EncodeDocumentApiV1EnterpriseMerkleEncodePost Encode Document into Merkle Trees
 
 	Encode a document into Merkle trees at specified segmentation levels.
@@ -80,202 +51,10 @@ type EnterpriseMerkleTreesAPI interface {
 	// EncodeDocumentApiV1EnterpriseMerkleEncodePostExecute executes the request
 	//  @return DocumentEncodeResponse
 	EncodeDocumentApiV1EnterpriseMerkleEncodePostExecute(r ApiEncodeDocumentApiV1EnterpriseMerkleEncodePostRequest) (*DocumentEncodeResponse, *http.Response, error)
-
-	/*
-	FindSourcesApiV1EnterpriseMerkleAttributePost Find Source Documents
-
-	Find source documents that contain a specific text segment.
-    
-    This endpoint searches the Merkle tree index to find which documents
-    contain the provided text segment.
-    
-    **Use Cases:**
-    - Verify if a text segment appears in your document repository
-    - Find the original source of a quote or passage
-    - Check if content has been previously published
-    
-    **Enterprise Tier Only**
-
-	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
-	@return ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest
-	*/
-	FindSourcesApiV1EnterpriseMerkleAttributePost(ctx context.Context) ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest
-
-	// FindSourcesApiV1EnterpriseMerkleAttributePostExecute executes the request
-	//  @return SourceAttributionResponse
-	FindSourcesApiV1EnterpriseMerkleAttributePostExecute(r ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest) (*SourceAttributionResponse, *http.Response, error)
 }
 
 // EnterpriseMerkleTreesAPIService EnterpriseMerkleTreesAPI service
 type EnterpriseMerkleTreesAPIService service
-
-type ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest struct {
-	ctx context.Context
-	ApiService EnterpriseMerkleTreesAPI
-	plagiarismDetectionRequest *PlagiarismDetectionRequest
-}
-
-func (r ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest) PlagiarismDetectionRequest(plagiarismDetectionRequest PlagiarismDetectionRequest) ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest {
-	r.plagiarismDetectionRequest = &plagiarismDetectionRequest
-	return r
-}
-
-func (r ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest) Execute() (*PlagiarismDetectionResponse, *http.Response, error) {
-	return r.ApiService.DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostExecute(r)
-}
-
-/*
-DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost Detect Plagiarism
-
-Analyze text for potential plagiarism by comparing against indexed documents.
-    
-    This endpoint:
-    1. Segments the target text
-    2. Checks each segment against the Merkle tree index
-    3. Identifies matching source documents
-    4. Calculates match percentages and confidence scores
-    5. Generates a heat map showing which parts match
-    
-    **Use Cases:**
-    - Academic plagiarism detection
-    - Content originality verification
-    - Copyright infringement detection
-    - Duplicate content identification
-    
-    **Enterprise Tier Only**
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest
-*/
-func (a *EnterpriseMerkleTreesAPIService) DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost(ctx context.Context) ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest {
-	return ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest{
-		ApiService: a,
-		ctx: ctx,
-	}
-}
-
-// Execute executes the request
-//  @return PlagiarismDetectionResponse
-func (a *EnterpriseMerkleTreesAPIService) DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostExecute(r ApiDetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPostRequest) (*PlagiarismDetectionResponse, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *PlagiarismDetectionResponse
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EnterpriseMerkleTreesAPIService.DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/enterprise/merkle/detect-plagiarism"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.plagiarismDetectionRequest == nil {
-		return localVarReturnValue, nil, reportError("plagiarismDetectionRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.plagiarismDetectionRequest
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v AppSchemasMerkleErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v AppSchemasMerkleErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v AppSchemasMerkleErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 422 {
-			var v HTTPValidationError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
 
 type ApiEncodeDocumentApiV1EnterpriseMerkleEncodePostRequest struct {
 	ctx context.Context
@@ -390,7 +169,7 @@ func (a *EnterpriseMerkleTreesAPIService) EncodeDocumentApiV1EnterpriseMerkleEnc
 			error: localVarHTTPResponse.Status,
 		}
 		if localVarHTTPResponse.StatusCode == 400 {
-			var v AppSchemasMerkleErrorResponse
+			var v ErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -401,7 +180,7 @@ func (a *EnterpriseMerkleTreesAPIService) EncodeDocumentApiV1EnterpriseMerkleEnc
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
-			var v AppSchemasMerkleErrorResponse
+			var v ErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -412,7 +191,7 @@ func (a *EnterpriseMerkleTreesAPIService) EncodeDocumentApiV1EnterpriseMerkleEnc
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
-			var v AppSchemasMerkleErrorResponse
+			var v ErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
@@ -423,170 +202,7 @@ func (a *EnterpriseMerkleTreesAPIService) EncodeDocumentApiV1EnterpriseMerkleEnc
 			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
-			var v AppSchemasMerkleErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 422 {
-			var v HTTPValidationError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return localVarReturnValue, localVarHTTPResponse, nil
-}
-
-type ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest struct {
-	ctx context.Context
-	ApiService EnterpriseMerkleTreesAPI
-	sourceAttributionRequest *SourceAttributionRequest
-}
-
-func (r ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest) SourceAttributionRequest(sourceAttributionRequest SourceAttributionRequest) ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest {
-	r.sourceAttributionRequest = &sourceAttributionRequest
-	return r
-}
-
-func (r ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest) Execute() (*SourceAttributionResponse, *http.Response, error) {
-	return r.ApiService.FindSourcesApiV1EnterpriseMerkleAttributePostExecute(r)
-}
-
-/*
-FindSourcesApiV1EnterpriseMerkleAttributePost Find Source Documents
-
-Find source documents that contain a specific text segment.
-    
-    This endpoint searches the Merkle tree index to find which documents
-    contain the provided text segment.
-    
-    **Use Cases:**
-    - Verify if a text segment appears in your document repository
-    - Find the original source of a quote or passage
-    - Check if content has been previously published
-    
-    **Enterprise Tier Only**
-
- @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
- @return ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest
-*/
-func (a *EnterpriseMerkleTreesAPIService) FindSourcesApiV1EnterpriseMerkleAttributePost(ctx context.Context) ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest {
-	return ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest{
-		ApiService: a,
-		ctx: ctx,
-	}
-}
-
-// Execute executes the request
-//  @return SourceAttributionResponse
-func (a *EnterpriseMerkleTreesAPIService) FindSourcesApiV1EnterpriseMerkleAttributePostExecute(r ApiFindSourcesApiV1EnterpriseMerkleAttributePostRequest) (*SourceAttributionResponse, *http.Response, error) {
-	var (
-		localVarHTTPMethod   = http.MethodPost
-		localVarPostBody     interface{}
-		formFiles            []formFile
-		localVarReturnValue  *SourceAttributionResponse
-	)
-
-	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "EnterpriseMerkleTreesAPIService.FindSourcesApiV1EnterpriseMerkleAttributePost")
-	if err != nil {
-		return localVarReturnValue, nil, &GenericOpenAPIError{error: err.Error()}
-	}
-
-	localVarPath := localBasePath + "/api/v1/enterprise/merkle/attribute"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := url.Values{}
-	localVarFormParams := url.Values{}
-	if r.sourceAttributionRequest == nil {
-		return localVarReturnValue, nil, reportError("sourceAttributionRequest is required and must be specified")
-	}
-
-	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// set Content-Type header
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// to determine the Accept header
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// set Accept header
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// body params
-	localVarPostBody = r.sourceAttributionRequest
-	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
-	if err != nil {
-		return localVarReturnValue, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := io.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = io.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarReturnValue, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := &GenericOpenAPIError{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v AppSchemasMerkleErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v AppSchemasMerkleErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v AppSchemasMerkleErrorResponse
+			var v ErrorResponse
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()

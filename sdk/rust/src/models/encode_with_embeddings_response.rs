@@ -22,6 +22,8 @@ pub struct EncodeWithEmbeddingsResponse {
     pub document_id: String,
     #[serde(rename = "merkle_tree", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub merkle_tree: Option<Option<Box<models::MerkleTreeInfo>>>,
+    #[serde(rename = "merkle_trees", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub merkle_trees: Option<Option<std::collections::HashMap<String, models::MerkleTreeLevelInfo>>>,
     /// List of generated embeddings
     #[serde(rename = "embeddings")]
     pub embeddings: Vec<models::EmbeddingInfo>,
@@ -41,6 +43,7 @@ impl EncodeWithEmbeddingsResponse {
             success: None,
             document_id,
             merkle_tree: None,
+            merkle_trees: None,
             embeddings,
             embedded_content: None,
             statistics,

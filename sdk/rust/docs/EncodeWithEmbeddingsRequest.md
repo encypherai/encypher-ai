@@ -7,6 +7,8 @@ Name | Type | Description | Notes
 **document_id** | **String** | Unique document identifier | 
 **text** | **String** | Full document text to encode | 
 **segmentation_level** | Option<**String**> | Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word | [optional][default to sentence]
+**segmentation_levels** | Option<**Vec<String>**> |  | [optional]
+**index_for_attribution** | Option<**bool**> |  | [optional]
 **action** | Option<**String**> | C2PA action type: c2pa.created (new content) or c2pa.edited (modified content) | [optional][default to c2pa.created]
 **manifest_mode** | Option<**String**> | Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier. | [optional][default to full]
 **embedding_strategy** | Option<**String**> | Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier. | [optional][default to single_point]

@@ -1,15 +1,15 @@
 # ErrorResponse
 
-Error response.
+Standard error response schema.
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **success** | **bool** | Always false for errors | [optional] [default to False]
-**error** | **str** | Error message | 
-**detail** | **str** |  | [optional] 
-**error_code** | **str** |  | [optional] 
+**error** | **str** | Error type | 
+**message** | **str** | Human-readable error message | 
+**details** | **Dict[str, object]** |  | [optional] 
 
 ## Example
 

@@ -41,6 +41,13 @@ class TestEncodeWithEmbeddingsResponse(unittest.TestCase):
                     root_hash = '', 
                     total_leaves = 56, 
                     tree_depth = 56, ),
+                merkle_trees = {
+                    'key' : encypher.models.merkle_tree_level_info.MerkleTreeLevelInfo(
+                        root_hash = '', 
+                        total_leaves = 56, 
+                        tree_depth = 56, 
+                        indexed = True, )
+                    },
                 embeddings = [
                     encypher.models.embedding_info.EmbeddingInfo(
                         leaf_index = 56, 

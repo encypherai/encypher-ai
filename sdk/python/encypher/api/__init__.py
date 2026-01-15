@@ -24,6 +24,7 @@ from encypher.api.status_revocation_api import StatusRevocationApi
 from encypher.api.streaming_api import StreamingApi
 from encypher.api.streaming_merkle_api import StreamingMerkleApi
 from encypher.api.usage_api import UsageApi
+from encypher.api.verification_api import VerificationApi
 from encypher.api.webhooks_api import WebhooksApi
 from encypher.api.verification_api import VerificationApi
 

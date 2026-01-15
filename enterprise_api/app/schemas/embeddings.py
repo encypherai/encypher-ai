@@ -66,6 +66,14 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         default="sentence",
         description="Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word"
     )
+    segmentation_levels: Optional[List[str]] = Field(
+        default=None,
+        description="Optional list of Merkle segmentation levels to build/index (sentence, paragraph, section). Defaults to [segmentation_level].",
+    )
+    index_for_attribution: Optional[bool] = Field(
+        default=None,
+        description="Whether to enforce Merkle indexing quotas for attribution workflows. Defaults to true for paid tiers.",
+    )
     action: str = Field(
         default="c2pa.created",
         description="C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)"
@@ -147,6 +155,16 @@ class EncodeWithEmbeddingsRequest(BaseModel):
             raise ValueError(f"Segmentation level must be one of: {', '.join(allowed)}")
         return v
 
+    @validator('segmentation_levels')
+    def validate_segmentation_levels(cls, v):
+        if v is None:
+            return v
+        allowed = {'sentence', 'paragraph', 'section'}
+        for level in v:
+            if level not in allowed:
+                raise ValueError(f"segmentation_levels entries must be one of: {', '.join(sorted(allowed))}")
+        return v
+
     @validator('manifest_mode')
     def validate_manifest_mode(cls, v):
         allowed = ['full', 'lightweight_uuid', 'hybrid']
@@ -191,11 +209,19 @@ class MerkleTreeInfo(BaseModel):
     tree_depth: int = Field(..., description="Height of the tree")
 
 
+class MerkleTreeLevelInfo(MerkleTreeInfo):
+    indexed: bool = Field(..., description="Whether the Merkle tree was indexed for attribution workflows")
+
+
 class EncodeWithEmbeddingsResponse(BaseModel):
     """Response from encoding document with embeddings."""
     success: bool = Field(True, description="Whether encoding succeeded")
     document_id: str = Field(..., description="Document identifier")
     merkle_tree: Optional[MerkleTreeInfo] = Field(None, description="Merkle tree information (None for free tier)")
+    merkle_trees: Optional[Dict[str, MerkleTreeLevelInfo]] = Field(
+        None,
+        description="Optional mapping of segmentation level to Merkle tree metadata.",
+    )
     embeddings: List[EmbeddingInfo] = Field(..., description="List of generated embeddings")
     embedded_content: Optional[str] = Field(
         None,

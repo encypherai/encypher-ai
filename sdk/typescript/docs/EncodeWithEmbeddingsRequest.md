@@ -10,6 +10,8 @@ Name | Type
 `documentId` | string
 `text` | string
 `segmentationLevel` | string
+`segmentationLevels` | Array&lt;string&gt;
+`indexForAttribution` | boolean
 `action` | string
 `manifestMode` | string
 `embeddingStrategy` | string
@@ -39,6 +41,8 @@ const example = {
   "documentId": null,
   "text": null,
   "segmentationLevel": null,
+  "segmentationLevels": null,
+  "indexForAttribution": null,
   "action": null,
   "manifestMode": null,
   "embeddingStrategy": null,

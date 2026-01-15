@@ -7,6 +7,7 @@ Method | HTTP request | Description
 [**get_stats_api_v1_verify_stats_get**](VerificationApi.md#get_stats_api_v1_verify_stats_get) | **GET** /api/v1/verify/stats | Get Stats
 [**get_verification_history_api_v1_verify_history_document_id_get**](VerificationApi.md#get_verification_history_api_v1_verify_history_document_id_get) | **GET** /api/v1/verify/history/{document_id} | Get Verification History
 [**health_check_api_v1_verify_health_get**](VerificationApi.md#health_check_api_v1_verify_health_get) | **GET** /api/v1/verify/health | Health Check
+[**verify_advanced_api_v1_verify_advanced_post**](VerificationApi.md#verify_advanced_api_v1_verify_advanced_post) | **POST** /api/v1/verify/advanced | Advanced verification
 [**verify_by_document_id_api_v1_verify_document_id_get**](VerificationApi.md#verify_by_document_id_api_v1_verify_document_id_get) | **GET** /api/v1/verify/{document_id} | Verify By Document Id
 [**verify_document_api_v1_verify_document_post**](VerificationApi.md#verify_document_api_v1_verify_document_post) | **POST** /api/v1/verify/document | Verify Document
 [**verify_signature_api_v1_verify_signature_post**](VerificationApi.md#verify_signature_api_v1_verify_signature_post) | **POST** /api/v1/verify/signature | Verify Signature
@@ -97,6 +98,36 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+
+## verify_advanced_api_v1_verify_advanced_post
+
+> serde_json::Value verify_advanced_api_v1_verify_advanced_post(verify_advanced_request)
+Advanced verification
+
+Verify signed content and optionally run attribution/plagiarism analysis.
+
+### Parameters
+
+
+Name | Type | Description  | Required | Notes
+------------- | ------------- | ------------- | ------------- | -------------
+**verify_advanced_request** | [**VerifyAdvancedRequest**](VerifyAdvancedRequest.md) |  | [required] |
+
+### Return type
+
+[**serde_json::Value**](serde_json::Value.md)
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)

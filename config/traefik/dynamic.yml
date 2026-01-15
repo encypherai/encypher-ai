@@ -127,6 +127,18 @@ http:
       tls: {}
       priority: 100
 
+    # Verification Advanced - routed to Enterprise API (advanced/analytics features)
+    api-verify-advanced:
+      rule: "Host(`api.encypherai.com`) && Path(`/api/v1/verify/advanced`)"
+      service: enterprise-api
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 110
+
     # Verification Service - ALL verification endpoints
     # Routes all /api/v1/verify* to verification-service for independent scaling
     api-verify:

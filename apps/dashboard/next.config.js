@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
+if (process.env.NODE_ENV === 'development') {
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1';
+  console.info(`[dashboard] NEXT_PUBLIC_API_URL (startup): ${apiBaseUrl}`);
+}
+
 const nextConfig = {
   reactStrictMode: true,
   allowedDevOrigins: [

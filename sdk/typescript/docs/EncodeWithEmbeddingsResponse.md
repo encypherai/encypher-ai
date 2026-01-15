@@ -10,6 +10,7 @@ Name | Type
 `success` | boolean
 `documentId` | string
 `merkleTree` | [MerkleTreeInfo](MerkleTreeInfo.md)
+`merkleTrees` | [{ [key: string]: MerkleTreeLevelInfo; }](MerkleTreeLevelInfo.md)
 `embeddings` | [Array&lt;EmbeddingInfo&gt;](EmbeddingInfo.md)
 `embeddedContent` | string
 `statistics` | { [key: string]: any; }
@@ -25,6 +26,7 @@ const example = {
   "success": null,
   "documentId": null,
   "merkleTree": null,
+  "merkleTrees": null,
   "embeddings": null,
   "embeddedContent": null,
   "statistics": null,

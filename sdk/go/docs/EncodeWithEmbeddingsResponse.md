@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **Success** | Pointer to **bool** | Whether encoding succeeded | [optional] [default to true]
 **DocumentId** | **string** | Document identifier | 
 **MerkleTree** | Pointer to [**NullableMerkleTreeInfo**](MerkleTreeInfo.md) |  | [optional] 
+**MerkleTrees** | Pointer to [**map[string]MerkleTreeLevelInfo**](MerkleTreeLevelInfo.md) |  | [optional] 
 **Embeddings** | [**[]EmbeddingInfo**](EmbeddingInfo.md) | List of generated embeddings | 
 **EmbeddedContent** | Pointer to **NullableString** |  | [optional] 
 **Statistics** | **map[string]interface{}** | Processing statistics | 
@@ -111,6 +112,41 @@ HasMerkleTree returns a boolean if a field has been set.
 `func (o *EncodeWithEmbeddingsResponse) UnsetMerkleTree()`
 
 UnsetMerkleTree ensures that no value is present for MerkleTree, not even an explicit nil
+### GetMerkleTrees
+
+`func (o *EncodeWithEmbeddingsResponse) GetMerkleTrees() map[string]MerkleTreeLevelInfo`
+
+GetMerkleTrees returns the MerkleTrees field if non-nil, zero value otherwise.
+
+### GetMerkleTreesOk
+
+`func (o *EncodeWithEmbeddingsResponse) GetMerkleTreesOk() (*map[string]MerkleTreeLevelInfo, bool)`
+
+GetMerkleTreesOk returns a tuple with the MerkleTrees field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetMerkleTrees
+
+`func (o *EncodeWithEmbeddingsResponse) SetMerkleTrees(v map[string]MerkleTreeLevelInfo)`
+
+SetMerkleTrees sets MerkleTrees field to given value.
+
+### HasMerkleTrees
+
+`func (o *EncodeWithEmbeddingsResponse) HasMerkleTrees() bool`
+
+HasMerkleTrees returns a boolean if a field has been set.
+
+### SetMerkleTreesNil
+
+`func (o *EncodeWithEmbeddingsResponse) SetMerkleTreesNil(b bool)`
+
+ SetMerkleTreesNil sets the value for MerkleTrees to be an explicit nil
+
+### UnsetMerkleTrees
+`func (o *EncodeWithEmbeddingsResponse) UnsetMerkleTrees()`
+
+UnsetMerkleTrees ensures that no value is present for MerkleTrees, not even an explicit nil
 ### GetEmbeddings
 
 `func (o *EncodeWithEmbeddingsResponse) GetEmbeddings() []EmbeddingInfo`

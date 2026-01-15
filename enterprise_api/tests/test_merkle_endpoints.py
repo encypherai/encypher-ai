@@ -130,14 +130,8 @@ class TestSourceAttributionEndpoint:
             json=request_data,
             headers=business_auth_headers
         )
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        assert data["success"] is True
-        assert data["matches_found"] == 0
-        assert len(data["sources"]) == 0
-        assert "query_hash" in data
+
+        assert response.status_code == 410
     
     @pytest.mark.asyncio
     async def test_find_sources_invalid_level(self, async_client: AsyncClient, business_auth_headers: dict):
@@ -152,8 +146,8 @@ class TestSourceAttributionEndpoint:
             json=request_data,
             headers=business_auth_headers
         )
-        
-        assert response.status_code == 422
+
+        assert response.status_code == 410
 
 
 class TestPlagiarismDetectionEndpoint:
@@ -173,16 +167,8 @@ class TestPlagiarismDetectionEndpoint:
             json=request_data,
             headers=business_auth_headers
         )
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        assert data["success"] is True
-        assert "report_id" in data
-        assert data["total_segments"] > 0
-        assert data["matched_segments"] == 0
-        assert data["overall_match_percentage"] == 0.0
-        assert len(data["source_documents"]) == 0
+
+        assert response.status_code == 410
     
     @pytest.mark.asyncio
     async def test_detect_plagiarism_with_heat_map(self, async_client: AsyncClient, business_auth_headers: dict):
@@ -198,14 +184,8 @@ class TestPlagiarismDetectionEndpoint:
             json=request_data,
             headers=business_auth_headers
         )
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        assert "heat_map_data" in data
-        if data["heat_map_data"]:
-            assert "positions" in data["heat_map_data"]
-            assert "total_segments" in data["heat_map_data"]
+
+        assert response.status_code == 410
     
     @pytest.mark.asyncio
     async def test_detect_plagiarism_min_match_filter(self, async_client: AsyncClient, business_auth_headers: dict):
@@ -222,13 +202,8 @@ class TestPlagiarismDetectionEndpoint:
             json=request_data,
             headers=business_auth_headers
         )
-        
-        assert response.status_code == 200
-        data = response.json()
-        
-        # All returned sources should have >= 50% match
-        for source in data["source_documents"]:
-            assert source["match_percentage"] >= 50.0
+
+        assert response.status_code == 410
 
 
 class TestEndpointIntegration:
@@ -270,19 +245,4 @@ class TestEndpointIntegration:
             json=find_request,
             headers=business_auth_headers
         )
-        assert find_response.status_code == 200
-        
-        find_data = find_response.json()
-        
-        # Verify the endpoint works correctly
-        assert find_data["success"] is True
-        assert "matches_found" in find_data
-        assert "sources" in find_data
-        
-        # If we found matches, verify one is our document
-        if find_data["matches_found"] > 0:
-            found_our_doc = any(
-                source["document_id"] == doc_id
-                for source in find_data["sources"]
-            )
-            assert found_our_doc is True
+        assert find_response.status_code == 410

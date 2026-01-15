@@ -7,8 +7,8 @@ docs/AccountApi.md
 docs/AccountInfo.md
 docs/AccountResponse.md
 docs/AppSchemasEmbeddingsBatchVerifyRequest.md
+docs/AppSchemasEmbeddingsErrorResponse.md
 docs/AppSchemasEmbeddingsRightsMetadata.md
-docs/AppSchemasMerkleErrorResponse.md
 docs/BYOKApi.md
 docs/BatchApi.md
 docs/BatchItemPayload.md
@@ -82,7 +82,6 @@ docs/FingerprintEncodeResponse.md
 docs/FingerprintMatch.md
 docs/HTTPValidationError.md
 docs/HealthApi.md
-docs/HeatMapData.md
 docs/InfoApi.md
 docs/KeyCreateRequest.md
 docs/KeyCreateResponse.md
@@ -100,13 +99,12 @@ docs/MerkleProofInfo.md
 docs/MerkleProofItem.md
 docs/MerkleRootResponse.md
 docs/MerkleTreeInfo.md
+docs/MerkleTreeLevelInfo.md
 docs/MultiSourceAttributionApi.md
 docs/MultiSourceLookupRequest.md
 docs/MultiSourceLookupResponse.md
 docs/OnboardingApi.md
 docs/PayoutSummary.md
-docs/PlagiarismDetectionRequest.md
-docs/PlagiarismDetectionResponse.md
 docs/PublicC2PAApi.md
 docs/PublicKeyInfo.md
 docs/PublicKeyListResponse.md
@@ -125,10 +123,6 @@ docs/SignResponse.md
 docs/SignatureVerification.md
 docs/SignatureVerify.md
 docs/SigningApi.md
-docs/SourceAttributionRequest.md
-docs/SourceAttributionResponse.md
-docs/SourceDocumentMatch.md
-docs/SourceMatch.md
 docs/SourceRecord.md
 docs/StatusRevocationApi.md
 docs/StreamMerkleFinalizeRequest.md
@@ -157,6 +151,7 @@ docs/VerificationResponse.md
 docs/VerificationServiceErrorDetail.md
 docs/VerificationServiceVerifyVerdict.md
 docs/VerificationStats.md
+docs/VerifyAdvancedRequest.md
 docs/VerifyEmbeddingRequest.md
 docs/VerifyEmbeddingResponse.md
 docs/VerifyRequest.md
@@ -202,8 +197,8 @@ src/index.ts
 src/models/AccountInfo.ts
 src/models/AccountResponse.ts
 src/models/AppSchemasEmbeddingsBatchVerifyRequest.ts
+src/models/AppSchemasEmbeddingsErrorResponse.ts
 src/models/AppSchemasEmbeddingsRightsMetadata.ts
-src/models/AppSchemasMerkleErrorResponse.ts
 src/models/BatchItemPayload.ts
 src/models/BatchItemResult.ts
 src/models/BatchResponseData.ts
@@ -267,7 +262,6 @@ src/models/FingerprintEncodeRequest.ts
 src/models/FingerprintEncodeResponse.ts
 src/models/FingerprintMatch.ts
 src/models/HTTPValidationError.ts
-src/models/HeatMapData.ts
 src/models/KeyCreateRequest.ts
 src/models/KeyCreateResponse.ts
 src/models/KeyListResponse.ts
@@ -283,11 +277,10 @@ src/models/MerkleProofInfo.ts
 src/models/MerkleProofItem.ts
 src/models/MerkleRootResponse.ts
 src/models/MerkleTreeInfo.ts
+src/models/MerkleTreeLevelInfo.ts
 src/models/MultiSourceLookupRequest.ts
 src/models/MultiSourceLookupResponse.ts
 src/models/PayoutSummary.ts
-src/models/PlagiarismDetectionRequest.ts
-src/models/PlagiarismDetectionResponse.ts
 src/models/PublicKeyInfo.ts
 src/models/PublicKeyListResponse.ts
 src/models/PublicKeyRegisterRequest.ts
@@ -303,10 +296,6 @@ src/models/SignRequest.ts
 src/models/SignResponse.ts
 src/models/SignatureVerification.ts
 src/models/SignatureVerify.ts
-src/models/SourceAttributionRequest.ts
-src/models/SourceAttributionResponse.ts
-src/models/SourceDocumentMatch.ts
-src/models/SourceMatch.ts
 src/models/SourceRecord.ts
 src/models/StreamMerkleFinalizeRequest.ts
 src/models/StreamMerkleFinalizeResponse.ts
@@ -330,6 +319,7 @@ src/models/VerificationResponse.ts
 src/models/VerificationServiceErrorDetail.ts
 src/models/VerificationServiceVerifyVerdict.ts
 src/models/VerificationStats.ts
+src/models/VerifyAdvancedRequest.ts
 src/models/VerifyEmbeddingRequest.ts
 src/models/VerifyEmbeddingResponse.ts
 src/models/VerifyRequest.ts

@@ -26,24 +26,10 @@ class TestEnterpriseMerkleTreesApi(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    def test_detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post(self) -> None:
-        """Test case for detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post
-
-        Detect Plagiarism
-        """
-        pass
-
     def test_encode_document_api_v1_enterprise_merkle_encode_post(self) -> None:
         """Test case for encode_document_api_v1_enterprise_merkle_encode_post
 
         Encode Document into Merkle Trees
-        """
-        pass
-
-    def test_find_sources_api_v1_enterprise_merkle_attribute_post(self) -> None:
-        """Test case for find_sources_api_v1_enterprise_merkle_attribute_post
-
-        Find Source Documents
         """
         pass
 

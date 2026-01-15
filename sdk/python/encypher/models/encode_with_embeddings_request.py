@@ -33,6 +33,8 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     document_id: StrictStr = Field(description="Unique document identifier")
     text: StrictStr = Field(description="Full document text to encode")
     segmentation_level: Optional[StrictStr] = Field(default='sentence', description="Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word")
+    segmentation_levels: Optional[List[StrictStr]] = None
+    index_for_attribution: Optional[StrictBool] = None
     action: Optional[StrictStr] = Field(default='c2pa.created', description="C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)")
     manifest_mode: Optional[StrictStr] = Field(default='full', description="Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier.")
     embedding_strategy: Optional[StrictStr] = Field(default='single_point', description="Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier.")
@@ -51,7 +53,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     rights: Optional[AppSchemasEmbeddingsRightsMetadata] = None
     embedding_options: Optional[EmbeddingOptions] = Field(default=None, description="Embedding generation options")
     expires_at: Optional[datetime] = None
-    __properties: ClassVar[List[str]] = ["document_id", "text", "segmentation_level", "action", "manifest_mode", "embedding_strategy", "distribution_target", "add_dual_binding", "disable_c2pa", "previous_instance_id", "metadata", "c2pa_manifest_url", "c2pa_manifest_hash", "custom_assertions", "template_id", "validate_assertions", "digital_source_type", "license", "rights", "embedding_options", "expires_at"]
+    __properties: ClassVar[List[str]] = ["document_id", "text", "segmentation_level", "segmentation_levels", "index_for_attribution", "action", "manifest_mode", "embedding_strategy", "distribution_target", "add_dual_binding", "disable_c2pa", "previous_instance_id", "metadata", "c2pa_manifest_url", "c2pa_manifest_hash", "custom_assertions", "template_id", "validate_assertions", "digital_source_type", "license", "rights", "embedding_options", "expires_at"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -101,6 +103,16 @@ class EncodeWithEmbeddingsRequest(BaseModel):
         # override the default output from pydantic by calling `to_dict()` of embedding_options
         if self.embedding_options:
             _dict['embedding_options'] = self.embedding_options.to_dict()
+        # set to None if segmentation_levels (nullable) is None
+        # and model_fields_set contains the field
+        if self.segmentation_levels is None and "segmentation_levels" in self.model_fields_set:
+            _dict['segmentation_levels'] = None
+
+        # set to None if index_for_attribution (nullable) is None
+        # and model_fields_set contains the field
+        if self.index_for_attribution is None and "index_for_attribution" in self.model_fields_set:
+            _dict['index_for_attribution'] = None
+
         # set to None if distribution_target (nullable) is None
         # and model_fields_set contains the field
         if self.distribution_target is None and "distribution_target" in self.model_fields_set:
@@ -171,6 +183,8 @@ class EncodeWithEmbeddingsRequest(BaseModel):
             "document_id": obj.get("document_id"),
             "text": obj.get("text"),
             "segmentation_level": obj.get("segmentation_level") if obj.get("segmentation_level") is not None else 'sentence',
+            "segmentation_levels": obj.get("segmentation_levels"),
+            "index_for_attribution": obj.get("index_for_attribution"),
             "action": obj.get("action") if obj.get("action") is not None else 'c2pa.created',
             "manifest_mode": obj.get("manifest_mode") if obj.get("manifest_mode") is not None else 'full',
             "embedding_strategy": obj.get("embedding_strategy") if obj.get("embedding_strategy") is not None else 'single_point',

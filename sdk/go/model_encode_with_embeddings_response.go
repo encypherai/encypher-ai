@@ -26,6 +26,7 @@ type EncodeWithEmbeddingsResponse struct {
 	// Document identifier
 	DocumentId string `json:"document_id"`
 	MerkleTree NullableMerkleTreeInfo `json:"merkle_tree,omitempty"`
+	MerkleTrees map[string]MerkleTreeLevelInfo `json:"merkle_trees,omitempty"`
 	// List of generated embeddings
 	Embeddings []EmbeddingInfo `json:"embeddings"`
 	EmbeddedContent NullableString `json:"embedded_content,omitempty"`
@@ -156,6 +157,39 @@ func (o *EncodeWithEmbeddingsResponse) SetMerkleTreeNil() {
 // UnsetMerkleTree ensures that no value is present for MerkleTree, not even an explicit nil
 func (o *EncodeWithEmbeddingsResponse) UnsetMerkleTree() {
 	o.MerkleTree.Unset()
+}
+
+// GetMerkleTrees returns the MerkleTrees field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *EncodeWithEmbeddingsResponse) GetMerkleTrees() map[string]MerkleTreeLevelInfo {
+	if o == nil {
+		var ret map[string]MerkleTreeLevelInfo
+		return ret
+	}
+	return o.MerkleTrees
+}
+
+// GetMerkleTreesOk returns a tuple with the MerkleTrees field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *EncodeWithEmbeddingsResponse) GetMerkleTreesOk() (map[string]MerkleTreeLevelInfo, bool) {
+	if o == nil || IsNil(o.MerkleTrees) {
+		return map[string]MerkleTreeLevelInfo{}, false
+	}
+	return o.MerkleTrees, true
+}
+
+// HasMerkleTrees returns a boolean if a field has been set.
+func (o *EncodeWithEmbeddingsResponse) HasMerkleTrees() bool {
+	if o != nil && !IsNil(o.MerkleTrees) {
+		return true
+	}
+
+	return false
+}
+
+// SetMerkleTrees gets a reference to the given map[string]MerkleTreeLevelInfo and assigns it to the MerkleTrees field.
+func (o *EncodeWithEmbeddingsResponse) SetMerkleTrees(v map[string]MerkleTreeLevelInfo) {
+	o.MerkleTrees = v
 }
 
 // GetEmbeddings returns the Embeddings field value
@@ -297,6 +331,9 @@ func (o EncodeWithEmbeddingsResponse) ToMap() (map[string]interface{}, error) {
 	toSerialize["document_id"] = o.DocumentId
 	if o.MerkleTree.IsSet() {
 		toSerialize["merkle_tree"] = o.MerkleTree.Get()
+	}
+	if o.MerkleTrees != nil {
+		toSerialize["merkle_trees"] = o.MerkleTrees
 	}
 	toSerialize["embeddings"] = o.Embeddings
 	if o.EmbeddedContent.IsSet() {

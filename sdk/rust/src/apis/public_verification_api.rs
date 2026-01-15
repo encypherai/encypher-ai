@@ -19,8 +19,8 @@ use super::{Error, configuration, ContentType};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum BatchVerifyEmbeddingsApiV1PublicVerifyBatchPostError {
-    Status400(models::ErrorResponse),
-    Status429(models::ErrorResponse),
+    Status400(models::AppSchemasEmbeddingsErrorResponse),
+    Status429(models::AppSchemasEmbeddingsErrorResponse),
     Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }
@@ -29,9 +29,9 @@ pub enum BatchVerifyEmbeddingsApiV1PublicVerifyBatchPostError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostError {
-    Status400(models::ErrorResponse),
-    Status404(models::ErrorResponse),
-    Status429(models::ErrorResponse),
+    Status400(models::AppSchemasEmbeddingsErrorResponse),
+    Status404(models::AppSchemasEmbeddingsErrorResponse),
+    Status429(models::AppSchemasEmbeddingsErrorResponse),
     Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }
@@ -40,9 +40,9 @@ pub enum ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum VerifyEmbeddingApiV1PublicVerifyRefIdGetError {
-    Status400(models::ErrorResponse),
-    Status404(models::ErrorResponse),
-    Status429(models::ErrorResponse),
+    Status400(models::AppSchemasEmbeddingsErrorResponse),
+    Status404(models::AppSchemasEmbeddingsErrorResponse),
+    Status429(models::AppSchemasEmbeddingsErrorResponse),
     Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }

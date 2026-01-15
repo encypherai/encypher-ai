@@ -3,6 +3,7 @@
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@encypher/design-system';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { OnboardingModal, useIsNewUser } from '../components/onboarding/OnboardingModal';
@@ -97,6 +98,14 @@ export default function DashboardPage() {
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const isNewUser = useIsNewUser();
 
+  const [greeting, setGreeting] = useState('Hello');
+
+  useEffect(() => {
+    const hour = new Date().getHours();
+    const nextGreeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+    setGreeting(nextGreeting);
+  }, []);
+
   // Fetch usage stats
   const statsQuery = useQuery({
     queryKey: ['usage-stats'],
@@ -113,8 +122,8 @@ export default function DashboardPage() {
       total_verifications: 0,
       success_rate: 0,
       avg_response_time_ms: 0,
-      period_start: new Date().toISOString(),
-      period_end: new Date().toISOString(),
+      period_start: '1970-01-01T00:00:00.000Z',
+      period_end: '1970-01-01T00:00:00.000Z',
     },
   });
 
@@ -138,7 +147,8 @@ export default function DashboardPage() {
   const formatNumber = (num: number) => num?.toLocaleString() ?? '0';
 
   const userName = session?.user?.name || session?.user?.email?.split('@')[0] || 'there';
-  const greeting = new Date().getHours() < 12 ? 'Good morning' : new Date().getHours() < 18 ? 'Good afternoon' : 'Good evening';
+  const formatDateUtc = (value: string, options: Intl.DateTimeFormatOptions) =>
+    new Date(value).toLocaleDateString('en-US', { ...options, timeZone: 'UTC' });
 
   return (
     <DashboardLayout>
@@ -335,8 +345,8 @@ export default function DashboardPage() {
                           </span>
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          Created {new Date(key.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          {key.last_used_at && ` • Last used ${new Date(key.last_used_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                          Created {formatDateUtc(key.created_at, { month: 'short', day: 'numeric', year: 'numeric' })}
+                          {key.last_used_at && ` • Last used ${formatDateUtc(key.last_used_at, { month: 'short', day: 'numeric' })}`}
                         </p>
                       </div>
                       <div className="text-muted-foreground group-hover:text-blue-ncs transition-colors">

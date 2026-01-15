@@ -18,6 +18,8 @@ def setup_logging(log_level: str = "INFO"):
     # Configure structlog
     structlog.configure(
         processors=[
+            # Include contextvars (e.g., request_id/correlation_id) in every event
+            structlog.contextvars.merge_contextvars,
             # Add log level
             structlog.stdlib.add_log_level,
             # Add logger name

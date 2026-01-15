@@ -8,11 +8,15 @@ from sqlalchemy import text
 from typing import List, Optional
 import httpx
 import json
+import os
 from uuid import uuid4
+import base64
+import structlog
 
 from encypher.core.keys import load_public_key_from_data
 from encypher.core.payloads import deserialize_jumbf_payload
 from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.signing import extract_certificates_from_cose
 try:
     from encypher.interop.c2pa import find_wrapper_info_bytes
 except ImportError:  # pragma: no cover
@@ -30,10 +34,27 @@ from ...models.schemas import (
 )
 from ...services.verification_service import VerificationService
 from ...core.config import settings
+from ...utils.c2pa_trust_list import (
+    fetch_trust_list,
+    get_trust_anchors,
+    set_trust_anchors_pem,
+    validate_certificate_chain,
+)
 
 router = APIRouter()
 
 MAX_VERIFY_BYTES = 2 * 1024 * 1024
+
+
+def _count_variation_selectors(text: str) -> int:
+    count = 0
+    for ch in text:
+        code = ord(ch)
+        if 0xFE00 <= code <= 0xFE0F:
+            count += 1
+        elif 0xE0100 <= code <= 0xE01EF:
+            count += 1
+    return count
 
 
 def _render_manifest_json(manifest: dict) -> str:
@@ -79,21 +100,16 @@ async def get_current_user(authorization: str = Header(None)) -> Optional[dict]:
         return None
 
 
-async def get_current_organization(authorization: str = Header(None)) -> dict:
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+async def get_optional_organization(authorization: str = Header(None)) -> Optional[dict]:
+    # TEAM_065: POST /api/v1/verify is public; only validate API key when provided.
+    if not authorization:
+        return None
+    if not authorization.startswith("Bearer "):
+        return None
 
     api_key = authorization.split(" ", 1)[1].strip()
     if not api_key:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="API key required",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        return None
 
     try:
         async with httpx.AsyncClient() as client:
@@ -127,6 +143,133 @@ async def get_current_organization(authorization: str = Header(None)) -> dict:
     return data
 
 
+def _demo_private_key_bytes() -> bytes:
+    # TEAM_065: Align demo verification with local docker-compose (32 bytes of 0x00) and allow override.
+    candidate = os.getenv("DEMO_PRIVATE_KEY_HEX")
+    if candidate:
+        try:
+            value = bytes.fromhex(candidate.strip())
+            if len(value) == 32:
+                return value
+        except ValueError:
+            pass
+    return b"\x00" * 32
+
+
+def _demo_public_key():
+    from cryptography.hazmat.primitives.asymmetric import ed25519
+
+    private_key = ed25519.Ed25519PrivateKey.from_private_bytes(_demo_private_key_bytes())
+    return private_key.public_key()
+
+
+def _extract_embedded_c2pa_public_key(_text: str):
+    """Extract leaf public key from embedded C2PA COSE x5chain if present."""
+    try:
+        info = find_wrapper_info_bytes(_text)
+    except Exception:  # pragma: no cover
+        info = None
+    if not info:
+        return None
+
+    manifest_bytes, _wrapper_start, _wrapper_length = info
+    try:
+        manifest_store = deserialize_jumbf_payload(manifest_bytes)
+    except Exception:
+        return None
+    if not isinstance(manifest_store, dict):
+        return None
+
+    cose_sign1_b64 = manifest_store.get("cose_sign1")
+    if not isinstance(cose_sign1_b64, str) or not cose_sign1_b64:
+        return None
+
+    try:
+        cose_bytes = base64.b64decode(cose_sign1_b64)
+    except Exception:
+        return None
+
+    try:
+        certs = extract_certificates_from_cose(cose_bytes)
+    except Exception:
+        return None
+
+    if not certs:
+        return None
+
+    return certs[0].public_key()
+
+
+async def _ensure_trust_list_loaded() -> None:
+    if get_trust_anchors():
+        return
+
+    pem = os.getenv("C2PA_TRUST_LIST_PEM")
+    if pem:
+        set_trust_anchors_pem(pem)
+        return
+
+    fetch_enabled = os.getenv("C2PA_TRUST_LIST_FETCH", "").strip().lower() in {"1", "true", "yes"}
+    if not fetch_enabled:
+        return
+
+    try:
+        pem = await fetch_trust_list()
+    except Exception:  # pragma: no cover
+        return
+    set_trust_anchors_pem(pem)
+
+
+async def _is_embedded_c2pa_key_trusted(text: str) -> bool:
+    await _ensure_trust_list_loaded()
+
+    if not get_trust_anchors():
+        return False
+
+    try:
+        info = find_wrapper_info_bytes(text)
+    except Exception:  # pragma: no cover
+        info = None
+    if not info:
+        return False
+
+    manifest_bytes, _wrapper_start, _wrapper_length = info
+    try:
+        manifest_store = deserialize_jumbf_payload(manifest_bytes)
+    except Exception:
+        return False
+    if not isinstance(manifest_store, dict):
+        return False
+
+    cose_sign1_b64 = manifest_store.get("cose_sign1")
+    if not isinstance(cose_sign1_b64, str) or not cose_sign1_b64:
+        return False
+
+    try:
+        cose_bytes = base64.b64decode(cose_sign1_b64)
+    except Exception:
+        return False
+
+    try:
+        certs = extract_certificates_from_cose(cose_bytes)
+    except Exception:
+        return False
+
+    if not certs:
+        return False
+
+    from cryptography.hazmat.primitives import serialization
+
+    leaf_pem = certs[0].public_bytes(serialization.Encoding.PEM).decode("utf-8")
+    chain_pem = None
+    if len(certs) > 1:
+        chain_pem = "\n".join(
+            cert.public_bytes(serialization.Encoding.PEM).decode("utf-8") for cert in certs[1:]
+        )
+    ok, _err, _parsed = validate_certificate_chain(leaf_pem, chain_pem)
+    return ok
+
+
 @router.post(
     "",
     response_model=VerifyResponse,
@@ -134,10 +277,26 @@ async def get_current_organization(authorization: str = Header(None)) -> dict:
 )
 async def verify_text(
     verify_request: VerifyRequest,
-    organization: dict = Depends(get_current_organization),
+    organization: Optional[dict] = Depends(get_optional_organization),
 ):
+    logger = structlog.get_logger(__name__)
     correlation_id = f"req-{uuid4().hex}"
+    structlog.contextvars.bind_contextvars(correlation_id=correlation_id)
     payload_bytes = len(verify_request.text.encode("utf-8"))
+    vs_count = _count_variation_selectors(verify_request.text)
+    try:
+        wrapper_info = find_wrapper_info_bytes(verify_request.text)
+    except Exception:  # pragma: no cover
+        wrapper_info = None
+    has_c2pa_wrapper = bool(wrapper_info)
+
+    logger.info(
+        "verify_received",
+        payload_bytes=payload_bytes,
+        variation_selectors=vs_count,
+        has_c2pa_wrapper=has_c2pa_wrapper,
+        has_auth_context=bool(organization),
+    )
     if payload_bytes > MAX_VERIFY_BYTES:
         return _error_response(
             status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
@@ -147,9 +306,15 @@ async def verify_text(
             hint="Submit smaller payloads.",
         )
 
-    organization_id = organization.get("organization_id")
-    organization_name = organization.get("organization_name")
-    certificate_pem = organization.get("certificate_pem")
+    organization_id = organization.get("organization_id") if organization else None
+    organization_name = organization.get("organization_name") if organization else None
+    certificate_pem = organization.get("certificate_pem") if organization else None
+
+    logger.info(
+        "verify_org_context",
+        organization_id=organization_id,
+        has_org_certificate=bool(certificate_pem),
+    )
 
     public_key = None
     if certificate_pem:
@@ -158,9 +323,23 @@ async def verify_text(
         except Exception:
             public_key = None
 
+    embedded_public_key = _extract_embedded_c2pa_public_key(verify_request.text)
+    embedded_trusted = await _is_embedded_c2pa_key_trusted(verify_request.text)
+
+    logger.info(
+        "verify_embedded_key_context",
+        has_embedded_public_key=embedded_public_key is not None,
+        embedded_trusted=embedded_trusted,
+    )
+
     def public_key_resolver(signer_id: str):
+        # TEAM_065: Support demo/user signers without requiring org auth.
+        if signer_id == "org_demo" or signer_id.startswith("user_"):
+            return _demo_public_key()
         if organization_id and signer_id == organization_id:
             return public_key
+        if embedded_public_key is not None:
+            return embedded_public_key
         return None
 
     start = time.perf_counter()
@@ -169,7 +348,20 @@ async def verify_text(
             text=verify_request.text,
             public_key_resolver=public_key_resolver,
         )
+        logger.info(
+            "verify_unicode_metadata_result",
+            is_valid=is_valid,
+            signer_id=signer_id,
+            manifest_type=type(manifest).__name__,
+            manifest_keys=list(manifest.keys()) if isinstance(manifest, dict) else None,
+        )
     except Exception as exc:
+        logger.warning(
+            "verify_unicode_metadata_exception",
+            exception_type=type(exc).__name__,
+            exception=str(exc),
+            has_c2pa_wrapper=has_c2pa_wrapper,
+        )
         # Fallback: Attempt C2PA wrapper-only verification.
         # This avoids failures when non-JSON VS blocks (e.g. mixed multi-embeddings)
         # break the legacy outer-payload extraction logic.
@@ -207,6 +399,13 @@ async def verify_text(
                     is_valid, signer_id, manifest = False, None, None
             except Exception:  # pragma: no cover - defensive
                 is_valid, signer_id, manifest = False, None, None
+
+            logger.info(
+                "verify_c2pa_fallback_result",
+                is_valid=is_valid,
+                signer_id=signer_id,
+                manifest_type=type(manifest).__name__ if manifest is not None else None,
+            )
         else:
             duration_ms = int((time.perf_counter() - start) * 1000)
             verdict = VerifyVerdict(
@@ -227,6 +426,11 @@ async def verify_text(
 
     # Fallback: no exception, but no signer_id extracted.
     if not signer_id:
+        logger.info(
+            "verify_missing_signer_id_primary",
+            has_c2pa_wrapper=has_c2pa_wrapper,
+            is_valid=is_valid,
+        )
         try:
             info = find_wrapper_info_bytes(verify_request.text)
         except Exception:  # pragma: no cover - defensive
@@ -258,6 +462,13 @@ async def verify_text(
             except Exception:  # pragma: no cover - defensive
                 pass
 
+        logger.info(
+            "verify_missing_signer_id_fallback_result",
+            is_valid=is_valid,
+            signer_id=signer_id,
+            manifest_type=type(manifest).__name__ if manifest is not None else None,
+        )
+
     duration_ms = int((time.perf_counter() - start) * 1000)
 
     reason_code = "OK" if is_valid else "SIGNATURE_INVALID"
@@ -265,6 +476,20 @@ async def verify_text(
         reason_code = "SIGNER_UNKNOWN"
     elif public_key_resolver(signer_id) is None:
         reason_code = "CERT_NOT_FOUND"
+    elif is_valid and embedded_public_key is not None and not embedded_trusted and not (organization_id and signer_id == organization_id):
+        # TEAM_065: Valid signature, but signer cannot be validated to a trusted root.
+        reason_code = "UNTRUSTED_SIGNER"
+
+    logger.info(
+        "verify_verdict",
+        reason_code=reason_code,
+        is_valid=is_valid,
+        signer_id=signer_id,
+        payload_bytes=payload_bytes,
+        duration_ms=duration_ms,
+        has_c2pa_wrapper=has_c2pa_wrapper,
+        variation_selectors=vs_count,
+    )
 
     verdict = VerifyVerdict(
         valid=is_valid,

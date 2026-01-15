@@ -87,6 +87,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 |----------|--------|------|------|-------------|--------------|
 | `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
 | `/api/v1/sign/advanced` | POST | ✅ | Professional+ | Sign content with advanced embedding controls | Key Service, Coalition Service (optional) |
+| `/api/v1/verify/advanced` | POST | ✅ | Professional+ | Verify signed content + optional attribution/plagiarism analysis | Key Service |
 | `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
 | `/api/v1/verify/{document_id}` | GET | ❌ | Public | Verify a previously signed document by ID | None |
 | `/api/v1/verify/signature` | POST | ❌ | Public | Verify a signature payload | None |
@@ -113,9 +114,9 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/enterprise/merkle/encode` | POST | ✅ | Enterprise | Encode document into Merkle tree |
-| `/api/v1/enterprise/merkle/attribute` | POST | ✅ | Enterprise | Find source documents via Merkle matching |
-| `/api/v1/enterprise/merkle/detect-plagiarism` | POST | ✅ | Enterprise | Detect plagiarized content |
+| `/api/v1/enterprise/merkle/encode` | POST | ✅ | Professional+ | Encode document into Merkle tree |
+| `/api/v1/enterprise/merkle/attribute` | POST | ✅ | Deprecated | Consolidated into `/api/v1/verify/advanced` (include_attribution=true) |
+| `/api/v1/enterprise/merkle/detect-plagiarism` | POST | ✅ | Deprecated | Consolidated into `/api/v1/verify/advanced` (detect_plagiarism=true) |
 
 ### Streaming Merkle Endpoints (NEW - Patent FIG. 5)
 

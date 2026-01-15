@@ -21,35 +21,11 @@ func Test_encypher_EnterpriseMerkleTreesAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
-	t.Run("Test EnterpriseMerkleTreesAPIService DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		resp, httpRes, err := apiClient.EnterpriseMerkleTreesAPI.DetectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost(context.Background()).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
 	t.Run("Test EnterpriseMerkleTreesAPIService EncodeDocumentApiV1EnterpriseMerkleEncodePost", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
 		resp, httpRes, err := apiClient.EnterpriseMerkleTreesAPI.EncodeDocumentApiV1EnterpriseMerkleEncodePost(context.Background()).Execute()
-
-		require.Nil(t, err)
-		require.NotNil(t, resp)
-		assert.Equal(t, 200, httpRes.StatusCode)
-
-	})
-
-	t.Run("Test EnterpriseMerkleTreesAPIService FindSourcesApiV1EnterpriseMerkleAttributePost", func(t *testing.T) {
-
-		t.Skip("skip test")  // remove to run test
-
-		resp, httpRes, err := apiClient.EnterpriseMerkleTreesAPI.FindSourcesApiV1EnterpriseMerkleAttributePost(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

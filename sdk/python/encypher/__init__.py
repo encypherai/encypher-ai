@@ -41,6 +41,7 @@ __all__ = [
     "StreamingApi",
     "StreamingMerkleApi",
     "UsageApi",
+    "VerificationApi",
     "WebhooksApi",
     "VerificationApi",
     "ApiResponse",
@@ -55,8 +56,8 @@ __all__ = [
     "AccountInfo",
     "AccountResponse",
     "AppSchemasEmbeddingsBatchVerifyRequest",
+    "AppSchemasEmbeddingsErrorResponse",
     "AppSchemasEmbeddingsRightsMetadata",
-    "AppSchemasMerkleErrorResponse",
     "BatchItemPayload",
     "BatchItemResult",
     "BatchResponseData",
@@ -120,7 +121,6 @@ __all__ = [
     "FingerprintEncodeResponse",
     "FingerprintMatch",
     "HTTPValidationError",
-    "HeatMapData",
     "KeyCreateRequest",
     "KeyCreateResponse",
     "KeyListResponse",
@@ -136,11 +136,10 @@ __all__ = [
     "MerkleProofItem",
     "MerkleRootResponse",
     "MerkleTreeInfo",
+    "MerkleTreeLevelInfo",
     "MultiSourceLookupRequest",
     "MultiSourceLookupResponse",
     "PayoutSummary",
-    "PlagiarismDetectionRequest",
-    "PlagiarismDetectionResponse",
     "PublicKeyInfo",
     "PublicKeyListResponse",
     "PublicKeyRegisterRequest",
@@ -156,10 +155,6 @@ __all__ = [
     "SignResponse",
     "SignatureVerification",
     "SignatureVerify",
-    "SourceAttributionRequest",
-    "SourceAttributionResponse",
-    "SourceDocumentMatch",
-    "SourceMatch",
     "SourceRecord",
     "StreamMerkleFinalizeRequest",
     "StreamMerkleFinalizeResponse",
@@ -183,6 +178,7 @@ __all__ = [
     "VerificationServiceErrorDetail",
     "VerificationServiceVerifyVerdict",
     "VerificationStats",
+    "VerifyAdvancedRequest",
     "VerifyEmbeddingRequest",
     "VerifyEmbeddingResponse",
     "VerifyRequest",
@@ -222,6 +218,7 @@ from encypher.api.status_revocation_api import StatusRevocationApi as StatusRevo
 from encypher.api.streaming_api import StreamingApi as StreamingApi
 from encypher.api.streaming_merkle_api import StreamingMerkleApi as StreamingMerkleApi
 from encypher.api.usage_api import UsageApi as UsageApi
+from encypher.api.verification_api import VerificationApi as VerificationApi
 from encypher.api.webhooks_api import WebhooksApi as WebhooksApi
 from encypher.api.verification_api import VerificationApi as VerificationApi
 
@@ -240,8 +237,8 @@ from encypher.exceptions import ApiException as ApiException
 from encypher.models.account_info import AccountInfo as AccountInfo
 from encypher.models.account_response import AccountResponse as AccountResponse
 from encypher.models.app_schemas_embeddings_batch_verify_request import AppSchemasEmbeddingsBatchVerifyRequest as AppSchemasEmbeddingsBatchVerifyRequest
+from encypher.models.app_schemas_embeddings_error_response import AppSchemasEmbeddingsErrorResponse as AppSchemasEmbeddingsErrorResponse
 from encypher.models.app_schemas_embeddings_rights_metadata import AppSchemasEmbeddingsRightsMetadata as AppSchemasEmbeddingsRightsMetadata
-from encypher.models.app_schemas_merkle_error_response import AppSchemasMerkleErrorResponse as AppSchemasMerkleErrorResponse
 from encypher.models.batch_item_payload import BatchItemPayload as BatchItemPayload
 from encypher.models.batch_item_result import BatchItemResult as BatchItemResult
 from encypher.models.batch_response_data import BatchResponseData as BatchResponseData
@@ -305,7 +302,6 @@ from encypher.models.fingerprint_encode_request import FingerprintEncodeRequest 
 from encypher.models.fingerprint_encode_response import FingerprintEncodeResponse as FingerprintEncodeResponse
 from encypher.models.fingerprint_match import FingerprintMatch as FingerprintMatch
 from encypher.models.http_validation_error import HTTPValidationError as HTTPValidationError
-from encypher.models.heat_map_data import HeatMapData as HeatMapData
 from encypher.models.key_create_request import KeyCreateRequest as KeyCreateRequest
 from encypher.models.key_create_response import KeyCreateResponse as KeyCreateResponse
 from encypher.models.key_list_response import KeyListResponse as KeyListResponse
@@ -321,11 +317,10 @@ from encypher.models.merkle_proof_info import MerkleProofInfo as MerkleProofInfo
 from encypher.models.merkle_proof_item import MerkleProofItem as MerkleProofItem
 from encypher.models.merkle_root_response import MerkleRootResponse as MerkleRootResponse
 from encypher.models.merkle_tree_info import MerkleTreeInfo as MerkleTreeInfo
+from encypher.models.merkle_tree_level_info import MerkleTreeLevelInfo as MerkleTreeLevelInfo
 from encypher.models.multi_source_lookup_request import MultiSourceLookupRequest as MultiSourceLookupRequest
 from encypher.models.multi_source_lookup_response import MultiSourceLookupResponse as MultiSourceLookupResponse
 from encypher.models.payout_summary import PayoutSummary as PayoutSummary
-from encypher.models.plagiarism_detection_request import PlagiarismDetectionRequest as PlagiarismDetectionRequest
-from encypher.models.plagiarism_detection_response import PlagiarismDetectionResponse as PlagiarismDetectionResponse
 from encypher.models.public_key_info import PublicKeyInfo as PublicKeyInfo
 from encypher.models.public_key_list_response import PublicKeyListResponse as PublicKeyListResponse
 from encypher.models.public_key_register_request import PublicKeyRegisterRequest as PublicKeyRegisterRequest
@@ -341,10 +336,6 @@ from encypher.models.sign_request import SignRequest as SignRequest
 from encypher.models.sign_response import SignResponse as SignResponse
 from encypher.models.signature_verification import SignatureVerification as SignatureVerification
 from encypher.models.signature_verify import SignatureVerify as SignatureVerify
-from encypher.models.source_attribution_request import SourceAttributionRequest as SourceAttributionRequest
-from encypher.models.source_attribution_response import SourceAttributionResponse as SourceAttributionResponse
-from encypher.models.source_document_match import SourceDocumentMatch as SourceDocumentMatch
-from encypher.models.source_match import SourceMatch as SourceMatch
 from encypher.models.source_record import SourceRecord as SourceRecord
 from encypher.models.stream_merkle_finalize_request import StreamMerkleFinalizeRequest as StreamMerkleFinalizeRequest
 from encypher.models.stream_merkle_finalize_response import StreamMerkleFinalizeResponse as StreamMerkleFinalizeResponse
@@ -368,6 +359,7 @@ from encypher.models.verification_response import VerificationResponse as Verifi
 from encypher.models.verification_service_error_detail import VerificationServiceErrorDetail as VerificationServiceErrorDetail
 from encypher.models.verification_service_verify_verdict import VerificationServiceVerifyVerdict as VerificationServiceVerifyVerdict
 from encypher.models.verification_stats import VerificationStats as VerificationStats
+from encypher.models.verify_advanced_request import VerifyAdvancedRequest as VerifyAdvancedRequest
 from encypher.models.verify_embedding_request import VerifyEmbeddingRequest as VerifyEmbeddingRequest
 from encypher.models.verify_embedding_response import VerifyEmbeddingResponse as VerifyEmbeddingResponse
 from encypher.models.verify_request import VerifyRequest as VerifyRequest

@@ -7,7 +7,8 @@ import logging
 import time
 from typing import Dict
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Response, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
@@ -34,17 +35,18 @@ logger = logging.getLogger(__name__)
 
 def require_merkle_feature(organization: dict = Depends(get_current_organization)) -> dict:
     """
-    Dependency that requires merkle_enabled feature.
+    Dependency that requires Professional+ tier.
     
-    Raises HTTPException 403 if the organization doesn't have merkle features enabled.
+    Raises HTTPException 403 if the organization doesn't have Professional+ tier.
     """
-    features = organization.get("features", {})
-    if not features.get("merkle_enabled", False):
+    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    allowed_tiers = {"professional", "business", "enterprise", "strategic_partner", "demo"}
+    if tier not in allowed_tiers:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Merkle tree features require Business tier or higher",
+                "message": "Merkle tree features require Professional tier or higher",
                 "upgrade_url": "/billing/upgrade",
             }
         )
@@ -201,106 +203,24 @@ async def encode_document(
 
 @router.post(
     "/attribute",
-    response_model=SourceAttributionResponse,
-    summary="Find Source Documents",
-    description="""
-    Find source documents that contain a specific text segment.
-    
-    This endpoint searches the Merkle tree index to find which documents
-    contain the provided text segment.
-    
-    **Use Cases:**
-    - Verify if a text segment appears in your document repository
-    - Find the original source of a quote or passage
-    - Check if content has been previously published
-    
-    **Enterprise Tier Only**
-    """,
-    responses={
-        200: {"description": "Search completed successfully"},
-        400: {"model": ErrorResponse, "description": "Invalid request"},
-        401: {"model": ErrorResponse, "description": "Unauthorized"},
-        500: {"model": ErrorResponse, "description": "Server error"}
-    }
+    include_in_schema=False,
 )
-async def find_sources(
-    request: SourceAttributionRequest,
-    db: AsyncSession = Depends(get_db),
-    organization: dict = Depends(require_merkle_feature),
-) -> SourceAttributionResponse:
-    """
-    Find source documents containing a text segment.
-    
-    Args:
-        request: Source attribution request
-        db: Database session
-    
-    Returns:
-        SourceAttributionResponse with matching sources
-    """
-    start_time = time.time()
-    organization_id = organization["organization_id"]
-    
-    # Check and increment quota (1 per lookup request)
-    await QuotaManager.check_quota(
-        db=db,
-        organization_id=organization_id,
-        quota_type=QuotaType.MERKLE_ATTRIBUTION,
-        features=organization.get("features", {}),
-        increment=1
+async def find_sources_deprecated(
+    _payload: dict = Body(...),
+    _db: AsyncSession = Depends(get_db),
+    _organization: dict = Depends(require_merkle_feature),
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=410,
+        content={
+            "success": False,
+            "error": {
+                "code": "ENDPOINT_DEPRECATED",
+                "message": "This endpoint has been consolidated into POST /api/v1/verify/advanced.",
+                "hint": "Use POST /api/v1/verify/advanced with include_attribution=true.",
+            },
+        },
     )
-    
-    try:
-        # Find matching sources
-        sources = await MerkleService.find_sources(
-            db=db,
-            text_segment=request.text_segment,
-            segmentation_level=request.segmentation_level,
-            normalize=request.normalize
-        )
-        
-        # Convert to response format
-        from app.utils.merkle import compute_hash, normalize_for_hashing
-        
-        if request.normalize:
-            normalized = normalize_for_hashing(
-                request.text_segment,
-                lowercase=True,
-                normalize_unicode_chars=True
-            )
-            query_hash = compute_hash(normalized)
-        else:
-            query_hash = compute_hash(request.text_segment)
-        
-        source_matches = []
-        for subhash, root in sources:
-            match = SourceMatch(
-                document_id=root.document_id,
-                organization_id=root.organization_id,
-                root_hash=root.root_hash,
-                segmentation_level=root.segmentation_level,
-                matched_hash=subhash.hash_value,
-                text_content=subhash.text_content if subhash.text_content else None,
-                confidence=1.0  # Exact hash match = 100% confidence
-            )
-            source_matches.append(match)
-        
-        processing_time_ms = (time.time() - start_time) * 1000
-        
-        return SourceAttributionResponse(
-            success=True,
-            query_hash=query_hash,
-            matches_found=len(source_matches),
-            sources=source_matches,
-            processing_time_ms=processing_time_ms
-        )
-        
-    except Exception as e:
-        logger.error(f"Error finding sources: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to find sources"
-        )
 
 
 # ============================================================================
@@ -309,121 +229,21 @@ async def find_sources(
 
 @router.post(
     "/detect-plagiarism",
-    response_model=PlagiarismDetectionResponse,
-    summary="Detect Plagiarism",
-    description="""
-    Analyze text for potential plagiarism by comparing against indexed documents.
-    
-    This endpoint:
-    1. Segments the target text
-    2. Checks each segment against the Merkle tree index
-    3. Identifies matching source documents
-    4. Calculates match percentages and confidence scores
-    5. Generates a heat map showing which parts match
-    
-    **Use Cases:**
-    - Academic plagiarism detection
-    - Content originality verification
-    - Copyright infringement detection
-    - Duplicate content identification
-    
-    **Enterprise Tier Only**
-    """,
-    responses={
-        200: {"description": "Analysis completed successfully"},
-        400: {"model": ErrorResponse, "description": "Invalid request"},
-        401: {"model": ErrorResponse, "description": "Unauthorized"},
-        500: {"model": ErrorResponse, "description": "Server error"}
-    }
+    include_in_schema=False,
 )
-async def detect_plagiarism(
-    request: PlagiarismDetectionRequest,
-    db: AsyncSession = Depends(get_db),
-    organization: dict = Depends(require_merkle_feature),
-) -> PlagiarismDetectionResponse:
-    """
-    Detect plagiarism in target text.
-    
-    Args:
-        request: Plagiarism detection request
-        db: Database session
-        organization: Authenticated organization with merkle feature
-    
-    Returns:
-        PlagiarismDetectionResponse with analysis results
-    """
-    start_time = time.time()
-    organization_id = organization["organization_id"]
-    
-    # Check and increment quota (1 per plagiarism check, regardless of document size)
-    await QuotaManager.check_quota(
-        db=db,
-        organization_id=organization_id,
-        quota_type=QuotaType.MERKLE_PLAGIARISM,
-        features=organization.get("features", {}),
-        increment=1
+async def detect_plagiarism_deprecated(
+    _payload: dict = Body(...),
+    _db: AsyncSession = Depends(get_db),
+    _organization: dict = Depends(require_merkle_feature),
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=410,
+        content={
+            "success": False,
+            "error": {
+                "code": "ENDPOINT_DEPRECATED",
+                "message": "This endpoint has been consolidated into POST /api/v1/verify/advanced.",
+                "hint": "Use POST /api/v1/verify/advanced with detect_plagiarism=true.",
+            },
+        },
     )
-    
-    try:
-        # Generate attribution report
-        report = await MerkleService.generate_attribution_report(
-            db=db,
-            organization_id=organization_id,
-            target_text=request.target_text,
-            segmentation_level=request.segmentation_level,
-            target_document_id=request.target_document_id,
-            include_heat_map=request.include_heat_map
-        )
-        
-        # Filter sources by minimum match percentage
-        source_docs = [
-            SourceDocumentMatch(
-                document_id=doc['document_id'],
-                organization_id=doc['organization_id'],
-                segmentation_level=doc['segmentation_level'],
-                matched_segments=doc['matched_segments'],
-                total_leaves=doc.get('total_leaves', doc.get('leaf_count')),
-                match_percentage=doc['match_percentage'],
-                confidence_score=doc['confidence_score'],
-                doc_metadata=doc.get('doc_metadata')
-            )
-            for doc in report.source_documents
-            if doc['match_percentage'] >= request.min_match_percentage
-        ]
-        
-        # Convert heat map data
-        heat_map = None
-        if report.heat_map_data:
-            heat_map = HeatMapData(
-                positions=report.heat_map_data['positions'],
-                total_segments=report.heat_map_data['total_segments'],
-                matched_segments=report.heat_map_data['matched_segments'],
-                match_percentage=report.heat_map_data['match_percentage']
-            )
-        
-        processing_time_ms = (time.time() - start_time) * 1000
-        
-        overall_match_pct = (
-            (report.matched_segments / report.total_segments) * 100
-            if report.total_segments > 0 else 0
-        )
-        
-        return PlagiarismDetectionResponse(
-            success=True,
-            report_id=str(report.id),  # Use 'id' and convert UUID to string
-            target_document_id=report.target_document_id,
-            total_segments=report.total_segments,
-            matched_segments=report.matched_segments,
-            overall_match_percentage=round(overall_match_pct, 2),
-            source_documents=source_docs,
-            heat_map_data=heat_map,
-            processing_time_ms=processing_time_ms,
-            scan_timestamp=report.scan_timestamp
-        )
-        
-    except Exception as e:
-        logger.error(f"Error detecting plagiarism: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to detect plagiarism"
-        )

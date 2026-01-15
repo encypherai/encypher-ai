@@ -11,29 +11,30 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// ErrorResponse : Error response.
+/// ErrorResponse : Standard error response schema.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ErrorResponse {
     /// Always false for errors
     #[serde(rename = "success", skip_serializing_if = "Option::is_none")]
     pub success: Option<bool>,
-    /// Error message
+    /// Error type
     #[serde(rename = "error")]
     pub error: String,
-    #[serde(rename = "detail", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub detail: Option<Option<String>>,
-    #[serde(rename = "error_code", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
-    pub error_code: Option<Option<String>>,
+    /// Human-readable error message
+    #[serde(rename = "message")]
+    pub message: String,
+    #[serde(rename = "details", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub details: Option<Option<std::collections::HashMap<String, serde_json::Value>>>,
 }
 
 impl ErrorResponse {
-    /// Error response.
-    pub fn new(error: String) -> ErrorResponse {
+    /// Standard error response schema.
+    pub fn new(error: String, message: String) -> ErrorResponse {
         ErrorResponse {
             success: None,
             error,
-            detail: None,
-            error_code: None,
+            message,
+            details: None,
         }
     }
 }

@@ -102,8 +102,8 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "BatchVerifyResponse",
-            '400': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -176,8 +176,8 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "BatchVerifyResponse",
-            '400': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -250,8 +250,8 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "BatchVerifyResponse",
-            '400': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -399,9 +399,9 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ExtractAndVerifyResponse",
-            '400': "ErrorResponse",
-            '404': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '404': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -474,9 +474,9 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ExtractAndVerifyResponse",
-            '400': "ErrorResponse",
-            '404': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '404': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -549,9 +549,9 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ExtractAndVerifyResponse",
-            '400': "ErrorResponse",
-            '404': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '404': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -703,9 +703,9 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "VerifyEmbeddingResponse",
-            '400': "ErrorResponse",
-            '404': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '404': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -782,9 +782,9 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "VerifyEmbeddingResponse",
-            '400': "ErrorResponse",
-            '404': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '404': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -861,9 +861,9 @@ class PublicVerificationApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "VerifyEmbeddingResponse",
-            '400': "ErrorResponse",
-            '404': "ErrorResponse",
-            '429': "ErrorResponse",
+            '400': "AppSchemasEmbeddingsErrorResponse",
+            '404': "AppSchemasEmbeddingsErrorResponse",
+            '429': "AppSchemasEmbeddingsErrorResponse",
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(

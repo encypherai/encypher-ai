@@ -111,9 +111,7 @@ All URIs are relative to *https://api.encypherai.com*
 *DocumentsApi* | [**getDocumentHistoryApiV1DocumentsDocumentIdHistoryGet_0**](docs/DocumentsApi.md#getdocumenthistoryapiv1documentsdocumentidhistoryget_0) | **GET** /api/v1/documents/{document_id}/history | Get Document History
 *DocumentsApi* | [**listDocumentsApiV1DocumentsGet**](docs/DocumentsApi.md#listdocumentsapiv1documentsget) | **GET** /api/v1/documents | List Documents
 *DocumentsApi* | [**listDocumentsApiV1DocumentsGet_0**](docs/DocumentsApi.md#listdocumentsapiv1documentsget_0) | **GET** /api/v1/documents | List Documents
-*EnterpriseMerkleTreesApi* | [**detectPlagiarismApiV1EnterpriseMerkleDetectPlagiarismPost**](docs/EnterpriseMerkleTreesApi.md#detectplagiarismapiv1enterprisemerkledetectplagiarismpost) | **POST** /api/v1/enterprise/merkle/detect-plagiarism | Detect Plagiarism
 *EnterpriseMerkleTreesApi* | [**encodeDocumentApiV1EnterpriseMerkleEncodePost**](docs/EnterpriseMerkleTreesApi.md#encodedocumentapiv1enterprisemerkleencodepost) | **POST** /api/v1/enterprise/merkle/encode | Encode Document into Merkle Trees
-*EnterpriseMerkleTreesApi* | [**findSourcesApiV1EnterpriseMerkleAttributePost**](docs/EnterpriseMerkleTreesApi.md#findsourcesapiv1enterprisemerkleattributepost) | **POST** /api/v1/enterprise/merkle/attribute | Find Source Documents
 *EvidenceGenerationApi* | [**generateEvidenceApiV1EnterpriseEvidenceGeneratePost**](docs/EvidenceGenerationApi.md#generateevidenceapiv1enterpriseevidencegeneratepost) | **POST** /api/v1/enterprise/evidence/generate | Generate Evidence
 *FingerprintApi* | [**detectFingerprintApiV1EnterpriseFingerprintDetectPost**](docs/FingerprintApi.md#detectfingerprintapiv1enterprisefingerprintdetectpost) | **POST** /api/v1/enterprise/fingerprint/detect | Detect Fingerprint
 *FingerprintApi* | [**encodeFingerprintApiV1EnterpriseFingerprintEncodePost**](docs/FingerprintApi.md#encodefingerprintapiv1enterprisefingerprintencodepost) | **POST** /api/v1/enterprise/fingerprint/encode | Encode Fingerprint
@@ -158,6 +156,7 @@ All URIs are relative to *https://api.encypherai.com*
 *VerificationApi* | [**getStatsApiV1VerifyStatsGet**](docs/VerificationApi.md#getstatsapiv1verifystatsget) | **GET** /api/v1/verify/stats | Get Stats
 *VerificationApi* | [**getVerificationHistoryApiV1VerifyHistoryDocumentIdGet**](docs/VerificationApi.md#getverificationhistoryapiv1verifyhistorydocumentidget) | **GET** /api/v1/verify/history/{document_id} | Get Verification History
 *VerificationApi* | [**healthCheckApiV1VerifyHealthGet**](docs/VerificationApi.md#healthcheckapiv1verifyhealthget) | **GET** /api/v1/verify/health | Health Check
+*VerificationApi* | [**verifyAdvancedApiV1VerifyAdvancedPost**](docs/VerificationApi.md#verifyadvancedapiv1verifyadvancedpost) | **POST** /api/v1/verify/advanced | Advanced verification
 *VerificationApi* | [**verifyByDocumentIdApiV1VerifyDocumentIdGet**](docs/VerificationApi.md#verifybydocumentidapiv1verifydocumentidget) | **GET** /api/v1/verify/{document_id} | Verify By Document Id
 *VerificationApi* | [**verifyDocumentApiV1VerifyDocumentPost**](docs/VerificationApi.md#verifydocumentapiv1verifydocumentpost) | **POST** /api/v1/verify/document | Verify Document
 *VerificationApi* | [**verifySignatureApiV1VerifySignaturePost**](docs/VerificationApi.md#verifysignatureapiv1verifysignaturepost) | **POST** /api/v1/verify/signature | Verify Signature
@@ -183,8 +182,8 @@ All URIs are relative to *https://api.encypherai.com*
 - [AccountInfo](docs/AccountInfo.md)
 - [AccountResponse](docs/AccountResponse.md)
 - [AppSchemasEmbeddingsBatchVerifyRequest](docs/AppSchemasEmbeddingsBatchVerifyRequest.md)
+- [AppSchemasEmbeddingsErrorResponse](docs/AppSchemasEmbeddingsErrorResponse.md)
 - [AppSchemasEmbeddingsRightsMetadata](docs/AppSchemasEmbeddingsRightsMetadata.md)
-- [AppSchemasMerkleErrorResponse](docs/AppSchemasMerkleErrorResponse.md)
 - [BatchItemPayload](docs/BatchItemPayload.md)
 - [BatchItemResult](docs/BatchItemResult.md)
 - [BatchResponseData](docs/BatchResponseData.md)
@@ -248,7 +247,6 @@ All URIs are relative to *https://api.encypherai.com*
 - [FingerprintEncodeResponse](docs/FingerprintEncodeResponse.md)
 - [FingerprintMatch](docs/FingerprintMatch.md)
 - [HTTPValidationError](docs/HTTPValidationError.md)
-- [HeatMapData](docs/HeatMapData.md)
 - [KeyCreateRequest](docs/KeyCreateRequest.md)
 - [KeyCreateResponse](docs/KeyCreateResponse.md)
 - [KeyListResponse](docs/KeyListResponse.md)
@@ -264,11 +262,10 @@ All URIs are relative to *https://api.encypherai.com*
 - [MerkleProofItem](docs/MerkleProofItem.md)
 - [MerkleRootResponse](docs/MerkleRootResponse.md)
 - [MerkleTreeInfo](docs/MerkleTreeInfo.md)
+- [MerkleTreeLevelInfo](docs/MerkleTreeLevelInfo.md)
 - [MultiSourceLookupRequest](docs/MultiSourceLookupRequest.md)
 - [MultiSourceLookupResponse](docs/MultiSourceLookupResponse.md)
 - [PayoutSummary](docs/PayoutSummary.md)
-- [PlagiarismDetectionRequest](docs/PlagiarismDetectionRequest.md)
-- [PlagiarismDetectionResponse](docs/PlagiarismDetectionResponse.md)
 - [PublicKeyInfo](docs/PublicKeyInfo.md)
 - [PublicKeyListResponse](docs/PublicKeyListResponse.md)
 - [PublicKeyRegisterRequest](docs/PublicKeyRegisterRequest.md)
@@ -284,10 +281,6 @@ All URIs are relative to *https://api.encypherai.com*
 - [SignResponse](docs/SignResponse.md)
 - [SignatureVerification](docs/SignatureVerification.md)
 - [SignatureVerify](docs/SignatureVerify.md)
-- [SourceAttributionRequest](docs/SourceAttributionRequest.md)
-- [SourceAttributionResponse](docs/SourceAttributionResponse.md)
-- [SourceDocumentMatch](docs/SourceDocumentMatch.md)
-- [SourceMatch](docs/SourceMatch.md)
 - [SourceRecord](docs/SourceRecord.md)
 - [StreamMerkleFinalizeRequest](docs/StreamMerkleFinalizeRequest.md)
 - [StreamMerkleFinalizeResponse](docs/StreamMerkleFinalizeResponse.md)
@@ -311,6 +304,7 @@ All URIs are relative to *https://api.encypherai.com*
 - [VerificationServiceErrorDetail](docs/VerificationServiceErrorDetail.md)
 - [VerificationServiceVerifyVerdict](docs/VerificationServiceVerifyVerdict.md)
 - [VerificationStats](docs/VerificationStats.md)
+- [VerifyAdvancedRequest](docs/VerifyAdvancedRequest.md)
 - [VerifyEmbeddingRequest](docs/VerifyEmbeddingRequest.md)
 - [VerifyEmbeddingResponse](docs/VerifyEmbeddingResponse.md)
 - [VerifyRequest](docs/VerifyRequest.md)

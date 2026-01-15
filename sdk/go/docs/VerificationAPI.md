@@ -7,6 +7,7 @@ Method | HTTP request | Description
 [**GetStatsApiV1VerifyStatsGet**](VerificationAPI.md#GetStatsApiV1VerifyStatsGet) | **Get** /api/v1/verify/stats | Get Stats
 [**GetVerificationHistoryApiV1VerifyHistoryDocumentIdGet**](VerificationAPI.md#GetVerificationHistoryApiV1VerifyHistoryDocumentIdGet) | **Get** /api/v1/verify/history/{document_id} | Get Verification History
 [**HealthCheckApiV1VerifyHealthGet**](VerificationAPI.md#HealthCheckApiV1VerifyHealthGet) | **Get** /api/v1/verify/health | Health Check
+[**VerifyAdvancedApiV1VerifyAdvancedPost**](VerificationAPI.md#VerifyAdvancedApiV1VerifyAdvancedPost) | **Post** /api/v1/verify/advanced | Advanced verification
 [**VerifyByDocumentIdApiV1VerifyDocumentIdGet**](VerificationAPI.md#VerifyByDocumentIdApiV1VerifyDocumentIdGet) | **Get** /api/v1/verify/{document_id} | Verify By Document Id
 [**VerifyDocumentApiV1VerifyDocumentPost**](VerificationAPI.md#VerifyDocumentApiV1VerifyDocumentPost) | **Post** /api/v1/verify/document | Verify Document
 [**VerifySignatureApiV1VerifySignaturePost**](VerificationAPI.md#VerifySignatureApiV1VerifySignaturePost) | **Post** /api/v1/verify/signature | Verify Signature
@@ -206,6 +207,72 @@ No authorization required
 ### HTTP request headers
 
 - **Content-Type**: Not defined
+- **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
+[[Back to Model list]](../README.md#documentation-for-models)
+[[Back to README]](../README.md)
+
+
+## VerifyAdvancedApiV1VerifyAdvancedPost
+
+> interface{} VerifyAdvancedApiV1VerifyAdvancedPost(ctx).VerifyAdvancedRequest(verifyAdvancedRequest).Execute()
+
+Advanced verification
+
+
+
+### Example
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+	openapiclient "github.com/encypherai/encypherai-commercial/sdk/go"
+)
+
+func main() {
+	verifyAdvancedRequest := *openapiclient.NewVerifyAdvancedRequest("Text_example") // VerifyAdvancedRequest | 
+
+	configuration := openapiclient.NewConfiguration()
+	apiClient := openapiclient.NewAPIClient(configuration)
+	resp, r, err := apiClient.VerificationAPI.VerifyAdvancedApiV1VerifyAdvancedPost(context.Background()).VerifyAdvancedRequest(verifyAdvancedRequest).Execute()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error when calling `VerificationAPI.VerifyAdvancedApiV1VerifyAdvancedPost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
+	}
+	// response from `VerifyAdvancedApiV1VerifyAdvancedPost`: interface{}
+	fmt.Fprintf(os.Stdout, "Response from `VerificationAPI.VerifyAdvancedApiV1VerifyAdvancedPost`: %v\n", resp)
+}
+```
+
+### Path Parameters
+
+
+
+### Other Parameters
+
+Other parameters are passed through a pointer to a apiVerifyAdvancedApiV1VerifyAdvancedPostRequest struct via the builder pattern
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **verifyAdvancedRequest** | [**VerifyAdvancedRequest**](VerifyAdvancedRequest.md) |  | 
+
+### Return type
+
+**interface{}**
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+- **Content-Type**: application/json
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)

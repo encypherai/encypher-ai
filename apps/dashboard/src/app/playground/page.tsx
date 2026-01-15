@@ -287,9 +287,11 @@ export default function PlaygroundPage() {
       // Handle verification response
       if (selectedEndpoint.id === 'verify' && data.data) {
         const verdict = data.data;
+        const isUntrustedSigner = verdict.reason_code === 'UNTRUSTED_SIGNER';
         return {
           type: 'verify',
-          success: data.success && verdict.valid,
+          success: data.success && verdict.valid && !isUntrustedSigner,
+          warning: data.success && verdict.valid && isUntrustedSigner,
           valid: verdict.valid,
           tampered: verdict.tampered,
           signerName: verdict.signer_name || verdict.signer_id || 'Unknown',
@@ -1344,13 +1346,25 @@ export default function PlaygroundPage() {
                   {/* Human-Readable Summary Card */}
                   {responseSummary && (
                     <div className={`p-4 rounded-lg border ${
-                      responseSummary.success 
-                        ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800' 
-                        : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                      responseSummary.warning
+                        ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+                        : responseSummary.success
+                          ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                          : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
                     }`}>
                       <div className="flex items-start gap-3">
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center ${responseSummary.success ? 'bg-green-100 dark:bg-green-900' : 'bg-red-100 dark:bg-red-900'}`}>
-                          {responseSummary.success ? (
+                        <div
+                          className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                            responseSummary.warning
+                              ? 'bg-amber-100 dark:bg-amber-900'
+                              : responseSummary.success
+                                ? 'bg-green-100 dark:bg-green-900'
+                                : 'bg-red-100 dark:bg-red-900'
+                          }`}
+                        >
+                          {responseSummary.warning ? (
+                            <svg className="w-5 h-5 text-amber-700 dark:text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                          ) : responseSummary.success ? (
                             <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                           ) : (
                             <svg className="w-5 h-5 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -1359,13 +1373,32 @@ export default function PlaygroundPage() {
                         <div className="flex-1">
                           {responseSummary.type === 'verify' && (
                             <>
-                              <h4 className={`font-semibold ${responseSummary.success ? 'text-green-800 dark:text-green-200' : 'text-red-800 dark:text-red-200'}`}>
-                                {responseSummary.valid ? 'Signature Valid' : responseSummary.tampered ? 'Content Tampered' : 'Verification Failed'}
+                              <h4
+                                className={`font-semibold ${
+                                  responseSummary.warning
+                                    ? 'text-amber-900 dark:text-amber-200'
+                                    : responseSummary.success
+                                      ? 'text-green-800 dark:text-green-200'
+                                      : 'text-red-800 dark:text-red-200'
+                                }`}
+                              >
+                                {responseSummary.warning
+                                  ? 'Signature Valid (Untrusted Signer)'
+                                  : responseSummary.valid
+                                    ? 'Signature Valid'
+                                    : responseSummary.tampered
+                                      ? 'Content Tampered'
+                                      : 'Verification Failed'}
                               </h4>
                               <div className="mt-2 text-sm space-y-1">
                                 <p className="text-muted-foreground">
                                   <span className="font-medium">Signer:</span> {responseSummary.signerName}
                                 </p>
+                                {responseSummary.warning && (
+                                  <p className="text-muted-foreground">
+                                    <span className="font-medium">Trust:</span> Not in trust list (signature valid)
+                                  </p>
+                                )}
                                 {responseSummary.embeddingsFound > 1 && (
                                   <p className="text-muted-foreground">
                                     <span className="font-medium">Embeddings found:</span> {responseSummary.embeddingsFound}

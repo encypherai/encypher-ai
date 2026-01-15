@@ -441,7 +441,7 @@ export default function PricingPage() {
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Licensing revenue</span>
-                    <span className="font-semibold text-primary">65-80% to you</span>
+                    <span className="font-semibold text-primary">$1M+</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-sm">Formal notice capability</span>

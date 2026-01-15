@@ -7,6 +7,7 @@ All URIs are relative to *https://api.encypherai.com*
 | [**getStatsApiV1VerifyStatsGet**](VerificationApi.md#getstatsapiv1verifystatsget) | **GET** /api/v1/verify/stats | Get Stats |
 | [**getVerificationHistoryApiV1VerifyHistoryDocumentIdGet**](VerificationApi.md#getverificationhistoryapiv1verifyhistorydocumentidget) | **GET** /api/v1/verify/history/{document_id} | Get Verification History |
 | [**healthCheckApiV1VerifyHealthGet**](VerificationApi.md#healthcheckapiv1verifyhealthget) | **GET** /api/v1/verify/health | Health Check |
+| [**verifyAdvancedApiV1VerifyAdvancedPost**](VerificationApi.md#verifyadvancedapiv1verifyadvancedpost) | **POST** /api/v1/verify/advanced | Advanced verification |
 | [**verifyByDocumentIdApiV1VerifyDocumentIdGet**](VerificationApi.md#verifybydocumentidapiv1verifydocumentidget) | **GET** /api/v1/verify/{document_id} | Verify By Document Id |
 | [**verifyDocumentApiV1VerifyDocumentPost**](VerificationApi.md#verifydocumentapiv1verifydocumentpost) | **POST** /api/v1/verify/document | Verify Document |
 | [**verifySignatureApiV1VerifySignaturePost**](VerificationApi.md#verifysignatureapiv1verifysignaturepost) | **POST** /api/v1/verify/signature | Verify Signature |
@@ -208,6 +209,78 @@ No authorization required
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 | **200** | Successful Response |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+
+## verifyAdvancedApiV1VerifyAdvancedPost
+
+> any verifyAdvancedApiV1VerifyAdvancedPost(verifyAdvancedRequest)
+
+Advanced verification
+
+Verify signed content and optionally run attribution/plagiarism analysis.
+
+### Example
+
+```ts
+import {
+  Configuration,
+  VerificationApi,
+} from '@encypher/sdk';
+import type { VerifyAdvancedApiV1VerifyAdvancedPostRequest } from '@encypher/sdk';
+
+async function example() {
+  console.log("🚀 Testing @encypher/sdk SDK...");
+  const config = new Configuration({ 
+    // Configure HTTP bearer authorization: HTTPBearer
+    accessToken: "YOUR BEARER TOKEN",
+  });
+  const api = new VerificationApi(config);
+
+  const body = {
+    // VerifyAdvancedRequest
+    verifyAdvancedRequest: ...,
+  } satisfies VerifyAdvancedApiV1VerifyAdvancedPostRequest;
+
+  try {
+    const data = await api.verifyAdvancedApiV1VerifyAdvancedPost(body);
+    console.log(data);
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+// Run the test
+example().catch(console.error);
+```
+
+### Parameters
+
+
+| Name | Type | Description  | Notes |
+|------------- | ------------- | ------------- | -------------|
+| **verifyAdvancedRequest** | [VerifyAdvancedRequest](VerifyAdvancedRequest.md) |  | |
+
+### Return type
+
+**any**
+
+### Authorization
+
+[HTTPBearer](../README.md#HTTPBearer)
+
+### HTTP request headers
+
+- **Content-Type**: `application/json`
+- **Accept**: `application/json`
+
+
+### HTTP response details
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+| **200** | Successful Response |  -  |
+| **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 

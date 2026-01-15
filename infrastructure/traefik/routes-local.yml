@@ -4,12 +4,12 @@
 http:
   routers:
     # ============================================
-    # VERIFY PORTAL (Host-based) -> Enterprise API (9000)
+    # VERIFY PORTAL (Host-based) -> Verification Service (8005)
     # Supports public URLs like https://verify.encypherai.com/{document_id}
     # ============================================
     verify-portal-router:
       rule: "Host(`verify.encypherai.com`)"
-      service: enterprise-api
+      service: verification-service
       entryPoints:
         - web
       priority: 20
@@ -82,6 +82,13 @@ http:
     # VERIFICATION -> Verification Service (8005)
     # All /api/v1/verify endpoints handled by verification-service
     # ============================================
+    verify-advanced-router:
+      rule: "Path(`/api/v1/verify/advanced`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 11
+
     verify-router:
       rule: "PathPrefix(`/api/v1/verify`)"
       service: verification-service

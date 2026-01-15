@@ -83,9 +83,7 @@ Class | Method | HTTP request | Description
 *DocumentsApi* | [**get_document_history_api_v1_documents_document_id_history_get_0**](docs/DocumentsApi.md#get_document_history_api_v1_documents_document_id_history_get_0) | **GET** /api/v1/documents/{document_id}/history | Get Document History
 *DocumentsApi* | [**list_documents_api_v1_documents_get**](docs/DocumentsApi.md#list_documents_api_v1_documents_get) | **GET** /api/v1/documents | List Documents
 *DocumentsApi* | [**list_documents_api_v1_documents_get_0**](docs/DocumentsApi.md#list_documents_api_v1_documents_get_0) | **GET** /api/v1/documents | List Documents
-*EnterpriseMerkleTreesApi* | [**detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post**](docs/EnterpriseMerkleTreesApi.md#detect_plagiarism_api_v1_enterprise_merkle_detect_plagiarism_post) | **POST** /api/v1/enterprise/merkle/detect-plagiarism | Detect Plagiarism
 *EnterpriseMerkleTreesApi* | [**encode_document_api_v1_enterprise_merkle_encode_post**](docs/EnterpriseMerkleTreesApi.md#encode_document_api_v1_enterprise_merkle_encode_post) | **POST** /api/v1/enterprise/merkle/encode | Encode Document into Merkle Trees
-*EnterpriseMerkleTreesApi* | [**find_sources_api_v1_enterprise_merkle_attribute_post**](docs/EnterpriseMerkleTreesApi.md#find_sources_api_v1_enterprise_merkle_attribute_post) | **POST** /api/v1/enterprise/merkle/attribute | Find Source Documents
 *EvidenceGenerationApi* | [**generate_evidence_api_v1_enterprise_evidence_generate_post**](docs/EvidenceGenerationApi.md#generate_evidence_api_v1_enterprise_evidence_generate_post) | **POST** /api/v1/enterprise/evidence/generate | Generate Evidence
 *FingerprintApi* | [**detect_fingerprint_api_v1_enterprise_fingerprint_detect_post**](docs/FingerprintApi.md#detect_fingerprint_api_v1_enterprise_fingerprint_detect_post) | **POST** /api/v1/enterprise/fingerprint/detect | Detect Fingerprint
 *FingerprintApi* | [**encode_fingerprint_api_v1_enterprise_fingerprint_encode_post**](docs/FingerprintApi.md#encode_fingerprint_api_v1_enterprise_fingerprint_encode_post) | **POST** /api/v1/enterprise/fingerprint/encode | Encode Fingerprint
@@ -130,6 +128,7 @@ Class | Method | HTTP request | Description
 *VerificationApi* | [**get_stats_api_v1_verify_stats_get**](docs/VerificationApi.md#get_stats_api_v1_verify_stats_get) | **GET** /api/v1/verify/stats | Get Stats
 *VerificationApi* | [**get_verification_history_api_v1_verify_history_document_id_get**](docs/VerificationApi.md#get_verification_history_api_v1_verify_history_document_id_get) | **GET** /api/v1/verify/history/{document_id} | Get Verification History
 *VerificationApi* | [**health_check_api_v1_verify_health_get**](docs/VerificationApi.md#health_check_api_v1_verify_health_get) | **GET** /api/v1/verify/health | Health Check
+*VerificationApi* | [**verify_advanced_api_v1_verify_advanced_post**](docs/VerificationApi.md#verify_advanced_api_v1_verify_advanced_post) | **POST** /api/v1/verify/advanced | Advanced verification
 *VerificationApi* | [**verify_by_document_id_api_v1_verify_document_id_get**](docs/VerificationApi.md#verify_by_document_id_api_v1_verify_document_id_get) | **GET** /api/v1/verify/{document_id} | Verify By Document Id
 *VerificationApi* | [**verify_document_api_v1_verify_document_post**](docs/VerificationApi.md#verify_document_api_v1_verify_document_post) | **POST** /api/v1/verify/document | Verify Document
 *VerificationApi* | [**verify_signature_api_v1_verify_signature_post**](docs/VerificationApi.md#verify_signature_api_v1_verify_signature_post) | **POST** /api/v1/verify/signature | Verify Signature
@@ -155,8 +154,8 @@ Class | Method | HTTP request | Description
  - [AccountInfo](docs/AccountInfo.md)
  - [AccountResponse](docs/AccountResponse.md)
  - [AppSchemasEmbeddingsBatchVerifyRequest](docs/AppSchemasEmbeddingsBatchVerifyRequest.md)
+ - [AppSchemasEmbeddingsErrorResponse](docs/AppSchemasEmbeddingsErrorResponse.md)
  - [AppSchemasEmbeddingsRightsMetadata](docs/AppSchemasEmbeddingsRightsMetadata.md)
- - [AppSchemasMerkleErrorResponse](docs/AppSchemasMerkleErrorResponse.md)
  - [BatchItemPayload](docs/BatchItemPayload.md)
  - [BatchItemResult](docs/BatchItemResult.md)
  - [BatchResponseData](docs/BatchResponseData.md)
@@ -219,7 +218,6 @@ Class | Method | HTTP request | Description
  - [FingerprintEncodeRequest](docs/FingerprintEncodeRequest.md)
  - [FingerprintEncodeResponse](docs/FingerprintEncodeResponse.md)
  - [FingerprintMatch](docs/FingerprintMatch.md)
- - [HeatMapData](docs/HeatMapData.md)
  - [HttpValidationError](docs/HttpValidationError.md)
  - [KeyCreateRequest](docs/KeyCreateRequest.md)
  - [KeyCreateResponse](docs/KeyCreateResponse.md)
@@ -236,11 +234,10 @@ Class | Method | HTTP request | Description
  - [MerkleProofItem](docs/MerkleProofItem.md)
  - [MerkleRootResponse](docs/MerkleRootResponse.md)
  - [MerkleTreeInfo](docs/MerkleTreeInfo.md)
+ - [MerkleTreeLevelInfo](docs/MerkleTreeLevelInfo.md)
  - [MultiSourceLookupRequest](docs/MultiSourceLookupRequest.md)
  - [MultiSourceLookupResponse](docs/MultiSourceLookupResponse.md)
  - [PayoutSummary](docs/PayoutSummary.md)
- - [PlagiarismDetectionRequest](docs/PlagiarismDetectionRequest.md)
- - [PlagiarismDetectionResponse](docs/PlagiarismDetectionResponse.md)
  - [PublicKeyInfo](docs/PublicKeyInfo.md)
  - [PublicKeyListResponse](docs/PublicKeyListResponse.md)
  - [PublicKeyRegisterRequest](docs/PublicKeyRegisterRequest.md)
@@ -256,10 +253,6 @@ Class | Method | HTTP request | Description
  - [SignResponse](docs/SignResponse.md)
  - [SignatureVerification](docs/SignatureVerification.md)
  - [SignatureVerify](docs/SignatureVerify.md)
- - [SourceAttributionRequest](docs/SourceAttributionRequest.md)
- - [SourceAttributionResponse](docs/SourceAttributionResponse.md)
- - [SourceDocumentMatch](docs/SourceDocumentMatch.md)
- - [SourceMatch](docs/SourceMatch.md)
  - [SourceRecord](docs/SourceRecord.md)
  - [StreamMerkleFinalizeRequest](docs/StreamMerkleFinalizeRequest.md)
  - [StreamMerkleFinalizeResponse](docs/StreamMerkleFinalizeResponse.md)
@@ -283,6 +276,7 @@ Class | Method | HTTP request | Description
  - [VerificationServiceErrorDetail](docs/VerificationServiceErrorDetail.md)
  - [VerificationServiceVerifyVerdict](docs/VerificationServiceVerifyVerdict.md)
  - [VerificationStats](docs/VerificationStats.md)
+ - [VerifyAdvancedRequest](docs/VerifyAdvancedRequest.md)
  - [VerifyEmbeddingRequest](docs/VerifyEmbeddingRequest.md)
  - [VerifyEmbeddingResponse](docs/VerifyEmbeddingResponse.md)
  - [VerifyRequest](docs/VerifyRequest.md)

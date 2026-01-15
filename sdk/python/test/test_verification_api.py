@@ -26,52 +26,10 @@ class TestVerificationApi(unittest.TestCase):
     def tearDown(self) -> None:
         pass
 
-    def test_get_stats_api_v1_verify_stats_get(self) -> None:
-        """Test case for get_stats_api_v1_verify_stats_get
+    def test_verify_advanced_api_v1_verify_advanced_post(self) -> None:
+        """Test case for verify_advanced_api_v1_verify_advanced_post
 
-        Get Stats
-        """
-        pass
-
-    def test_get_verification_history_api_v1_verify_history_document_id_get(self) -> None:
-        """Test case for get_verification_history_api_v1_verify_history_document_id_get
-
-        Get Verification History
-        """
-        pass
-
-    def test_health_check_api_v1_verify_health_get(self) -> None:
-        """Test case for health_check_api_v1_verify_health_get
-
-        Health Check
-        """
-        pass
-
-    def test_verify_by_document_id_api_v1_verify_document_id_get(self) -> None:
-        """Test case for verify_by_document_id_api_v1_verify_document_id_get
-
-        Verify By Document Id
-        """
-        pass
-
-    def test_verify_document_api_v1_verify_document_post(self) -> None:
-        """Test case for verify_document_api_v1_verify_document_post
-
-        Verify Document
-        """
-        pass
-
-    def test_verify_signature_api_v1_verify_signature_post(self) -> None:
-        """Test case for verify_signature_api_v1_verify_signature_post
-
-        Verify Signature
-        """
-        pass
-
-    def test_verify_text_api_v1_verify_post(self) -> None:
-        """Test case for verify_text_api_v1_verify_post
-
-        Verify Text
+        Advanced verification
         """
         pass
 

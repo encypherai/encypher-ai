@@ -24,13 +24,13 @@ from typing_extensions import Self
 
 class ErrorResponse(BaseModel):
     """
-    Error response.
+    Standard error response schema.
     """ # noqa: E501
     success: Optional[StrictBool] = Field(default=False, description="Always false for errors")
-    error: StrictStr = Field(description="Error message")
-    detail: Optional[StrictStr] = None
-    error_code: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = ["success", "error", "detail", "error_code"]
+    error: StrictStr = Field(description="Error type")
+    message: StrictStr = Field(description="Human-readable error message")
+    details: Optional[Dict[str, Any]] = None
+    __properties: ClassVar[List[str]] = ["success", "error", "message", "details"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -71,15 +71,10 @@ class ErrorResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # set to None if detail (nullable) is None
+        # set to None if details (nullable) is None
         # and model_fields_set contains the field
-        if self.detail is None and "detail" in self.model_fields_set:
-            _dict['detail'] = None
-
-        # set to None if error_code (nullable) is None
-        # and model_fields_set contains the field
-        if self.error_code is None and "error_code" in self.model_fields_set:
-            _dict['error_code'] = None
+        if self.details is None and "details" in self.model_fields_set:
+            _dict['details'] = None
 
         return _dict
 
@@ -95,8 +90,8 @@ class ErrorResponse(BaseModel):
         _obj = cls.model_validate({
             "success": obj.get("success") if obj.get("success") is not None else False,
             "error": obj.get("error"),
-            "detail": obj.get("detail"),
-            "error_code": obj.get("error_code")
+            "message": obj.get("message"),
+            "details": obj.get("details")
         })
         return _obj
 
