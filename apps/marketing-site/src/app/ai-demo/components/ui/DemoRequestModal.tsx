@@ -38,11 +38,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
     setIsSubmitting(true);
 
     try {
-      // Use web-service URL for demo requests
-      const baseUrl = process.env.NEXT_PUBLIC_WEB_SERVICE_URL || 'http://localhost:8002';
-      const url = `${baseUrl}/api/v1/ai-demo/demo-requests`;
-      
-      const response = await fetch(url, {
+      const response = await fetch('/api/demo-request', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -50,6 +46,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
         body: JSON.stringify({
           ...formData,
           source: 'ai-demo',
+          context: 'ai',
         }),
       });
 

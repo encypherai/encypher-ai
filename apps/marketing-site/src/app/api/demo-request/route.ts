@@ -2,15 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * API route to handle demo requests from the marketing site.
- * 
+ *
  * Architecture:
+ * - Production: Forwards to web-service (source of truth for demo_requests + email)
  * - Development: Logs the request and returns success (no backend required)
- * - Production: Forwards to the notification-service via API Gateway
- * 
- * The notification-service (port 8008) handles:
- * - Storing demo requests in the database
- * - Sending confirmation emails to users
- * - Sending notification emails to sales team
  */
 export async function POST(request: NextRequest) {
   try {
@@ -27,19 +22,27 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString(),
     });
 
-    // In production, forward to notification-service via API Gateway
-    const gatewayUrl = process.env.GATEWAY_URL || process.env.NEXT_PUBLIC_GATEWAY_URL;
     const isProduction = process.env.NODE_ENV === 'production';
-    
-    if (gatewayUrl && isProduction) {
-      // Route based on context
-      const endpoint = body.context === 'ai' 
-        ? '/api/v1/notifications/demo-requests/ai'
+    const webServiceUrl = process.env.WEB_SERVICE_URL || process.env.NEXT_PUBLIC_WEB_SERVICE_URL;
+
+    if (isProduction && !webServiceUrl) {
+      console.error('[Demo Request] Missing WEB_SERVICE_URL in production');
+      return NextResponse.json(
+        { success: false, error: 'Server misconfiguration' },
+        { status: 500 }
+      );
+    }
+
+    if (webServiceUrl) {
+      const endpoint = body.context === 'ai'
+        ? '/api/v1/ai-demo/demo-requests'
         : body.context === 'enterprise'
-        ? '/api/v1/notifications/demo-requests/enterprise'
-        : '/api/v1/notifications/demo-requests/publisher';
-      
-      const response = await fetch(`${gatewayUrl}${endpoint}`, {
+        ? '/api/v1/sales/enterprise-requests'
+        : body.context === 'general'
+        ? '/api/v1/sales/general-requests'
+        : '/api/v1/publisher-demo/demo-requests';
+
+      const response = await fetch(`${webServiceUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
