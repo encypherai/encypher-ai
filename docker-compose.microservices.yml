@@ -344,6 +344,8 @@ services:
       AUTH_SERVICE_URL: http://auth-service:8001
       KEY_SERVICE_URL: http://key-service:8003
       ENCODING_SERVICE_URL: http://encoding-service:8004
+      # Demo key (must match enterprise-api's SECRET_KEY for demo org verification)
+      DEMO_PRIVATE_KEY_HEX: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       # Service config
       SERVICE_NAME: verification-service
       SERVICE_PORT: 8005

@@ -95,6 +95,12 @@ class EmbeddingService:
         self.private_key = private_key
         self.signer_id = signer_id
     
+    @staticmethod
+    def _get_api_version() -> str:
+        """Get the enterprise-api version for claim_generator."""
+        from app import __version__
+        return __version__
+    
     async def create_embeddings(
         self,
         db: AsyncSession,
@@ -378,7 +384,7 @@ class EmbeddingService:
                     },
                     metadata_format="manifest",
                     add_hard_binding=False,
-                    claim_generator=f"Encypher Enterprise API/{organization_id}",
+                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
                     actions=c2pa_actions,
                     distribute_across_targets=use_distributed,
                     target=MetadataTarget.FILE_END,
@@ -408,7 +414,7 @@ class EmbeddingService:
                     custom_metadata=document_metadata,
                     metadata_format=metadata_format,
                     add_hard_binding=add_hard_binding,
-                    claim_generator=f"Encypher Enterprise API/{organization_id}",
+                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
                     actions=c2pa_actions,
                     ingredients=c2pa_ingredients,
                     custom_assertions=final_custom_assertions,
@@ -434,7 +440,7 @@ class EmbeddingService:
                     custom_metadata=document_metadata,
                     metadata_format=metadata_format,
                     add_hard_binding=add_hard_binding,
-                    claim_generator=f"Encypher Enterprise API/{organization_id}",
+                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
                     actions=c2pa_actions,
                     ingredients=c2pa_ingredients,
                     custom_assertions=final_custom_assertions,

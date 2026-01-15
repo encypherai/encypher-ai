@@ -223,12 +223,16 @@ async def execute_signing(
             custom_assertions = raw_assertions
 
         logger.debug("Embedding C2PA manifest for document %s", document_id)
+        # Use caller-provided claim_generator, or default to enterprise-api identity
+        from app import __version__ as api_version
+        effective_claim_generator = request.claim_generator or f"encypher-enterprise-api/{api_version}"
+        
         signed_text = UnicodeMetadata.embed_metadata(
             text=request.text,
             private_key=private_key,
             signer_id=signer_id,
             metadata_format="c2pa",
-            claim_generator=request.claim_generator,
+            claim_generator=effective_claim_generator,
             actions=request.actions,
             custom_assertions=custom_assertions,
         )
