@@ -8,11 +8,11 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Use verification-service for verify requests (Enterprise API /verify is deprecated)
-    const verificationServiceUrl =
-      process.env.VERIFICATION_SERVICE_URL ||
-      process.env.NEXT_PUBLIC_VERIFICATION_SERVICE_URL ||
-      "http://localhost:8005";
+    // Use ENTERPRISE_API_URL (api.encypherai.com) - Traefik routes /api/v1/verify to verification-service
+    const apiUrl =
+      process.env.ENTERPRISE_API_URL ||
+      process.env.NEXT_PUBLIC_ENTERPRISE_API_URL ||
+      "http://localhost:9000";
 
     const encodedText = typeof body?.encoded_text === "string" ? body.encoded_text : "";
     if (!encodedText.trim()) {
@@ -20,7 +20,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Verification is a public endpoint - no API key required
-    const upstream = await fetch(`${verificationServiceUrl}/api/v1/verify`, {
+    // Traefik routes /api/v1/verify to the verification-service
+    const upstream = await fetch(`${apiUrl}/api/v1/verify`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
