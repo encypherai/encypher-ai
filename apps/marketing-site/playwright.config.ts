@@ -8,6 +8,7 @@ export default defineConfig({
   use: {
     baseURL: "http://127.0.0.1:3000",
     trace: "on-first-retry",
+    viewport: { width: 1920, height: 1080 },
   },
   projects: [
     {

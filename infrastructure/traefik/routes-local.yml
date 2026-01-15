@@ -111,6 +111,15 @@ http:
         - web
 
     # ============================================
+    # WEB SERVICE -> Marketing forms + analytics (8002)
+    # ============================================
+    web-service-router:
+      rule: "PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`)"
+      service: web-service
+      entryPoints:
+        - web
+
+    # ============================================
     # C2PA SIGNING/VERIFICATION -> Enterprise API (9000)
     # Catch-all for /api/v1/* routes not matched above
     # ============================================
@@ -198,6 +207,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://host.docker.internal:8008"
+
+    web-service:
+      loadBalancer:
+        servers:
+          - url: "http://host.docker.internal:8002"
 
     enterprise-api:
       loadBalancer:

@@ -47,7 +47,7 @@ The Encypher platform uses a microservices architecture with all services runnin
 |---------|------|----------|--------|-------------|
 | **Traefik** | 8000 | - | ✅ Active | API Gateway, routes to microservices |
 | [**auth-service**](./auth-service/) | 8001 | postgres-core | ✅ Active | Authentication, JWT, OAuth |
-| [**user-service**](./user-service/) | 8002 | postgres-core | ✅ Active | User profiles, teams |
+| [**web-service**](./web-service/) | 8002 | postgres-core | ✅ Active | Marketing forms, demo requests, analytics |
 | [**key-service**](./key-service/) | 8003 | postgres-core | ✅ Active | API keys, organizations |
 | [**encoding-service**](./encoding-service/) | 8004 | postgres-core | ✅ Active | C2PA encoding |
 | [**verification-service**](./verification-service/) | 8005 | postgres-core | ✅ Active | Content verification |

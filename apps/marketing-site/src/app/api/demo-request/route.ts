@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+import { resolveDemoRequestEndpoint } from '@/lib/demoRequestRouting';
+
 /**
  * API route to handle demo requests from the marketing site.
  *
@@ -34,13 +36,10 @@ export async function POST(request: NextRequest) {
     }
 
     if (webServiceUrl) {
-      const endpoint = body.context === 'ai'
-        ? '/api/v1/ai-demo/demo-requests'
-        : body.context === 'enterprise'
-        ? '/api/v1/sales/enterprise-requests'
-        : body.context === 'general'
-        ? '/api/v1/sales/general-requests'
-        : '/api/v1/publisher-demo/demo-requests';
+      if (body.context && !['ai', 'publisher', 'enterprise', 'general'].includes(body.context)) {
+        console.warn('[Demo Request] Unknown context, defaulting to general:', body.context);
+      }
+      const endpoint = resolveDemoRequestEndpoint(body.context);
 
       const response = await fetch(`${webServiceUrl}${endpoint}`, {
         method: 'POST',

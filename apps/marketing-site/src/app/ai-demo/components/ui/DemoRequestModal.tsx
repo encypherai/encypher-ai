@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader2, CheckCircle } from 'lucide-react';
 import { trackEvent } from '../../lib/analytics';
-import { submitDemoRequest } from '@/lib/api';
 
 interface DemoRequestModalProps {
   onClose: () => void;

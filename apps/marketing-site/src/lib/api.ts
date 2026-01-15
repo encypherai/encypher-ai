@@ -2,9 +2,13 @@
  * API client for the marketing site web-service
  */
 
-// Web service URL for demo requests, analytics, and sales forms
+// Web service URL for demo requests and sales forms
 const WEB_SERVICE_URL = process.env.NEXT_PUBLIC_WEB_SERVICE_URL || 'http://localhost:8002';
 const WEB_API_V1 = `${WEB_SERVICE_URL}/api/v1`;
+
+// Analytics service URL (anonymous pageviews)
+const ANALYTICS_SERVICE_URL = process.env.NEXT_PUBLIC_ANALYTICS_SERVICE_URL || 'http://localhost:8006';
+const ANALYTICS_API_V1 = `${ANALYTICS_SERVICE_URL}/api/v1`;
 
 // Auth service URL (separate microservice for authentication)
 const AUTH_SERVICE_URL = process.env.NEXT_PUBLIC_AUTH_SERVICE_URL || 'http://localhost:8001';
@@ -39,6 +43,25 @@ export interface AnalyticsEventData {
   properties?: Record<string, any>;
 }
 
+export function resolveAnalyticsPath(pageUrl: string): string {
+  try {
+    const parsed = new URL(pageUrl);
+    return `${parsed.pathname}${parsed.search}`;
+  } catch {
+    return pageUrl;
+  }
+}
+
+export function buildAnalyticsPath(pageUrl: string, eventName?: string): string {
+  const basePath = resolveAnalyticsPath(pageUrl);
+  if (!eventName) {
+    return basePath;
+  }
+
+  const separator = basePath.includes('?') ? '&' : '?';
+  return `${basePath}${separator}event=${encodeURIComponent(eventName)}`;
+}
+
 export interface FetchApiOptions extends RequestInit {
   token?: string;
   skipJsonParse?: boolean;
@@ -55,7 +78,7 @@ export class AuthError extends Error {
 
 /**
  * Generic fetch wrapper
- * Routes /auth/* endpoints to auth-service, all others to enterprise-api
+ * Routes /auth/* endpoints to auth-service, /analytics/* to analytics-service, all others to web-service
  */
 export async function fetchApi<T>(endpoint: string, options: FetchApiOptions = {}): Promise<T> {
   let url = endpoint;
@@ -65,6 +88,8 @@ export async function fetchApi<T>(endpoint: string, options: FetchApiOptions = {
     // Route auth endpoints to auth-service
     if (endpoint.startsWith('/auth/')) {
       url = `${AUTH_API_V1}${endpoint}`;
+    } else if (endpoint.startsWith('/analytics/')) {
+      url = `${ANALYTICS_API_V1}${endpoint}`;
     } else {
       url = `${WEB_API_V1}${endpoint}`;
     }
@@ -109,13 +134,15 @@ export async function submitDemoRequest(data: DemoRequestData): Promise<DemoRequ
  */
 export async function trackEvent(data: AnalyticsEventData): Promise<any> {
   const payload = {
-    event_type: 'custom',
-    ...data,
+    site_id: 'marketing-site',
+    path: buildAnalyticsPath(data.page_url, data.event_name),
+    referrer: data.referrer,
+    user_agent: data.user_agent,
   };
 
   try {
     // Use relative path, fetchApi will prepend API_V1
-    return await fetchApi('/analytics/', {
+    return await fetchApi('/analytics/pageview', {
       method: 'POST',
       body: JSON.stringify(payload),
       keepalive: true, 

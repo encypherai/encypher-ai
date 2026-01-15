@@ -8,17 +8,16 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Navbar } from '@/components/layout/navbar';
 import { Footer } from '@/components/layout/footer';
-import { submitDemoRequest, DemoRequestData } from '@/lib/api';
 
 export default function DemoPage() {
-  const [formData, setFormData] = useState<DemoRequestData>({
+  const [formData, setFormData] = useState({
     name: '',
     email: '',
     organization: '',
     role: '',
     message: '',
     consent: false,
-    source: 'demo-page'
+    source: 'demo-page',
   });
   
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
@@ -39,7 +38,19 @@ export default function DemoPage() {
     setErrorMessage('');
 
     try {
-      await submitDemoRequest(formData);
+      const response = await fetch('/api/demo-request', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...formData,
+          context: 'general',
+        }),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to submit demo request');
+      }
       setStatus('success');
     } catch (error) {
       console.error('Demo request failed:', error);

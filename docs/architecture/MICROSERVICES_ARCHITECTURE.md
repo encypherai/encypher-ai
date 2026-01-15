@@ -2,7 +2,7 @@
 
 **Version:** 1.0  
 **Last Updated:** October 30, 2025  
-**Status:** 32% Complete (2/8 services)
+**Status:** Active (9 services)
 
 ---
 
@@ -56,10 +56,10 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 │  └──────────────┘  └──────────────┘  └──────────────┘             │
 │                                                                      │
 │  ┌──────────────┐  ┌──────────────┐                                │
-│  │Notification  │  │    User      │                                │
-│  │Service (8008)│  │Service (8002)│                                │
-│  │     ⏳       │  │     ⏳       │                                │
-│  └──────────────┘  └──────────────┘                                │
+│  │Notification  │  │    User      │  │   Web Service │             │
+│  │Service (8008)│  │Service (8002)│  │   (8002)      │             │
+│  │     ⏳       │  │     ⏳       │  │     ✅       │             │
+│  └──────────────┘  └──────────────┘  └──────────────┘             │
 └─────────────────────────────────────────────────────────────────────┘
                               ↓
 ┌─────────────────────────────────────────────────────────────────────┐
@@ -138,7 +138,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **3. Encoding Service** ⏳ Port 8004
 
-**Status:** Planned  
+**Status:** Active  
 **Dependencies:** PostgreSQL, Key Service
 
 **Responsibilities:**
@@ -158,7 +158,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **4. Verification Service** ⏳ Port 8005
 
-**Status:** Planned  
+**Status:** Active  
 **Dependencies:** PostgreSQL, Key Service
 
 **Responsibilities:**
@@ -178,7 +178,7 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ### **5. Analytics Service** ⏳ Port 8006
 
-**Status:** Planned  
+**Status:** Active  
 **Dependencies:** PostgreSQL, Redis
 
 **Responsibilities:**
@@ -239,9 +239,9 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ---
 
-### **8. User Service** ⏳ Port 8002
+### **8. User Service** ✅ Port 8002
 
-**Status:** Planned  
+**Status:** Active  
 **Dependencies:** PostgreSQL, Auth Service
 
 **Responsibilities:**
@@ -260,7 +260,29 @@ Encypher is transitioning from a monolithic FastAPI application to a microservic
 
 ---
 
-### **9. API Gateway** ⏳ Port 8000
+### **9. Web Service** ✅ Port 8002
+
+**Status:** Active  
+**Dependencies:** PostgreSQL
+
+**Responsibilities:**
+- Marketing demo requests and sales contact forms
+- Publisher/AI demo intake
+- Marketing-site analytics events
+- Email notifications for inbound leads
+
+**Endpoints:**
+- `POST /api/v1/ai-demo/demo-requests` - AI demo requests
+- `POST /api/v1/publisher-demo/demo-requests` - Publisher demo requests
+- `POST /api/v1/sales/enterprise-requests` - Enterprise sales contact
+- `POST /api/v1/sales/general-requests` - General sales contact
+- `POST /api/v1/demo-requests` - Legacy demo requests
+- `POST /api/v1/analytics` - Legacy analytics events
+- `GET /health` - Health check
+
+---
+
+### **10. API Gateway** ⏳ Port 8000
 
 **Status:** Planned  
 **Dependencies:** All services

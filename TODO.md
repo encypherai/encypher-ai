@@ -19,6 +19,7 @@
 ## Completed
 
 <!-- Move completed TODOs here with [x] -->
+- [x] `.questions/TEAM_068_analytics_routing_decision.md` - TEAM_068: Decided marketing analytics should use analytics-service pageview endpoint and updated routing accordingly.
 
 ---
 

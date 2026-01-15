@@ -92,6 +92,16 @@ http:
       middlewares:
         - cors
 
+    # Web Service - marketing forms + analytics
+    api-web-service:
+      rule: "PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`) || PathPrefix(`/api/v1/analytics`)"
+      service: web-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
     # Auth Service - authentication (default for /api/v1/auth/*)
     api-auth:
       rule: "PathPrefix(`/api/v1/auth`)"
@@ -192,6 +202,11 @@ http:
       loadBalancer:
         servers:
           - url: "http://notification-service.railway.internal:8080"
+
+    web-service:
+      loadBalancer:
+        servers:
+          - url: "http://web-service.railway.internal:8080"
 
     enterprise-api:
       loadBalancer:

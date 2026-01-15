@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { X, Loader2, CheckCircle } from 'lucide-react';
-import { submitDemoRequest } from '@/lib/api';
 
 export type ContactContext = 'ai' | 'publisher' | 'enterprise' | 'general';
 
@@ -151,14 +150,14 @@ export default function SalesContactModal({
         throw new Error('Failed to submit request');
       }
 
-      const data = await response.json();
+      await response.json();
       setIsSuccess(true);
 
       // Close modal after 3 seconds
       setTimeout(() => {
         onClose();
       }, 3000);
-    } catch (err) {
+    } catch {
       setError('Failed to submit request. Please try again or contact sales@encypher.com');
     } finally {
       setIsSubmitting(false);
