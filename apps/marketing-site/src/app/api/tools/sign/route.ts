@@ -89,7 +89,18 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    console.error(`${logPrefix} unexpected error`, { requestId, message });
-    return NextResponse.json({ detail: message }, { status: 500 });
+    const cause = error instanceof Error && error.cause ? String(error.cause) : undefined;
+    const stack = error instanceof Error ? error.stack : undefined;
+    console.error(`${logPrefix} unexpected error`, {
+      requestId,
+      message,
+      cause,
+      stack,
+      errorName: error instanceof Error ? error.name : typeof error,
+    });
+    return NextResponse.json({
+      detail: message,
+      cause: cause || undefined,
+    }, { status: 500 });
   }
 }
