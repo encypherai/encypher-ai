@@ -829,7 +829,7 @@ class UnicodeMetadata:
         MAX_ITERATIONS = 6
         for _ in range(MAX_ITERATIONS):
             c2pa_manifest: C2PAPayload = {
-                "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+                "@context": "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
                 "instance_id": instance_id,
                 "claim_generator": claim_gen,
                 "assertions": [],
@@ -1200,10 +1200,14 @@ class UnicodeMetadata:
             return False, signer_id, None
 
         # --- 2. Manifest Content Validation ---
-        # a) Check @context URL
-        expected_context = "https://c2pa.org/schemas/v2.2/c2pa.jsonld"
-        if c2pa_manifest.get("@context") != expected_context:
-            logger.warning(f"C2PA verification: Manifest @context mismatch. Expected '{expected_context}', got '{c2pa_manifest.get('@context')}'.")
+        # a) Check @context URL (accept both v2.2 and v2.3)
+        valid_contexts = {
+            "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+            "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+        }
+        manifest_context = c2pa_manifest.get("@context")
+        if manifest_context not in valid_contexts:
+            logger.warning(f"C2PA verification: Manifest @context mismatch. Expected one of {valid_contexts}, got '{manifest_context}'.")
             return False, signer_id, c2pa_manifest
 
         # b) Check for mandatory assertions
