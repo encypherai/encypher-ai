@@ -334,7 +334,8 @@ async def verify_text(
 
     def public_key_resolver(signer_id: str):
         # TEAM_065: Support demo/user signers without requiring org auth.
-        if signer_id == "org_demo" or signer_id.startswith("user_"):
+        # TEAM_066: Also support org_encypher* signers (e.g., org_encypher_marketing) which use demo key.
+        if signer_id == "org_demo" or signer_id.startswith("user_") or signer_id.startswith("org_encypher"):
             return _demo_public_key()
         if organization_id and signer_id == organization_id:
             return public_key

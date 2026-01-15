@@ -8,29 +8,22 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const enterpriseApiUrl =
-      process.env.ENTERPRISE_API_URL ||
-      process.env.NEXT_PUBLIC_ENTERPRISE_API_URL ||
-      "https://enterprise-api-staging.up.railway.app";
-
-    const apiKey = process.env.ENTERPRISE_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { detail: "Missing ENTERPRISE_API_KEY" },
-        { status: 500 }
-      );
-    }
+    // Use verification-service for verify requests (Enterprise API /verify is deprecated)
+    const verificationServiceUrl =
+      process.env.VERIFICATION_SERVICE_URL ||
+      process.env.NEXT_PUBLIC_VERIFICATION_SERVICE_URL ||
+      "http://localhost:8005";
 
     const encodedText = typeof body?.encoded_text === "string" ? body.encoded_text : "";
     if (!encodedText.trim()) {
       return NextResponse.json({ detail: "encoded_text is required" }, { status: 400 });
     }
 
-    const upstream = await fetch(`${enterpriseApiUrl}/api/v1/verify`, {
+    // Verification is a public endpoint - no API key required
+    const upstream = await fetch(`${verificationServiceUrl}/api/v1/verify`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({ text: encodedText }),
     });

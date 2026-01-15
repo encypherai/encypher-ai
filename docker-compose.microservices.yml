@@ -330,7 +330,9 @@ services:
 
   # Verification Service (Port 8005)
   verification-service:
-    build: ./services/verification-service
+    build:
+      context: .
+      dockerfile: ./services/verification-service/Dockerfile
     container_name: encypher-verification-service
     ports:
       - "8005:8005"

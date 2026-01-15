@@ -245,6 +245,23 @@ class QuotaManager:
             logger.debug(f"User-level key {organization_id}: allowing {quota_type.value} (limit: {quota_limit})")
             return True
         
+        # Check if this is a demo key (doesn't require database lookup)
+        is_demo_key = (features and features.get("is_demo", False)) or organization_id.startswith("org_demo") or organization_id.startswith("org_encypher")
+        
+        if is_demo_key:
+            # Demo keys use in-memory quota tracking from DEMO_KEYS config
+            tier = _coerce_tier(tier_override or "starter")
+            quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
+            
+            # Demo keys with quota_limit = -1 or high limits are unlimited
+            if quota_limit == -1 or quota_limit > 100000:
+                logger.debug(f"Demo key {organization_id}: allowing {quota_type.value} (unlimited)")
+                return True
+            
+            # For demo keys with limits, allow without tracking (stateless)
+            logger.debug(f"Demo key {organization_id}: allowing {quota_type.value} (limit: {quota_limit}, no tracking)")
+            return True
+        
         # Get organization from database for org-level keys
         result = await db.execute(
             select(Organization).where(Organization.organization_id == organization_id)
@@ -408,6 +425,18 @@ class QuotaManager:
                 "X-Quota-Limit": str(limit),
                 "X-Quota-Used": "0",  # Not tracked for user-level keys
                 "X-Quota-Remaining": str(limit),
+                "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
+            }
+        
+        # Check if this is a demo key (doesn't require database lookup)
+        is_demo_key = organization_id.startswith("org_demo") or organization_id.startswith("org_encypher")
+        
+        if is_demo_key:
+            # Return generic headers for demo keys (no tracking)
+            return {
+                "X-Quota-Limit": "50000",
+                "X-Quota-Used": "0",
+                "X-Quota-Remaining": "50000",
                 "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
             }
         

@@ -156,6 +156,32 @@ DEMO_KEYS = {
         "coalition_member": True,
         "coalition_rev_share": 85,
     },
+    # Marketing site production key - starter tier for public tools
+    "ency_marketing_site_prod_2026": {
+        "organization_id": "org_encypher_marketing",
+        "organization_name": "Encypher Corporation - Marketing Site",
+        "tier": "starter",
+        "is_demo": True,  # Uses shared demo key (no database record needed)
+        "user_id": "usr_encypher_marketing",
+        "api_key_owner_id": "usr_encypher_marketing",
+        "features": {
+            "team_management": False,
+            "audit_logs": False,
+            "merkle_enabled": False,
+            "bulk_operations": False,
+            "sentence_tracking": False,
+            "streaming": False,
+            "byok": False,
+            "sso": False,
+            "custom_assertions": False,
+            "max_team_members": 1,
+        },
+        "permissions": ["sign", "verify"],  # Basic permissions only
+        "monthly_api_limit": 50000,  # Reasonable limit for public tools
+        "monthly_api_usage": 0,
+        "coalition_member": False,
+        "coalition_rev_share": 0,
+    },
 }
 
 

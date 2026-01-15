@@ -21,9 +21,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const signRequest = buildSignAdvancedRequest(body);
+    // Use basic /sign endpoint (works with Starter tier)
+    const signRequest = {
+      document_id: `doc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+      text: body.original_text,
+      action: "c2pa.created",
+      metadata: body.custom_metadata || {},
+      custom_assertions: body.ai_info ? [{
+        label: "c2pa.generative-ai",
+        data: {
+          softwareAgent: body.ai_info.claim_generator || "Encypher Marketing Site",
+          description: body.ai_info.provenance || "Content signed via marketing site tools",
+        }
+      }] : undefined,
+    };
 
-    const upstream = await fetch(`${enterpriseApiUrl}/api/v1/sign/advanced`, {
+    const upstream = await fetch(`${enterpriseApiUrl}/api/v1/sign`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -47,7 +60,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      encoded_text: data.embedded_content,
+      encoded_text: data.signed_text || data.signed_content || data.embedded_content,
       metadata: data.metadata,
     });
   } catch (error) {
