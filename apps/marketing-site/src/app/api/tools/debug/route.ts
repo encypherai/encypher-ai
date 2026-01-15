@@ -13,40 +13,70 @@ export async function GET() {
   const hasApiKey = Boolean(process.env.ENTERPRISE_API_KEY);
   const nodeEnv = process.env.NODE_ENV;
 
-  // Test connectivity to the Enterprise API health endpoint
+  // Test connectivity to the Enterprise API docs endpoint (known to work)
   let connectivityStatus = "unknown";
   let connectivityError: string | undefined;
   let connectivityLatencyMs: number | undefined;
+  let responseStatus: number | undefined;
+
+  const testUrl = `${enterpriseApiUrl}/docs`;
 
   try {
     const start = Date.now();
-    const healthResponse = await fetch(`${enterpriseApiUrl}/health`, {
+    const response = await fetch(testUrl, {
       method: "GET",
       signal: AbortSignal.timeout(10000),
     });
     connectivityLatencyMs = Date.now() - start;
-    connectivityStatus = healthResponse.ok ? "ok" : `error_${healthResponse.status}`;
+    responseStatus = response.status;
+    connectivityStatus = response.ok ? "ok" : `http_${response.status}`;
   } catch (error) {
     connectivityStatus = "fetch_failed";
     if (error instanceof Error) {
-      connectivityError = error.message;
+      connectivityError = `${error.name}: ${error.message}`;
       if (error.cause) {
-        connectivityError += ` (cause: ${String(error.cause)})`;
+        const causeStr = error.cause instanceof Error 
+          ? `${error.cause.name}: ${error.cause.message}`
+          : String(error.cause);
+        connectivityError += ` | cause: ${causeStr}`;
       }
+    } else {
+      connectivityError = String(error);
+    }
+  }
+
+  // Also test a simple external fetch to rule out general network issues
+  let externalConnectivity = "unknown";
+  let externalError: string | undefined;
+  try {
+    const extResponse = await fetch("https://httpbin.org/get", {
+      method: "GET",
+      signal: AbortSignal.timeout(5000),
+    });
+    externalConnectivity = extResponse.ok ? "ok" : `http_${extResponse.status}`;
+  } catch (error) {
+    externalConnectivity = "fetch_failed";
+    if (error instanceof Error) {
+      externalError = error.message;
     }
   }
 
   return NextResponse.json({
     enterpriseApiUrl,
+    testUrl,
     hasApiKey,
     nodeEnv,
     connectivityStatus,
     connectivityError,
     connectivityLatencyMs,
+    responseStatus,
+    externalConnectivity,
+    externalError,
     envVars: {
-      ENTERPRISE_API_URL: process.env.ENTERPRISE_API_URL ? "set" : "unset",
-      NEXT_PUBLIC_ENTERPRISE_API_URL: process.env.NEXT_PUBLIC_ENTERPRISE_API_URL ? "set" : "unset",
-      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ? "set" : "unset",
+      ENTERPRISE_API_URL: process.env.ENTERPRISE_API_URL || "unset",
+      NEXT_PUBLIC_ENTERPRISE_API_URL: process.env.NEXT_PUBLIC_ENTERPRISE_API_URL || "unset",
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || "unset",
     },
+    timestamp: new Date().toISOString(),
   });
 }
