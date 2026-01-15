@@ -15,6 +15,16 @@ function normalizeString(value) {
 }
 
 /**
+ * For verify endpoint: preserve exact text including invisible metadata.
+ * C2PA signed content includes invisible Unicode variation selectors and wrappers
+ * that MUST NOT be trimmed or normalized.
+ */
+function preserveExactString(value) {
+  if (typeof value !== 'string') return undefined;
+  return value.length > 0 ? value : undefined;
+}
+
+/**
  * @param {string} endpointId
  * @param {PlaygroundFormValues} values
  */
@@ -24,7 +34,7 @@ export function buildRequestObject(endpointId, values) {
   }
 
   if (endpointId === 'verify') {
-    const text = normalizeString(values.text);
+    const text = preserveExactString(values.text);
     if (!text) throw new Error('verify.text is required');
     return { text };
   }
