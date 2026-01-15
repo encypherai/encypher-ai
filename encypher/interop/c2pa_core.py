@@ -133,7 +133,7 @@ def encypher_manifest_to_c2pa_like_dict(
 
     # Add optional C2PA v2.2 context URL if requested
     if add_context:
-        result["@context"] = "https://c2pa.org/schemas/v2.2/c2pa.jsonld"
+        result["@context"] = "https://c2pa.org/schemas/v2.3/c2pa.jsonld"
 
     # Generate a unique instance_id for this manifest (UUID) if requested
     if add_instance_id:
@@ -400,14 +400,14 @@ def get_c2pa_manifest_schema() -> dict[str, Any]:
     """
     return {
         "$schema": "http://json-schema.org/draft-07/schema#",
-        "title": "C2PA v2.2 Manifest",
-        "description": "A C2PA v2.2 compliant manifest schema for Encypher",
+        "title": "C2PA v2.3 Manifest",
+        "description": "A C2PA v2.3 compliant manifest schema for Encypher",
         "type": "object",
         "properties": {
             "@context": {
                 "type": "string",
-                "description": "The JSON-LD context URL for C2PA v2.2",
-                "const": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+                "description": "The JSON-LD context URL for C2PA v2.3",
+                "const": "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
             },
             "instance_id": {"type": "string", "description": "Unique UUID for this manifest instance", "format": "uuid"},
             "claim_generator": {
