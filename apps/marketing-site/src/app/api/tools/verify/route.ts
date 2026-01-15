@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { resolveEnterpriseApiUrl } from "@/lib/enterpriseApiUrl";
 import { mapVerifyResponseToDecodeToolResponse } from "@/lib/enterpriseApiTools";
 
 export const runtime = "nodejs";
@@ -9,10 +10,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Use ENTERPRISE_API_URL (api.encypherai.com) - Traefik routes /api/v1/verify to verification-service
-    const apiUrl =
-      process.env.ENTERPRISE_API_URL ||
-      process.env.NEXT_PUBLIC_ENTERPRISE_API_URL ||
-      "http://localhost:9000";
+    const apiUrl = resolveEnterpriseApiUrl();
 
     const encodedText = typeof body?.encoded_text === "string" ? body.encoded_text : "";
     if (!encodedText.trim()) {

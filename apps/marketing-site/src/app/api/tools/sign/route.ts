@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { buildSignAdvancedRequest } from "@/lib/enterpriseApiTools";
+import { resolveEnterpriseApiUrl } from "@/lib/enterpriseApiUrl";
 
 export const runtime = "nodejs";
 
@@ -8,10 +8,7 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    const enterpriseApiUrl =
-      process.env.ENTERPRISE_API_URL ||
-      process.env.NEXT_PUBLIC_ENTERPRISE_API_URL ||
-      "https://enterprise-api-staging.up.railway.app";
+    const enterpriseApiUrl = resolveEnterpriseApiUrl();
 
     const apiKey = process.env.ENTERPRISE_API_KEY;
     if (!apiKey) {
