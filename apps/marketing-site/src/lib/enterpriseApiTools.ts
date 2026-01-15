@@ -25,6 +25,14 @@ export type SignAdvancedRequest = {
   };
 };
 
+export type SignBasicRequest = {
+  document_id: string;
+  text: string;
+  action: "c2pa.created";
+  metadata?: Record<string, unknown>;
+  custom_assertions?: Array<{ label: string; data: Record<string, unknown> }>;
+};
+
 export type VerifyResponseLike = {
   success: boolean;
   correlation_id: string;
@@ -68,6 +76,34 @@ export type DecodeToolResponseLike = {
 
 function randomDocId(): string {
   return `doc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+export function buildSignBasicRequest(input: EncodeToolRequestLike): SignBasicRequest {
+  const metadataPayload: Record<string, unknown> = {
+    ...(input.custom_metadata || {}),
+  };
+
+  const customAssertions: Array<{ label: string; data: Record<string, unknown> }> = [];
+  const claimGenerator = input.ai_info?.claim_generator;
+  const provenance = input.ai_info?.provenance;
+
+  if (claimGenerator || provenance) {
+    customAssertions.push({
+      label: "c2pa.generative-ai",
+      data: {
+        softwareAgent: claimGenerator || "Encypher Marketing Site",
+        description: provenance || "Content signed via marketing site tools",
+      },
+    });
+  }
+
+  return {
+    document_id: randomDocId(),
+    text: input.original_text,
+    action: "c2pa.created",
+    metadata: Object.keys(metadataPayload).length ? metadataPayload : undefined,
+    custom_assertions: customAssertions.length ? customAssertions : undefined,
+  };
 }
 
 export function buildSignAdvancedRequest(input: EncodeToolRequestLike): SignAdvancedRequest {

@@ -1,17 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { resolveEnterpriseApiUrl } from "@/lib/enterpriseApiUrl";
+import { buildSignBasicRequest } from "@/lib/enterpriseApiTools";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const requestId = crypto.randomUUID();
+  const logPrefix = "[tools-sign]";
   try {
     const body = await request.json();
+
+    const originalText = typeof body?.original_text === "string" ? body.original_text : "";
+    if (!originalText.trim()) {
+      console.warn(`${logPrefix} invalid payload`, {
+        requestId,
+        hasText: Boolean(originalText.trim()),
+        metadataKeys: body?.custom_metadata ? Object.keys(body.custom_metadata) : [],
+        hasAiInfo: Boolean(body?.ai_info),
+      });
+      return NextResponse.json({ detail: "original_text is required" }, { status: 400 });
+    }
 
     const enterpriseApiUrl = resolveEnterpriseApiUrl();
 
     const apiKey = process.env.ENTERPRISE_API_KEY;
     if (!apiKey) {
+      console.error(`${logPrefix} missing ENTERPRISE_API_KEY`, { requestId });
       return NextResponse.json(
         { detail: "Missing ENTERPRISE_API_KEY" },
         { status: 500 }
@@ -19,25 +34,26 @@ export async function POST(request: NextRequest) {
     }
 
     // Use basic /sign endpoint (works with Starter tier)
-    const signRequest = {
-      document_id: `doc_${Date.now()}_${Math.random().toString(16).slice(2)}`,
-      text: body.original_text,
-      action: "c2pa.created",
-      metadata: body.custom_metadata || {},
-      custom_assertions: body.ai_info ? [{
-        label: "c2pa.generative-ai",
-        data: {
-          softwareAgent: body.ai_info.claim_generator || "Encypher Marketing Site",
-          description: body.ai_info.provenance || "Content signed via marketing site tools",
-        }
-      }] : undefined,
-    };
+    const signRequest = buildSignBasicRequest({
+      original_text: originalText,
+      custom_metadata: body.custom_metadata || {},
+      ai_info: body.ai_info || null,
+    });
+
+    console.info(`${logPrefix} forwarding request`, {
+      requestId,
+      upstreamHost: enterpriseApiUrl,
+      hasMetadata: Boolean(body.custom_metadata && Object.keys(body.custom_metadata).length),
+      hasAiInfo: Boolean(body.ai_info),
+      textLength: originalText.length,
+    });
 
     const upstream = await fetch(`${enterpriseApiUrl}/api/v1/sign`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${apiKey}`,
+        "X-Request-Id": requestId,
       },
       body: JSON.stringify(signRequest),
     });
@@ -47,6 +63,11 @@ export async function POST(request: NextRequest) {
       .catch(() => ({ detail: "Upstream returned invalid JSON" }));
 
     if (!upstream.ok) {
+      console.error(`${logPrefix} upstream error`, {
+        requestId,
+        status: upstream.status,
+        detail: data?.detail || data?.error?.message || data?.error,
+      });
       const detail =
         (typeof data?.detail === "string" && data.detail) ||
         data?.detail?.message ||
@@ -56,12 +77,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ detail }, { status: upstream.status });
     }
 
+    console.info(`${logPrefix} upstream success`, {
+      requestId,
+      status: upstream.status,
+      hasSignedText: Boolean(data?.signed_text || data?.signed_content || data?.embedded_content),
+    });
+
     return NextResponse.json({
       encoded_text: data.signed_text || data.signed_content || data.embedded_content,
       metadata: data.metadata,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
+    console.error(`${logPrefix} unexpected error`, { requestId, message });
     return NextResponse.json({ detail: message }, { status: 500 });
   }
 }
