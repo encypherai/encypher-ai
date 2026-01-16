@@ -56,6 +56,13 @@ Our implementation uses the official `c2pa-text` library to encode C2PA manifest
 
 Learn more about [Encypher's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
 
+### C2PA `@context` compatibility configuration (v3.0.3+)
+
+`encypher-ai` allows production services to control the emitted and accepted C2PA schema contexts via environment variables:
+
+- `ENCYPHER_C2PA_CONTEXT_URL` controls the emitted `@context` during embedding.
+- `ENCYPHER_C2PA_ACCEPTED_CONTEXTS` controls the verifier allowlist (JSON list or comma-separated string).
+
 ### Maintenance & Support
 
 While this library is open source, Encypher offers an **Enterprise API** for:
@@ -101,7 +108,7 @@ Try Encypher directly in your browser with our interactive Google Colab notebook
 For a local demonstration, check out the detailed Jupyter Notebook example included in the repository:
 [`encypher/examples/encypher_v2_demo.ipynb`](./encypher/examples/encypher_v2_demo.ipynb)
 
-This notebook covers key generation, basic and manifest format usage, and tamper detection using the latest version.
+This notebook covers key generation, basic and manifest format usage, and tamper detection using the latest version (v2.2.0+).
 
 ## Installation
 
@@ -142,7 +149,7 @@ signer_id_example = "readme-signer-001" # Using signer_id
 public_keys_store: Dict[str, Ed25519PublicKey] = { signer_id_example: public_key }
 
 # Create a provider function to look up public keys by ID
-def public_key_resolver(signer_id: str) -> Optional[Ed25519PublicKey]: # Renamed and uses signer_id
+def public_key_provider(signer_id: str) -> Optional[Ed25519PublicKey]: # Renamed and uses signer_id
     return public_keys_store.get(signer_id)
 # -----------------------------------------------------------------
 
@@ -179,7 +186,7 @@ extracted_signer_id: Optional[str]
 verified_payload: Union[BasicPayload, ManifestPayload, None] # Type hint for clarity
 is_valid, extracted_signer_id, verified_payload = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_resolver=public_key_resolver
+    public_key_provider=public_key_provider
 )
 
 print(f"\nSignature valid: {is_valid}")
@@ -205,7 +212,7 @@ encoded_text_no_ts = UnicodeMetadata.embed_metadata(
 
 is_valid2, _, payload2 = UnicodeMetadata.verify_metadata(
     text=encoded_text_no_ts,
-    public_key_resolver=public_key_resolver
+    public_key_provider=public_key_provider
 )
 print(f"Valid: {is_valid2}; Timestamp present: {bool(getattr(payload2, 'timestamp', None))}")
 ```
@@ -237,7 +244,7 @@ handler = StreamingHandler(
     signer_id=signer_id_example,
     timestamp=stream_timestamp,
     custom_metadata=stream_custom_payload,
-    # metadata_format defaults to "basic" (also accepts "manifest", "cbor_manifest", or "c2pa")
+    # metadata_format defaults to "basic" (also accepts "manifest", "cbor_manifest", or "jumbf")
     # encode_first_chunk_only defaults to True, which is common for streaming
 )
 
@@ -271,7 +278,7 @@ stream_signer_id: Optional[str]
 stream_payload: Union[BasicPayload, ManifestPayload, None]
 is_stream_valid, stream_signer_id, stream_payload = UnicodeMetadata.verify_metadata(
     text=full_response_from_stream,
-    public_key_resolver=public_key_resolver, # Using the provider from basic example
+    public_key_provider=public_key_provider, # Using the provider from basic example
     require_hard_binding=False # Disable for streaming
 )
 
@@ -385,7 +392,7 @@ signer_id_manifest = "manifest-signer-001"
 
 # Store public keys and create a provider function
 public_keys_store: Dict[str, Ed25519PublicKey] = { signer_id_manifest: public_key }
-def public_key_resolver(signer_id: str) -> Optional[Ed25519PublicKey]:
+def public_key_provider(signer_id: str) -> Optional[Ed25519PublicKey]:
     return public_keys_store.get(signer_id)
 # ----------------------------------------------------
 
@@ -423,7 +430,7 @@ Verification confirms both the signature's authenticity and the text's integrity
 # 1. Verify the original, unmodified text
 is_valid, signer, payload = UnicodeMetadata.verify_metadata(
     text=encoded_text_manifest,
-    public_key_resolver=public_key_resolver
+    public_key_provider=public_key_provider
 )
 
 print(f"\nVerification of original text successful: {is_valid}")
@@ -441,7 +448,7 @@ tampered_text = encoded_text_manifest.replace("important", "unimportant")
 
 is_tampered_valid, _, _ = UnicodeMetadata.verify_metadata(
     text=tampered_text,
-    public_key_resolver=public_key_resolver
+    public_key_provider=public_key_provider
 )
 
 print(f"\nVerification of tampered text successful: {is_tampered_valid}") # Expected: False
