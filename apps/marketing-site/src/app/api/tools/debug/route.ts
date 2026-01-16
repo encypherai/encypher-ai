@@ -61,6 +61,34 @@ export async function GET() {
     }
   }
 
+  // Check account info if API key is available
+  let accountInfo: Record<string, unknown> | undefined;
+  let accountError: string | undefined;
+  const apiKey = process.env.ENTERPRISE_API_KEY;
+  if (apiKey) {
+    try {
+      const accountResponse = await fetch(`${enterpriseApiUrl}/api/v1/account`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+        },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (accountResponse.ok) {
+        const data = await accountResponse.json();
+        accountInfo = {
+          org_id: data.org_id || data.organization_id,
+          org_name: data.org_name || data.organization_name || data.name,
+          tier: data.tier || data.subscription_tier,
+        };
+      } else {
+        accountError = `HTTP ${accountResponse.status}`;
+      }
+    } catch (error) {
+      accountError = error instanceof Error ? error.message : String(error);
+    }
+  }
+
   return NextResponse.json({
     enterpriseApiUrl,
     testUrl,
@@ -72,6 +100,8 @@ export async function GET() {
     responseStatus,
     externalConnectivity,
     externalError,
+    accountInfo,
+    accountError,
     envVars: {
       ENTERPRISE_API_URL: process.env.ENTERPRISE_API_URL || "unset",
       NEXT_PUBLIC_ENTERPRISE_API_URL: process.env.NEXT_PUBLIC_ENTERPRISE_API_URL || "unset",
