@@ -9,6 +9,10 @@ This document provides a chronological list of notable changes for each version 
   - `ENCYPHER_C2PA_CONTEXT_URL` controls the emitted `@context` during embedding.
   - `ENCYPHER_C2PA_ACCEPTED_CONTEXTS` controls the verifier allowlist (JSON list or comma-separated string).
 - Default verifier allowlist accepts both C2PA schema contexts v2.2 and v2.3 to avoid false `SIGNATURE_INVALID` failures when signing emits v2.3.
+- Restored green CI by fixing `mypy` typing issues:
+  - Corrected internal helper type signatures.
+  - Added missing return type annotations.
+  - Cleaned up unused imports caught by linters.
 
 ## 3.0.2 (2026-01-10)
 
