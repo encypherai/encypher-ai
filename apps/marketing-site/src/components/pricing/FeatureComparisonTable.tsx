@@ -122,7 +122,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
         enterprise: 'Unlimited',
       },
       {
-        name: 'Plagiarism Detection',
+        name: 'Similarity Detection',
         description: 'POST /api/v1/verify/advanced (detect_plagiarism=true)',
         starter: false,
         professional: false,
@@ -382,7 +382,7 @@ export default function FeatureComparisonTable({
                   )}
                   {isPopular && !isCurrentPlan && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary/80 text-xs">
-                      Most Popular
+                      Recommended
                     </Badge>
                   )}
                   <div className="pt-2">

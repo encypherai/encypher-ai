@@ -88,7 +88,7 @@ export const PRICING_TIERS: TiersConfig = {
     features: [
       'Everything in Professional',
       'Merkle encodings (10K/mo)',
-      'Plagiarism detection (5K/mo)',
+      'Similarity detection (5K/mo)',
       'Source attribution (50K lookups/mo)',
       'Batch operations (100 docs)',
       '50 API keys',

@@ -45,7 +45,7 @@ const ICP_VALUE_PROPS: Record<ICP, { headline: string; subheadline: string; icon
 const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta: { text: string; variant: 'default' | 'outline' }; showPrice: boolean; highlight?: string }> = {
   starter: {
     description: 'Get paid when AI uses your content',
-    bestFor: 'Independent bloggers, small sites, WordPress users',
+    bestFor: 'Independent bloggers, local news, small sites, WordPress users',
     cta: { text: 'Get Started Free', variant: 'default' },
     showPrice: true,
     highlight: 'WordPress plugin installs in 5 minutes',
@@ -62,7 +62,7 @@ const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta
     bestFor: 'Major digital publishers, news networks',
     cta: { text: 'Start Free Trial', variant: 'default' },
     showPrice: true,
-    highlight: 'Plagiarism detection + source attribution',
+    highlight: 'Similarity detection + source attribution',
   },
   enterprise: {
     description: 'White-glove implementation',
@@ -281,7 +281,7 @@ export default function PricingPage() {
                         className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full shadow-md"
                         style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}
                       >
-                        Most Popular
+                        Recommended
                       </span>
                     </div>
                   )}
