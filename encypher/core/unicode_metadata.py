@@ -23,6 +23,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey,
 from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from encypher import __version__
+from encypher.config.settings import Settings
 from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
 from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode
 
@@ -791,6 +792,8 @@ class UnicodeMetadata:
         if not isinstance(private_key, ed25519.Ed25519PrivateKey):
             raise TypeError("For C2PA embedding, 'private_key' must be an Ed25519PrivateKey instance.")
 
+        text = normalize_text(text)
+
         base_hash_result = compute_normalized_hash(text)
         content_hash = base_hash_result.hexdigest
 
@@ -826,10 +829,13 @@ class UnicodeMetadata:
         wrapper_text = ""
         cose_sign1_bytes: Optional[bytes] = None
 
+        settings = Settings()
+        c2pa_context_url = settings.get("c2pa_context_url", "https://c2pa.org/schemas/v2.3/c2pa.jsonld")
+
         MAX_ITERATIONS = 6
         for _ in range(MAX_ITERATIONS):
             c2pa_manifest: C2PAPayload = {
-                "@context": "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+                "@context": c2pa_context_url,
                 "instance_id": instance_id,
                 "claim_generator": claim_gen,
                 "assertions": [],
@@ -1200,11 +1206,15 @@ class UnicodeMetadata:
             return False, signer_id, None
 
         # --- 2. Manifest Content Validation ---
-        # a) Check @context URL (accept both v2.2 and v2.3)
-        valid_contexts = {
-            "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
-            "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
-        }
+        settings = Settings()
+        configured_contexts = settings.get(
+            "c2pa_accepted_contexts",
+            [
+                "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+                "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+            ],
+        )
+        valid_contexts = set(configured_contexts) if isinstance(configured_contexts, list) else set()
         manifest_context = c2pa_manifest.get("@context")
         if manifest_context not in valid_contexts:
             logger.warning(f"C2PA verification: Manifest @context mismatch. Expected one of {valid_contexts}, got '{manifest_context}'.")

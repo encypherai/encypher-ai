@@ -8,10 +8,7 @@ and encoding metadata into the streaming chunks.
 from datetime import date, datetime, timezone
 from typing import Any, Literal, Optional, Union
 
-from cryptography.hazmat.primitives.asymmetric import dh, dsa, ec, ed448, ed25519, rsa, x448, x25519
-
-# Import necessary types for signature handling
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
+from cryptography.hazmat.primitives.asymmetric import ed25519
 
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
 
@@ -33,7 +30,7 @@ class StreamingHandler:
         timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Union[str, MetadataTarget] = "whitespace",
         encode_first_chunk_only: bool = True,
-        private_key: Optional[PrivateKeyTypes] = None,
+        private_key: Optional[ed25519.Ed25519PrivateKey] = None,
         signer_id: Optional[str] = None,
         metadata_format: Literal["basic", "manifest", "c2pa"] = "c2pa",
         omit_keys: Optional[list[str]] = None,
@@ -78,17 +75,8 @@ class StreamingHandler:
             raise TypeError("If provided, 'custom_metadata' must be a dictionary.")
         if not isinstance(encode_first_chunk_only, bool):
             raise TypeError("'encode_first_chunk_only' must be a boolean.")
-        if private_key is not None and not (
-            isinstance(private_key, ed25519.Ed25519PrivateKey)
-            or isinstance(private_key, rsa.RSAPrivateKey)
-            or isinstance(private_key, dsa.DSAPrivateKey)
-            or isinstance(private_key, dh.DHPrivateKey)
-            or isinstance(private_key, ec.EllipticCurvePrivateKey)
-            or isinstance(private_key, x25519.X25519PrivateKey)
-            or isinstance(private_key, x448.X448PrivateKey)
-            or isinstance(private_key, ed448.Ed448PrivateKey)
-        ):
-            raise TypeError("If provided, 'private_key' must be a valid private key type (e.g., Ed25519PrivateKey).")
+        if private_key is not None and not isinstance(private_key, ed25519.Ed25519PrivateKey):
+            raise TypeError("If provided, 'private_key' must be an Ed25519PrivateKey.")
         if signer_id is not None and not isinstance(signer_id, str):
             raise TypeError("If provided, 'signer_id' must be a string.")
         if omit_keys is not None and (not isinstance(omit_keys, list) or not all(isinstance(k, str) for k in omit_keys)):

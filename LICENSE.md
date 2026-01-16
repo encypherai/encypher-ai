@@ -585,7 +585,7 @@ For example, a typical source file header might be:
 
 ```python
 # [Project Name] - [Brief Description]
-# Copyright (C) 2025 Encypher LLC.
+# Copyright (C) 2025 Encypher Corporation.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by

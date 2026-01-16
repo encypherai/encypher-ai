@@ -16,7 +16,7 @@ All contributors are expected to adhere to our Code of Conduct. Please read it b
    ```
 3. **Set up the development environment**
    ```bash
-   uv pip install -e ".[dev]"
+   uv sync --all-extras
    ```
 4. **Create a new branch**
    ```bash
@@ -29,21 +29,20 @@ All contributors are expected to adhere to our Code of Conduct. Please read it b
 
 We follow PEP 8 guidelines for Python code. We use the following tools to enforce code style:
 
-- **Black**: For code formatting
-- **isort**: For import sorting
-- **flake8**: For linting
+- **ruff**: For linting and formatting
 - **mypy**: For static type checking
 
 Run these tools before submitting a pull request:
 
 ```bash
-# Format code
-black .
-isort .
+# Lint
+uv run ruff check .
 
-# Check for issues
-flake8
-mypy .
+# Format
+uv run ruff format .
+
+# Type check
+uv run mypy .
 ```
 
 ### Testing
@@ -52,10 +51,10 @@ All code changes should include appropriate tests. We use pytest for testing:
 
 ```bash
 # Run all tests
-pytest
+uv run pytest
 
 # Run tests with coverage
-pytest --cov=encypher
+uv run pytest --cov=encypher
 ```
 
 ### Documentation

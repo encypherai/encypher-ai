@@ -6,7 +6,7 @@ This directory contains a collection of practical examples demonstrating how to 
 
 -   **[Basic Text Embedding](./basic_text_embedding.md)**: Start here to learn the fundamentals of embedding and extracting metadata in text.
 -   **[Advanced Usage](./advanced-usage.md)**: Explore more complex scenarios, including custom manifest creation and advanced verification options.
--   **[Tamper Detection](./tamper_detection.md)**: A concise, runnable example showing how the C2PA v2.2 hard-binding and signature verification automatically protect against content and manifest tampering.
+-   **[Tamper Detection](../user-guide/tamper-detection.md)**: A concise, runnable example showing how C2PA hard-binding and signature verification automatically protect against content and manifest tampering.
 
 ## C2PA Demonstrations
 

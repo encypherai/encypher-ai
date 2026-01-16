@@ -16,6 +16,7 @@ from typing import Dict, Optional, Union
 
 
 from encypher.core.keys import generate_ed25519_key_pair
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
 from encypher.core.payloads import BasicPayload, ManifestPayload
 from encypher.core.unicode_metadata import UnicodeMetadata
 
@@ -51,7 +52,7 @@ encoded_text = UnicodeMetadata.embed_metadata(
     timestamp=int(time.time()),
     custom_metadata={
         "model_id": "gpt-4o",
-        "version": "2.3.0",
+        "version": "3.0.2",
         "organization": "Encypher"
     },
     metadata_format="basic",  # 'basic' is a simple key-value format
@@ -65,16 +66,16 @@ print(f"Encoded text:   {encoded_text}")
 
 ### 3. Extract and Verify Metadata
 
-To ensure the text is authentic and unmodified, use the `verify_metadata` method with your `public_key_provider`.
+To ensure the text is authentic and unmodified, use the `verify_metadata` method with your `public_key_resolver`.
 
 ```python
-# Verify the metadata using the public key provider
+# Verify the metadata using the public key resolver
 is_valid: bool
 extracted_signer_id: Optional[str]
 verified_payload: Union[BasicPayload, ManifestPayload, None]
 is_valid, extracted_signer_id, verified_payload = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_provider=public_key_provider
+    public_key_resolver=public_key_resolver
 )
 
 print(f"\nSignature valid: {is_valid}")
@@ -129,7 +130,7 @@ for chunk in streaming_response_chunks:
         full_encoded_response += encoded_chunk
 
 # Finalize the stream to process any remaining buffer and embed the metadata
-final_chunk = streaming_handler.finalize_stream()
+final_chunk = streaming_handler.finalize()
 if final_chunk:
     print(final_chunk, end="")
     full_encoded_response += final_chunk
@@ -138,7 +139,8 @@ print("\n--- End of Stream ---")
 # Verify the complete streamed text
 is_stream_valid, stream_signer_id, stream_payload = UnicodeMetadata.verify_metadata(
     text=full_encoded_response,
-    public_key_provider=public_key_provider
+    public_key_resolver=public_key_resolver,
+    require_hard_binding=False,
 )
 
 print(f"\nStreamed text signature valid: {is_stream_valid}")

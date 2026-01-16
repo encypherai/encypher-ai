@@ -1,3 +1,4 @@
+import unicodedata
 import unittest
 
 import c2pa_text
@@ -21,6 +22,11 @@ class TestC2PATextWrapperByteOffsets(unittest.TestCase):
         self.assertIsNotNone(span)
 
         # wrapper segment should start with ZWNBSP and run to end of text
-        wrapper_segment = embedded[span[0] : span[1]]
+        start_byte, length_byte = span
+        embedded_bytes = embedded.encode("utf-8")
+        wrapper_segment = embedded_bytes[start_byte : start_byte + length_byte].decode("utf-8")
         self.assertTrue(wrapper_segment.startswith("\ufeff"))
-        self.assertEqual(span[1], len(embedded))
+
+        normalized_embedded = unicodedata.normalize("NFC", embedded)
+        normalized_bytes = normalized_embedded.encode("utf-8")
+        self.assertEqual(start_byte + length_byte, len(normalized_bytes))
