@@ -293,7 +293,9 @@ async def get_trust_anchor(
     await public_rate_limiter(request, endpoint_type="trust_anchor_lookup")
     
     # Handle Encypher's official public key (free tier / demo)
-    if signer_id in ("encypher.public", settings.demo_organization_id) or signer_id.startswith("demo-"):
+    # Also includes org_encypher_marketing which uses the shared demo key
+    DEMO_SIGNER_IDS = {"encypher.public", settings.demo_organization_id, "org_encypher_marketing"}
+    if signer_id in DEMO_SIGNER_IDS or signer_id.startswith("demo-"):
         demo_private_key = get_demo_private_key()
         demo_public_key = demo_private_key.public_key()
         
