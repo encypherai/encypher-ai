@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { resolveEnterpriseApiUrl } from "@/lib/enterpriseApiUrl";
 import { mapVerifyResponseToDecodeToolResponse } from "@/lib/enterpriseApiTools";
+import { buildUpstreamTraceHeaders } from "@/lib/upstreamTraceHeaders";
 
 export const runtime = "nodejs";
 
@@ -35,6 +36,8 @@ export async function POST(request: NextRequest) {
         error: { message: "Upstream returned invalid JSON" },
       }));
 
+    const upstreamTraceHeaders = buildUpstreamTraceHeaders(upstream.headers, data);
+
     if (!upstream.ok) {
       const detail =
         (typeof data?.detail === "string" && data.detail) ||
@@ -42,10 +45,18 @@ export async function POST(request: NextRequest) {
         data?.error?.message ||
         `Request failed with status ${upstream.status}`;
 
-      return NextResponse.json({ detail }, { status: upstream.status });
+      const response = NextResponse.json({ detail }, { status: upstream.status });
+      Object.entries(upstreamTraceHeaders).forEach(([key, value]) => {
+        response.headers.set(key, value);
+      });
+      return response;
     }
 
-    return NextResponse.json(mapVerifyResponseToDecodeToolResponse(data));
+    const response = NextResponse.json(mapVerifyResponseToDecodeToolResponse(data));
+    Object.entries(upstreamTraceHeaders).forEach(([key, value]) => {
+      response.headers.set(key, value);
+    });
+    return response;
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json({ detail: message }, { status: 500 });
