@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encypher-ai"
-version = "3.0.2"
-description = "Embed invisible metadata into text using Unicode Variation Selectors."
+version = "3.0.3"
+description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
-authors = [{name = "Encypher Corporation"}]
+authors = [{name = "Encypher Team"}]
 license = "AGPL-3.0"
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -21,7 +21,7 @@ dependencies = [
     "rich",
     "cryptography",
     "cbor2>=5.6.5",
-    "c2pa-text>=0.1.0",
+    "c2pa-text>=1.0.0",
     "requests",
 ]
 
@@ -50,6 +50,7 @@ warn_unused_configs = true
 disallow_untyped_defs = true
 disallow_incomplete_defs = true
 ignore_missing_imports = true
+exclude = "(^((\\.\\\\)|(\\./))?\\.venv([\\\\/]|$)|^((\\.\\\\)|(\\./))?\\.ruff_cache([\\\\/]|$)|^((\\.\\\\)|(\\./))?\\.pytest_cache([\\\\/]|$)|^((\\.\\\\)|(\\./))?examples([\\\\/]|$)|^((\\.\\\\)|(\\./))?encypher([\\\\/])examples([\\\\/]|$))"
 
 [[tool.mypy.overrides]]
 module = ["tests.*"]
@@ -72,6 +73,7 @@ python_classes = "Test*"
 [tool.ruff]
 line-length = 150
 target-version = "py39"
+extend-exclude = ["**/*.ipynb"]
 # Inherits from root ruff.toml
 
 [tool.ruff.lint]
@@ -94,6 +96,3 @@ line-ending = "auto"
 
 [tool.setuptools]
 packages = ["encypher"]
-
-[tool.uv.sources]
-c2pa-text = { path = "../c2pa-text/python", editable = true }

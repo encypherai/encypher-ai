@@ -68,7 +68,9 @@ C2PAPayload = TypedDict(
         "instance_id": str,
         "claim_generator": str,
         "assertions": list[C2PAAssertion],
+        "ingredients": list[dict[str, Any]],
     },
+    total=False,
 )
 
 
@@ -93,7 +95,7 @@ class C2PASoftBindingAssertionData(TypedDict):
 InnerPayloadTypes = Union[BasicPayload, ManifestPayload, C2PAPayload]
 
 
-class OuterPayload(TypedDict):
+class OuterPayload(TypedDict, total=False):
     """
     The complete outer structure embedded into the text.
     This structure is designed to be backward-compatible and extensible.
@@ -106,6 +108,7 @@ class OuterPayload(TypedDict):
     # base64-encoded string for binary formats like CBOR.
     payload: Union[BasicPayload, ManifestPayload, str]
     signature: str  # Base64 encoded signature string
+    cose_sign1: str
 
 
 # --- End TypedDict Definitions ---
@@ -214,5 +217,3 @@ def deserialize_jumbf_payload(jumbf_bytes: bytes) -> dict[str, Any]:
     except Exception as e:
         logger.error(f"Unexpected error during JUMBF deserialization: {e}", exc_info=True)
         raise RuntimeError(f"Unexpected error deserializing JUMBF payload: {e}") from e
-
-

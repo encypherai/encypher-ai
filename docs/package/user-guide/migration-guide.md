@@ -25,7 +25,7 @@ The internal implementation of the `StreamingHandler` has been updated to correc
 No code changes are required when upgrading to version 2.4.0. The fix is internal to the implementation and doesn't affect the public API. Simply upgrade to version 2.4.0 using:
 
 ```bash
-uv pip install --upgrade encypher-ai==2.4.0
+uv add --upgrade encypher-ai==2.4.0
 ```
 
 ## Version 2.2.0 Refactoring

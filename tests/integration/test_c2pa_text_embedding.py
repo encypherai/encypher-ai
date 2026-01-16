@@ -1,3 +1,4 @@
+import os
 import struct
 import unicodedata
 import unittest
@@ -452,9 +453,9 @@ class TestC2PATextEmbedding(unittest.TestCase):
         self.assertIsNotNone(manifest_bytes)
         self.assertEqual(clean_text, unicodedata.normalize("NFC", sample_text))
         self.assertIsNotNone(span)
-        self.assertEqual(span[1], len(embedded_text))
-
-        wrapper_segment = embedded_text[span[0] : span[1]]
+        start_byte, length_byte = span
+        embedded_bytes = embedded_text.encode("utf-8")
+        wrapper_segment = embedded_bytes[start_byte : start_byte + length_byte].decode("utf-8")
         self.assertTrue(wrapper_segment.startswith("﻿"))
 
         self.assertGreaterEqual(len(manifest_bytes), 8)
@@ -475,12 +476,94 @@ class TestC2PATextEmbedding(unittest.TestCase):
         self.assertEqual(extracted_signer, key_id)
         self.assertIsNotNone(manifest)
 
+        self.assertEqual(
+            manifest.get("@context"),
+            "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+        )
+
         hard_binding = next((a for a in manifest["assertions"] if a.get("label") == "c2pa.hash.data.v1"), None)
         self.assertIsNotNone(hard_binding)
         exclusions = hard_binding["data"].get("exclusions")
         expected_start = len(unicodedata.normalize("NFC", sample_text).encode("utf-8"))
         expected_length = len(wrapper_segment.encode("utf-8"))
         self.assertEqual(exclusions, [{"start": expected_start, "length": expected_length}])
+
+    def test_c2pa_context_url_can_be_overridden_via_env(self):
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-context-override"
+        sample_text = "Context override test"
+
+        old_context_url = os.environ.get("ENCYPHER_C2PA_CONTEXT_URL")
+        try:
+            os.environ["ENCYPHER_C2PA_CONTEXT_URL"] = "https://c2pa.org/schemas/v2.2/c2pa.jsonld"
+
+            embedded_text = UnicodeMetadata.embed_metadata(
+                text=sample_text,
+                private_key=private_key,
+                signer_id=key_id,
+                metadata_format="c2pa",
+            )
+
+            def resolver(kid: str):
+                return public_key if kid == key_id else None
+
+            verified, extracted_signer, manifest = UnicodeMetadata.verify_metadata(
+                text=embedded_text,
+                public_key_resolver=resolver,
+                return_payload_on_failure=True,
+            )
+
+            self.assertTrue(verified)
+            self.assertEqual(extracted_signer, key_id)
+            self.assertIsNotNone(manifest)
+            self.assertEqual(manifest.get("@context"), "https://c2pa.org/schemas/v2.2/c2pa.jsonld")
+        finally:
+            if old_context_url is None:
+                os.environ.pop("ENCYPHER_C2PA_CONTEXT_URL", None)
+            else:
+                os.environ["ENCYPHER_C2PA_CONTEXT_URL"] = old_context_url
+
+    def test_c2pa_verifier_rejects_non_accepted_contexts(self):
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-context-reject"
+        sample_text = "Context reject test"
+
+        old_context_url = os.environ.get("ENCYPHER_C2PA_CONTEXT_URL")
+        old_accepted = os.environ.get("ENCYPHER_C2PA_ACCEPTED_CONTEXTS")
+        try:
+            os.environ.pop("ENCYPHER_C2PA_CONTEXT_URL", None)
+            embedded_text = UnicodeMetadata.embed_metadata(
+                text=sample_text,
+                private_key=private_key,
+                signer_id=key_id,
+                metadata_format="c2pa",
+            )
+
+            os.environ["ENCYPHER_C2PA_ACCEPTED_CONTEXTS"] = "https://c2pa.org/schemas/v2.2/c2pa.jsonld"
+
+            def resolver(kid: str):
+                return public_key if kid == key_id else None
+
+            verified, extracted_signer, manifest = UnicodeMetadata.verify_metadata(
+                text=embedded_text,
+                public_key_resolver=resolver,
+                return_payload_on_failure=True,
+            )
+
+            self.assertFalse(verified)
+            self.assertEqual(extracted_signer, key_id)
+            self.assertIsNotNone(manifest)
+            self.assertEqual(manifest.get("@context"), "https://c2pa.org/schemas/v2.3/c2pa.jsonld")
+        finally:
+            if old_context_url is None:
+                os.environ.pop("ENCYPHER_C2PA_CONTEXT_URL", None)
+            else:
+                os.environ["ENCYPHER_C2PA_CONTEXT_URL"] = old_context_url
+
+            if old_accepted is None:
+                os.environ.pop("ENCYPHER_C2PA_ACCEPTED_CONTEXTS", None)
+            else:
+                os.environ["ENCYPHER_C2PA_ACCEPTED_CONTEXTS"] = old_accepted
 
 
 if __name__ == "__main__":

@@ -1,6 +1,14 @@
 # C2PA Integration for Text Content
 
-The Encypher SDK provides a robust, C2PA-compliant solution for embedding provenance and authenticity metadata directly into plain text. While the official C2PA standard primarily focuses on container-based media files (like JPEG or MP4), our SDK extends these principles to the text domain, which traditionally lacks a standard embedding mechanism.
+The Encypher SDK provides a robust, C2PA-compliant solution for embedding provenance and authenticity metadata directly into plain text. As of C2PA v2.3, the official specification includes support for embedding manifests into unstructured text (Appendix A.7), and this SDK implements that standard.
+
+Specification reference:
+https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text
+
+This project is maintained by Encypher. The maintainers of this codebase are co-chairs of the C2PA Text Task Force and authors of the linked specification.
+
+For the wrapper transport layer (`C2PATextManifestWrapper` encoding/decoding), Encypher relies on the MIT-licensed reference implementation:
+https://github.com/encypherai/c2pa-text
 
 > Note: Timestamps are optional in C2PA text embeddings. When omitted, C2PA action assertions that normally include a `when` field (e.g., `c2pa.created`, `c2pa.watermarked`) will simply omit it.
 
@@ -19,9 +27,18 @@ This approach makes the text itself the carrier of its own C2PA provenance, ensu
 Our implementation fully supports the core security features of the C2PA standard:
 
 -   **Digital Signatures (COSE)**: Manifests are signed using Ed25519 keys within a `COSE_Sign1` structure, ensuring authenticity and integrity.
--   **Hard Binding**: A cryptographic hash of the original, clean text content is included in the manifest. This creates a tamper-evident seal, proving the text has not been altered.
+-   **Hard Binding (`c2pa.hash.data`)**: A cryptographic hash of the original, clean text content is included in the manifest. The hash is computed on NFC-normalized, UTF-8 encoded text after removing the wrapper bytes specified by the `exclusions` field. This creates a tamper-evident seal, proving the text has not been altered.
 -   **Soft Binding**: A hash of the manifest's assertions is also included, preventing claims from being added, removed, or modified after signing.
 -   **X.509 Certificate Chains**: You can provide a certificate chain along with the signature, allowing verifiers to trace the key's authenticity back to a trusted root Certificate Authority (CA).
+
+### Validation Status Codes
+
+Per the C2PA v2.3 specification, the following status codes are used for text-based manifest validation:
+
+-   `manifest.text.corruptedWrapper`: A `C2PATextManifestWrapper` magic number was detected, but the wrapper itself was malformed or incomplete.
+-   `manifest.text.multipleWrappers`: More than one valid `C2PATextManifestWrapper` was found in the text.
+
+> **Note:** Our implementation is strict-by-default: verification fails if multiple valid wrappers are detected. The spec allows validators to select the intended wrapper via the `exclusions` field, but we enforce single-wrapper compliance for security.
 
 ## Practical Example: Embedding a C2PA Manifest
 
@@ -133,3 +150,14 @@ When you run this script, you will see:
 3.  When a single word of the text is changed, the verification fails, demonstrating the power of the hard-binding content hash.
 
 This workflow provides a powerful tool for establishing trust and transparency in AI-generated text and other plain-text content.
+
+## Maintenance & Support
+
+While this library is open source, Encypher offers an **Enterprise API** for:
+
+- Managing cryptographic keys at scale (including HSM-backed workflows)
+- Automated verification, revocation, and trust anchor management
+- Content production workflows for signing at scale
+- Analytics and tracking for signed content
+
+[Learn more about Encypher Enterprise](https://encypherai.com)

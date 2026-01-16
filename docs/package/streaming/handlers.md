@@ -12,19 +12,23 @@ The `StreamingHandler` class is the primary interface for handling streaming con
 class StreamingHandler:
     def __init__(
         self,
-        metadata: Dict[str, Any],
-        private_key: PrivateKeyTypes,
+        custom_metadata: Optional[dict[str, Any]] = None,
+        timestamp: Optional[Union[str, datetime, date, int, float]] = None,
         target: Union[str, MetadataTarget] = "whitespace",
         encode_first_chunk_only: bool = True,
-        min_buffer_size: int = 0
+        private_key: Optional[Ed25519PrivateKey] = None,
+        signer_id: Optional[str] = None,
+        metadata_format: Literal["basic", "manifest", "c2pa"] = "c2pa",
+        omit_keys: Optional[list[str]] = None,
+        metadata: Optional[dict[str, Any]] = None,
     ):
         """
         Initialize a StreamingHandler for processing streaming content.
 
         Args:
-            metadata: Dictionary containing the metadata to embed. Must include
-                     a 'key_id' for public key resolution during verification.
-            private_key: The private key (Ed25519PrivateKey) used for signing the metadata.
+            custom_metadata: User metadata to embed into the payload.
+            timestamp: Optional timestamp to embed. When omitted, the library will generate one.
+            target: Where to embed metadata.
             target: Where to embed metadata. Can be a string ("whitespace", "punctuation",
                    "first_letter", "last_letter", "all_characters", "file_end", "file_end_zwnbsp")
                    or a MetadataTarget enum. End-of-file targets append selectors at the end of
@@ -32,8 +36,11 @@ class StreamingHandler:
             encode_first_chunk_only: If True (default), metadata is embedded entirely within
                                     the first suitable chunk(s). If False, metadata can be
                                     distributed across multiple chunks if needed.
-            min_buffer_size: Minimum number of characters to accumulate before attempting
-                             to embed metadata. Defaults to 0.
+            private_key: The private key (Ed25519PrivateKey) used for signing the metadata.
+            signer_id: Key identifier embedded into the payload and later used for verification.
+            metadata_format: The metadata format to embed. For streaming, `basic` is the typical choice.
+            omit_keys: Optional list of metadata keys to omit from the payload prior to signing.
+            metadata: Deprecated alias for providing metadata; prefer `custom_metadata`.
         """
 ```
 
@@ -44,8 +51,8 @@ class StreamingHandler:
 ```python
 def process_chunk(
     self,
-    chunk: str
-) -> Optional[str]:
+    chunk: Union[str, dict[str, Any]]
+) -> Union[str, dict[str, Any]]:
     """
     Process a chunk of streaming content, embedding metadata if possible.
 
@@ -58,8 +65,7 @@ def process_chunk(
         chunk: The text chunk to process.
 
     Returns:
-        The processed text chunk with embedded metadata if embedding occurred,
-        or None if the chunk was just added to the buffer without embedding.
+        The processed chunk with embedded metadata, preserving the input chunk type.
     """
 ```
 
@@ -80,68 +86,42 @@ def finalize(self) -> Optional[str]:
     """
 ```
 
-#### get_metadata
+#### reset
 
 ```python
-def get_metadata(self) -> Dict[str, Any]:
-    """
-    Get the current metadata being used by the handler.
-
-    Returns:
-        The metadata dictionary
-    """
-```
-
-#### update_metadata
-
-```python
-def update_metadata(
-    self,
-    metadata: Dict[str, Any]
-) -> None:
-    """
-    Update the metadata used by the handler.
-
-    Args:
-        metadata: New metadata dictionary to use
-    """
+def reset(self) -> None:
+    """Reset internal handler state so it can be reused for a new stream."""
 ```
 
 ### Usage Example
 
 ```python
+from datetime import datetime, timezone
 from encypher.streaming import StreamingHandler
-from encypher.core.keys import generate_key_pair
 from encypher.core.unicode_metadata import UnicodeMetadata
-from cryptography.hazmat.primitives import serialization
+from encypher.core.keys import generate_ed25519_key_pair
 from typing import Optional
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-import time
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 # Generate key pair (replace with your actual key management)
-private_key, public_key = generate_key_pair()
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "example-key-1"
 
 # Example public key resolver function
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
-    if key_id == "example-key-1":
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
+    if key_id == signer_id:
         return public_key
     return None
 
-# Create metadata
-metadata = {
-    "model": "gpt-4",
-    "organization": "MyCompany",
-    "timestamp": time.time(),
-    "version": "2.0.0",
-    "key_id": "example-key-1" # Identifier for the public key
-}
-
 # Initialize the streaming handler
 handler = StreamingHandler(
-    metadata=metadata,
+    custom_metadata={"model": "gpt-4", "organization": "MyCompany"},
     private_key=private_key,
+    signer_id=signer_id,
+    timestamp=datetime.now(timezone.utc),
     target="whitespace",
-    encode_first_chunk_only=True
+    encode_first_chunk_only=True,
+    metadata_format="basic",
 )
 
 # Process chunks as they arrive
@@ -176,13 +156,15 @@ extracted_metadata = UnicodeMetadata.extract_metadata(full_text)
 print(f"\nExtracted metadata: {extracted_metadata}")
 
 # Verify the metadata using the public key resolver
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
-    full_text,
-    public_key_resolver=resolve_public_key
+is_valid, extracted_signer_id, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=full_text,
+    public_key_resolver=resolve_public_key,
+    require_hard_binding=False,
 )
 
 print(f"\nVerification result: {'✅ Verified' if is_valid else '❌ Failed'}")
 if is_valid:
+    print(f"Signer ID: {extracted_signer_id}")
     print(f"Verified metadata: {verified_metadata}")
 ```
 
@@ -190,36 +172,35 @@ if is_valid:
 
 ```python
 import openai
-from encypher.streaming import StreamingHandler
-from encypher.core.keys import generate_key_pair
-from encypher.core.unicode_metadata import UnicodeMetadata
+from datetime import datetime, timezone
 from typing import Optional
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-import time
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+from encypher.core.keys import generate_ed25519_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.streaming import StreamingHandler
 
 # Initialize OpenAI client
 client = openai.OpenAI(api_key="your-api-key")
 
 # Generate key pair and resolver (replace with actual key management)
-private_key, public_key = generate_key_pair()
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
-    if key_id == "openai-stream-key": return public_key
-    return None
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "openai-stream-key"
 
-# Create metadata
-metadata = {
-    "model": "gpt-4",
-    "organization": "MyCompany",
-    "timestamp": time.time(),
-    "version": "2.0.0",
-    "key_id": "openai-stream-key"
-}
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
+    if key_id == signer_id:
+        return public_key
+    return None
 
 # Initialize the streaming handler
 handler = StreamingHandler(
-    metadata=metadata,
+    custom_metadata={"model": "gpt-4", "organization": "MyCompany"},
     private_key=private_key,
-    target="whitespace"
+    signer_id=signer_id,
+    timestamp=datetime.now(timezone.utc),
+    target="whitespace",
+    metadata_format="basic",
 )
 
 # Create a streaming completion
@@ -256,13 +237,15 @@ print("\n\nStreaming completed!")
 
 # Verify the final response
 print("\nVerifying full response...")
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
-    full_response,
-    public_key_resolver=resolve_public_key
+is_valid, extracted_signer_id, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=full_response,
+    public_key_resolver=resolve_public_key,
+    require_hard_binding=False,
 )
 
 if is_valid:
     print("✅ Verification successful!")
+    print(f"Signer ID: {extracted_signer_id}")
     print(f"Verified metadata: {verified_metadata}")
 else:
     print("❌ Verification failed!")
@@ -272,36 +255,35 @@ else:
 
 ```python
 import anthropic
-from encypher.streaming import StreamingHandler
-from encypher.core.keys import generate_key_pair
-from encypher.core.unicode_metadata import UnicodeMetadata
+from datetime import datetime, timezone
 from typing import Optional
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-import time
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+from encypher.streaming import StreamingHandler
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_ed25519_key_pair
 
 # Initialize Anthropic client
 client = anthropic.Anthropic(api_key="your-api-key")
 
 # Generate key pair and resolver (replace with actual key management)
-private_key, public_key = generate_key_pair()
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
-    if key_id == "anthropic-stream-key": return public_key
-    return None
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "anthropic-stream-key"
 
-# Create metadata
-metadata = {
-    "model": "claude-3-opus-20240229",
-    "organization": "MyCompany",
-    "timestamp": time.time(),
-    "version": "2.0.0",
-    "key_id": "anthropic-stream-key"
-}
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
+    if key_id == signer_id:
+        return public_key
+    return None
 
 # Initialize the streaming handler
 handler = StreamingHandler(
-    metadata=metadata,
+    custom_metadata={"model": "claude-3-opus-20240229", "organization": "MyCompany"},
     private_key=private_key,
-    target="whitespace"
+    signer_id=signer_id,
+    timestamp=datetime.now(timezone.utc),
+    target="whitespace",
+    metadata_format="basic",
 )
 
 # Create a streaming completion
@@ -332,13 +314,15 @@ print("\n\nStreaming completed!")
 
 # Verify the final response
 print("\nVerifying full response...")
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
-    full_response,
-    public_key_resolver=resolve_public_key
+is_valid, extracted_signer_id, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=full_response,
+    public_key_resolver=resolve_public_key,
+    require_hard_binding=False,
 )
 
 if is_valid:
     print("✅ Verification successful!")
+    print(f"Signer ID: {extracted_signer_id}")
     print(f"Verified metadata: {verified_metadata}")
 else:
     print("❌ Verification failed!")
@@ -350,37 +334,36 @@ Encypher works seamlessly with [LiteLLM](https://github.com/BerriAI/litellm), wh
 
 ```python
 import litellm
-from encypher.streaming import StreamingHandler
-from encypher.core.keys import generate_key_pair
-from encypher.core.unicode_metadata import UnicodeMetadata
+from datetime import datetime, timezone
 from typing import Optional
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
-import time
+
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
+
+from encypher.streaming import StreamingHandler
+from encypher.core.unicode_metadata import UnicodeMetadata
+from encypher.core.keys import generate_ed25519_key_pair
 
 # Configure LiteLLM
 litellm.api_key = "your-api-key"
 
 # Generate key pair and resolver (replace with actual key management)
-private_key, public_key = generate_key_pair()
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
-    # In a real application, this would look up the key in a secure storage
-    if key_id == "litellm-stream-key": return public_key
-    return None
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "litellm-stream-key"
 
-# Create metadata
-metadata = {
-    "model": "gpt-4",
-    "provider": "openai",
-    "timestamp": time.time(),
-    "version": "2.0.0",
-    "key_id": "litellm-stream-key"
-}
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
+    # In a real application, this would look up the key in a secure storage
+    if key_id == signer_id:
+        return public_key
+    return None
 
 # Initialize the streaming handler
 handler = StreamingHandler(
-    metadata=metadata,
+    custom_metadata={"model": "gpt-4", "provider": "openai"},
     private_key=private_key,
-    target="whitespace"
+    signer_id=signer_id,
+    timestamp=datetime.now(timezone.utc),
+    target="whitespace",
+    metadata_format="basic",
 )
 
 # Create a streaming completion
@@ -417,13 +400,15 @@ print("\n\nStreaming completed!")
 
 # Verify the final response
 print("\nVerifying full response...")
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
-    full_response,
-    public_key_resolver=resolve_public_key
+is_valid, extracted_signer_id, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=full_response,
+    public_key_resolver=resolve_public_key,
+    require_hard_binding=False,
 )
 
 if is_valid:
     print("✅ Verification successful!")
+    print(f"Signer ID: {extracted_signer_id}")
     print(f"Verified metadata: {verified_metadata}")
 else:
     print("❌ Verification failed!")
@@ -455,24 +440,26 @@ To verify content with embedded metadata from a `StreamingHandler`, use the `Uni
 
 ```python
 from encypher.core.unicode_metadata import UnicodeMetadata
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
 from typing import Optional
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 
 # Define a public key resolver function
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
     # In a real application, this would look up the key in a secure storage
     if key_id == "example-key-1":
         return public_key  # The public key corresponding to the private key used for signing
     return None
 
 # After processing all chunks and obtaining the full response
-is_valid, verified_metadata = UnicodeMetadata.verify_metadata(
-    full_response,
-    public_key_resolver=resolve_public_key  # Provide the resolver function
+is_valid, extracted_signer_id, verified_metadata = UnicodeMetadata.verify_metadata(
+    text=full_response,
+    public_key_resolver=resolve_public_key,  # Provide the resolver function
+    require_hard_binding=False,
 )
 
 if is_valid:
     print("✅ Verification successful!")
+    print(f"Signer ID: {extracted_signer_id}")
     print(f"Metadata: {verified_metadata}")
 else:
     print("❌ Verification failed - content may have been tampered with or the key_id is not recognized.")
@@ -484,7 +471,7 @@ You can create a custom streaming handler by extending the `StreamingHandler` cl
 
 ```python
 from encypher.streaming import StreamingHandler
-from encypher.core import MetadataTarget
+from encypher.core.unicode_metadata import MetadataTarget
 import json
 
 class CustomStreamingHandler(StreamingHandler):
@@ -496,17 +483,17 @@ class CustomStreamingHandler(StreamingHandler):
         # Initialize the parent class
         super().__init__(*args, **kwargs)
 
-    def process_chunk(self, chunk, is_final=False):
+    def process_chunk(self, chunk):
         # Track statistics
         self.chunks_processed += 1
-        self.total_characters += len(chunk)
+        self.total_characters += len(str(chunk))
 
         # Add chunk number to metadata
         self.metadata["chunk_number"] = self.chunks_processed
         self.metadata["total_characters"] = self.total_characters
 
         # Use the parent implementation to process the chunk
-        return super().process_chunk(chunk, is_final)
+        return super().process_chunk(chunk)
 
     def finalize(self):
         # Add final statistics to metadata
@@ -525,7 +512,7 @@ class CustomStreamingHandler(StreamingHandler):
         }
 
 # Usage example
-handler = CustomStreamingHandler(metadata={"model": "custom-model"})
+handler = CustomStreamingHandler(custom_metadata={"model": "custom-model"}, metadata_format="basic")
 
 # Process chunks
 for chunk in chunks:
@@ -541,4 +528,4 @@ print(f"Streaming statistics: {json.dumps(stats, indent=2)}")
 
 - [`MetadataEncoder`](../api-reference/metadata-encoder.md) - Base class for embedding and extracting metadata
 - [`StreamingMetadataEncoder`](../api-reference/streaming-metadata-encoder.md) - Lower-level interface for streaming scenarios
-- [`UnicodeMetadata`](../api-reference/unicode-metadata.md) - Low-level utilities for working with Unicode variation selectors
+- [`UnicodeMetadata`](../api-reference/unicode_metadata.md) - Low-level utilities for working with Unicode variation selectors

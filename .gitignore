@@ -21,6 +21,7 @@ var/
 */node_modules/
 *.lock
 .windsurf/
+.teams/
 
 # Virtual Environment
 venv/

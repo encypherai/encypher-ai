@@ -10,7 +10,7 @@ Encypher is available on PyPI and can be installed using uv.
 ## Basic Installation
 
 ```bash
-uv pip install encypher-ai
+uv add encypher-ai
 ```
 
 This installs the core Encypher package with all required dependencies.
@@ -24,8 +24,8 @@ For development purposes, you can install Encypher with additional development d
 git clone https://github.com/encypherai/encypher-ai.git
 cd encypher-ai
 
-# Install with development dependencies
-uv pip install -e ".[dev]"
+# Install dependencies (including dev extras)
+uv sync --all-extras
 ```
 
 ## Dependencies
@@ -33,14 +33,13 @@ uv pip install -e ".[dev]"
 Encypher has the following core dependencies:
 
 - `cryptography`: For Ed25519 digital signatures and key management.
-- `cbor2`: For CBOR encoding/decoding of C2PA-inspired manifests.
-- `pycose`: For COSE signing and verification, used in C2PA v2.2 manifests.
+- `cbor2`: For CBOR encoding/decoding.
+- `c2pa-text`: For C2PA `C2PATextManifestWrapper` encoding/decoding.
+- `requests`: For HTTP requests.
 
 For development, additional dependencies include:
 
 - `pytest`: For running tests
-- `black`: For code formatting
-- `isort`: For import sorting
 - `ruff`: For linting and code formatting
 - `mypy`: For static type checking
 

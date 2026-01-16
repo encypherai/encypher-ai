@@ -17,6 +17,7 @@ from typing import Any, Optional
 import cbor2
 
 from encypher import __version__
+from encypher.config.settings import Settings
 
 # Configure logger
 logger = logging.getLogger(__name__)
@@ -133,7 +134,8 @@ def encypher_manifest_to_c2pa_like_dict(
 
     # Add optional C2PA v2.2 context URL if requested
     if add_context:
-        result["@context"] = "https://c2pa.org/schemas/v2.3/c2pa.jsonld"
+        settings = Settings()
+        result["@context"] = settings.get("c2pa_context_url", "https://c2pa.org/schemas/v2.3/c2pa.jsonld")
 
     # Generate a unique instance_id for this manifest (UUID) if requested
     if add_instance_id:
