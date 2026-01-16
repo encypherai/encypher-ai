@@ -10,7 +10,7 @@ import os
 from pathlib import Path
 from typing import Any, Optional, Union
 
-from encypher.core.unicode_metadata import MetadataTarget
+from encypher.core.constants import MetadataTarget
 
 
 class Settings:
@@ -29,6 +29,11 @@ class Settings:
         "timestamp_format": "%Y-%m-%dT%H:%M%z",
         "logging_level": "INFO",
         "report_usage_metrics": False,
+        "c2pa_context_url": "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+        "c2pa_accepted_contexts": [
+            "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+            "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+        ],
     }
 
     def __init__(
@@ -83,6 +88,8 @@ class Settings:
             "timestamp_format": f"{self.env_prefix}TIMESTAMP_FORMAT",
             "logging_level": f"{self.env_prefix}LOGGING_LEVEL",
             "report_usage_metrics": f"{self.env_prefix}REPORT_USAGE_METRICS",
+            "c2pa_context_url": f"{self.env_prefix}C2PA_CONTEXT_URL",
+            "c2pa_accepted_contexts": f"{self.env_prefix}C2PA_ACCEPTED_CONTEXTS",
         }
 
         # Update config with environment variables if they exist
@@ -96,6 +103,20 @@ class Settings:
                         "yes",
                         "y",
                     ]
+                elif config_key == "c2pa_accepted_contexts":
+                    raw_value = os.environ[env_var]
+                    parsed: list[str]
+                    try:
+                        maybe_json = json.loads(raw_value)
+                    except json.JSONDecodeError:
+                        maybe_json = None
+
+                    if isinstance(maybe_json, list) and all(isinstance(item, str) for item in maybe_json):
+                        parsed = [item.strip() for item in maybe_json if item.strip()]
+                    else:
+                        parsed = [part.strip() for part in raw_value.split(",") if part.strip()]
+
+                    self.config[config_key] = parsed
                 else:
                     self.config[config_key] = os.environ[env_var]
 
