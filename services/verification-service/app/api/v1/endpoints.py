@@ -145,14 +145,15 @@ async def get_optional_organization(authorization: str = Header(None)) -> Option
 
 def _demo_private_key_bytes() -> bytes:
     # TEAM_065: Align demo verification with local docker-compose (32 bytes of 0x00) and allow override.
-    candidate = os.getenv("DEMO_PRIVATE_KEY_HEX")
-    if candidate:
-        try:
-            value = bytes.fromhex(candidate.strip())
-            if len(value) == 32:
-                return value
-        except ValueError:
-            pass
+    for env_name in ("DEMO_PRIVATE_KEY_HEX", "SECRET_KEY"):
+        candidate = os.getenv(env_name)
+        if candidate:
+            try:
+                value = bytes.fromhex(candidate.strip())
+                if len(value) == 32:
+                    return value
+            except ValueError:
+                pass
     return b"\x00" * 32
 
 

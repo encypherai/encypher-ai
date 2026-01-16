@@ -52,6 +52,29 @@ def test_verify_missing_api_key_allows_public_verification(client) -> None:
     assert response.status_code == 200
 
 
+def test_verify_org_encypher_marketing_uses_secret_key_for_demo_verification(client, monkeypatch) -> None:
+    secret_key_hex = "11" * 32
+    monkeypatch.setenv("SECRET_KEY", secret_key_hex)
+
+    demo_private_key = ed25519.Ed25519PrivateKey.from_private_bytes(bytes.fromhex(secret_key_hex))
+    signer_id = "org_encypher_marketing"
+    signed_text = UnicodeMetadata.embed_metadata(
+        text="hello world",
+        private_key=demo_private_key,
+        signer_id=signer_id,
+        metadata_format="c2pa",
+        target=MetadataTarget.WHITESPACE,
+    )
+
+    response = client.post("/api/v1/verify", json={"text": signed_text})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["valid"] is True
+    assert payload["data"]["reason_code"] == "OK"
+    assert payload["data"]["signer_id"] == signer_id
+
+
 def test_verify_payload_too_large_returns_413(client, monkeypatch) -> None:
     dummy_response = _DummyResponse(
         200,
