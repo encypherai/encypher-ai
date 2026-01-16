@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encypher-ai"
-version = "3.0.2"
+version = "3.0.3"
 description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
 authors = [{name = "Encypher Team"}]
@@ -63,14 +63,6 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 check_untyped_defs = false
 ignore_missing_imports = true
-ignore_errors = true
-
-[[tool.mypy.overrides]]
-module = ["pytest", "pytest.*", "_pytest", "_pytest.*"]
-follow_imports = "skip"
-
-[[tool.mypy.overrides]]
-module = ["examples", "examples.*"]
 ignore_errors = true
 
 [tool.pytest.ini_options]

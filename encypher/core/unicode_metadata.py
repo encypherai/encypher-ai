@@ -11,6 +11,7 @@ import copy
 import hashlib
 import json
 import re
+import unicodedata
 import uuid
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Literal, Optional, Union, cast
@@ -19,10 +20,12 @@ import cbor2
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
+from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from encypher import __version__
+from encypher.config.settings import Settings
 from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
-from encypher.interop.c2pa.text_wrapper import count_valid_wrappers, encode_wrapper, find_and_decode
+from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode
 
 from .constants import MetadataTarget
 from .logging_config import logger
@@ -734,7 +737,7 @@ class UnicodeMetadata:
             return embedded_text
 
     @staticmethod
-    def _compute_text_hash(text: str, algorithm: str = "sha256") -> str:
+    def _compute_text_hash(cls, text: str, algorithm: str = "sha256") -> str:
         """Compute hex digest of *text* using *algorithm* after NFC normalization."""
         import hashlib
         import unicodedata
@@ -751,7 +754,7 @@ class UnicodeMetadata:
     def _embed_c2pa(
         cls,
         text: str,
-        private_key: SigningKey,
+        private_key: PrivateKeyTypes,
         signer_id: str,
         claim_generator: Optional[str],
         actions: Optional[list[dict[str, Any]]],
@@ -789,10 +792,9 @@ class UnicodeMetadata:
         if not isinstance(private_key, ed25519.Ed25519PrivateKey):
             raise TypeError("For C2PA embedding, 'private_key' must be an Ed25519PrivateKey instance.")
 
-        private_key = cast(Ed25519PrivateKey, private_key)
+        text = normalize_text(text)
 
         base_hash_result = compute_normalized_hash(text)
-        normalized_text = base_hash_result.normalized_text
         content_hash = base_hash_result.hexdigest
 
         current_exclusions: list[dict[str, int]] = []
@@ -827,10 +829,13 @@ class UnicodeMetadata:
         wrapper_text = ""
         cose_sign1_bytes: Optional[bytes] = None
 
+        settings = Settings()
+        c2pa_context_url = settings.get("c2pa_context_url", "https://c2pa.org/schemas/v2.3/c2pa.jsonld")
+
         MAX_ITERATIONS = 6
         for _ in range(MAX_ITERATIONS):
             c2pa_manifest: C2PAPayload = {
-                "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+                "@context": c2pa_context_url,
                 "instance_id": instance_id,
                 "claim_generator": claim_gen,
                 "assertions": [],
@@ -907,7 +912,7 @@ class UnicodeMetadata:
             jumbf_bytes = serialize_jumbf_payload(jumbf_payload)
             wrapper_text = encode_wrapper(jumbf_bytes)
 
-            final_text = normalized_text + wrapper_text
+            final_text = text + wrapper_text
 
             exclusion_tuples: list[tuple[int, int]] = []
             new_exclusions: list[dict[str, int]] = []
@@ -941,7 +946,7 @@ class UnicodeMetadata:
             raise RuntimeError("Failed to produce C2PA wrapper text")
 
         logger.info("Successfully embedded C2PA manifest for signer '%s'.", signer_id)
-        return normalized_text + wrapper_text
+        return text + wrapper_text
 
     @classmethod
     def verify_metadata(
@@ -993,9 +998,6 @@ class UnicodeMetadata:
 
         # --- Format-Specific Verification Dispatch ---
         if payload_format == "c2pa":
-            if count_valid_wrappers(text) > 1:
-                logger.warning("Multiple valid C2PA wrappers detected; strict verification failed.")
-                return False, signer_id, None
             try:
                 manifest_bytes, clean_text, span = find_and_decode(text)
             except ValueError as err:
@@ -1006,7 +1008,15 @@ class UnicodeMetadata:
                 logger.warning("C2PA format indicated but no text wrapper found.")
                 return False, signer_id, None
 
-            exclusion_start, exclusion_length = span
+            wrapper_segment = text[span[0] : span[1]]
+            normalized_full_text = unicodedata.normalize("NFC", text)
+            normalized_index = normalized_full_text.rfind(wrapper_segment)
+            if normalized_index < 0:
+                logger.warning("Unable to locate wrapper segment in normalized text during verification.")
+                return False, signer_id, None
+
+            exclusion_start = len(normalized_full_text[:normalized_index].encode("utf-8"))
+            exclusion_length = len(wrapper_segment.encode("utf-8"))
 
             return cls._verify_c2pa(
                 original_text=text,
@@ -1196,10 +1206,18 @@ class UnicodeMetadata:
             return False, signer_id, None
 
         # --- 2. Manifest Content Validation ---
-        # a) Check @context URL
-        expected_context = "https://c2pa.org/schemas/v2.2/c2pa.jsonld"
-        if c2pa_manifest.get("@context") != expected_context:
-            logger.warning(f"C2PA verification: Manifest @context mismatch. Expected '{expected_context}', got '{c2pa_manifest.get('@context')}'.")
+        settings = Settings()
+        configured_contexts = settings.get(
+            "c2pa_accepted_contexts",
+            [
+                "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+                "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+            ],
+        )
+        valid_contexts = set(configured_contexts) if isinstance(configured_contexts, list) else set()
+        manifest_context = c2pa_manifest.get("@context")
+        if manifest_context not in valid_contexts:
+            logger.warning(f"C2PA verification: Manifest @context mismatch. Expected one of {valid_contexts}, got '{manifest_context}'.")
             return False, signer_id, c2pa_manifest
 
         # b) Check for mandatory assertions

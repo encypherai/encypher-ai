@@ -2,36 +2,33 @@
 
 This document provides a chronological list of notable changes for each version of Encypher.
 
-## Unreleased
+## 3.0.3 (2026-01-16)
+
+### Fixed
+- Made C2PA manifest `@context` handling configurable via environment variables:
+  - `ENCYPHER_C2PA_CONTEXT_URL` controls the emitted `@context` during embedding.
+  - `ENCYPHER_C2PA_ACCEPTED_CONTEXTS` controls the verifier allowlist (JSON list or comma-separated string).
+- Default verifier allowlist accepts both C2PA schema contexts v2.2 and v2.3 to avoid false `SIGNATURE_INVALID` failures when signing emits v2.3.
 
 ## 3.0.2 (2026-01-10)
-
-### Changed
-- C2PA text verification is strict-by-default: verification fails when more than one valid `C2PATextManifestWrapper` is present.
-- C2PA text extraction is best-effort: when multiple valid wrappers are detected, the EOF-most wrapper is selected and a warning is emitted.
-
-### Documentation
-- Linked the published C2PA v2.3 specification section for text embeddings:
-  https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text
-
-## 3.0.1 (2026-01-09)
 
 ### Added
 - Introduced a shared `text_hashing` helper in `encypher.interop.c2pa` that performs NFC normalisation, exclusion filtering, and SHA-256 hashing so embedding and verification reuse the exact same pipeline.
 - Documented the end-of-text `C2PATextManifestWrapper` flow, including the FEFF prefix, contiguous variation selector block, and wrapper exclusion handling mandated by the latest C2PA text embedding proposal.
- - Implemented native COSE_Sign1 EdDSA (Ed25519) signing/verification using `cbor2` + `cryptography` (no external COSE runtime required).
+- Implemented native COSE_Sign1 EdDSA (Ed25519) signing/verification using `cbor2` + `cryptography` (no external COSE runtime required).
 
 ### Changed
 - Updated the C2PA embedding path to always append a single FEFF-prefixed wrapper containing a JUMBF manifest store encoded with the `magic | version | length | payload` layout.
 - Refactored hard-binding exclusion tracking to record `{start, length}` byte ranges derived from the NFC-normalised text and to stabilise those offsets prior to signing.
- - Removed `pycose` usage and replaced with a minimal COSE_Sign1 EdDSA implementation (Ed25519). Behaviour is unchanged for EdDSA-based claims; X.509 x5chain handling preserved.
+- Removed `pycose` usage and replaced with a minimal COSE_Sign1 EdDSA implementation (Ed25519). Behaviour is unchanged for EdDSA-based claims; X.509 x5chain handling preserved.
 
 ### Fixed
 - Ensured validators normalise text, remove wrapper exclusions, and recompute the content hash using the shared helper, eliminating discrepancies between embedding and verification.
+- Accepted C2PA manifest `@context` values for both v2.2 and v2.3 during verification.
 
 ### Documentation
 - Refreshed C2PA API references, tutorials, and provenance guides to explain the FEFF-prefixed wrapper workflow, normalised hashing routine, and the new helper utilities.
- - Noted release plan: 3.0 will target C2PA 2.3 alignment and include the native COSE path.
+- Noted release plan: 3.0 will target C2PA 2.3 alignment and include the native COSE path.
 
 ### Security
 - Dependency hygiene: Eliminated transitive `python-ecdsa` (GHSA-wj6h-64fc-37mp) by removing `pycose` and using a native COSE EdDSA implementation.
@@ -202,7 +199,8 @@ This document provides a chronological list of notable changes for each version 
         - Now requires `signer_id` as a direct parameter (replacing `key_id` within a `metadata` dictionary).
         - Accepts other metadata components (`model_id`, `timestamp`, `organization`, `version`, `custom_metadata`, `metadata_format`) as direct parameters. The generic `metadata` dictionary parameter has been removed for clarity and type safety.
     - `verify_metadata`:
-        - Expects a `public_key_resolver` callable that receives `signer_id` and returns the corresponding Ed25519 public key.
+        - The `public_key_resolver` parameter has been renamed to `public_key_provider` for consistency.
+        - The `public_key_provider` function now receives `signer_id` as its argument.
         - Returns a tuple: `(is_valid: bool, signer_id: Optional[str], payload: Union[BasicPayload, ManifestPayload, None])`.
     - `extract_metadata`:
         - Now consistently returns a `BasicPayload` or `ManifestPayload` object (or `None`), rather than a raw dictionary.
