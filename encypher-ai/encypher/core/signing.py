@@ -48,7 +48,7 @@ def _build_sign1(protected_bstr: bytes, unprotected: dict, payload: bytes, signa
     return cbor2.dumps([protected_bstr, unprotected, payload, signature])
 
 
-def _parse_sign1(cose_bytes: bytes):
+def _parse_sign1(cose_bytes: bytes) -> tuple[bytes, dict, Optional[bytes], bytes]:
     arr = cbor2.loads(cose_bytes)
     if not isinstance(arr, list) or len(arr) != 4:
         raise ValueError("Invalid COSE_Sign1 structure")

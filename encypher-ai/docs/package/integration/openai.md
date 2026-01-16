@@ -7,14 +7,14 @@ This guide explains how to integrate Encypher with the OpenAI API to embed and v
 Before you begin, ensure you have an OpenAI API key and have installed the required packages:
 
 ```bash
-uv pip install encypher-ai openai
+uv add encypher-ai openai
 ```
 
 ## Best Practices
 
 1.  **Include Model Information**: Record the model name/version in `custom_metadata` for traceability.
 2.  **Timestamps (optional)**: Timestamps are recommended but optional across all formats (including C2PA). When omitted, C2PA assertions that normally include a `when` field will simply omit it.
-3.  **Secure Keys**: Manage private keys securely and use a `public_key_provider` that resolves `signer_id` to public keys.
+3.  **Secure Keys**: Manage private keys securely and use a `public_key_resolver` that resolves `signer_id` to public keys.
 
 ## Non-Streaming Example
 
@@ -23,8 +23,9 @@ This example demonstrates how to sign and verify a standard, non-streaming respo
 ```python
 import os
 import openai
-from encypher.core.encypher import Encypher
+
 from encypher.core.keys import generate_ed25519_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
 
 # --- 1. Setup ---
 # In a real application, use a secure key management solution.
@@ -34,13 +35,7 @@ private_key, public_key = generate_ed25519_key_pair()
 signer_id = "openai-guide-signer-001"
 public_keys_store = {signer_id: public_key}
 
-encypher = Encypher(
-    private_key=private_key,
-    signer_id=signer_id,
-    public_key_provider=public_keys_store.get
-)
-
-client = openai.OpenAI()
+client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 # --- 2. Call the OpenAI API ---
 response = client.chat.completions.create(
@@ -58,45 +53,54 @@ custom_metadata = {
     "usage_tokens": dict(response.usage),
 }
 
-encoded_text = encypher.embed(
+encoded_text = UnicodeMetadata.embed_metadata(
     text=original_text,
-    custom_metadata=custom_metadata
+    private_key=private_key,
+    signer_id=signer_id,
+    custom_metadata=custom_metadata,
 )
 
 print("--- Response with Embedded Metadata ---")
 print(encoded_text)
 
 # --- 4. Verify Metadata ---
-verification_result = encypher.verify(text=encoded_text)
+is_valid, extracted_signer_id, payload = UnicodeMetadata.verify_metadata(
+    text=encoded_text,
+    public_key_resolver=public_keys_store.get,
+)
 
-print(f"\nSignature valid: {verification_result.is_valid}")
-if verification_result.is_valid:
-    print(f"Verified Payload: {verification_result.payload.custom_metadata}")
+print(f"\nSignature valid: {is_valid}")
+if is_valid and payload:
+    print(f"Verified Signer ID: {extracted_signer_id}")
+    print(f"Verified Payload: {payload}")
 ```
 
 ## Streaming Example
 
-For streaming responses, use the `StreamingEncypher` class to buffer chunks and embed the payload efficiently.
+For streaming responses, use the `StreamingHandler` class to buffer chunks and embed the payload efficiently.
 
 ```python
 import os
 import openai
-from encypher.streaming.encypher import StreamingEncypher
+from encypher.streaming.handlers import StreamingHandler
 from encypher.core.keys import generate_ed25519_key_pair
+from encypher.core.unicode_metadata import UnicodeMetadata
 
 # --- 1. Setup ---
 private_key, public_key = generate_ed25519_key_pair()
 signer_id = "openai-streaming-signer-001"
 public_keys_store = {signer_id: public_key}
 
-client = openai.OpenAI()
+client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-# --- 2. Initialize the StreamingEncypher ---
-streaming_encypher = StreamingEncypher(
+# --- 2. Initialize the StreamingHandler ---
+streaming_handler = StreamingHandler(
     private_key=private_key,
     signer_id=signer_id,
-    public_key_provider=public_keys_store.get,
+    timestamp=None,
     custom_metadata={"openai_model": "gpt-4o-stream"},
+    encode_first_chunk_only=True,
+    metadata_format="basic",
 )
 
 # --- 3. Process the Stream ---
@@ -113,29 +117,27 @@ full_encoded_response = ""
 print("--- Streaming Response with Embedded Metadata ---")
 for chunk in stream:
     content = chunk.choices[0].delta.content or ""
-    encoded_chunk = streaming_encypher.process_chunk(chunk=content)
+    encoded_chunk = streaming_handler.process_chunk(chunk=content)
     if encoded_chunk:
         print(encoded_chunk, end="")
         full_encoded_response += encoded_chunk
 
 # --- 4. Finalize the Stream ---
-final_chunk = streaming_encypher.finalize()
+final_chunk = streaming_handler.finalize()
 if final_chunk:
     print(final_chunk, end="")
     full_encoded_response += final_chunk
 print("\n--- End of Stream ---")
 
 # --- 5. Verify the Complete Streamed Text ---
-# For verification, we use the standard Encypher class.
-# Since hard binding is not added to streamed content, we must disable it during verification.
-from encypher.core.encypher import Encypher
-verifier = Encypher(public_key_provider=public_keys_store.get)
-verification_result = verifier.verify(
+is_valid, extracted_signer_id, payload = UnicodeMetadata.verify_metadata(
     text=full_encoded_response,
-    require_hard_binding=False  # Disable for streaming
+    public_key_resolver=public_keys_store.get,
+    require_hard_binding=False,
 )
 
-print(f"\nSignature valid: {verification_result.is_valid}")
-if verification_result.is_valid:
-    print(f"Verified Payload: {verification_result.payload.custom_metadata}")
+print(f"\nSignature valid: {is_valid}")
+if is_valid and payload:
+    print(f"Verified Signer ID: {extracted_signer_id}")
+    print(f"Verified Payload: {payload}")
 ```

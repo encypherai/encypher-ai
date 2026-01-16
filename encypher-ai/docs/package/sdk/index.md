@@ -8,16 +8,16 @@ enterprise deployments.
 ## Installation
 
 ```bash
-pip install encypher-enterprise
+uv add encypher-enterprise
 ```
 
 Optional extras enable first-class integrations:
 
 ```bash
-pip install encypher-enterprise[langchain]   # LangChain helpers
-pip install encypher-enterprise[openai]      # OpenAI client wrappers
-pip install encypher-enterprise[litellm]     # LiteLLM adapter
-pip install encypher-enterprise[all]         # Install every integration
+uv add 'encypher-enterprise[langchain]'   # LangChain helpers
+uv add 'encypher-enterprise[openai]'      # OpenAI client wrappers
+uv add 'encypher-enterprise[litellm]'     # LiteLLM adapter
+uv add 'encypher-enterprise[all]'         # Install every integration
 ```
 
 ## Quick Start

@@ -128,6 +128,40 @@ def decode_and_deserialize(text: str) -> Optional[dict[str, Any]]:
 class TestUnicodeMetadata:
     """Tests for the UnicodeMetadata class using signatures."""
 
+    def test_encode_decode(self):
+        """Test encoding and decoding text using variation selectors."""
+        original_text = "Test text"
+        emoji = "🔍"
+
+        encoded = UnicodeMetadata.encode(emoji, original_text)
+        decoded = UnicodeMetadata.decode(encoded)
+
+        assert decoded == original_text
+        assert encoded.startswith(emoji)
+        assert len(encoded) > len(emoji)
+
+    def test_variation_selector_conversion(self):
+        """Test conversion between bytes and variation selectors."""
+        for byte in [0, 15, 16, 255]:
+            vs = UnicodeMetadata.to_variation_selector(byte)
+            assert vs is not None
+
+            byte_back = UnicodeMetadata.from_variation_selector(ord(vs))
+            assert byte_back == byte
+
+        assert UnicodeMetadata.to_variation_selector(256) is None
+        assert UnicodeMetadata.from_variation_selector(0x0000) is None
+
+    def test_unicode_metadata_non_string_input(self, key_pair_1):
+        """Test that non-string input raises TypeError for embed_metadata."""
+        private_key, _ = key_pair_1
+        with pytest.raises(TypeError, match="Input text must be a string"):
+            UnicodeMetadata.embed_metadata(12345, private_key, "test-signer")  # type: ignore
+        with pytest.raises(TypeError, match="Input text must be a string"):
+            UnicodeMetadata.embed_metadata(None, private_key, "test-signer")  # type: ignore
+        with pytest.raises(TypeError, match="Input text must be a string"):
+            UnicodeMetadata.embed_metadata(["list"], private_key, "test-signer")  # type: ignore
+
     # --- Test Cases ---
 
     @pytest.mark.parametrize(
@@ -598,44 +632,3 @@ class TestUnicodeMetadata:
         custom_meta = payload.get("custom_metadata", {})
         assert "user_id" not in custom_meta
         assert "session_id" not in custom_meta
-
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
-    def test_embed_extract_metadata(self):
-        pass
-
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
-    def test_custom_metadata(self):
-        pass
-
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
-    def test_no_metadata_target(self):
-        pass
-
-    @pytest.mark.skip(reason=("Test based on old embed_metadata signature (HMAC), incompatible with new signature-based method."))
-    def test_datetime_timestamp(self):
-        pass
-
-    @pytest.fixture
-    def sample_text(self) -> str:
-        """Provides a much longer sample text with abundant targets for embedding metadata."""
-        # This text needs to be significantly long and varied to ensure enough targets
-        # of both whitespace and punctuation types for ~500 bytes of payload.
-        # Let's add multiple paragraphs and different styles.
-        paragraph1 = (
-            "This is the first paragraph of a substantially longer sample text document, meticulously crafted for testing metadata embedding procedures. "
-            "Our primary objective is to guarantee a sufficient quantity of 'target' characters—such as spaces, commas, periods, newlines (though maybe not embeddable), question marks, exclamation points, and semicolons—within this block. "
-            "These targets are essential for successfully embedding the necessary metadata payload. This payload encompasses not merely the original data but also a robust cryptographic signature and associated signer identification. Punctuation, indeed, helps significantly! "
-            "Consider these numbers: 123, 45.67, -890. Is variability not the spice of life? Yes! Yes, it is! "
-        )
-        paragraph2 = (
-            "Moving to the second paragraph, we explore the intricacies of the embedding process itself. It involves meticulously scanning the text to identify suitable locations (the aforementioned targets). "
-            "Once identified, the compressed and serialized metadata payload is encoded using specific Unicode variation selectors or similar techniques. Then, it's subtly inserted into the text at these target locations. "
-            "The key is to make these insertions minimally disruptive to the original text's appearance and flow. Think about that; it's quite clever, right? What about a list? Item 1; Item 2; Item 3. "
-        )
-        paragraph3 = (
-            "Finally, the third paragraph focuses on the verification stage. This critical step involves extracting the embedded bytes from their hidden locations within the text. "
-            "The extracted bytes are then decoded, decompressed, and deserialized to reconstruct the original payload structure. The most crucial part follows: checking the cryptographic signature. "
-            "This involves using the public key associated with the claimed signer ID (retrieved from a trusted provider) to validate the signature against the reconstructed payload data. If they match, the metadata is authentic! "
-            "We sincerely hope this greatly extended version provides more than ample space for all test cases. Let's add one more: 987-654-3210. Success? We hope so..."  # noqa: E501
-        )
-        return f"{paragraph1}\n\n{paragraph2}\n\n{paragraph3}"  # noqa: E501

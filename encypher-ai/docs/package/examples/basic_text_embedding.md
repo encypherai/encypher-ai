@@ -1,8 +1,8 @@
 # Basic Text Embedding Tutorial
 
 This tutorial walks through the minimal steps required to embed a C2PA manifest
-into plain text with Encypher. The workflow follows the latest
-``C2PATextManifestWrapper`` proposal: the manifest is encoded as a JUMBF
+into plain text with Encypher. The workflow follows the C2PA v2.3
+``C2PATextManifestWrapper`` specification: the manifest is encoded as a JUMBF
 container, converted to Unicode variation selectors, and appended to the end of
 the text after a ``U+FEFF`` marker. The visible content never changes, but copy
 and paste operations retain the provenance wrapper.

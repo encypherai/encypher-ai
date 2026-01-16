@@ -42,7 +42,7 @@ To run the YouTube demo:
 
 ```bash
 # From your Encypher installation directory
-python -m encypher_ai.examples.youtube_demo
+uv run python -m encypher.examples.youtube_demo
 ```
 
 ## Demo Structure
@@ -77,22 +77,23 @@ from rich.table import Table
 import time
 import json
 
-from encypher_ai.core.unicode_metadata import UnicodeMetadata
-from encypher_ai.core.keys import generate_key_pair
-from encypher_ai.streaming.handlers import StreamingHandler
-from cryptography.hazmat.primitives.asymmetric.types import PublicKeyTypes
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from typing import Optional
+
+from encypher import UnicodeMetadata
+from encypher.core.keys import generate_ed25519_key_pair
+from encypher.streaming import StreamingHandler
 
 # Initialize rich console for pretty output
 console = Console()
 
 # Generate key pair for digital signatures
-private_key, public_key = generate_key_pair()
-key_id = "demo-key-1"
+private_key, public_key = generate_ed25519_key_pair()
+signer_id = "demo-key-1"
 
 # Create a public key resolver
-def resolve_public_key(key_id: str) -> Optional[PublicKeyTypes]:
-    if key_id == "demo-key-1":
+def resolve_public_key(key_id: str) -> Optional[Ed25519PublicKey]:
+    if key_id == signer_id:
         return public_key
     return None
 
@@ -104,8 +105,7 @@ metadata = {
     "model": "gpt-4",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": key_id  # Required for verification
+    "version": "3.0.2",
 }
 
 # Display the original text
@@ -123,7 +123,8 @@ encoded_text = UnicodeMetadata.embed_metadata(
     text=text,
     custom_metadata=metadata,
     private_key=private_key,
-    signer_id=key_id,
+    signer_id=signer_id,
+    metadata_format="basic",
     timestamp=metadata.get("timestamp")
 )
 
@@ -145,7 +146,8 @@ console.print("\n[bold]Verifying content integrity...[/bold]")
 time.sleep(1)  # Dramatic pause
 is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=encoded_text,
-    public_key_provider=resolve_public_key
+    public_key_resolver=resolve_public_key,
+    return_payload_on_failure=True,
 )
 
 if is_valid:
@@ -168,7 +170,8 @@ console.print("\n[bold]Verifying tampered content...[/bold]")
 time.sleep(1)  # Dramatic pause
 is_valid_tampered, signer_id_tampered, payload_dict_tampered = UnicodeMetadata.verify_metadata(
     text=tampered_text,
-    public_key_provider=resolve_public_key
+    public_key_resolver=resolve_public_key,
+    return_payload_on_failure=True,
 )
 
 if is_valid_tampered:
@@ -196,15 +199,14 @@ streaming_metadata = {
     "model": "streaming-demo",
     "organization": "Encypher",
     "timestamp": int(time.time()),
-    "version": "2.3.0",
-    "key_id": key_id  # Required for verification
+    "version": "3.0.2",
 }
 
 # Create a streaming handler
 handler = StreamingHandler(
     custom_metadata=streaming_metadata,
     private_key=private_key,
-    signer_id=streaming_metadata.get("key_id"),
+    signer_id=signer_id,
     timestamp=streaming_metadata.get("timestamp")
 )
 
@@ -249,7 +251,9 @@ console.print(Panel(json.dumps(extracted_streaming, indent=2), border_style="blu
 # Verify streaming text
 is_valid, signer_id, payload_dict = UnicodeMetadata.verify_metadata(
     text=full_text,
-    public_key_provider=resolve_public_key
+    public_key_resolver=resolve_public_key,
+    require_hard_binding=False,
+    return_payload_on_failure=True,
 )
 
 if is_valid:
@@ -291,8 +295,8 @@ You can customize the demo for your own presentations:
 
 ```python
 # Generate key pairs for digital signature verification
-from encypher_ai.core.keys import generate_key_pair
-private_key, public_key = generate_key_pair()
+from encypher.core.keys import generate_ed25519_key_pair
+private_key, public_key = generate_ed25519_key_pair()
 key_id = "your-custom-key-id"
 
 # Modify the example metadata
@@ -301,7 +305,6 @@ metadata = {
     "organization": "Your Organization",
     "timestamp": int(time.time()),  # Unix timestamp
     "custom_field": "custom value",
-    "key_id": key_id  # Required for verification
 }
 
 # Adjust timing between sections
@@ -311,4 +314,4 @@ time.sleep(custom_delay)  # Change pause duration
 
 ## Source Code
 
-You can find the full source code for the YouTube demo in the `docs/package/examples/youtube_demo.py` file in the Encypher repository.
+You can find the full source code for the YouTube demo in `encypher/examples/youtube_demo.py`.

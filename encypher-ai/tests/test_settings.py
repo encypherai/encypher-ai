@@ -125,3 +125,32 @@ class TestSettings:
         assert config_dict["timestamp_format"] == "%Y-%m-%dT%H:%M%z"
         assert config_dict["logging_level"] == "INFO"
         assert config_dict["report_usage_metrics"] is False
+
+    def test_c2pa_context_settings_defaults(self):
+        settings = Settings()
+        assert settings.get("c2pa_context_url") == "https://c2pa.org/schemas/v2.3/c2pa.jsonld"
+        assert settings.get("c2pa_accepted_contexts") == [
+            "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+            "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+        ]
+
+    def test_c2pa_context_settings_from_env(self, monkeypatch):
+        monkeypatch.setenv("ENCYPHER_C2PA_CONTEXT_URL", "https://c2pa.org/schemas/v2.2/c2pa.jsonld")
+        monkeypatch.setenv(
+            "ENCYPHER_C2PA_ACCEPTED_CONTEXTS",
+            json.dumps(["https://c2pa.org/schemas/v2.2/c2pa.jsonld"]),
+        )
+
+        settings = Settings()
+        assert settings.get("c2pa_context_url") == "https://c2pa.org/schemas/v2.2/c2pa.jsonld"
+        assert settings.get("c2pa_accepted_contexts") == ["https://c2pa.org/schemas/v2.2/c2pa.jsonld"]
+
+        monkeypatch.setenv(
+            "ENCYPHER_C2PA_ACCEPTED_CONTEXTS",
+            "https://c2pa.org/schemas/v2.2/c2pa.jsonld, https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+        )
+        settings = Settings()
+        assert settings.get("c2pa_accepted_contexts") == [
+            "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+            "https://c2pa.org/schemas/v2.3/c2pa.jsonld",
+        ]

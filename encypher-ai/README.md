@@ -36,18 +36,43 @@ The encoding is done using Unicode variation selectors, which are designed to sp
 
 Encypher implements the [Coalition for Content Provenance and Authenticity (C2PA)](https://c2pa.org/) standard for plain-text environments using the **C2PA Text Embedding Standard**. The core library uses the [`c2pa-text`](https://github.com/encypherai/c2pa-text) reference implementation for text manifest wrappers.
 
+Specification reference:
+https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text
+
+This project is maintained by Encypher. The maintainers of this codebase are co-chairs of the C2PA Text Task Force and authors of the linked specification.
+
+Encypher relies on the MIT-licensed `encypherai/c2pa-text` package for C2PA Text Manifest wrapper encoding/decoding (the wrapper transport layer), while `encypher-ai` provides end-to-end signing, embedding, extraction, and verification.
+
 Key features:
-- **C2PA 2.2 compliant manifests** with proper structure (`@context`, `instance_id`, `claim_generator`)
+- **C2PA 2.3 compliant manifests** with proper structure (`@context`, `instance_id`, `claim_generator`)
 - **Hard binding** via `c2pa.hash.data.v1` assertions with NFC normalization
 - **Soft binding** via `c2pa.soft_binding.v1` for manifest recovery
 - **C2PATextManifestWrapper** encoding using Unicode variation selectors (U+FE00-U+FE0F, U+E0100-U+E01EF)
 - **COSE_Sign1 signatures** for cryptographic integrity
 - **Format-agnostic embedding** that works across JSON, XML, databases, and message brokers
-- **Spec version**: Aligned with C2PA 2.2 specification and Manifests_Text.adoc
+- **Spec version**: Aligned with C2PA 2.3 specification (unstructured text embedding)
 
 Our implementation uses the official `c2pa-text` library to encode C2PA manifests into invisible Unicode variation selectors, enabling provenance tracking and tamper detection without altering the visible appearance of the text.
 
 Learn more about [Encypher's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
+
+### C2PA `@context` compatibility configuration (v3.0.3+)
+
+`encypher-ai` allows production services to control the emitted and accepted C2PA schema contexts via environment variables:
+
+- `ENCYPHER_C2PA_CONTEXT_URL` controls the emitted `@context` during embedding.
+- `ENCYPHER_C2PA_ACCEPTED_CONTEXTS` controls the verifier allowlist (JSON list or comma-separated string).
+
+### Maintenance & Support
+
+While this library is open source, Encypher offers an **Enterprise API** for:
+
+- Managing cryptographic keys at scale (including HSM-backed workflows)
+- Automated verification, revocation, and trust anchor management
+- Content production workflows for signing at scale
+- Analytics and tracking for signed content
+
+[Learn more about Encypher Enterprise](https://encypherai.com)
 
 ### Cryptography and COSE
 
@@ -87,14 +112,14 @@ This notebook covers key generation, basic and manifest format usage, and tamper
 
 ## Installation
 
-First, install the uv package manager if you don't have it already:
+Use `uv` for installation and dependency management:
 
 ```bash
-# Install uv (recommended)
-pip install uv
+# Add to an existing project
+uv add encypher-ai
 
-# Then install Encypher
-uv pip install encypher-ai
+# Or run ad-hoc scripts
+uv run python -c "import encypher; print(encypher.__version__)"
 ```
 
 ## Quick Start
