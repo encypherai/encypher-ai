@@ -93,13 +93,6 @@ class Settings(BaseSettings):
     # ===========================================
     COALITION_SERVICE_URL: str = "http://localhost:8009"
 
-    # ===========================================
-    # SUPER ADMIN BOOTSTRAP (for initial setup)
-    # ===========================================
-    # Secret token for bootstrapping super admin accounts
-    # Set this in production env vars, then use POST /api/v1/auth/admin/bootstrap
-    SUPER_ADMIN_BOOTSTRAP_TOKEN: str = ""
-
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

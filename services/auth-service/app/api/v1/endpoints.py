@@ -29,16 +29,9 @@ from ...services.auth_service import AuthService
 from ...services.api_access_service import ApiAccessService
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
-from ...core.config import settings
 from pydantic import BaseModel, EmailStr
 
 router = APIRouter()
-
-
-class SuperAdminBootstrapRequest(BaseModel):
-    """Request to bootstrap a super admin account"""
-    email: EmailStr
-    bootstrap_token: str
 
 
 class SuperAdminPromoteRequest(BaseModel):
@@ -948,79 +941,6 @@ async def check_user_api_access(
 # ============================================
 # SUPER ADMIN MANAGEMENT ENDPOINTS
 # ============================================
-
-
-@router.post("/admin/bootstrap", response_model=None)
-async def bootstrap_super_admin(
-    request: SuperAdminBootstrapRequest,
-    db: Session = Depends(get_db),
-):
-    """
-    Bootstrap a super admin account using a secret token.
-    
-    This endpoint is used for initial setup when no super admins exist.
-    Requires SUPER_ADMIN_BOOTSTRAP_TOKEN to be set in environment.
-    
-    **Security**: Token-based authentication, no JWT required.
-    """
-    import structlog
-    logger = structlog.get_logger(__name__)
-    
-    # Check if bootstrap token is configured
-    if not settings.SUPER_ADMIN_BOOTSTRAP_TOKEN:
-        logger.warning("bootstrap_attempt_no_token_configured")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Bootstrap token not configured. Set SUPER_ADMIN_BOOTSTRAP_TOKEN env var.",
-        )
-    
-    # Verify bootstrap token
-    if request.bootstrap_token != settings.SUPER_ADMIN_BOOTSTRAP_TOKEN:
-        logger.warning("bootstrap_attempt_invalid_token", email=request.email)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid bootstrap token",
-        )
-    
-    # Find user by email
-    user = db.query(User).filter(User.email == request.email).first()
-    if not user:
-        logger.warning("bootstrap_attempt_user_not_found", email=request.email)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with email {request.email} not found",
-        )
-    
-    # Check if already super admin
-    if user.is_super_admin:
-        logger.info("bootstrap_user_already_super_admin", user_id=str(user.id), email=request.email)
-        return {
-            "success": True,
-            "data": {
-                "user_id": str(user.id),
-                "email": user.email,
-                "is_super_admin": True,
-                "message": "User is already a super admin",
-            },
-            "error": None,
-        }
-    
-    # Promote to super admin
-    user.is_super_admin = True
-    db.commit()
-    
-    logger.info("bootstrap_super_admin_success", user_id=str(user.id), email=request.email)
-    
-    return {
-        "success": True,
-        "data": {
-            "user_id": str(user.id),
-            "email": user.email,
-            "is_super_admin": True,
-            "message": "User promoted to super admin",
-        },
-        "error": None,
-    }
 
 
 @router.post("/admin/promote", response_model=None)
