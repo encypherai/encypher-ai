@@ -20,7 +20,6 @@ import cbor2
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from encypher import __version__
 from encypher.config.settings import Settings
@@ -737,7 +736,7 @@ class UnicodeMetadata:
             return embedded_text
 
     @staticmethod
-    def _compute_text_hash(cls, text: str, algorithm: str = "sha256") -> str:
+    def _compute_text_hash(text: str, algorithm: str = "sha256") -> str:
         """Compute hex digest of *text* using *algorithm* after NFC normalization."""
         import hashlib
         import unicodedata
@@ -754,7 +753,7 @@ class UnicodeMetadata:
     def _embed_c2pa(
         cls,
         text: str,
-        private_key: PrivateKeyTypes,
+        private_key: SigningKey,
         signer_id: str,
         claim_generator: Optional[str],
         actions: Optional[list[dict[str, Any]]],
