@@ -29,8 +29,21 @@ from ...services.auth_service import AuthService
 from ...services.api_access_service import ApiAccessService
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
+from ...core.config import settings
+from pydantic import BaseModel, EmailStr
 
 router = APIRouter()
+
+
+class SuperAdminBootstrapRequest(BaseModel):
+    """Request to bootstrap a super admin account"""
+    email: EmailStr
+    bootstrap_token: str
+
+
+class SuperAdminPromoteRequest(BaseModel):
+    """Request to promote a user to super admin"""
+    email: EmailStr
 
 
 # TEAM_006: Super admin check helper
@@ -927,6 +940,313 @@ async def check_user_api_access(
         "data": {
             "user_id": user_id,
             "approved": is_approved,
+        },
+        "error": None,
+    }
+
+
+# ============================================
+# SUPER ADMIN MANAGEMENT ENDPOINTS
+# ============================================
+
+
+@router.post("/admin/bootstrap", response_model=None)
+async def bootstrap_super_admin(
+    request: SuperAdminBootstrapRequest,
+    db: Session = Depends(get_db),
+):
+    """
+    Bootstrap a super admin account using a secret token.
+    
+    This endpoint is used for initial setup when no super admins exist.
+    Requires SUPER_ADMIN_BOOTSTRAP_TOKEN to be set in environment.
+    
+    **Security**: Token-based authentication, no JWT required.
+    """
+    import structlog
+    logger = structlog.get_logger(__name__)
+    
+    # Check if bootstrap token is configured
+    if not settings.SUPER_ADMIN_BOOTSTRAP_TOKEN:
+        logger.warning("bootstrap_attempt_no_token_configured")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Bootstrap token not configured. Set SUPER_ADMIN_BOOTSTRAP_TOKEN env var.",
+        )
+    
+    # Verify bootstrap token
+    if request.bootstrap_token != settings.SUPER_ADMIN_BOOTSTRAP_TOKEN:
+        logger.warning("bootstrap_attempt_invalid_token", email=request.email)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid bootstrap token",
+        )
+    
+    # Find user by email
+    user = db.query(User).filter(User.email == request.email).first()
+    if not user:
+        logger.warning("bootstrap_attempt_user_not_found", email=request.email)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with email {request.email} not found",
+        )
+    
+    # Check if already super admin
+    if user.is_super_admin:
+        logger.info("bootstrap_user_already_super_admin", user_id=str(user.id), email=request.email)
+        return {
+            "success": True,
+            "data": {
+                "user_id": str(user.id),
+                "email": user.email,
+                "is_super_admin": True,
+                "message": "User is already a super admin",
+            },
+            "error": None,
+        }
+    
+    # Promote to super admin
+    user.is_super_admin = True
+    db.commit()
+    
+    logger.info("bootstrap_super_admin_success", user_id=str(user.id), email=request.email)
+    
+    return {
+        "success": True,
+        "data": {
+            "user_id": str(user.id),
+            "email": user.email,
+            "is_super_admin": True,
+            "message": "User promoted to super admin",
+        },
+        "error": None,
+    }
+
+
+@router.post("/admin/promote", response_model=None)
+async def promote_to_super_admin(
+    request: SuperAdminPromoteRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Promote a user to super admin.
+    
+    **Super Admin only** - Requires existing super admin privileges.
+    """
+    import structlog
+    logger = structlog.get_logger(__name__)
+    
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    
+    # Require super admin access
+    require_super_admin(db, admin_user_id)
+    
+    # Find target user by email
+    target_user = db.query(User).filter(User.email == request.email).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with email {request.email} not found",
+        )
+    
+    # Check if already super admin
+    if target_user.is_super_admin:
+        return {
+            "success": True,
+            "data": {
+                "user_id": str(target_user.id),
+                "email": target_user.email,
+                "is_super_admin": True,
+                "message": "User is already a super admin",
+            },
+            "error": None,
+        }
+    
+    # Promote to super admin
+    target_user.is_super_admin = True
+    db.commit()
+    
+    logger.info(
+        "promote_super_admin_success",
+        admin_user_id=admin_user_id,
+        target_user_id=str(target_user.id),
+        target_email=request.email,
+    )
+    
+    return {
+        "success": True,
+        "data": {
+            "user_id": str(target_user.id),
+            "email": target_user.email,
+            "is_super_admin": True,
+            "message": "User promoted to super admin",
+        },
+        "error": None,
+    }
+
+
+@router.post("/admin/demote", response_model=None)
+async def demote_from_super_admin(
+    request: SuperAdminPromoteRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Demote a user from super admin.
+    
+    **Super Admin only** - Requires existing super admin privileges.
+    Cannot demote yourself.
+    """
+    import structlog
+    logger = structlog.get_logger(__name__)
+    
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    
+    # Require super admin access
+    require_super_admin(db, admin_user_id)
+    
+    # Find target user by email
+    target_user = db.query(User).filter(User.email == request.email).first()
+    if not target_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User with email {request.email} not found",
+        )
+    
+    # Cannot demote yourself
+    if str(target_user.id) == admin_user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot demote yourself from super admin",
+        )
+    
+    # Check if not a super admin
+    if not target_user.is_super_admin:
+        return {
+            "success": True,
+            "data": {
+                "user_id": str(target_user.id),
+                "email": target_user.email,
+                "is_super_admin": False,
+                "message": "User is not a super admin",
+            },
+            "error": None,
+        }
+    
+    # Demote from super admin
+    target_user.is_super_admin = False
+    db.commit()
+    
+    logger.info(
+        "demote_super_admin_success",
+        admin_user_id=admin_user_id,
+        target_user_id=str(target_user.id),
+        target_email=request.email,
+    )
+    
+    return {
+        "success": True,
+        "data": {
+            "user_id": str(target_user.id),
+            "email": target_user.email,
+            "is_super_admin": False,
+            "message": "User demoted from super admin",
+        },
+        "error": None,
+    }
+
+
+@router.get("/admin/list-super-admins", response_model=None)
+async def list_super_admins(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    List all super admin users.
+    
+    **Super Admin only** - Requires existing super admin privileges.
+    """
+    # Verify token
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    
+    # Require super admin access
+    require_super_admin(db, admin_user_id)
+    
+    # Get all super admins
+    super_admins = db.query(User).filter(User.is_super_admin == True).all()
+    
+    return {
+        "success": True,
+        "data": {
+            "super_admins": [
+                {
+                    "user_id": str(u.id),
+                    "email": u.email,
+                    "name": u.name,
+                }
+                for u in super_admins
+            ],
+            "total": len(super_admins),
         },
         "error": None,
     }
