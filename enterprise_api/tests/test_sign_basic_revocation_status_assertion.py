@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from fastapi import HTTPException
 
 from app.models.request_models import SignRequest
 from app.services.signing_executor import execute_signing
@@ -27,40 +25,8 @@ class _FakeSessionCtx:
 
 
 @pytest.mark.asyncio
-async def test_sign_basic_template_requires_business() -> None:
-    request = SignRequest(
-        text="Hello world.",
-        document_type="article",
-        template_id="tmpl_builtin_no_ai_training_v1",
-    )
-
-    organization = {
-        "organization_id": "org_starter",
-        "organization_name": "Starter",
-        "tier": "starter",
-        "is_demo": True,
-        "features": {"custom_assertions": False},
-        "custom_assertions_enabled": False,
-    }
-
-    db = AsyncMock()
-
-    with (
-        patch("app.services.signing_executor._index_in_coalition", new=AsyncMock(return_value=None)),
-    ):
-        with pytest.raises(HTTPException) as exc_info:
-            await execute_signing(request=request, organization=organization, db=db)
-
-    assert exc_info.value.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_sign_basic_applies_builtin_template_assertions() -> None:
-    request = SignRequest(
-        text="Hello world.",
-        document_type="article",
-        template_id="tmpl_builtin_no_ai_training_v1",
-    )
+async def test_sign_basic_embeds_status_list_assertion() -> None:
+    request = SignRequest(text="Hello world.", document_type="article")
 
     organization = {
         "organization_id": "org_business",
@@ -75,8 +41,16 @@ async def test_sign_basic_applies_builtin_template_assertions() -> None:
     db.execute = AsyncMock(return_value=_FakeScalarResult())
 
     content_db = AsyncMock()
+    content_db.execute = AsyncMock()
+    content_db.commit = AsyncMock()
+
     core_db = AsyncMock()
-    allocate_mock = AsyncMock(return_value=(0, 1, "https://status.encypherai.com/v1/org_business/list/0"))
+    core_db.execute = AsyncMock()
+    core_db.commit = AsyncMock()
+
+    allocate_mock = AsyncMock(
+        return_value=(3, 12, "https://status.encypherai.com/v1/org_business/list/3")
+    )
 
     with (
         patch(
@@ -91,12 +65,16 @@ async def test_sign_basic_applies_builtin_template_assertions() -> None:
         result = await execute_signing(request=request, organization=organization, db=db)
 
     assert result.success is True
-    assert result.signed_text == "signed"
+
+    allocate_kwargs = allocate_mock.call_args.kwargs
+    assert allocate_kwargs["organization_id"] == "org_business"
+    assert allocate_kwargs["document_id"]
 
     called_assertions = mock_embed.call_args.kwargs.get("custom_assertions")
     assert called_assertions is not None
     assert any(
-        assertion.get("label") == "c2pa.training-mining.v1"
-        and assertion.get("data", {}).get("use", {}).get("ai_training") is False
+        assertion.get("label") == "org.encypher.status"
+        and assertion.get("data", {}).get("statusListCredential") == "https://status.encypherai.com/v1/org_business/list/3"
+        and str(assertion.get("data", {}).get("statusListIndex")) == "12"
         for assertion in called_assertions
     )

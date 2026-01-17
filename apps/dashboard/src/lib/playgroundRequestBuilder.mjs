@@ -21,7 +21,9 @@ function normalizeString(value) {
  */
 function preserveExactString(value) {
   if (typeof value !== 'string') return undefined;
-  return value.length > 0 ? value : undefined;
+  if (value.length === 0) return undefined;
+  if (value.trim().length === 0) return undefined;
+  return value;
 }
 
 /**
@@ -36,6 +38,12 @@ export function buildRequestObject(endpointId, values) {
   if (endpointId === 'verify') {
     const text = preserveExactString(values.text);
     if (!text) throw new Error('verify.text is required');
+    return { text };
+  }
+
+  if (endpointId === 'verify-advanced') {
+    const text = preserveExactString(values.text);
+    if (!text) throw new Error('verify-advanced.text is required');
     return { text };
   }
 
@@ -90,6 +98,12 @@ export function parseRequestBodyJson(endpointId, json) {
   if (!parsed || typeof parsed !== 'object') return null;
 
   if (endpointId === 'verify') {
+    return {
+      text: typeof parsed.text === 'string' ? parsed.text : '',
+    };
+  }
+
+  if (endpointId === 'verify-advanced') {
     return {
       text: typeof parsed.text === 'string' ? parsed.text : '',
     };

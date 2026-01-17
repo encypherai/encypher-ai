@@ -22,6 +22,7 @@ from app.schemas.embeddings import (
     MerkleTreeLevelInfo,
 )
 from app.services.embedding_service import EmbeddingService
+from app.services.status_service import status_service
 from app.services.merkle_service import MerkleService
 from app.utils.crypto_utils import load_organization_private_key
 from app.utils.quota import QuotaManager, QuotaType
@@ -288,6 +289,22 @@ async def encode_document_with_embeddings(
         if request.custom_assertions:
             raw_assertions.extend(request.custom_assertions)
 
+        try:
+            _list_index, bit_index, status_list_url = await status_service.allocate_status_index(
+                db=db,
+                organization_id=organization_id,
+                document_id=request.document_id,
+            )
+        except Exception as exc:
+            logger.error("Failed to allocate status list index: %s", exc, exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail={
+                    "code": "STATUS_LIST_ALLOCATION_FAILED",
+                    "message": "Failed to allocate status list entry",
+                },
+            ) from exc
+
         validated_assertions = None
         if raw_assertions and request.validate_assertions:
             from sqlalchemy import select
@@ -334,6 +351,20 @@ async def encode_document_with_embeddings(
             # Use assertions without validation
             validated_assertions = raw_assertions
             logger.info(f"Using {len(validated_assertions)} custom assertions without validation")
+
+        status_assertion = {
+            "label": "org.encypher.status",
+            "data": {
+                "statusListCredential": status_list_url,
+                "statusListIndex": str(bit_index),
+            },
+        }
+
+        if validated_assertions is None:
+            validated_assertions = []
+        else:
+            validated_assertions = list(validated_assertions)
+        validated_assertions.append(status_assertion)
         
         # Initialize embedding service with organization's key
         embedding_service = EmbeddingService(private_key, signer_id)

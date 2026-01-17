@@ -193,6 +193,25 @@ curl -X POST https://api.encypherai.com/api/v1/verify \
 
 ---
 
+### Document Revocation (Enterprise)
+
+Signed content embeds an `org.encypher.status` C2PA assertion containing:
+
+- `statusListCredential`: URL of the organization status list credential
+- `statusListIndex`: Bit index within the status list
+
+Verification checks this status list to determine revocation state.
+
+**Endpoints:**
+
+- `POST /api/v1/status/documents/{document_id}/revoke`
+- `POST /api/v1/status/documents/{document_id}/reinstate`
+- `GET /api/v1/status/documents/{document_id}`
+- `GET /api/v1/status/list/{organization_id}/{list_index}`
+- `GET /api/v1/status/stats`
+
+---
+
 ### POST /api/v1/public/c2pa/validate-manifest
 
 Validate a C2PA-like manifest JSON object (structure + assertion schema validation only).

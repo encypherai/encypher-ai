@@ -62,6 +62,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ **Schema Registry**: Manage custom JSON schemas
 - ✅ **C2PA Provenance Chain**: Full edit history tracking
 - ✅ **Public Extraction API**: Third-party embedding verification
+- ✅ **Per-Document Revocation**: StatusList2021 assertions embedded on sign/sign-advanced
 
 #### Coalition Features (via Coalition Service)
 - ✅ **Auto-Enrollment**: Automatic coalition membership for free tier
@@ -115,8 +116,8 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/merkle/encode` | POST | ✅ | Professional+ | Encode document into Merkle tree |
-| `/api/v1/enterprise/merkle/attribute` | POST | ✅ | Deprecated | Consolidated into `/api/v1/verify/advanced` (include_attribution=true) |
-| `/api/v1/enterprise/merkle/detect-plagiarism` | POST | ✅ | Deprecated | Consolidated into `/api/v1/verify/advanced` (detect_plagiarism=true) |
+
+Deprecated attribution and plagiarism endpoints have been removed. Use `/api/v1/verify/advanced` with `include_attribution=true` or `detect_plagiarism=true`.
 
 ### Streaming Merkle Endpoints (NEW - Patent FIG. 5)
 
@@ -244,6 +245,9 @@ Look up content across multiple sources with chronological ordering.
 | `GET /api/v1/status/documents/{document_id}` | Get document revocation status | Enterprise |
 | `GET /api/v1/status/list/{organization_id}/{list_index}` | Get status list credential (public, CDN-cacheable) | Public |
 | `GET /api/v1/status/stats` | Get revocation statistics | Enterprise |
+
+Signing endpoints embed an `org.encypher.status` C2PA assertion containing the
+`statusListCredential` URL and `statusListIndex` bit position for revocation checks.
 
 ### Licensing Endpoints
 

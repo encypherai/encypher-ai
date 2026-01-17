@@ -11,6 +11,13 @@ describe('Playground request builder (contract)', () => {
   it('builds verify body and requires text', () => {
     assert.deepEqual(buildRequestObject('verify', { text: 'hello' }), { text: 'hello' });
     assert.throws(() => buildRequestObject('verify', { text: '   ' }), /verify\.text is required/);
+    assert.throws(() => buildRequestObject('verify', { text: '' }), /verify\.text is required/);
+  });
+
+  it('builds verify advanced body and requires text', () => {
+    assert.deepEqual(buildRequestObject('verify-advanced', { text: 'hello' }), { text: 'hello' });
+    assert.throws(() => buildRequestObject('verify-advanced', { text: '   ' }), /verify-advanced\.text is required/);
+    assert.throws(() => buildRequestObject('verify-advanced', { text: '' }), /verify-advanced\.text is required/);
   });
 
   it('builds lookup body and requires sentence_text', () => {
@@ -52,6 +59,7 @@ describe('Playground request builder (contract)', () => {
   it('parseRequestBodyJson returns best-effort values and null for invalid JSON', () => {
     assert.equal(parseRequestBodyJson('verify', '{'), null);
     assert.deepEqual(parseRequestBodyJson('verify', '{"text":"abc"}'), { text: 'abc' });
+    assert.deepEqual(parseRequestBodyJson('verify-advanced', '{"text":"abc"}'), { text: 'abc' });
     assert.deepEqual(parseRequestBodyJson('lookup', '{"sentence_text":"abc"}'), { sentence_text: 'abc' });
     assert.deepEqual(parseRequestBodyJson('sign', '{"text":"abc"}'), {
       text: 'abc',

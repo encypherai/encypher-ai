@@ -1,7 +1,7 @@
 # PRD — Dashboard API Playground (10/10 UX)
 
 ## Status
-Complete ✅
+QA Pending (manual UI verification)
 
 ## Current Goal
 Make the API Playground in `apps/dashboard` a trusted, award-winning experience: accurate endpoints, correct auth behavior, great defaults (demo mode), and a smooth path to testing with the user's org API key.
@@ -40,6 +40,10 @@ Make the API Playground in `apps/dashboard` a trusted, award-winning experience:
 - [x] 4.0 Verification
 - [x] 4.1 Task — ✅ npm lint ✅ type-check ✅ puppeteer
 
+- [x] 5.0 Build integrity (merge conflict cleanup)
+- [x] 5.1 Remove merge conflict markers in playground code
+- [x] 5.2 Verification — ✅ npm lint ✅ type-check ✅ puppeteer
+
 ## Success Criteria
 - The playground can execute a successful end-to-end demo flow without requiring the user to paste a key.
 - The playground can use a selected org key for authenticated endpoints.
@@ -50,9 +54,13 @@ Make the API Playground in `apps/dashboard` a trusted, award-winning experience:
 
 ## Completion Notes
 - Added an initial Puppeteer smoke test harness.
+- Added `@playwright/test` dev dependency to satisfy type-check for `tests/playground-verify.spec.ts`.
+- Updated `tests/e2e/verify-demo-flow.mjs` to align with the guided tour (manual sign text entry).
+- Added `/verify/advanced` to the playground (Pro+ badge) and gated status/revocation endpoints as Pro+ in UI.
+- Manual UI verification pending for guided tour + sign/verify flow.
 - Implemented comprehensive UX improvements (TEAM_058):
   - **Quick Start Banner**: Guided Sign → Verify flow with step indicators and "Copy to Verify" automation
-  - **Demo Mode**: "Try Demo (No Auth)" button loads pre-signed content for instant verification
+  - **Guided Tour**: "Start Guided Tour" seeds demo content and walks through API key → sign → verify
   - **JSON Validation**: Real-time validation with Valid/Invalid badges and error messages
   - **Response Summary Cards**: Human-readable verdict cards for verify, sign, and lookup responses
   - **Field Documentation**: Expandable inline docs for each JSON field

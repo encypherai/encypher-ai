@@ -35,7 +35,7 @@ Implement W3C-compatible Bitstring Status Lists to enable per-document revocatio
 - [x] 2.1 Create `StatusService` class — ✅ app/services/status_service.py
 - [x] 2.2 Implement `allocate_status_index()` for new documents — ✅ status_service.py
 - [x] 2.3 Integrate with `embedding_service.py` to add status assertion — ✅ embedding_service.py
-- [ ] 2.4 Update manifest structure with status reference (in C2PA assertions)
+- [x] 2.4 Update manifest structure with status reference (in C2PA assertions) — ✅ signing_executor.py, embedding_executor.py
 
 ### 3.0 Status List Generation
 - [x] 3.1 Create background worker for bitstring generation — ✅ status_service.generate_status_list()
@@ -111,11 +111,12 @@ Successfully implemented W3C-compatible Bitstring Status Lists for per-document 
 3. **Revocation API**: Full REST API for revoke/reinstate/query operations
 4. **Verification Integration**: `DOC_REVOKED` reason code in verification flow
 5. **Rate Limiting**: Tier-aware rate limits with standard HTTP headers
+6. **Manifest Integration**: Status list assertions embedded on sign/sign-advanced
 
 ### Deferred Items
 - **CDN Upload**: Requires production S3/R2 credentials
 - **Integration Tests**: Require full environment setup
-- **C2PA Manifest Integration**: Task 2.4 deferred for future iteration
+- **Performance Tests**: Pending dedicated load harness
 
 ### Files Created
 - `app/models/status_list.py`

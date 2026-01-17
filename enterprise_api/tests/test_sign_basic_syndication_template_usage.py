@@ -46,8 +46,13 @@ async def test_sign_basic_applies_news_wire_syndication_template_assertions() ->
 
     content_db = AsyncMock()
     core_db = AsyncMock()
+    allocate_mock = AsyncMock(return_value=(0, 3, "https://status.encypherai.com/v1/org_business/list/0"))
 
     with (
+        patch(
+            "app.services.signing_executor.status_service.allocate_status_index",
+            new=allocate_mock,
+        ),
         patch("app.services.signing_executor._index_in_coalition", new=AsyncMock(return_value=None)),
         patch("app.services.signing_executor.content_session_factory", new=lambda: _FakeSessionCtx(content_db)),
         patch("app.services.signing_executor.core_session_factory", new=lambda: _FakeSessionCtx(core_db)),

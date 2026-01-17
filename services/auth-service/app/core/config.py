@@ -43,9 +43,9 @@ class Settings(BaseSettings):
     # ===========================================
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
-    # Industry standard for B2B SaaS: 1 hour access, 14 day refresh
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 14
+    # Extended session for better UX: 8 hour access, 30 day refresh
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 480
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
     # ===========================================
     # SHARED: CORS (from shared vars)

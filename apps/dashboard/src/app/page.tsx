@@ -2,7 +2,7 @@
 
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@encypher/design-system';
 import { useQuery } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
@@ -94,8 +94,7 @@ function ApiKeysSkeleton() {
 }
 
 export default function DashboardPage() {
-  const { data: session } = useSession();
-  const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const { session, status, accessToken, isLoading } = useRequireAuth();
   const isNewUser = useIsNewUser();
 
   const [greeting, setGreeting] = useState('Hello');

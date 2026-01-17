@@ -79,6 +79,11 @@ def _vs_to_byte(code_point: int) -> Optional[int]:
     return None
 
 
+def _byte_offset_to_char_index(text: str, byte_offset: int) -> int:
+    """Convert a UTF-8 byte offset to a character index."""
+    return len(text.encode("utf-8")[:byte_offset].decode("utf-8", errors="ignore"))
+
+
 def normalize_text(text: str) -> str:
     """Normalize text to NFC form for consistent embedding/verification.
     
@@ -148,7 +153,11 @@ def find_all_c2pa_wrappers(text: str) -> list[tuple[bytes, int, int]]:
     manifest_bytes, _clean_text, span = find_and_decode(text)
     if manifest_bytes is None or span is None:
         return []
-    return [(manifest_bytes, span[0], span[1])]
+    start_byte, length_byte = span
+    end_byte = start_byte + length_byte
+    start_char = _byte_offset_to_char_index(text, start_byte)
+    end_char = _byte_offset_to_char_index(text, end_byte)
+    return [(manifest_bytes, start_char, end_char)]
 
 
 def find_all_embeddings_raw(text: str) -> list[tuple[str, bytes, int, int]]:

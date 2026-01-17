@@ -1,0 +1,158 @@
+export const PLAYGROUND_ENDPOINTS = [
+  {
+    id: 'sign',
+    name: 'Sign Content',
+    method: 'POST',
+    path: '/sign',
+    description: 'Sign content (requires an API key with sign permission).',
+    category: 'Signing',
+    requiresAuth: true,
+    authType: 'apikey',
+    docsUrl: 'https://api.encypherai.com/docs',
+    sampleBody: JSON.stringify(
+      {
+        text: 'Hello, world.',
+        document_title: 'Example Document',
+        document_type: 'article',
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: 'sign-advanced',
+    name: 'Sign (Advanced)',
+    method: 'POST',
+    path: '/sign/advanced',
+    description: 'Sign with advanced embedding controls (typically Professional+).',
+    category: 'Signing',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    docsUrl: 'https://api.encypherai.com/docs',
+    sampleBody: JSON.stringify(
+      {
+        document_id: 'doc_example_123',
+        text: 'Hello, world.',
+        segmentation_level: 'sentence',
+        action: 'c2pa.created',
+        manifest_mode: 'full',
+        embedding_strategy: 'single_point',
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: 'verify',
+    name: 'Verify Content',
+    method: 'POST',
+    path: '/verify',
+    description: 'Verify signed content (public, rate limited).',
+    category: 'Verification',
+    requiresAuth: false,
+    docsUrl: 'https://api.encypherai.com/docs',
+    sampleBody: JSON.stringify(
+      {
+        text: 'Paste signed content here to verify...',
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: 'verify-advanced',
+    name: 'Verify (Advanced)',
+    method: 'POST',
+    path: '/verify/advanced',
+    description:
+      'Advanced verification with optional attribution/plagiarism analysis (API key required). Attribution requires Pro+, plagiarism Business+, cross-org Enterprise.',
+    category: 'Verification',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    docsUrl: 'https://api.encypherai.com/docs',
+    sampleBody: JSON.stringify(
+      {
+        text: 'Paste signed content here to verify...',
+        include_attribution: true,
+        detect_plagiarism: false,
+        segmentation_level: 'sentence',
+        search_scope: 'organization',
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: 'lookup',
+    name: 'Lookup Sentence',
+    method: 'POST',
+    path: '/lookup',
+    description: 'Lookup sentence provenance (public).',
+    category: 'Verification',
+    requiresAuth: false,
+    docsUrl: 'https://api.encypherai.com/docs',
+    sampleBody: JSON.stringify(
+      {
+        sentence_text: 'The Senate passed a landmark bill today.',
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: 'status-document',
+    name: 'Get Document Status',
+    method: 'GET',
+    path: '/status/documents/{document_id}',
+    description: 'Check revocation status for a document (API key required, Pro+).',
+    category: 'Status & Revocation',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    docsUrl: 'https://api.encypherai.com/docs',
+  },
+  {
+    id: 'status-revoke',
+    name: 'Revoke Document',
+    method: 'POST',
+    path: '/status/documents/{document_id}/revoke',
+    description: 'Revoke a signed document (API key required, Pro+).',
+    category: 'Status & Revocation',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    docsUrl: 'https://api.encypherai.com/docs',
+    sampleBody: JSON.stringify(
+      {
+        reason: 'factual_error',
+        reason_detail: 'Optional details about the revocation.',
+      },
+      null,
+      2
+    ),
+  },
+  {
+    id: 'status-reinstate',
+    name: 'Reinstate Document',
+    method: 'POST',
+    path: '/status/documents/{document_id}/reinstate',
+    description: 'Reinstate a revoked document (API key required, Pro+).',
+    category: 'Status & Revocation',
+    requiresAuth: true,
+    authType: 'apikey',
+    minTier: 'professional',
+    docsUrl: 'https://api.encypherai.com/docs',
+  },
+  {
+    id: 'status-list',
+    name: 'Get Status List',
+    method: 'GET',
+    path: '/status/list/{organization_id}/{list_index}',
+    description: 'Fetch a W3C StatusList2021 credential (public).',
+    category: 'Status & Revocation',
+    requiresAuth: false,
+    docsUrl: 'https://api.encypherai.com/docs',
+  },
+];

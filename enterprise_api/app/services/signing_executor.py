@@ -28,6 +28,7 @@ from app.config import settings
 from app.database import content_session_factory, core_session_factory
 from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
+from app.services.status_service import status_service
 from app.utils.coalition_client import CoalitionClient
 from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
 from app.utils.sentence_parser import compute_sentence_hash, compute_text_hash, parse_sentences
@@ -219,8 +220,32 @@ async def execute_signing(
                     },
                 )
 
-        if raw_assertions:
-            custom_assertions = raw_assertions
+        try:
+            _list_index, bit_index, status_list_url = await status_service.allocate_status_index(
+                db=db,
+                organization_id=org_id,
+                document_id=document_id,
+            )
+        except Exception as exc:
+            logger.error("Failed to allocate status list index: %s", exc, exc_info=True)
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "code": "STATUS_LIST_ALLOCATION_FAILED",
+                    "message": "Failed to allocate status list entry",
+                },
+            ) from exc
+
+        status_assertion = {
+            "label": "org.encypher.status",
+            "data": {
+                "statusListCredential": status_list_url,
+                "statusListIndex": str(bit_index),
+            },
+        }
+
+        custom_assertions = list(raw_assertions) if raw_assertions else []
+        custom_assertions.append(status_assertion)
 
         logger.debug("Embedding C2PA manifest for document %s", document_id)
         # Use caller-provided claim_generator, or default to enterprise-api identity

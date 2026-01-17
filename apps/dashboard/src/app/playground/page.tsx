@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
+import { useRequireAuth } from '@/hooks/useRequireAuth';
 import {
   Button,
   Card,
@@ -16,8 +16,10 @@ import {
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { TemplateSelector } from '../../components/TemplateSelector';
+import { TourSpotlight } from '../../components/TourSpotlight';
 import apiClient from '../../lib/api';
 import { buildRequestBodyJson, parseRequestBodyJson } from '../../lib/playgroundRequestBuilder.mjs';
+import { PLAYGROUND_ENDPOINTS } from '../../lib/playgroundEndpoints.mjs';
 
 // API base URL - NEXT_PUBLIC_API_URL already includes /api/v1
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
@@ -83,99 +85,37 @@ const fieldDocs: Record<string, Record<string, string>> = {
   verify: {
     text: 'The signed content to verify. Paste the full text including invisible metadata.',
   },
+  'verify-advanced': {
+    text: 'Signed content to verify with attribution/plagiarism options (Enterprise).',
+  },
   lookup: {
     sentence_text: 'A sentence to look up in the provenance database.',
   },
+  'status-document': {
+    document_id: 'Path param. The document ID assigned at signing time.',
+  },
+  'status-revoke': {
+    document_id: 'Path param. The document ID assigned at signing time.',
+    reason: 'Revocation reason (e.g., factual_error, legal_takedown, content_policy).',
+    reason_detail: 'Optional free-form explanation for audit logs.',
+  },
+  'status-reinstate': {
+    document_id: 'Path param. The document ID assigned at signing time.',
+  },
+  'status-list': {
+    organization_id: 'Path param. Organization ID that owns the status list.',
+    list_index: 'Path param. Integer list index for the status list shard.',
+  },
 };
 
-// Demo sample for instant success - pre-signed content that can be verified without auth
-const DEMO_SIGNED_CONTENT = `Breaking: Scientists discover high-energy particles from distant galaxy.󠅟󠅞󠅟󠅞󠄢󠄿󠅞󠅟󠅞󠅟󠅞󠅟󠅞󠅟󠅞󠅟󠅞󠅟󠅞󠅟󠅞󠅟 The research team at CERN announced today that they have detected unusual cosmic ray patterns that may indicate a new type of stellar phenomenon.`;
-
-// Demo mode configuration
-const DEMO_VERIFY_SAMPLE = {
-  text: DEMO_SIGNED_CONTENT,
+// Demo sample for instant success in sign flow
+const DEMO_SIGN_SAMPLE = {
+  text: 'Breaking: Scientists discover high-energy particles from distant galaxy.',
+  document_title: 'CERN Cosmic Rays',
+  document_type: 'article',
 };
 
-const endpoints: ApiEndpoint[] = [
-  {
-    id: 'sign',
-    name: 'Sign Content',
-    method: 'POST',
-    path: '/sign',
-    description: 'Sign content (requires an API key with sign permission).',
-    category: 'Signing',
-    requiresAuth: true,
-    authType: 'apikey',
-    docsUrl: 'https://api.encypherai.com/docs',
-    sampleBody: JSON.stringify(
-      {
-        text: 'Hello, world.',
-        document_title: 'Example Document',
-        document_type: 'article',
-      },
-      null,
-      2
-    ),
-  },
-  {
-    id: 'sign-advanced',
-    name: 'Sign (Advanced)',
-    method: 'POST',
-    path: '/sign/advanced',
-    description: 'Sign with advanced embedding controls (typically Professional+).',
-    category: 'Signing',
-    requiresAuth: true,
-    authType: 'apikey',
-    minTier: 'professional',
-    docsUrl: 'https://api.encypherai.com/docs',
-    sampleBody: JSON.stringify(
-      {
-        document_id: 'doc_example_123',
-        text: 'Hello, world.',
-        segmentation_level: 'sentence',
-        action: 'c2pa.created',
-        manifest_mode: 'full',
-        embedding_strategy: 'single_point',
-      },
-      null,
-      2
-    ),
-  },
-  {
-    id: 'verify',
-    name: 'Verify Content',
-    method: 'POST',
-    path: '/verify',
-    description: 'Verify signed content (public, rate limited).',
-    category: 'Verification',
-    requiresAuth: false,
-    docsUrl: 'https://api.encypherai.com/docs',
-    sampleBody: JSON.stringify(
-      {
-        text: 'Paste signed content here to verify...',
-      },
-      null,
-      2
-    ),
-  },
-  {
-    id: 'lookup',
-    name: 'Lookup Sentence',
-    method: 'POST',
-    path: '/lookup',
-    description: 'Lookup sentence provenance (public).',
-    category: 'Verification',
-    requiresAuth: false,
-    docsUrl: 'https://api.encypherai.com/docs',
-    sampleBody: JSON.stringify(
-      {
-        sentence_text: 'The Senate passed a landmark bill today.',
-      },
-      null,
-      2
-    ),
-  },
-];
+const endpoints: ApiEndpoint[] = PLAYGROUND_ENDPOINTS as ApiEndpoint[];
 
 const methodColors: Record<HttpMethod, string> = {
   GET: 'bg-green-100 text-green-700',
@@ -200,8 +140,7 @@ const tierLabels: Record<Tier, string> = {
 };
 
 export default function PlaygroundPage() {
-  const { data: session } = useSession();
-  const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
+  const { session, status, accessToken } = useRequireAuth();
   // Get user tier from session (default to starter for new users)
   const userTier = ((session?.user as Record<string, unknown>)?.tier as Tier) || 'starter';
 
@@ -231,6 +170,10 @@ export default function PlaygroundPage() {
   const [showQuickStart, setShowQuickStart] = useState<boolean>(true);
   const [quickStartStep, setQuickStartStep] = useState<number>(0);
   const [lastSignedContent, setLastSignedContent] = useState<string | null>(null);
+  
+  // Guided Tour State (4 steps: 0=API Key, 1=Sign, 2=Copy, 3=Verify)
+  const [tourActive, setTourActive] = useState<boolean>(false);
+  const [tourStep, setTourStep] = useState<number>(0);
   const [endpointSearch, setEndpointSearch] = useState<string>('');
   const preserveRequestBodyOnEndpointChangeRef = useRef<boolean>(false);
   const [requestEditorMode, setRequestEditorMode] = useState<RequestEditorMode>('form');
@@ -243,7 +186,10 @@ export default function PlaygroundPage() {
   });
 
   const supportsFormBuilder =
-    selectedEndpoint.id === 'sign' || selectedEndpoint.id === 'verify' || selectedEndpoint.id === 'lookup';
+    selectedEndpoint.id === 'sign' ||
+    selectedEndpoint.id === 'verify' ||
+    selectedEndpoint.id === 'verify-advanced' ||
+    selectedEndpoint.id === 'lookup';
 
   // Filter endpoints by search term
   const filteredEndpoints = useMemo(() => {
@@ -285,7 +231,7 @@ export default function PlaygroundPage() {
     try {
       const data = JSON.parse(response);
       // Handle verification response
-      if (selectedEndpoint.id === 'verify' && data.data) {
+      if ((selectedEndpoint.id === 'verify' || selectedEndpoint.id === 'verify-advanced') && data.data) {
         const verdict = data.data;
         const isUntrustedSigner = verdict.reason_code === 'UNTRUSTED_SIGNER';
         return {
@@ -411,7 +357,7 @@ export default function PlaygroundPage() {
   const formValidation = useMemo(() => {
     if (!supportsFormBuilder || requestEditorMode !== 'form') return { valid: true, error: null as string | null };
 
-    if (selectedEndpoint.id === 'verify') {
+    if (selectedEndpoint.id === 'verify' || selectedEndpoint.id === 'verify-advanced') {
       return formValues.text.trim()
         ? { valid: true, error: null }
         : { valid: false, error: 'Text is required for verification.' };
@@ -462,21 +408,65 @@ export default function PlaygroundPage() {
     }
   };
 
-  // Demo Mode: Load pre-signed demo content for instant verification
-  const handleTryDemo = () => {
-    const verifyEndpoint = endpoints.find(e => e.id === 'verify');
-    if (verifyEndpoint) {
-      preserveRequestBodyOnEndpointChangeRef.current = true;
-      setSelectedEndpoint(verifyEndpoint);
-      setRequestEditorMode('form');
-      setFormValues((prev) => ({
-        ...prev,
-        text: DEMO_VERIFY_SAMPLE.text,
-      }));
-      setRequestBody(JSON.stringify(DEMO_VERIFY_SAMPLE, null, 2));
-      setSelectedApiKey('none');
-      toast.success('Demo content loaded! Click Send Request to verify.');
+  // Guided Tour: Start the 4-step tour (API Key → Sign → Copy → Verify)
+  const startGuidedTour = () => {
+    setTourActive(true);
+    setTourStep(0);
+    setQuickStartStep(0);
+    setLastSignedContent(null);
+    setSelectedApiKey('generated'); // Auto-select "Generate" option
+    localStorage.setItem('playground_tour_active', 'true');
+    toast.success('Welcome to the guided tour! Let\'s create your API key first.');
+  };
+
+  const skipTour = () => {
+    setTourActive(false);
+    setTourStep(0);
+    localStorage.removeItem('playground_tour_active');
+    toast.info('Tour skipped. You can restart it anytime from the Quick Start banner.');
+  };
+
+  const nextTourStep = () => {
+    const nextStep = tourStep + 1;
+    
+    if (nextStep === 1) {
+      // Step 1: Load Sign endpoint with demo content
+      const signEndpoint = endpoints.find(e => e.id === 'sign');
+      if (signEndpoint) {
+        preserveRequestBodyOnEndpointChangeRef.current = true;
+        setSelectedEndpoint(signEndpoint);
+        setRequestEditorMode('form');
+        setFormValues((prev) => ({
+          ...prev,
+          text: DEMO_SIGN_SAMPLE.text,
+          document_title: DEMO_SIGN_SAMPLE.document_title,
+          document_type: DEMO_SIGN_SAMPLE.document_type,
+        }));
+        setRequestBody(JSON.stringify(DEMO_SIGN_SAMPLE, null, 2));
+        setTourStep(1);
+        setQuickStartStep(1);
+        toast.success('Great! Now let\'s sign some content with your API key.');
+      }
+    } else if (nextStep === 2) {
+      // Step 2: Copy to Verify (handled by handleCopyToVerify)
+      setTourStep(2);
+      setQuickStartStep(2);
+    } else if (nextStep === 3) {
+      // Step 3: Verify
+      setTourStep(3);
+      setQuickStartStep(3);
+    } else if (nextStep === 4) {
+      // Tour complete
+      setTourActive(false);
+      setTourStep(0);
+      localStorage.removeItem('playground_tour_active');
+      toast.success('🎉 Tour complete! You\'ve mastered the Sign → Verify flow.');
     }
+  };
+
+  // Legacy Demo Mode (kept for backward compatibility)
+  const handleTryDemo = () => {
+    startGuidedTour();
   };
 
   const handleGenerateKey = async () => {
@@ -495,6 +485,11 @@ export default function PlaygroundPage() {
       setGeneratedApiKey(key);
       setSelectedApiKey('generated');
       toast.success('New API key generated for the playground');
+      
+      // Auto-advance tour if active on step 0
+      if (tourActive && tourStep === 0) {
+        setTimeout(() => nextTourStep(), 1000);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to generate API key');
     } finally {
@@ -641,40 +636,47 @@ export default function PlaygroundPage() {
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-delft-blue dark:text-white">Quick Start: Sign → Verify</h3>
-                    <p className="text-sm text-muted-foreground">Try the complete flow in 3 steps</p>
+                    <h3 className="font-semibold text-delft-blue dark:text-white">Guided Tour: API Key → Sign → Verify</h3>
+                    <p className="text-sm text-muted-foreground">Complete walkthrough in 4 steps</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2 ml-4">
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${quickStartStep >= 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
-                    <span className={quickStartStep > 0 ? 'text-green-600' : ''}>1</span> Sign
-                    {quickStartStep > 0 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 0 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={tourStep > 0 ? 'text-green-600' : ''}>1</span> API Key
+                    {tourStep > 0 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                   </div>
                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${quickStartStep >= 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
-                    <span className={quickStartStep > 1 ? 'text-green-600' : ''}>2</span> Copy
-                    {quickStartStep > 1 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 1 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={tourStep > 1 ? 'text-green-600' : ''}>2</span> Sign
+                    {tourStep > 1 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                   </div>
                   <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
-                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${quickStartStep >= 2 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
-                    <span className={quickStartStep > 2 ? 'text-green-600' : ''}>3</span> Verify
-                    {quickStartStep > 2 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 2 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={tourStep > 2 ? 'text-green-600' : ''}>3</span> Copy
+                    {tourStep > 2 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
+                  </div>
+                  <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                  <div className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${tourActive && tourStep >= 3 ? 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300' : 'bg-slate-100 text-slate-500'}`}>
+                    <span className={tourStep > 3 ? 'text-green-600' : ''}>4</span> Verify
+                    {tourStep > 3 && <svg className="w-3 h-3 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>}
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {quickStartStep === 0 && (
-                  <Button variant="secondary" size="sm" onClick={handleTryDemo}>
-                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    Try Demo (No Auth)
+                {!tourActive && quickStartStep === 0 && (
+                  <Button variant="secondary" size="sm" onClick={startGuidedTour}>
+                    <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                    Start Guided Tour
                   </Button>
                 )}
                 {quickStartStep === 1 && lastSignedContent && (
-                  <Button variant="primary" size="sm" onClick={handleCopyToVerify}>
+                  <Button variant="primary" size="sm" onClick={handleCopyToVerify} data-tour-target="copy-to-verify">
                     Copy to Verify →
                   </Button>
                 )}
@@ -918,6 +920,7 @@ export default function PlaygroundPage() {
                     onClick={handleGenerateKey}
                     disabled={!accessToken || isGeneratingKey}
                     className="w-full"
+                    data-tour-target="generate-api-key"
                   >
                     {isGeneratingKey ? 'Generating...' : 'Generate New API Key'}
                   </Button>
@@ -1281,6 +1284,7 @@ export default function PlaygroundPage() {
                 onClick={handleSendRequest}
                 disabled={!canSendRequest}
                 className="w-full"
+                data-tour-target="send-request"
               >
                 {isLoading ? (
                   <>
@@ -1509,6 +1513,49 @@ export default function PlaygroundPage() {
           </Card>
         </div>
       </div>
+
+      {/* Guided Tour Spotlights */}
+      <TourSpotlight
+        active={tourActive && tourStep === 0}
+        message="Click 'Generate New API Key' to create your API key for testing."
+        targetSelector="[data-tour-target='generate-api-key']"
+        position="top"
+        onNext={() => {
+          // Don't show next button - user must click the actual Generate button
+        }}
+        onSkip={skipTour}
+        nextLabel=""
+      />
+
+      <TourSpotlight
+        active={tourActive && tourStep === 1}
+        message="Great! Now let's sign some content. Click 'Send Request' to sign the demo text with your API key."
+        targetSelector="[data-tour-target='send-request']"
+        position="top"
+        onNext={nextTourStep}
+        onSkip={skipTour}
+        nextLabel="Continue"
+      />
+
+      <TourSpotlight
+        active={tourActive && tourStep === 2 && lastSignedContent !== null}
+        message="Perfect! Your content is signed. Now click 'Copy to Verify →' to move the signed content to the verify endpoint."
+        targetSelector="[data-tour-target='copy-to-verify']"
+        position="top"
+        onNext={nextTourStep}
+        onSkip={skipTour}
+        nextLabel="Continue"
+      />
+
+      <TourSpotlight
+        active={tourActive && tourStep === 3}
+        message="Final step! Click 'Send Request' to verify the signed content and see the cryptographic proof."
+        targetSelector="[data-tour-target='send-request']"
+        position="top"
+        onNext={nextTourStep}
+        onSkip={skipTour}
+        nextLabel="Finish Tour"
+      />
     </DashboardLayout>
   );
 }
