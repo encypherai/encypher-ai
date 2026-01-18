@@ -594,10 +594,10 @@ Preview deliveries are synchronous and retried up to three times. Production del
 
 ## Streaming Signing (SSE)
 
-- `POST /api/v1/stream/sign`  
+- `POST /api/v1/sign/stream`  
   Streams `start`, `progress`, `partial`, and `final` events via Server-Sent Events. The final event includes the signed text, verification URL, and runtime statistics. Provide an optional `run_id` to make retries idempotent.
 
-- `GET /api/v1/stream/runs/{run_id}`  
+- `GET /api/v1/sign/stream/runs/{run_id}`  
   Returns the most recent persisted state for a streaming run, enabling clients to resume after reconnects.
 
 ---

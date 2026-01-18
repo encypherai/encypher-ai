@@ -1,6 +1,7 @@
 """
 API router for the Encypher Dashboard Backend.
 """
+
 from fastapi import APIRouter
 
 from app.api.endpoints import (

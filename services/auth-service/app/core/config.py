@@ -92,6 +92,7 @@ class Settings(BaseSettings):
     # INTERNAL SERVICE URLS (for service-to-service)
     # ===========================================
     COALITION_SERVICE_URL: str = "http://localhost:8009"
+    NOTIFICATION_SERVICE_URL: str = "http://localhost:8008"
 
     model_config = SettingsConfigDict(
         env_file=".env",

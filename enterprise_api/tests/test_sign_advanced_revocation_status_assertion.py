@@ -21,9 +21,7 @@ async def test_sign_advanced_embeds_status_list_assertion(
         def get_segments(self, level: str):
             return [self._text]
 
-    allocate_mock = AsyncMock(
-        return_value=(1, 7, "https://status.encypherai.com/v1/org_business/list/1")
-    )
+    allocate_mock = AsyncMock(return_value=(1, 7, "https://status.encypherai.com/v1/org_business/list/1"))
 
     with (
         patch("app.utils.quota.QuotaManager.check_quota", new=AsyncMock(return_value=True)),

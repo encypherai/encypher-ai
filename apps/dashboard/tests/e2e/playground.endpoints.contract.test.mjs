@@ -55,4 +55,38 @@ describe('Playground endpoint catalog (contract)', () => {
     const sample = JSON.parse(verifyAdvanced.sampleBody);
     assert.ok(sample.text, 'verify-advanced sample body missing text');
   });
+
+  it('includes streaming endpoints with tier metadata', () => {
+    const streamSign = findById('stream-sign');
+    assert.ok(streamSign, 'stream-sign endpoint missing');
+    assert.equal(streamSign.method, 'POST');
+    assert.equal(streamSign.path, '/sign/stream');
+    assert.equal(streamSign.requiresAuth, true);
+    assert.equal(streamSign.minTier, 'professional');
+    assert.equal(streamSign.category, 'Streaming');
+    assert.ok(streamSign.sampleBody, 'stream-sign sample body missing');
+
+    const streamChatOpenai = findById('stream-chat-openai');
+    assert.ok(streamChatOpenai, 'stream-chat-openai endpoint missing');
+    assert.equal(streamChatOpenai.method, 'POST');
+    assert.equal(streamChatOpenai.path, '/chat/completions');
+    assert.equal(streamChatOpenai.requiresAuth, true);
+    assert.equal(streamChatOpenai.minTier, 'professional');
+    assert.equal(streamChatOpenai.category, 'Streaming');
+
+    const streamChatHealth = findById('stream-chat-health');
+    assert.ok(streamChatHealth, 'stream-chat-health endpoint missing');
+    assert.equal(streamChatHealth.method, 'GET');
+    assert.equal(streamChatHealth.path, '/chat/health');
+    assert.equal(streamChatHealth.requiresAuth, false);
+    assert.equal(streamChatHealth.category, 'Streaming');
+
+    const streamSessionCreate = findById('stream-session-create');
+    assert.ok(streamSessionCreate, 'stream-session-create endpoint missing');
+    assert.equal(streamSessionCreate.method, 'POST');
+    assert.equal(streamSessionCreate.path, '/sign/stream/sessions');
+    assert.equal(streamSessionCreate.requiresAuth, true);
+    assert.equal(streamSessionCreate.minTier, 'professional');
+    assert.equal(streamSessionCreate.category, 'Streaming');
+  });
 });

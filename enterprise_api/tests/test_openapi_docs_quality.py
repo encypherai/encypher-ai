@@ -17,7 +17,7 @@ def test_public_openapi_does_not_include_internal_endpoints() -> None:
     paths = openapi.get("paths", {})
 
     assert "/api/v1/usage/reset" not in paths
-    assert "/api/v1/stream/health" not in paths
+    assert "/api/v1/sign/stream/health" not in paths
 
 
 def test_public_openapi_operations_have_summary_and_description() -> None:

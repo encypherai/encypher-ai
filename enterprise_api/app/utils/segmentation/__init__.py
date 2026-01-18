@@ -11,11 +11,24 @@ This package provides:
 
 By default, spaCy is used for accurate boundary detection and tokenization.
 """
+
+from typing import Callable, Optional
+
 from .hierarchical import HierarchicalSegmenter, build_hierarchical_structure
 from .paragraph import segment_paragraphs
 from .section import segment_sections
 from .sentence import segment_sentences
 from .word import segment_words_normalized, segment_words_simple
+
+DefaultSegmenter: Optional[type] = None
+segment_sentences_default: Optional[Callable[[str, bool], list[str]]] = None
+segment_words_default: Optional[Callable[[str, bool], list[str]]] = None
+normalize_for_hashing: Optional[Callable[[str, bool, bool], str]] = None
+normalize_unicode: Optional[Callable[[str], str]] = None
+AdvancedSegmenter: Optional[type] = None
+segment_sentences_advanced: Optional[Callable[[str, str], list[str]]] = None
+segment_words: Optional[Callable[[str, str, bool], list[str]]] = None
+normalize_text_advanced: Optional[Callable[..., str]] = None
 
 # Default segmenter (spaCy-based with Unicode normalization) - RECOMMENDED
 try:
@@ -27,6 +40,7 @@ try:
         segment_sentences_default,
         segment_words_default,
     )
+
     DEFAULT_AVAILABLE = True
 except ImportError:
     DEFAULT_AVAILABLE = False
@@ -45,6 +59,7 @@ try:
         segment_sentences_advanced,
         segment_words,
     )
+
     ADVANCED_AVAILABLE = True
 except ImportError:
     ADVANCED_AVAILABLE = False

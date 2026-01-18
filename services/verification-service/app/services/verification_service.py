@@ -1,4 +1,5 @@
 """Verification service business logic"""
+
 import time
 from typing import Optional, Tuple, Dict, Any, List
 from sqlalchemy.orm import Session
@@ -19,10 +20,7 @@ class VerificationService:
         """Fetch document from Encoding Service"""
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(
-                    f"{settings.ENCODING_SERVICE_URL}/api/v1/encode/documents/{document_id}",
-                    timeout=5.0
-                )
+                response = await client.get(f"{settings.ENCODING_SERVICE_URL}/api/v1/encode/documents/{document_id}", timeout=5.0)
                 if response.status_code == 200:
                     return response.json()
                 return None
@@ -41,11 +39,7 @@ class VerificationService:
         start_time = time.time()
 
         # Verify signature
-        is_valid, error_msg = verify_signature(
-            verify_data.content,
-            verify_data.signature,
-            verify_data.public_key_pem
-        )
+        is_valid, error_msg = verify_signature(verify_data.content, verify_data.signature, verify_data.public_key_pem)
 
         # Verify content hash
         content_hash = verify_content_hash(verify_data.content, verify_data.signature[:64])
@@ -187,15 +181,15 @@ class VerificationService:
         return result, processing_time
 
     @staticmethod
-    def get_verification_history(
-        db: Session,
-        document_id: str,
-        limit: int = 100
-    ) -> List[VerificationResult]:
+    def get_verification_history(db: Session, document_id: str, limit: int = 100) -> List[VerificationResult]:
         """Get verification history for a document"""
-        return db.query(VerificationResult).filter(
-            VerificationResult.document_id == document_id
-        ).order_by(VerificationResult.created_at.desc()).limit(limit).all()
+        return (
+            db.query(VerificationResult)
+            .filter(VerificationResult.document_id == document_id)
+            .order_by(VerificationResult.created_at.desc())
+            .limit(limit)
+            .all()
+        )
 
     @staticmethod
     def get_verification_stats(db: Session, user_id: Optional[str] = None) -> Dict[str, Any]:

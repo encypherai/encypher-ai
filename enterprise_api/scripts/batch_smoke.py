@@ -3,6 +3,7 @@ Lightweight smoke test for the batch service.
 
 Used in CI/local environments where pytest's Postgres dependencies are unavailable.
 """
+
 import asyncio
 from uuid import uuid4
 

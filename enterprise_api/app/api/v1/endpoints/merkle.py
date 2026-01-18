@@ -3,6 +3,7 @@ API endpoints for Merkle tree operations.
 
 Enterprise tier endpoints for content attribution and plagiarism detection.
 """
+
 import logging
 import time
 from typing import Dict
@@ -27,6 +28,7 @@ from app.schemas.merkle import (
     SourceDocumentMatch,
     SourceMatch,
 )
+from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
 from app.services.merkle_service import MerkleService
 from app.utils.quota import QuotaManager, QuotaType
 
@@ -36,7 +38,7 @@ logger = logging.getLogger(__name__)
 def require_merkle_feature(organization: dict = Depends(get_current_organization)) -> dict:
     """
     Dependency that requires Professional+ tier.
-    
+
     Raises HTTPException 403 if the organization doesn't have Professional+ tier.
     """
     tier = (organization.get("tier") or "starter").lower().replace("-", "_")
@@ -48,9 +50,10 @@ def require_merkle_feature(organization: dict = Depends(get_current_organization
                 "code": "FEATURE_NOT_AVAILABLE",
                 "message": "Merkle tree features require Professional tier or higher",
                 "upgrade_url": "/billing/upgrade",
-            }
+            },
         )
     return organization
+
 
 router = APIRouter(prefix="/enterprise/merkle", tags=["Enterprise - Merkle Trees"])
 
@@ -58,6 +61,7 @@ router = APIRouter(prefix="/enterprise/merkle", tags=["Enterprise - Merkle Trees
 # ============================================================================
 # Document Encoding Endpoint
 # ============================================================================
+
 
 @router.post(
     "/encode",
@@ -89,8 +93,8 @@ router = APIRouter(prefix="/enterprise/merkle", tags=["Enterprise - Merkle Trees
         400: {"model": ErrorResponse, "description": "Invalid request"},
         401: {"model": ErrorResponse, "description": "Unauthorized"},
         403: {"model": ErrorResponse, "description": "Quota exceeded or feature not enabled"},
-        500: {"model": ErrorResponse, "description": "Server error"}
-    }
+        500: {"model": ErrorResponse, "description": "Server error"},
+    },
 )
 async def encode_document(
     request: DocumentEncodeRequest,
@@ -100,36 +104,33 @@ async def encode_document(
 ) -> DocumentEncodeResponse:
     """
     Encode a document into Merkle trees.
-    
+
     Args:
         request: Document encoding request
         db: Database session
         organization: Authenticated organization with merkle feature
-    
+
     Returns:
         DocumentEncodeResponse with root hashes and metadata
-    
+
     Raises:
         HTTPException: If encoding fails
     """
     start_time = time.time()
     organization_id = organization["organization_id"]
-    
+
     # Check and increment quota (1 per document, regardless of size)
     await QuotaManager.check_quota(
         db=db,
         organization_id=organization_id,
         quota_type=QuotaType.MERKLE_ENCODING,
         increment=1,  # Per document, not per sentence
-        features=organization.get("features", {})
+        features=organization.get("features", {}),
     )
-    
+
     try:
-        logger.info(
-            f"Encoding document {request.document_id} for org {organization_id} "
-            f"at levels: {request.segmentation_levels}"
-        )
-        
+        logger.info(f"Encoding document {request.document_id} for org {organization_id} at levels: {request.segmentation_levels}")
+
         # Encode the document
         roots: Dict[str, MerkleRoot] = await MerkleService.encode_document(
             db=db,
@@ -138,13 +139,42 @@ async def encode_document(
             text=request.text,
             segmentation_levels=request.segmentation_levels,
             metadata=request.metadata,
-            include_words=request.include_words
+            include_words=request.include_words,
         )
-        
+
+        fuzzy_index_summary = None
+        if request.fuzzy_fingerprint and request.fuzzy_fingerprint.enabled:
+            if not organization.get("fuzzy_fingerprint_enabled", False):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail={
+                        "code": "FEATURE_NOT_AVAILABLE",
+                        "message": "Fuzzy fingerprint indexing requires Enterprise tier",
+                        "required_tier": "enterprise",
+                    },
+                )
+
+            await QuotaManager.check_quota(
+                db=db,
+                organization_id=organization_id,
+                quota_type=QuotaType.FUZZY_INDEX,
+                increment=1,
+                features=organization.get("features", {}),
+            )
+
+            fuzzy_index_summary = await fuzzy_fingerprint_service.index_document(
+                db=db,
+                organization_id=organization_id,
+                document_id=request.document_id,
+                text=request.text,
+                config=request.fuzzy_fingerprint,
+                merkle_roots=roots,
+            )
+
         # Convert to response format
         roots_response = {}
         total_segments = {}
-        
+
         for level, root in roots.items():
             roots_response[level] = MerkleRootResponse(
                 root_id=str(root.id),  # Use 'id' and convert UUID to string
@@ -154,16 +184,14 @@ async def encode_document(
                 total_leaves=root.leaf_count,
                 segmentation_level=root.segmentation_level,
                 created_at=root.created_at,
-                metadata=root.doc_metadata
+                metadata=root.doc_metadata,
             )
             total_segments[level] = root.leaf_count
-        
+
         processing_time_ms = (time.time() - start_time) * 1000
-        
-        logger.info(
-            f"Successfully encoded document {request.document_id} in {processing_time_ms:.2f}ms"
-        )
-        
+
+        logger.info(f"Successfully encoded document {request.document_id} in {processing_time_ms:.2f}ms")
+
         # Add quota usage headers
         quota_headers = await QuotaManager.get_quota_headers(
             db=db,
@@ -172,7 +200,7 @@ async def encode_document(
         )
         for header, value in quota_headers.items():
             response.headers[header] = value
-        
+
         return DocumentEncodeResponse(
             success=True,
             message="Document encoded successfully",
@@ -180,26 +208,22 @@ async def encode_document(
             organization_id=organization_id,
             roots=roots_response,
             total_segments=total_segments,
-            processing_time_ms=processing_time_ms
+            processing_time_ms=processing_time_ms,
+            fuzzy_index=fuzzy_index_summary,
         )
-        
+
     except ValueError as e:
         logger.error(f"Validation error encoding document: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except Exception as e:
         logger.error(f"Error encoding document {request.document_id}: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to encode document"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to encode document")
 
 
 # ============================================================================
 # Source Attribution Endpoint
 # ============================================================================
+
 
 @router.post(
     "/attribute",
@@ -226,6 +250,7 @@ async def find_sources_deprecated(
 # ============================================================================
 # Plagiarism Detection Endpoint
 # ============================================================================
+
 
 @router.post(
     "/detect-plagiarism",

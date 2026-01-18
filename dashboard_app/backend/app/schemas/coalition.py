@@ -1,6 +1,7 @@
 """
 Coalition schemas for API request/response models.
 """
+
 from datetime import datetime
 from typing import List, Optional
 
@@ -10,22 +11,26 @@ from pydantic import BaseModel
 # Coalition Member Schemas
 class CoalitionMemberBase(BaseModel):
     """Base coalition member schema."""
+
     status: str = "active"
 
 
 class CoalitionMemberCreate(CoalitionMemberBase):
     """Schema for creating a coalition member."""
+
     user_id: int
 
 
 class CoalitionMemberUpdate(BaseModel):
     """Schema for updating a coalition member."""
+
     status: Optional[str] = None
     pending_payout: Optional[float] = None
 
 
 class CoalitionMember(CoalitionMemberBase):
     """Coalition member response schema."""
+
     id: int
     user_id: int
     joined_date: datetime
@@ -45,6 +50,7 @@ class CoalitionMember(CoalitionMemberBase):
 # Content Item Schemas
 class ContentItemBase(BaseModel):
     """Base content item schema."""
+
     title: str
     content_type: str
     word_count: int = 0
@@ -52,6 +58,7 @@ class ContentItemBase(BaseModel):
 
 class ContentItemCreate(ContentItemBase):
     """Schema for creating a content item."""
+
     user_id: int
     file_path: Optional[str] = None
     c2pa_manifest_url: Optional[str] = None
@@ -59,6 +66,7 @@ class ContentItemCreate(ContentItemBase):
 
 class ContentItem(ContentItemBase):
     """Content item response schema."""
+
     id: int
     user_id: int
     file_path: Optional[str] = None
@@ -78,6 +86,7 @@ class ContentItem(ContentItemBase):
 # Revenue Transaction Schemas
 class RevenueTransactionBase(BaseModel):
     """Base revenue transaction schema."""
+
     amount: float
     transaction_type: str  # earned, paid, adjustment
     status: str = "pending"
@@ -86,6 +95,7 @@ class RevenueTransactionBase(BaseModel):
 
 class RevenueTransactionCreate(RevenueTransactionBase):
     """Schema for creating a revenue transaction."""
+
     user_id: int
     content_id: Optional[int] = None
     period_start: Optional[datetime] = None
@@ -94,6 +104,7 @@ class RevenueTransactionCreate(RevenueTransactionBase):
 
 class RevenueTransaction(RevenueTransactionBase):
     """Revenue transaction response schema."""
+
     id: int
     user_id: int
     content_id: Optional[int] = None
@@ -110,6 +121,7 @@ class RevenueTransaction(RevenueTransactionBase):
 # Content Access Log Schemas
 class ContentAccessLogBase(BaseModel):
     """Base content access log schema."""
+
     ai_company: str
     access_type: str
     revenue_amount: float = 0.0
@@ -117,6 +129,7 @@ class ContentAccessLogBase(BaseModel):
 
 class ContentAccessLogCreate(ContentAccessLogBase):
     """Schema for creating a content access log."""
+
     content_id: int
     user_id: int
     ip_address: Optional[str] = None
@@ -125,6 +138,7 @@ class ContentAccessLogCreate(ContentAccessLogBase):
 
 class ContentAccessLog(ContentAccessLogBase):
     """Content access log response schema."""
+
     id: int
     content_id: int
     user_id: int
@@ -140,6 +154,7 @@ class ContentAccessLog(ContentAccessLogBase):
 # Coalition Stats Schemas
 class ContentStats(BaseModel):
     """Content statistics schema."""
+
     total_documents: int
     verification_count: int
     recent_documents: int  # Last 30 days
@@ -148,6 +163,7 @@ class ContentStats(BaseModel):
 
 class RevenueStats(BaseModel):
     """Revenue statistics schema."""
+
     total_earned: float
     pending: float
     paid: float
@@ -157,6 +173,7 @@ class RevenueStats(BaseModel):
 
 class RevenueHistoryItem(BaseModel):
     """Revenue history item schema."""
+
     month: str
     earned: float
     paid: float
@@ -164,6 +181,7 @@ class RevenueHistoryItem(BaseModel):
 
 class TopContentItem(BaseModel):
     """Top performing content item schema."""
+
     id: int
     title: str
     content_type: str
@@ -175,6 +193,7 @@ class TopContentItem(BaseModel):
 
 class RecentAccessItem(BaseModel):
     """Recent content access item schema."""
+
     id: int
     ai_company: str
     content_title: str
@@ -185,6 +204,7 @@ class RecentAccessItem(BaseModel):
 
 class CoalitionStats(BaseModel):
     """Coalition dashboard statistics."""
+
     content_stats: ContentStats
     revenue_stats: RevenueStats
     revenue_history: List[RevenueHistoryItem]
@@ -195,6 +215,7 @@ class CoalitionStats(BaseModel):
 # Admin Schemas
 class AdminCoalitionOverview(BaseModel):
     """Admin coalition overview statistics."""
+
     total_members: int
     active_members: int
     total_content: int
@@ -204,6 +225,7 @@ class AdminCoalitionOverview(BaseModel):
 
 class MemberListItem(BaseModel):
     """Member list item for admin view."""
+
     id: int
     user_id: int
     email: str
@@ -218,6 +240,7 @@ class MemberListItem(BaseModel):
 
 class MemberListResponse(BaseModel):
     """Response schema for member list."""
+
     items: List[MemberListItem]
     total: int
     page: int

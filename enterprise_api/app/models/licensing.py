@@ -4,6 +4,7 @@ Licensing Agreement Management Models.
 Database models for managing licensing agreements with AI companies,
 tracking content access, and revenue distribution.
 """
+
 import uuid
 from datetime import date, datetime
 from decimal import Decimal
@@ -19,6 +20,7 @@ from app.database import Base
 
 class AgreementStatus(str, Enum):
     """Licensing agreement status."""
+
     ACTIVE = "active"
     SUSPENDED = "suspended"
     TERMINATED = "terminated"
@@ -27,6 +29,7 @@ class AgreementStatus(str, Enum):
 
 class AgreementType(str, Enum):
     """Type of licensing agreement."""
+
     SUBSCRIPTION = "subscription"
     ONE_TIME = "one_time"
     USAGE_BASED = "usage_based"
@@ -34,6 +37,7 @@ class AgreementType(str, Enum):
 
 class DistributionStatus(str, Enum):
     """Revenue distribution status."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     COMPLETED = "completed"
@@ -42,6 +46,7 @@ class DistributionStatus(str, Enum):
 
 class PayoutStatus(str, Enum):
     """Member payout status."""
+
     PENDING = "pending"
     PROCESSING = "processing"
     PAID = "paid"
@@ -54,8 +59,9 @@ class AICompany(Base):
 
     Represents an AI company that has licensing agreements with Encypher.
     """
+
     __tablename__ = "ai_companies"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     # Primary key
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -78,7 +84,7 @@ class AICompany(Base):
             validate_strings=True,
         ),
         nullable=False,
-        default=AgreementStatus.ACTIVE
+        default=AgreementStatus.ACTIVE,
     )
 
     # Timestamps
@@ -98,8 +104,9 @@ class LicensingAgreement(Base):
 
     Defines terms, pricing, content types, and duration of the agreement.
     """
+
     __tablename__ = "licensing_agreements"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     # Primary key
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -118,7 +125,7 @@ class LicensingAgreement(Base):
             validate_strings=True,
         ),
         nullable=False,
-        default=AgreementType.SUBSCRIPTION
+        default=AgreementType.SUBSCRIPTION,
     )
     total_value = Column(DECIMAL(12, 2), nullable=False)
     currency = Column(String(3), nullable=False, default="USD")
@@ -141,7 +148,7 @@ class LicensingAgreement(Base):
             validate_strings=True,
         ),
         nullable=False,
-        default=AgreementStatus.ACTIVE
+        default=AgreementStatus.ACTIVE,
     )
 
     # Timestamps
@@ -159,17 +166,13 @@ class LicensingAgreement(Base):
     def is_active(self) -> bool:
         """Check if agreement is currently active."""
         today = date.today()
-        return (
-            self.status == AgreementStatus.ACTIVE and
-            self.start_date <= today <= self.end_date
-        )
+        return self.status == AgreementStatus.ACTIVE and self.start_date <= today <= self.end_date
 
     def get_monthly_value(self) -> Decimal:
         """Calculate monthly value of the agreement."""
         if self.agreement_type == AgreementType.SUBSCRIPTION:
             # Calculate number of months in agreement
-            months = ((self.end_date.year - self.start_date.year) * 12 +
-                     (self.end_date.month - self.start_date.month))
+            months = (self.end_date.year - self.start_date.year) * 12 + (self.end_date.month - self.start_date.month)
             if months == 0:
                 months = 1
             return self.total_value / Decimal(months)
@@ -182,8 +185,9 @@ class ContentAccessLog(Base):
 
     Tracks when AI companies access content for revenue attribution.
     """
+
     __tablename__ = "content_access_logs"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     # Primary key
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -211,8 +215,9 @@ class RevenueDistribution(Base):
 
     Tracks how revenue is distributed between Encypher and coalition members.
     """
+
     __tablename__ = "revenue_distributions"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     # Primary key
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -227,7 +232,7 @@ class RevenueDistribution(Base):
     # Revenue breakdown
     total_revenue = Column(DECIMAL(12, 2), nullable=False)
     encypher_share = Column(DECIMAL(12, 2), nullable=False)  # 30%
-    member_pool = Column(DECIMAL(12, 2), nullable=False)     # 70%
+    member_pool = Column(DECIMAL(12, 2), nullable=False)  # 70%
 
     # Status
     status = Column(
@@ -239,7 +244,7 @@ class RevenueDistribution(Base):
             validate_strings=True,
         ),
         nullable=False,
-        default=DistributionStatus.PENDING
+        default=DistributionStatus.PENDING,
     )
 
     # Timestamps
@@ -260,8 +265,9 @@ class MemberRevenue(Base):
 
     Tracks revenue owed to each coalition member based on content usage.
     """
+
     __tablename__ = "member_revenue"
-    __table_args__ = {'extend_existing': True}
+    __table_args__ = {"extend_existing": True}
 
     # Primary key
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
@@ -287,7 +293,7 @@ class MemberRevenue(Base):
             validate_strings=True,
         ),
         nullable=False,
-        default=PayoutStatus.PENDING
+        default=PayoutStatus.PENDING,
     )
 
     # Payment details

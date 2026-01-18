@@ -4,6 +4,7 @@ Certificate resolution utilities for verification endpoints.
 Provides a cached view of organization certificates and BYOK public keys
 so verification requests can synchronously resolve signer public keys.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -77,21 +78,11 @@ class CertificateResolver:
     async def refresh_cache(self, db: AsyncSession) -> None:
         """Refresh the certificate cache when expired."""
 
-        if (
-            self._ttl > 0
-            and self._cache
-            and self._cache_expiry
-            and self._cache_expiry > datetime.utcnow()
-        ):
+        if self._ttl > 0 and self._cache and self._cache_expiry and self._cache_expiry > datetime.utcnow():
             return
 
         async with self._lock:
-            if (
-                self._ttl > 0
-                and self._cache
-                and self._cache_expiry
-                and self._cache_expiry > datetime.utcnow()
-            ):
+            if self._ttl > 0 and self._cache and self._cache_expiry and self._cache_expiry > datetime.utcnow():
                 return
 
             stmt = select(
@@ -134,9 +125,8 @@ class CertificateResolver:
                 except (ValueError, TypeError) as e:
                     # Skip certificates that can't be parsed - log for debugging
                     import logging
-                    logging.getLogger(__name__).warning(
-                        f"Failed to extract public key for org {organization_id}: {e}"
-                    )
+
+                    logging.getLogger(__name__).warning(f"Failed to extract public key for org {organization_id}: {e}")
                     continue
 
                 refreshed[organization_id] = ResolvedCertificate(
@@ -159,35 +149,35 @@ class CertificateResolver:
                 PublicKey.is_active,
                 PublicKey.created_at,
             ).where(PublicKey.is_active.is_(True))
-            
+
             byok_result = await db.execute(byok_stmt)
             try:
                 byok_rows = byok_result.all()
             except AttributeError:
                 byok_rows = byok_result.fetchall() if hasattr(byok_result, "fetchall") else []
-            
+
             for row in byok_rows:
                 if not row:
                     continue
                 org_id, key_name, public_key_pem, is_active, created_at = row
                 if not public_key_pem or not is_active:
                     continue
-                
+
                 # Skip if org already has a certificate (certificate takes precedence)
                 if org_id in refreshed:
                     logger.debug(f"Org {org_id} has certificate, skipping BYOK key")
                     continue
-                
+
                 try:
-                    public_key = load_pem_public_key(
-                        public_key_pem.encode(),
-                        backend=default_backend()
-                    )
+                    byok_public_key = load_pem_public_key(public_key_pem.encode(), backend=default_backend())
+                    if not isinstance(byok_public_key, (Ed25519PublicKey, ec.EllipticCurvePublicKey, rsa.RSAPublicKey)):
+                        logger.warning("Unsupported BYOK public key type for org %s", org_id)
+                        continue
                     refreshed[org_id] = ResolvedCertificate(
                         signer_id=org_id,
                         organization_name=key_name or org_id,
                         certificate_pem=public_key_pem,  # Store PEM for reference
-                        public_key=public_key,
+                        public_key=byok_public_key,
                         status=OrganizationCertificateStatus.ACTIVE,
                         certificate_rotated_at=created_at,
                         certificate_expiry=None,  # BYOK keys don't expire (managed separately)

@@ -1,6 +1,7 @@
 """
 Database connection and session management.
 """
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
@@ -18,11 +19,12 @@ AsyncSessionLocal = async_sessionmaker(
     class_=AsyncSession,
     autocommit=False,
     autoflush=False,
-    expire_on_commit=False # Often useful for FastAPI to keep objects accessible after commit
+    expire_on_commit=False,  # Often useful for FastAPI to keep objects accessible after commit
 )
 
 # Create Base class for models
 Base = declarative_base()
+
 
 # Dependency to get DB session
 async def get_db() -> AsyncSession:
@@ -33,7 +35,7 @@ async def get_db() -> AsyncSession:
         try:
             yield session
             # Optionally, commit here if you want all operations within a request to be a single transaction
-            # await session.commit() 
+            # await session.commit()
         except Exception:
             # Rollback in case of an exception during the request handling
             # await session.rollback()

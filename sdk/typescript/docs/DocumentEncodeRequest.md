@@ -12,6 +12,7 @@ Name | Type
 `segmentationLevels` | Array&lt;string&gt;
 `includeWords` | boolean
 `metadata` | { [key: string]: any; }
+`fuzzyFingerprint` | [FuzzyFingerprintConfig](FuzzyFingerprintConfig.md)
 
 ## Example
 
@@ -25,6 +26,7 @@ const example = {
   "segmentationLevels": [sentence, paragraph],
   "includeWords": null,
   "metadata": null,
+  "fuzzyFingerprint": null,
 } satisfies DocumentEncodeRequest
 
 console.log(example)

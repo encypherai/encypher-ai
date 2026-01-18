@@ -1,4 +1,5 @@
 """Notification service business logic"""
+
 from datetime import datetime
 from typing import List
 
@@ -93,6 +94,4 @@ class NotificationService:
     @staticmethod
     def get_user_notifications(db: Session, user_id: str, limit: int = 100) -> List[Notification]:
         """Get notifications for user"""
-        return db.query(Notification).filter(
-            Notification.user_id == user_id
-        ).order_by(Notification.created_at.desc()).limit(limit).all()
+        return db.query(Notification).filter(Notification.user_id == user_id).order_by(Notification.created_at.desc()).limit(limit).all()

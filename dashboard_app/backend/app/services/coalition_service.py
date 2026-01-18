@@ -1,6 +1,7 @@
 """
 Service for coalition operations.
 """
+
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
@@ -25,10 +26,7 @@ from app.schemas.coalition import (
 )
 
 
-async def get_or_create_coalition_member(
-    db: AsyncSession,
-    user_id: int
-) -> CoalitionMember:
+async def get_or_create_coalition_member(db: AsyncSession, user_id: int) -> CoalitionMember:
     """
     Get or create a coalition member for a user.
     """
@@ -54,10 +52,7 @@ async def get_or_create_coalition_member(
     return member
 
 
-async def get_coalition_stats(
-    db: AsyncSession,
-    user_id: int
-) -> CoalitionStats:
+async def get_coalition_stats(db: AsyncSession, user_id: int) -> CoalitionStats:
     """
     Get comprehensive coalition statistics for a user.
     """
@@ -67,24 +62,15 @@ async def get_coalition_stats(
     # Get content stats
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
 
-    total_docs_query = select(func.count(ContentItem.id)).where(
-        ContentItem.user_id == user_id
-    )
+    total_docs_query = select(func.count(ContentItem.id)).where(ContentItem.user_id == user_id)
     total_docs_result = await db.execute(total_docs_query)
     total_documents = total_docs_result.scalar() or 0
 
-    recent_docs_query = select(func.count(ContentItem.id)).where(
-        and_(
-            ContentItem.user_id == user_id,
-            ContentItem.signed_at >= thirty_days_ago
-        )
-    )
+    recent_docs_query = select(func.count(ContentItem.id)).where(and_(ContentItem.user_id == user_id, ContentItem.signed_at >= thirty_days_ago))
     recent_docs_result = await db.execute(recent_docs_query)
     recent_documents = recent_docs_result.scalar() or 0
 
-    verification_query = select(func.sum(ContentItem.verification_count)).where(
-        ContentItem.user_id == user_id
-    )
+    verification_query = select(func.sum(ContentItem.verification_count)).where(ContentItem.user_id == user_id)
     verification_result = await db.execute(verification_query)
     verification_count = verification_result.scalar() or 0
 
@@ -92,19 +78,12 @@ async def get_coalition_stats(
     trend_percentage = 12.0 if recent_documents > 0 else 0.0
 
     content_stats = ContentStats(
-        total_documents=total_documents,
-        verification_count=verification_count,
-        recent_documents=recent_documents,
-        trend_percentage=trend_percentage
+        total_documents=total_documents, verification_count=verification_count, recent_documents=recent_documents, trend_percentage=trend_percentage
     )
 
     # Get revenue stats
     paid_query = select(func.sum(RevenueTransaction.amount)).where(
-        and_(
-            RevenueTransaction.user_id == user_id,
-            RevenueTransaction.transaction_type == "paid",
-            RevenueTransaction.status == "completed"
-        )
+        and_(RevenueTransaction.user_id == user_id, RevenueTransaction.transaction_type == "paid", RevenueTransaction.status == "completed")
     )
     paid_result = await db.execute(paid_query)
     paid = paid_result.scalar() or 0.0
@@ -121,7 +100,7 @@ async def get_coalition_stats(
         pending=member.pending_payout,
         paid=paid,
         next_payout_date=next_payout,
-        monthly_average=paid / 12 if paid > 0 else 0.0
+        monthly_average=paid / 12 if paid > 0 else 0.0,
     )
 
     # Get revenue history (last 12 months)
@@ -142,7 +121,7 @@ async def get_coalition_stats(
                 RevenueTransaction.user_id == user_id,
                 RevenueTransaction.transaction_type == "earned",
                 RevenueTransaction.created_at >= month_start,
-                RevenueTransaction.created_at < month_end
+                RevenueTransaction.created_at < month_end,
             )
         )
         earned_result = await db.execute(earned_query)
@@ -153,22 +132,16 @@ async def get_coalition_stats(
                 RevenueTransaction.user_id == user_id,
                 RevenueTransaction.transaction_type == "paid",
                 RevenueTransaction.paid_at >= month_start,
-                RevenueTransaction.paid_at < month_end
+                RevenueTransaction.paid_at < month_end,
             )
         )
         paid_result = await db.execute(paid_query)
         paid_month = paid_result.scalar() or 0.0
 
-        revenue_history.insert(0, RevenueHistoryItem(
-            month=month_str,
-            earned=earned,
-            paid=paid_month
-        ))
+        revenue_history.insert(0, RevenueHistoryItem(month=month_str, earned=earned, paid=paid_month))
 
     # Get top performing content
-    top_content_query = select(ContentItem).where(
-        ContentItem.user_id == user_id
-    ).order_by(desc(ContentItem.revenue_generated)).limit(10)
+    top_content_query = select(ContentItem).where(ContentItem.user_id == user_id).order_by(desc(ContentItem.revenue_generated)).limit(10)
 
     top_content_result = await db.execute(top_content_query)
     top_content_items = top_content_result.scalars().all()
@@ -181,19 +154,19 @@ async def get_coalition_stats(
             word_count=item.word_count,
             verification_count=item.verification_count,
             access_count=item.access_count,
-            revenue_generated=item.revenue_generated
+            revenue_generated=item.revenue_generated,
         )
         for item in top_content_items
     ]
 
     # Get recent access logs
-    recent_access_query = select(
-        ContentAccessLog, ContentItem.title
-    ).join(
-        ContentItem, ContentAccessLog.content_id == ContentItem.id
-    ).where(
-        ContentAccessLog.user_id == user_id
-    ).order_by(desc(ContentAccessLog.accessed_at)).limit(50)
+    recent_access_query = (
+        select(ContentAccessLog, ContentItem.title)
+        .join(ContentItem, ContentAccessLog.content_id == ContentItem.id)
+        .where(ContentAccessLog.user_id == user_id)
+        .order_by(desc(ContentAccessLog.accessed_at))
+        .limit(50)
+    )
 
     recent_access_result = await db.execute(recent_access_query)
     recent_access_rows = recent_access_result.all()
@@ -205,7 +178,7 @@ async def get_coalition_stats(
             content_title=title,
             access_type=log.access_type,
             accessed_at=log.accessed_at,
-            revenue_amount=log.revenue_amount
+            revenue_amount=log.revenue_amount,
         )
         for log, title in recent_access_rows
     ]
@@ -215,15 +188,11 @@ async def get_coalition_stats(
         revenue_stats=revenue_stats,
         revenue_history=revenue_history,
         top_content=top_content,
-        recent_access=recent_access
+        recent_access=recent_access,
     )
 
 
-async def get_member_revenue(
-    db: AsyncSession,
-    user_id: int,
-    period: Optional[str] = None
-) -> Dict[str, Any]:
+async def get_member_revenue(db: AsyncSession, user_id: int, period: Optional[str] = None) -> Dict[str, Any]:
     """
     Get revenue breakdown for a member.
     """
@@ -238,9 +207,7 @@ async def get_member_revenue(
     else:
         start_date = None
 
-    query = select(RevenueTransaction).where(
-        RevenueTransaction.user_id == user_id
-    )
+    query = select(RevenueTransaction).where(RevenueTransaction.user_id == user_id)
 
     if start_date:
         query = query.where(RevenueTransaction.created_at >= start_date)
@@ -257,26 +224,17 @@ async def get_member_revenue(
     }
 
 
-async def get_top_content(
-    db: AsyncSession,
-    user_id: int,
-    limit: int = 10
-) -> List[ContentItem]:
+async def get_top_content(db: AsyncSession, user_id: int, limit: int = 10) -> List[ContentItem]:
     """
     Get top performing content for a user.
     """
-    query = select(ContentItem).where(
-        ContentItem.user_id == user_id
-    ).order_by(desc(ContentItem.revenue_generated)).limit(limit)
+    query = select(ContentItem).where(ContentItem.user_id == user_id).order_by(desc(ContentItem.revenue_generated)).limit(limit)
 
     result = await db.execute(query)
     return result.scalars().all()
 
 
-async def create_content_item(
-    db: AsyncSession,
-    content_data: ContentItemCreate
-) -> ContentItem:
+async def create_content_item(db: AsyncSession, content_data: ContentItemCreate) -> ContentItem:
     """
     Create a new content item.
     """
@@ -291,10 +249,7 @@ async def create_content_item(
     return content
 
 
-async def create_revenue_transaction(
-    db: AsyncSession,
-    transaction_data: RevenueTransactionCreate
-) -> RevenueTransaction:
+async def create_revenue_transaction(db: AsyncSession, transaction_data: RevenueTransactionCreate) -> RevenueTransaction:
     """
     Create a new revenue transaction.
     """
@@ -309,10 +264,7 @@ async def create_revenue_transaction(
     return transaction
 
 
-async def create_access_log(
-    db: AsyncSession,
-    log_data: ContentAccessLogCreate
-) -> ContentAccessLog:
+async def create_access_log(db: AsyncSession, log_data: ContentAccessLogCreate) -> ContentAccessLog:
     """
     Create a new content access log.
     """
@@ -339,10 +291,7 @@ async def create_access_log(
     return log
 
 
-async def update_member_stats(
-    db: AsyncSession,
-    user_id: int
-) -> None:
+async def update_member_stats(db: AsyncSession, user_id: int) -> None:
     """
     Update coalition member statistics.
     """
@@ -360,21 +309,14 @@ async def update_member_stats(
 
     # Sum earned revenue
     earned_query = select(func.sum(RevenueTransaction.amount)).where(
-        and_(
-            RevenueTransaction.user_id == user_id,
-            RevenueTransaction.transaction_type == "earned"
-        )
+        and_(RevenueTransaction.user_id == user_id, RevenueTransaction.transaction_type == "earned")
     )
     earned_result = await db.execute(earned_query)
     member.total_earned = earned_result.scalar() or 0.0
 
     # Sum pending revenue
     pending_query = select(func.sum(RevenueTransaction.amount)).where(
-        and_(
-            RevenueTransaction.user_id == user_id,
-            RevenueTransaction.transaction_type == "earned",
-            RevenueTransaction.status == "pending"
-        )
+        and_(RevenueTransaction.user_id == user_id, RevenueTransaction.transaction_type == "earned", RevenueTransaction.status == "pending")
     )
     pending_result = await db.execute(pending_query)
     member.pending_payout = pending_result.scalar() or 0.0
@@ -383,9 +325,7 @@ async def update_member_stats(
 
 
 # Admin functions
-async def get_admin_coalition_overview(
-    db: AsyncSession
-) -> AdminCoalitionOverview:
+async def get_admin_coalition_overview(db: AsyncSession) -> AdminCoalitionOverview:
     """
     Get coalition overview statistics for admin.
     """
@@ -395,9 +335,7 @@ async def get_admin_coalition_overview(
     total_members = total_members_result.scalar() or 0
 
     # Active members
-    active_members_query = select(func.count(CoalitionMember.id)).where(
-        CoalitionMember.status == "active"
-    )
+    active_members_query = select(func.count(CoalitionMember.id)).where(CoalitionMember.status == "active")
     active_members_result = await db.execute(active_members_query)
     active_members = active_members_result.scalar() or 0
 
@@ -411,10 +349,7 @@ async def get_admin_coalition_overview(
     month_start = datetime(now.year, now.month, 1)
 
     revenue_mtd_query = select(func.sum(RevenueTransaction.amount)).where(
-        and_(
-            RevenueTransaction.transaction_type == "earned",
-            RevenueTransaction.created_at >= month_start
-        )
+        and_(RevenueTransaction.transaction_type == "earned", RevenueTransaction.created_at >= month_start)
     )
     revenue_mtd_result = await db.execute(revenue_mtd_query)
     total_revenue_mtd = revenue_mtd_result.scalar() or 0.0
@@ -429,22 +364,22 @@ async def get_admin_coalition_overview(
         active_members=active_members,
         total_content=total_content,
         total_revenue_mtd=total_revenue_mtd,
-        total_verifications=total_verifications
+        total_verifications=total_verifications,
     )
 
 
-async def get_coalition_members(
-    db: AsyncSession,
-    skip: int = 0,
-    limit: int = 50
-) -> MemberListResponse:
+async def get_coalition_members(db: AsyncSession, skip: int = 0, limit: int = 50) -> MemberListResponse:
     """
     Get list of coalition members for admin.
     """
     # Get members with user info
-    query = select(CoalitionMember, User).join(
-        User, CoalitionMember.user_id == User.id
-    ).order_by(desc(CoalitionMember.total_earned)).offset(skip).limit(limit)
+    query = (
+        select(CoalitionMember, User)
+        .join(User, CoalitionMember.user_id == User.id)
+        .order_by(desc(CoalitionMember.total_earned))
+        .offset(skip)
+        .limit(limit)
+    )
 
     result = await db.execute(query)
     rows = result.all()
@@ -465,14 +400,9 @@ async def get_coalition_members(
             total_verifications=member.total_verifications,
             total_earned=member.total_earned,
             pending_payout=member.pending_payout,
-            joined_date=member.joined_date
+            joined_date=member.joined_date,
         )
         for member, user in rows
     ]
 
-    return MemberListResponse(
-        items=items,
-        total=total,
-        page=skip // limit + 1 if limit > 0 else 1,
-        limit=limit
-    )
+    return MemberListResponse(items=items, total=total, page=skip // limit + 1 if limit > 0 else 1, limit=limit)

@@ -6,9 +6,9 @@ docs/APIKeysApi.md
 docs/AccountApi.md
 docs/AccountInfo.md
 docs/AccountResponse.md
-docs/AppSchemasEmbeddingsBatchVerifyRequest.md
-docs/AppSchemasEmbeddingsErrorResponse.md
+docs/AppSchemasBatchBatchVerifyRequest.md
 docs/AppSchemasEmbeddingsRightsMetadata.md
+docs/AppSchemasMerkleErrorResponse.md
 docs/BYOKApi.md
 docs/BatchApi.md
 docs/BatchItemPayload.md
@@ -20,7 +20,7 @@ docs/BatchSummary.md
 docs/BatchVerifyRequest.md
 docs/BatchVerifyResponse.md
 docs/BatchVerifyResult.md
-docs/BodyCreateStreamingSessionApiV1StreamSessionCreatePost.md
+docs/BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md
 docs/C2PAAssertionValidateRequest.md
 docs/C2PAAssertionValidateResponse.md
 docs/C2PAAssertionValidationResult.md
@@ -80,6 +80,8 @@ docs/FingerprintDetectResponse.md
 docs/FingerprintEncodeRequest.md
 docs/FingerprintEncodeResponse.md
 docs/FingerprintMatch.md
+docs/FuzzyFingerprintConfig.md
+docs/FuzzySearchConfig.md
 docs/HTTPValidationError.md
 docs/HealthApi.md
 docs/InfoApi.md
@@ -196,9 +198,9 @@ src/apis/index.ts
 src/index.ts
 src/models/AccountInfo.ts
 src/models/AccountResponse.ts
-src/models/AppSchemasEmbeddingsBatchVerifyRequest.ts
-src/models/AppSchemasEmbeddingsErrorResponse.ts
+src/models/AppSchemasBatchBatchVerifyRequest.ts
 src/models/AppSchemasEmbeddingsRightsMetadata.ts
+src/models/AppSchemasMerkleErrorResponse.ts
 src/models/BatchItemPayload.ts
 src/models/BatchItemResult.ts
 src/models/BatchResponseData.ts
@@ -208,7 +210,7 @@ src/models/BatchSummary.ts
 src/models/BatchVerifyRequest.ts
 src/models/BatchVerifyResponse.ts
 src/models/BatchVerifyResult.ts
-src/models/BodyCreateStreamingSessionApiV1StreamSessionCreatePost.ts
+src/models/BodyCreateStreamingSessionApiV1SignStreamSessionsPost.ts
 src/models/C2PAAssertionValidateRequest.ts
 src/models/C2PAAssertionValidateResponse.ts
 src/models/C2PAAssertionValidationResult.ts
@@ -261,6 +263,8 @@ src/models/FingerprintDetectResponse.ts
 src/models/FingerprintEncodeRequest.ts
 src/models/FingerprintEncodeResponse.ts
 src/models/FingerprintMatch.ts
+src/models/FuzzyFingerprintConfig.ts
+src/models/FuzzySearchConfig.ts
 src/models/HTTPValidationError.ts
 src/models/KeyCreateRequest.ts
 src/models/KeyCreateResponse.ts

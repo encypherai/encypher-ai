@@ -68,7 +68,8 @@ The WordPress C2PA plugin implementation is **complete** per the PRD specificati
 **Endpoints Used:**
 - `POST /api/v1/sign` (authenticated)
 - `POST /api/v1/sign/advanced` (authenticated)
-- `POST /api/v1/verify` (authenticated)
+- `POST /api/v1/verify` (public)
+- `POST /api/v1/verify/advanced` (authenticated)
 - `POST /api/v1/public/extract-and-verify` (public)
 
 **Implementation:**

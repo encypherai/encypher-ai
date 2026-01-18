@@ -12,7 +12,7 @@ All URIs are relative to *https://api.encypherai.com*
 
 ## batchVerifyEmbeddingsApiV1PublicVerifyBatchPost
 
-> BatchVerifyResponse batchVerifyEmbeddingsApiV1PublicVerifyBatchPost(appSchemasEmbeddingsBatchVerifyRequest, authorization)
+> BatchVerifyResponse batchVerifyEmbeddingsApiV1PublicVerifyBatchPost(batchVerifyRequest, authorization)
 
 Batch Verify Embeddings (Public - No Auth Required)
 
@@ -32,8 +32,8 @@ async function example() {
   const api = new PublicVerificationApi();
 
   const body = {
-    // AppSchemasEmbeddingsBatchVerifyRequest
-    appSchemasEmbeddingsBatchVerifyRequest: ...,
+    // BatchVerifyRequest
+    batchVerifyRequest: ...,
     // string (optional)
     authorization: authorization_example,
   } satisfies BatchVerifyEmbeddingsApiV1PublicVerifyBatchPostRequest;
@@ -55,7 +55,7 @@ example().catch(console.error);
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **appSchemasEmbeddingsBatchVerifyRequest** | [AppSchemasEmbeddingsBatchVerifyRequest](AppSchemasEmbeddingsBatchVerifyRequest.md) |  | |
+| **batchVerifyRequest** | [BatchVerifyRequest](BatchVerifyRequest.md) |  | |
 | **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type

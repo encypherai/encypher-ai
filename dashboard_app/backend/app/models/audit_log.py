@@ -1,6 +1,7 @@
 """
 Audit log model for storing verification results.
 """
+
 from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.sql import func
 
@@ -9,6 +10,7 @@ from app.core.database import Base
 
 class AuditLog(Base):
     """Audit log model for storing verification results."""
+
     __tablename__ = "audit_logs"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -19,7 +21,7 @@ class AuditLog(Base):
     event_data = Column(JSON, nullable=True)  # Extracted metadata or other event-specific data as JSON
     error_message = Column(Text, nullable=True)  # Error message if verification failed
     model_id = Column(String, nullable=True, index=True)  # AI model ID from metadata
-    
+
     # Additional fields for filtering and reporting
     source_type = Column(String, nullable=True)  # File, API, etc.
     department = Column(String, nullable=True, index=True)  # Department from metadata

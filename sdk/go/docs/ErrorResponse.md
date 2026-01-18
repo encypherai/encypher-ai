@@ -5,15 +5,15 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **Success** | Pointer to **bool** | Always false for errors | [optional] [default to false]
-**Error** | **string** | Error type | 
-**Message** | **string** | Human-readable error message | 
-**Details** | Pointer to **map[string]interface{}** |  | [optional] 
+**Error** | **string** | Error message | 
+**Detail** | Pointer to **NullableString** |  | [optional] 
+**ErrorCode** | Pointer to **NullableString** |  | [optional] 
 
 ## Methods
 
 ### NewErrorResponse
 
-`func NewErrorResponse(error_ string, message string, ) *ErrorResponse`
+`func NewErrorResponse(error_ string, ) *ErrorResponse`
 
 NewErrorResponse instantiates a new ErrorResponse object
 This constructor will assign default values to properties that have it defined,
@@ -73,61 +73,76 @@ and a boolean to check if the value has been set.
 SetError sets Error field to given value.
 
 
-### GetMessage
+### GetDetail
 
-`func (o *ErrorResponse) GetMessage() string`
+`func (o *ErrorResponse) GetDetail() string`
 
-GetMessage returns the Message field if non-nil, zero value otherwise.
+GetDetail returns the Detail field if non-nil, zero value otherwise.
 
-### GetMessageOk
+### GetDetailOk
 
-`func (o *ErrorResponse) GetMessageOk() (*string, bool)`
+`func (o *ErrorResponse) GetDetailOk() (*string, bool)`
 
-GetMessageOk returns a tuple with the Message field if it's non-nil, zero value otherwise
+GetDetailOk returns a tuple with the Detail field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetMessage
+### SetDetail
 
-`func (o *ErrorResponse) SetMessage(v string)`
+`func (o *ErrorResponse) SetDetail(v string)`
 
-SetMessage sets Message field to given value.
+SetDetail sets Detail field to given value.
 
+### HasDetail
 
-### GetDetails
+`func (o *ErrorResponse) HasDetail() bool`
 
-`func (o *ErrorResponse) GetDetails() map[string]interface{}`
+HasDetail returns a boolean if a field has been set.
 
-GetDetails returns the Details field if non-nil, zero value otherwise.
+### SetDetailNil
 
-### GetDetailsOk
+`func (o *ErrorResponse) SetDetailNil(b bool)`
 
-`func (o *ErrorResponse) GetDetailsOk() (*map[string]interface{}, bool)`
+ SetDetailNil sets the value for Detail to be an explicit nil
 
-GetDetailsOk returns a tuple with the Details field if it's non-nil, zero value otherwise
+### UnsetDetail
+`func (o *ErrorResponse) UnsetDetail()`
+
+UnsetDetail ensures that no value is present for Detail, not even an explicit nil
+### GetErrorCode
+
+`func (o *ErrorResponse) GetErrorCode() string`
+
+GetErrorCode returns the ErrorCode field if non-nil, zero value otherwise.
+
+### GetErrorCodeOk
+
+`func (o *ErrorResponse) GetErrorCodeOk() (*string, bool)`
+
+GetErrorCodeOk returns a tuple with the ErrorCode field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetDetails
+### SetErrorCode
 
-`func (o *ErrorResponse) SetDetails(v map[string]interface{})`
+`func (o *ErrorResponse) SetErrorCode(v string)`
 
-SetDetails sets Details field to given value.
+SetErrorCode sets ErrorCode field to given value.
 
-### HasDetails
+### HasErrorCode
 
-`func (o *ErrorResponse) HasDetails() bool`
+`func (o *ErrorResponse) HasErrorCode() bool`
 
-HasDetails returns a boolean if a field has been set.
+HasErrorCode returns a boolean if a field has been set.
 
-### SetDetailsNil
+### SetErrorCodeNil
 
-`func (o *ErrorResponse) SetDetailsNil(b bool)`
+`func (o *ErrorResponse) SetErrorCodeNil(b bool)`
 
- SetDetailsNil sets the value for Details to be an explicit nil
+ SetErrorCodeNil sets the value for ErrorCode to be an explicit nil
 
-### UnsetDetails
-`func (o *ErrorResponse) UnsetDetails()`
+### UnsetErrorCode
+`func (o *ErrorResponse) UnsetErrorCode()`
 
-UnsetDetails ensures that no value is present for Details, not even an explicit nil
+UnsetErrorCode ensures that no value is present for ErrorCode, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

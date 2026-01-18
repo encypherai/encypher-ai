@@ -1,6 +1,7 @@
 """
 Request logging middleware with structured logging and request IDs.
 """
+
 import uuid
 import time
 import structlog
@@ -11,7 +12,7 @@ from starlette.requests import Request
 class RequestLoggingMiddleware(BaseHTTPMiddleware):
     """
     Middleware to add request IDs and structured logging to all requests.
-    
+
     Features:
     - Generates unique request ID for each request
     - Adds request ID to response headers
@@ -35,15 +36,12 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             method=request.method,
             path=request.url.path,
             client_ip=request.client.host if request.client else None,
-            user_agent=request.headers.get("user-agent", "unknown")
+            user_agent=request.headers.get("user-agent", "unknown"),
         )
 
         # Log request start
         start_time = time.time()
-        logger.info(
-            "request_started",
-            query_params=dict(request.query_params) if request.query_params else None
-        )
+        logger.info("request_started", query_params=dict(request.query_params) if request.query_params else None)
 
         # Process request
         try:
@@ -53,11 +51,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             duration = time.time() - start_time
 
             # Log request completion
-            logger.info(
-                "request_completed",
-                status_code=response.status_code,
-                duration_ms=round(duration * 1000, 2)
-            )
+            logger.info("request_completed", status_code=response.status_code, duration_ms=round(duration * 1000, 2))
 
             # Add request ID to response headers
             response.headers["X-Request-ID"] = request_id
@@ -69,12 +63,7 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             duration = time.time() - start_time
 
             # Log error
-            logger.error(
-                "request_failed",
-                error=str(e),
-                error_type=type(e).__name__,
-                duration_ms=round(duration * 1000, 2)
-            )
+            logger.error("request_failed", error=str(e), error_type=type(e).__name__, duration_ms=round(duration * 1000, 2))
 
             # Re-raise exception
             raise

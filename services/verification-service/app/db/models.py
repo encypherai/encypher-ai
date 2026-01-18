@@ -1,4 +1,5 @@
 """SQLAlchemy database models for Verification Service"""
+
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -13,6 +14,7 @@ def generate_uuid():
 
 class VerificationResult(Base):
     """Verification result model"""
+
     __tablename__ = "verification_results"
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -55,6 +57,7 @@ class VerificationResult(Base):
 
 class VerificationLog(Base):
     """Verification audit log"""
+
     __tablename__ = "verification_logs"
 
     id = Column(String, primary_key=True, default=generate_uuid)

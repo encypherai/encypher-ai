@@ -2,6 +2,7 @@
 API endpoints for AI Demo feature.
 Handles demo requests and analytics events from the ai-demo page.
 """
+
 import hashlib
 import logging
 
@@ -103,9 +104,7 @@ async def create_demo_request(
     except Exception as e:
         logger.error(f"Error creating AI demo request: {e}")
         db.rollback()
-        raise HTTPException(
-            status_code=500, detail="Failed to create demo request"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to create demo request") from e
 
 
 @router.post("/analytics/events", response_model=AnalyticsEventResponse)

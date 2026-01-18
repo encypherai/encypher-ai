@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
@@ -10,13 +9,7 @@ class CRUDDemoRequest(CRUDBase[DemoRequest, DemoRequestCreate, DemoRequestUpdate
     """CRUD operations for DemoRequest model"""
 
     def create_with_metadata(
-        self,
-        db: Session,
-        *,
-        obj_in: DemoRequestCreate,
-        ip_address: str | None = None,
-        user_agent: str | None = None,
-        referrer: str | None = None
+        self, db: Session, *, obj_in: DemoRequestCreate, ip_address: str | None = None, user_agent: str | None = None, referrer: str | None = None
     ) -> DemoRequest:
         """Create a new demo request with additional metadata"""
         # Convert the Pydantic model to a dict
@@ -41,17 +34,10 @@ class CRUDDemoRequest(CRUDBase[DemoRequest, DemoRequestCreate, DemoRequestUpdate
         """Get a demo request by email"""
         return db.query(self.model).filter(self.model.email == email).first()
 
-    def get_multi_by_status(
-        self, db: Session, *, status: str, skip: int = 0, limit: int = 100
-    ) -> list[DemoRequest]:
+    def get_multi_by_status(self, db: Session, *, status: str, skip: int = 0, limit: int = 100) -> list[DemoRequest]:
         """Get multiple demo requests filtered by status"""
-        return (
-            db.query(self.model)
-            .filter(self.model.status == status)
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        return db.query(self.model).filter(self.model.status == status).offset(skip).limit(limit).all()
+
 
 # Create an instance of the CRUDDemoRequest class
 demo_request = CRUDDemoRequest(DemoRequest)

@@ -6,6 +6,7 @@ Two-Database Architecture:
 - Core DB: Customer/billing data
 - Content DB: Verification/content data
 """
+
 import asyncio
 import os
 import sys
@@ -198,11 +199,7 @@ async def content_engine():
 @pytest_asyncio.fixture(scope="function")
 async def db(async_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create a CORE database session for testing."""
-    async_session = async_sessionmaker(
-        async_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
-    )
+    async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
     async with async_session() as session:
         yield session
 
@@ -210,11 +207,7 @@ async def db(async_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture(scope="function")
 async def content_db(content_engine) -> AsyncGenerator[AsyncSession, None]:
     """Create a CONTENT database session for testing."""
-    async_session = async_sessionmaker(
-        content_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
-    )
+    async_session = async_sessionmaker(content_engine, class_=AsyncSession, expire_on_commit=False)
     async with async_session() as session:
         yield session
 
@@ -222,22 +215,22 @@ async def content_db(content_engine) -> AsyncGenerator[AsyncSession, None]:
 @pytest_asyncio.fixture(scope="function")
 async def client(db: AsyncSession, content_db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create an async HTTP client for testing with both databases."""
-    
+
     # Override the get_db dependency (core database)
     async def override_get_db():
         yield db
-    
+
     # Override the get_content_db dependency
     async def override_get_content_db():
         yield content_db
-    
+
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_content_db] = override_get_content_db
-    
+
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
-    
+
     # Clear overrides
     app.dependency_overrides.clear()
 
@@ -246,10 +239,7 @@ async def client(db: AsyncSession, content_db: AsyncSession) -> AsyncGenerator[A
 def auth_headers() -> dict:
     """Return authentication headers for testing."""
     # Use demo API key - must match DEMO_API_KEY in docker-compose
-    return {
-        "Authorization": f"Bearer {os.getenv('DEMO_API_KEY', 'demo-api-key-for-testing')}",
-        "Content-Type": "application/json"
-    }
+    return {"Authorization": f"Bearer {os.getenv('DEMO_API_KEY', 'demo-api-key-for-testing')}", "Content-Type": "application/json"}
 
 
 @pytest.fixture
@@ -270,56 +260,38 @@ async def async_client(client: AsyncClient) -> AsyncClient:
 @pytest.fixture
 def starter_auth_headers() -> dict:
     """Return auth headers for a Starter tier organization."""
-    return {
-        "Authorization": f"Bearer {os.getenv('STARTER_API_KEY', 'starter-api-key-for-testing')}",
-        "Content-Type": "application/json"
-    }
+    return {"Authorization": f"Bearer {os.getenv('STARTER_API_KEY', 'starter-api-key-for-testing')}", "Content-Type": "application/json"}
 
 
 @pytest.fixture
 def professional_auth_headers() -> dict:
     """Return auth headers for a Professional tier organization."""
-    return {
-        "Authorization": f"Bearer {os.getenv('PROFESSIONAL_API_KEY', 'professional-api-key-for-testing')}",
-        "Content-Type": "application/json"
-    }
+    return {"Authorization": f"Bearer {os.getenv('PROFESSIONAL_API_KEY', 'professional-api-key-for-testing')}", "Content-Type": "application/json"}
 
 
 @pytest.fixture
 def business_auth_headers() -> dict:
     """Return auth headers for a Business tier organization."""
-    return {
-        "Authorization": f"Bearer {os.getenv('BUSINESS_API_KEY', 'business-api-key-for-testing')}",
-        "Content-Type": "application/json"
-    }
+    return {"Authorization": f"Bearer {os.getenv('BUSINESS_API_KEY', 'business-api-key-for-testing')}", "Content-Type": "application/json"}
 
 
 @pytest.fixture
 def business_admin_headers() -> dict:
     """Return auth headers for a Business tier admin user."""
     # Uses same org as business, but could be different user in future
-    return {
-        "Authorization": f"Bearer {os.getenv('BUSINESS_ADMIN_API_KEY', 'business-api-key-for-testing')}",
-        "Content-Type": "application/json"
-    }
+    return {"Authorization": f"Bearer {os.getenv('BUSINESS_ADMIN_API_KEY', 'business-api-key-for-testing')}", "Content-Type": "application/json"}
 
 
 @pytest.fixture
 def business_owner_headers() -> dict:
     """Return auth headers for a Business tier owner user."""
-    return {
-        "Authorization": f"Bearer {os.getenv('BUSINESS_OWNER_API_KEY', 'business-api-key-for-testing')}",
-        "Content-Type": "application/json"
-    }
+    return {"Authorization": f"Bearer {os.getenv('BUSINESS_OWNER_API_KEY', 'business-api-key-for-testing')}", "Content-Type": "application/json"}
 
 
 @pytest.fixture
 def enterprise_auth_headers() -> dict:
     """Return auth headers for an Enterprise tier organization."""
-    return {
-        "Authorization": f"Bearer {os.getenv('ENTERPRISE_API_KEY', 'enterprise-api-key-for-testing')}",
-        "Content-Type": "application/json"
-    }
+    return {"Authorization": f"Bearer {os.getenv('ENTERPRISE_API_KEY', 'enterprise-api-key-for-testing')}", "Content-Type": "application/json"}
 
 
 @pytest.fixture
@@ -337,6 +309,4 @@ def owner_member_id() -> str:
 # Configure pytest-asyncio
 def pytest_configure(config):
     """Configure pytest with custom markers."""
-    config.addinivalue_line(
-        "markers", "asyncio: mark test as an asyncio test"
-    )
+    config.addinivalue_line("markers", "asyncio: mark test as an asyncio test")

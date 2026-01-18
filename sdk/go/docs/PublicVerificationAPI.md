@@ -12,7 +12,7 @@ Method | HTTP request | Description
 
 ## BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost
 
-> BatchVerifyResponse BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost(ctx).AppSchemasEmbeddingsBatchVerifyRequest(appSchemasEmbeddingsBatchVerifyRequest).Authorization(authorization).Execute()
+> BatchVerifyResponse BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost(ctx).BatchVerifyRequest(batchVerifyRequest).Authorization(authorization).Execute()
 
 Batch Verify Embeddings (Public - No Auth Required)
 
@@ -31,12 +31,12 @@ import (
 )
 
 func main() {
-	appSchemasEmbeddingsBatchVerifyRequest := *openapiclient.NewAppSchemasEmbeddingsBatchVerifyRequest([]openapiclient.VerifyEmbeddingRequest{*openapiclient.NewVerifyEmbeddingRequest("RefId_example", "Signature_example")}) // AppSchemasEmbeddingsBatchVerifyRequest | 
+	batchVerifyRequest := *openapiclient.NewBatchVerifyRequest([]openapiclient.VerifyEmbeddingRequest{*openapiclient.NewVerifyEmbeddingRequest("RefId_example", "Signature_example")}) // BatchVerifyRequest | 
 	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.PublicVerificationAPI.BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost(context.Background()).AppSchemasEmbeddingsBatchVerifyRequest(appSchemasEmbeddingsBatchVerifyRequest).Authorization(authorization).Execute()
+	resp, r, err := apiClient.PublicVerificationAPI.BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost(context.Background()).BatchVerifyRequest(batchVerifyRequest).Authorization(authorization).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `PublicVerificationAPI.BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -57,7 +57,7 @@ Other parameters are passed through a pointer to a apiBatchVerifyEmbeddingsApiV1
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **appSchemasEmbeddingsBatchVerifyRequest** | [**AppSchemasEmbeddingsBatchVerifyRequest**](AppSchemasEmbeddingsBatchVerifyRequest.md) |  | 
+ **batchVerifyRequest** | [**BatchVerifyRequest**](BatchVerifyRequest.md) |  | 
  **authorization** | **string** |  | 
 
 ### Return type

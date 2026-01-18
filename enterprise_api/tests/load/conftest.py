@@ -9,6 +9,7 @@ These tests are excluded from the default test run because:
 2. They can take several minutes to complete
 3. They may stress system resources
 """
+
 import os
 import sys
 from pathlib import Path
@@ -26,9 +27,7 @@ def pytest_collection_modifyitems(items):
         if "load" in str(item.fspath):
             item.add_marker(pytest.mark.stress)
             if not load_tests_enabled:
-                item.add_marker(
-                    pytest.mark.skip(reason="Load tests are opt-in. Set LOAD_TESTS=true to run.")
-                )
+                item.add_marker(pytest.mark.skip(reason="Load tests are opt-in. Set LOAD_TESTS=true to run."))
 
 
 # Ensure app is importable
@@ -42,10 +41,7 @@ _set_enterprise_app()
 
 
 # Database URL - uses Docker internal network
-TEST_DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL",
-    "postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher"
-)
+TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "postgresql+asyncpg://encypher:encypher_dev_password@postgres:5432/encypher")
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -65,11 +61,7 @@ async def async_engine():
 @pytest_asyncio.fixture(scope="function")
 async def db(async_engine) -> AsyncSession:
     """Create a database session for load testing."""
-    async_session = async_sessionmaker(
-        async_engine,
-        class_=AsyncSession,
-        expire_on_commit=False
-    )
-    
+    async_session = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+
     async with async_session() as session:
         yield session

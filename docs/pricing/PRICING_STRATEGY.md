@@ -534,8 +534,8 @@ NET TO ENCYPHER:        $455 / year
 | POST /merkle/attribute | ❌ | ❌ | ✅ | ✅ |
 | POST /merkle/detect-plagiarism | ❌ | ❌ | ✅ | ✅ |
 | **STREAMING** | | | | |
-| WebSocket /stream/sign | ❌ | ✅ | ✅ | ✅ |
-| SSE /stream/events | ❌ | ✅ | ✅ | ✅ |
+| WebSocket /sign/stream | ❌ | ✅ | ✅ | ✅ |
+| SSE /sign/stream/sessions/{session_id}/events | ❌ | ✅ | ✅ | ✅ |
 | Session management | ❌ | ✅ | ✅ | ✅ |
 | **BATCH OPERATIONS** | | | | |
 | POST /batch/sign (100 docs) | ❌ | ❌ | ✅ | ✅ |

@@ -3,8 +3,9 @@ Verification router for C2PA manifest verification.
 
 Provides both HTML-friendly verification pages and JSON APIs used by SDKs.
 """
+
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
@@ -15,8 +16,10 @@ from uuid import uuid4
 from app.database import get_db
 from app.dependencies import get_current_organization_dep
 from app.models.request_models import VerifyRequest
-from app.services.merkle_service import MerkleService
+from app.schemas.fuzzy_fingerprint import FuzzySearchConfig
 from app.services import verification_logic
+from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
+from app.services.merkle_service import MerkleService
 from app.utils.quota import QuotaManager, QuotaType
 
 router = APIRouter()
@@ -30,6 +33,7 @@ class VerifyAdvancedRequest(BaseModel):
     min_match_percentage: float = Field(default=0.0, ge=0.0, le=100.0)
     segmentation_level: str = Field(default="sentence")
     search_scope: str = Field(default="organization")
+    fuzzy_search: Optional[FuzzySearchConfig] = Field(default=None)
 
 
 @router.get("/verify/{document_id}", include_in_schema=False)
@@ -123,7 +127,8 @@ async def verify_advanced(
             normalize=True,
         )
 
-        from app.utils.merkle import compute_hash, normalize_for_hashing
+        from app.utils.merkle import compute_hash
+        from app.utils.segmentation.default import normalize_for_hashing
 
         normalized = normalize_for_hashing(
             request.text,
@@ -178,16 +183,10 @@ async def verify_advanced(
         )
         duration_ms = int((time.perf_counter() - start) * 1000)
 
-        source_documents = [
-            doc
-            for doc in (report.source_documents or [])
-            if doc.get("match_percentage", 0.0) >= request.min_match_percentage
-        ]
+        raw_sources = cast(list[Dict[str, Any]], report.source_documents or [])
+        source_documents = [doc for doc in raw_sources if doc.get("match_percentage", 0.0) >= request.min_match_percentage]
 
-        overall_pct = (
-            (report.matched_segments / report.total_segments) * 100
-            if getattr(report, "total_segments", 0) else 0.0
-        )
+        overall_pct = (report.matched_segments / report.total_segments) * 100 if getattr(report, "total_segments", 0) else 0.0
 
         response_payload["plagiarism"] = {
             "report_id": str(report.id),
@@ -199,6 +198,41 @@ async def verify_advanced(
             "processing_time_ms": duration_ms,
             "scan_timestamp": getattr(report, "scan_timestamp", None),
         }
+
+    fuzzy_config = request.fuzzy_search
+    if fuzzy_config and fuzzy_config.enabled:
+        if not organization.get("fuzzy_fingerprint_enabled", False):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Fuzzy fingerprint search requires Enterprise tier",
+                    "required_tier": "enterprise",
+                },
+            )
+
+        if fuzzy_config.fallback_when_no_binding and verdict.embeddings_found:
+            response_payload["fuzzy_search"] = {
+                "matches_found": 0,
+                "matches": [],
+                "processing_time_ms": 0,
+                "skipped_reason": "embeddings_found",
+            }
+        else:
+            await QuotaManager.check_quota(
+                db=db,
+                organization_id=organization["organization_id"],
+                quota_type=QuotaType.FUZZY_SEARCH,
+                increment=1,
+                features=organization.get("features", {}),
+            )
+            response_payload["fuzzy_search"] = await fuzzy_fingerprint_service.search(
+                db=db,
+                organization_id=organization["organization_id"],
+                text=request.text,
+                config=fuzzy_config,
+                search_scope=scope,
+            )
 
     return JSONResponse(status_code=status.HTTP_200_OK, content=response_payload)
 

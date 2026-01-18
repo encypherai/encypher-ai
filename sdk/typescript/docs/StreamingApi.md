@@ -4,22 +4,22 @@ All URIs are relative to *https://api.encypherai.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**closeStreamingSessionApiV1StreamSessionSessionIdClosePost**](StreamingApi.md#closestreamingsessionapiv1streamsessionsessionidclosepost) | **POST** /api/v1/stream/session/{session_id}/close | Close Streaming Session |
-| [**createStreamingSessionApiV1StreamSessionCreatePost**](StreamingApi.md#createstreamingsessionapiv1streamsessioncreatepost) | **POST** /api/v1/stream/session/create | Create Streaming Session |
-| [**getStreamRunApiV1StreamRunsRunIdGet**](StreamingApi.md#getstreamrunapiv1streamrunsrunidget) | **GET** /api/v1/stream/runs/{run_id} | Get Stream Run |
-| [**getStreamingStatsApiV1StreamStatsGet**](StreamingApi.md#getstreamingstatsapiv1streamstatsget) | **GET** /api/v1/stream/stats | Get Streaming Stats |
-| [**sseEventsEndpointApiV1StreamEventsGet**](StreamingApi.md#sseeventsendpointapiv1streameventsget) | **GET** /api/v1/stream/events | Sse Events Endpoint |
-| [**streamSigningApiV1StreamSignPost**](StreamingApi.md#streamsigningapiv1streamsignpost) | **POST** /api/v1/stream/sign | Stream Signing |
+| [**closeStreamingSessionApiV1SignStreamSessionsSessionIdClosePost**](StreamingApi.md#closestreamingsessionapiv1signstreamsessionssessionidclosepost) | **POST** /api/v1/sign/stream/sessions/{session_id}/close | Close Streaming Session |
+| [**createStreamingSessionApiV1SignStreamSessionsPost**](StreamingApi.md#createstreamingsessionapiv1signstreamsessionspost) | **POST** /api/v1/sign/stream/sessions | Create Streaming Session |
+| [**getStreamRunApiV1SignStreamRunsRunIdGet**](StreamingApi.md#getstreamrunapiv1signstreamrunsrunidget) | **GET** /api/v1/sign/stream/runs/{run_id} | Get Stream Run |
+| [**getStreamingStatsApiV1SignStreamStatsGet**](StreamingApi.md#getstreamingstatsapiv1signstreamstatsget) | **GET** /api/v1/sign/stream/stats | Get Streaming Stats |
+| [**sseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGet**](StreamingApi.md#sseeventsendpointapiv1signstreamsessionssessionideventsget) | **GET** /api/v1/sign/stream/sessions/{session_id}/events | Sse Events Endpoint |
+| [**streamSigningApiV1SignStreamPost**](StreamingApi.md#streamsigningapiv1signstreampost) | **POST** /api/v1/sign/stream | Stream Signing |
 
 
 
-## closeStreamingSessionApiV1StreamSessionSessionIdClosePost
+## closeStreamingSessionApiV1SignStreamSessionsSessionIdClosePost
 
-> any closeStreamingSessionApiV1StreamSessionSessionIdClosePost(sessionId)
+> any closeStreamingSessionApiV1SignStreamSessionsSessionIdClosePost(sessionId)
 
 Close Streaming Session
 
-Close a streaming session.  Args:     session_id: Session identifier     organization: Authenticated organization     db: Database session      Returns:     Session closure result with stats
+Close a streaming session.  Args:     session_id: Session identifier     organization: Authenticated organization     db: Database session  Returns:     Session closure result with stats
 
 ### Example
 
@@ -28,7 +28,7 @@ import {
   Configuration,
   StreamingApi,
 } from '@encypher/sdk';
-import type { CloseStreamingSessionApiV1StreamSessionSessionIdClosePostRequest } from '@encypher/sdk';
+import type { CloseStreamingSessionApiV1SignStreamSessionsSessionIdClosePostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -41,10 +41,10 @@ async function example() {
   const body = {
     // string
     sessionId: sessionId_example,
-  } satisfies CloseStreamingSessionApiV1StreamSessionSessionIdClosePostRequest;
+  } satisfies CloseStreamingSessionApiV1SignStreamSessionsSessionIdClosePostRequest;
 
   try {
-    const data = await api.closeStreamingSessionApiV1StreamSessionSessionIdClosePost(body);
+    const data = await api.closeStreamingSessionApiV1SignStreamSessionsSessionIdClosePost(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -85,13 +85,13 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## createStreamingSessionApiV1StreamSessionCreatePost
+## createStreamingSessionApiV1SignStreamSessionsPost
 
-> any createStreamingSessionApiV1StreamSessionCreatePost(sessionType, bodyCreateStreamingSessionApiV1StreamSessionCreatePost)
+> any createStreamingSessionApiV1SignStreamSessionsPost(sessionType, bodyCreateStreamingSessionApiV1SignStreamSessionsPost)
 
 Create Streaming Session
 
-Create a new streaming session.  Args:     session_type: Type of session (websocket, sse, kafka)     metadata: Optional session metadata     signing_options: Optional signing configuration     organization: Authenticated organization     db: Database session      Returns:     Session creation result with session_id
+Create a new streaming session.  Args:     session_type: Type of session (websocket, sse, kafka)     metadata: Optional session metadata     signing_options: Optional signing configuration     organization: Authenticated organization     db: Database session  Returns:     Session creation result with session_id
 
 ### Example
 
@@ -100,7 +100,7 @@ import {
   Configuration,
   StreamingApi,
 } from '@encypher/sdk';
-import type { CreateStreamingSessionApiV1StreamSessionCreatePostRequest } from '@encypher/sdk';
+import type { CreateStreamingSessionApiV1SignStreamSessionsPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -113,12 +113,12 @@ async function example() {
   const body = {
     // string (optional)
     sessionType: sessionType_example,
-    // BodyCreateStreamingSessionApiV1StreamSessionCreatePost (optional)
-    bodyCreateStreamingSessionApiV1StreamSessionCreatePost: ...,
-  } satisfies CreateStreamingSessionApiV1StreamSessionCreatePostRequest;
+    // BodyCreateStreamingSessionApiV1SignStreamSessionsPost (optional)
+    bodyCreateStreamingSessionApiV1SignStreamSessionsPost: ...,
+  } satisfies CreateStreamingSessionApiV1SignStreamSessionsPostRequest;
 
   try {
-    const data = await api.createStreamingSessionApiV1StreamSessionCreatePost(body);
+    const data = await api.createStreamingSessionApiV1SignStreamSessionsPost(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -135,7 +135,7 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **sessionType** | `string` |  | [Optional] [Defaults to `&#39;websocket&#39;`] |
-| **bodyCreateStreamingSessionApiV1StreamSessionCreatePost** | [BodyCreateStreamingSessionApiV1StreamSessionCreatePost](BodyCreateStreamingSessionApiV1StreamSessionCreatePost.md) |  | [Optional] |
+| **bodyCreateStreamingSessionApiV1SignStreamSessionsPost** | [BodyCreateStreamingSessionApiV1SignStreamSessionsPost](BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md) |  | [Optional] |
 
 ### Return type
 
@@ -160,9 +160,9 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## getStreamRunApiV1StreamRunsRunIdGet
+## getStreamRunApiV1SignStreamRunsRunIdGet
 
-> any getStreamRunApiV1StreamRunsRunIdGet(runId)
+> any getStreamRunApiV1SignStreamRunsRunIdGet(runId)
 
 Get Stream Run
 
@@ -175,7 +175,7 @@ import {
   Configuration,
   StreamingApi,
 } from '@encypher/sdk';
-import type { GetStreamRunApiV1StreamRunsRunIdGetRequest } from '@encypher/sdk';
+import type { GetStreamRunApiV1SignStreamRunsRunIdGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -188,10 +188,10 @@ async function example() {
   const body = {
     // string
     runId: runId_example,
-  } satisfies GetStreamRunApiV1StreamRunsRunIdGetRequest;
+  } satisfies GetStreamRunApiV1SignStreamRunsRunIdGetRequest;
 
   try {
-    const data = await api.getStreamRunApiV1StreamRunsRunIdGet(body);
+    const data = await api.getStreamRunApiV1SignStreamRunsRunIdGet(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -232,13 +232,13 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## getStreamingStatsApiV1StreamStatsGet
+## getStreamingStatsApiV1SignStreamStatsGet
 
-> any getStreamingStatsApiV1StreamStatsGet()
+> any getStreamingStatsApiV1SignStreamStatsGet()
 
 Get Streaming Stats
 
-Get streaming statistics for organization.  Args:     organization: Authenticated organization      Returns:     Streaming statistics
+Get streaming statistics for organization.  Args:     organization: Authenticated organization  Returns:     Streaming statistics
 
 ### Example
 
@@ -247,7 +247,7 @@ import {
   Configuration,
   StreamingApi,
 } from '@encypher/sdk';
-import type { GetStreamingStatsApiV1StreamStatsGetRequest } from '@encypher/sdk';
+import type { GetStreamingStatsApiV1SignStreamStatsGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -258,7 +258,7 @@ async function example() {
   const api = new StreamingApi(config);
 
   try {
-    const data = await api.getStreamingStatsApiV1StreamStatsGet();
+    const data = await api.getStreamingStatsApiV1SignStreamStatsGet();
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -295,13 +295,13 @@ This endpoint does not need any parameter.
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## sseEventsEndpointApiV1StreamEventsGet
+## sseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGet
 
-> any sseEventsEndpointApiV1StreamEventsGet(sessionId, apiKey)
+> any sseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGet(sessionId, apiKey)
 
 Sse Events Endpoint
 
-Server-Sent Events (SSE) endpoint for unidirectional streaming.  Args:     session_id: Session identifier     api_key: API key for authentication      Returns:     StreamingResponse with SSE events
+Server-Sent Events (SSE) endpoint for unidirectional streaming (session scoped).  Args:     session_id: Session identifier     api_key: API key for authentication  Returns:     StreamingResponse with SSE events
 
 ### Example
 
@@ -310,7 +310,7 @@ import {
   Configuration,
   StreamingApi,
 } from '@encypher/sdk';
-import type { SseEventsEndpointApiV1StreamEventsGetRequest } from '@encypher/sdk';
+import type { SseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -325,10 +325,10 @@ async function example() {
     sessionId: sessionId_example,
     // string (optional)
     apiKey: apiKey_example,
-  } satisfies SseEventsEndpointApiV1StreamEventsGetRequest;
+  } satisfies SseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGetRequest;
 
   try {
-    const data = await api.sseEventsEndpointApiV1StreamEventsGet(body);
+    const data = await api.sseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGet(body);
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -370,9 +370,9 @@ example().catch(console.error);
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## streamSigningApiV1StreamSignPost
+## streamSigningApiV1SignStreamPost
 
-> streamSigningApiV1StreamSignPost(streamSignRequest)
+> streamSigningApiV1SignStreamPost(streamSignRequest)
 
 Stream Signing
 
@@ -385,7 +385,7 @@ import {
   Configuration,
   StreamingApi,
 } from '@encypher/sdk';
-import type { StreamSigningApiV1StreamSignPostRequest } from '@encypher/sdk';
+import type { StreamSigningApiV1SignStreamPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -398,10 +398,10 @@ async function example() {
   const body = {
     // StreamSignRequest
     streamSignRequest: ...,
-  } satisfies StreamSigningApiV1StreamSignPostRequest;
+  } satisfies StreamSigningApiV1SignStreamPostRequest;
 
   try {
-    const data = await api.streamSigningApiV1StreamSignPost(body);
+    const data = await api.streamSigningApiV1SignStreamPost(body);
     console.log(data);
   } catch (error) {
     console.error(error);

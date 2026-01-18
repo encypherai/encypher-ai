@@ -5,22 +5,23 @@ Revises: add_org_certificate_metadata
 Create Date: 2025-11-21 19:00:00
 
 """
+
 import sqlalchemy as sa
 
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision = 'add_kms_support'
-down_revision = 'add_org_certificate_metadata'
+revision = "add_kms_support"
+down_revision = "add_org_certificate_metadata"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column('organizations', sa.Column('kms_key_id', sa.String(255), nullable=True))
-    op.add_column('organizations', sa.Column('kms_region', sa.String(50), nullable=True))
+    op.add_column("organizations", sa.Column("kms_key_id", sa.String(255), nullable=True))
+    op.add_column("organizations", sa.Column("kms_region", sa.String(50), nullable=True))
 
 
 def downgrade() -> None:
-    op.drop_column('organizations', 'kms_region')
-    op.drop_column('organizations', 'kms_key_id')
+    op.drop_column("organizations", "kms_region")
+    op.drop_column("organizations", "kms_key_id")

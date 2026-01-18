@@ -4,15 +4,16 @@ Setup Alembic for a microservice with database-per-service architecture.
 
 Usage:
     uv run python scripts/setup_service_alembic.py <service_name>
-    
+
 Example:
     uv run python scripts/setup_service_alembic.py key-service
 """
+
 import sys
 from pathlib import Path
 
 # Alembic configuration template
-ALEMBIC_INI_TEMPLATE = '''# Alembic configuration for {service_name}
+ALEMBIC_INI_TEMPLATE = """# Alembic configuration for {service_name}
 
 [alembic]
 script_location = alembic
@@ -57,7 +58,7 @@ formatter = generic
 [formatter_generic]
 format = %(levelname)-5.5s [%(name)s] %(message)s
 datefmt = %H:%M:%S
-'''
+"""
 
 ENV_PY_TEMPLATE = '''"""
 Alembic environment configuration for {service_name}
@@ -159,18 +160,18 @@ def setup_alembic(service_name: str):
     # Determine paths
     services_dir = Path(__file__).parent.parent / "services"
     service_dir = services_dir / service_name
-    
+
     if not service_dir.exists():
         print(f"Error: Service directory not found: {service_dir}")
         sys.exit(1)
-    
+
     alembic_dir = service_dir / "alembic"
     versions_dir = alembic_dir / "versions"
-    
+
     # Create directories
     alembic_dir.mkdir(exist_ok=True)
     versions_dir.mkdir(exist_ok=True)
-    
+
     # Database name (e.g., key-service -> encypher_keys)
     db_name_map = {
         "auth-service": "encypher_auth",
@@ -184,7 +185,7 @@ def setup_alembic(service_name: str):
         "coalition-service": "encypher_coalition",
     }
     db_name = db_name_map.get(service_name, f"encypher_{service_name.replace('-', '_')}")
-    
+
     # Write alembic.ini
     alembic_ini_path = service_dir / "alembic.ini"
     if not alembic_ini_path.exists():
@@ -193,7 +194,7 @@ def setup_alembic(service_name: str):
         print(f"Created: {alembic_ini_path}")
     else:
         print(f"Exists: {alembic_ini_path}")
-    
+
     # Write env.py
     env_py_path = alembic_dir / "env.py"
     if not env_py_path.exists():
@@ -202,7 +203,7 @@ def setup_alembic(service_name: str):
         print(f"Created: {env_py_path}")
     else:
         print(f"Exists: {env_py_path}")
-    
+
     # Write script.py.mako
     mako_path = alembic_dir / "script.py.mako"
     if not mako_path.exists():
@@ -211,13 +212,13 @@ def setup_alembic(service_name: str):
         print(f"Created: {mako_path}")
     else:
         print(f"Exists: {mako_path}")
-    
+
     # Create __init__.py in versions
     init_path = versions_dir / "__init__.py"
     if not init_path.exists():
         init_path.touch()
         print(f"Created: {init_path}")
-    
+
     print(f"\n✅ Alembic setup complete for {service_name}")
     print(f"   Database: {db_name}")
     print("\nNext steps:")
@@ -232,6 +233,6 @@ if __name__ == "__main__":
         print("Usage: python setup_service_alembic.py <service_name>")
         print("Example: python setup_service_alembic.py key-service")
         sys.exit(1)
-    
+
     service_name = sys.argv[1]
     setup_alembic(service_name)

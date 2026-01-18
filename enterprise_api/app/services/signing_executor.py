@@ -5,12 +5,13 @@ Two-Database Architecture:
 - Content DB: Stores documents and sentence_records
 - Core DB: Stores organization usage counters
 """
+
 from __future__ import annotations
 
 import logging
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union, cast
 
 from fastapi import HTTPException
 from sqlalchemy import select, text
@@ -19,10 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 try:
     from encypher import UnicodeMetadata
 except ImportError as exc:  # pragma: no cover - import guard
-    raise ImportError(
-        "encypher-ai package not found. "
-        "Please install the preview version with C2PA support."
-    ) from exc
+    raise ImportError("encypher-ai package not found. Please install the preview version with C2PA support.") from exc
 
 from app.config import settings
 from app.database import content_session_factory, core_session_factory
@@ -97,9 +95,7 @@ async def execute_signing(
         effective_template_id = request.template_id
         if effective_template_id is None:
             row = await db.execute(
-                text(
-                    "SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"
-                ),
+                text("SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"),
                 {"org_id": org_id},
             )
             effective_template_id = row.scalar_one_or_none()
@@ -109,9 +105,7 @@ async def execute_signing(
             custom_assertions_enabled = False
             if isinstance(features, dict):
                 custom_assertions_enabled = features.get("custom_assertions", False)
-            custom_assertions_enabled = custom_assertions_enabled or organization.get(
-                "custom_assertions_enabled", False
-            )
+            custom_assertions_enabled = custom_assertions_enabled or organization.get("custom_assertions_enabled", False)
 
             if not custom_assertions_enabled:
                 raise HTTPException(
@@ -130,10 +124,7 @@ async def execute_signing(
                 select(C2PAAssertionTemplate)
                 .where(
                     C2PAAssertionTemplate.id == effective_template_id,
-                    (
-                        (C2PAAssertionTemplate.organization_id == org_id)
-                        | (C2PAAssertionTemplate.is_public)
-                    ),
+                    ((C2PAAssertionTemplate.organization_id == org_id) | (C2PAAssertionTemplate.is_public)),
                     C2PAAssertionTemplate.is_active,
                 )
                 .limit(1)
@@ -141,9 +132,9 @@ async def execute_signing(
             result = await db.execute(stmt)
             template = result.scalar_one_or_none()
 
-            template_data = None
+            template_data: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
             if template:
-                template_data = template.template_data or {}
+                template_data = cast(Union[Dict[str, Any], List[Dict[str, Any]]], template.template_data or {})
             else:
                 from app.services.c2pa_builtin_templates import get_builtin_template
 
@@ -160,11 +151,15 @@ async def execute_signing(
                     },
                 )
 
-            assertions_payload = []
+            assertions_payload: List[Dict[str, Any]] = []
             if isinstance(template_data, dict):
-                assertions_payload = template_data.get("assertions") or []
+                assertions_payload = [
+                    assertion
+                    for assertion in (template_data.get("assertions") or [])
+                    if isinstance(assertion, dict)
+                ]
             elif isinstance(template_data, list):
-                assertions_payload = template_data
+                assertions_payload = [assertion for assertion in template_data if isinstance(assertion, dict)]
 
             for assertion in assertions_payload:
                 if not isinstance(assertion, dict):
@@ -204,7 +199,7 @@ async def execute_signing(
                 schema_result = await db.execute(stmt)
                 schema_model = schema_result.scalar_one_or_none()
                 if schema_model:
-                    registered_schemas[label] = schema_model.json_schema
+                    registered_schemas[label] = cast(Dict[str, Any], schema_model.json_schema)
 
             all_valid, validation_results = validator.validate_custom_assertions(
                 raw_assertions,
@@ -250,8 +245,9 @@ async def execute_signing(
         logger.debug("Embedding C2PA manifest for document %s", document_id)
         # Use caller-provided claim_generator, or default to enterprise-api identity
         from app import __version__ as api_version
+
         effective_claim_generator = request.claim_generator or f"encypher-enterprise-api/{api_version}"
-        
+
         signed_text = UnicodeMetadata.embed_metadata(
             text=request.text,
             private_key=private_key,
@@ -281,7 +277,7 @@ async def execute_signing(
     # Two-Database Architecture:
     # 1. Store document/sentences in CONTENT database
     # 2. Update usage counters in CORE database
-    
+
     try:
         # Write to CONTENT database (documents, sentences)
         async with content_session_factory() as content_db:
@@ -316,14 +312,16 @@ async def execute_signing(
             for idx, sentence in enumerate(sentences):
                 sentence_id = f"sent_{uuid.uuid4().hex[:20]}"
                 sentence_hash = compute_sentence_hash(sentence)
-                sentence_records.append({
-                    "sent_id": sentence_id,
-                    "doc_id": document_id,
-                    "org_id": organization["organization_id"],
-                    "text": sentence,
-                    "hash": sentence_hash,
-                    "idx": idx,
-                })
+                sentence_records.append(
+                    {
+                        "sent_id": sentence_id,
+                        "doc_id": document_id,
+                        "org_id": organization["organization_id"],
+                        "text": sentence,
+                        "hash": sentence_hash,
+                        "idx": idx,
+                    }
+                )
 
             if sentence_records:
                 await content_db.execute(
@@ -336,9 +334,9 @@ async def execute_signing(
                         VALUES (:sent_id, :doc_id, :org_id, :text, :hash, :idx, TRUE)
                         """
                     ),
-                    sentence_records
+                    sentence_records,
                 )
-            
+
             await content_db.commit()
 
         # Write to CORE database (usage counters)
@@ -427,9 +425,13 @@ async def _index_in_coalition(
         if not member or member.get("status") != "active":
             return
 
+        member_id = member.get("member_id")
+        if not isinstance(member_id, str):
+            return
+
         word_count = len(request.text.split())
         indexed = await coalition_client.index_content(
-            member_id=member.get("member_id"),
+            member_id=member_id,
             document_id=document_id,
             content_hash=text_hash,
             content_type=request.document_type,
@@ -444,4 +446,3 @@ async def _index_in_coalition(
             )
     except Exception as exc:  # pragma: no cover - external dependency
         logger.warning("Coalition indexing failed for %s: %s", document_id, exc, exc_info=True)
-

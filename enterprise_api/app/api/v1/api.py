@@ -3,6 +3,7 @@ API v1 router configuration.
 
 Combines all v1 endpoints into a single router.
 """
+
 from fastapi import APIRouter
 
 from app.api.v1.endpoints import merkle, provisioning

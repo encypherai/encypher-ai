@@ -189,7 +189,7 @@ Value: {
 
 ### WebSocket Endpoints
 
-#### `WS /api/v1/stream/sign`
+#### `WS /api/v1/sign/stream`
 Real-time content signing via WebSocket.
 
 **Query Parameters:**
@@ -255,12 +255,12 @@ Real-time content signing via WebSocket.
 }
 ```
 
-#### `WS /api/v1/stream/chat`
-Chat application wrapper (currently redirects to `/stream/sign`).
+#### `WS /api/v1/chat/stream`
+Chat application wrapper (currently redirects to `/sign/stream`).
 
 ### REST Endpoints
 
-#### `POST /api/v1/stream/session/create`
+#### `POST /api/v1/sign/stream/sessions`
 Create a new streaming session.
 
 **Request:**
@@ -289,7 +289,7 @@ Create a new streaming session.
 }
 ```
 
-#### `POST /api/v1/stream/session/{session_id}/close`
+#### `POST /api/v1/sign/stream/sessions/{session_id}/close`
 Close a streaming session.
 
 **Response:**
@@ -305,7 +305,7 @@ Close a streaming session.
 }
 ```
 
-#### `GET /api/v1/stream/stats`
+#### `GET /api/v1/sign/stream/stats`
 Get streaming statistics for organization.
 
 **Response:**
@@ -320,11 +320,13 @@ Get streaming statistics for organization.
 
 ### SSE Endpoint
 
-#### `GET /api/v1/stream/events`
-Server-Sent Events for unidirectional streaming.
+#### `GET /api/v1/sign/stream/sessions/{session_id}/events`
+Server-Sent Events for unidirectional streaming (session scoped).
+
+**Path Parameters:**
+- `session_id` (required) - Session identifier
 
 **Query Parameters:**
-- `session_id` (required) - Session identifier
 - `api_key` (optional) - API key for authentication
 
 ---

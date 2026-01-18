@@ -125,7 +125,7 @@ http:
     # Enterprise API - signing, batch, streaming, etc.
     # Routes all C2PA core functionality to enterprise-api
     api-enterprise:
-      rule: "PathPrefix(`/api/v1/sign`) || PathPrefix(`/api/v1/batch`) || PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/onboarding`) || PathPrefix(`/api/v1/stream`) || PathPrefix(`/api/v1/chat`) || PathPrefix(`/api/v1/licensing`) || PathPrefix(`/api/v1/usage`) || PathPrefix(`/api/v1/audit`) || PathPrefix(`/api/v1/org`) || PathPrefix(`/api/v1/enterprise`) || PathPrefix(`/api/v1/status`) || PathPrefix(`/api/v1/tools`) || PathPrefix(`/api/v1/public`) || PathPrefix(`/api/v1/provisioning`)"
+      rule: "PathPrefix(`/api/v1/sign`) || PathPrefix(`/api/v1/batch`) || PathPrefix(`/api/v1/lookup`) || PathPrefix(`/api/v1/onboarding`) || PathPrefix(`/api/v1/chat`) || PathPrefix(`/api/v1/licensing`) || PathPrefix(`/api/v1/usage`) || PathPrefix(`/api/v1/audit`) || PathPrefix(`/api/v1/org`) || PathPrefix(`/api/v1/enterprise`) || PathPrefix(`/api/v1/status`) || PathPrefix(`/api/v1/tools`) || PathPrefix(`/api/v1/public`) || PathPrefix(`/api/v1/provisioning`)"
       service: enterprise-api
       entryPoints:
         - web

@@ -1,6 +1,7 @@
 """
 Pydantic schemas for Coalition Service API
 """
+
 from pydantic import BaseModel, Field, UUID4
 from typing import Optional, List
 from datetime import datetime, date

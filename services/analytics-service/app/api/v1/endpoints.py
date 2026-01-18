@@ -1,4 +1,5 @@
 """API endpoints for Analytics Service v1"""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query, Request
 from sqlalchemy.orm import Session
 from typing import List
@@ -25,10 +26,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     """Verify user token with auth service and return user dict from Standard Response Format."""
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
-                headers={"Authorization": authorization}
-            )
+            response = await client.post(f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify", headers={"Authorization": authorization})
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -60,7 +58,7 @@ async def record_metric(
 ):
     """
     Record a usage metric
-    
+
     - **metric_type**: Type of metric (api_call, document_signed, verification, etc.)
     - **service_name**: Service name
     - **endpoint**: Optional endpoint
@@ -91,17 +89,17 @@ async def get_usage_stats(
 ):
     """
     Get usage statistics
-    
+
     - **days**: Number of days to look back (default: 30)
     """
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
-    
+
     # Use organization_id if available, fall back to user_id
     # For user-level API keys, organization_id is "user_{user_id}"
     org_id = current_user.get("organization_id")
     user_id = current_user.get("id") or current_user.get("user_id")
-    
+
     # Query by organization_id first (new metrics), then user_id (legacy)
     stats = AnalyticsService.get_usage_stats(
         db=db,
@@ -121,7 +119,7 @@ async def get_service_metrics(
 ):
     """
     Get metrics grouped by service
-    
+
     - **days**: Number of days to look back (default: 30)
     """
     end_date = datetime.utcnow()
@@ -147,7 +145,7 @@ async def get_time_series(
 ):
     """
     Get time series data
-    
+
     - **metric_type**: Type of metric
     - **days**: Number of days to look back (default: 7)
     - **interval**: Aggregation interval (hour or day)
@@ -175,7 +173,7 @@ async def get_analytics_report(
 ):
     """
     Get comprehensive analytics report
-    
+
     - **days**: Number of days to look back (default: 30)
     """
     end_date = datetime.utcnow()
@@ -223,6 +221,7 @@ _rl_store = {}
 
 def _rate_limit(ip: str, route: str, limit: int = 60, window_sec: int = 60):
     import time
+
     now = time.time()
     key = (ip, route)
     timestamps = _rl_store.get(key, [])

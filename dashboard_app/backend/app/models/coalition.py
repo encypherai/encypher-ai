@@ -1,6 +1,7 @@
 """
 Coalition models for tracking members, content, and revenue.
 """
+
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Text
 from sqlalchemy.sql import func
 
@@ -9,6 +10,7 @@ from app.core.database import Base
 
 class CoalitionMember(Base):
     """Coalition member information."""
+
     __tablename__ = "coalition_members"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -28,13 +30,14 @@ class CoalitionMember(Base):
     # user = relationship("User", back_populates="coalition_member")
 
     __table_args__ = (
-        Index('idx_coalition_member_user', 'user_id'),
-        Index('idx_coalition_member_status', 'status'),
+        Index("idx_coalition_member_user", "user_id"),
+        Index("idx_coalition_member_status", "status"),
     )
 
 
 class ContentItem(Base):
     """Signed content items tracked for coalition members."""
+
     __tablename__ = "content_items"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -53,14 +56,15 @@ class ContentItem(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     __table_args__ = (
-        Index('idx_content_user', 'user_id'),
-        Index('idx_content_type', 'content_type'),
-        Index('idx_content_signed', 'signed_at'),
+        Index("idx_content_user", "user_id"),
+        Index("idx_content_type", "content_type"),
+        Index("idx_content_signed", "signed_at"),
     )
 
 
 class RevenueTransaction(Base):
     """Revenue transactions for coalition members."""
+
     __tablename__ = "revenue_transactions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -77,15 +81,16 @@ class RevenueTransaction(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     __table_args__ = (
-        Index('idx_revenue_user', 'user_id'),
-        Index('idx_revenue_type', 'transaction_type'),
-        Index('idx_revenue_status', 'status'),
-        Index('idx_revenue_created', 'created_at'),
+        Index("idx_revenue_user", "user_id"),
+        Index("idx_revenue_type", "transaction_type"),
+        Index("idx_revenue_status", "status"),
+        Index("idx_revenue_created", "created_at"),
     )
 
 
 class ContentAccessLog(Base):
     """Logs of AI companies accessing coalition member content."""
+
     __tablename__ = "content_access_logs"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -100,8 +105,8 @@ class ContentAccessLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
     __table_args__ = (
-        Index('idx_access_content', 'content_id'),
-        Index('idx_access_user', 'user_id'),
-        Index('idx_access_company', 'ai_company'),
-        Index('idx_access_date', 'accessed_at'),
+        Index("idx_access_content", "content_id"),
+        Index("idx_access_user", "user_id"),
+        Index("idx_access_company", "ai_company"),
+        Index("idx_access_date", "accessed_at"),
     )

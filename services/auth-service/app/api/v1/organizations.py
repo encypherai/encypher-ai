@@ -2,18 +2,147 @@
 Organization API endpoints for team management
 """
 
+import logging
+
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 
+from ...db.models import User
 from ...db.session import get_db
+from ...core.config import settings
 from ...services.organization_service import OrganizationService
+import dns.resolver
 from ...services.auth_service import AuthService
 from ...deps.rate_limit import rate_limiter
+from encypher_commercial_shared.email import EmailConfig, build_invitation_email
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
+logger = logging.getLogger(__name__)
+
+
+def _get_email_config() -> EmailConfig:
+    return EmailConfig(
+        smtp_host=settings.SMTP_HOST,
+        smtp_port=settings.SMTP_PORT,
+        smtp_user=settings.SMTP_USER,
+        smtp_pass=settings.SMTP_PASS,
+        smtp_tls=settings.SMTP_TLS,
+        email_from=settings.EMAIL_FROM,
+        email_from_name=settings.EMAIL_FROM_NAME,
+        frontend_url=settings.FRONTEND_URL,
+        dashboard_url=settings.DASHBOARD_URL,
+        support_email=settings.SUPPORT_EMAIL,
+    )
+
+
+async def _send_invitation_email(
+    *,
+    authorization: str,
+    recipient_email: str,
+    inviter_name: Optional[str],
+    inviter_email: str,
+    organization_name: str,
+    role: str,
+    invitation_token: str,
+    message: Optional[str],
+    expires_at: Optional[datetime],
+) -> None:
+    config = _get_email_config()
+    subject, html_content, plain_content = build_invitation_email(
+        config=config,
+        inviter_name=inviter_name,
+        inviter_email=inviter_email,
+        organization_name=organization_name,
+        role=role,
+        invitation_token=invitation_token,
+        message=message,
+        expires_at=expires_at,
+    )
+
+    payload = {
+        "notification_type": "email",
+        "recipient": recipient_email,
+        "subject": subject,
+        "content": html_content,
+        "metadata": {
+            "plain_content": plain_content,
+            "organization_name": organization_name,
+            "role": role,
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                f"{settings.NOTIFICATION_SERVICE_URL}/api/v1/notifications/send",
+                json=payload,
+                headers={"Authorization": authorization},
+            )
+            if response.status_code >= 400:
+                logger.warning(
+                    "invitation_email_failed",
+                    status=response.status_code,
+                    response=response.text,
+                )
+    except httpx.RequestError as exc:
+        logger.warning("invitation_email_request_failed", error=str(exc))
+
+
+async def _send_domain_claim_email(
+    *,
+    authorization: str,
+    recipient_email: str,
+    organization_name: str,
+    domain: str,
+    email_token: str,
+) -> None:
+    config = _get_email_config()
+    base_url = config.dashboard_url or config.frontend_url
+    verification_url = f"{base_url}/verify-domain?token={email_token}"
+    subject = f"Verify {domain} for {organization_name}"
+    html_content = (
+        f"<p>Confirm domain ownership for <strong>{organization_name}</strong>.</p>"
+        f"<p>Verify <strong>{domain}</strong> by clicking the link below:</p>"
+        f"<p><a href=\"{verification_url}\">Verify domain</a></p>"
+        "<p>If you did not request this, you can ignore this email.</p>"
+    )
+    plain_content = (
+        f"Verify {domain} for {organization_name}\n\n"
+        f"Verify domain: {verification_url}\n\n"
+        "If you did not request this, you can ignore this email."
+    )
+
+    payload = {
+        "notification_type": "email",
+        "recipient": recipient_email,
+        "subject": subject,
+        "content": html_content,
+        "metadata": {
+            "plain_content": plain_content,
+            "organization_name": organization_name,
+            "domain": domain,
+        },
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                f"{settings.NOTIFICATION_SERVICE_URL}/api/v1/notifications/send",
+                json=payload,
+                headers={"Authorization": authorization},
+            )
+            if response.status_code >= 400:
+                logger.warning(
+                    "domain_claim_email_failed",
+                    status=response.status_code,
+                    response=response.text,
+                )
+    except httpx.RequestError as exc:
+        logger.warning("domain_claim_email_request_failed", error=str(exc))
 
 
 # ==========================================
@@ -40,6 +169,32 @@ class OrganizationResponse(BaseModel):
     max_seats: int
     subscription_status: str
     coalition_rev_share: int
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class DomainClaimCreate(BaseModel):
+    domain: str
+    verification_email: EmailStr
+
+
+class DomainClaimAutoJoinUpdate(BaseModel):
+    enabled: bool
+
+
+class DomainClaimResponse(BaseModel):
+    id: str
+    organization_id: str
+    domain: str
+    verification_email: str
+    status: str
+    dns_token: str
+    dns_verified_at: Optional[datetime] = None
+    email_verified_at: Optional[datetime] = None
+    verified_at: Optional[datetime] = None
+    auto_join_enabled: bool
     created_at: datetime
 
     class Config:
@@ -148,6 +303,144 @@ async def create_organization(
         org = org_service.create_organization(name=org_data.name, email=org_data.email, owner_user_id=user_id)
 
         return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+# ==========================================
+# DOMAIN CLAIM ENDPOINTS
+# ==========================================
+
+
+@router.get("/{org_id}/domain-claims")
+async def list_domain_claims(
+    org_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """List domain claims for an organization"""
+    user_id = await get_current_user_id(request, db)
+
+    org_service = OrganizationService(db)
+    try:
+        claims = org_service.list_domain_claims(org_id, user_id)
+        return {
+            "success": True,
+            "data": [DomainClaimResponse.model_validate(claim).model_dump() for claim in claims],
+            "error": None,
+        }
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+
+
+@router.post("/{org_id}/domain-claims", status_code=status.HTTP_201_CREATED)
+async def create_domain_claim(
+    org_id: str,
+    payload: DomainClaimCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("domain_claim_create", limit=5, window_sec=300)),
+):
+    """Create a domain claim for verification."""
+    user_id = await get_current_user_id(request, db)
+
+    try:
+        org_service = OrganizationService(db)
+        claim = org_service.create_domain_claim(
+            org_id=org_id,
+            domain=payload.domain,
+            verification_email=payload.verification_email,
+            actor_user_id=user_id,
+        )
+        org = org_service.get_organization(org_id)
+        if org:
+            await _send_domain_claim_email(
+                authorization=request.headers.get("Authorization", ""),
+                recipient_email=claim.verification_email,
+                organization_name=org.name,
+                domain=claim.domain,
+                email_token=claim.email_token,
+            )
+
+        response = DomainClaimResponse.model_validate(claim).model_dump()
+        response["dns_txt_record"] = f"encypher-domain-claim={claim.dns_token}"
+        return {
+            "success": True,
+            "data": response,
+            "error": None,
+        }
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/{org_id}/domain-claims/{claim_id}/verify-dns")
+async def verify_domain_dns(
+    org_id: str,
+    claim_id: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Verify a domain claim via DNS TXT records."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+
+    try:
+        claim = org_service.get_domain_claim(org_id, claim_id)
+        if not claim:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain claim not found")
+
+        records = dns.resolver.resolve(claim.domain, "TXT")
+        txt_records = ["".join(part.decode("utf-8") for part in record.strings) for record in records]
+        verified = org_service.verify_domain_dns(org_id, claim_id, user_id, txt_records)
+        return {
+            "success": True,
+            "data": DomainClaimResponse.model_validate(verified).model_dump(),
+            "error": None,
+        }
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except (ValueError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers) as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.patch("/{org_id}/domain-claims/{claim_id}/auto-join")
+async def update_domain_auto_join(
+    org_id: str,
+    claim_id: str,
+    payload: DomainClaimAutoJoinUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Enable or disable auto-join for a verified domain claim."""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+
+    try:
+        claim = org_service.set_domain_auto_join(org_id, claim_id, user_id, payload.enabled)
+        return {
+            "success": True,
+            "data": DomainClaimResponse.model_validate(claim).model_dump(),
+            "error": None,
+        }
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/domain-claims/verify-email")
+async def verify_domain_email(token: str, db: Session = Depends(get_db)):
+    """Verify a domain claim via email token (public endpoint)."""
+    org_service = OrganizationService(db)
+    try:
+        claim = org_service.verify_domain_email(token)
+        return {
+            "success": True,
+            "data": DomainClaimResponse.model_validate(claim).model_dump(),
+            "error": None,
+        }
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -347,7 +640,20 @@ async def create_invitation(
             org_id=org_id, email=invitation_data.email, role=invitation_data.role, inviter_user_id=user_id, message=invitation_data.message
         )
 
-        # TODO: Send invitation email via notification service
+        inviter = db.query(User).filter(User.id == user_id).first()
+        org = org_service.get_organization(org_id)
+        if inviter and org:
+            await _send_invitation_email(
+                authorization=request.headers.get("Authorization", ""),
+                recipient_email=invitation.email,
+                inviter_name=inviter.name,
+                inviter_email=inviter.email,
+                organization_name=org.name,
+                role=invitation.role,
+                invitation_token=invitation.token,
+                message=invitation.message,
+                expires_at=invitation.expires_at,
+            )
 
         return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
     except PermissionError as e:
@@ -412,7 +718,20 @@ async def resend_invitation(
         org_service = OrganizationService(db)
         invitation = org_service.resend_invitation(org_id=org_id, invitation_id=invitation_id, actor_user_id=user_id)
 
-        # TODO: Send invitation email via notification service
+        inviter = db.query(User).filter(User.id == user_id).first()
+        org = org_service.get_organization(org_id)
+        if inviter and org:
+            await _send_invitation_email(
+                authorization=request.headers.get("Authorization", ""),
+                recipient_email=invitation.email,
+                inviter_name=inviter.name,
+                inviter_email=inviter.email,
+                organization_name=org.name,
+                role=invitation.role,
+                invitation_token=invitation.token,
+                message=invitation.message,
+                expires_at=invitation.expires_at,
+            )
 
         return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
     except PermissionError as e:

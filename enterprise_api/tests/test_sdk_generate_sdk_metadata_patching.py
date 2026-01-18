@@ -69,7 +69,7 @@ async def test_patch_go_metadata_sets_monorepo_module_path(tmp_path: Path) -> No
     go_mod.write_text("module github.com/encypherai/sdk-go\n\ngo 1.23\n", encoding="utf-8")
 
     readme = tmp_path / "README.md"
-    readme.write_text("import \"github.com/encypherai/sdk-go\"\n", encoding="utf-8")
+    readme.write_text('import "github.com/encypherai/sdk-go"\n', encoding="utf-8")
 
     main_go = tmp_path / "cmd" / "encypher" / "main.go"
     main_go.parent.mkdir(parents=True, exist_ok=True)
@@ -122,15 +122,15 @@ Repository = "https://github.com/encypherai/sdk-python"
     mod._patch_python_metadata(tmp_path)
 
     text = pyproject.read_text(encoding="utf-8")
-    assert "\"urllib3>=2.1.0,<3.0.0\"" in text
-    assert "{name = \"Encypher\"" in text
-    assert "email = \"sdk@encypherai.com\"" in text
+    assert '"urllib3>=2.1.0,<3.0.0"' in text
+    assert '{name = "Encypher"' in text
+    assert 'email = "sdk@encypherai.com"' in text
     assert "license" in text
     assert "MIT" in text
-    assert "Homepage = \"https://encypherai.com\"" in text
-    assert f"Documentation = \"{mod.PRODUCTION_BASE_URL}/docs\"" in text
-    assert f"Repository = \"{mod.MONOREPO_URL}\"" in text
-    assert f"Changelog = \"{mod.MONOREPO_URL}/releases\"" in text
+    assert 'Homepage = "https://encypherai.com"' in text
+    assert f'Documentation = "{mod.PRODUCTION_BASE_URL}/docs"' in text
+    assert f'Repository = "{mod.MONOREPO_URL}"' in text
+    assert f'Changelog = "{mod.MONOREPO_URL}/releases"' in text
 
     config_py = tmp_path / "encypher" / "configuration.py"
     config_py.parent.mkdir(parents=True, exist_ok=True)
@@ -171,12 +171,12 @@ license = \"Unlicense\"
     mod._patch_rust_metadata(tmp_path)
 
     patched = cargo.read_text(encoding="utf-8")
-    assert f"repository = \"{mod.MONOREPO_URL}\"" in patched
-    assert "homepage = \"https://encypherai.com\"" in patched
-    assert f"documentation = \"{mod.PRODUCTION_BASE_URL}/docs\"" in patched
-    assert "license = \"MIT\"" in patched
-    assert "readme = \"README.md\"" in patched
-    assert "authors = [\"Encypher <sdk@encypherai.com>\"]" in patched
+    assert f'repository = "{mod.MONOREPO_URL}"' in patched
+    assert 'homepage = "https://encypherai.com"' in patched
+    assert f'documentation = "{mod.PRODUCTION_BASE_URL}/docs"' in patched
+    assert 'license = "MIT"' in patched
+    assert 'readme = "README.md"' in patched
+    assert 'authors = ["Encypher <sdk@encypherai.com>"]' in patched
 
     rust_cfg = tmp_path / "src" / "apis" / "configuration.rs"
     rust_cfg.parent.mkdir(parents=True, exist_ok=True)

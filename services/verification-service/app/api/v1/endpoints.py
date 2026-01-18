@@ -1,4 +1,5 @@
 """API endpoints for Verification Service v1"""
+
 import time
 
 from fastapi import APIRouter, Depends, HTTPException, status, Header
@@ -11,17 +12,36 @@ import json
 import os
 from uuid import uuid4
 import base64
-import structlog
+
+try:
+    import structlog
+except ModuleNotFoundError:  # pragma: no cover - fallback for OpenAPI generation
+    import logging
+
+    class _StructlogFallback:
+        @staticmethod
+        def get_logger(name: str | None = None):
+            return logging.getLogger(name)
+
+        class contextvars:
+            @staticmethod
+            def bind_contextvars(**_kwargs):
+                return None
+
+    structlog = _StructlogFallback()
 
 from encypher.core.keys import load_public_key_from_data
 from encypher.core.payloads import deserialize_jumbf_payload
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.signing import extract_certificates_from_cose
+
 try:
     from encypher.interop.c2pa import find_wrapper_info_bytes
 except ImportError:  # pragma: no cover
+
     def find_wrapper_info_bytes(_text: str):
         return None
+
 
 from ...db.session import get_db
 from ...models.enterprise_schemas import ErrorDetail, VerifyRequest, VerifyResponse, VerifyVerdict
@@ -89,10 +109,7 @@ async def get_current_user(authorization: str = Header(None)) -> Optional[dict]:
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
-                headers={"Authorization": authorization}
-            )
+            response = await client.post(f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify", headers={"Authorization": authorization})
             if response.status_code == 200:
                 return response.json()
             return None
@@ -264,9 +281,7 @@ async def _is_embedded_c2pa_key_trusted(text: str) -> bool:
     leaf_pem = certs[0].public_bytes(serialization.Encoding.PEM).decode("utf-8")
     chain_pem = None
     if len(certs) > 1:
-        chain_pem = "\n".join(
-            cert.public_bytes(serialization.Encoding.PEM).decode("utf-8") for cert in certs[1:]
-        )
+        chain_pem = "\n".join(cert.public_bytes(serialization.Encoding.PEM).decode("utf-8") for cert in certs[1:])
     ok, _err, _parsed = validate_certificate_chain(leaf_pem, chain_pem)
     return ok
 
@@ -643,7 +658,7 @@ async def verify_signature(
 ):
     """
     Verify a signature (public endpoint)
-    
+
     - **content**: Original content
     - **signature**: Hex-encoded signature
     - **public_key_pem**: PEM-encoded public key
@@ -686,7 +701,7 @@ async def verify_document(
 ):
     """
     Complete document verification (public endpoint)
-    
+
     - **document_id**: Document ID from encoding service
     - **content**: Current content to verify
     """
@@ -726,7 +741,7 @@ async def get_verification_history(
 ):
     """
     Get verification history for a document (public endpoint)
-    
+
     - **document_id**: Document ID
     - **limit**: Maximum number of results
     """

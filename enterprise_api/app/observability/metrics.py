@@ -1,4 +1,5 @@
 """Minimal in-memory metrics collectors for the Enterprise API."""
+
 from collections import Counter
 
 _counters: Counter[str] = Counter()

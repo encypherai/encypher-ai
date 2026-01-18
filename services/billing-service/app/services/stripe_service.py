@@ -9,6 +9,7 @@ Handles:
 - Webhook processing
 - Stripe Connect for publisher payouts
 """
+
 import logging
 from typing import Optional, Dict, Any, List
 
@@ -52,7 +53,7 @@ STRIPE_PRODUCTS = {
 class StripeService:
     """
     Service for Stripe payment operations.
-    
+
     Handles all Stripe API interactions including customers,
     subscriptions, checkout, and webhooks.
     """
@@ -63,20 +64,17 @@ class StripeService:
 
     @staticmethod
     async def create_customer(
-        email: str,
-        name: Optional[str] = None,
-        organization_id: Optional[str] = None,
-        metadata: Optional[Dict[str, str]] = None
+        email: str, name: Optional[str] = None, organization_id: Optional[str] = None, metadata: Optional[Dict[str, str]] = None
     ) -> stripe.Customer:
         """
         Create a Stripe customer.
-        
+
         Args:
             email: Customer email
             name: Customer/organization name
             organization_id: Encypher organization ID
             metadata: Additional metadata
-            
+
         Returns:
             Stripe Customer object
         """
@@ -108,11 +106,7 @@ class StripeService:
             return None
 
     @staticmethod
-    async def get_or_create_customer(
-        email: str,
-        name: Optional[str] = None,
-        organization_id: Optional[str] = None
-    ) -> stripe.Customer:
+    async def get_or_create_customer(email: str, name: Optional[str] = None, organization_id: Optional[str] = None) -> stripe.Customer:
         """
         Get existing customer by email or create new one.
         """
@@ -126,11 +120,7 @@ class StripeService:
                 return customer
 
             # Create new customer
-            return await StripeService.create_customer(
-                email=email,
-                name=name,
-                organization_id=organization_id
-            )
+            return await StripeService.create_customer(email=email, name=name, organization_id=organization_id)
 
         except StripeError as e:
             logger.error(f"Failed to get/create customer: {e}")
@@ -148,11 +138,11 @@ class StripeService:
         cancel_url: str,
         organization_id: Optional[str] = None,
         trial_days: int = 0,
-        metadata: Optional[Dict[str, str]] = None
+        metadata: Optional[Dict[str, str]] = None,
     ) -> stripe.checkout.Session:
         """
         Create a Stripe Checkout session for subscription.
-        
+
         Args:
             customer_id: Stripe customer ID
             price_id: Stripe price ID
@@ -161,7 +151,7 @@ class StripeService:
             organization_id: Encypher organization ID
             trial_days: Number of trial days (0 for no trial)
             metadata: Additional metadata
-            
+
         Returns:
             Stripe Checkout Session
         """
@@ -200,15 +190,11 @@ class StripeService:
 
     @staticmethod
     async def create_upgrade_checkout(
-        customer_id: str,
-        current_subscription_id: str,
-        new_price_id: str,
-        success_url: str,
-        cancel_url: str
+        customer_id: str, current_subscription_id: str, new_price_id: str, success_url: str, cancel_url: str
     ) -> stripe.checkout.Session:
         """
         Create checkout session for upgrading subscription.
-        
+
         Uses Stripe's proration to handle upgrade billing.
         """
         try:
@@ -220,9 +206,7 @@ class StripeService:
                 line_items=[{"price": new_price_id, "quantity": 1}],
                 success_url=success_url,
                 cancel_url=cancel_url,
-                subscription_data={
-                    "metadata": {"upgrade_from": current_subscription_id}
-                },
+                subscription_data={"metadata": {"upgrade_from": current_subscription_id}},
             )
 
             return session
@@ -236,13 +220,10 @@ class StripeService:
     # =========================================================================
 
     @staticmethod
-    async def create_billing_portal_session(
-        customer_id: str,
-        return_url: str
-    ) -> stripe.billing_portal.Session:
+    async def create_billing_portal_session(customer_id: str, return_url: str) -> stripe.billing_portal.Session:
         """
         Create a Stripe Billing Portal session.
-        
+
         Allows customers to manage their subscription, payment methods,
         and view invoices.
         """
@@ -273,13 +254,10 @@ class StripeService:
             return None
 
     @staticmethod
-    async def cancel_subscription(
-        subscription_id: str,
-        cancel_at_period_end: bool = True
-    ) -> stripe.Subscription:
+    async def cancel_subscription(subscription_id: str, cancel_at_period_end: bool = True) -> stripe.Subscription:
         """
         Cancel a subscription.
-        
+
         Args:
             subscription_id: Stripe subscription ID
             cancel_at_period_end: If True, cancel at end of billing period
@@ -287,10 +265,7 @@ class StripeService:
         """
         try:
             if cancel_at_period_end:
-                subscription = stripe.Subscription.modify(
-                    subscription_id,
-                    cancel_at_period_end=True
-                )
+                subscription = stripe.Subscription.modify(subscription_id, cancel_at_period_end=True)
             else:
                 subscription = stripe.Subscription.delete(subscription_id)
 
@@ -302,14 +277,10 @@ class StripeService:
             raise
 
     @staticmethod
-    async def update_subscription(
-        subscription_id: str,
-        new_price_id: str,
-        proration_behavior: str = "create_prorations"
-    ) -> stripe.Subscription:
+    async def update_subscription(subscription_id: str, new_price_id: str, proration_behavior: str = "create_prorations") -> stripe.Subscription:
         """
         Update subscription to a new price (upgrade/downgrade).
-        
+
         Args:
             subscription_id: Stripe subscription ID
             new_price_id: New Stripe price ID
@@ -323,10 +294,12 @@ class StripeService:
 
             updated = stripe.Subscription.modify(
                 subscription_id,
-                items=[{
-                    "id": subscription["items"]["data"][0].id,
-                    "price": new_price_id,
-                }],
+                items=[
+                    {
+                        "id": subscription["items"]["data"][0].id,
+                        "price": new_price_id,
+                    }
+                ],
                 proration_behavior=proration_behavior,
             )
 
@@ -342,10 +315,7 @@ class StripeService:
     # =========================================================================
 
     @staticmethod
-    async def get_invoices(
-        customer_id: str,
-        limit: int = 10
-    ) -> List[stripe.Invoice]:
+    async def get_invoices(customer_id: str, limit: int = 10) -> List[stripe.Invoice]:
         """Get invoices for a customer."""
         try:
             invoices = stripe.Invoice.list(
@@ -372,29 +342,22 @@ class StripeService:
     # =========================================================================
 
     @staticmethod
-    def verify_webhook_signature(
-        payload: bytes,
-        signature: str
-    ) -> stripe.Event:
+    def verify_webhook_signature(payload: bytes, signature: str) -> stripe.Event:
         """
         Verify and parse a Stripe webhook event.
-        
+
         Args:
             payload: Raw request body
             signature: Stripe-Signature header value
-            
+
         Returns:
             Verified Stripe Event
-            
+
         Raises:
             ValueError: If signature verification fails
         """
         try:
-            event = stripe.Webhook.construct_event(
-                payload,
-                signature,
-                settings.STRIPE_WEBHOOK_SECRET
-            )
+            event = stripe.Webhook.construct_event(payload, signature, settings.STRIPE_WEBHOOK_SECRET)
             return event
 
         except stripe.error.SignatureVerificationError as e:
@@ -405,10 +368,10 @@ class StripeService:
     async def handle_webhook_event(event: stripe.Event) -> Dict[str, Any]:
         """
         Handle a Stripe webhook event.
-        
+
         Args:
             event: Verified Stripe Event
-            
+
         Returns:
             Dict with handling result
         """
@@ -514,19 +477,15 @@ class StripeService:
     # =========================================================================
 
     @staticmethod
-    async def create_connect_account(
-        email: str,
-        organization_id: str,
-        country: str = "US"
-    ) -> stripe.Account:
+    async def create_connect_account(email: str, organization_id: str, country: str = "US") -> stripe.Account:
         """
         Create a Stripe Connect account for publisher payouts.
-        
+
         Args:
             email: Publisher email
             organization_id: Encypher organization ID
             country: Two-letter country code
-            
+
         Returns:
             Stripe Connect Account
         """
@@ -551,14 +510,10 @@ class StripeService:
             raise
 
     @staticmethod
-    async def create_connect_onboarding_link(
-        account_id: str,
-        refresh_url: str,
-        return_url: str
-    ) -> stripe.AccountLink:
+    async def create_connect_onboarding_link(account_id: str, refresh_url: str, return_url: str) -> stripe.AccountLink:
         """
         Create onboarding link for Connect account.
-        
+
         Publishers use this to complete their payout account setup.
         """
         try:
@@ -576,21 +531,16 @@ class StripeService:
             raise
 
     @staticmethod
-    async def create_payout(
-        connect_account_id: str,
-        amount_cents: int,
-        currency: str = "usd",
-        description: Optional[str] = None
-    ) -> stripe.Transfer:
+    async def create_payout(connect_account_id: str, amount_cents: int, currency: str = "usd", description: Optional[str] = None) -> stripe.Transfer:
         """
         Create a payout to a publisher's Connect account.
-        
+
         Args:
             connect_account_id: Publisher's Stripe Connect account ID
             amount_cents: Amount in cents
             currency: Currency code
             description: Payout description
-            
+
         Returns:
             Stripe Transfer object
         """
@@ -602,9 +552,7 @@ class StripeService:
                 description=description or "Encypher Coalition Revenue Share",
             )
 
-            logger.info(
-                f"Created payout of ${amount_cents/100:.2f} to {connect_account_id}"
-            )
+            logger.info(f"Created payout of ${amount_cents / 100:.2f} to {connect_account_id}")
             return transfer
 
         except StripeError as e:
@@ -619,7 +567,7 @@ class StripeService:
     async def setup_stripe_products() -> Dict[str, Any]:
         """
         Create Stripe products and prices for all tiers.
-        
+
         Run this once to set up your Stripe catalog.
         Returns the product/price IDs to configure in your app.
         """
@@ -687,11 +635,11 @@ class StripeService:
 def get_stripe_price_id(tier: str, billing_cycle: str) -> Optional[str]:
     """
     Get Stripe price ID for a tier and billing cycle.
-    
+
     Args:
         tier: Tier name (professional, business)
         billing_cycle: "monthly" or "annual"
-        
+
     Returns:
         Stripe price ID or None
     """

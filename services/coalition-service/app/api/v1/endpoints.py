@@ -1,6 +1,7 @@
 """
 Coalition Service API Endpoints
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -262,9 +263,7 @@ async def get_member_revenue(
 
 # Licensing Agreement Endpoints (Admin)
 @router.post("/agreements", response_model=SuccessResponse, status_code=status.HTTP_201_CREATED)
-async def create_licensing_agreement(
-    agreement: LicensingAgreementCreate, db: Session = Depends(get_db)
-):
+async def create_licensing_agreement(agreement: LicensingAgreementCreate, db: Session = Depends(get_db)):
     """
     Create a licensing agreement (Admin only)
     """
@@ -429,7 +428,7 @@ async def get_content_pool(
     content_type: Optional[str] = None,
     min_word_count: Optional[int] = None,
     member_id: Optional[UUID] = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """
     Get aggregated content pool with filtering (Admin only)
@@ -512,18 +511,21 @@ async def get_content_pool_stats(db: Session = Depends(get_db)):
         total_verifications = db.query(func.sum(CoalitionContent.verification_count)).scalar() or 0
 
         # By content type
-        type_stats = db.query(
-            CoalitionContent.content_type,
-            func.count(CoalitionContent.id).label("count"),
-            func.sum(CoalitionContent.word_count).label("total_words"),
-        ).group_by(CoalitionContent.content_type).all()
+        type_stats = (
+            db.query(
+                CoalitionContent.content_type,
+                func.count(CoalitionContent.id).label("count"),
+                func.sum(CoalitionContent.word_count).label("total_words"),
+            )
+            .group_by(CoalitionContent.content_type)
+            .all()
+        )
 
         # Recent activity
         from datetime import datetime, timedelta
+
         last_24h = datetime.utcnow() - timedelta(hours=24)
-        recent_content = db.query(func.count(CoalitionContent.id)).filter(
-            CoalitionContent.indexed_at >= last_24h
-        ).scalar()
+        recent_content = db.query(func.count(CoalitionContent.id)).filter(CoalitionContent.indexed_at >= last_24h).scalar()
 
         return SuccessResponse(
             success=True,
@@ -553,14 +555,12 @@ async def get_content_pool_stats(db: Session = Depends(get_db)):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get content pool stats: {str(e)}",
         )
+
+
 # Revenue Distribution Endpoints (Admin)
 @router.post("/distributions/calculate", response_model=SuccessResponse, status_code=status.HTTP_201_CREATED)
 async def calculate_distribution(
-    agreement_id: UUID,
-    period_start: date,
-    period_end: date,
-    calculation_method: str = "usage_based",
-    db: Session = Depends(get_db)
+    agreement_id: UUID, period_start: date, period_end: date, calculation_method: str = "usage_based", db: Session = Depends(get_db)
 ):
     """
     Calculate revenue distribution for an agreement period (Admin only)
@@ -612,11 +612,7 @@ async def calculate_distribution(
 
 @router.get("/distributions", response_model=SuccessResponse)
 async def list_distributions(
-    agreement_id: Optional[UUID] = None,
-    status_filter: Optional[str] = None,
-    limit: int = 50,
-    offset: int = 0,
-    db: Session = Depends(get_db)
+    agreement_id: Optional[UUID] = None, status_filter: Optional[str] = None, limit: int = 50, offset: int = 0, db: Session = Depends(get_db)
 ):
     """
     List revenue distributions (Admin only)
@@ -669,11 +665,7 @@ async def list_distributions(
 
 
 @router.post("/distributions/{distribution_id}/mark-paid", response_model=SuccessResponse)
-async def mark_distribution_paid(
-    distribution_id: UUID,
-    payment_method: str = "stripe",
-    db: Session = Depends(get_db)
-):
+async def mark_distribution_paid(distribution_id: UUID, payment_method: str = "stripe", db: Session = Depends(get_db)):
     """
     Mark a distribution as paid (Admin only)
     """
@@ -707,21 +699,19 @@ async def mark_distribution_paid(
 
 
 @router.get("/distributions/{distribution_id}/payouts", response_model=SuccessResponse)
-async def get_distribution_payouts(
-    distribution_id: UUID,
-    db: Session = Depends(get_db)
-):
+async def get_distribution_payouts(distribution_id: UUID, db: Session = Depends(get_db)):
     """
     Get member payouts for a distribution (Admin only)
     """
     try:
         from ...db.models import MemberRevenue, CoalitionMember
 
-        payouts = db.query(MemberRevenue, CoalitionMember).join(
-            CoalitionMember, MemberRevenue.member_id == CoalitionMember.id
-        ).filter(
-            MemberRevenue.distribution_id == distribution_id
-        ).all()
+        payouts = (
+            db.query(MemberRevenue, CoalitionMember)
+            .join(CoalitionMember, MemberRevenue.member_id == CoalitionMember.id)
+            .filter(MemberRevenue.distribution_id == distribution_id)
+            .all()
+        )
 
         return SuccessResponse(
             success=True,
@@ -756,10 +746,7 @@ async def get_distribution_payouts(
 
 
 @router.get("/payouts/pending", response_model=SuccessResponse)
-async def get_pending_payouts(
-    min_amount: Optional[float] = None,
-    db: Session = Depends(get_db)
-):
+async def get_pending_payouts(min_amount: Optional[float] = None, db: Session = Depends(get_db)):
     """
     Get all pending payouts (Admin only)
     """
@@ -798,18 +785,12 @@ async def get_pending_payouts(
 
 # Licensing Agreement Management Endpoints (Admin)
 @router.patch("/agreements/{agreement_id}", response_model=SuccessResponse)
-async def update_licensing_agreement(
-    agreement_id: UUID,
-    update: LicensingAgreementUpdate,
-    db: Session = Depends(get_db)
-):
+async def update_licensing_agreement(agreement_id: UUID, update: LicensingAgreementUpdate, db: Session = Depends(get_db)):
     """
     Update a licensing agreement (Admin only)
     """
     try:
-        agreement = db.query(LicensingAgreement).filter(
-            LicensingAgreement.id == agreement_id
-        ).first()
+        agreement = db.query(LicensingAgreement).filter(LicensingAgreement.id == agreement_id).first()
 
         if not agreement:
             raise HTTPException(
@@ -852,10 +833,7 @@ async def update_licensing_agreement(
 
 
 @router.post("/agreements/{agreement_id}/activate", response_model=SuccessResponse)
-async def activate_licensing_agreement(
-    agreement_id: UUID,
-    db: Session = Depends(get_db)
-):
+async def activate_licensing_agreement(agreement_id: UUID, db: Session = Depends(get_db)):
     """
     Activate a licensing agreement (Admin only)
 
@@ -865,9 +843,7 @@ async def activate_licensing_agreement(
     - Has content scope defined
     """
     try:
-        agreement = db.query(LicensingAgreement).filter(
-            LicensingAgreement.id == agreement_id
-        ).first()
+        agreement = db.query(LicensingAgreement).filter(LicensingAgreement.id == agreement_id).first()
 
         if not agreement:
             raise HTTPException(
@@ -923,19 +899,12 @@ async def activate_licensing_agreement(
 
 
 @router.get("/agreements/{agreement_id}/eligible-content", response_model=SuccessResponse)
-async def get_eligible_content(
-    agreement_id: UUID,
-    limit: int = 100,
-    offset: int = 0,
-    db: Session = Depends(get_db)
-):
+async def get_eligible_content(agreement_id: UUID, limit: int = 100, offset: int = 0, db: Session = Depends(get_db)):
     """
     Get content eligible for a licensing agreement based on its scope (Admin only)
     """
     try:
-        agreement = db.query(LicensingAgreement).filter(
-            LicensingAgreement.id == agreement_id
-        ).first()
+        agreement = db.query(LicensingAgreement).filter(LicensingAgreement.id == agreement_id).first()
 
         if not agreement:
             raise HTTPException(

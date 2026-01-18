@@ -5,6 +5,7 @@ Environment Variables:
 - Shared: DATABASE_URL, REDIS_URL, ALLOWED_ORIGINS, AUTH_SERVICE_URL, MARKETING_SITE_URL, DASHBOARD_URL
 - Service-specific: SMTP_* (email configuration)
 """
+
 from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict

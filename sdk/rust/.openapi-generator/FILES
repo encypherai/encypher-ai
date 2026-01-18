@@ -7,9 +7,9 @@ docs/AccountApi.md
 docs/AccountInfo.md
 docs/AccountResponse.md
 docs/ApiKeysApi.md
-docs/AppSchemasEmbeddingsBatchVerifyRequest.md
-docs/AppSchemasEmbeddingsErrorResponse.md
+docs/AppSchemasBatchBatchVerifyRequest.md
 docs/AppSchemasEmbeddingsRightsMetadata.md
+docs/AppSchemasMerkleErrorResponse.md
 docs/BatchApi.md
 docs/BatchItemPayload.md
 docs/BatchItemResult.md
@@ -20,7 +20,7 @@ docs/BatchSummary.md
 docs/BatchVerifyRequest.md
 docs/BatchVerifyResponse.md
 docs/BatchVerifyResult.md
-docs/BodyCreateStreamingSessionApiV1StreamSessionCreatePost.md
+docs/BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md
 docs/ByokApi.md
 docs/C2PaAssertionValidateRequest.md
 docs/C2PaAssertionValidateResponse.md
@@ -81,6 +81,8 @@ docs/FingerprintDetectResponse.md
 docs/FingerprintEncodeRequest.md
 docs/FingerprintEncodeResponse.md
 docs/FingerprintMatch.md
+docs/FuzzyFingerprintConfig.md
+docs/FuzzySearchConfig.md
 docs/HealthApi.md
 docs/HttpValidationError.md
 docs/InfoApi.md
@@ -198,9 +200,9 @@ src/apis/webhooks_api.rs
 src/lib.rs
 src/models/account_info.rs
 src/models/account_response.rs
-src/models/app__schemas__embeddings__batch_verify_request.rs
-src/models/app__schemas__embeddings__error_response.rs
+src/models/app__schemas__batch__batch_verify_request.rs
 src/models/app__schemas__embeddings__rights_metadata.rs
+src/models/app__schemas__merkle__error_response.rs
 src/models/batch_item_payload.rs
 src/models/batch_item_result.rs
 src/models/batch_response_data.rs
@@ -210,7 +212,7 @@ src/models/batch_summary.rs
 src/models/batch_verify_request.rs
 src/models/batch_verify_response.rs
 src/models/batch_verify_result.rs
-src/models/body_create_streaming_session_api_v1_stream_session_create_post.rs
+src/models/body_create_streaming_session_api_v1_sign_stream_sessions_post.rs
 src/models/c2_pa_assertion_validate_request.rs
 src/models/c2_pa_assertion_validate_response.rs
 src/models/c2_pa_assertion_validation_result.rs
@@ -263,6 +265,8 @@ src/models/fingerprint_detect_response.rs
 src/models/fingerprint_encode_request.rs
 src/models/fingerprint_encode_response.rs
 src/models/fingerprint_match.rs
+src/models/fuzzy_fingerprint_config.rs
+src/models/fuzzy_search_config.rs
 src/models/http_validation_error.rs
 src/models/key_create_request.rs
 src/models/key_create_response.rs

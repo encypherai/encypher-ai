@@ -1,14 +1,15 @@
 """Analyze the 5K file benchmark results."""
+
 import statistics
 from pathlib import Path
 
 # Paths
-output_dir = Path('../outputs/wikipedia_prepared/part_00000')
+output_dir = Path("../outputs/wikipedia_prepared/part_00000")
 
 # Find all original and embedded files
-original_files = sorted(output_dir.glob('article_*.txt'))
-original_files = [f for f in original_files if not f.name.endswith('.embedded.txt')][:5000]
-embedded_files = [output_dir / f'{f.stem}.embedded{f.suffix}' for f in original_files]
+original_files = sorted(output_dir.glob("article_*.txt"))
+original_files = [f for f in original_files if not f.name.endswith(".embedded.txt")][:5000]
+embedded_files = [output_dir / f"{f.stem}.embedded{f.suffix}" for f in original_files]
 
 print("=" * 80)
 print("5K FILE BENCHMARK ANALYSIS")
@@ -21,7 +22,7 @@ embedded_count = len([f for f in embedded_files if f.exists()])
 print("\nFiles Processed:")
 print(f"  - Original files: {original_count:,}")
 print(f"  - Embedded files created: {embedded_count:,}")
-print(f"  - Success rate: {(embedded_count/original_count*100):.2f}%")
+print(f"  - Success rate: {(embedded_count / original_count * 100):.2f}%")
 
 # Analyze file sizes
 original_sizes = []
@@ -45,14 +46,14 @@ print(f"  - Average size: {statistics.mean(original_sizes):,.0f} bytes")
 print(f"  - Median size: {statistics.median(original_sizes):,.0f} bytes")
 print(f"  - Min size: {min(original_sizes):,} bytes")
 print(f"  - Max size: {max(original_sizes):,} bytes")
-print(f"  - Total size: {sum(original_sizes):,.0f} bytes ({sum(original_sizes)/1024/1024:.2f} MB)")
+print(f"  - Total size: {sum(original_sizes):,.0f} bytes ({sum(original_sizes) / 1024 / 1024:.2f} MB)")
 
 print("\nEmbedded Files:")
 print(f"  - Average size: {statistics.mean(embedded_sizes):,.0f} bytes")
 print(f"  - Median size: {statistics.median(embedded_sizes):,.0f} bytes")
 print(f"  - Min size: {min(embedded_sizes):,} bytes")
 print(f"  - Max size: {max(embedded_sizes):,} bytes")
-print(f"  - Total size: {sum(embedded_sizes):,.0f} bytes ({sum(embedded_sizes)/1024/1024:.2f} MB)")
+print(f"  - Total size: {sum(embedded_sizes):,.0f} bytes ({sum(embedded_sizes) / 1024 / 1024:.2f} MB)")
 
 print("\nSize Increase:")
 print(f"  - Average increase: {statistics.mean(size_increases):.1f}%")
@@ -68,9 +69,9 @@ overhead = total_emb_size - total_orig_size
 print("\n" + "=" * 80)
 print("EXTRAPOLATED 5K RESULTS")
 print("=" * 80)
-print(f"  - Original total: ~{total_orig_size/1024/1024:.2f} MB")
-print(f"  - Embedded total: ~{total_emb_size/1024/1024:.2f} MB")
-print(f"  - Overhead: ~{overhead/1024/1024:.2f} MB")
+print(f"  - Original total: ~{total_orig_size / 1024 / 1024:.2f} MB")
+print(f"  - Embedded total: ~{total_emb_size / 1024 / 1024:.2f} MB")
+print(f"  - Overhead: ~{overhead / 1024 / 1024:.2f} MB")
 print(f"  - Average increase: {statistics.mean(size_increases):.1f}%")
 
 # Performance metrics from benchmark output
@@ -82,7 +83,7 @@ print("  - Total time: 588.85 seconds (9:48)")
 print("  - Average per file: 117.77 ms")
 print("  - Median per file: 48.15 ms")
 print("  - P95 per file: 465.77 ms")
-print(f"  - Throughput: {5000/588.85:.1f} files/second")
+print(f"  - Throughput: {5000 / 588.85:.1f} files/second")
 print("  - Concurrency: 8 workers")
 
 # Calculate sentences per second (estimate based on article_0 having 124 sentences)
@@ -105,10 +106,10 @@ print("=" * 80)
 
 for i, emb_file in enumerate(embedded_files[:5]):
     if emb_file.exists():
-        content = emb_file.read_text(encoding='utf-8')
+        content = emb_file.read_text(encoding="utf-8")
         invisible_count = sum(1 for c in content if ord(c) > 0xE0000 or (0xFE00 <= ord(c) <= 0xFE0F))
         has_c2pa = any(ord(c) > 0xE0000 for c in content[-5000:])
-        
+
         print(f"\n{emb_file.name}:")
         print(f"  - Size: {len(content):,} chars")
         print(f"  - Invisible chars: {invisible_count:,}")
@@ -122,6 +123,6 @@ print("✓ Enhanced segmentation detecting ~3.6x more sentences")
 print("✓ Each sentence has minimal invisible embedding")
 print("✓ ONE C2PA wrapper per document")
 print(f"✓ Average file size increase: ~{statistics.mean(size_increases):.1f}%")
-print(f"✓ Processing speed: ~{5000/588.85:.1f} files/second")
+print(f"✓ Processing speed: ~{5000 / 588.85:.1f} files/second")
 print("✓ All embedded files saved successfully")
 print("=" * 80)

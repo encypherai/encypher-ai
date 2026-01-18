@@ -1,6 +1,7 @@
 """
 Cryptographic operations for document signing
 """
+
 import hashlib
 import uuid
 from typing import Dict, Any
@@ -20,19 +21,16 @@ def hash_content(content: str) -> str:
 def sign_content(content: str, private_key_pem: str) -> str:
     """
     Sign content with Ed25519 private key
-    
+
     Args:
         content: Content to sign
         private_key_pem: PEM-encoded private key
-        
+
     Returns:
         Hex-encoded signature
     """
     # Load private key
-    private_key = serialization.load_pem_private_key(
-        private_key_pem.encode(),
-        password=None
-    )
+    private_key = serialization.load_pem_private_key(private_key_pem.encode(), password=None)
 
     # Sign content
     signature = private_key.sign(content.encode())
@@ -43,12 +41,12 @@ def sign_content(content: str, private_key_pem: str) -> str:
 def verify_signature(content: str, signature_hex: str, public_key_pem: str) -> bool:
     """
     Verify Ed25519 signature
-    
+
     Args:
         content: Original content
         signature_hex: Hex-encoded signature
         public_key_pem: PEM-encoded public key
-        
+
     Returns:
         True if signature is valid
     """
@@ -65,21 +63,16 @@ def verify_signature(content: str, signature_hex: str, public_key_pem: str) -> b
         return False
 
 
-def create_manifest(
-    document_id: str,
-    content_hash: str,
-    signature: str,
-    metadata: Dict[str, Any]
-) -> Dict[str, Any]:
+def create_manifest(document_id: str, content_hash: str, signature: str, metadata: Dict[str, Any]) -> Dict[str, Any]:
     """
     Create a C2PA-style manifest
-    
+
     Args:
         document_id: Unique document identifier
         content_hash: SHA-256 hash of content
         signature: Ed25519 signature
         metadata: Additional metadata
-        
+
     Returns:
         Manifest dictionary
     """

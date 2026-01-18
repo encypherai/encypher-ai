@@ -1,4 +1,5 @@
 """SQLAlchemy database models for User Service"""
+
 import uuid
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, String
@@ -10,6 +11,7 @@ Base = declarative_base()
 
 class UserProfile(Base):
     """User profile model"""
+
     __tablename__ = "user_profiles"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
@@ -34,6 +36,7 @@ class UserProfile(Base):
 
 class Team(Base):
     """Team model"""
+
     __tablename__ = "teams"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))

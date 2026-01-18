@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **MinMatchPercentage** | Pointer to **float32** |  | [optional] [default to 0.0]
 **SegmentationLevel** | Pointer to **string** |  | [optional] [default to "sentence"]
 **SearchScope** | Pointer to **string** |  | [optional] [default to "organization"]
+**FuzzySearch** | Pointer to [**NullableFuzzySearchConfig**](FuzzySearchConfig.md) |  | [optional] 
 
 ## Methods
 
@@ -201,6 +202,41 @@ SetSearchScope sets SearchScope field to given value.
 
 HasSearchScope returns a boolean if a field has been set.
 
+### GetFuzzySearch
+
+`func (o *VerifyAdvancedRequest) GetFuzzySearch() FuzzySearchConfig`
+
+GetFuzzySearch returns the FuzzySearch field if non-nil, zero value otherwise.
+
+### GetFuzzySearchOk
+
+`func (o *VerifyAdvancedRequest) GetFuzzySearchOk() (*FuzzySearchConfig, bool)`
+
+GetFuzzySearchOk returns a tuple with the FuzzySearch field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetFuzzySearch
+
+`func (o *VerifyAdvancedRequest) SetFuzzySearch(v FuzzySearchConfig)`
+
+SetFuzzySearch sets FuzzySearch field to given value.
+
+### HasFuzzySearch
+
+`func (o *VerifyAdvancedRequest) HasFuzzySearch() bool`
+
+HasFuzzySearch returns a boolean if a field has been set.
+
+### SetFuzzySearchNil
+
+`func (o *VerifyAdvancedRequest) SetFuzzySearchNil(b bool)`
+
+ SetFuzzySearchNil sets the value for FuzzySearch to be an explicit nil
+
+### UnsetFuzzySearch
+`func (o *VerifyAdvancedRequest) UnsetFuzzySearch()`
+
+UnsetFuzzySearch ensures that no value is present for FuzzySearch, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

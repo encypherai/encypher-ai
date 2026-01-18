@@ -1,6 +1,7 @@
 """
 Cryptographic utilities for key management and encryption.
 """
+
 import logging
 from typing import Optional, cast
 
@@ -21,10 +22,7 @@ logger = logging.getLogger(__name__)
 _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
 
 
-async def load_organization_private_key(
-    organization_id: str,
-    db: AsyncSession
-) -> SigningKey:
+async def load_organization_private_key(organization_id: str, db: AsyncSession) -> SigningKey:
     """
     Load signing key (private key or KMS signer) for organization.
 
@@ -42,12 +40,11 @@ async def load_organization_private_key(
     global _DEMO_PRIVATE_KEY
     if organization_id == settings.demo_organization_id:
         return get_demo_private_key()
-    
+
     # Fetch potentially needed columns: encrypted key and KMS key ID
     try:
         result = await db.execute(
-            text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE id = :org_id"),
-            {"org_id": organization_id}
+            text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE id = :org_id"), {"org_id": organization_id}
         )
         row = result.fetchone()
     except Exception as e:
@@ -72,20 +69,13 @@ async def load_organization_private_key(
 
     # Decrypt using AES-GCM
     aesgcm = AESGCM(settings.key_encryption_key_bytes)
-    private_key_bytes = aesgcm.decrypt(
-        settings.encryption_nonce_bytes,
-        bytes(encrypted_key),
-        None
-    )
+    private_key_bytes = aesgcm.decrypt(settings.encryption_nonce_bytes, bytes(encrypted_key), None)
 
     # Load Ed25519 private key
     return ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
 
 
-async def load_organization_public_key(
-    organization_id: str,
-    db: AsyncSession
-) -> ed25519.Ed25519PublicKey:
+async def load_organization_public_key(organization_id: str, db: AsyncSession) -> ed25519.Ed25519PublicKey:
     """
     Load organization's public key from database.
 
@@ -104,18 +94,15 @@ async def load_organization_public_key(
     if organization_id == settings.demo_organization_id:
         private_key = get_demo_private_key()
         return private_key.public_key()
-    
+
     # Check if this is a user-level org (starts with "user_") - they use demo key
     if organization_id.startswith("user_"):
         logger.info(f"User org {organization_id} uses demo key for verification")
         private_key = get_demo_private_key()
         return private_key.public_key()
-    
+
     # Look up organization's public key from database
-    result = await db.execute(
-        text("SELECT public_key FROM organizations WHERE id = :org_id"),
-        {"org_id": organization_id}
-    )
+    result = await db.execute(text("SELECT public_key FROM organizations WHERE id = :org_id"), {"org_id": organization_id})
     row = result.fetchone()
 
     if not row or not row[0]:
@@ -151,18 +138,12 @@ def encrypt_private_key(private_key: ed25519.Ed25519PrivateKey) -> bytes:
     """
     # Serialize private key to bytes
     private_bytes = private_key.private_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PrivateFormat.Raw,
-        encryption_algorithm=serialization.NoEncryption()
+        encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw, encryption_algorithm=serialization.NoEncryption()
     )
 
     # Encrypt using AES-GCM
     aesgcm = AESGCM(settings.key_encryption_key_bytes)
-    encrypted = aesgcm.encrypt(
-        settings.encryption_nonce_bytes,
-        private_bytes,
-        None
-    )
+    encrypted = aesgcm.encrypt(settings.encryption_nonce_bytes, private_bytes, None)
 
     return encrypted
 
@@ -183,11 +164,7 @@ def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
     try:
         # Decrypt using AES-GCM
         aesgcm = AESGCM(settings.key_encryption_key_bytes)
-        private_key_bytes = aesgcm.decrypt(
-            settings.encryption_nonce_bytes,
-            encrypted_key,
-            None
-        )
+        private_key_bytes = aesgcm.decrypt(settings.encryption_nonce_bytes, encrypted_key, None)
 
         # Load Ed25519 private key
         return ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
@@ -206,7 +183,7 @@ def extract_public_key_from_certificate(cert_pem: str) -> ed25519.Ed25519PublicK
         Ed25519PublicKey: Public key from certificate
     """
     cert = x509.load_pem_x509_certificate(cert_pem.encode(), default_backend())
-    return cert.public_key()
+    return cast(ed25519.Ed25519PublicKey, cert.public_key())
 
 
 def serialize_public_key(public_key: ed25519.Ed25519PublicKey) -> bytes:
@@ -219,10 +196,7 @@ def serialize_public_key(public_key: ed25519.Ed25519PublicKey) -> bytes:
     Returns:
         bytes: Serialized public key
     """
-    return public_key.public_bytes(
-        encoding=serialization.Encoding.Raw,
-        format=serialization.PublicFormat.Raw
-    )
+    return public_key.public_bytes(encoding=serialization.Encoding.Raw, format=serialization.PublicFormat.Raw)
 
 
 def deserialize_public_key(public_key_bytes: bytes) -> ed25519.Ed25519PublicKey:
@@ -250,9 +224,7 @@ def get_demo_private_key() -> ed25519.Ed25519PrivateKey:
         return _DEMO_PRIVATE_KEY
 
     if settings.demo_private_key_bytes:
-        _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.from_private_bytes(
-            cast(bytes, settings.demo_private_key_bytes)
-        )
+        _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.from_private_bytes(settings.demo_private_key_bytes)
         return _DEMO_PRIVATE_KEY
 
     _DEMO_PRIVATE_KEY = ed25519.Ed25519PrivateKey.generate()

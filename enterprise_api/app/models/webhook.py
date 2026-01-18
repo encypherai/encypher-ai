@@ -3,6 +3,7 @@ Webhook model for event notifications.
 
 Stores webhook configurations for organizations to receive event notifications.
 """
+
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional

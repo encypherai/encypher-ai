@@ -1,4 +1,5 @@
 """Signing router for content signing with C2PA manifests."""
+
 import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
@@ -27,20 +28,20 @@ async def sign_content(
     db: AsyncSession = Depends(get_db),
 ) -> SignResponse:
     """Sign content with a C2PA manifest."""
-    
+
     # Get tier from organization context for tier-aware rate limiting
     tier = organization.get("tier", "starter")
-    
+
     result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],
         scope="sign",
         tier=tier,
     )
-    
+
     # Add rate limit headers to response
     for header, value in api_rate_limiter.get_headers(result).items():
         response.headers[header] = value
-    
+
     if not result.allowed:
         detail = {
             "code": "E_RATE_SIGN",
@@ -67,7 +68,7 @@ async def sign_content(
         db=db,
         document_id=request.document_id,
     )
-    
+
     # Add quota usage headers to response
     quota_headers = await QuotaManager.get_quota_headers(
         db=db,
@@ -76,9 +77,9 @@ async def sign_content(
     )
     for header, value in quota_headers.items():
         response.headers[header] = value
-    
+
     increment("sign_requests")
-    
+
     # Emit webhook event (fire and forget - don't block response)
     asyncio.create_task(
         emit_document_signed(
@@ -88,7 +89,7 @@ async def sign_content(
             document_type=request.document_type,
         )
     )
-    
+
     return signing_result
 
 

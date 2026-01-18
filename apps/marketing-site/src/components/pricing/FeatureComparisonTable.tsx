@@ -168,7 +168,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
     features: [
       {
         name: 'Streaming Signing',
-        description: 'POST /api/v1/stream/sign - Stream signing progress (SSE)',
+        description: 'POST /api/v1/sign/stream - Stream signing progress (SSE)',
         starter: false,
         professional: true,
         business: true,
@@ -176,7 +176,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
       },
       {
         name: 'Chat Application Wrapper',
-        description: 'POST /api/v1/stream/chat/openai-compatible - OpenAI-compatible chat streaming',
+        description: 'POST /api/v1/chat/completions - OpenAI-compatible chat streaming',
         starter: false,
         professional: true,
         business: true,
@@ -184,7 +184,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
       },
       {
         name: 'Server-Sent Events',
-        description: 'GET /api/v1/stream/events - SSE endpoint',
+        description: 'GET /api/v1/sign/stream/sessions/{session_id}/events - SSE endpoint',
         starter: false,
         professional: true,
         business: true,

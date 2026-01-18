@@ -1,9 +1,10 @@
 """
 Coalition Service Client for Enterprise API
 """
+
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Any, Optional, cast
 
 import httpx
 
@@ -23,19 +24,14 @@ class CoalitionClient:
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(
-                    f"{self.base_url}/api/v1/coalition/status/{user_id}"
-                )
+                response = await client.get(f"{self.base_url}/api/v1/coalition/status/{user_id}")
 
                 if response.status_code == 200:
-                    data = response.json()
+                    data = cast(dict[str, Any], response.json())
                     if data.get("success"):
                         return data.get("data")
 
-                logger.warning(
-                    f"Coalition member not found for user {user_id}: "
-                    f"status={response.status_code}"
-                )
+                logger.warning(f"Coalition member not found for user {user_id}: status={response.status_code}")
                 return None
 
         except httpx.TimeoutException:
@@ -72,16 +68,10 @@ class CoalitionClient:
                 )
 
                 if response.status_code == 201:
-                    logger.info(
-                        f"Successfully indexed content in coalition: "
-                        f"document={document_id}, member={member_id}"
-                    )
+                    logger.info(f"Successfully indexed content in coalition: document={document_id}, member={member_id}")
                     return True
                 else:
-                    logger.warning(
-                        f"Failed to index content in coalition: "
-                        f"status={response.status_code}, response={response.text}"
-                    )
+                    logger.warning(f"Failed to index content in coalition: status={response.status_code}, response={response.text}")
                     return False
 
         except httpx.TimeoutException:
@@ -97,12 +87,10 @@ class CoalitionClient:
         """
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.get(
-                    f"{self.base_url}/api/v1/coalition/stats/{user_id}"
-                )
+                response = await client.get(f"{self.base_url}/api/v1/coalition/stats/{user_id}")
 
                 if response.status_code == 200:
-                    data = response.json()
+                    data = cast(dict[str, Any], response.json())
                     if data.get("success"):
                         return data.get("data")
 

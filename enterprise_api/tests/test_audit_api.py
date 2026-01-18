@@ -1,11 +1,12 @@
 """Tests for audit logging API endpoints."""
+
 import pytest
 from httpx import AsyncClient
 
 
 class TestAuditLogEndpoints:
     """Test suite for /api/v1/audit-logs endpoints.
-    
+
     Note: Audit logs are tier-gated (Business+ only).
     Uses business-api-key-for-testing which has Business tier.
     """
@@ -17,10 +18,10 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs",
             headers=business_auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify response structure
         assert "organization_id" in data
         assert "logs" in data
@@ -28,7 +29,7 @@ class TestAuditLogEndpoints:
         assert "page" in data
         assert "page_size" in data
         assert "has_more" in data
-        
+
         assert isinstance(data["logs"], list)
 
     @pytest.mark.asyncio
@@ -38,10 +39,10 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs?page=1&page_size=10",
             headers=business_auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert data["page"] == 1
         assert data["page_size"] == 10
         assert len(data["logs"]) <= 10
@@ -53,10 +54,10 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs?action=document.signed",
             headers=business_auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # All returned logs should match the filter
         for log in data["logs"]:
             assert log["action"] == "document.signed"
@@ -68,7 +69,7 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs?start_date=2025-01-01T00:00:00Z&end_date=2025-12-31T23:59:59Z",
             headers=business_auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
         assert isinstance(data["logs"], list)
@@ -86,7 +87,7 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs",
             headers=starter_auth_headers,
         )
-        
+
         # Should return 403 for Starter/Demo tier
         assert response.status_code == 403
         data = response.json()
@@ -100,10 +101,10 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs/export?format=json",
             headers=business_auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert "organization_id" in data
         assert "export_date" in data
         assert "logs" in data
@@ -116,7 +117,7 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs/export?format=csv",
             headers=business_auth_headers,
         )
-        
+
         assert response.status_code == 200
         assert "text/csv" in response.headers.get("content-type", "")
 
@@ -127,10 +128,10 @@ class TestAuditLogEndpoints:
             "/api/v1/audit-logs?page_size=1",
             headers=business_auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         if data["logs"]:
             log = data["logs"][0]
             assert "id" in log

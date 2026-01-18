@@ -13,6 +13,7 @@ Name | Type | Description | Notes
 **roots** | [**Dict[str, MerkleRootResponse]**](MerkleRootResponse.md) | Dictionary mapping segmentation level to Merkle root | 
 **total_segments** | **Dict[str, int]** | Number of segments at each level | 
 **processing_time_ms** | **float** | Processing time in milliseconds | 
+**fuzzy_index** | **Dict[str, object]** |  | [optional] 
 
 ## Example
 

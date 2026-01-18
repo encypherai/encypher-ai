@@ -7,6 +7,7 @@ This package provides:
 - Proof generation and verification
 - Hash computation utilities
 """
+
 # Import normalize_for_hashing from segmentation
 from app.utils.segmentation import normalize_for_hashing
 

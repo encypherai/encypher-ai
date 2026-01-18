@@ -37,7 +37,7 @@ async def lifespan(app: FastAPI):
                 # Check if user exists by email or username
                 user_by_email = await get_user_by_email(db=db, email=admin_email)
                 user_by_username = await get_user_by_username(db=db, username="admin")
-                
+
                 if not user_by_email and not user_by_username:
                     await create_user(
                         db=db,
@@ -63,11 +63,9 @@ async def lifespan(app: FastAPI):
         logging.error(f"Error cancelling cache cleanup task: {e}")
     print("Application shutdown.")
 
+
 app = FastAPI(
-    title="Encypher Dashboard Backend",
-    version="0.1.0",
-    description="API for the Encypher Compliance Readiness Dashboard",
-    lifespan=lifespan
+    title="Encypher Dashboard Backend", version="0.1.0", description="API for the Encypher Compliance Readiness Dashboard", lifespan=lifespan
 )
 
 # Set up CORS middleware
@@ -94,7 +92,6 @@ async def health_check():
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
-
 
 
 if __name__ == "__main__":

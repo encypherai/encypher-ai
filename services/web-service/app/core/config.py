@@ -48,9 +48,7 @@ class Settings(BaseSettings):
         database_url = values.data.get("DATABASE_URL")
         if isinstance(database_url, str) and database_url:
             if database_url.startswith("postgres://"):
-                return database_url.replace(
-                    "postgres://", "postgresql+psycopg2://", 1
-                )
+                return database_url.replace("postgres://", "postgresql+psycopg2://", 1)
             return database_url
         port = values.data.get("POSTGRES_PORT", 5432)
         host = f"{values.data.get('POSTGRES_SERVER')}:{port}"

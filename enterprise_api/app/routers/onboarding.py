@@ -1,6 +1,7 @@
 """
 Onboarding router for SSL.com certificate requests and lifecycle management.
 """
+
 import logging
 import uuid
 
@@ -18,10 +19,7 @@ logger = logging.getLogger(__name__)
 
 
 @router.post("/request-certificate")
-async def request_certificate(
-    organization: dict = Depends(get_current_organization),
-    db: AsyncSession = Depends(get_db)
-):
+async def request_certificate(organization: dict = Depends(get_current_organization), db: AsyncSession = Depends(get_db)):
     """
     Initiate SSL.com certificate request for organization.
 
@@ -53,22 +51,19 @@ async def request_certificate(
             ORDER BY created_at DESC
             LIMIT 1
         """),
-        {"org_id": organization['organization_id']}
+        {"org_id": organization["organization_id"]},
     )
     existing_cert = existing.fetchone()
 
     if existing_cert:
-        logger.warning(
-            f"Organization {organization['organization_id']} already has "
-            f"{existing_cert.order_status} certificate"
-        )
+        logger.warning(f"Organization {organization['organization_id']} already has {existing_cert.order_status} certificate")
         return {
             "success": False,
             "error": {
                 "code": "CERTIFICATE_EXISTS",
                 "message": f"Organization already has {existing_cert.order_status} certificate",
-                "cert_id": existing_cert.cert_id
-            }
+                "cert_id": existing_cert.cert_id,
+            },
         }
 
     # Create SSL.com order
@@ -76,21 +71,16 @@ async def request_certificate(
         try:
             logger.debug("Creating SSL.com certificate order...")
             order = await ssl_client.create_code_signing_order(
-                organization=organization['organization_name'],
+                organization=organization["organization_name"],
                 country="US",  # TODO: Get from organization data
-                email=organization.get('email', 'noreply@encypherai.com'),
-                validity_years=2
+                email=organization.get("email", "noreply@encypherai.com"),
+                validity_years=2,
             )
             logger.info(f"SSL.com order created: {order.get('order_id')}")
         except httpx.HTTPStatusError as e:
             logger.error(f"SSL.com API error: {e}", exc_info=True)
             raise HTTPException(
-                status_code=500,
-                detail={
-                    "code": "SSL_COM_API_ERROR",
-                    "message": "Failed to create SSL.com certificate order",
-                    "details": str(e)
-                }
+                status_code=500, detail={"code": "SSL_COM_API_ERROR", "message": "Failed to create SSL.com certificate order", "details": str(e)}
             )
 
     # Store order tracking
@@ -106,10 +96,10 @@ async def request_certificate(
             """),
             {
                 "cert_id": cert_id,
-                "org_id": organization['organization_id'],
-                "order_id": order.get('order_id'),
-                "val_url": order.get('validation_url')
-            }
+                "org_id": organization["organization_id"],
+                "order_id": order.get("order_id"),
+                "val_url": order.get("validation_url"),
+            },
         )
 
         await db.commit()
@@ -118,34 +108,21 @@ async def request_certificate(
     except Exception as e:
         await db.rollback()
         logger.error(f"Database error while storing certificate lifecycle: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail={
-                "code": "DATABASE_ERROR",
-                "message": "Failed to store certificate request",
-                "details": str(e)
-            }
-        )
+        raise HTTPException(status_code=500, detail={"code": "DATABASE_ERROR", "message": "Failed to store certificate request", "details": str(e)})
 
     return {
         "success": True,
         "cert_id": cert_id,
-        "order_id": order.get('order_id'),
+        "order_id": order.get("order_id"),
         "status": "pending_validation",
-        "validation_url": order.get('validation_url'),
+        "validation_url": order.get("validation_url"),
         "estimated_completion": "2-5 business days",
-        "instructions": (
-            "Please complete identity verification at the validation URL. "
-            "You will receive an email when your certificate is issued."
-        )
+        "instructions": ("Please complete identity verification at the validation URL. You will receive an email when your certificate is issued."),
     }
 
 
 @router.get("/certificate-status")
-async def get_certificate_status(
-    organization: dict = Depends(get_current_organization),
-    db: AsyncSession = Depends(get_db)
-):
+async def get_certificate_status(organization: dict = Depends(get_current_organization), db: AsyncSession = Depends(get_db)):
     """
     Get current certificate status for organization.
 
@@ -168,17 +145,13 @@ async def get_certificate_status(
             ORDER BY created_at DESC
             LIMIT 1
         """),
-        {"org_id": organization['organization_id']}
+        {"org_id": organization["organization_id"]},
     )
 
     row = result.fetchone()
 
     if not row:
-        return {
-            "success": True,
-            "has_certificate": False,
-            "message": "No certificate request found. Please request a certificate first."
-        }
+        return {"success": True, "has_certificate": False, "message": "No certificate request found. Please request a certificate first."}
 
     return {
         "success": True,
@@ -189,5 +162,5 @@ async def get_certificate_status(
         "validation_url": row.validation_url,
         "ordered_at": row.ordered_at,
         "issued_at": row.issued_at,
-        "expires_at": row.expires_at
+        "expires_at": row.expires_at,
     }

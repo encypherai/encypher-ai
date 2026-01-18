@@ -1,4 +1,4 @@
- # Tests for public C2PA manifest validation endpoint.
+# Tests for public C2PA manifest validation endpoint.
 #
 # Endpoint: POST /api/v1/public/c2pa/validate-manifest
 #
@@ -12,6 +12,7 @@ import pytest
 from httpx import AsyncClient
 from app.middleware.public_rate_limiter import public_rate_limiter
 
+
 def _valid_manifest_payload() -> dict:
     return {
         "manifest": {
@@ -24,6 +25,7 @@ def _valid_manifest_payload() -> dict:
             ],
         }
     }
+
 
 @pytest.mark.asyncio
 async def test_validate_manifest_anonymous_valid(async_client: AsyncClient) -> None:
@@ -42,6 +44,7 @@ async def test_validate_manifest_anonymous_valid(async_client: AsyncClient) -> N
     assert isinstance(data["assertions"], list)
     assert data["assertions"][0]["label"] == "c2pa.location.v1"
 
+
 @pytest.mark.asyncio
 async def test_validate_manifest_missing_required_field(async_client: AsyncClient) -> None:
     payload = _valid_manifest_payload()
@@ -57,6 +60,7 @@ async def test_validate_manifest_missing_required_field(async_client: AsyncClien
     data = response.json()
     assert data["valid"] is False
     assert any("claim_generator" in e for e in data["errors"])
+
 
 @pytest.mark.asyncio
 async def test_validate_manifest_custom_schema_validation(async_client: AsyncClient) -> None:
@@ -90,6 +94,7 @@ async def test_validate_manifest_custom_schema_validation(async_client: AsyncCli
     assert data["valid"] is True
     assert data["assertions"][0]["valid"] is True
 
+
 @pytest.mark.asyncio
 async def test_validate_manifest_anonymous_rate_limited(async_client: AsyncClient) -> None:
     original_limits = copy.deepcopy(public_rate_limiter.ENDPOINT_LIMITS)
@@ -117,6 +122,7 @@ async def test_validate_manifest_anonymous_rate_limited(async_client: AsyncClien
     finally:
         public_rate_limiter.ENDPOINT_LIMITS = original_limits
         public_rate_limiter.reset_ip("203.0.113.13")
+
 
 @pytest.mark.asyncio
 async def test_validate_manifest_authenticated_bypasses_public_rate_limit(

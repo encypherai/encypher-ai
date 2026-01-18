@@ -8,6 +8,7 @@ It can be run multiple times safely (uses IF NOT EXISTS).
 Usage:
     uv run python scripts/run_merkle_migrations.py
 """
+
 import asyncio
 import sys
 from pathlib import Path
@@ -31,22 +32,22 @@ MIGRATIONS = [
 async def run_migration(migration_file: Path) -> None:
     """Run a single migration file."""
     print(f"Running migration: {migration_file.name}")
-    
+
     # Read migration SQL
     sql_content = migration_file.read_text()
-    
+
     # Split into individual statements
     # Remove comments and split on semicolons
     lines = []
-    for line in sql_content.split('\n'):
+    for line in sql_content.split("\n"):
         # Skip comment-only lines
-        if line.strip().startswith('--'):
+        if line.strip().startswith("--"):
             continue
         lines.append(line)
-    
-    clean_sql = '\n'.join(lines)
-    statements = [s.strip() for s in clean_sql.split(';') if s.strip()]
-    
+
+    clean_sql = "\n".join(lines)
+    statements = [s.strip() for s in clean_sql.split(";") if s.strip()]
+
     # Execute each statement in a transaction
     async with engine.begin() as conn:
         for i, statement in enumerate(statements, 1):
@@ -57,7 +58,7 @@ async def run_migration(migration_file: Path) -> None:
                 print(f"  ✗ Error in statement {i}: {e}")
                 print(f"  Statement: {statement[:100]}...")
                 raise
-    
+
     print(f"  ✓ Migration {migration_file.name} completed")
 
 
@@ -69,22 +70,22 @@ async def main():
     print(f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Unknown'}")
     print(f"Environment: {settings.environment}")
     print("=" * 60)
-    
+
     migrations_dir = Path(__file__).parent.parent / "migrations"
-    
+
     if not migrations_dir.exists():
         print(f"Error: Migrations directory not found: {migrations_dir}")
         sys.exit(1)
-    
+
     print(f"\nRunning {len(MIGRATIONS)} migrations...\n")
-    
+
     for migration_name in MIGRATIONS:
         migration_file = migrations_dir / migration_name
-        
+
         if not migration_file.exists():
             print(f"Error: Migration file not found: {migration_file}")
             sys.exit(1)
-        
+
         try:
             await run_migration(migration_file)
         except Exception as e:
@@ -92,7 +93,7 @@ async def main():
             print("\nTo rollback, run:")
             print("  psql -U postgres -d encypher_enterprise -f migrations/rollback_merkle_tables.sql")
             sys.exit(1)
-    
+
     print("\n" + "=" * 60)
     print("✓ All migrations completed successfully!")
     print("=" * 60)

@@ -2,6 +2,7 @@
 Service for handling statistical updates in the background.
 Separated to ensure non-blocking operations and proper session management.
 """
+
 import logging
 from datetime import datetime
 
@@ -18,10 +19,10 @@ class StatService:
     async def update_api_key_last_used(self, api_key: str):
         """
         Update the last_used_at timestamp for an API key.
-        
+
         This runs in a background task with its own database session
         to avoid blocking the main request or using a closed session.
-        
+
         Args:
             api_key: The API key to update
         """

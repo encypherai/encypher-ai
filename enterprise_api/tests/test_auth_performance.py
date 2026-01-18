@@ -19,16 +19,12 @@ async def test_get_current_organization_uses_client():
     """
     Test that dependency uses KeyServiceClient and not direct DB calls.
     """
-    
+
     with patch.object(dependencies, "key_service_client") as mock_service_client:
-        mock_service_client.validate_key = AsyncMock(return_value={
-            "api_key": "test_key",
-            "organization_id": "org_1",
-            "tier": "professional",
-            "api_calls_this_month": 0,
-            "monthly_quota": 1000
-        })
-        
+        mock_service_client.validate_key = AsyncMock(
+            return_value={"api_key": "test_key", "organization_id": "org_1", "tier": "professional", "api_calls_this_month": 0, "monthly_quota": 1000}
+        )
+
         # Mock credentials
         mock_credentials = MagicMock()
         mock_credentials.credentials = "test_key"
@@ -41,14 +37,10 @@ async def test_get_current_organization_uses_client():
         mock_request.state = MagicMock()
 
         # Call the dependency (no DB arg needed now)
-        result = await get_current_organization(
-            request=mock_request,
-            background_tasks=mock_background_tasks,
-            credentials=mock_credentials
-        )
+        result = await get_current_organization(request=mock_request, background_tasks=mock_background_tasks, credentials=mock_credentials)
 
         # Verify client was called
         mock_service_client.validate_key.assert_called_once_with("test_key")
-        
+
         # Verify result matches
         assert result["organization_id"] == "org_1"

@@ -5,6 +5,7 @@ Handles connection validation and SQL migration execution on service startup.
 Unlike microservices that use Alembic, Enterprise API uses raw SQL migrations
 for more control over the two-database architecture.
 """
+
 import logging
 import os
 import sys
@@ -18,73 +19,61 @@ logger = logging.getLogger(__name__)
 
 class DatabaseStartupError(Exception):
     """Raised when database startup fails."""
+
     pass
 
 
-def check_database_connection(
-    database_url: str,
-    max_retries: int = 5,
-    retry_delay: float = 2.0,
-    service_name: str = "enterprise-api"
-) -> bool:
+def check_database_connection(database_url: str, max_retries: int = 5, retry_delay: float = 2.0, service_name: str = "enterprise-api") -> bool:
     """
     Check if the database is reachable and accepting connections.
-    
+
     Args:
         database_url: PostgreSQL connection URL
         max_retries: Maximum number of connection attempts
         retry_delay: Seconds to wait between retries
         service_name: Name of the service (for logging)
-    
+
     Returns:
         True if connection successful
-        
+
     Raises:
         DatabaseStartupError: If connection fails after all retries
     """
     if not database_url:
-        raise DatabaseStartupError(
-            f"[{service_name}] DATABASE_URL is not set or empty. "
-            "Please configure the database URL environment variable."
-        )
-    
+        raise DatabaseStartupError(f"[{service_name}] DATABASE_URL is not set or empty. Please configure the database URL environment variable.")
+
     # Validate URL format
     try:
         parsed = urlparse(database_url)
         if not parsed.scheme or not parsed.hostname:
             raise ValueError("Invalid URL format")
     except Exception as e:
-        raise DatabaseStartupError(
-            f"[{service_name}] Invalid DATABASE_URL format: {e}. "
-            f"URL should be: postgresql://user:pass@host:port/dbname"
-        )
-    
+        raise DatabaseStartupError(f"[{service_name}] Invalid DATABASE_URL format: {e}. URL should be: postgresql://user:pass@host:port/dbname")
+
     # Mask password in logs
     safe_url = database_url.replace(parsed.password or "", "***") if parsed.password else database_url
-    
+
     try:
         from sqlalchemy import create_engine, text
     except ImportError:
-        raise DatabaseStartupError(
-            f"[{service_name}] SQLAlchemy is not installed."
-        )
-    
+        raise DatabaseStartupError(f"[{service_name}] SQLAlchemy is not installed.")
+
     for attempt in range(1, max_retries + 1):
         try:
             logger.info(f"[{service_name}] Attempting database connection (attempt {attempt}/{max_retries})...")
-            
+
             # Normalize URL for sync connection
             sync_url = database_url.replace("+asyncpg", "").replace("+aiopg", "")
-            
+
             engine = create_engine(sync_url, pool_pre_ping=True)
             with engine.connect() as conn:
                 result = conn.execute(text("SELECT 1"))
                 result.fetchone()
-            
+
             logger.info(f"[{service_name}] ✓ Database connection successful")
             engine.dispose()
             return True
-            
+
         except Exception as e:
             logger.warning(f"[{service_name}] Connection attempt {attempt} failed: {e}")
             if attempt < max_retries:
@@ -92,82 +81,77 @@ def check_database_connection(
                 time.sleep(retry_delay)
             else:
                 raise DatabaseStartupError(
-                    f"[{service_name}] Failed to connect to database after {max_retries} attempts. "
-                    f"URL: {safe_url}, Error: {e}"
+                    f"[{service_name}] Failed to connect to database after {max_retries} attempts. URL: {safe_url}, Error: {e}"
                 )
-    
+
     return False
 
 
-def run_sql_migrations(
-    database_url: str,
-    migrations_dir: str,
-    service_name: str = "enterprise-api"
-) -> bool:
+def run_sql_migrations(database_url: str, migrations_dir: str, service_name: str = "enterprise-api") -> bool:
     """
     Run SQL migrations from a directory.
-    
+
     Migrations are run in alphabetical order. Each migration should be idempotent
     (use IF NOT EXISTS, etc.) to allow safe re-runs.
-    
+
     Args:
         database_url: PostgreSQL connection URL
         migrations_dir: Path to directory containing .sql migration files
         service_name: Name of the service (for logging)
-    
+
     Returns:
         True if migrations completed successfully
-        
+
     Raises:
         DatabaseStartupError: If migration fails
     """
     migrations_path = Path(migrations_dir)
-    
+
     if not migrations_path.exists():
         logger.warning(f"[{service_name}] Migrations directory not found: {migrations_dir}")
         return True
-    
+
     # Get all SQL files sorted by name
     sql_files = sorted(migrations_path.glob("*.sql"))
-    
+
     # Filter out rollback files
     sql_files = [f for f in sql_files if not f.name.startswith("rollback")]
-    
+
     if not sql_files:
         logger.info(f"[{service_name}] No migration files found in {migrations_dir}")
         return True
-    
+
     logger.info(f"[{service_name}] Found {len(sql_files)} migration files")
-    
+
     try:
         from sqlalchemy import create_engine, text
     except ImportError:
         raise DatabaseStartupError(f"[{service_name}] SQLAlchemy is not installed.")
-    
+
     # Normalize URL for sync connection
     sync_url = database_url.replace("+asyncpg", "").replace("+aiopg", "")
-    
+
     engine = create_engine(sync_url)
-    
+
     try:
         for sql_file in sql_files:
             logger.info(f"[{service_name}] Running migration: {sql_file.name}")
-            
+
             # Read SQL content
             sql_content = sql_file.read_text()
-            
+
             # Split into statements (handle comments)
             lines = []
-            for line in sql_content.split('\n'):
+            for line in sql_content.split("\n"):
                 # Skip comment-only lines
                 stripped = line.strip()
-                if stripped.startswith('--'):
+                if stripped.startswith("--"):
                     continue
                 lines.append(line)
-            
-            clean_sql = '\n'.join(lines)
-            statements = [s.strip() for s in clean_sql.split(';') if s.strip()]
-            
+
+            clean_sql = "\n".join(lines)
+            statements = [s.strip() for s in clean_sql.split(";") if s.strip()]
+
             # Execute each statement
             with engine.begin() as conn:
                 for i, statement in enumerate(statements, 1):
@@ -182,12 +166,12 @@ def run_sql_migrations(
                             logger.error(f"[{service_name}] Statement {i} failed: {e}")
                             logger.error(f"[{service_name}] Statement: {statement[:200]}...")
                             raise
-            
+
             logger.info(f"[{service_name}] ✓ Migration {sql_file.name} completed")
-        
+
         logger.info(f"[{service_name}] ✓ All migrations completed successfully")
         return True
-        
+
     except Exception as e:
         raise DatabaseStartupError(f"[{service_name}] Migration failed: {e}")
     finally:
@@ -201,14 +185,14 @@ def ensure_database_ready(
     max_retries: int = 5,
     retry_delay: float = 2.0,
     run_migrations: bool = True,
-    exit_on_failure: bool = True
+    exit_on_failure: bool = True,
 ) -> bool:
     """
     Ensure the database is ready for the service to start.
-    
+
     This is the main entry point that should be called on service startup.
     It validates the connection and optionally runs SQL migrations.
-    
+
     Args:
         database_url: PostgreSQL connection URL (defaults to CORE_DATABASE_URL or DATABASE_URL env var)
         service_name: Name of the service (for logging)
@@ -217,42 +201,38 @@ def ensure_database_ready(
         retry_delay: Seconds to wait between retries
         run_migrations: If True, run SQL migrations
         exit_on_failure: If True, call sys.exit(1) on failure
-    
+
     Returns:
         True if database is ready
-        
+
     Raises:
         DatabaseStartupError: If database is not ready (only if exit_on_failure=False)
     """
     # Get database URL from parameter or environment
     db_url = database_url or os.environ.get("CORE_DATABASE_URL") or os.environ.get("DATABASE_URL")
-    
+
     # Default migrations directory
     if migrations_dir is None:
         migrations_dir = str(Path(__file__).parent.parent.parent / "migrations")
-    
+
+    if not db_url:
+        raise DatabaseStartupError(
+            f"[{service_name}] DATABASE_URL is not set or empty. Please configure the database URL environment variable."
+        )
+
     logger.info(f"[{service_name}] Starting database readiness check...")
-    
+
     try:
         # Step 1: Check connection
-        check_database_connection(
-            database_url=db_url,
-            max_retries=max_retries,
-            retry_delay=retry_delay,
-            service_name=service_name
-        )
-        
+        check_database_connection(database_url=db_url, max_retries=max_retries, retry_delay=retry_delay, service_name=service_name)
+
         # Step 2: Run migrations if requested
         if run_migrations:
-            run_sql_migrations(
-                database_url=db_url,
-                migrations_dir=migrations_dir,
-                service_name=service_name
-            )
-        
+            run_sql_migrations(database_url=db_url, migrations_dir=migrations_dir, service_name=service_name)
+
         logger.info(f"[{service_name}] ✓ Database is ready")
         return True
-        
+
     except DatabaseStartupError as e:
         logger.error(str(e))
         if exit_on_failure:

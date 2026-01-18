@@ -14,6 +14,7 @@ Name | Type
 `roots` | [{ [key: string]: MerkleRootResponse; }](MerkleRootResponse.md)
 `totalSegments` | { [key: string]: number; }
 `processingTimeMs` | number
+`fuzzyIndex` | { [key: string]: any; }
 
 ## Example
 
@@ -29,6 +30,7 @@ const example = {
   "roots": null,
   "totalSegments": null,
   "processingTimeMs": null,
+  "fuzzyIndex": null,
 } satisfies DocumentEncodeResponse
 
 console.log(example)

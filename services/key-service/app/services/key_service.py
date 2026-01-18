@@ -1,6 +1,7 @@
 """
 Key service business logic
 """
+
 from datetime import datetime
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
@@ -23,15 +24,15 @@ class KeyService:
     def _ensure_user_has_organization(db: Session, user_id: str) -> Optional[str]:
         """
         Try to find or create an organization for the user.
-        
+
         Note: The key-service may be on a different database than auth-service,
         so organization_members table may not exist here. In that case, we
         return None and the key will be user-level only.
-        
+
         Returns the organization_id or None if not available.
         """
         from sqlalchemy import text
-        
+
         # The key-service database may not have the organization tables
         # (they're managed by auth-service on a different DB)
         # Just return None - the key will work as a user-level key
@@ -42,11 +43,11 @@ class KeyService:
         """
         Create a new API key
         Returns: (ApiKey model, actual key string)
-        
+
         If organization_id is not provided, looks up user's default organization.
         """
         from sqlalchemy import text
-        
+
         # Generate new API key
         api_key = generate_api_key()
         key_hash = hash_api_key(api_key)
@@ -54,7 +55,7 @@ class KeyService:
 
         # Create key prefix for display (first 12 chars)
         key_prefix = api_key[:12] + "..."
-        
+
         # If no org provided, the key will be user-level only
         # Note: Key-service uses a separate database from auth-service,
         # so we can't query organization_members here. User-level keys
@@ -71,6 +72,7 @@ class KeyService:
             permissions=key_data.permissions,
             description=key_data.description,
             expires_at=key_data.expires_at,
+            created_by=user_id,
         )
 
         db.add(db_key)
@@ -90,12 +92,33 @@ class KeyService:
         return query.order_by(ApiKey.created_at.desc()).all()
 
     @staticmethod
-    def get_key_by_id(db: Session, key_id: str, user_id: str) -> Optional[ApiKey]:
+    def get_org_keys(db: Session, organization_id: str, include_revoked: bool = False) -> List[ApiKey]:
+        """Get all API keys for an organization"""
+        query = db.query(ApiKey).filter(ApiKey.organization_id == organization_id)
+
+        if not include_revoked:
+            query = query.filter(ApiKey.is_revoked == False)
+
+        return query.order_by(ApiKey.created_at.desc()).all()
+
+    @staticmethod
+    def get_key_by_id(
+        db: Session,
+        key_id: str,
+        user_id: Optional[str] = None,
+        organization_id: Optional[str] = None,
+    ) -> Optional[ApiKey]:
         """Get a specific API key by ID"""
-        return db.query(ApiKey).filter(
-            ApiKey.id == key_id,
-            ApiKey.user_id == user_id
-        ).first()
+        query = db.query(ApiKey).filter(ApiKey.id == key_id)
+
+        if organization_id:
+            query = query.filter(ApiKey.organization_id == organization_id)
+        elif user_id:
+            query = query.filter(ApiKey.user_id == user_id)
+        else:
+            return None
+
+        return query.first()
 
     @staticmethod
     def verify_key(db: Session, api_key: str) -> Optional[ApiKey]:
@@ -110,11 +133,15 @@ class KeyService:
         key_hash = hash_api_key(api_key)
 
         # Find key in database
-        db_key = db.query(ApiKey).filter(
-            ApiKey.key_hash == key_hash,
-            ApiKey.is_active == True,
-            ApiKey.is_revoked == False,
-        ).first()
+        db_key = (
+            db.query(ApiKey)
+            .filter(
+                ApiKey.key_hash == key_hash,
+                ApiKey.is_active == True,
+                ApiKey.is_revoked == False,
+            )
+            .first()
+        )
 
         if not db_key:
             return None
@@ -135,11 +162,11 @@ class KeyService:
         """
         Verify an API key and return full organization context.
         This is the unified auth method used by all services.
-        
+
         Supports both:
         - Organization-level keys (linked to organization_id)
         - User-level keys (linked to user_id, no organization)
-        
+
         Returns:
             dict with organization_id, tier, features, permissions
             or None if invalid
@@ -156,7 +183,8 @@ class KeyService:
         # First try: Query key with organization join (org-level keys)
         # Note: certificate_pem column will be added by auth-service migration 005
         # For now, we query without it and fetch separately if needed
-        result = db.execute(text("""
+        result = db.execute(
+            text("""
             SELECT 
                 k.id as key_id,
                 k.organization_id,
@@ -175,7 +203,9 @@ class KeyService:
             FROM api_keys k
             LEFT JOIN organizations o ON k.organization_id = o.id
             WHERE k.key_hash = :key_hash
-        """), {"key_hash": key_hash}).fetchone()
+        """),
+            {"key_hash": key_hash},
+        ).fetchone()
 
         if not result:
             return None
@@ -190,11 +220,14 @@ class KeyService:
 
         # Update usage (fire and forget style - don't block on this)
         try:
-            db.execute(text("""
+            db.execute(
+                text("""
                 UPDATE api_keys 
                 SET last_used_at = NOW(), usage_count = usage_count + 1
                 WHERE key_hash = :key_hash
-            """), {"key_hash": key_hash})
+            """),
+                {"key_hash": key_hash},
+            )
             db.commit()
         except Exception:
             db.rollback()  # Don't fail auth if usage update fails
@@ -204,11 +237,11 @@ class KeyService:
             # User-level key - provide default starter tier context
             # Mark as demo so they can use demo signing keys for testing
             key_permissions = result.key_permissions if isinstance(result.key_permissions, list) else ["sign", "verify"]
-            
+
             # Check if key has special permissions that enable features
             has_merkle = "merkle" in key_permissions
             is_super_admin = "admin" in key_permissions or "super_admin" in key_permissions
-            
+
             # SHORT-TERM FIX: Hardcoded superadmin user IDs
             # TODO: Remove after shared core DB migration (see PRD_Shared_Core_DB.md)
             # These users get full enterprise access regardless of key permissions
@@ -217,7 +250,7 @@ class KeyService:
             }
             if result.user_id in SUPERADMIN_USER_IDS:
                 is_super_admin = True
-            
+
             return {
                 "key_id": result.key_id,
                 "user_id": result.user_id,
@@ -262,9 +295,15 @@ class KeyService:
         }
 
     @staticmethod
-    def update_key(db: Session, key_id: str, user_id: str, update_data: ApiKeyUpdate) -> Optional[ApiKey]:
+    def update_key(
+        db: Session,
+        key_id: str,
+        user_id: str,
+        update_data: ApiKeyUpdate,
+        organization_id: Optional[str] = None,
+    ) -> Optional[ApiKey]:
         """Update an API key"""
-        db_key = KeyService.get_key_by_id(db, key_id, user_id)
+        db_key = KeyService.get_key_by_id(db, key_id, user_id=user_id, organization_id=organization_id)
 
         if not db_key:
             return None
@@ -286,9 +325,9 @@ class KeyService:
         return db_key
 
     @staticmethod
-    def revoke_key(db: Session, key_id: str, user_id: str) -> bool:
+    def revoke_key(db: Session, key_id: str, user_id: str, organization_id: Optional[str] = None) -> bool:
         """Revoke an API key"""
-        db_key = KeyService.get_key_by_id(db, key_id, user_id)
+        db_key = KeyService.get_key_by_id(db, key_id, user_id=user_id, organization_id=organization_id)
 
         if not db_key:
             return False
@@ -305,13 +344,14 @@ class KeyService:
         db: Session,
         key_id: str,
         user_id: str,
-        reason: Optional[str] = None
+        reason: Optional[str] = None,
+        organization_id: Optional[str] = None,
     ) -> Optional[Tuple[ApiKey, str]]:
         """
         Rotate an API key (create new one, revoke old one)
         Returns: (new ApiKey model, new key string) or None
         """
-        old_key = KeyService.get_key_by_id(db, key_id, user_id)
+        old_key = KeyService.get_key_by_id(db, key_id, user_id=user_id, organization_id=organization_id)
 
         if not old_key:
             return None
@@ -324,7 +364,12 @@ class KeyService:
             expires_at=old_key.expires_at,
         )
 
-        new_db_key, new_api_key = KeyService.create_key(db, user_id, new_key_data)
+        new_db_key, new_api_key = KeyService.create_key(
+            db,
+            user_id,
+            new_key_data,
+            organization_id=organization_id or old_key.organization_id,
+        )
 
         # Revoke old key
         old_key.is_revoked = True
@@ -335,7 +380,7 @@ class KeyService:
         rotation = KeyRotation(
             old_key_id=old_key.id,
             new_key_id=new_db_key.id,
-            user_id=user_id,
+            organization_id=organization_id or old_key.organization_id,
             reason=reason,
             rotated_by=user_id,
         )
@@ -374,10 +419,10 @@ class KeyService:
         return usage
 
     @staticmethod
-    def get_key_usage_stats(db: Session, key_id: str, user_id: str) -> dict:
+    def get_key_usage_stats(db: Session, key_id: str, user_id: str, organization_id: Optional[str] = None) -> dict:
         """Get usage statistics for an API key"""
         # Verify key belongs to user
-        db_key = KeyService.get_key_by_id(db, key_id, user_id)
+        db_key = KeyService.get_key_by_id(db, key_id, user_id=user_id, organization_id=organization_id)
         if not db_key:
             return {}
 
@@ -385,12 +430,9 @@ class KeyService:
         total_requests = db.query(KeyUsage).filter(KeyUsage.key_id == key_id).count()
 
         # Get requests by endpoint
-        endpoint_stats = db.query(
-            KeyUsage.endpoint,
-            func.count(KeyUsage.id).label('count')
-        ).filter(
-            KeyUsage.key_id == key_id
-        ).group_by(KeyUsage.endpoint).all()
+        endpoint_stats = (
+            db.query(KeyUsage.endpoint, func.count(KeyUsage.id).label("count")).filter(KeyUsage.key_id == key_id).group_by(KeyUsage.endpoint).all()
+        )
 
         requests_by_endpoint = {stat.endpoint: stat.count for stat in endpoint_stats}
 

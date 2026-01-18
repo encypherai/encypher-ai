@@ -26,11 +26,7 @@ class _FakeSessionCtx:
 
 
 async def _ensure_default_template_column(db: AsyncSession) -> None:
-    await db.execute(
-        text(
-            "ALTER TABLE organizations ADD COLUMN IF NOT EXISTS default_c2pa_template_id VARCHAR(64)"
-        )
-    )
+    await db.execute(text("ALTER TABLE organizations ADD COLUMN IF NOT EXISTS default_c2pa_template_id VARCHAR(64)"))
     await db.commit()
 
 
@@ -40,9 +36,7 @@ async def test_sign_basic_org_default_template_requires_business(
 ) -> None:
     await _ensure_default_template_column(db)
     await db.execute(
-        text(
-            "UPDATE organizations SET default_c2pa_template_id = :template_id WHERE id = :org_id"
-        ),
+        text("UPDATE organizations SET default_c2pa_template_id = :template_id WHERE id = :org_id"),
         {"template_id": "tmpl_builtin_no_ai_training_v1", "org_id": "org_starter"},
     )
     await db.commit()
@@ -71,9 +65,7 @@ async def test_sign_basic_applies_org_default_template_assertions(
 ) -> None:
     await _ensure_default_template_column(db)
     await db.execute(
-        text(
-            "UPDATE organizations SET default_c2pa_template_id = :template_id WHERE id = :org_id"
-        ),
+        text("UPDATE organizations SET default_c2pa_template_id = :template_id WHERE id = :org_id"),
         {"template_id": "tmpl_builtin_no_ai_training_v1", "org_id": "org_business"},
     )
     await db.commit()
@@ -105,8 +97,7 @@ async def test_sign_basic_applies_org_default_template_assertions(
     called_assertions = mock_embed.call_args.kwargs.get("custom_assertions")
     assert called_assertions is not None
     assert any(
-        assertion.get("label") == "c2pa.training-mining.v1"
-        and assertion.get("data", {}).get("use", {}).get("ai_training") is False
+        assertion.get("label") == "c2pa.training-mining.v1" and assertion.get("data", {}).get("use", {}).get("ai_training") is False
         for assertion in called_assertions
     )
 
@@ -117,9 +108,7 @@ async def test_sign_advanced_applies_org_default_template_assertions(
 ) -> None:
     await _ensure_default_template_column(db)
     await db.execute(
-        text(
-            "UPDATE organizations SET default_c2pa_template_id = :template_id WHERE id = :org_id"
-        ),
+        text("UPDATE organizations SET default_c2pa_template_id = :template_id WHERE id = :org_id"),
         {"template_id": "tmpl_builtin_no_ai_training_v1", "org_id": "org_business"},
     )
     await db.commit()
@@ -164,7 +153,6 @@ async def test_sign_advanced_applies_org_default_template_assertions(
     called_assertions = mock_create.call_args.kwargs.get("custom_assertions")
     assert called_assertions is not None
     assert any(
-        assertion.get("label") == "c2pa.training-mining.v1"
-        and assertion.get("data", {}).get("use", {}).get("ai_training") is False
+        assertion.get("label") == "c2pa.training-mining.v1" and assertion.get("data", {}).get("use", {}).get("ai_training") is False
         for assertion in called_assertions
     )

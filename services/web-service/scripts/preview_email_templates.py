@@ -6,6 +6,7 @@ Opens all email templates in your default browser for visual review.
 Run from the web-service directory:
     uv run python scripts/preview_email_templates.py
 """
+
 import tempfile
 import webbrowser
 from pathlib import Path
@@ -56,10 +57,8 @@ def generate_confirmation_html(
     secondary_cta_url: str,
 ) -> str:
     """Generate branded confirmation email HTML."""
-    next_steps_html = "".join(
-        f'<li style="margin-bottom: 8px;">{step}</li>' for step in next_steps
-    )
-    
+    next_steps_html = "".join(f'<li style="margin-bottom: 8px;">{step}</li>' for step in next_steps)
+
     return f"""
 <!DOCTYPE html>
 <html>
@@ -269,7 +268,7 @@ def generate_index_html(templates: dict[str, str]) -> str:
     links = ""
     for name in templates:
         links += f'<li><a href="{name}.html" target="_blank">{name.replace("_", " ").title()}</a></li>\n'
-    
+
     return """
 <!DOCTYPE html>
 <html>

@@ -1,6 +1,7 @@
 """
 Logging configuration for Coalition Service
 """
+
 import logging
 import structlog
 from pythonjsonlogger import jsonlogger
@@ -21,9 +22,7 @@ def setup_logging(log_level: str = "INFO") -> structlog.BoundLogger:
 
     # Configure JSON formatter for handlers
     logHandler = logging.StreamHandler()
-    formatter = jsonlogger.JsonFormatter(
-        "%(asctime)s %(name)s %(levelname)s %(message)s"
-    )
+    formatter = jsonlogger.JsonFormatter("%(asctime)s %(name)s %(levelname)s %(message)s")
     logHandler.setFormatter(formatter)
 
     # Get root logger and configure

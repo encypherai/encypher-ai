@@ -57,6 +57,7 @@ interface ApiKeyCreateResponse {
   fingerprint: string;
   permissions: string[];
   created_at: string;
+  organization_id?: string | null;
 }
 
 interface UsageStats {
@@ -92,6 +93,44 @@ interface TimeSeriesData {
   timestamp: string;
   count: number;
   value?: number;
+}
+
+interface OrganizationInfo {
+  id: string;
+  name: string;
+  slug: string | null;
+  email: string;
+  tier: string;
+  max_seats: number;
+  subscription_status: string;
+  created_at: string;
+}
+
+interface OrganizationCreateResponse {
+  success: boolean;
+  data: OrganizationInfo;
+  error: { code: string; message: string } | null;
+}
+
+interface DomainClaimInfo {
+  id: string;
+  organization_id: string;
+  domain: string;
+  verification_email: string;
+  status: string;
+  dns_token: string;
+  dns_verified_at: string | null;
+  email_verified_at: string | null;
+  verified_at: string | null;
+  auto_join_enabled: boolean;
+  created_at: string;
+  dns_txt_record?: string;
+}
+
+interface DomainClaimResponse {
+  success: boolean;
+  data: DomainClaimInfo;
+  error: { code: string; message: string } | null;
 }
 
 interface AnalyticsReport {
@@ -306,10 +345,81 @@ const apiClient = {
   /**
    * Get all API keys for the current user
    */
-  async getApiKeys(accessToken: string): Promise<ApiKeyInfo[]> {
+  async getApiKeys(accessToken: string, organizationId?: string | null): Promise<ApiKeyInfo[]> {
+    const params = new URLSearchParams();
+    if (organizationId) {
+      params.append('organization_id', organizationId);
+    }
+    const query = params.toString();
     const response = await fetchWithAuth<ApiKeyInfo[]>(
-      `${KEY_SERVICE_URL}/keys`,
+      `${KEY_SERVICE_URL}/keys${query ? `?${query}` : ''}`,
       accessToken
+    );
+    return response;
+  },
+
+  /**
+   * List domain claims for an organization
+   */
+  async listDomainClaims(accessToken: string, organizationId: string): Promise<DomainClaimInfo[]> {
+    const response = await fetchWithAuth<{ success: boolean; data: DomainClaimInfo[] }>(
+      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims`,
+      accessToken
+    );
+    return response.data ?? [];
+  },
+
+  /**
+   * Create a new domain claim
+   */
+  async createDomainClaim(
+    accessToken: string,
+    organizationId: string,
+    payload: { domain: string; verification_email: string }
+  ): Promise<DomainClaimResponse> {
+    const response = await fetchWithAuth<DomainClaimResponse>(
+      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return response;
+  },
+
+  /**
+   * Verify domain claim via DNS TXT
+   */
+  async verifyDomainClaimDns(
+    accessToken: string,
+    organizationId: string,
+    claimId: string
+  ): Promise<DomainClaimResponse> {
+    const response = await fetchWithAuth<DomainClaimResponse>(
+      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims/${claimId}/verify-dns`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response;
+  },
+
+  /**
+   * Toggle auto-join for a domain claim
+   */
+  async updateDomainAutoJoin(
+    accessToken: string,
+    organizationId: string,
+    claimId: string,
+    enabled: boolean
+  ): Promise<DomainClaimResponse> {
+    const response = await fetchWithAuth<DomainClaimResponse>(
+      `${AUTH_SERVICE_URL}/organizations/${organizationId}/domain-claims/${claimId}/auto-join`,
+      accessToken,
+      {
+        method: 'PATCH',
+        body: JSON.stringify({ enabled }),
+      }
     );
     return response;
   },
@@ -320,14 +430,22 @@ const apiClient = {
   async createApiKey(
     accessToken: string,
     name: string,
-    permissions: string[] = ['sign', 'verify', 'read']
+    permissions: string[] = ['sign', 'verify', 'read'],
+    organizationId?: string | null
   ): Promise<ApiResponse<ApiKeyCreateResponse>> {
+    const payload: { name: string; permissions: string[]; organization_id?: string } = {
+      name,
+      permissions,
+    };
+    if (organizationId) {
+      payload.organization_id = organizationId;
+    }
     const response = await fetchWithAuth<ApiKeyCreateResponse>(
       `${KEY_SERVICE_URL}/keys/generate`,
       accessToken,
       {
         method: 'POST',
-        body: JSON.stringify({ name, permissions }),
+        body: JSON.stringify(payload),
       }
     );
     return {
@@ -346,6 +464,28 @@ const apiClient = {
       accessToken,
       { method: 'DELETE' }
     );
+  },
+
+  // ============================================
+  // Organizations (auth-service)
+  // ============================================
+
+  /**
+   * Create a new organization
+   */
+  async createOrganization(
+    accessToken: string,
+    payload: { name: string; email: string }
+  ): Promise<OrganizationCreateResponse> {
+    const response = await fetchWithAuth<OrganizationCreateResponse>(
+      `${AUTH_SERVICE_URL}/organizations`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return response;
   },
 
   /**
@@ -995,6 +1135,10 @@ export { ApiError };
 export type { 
   ApiKeyInfo, 
   ApiKeyCreateResponse, 
+  OrganizationInfo,
+  OrganizationCreateResponse,
+  DomainClaimInfo,
+  DomainClaimResponse,
   UsageStats, 
   AnalyticsReport, 
   TimeSeriesData,

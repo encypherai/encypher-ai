@@ -60,11 +60,19 @@ export default function TeamPage() {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const queryClient = useQueryClient();
-  const { activeOrganization, isLoading: orgLoading } = useOrganization();
+  const {
+    activeOrganization,
+    isLoading: orgLoading,
+    refetch: refetchOrganizations,
+    setActiveOrganization,
+  } = useOrganization();
   
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
   const [showInviteForm, setShowInviteForm] = useState(false);
+  const [showCreateOrgForm, setShowCreateOrgForm] = useState(false);
+  const [orgName, setOrgName] = useState('');
+  const [orgEmail, setOrgEmail] = useState('');
 
   // Use active organization from context
   const orgId = activeOrganization?.id;
@@ -72,6 +80,26 @@ export default function TeamPage() {
   // Check if user has Business+ tier
   const userTier = (session?.user as any)?.tier || 'starter';
   const hasTeamFeature = ['business', 'enterprise'].includes(userTier);
+
+  const createOrgMutation = useMutation({
+    mutationFn: async ({ name, email }: { name: string; email: string }) => {
+      if (!accessToken) throw new Error('You must be signed in to create an organization.');
+      return apiClient.createOrganization(accessToken, { name, email });
+    },
+    onSuccess: async (response) => {
+      await refetchOrganizations();
+      if (response?.data) {
+        setActiveOrganization(response.data);
+      }
+      setOrgName('');
+      setOrgEmail('');
+      setShowCreateOrgForm(false);
+      toast.success('Organization created successfully.');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to create organization.');
+    },
+  });
 
   // Fetch seat info
   const seatsQuery = useQuery({
@@ -227,6 +255,7 @@ export default function TeamPage() {
   const invitations = invitationsQuery.data || [];
   const seats = seatsQuery.data;
   const canInvite = seats ? (seats.unlimited || seats.available > 0) : false;
+  const isLoadingTeam = membersQuery.isLoading || orgLoading;
 
   // Show upgrade prompt for non-Business users
   if (!hasTeamFeature) {
@@ -261,18 +290,81 @@ export default function TeamPage() {
             <p className="text-muted-foreground">
               Manage your organization's team members and roles
             </p>
+            {activeOrganization && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Active organization: <span className="font-medium text-foreground">{activeOrganization.name}</span>
+              </p>
+            )}
           </div>
-          <Button
-            variant="primary"
-            onClick={() => setShowInviteForm(!showInviteForm)}
-            disabled={!canInvite}
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-            </svg>
-            Invite Member
-          </Button>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowCreateOrgForm(!showCreateOrgForm)}
+              disabled={createOrgMutation.isPending}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Organization
+            </Button>
+            <Button
+              variant="primary"
+              onClick={() => setShowInviteForm(!showInviteForm)}
+              disabled={!canInvite}
+            >
+              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+              </svg>
+              Invite Member
+            </Button>
+          </div>
         </div>
+
+        {showCreateOrgForm && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Create Organization</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <Input
+                      type="text"
+                      placeholder="Organization name"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      type="email"
+                      placeholder="Billing contact email"
+                      value={orgEmail}
+                      onChange={(e) => setOrgEmail(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button
+                    variant="primary"
+                    onClick={() => createOrgMutation.mutate({ name: orgName, email: orgEmail })}
+                    disabled={!orgName || !orgEmail || createOrgMutation.isPending}
+                  >
+                    {createOrgMutation.isPending ? 'Creating...' : 'Create Organization'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCreateOrgForm(false)}
+                    disabled={createOrgMutation.isPending}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Seat Usage */}
         {seats && (
@@ -385,7 +477,7 @@ export default function TeamPage() {
             <CardTitle className="text-lg">Team Members ({members.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            {membersQuery.isLoading ? (
+            {isLoadingTeam ? (
               <div className="text-center py-8 text-muted-foreground">Loading team members...</div>
             ) : members.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">

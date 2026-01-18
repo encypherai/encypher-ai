@@ -1,9 +1,11 @@
 """
 SQLAlchemy models for the Enterprise API.
 """
+
 from app.models.batch import BatchItem, BatchRequest
 from app.models.content_reference import ContentReference
 from app.models.error_log import ErrorLog
+from app.models.fuzzy_fingerprint import FuzzyFingerprint
 from app.models.merkle import AttributionReport, MerkleProofCache, MerkleRoot, MerkleSubhash
 from app.models.organization import Organization
 from app.models.public_key import PublicKey
@@ -16,6 +18,7 @@ __all__ = [
     "MerkleSubhash",
     "MerkleProofCache",
     "AttributionReport",
+    "FuzzyFingerprint",
     "ContentReference",
     "BatchRequest",
     "BatchItem",

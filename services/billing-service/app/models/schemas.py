@@ -1,4 +1,5 @@
 """Pydantic schemas for Billing Service"""
+
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, Any
 from datetime import datetime
@@ -7,6 +8,7 @@ from enum import Enum
 
 class TierName(str, Enum):
     """Available subscription tiers"""
+
     STARTER = "starter"
     PROFESSIONAL = "professional"
     BUSINESS = "business"
@@ -16,6 +18,7 @@ class TierName(str, Enum):
 
 class PlanInfo(BaseModel):
     """Information about a subscription plan"""
+
     id: str
     name: str
     tier: TierName
@@ -30,12 +33,14 @@ class PlanInfo(BaseModel):
 
 class SubscriptionCreate(BaseModel):
     """Schema for creating a subscription"""
+
     plan_id: str
     billing_cycle: str = Field(pattern="^(monthly|annual)$")
 
 
 class SubscriptionResponse(BaseModel):
     """Schema for subscription response"""
+
     id: str
     user_id: str
     organization_id: Optional[str] = None
@@ -59,12 +64,14 @@ class SubscriptionResponse(BaseModel):
 
 class SubscriptionUpdate(BaseModel):
     """Schema for updating subscription"""
+
     plan_id: Optional[str] = None
     billing_cycle: Optional[str] = None
 
 
 class UsageMetric(BaseModel):
     """Single usage metric"""
+
     name: str
     limit: Any  # int or "unlimited"
     used: int
@@ -75,6 +82,7 @@ class UsageMetric(BaseModel):
 
 class UsageResponse(BaseModel):
     """Current usage statistics"""
+
     organization_id: str
     tier: str
     period_start: datetime
@@ -85,6 +93,7 @@ class UsageResponse(BaseModel):
 
 class CoalitionEarnings(BaseModel):
     """Coalition earnings for a period"""
+
     period: str  # e.g., "2025-11"
     gross_revenue: float
     publisher_share: float
@@ -96,6 +105,7 @@ class CoalitionEarnings(BaseModel):
 
 class CoalitionSummary(BaseModel):
     """Coalition membership summary"""
+
     member: bool
     opted_out: bool
     publisher_share_percent: int
@@ -109,12 +119,14 @@ class CoalitionSummary(BaseModel):
 
 class UpgradeRequest(BaseModel):
     """Request to upgrade subscription"""
+
     target_tier: TierName
     billing_cycle: str = Field(pattern="^(monthly|annual)$")
 
 
 class UpgradeResponse(BaseModel):
     """Response for upgrade request"""
+
     success: bool
     checkout_url: Optional[str] = None  # Stripe checkout URL (when integrated)
     message: str
@@ -124,6 +136,7 @@ class UpgradeResponse(BaseModel):
 
 class InvoiceResponse(BaseModel):
     """Schema for invoice response"""
+
     id: str
     invoice_number: str
     status: str
@@ -142,6 +155,7 @@ class InvoiceResponse(BaseModel):
 
 class PaymentResponse(BaseModel):
     """Schema for payment response"""
+
     id: str
     invoice_id: str
     amount: float
@@ -156,6 +170,7 @@ class PaymentResponse(BaseModel):
 
 class BillingStats(BaseModel):
     """Schema for billing statistics"""
+
     total_revenue: float
     monthly_recurring_revenue: float
     active_subscriptions: int
@@ -167,4 +182,5 @@ class BillingStats(BaseModel):
 
 class MessageResponse(BaseModel):
     """Generic message response"""
+
     message: str

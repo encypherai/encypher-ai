@@ -12,6 +12,7 @@ class DemoRequestStatus(str, Enum):
     COMPLETED = "completed"
     REJECTED = "rejected"
 
+
 # Shared properties
 class DemoRequestBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=255, description="Full name of the requester")
@@ -22,14 +23,17 @@ class DemoRequestBase(BaseModel):
     source: str | None = Field(None, max_length=100, description="Source of the demo request")
     consent: bool = Field(False, description="Whether the user consented to be contacted")
 
+
 # Properties to receive on creation
 class DemoRequestCreate(DemoRequestBase):
     pass
+
 
 # Properties to receive on update (admin only)
 class DemoRequestUpdate(BaseModel):
     status: DemoRequestStatus | None = None
     notes: str | None = Field(None, description="Internal notes about the demo request")
+
 
 # Properties shared by models stored in DB
 class DemoRequestInDBBase(DemoRequestBase):
@@ -45,9 +49,11 @@ class DemoRequestInDBBase(DemoRequestBase):
     class Config:
         from_attributes = True
 
+
 # Properties to return to client
 class DemoRequest(DemoRequestInDBBase):
     pass
+
 
 # Properties stored in DB
 class DemoRequestInDB(DemoRequestInDBBase):

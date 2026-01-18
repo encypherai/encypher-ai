@@ -8,6 +8,7 @@ Provides endpoints for:
 - Serving status lists (public, CDN-cacheable)
 - Querying document status
 """
+
 import logging
 from typing import Optional
 
@@ -29,19 +30,23 @@ logger = logging.getLogger(__name__)
 # Request/Response Models
 # -----------------------------------------------------------------------------
 
+
 class RevokeRequest(BaseModel):
     """Request to revoke a document."""
+
     reason: RevocationReason = Field(..., description="Revocation reason code")
     reason_detail: Optional[str] = Field(None, description="Detailed explanation")
 
 
 class ReinstateRequest(BaseModel):
     """Request to reinstate a revoked document."""
+
     pass  # No additional fields needed
 
 
 class DocumentStatusResponse(BaseModel):
     """Response for document status query."""
+
     document_id: str
     organization_id: str
     revoked: bool
@@ -56,6 +61,7 @@ class DocumentStatusResponse(BaseModel):
 
 class RevocationResponse(BaseModel):
     """Response for revocation/reinstatement actions."""
+
     success: bool
     document_id: str
     action: str  # "revoked" or "reinstated"
@@ -67,6 +73,7 @@ class RevocationResponse(BaseModel):
 # Document Revocation Endpoints
 # -----------------------------------------------------------------------------
 
+
 @router.post("/documents/{document_id}/revoke", response_model=RevocationResponse)
 async def revoke_document(
     document_id: str,
@@ -76,10 +83,10 @@ async def revoke_document(
 ):
     """
     Revoke a document's authenticity.
-    
+
     The document will fail verification within 5 minutes (CDN cache TTL).
     This action is reversible via the reinstate endpoint.
-    
+
     **Revocation Reasons:**
     - `factual_error`: Content contains factual errors
     - `legal_takedown`: Legal request (DMCA, court order)
@@ -91,8 +98,10 @@ async def revoke_document(
     - `other`: Other reason (specify in reason_detail)
     """
     organization_id = org.get("organization_id") or org.get("id")
+    if not organization_id:
+        raise HTTPException(status_code=400, detail="Organization ID missing")
     user_id = org.get("user_id", "api")
-    
+
     try:
         entry = await status_service.revoke_document(
             db=db,
@@ -103,16 +112,15 @@ async def revoke_document(
             revoked_by=user_id,
         )
         await db.commit()
-        
+
         return RevocationResponse(
             success=True,
             document_id=document_id,
             action="revoked",
             timestamp=entry.revoked_at.isoformat() if entry.revoked_at else "",
-            message=f"Document {document_id} has been revoked. "
-                    f"Verification will fail within 5 minutes.",
+            message=f"Document {document_id} has been revoked. Verification will fail within 5 minutes.",
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -128,12 +136,14 @@ async def reinstate_document(
 ):
     """
     Reinstate a previously revoked document.
-    
+
     The document will pass verification again within 5 minutes (CDN cache TTL).
     """
     organization_id = org.get("organization_id") or org.get("id")
+    if not organization_id:
+        raise HTTPException(status_code=400, detail="Organization ID missing")
     user_id = org.get("user_id", "api")
-    
+
     try:
         entry = await status_service.reinstate_document(
             db=db,
@@ -142,16 +152,15 @@ async def reinstate_document(
             reinstated_by=user_id,
         )
         await db.commit()
-        
+
         return RevocationResponse(
             success=True,
             document_id=document_id,
             action="reinstated",
             timestamp=entry.reinstated_at.isoformat() if entry.reinstated_at else "",
-            message=f"Document {document_id} has been reinstated. "
-                    f"Verification will pass within 5 minutes.",
+            message=f"Document {document_id} has been reinstated. Verification will pass within 5 minutes.",
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
@@ -169,28 +178,24 @@ async def get_document_status(
     Get the revocation status of a document.
     """
     organization_id = org.get("organization_id") or org.get("id")
-    
+    if not organization_id:
+        raise HTTPException(status_code=400, detail="Organization ID missing")
+
     from sqlalchemy import select
-    
+
     result = await db.execute(
-        select(StatusListEntry)
-        .where(
+        select(StatusListEntry).where(
             StatusListEntry.organization_id == organization_id,
             StatusListEntry.document_id == document_id,
         )
     )
     entry = result.scalar_one_or_none()
-    
+
     if not entry:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Document {document_id} not found in status list"
-        )
-    
-    status_list_url = status_service._build_status_list_url(
-        organization_id, entry.list_index
-    )
-    
+        raise HTTPException(status_code=404, detail=f"Document {document_id} not found in status list")
+
+    status_list_url = status_service._build_status_list_url(organization_id, int(entry.list_index))
+
     return DocumentStatusResponse(
         document_id=document_id,
         organization_id=organization_id,
@@ -209,6 +214,7 @@ async def get_document_status(
 # Public Status List Endpoint (CDN-cacheable)
 # -----------------------------------------------------------------------------
 
+
 @router.get(
     "/list/{organization_id}/{list_index}",
     response_class=JSONResponse,
@@ -221,30 +227,26 @@ async def get_status_list(
 ):
     """
     Get a status list credential (public, no auth required).
-    
+
     This endpoint serves W3C StatusList2021 credentials for verification.
     Responses are designed to be cached by CDN with 5-minute TTL.
-    
+
     **Response Format:** W3C StatusList2021Credential (JSON-LD)
     """
     from sqlalchemy import select
-    
+
     # Check if list exists
     result = await db.execute(
-        select(StatusListMetadata)
-        .where(
+        select(StatusListMetadata).where(
             StatusListMetadata.organization_id == organization_id,
             StatusListMetadata.list_index == list_index,
         )
     )
     metadata = result.scalar_one_or_none()
-    
+
     if not metadata:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Status list {organization_id}/{list_index} not found"
-        )
-    
+        raise HTTPException(status_code=404, detail=f"Status list {organization_id}/{list_index} not found")
+
     # Generate the status list credential
     credential = await status_service.generate_status_list(
         db=db,
@@ -252,14 +254,14 @@ async def get_status_list(
         list_index=list_index,
     )
     await db.commit()
-    
+
     # Return with cache headers
     return JSONResponse(
         content=credential,
         headers={
             "Cache-Control": "public, max-age=300",  # 5 minutes
             "Content-Type": "application/json",
-            "ETag": f'"{metadata.cdn_etag}"' if metadata.cdn_etag else None,
+            "ETag": f'"{metadata.cdn_etag}"' if metadata.cdn_etag else "",
         },
     )
 
@@ -267,6 +269,7 @@ async def get_status_list(
 # -----------------------------------------------------------------------------
 # Admin/Reporting Endpoints
 # -----------------------------------------------------------------------------
+
 
 @router.get("/stats")
 async def get_status_stats(
@@ -277,22 +280,20 @@ async def get_status_stats(
     Get status list statistics for the organization.
     """
     organization_id = org.get("organization_id") or org.get("id")
-    
+
     from sqlalchemy import select
-    
+
     # Get list metadata
     result = await db.execute(
-        select(StatusListMetadata)
-        .where(StatusListMetadata.organization_id == organization_id)
-        .order_by(StatusListMetadata.list_index)
+        select(StatusListMetadata).where(StatusListMetadata.organization_id == organization_id).order_by(StatusListMetadata.list_index)
     )
     lists = result.scalars().all()
-    
+
     # Calculate totals
     total_documents = sum(m.total_documents for m in lists)
     total_revoked = sum(m.revoked_count for m in lists)
     total_lists = len(lists)
-    
+
     return {
         "organization_id": organization_id,
         "total_documents": total_documents,

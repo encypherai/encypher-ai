@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 # Properties to receive on creation - flexible to match marketing site
 class AnalyticsEventCreate(BaseModel):
     """Schema for creating an analytics event from the marketing site."""
+
     event_name: str = Field(..., max_length=255, description="Event name")
     event_type: str | None = Field(None, max_length=100, description="Event type")
     session_id: str | None = Field(None, max_length=128, description="Session ID")
@@ -16,15 +17,13 @@ class AnalyticsEventCreate(BaseModel):
     user_id: str | None = Field(None, description="User ID if authenticated")
     user_agent: str | None = Field(None, description="User agent string")
     referrer: str | None = Field(None, description="Referrer URL")
-    properties: dict[str, Any] | None = Field(
-        default_factory=dict,
-        description="Additional event properties"
-    )
+    properties: dict[str, Any] | None = Field(default_factory=dict, description="Additional event properties")
 
 
 # Response schema
 class AnalyticsEventResponse(BaseModel):
     """Schema for analytics event response."""
+
     success: bool
     message: str = "Event tracked successfully"
     event_id: UUID | None = Field(default_factory=uuid4)

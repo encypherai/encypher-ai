@@ -20,26 +20,22 @@ try:
 except Exception:
     DOCKER_AVAILABLE = False
 
+
 @pytest.mark.skipif(not DOCKER_AVAILABLE, reason="Docker not available")
 class TestLoadDockerIntegration:
-    
     @pytest.fixture(scope="class")
     def postgres_container(self):
         """Start Postgres container."""
         container = docker_client.containers.run(
             "postgres:15-alpine",
-            environment={
-                "POSTGRES_USER": "encypher",
-                "POSTGRES_PASSWORD": "password",
-                "POSTGRES_DB": "encypher_test"
-            },
-            ports={'5432/tcp': 54321},
+            environment={"POSTGRES_USER": "encypher", "POSTGRES_PASSWORD": "password", "POSTGRES_DB": "encypher_test"},
+            ports={"5432/tcp": 54321},
             detach=True,
-            remove=True
+            remove=True,
         )
-        
+
         db_url = "postgresql+asyncpg://encypher:password@localhost:54321/encypher_test"
-        
+
         # Wait for ready
         start_time = time.time()
         while time.time() - start_time < 30:
@@ -48,7 +44,7 @@ class TestLoadDockerIntegration:
                     break
             except (socket.timeout, ConnectionRefusedError):
                 time.sleep(1)
-        
+
         yield container, db_url
         container.stop()
 
@@ -60,20 +56,20 @@ class TestLoadDockerIntegration:
         """
         container, db_url = postgres_container
         server_port = 8091
-        
+
         # 1. Init DB Schema
         async def init_db():
             engine = create_async_engine(db_url)
             async with engine.begin() as conn:
                 with open("scripts/init_db.sql", "r") as f:
                     schema_sql = f.read()
-                    for statement in schema_sql.split(';'):
+                    for statement in schema_sql.split(";"):
                         if statement.strip():
                             await conn.execute(text(statement))
             await engine.dispose()
-        
+
         asyncio.run(init_db())
-        
+
         # 2. Start Server using Subprocess
         env = os.environ.copy()
         env["DATABASE_URL"] = db_url.replace("+asyncpg", "")
@@ -82,17 +78,12 @@ class TestLoadDockerIntegration:
         env["SSL_COM_API_KEY"] = "test_key"
         env["DEMO_API_KEY"] = "demo-key-load-test"
         env["PORT"] = str(server_port)
-        
+
         # Path to run_server.py
         script_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "run_server.py")
-        
-        proc = subprocess.Popen(
-            [sys.executable, script_path],
-            env=env,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL
-        )
-        
+
+        proc = subprocess.Popen([sys.executable, script_path], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
         try:
             # Wait for server to start
             base_url = f"http://127.0.0.1:{server_port}"
@@ -105,7 +96,7 @@ class TestLoadDockerIntegration:
                     break
                 except (httpx.ConnectError, httpx.ReadTimeout):
                     time.sleep(0.5)
-            
+
             if not server_up:
                 # If failed, try to get output from a retry or log file
                 # But for now just fail
@@ -113,17 +104,17 @@ class TestLoadDockerIntegration:
 
             # 3. Run Load Test
             print("\nStarting load test against running server...")
-            
+
             latencies = []
             payload = {"text": "This is a load test content string." * 10, "title": "Load Test"}
             # Using demo key to bypass auth service dependency
             headers = {"Authorization": "Bearer demo-key-load-test"}
-            
+
             # Warmup
             for _ in range(5):
                 resp = httpx.post(f"{base_url}/api/v1/sign", json=payload, headers=headers)
                 assert resp.status_code == 200
-            
+
             # Measure
             start_total = time.time()
             for _ in range(50):
@@ -132,18 +123,18 @@ class TestLoadDockerIntegration:
                 t1 = time.time()
                 assert resp.status_code == 200
                 latencies.append((t1 - t0) * 1000)
-            
+
             time.time() - start_total
-            
+
             # Stats
             p95 = np.percentile(latencies, 95)
             avg = np.mean(latencies)
-            
+
             print(f"\nResults: Avg={avg:.2f}ms, P95={p95:.2f}ms")
-            
+
             assert p95 < 100, f"P95 {p95}ms too high"
             assert avg < 50, f"Avg {avg}ms too high"
-            
+
         finally:
             proc.terminate()
             try:

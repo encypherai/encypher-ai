@@ -1,6 +1,7 @@
 """
 Celery application configuration for background tasks.
 """
+
 from celery import Celery
 import os
 
@@ -8,18 +9,14 @@ import os
 REDIS_CELERY_URL = os.getenv("REDIS_CELERY_URL", "redis://localhost:6380")
 
 # Create Celery app
-celery_app = Celery(
-    "encypher-encoding",
-    broker=REDIS_CELERY_URL,
-    backend=REDIS_CELERY_URL
-)
+celery_app = Celery("encypher-encoding", broker=REDIS_CELERY_URL, backend=REDIS_CELERY_URL)
 
 # Configure Celery
 celery_app.conf.update(
-    task_serializer='json',
-    accept_content=['json'],
-    result_serializer='json',
-    timezone='UTC',
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="UTC",
     enable_utc=True,
     task_track_started=True,
     task_time_limit=30 * 60,  # 30 minutes max
@@ -32,4 +29,4 @@ celery_app.conf.update(
 )
 
 # Auto-discover tasks
-celery_app.autodiscover_tasks(['app.tasks'])
+celery_app.autodiscover_tasks(["app.tasks"])

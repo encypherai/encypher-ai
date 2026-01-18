@@ -1,6 +1,7 @@
 """
 Pydantic response models for API responses.
 """
+
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -24,7 +25,7 @@ class SignResponse(BaseModel):
                     "document_id": "doc_abc123xyz",
                     "signed_text": "The Senate passed... [with invisible C2PA manifest]",
                     "total_sentences": 2,
-                    "verification_url": "https://verify.encypherai.com/doc_abc123xyz"
+                    "verification_url": "https://verify.encypherai.com/doc_abc123xyz",
                 }
             ]
         }
@@ -41,7 +42,7 @@ class ErrorDetail(BaseModel):
 
 class EmbeddingVerdict(BaseModel):
     """Verification verdict for a single embedding."""
-    
+
     index: int = Field(..., description="Index of this embedding (0-based)")
     valid: bool = Field(..., description="Whether the signature is valid")
     tampered: bool = Field(..., description="Whether the payload was tampered")
@@ -132,7 +133,7 @@ class LookupResponse(BaseModel):
                     "organization_name": "Example Publisher",
                     "publication_date": "2025-01-15T10:00:00Z",
                     "sentence_index": 0,
-                    "document_url": "https://example.com/article"
+                    "document_url": "https://example.com/article",
                 }
             ]
         }
@@ -143,21 +144,10 @@ class ErrorResponse(BaseModel):
     """Response model for API errors."""
 
     success: bool = Field(False, description="Always false for errors")
-    error: Dict[str, Any] = Field(
-        ...,
-        description="Error details including code and message"
-    )
+    error: Dict[str, Any] = Field(..., description="Error details including code and message")
 
     model_config = {
         "json_schema_extra": {
-            "examples": [
-                {
-                    "success": False,
-                    "error": {
-                        "code": "INVALID_API_KEY",
-                        "message": "The provided API key is invalid or expired"
-                    }
-                }
-            ]
+            "examples": [{"success": False, "error": {"code": "INVALID_API_KEY", "message": "The provided API key is invalid or expired"}}]
         }
     }

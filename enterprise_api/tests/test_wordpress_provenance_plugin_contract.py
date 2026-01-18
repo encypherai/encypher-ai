@@ -67,6 +67,7 @@ def test_plugin_uses_supported_sign_and_verify_endpoints() -> None:
     assert "'/sign'" in src
     assert "'/sign/advanced'" in src
     assert "'/verify'" in src
+    assert "'/verify/advanced'" in src
 
 
 def test_wordpress_plugin_docs_do_not_reference_legacy_embeddings_endpoints() -> None:
@@ -77,12 +78,7 @@ def test_wordpress_plugin_docs_do_not_reference_legacy_embeddings_endpoints() ->
         repo_root / "integrations" / "wordpress-provenance-plugin" / "IMPLEMENTATION_COMPLETE.md",
         repo_root / "integrations" / "wordpress-provenance-plugin" / "LOCAL_TESTING_GUIDE.md",
         repo_root / "integrations" / "wordpress-provenance-plugin" / "TIER_AUDIT.md",
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "README.md",
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "README.md",
     ]
 
     forbidden = [
@@ -263,13 +259,7 @@ def test_plugin_auto_sign_does_not_delete_marked_meta_as_a_bypass() -> None:
 def test_plugin_does_not_log_request_uri_on_every_request() -> None:
     repo_root = _repo_root()
     plugin_php = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-        / "includes"
-        / "class-encypher-provenance.php"
+        repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance" / "includes" / "class-encypher-provenance.php"
     )
     src = plugin_php.read_text(encoding="utf-8")
 
@@ -294,13 +284,7 @@ def test_plugin_provenance_handler_uses_global_wp_query() -> None:
 
 def test_plugin_ui_does_not_use_emoji_status_glyphs() -> None:
     repo_root = _repo_root()
-    plugin_root = (
-        repo_root
-        / "integrations"
-        / "wordpress-provenance-plugin"
-        / "plugin"
-        / "encypher-provenance"
-    )
+    plugin_root = repo_root / "integrations" / "wordpress-provenance-plugin" / "plugin" / "encypher-provenance"
 
     targets = [
         plugin_root / "includes" / "class-encypher-provenance-admin.php",

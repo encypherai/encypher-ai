@@ -9,41 +9,21 @@ class TestValidator(unittest.TestCase):
     def setUp(self):
         """Set up test policy rules."""
         self.policy_rules = [
-            {
-                "key": "doc_id",
-                "required": True,
-                "type": "string",
-                "description": "Document ID"
-            },
+            {"key": "doc_id", "required": True, "type": "string", "description": "Document ID"},
             {
                 "key": "sensitivity",
                 "required": True,
                 "type": "string",
                 "allowed_values": ["public", "internal", "confidential"],
-                "description": "Document sensitivity level"
+                "description": "Document sensitivity level",
             },
-            {
-                "key": "version",
-                "required": False,
-                "type": "integer",
-                "description": "Document version"
-            },
-            {
-                "key": "is_draft",
-                "required": False,
-                "type": "boolean",
-                "description": "Whether the document is a draft"
-            }
+            {"key": "version", "required": False, "type": "integer", "description": "Document version"},
+            {"key": "is_draft", "required": False, "type": "boolean", "description": "Whether the document is a draft"},
         ]
 
     def test_valid_metadata(self):
         """Test validation with valid metadata."""
-        metadata = {
-            "doc_id": "DOC-123",
-            "sensitivity": "internal",
-            "version": 1,
-            "is_draft": True
-        }
+        metadata = {"doc_id": "DOC-123", "sensitivity": "internal", "version": 1, "is_draft": True}
         is_valid, errors = validate_metadata(metadata, self.policy_rules, "test_source")
         self.assertTrue(is_valid)
         self.assertEqual(len(errors), 0)
@@ -51,10 +31,7 @@ class TestValidator(unittest.TestCase):
     def test_missing_required_key(self):
         """Test validation with missing required key."""
         # Missing doc_id (required)
-        metadata = {
-            "sensitivity": "internal",
-            "version": 1
-        }
+        metadata = {"sensitivity": "internal", "version": 1}
         is_valid, errors = validate_metadata(metadata, self.policy_rules, "test_source")
         self.assertFalse(is_valid)
         self.assertEqual(len(errors), 1)
@@ -66,7 +43,7 @@ class TestValidator(unittest.TestCase):
         metadata = {
             "doc_id": "DOC-123",
             "sensitivity": "internal",
-            "version": "1.0"  # Should be an integer
+            "version": "1.0",  # Should be an integer
         }
         is_valid, errors = validate_metadata(metadata, self.policy_rules, "test_source")
         self.assertFalse(is_valid)
@@ -79,7 +56,7 @@ class TestValidator(unittest.TestCase):
         metadata = {
             "doc_id": "DOC-123",
             "sensitivity": "top_secret",  # Not in allowed values
-            "version": 1
+            "version": 1,
         }
         is_valid, errors = validate_metadata(metadata, self.policy_rules, "test_source")
         self.assertFalse(is_valid)
@@ -92,7 +69,7 @@ class TestValidator(unittest.TestCase):
             # Missing doc_id
             "sensitivity": "top_secret",  # Not in allowed values
             "version": "2.0",  # Wrong type
-            "is_draft": "yes"  # Wrong type
+            "is_draft": "yes",  # Wrong type
         }
         is_valid, errors = validate_metadata(metadata, self.policy_rules, "test_source")
         self.assertFalse(is_valid)
@@ -112,5 +89,6 @@ class TestValidator(unittest.TestCase):
         self.assertFalse(is_valid)
         self.assertEqual(len(errors), 2)  # 2 errors for 2 required keys
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

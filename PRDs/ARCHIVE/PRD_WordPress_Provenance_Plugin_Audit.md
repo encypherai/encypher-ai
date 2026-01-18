@@ -1,54 +1,40 @@
-# WordPress Provenance Plugin Audit
+## Status
+Completed
 
-**Status:** ✅ Complete
-**Current Goal:** Complete verification and archive PRD.
+## Current Goal
+Audit and align the WordPress provenance plugin workflows with Enterprise API sign/verify (standard + advanced) endpoints, including verification coverage and testing guidance.
 
 ## Overview
-
-Audit `integrations/wordpress-provenance-plugin` to ensure it uses the correct Enterprise API endpoints/schemas and that WordPress feature gating accurately reflects the canonical product tier model. Produce a concrete mismatch list and implement safe, tested fixes where feasible.
+This PRD captures the audit and remediation work needed to ensure the WordPress provenance plugin integrates the Enterprise API signing and verification endpoints correctly for all tiers. It focuses on sign/sign-advanced usage, verify/verify-advanced usage where tier-appropriate, and validation via automated and dockerized workflows.
 
 ## Objectives
-
-- Ensure WordPress plugin calls align with `sdk/openapi.public.json` request/response schemas and auth requirements.
-- Ensure tier gating maps correctly to canonical tiers in `packages/pricing-config/src/tiers.ts`.
-- Add an automated verification baseline (tests/lint) appropriate to the plugin codebase and ensure repo verification passes.
+- Confirm current plugin workflows and docs match the Enterprise API sign/verify surface area.
+- Add or adjust verification flows to include verify/advanced where tier-appropriate.
+- Add automated contract coverage and document dockerized verification steps.
+- Produce an audit summary with evidence of tests and manual verification.
 
 ## Tasks
-
-### 1.0 Audit & Mapping
-
-- [x] 1.1 Establish SSOT PRD + session log
-- [x] 1.2 Map plugin API call flow (auth headers, endpoints, payloads, error handling)
-- [x] 1.3 Map tier gating (admin + REST + JS) and produce mismatch list vs canonical pricing tiers + OpenAPI
-
-### 2.0 Fixes
-
-- [x] 2.1 Implement fixes for confirmed mismatches
-- [x] 2.2 Add/update tests for fixes
-
-### 3.0 Testing & Validation
-
-- [x] 3.1 Unit tests passing — ✅ pytest (`uv run pytest -q enterprise_api/tests/test_wordpress_provenance_plugin_contract.py`)
-- [x] 3.2 Integration tests passing — ✅ pytest (`uv run pytest -q enterprise_api/tests/test_account.py`)
-- [ ] 3.3 Frontend verification — N/A (no puppeteer/playwright harness found for this plugin)
+- [x] 1.0 Audit existing WordPress plugin endpoint usage
+  - [x] 1.1 Review plugin sign/sign-advanced integration paths
+  - [x] 1.2 Review plugin verify/verify-advanced integration paths
+  - [x] 1.3 Cross-check documentation and docker compose instructions
+- [x] 2.0 Implement missing endpoint integration
+  - [x] 2.1 Add verify/advanced workflow for eligible tiers (fallback to verify)
+  - [x] 2.2 Store/report advanced verification metadata where needed
+  - [x] 2.3 Update documentation to reflect advanced verification usage
+- [x] 3.0 Verification & testing
+  - [x] 3.1 Add/adjust contract tests for sign/verify endpoint usage
+  - [x] 3.2 Run pytest for WordPress plugin contract coverage
+  - [x] 3.3 (If needed) Run dockerized WordPress + Enterprise API flow and record results
 
 ## Success Criteria
-
-- Plugin API calls match OpenAPI paths and schemas (or mismatches documented with remediation).
-- Tier gating is consistent with canonical tiers and does not claim features unavailable for a tier.
-- All required verification steps are completed with explicit markers.
+- WordPress plugin uses `/sign`, `/sign/advanced`, `/verify`, and `/verify/advanced` appropriately per tier.
+- Contract tests cover endpoint usage and pass (`uv run pytest enterprise_api/tests/test_wordpress_provenance_plugin_contract.py`).
+- Documentation and local testing guidance reflect the verified endpoint workflows.
 
 ## Completion Notes
-
-Implemented and validated the WordPress provenance plugin audit fixes:
-
-- Updated tier lookup to use documented `GET /api/v1/account` (no `/stats`).
-- Enforced canonical tier IDs (`starter`, `professional`, `business`, `enterprise`) throughout plugin gating and UI.
-- Hardened public verify handler to reject non-published posts.
-- Fixed auto-mark setting key usage (`auto_mark_on_publish`).
-- Fixed Enterprise API test DB port mismatch by deriving from `POSTGRES_HOST_PORT` (default `15432`).
-
-Verification:
-- ✅ `uv run ruff check enterprise_api/tests/conftest.py enterprise_api/tests/test_wordpress_provenance_plugin_contract.py`
-- ✅ `uv run pytest -q enterprise_api/tests/test_wordpress_provenance_plugin_contract.py`
-- ✅ `uv run pytest -q enterprise_api/tests/test_account.py`
+- Dockerized WordPress + Enterprise API flow validated on 2026-01-17.
+- WordPress installed and plugin configured with `api_base_url=http://enterprise-api:8000/api/v1`, `api_key=demo-local-key`, tier=professional.
+- Created post ID 4 and verified via REST with timeout-protected curl:
+  - `curl --connect-timeout 5 --max-time 20 -sS -i -X POST "http://localhost:8080/index.php?rest_route=/encypher-provenance/v1/verify" -H "Content-Type: application/json" -d '{"post_id":4}'`
+  - Response: `verification_mode=advanced`, `valid=true`, `correlation_id=req-efc6b83800f147e1a378dd992d747127`.

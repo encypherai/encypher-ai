@@ -55,9 +55,7 @@ async def test_batch_sign_c2pa_persists_results(monkeypatch, async_engine):
         assert response.data.summary.success_count == 2
         assert all(item.status == "ok" for item in response.data.results)
 
-        result = await session.execute(
-            select(BatchRequest).where(BatchRequest.idempotency_key == request.idempotency_key)
-        )
+        result = await session.execute(select(BatchRequest).where(BatchRequest.idempotency_key == request.idempotency_key))
         batch_row = result.scalar_one()
         assert batch_row.success_count == 2
 

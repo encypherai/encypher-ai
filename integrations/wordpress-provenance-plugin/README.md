@@ -36,6 +36,7 @@ The plugin targets the production Enterprise API hosted at `https://api.encypher
 - `POST /api/v1/sign` signs a post with a document-level C2PA manifest (Starter tier).
 - `POST /api/v1/sign/advanced` signs a post with sentence-level Merkle tree embeddings and provenance chain support (Professional+ tiers).
 - `POST /api/v1/verify` verifies a signed post and returns validity + signer details.
+- `POST /api/v1/verify/advanced` provides tier-gated verification for Professional+ workspaces (attribution, plagiarism options, etc.).
 - `POST /api/v1/public/extract-and-verify` provides public extraction + verification for third parties (no auth).
 
 Both endpoints and their request/response shapes are described in detail in the [Enterprise API README](../../enterprise_api/README.md) and [C2PA Provenance Chain documentation](../../docs/c2pa/C2PA_PROVENANCE_CHAIN.md). API failures are surfaced in the editor so authors can retry or contact support.

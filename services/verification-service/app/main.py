@@ -1,4 +1,5 @@
 """Verification Service - Main Application"""
+
 from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -20,16 +21,16 @@ logger = setup_logging(settings.LOG_LEVEL).bind(service=settings.SERVICE_NAME)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    
+
     # Ensure database is ready and run migrations
     ensure_database_ready(
         database_url=settings.DATABASE_URL,
         service_name=settings.SERVICE_NAME,
         alembic_config_path="alembic.ini",
         run_migrations=True,
-        exit_on_failure=True
+        exit_on_failure=True,
     )
-    
+
     yield
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
@@ -37,7 +38,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Encypher Verification Service",
     description="Document verification microservice",
-    version="1.0.1",
+    version="1.0.2",
     lifespan=lifespan,
 )
 
@@ -62,7 +63,7 @@ app.include_router(v1_endpoints.router, prefix="/api/v1/verify", tags=["verifica
 async def root():
     return {
         "service": settings.SERVICE_NAME,
-        "version": "1.0.1",
+        "version": "1.0.2",
         "status": "running",
     }
 
@@ -93,6 +94,7 @@ async def verify_portal_demo_document_id(
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host=settings.SERVICE_HOST,

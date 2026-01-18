@@ -61,6 +61,8 @@ src/
 ### Team & Organization
 - **Team Management** - Invite members, manage roles, view audit logs
 - **Organization Switcher** - Switch between organizations (business tier)
+- **Org-Scoped API Keys** - API keys are created/listed for the active organization
+- **Create Organization** - Team page supports creating a new organization and setting it active
 - **Webhooks** - Configure webhook endpoints for real-time notifications
 
 ### Data & Export

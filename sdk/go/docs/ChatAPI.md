@@ -4,14 +4,14 @@ All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**ChatHealthCheckApiV1StreamChatHealthGet**](ChatAPI.md#ChatHealthCheckApiV1StreamChatHealthGet) | **Get** /api/v1/stream/chat/health | Chat Health Check
-[**OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost**](ChatAPI.md#OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost) | **Post** /api/v1/stream/chat/openai-compatible | Openai Compatible Chat
+[**ChatHealthCheckApiV1ChatHealthGet**](ChatAPI.md#ChatHealthCheckApiV1ChatHealthGet) | **Get** /api/v1/chat/health | Chat Health Check
+[**OpenaiCompatibleChatApiV1ChatCompletionsPost**](ChatAPI.md#OpenaiCompatibleChatApiV1ChatCompletionsPost) | **Post** /api/v1/chat/completions | Openai Compatible Chat
 
 
 
-## ChatHealthCheckApiV1StreamChatHealthGet
+## ChatHealthCheckApiV1ChatHealthGet
 
-> interface{} ChatHealthCheckApiV1StreamChatHealthGet(ctx).Execute()
+> interface{} ChatHealthCheckApiV1ChatHealthGet(ctx).Execute()
 
 Chat Health Check
 
@@ -33,13 +33,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.ChatAPI.ChatHealthCheckApiV1StreamChatHealthGet(context.Background()).Execute()
+	resp, r, err := apiClient.ChatAPI.ChatHealthCheckApiV1ChatHealthGet(context.Background()).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `ChatAPI.ChatHealthCheckApiV1StreamChatHealthGet``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `ChatAPI.ChatHealthCheckApiV1ChatHealthGet``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `ChatHealthCheckApiV1StreamChatHealthGet`: interface{}
-	fmt.Fprintf(os.Stdout, "Response from `ChatAPI.ChatHealthCheckApiV1StreamChatHealthGet`: %v\n", resp)
+	// response from `ChatHealthCheckApiV1ChatHealthGet`: interface{}
+	fmt.Fprintf(os.Stdout, "Response from `ChatAPI.ChatHealthCheckApiV1ChatHealthGet`: %v\n", resp)
 }
 ```
 
@@ -49,7 +49,7 @@ This endpoint does not need any parameter.
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiChatHealthCheckApiV1StreamChatHealthGetRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiChatHealthCheckApiV1ChatHealthGetRequest struct via the builder pattern
 
 
 ### Return type
@@ -70,9 +70,9 @@ No authorization required
 [[Back to README]](../README.md)
 
 
-## OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost
+## OpenaiCompatibleChatApiV1ChatCompletionsPost
 
-> interface{} OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost(ctx).ChatCompletionRequest(chatCompletionRequest).Execute()
+> interface{} OpenaiCompatibleChatApiV1ChatCompletionsPost(ctx).ChatCompletionRequest(chatCompletionRequest).Execute()
 
 Openai Compatible Chat
 
@@ -95,13 +95,13 @@ func main() {
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.ChatAPI.OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost(context.Background()).ChatCompletionRequest(chatCompletionRequest).Execute()
+	resp, r, err := apiClient.ChatAPI.OpenaiCompatibleChatApiV1ChatCompletionsPost(context.Background()).ChatCompletionRequest(chatCompletionRequest).Execute()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error when calling `ChatAPI.OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost``: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error when calling `ChatAPI.OpenaiCompatibleChatApiV1ChatCompletionsPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost`: interface{}
-	fmt.Fprintf(os.Stdout, "Response from `ChatAPI.OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost`: %v\n", resp)
+	// response from `OpenaiCompatibleChatApiV1ChatCompletionsPost`: interface{}
+	fmt.Fprintf(os.Stdout, "Response from `ChatAPI.OpenaiCompatibleChatApiV1ChatCompletionsPost`: %v\n", resp)
 }
 ```
 
@@ -111,7 +111,7 @@ func main() {
 
 ### Other Parameters
 
-Other parameters are passed through a pointer to a apiOpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePostRequest struct via the builder pattern
+Other parameters are passed through a pointer to a apiOpenaiCompatibleChatApiV1ChatCompletionsPostRequest struct via the builder pattern
 
 
 Name | Type | Description  | Notes

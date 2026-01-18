@@ -326,7 +326,8 @@ The plugin communicates with the Encypher Enterprise API:
 **Endpoints:**
 - `POST /api/v1/sign` (Starter tier)
 - `POST /api/v1/sign/advanced` (Professional+ tiers)
-- `POST /api/v1/verify` (verification)
+- `POST /api/v1/verify` (public verification)
+- `POST /api/v1/verify/advanced` (authenticated verification with tier-gated options)
 
 **Request:**
 ```json

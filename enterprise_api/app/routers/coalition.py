@@ -1,9 +1,10 @@
 """Coalition revenue tracking router."""
+
 from datetime import date, datetime, timezone
 from typing import List, Optional
 from uuid import uuid4
 
-from dateutil.relativedelta import relativedelta
+from dateutil.relativedelta import relativedelta  # type: ignore[import-untyped]
 from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from sqlalchemy import text
@@ -27,6 +28,7 @@ TIER_REV_SHARE = {
 
 class ContentStats(BaseModel):
     """Content corpus statistics."""
+
     period_start: str
     period_end: str
     documents_count: int
@@ -38,6 +40,7 @@ class ContentStats(BaseModel):
 
 class EarningsSummary(BaseModel):
     """Earnings summary for a period."""
+
     period_start: str
     period_end: str
     gross_revenue_cents: int
@@ -49,6 +52,7 @@ class EarningsSummary(BaseModel):
 
 class PayoutSummary(BaseModel):
     """Payout summary."""
+
     id: str
     period_start: str
     period_end: str
@@ -61,23 +65,24 @@ class PayoutSummary(BaseModel):
 
 class CoalitionDashboardResponse(BaseModel):
     """Coalition dashboard data."""
+
     organization_id: str
     tier: str
     publisher_share_percent: int
     coalition_member: bool
     opted_out: bool
-    
+
     # Current period stats
     current_period: ContentStats
-    
+
     # Earnings
     lifetime_earnings_cents: int
     pending_earnings_cents: int
     paid_earnings_cents: int
-    
+
     # Recent earnings
     recent_earnings: List[EarningsSummary]
-    
+
     # Recent payouts
     recent_payouts: List[PayoutSummary]
 
@@ -90,22 +95,22 @@ async def get_coalition_dashboard(
 ) -> CoalitionDashboardResponse:
     """
     Get coalition dashboard data for the organization.
-    
+
     Returns content stats, earnings, and payout information.
     """
     org_id = organization["organization_id"]
     tier = organization.get("tier", "starter")
     rev_share = TIER_REV_SHARE.get(tier, TIER_REV_SHARE["starter"])
-    
+
     # Get coalition membership status
     coalition_member = organization.get("coalition_member", True)
     opted_out = organization.get("coalition_opted_out", False)
-    
+
     # Calculate current period (current month)
     today = date.today()
     period_start = today.replace(day=1)
     period_end = (period_start + relativedelta(months=1)) - relativedelta(days=1)
-    
+
     # Get current period content stats
     stats_result = await db.execute(
         text("""
@@ -116,10 +121,10 @@ async def get_coalition_dashboard(
               AND period_start = :period_start
               AND period_end = :period_end
         """),
-        {"org_id": org_id, "period_start": period_start, "period_end": period_end}
+        {"org_id": org_id, "period_start": period_start, "period_end": period_end},
     )
     stats_row = stats_result.fetchone()
-    
+
     # If no stats exist, calculate from documents table (in content database)
     if not stats_row:
         doc_stats = await content_db.execute(
@@ -131,7 +136,7 @@ async def get_coalition_dashboard(
                 FROM documents
                 WHERE organization_id = :org_id
             """),
-            {"org_id": org_id}
+            {"org_id": org_id},
         )
         doc_row = doc_stats.fetchone()
         current_stats = ContentStats(
@@ -153,7 +158,7 @@ async def get_coalition_dashboard(
             unique_content_hash_count=stats_row.unique_content_hash_count,
             content_categories=stats_row.content_categories,
         )
-    
+
     # Get earnings summary
     earnings_result = await db.execute(
         text("""
@@ -164,10 +169,10 @@ async def get_coalition_dashboard(
             FROM coalition_earnings
             WHERE organization_id = :org_id
         """),
-        {"org_id": org_id}
+        {"org_id": org_id},
     )
     earnings_row = earnings_result.fetchone()
-    
+
     # Get recent earnings (last 6 months)
     recent_earnings_result = await db.execute(
         text("""
@@ -184,7 +189,7 @@ async def get_coalition_dashboard(
             ORDER BY period_start DESC
             LIMIT 6
         """),
-        {"org_id": org_id}
+        {"org_id": org_id},
     )
     recent_earnings = [
         EarningsSummary(
@@ -198,7 +203,7 @@ async def get_coalition_dashboard(
         )
         for row in recent_earnings_result.fetchall()
     ]
-    
+
     # Get recent payouts
     payouts_result = await db.execute(
         text("""
@@ -209,7 +214,7 @@ async def get_coalition_dashboard(
             ORDER BY created_at DESC
             LIMIT 5
         """),
-        {"org_id": org_id}
+        {"org_id": org_id},
     )
     recent_payouts = [
         PayoutSummary(
@@ -224,7 +229,7 @@ async def get_coalition_dashboard(
         )
         for row in payouts_result.fetchall()
     ]
-    
+
     return CoalitionDashboardResponse(
         organization_id=org_id,
         tier=tier,
@@ -250,7 +255,7 @@ async def get_content_stats(
     Get historical content corpus statistics.
     """
     org_id = organization["organization_id"]
-    
+
     result = await db.execute(
         text("""
             SELECT period_start, period_end, documents_count, sentences_count,
@@ -260,9 +265,9 @@ async def get_content_stats(
             ORDER BY period_start DESC
             LIMIT :limit
         """),
-        {"org_id": org_id, "limit": months}
+        {"org_id": org_id, "limit": months},
     )
-    
+
     stats = [
         {
             "period_start": row.period_start.isoformat() if row.period_start else "",
@@ -275,7 +280,7 @@ async def get_content_stats(
         }
         for row in result.fetchall()
     ]
-    
+
     return {
         "organization_id": org_id,
         "stats": stats,
@@ -292,7 +297,7 @@ async def get_earnings_history(
     Get detailed earnings history.
     """
     org_id = organization["organization_id"]
-    
+
     result = await db.execute(
         text("""
             SELECT id, deal_id, deal_name, ai_company, period_start, period_end,
@@ -303,9 +308,9 @@ async def get_earnings_history(
             ORDER BY period_start DESC
             LIMIT :limit
         """),
-        {"org_id": org_id, "limit": months * 10}  # Assume up to 10 deals per month
+        {"org_id": org_id, "limit": months * 10},  # Assume up to 10 deals per month
     )
-    
+
     earnings = [
         {
             "id": row.id,
@@ -324,7 +329,7 @@ async def get_earnings_history(
         }
         for row in result.fetchall()
     ]
-    
+
     return {
         "organization_id": org_id,
         "earnings": earnings,
@@ -338,12 +343,12 @@ async def opt_out_of_coalition(
 ):
     """
     Opt out of the coalition revenue sharing program.
-    
+
     Note: This will stop future earnings but won't affect pending payouts.
     """
     org_id = organization["organization_id"]
     now = datetime.now(timezone.utc)
-    
+
     await db.execute(
         text("""
             UPDATE organizations
@@ -351,10 +356,10 @@ async def opt_out_of_coalition(
                 updated_at = :now
             WHERE id = :org_id
         """),
-        {"org_id": org_id, "now": now}
+        {"org_id": org_id, "now": now},
     )
     await db.commit()
-    
+
     return {
         "success": True,
         "message": "You have opted out of the coalition. Pending earnings will still be paid.",
@@ -372,7 +377,7 @@ async def opt_in_to_coalition(
     """
     org_id = organization["organization_id"]
     now = datetime.now(timezone.utc)
-    
+
     await db.execute(
         text("""
             UPDATE organizations
@@ -380,10 +385,10 @@ async def opt_in_to_coalition(
                 updated_at = :now
             WHERE id = :org_id
         """),
-        {"org_id": org_id, "now": now}
+        {"org_id": org_id, "now": now},
     )
     await db.commit()
-    
+
     return {
         "success": True,
         "message": "You have opted back into the coalition. Earnings will resume.",
@@ -399,10 +404,10 @@ async def calculate_content_stats(
 ) -> str:
     """
     Calculate and store content stats for a period.
-    
+
     This is typically called by a scheduled job.
     Returns the stats ID.
-    
+
     Args:
         db: Core database session (for storing stats)
         content_db: Content database session (for querying documents)
@@ -423,13 +428,13 @@ async def calculate_content_stats(
             "org_id": organization_id,
             "start": period_start,
             "end": period_end,
-        }
+        },
     )
     row = result.fetchone()
-    
+
     stats_id = f"stats_{uuid4().hex[:16]}"
     now = datetime.now(timezone.utc)
-    
+
     # Upsert stats
     await db.execute(
         text("""
@@ -459,9 +464,9 @@ async def calculate_content_stats(
             "sentences": row.sentence_count if row else 0,
             "hashes": row.unique_hashes if row else 0,
             "now": now,
-        }
+        },
     )
-    
+
     return stats_id
 
 
@@ -476,7 +481,7 @@ async def attribute_deal_revenue(
 ) -> List[str]:
     """
     Attribute revenue from an AI deal to coalition members.
-    
+
     Uses corpus size-based attribution by default.
     Returns list of earnings IDs created.
     """
@@ -496,39 +501,39 @@ async def attribute_deal_revenue(
             WHERE o.coalition_member = TRUE
               AND o.coalition_opted_out = FALSE
         """),
-        {"start": period_start, "end": period_end}
+        {"start": period_start, "end": period_end},
     )
     members = result.fetchall()
-    
+
     if not members:
         return []
-    
+
     # Calculate total corpus size
     total_sentences = sum(m.sentences for m in members)
     if total_sentences == 0:
         return []
-    
+
     earnings_ids = []
     now = datetime.now(timezone.utc)
-    
+
     for member in members:
         if member.sentences == 0:
             continue
-        
+
         # Calculate attribution weight
         weight = member.sentences / total_sentences
-        
+
         # Get tier-based rev share (or use org override)
         rev_share = TIER_REV_SHARE.get(member.tier, TIER_REV_SHARE["starter"])
         publisher_percent = member.coalition_rev_share_publisher or rev_share["publisher"]
-        
+
         # Calculate earnings
         attributed_gross = int(gross_revenue_cents * weight)
         publisher_earnings = int(attributed_gross * publisher_percent / 100)
         encypher_share = attributed_gross - publisher_earnings
-        
+
         earnings_id = f"earn_{uuid4().hex[:16]}"
-        
+
         await db.execute(
             text("""
                 INSERT INTO coalition_earnings (
@@ -560,9 +565,9 @@ async def attribute_deal_revenue(
                 "encypher_share": encypher_share,
                 "weight": weight,
                 "now": now,
-            }
+            },
         )
-        
+
         earnings_ids.append(earnings_id)
-    
+
     return earnings_ids

@@ -3,10 +3,11 @@ Quota enforcement system for API usage limits.
 
 Tracks and enforces usage quotas based on organization tier.
 """
+
 import logging
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import HTTPException, status
 from sqlalchemy import select, update
@@ -30,9 +31,12 @@ def _coerce_tier(value: Any) -> OrganizationTier:
 
 class QuotaType(str, Enum):
     """Types of quotas that can be enforced."""
+
     MERKLE_ENCODING = "merkle_encoding"
     MERKLE_ATTRIBUTION = "merkle_attribution"
     MERKLE_PLAGIARISM = "merkle_plagiarism"
+    FUZZY_INDEX = "fuzzy_index"
+    FUZZY_SEARCH = "fuzzy_search"
     API_CALLS = "api_calls"
     SENTENCES_TRACKED = "sentences_tracked"
     BATCH_OPERATIONS = "batch_operations"
@@ -66,6 +70,7 @@ TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
         "verification": True,
         "sentence_tracking": False,
         "merkle": False,
+        "fuzzy_fingerprint": False,
         "streaming": False,
         "batch_operations": False,
         "byok": False,
@@ -80,6 +85,7 @@ TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
         "verification": True,
         "sentence_tracking": True,
         "merkle": True,  # Sentence-level Merkle roots available for all paid tiers
+        "fuzzy_fingerprint": False,
         "streaming": True,
         "batch_operations": False,
         "byok": True,
@@ -94,6 +100,7 @@ TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
         "verification": True,
         "sentence_tracking": True,
         "merkle": True,
+        "fuzzy_fingerprint": False,
         "streaming": True,
         "batch_operations": True,
         "byok": True,
@@ -108,6 +115,7 @@ TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
         "verification": True,
         "sentence_tracking": True,
         "merkle": True,
+        "fuzzy_fingerprint": True,
         "streaming": True,
         "batch_operations": True,
         "byok": True,
@@ -122,6 +130,7 @@ TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
         "verification": True,
         "sentence_tracking": True,
         "merkle": True,
+        "fuzzy_fingerprint": True,
         "streaming": True,
         "batch_operations": True,
         "byok": True,
@@ -143,6 +152,8 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.MERKLE_ENCODING: 0,  # Not available
         QuotaType.MERKLE_ATTRIBUTION: 0,
         QuotaType.MERKLE_PLAGIARISM: 0,
+        QuotaType.FUZZY_INDEX: 0,
+        QuotaType.FUZZY_SEARCH: 0,
         QuotaType.BATCH_OPERATIONS: 0,
         QuotaType.API_CALLS: 10000,
     },
@@ -152,6 +163,8 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.MERKLE_ENCODING: 5000,  # Sentence-level Merkle available for paid tiers
         QuotaType.MERKLE_ATTRIBUTION: 10000,
         QuotaType.MERKLE_PLAGIARISM: 0,  # Business+ only
+        QuotaType.FUZZY_INDEX: 0,
+        QuotaType.FUZZY_SEARCH: 0,
         QuotaType.BATCH_OPERATIONS: 0,
         QuotaType.API_CALLS: 50000,
     },
@@ -161,6 +174,8 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.MERKLE_ENCODING: 10000,
         QuotaType.MERKLE_ATTRIBUTION: 50000,
         QuotaType.MERKLE_PLAGIARISM: 5000,
+        QuotaType.FUZZY_INDEX: 0,
+        QuotaType.FUZZY_SEARCH: 0,
         QuotaType.BATCH_OPERATIONS: 1000,
         QuotaType.API_CALLS: 500000,
     },
@@ -170,6 +185,8 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.MERKLE_ENCODING: -1,  # Unlimited
         QuotaType.MERKLE_ATTRIBUTION: -1,
         QuotaType.MERKLE_PLAGIARISM: -1,
+        QuotaType.FUZZY_INDEX: -1,
+        QuotaType.FUZZY_SEARCH: -1,
         QuotaType.BATCH_OPERATIONS: -1,
         QuotaType.API_CALLS: -1,
     },
@@ -179,6 +196,8 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
         QuotaType.MERKLE_ENCODING: -1,  # Unlimited
         QuotaType.MERKLE_ATTRIBUTION: -1,
         QuotaType.MERKLE_PLAGIARISM: -1,
+        QuotaType.FUZZY_INDEX: -1,
+        QuotaType.FUZZY_SEARCH: -1,
         QuotaType.BATCH_OPERATIONS: -1,
         QuotaType.API_CALLS: -1,
     },
@@ -188,22 +207,22 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
 class QuotaManager:
     """
     Manages quota checking and enforcement.
-    
+
     Tracks usage and enforces limits based on organization tier.
     """
-    
+
     @staticmethod
     async def check_quota(
         db: AsyncSession,
         organization_id: str,
         quota_type: QuotaType,
         increment: int = 1,
-        tier_override: str = None,
-        features: dict = None
+        tier_override: Optional[str] = None,
+        features: Optional[Dict[str, Any]] = None,
     ) -> bool:
         """
         Check if organization has quota available and increment if so.
-        
+
         Args:
             db: Database session
             organization_id: Organization identifier
@@ -211,10 +230,10 @@ class QuotaManager:
             increment: Amount to increment (default 1)
             tier_override: Optional tier to use instead of DB lookup (for user-level keys)
             features: Optional features dict from organization context (for permission-based access)
-        
+
         Returns:
             True if quota available, False if exceeded
-        
+
         Raises:
             HTTPException: If quota exceeded
         """
@@ -225,11 +244,11 @@ class QuotaManager:
             if features and features.get("is_super_admin", False):
                 logger.debug(f"Super admin key {organization_id}: allowing unlimited {quota_type.value}")
                 return True
-            
+
             # Use starter tier limits for user-level keys
             tier = OrganizationTier.STARTER
             quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
-            
+
             # For user-level keys, we don't track usage in DB - just check if feature is available
             if quota_limit == 0:
                 raise HTTPException(
@@ -239,45 +258,42 @@ class QuotaManager:
                         "message": f"'{quota_type.value}' is not available on starter tier",
                         "current_tier": "starter",
                         "upgrade_url": "https://dashboard.encypherai.com/billing",
-                    }
+                    },
                 )
             # Allow the request - user-level keys have generous limits
             logger.debug(f"User-level key {organization_id}: allowing {quota_type.value} (limit: {quota_limit})")
             return True
-        
+
         # Check if this is a demo key (doesn't require database lookup)
-        is_demo_key = (features and features.get("is_demo", False)) or organization_id.startswith("org_demo") or organization_id.startswith("org_encypher")
-        
+        is_demo_key = (
+            (features and features.get("is_demo", False)) or organization_id.startswith("org_demo") or organization_id.startswith("org_encypher")
+        )
+
         if is_demo_key:
             # Demo keys use in-memory quota tracking from DEMO_KEYS config
             tier = _coerce_tier(tier_override or "starter")
             quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
-            
+
             # Demo keys with quota_limit = -1 or high limits are unlimited
             if quota_limit == -1 or quota_limit > 100000:
                 logger.debug(f"Demo key {organization_id}: allowing {quota_type.value} (unlimited)")
                 return True
-            
+
             # For demo keys with limits, allow without tracking (stateless)
             logger.debug(f"Demo key {organization_id}: allowing {quota_type.value} (limit: {quota_limit}, no tracking)")
             return True
-        
+
         # Get organization from database for org-level keys
-        result = await db.execute(
-            select(Organization).where(Organization.organization_id == organization_id)
-        )
+        result = await db.execute(select(Organization).where(Organization.organization_id == organization_id))
         org = result.scalar_one_or_none()
-        
+
         if not org:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Organization not found"
-            )
-        
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
         # Get quota limit for tier (DB stores tier as string)
         tier = _coerce_tier(tier_override or org.tier)
         quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
-        
+
         # Quota = 0 means feature not available for this tier
         if quota_limit == 0:
             raise HTTPException(
@@ -287,16 +303,16 @@ class QuotaManager:
                     "message": f"'{quota_type.value}' is not available on {tier.value} tier",
                     "current_tier": tier.value,
                     "upgrade_url": "https://dashboard.encypherai.com/billing",
-                }
+                },
             )
-        
+
         # Quota = -1 means unlimited - allow without tracking
         if quota_limit == -1:
             return True
-        
+
         # Get current usage
         current_usage = QuotaManager._get_current_usage(org, quota_type)
-        
+
         # Check if quota exceeded
         if current_usage + increment > quota_limit:
             raise HTTPException(
@@ -306,38 +322,37 @@ class QuotaManager:
                     "message": f"Monthly quota exceeded for {quota_type.value}",
                     "quota_limit": quota_limit,
                     "current_usage": current_usage,
-                    "reset_date": QuotaManager._get_reset_date().isoformat()
-                }
+                    "reset_date": QuotaManager._get_reset_date().isoformat(),
+                },
             )
-        
+
         # Increment usage
         await QuotaManager._increment_usage(db, org, quota_type, increment)
-        
+
         return True
-    
+
     @staticmethod
     def get_quota_limit(tier: OrganizationTier, quota_type: QuotaType) -> int:
         """
         Get quota limit for a tier and quota type.
-        
+
         Args:
             tier: Organization tier
             quota_type: Type of quota
-        
+
         Returns:
-            Quota limit (requests per month)
         """
         return TIER_QUOTAS.get(tier, {}).get(quota_type, 0)
-    
+
     @staticmethod
     def _get_current_usage(org: Organization, quota_type: QuotaType) -> int:
         """
         Get current usage for a quota type.
-        
+
         Args:
             org: Organization
             quota_type: Type of quota
-        
+
         Returns:
             Current usage count
         """
@@ -346,28 +361,25 @@ class QuotaManager:
             QuotaType.MERKLE_ENCODING: "merkle_encoding_calls_this_month",
             QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
             QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
+            QuotaType.FUZZY_INDEX: "fuzzy_index_calls_this_month",
+            QuotaType.FUZZY_SEARCH: "fuzzy_search_calls_this_month",
             QuotaType.API_CALLS: "api_calls_this_month",
             QuotaType.C2PA_SIGNATURES: "documents_signed",
             QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
             QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
         }
-        
+
         field_name = usage_fields.get(quota_type)
         if not field_name:
             return 0
-        
+
         return getattr(org, field_name, 0)
-    
+
     @staticmethod
-    async def _increment_usage(
-        db: AsyncSession,
-        org: Organization,
-        quota_type: QuotaType,
-        increment: int
-    ):
+    async def _increment_usage(db: AsyncSession, org: Organization, quota_type: QuotaType, increment: int):
         """
         Increment usage counter for a quota type.
-        
+
         Args:
             db: Database session
             org: Organization
@@ -379,32 +391,30 @@ class QuotaManager:
             QuotaType.MERKLE_ENCODING: "merkle_encoding_calls_this_month",
             QuotaType.MERKLE_ATTRIBUTION: "merkle_attribution_calls_this_month",
             QuotaType.MERKLE_PLAGIARISM: "merkle_plagiarism_calls_this_month",
+            QuotaType.FUZZY_INDEX: "fuzzy_index_calls_this_month",
+            QuotaType.FUZZY_SEARCH: "fuzzy_search_calls_this_month",
             QuotaType.API_CALLS: "api_calls_this_month",
             QuotaType.C2PA_SIGNATURES: "documents_signed",
             QuotaType.SENTENCES_TRACKED: "sentences_tracked_this_month",
             QuotaType.BATCH_OPERATIONS: "batch_operations_this_month",
         }
-        
+
         field_name = usage_fields.get(quota_type)
         if not field_name:
             return
-        
+
         # Increment the counter
         current_value = getattr(org, field_name, 0)
         setattr(org, field_name, current_value + increment)
-        
+
         await db.commit()
         await db.refresh(org)
-    
+
     @staticmethod
-    async def get_quota_headers(
-        db: AsyncSession,
-        organization_id: str,
-        quota_type: QuotaType
-    ) -> dict:
+    async def get_quota_headers(db: AsyncSession, organization_id: str, quota_type: QuotaType) -> dict:
         """
         Get HTTP headers showing quota usage for a specific quota type.
-        
+
         Returns headers like:
         - X-Quota-Limit: 5000
         - X-Quota-Used: 1234
@@ -427,10 +437,10 @@ class QuotaManager:
                 "X-Quota-Remaining": str(limit),
                 "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
             }
-        
+
         # Check if this is a demo key (doesn't require database lookup)
         is_demo_key = organization_id.startswith("org_demo") or organization_id.startswith("org_encypher")
-        
+
         if is_demo_key:
             # Return generic headers for demo keys (no tracking)
             return {
@@ -439,19 +449,17 @@ class QuotaManager:
                 "X-Quota-Remaining": "50000",
                 "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
             }
-        
-        result = await db.execute(
-            select(Organization).where(Organization.organization_id == organization_id)
-        )
+
+        result = await db.execute(select(Organization).where(Organization.organization_id == organization_id))
         org = result.scalar_one_or_none()
-        
+
         if not org:
             return {}
 
         tier = _coerce_tier(org.tier)
         limit = QuotaManager.get_quota_limit(tier, quota_type)
         used = QuotaManager._get_current_usage(org, quota_type)
-        
+
         if limit == -1:
             return {
                 "X-Quota-Limit": "unlimited",
@@ -459,7 +467,7 @@ class QuotaManager:
                 "X-Quota-Remaining": "unlimited",
                 "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
             }
-        
+
         remaining = max(0, limit - used)
         return {
             "X-Quota-Limit": str(limit),
@@ -467,12 +475,12 @@ class QuotaManager:
             "X-Quota-Remaining": str(remaining),
             "X-Quota-Reset": QuotaManager._get_reset_date().isoformat(),
         }
-    
+
     @staticmethod
     def _get_reset_date() -> datetime:
         """
         Get the date when quotas reset (first day of next month).
-        
+
         Returns:
             Reset datetime
         """
@@ -481,80 +489,74 @@ class QuotaManager:
             return datetime(now.year + 1, 1, 1)
         else:
             return datetime(now.year, now.month + 1, 1)
-    
+
     @staticmethod
-    async def get_quota_status(
-        db: AsyncSession,
-        organization_id: str
-    ) -> Dict[str, any]:
+    async def get_quota_status(db: AsyncSession, organization_id: str) -> Dict[str, Any]:
         """
         Get quota status for an organization.
-        
+
         Args:
             db: Database session
             organization_id: Organization identifier
-        
+
         Returns:
             Dictionary with quota status for all quota types
         """
         # Handle user-level keys (synthetic org IDs)
         if organization_id.startswith("user_"):
             tier = OrganizationTier.STARTER
-            status_dict = {
+            quotas: Dict[str, Dict[str, Any]] = {}
+            status_dict: Dict[str, Any] = {
                 "organization_id": organization_id,
                 "tier": "starter",
                 "reset_date": QuotaManager._get_reset_date().isoformat(),
-                "quotas": {}
+                "quotas": quotas,
             }
-            
+
             for quota_type in QuotaType:
                 limit = QuotaManager.get_quota_limit(tier, quota_type)
-                status_dict["quotas"][quota_type.value] = {
+                quotas[quota_type.value] = {
                     "limit": limit,
                     "used": 0,  # Not tracked for user-level keys
                     "remaining": limit if limit > 0 else 0,
-                    "percentage_used": 0
+                    "percentage_used": 0,
                 }
-            
+
             return status_dict
-        
+
         # Get organization from database
-        result = await db.execute(
-            select(Organization).where(Organization.organization_id == organization_id)
-        )
+        result = await db.execute(select(Organization).where(Organization.organization_id == organization_id))
         org = result.scalar_one_or_none()
-        
+
         if not org:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Organization not found"
-            )
-        
-        status_dict = {
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+        org_quotas: Dict[str, Dict[str, Any]] = {}
+        org_status: Dict[str, Any] = {
             "organization_id": organization_id,
             "tier": _coerce_tier(org.tier).value,
             "reset_date": QuotaManager._get_reset_date().isoformat(),
-            "quotas": {}
+            "quotas": org_quotas,
         }
-        
+
         for quota_type in QuotaType:
             limit = QuotaManager.get_quota_limit(_coerce_tier(org.tier), quota_type)
             usage = QuotaManager._get_current_usage(org, quota_type)
-            
-            status_dict["quotas"][quota_type.value] = {
+
+            org_quotas[quota_type.value] = {
                 "limit": limit,
                 "used": usage,
                 "remaining": max(0, limit - usage),
-                "percentage_used": round((usage / limit * 100) if limit > 0 else 0, 2)
+                "percentage_used": round((usage / limit * 100) if limit > 0 else 0, 2),
             }
-        
+
         return status_dict
-    
+
     @staticmethod
     async def reset_monthly_quotas(db: AsyncSession):
         """
         Reset all monthly quotas (run on first day of month).
-        
+
         Args:
             db: Database session
         """
@@ -563,6 +565,8 @@ class QuotaManager:
                 merkle_encoding_calls_this_month=0,
                 merkle_attribution_calls_this_month=0,
                 merkle_plagiarism_calls_this_month=0,
+                fuzzy_index_calls_this_month=0,
+                fuzzy_search_calls_this_month=0,
                 api_calls_this_month=0,
                 documents_signed=0,
                 sentences_tracked_this_month=0,
@@ -574,26 +578,22 @@ class QuotaManager:
 
 
 # Dependency for quota checking
-async def check_quota_dependency(
-    quota_type: QuotaType,
-    organization_id: str,
-    db: AsyncSession
-):
+async def check_quota_dependency(quota_type: QuotaType, organization_id: str, db: AsyncSession):
     """
     FastAPI dependency for quota checking.
-    
+
     Usage:
         @router.post("/endpoint")
         async def endpoint(
             _: None = Depends(lambda: check_quota_dependency(QuotaType.MERKLE_ENCODING, org_id, db))
         ):
             ...
-    
+
     Args:
         quota_type: Type of quota to check
         organization_id: Organization identifier
         db: Database session
-    
+
     Raises:
         HTTPException: If quota exceeded
     """

@@ -11,6 +11,7 @@ try:
 except Exception:
     DOCKER_AVAILABLE = False
 
+
 @pytest.mark.skipif(not DOCKER_AVAILABLE, reason="Docker not available")
 @pytest.mark.asyncio
 class TestLoad:
@@ -20,16 +21,12 @@ class TestLoad:
         print("Starting Postgres container...")
         container = docker_client.containers.run(
             "postgres:15-alpine",
-            environment={
-                "POSTGRES_USER": "postgres",
-                "POSTGRES_PASSWORD": "password",
-                "POSTGRES_DB": "encypher_test"
-            },
-            ports={'5432/tcp': 5432},
+            environment={"POSTGRES_USER": "postgres", "POSTGRES_PASSWORD": "password", "POSTGRES_DB": "encypher_test"},
+            ports={"5432/tcp": 5432},
             detach=True,
-            remove=True
+            remove=True,
         )
-        
+
         # Wait for Postgres to be ready
         timeout = 30
         start_time = time.time()
@@ -45,7 +42,7 @@ class TestLoad:
             pytest.fail("Postgres container failed to start")
 
         yield container
-        
+
         print("Stopping Postgres container...")
         container.stop()
 
@@ -58,11 +55,12 @@ class TestLoad:
         # For this test to run against the actual app, we would need to start the uvicorn server
         # in a background process or another container.
         # Given the constraints, we will assume the app is running or skip if not reachable.
-        
+
         # Skipping actual HTTP calls for this generated test file as we don't have the app running
         # but this serves as the template for the load test.
         print("Load test template created. Requires running app instance.")
         assert True
+
 
 if __name__ == "__main__":
     # Simple load generator script if run directly

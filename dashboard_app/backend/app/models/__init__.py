@@ -1,6 +1,7 @@
 """
 Models package.
 """
+
 from app.models.audit_log import AuditLog
 from app.models.blacklisted_token import BlacklistedToken
 from app.models.coalition import CoalitionMember, ContentAccessLog, ContentItem, RevenueTransaction

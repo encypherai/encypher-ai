@@ -1,6 +1,7 @@
 """
 Pydantic schemas for demo corpus generation.
 """
+
 from __future__ import annotations
 
 from typing import List, Optional

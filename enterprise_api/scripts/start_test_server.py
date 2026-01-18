@@ -14,9 +14,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 sys.path.insert(0, root_dir)
 
+
 def main():
     print("Starting Test Server...")
-    
+
     # 1. Check Docker
     try:
         docker_client = docker.from_env()
@@ -41,14 +42,10 @@ def main():
         container = docker_client.containers.run(
             "postgres:15-alpine",
             name="encypher_test_db_sdk",
-            environment={
-                "POSTGRES_USER": "encypher",
-                "POSTGRES_PASSWORD": "password",
-                "POSTGRES_DB": "encypher_test"
-            },
-            ports={'5432/tcp': 54323}, # Use different port than load test
+            environment={"POSTGRES_USER": "encypher", "POSTGRES_PASSWORD": "password", "POSTGRES_DB": "encypher_test"},
+            ports={"5432/tcp": 54323},  # Use different port than load test
             detach=True,
-            remove=False
+            remove=False,
         )
     except Exception as e:
         print(f"Failed to start container: {e}")
@@ -56,12 +53,12 @@ def main():
 
     db_host = "127.0.0.1"
     db_port = 54323
-    server_port = 8093 # Different port
-    
+    server_port = 8093  # Different port
+
     # Cleanup function
     def cleanup(signum=None, frame=None):
         print("\nStopping server...")
-        if 'proc' in locals() and proc:
+        if "proc" in locals() and proc:
             proc.terminate()
         if container:
             print("Stopping Postgres...")
@@ -82,19 +79,13 @@ def main():
         connected = False
         while time.time() - start_time < 30:
             try:
-                conn = psycopg2.connect(
-                    user="encypher",
-                    password="password",
-                    host=db_host,
-                    port=db_port,
-                    database="encypher_test"
-                )
+                conn = psycopg2.connect(user="encypher", password="password", host=db_host, port=db_port, database="encypher_test")
                 conn.close()
                 connected = True
                 break
             except:
                 time.sleep(1)
-        
+
         if not connected:
             print("DB timeout")
             try:
@@ -105,29 +96,23 @@ def main():
 
         # Init DB
         print("Initializing DB...")
-        conn = psycopg2.connect(
-            user="encypher",
-            password="password",
-            host=db_host,
-            port=db_port,
-            database="encypher_test"
-        )
+        conn = psycopg2.connect(user="encypher", password="password", host=db_host, port=db_port, database="encypher_test")
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cur = conn.cursor()
-        
+
         with open(os.path.join(root_dir, "scripts", "init_db.sql"), "r") as f:
-            for stmt in f.read().split(';'):
+            for stmt in f.read().split(";"):
                 if stmt.strip():
                     cur.execute(stmt)
-        
+
         with open(os.path.join(root_dir, "scripts", "seed_load_test_data.sql"), "r") as f:
-             for stmt in f.read().split(';'):
+            for stmt in f.read().split(";"):
                 if stmt.strip():
                     cur.execute(stmt)
-        
+
         cur.close()
         conn.close()
-        
+
         # Start Server
         print(f"Starting Server on {server_port}...")
         env = os.environ.copy()
@@ -137,25 +122,21 @@ def main():
         env["SSL_COM_API_KEY"] = "test_key"
         env["DEMO_API_KEY"] = "demo-key-load-test"
         env["PORT"] = str(server_port)
-        
+
         script_path = os.path.join(root_dir, "tests", "load", "run_server.py")
-        
+
         proc = subprocess.Popen(
-            [sys.executable, script_path],
-            env=env,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            bufsize=1,
-            universal_newlines=True
+            [sys.executable, script_path], env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=1, universal_newlines=True
         )
 
         # Thread to read/print output
         import threading
+
         def stream_output():
             for line in proc.stdout:
-                print(line, end='')
+                print(line, end="")
                 sys.stdout.flush()
-        
+
         t = threading.Thread(target=stream_output, daemon=True)
         t.start()
 
@@ -181,6 +162,7 @@ def main():
     except Exception as e:
         print(f"Error: {e}")
         cleanup()
+
 
 if __name__ == "__main__":
     main()

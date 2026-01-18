@@ -75,9 +75,9 @@
           }
         ],
         "url": {
-          "raw": "{{baseUrl}}/stream/sign",
+          "raw": "{{baseUrl}}/api/v1/sign/stream",
           "host": ["{{baseUrl}}"],
-          "path": ["stream", "sign"]
+          "path": ["api", "v1", "sign", "stream"]
         },
         "body": {
           "mode": "raw",

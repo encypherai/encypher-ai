@@ -52,7 +52,6 @@ async def test_sign_advanced_embeds_rights_assertion(
     called_assertions = mock_create.call_args.kwargs.get("custom_assertions")
     assert called_assertions is not None
     assert any(
-        assertion.get("label") == "com.encypher.rights.v1"
-        and assertion.get("data", {}).get("copyright_holder") == "Example Publisher"
+        assertion.get("label") == "com.encypher.rights.v1" and assertion.get("data", {}).get("copyright_holder") == "Example Publisher"
         for assertion in called_assertions
     )

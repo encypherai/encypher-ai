@@ -1,4 +1,5 @@
 """Audit logging router for Business+ tier organizations."""
+
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import List, Optional
@@ -17,35 +18,36 @@ router = APIRouter()
 
 class AuditAction(str, Enum):
     """Types of auditable actions."""
+
     # API Key operations
     API_KEY_CREATED = "api_key.created"
     API_KEY_REVOKED = "api_key.revoked"
     API_KEY_ROTATED = "api_key.rotated"
-    
+
     # Signing operations
     DOCUMENT_SIGNED = "document.signed"
     BATCH_SIGN_STARTED = "batch.sign.started"
     BATCH_SIGN_COMPLETED = "batch.sign.completed"
-    
+
     # Verification operations
     DOCUMENT_VERIFIED = "document.verified"
     VERIFICATION_FAILED = "verification.failed"
-    
+
     # Organization operations
     ORG_SETTINGS_UPDATED = "org.settings.updated"
     ORG_TIER_CHANGED = "org.tier.changed"
     ORG_MEMBER_ADDED = "org.member.added"
     ORG_MEMBER_REMOVED = "org.member.removed"
     ORG_MEMBER_ROLE_CHANGED = "org.member.role.changed"
-    
+
     # Certificate operations
     CERTIFICATE_UPLOADED = "certificate.uploaded"
     CERTIFICATE_ROTATED = "certificate.rotated"
-    
+
     # Coalition operations
     COALITION_OPTED_IN = "coalition.opted_in"
     COALITION_OPTED_OUT = "coalition.opted_out"
-    
+
     # Billing operations
     SUBSCRIPTION_CREATED = "subscription.created"
     SUBSCRIPTION_UPGRADED = "subscription.upgraded"
@@ -55,6 +57,7 @@ class AuditAction(str, Enum):
 
 class AuditLogEntry(BaseModel):
     """Single audit log entry."""
+
     id: str
     timestamp: str
     action: str
@@ -69,6 +72,7 @@ class AuditLogEntry(BaseModel):
 
 class AuditLogResponse(BaseModel):
     """Paginated audit log response."""
+
     organization_id: str
     logs: List[AuditLogEntry]
     total: int
@@ -79,6 +83,7 @@ class AuditLogResponse(BaseModel):
 
 class AuditLogCreateRequest(BaseModel):
     """Request to create an audit log entry."""
+
     action: AuditAction
     resource_type: str
     resource_id: Optional[str] = None
@@ -98,7 +103,7 @@ async def check_audit_logs_enabled(
                 "code": "FEATURE_NOT_AVAILABLE",
                 "message": "Audit logs are only available on Business and Enterprise tiers",
                 "upgrade_url": "/billing/upgrade",
-            }
+            },
         )
     return organization
 
@@ -117,53 +122,53 @@ async def get_audit_logs(
 ) -> AuditLogResponse:
     """
     Get audit logs for the organization.
-    
+
     Supports filtering by:
     - action: Type of action (e.g., "document.signed")
     - actor_id: ID of the user or API key that performed the action
     - resource_type: Type of resource affected
     - start_date/end_date: Date range
-    
+
     Results are paginated and sorted by timestamp (newest first).
     """
     org_id = organization["organization_id"]
     offset = (page - 1) * page_size
-    
+
     # Build query with filters
     where_clauses = ["organization_id = :org_id"]
     params = {"org_id": org_id, "limit": page_size, "offset": offset}
-    
+
     if action:
         where_clauses.append("action = :action")
         params["action"] = action
-    
+
     if actor_id:
         where_clauses.append("actor_id = :actor_id")
         params["actor_id"] = actor_id
-    
+
     if resource_type:
         where_clauses.append("resource_type = :resource_type")
         params["resource_type"] = resource_type
-    
+
     if start_date:
         where_clauses.append("created_at >= :start_date")
         # Parse ISO string to datetime for PostgreSQL
-        params["start_date"] = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
-    
+        params["start_date"] = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
+
     if end_date:
         where_clauses.append("created_at <= :end_date")
-        params["end_date"] = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-    
+        params["end_date"] = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+
     where_sql = " AND ".join(where_clauses)
-    
+
     # Get total count
     # Note: where_sql contains only hardcoded column names and :param placeholders, not user input
     count_result = await db.execute(
         text(f"SELECT COUNT(*) FROM audit_logs WHERE {where_sql}"),  # noqa: S608
-        params
+        params,
     )
     total = count_result.scalar() or 0
-    
+
     # Get paginated results
     # Note: where_sql is built from hardcoded strings, user values are parameterized
     result = await db.execute(
@@ -176,10 +181,10 @@ async def get_audit_logs(
             ORDER BY created_at DESC
             LIMIT :limit OFFSET :offset
         """),  # noqa: S608
-        params
+        params,
     )
     rows = result.fetchall()
-    
+
     logs = [
         AuditLogEntry(
             id=row.id,
@@ -195,7 +200,7 @@ async def get_audit_logs(
         )
         for row in rows
     ]
-    
+
     return AuditLogResponse(
         organization_id=org_id,
         logs=logs,
@@ -216,22 +221,22 @@ async def export_audit_logs(
 ):
     """
     Export audit logs in JSON or CSV format.
-    
+
     Returns all logs within the specified date range.
     Default is last 30 days if no dates specified.
     """
     org_id = organization["organization_id"]
-    
+
     # Default to last 30 days
     end_dt = datetime.now(timezone.utc)
     if end_date:
-        end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
-    
+        end_dt = datetime.fromisoformat(end_date.replace("Z", "+00:00"))
+
     if start_date:
-        start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+        start_dt = datetime.fromisoformat(start_date.replace("Z", "+00:00"))
     else:
         start_dt = end_dt - timedelta(days=30)
-    
+
     result = await db.execute(
         text("""
             SELECT 
@@ -243,41 +248,39 @@ async def export_audit_logs(
               AND created_at <= :end_date
             ORDER BY created_at DESC
         """),
-        {"org_id": org_id, "start_date": start_dt, "end_date": end_dt}
+        {"org_id": org_id, "start_date": start_dt, "end_date": end_dt},
     )
     rows = result.fetchall()
-    
+
     if format == "csv":
         import csv
         import io
-        
+
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow([
-            "id", "timestamp", "action", "actor_id", "actor_type",
-            "resource_type", "resource_id", "ip_address", "user_agent"
-        ])
-        
+        writer.writerow(["id", "timestamp", "action", "actor_id", "actor_type", "resource_type", "resource_id", "ip_address", "user_agent"])
+
         for row in rows:
-            writer.writerow([
-                row.id,
-                row.created_at.isoformat() if row.created_at else "",
-                row.action,
-                row.actor_id,
-                row.actor_type,
-                row.resource_type,
-                row.resource_id,
-                row.ip_address,
-                row.user_agent,
-            ])
-        
+            writer.writerow(
+                [
+                    row.id,
+                    row.created_at.isoformat() if row.created_at else "",
+                    row.action,
+                    row.actor_id,
+                    row.actor_type,
+                    row.resource_type,
+                    row.resource_id,
+                    row.ip_address,
+                    row.user_agent,
+                ]
+            )
+
         from fastapi.responses import Response
+
         return Response(
-            content=output.getvalue(),
-            media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=audit_logs_{org_id}.csv"}
+            content=output.getvalue(), media_type="text/csv", headers={"Content-Disposition": f"attachment; filename=audit_logs_{org_id}.csv"}
         )
-    
+
     # JSON format
     logs = [
         {
@@ -294,7 +297,7 @@ async def export_audit_logs(
         }
         for row in rows
     ]
-    
+
     return {
         "organization_id": org_id,
         "export_date": datetime.now(timezone.utc).isoformat(),
@@ -319,18 +322,18 @@ async def log_audit_event(
 ) -> str:
     """
     Create an audit log entry.
-    
+
     This is a helper function to be called from other parts of the application.
     Returns the ID of the created log entry.
     """
     import json
-    
+
     log_id = f"audit_{uuid4().hex[:16]}"
     now = datetime.now(timezone.utc)
-    
+
     # Serialize details dict to JSON string for PostgreSQL JSONB column
     details_json = json.dumps(details) if details else None
-    
+
     await db.execute(
         text("""
             INSERT INTO audit_logs (
@@ -354,7 +357,7 @@ async def log_audit_event(
             "details": details_json,
             "ip_address": ip_address,
             "user_agent": user_agent,
-        }
+        },
     )
-    
+
     return log_id

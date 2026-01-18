@@ -2,6 +2,7 @@
 """
 Script to generate all Encypher Enterprise SDK files.
 """
+
 from pathlib import Path
 
 SDK_ROOT = Path(__file__).parent.parent / "enterprise_sdk"
@@ -32,7 +33,6 @@ def get_config() -> EncypherConfig:
     """Get SDK configuration."""
     return EncypherConfig()
 ''',
-
     "encypher_enterprise/client.py": '''"""
 Synchronous client for Encypher Enterprise API.
 """
@@ -218,7 +218,6 @@ class EncypherClient:
         """Context manager exit."""
         self.close()
 ''',
-
     "encypher_enterprise/__init__.py": '''"""
 Encypher Enterprise SDK - Python client for C2PA content signing.
 """
@@ -271,6 +270,7 @@ __all__ = [
 ''',
 }
 
+
 def main():
     """Generate all SDK files."""
     for file_path, content in FILES.items():
@@ -280,6 +280,7 @@ def main():
         print(f"✅ Created: {file_path}")
 
     print(f"\n✅ Generated {len(FILES)} SDK files")
+
 
 if __name__ == "__main__":
     main()

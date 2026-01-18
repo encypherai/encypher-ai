@@ -5,12 +5,13 @@ Revises: 0f99842641fa
 Create Date: 2025-06-02 09:38:07.811268
 
 """
+
 from collections.abc import Sequence
 from typing import Union
 
 # revision identifiers, used by Alembic.
-revision: str = '7e4827b6f4e7'
-down_revision: Union[str, None] = '0f99842641fa'
+revision: str = "7e4827b6f4e7"
+down_revision: Union[str, None] = "0f99842641fa"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

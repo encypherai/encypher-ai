@@ -16,6 +16,7 @@ from app.db.models import (
     Organization,
     OrganizationMember,
     OrganizationInvitation,
+    OrganizationDomainClaim,
     User,
 )
 
@@ -217,6 +218,88 @@ class TestCreateInvitation(TestOrganizationService):
 
                 with pytest.raises(ValueError, match="already pending"):
                     service.create_invitation(org_id=mock_org.id, email="existing@example.com", role="member", inviter_user_id="admin_user")
+
+
+class TestDomainClaims(TestOrganizationService):
+    """Tests for domain claim logic"""
+
+    def test_create_domain_claim_rejects_common_domain(self, service, mock_db, mock_org):
+        with patch.object(service, "_has_permission", return_value=True):
+            with patch.object(service, "get_organization", return_value=mock_org):
+                with pytest.raises(ValueError, match="Common email domains cannot be claimed"):
+                    service.create_domain_claim(
+                        org_id=mock_org.id,
+                        domain="gmail.com",
+                        verification_email="admin@gmail.com",
+                        actor_user_id="user123",
+                    )
+
+    def test_create_domain_claim_enforces_limit(self, service, mock_db, mock_org):
+        active_query = MagicMock()
+        active_query.filter.return_value.count.return_value = 1
+        existing_query = MagicMock()
+        existing_query.filter.return_value.first.return_value = None
+
+        with patch.object(service, "_has_permission", return_value=True):
+            mock_org.tier = "starter"
+            with patch.object(service, "get_organization", return_value=mock_org):
+                with patch.object(service, "_log_action"):
+                    mock_db.query.side_effect = [active_query, existing_query]
+                    with pytest.raises(ValueError, match="Domain claim limit reached"):
+                        service.create_domain_claim(
+                            org_id=mock_org.id,
+                            domain="example.com",
+                            verification_email="admin@example.com",
+                            actor_user_id="user123",
+                        )
+
+    def test_verify_domain_email_marks_verified(self, service, mock_db):
+        claim = MagicMock(spec=OrganizationDomainClaim)
+        claim.status = "pending"
+        claim.email_verified_at = None
+        claim.dns_verified_at = datetime.utcnow()
+        claim.verified_at = None
+
+        query = MagicMock()
+        query.filter.return_value.first.return_value = claim
+        mock_db.query.return_value = query
+
+        result = service.verify_domain_email("token123")
+
+        assert result.email_verified_at is not None
+        assert result.status == "verified"
+        mock_db.commit.assert_called_once()
+
+    def test_verify_domain_dns_sets_verified(self, service, mock_db):
+        claim = MagicMock(spec=OrganizationDomainClaim)
+        claim.status = "pending"
+        claim.dns_token = "abc"
+        claim.dns_verified_at = None
+        claim.email_verified_at = datetime.utcnow()
+        claim.verified_at = None
+
+        query = MagicMock()
+        query.filter.return_value.first.return_value = claim
+        mock_db.query.return_value = query
+
+        with patch.object(service, "_has_permission", return_value=True):
+            result = service.verify_domain_dns("org123", "claim123", "user123", ["encypher-domain-claim=abc"])
+
+        assert result.dns_verified_at is not None
+        assert result.status == "verified"
+        mock_db.commit.assert_called_once()
+
+    def test_set_domain_auto_join_requires_verified(self, service, mock_db):
+        claim = MagicMock(spec=OrganizationDomainClaim)
+        claim.status = "pending"
+
+        query = MagicMock()
+        query.filter.return_value.first.return_value = claim
+        mock_db.query.return_value = query
+
+        with patch.object(service, "_has_permission", return_value=True):
+            with pytest.raises(ValueError, match="Domain must be verified"):
+                service.set_domain_auto_join("org123", "claim123", "user123", True)
 
 
 class TestAcceptInvitation(TestOrganizationService):

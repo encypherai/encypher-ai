@@ -1,4 +1,5 @@
 """Pydantic schemas for Notification Service"""
+
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -7,6 +8,7 @@ from pydantic import BaseModel, Field
 
 class NotificationCreate(BaseModel):
     """Schema for creating a notification"""
+
     notification_type: str = Field(pattern="^(email|sms|webhook)$")
     recipient: str
     subject: Optional[str] = None
@@ -16,6 +18,7 @@ class NotificationCreate(BaseModel):
 
 class NotificationResponse(BaseModel):
     """Schema for notification response"""
+
     id: str
     user_id: str
     notification_type: str
@@ -31,4 +34,5 @@ class NotificationResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     """Generic message response"""
+
     message: str

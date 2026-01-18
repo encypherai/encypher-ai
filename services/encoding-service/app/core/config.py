@@ -5,6 +5,7 @@ Environment Variables:
 - Shared: CONTENT_DATABASE_URL, REDIS_URL, ALLOWED_ORIGINS, AUTH_SERVICE_URL, KEY_SERVICE_URL
 - Service-specific: DEFAULT_ENCODING, MAX_DOCUMENT_SIZE, SUPPORTED_FORMATS
 """
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 

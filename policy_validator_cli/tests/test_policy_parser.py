@@ -24,22 +24,15 @@ class TestPolicyParser(unittest.TestCase):
         policy_data = {
             "policy_name": "Test Policy",
             "description": "A test policy",
-            "rules": [
-                {
-                    "key": "test_key",
-                    "required": True,
-                    "type": "string",
-                    "description": "A test key"
-                }
-            ]
+            "rules": [{"key": "test_key", "required": True, "type": "string", "description": "A test key"}],
         }
         policy_path = self.temp_path / "valid_policy.json"
-        with open(policy_path, 'w') as f:
+        with open(policy_path, "w") as f:
             json.dump(policy_data, f)
 
         # Load the policy
         loaded_policy = load_policy(policy_path)
-        
+
         # Verify the loaded policy matches the original
         self.assertEqual(loaded_policy["policy_name"], policy_data["policy_name"])
         self.assertEqual(loaded_policy["description"], policy_data["description"])
@@ -56,74 +49,52 @@ class TestPolicyParser(unittest.TestCase):
     def test_load_invalid_json(self):
         """Test loading a file with invalid JSON."""
         invalid_json_path = self.temp_path / "invalid.json"
-        with open(invalid_json_path, 'w') as f:
+        with open(invalid_json_path, "w") as f:
             f.write("{invalid json")
-        
+
         with self.assertRaises(PolicySchemaError):
             load_policy(invalid_json_path)
 
     def test_missing_required_keys(self):
         """Test loading a policy missing required top-level keys."""
         # Missing "rules" key
-        missing_rules = {
-            "policy_name": "Test Policy",
-            "description": "A test policy"
-        }
+        missing_rules = {"policy_name": "Test Policy", "description": "A test policy"}
         missing_rules_path = self.temp_path / "missing_rules.json"
-        with open(missing_rules_path, 'w') as f:
+        with open(missing_rules_path, "w") as f:
             json.dump(missing_rules, f)
-        
+
         with self.assertRaises(PolicySchemaError):
             load_policy(missing_rules_path)
-        
+
         # Missing "policy_name" key
-        missing_name = {
-            "description": "A test policy",
-            "rules": []
-        }
+        missing_name = {"description": "A test policy", "rules": []}
         missing_name_path = self.temp_path / "missing_name.json"
-        with open(missing_name_path, 'w') as f:
+        with open(missing_name_path, "w") as f:
             json.dump(missing_name, f)
-        
+
         with self.assertRaises(PolicySchemaError):
             load_policy(missing_name_path)
 
     def test_invalid_rule_structure(self):
         """Test loading a policy with invalid rule structure."""
         # Rule missing "key" field
-        missing_key = {
-            "policy_name": "Test Policy",
-            "rules": [
-                {
-                    "required": True,
-                    "type": "string"
-                }
-            ]
-        }
+        missing_key = {"policy_name": "Test Policy", "rules": [{"required": True, "type": "string"}]}
         missing_key_path = self.temp_path / "missing_key.json"
-        with open(missing_key_path, 'w') as f:
+        with open(missing_key_path, "w") as f:
             json.dump(missing_key, f)
-        
+
         with self.assertRaises(PolicySchemaError):
             load_policy(missing_key_path)
-        
+
         # Rule with invalid "type"
-        invalid_type = {
-            "policy_name": "Test Policy",
-            "rules": [
-                {
-                    "key": "test_key",
-                    "required": True,
-                    "type": "invalid_type"
-                }
-            ]
-        }
+        invalid_type = {"policy_name": "Test Policy", "rules": [{"key": "test_key", "required": True, "type": "invalid_type"}]}
         invalid_type_path = self.temp_path / "invalid_type.json"
-        with open(invalid_type_path, 'w') as f:
+        with open(invalid_type_path, "w") as f:
             json.dump(invalid_type, f)
-        
+
         with self.assertRaises(PolicySchemaError):
             load_policy(invalid_type_path)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

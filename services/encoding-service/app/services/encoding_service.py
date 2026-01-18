@@ -1,6 +1,7 @@
 """
 Encoding service business logic
 """
+
 import time
 from typing import Optional, Tuple, Dict, Any
 from sqlalchemy.orm import Session
@@ -25,17 +26,13 @@ class EncodingService:
     async def verify_api_key(api_key: str) -> Optional[Dict[str, Any]]:
         """
         Verify API key with Key Service
-        
+
         Returns:
             Key information if valid, None otherwise
         """
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{settings.KEY_SERVICE_URL}/api/v1/keys/verify",
-                    json={"key": api_key},
-                    timeout=5.0
-                )
+                response = await client.post(f"{settings.KEY_SERVICE_URL}/api/v1/keys/verify", json={"key": api_key}, timeout=5.0)
 
                 if response.status_code == 200:
                     data = response.json()
@@ -56,7 +53,7 @@ class EncodingService:
     ) -> Tuple[EncodedDocument, float]:
         """
         Sign a document with cryptographic signature
-        
+
         Returns:
             (EncodedDocument, processing_time_ms)
         """
@@ -73,12 +70,7 @@ class EncodingService:
             signature = sign_content(document_data.content, private_key_pem)
 
             # Create manifest
-            manifest = create_manifest(
-                document_id=document_id,
-                content_hash=content_hash,
-                signature=signature,
-                metadata=document_data.metadata or {}
-            )
+            manifest = create_manifest(document_id=document_id, content_hash=content_hash, signature=signature, metadata=document_data.metadata or {})
 
             # For now, encoded content is same as original
             # In production, this would use Unicode steganography
@@ -127,7 +119,7 @@ class EncodingService:
             # Log failed operation
             EncodingService._log_operation(
                 db=db,
-                document_id=document_id if 'document_id' in locals() else "unknown",
+                document_id=document_id if "document_id" in locals() else "unknown",
                 user_id=user_id,
                 operation_type="sign",
                 status="failed",
@@ -191,45 +183,35 @@ class EncodingService:
     @staticmethod
     def get_document(db: Session, document_id: str, user_id: str) -> Optional[EncodedDocument]:
         """Get a document by ID"""
-        return db.query(EncodedDocument).filter(
-            EncodedDocument.document_id == document_id,
-            EncodedDocument.user_id == user_id
-        ).first()
+        return db.query(EncodedDocument).filter(EncodedDocument.document_id == document_id, EncodedDocument.user_id == user_id).first()
 
     @staticmethod
     def get_user_documents(db: Session, user_id: str, limit: int = 100) -> list[EncodedDocument]:
         """Get all documents for a user"""
-        return db.query(EncodedDocument).filter(
-            EncodedDocument.user_id == user_id
-        ).order_by(EncodedDocument.created_at.desc()).limit(limit).all()
+        return db.query(EncodedDocument).filter(EncodedDocument.user_id == user_id).order_by(EncodedDocument.created_at.desc()).limit(limit).all()
 
     @staticmethod
     def get_operation_stats(db: Session, user_id: str) -> Dict[str, Any]:
         """Get operation statistics for a user"""
         # Total operations
-        total = db.query(SigningOperation).filter(
-            SigningOperation.user_id == user_id
-        ).count()
+        total = db.query(SigningOperation).filter(SigningOperation.user_id == user_id).count()
 
         # Successful operations
-        successful = db.query(SigningOperation).filter(
-            SigningOperation.user_id == user_id,
-            SigningOperation.status == "success"
-        ).count()
+        successful = db.query(SigningOperation).filter(SigningOperation.user_id == user_id, SigningOperation.status == "success").count()
 
         # Failed operations
         failed = total - successful
 
         # Average processing time
-        avg_time = db.query(func.avg(SigningOperation.processing_time_ms)).filter(
-            SigningOperation.user_id == user_id,
-            SigningOperation.status == "success"
-        ).scalar() or 0.0
+        avg_time = (
+            db.query(func.avg(SigningOperation.processing_time_ms))
+            .filter(SigningOperation.user_id == user_id, SigningOperation.status == "success")
+            .scalar()
+            or 0.0
+        )
 
         # Total content size
-        total_size = db.query(func.sum(SigningOperation.content_size_bytes)).filter(
-            SigningOperation.user_id == user_id
-        ).scalar() or 0
+        total_size = db.query(func.sum(SigningOperation.content_size_bytes)).filter(SigningOperation.user_id == user_id).scalar() or 0
 
         return {
             "total_operations": total,

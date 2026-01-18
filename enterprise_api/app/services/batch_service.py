@@ -1,6 +1,7 @@
 """
 Batch processing service for bulk signing and verification.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -10,7 +11,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, cast
 
 from fastapi import HTTPException, status
 from sqlalchemy import select
@@ -171,7 +172,7 @@ class BatchService:
         batch_request = BatchRequest(
             organization_id=organization_id,
             api_key_id=organization.get("api_key_id"),
-            request_type=request_type.value if hasattr(request_type, 'value') else str(request_type),
+            request_type=request_type.value if hasattr(request_type, "value") else str(request_type),
             mode=request.mode,
             segmentation_level=getattr(request, "segmentation_level", None),
             idempotency_key=request.idempotency_key,
@@ -183,7 +184,9 @@ class BatchService:
         )
         db.add(batch_request)
         await db.flush()
-        batch_request.started_at = datetime.now(timezone.utc)
+        batch_request_any = cast(Any, batch_request)
+        started_at_dt = datetime.now(timezone.utc)
+        batch_request_any.started_at = started_at_dt
 
         started_at = time.perf_counter()
         worker_results = await self._run_workers(request=request, organization=organization, request_type=request_type)
@@ -192,12 +195,12 @@ class BatchService:
         success_count = sum(1 for result in worker_results if result.state == "completed")
         failure_count = sum(1 for result in worker_results if result.state == "failed")
 
-        batch_request.success_count = success_count
-        batch_request.failure_count = failure_count
-        batch_request.completed_at = datetime.now(timezone.utc)
-        batch_request.status = (
-            "completed" if failure_count == 0 else "failed"
-        )
+        completed_at_dt = datetime.now(timezone.utc)
+        status_value = "completed" if failure_count == 0 else "failed"
+        batch_request_any.success_count = success_count
+        batch_request_any.failure_count = failure_count
+        batch_request_any.completed_at = completed_at_dt
+        batch_request_any.status = status_value
 
         await self._persist_results(db=db, batch_request=batch_request, results=worker_results)
         await db.commit()
@@ -207,10 +210,10 @@ class BatchService:
             success_count=success_count,
             failure_count=failure_count,
             mode=request.mode,
-            status=batch_request.status,
+            status=status_value,
             duration_ms=duration_ms,
-            started_at=batch_request.started_at.isoformat() if batch_request.started_at else None,
-            completed_at=batch_request.completed_at.isoformat() if batch_request.completed_at else None,
+            started_at=started_at_dt.isoformat(),
+            completed_at=completed_at_dt.isoformat(),
         )
 
         data = BatchResponseData(
@@ -250,11 +253,7 @@ class BatchService:
         batch_request: BatchRequest,
         correlation_id: str,
     ) -> BatchResponseEnvelope:
-        stmt = (
-            select(BatchItem)
-            .where(BatchItem.batch_request_id == batch_request.id)
-            .order_by(BatchItem.created_at)
-        )
+        stmt = select(BatchItem).where(BatchItem.batch_request_id == batch_request.id).order_by(BatchItem.created_at)
         items_result = await db.execute(stmt)
         items = list(items_result.scalars().all())
         worker_results = [self._from_batch_item(item) for item in items]
@@ -348,7 +347,7 @@ class BatchService:
             try:
                 if request_type == BatchRequestType.SIGN:
                     return await self._process_sign_item(
-                        request=request,
+                        request=cast(BatchSignRequest, request),
                         organization=organization,
                         item=item,
                         duration_start=start,
@@ -397,18 +396,18 @@ class BatchService:
                     document_id=item.document_id,
                     document_title=item.title or item.document_id,
                 )
-                response = await execute_signing(
+                sign_response = await execute_signing(
                     request=sign_request,
                     organization=organization,
                     db=worker_session,
                     document_id=item.document_id,
                 )
                 duration_ms = int((time.perf_counter() - duration_start) * 1000)
-                stats = {"total_sentences": response.total_sentences, "duration_ms": duration_ms}
+                stats = {"total_sentences": sign_response.total_sentences, "duration_ms": duration_ms}
                 return WorkerResult(
-                    document_id=response.document_id,
+                    document_id=sign_response.document_id,
                     state="completed",
-                    signed_text=response.signed_text,
+                    signed_text=sign_response.signed_text,
                     statistics=stats,
                     duration_ms=duration_ms,
                 )
@@ -419,18 +418,18 @@ class BatchService:
                 segmentation_level=request.segmentation_level or "sentence",
                 metadata=item.metadata,
             )
-            response = await encode_document_with_embeddings(
+            embed_response = await encode_document_with_embeddings(
                 request=embed_request,
                 organization=organization,
                 db=worker_session,
             )
             duration_ms = int((time.perf_counter() - duration_start) * 1000)
-            stats = dict(response.statistics or {})
+            stats = dict(embed_response.statistics or {})
             stats["duration_ms"] = duration_ms
             return WorkerResult(
-                document_id=response.document_id,
+                document_id=embed_response.document_id,
                 state="completed",
-                embedded_content=response.embedded_content,
+                embedded_content=embed_response.embedded_content,
                 statistics=stats,
                 duration_ms=duration_ms,
             )
@@ -526,17 +525,20 @@ class BatchService:
         )
 
     def _from_batch_item(self, item: BatchItem) -> WorkerResult:
-        payload = item.result_payload or {}
+        item_any = cast(Any, item)
+        payload = cast(Optional[Dict[str, Any]], item_any.result_payload) or {}
+        statistics = cast(Optional[Dict[str, Any]], item_any.statistics) or {}
+        duration_ms = int(item_any.duration_ms or statistics.get("duration_ms", 0))
         return WorkerResult(
-            document_id=item.document_id,
-            state=item.status,
+            document_id=cast(str, item_any.document_id or ""),
+            state=cast(str, item_any.status or ""),
             signed_text=payload.get("signed_text"),
             embedded_content=payload.get("embedded_content"),
             verdict_payload=payload.get("verdict"),
-            error_code=item.error_code,
-            error_message=item.error_message,
-            statistics=item.statistics or {},
-            duration_ms=item.duration_ms or (item.statistics or {}).get("duration_ms", 0),
+            error_code=cast(Optional[str], item_any.error_code),
+            error_message=cast(Optional[str], item_any.error_message),
+            statistics=statistics,
+            duration_ms=duration_ms,
         )
 
 

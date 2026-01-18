@@ -1,4 +1,5 @@
 """API endpoints for Billing Service v1"""
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -27,6 +28,7 @@ router = APIRouter()
 # Request/Response models for Stripe endpoints
 class CheckoutRequest(BaseModel):
     """Request to create a checkout session"""
+
     tier: TierName
     billing_cycle: str  # "monthly" or "annual"
     success_url: Optional[str] = None
@@ -35,12 +37,14 @@ class CheckoutRequest(BaseModel):
 
 class CheckoutResponse(BaseModel):
     """Response with checkout session URL"""
+
     checkout_url: str
     session_id: str
 
 
 class PortalResponse(BaseModel):
     """Response with billing portal URL"""
+
     portal_url: str
 
 
@@ -48,10 +52,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     """Verify user token with auth service"""
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
-                headers={"Authorization": authorization}
-            )
+            response = await client.post(f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify", headers={"Authorization": authorization})
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=status.HTTP_401_UNAUTHORIZED,
@@ -152,6 +153,7 @@ async def health_check():
 # Stripe Integration Endpoints
 # =========================================================================
 
+
 @router.post("/checkout", response_model=CheckoutResponse)
 async def create_checkout_session(
     request: CheckoutRequest,
@@ -159,23 +161,19 @@ async def create_checkout_session(
 ):
     """
     Create a Stripe Checkout session for subscription upgrade.
-    
+
     Returns a URL to redirect the user to Stripe's hosted checkout page.
     """
     # Validate tier
     if request.tier in [TierName.STARTER, TierName.ENTERPRISE, TierName.STRATEGIC_PARTNER]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Cannot checkout for {request.tier.value} tier. Use contact sales for Enterprise."
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Cannot checkout for {request.tier.value} tier. Use contact sales for Enterprise."
         )
 
     # Get Stripe price ID
     price_id = get_stripe_price_id(request.tier.value, request.billing_cycle)
     if not price_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Price not configured for {request.tier.value} {request.billing_cycle}"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Price not configured for {request.tier.value} {request.billing_cycle}")
 
     try:
         # Get or create Stripe customer
@@ -205,10 +203,7 @@ async def create_checkout_session(
         )
 
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create checkout session: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create checkout session: {str(e)}")
 
 
 @router.get("/portal", response_model=PortalResponse)
@@ -218,7 +213,7 @@ async def get_billing_portal(
 ):
     """
     Get a URL to the Stripe Billing Portal.
-    
+
     The portal allows customers to:
     - Update payment methods
     - View invoices
@@ -246,10 +241,7 @@ async def get_billing_portal(
         return PortalResponse(portal_url=session.url)
 
     except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create billing portal session: {str(e)}"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create billing portal session: {str(e)}")
 
 
 @router.post("/upgrade", response_model=UpgradeResponse)
@@ -260,7 +252,7 @@ async def upgrade_subscription(
 ):
     """
     Upgrade to a higher tier.
-    
+
     For paid tiers, returns a Stripe checkout URL.
     For downgrades or free tier, processes immediately.
     """
@@ -330,6 +322,7 @@ async def upgrade_subscription(
 # Usage Statistics
 # =========================================================================
 
+
 @router.get("/usage")
 async def get_usage_stats(
     db: Session = Depends(get_db),
@@ -337,7 +330,7 @@ async def get_usage_stats(
 ):
     """
     Get current period usage statistics.
-    
+
     Returns usage metrics for the current billing period including:
     - API calls
     - Documents signed
@@ -413,6 +406,7 @@ async def get_usage_stats(
 # Coalition Revenue
 # =========================================================================
 
+
 @router.get("/coalition")
 async def get_coalition_earnings(
     db: Session = Depends(get_db),
@@ -420,7 +414,7 @@ async def get_coalition_earnings(
 ):
     """
     Get coalition earnings summary for the current user/organization.
-    
+
     Returns:
     - Coalition membership status
     - Revenue share percentages
@@ -459,11 +453,12 @@ async def get_coalition_earnings(
 # Plans & Pricing Info
 # =========================================================================
 
+
 @router.get("/plans", response_model=List[PlanInfo])
 async def get_available_plans():
     """
     Get all available subscription plans.
-    
+
     Returns pricing, features, and limits for each tier.
     """
     # Import pricing info
@@ -474,17 +469,19 @@ async def get_available_plans():
         if tier_id == "strategic_partner":
             continue  # Don't show invite-only tier
 
-        plans.append(PlanInfo(
-            id=tier_id,
-            name=tier["name"],
-            tier=TierName(tier_id) if tier_id in TierName.__members__.values() else TierName.STARTER,
-            price_monthly=tier["price_monthly"],
-            price_annual=tier["price_annual"],
-            features=tier["features"],
-            limits=tier["limits"],
-            coalition_rev_share=tier["coalition_rev_share"],
-            enterprise=tier_id == "enterprise",  # Mark enterprise for custom pricing
-            popular=tier_id == "professional",  # Professional is the recommended tier
-        ))
+        plans.append(
+            PlanInfo(
+                id=tier_id,
+                name=tier["name"],
+                tier=TierName(tier_id) if tier_id in TierName.__members__.values() else TierName.STARTER,
+                price_monthly=tier["price_monthly"],
+                price_annual=tier["price_annual"],
+                features=tier["features"],
+                limits=tier["limits"],
+                coalition_rev_share=tier["coalition_rev_share"],
+                enterprise=tier_id == "enterprise",  # Mark enterprise for custom pricing
+                popular=tier_id == "professional",  # Professional is the recommended tier
+            )
+        )
 
     return plans

@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from app.dependencies import require_super_admin
 from app.main import app, docs_landing, public_openapi
 
+
 @pytest.mark.asyncio
 async def test_docs_landing_page_is_branded_with_swagger() -> None:
     resp = await docs_landing()

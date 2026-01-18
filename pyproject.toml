@@ -15,6 +15,7 @@ dependencies = [
     "wikiextractor>=3.0.6",
     "pywin32>=310 ; sys_platform == 'win32'",
     "comtypes>=1.4.11 ; sys_platform == 'win32'",
+    "pypdf>=6.6.0",
 ]
 
 [tool.uv]
@@ -37,5 +38,6 @@ markers = [
 
 [dependency-groups]
 dev = [
+    "mypy>=1.19.1",
     "rich>=14.2.0",
 ]

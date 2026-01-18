@@ -1,4 +1,5 @@
 """Cryptographic verification operations"""
+
 import hashlib
 from typing import Tuple
 from cryptography.hazmat.primitives import serialization
@@ -7,7 +8,7 @@ from cryptography.hazmat.primitives import serialization
 def verify_signature(content: str, signature_hex: str, public_key_pem: str) -> Tuple[bool, str]:
     """
     Verify Ed25519 signature
-    
+
     Returns:
         (is_valid, error_message)
     """
@@ -29,7 +30,7 @@ def verify_content_hash(content: str, expected_hash: str) -> bool:
 def check_tampering(original_content: str, current_content: str) -> Tuple[bool, float]:
     """
     Check if content has been tampered with
-    
+
     Returns:
         (is_tampered, similarity_score)
     """

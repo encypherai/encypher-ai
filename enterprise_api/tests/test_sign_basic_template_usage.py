@@ -96,7 +96,6 @@ async def test_sign_basic_applies_builtin_template_assertions() -> None:
     called_assertions = mock_embed.call_args.kwargs.get("custom_assertions")
     assert called_assertions is not None
     assert any(
-        assertion.get("label") == "c2pa.training-mining.v1"
-        and assertion.get("data", {}).get("use", {}).get("ai_training") is False
+        assertion.get("label") == "c2pa.training-mining.v1" and assertion.get("data", {}).get("use", {}).get("ai_training") is False
         for assertion in called_assertions
     )

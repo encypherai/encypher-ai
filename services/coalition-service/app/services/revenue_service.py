@@ -1,6 +1,7 @@
 """
 Revenue Distribution Service
 """
+
 import uuid
 from datetime import datetime, date
 from typing import Optional, List, Dict
@@ -58,9 +59,7 @@ class RevenueService:
             RevenueDistribution record
         """
         # Get agreement
-        agreement = db.query(LicensingAgreement).filter(
-            LicensingAgreement.id == agreement_id
-        ).first()
+        agreement = db.query(LicensingAgreement).filter(LicensingAgreement.id == agreement_id).first()
 
         if not agreement:
             raise ValueError(f"Agreement {agreement_id} not found")
@@ -69,9 +68,7 @@ class RevenueService:
             raise ValueError(f"Agreement {agreement_id} is not active")
 
         # Calculate total revenue for this period
-        total_revenue = RevenueService._calculate_period_revenue(
-            agreement, period_start, period_end
-        )
+        total_revenue = RevenueService._calculate_period_revenue(agreement, period_start, period_end)
 
         # Get revenue split
         split = RevenueService.get_revenue_split(db)
@@ -79,13 +76,17 @@ class RevenueService:
         member_pool = total_revenue * Decimal(split["members"]) / Decimal(100)
 
         # Get content access in this period
-        access_logs = db.query(ContentAccessLog).filter(
-            and_(
-                ContentAccessLog.agreement_id == agreement_id,
-                ContentAccessLog.accessed_at >= period_start,
-                ContentAccessLog.accessed_at < period_end,
+        access_logs = (
+            db.query(ContentAccessLog)
+            .filter(
+                and_(
+                    ContentAccessLog.agreement_id == agreement_id,
+                    ContentAccessLog.accessed_at >= period_start,
+                    ContentAccessLog.accessed_at < period_end,
+                )
             )
-        ).all()
+            .all()
+        )
 
         # Count unique content and total accesses
         unique_content = set()
@@ -170,11 +171,7 @@ class RevenueService:
             return Decimal("0")
 
         # Pro-rate the revenue
-        period_revenue = (
-            Decimal(str(agreement.total_value))
-            * Decimal(days_in_period)
-            / Decimal(days_in_agreement)
-        )
+        period_revenue = Decimal(str(agreement.total_value)) * Decimal(days_in_period) / Decimal(days_in_agreement)
 
         return period_revenue.quantize(Decimal("0.01"))
 
@@ -211,9 +208,7 @@ class RevenueService:
         # Create member revenue records
         for member_id, access_count in member_access_count.items():
             contribution_pct = Decimal(access_count) / Decimal(total_accesses) * Decimal(100)
-            revenue_amount = (
-                distribution.member_pool * Decimal(access_count) / Decimal(total_accesses)
-            )
+            revenue_amount = distribution.member_pool * Decimal(access_count) / Decimal(total_accesses)
 
             member_rev = MemberRevenue(
                 id=uuid.uuid4(),
@@ -258,9 +253,7 @@ class RevenueService:
         # Get unique members from content
         members = set()
         for content_id in content_ids:
-            content = db.query(CoalitionContent).filter(
-                CoalitionContent.id == content_id
-            ).first()
+            content = db.query(CoalitionContent).filter(CoalitionContent.id == content_id).first()
             if content:
                 members.add(content.member_id)
 
@@ -274,13 +267,16 @@ class RevenueService:
         for member_id in members:
             # Count this member's content
             member_content = [
-                cid for cid in content_ids
-                if db.query(CoalitionContent).filter(
+                cid
+                for cid in content_ids
+                if db.query(CoalitionContent)
+                .filter(
                     and_(
                         CoalitionContent.id == cid,
                         CoalitionContent.member_id == member_id,
                     )
-                ).first()
+                )
+                .first()
             ]
 
             member_rev = MemberRevenue(
@@ -323,9 +319,7 @@ class RevenueService:
         member_content_count = {}
 
         for log in access_logs:
-            content = db.query(CoalitionContent).filter(
-                CoalitionContent.id == log.content_id
-            ).first()
+            content = db.query(CoalitionContent).filter(CoalitionContent.id == log.content_id).first()
 
             if not content:
                 continue
@@ -377,9 +371,7 @@ class RevenueService:
         """
         Mark a distribution as paid and update member revenue records
         """
-        distribution = db.query(RevenueDistribution).filter(
-            RevenueDistribution.id == distribution_id
-        ).first()
+        distribution = db.query(RevenueDistribution).filter(RevenueDistribution.id == distribution_id).first()
 
         if not distribution:
             return False
@@ -392,9 +384,7 @@ class RevenueService:
             return True
 
         # Get member revenues
-        member_revenues = db.query(MemberRevenue).filter(
-            MemberRevenue.distribution_id == distribution_id
-        ).all()
+        member_revenues = db.query(MemberRevenue).filter(MemberRevenue.distribution_id == distribution_id).all()
 
         # Mark each as paid
         for member_rev in member_revenues:
@@ -436,20 +426,14 @@ class RevenueService:
         """
         Get total earnings for a member
         """
-        result = db.query(
-            func.sum(
-                func.case(
-                    (MemberRevenue.status == "paid", MemberRevenue.revenue_amount),
-                    else_=0
-                )
-            ).label("paid"),
-            func.sum(
-                func.case(
-                    (MemberRevenue.status == "pending", MemberRevenue.revenue_amount),
-                    else_=0
-                )
-            ).label("pending"),
-        ).filter(MemberRevenue.member_id == member_id).first()
+        result = (
+            db.query(
+                func.sum(func.case((MemberRevenue.status == "paid", MemberRevenue.revenue_amount), else_=0)).label("paid"),
+                func.sum(func.case((MemberRevenue.status == "pending", MemberRevenue.revenue_amount), else_=0)).label("pending"),
+            )
+            .filter(MemberRevenue.member_id == member_id)
+            .first()
+        )
 
         return {
             "paid": Decimal(str(result.paid or 0)),

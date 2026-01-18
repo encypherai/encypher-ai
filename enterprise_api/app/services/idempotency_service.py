@@ -1,11 +1,12 @@
 """
 Redis-backed idempotency helper for batch endpoints.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
-from typing import Optional
+from typing import Any, Optional, cast
 
 import redis.asyncio as redis
 
@@ -38,7 +39,7 @@ class IdempotencyService:
                     encoding="utf-8",
                     decode_responses=True,
                 )
-                await self._redis.ping()
+                await cast(Any, self._redis.ping())
                 logger.info("Idempotency Redis connection established")
             except Exception as exc:  # pragma: no cover - network failures
                 logger.warning("Redis unavailable for idempotency: %s", exc)
@@ -71,11 +72,11 @@ class IdempotencyService:
         key = self._key(scope, idem_key)
         ttl = ttl_seconds or self.default_ttl_seconds
         try:
-            added = await client.set(key, payload_hash, nx=True, ex=ttl)
+            added = cast(Optional[bool], await client.set(key, payload_hash, nx=True, ex=ttl))
             if added:
                 return True
 
-            existing = await client.get(key)
+            existing = cast(Optional[str], await client.get(key))
             return existing == payload_hash
         except Exception as exc:  # pragma: no cover - redis failures
             logger.warning("Failed to register idempotency key %s: %s", key, exc)
@@ -88,7 +89,7 @@ class IdempotencyService:
         if not client:
             return None
         try:
-            return await client.get(self._key(scope, idem_key))
+            return cast(Optional[str], await client.get(self._key(scope, idem_key)))
         except Exception:  # pragma: no cover
             return None
 
@@ -105,4 +106,3 @@ class IdempotencyService:
 
 
 idempotency_service = IdempotencyService()
-

@@ -2,9 +2,10 @@
 Client for communicating with the Key Service.
 Handles API key validation and caching.
 """
+
 import json
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
 
 import httpx
 import redis.asyncio as redis
@@ -17,7 +18,7 @@ logger = logging.getLogger(__name__)
 class KeyServiceClient:
     """
     Client for the Key Service with Redis caching.
-    
+
     Validates API keys against the Key Service and caches the result
     in Redis to avoid excessive HTTP calls.
     """
@@ -38,12 +39,13 @@ class KeyServiceClient:
         """Get Redis client, initializing if needed."""
         if self.redis_client:
             return self.redis_client
-        
+
         # Import here to avoid circular deps if any
         from app.services.session_service import session_service
+
         if session_service.redis_client:
             return session_service.redis_client
-            
+
         return None
 
     def _cache_key(self, api_key: str) -> str:
@@ -73,7 +75,7 @@ class KeyServiceClient:
             None if invalid/error
         """
         redis_conn = await self._get_redis()
-        
+
         # 1. Check Cache
         if redis_conn:
             try:
@@ -81,43 +83,35 @@ class KeyServiceClient:
                 if cached:
                     # Reset TTL on cache hit (sliding window)
                     await redis_conn.expire(self._cache_key(api_key), self.cache_ttl)
-                    return json.loads(cached)
+                    return cast(Dict[str, Any], json.loads(cached))
             except Exception as e:
                 logger.warning(f"Redis cache read error: {e}")
 
         # 2. Call Key Service /validate endpoint (unified auth)
         try:
             async with httpx.AsyncClient() as client:
-                response = await client.post(
-                    f"{self.base_url}/api/v1/keys/validate",
-                    json={"key": api_key},
-                    timeout=5.0
-                )
-                
+                response = await client.post(f"{self.base_url}/api/v1/keys/validate", json={"key": api_key}, timeout=5.0)
+
                 if response.status_code == 200:
-                    data = response.json()
+                    data = cast(Dict[str, Any], response.json())
                     if data.get("success") and data.get("data"):
-                        org_context = data["data"]
-                        
+                        org_context = cast(Dict[str, Any], data["data"])
+
                         # 3. Update Cache
                         if redis_conn and org_context:
                             try:
-                                await redis_conn.setex(
-                                    self._cache_key(api_key),
-                                    self.cache_ttl,
-                                    json.dumps(org_context)
-                                )
+                                await redis_conn.setex(self._cache_key(api_key), self.cache_ttl, json.dumps(org_context))
                             except Exception as e:
                                 logger.warning(f"Redis cache write error: {e}")
-                        
+
                         return org_context
-                        
+
         except httpx.ConnectError:
             logger.warning("Key Service unavailable, falling back to demo mode")
             # Fall through to return None - dependencies.py handles demo fallback
         except Exception as e:
             logger.error(f"Key Service call failed: {e}")
-            
+
         return None
 
 

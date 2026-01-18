@@ -7,7 +7,14 @@ from typing import Optional, List
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
-from ..db.models import Organization, OrganizationMember, OrganizationInvitation, OrganizationAuditLog, User
+from ..db.models import (
+    Organization,
+    OrganizationMember,
+    OrganizationInvitation,
+    OrganizationAuditLog,
+    OrganizationDomainClaim,
+    User,
+)
 import secrets
 import re
 
@@ -22,6 +29,27 @@ ROLE_CAN_MANAGE_BILLING = {"owner", "admin"}
 ROLE_CAN_MANAGE_SETTINGS = {"owner", "admin"}
 ROLE_CAN_CREATE_API_KEYS = {"owner", "admin", "manager"}
 
+COMMON_EMAIL_DOMAINS = {
+    "gmail.com",
+    "yahoo.com",
+    "outlook.com",
+    "hotmail.com",
+    "icloud.com",
+    "aol.com",
+    "proton.me",
+    "protonmail.com",
+    "live.com",
+}
+
+DOMAIN_LIMITS_BY_TIER = {
+    "starter": 1,
+    "professional": 1,
+    "business": 3,
+    "enterprise": 10,
+}
+
+DOMAIN_REGEX = re.compile(r"^[a-z0-9.-]+\.[a-z]{2,}$")
+
 
 def generate_slug(name: str) -> str:
     """Generate a URL-safe slug from organization name"""
@@ -29,6 +57,18 @@ def generate_slug(name: str) -> str:
     slug = re.sub(r"[\s_]+", "-", slug)
     slug = re.sub(r"-+", "-", slug).strip("-")
     return slug[:100]
+
+
+def normalize_domain(domain: str) -> str:
+    """Normalize a domain for storage and comparison."""
+    cleaned = domain.strip().lower()
+    if cleaned.startswith("http://"):
+        cleaned = cleaned[7:]
+    if cleaned.startswith("https://"):
+        cleaned = cleaned[8:]
+    if cleaned.startswith("@"):
+        cleaned = cleaned[1:]
+    return cleaned.split("/")[0]
 
 
 class OrganizationService:
@@ -239,6 +279,205 @@ class OrganizationService:
             "available": -1 if max_seats == -1 else max(0, max_seats - used),
             "unlimited": max_seats == -1,
         }
+
+    # ==========================================
+    # DOMAIN CLAIMS
+    # ==========================================
+
+    def list_domain_claims(self, org_id: str, user_id: str) -> List[OrganizationDomainClaim]:
+        """List domain claims for an organization"""
+        if not self.can_user_access_org(org_id, user_id):
+            raise PermissionError("You don't have permission to view domain claims")
+
+        return (
+            self.db.query(OrganizationDomainClaim)
+            .filter(OrganizationDomainClaim.organization_id == org_id)
+            .order_by(OrganizationDomainClaim.created_at.desc())
+            .all()
+        )
+
+    def get_domain_claim(self, org_id: str, claim_id: str) -> Optional[OrganizationDomainClaim]:
+        """Fetch a specific domain claim for an organization."""
+        return (
+            self.db.query(OrganizationDomainClaim)
+            .filter(
+                OrganizationDomainClaim.id == claim_id,
+                OrganizationDomainClaim.organization_id == org_id,
+            )
+            .first()
+        )
+
+    def create_domain_claim(
+        self,
+        org_id: str,
+        domain: str,
+        verification_email: str,
+        actor_user_id: str,
+    ) -> OrganizationDomainClaim:
+        """Create a domain claim for verification."""
+        if not self._has_permission(org_id, actor_user_id, ROLE_CAN_MANAGE_SETTINGS):
+            raise PermissionError("You don't have permission to manage domain claims")
+
+        org = self.get_organization(org_id)
+        if not org:
+            raise ValueError("Organization not found")
+
+        normalized_domain = normalize_domain(domain)
+        if not DOMAIN_REGEX.match(normalized_domain):
+            raise ValueError("Invalid domain format")
+        if normalized_domain in COMMON_EMAIL_DOMAINS:
+            raise ValueError("Common email domains cannot be claimed")
+
+        email_domain = normalize_domain(verification_email.split("@")[-1]) if "@" in verification_email else ""
+        if email_domain != normalized_domain:
+            raise ValueError("Verification email must match the domain being claimed")
+
+        limit = DOMAIN_LIMITS_BY_TIER.get(org.tier, 1)
+        active_claims = (
+            self.db.query(OrganizationDomainClaim)
+            .filter(
+                OrganizationDomainClaim.organization_id == org_id,
+                OrganizationDomainClaim.status.in_(["pending", "verified"]),
+            )
+            .count()
+        )
+        if active_claims >= limit:
+            raise ValueError("Domain claim limit reached for this organization tier")
+
+        existing_domain = (
+            self.db.query(OrganizationDomainClaim)
+            .filter(
+                OrganizationDomainClaim.domain == normalized_domain,
+                OrganizationDomainClaim.status.in_(["pending", "verified"]),
+            )
+            .first()
+        )
+        if existing_domain and existing_domain.organization_id != org_id:
+            raise ValueError("Domain is already claimed by another organization")
+
+        dns_token = secrets.token_urlsafe(24)
+        email_token = secrets.token_urlsafe(24)
+
+        claim = OrganizationDomainClaim(
+            organization_id=org_id,
+            domain=normalized_domain,
+            verification_email=verification_email.lower(),
+            dns_token=dns_token,
+            email_token=email_token,
+            created_by=actor_user_id,
+            status="pending",
+        )
+        self.db.add(claim)
+
+        self._log_action(
+            org_id,
+            actor_user_id,
+            "domain_claim.created",
+            "domain_claim",
+            claim.id,
+            {"domain": normalized_domain, "verification_email": verification_email},
+        )
+
+        self.db.commit()
+        return claim
+
+    def verify_domain_email(self, token: str) -> OrganizationDomainClaim:
+        """Verify a domain claim via email token."""
+        claim = (
+            self.db.query(OrganizationDomainClaim)
+            .filter(OrganizationDomainClaim.email_token == token)
+            .first()
+        )
+        if not claim:
+            raise ValueError("Domain claim not found")
+
+        if claim.status == "rejected":
+            raise ValueError("Domain claim has been rejected")
+
+        claim.email_verified_at = datetime.utcnow()
+        self._refresh_domain_claim_status(claim)
+        self.db.commit()
+        return claim
+
+    def verify_domain_dns(self, org_id: str, claim_id: str, actor_user_id: str, txt_records: List[str]) -> OrganizationDomainClaim:
+        """Verify a domain claim via DNS TXT lookup."""
+        if not self._has_permission(org_id, actor_user_id, ROLE_CAN_MANAGE_SETTINGS):
+            raise PermissionError("You don't have permission to verify domain claims")
+
+        claim = self.get_domain_claim(org_id, claim_id)
+        if not claim:
+            raise ValueError("Domain claim not found")
+
+        if claim.status == "rejected":
+            raise ValueError("Domain claim has been rejected")
+
+        expected_marker = f"encypher-domain-claim={claim.dns_token}"
+        if not any(expected_marker in record for record in txt_records):
+            raise ValueError("DNS verification record not found")
+
+        claim.dns_verified_at = datetime.utcnow()
+        self._refresh_domain_claim_status(claim)
+        self.db.commit()
+        return claim
+
+    def set_domain_auto_join(
+        self,
+        org_id: str,
+        claim_id: str,
+        actor_user_id: str,
+        enabled: bool,
+    ) -> OrganizationDomainClaim:
+        """Enable/disable auto-join for a verified domain claim."""
+        if not self._has_permission(org_id, actor_user_id, ROLE_CAN_MANAGE_SETTINGS):
+            raise PermissionError("You don't have permission to manage domain claims")
+
+        claim = (
+            self.db.query(OrganizationDomainClaim)
+            .filter(
+                OrganizationDomainClaim.id == claim_id,
+                OrganizationDomainClaim.organization_id == org_id,
+            )
+            .first()
+        )
+        if not claim:
+            raise ValueError("Domain claim not found")
+
+        if claim.status != "verified":
+            raise ValueError("Domain must be verified before enabling auto-join")
+
+        claim.auto_join_enabled = enabled
+        self._log_action(
+            org_id,
+            actor_user_id,
+            "domain_claim.auto_join_updated",
+            "domain_claim",
+            claim.id,
+            {"auto_join_enabled": enabled},
+        )
+        self.db.commit()
+        return claim
+
+    def get_auto_join_org_for_email(self, email: str) -> Optional[str]:
+        """Return org_id for a verified domain with auto-join enabled."""
+        if "@" not in email:
+            return None
+        domain = normalize_domain(email.split("@")[-1])
+        claim = (
+            self.db.query(OrganizationDomainClaim)
+            .filter(
+                OrganizationDomainClaim.domain == domain,
+                OrganizationDomainClaim.status == "verified",
+                OrganizationDomainClaim.auto_join_enabled == True,
+            )
+            .first()
+        )
+        return claim.organization_id if claim else None
+
+    def _refresh_domain_claim_status(self, claim: OrganizationDomainClaim) -> None:
+        if claim.dns_verified_at and claim.email_verified_at:
+            claim.status = "verified"
+            if not claim.verified_at:
+                claim.verified_at = datetime.utcnow()
 
     # ==========================================
     # INVITATIONS

@@ -1,6 +1,7 @@
 """
 SQLAlchemy database models for Encoding Service
 """
+
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -16,6 +17,7 @@ def generate_uuid():
 
 class EncodedDocument(Base):
     """Encoded document model"""
+
     __tablename__ = "encoded_documents"
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -53,6 +55,7 @@ class EncodedDocument(Base):
 
 class SigningOperation(Base):
     """Signing operation audit log"""
+
     __tablename__ = "signing_operations"
 
     id = Column(String, primary_key=True, default=generate_uuid)

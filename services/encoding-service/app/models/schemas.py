@@ -1,6 +1,7 @@
 """
 Pydantic schemas for Encoding Service
 """
+
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any
 from datetime import datetime
@@ -9,6 +10,7 @@ from datetime import datetime
 # Document Schemas
 class DocumentSign(BaseModel):
     """Schema for signing a document"""
+
     content: str = Field(..., min_length=1)
     metadata: Optional[Dict[str, Any]] = None
     format: str = Field(default="text", pattern="^(text|json|markdown)$")
@@ -17,6 +19,7 @@ class DocumentSign(BaseModel):
 
 class DocumentEmbed(BaseModel):
     """Schema for embedding metadata"""
+
     content: str = Field(..., min_length=1)
     metadata: Dict[str, Any] = Field(..., min_length=1)
     format: str = Field(default="text", pattern="^(text|json|markdown)$")
@@ -24,6 +27,7 @@ class DocumentEmbed(BaseModel):
 
 class SignedDocumentResponse(BaseModel):
     """Schema for signed document response"""
+
     document_id: str
     encoded_content: str
     signature: str
@@ -37,6 +41,7 @@ class SignedDocumentResponse(BaseModel):
 
 class DocumentInfo(BaseModel):
     """Schema for document information"""
+
     id: str
     document_id: str
     content_hash: str
@@ -54,6 +59,7 @@ class DocumentInfo(BaseModel):
 
 class ManifestResponse(BaseModel):
     """Schema for manifest response"""
+
     manifest_id: str
     version: str
     content_hash: str
@@ -66,6 +72,7 @@ class ManifestResponse(BaseModel):
 # Operation Schemas
 class OperationStats(BaseModel):
     """Schema for operation statistics"""
+
     total_operations: int
     successful_operations: int
     failed_operations: int
@@ -76,9 +83,11 @@ class OperationStats(BaseModel):
 # Response Schemas
 class MessageResponse(BaseModel):
     """Generic message response"""
+
     message: str
 
 
 class ErrorResponse(BaseModel):
     """Error response schema"""
+
     detail: str

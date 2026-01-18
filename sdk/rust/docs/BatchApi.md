@@ -41,7 +41,7 @@ Name | Type | Description  | Required | Notes
 
 ## batch_verify_api_v1_batch_verify_post
 
-> models::BatchResponseEnvelope batch_verify_api_v1_batch_verify_post(batch_verify_request)
+> models::BatchResponseEnvelope batch_verify_api_v1_batch_verify_post(app_schemas_batch_batch_verify_request)
 Batch Verify
 
 Verify multiple documents in a single request.
@@ -51,7 +51,7 @@ Verify multiple documents in a single request.
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**batch_verify_request** | [**BatchVerifyRequest**](BatchVerifyRequest.md) |  | [required] |
+**app_schemas_batch_batch_verify_request** | [**AppSchemasBatchBatchVerifyRequest**](AppSchemasBatchBatchVerifyRequest.md) |  | [required] |
 
 ### Return type
 

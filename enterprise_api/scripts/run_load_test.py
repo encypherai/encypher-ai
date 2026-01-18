@@ -15,9 +15,10 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 sys.path.insert(0, root_dir)
 
+
 def main():
     print("Starting Load Test Script (Fixed Sync Init)...")
-    
+
     # 1. Check Docker
     try:
         docker_client = docker.from_env()
@@ -44,14 +45,10 @@ def main():
         container = docker_client.containers.run(
             "postgres:15-alpine",
             name="encypher_load_test_db",
-            environment={
-                "POSTGRES_USER": "encypher",
-                "POSTGRES_PASSWORD": "password",
-                "POSTGRES_DB": "encypher_test"
-            },
-            ports={'5432/tcp': 54322},
+            environment={"POSTGRES_USER": "encypher", "POSTGRES_PASSWORD": "password", "POSTGRES_DB": "encypher_test"},
+            ports={"5432/tcp": 54322},
             detach=True,
-            remove=False # Keep container for debugging if test fails
+            remove=False,  # Keep container for debugging if test fails
         )
         print(f"Container started with ID: {container.short_id}")
     except Exception as e:
@@ -77,11 +74,11 @@ def main():
                     break
             except (socket.timeout, ConnectionRefusedError):
                 time.sleep(1)
-        
+
         if not connected:
             print("DB port timeout. Container logs:")
             try:
-                print(container.logs().decode('utf-8'))
+                print(container.logs().decode("utf-8"))
             except:
                 pass
             raise Exception("DB port timeout")
@@ -92,24 +89,18 @@ def main():
         connected = False
         while time.time() - start_time < 30:
             try:
-                conn = psycopg2.connect(
-                    user="encypher",
-                    password="password",
-                    host=db_host,
-                    port=db_port,
-                    database="encypher_test"
-                )
+                conn = psycopg2.connect(user="encypher", password="password", host=db_host, port=db_port, database="encypher_test")
                 conn.close()
                 print("DB Ready!")
                 connected = True
                 break
             except Exception:
                 time.sleep(1)
-        
+
         if not connected:
             print("DB connection timeout. Container logs:")
             try:
-                print(container.logs().decode('utf-8'))
+                print(container.logs().decode("utf-8"))
             except:
                 pass
             raise Exception("DB connection timeout")
@@ -117,24 +108,18 @@ def main():
         # 3. Init DB (Sync using psycopg2)
         print("Initializing DB schema...")
         try:
-            conn = psycopg2.connect(
-                user="encypher",
-                password="password",
-                host=db_host,
-                port=db_port,
-                database="encypher_test"
-            )
+            conn = psycopg2.connect(user="encypher", password="password", host=db_host, port=db_port, database="encypher_test")
             conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
             cur = conn.cursor()
-            
+
             sql_path = os.path.join(root_dir, "scripts", "init_db.sql")
             if not os.path.exists(sql_path):
-                 raise FileNotFoundError(f"SQL file not found at {sql_path}")
+                raise FileNotFoundError(f"SQL file not found at {sql_path}")
 
             with open(sql_path, "r") as f:
                 schema_sql = f.read()
                 # Execute statements one by one
-                for statement in schema_sql.split(';'):
+                for statement in schema_sql.split(";"):
                     if statement.strip():
                         try:
                             cur.execute(statement)
@@ -142,14 +127,14 @@ def main():
                             print(f"Error executing statement: {statement[:50]}...")
                             print(f"Error: {sql_err}")
                             raise
-            
+
             # Seed test data
             print("Seeding test data...")
             seed_path = os.path.join(root_dir, "scripts", "seed_load_test_data.sql")
             if os.path.exists(seed_path):
                 with open(seed_path, "r") as f:
                     seed_sql = f.read()
-                    for statement in seed_sql.split(';'):
+                    for statement in seed_sql.split(";"):
                         if statement.strip():
                             try:
                                 cur.execute(statement)
@@ -166,7 +151,7 @@ def main():
         except Exception as e:
             print(f"Schema init failed: {e}")
             try:
-                print(container.logs().decode('utf-8'))
+                print(container.logs().decode("utf-8"))
             except:
                 pass
             raise
@@ -177,25 +162,20 @@ def main():
         # Pass unmodified URL if app replaces it, or modify here.
         # App replaces postgresql:// -> postgresql+asyncpg://
         # We pass postgresql://
-        env["DATABASE_URL"] = async_db_url.replace("+asyncpg", "") 
+        env["DATABASE_URL"] = async_db_url.replace("+asyncpg", "")
         env["KEY_ENCRYPTION_KEY"] = "00" * 32
         env["ENCRYPTION_NONCE"] = "00" * 12
         env["SSL_COM_API_KEY"] = "test_key"
         env["DEMO_API_KEY"] = "demo-key-load-test"
         env["PORT"] = str(server_port)
         # env["ENVIRONMENT"] = "production"
-        
+
         script_path = os.path.join(root_dir, "tests", "load", "run_server.py")
-        
+
         # Open a log file for the server
         server_log_file = open("server_load_test.log", "w")
-        
-        proc = subprocess.Popen(
-            [sys.executable, script_path],
-            env=env,
-            stdout=server_log_file,
-            stderr=server_log_file
-        )
+
+        proc = subprocess.Popen([sys.executable, script_path], env=env, stdout=server_log_file, stderr=server_log_file)
 
         try:
             # Wait for server
@@ -210,7 +190,7 @@ def main():
                     break
                 except (httpx.ConnectError, httpx.ReadTimeout):
                     time.sleep(0.5)
-            
+
             if not server_up:
                 print("Server failed to start. Logs:")
                 server_log_file.flush()
@@ -222,7 +202,7 @@ def main():
             print("\n=== Starting Load Generation ===")
             headers = {"Authorization": "Bearer demo-key-load-test"}
             payload = {"text": "This is a load test content string." * 10, "title": "Load Test"}
-            
+
             # Warmup
             print("Warming up (5 reqs)...")
             for _ in range(5):
@@ -247,28 +227,28 @@ def main():
                     latencies.append((t1 - t0) * 1000)
                 except Exception as e:
                     print(f"Req {i} exception: {e}")
-                    latencies.append(0) # Penalty?
-            
+                    latencies.append(0)  # Penalty?
+
             total_time = time.time() - start_total
-            
+
             # Print server logs if there were failures
-            if any(l == 0 for l in latencies) or any(l == 500 for l in latencies): # rudimentary check
-                 print("\n--- Server Logs (Tail) ---")
-                 server_log_file.flush()
-                 with open("server_load_test.log", "r") as f:
-                     print(f.read()[-2000:])
-            
+            if any(l == 0 for l in latencies) or any(l == 500 for l in latencies):  # rudimentary check
+                print("\n--- Server Logs (Tail) ---")
+                server_log_file.flush()
+                with open("server_load_test.log", "r") as f:
+                    print(f.read()[-2000:])
+
             # Stats
             if latencies:
                 p95 = np.percentile(latencies, 95)
                 avg = np.mean(latencies)
-                
+
                 print("-" * 30)
                 print(f"Total Time: {total_time:.2f}s")
                 print(f"Avg Latency: {avg:.2f}ms")
                 print(f"P95 Latency: {p95:.2f}ms")
                 print("-" * 30)
-                
+
                 if p95 < 150:
                     print("SUCCESS: P95 < 150ms (Target met)")
                 else:
@@ -290,6 +270,7 @@ def main():
     except Exception as e:
         print(f"Test failed with exception: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         if container:
@@ -300,6 +281,7 @@ def main():
                 print("Container removed.")
             except:
                 pass
+
 
 if __name__ == "__main__":
     main()

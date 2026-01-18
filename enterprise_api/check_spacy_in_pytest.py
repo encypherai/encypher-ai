@@ -1,7 +1,9 @@
 """Check if spaCy is available in pytest context."""
+
 # Check if spaCy is available
 try:
     import spacy
+
     print(f"✓ spaCy imported: {spacy.__version__}")
     try:
         _nlp = spacy.load("en_core_web_sm")

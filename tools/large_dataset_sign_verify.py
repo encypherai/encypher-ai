@@ -25,6 +25,7 @@ Notes:
   - Datasets and outputs are ignored by git (.gitignore updated)
   - Default dump is Simple English Wikipedia (smaller, still large). Override with --dump-url.
 """
+
 import argparse
 import asyncio
 import bz2
@@ -52,6 +53,7 @@ try:
         TimeElapsedColumn,
         TimeRemainingColumn,
     )
+
     HAVE_RICH = True
 except Exception:
     HAVE_RICH = False
@@ -147,9 +149,7 @@ def run_wikiextractor(dump_path: Path, extract_dir: Path, processes: int = 4) ->
     try:
         subprocess.run(cmd, check=True)
     except FileNotFoundError:
-        raise RuntimeError(
-            "wikiextractor not found. Install it with: uv add wikiextractor"
-        )
+        raise RuntimeError("wikiextractor not found. Install it with: uv add wikiextractor")
     except subprocess.CalledProcessError:
         print("! WikiExtractor failed; falling back to simple extractor (no multiprocessing)")
         simple_extract_dump(dump_path, extract_dir)
@@ -188,8 +188,9 @@ def simple_extract_dump(dump_path: Path, extract_dir: Path) -> None:
                         fout.write(json.dumps(obj, ensure_ascii=False) + "\n")
                         count += 1
                     capturing = False
-        
+
     print(f"✓ Simple extracted {count:,} pages to {out_file}")
+
 
 def prepare_txt_corpus(extract_dir: Path, prepared_dir: Path, limit: int, chunk_size: int = 1000) -> int:
     """Convert JSON lines from WikiExtractor into individual .txt files with subdir chunking.
@@ -385,12 +386,14 @@ async def encode_merkle_async(files: list[Path], base_url: str, concurrency: int
         raise RuntimeError("ENCYPHER_API_KEY is not set. Export it for local signing.")
     # Use threadpool to run blocking client in parallel? Better: use httpx directly
     import httpx
+
     headers = {"Authorization": f"Bearer {api_key}"}
     url = base_url.rstrip("/") + "/api/v1/enterprise/merkle/encode"
     sem = asyncio.Semaphore(concurrency)
     start = time.perf_counter()
     per_file: list[float] = []
     async with httpx.AsyncClient(timeout=60.0, headers=headers) as client:
+
         async def worker(path: Path):
             text = path.read_text(encoding="utf-8")
             data = {"document_id": path.stem, "text": text, "segmentation_levels": ["sentence"]}
@@ -401,7 +404,9 @@ async def encode_merkle_async(files: list[Path], base_url: str, concurrency: int
             per_file.append(time.perf_counter() - t0)
 
         if HAVE_RICH:
-            with Progress(SpinnerColumn(), TextColumn("[bold]Merkle encoding..."), BarColumn(), TimeElapsedColumn(), TimeRemainingColumn()) as progress:
+            with Progress(
+                SpinnerColumn(), TextColumn("[bold]Merkle encoding..."), BarColumn(), TimeElapsedColumn(), TimeRemainingColumn()
+            ) as progress:
                 task = progress.add_task("encode", total=len(files))
                 for i, f in enumerate(files):
                     await worker(f)
@@ -418,12 +423,14 @@ async def encode_embeddings_async(files: list[Path], base_url: str, concurrency:
     if not api_key:
         raise RuntimeError("ENCYPHER_API_KEY is not set. Export it for local signing.")
     import httpx
+
     headers = {"Authorization": f"Bearer {api_key}"}
     url = base_url.rstrip("/") + "/api/v1/enterprise/embeddings/encode-with-embeddings"
     sem = asyncio.Semaphore(concurrency)
     start = time.perf_counter()
     per_file: list[float] = []
     async with httpx.AsyncClient(timeout=60.0, headers=headers) as client:
+
         async def worker(path: Path):
             text = path.read_text(encoding="utf-8")
             data = {
@@ -447,7 +454,9 @@ async def encode_embeddings_async(files: list[Path], base_url: str, concurrency:
             per_file.append(time.perf_counter() - t0)
 
         if HAVE_RICH:
-            with Progress(SpinnerColumn(), TextColumn("[bold]Embedding (minimal) sentences..."), BarColumn(), TimeElapsedColumn(), TimeRemainingColumn()) as progress:
+            with Progress(
+                SpinnerColumn(), TextColumn("[bold]Embedding (minimal) sentences..."), BarColumn(), TimeElapsedColumn(), TimeRemainingColumn()
+            ) as progress:
                 task = progress.add_task("embed", total=len(files))
                 for f in files:
                     await worker(f)
@@ -515,6 +524,7 @@ def main() -> None:
     print(f"Using concurrency: {concurrency}")
     # Only use raw prepared articles (exclude already-processed files like .signed.* or .embedded.*)
     import re as _re
+
     _all_txt = sorted(prepared_dir.rglob("*.txt"))
     files = [p for p in _all_txt if _re.fullmatch(r"article_\d+\.txt", p.name)][: args.limit]
     if args.mode == "c2pa":
@@ -533,12 +543,15 @@ def main() -> None:
             # Move sample to temp dir and verify subset
             sample_files = sorted((prepared_dir).rglob("*.signed.txt"))[: args.verify_sample]
             if HAVE_RICH:
-                with Progress(SpinnerColumn(), TextColumn("[bold]Verifying sample..."), BarColumn(), TimeElapsedColumn(), TimeRemainingColumn()) as progress:
+                with Progress(
+                    SpinnerColumn(), TextColumn("[bold]Verifying sample..."), BarColumn(), TimeElapsedColumn(), TimeRemainingColumn()
+                ) as progress:
                     task = progress.add_task("verify-sample", total=len(sample_files))
                     # Use SDK verifier but on subset: create a temp dir view by copying paths list
                     # For simplicity, just read and verify per file here
                     api_key = os.getenv("ENCYPHER_API_KEY")
                     from encypher_enterprise import EncypherClient
+
                     client = EncypherClient(api_key=api_key, base_url=args.base_url)
                     start = time.perf_counter()
                     per_times = []
@@ -552,6 +565,7 @@ def main() -> None:
             else:
                 api_key = os.getenv("ENCYPHER_API_KEY")
                 from encypher_enterprise import EncypherClient
+
                 client = EncypherClient(api_key=api_key, base_url=args.base_url)
                 start = time.perf_counter()
                 per_times = []

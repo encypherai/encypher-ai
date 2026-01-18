@@ -9,6 +9,7 @@ from app.db.base import Base
 
 class DemoRequest(Base):
     """Model for tracking demo requests from the marketing site."""
+
     __tablename__ = "demo_requests"
 
     id = Column(Integer, primary_key=True, index=True)

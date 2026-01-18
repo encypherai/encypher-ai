@@ -48,9 +48,7 @@ async def test_sign_basic_embeds_status_list_assertion() -> None:
     core_db.execute = AsyncMock()
     core_db.commit = AsyncMock()
 
-    allocate_mock = AsyncMock(
-        return_value=(3, 12, "https://status.encypherai.com/v1/org_business/list/3")
-    )
+    allocate_mock = AsyncMock(return_value=(3, 12, "https://status.encypherai.com/v1/org_business/list/3"))
 
     with (
         patch(

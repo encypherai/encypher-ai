@@ -1,4 +1,5 @@
 """Usage metering router for billing integration."""
+
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -14,6 +15,7 @@ router = APIRouter()
 
 class UsageMetric(BaseModel):
     """Single usage metric with limit info."""
+
     name: str
     used: int
     limit: int  # -1 for unlimited
@@ -24,6 +26,7 @@ class UsageMetric(BaseModel):
 
 class UsageResponse(BaseModel):
     """Usage statistics response."""
+
     organization_id: str
     tier: str
     period_start: str
@@ -34,6 +37,7 @@ class UsageResponse(BaseModel):
 
 class UsageResetResponse(BaseModel):
     """Response after resetting usage counters."""
+
     success: bool
     message: str
     organization_id: str
@@ -149,7 +153,7 @@ async def get_usage_stats(
 ) -> UsageResponse:
     """
     Get current period usage statistics for the organization.
-    
+
     Returns usage metrics including:
     - C2PA signatures (documents signed)
     - Sentences tracked
@@ -157,13 +161,13 @@ async def get_usage_stats(
     - API calls
     """
     org_id = organization["organization_id"]
-    
+
     # Handle user-level keys (synthetic org IDs like "user_{user_id}")
     if org_id.startswith("user_"):
         tier = "starter"
         limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
         return _build_user_level_response(org_id, tier, limits)
-    
+
     # Get organization usage data from unified schema
     result = await db.execute(
         text("""
@@ -174,40 +178,28 @@ async def get_usage_stats(
             FROM organizations
             WHERE id = :org_id
         """),
-        {"org_id": org_id}
+        {"org_id": org_id},
     )
     row = result.fetchone()
-    
+
     if not row:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Organization not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
     tier = row.tier or "starter"
     limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
-    
+
     # Get document counts from documents table (in content database)
-    doc_result = await content_db.execute(
-        text("SELECT COUNT(*) FROM documents WHERE organization_id = :org_id"),
-        {"org_id": org_id}
-    )
+    doc_result = await content_db.execute(text("SELECT COUNT(*) FROM documents WHERE organization_id = :org_id"), {"org_id": org_id})
     documents_signed = doc_result.scalar() or 0
-    
+
     # Get sentence counts from sentence_records table (in content database)
-    sent_result = await content_db.execute(
-        text("SELECT COUNT(*) FROM sentence_records WHERE organization_id = :org_id"),
-        {"org_id": org_id}
-    )
+    sent_result = await content_db.execute(text("SELECT COUNT(*) FROM sentence_records WHERE organization_id = :org_id"), {"org_id": org_id})
     sentences_tracked = sent_result.scalar() or 0
-    
+
     # Get batch operation counts
-    batch_result = await db.execute(
-        text("SELECT COUNT(*) FROM batch_requests WHERE organization_id = :org_id"),
-        {"org_id": org_id}
-    )
+    batch_result = await db.execute(text("SELECT COUNT(*) FROM batch_requests WHERE organization_id = :org_id"), {"org_id": org_id})
     batch_operations = batch_result.scalar() or 0
-    
+
     # Calculate period dates (monthly billing cycle)
     now = datetime.now(timezone.utc)
     period_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -215,7 +207,7 @@ async def get_usage_stats(
         period_end = period_start.replace(year=now.year + 1, month=1)
     else:
         period_end = period_start.replace(month=now.month + 1)
-    
+
     # Build metrics
     metrics = {
         "c2pa_signatures": _calculate_metric(
@@ -239,7 +231,7 @@ async def get_usage_stats(
             name="API Calls",
         ),
     }
-    
+
     return UsageResponse(
         organization_id=org_id,
         tier=tier,
@@ -261,13 +253,13 @@ async def reset_monthly_usage(
 ) -> UsageResetResponse:
     """
     Reset monthly usage counters.
-    
+
     This is typically called by a scheduled job at the start of each billing period.
     Requires super admin permissions.
     """
     org_id = organization["organization_id"]
     now = datetime.now(timezone.utc)
-    
+
     # Reset monthly API usage counter
     await db.execute(
         text("""
@@ -277,10 +269,10 @@ async def reset_monthly_usage(
                 updated_at = :updated_at
             WHERE id = :org_id
         """),
-        {"org_id": org_id, "updated_at": now}
+        {"org_id": org_id, "updated_at": now},
     )
     await db.commit()
-    
+
     return UsageResetResponse(
         success=True,
         message="Monthly usage counters reset successfully",
@@ -297,31 +289,33 @@ async def get_usage_history(
 ):
     """
     Get historical usage data for the organization.
-    
+
     Returns monthly usage summaries for the specified number of months.
     """
     org_id = organization["organization_id"]
-    
+
     # For now, return placeholder data
     # TODO: Implement usage_history table and tracking
     now = datetime.now(timezone.utc)
     history = []
-    
+
     for i in range(months):
         month = now.month - i
         year = now.year
         if month <= 0:
             month += 12
             year -= 1
-        
-        history.append({
-            "period": f"{year}-{month:02d}",
-            "c2pa_signatures": 0,
-            "sentences_tracked": 0,
-            "batch_operations": 0,
-            "api_calls": 0,
-        })
-    
+
+        history.append(
+            {
+                "period": f"{year}-{month:02d}",
+                "c2pa_signatures": 0,
+                "sentences_tracked": 0,
+                "batch_operations": 0,
+                "api_calls": 0,
+            }
+        )
+
     return {
         "organization_id": org_id,
         "history": history,

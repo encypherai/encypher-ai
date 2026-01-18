@@ -1,6 +1,7 @@
 """
 Service to generate a demo directory corpus with sample text files grouped by topic.
 """
+
 from __future__ import annotations
 
 import os

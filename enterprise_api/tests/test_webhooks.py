@@ -3,6 +3,7 @@
 Tests the /api/v1/webhooks endpoints for webhook management.
 Uses async fixtures from conftest.py for proper database and auth handling.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -19,7 +20,7 @@ class TestListWebhooks:
     async def test_list_webhooks_success(self, client: AsyncClient, auth_headers: dict):
         """Test successful webhook listing."""
         response = await client.get("/api/v1/webhooks", headers=auth_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -33,24 +34,13 @@ class TestCreateWebhook:
 
     async def test_create_webhook_requires_auth(self, client: AsyncClient):
         """Test that creating webhooks requires authentication."""
-        response = await client.post(
-            "/api/v1/webhooks",
-            json={
-                "url": "https://example.com/webhook",
-                "events": ["document.signed"]
-            }
-        )
+        response = await client.post("/api/v1/webhooks", json={"url": "https://example.com/webhook", "events": ["document.signed"]})
         assert response.status_code == 401
 
     async def test_create_webhook_http_rejected(self, client: AsyncClient, auth_headers: dict):
         """Test that HTTP (non-HTTPS) URLs are rejected."""
         response = await client.post(
-            "/api/v1/webhooks",
-            json={
-                "url": "http://example.com/webhook",
-                "events": ["document.signed"]
-            },
-            headers=auth_headers
+            "/api/v1/webhooks", json={"url": "http://example.com/webhook", "events": ["document.signed"]}, headers=auth_headers
         )
         assert response.status_code == 400
 
@@ -90,12 +80,7 @@ class TestCreateWebhook:
     async def test_create_webhook_invalid_events(self, client: AsyncClient, auth_headers: dict):
         """Test that invalid events are rejected."""
         response = await client.post(
-            "/api/v1/webhooks",
-            json={
-                "url": "https://example.com/webhook",
-                "events": ["invalid.event.type"]
-            },
-            headers=auth_headers
+            "/api/v1/webhooks", json={"url": "https://example.com/webhook", "events": ["invalid.event.type"]}, headers=auth_headers
         )
         assert response.status_code == 400
 
@@ -106,19 +91,12 @@ class TestUpdateWebhook:
 
     async def test_update_webhook_requires_auth(self, client: AsyncClient):
         """Test that updating webhooks requires authentication."""
-        response = await client.patch(
-            "/api/v1/webhooks/wh_test",
-            json={"is_active": False}
-        )
+        response = await client.patch("/api/v1/webhooks/wh_test", json={"is_active": False})
         assert response.status_code == 401
 
     async def test_update_webhook_not_found(self, client: AsyncClient, auth_headers: dict):
         """Test updating non-existent webhook."""
-        response = await client.patch(
-            "/api/v1/webhooks/wh_nonexistent_12345",
-            json={"is_active": False},
-            headers=auth_headers
-        )
+        response = await client.patch("/api/v1/webhooks/wh_nonexistent_12345", json={"is_active": False}, headers=auth_headers)
         assert response.status_code == 404
 
     async def test_update_webhook_rejects_private_ip_url(self, client: AsyncClient, auth_headers: dict):
@@ -159,10 +137,7 @@ class TestDeleteWebhook:
 
     async def test_delete_webhook_not_found(self, client: AsyncClient, auth_headers: dict):
         """Test deleting non-existent webhook."""
-        response = await client.delete(
-            "/api/v1/webhooks/wh_nonexistent_12345",
-            headers=auth_headers
-        )
+        response = await client.delete("/api/v1/webhooks/wh_nonexistent_12345", headers=auth_headers)
         assert response.status_code == 404
 
 
@@ -177,8 +152,5 @@ class TestTestWebhook:
 
     async def test_test_webhook_not_found(self, client: AsyncClient, auth_headers: dict):
         """Test testing non-existent webhook."""
-        response = await client.post(
-            "/api/v1/webhooks/wh_nonexistent_12345/test",
-            headers=auth_headers
-        )
+        response = await client.post("/api/v1/webhooks/wh_nonexistent_12345/test", headers=auth_headers)
         assert response.status_code == 404

@@ -3,6 +3,7 @@ API Keys router for key management.
 
 Provides endpoints for creating, listing, rotating, and revoking API keys.
 """
+
 import hashlib
 import json
 import logging
@@ -190,6 +191,7 @@ async def list_keys(
         scopes = row.scopes if row.scopes else ["sign", "verify"]
         if isinstance(scopes, str):
             import json
+
             scopes = json.loads(scopes)
         keys.append(
             KeySummary(

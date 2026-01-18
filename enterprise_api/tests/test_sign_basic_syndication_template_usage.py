@@ -65,12 +65,10 @@ async def test_sign_basic_applies_news_wire_syndication_template_assertions() ->
     called_assertions = mock_embed.call_args.kwargs.get("custom_assertions")
     assert called_assertions is not None
     assert any(
-        assertion.get("label") == "c2pa.training-mining.v1"
-        and assertion.get("data", {}).get("use", {}).get("ai_training") is False
+        assertion.get("label") == "c2pa.training-mining.v1" and assertion.get("data", {}).get("use", {}).get("ai_training") is False
         for assertion in called_assertions
     )
     assert any(
-        assertion.get("label") == "com.encypher.rights.v1"
-        and assertion.get("data", {}).get("syndication_allowed") is True
+        assertion.get("label") == "com.encypher.rights.v1" and assertion.get("data", {}).get("syndication_allowed") is True
         for assertion in called_assertions
     )

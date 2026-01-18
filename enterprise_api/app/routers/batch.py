@@ -1,4 +1,5 @@
 """Batch signing and verification endpoints."""
+
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
@@ -49,17 +50,17 @@ async def batch_sign(
 
     correlation_id = _correlation_id(request)
     tier = organization.get("tier", "starter")
-    
+
     result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],
         scope="batch_sign",
         tier=tier,
     )
-    
+
     # Add rate limit headers to response
     for header, value in api_rate_limiter.get_headers(result).items():
         response.headers[header] = value
-    
+
     if not result.allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
@@ -87,14 +88,12 @@ async def batch_sign(
         increment=len(batch_request.items),
     )
 
-    result = await batch_service.sign_batch(
+    batch_response = await batch_service.sign_batch(
         db=db,
         request=batch_request,
         organization=organization,
         correlation_id=correlation_id,
     )
-    
-    # Add quota usage headers to response
     quota_headers = await QuotaManager.get_quota_headers(
         db=db,
         organization_id=organization["organization_id"],
@@ -102,8 +101,8 @@ async def batch_sign(
     )
     for header, value in quota_headers.items():
         response.headers[header] = value
-    
-    return result
+
+    return batch_response
 
 
 @router.post("/batch/verify", response_model=BatchResponseEnvelope)
@@ -137,17 +136,17 @@ async def batch_verify(
 
     correlation_id = _correlation_id(request)
     tier = organization.get("tier", "starter")
-    
+
     result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],
         scope="batch_verify",
         tier=tier,
     )
-    
+
     # Add rate limit headers to response
     for header, value in api_rate_limiter.get_headers(result).items():
         response.headers[header] = value
-    
+
     if not result.allowed:
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,

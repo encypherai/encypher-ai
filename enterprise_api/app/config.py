@@ -2,8 +2,9 @@
 Configuration module for Encypher Enterprise API.
 Uses Pydantic Settings for environment variable management.
 """
+
 from functools import lru_cache
-from typing import Optional
+from typing import ClassVar, Optional
 
 import re
 
@@ -23,7 +24,7 @@ class Settings(BaseSettings):
     content_database_url: Optional[str] = None
     # Legacy single database URL (for backward compatibility)
     database_url: Optional[str] = None
-    
+
     # Redis (for session management)
     redis_url: str = "redis://localhost:6379/0"
 
@@ -59,7 +60,7 @@ class Settings(BaseSettings):
     # Domains
     marketing_domain: str = "encypher.ai"
     infrastructure_domain: str = "encypherai.com"
-    
+
     # CORS - comma-separated list of allowed origins
     allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 
@@ -87,7 +88,7 @@ class Settings(BaseSettings):
     nextauth_secret: Optional[str] = None
     nextauth_url: Optional[str] = None
 
-    model_config: SettingsConfigDict = SettingsConfigDict(
+    model_config: ClassVar[SettingsConfigDict] = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
@@ -107,7 +108,7 @@ class Settings(BaseSettings):
     def core_database_url_resolved(self) -> str:
         """Get core database URL, falling back to legacy database_url."""
         return self.core_database_url or self.database_url or ""
-    
+
     @property
     def content_database_url_resolved(self) -> str:
         """Get content database URL, falling back to legacy database_url."""

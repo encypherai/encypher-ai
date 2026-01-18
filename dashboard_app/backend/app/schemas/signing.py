@@ -1,6 +1,7 @@
 """
 Pydantic schemas for directory signing workflow.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional

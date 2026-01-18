@@ -1,4 +1,5 @@
 """Generate and validate the FastAPI OpenAPI document."""
+
 import json
 from pathlib import Path
 

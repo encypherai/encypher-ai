@@ -27,7 +27,4 @@ async def test_tools_encode_is_deprecated(async_client: AsyncClient) -> None:
     assert response.status_code == 410
     payload = response.json()
     assert payload["success"] is False
-    assert (
-        payload["error"]["message"]
-        == "Deprecated endpoint. Use /api/v1/sign/advanced (authenticated) instead."
-    )
+    assert payload["error"]["message"] == "Deprecated endpoint. Use /api/v1/sign/advanced (authenticated) instead."

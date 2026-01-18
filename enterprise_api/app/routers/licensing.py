@@ -3,7 +3,8 @@ Licensing Agreement Management API Router.
 
 Endpoints for managing licensing agreements, content access, and revenue distribution.
 """
-from typing import List, Optional
+
+from typing import List, Optional, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -36,11 +37,9 @@ router = APIRouter(prefix="/licensing", tags=["Licensing"])
 # Agreement Management (Admin only)
 # ============================================================================
 
+
 @router.post("/agreements", response_model=LicensingAgreementCreateResponse)
-async def create_agreement(
-    agreement_data: LicensingAgreementCreate,
-    db: AsyncSession = Depends(get_db)
-):
+async def create_agreement(agreement_data: LicensingAgreementCreate, db: AsyncSession = Depends(get_db)):
     """
     Create a new licensing agreement with an AI company.
 
@@ -54,6 +53,8 @@ async def create_agreement(
 
         # Get AI company details for response
         ai_company_result = await db.get(AICompany, agreement.ai_company_id)
+        if not ai_company_result:
+            raise HTTPException(status_code=404, detail="AI company not found")
 
         return LicensingAgreementCreateResponse(
             id=agreement.id,
@@ -61,7 +62,7 @@ async def create_agreement(
             api_key=api_key,
             api_key_prefix=ai_company_result.api_key_prefix,
             status=agreement.status,
-            created_at=agreement.created_at
+            created_at=agreement.created_at,
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -72,27 +73,19 @@ async def list_agreements(
     status: Optional[AgreementStatus] = Query(None, description="Filter by status"),
     limit: int = Query(100, ge=1, le=1000, description="Results per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     List all licensing agreements.
 
     **Admin only** - Returns all agreements with optional filtering.
     """
-    agreements = await LicensingService.list_agreements(
-        db=db,
-        status=status,
-        limit=limit,
-        offset=offset
-    )
+    agreements = await LicensingService.list_agreements(db=db, status=status, limit=limit, offset=offset)
     return agreements
 
 
 @router.get("/agreements/{agreement_id}", response_model=LicensingAgreementResponse)
-async def get_agreement(
-    agreement_id: UUID,
-    db: AsyncSession = Depends(get_db)
-):
+async def get_agreement(agreement_id: UUID, db: AsyncSession = Depends(get_db)):
     """
     Get details of a specific licensing agreement.
 
@@ -105,11 +98,7 @@ async def get_agreement(
 
 
 @router.patch("/agreements/{agreement_id}", response_model=LicensingAgreementResponse)
-async def update_agreement(
-    agreement_id: UUID,
-    update_data: LicensingAgreementUpdate,
-    db: AsyncSession = Depends(get_db)
-):
+async def update_agreement(agreement_id: UUID, update_data: LicensingAgreementUpdate, db: AsyncSession = Depends(get_db)):
     """
     Update a licensing agreement.
 
@@ -122,10 +111,7 @@ async def update_agreement(
 
 
 @router.delete("/agreements/{agreement_id}", response_model=SuccessResponse)
-async def terminate_agreement(
-    agreement_id: UUID,
-    db: AsyncSession = Depends(get_db)
-):
+async def terminate_agreement(agreement_id: UUID, db: AsyncSession = Depends(get_db)):
     """
     Terminate a licensing agreement.
 
@@ -140,6 +126,7 @@ async def terminate_agreement(
 # ============================================================================
 # AI Company Content Access
 # ============================================================================
+
 
 @router.get("/content", response_model=ContentListResponse)
 async def list_available_content(
@@ -159,16 +146,11 @@ async def list_available_content(
     the terms of active licensing agreements.
     """
     # Get active agreement for this AI company
-    agreement = await LicensingService.get_active_agreement_for_company(
-        db=db,
-        ai_company_id=ai_company.id
-    )
+    ai_company_id = cast(UUID, ai_company.id)
+    agreement = await LicensingService.get_active_agreement_for_company(db=db, ai_company_id=ai_company_id)
 
     if not agreement:
-        raise HTTPException(
-            status_code=403,
-            detail="No active agreement found for this AI company"
-        )
+        raise HTTPException(status_code=403, detail="No active agreement found for this AI company")
 
     # Query content matching agreement terms
     content_list, total = await LicensingService.list_available_content(
@@ -178,7 +160,7 @@ async def list_available_content(
         min_word_count=min_word_count,
         include_rights_signals=include_rights_signals,
         limit=limit,
-        offset=offset
+        offset=offset,
     )
 
     if include_rights_signals and content_list:
@@ -186,20 +168,16 @@ async def list_available_content(
         owner_id = await LicensingService.get_content_owner(content_db, content_id)
         await LicensingService.track_content_access(
             db=db,
-            agreement_id=agreement.id,
+            agreement_id=cast(UUID, agreement.id),
             content_id=content_id,
             member_id=owner_id or "unknown",
-            ai_company_name=ai_company.company_name,
+            ai_company_name=cast(str, ai_company.company_name),
             access_type="list",
         )
 
     # TODO: Implement quota tracking based on agreement terms
     # For now, quota_remaining is None (unlimited)
-    return ContentListResponse(
-        content=content_list,
-        total=total,
-        quota_remaining=None
-    )
+    return ContentListResponse(content=content_list, total=total, quota_remaining=None)
 
 
 @router.post("/track-access", response_model=ContentAccessLogResponse)
@@ -216,34 +194,26 @@ async def track_content_access(
     revenue attribution.
     """
     # Get the active agreement for this AI company
-    agreement = await LicensingService.get_active_agreement_for_company(
-        db=db,
-        ai_company_id=ai_company.id
-    )
+    ai_company_id = cast(UUID, ai_company.id)
+    agreement = await LicensingService.get_active_agreement_for_company(db=db, ai_company_id=ai_company_id)
 
     if not agreement:
-        raise HTTPException(
-            status_code=403,
-            detail="No active agreement found for this AI company"
-        )
+        raise HTTPException(status_code=403, detail="No active agreement found for this AI company")
 
     # Look up the content owner (member_id) from the content reference
     member_id = await LicensingService.get_content_owner(content_db, access_data.content_id)
 
     if not member_id:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Content {access_data.content_id} not found"
-        )
+        raise HTTPException(status_code=404, detail=f"Content {access_data.content_id} not found")
 
     # Track the access
     access_log = await LicensingService.track_content_access(
         db=db,
-        agreement_id=agreement.id,
+        agreement_id=cast(UUID, agreement.id),
         content_id=access_data.content_id,
         member_id=member_id,
-        ai_company_name=ai_company.company_name,
-        access_type=access_data.access_type
+        ai_company_name=cast(str, ai_company.company_name),
+        access_type=access_data.access_type,
     )
 
     return access_log
@@ -253,11 +223,9 @@ async def track_content_access(
 # Revenue Distribution (Admin only)
 # ============================================================================
 
+
 @router.post("/distributions", response_model=RevenueDistributionResponse)
-async def create_revenue_distribution(
-    distribution_data: RevenueDistributionCreate,
-    db: AsyncSession = Depends(get_db)
-):
+async def create_revenue_distribution(distribution_data: RevenueDistributionCreate, db: AsyncSession = Depends(get_db)):
     """
     Create revenue distribution for a period.
 
@@ -265,12 +233,10 @@ async def create_revenue_distribution(
     content access during the specified period. Implements 70/30 split.
     """
     try:
-        distribution = await LicensingService.calculate_revenue_distribution(
-            db, distribution_data
-        )
+        distribution = await LicensingService.calculate_revenue_distribution(db, distribution_data)
 
         # Load member revenues
-        member_revenues = await LicensingService.get_member_revenues(db, distribution.id)
+        member_revenues = await LicensingService.get_member_revenues(db, cast(UUID, distribution.id))
 
         return RevenueDistributionResponse(
             id=distribution.id,
@@ -292,10 +258,10 @@ async def create_revenue_distribution(
                     revenue_amount=mr.revenue_amount,
                     status=mr.status,
                     paid_at=mr.paid_at,
-                    payment_reference=mr.payment_reference
+                    payment_reference=mr.payment_reference,
                 )
                 for mr in member_revenues
-            ]
+            ],
         )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -309,28 +275,19 @@ async def list_distributions(
     status: Optional[DistributionStatus] = Query(None, description="Filter by status"),
     limit: int = Query(100, ge=1, le=1000, description="Results per page"),
     offset: int = Query(0, ge=0, description="Pagination offset"),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 ):
     """
     List revenue distributions.
 
     **Admin only** - Returns all distributions with optional filtering.
     """
-    distributions = await LicensingService.list_distributions(
-        db=db,
-        agreement_id=agreement_id,
-        status=status,
-        limit=limit,
-        offset=offset
-    )
+    distributions = await LicensingService.list_distributions(db=db, agreement_id=agreement_id, status=status, limit=limit, offset=offset)
     return distributions
 
 
 @router.get("/distributions/{distribution_id}", response_model=RevenueDistributionResponse)
-async def get_distribution(
-    distribution_id: UUID,
-    db: AsyncSession = Depends(get_db)
-):
+async def get_distribution(distribution_id: UUID, db: AsyncSession = Depends(get_db)):
     """
     Get details of a revenue distribution.
 
@@ -363,18 +320,15 @@ async def get_distribution(
                 revenue_amount=mr.revenue_amount,
                 status=mr.status,
                 paid_at=mr.paid_at,
-                payment_reference=mr.payment_reference
+                payment_reference=mr.payment_reference,
             )
             for mr in member_revenues
-        ]
+        ],
     )
 
 
 @router.post("/payouts", response_model=PayoutResponse)
-async def process_payouts(
-    payout_data: PayoutCreate,
-    db: AsyncSession = Depends(get_db)
-):
+async def process_payouts(payout_data: PayoutCreate, db: AsyncSession = Depends(get_db)):
     """
     Process payouts for a revenue distribution.
 
@@ -384,11 +338,7 @@ async def process_payouts(
     with Stripe or other payment processors.
     """
     try:
-        result = await LicensingService.process_payouts(
-            db=db,
-            distribution_id=payout_data.distribution_id,
-            payment_method=payout_data.payment_method
-        )
+        result = await LicensingService.process_payouts(db=db, distribution_id=payout_data.distribution_id, payment_method=payout_data.payment_method)
 
         return PayoutResponse(**result)
     except ValueError as e:

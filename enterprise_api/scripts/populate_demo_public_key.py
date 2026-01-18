@@ -8,6 +8,7 @@ Supports both:
 - Raw Ed25519 keys (32 bytes hex)
 - PEM format keys (legacy format from old backend)
 """
+
 import asyncio
 import os
 import sys
@@ -44,7 +45,7 @@ def load_private_key_from_pem(pem_str: str) -> ed25519.Ed25519PrivateKey:
 
 async def populate_demo_public_key():
     """Populate demo organization's public key in database."""
-    
+
     # Try to load from PEM format first (legacy keys)
     if settings.demo_public_key_pem:
         print("Loading public key from PEM format (legacy)")
@@ -77,33 +78,30 @@ async def populate_demo_public_key():
         demo_private_key = get_demo_private_key()
         demo_public_key = demo_private_key.public_key()
         public_key_bytes = serialize_public_key(demo_public_key)
-    
+
     print(f"Demo organization ID: {settings.demo_organization_id}")
     print(f"Public key bytes length: {len(public_key_bytes)}")
     print(f"Public key hex: {public_key_bytes.hex()}")
-    
+
     # Connect to database
     database_url = settings.core_database_url_resolved
     if not database_url:
         print("ERROR: No database URL configured")
         return False
-    
+
     engine = create_async_engine(database_url, echo=True)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with async_session() as session:
         try:
             # Check if demo org exists
-            result = await session.execute(
-                text("SELECT id, name FROM organizations WHERE id = :org_id"),
-                {"org_id": settings.demo_organization_id}
-            )
+            result = await session.execute(text("SELECT id, name FROM organizations WHERE id = :org_id"), {"org_id": settings.demo_organization_id})
             org = result.fetchone()
-            
+
             if not org:
                 print(f"WARNING: Demo organization '{settings.demo_organization_id}' not found in database")
                 print("Creating demo organization...")
-                
+
                 # Create demo organization
                 await session.execute(
                     text("""
@@ -122,29 +120,26 @@ async def populate_demo_public_key():
                         "name": settings.demo_organization_name,
                         "email": "demo@encypherai.com",
                         "tier": "enterprise",
-                        "public_key": public_key_bytes
-                    }
+                        "public_key": public_key_bytes,
+                    },
                 )
                 await session.commit()
                 print("✅ Created demo organization with public key")
                 return True
-            
+
             print(f"Found demo organization: {org.name}")
-            
+
             # Update public key
             await session.execute(
                 text("UPDATE organizations SET public_key = :public_key, updated_at = CURRENT_TIMESTAMP WHERE id = :org_id"),
-                {"org_id": settings.demo_organization_id, "public_key": public_key_bytes}
+                {"org_id": settings.demo_organization_id, "public_key": public_key_bytes},
             )
             await session.commit()
-            
+
             print("✅ Updated public key for demo organization")
-            
+
             # Verify
-            result = await session.execute(
-                text("SELECT public_key FROM organizations WHERE id = :org_id"),
-                {"org_id": settings.demo_organization_id}
-            )
+            result = await session.execute(text("SELECT public_key FROM organizations WHERE id = :org_id"), {"org_id": settings.demo_organization_id})
             row = result.fetchone()
             if row and row[0]:
                 stored_key = bytes(row[0])
@@ -159,7 +154,7 @@ async def populate_demo_public_key():
             else:
                 print("❌ ERROR: Public key not found after update")
                 return False
-                
+
         except Exception as e:
             print(f"❌ ERROR: {e}")
             await session.rollback()
@@ -171,41 +166,38 @@ async def populate_demo_public_key():
 async def populate_legacy_signer_keys():
     """
     Populate public keys for legacy signer IDs that old content might use.
-    
+
     Old content from the website tools might use signer IDs like:
     - demo-signer-id
     - c2pa-demo-signer-001
     - org_demo
-    
+
     All of these should map to the same demo public key.
     """
     demo_private_key = get_demo_private_key()
     demo_public_key = demo_private_key.public_key()
     public_key_bytes = serialize_public_key(demo_public_key)
-    
+
     legacy_signer_ids = [
         "demo-signer-id",
         "c2pa-demo-signer-001",
     ]
-    
+
     database_url = settings.core_database_url_resolved
     if not database_url:
         print("ERROR: No database URL configured")
         return False
-    
+
     engine = create_async_engine(database_url, echo=False)
     async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
-    
+
     async with async_session() as session:
         try:
             for signer_id in legacy_signer_ids:
                 # Check if org exists
-                result = await session.execute(
-                    text("SELECT id FROM organizations WHERE id = :org_id"),
-                    {"org_id": signer_id}
-                )
+                result = await session.execute(text("SELECT id FROM organizations WHERE id = :org_id"), {"org_id": signer_id})
                 org = result.fetchone()
-                
+
                 if not org:
                     print(f"Creating legacy signer organization: {signer_id}")
                     await session.execute(
@@ -223,21 +215,21 @@ async def populate_legacy_signer_keys():
                             "name": f"Legacy Demo Signer ({signer_id})",
                             "email": f"{signer_id}@encypherai.com",
                             "tier": "starter",
-                            "public_key": public_key_bytes
-                        }
+                            "public_key": public_key_bytes,
+                        },
                     )
                     print(f"✅ Created {signer_id} with demo public key")
                 else:
                     # Update public key
                     await session.execute(
                         text("UPDATE organizations SET public_key = :public_key WHERE id = :org_id"),
-                        {"org_id": signer_id, "public_key": public_key_bytes}
+                        {"org_id": signer_id, "public_key": public_key_bytes},
                     )
                     print(f"✅ Updated {signer_id} with demo public key")
-            
+
             await session.commit()
             return True
-            
+
         except Exception as e:
             print(f"❌ ERROR: {e}")
             await session.rollback()
@@ -252,27 +244,27 @@ async def main():
     print("Populating Demo Organization Public Key")
     print("=" * 60)
     print()
-    
+
     # Populate main demo org
     success = await populate_demo_public_key()
-    
+
     if success:
         print()
         print("=" * 60)
         print("Populating Legacy Signer Public Keys")
         print("=" * 60)
         print()
-        
+
         # Populate legacy signer IDs
         legacy_success = await populate_legacy_signer_keys()
-        
+
         if legacy_success:
             print()
             print("=" * 60)
             print("✅ All public keys populated successfully!")
             print("=" * 60)
             return 0
-    
+
     print()
     print("=" * 60)
     print("❌ Failed to populate public keys")

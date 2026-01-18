@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **SegmentationLevels** | Pointer to **[]string** | Segmentation levels to encode (word/sentence/paragraph/section) | [optional] [default to [sentence]]
 **IncludeWords** | Pointer to **bool** | Whether to include word-level segmentation | [optional] [default to false]
 **Metadata** | Pointer to **map[string]interface{}** |  | [optional] 
+**FuzzyFingerprint** | Pointer to [**NullableFuzzyFingerprintConfig**](FuzzyFingerprintConfig.md) |  | [optional] 
 
 ## Methods
 
@@ -154,6 +155,41 @@ HasMetadata returns a boolean if a field has been set.
 `func (o *DocumentEncodeRequest) UnsetMetadata()`
 
 UnsetMetadata ensures that no value is present for Metadata, not even an explicit nil
+### GetFuzzyFingerprint
+
+`func (o *DocumentEncodeRequest) GetFuzzyFingerprint() FuzzyFingerprintConfig`
+
+GetFuzzyFingerprint returns the FuzzyFingerprint field if non-nil, zero value otherwise.
+
+### GetFuzzyFingerprintOk
+
+`func (o *DocumentEncodeRequest) GetFuzzyFingerprintOk() (*FuzzyFingerprintConfig, bool)`
+
+GetFuzzyFingerprintOk returns a tuple with the FuzzyFingerprint field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetFuzzyFingerprint
+
+`func (o *DocumentEncodeRequest) SetFuzzyFingerprint(v FuzzyFingerprintConfig)`
+
+SetFuzzyFingerprint sets FuzzyFingerprint field to given value.
+
+### HasFuzzyFingerprint
+
+`func (o *DocumentEncodeRequest) HasFuzzyFingerprint() bool`
+
+HasFuzzyFingerprint returns a boolean if a field has been set.
+
+### SetFuzzyFingerprintNil
+
+`func (o *DocumentEncodeRequest) SetFuzzyFingerprintNil(b bool)`
+
+ SetFuzzyFingerprintNil sets the value for FuzzyFingerprint to be an explicit nil
+
+### UnsetFuzzyFingerprint
+`func (o *DocumentEncodeRequest) UnsetFuzzyFingerprint()`
+
+UnsetFuzzyFingerprint ensures that no value is present for FuzzyFingerprint, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

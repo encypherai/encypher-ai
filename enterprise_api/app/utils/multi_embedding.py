@@ -12,6 +12,7 @@ The /sign/advanced endpoint creates:
 
 This feature is NOT available in the open-source encypher-ai library.
 """
+
 import json
 import logging
 import unicodedata
@@ -28,7 +29,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EmbeddingInfo:
     """Information about a single embedding found in text."""
-    
+
     index: int
     manifest_bytes: bytes
     span: tuple[int, int]  # (start, end) char indices in NFC-normalized text
@@ -50,13 +51,13 @@ class EmbeddingInfo:
 @dataclass
 class MultiEmbeddingResult:
     """Result of extracting multiple embeddings from text."""
-    
+
     total_found: int = 0
     embeddings: list[EmbeddingInfo] = field(default_factory=list)
     all_valid: bool = False
     any_valid: bool = False
     clean_text: str = ""  # Full text with all wrappers removed
-    
+
 
 # Variation selector ranges used by encypher-ai
 VS_START = 0xFE00
@@ -86,7 +87,7 @@ def _byte_offset_to_char_index(text: str, byte_offset: int) -> int:
 
 def normalize_text(text: str) -> str:
     """Normalize text to NFC form for consistent embedding/verification.
-    
+
     This ensures that text is normalized the same way during both
     embedding and verification, avoiding signature mismatches due to
     different Unicode representations of the same characters.
@@ -96,14 +97,14 @@ def normalize_text(text: str) -> str:
 
 def find_all_vs_blocks(text: str, min_length: int = 16) -> list[tuple[int, int, bytes]]:
     """Find ALL variation selector blocks in the text.
-    
+
     This finds contiguous runs of variation selectors that represent
     embedded metadata (basic format embeddings from /sign/advanced).
-    
+
     Args:
         text: The text to search.
         min_length: Minimum number of VS characters to consider a valid block.
-        
+
     Returns:
         List of tuples (start_index, end_index, decoded_bytes) for each
         VS block found, in order of appearance.
@@ -111,14 +112,14 @@ def find_all_vs_blocks(text: str, min_length: int = 16) -> list[tuple[int, int, 
     results = []
     i = 0
     n = len(text)
-    
+
     while i < n:
         code_point = ord(text[i])
         if _is_variation_selector(code_point):
             # Found start of a VS block
             block_start = i
             decoded_bytes = []
-            
+
             while i < n:
                 cp = ord(text[i])
                 byte_val = _vs_to_byte(cp)
@@ -127,25 +128,25 @@ def find_all_vs_blocks(text: str, min_length: int = 16) -> list[tuple[int, int, 
                     i += 1
                 else:
                     break
-            
+
             # Only include blocks that meet minimum length
             if len(decoded_bytes) >= min_length:
                 results.append((block_start, i, bytes(decoded_bytes)))
         else:
             i += 1
-    
+
     return results
 
 
 def find_all_c2pa_wrappers(text: str) -> list[tuple[bytes, int, int]]:
     """Find ALL C2PA wrappers in the text.
-    
+
     C2PA wrappers use the C2PATextManifestWrapper format with FEFF prefix
     and contain JUMBF-encoded manifests.
-    
+
     Args:
         text: The text to search for wrappers.
-        
+
     Returns:
         List of tuples (manifest_bytes, start_index, end_index) for each
         wrapper found, in order of appearance. Empty list if no wrappers found.
@@ -162,32 +163,29 @@ def find_all_c2pa_wrappers(text: str) -> list[tuple[bytes, int, int]]:
 
 def find_all_embeddings_raw(text: str) -> list[tuple[str, bytes, int, int]]:
     """Find ALL embeddings in text - both C2PA wrappers and basic format.
-    
+
     Args:
         text: The text to search.
-        
+
     Returns:
         List of tuples (embedding_type, payload_bytes, start_index, end_index)
         sorted by start_index. embedding_type is "c2pa" or "basic".
     """
     all_embeddings = []
-    
+
     # Find C2PA wrappers
     c2pa_wrappers = find_all_c2pa_wrappers(text)
     logger.info(f"find_all_embeddings_raw: found {len(c2pa_wrappers)} C2PA wrappers")
     for manifest_bytes, start, end in c2pa_wrappers:
         all_embeddings.append(("c2pa", manifest_bytes, start, end))
-    
+
     # Find basic format VS blocks
     vs_blocks = find_all_vs_blocks(text)
     logger.info(f"find_all_embeddings_raw: found {len(vs_blocks)} VS blocks")
     for start, end, decoded_bytes in vs_blocks:
         # Check if this VS block overlaps with any C2PA wrapper
         # (C2PA wrappers also use VS, so we need to exclude them)
-        overlaps_c2pa = any(
-            not (end <= c_start or start >= c_end)
-            for _, c_start, c_end in c2pa_wrappers
-        )
+        overlaps_c2pa = any(not (end <= c_start or start >= c_end) for _, c_start, c_end in c2pa_wrappers)
         if not overlaps_c2pa:
             # Try to parse as JSON to verify it's a basic format embedding
             try:
@@ -198,7 +196,7 @@ def find_all_embeddings_raw(text: str) -> list[tuple[str, bytes, int, int]]:
             except (UnicodeDecodeError, json.JSONDecodeError):
                 # Not a valid basic format embedding, skip
                 pass
-    
+
     # Sort by start index
     all_embeddings.sort(key=lambda x: x[2])
     return all_embeddings
@@ -206,41 +204,41 @@ def find_all_embeddings_raw(text: str) -> list[tuple[str, bytes, int, int]]:
 
 def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
     """Extract ALL embeddings from text without verification.
-    
+
     Finds both C2PA wrappers and basic format embeddings from /sign/advanced.
     Text is normalized to NFC form for consistent processing.
-    
+
     Args:
         text: The text containing one or more embedded manifests.
-        
+
     Returns:
         MultiEmbeddingResult with all found embeddings and their metadata.
     """
     # Normalize text to NFC for consistent processing
     text = normalize_text(text)
-    
+
     result = MultiEmbeddingResult()
     all_raw = find_all_embeddings_raw(text)
-    
+
     logger.info(f"extract_all_embeddings: find_all_embeddings_raw returned {len(all_raw)} raw embeddings")
-    
+
     if not all_raw:
         result.clean_text = text
         return result
-    
+
     result.total_found = len(all_raw)
-    
+
     # Build clean text by removing all embeddings
     # For basic format embeddings, the segment_text should be the FULL sentence
     # (text from previous embedding end to NEXT embedding start, excluding the VS block)
     clean_parts = []
     prev_end = 0
-    
+
     for i, (embedding_type, payload_bytes, start, end) in enumerate(all_raw):
         # Get the text segment before this embedding
         text_before = text[prev_end:start]
         clean_parts.append(text_before)
-        
+
         # For basic format, segment_text should be the full sentence:
         # text_before + text_after (up to next embedding or end)
         if embedding_type == "basic":
@@ -258,11 +256,11 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
         else:
             # For C2PA, segment_text is just the text before (for hard binding verification)
             segment_text = text_before
-        
+
         # Extract metadata from this embedding
         wrapper_text = text[start:end]
         metadata = None
-        
+
         signer_id_from_outer = None
         try:
             if embedding_type == "c2pa":
@@ -281,7 +279,7 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
         except Exception as e:
             logger.warning(f"Failed to extract metadata from embedding {i}: {e}")
             metadata = None
-        
+
         embedding = EmbeddingInfo(
             index=i,
             manifest_bytes=payload_bytes,
@@ -294,21 +292,21 @@ def extract_all_embeddings(text: str) -> MultiEmbeddingResult:
             embedding_type=embedding_type,
             metadata=metadata,
         )
-        
+
         # Extract signer_id - for basic format it's in outer payload, for C2PA it's in metadata
         if signer_id_from_outer:
             embedding.signer_id = signer_id_from_outer
         elif metadata and isinstance(metadata, dict):
             signer_id = _extract_signer_id(metadata)
             embedding.signer_id = signer_id
-        
+
         result.embeddings.append(embedding)
         prev_end = end
-    
+
     # Add any remaining text after the last embedding
     if prev_end < len(text):
         clean_parts.append(text[prev_end:])
-    
+
     result.clean_text = "".join(clean_parts)
     return result
 
@@ -319,16 +317,16 @@ def _extract_signer_id(metadata: dict) -> Optional[str]:
     manifest = metadata.get("manifest", {})
     if isinstance(manifest, dict) and manifest.get("signer_id"):
         return manifest.get("signer_id")
-    
+
     # Path 2: direct signer_id
     if metadata.get("signer_id"):
         return metadata.get("signer_id")
-    
+
     # Path 3: claim_generator_info.signer_id (C2PA format)
     claim_info = metadata.get("claim_generator_info", {})
     if isinstance(claim_info, dict) and claim_info.get("signer_id"):
         return claim_info.get("signer_id")
-    
+
     return None
 
 
@@ -338,41 +336,41 @@ async def extract_and_verify_all_embeddings(
     demo_signer_ids: Optional[set[str]] = None,
 ) -> MultiEmbeddingResult:
     """Extract and verify ALL embeddings in text.
-    
+
     This is the main entry point for multi-embedding extraction and verification.
     Each embedding is verified independently against its signer's public key.
     Text is normalized to NFC form for consistent verification.
-    
+
     Args:
         text: The text containing one or more embedded manifests.
         public_key_resolver: Async or sync function that takes signer_id and returns public key.
         demo_signer_ids: Set of signer IDs that should use the demo key.
-        
+
     Returns:
         MultiEmbeddingResult with all embeddings and their verification status.
     """
     # Normalize text to NFC for consistent verification (must match embedding normalization)
     text = normalize_text(text)
-    
+
     if demo_signer_ids is None:
         demo_signer_ids = {"org_demo", "demo-signer-id", "c2pa-demo-signer-001"}
-    
+
     # First extract all embeddings (also normalizes internally)
     result = extract_all_embeddings(text)
-    
+
     if result.total_found == 0:
         return result
-    
+
     valid_count = 0
-    
+
     # Verify each embedding independently
     # - Basic format: signature is over payload bytes only, text doesn't matter
     # - C2PA format: signature includes hard binding hash of full text, must use full text
     for embedding in result.embeddings:
         try:
             # Get the wrapper text for this embedding (from normalized text)
-            wrapper_text = text[embedding.span[0]:embedding.span[1]]
-            
+            wrapper_text = text[embedding.span[0] : embedding.span[1]]
+
             if embedding.embedding_type == "c2pa":
                 # C2PA embeddings have hard binding that requires the FULL original text
                 # The exclusion range in the manifest is relative to the full document
@@ -381,14 +379,14 @@ async def extract_and_verify_all_embeddings(
                 # Basic format embeddings: signature is over payload bytes only
                 # We can verify with just the wrapper (text content doesn't affect signature)
                 text_to_verify = wrapper_text
-            
+
             # Verify using UnicodeMetadata
             verification_result = UnicodeMetadata.verify_metadata(
                 text=text_to_verify,
                 public_key_resolver=public_key_resolver,
                 return_payload_on_failure=True,
             )
-            
+
             # Parse verification result
             if isinstance(verification_result, tuple) and len(verification_result) == 3:
                 signature_valid, signer_id, payload = verification_result
@@ -400,10 +398,10 @@ async def extract_and_verify_all_embeddings(
                 signature_valid = False
                 signer_id = embedding.signer_id
                 payload = embedding.metadata
-            
+
             embedding.signature_valid = signature_valid
             embedding.signer_id = signer_id or embedding.signer_id
-            
+
             # Merkle tree content verification for basic format embeddings
             # This detects per-sentence tampering by comparing leaf hashes
             # NOTE: We need to re-segment the clean text to get proper sentence boundaries
@@ -412,22 +410,23 @@ async def extract_and_verify_all_embeddings(
                 custom_meta = embedding.metadata.get("custom_metadata", {})
                 expected_leaf_hash = custom_meta.get("leaf_hash")
                 leaf_index = custom_meta.get("leaf_index")
-                
+
                 if expected_leaf_hash is not None and leaf_index is not None:
                     # Re-segment clean text to get proper sentence boundaries
                     from app.utils.segmentation.sentence import segment_sentences
+
                     clean_sentences = segment_sentences(result.clean_text)
-                    
+
                     if 0 <= leaf_index < len(clean_sentences):
                         # Get the sentence at this leaf_index
                         sentence_text = clean_sentences[leaf_index]
                         computed_hash = compute_leaf_hash(sentence_text)
                         embedding.leaf_hash = expected_leaf_hash
                         embedding.computed_hash = computed_hash
-                        embedding.content_hash_valid = (expected_leaf_hash == computed_hash)
+                        embedding.content_hash_valid = expected_leaf_hash == computed_hash
                         # Update segment_text to be the actual sentence
                         embedding.segment_text = sentence_text
-                        
+
                         if not embedding.content_hash_valid:
                             logger.info(
                                 f"Content hash mismatch for embedding {embedding.index} (leaf {leaf_index}): "
@@ -435,17 +434,17 @@ async def extract_and_verify_all_embeddings(
                             )
                     else:
                         logger.warning(f"Leaf index {leaf_index} out of range for {len(clean_sentences)} sentences")
-            
+
             if signature_valid:
                 embedding.verification_status = "Success"
                 embedding.metadata = payload if isinstance(payload, dict) else embedding.metadata
-                
+
                 # Determine signer name
                 if signer_id in demo_signer_ids:
                     embedding.signer_name = f"{signer_id} (Demo Key)"
                 else:
                     embedding.signer_name = f"{signer_id} (Verified via Trust Anchor)"
-                
+
                 # Override status if content hash doesn't match (tampered content)
                 if embedding.content_hash_valid is False:
                     embedding.verification_status = "Failure"
@@ -462,13 +461,13 @@ async def extract_and_verify_all_embeddings(
                     embedding.error = f"Signer '{signer_id}' is not in our Trust Anchor database."
                 else:
                     embedding.error = "Signature verification failed."
-                    
+
         except Exception as e:
             logger.warning(f"Verification failed for embedding {embedding.index}: {e}")
             embedding.verification_status = "Error"
             embedding.error = str(e)
-    
+
     result.any_valid = valid_count > 0
     result.all_valid = valid_count == result.total_found
-    
+
     return result

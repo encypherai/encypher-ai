@@ -12,7 +12,7 @@ Method | HTTP request | Description
 
 ## batch_verify_embeddings_api_v1_public_verify_batch_post
 
-> models::BatchVerifyResponse batch_verify_embeddings_api_v1_public_verify_batch_post(app_schemas_embeddings_batch_verify_request, authorization)
+> models::BatchVerifyResponse batch_verify_embeddings_api_v1_public_verify_batch_post(batch_verify_request, authorization)
 Batch Verify Embeddings (Public - No Auth Required)
 
 Verify multiple embeddings in a single request.          **This endpoint is PUBLIC and does NOT require authentication.**          Useful for:     - Verifying all embeddings on a page at once     - Bulk verification by web scrapers     - Browser extensions checking multiple paragraphs          **Rate Limiting:**     - 100 requests/hour per IP address     - Maximum 50 embeddings per request
@@ -22,7 +22,7 @@ Verify multiple embeddings in a single request.          **This endpoint is PUBL
 
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
-**app_schemas_embeddings_batch_verify_request** | [**AppSchemasEmbeddingsBatchVerifyRequest**](AppSchemasEmbeddingsBatchVerifyRequest.md) |  | [required] |
+**batch_verify_request** | [**BatchVerifyRequest**](BatchVerifyRequest.md) |  | [required] |
 **authorization** | Option<**String**> |  |  |
 
 ### Return type

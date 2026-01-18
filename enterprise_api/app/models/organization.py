@@ -3,6 +3,7 @@ Organization model for tier-based access control and certificate metadata.
 
 Keeps track of usage quotas, feature flags, and signing certificate state.
 """
+
 from datetime import datetime
 from enum import Enum
 
@@ -30,7 +31,7 @@ class OrganizationTier(str, Enum):
     BUSINESS = "business"  # $499/mo - Merkle + plagiarism, 75/25 rev share
     ENTERPRISE = "enterprise"  # Custom - Full platform, 80/20 rev share
     STRATEGIC_PARTNER = "strategic_partner"  # Invite only - 85/15 rev share
-    
+
     # Legacy alias for backward compatibility
     FREE = "starter"
 
@@ -48,7 +49,7 @@ class OrganizationCertificateStatus(str, Enum):
 class Organization(Base):
     """
     Organization model with tier, quota tracking, and certificate metadata.
-    
+
     Updated to use unified schema with 'id' as primary key.
     """
 
@@ -57,7 +58,7 @@ class Organization(Base):
 
     # Primary key - matches unified schema: id VARCHAR(64) PRIMARY KEY
     id = Column(String(64), primary_key=True)
-    
+
     # Alias for backward compatibility
     organization_id = synonym("id")
 
@@ -86,7 +87,7 @@ class Organization(Base):
     )
     certificate_rotated_at = Column(TIMESTAMP(timezone=True), nullable=True)
     certificate_expiry = Column(TIMESTAMP(timezone=True), nullable=True)
-    
+
     # AWS KMS Support (Enterprise Tier)
     kms_key_id = Column(String(255), nullable=True)
     kms_region = Column(String(50), nullable=True)
@@ -102,6 +103,7 @@ class Organization(Base):
     audit_logs_enabled = Column(Boolean, default=False)
     sso_enabled = Column(Boolean, default=False)
     custom_assertions_enabled = Column(Boolean, default=False)
+    fuzzy_fingerprint_enabled = Column(Boolean, default=False)
 
     default_c2pa_template_id = Column(String(64), nullable=True)
 
@@ -121,6 +123,8 @@ class Organization(Base):
     merkle_encoding_calls_this_month = Column(Integer, default=0)
     merkle_attribution_calls_this_month = Column(Integer, default=0)
     merkle_plagiarism_calls_this_month = Column(Integer, default=0)
+    fuzzy_index_calls_this_month = Column(Integer, default=0)
+    fuzzy_search_calls_this_month = Column(Integer, default=0)
     batch_operations_this_month = Column(Integer, default=0)
 
     # Timestamps
@@ -158,6 +162,7 @@ class Organization(Base):
             "audit_logs": self.audit_logs_enabled,
             "sso": self.sso_enabled,
             "custom_assertions": self.custom_assertions_enabled,
+            "fuzzy_fingerprint": self.fuzzy_fingerprint_enabled,
         }
         return feature_map.get(feature, False)
 
@@ -179,6 +184,8 @@ class Organization(Base):
             "merkle_encoding": (QuotaType.MERKLE_ENCODING, self.merkle_encoding_calls_this_month),
             "merkle_attribution": (QuotaType.MERKLE_ATTRIBUTION, self.merkle_attribution_calls_this_month),
             "merkle_plagiarism": (QuotaType.MERKLE_PLAGIARISM, self.merkle_plagiarism_calls_this_month),
+            "fuzzy_index": (QuotaType.FUZZY_INDEX, self.fuzzy_index_calls_this_month),
+            "fuzzy_search": (QuotaType.FUZZY_SEARCH, self.fuzzy_search_calls_this_month),
         }
 
         if quota_type not in quota_map:

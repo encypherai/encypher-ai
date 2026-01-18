@@ -3,6 +3,7 @@ API Key generation and management utilities.
 
 Provides secure API key generation, hashing, and verification for AI company authentication.
 """
+
 import secrets
 from typing import Tuple
 
@@ -53,12 +54,12 @@ def hash_api_key(api_key: str) -> str:
         Bcrypt hash of the API key as a string
     """
     # Convert to bytes and hash with bcrypt
-    api_key_bytes = api_key.encode('utf-8')
+    api_key_bytes = api_key.encode("utf-8")
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(api_key_bytes, salt)
 
     # Return as string for database storage
-    return hashed.decode('utf-8')
+    return hashed.decode("utf-8")
 
 
 def verify_api_key(api_key: str, api_key_hash: str) -> bool:
@@ -73,8 +74,8 @@ def verify_api_key(api_key: str, api_key_hash: str) -> bool:
         True if the API key matches the hash, False otherwise
     """
     try:
-        api_key_bytes = api_key.encode('utf-8')
-        hash_bytes = api_key_hash.encode('utf-8')
+        api_key_bytes = api_key.encode("utf-8")
+        hash_bytes = api_key_hash.encode("utf-8")
         return bcrypt.checkpw(api_key_bytes, hash_bytes)
     except Exception:
         return False
@@ -103,7 +104,7 @@ def is_valid_api_key_format(api_key: str) -> bool:
         return False
 
     # Check that the rest is valid hex
-    key_part = api_key[len(API_KEY_PREFIX):]
+    key_part = api_key[len(API_KEY_PREFIX) :]
     try:
         int(key_part, 16)  # Will raise ValueError if not valid hex
         return True
