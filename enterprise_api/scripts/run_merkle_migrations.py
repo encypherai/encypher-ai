@@ -67,7 +67,9 @@ async def main():
     print("=" * 60)
     print("Merkle Tree Database Migrations")
     print("=" * 60)
-    print(f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Unknown'}")
+    database_url = settings.database_url or ""
+    database_label = database_url.split("@", 1)[1] if database_url and "@" in database_url else "Unknown"
+    print(f"Database: {database_label}")
     print(f"Environment: {settings.environment}")
     print("=" * 60)
 

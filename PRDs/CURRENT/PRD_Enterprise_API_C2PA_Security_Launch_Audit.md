@@ -15,10 +15,10 @@ This PRD captures a red-team security audit of the Enterprise API and the remedi
 ## Tasks
 
 ### 1.0 Audit Findings
-- [ ] 1.1 Document auth and demo-key bypass risks.
-- [ ] 1.2 Review public verification endpoints for signature enforcement and data exposure.
-- [ ] 1.3 Review trust boundaries for proxy headers (X-Forwarded-For) and IP rate limiting.
-- [ ] 1.4 Review transport protections (security headers, trusted hosts, CORS).
+- [x] 1.1 Document auth and demo-key bypass risks.
+- [x] 1.2 Review public verification endpoints for signature enforcement and data exposure.
+- [x] 1.3 Review trust boundaries for proxy headers (X-Forwarded-For) and IP rate limiting.
+- [x] 1.4 Review transport protections (security headers, trusted hosts, CORS).
 
 #### Findings (Draft)
 - **1.1 Auth/demo key bypass**
@@ -36,16 +36,16 @@ This PRD captures a red-team security audit of the Enterprise API and the remedi
   - Public docs endpoints are always exposed regardless of `enable_public_api_docs` flag.
 
 ### 2.0 Security Hardening
-- [ ] 2.1 Gate demo API keys by environment and explicit allowlist.
-- [ ] 2.2 Enforce signature validation for public verify endpoints (constant-time compare).
-- [ ] 2.3 Add trusted proxy configuration and only honor forwarded headers when enabled.
-- [ ] 2.4 Add response security headers middleware (HSTS, CSP, XFO, XCTO, Referrer-Policy, Permissions-Policy).
-- [ ] 2.5 Add TrustedHost middleware and tighten production CORS defaults.
+- [x] 2.1 Gate demo API keys by environment and explicit allowlist.
+- [x] 2.2 Enforce signature validation for public verify endpoints (constant-time compare).
+- [x] 2.3 Add trusted proxy configuration and only honor forwarded headers when enabled.
+- [x] 2.4 Add response security headers middleware (HSTS, CSP, XFO, XCTO, Referrer-Policy, Permissions-Policy).
+- [x] 2.5 Add TrustedHost middleware and tighten production CORS defaults.
 
 ### 3.0 Validation
-- [ ] 3.1 Security regression tests — ✅ pytest
-- [ ] 3.2 Lint/type checks — ✅ ruff ✅ mypy
-- [ ] 3.3 Dependency audit — ✅ pip-audit
+- [x] 3.1 Security regression tests — ✅ pytest
+- [ ] 3.2 Lint/type checks — ✅ ruff ❌ mypy (pre-existing script typing issues)
+- [x] 3.3 Dependency audit — ✅ pip-audit
 
 ## Success Criteria
 - Public verification endpoints require valid signatures for metadata disclosure.
@@ -55,4 +55,8 @@ This PRD captures a red-team security audit of the Enterprise API and the remedi
 - All tests pass with verification markers.
 
 ## Completion Notes
-- (Fill in after completion.)
+- Added security headers + TrustedHost middleware, tightened CORS defaults, and gated public docs.
+- Public verify now validates signatures with constant-time prefix compare and rejects malformed signatures.
+- Content references now persist HMAC signatures; public verify tests updated.
+- Trusted proxy IP allowlist now drives forwarded header trust.
+- Tests: `uv run pytest enterprise_api/tests` ✅; `uv run ruff check .` ✅; `uv run pip-audit` ✅; `uv run mypy .` ❌ (pre-existing script typing errors in enterprise_api/scripts).

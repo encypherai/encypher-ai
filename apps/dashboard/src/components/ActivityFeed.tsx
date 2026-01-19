@@ -1,17 +1,25 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent } from '@encypher/design-system';
+import { Badge, Card, CardHeader, CardTitle, CardContent } from '@encypher/design-system';
 
 interface ActivityItem {
   id: string;
   type: 'api_call' | 'key_created' | 'key_revoked' | 'sign' | 'verify' | 'login' | 'settings_changed';
   description: string;
   timestamp: Date;
-  metadata?: Record<string, string | number>;
+  metadata?: {
+    status?: number;
+    latency_ms?: number;
+    endpoint?: string;
+    method?: string;
+    api_key?: string;
+    location?: string;
+    request_id?: string;
+    region?: string;
+  };
 }
 
 const activityIcons: Record<ActivityItem['type'], { icon: string; color: string; bg: string }> = {
@@ -38,22 +46,123 @@ function formatTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
+function formatLatency(latencyMs?: number): string | null {
+  if (!latencyMs && latencyMs !== 0) return null;
+  if (latencyMs >= 1000) {
+    return `${(latencyMs / 1000).toFixed(2)}s`;
+  }
+  return `${Math.round(latencyMs)}ms`;
+}
+
+function getStatusVariant(status?: number): 'success' | 'warning' | 'destructive' | 'secondary' {
+  if (!status) return 'secondary';
+  if (status >= 200 && status < 300) return 'success';
+  if (status >= 400 && status < 500) return 'warning';
+  return 'destructive';
+}
+
 // Mock data for demo - in production this would come from an API
 const mockActivities: ActivityItem[] = [
-  { id: '1', type: 'sign', description: 'Signed document via API', timestamp: new Date(Date.now() - 5 * 60000) },
-  { id: '2', type: 'verify', description: 'Verified content authenticity', timestamp: new Date(Date.now() - 15 * 60000) },
-  { id: '3', type: 'api_call', description: 'API call to /v1/sign endpoint', timestamp: new Date(Date.now() - 30 * 60000), metadata: { status: 200 } },
-  { id: '4', type: 'key_created', description: 'Created new API key "Production"', timestamp: new Date(Date.now() - 2 * 3600000) },
-  { id: '5', type: 'login', description: 'Logged in from Chrome on Windows', timestamp: new Date(Date.now() - 24 * 3600000) },
+  {
+    id: '1',
+    type: 'api_call',
+    description: 'Signing request completed for newsroom article',
+    timestamp: new Date(Date.now() - 4 * 60000),
+    metadata: {
+      status: 201,
+      latency_ms: 312,
+      endpoint: '/v1/sign',
+      method: 'POST',
+      api_key: 'prod_newsroom_4f2c',
+      location: 'New York, US',
+      request_id: 'req_9c12f2d',
+    },
+  },
+  {
+    id: '2',
+    type: 'verify',
+    description: 'Verification checks passed for syndicated content',
+    timestamp: new Date(Date.now() - 18 * 60000),
+    metadata: {
+      status: 200,
+      latency_ms: 224,
+      endpoint: '/v1/verify',
+      method: 'POST',
+      api_key: 'prod_newsroom_4f2c',
+      location: 'Chicago, US',
+      request_id: 'req_7d84e8a',
+    },
+  },
+  {
+    id: '3',
+    type: 'sign',
+    description: 'Batch signing job queued for 120 assets',
+    timestamp: new Date(Date.now() - 45 * 60000),
+    metadata: {
+      status: 202,
+      latency_ms: 410,
+      endpoint: '/v1/sign/batch',
+      method: 'POST',
+      api_key: 'studio_batch_21a9',
+      region: 'eu-west-1',
+    },
+  },
+  {
+    id: '4',
+    type: 'api_call',
+    description: 'Key rotated after security policy update',
+    timestamp: new Date(Date.now() - 2 * 3600000),
+    metadata: {
+      status: 204,
+      latency_ms: 180,
+      endpoint: '/v1/keys/rotate',
+      method: 'POST',
+      api_key: 'prod_keys_37b1',
+      location: 'London, UK',
+    },
+  },
+  {
+    id: '5',
+    type: 'login',
+    description: 'Admin login from Chrome on macOS',
+    timestamp: new Date(Date.now() - 7 * 3600000),
+    metadata: {
+      status: 200,
+      latency_ms: 96,
+      endpoint: '/v1/auth/login',
+      method: 'POST',
+      location: 'San Francisco, US',
+    },
+  },
+  {
+    id: '6',
+    type: 'settings_changed',
+    description: 'Updated webhook alert thresholds',
+    timestamp: new Date(Date.now() - 26 * 3600000),
+    metadata: {
+      status: 200,
+      latency_ms: 184,
+      endpoint: '/v1/settings/alerts',
+      method: 'PATCH',
+      api_key: 'ops_monitor_8d2f',
+      region: 'us-east-1',
+    },
+  },
 ];
 
 interface ActivityFeedProps {
   limit?: number;
   showHeader?: boolean;
   compact?: boolean;
+  title?: string;
 }
 
-export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: ActivityFeedProps) {
+export function ActivityFeed({
+  limit = 5,
+  showHeader = true,
+  compact = false,
+  title = 'Recent Activity',
+}: ActivityFeedProps) {
   const { data: session } = useSession();
   const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
 
@@ -77,7 +186,7 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
       <Card>
         {showHeader && (
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>{title}</CardTitle>
           </CardHeader>
         )}
         <CardContent className={showHeader ? '' : 'pt-6'}>
@@ -102,7 +211,7 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
       <Card>
         {showHeader && (
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>{title}</CardTitle>
           </CardHeader>
         )}
         <CardContent className={showHeader ? '' : 'pt-6'}>
@@ -124,7 +233,7 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
     <Card>
       {showHeader && (
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>{title}</CardTitle>
           <Link href="/audit-logs" className="text-sm text-blue-ncs hover:underline">
             View all
           </Link>
@@ -134,6 +243,20 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
         <div className={compact ? 'space-y-2' : 'space-y-4'}>
           {activities.map((activity) => {
             const iconConfig = activityIcons[activity.type];
+            const latency = formatLatency(activity.metadata?.latency_ms);
+            const endpoint = activity.metadata?.endpoint
+              ? `${activity.metadata?.method ?? 'POST'} ${activity.metadata.endpoint}`
+              : null;
+            const statusVariant = getStatusVariant(activity.metadata?.status);
+            const detailItems = [
+              { label: 'Endpoint', value: endpoint },
+              { label: 'Latency', value: latency },
+              { label: 'Status', value: activity.metadata?.status ? String(activity.metadata.status) : null },
+              { label: 'Key', value: activity.metadata?.api_key },
+              { label: 'Origin', value: activity.metadata?.location },
+              { label: 'Region', value: activity.metadata?.region },
+              { label: 'Request ID', value: activity.metadata?.request_id },
+            ].filter((item) => Boolean(item.value));
             return (
               <div
                 key={activity.id}
@@ -148,24 +271,50 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-slate-700 ${compact ? 'text-sm' : ''}`}>
-                    {activity.description}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {formatTimeAgo(activity.timestamp)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className={`text-slate-800 dark:text-slate-100 font-medium ${compact ? 'text-sm' : ''}`}>
+                      {activity.description}
+                    </p>
+                    {activity.type === 'api_call' && (
+                      <Badge variant="secondary" size="sm">
+                        API Call
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>{formatTimeAgo(activity.timestamp)}</span>
+                    {activity.metadata?.location && <span>• {activity.metadata.location}</span>}
+                  </div>
+                  {detailItems.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {detailItems.map((item) => (
+                        <div
+                          key={item.label}
+                          className="flex items-center gap-1 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground"
+                        >
+                          <span className="uppercase tracking-wide text-[10px]">{item.label}</span>
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {item.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Metadata badge */}
-                {activity.metadata?.status && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    activity.metadata.status === 200 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {activity.metadata.status}
-                  </span>
-                )}
+                {/* Metadata badges */}
+                <div className="flex flex-col items-end gap-2">
+                  {activity.metadata?.status && (
+                    <Badge variant={statusVariant} size="sm">
+                      Status {activity.metadata.status}
+                    </Badge>
+                  )}
+                  {latency && (
+                    <Badge variant="outline" size="sm">
+                      Latency {latency}
+                    </Badge>
+                  )}
+                </div>
               </div>
             );
           })}

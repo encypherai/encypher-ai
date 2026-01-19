@@ -60,6 +60,8 @@ class TestAuthenticateAPIKey:
         mock_settings.demo_organization_id = "org_demo"
         mock_settings.demo_organization_name = "Demo Org"
         mock_settings.demo_private_key_bytes = b"demo_key"
+        mock_settings.is_production = False
+        mock_settings.is_demo_key_allowlisted.return_value = True
 
         db = AsyncMock()
 
@@ -98,7 +100,8 @@ class TestAuthenticateAPIKey:
 
         # Mock database query returning revoked key
         mock_row = Mock()
-        mock_row.revoked = True
+        mock_row.revoked_at = datetime.utcnow()
+        mock_row.is_active = False
         mock_row.organization_id = "org_123"
 
         mock_result = Mock()
@@ -121,7 +124,8 @@ class TestAuthenticateAPIKey:
 
         # Mock database query returning expired key
         mock_row = Mock()
-        mock_row.revoked = False
+        mock_row.revoked_at = None
+        mock_row.is_active = True
         mock_row.expires_at = datetime.utcnow() - timedelta(days=1)
         mock_row.organization_id = "org_123"
 
@@ -145,11 +149,12 @@ class TestAuthenticateAPIKey:
 
         # Mock database query returning org with exceeded quota
         mock_row = Mock()
-        mock_row.revoked = False
+        mock_row.revoked_at = None
+        mock_row.is_active = True
         mock_row.expires_at = None
-        mock_row.tier = "basic"
-        mock_row.monthly_quota = 1000
-        mock_row.api_calls_this_month = 1000
+        mock_row.tier = "starter"
+        mock_row.monthly_api_limit = 1000
+        mock_row.monthly_api_usage = 1000
         mock_row.organization_id = "org_123"
 
         mock_result = Mock()
@@ -172,19 +177,20 @@ class TestAuthenticateAPIKey:
 
         # Mock database query returning valid key
         mock_row = Mock()
-        mock_row.api_key = "valid_key"
+        mock_row.api_key_id = "key_123"
         mock_row.organization_id = "org_123"
         mock_row.organization_name = "Test Org"
-        mock_row.organization_type = "enterprise"
         mock_row.tier = "enterprise"
-        mock_row.revoked = False
+        mock_row.revoked_at = None
+        mock_row.is_active = True
         mock_row.expires_at = None
-        mock_row.can_sign = True
-        mock_row.can_verify = True
-        mock_row.can_lookup = True
-        mock_row.monthly_quota = 10000
-        mock_row.api_calls_this_month = 100
+        mock_row.scopes = ["sign", "verify", "lookup"]
+        mock_row.monthly_api_limit = 10000
+        mock_row.monthly_api_usage = 100
         mock_row.private_key_encrypted = b"encrypted_key"
+        mock_row.features = {}
+        mock_row.coalition_member = True
+        mock_row.coalition_rev_share = 65
 
         mock_result = Mock()
         mock_result.fetchone = Mock(return_value=mock_row)

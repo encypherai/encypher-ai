@@ -33,7 +33,7 @@ async def run() -> None:
             verification_url="http://verify.local",
         )
 
-    batch_service_module.execute_signing = fake_execute_signing
+    setattr(batch_service_module, "execute_signing", fake_execute_signing)
     batch_service_module.async_session_factory = session_factory
 
     service = BatchService(worker_limit=2, max_items=10)
@@ -61,6 +61,9 @@ async def run() -> None:
             correlation_id="smoke",
         )
     print("Batch smoke success:", result.success)
+    if result.data is None:
+        print("No batch results returned")
+        return
     for item in result.data.results:
         print(item.document_id, item.status)
 

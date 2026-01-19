@@ -14,8 +14,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "app"))
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from sqlalchemy import text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 
 def load_public_key_from_pem(pem_str: str) -> ed25519.Ed25519PublicKey:
@@ -104,7 +103,7 @@ async def populate_demo_public_key():
 
     # Connect to database
     engine = create_async_engine(database_url, echo=False)
-    async_session = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
     async with async_session() as session:
         try:

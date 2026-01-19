@@ -154,6 +154,7 @@ class AutoProvisionResponse(BaseModel):
 class APIKeyCreateRequest(BaseModel):
     """Request schema for creating an API key."""
 
+    organization_id: str = Field(..., description="Organization identifier")
     name: Optional[str] = Field(None, description="Friendly name for the API key", max_length=255, examples=["Production Key"])
     expires_in_days: Optional[int] = Field(
         None,
@@ -179,7 +180,8 @@ class APIKeyListResponse(BaseModel):
 class APIKeyRevokeRequest(BaseModel):
     """Request schema for revoking an API key."""
 
-    key_id: str = Field(..., description="API key identifier to revoke")
+    organization_id: str = Field(..., description="Organization identifier")
+    key_id: Optional[str] = Field(None, description="API key identifier to revoke")
     reason: Optional[str] = Field(None, description="Reason for revocation", examples=["Key compromised"])
 
 

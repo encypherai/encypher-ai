@@ -107,6 +107,19 @@ Use this index to jump directly to the documentation you need.
 | [enterprise_api/README.md](./enterprise_api/README.md) | **Complete API reference** (653 lines) |
 | [enterprise_api/agents.md](./enterprise_api/agents.md) | **Development guide, deployment** (612 lines) |
 | [enterprise_api/docs/API.md](./enterprise_api/docs/API.md) | Detailed API documentation |
+| [enterprise_api/docs/THREAT_MODEL.md](./enterprise_api/docs/THREAT_MODEL.md) | Threat model for enterprise archive workflows |
+| [enterprise_api/docs/KEY_MANAGEMENT_READINESS.md](./enterprise_api/docs/KEY_MANAGEMENT_READINESS.md) | Key management rotation, revocation, KMS readiness |
+| [enterprise_api/docs/PRIVACY_RETENTION_POLICY.md](./enterprise_api/docs/PRIVACY_RETENTION_POLICY.md) | Engineering retention and deletion policy |
+| [enterprise_api/docs/SECURITY_REVIEW_CHECKLIST.md](./enterprise_api/docs/SECURITY_REVIEW_CHECKLIST.md) | SOC2/GDPR security review checklist |
+| [enterprise_api/docs/RELIABILITY_RESILIENCE.md](./enterprise_api/docs/RELIABILITY_RESILIENCE.md) | Reliability and resilience strategy (HA, idempotency, retries) |
+| [enterprise_api/docs/PERFORMANCE_SCALE.md](./enterprise_api/docs/PERFORMANCE_SCALE.md) | Performance targets and scale planning |
+| [enterprise_api/docs/OBSERVABILITY_INCIDENT_RESPONSE.md](./enterprise_api/docs/OBSERVABILITY_INCIDENT_RESPONSE.md) | Observability and incident response plan |
+| [enterprise_api/docs/DATA_INTEGRITY_AUDITABILITY.md](./enterprise_api/docs/DATA_INTEGRITY_AUDITABILITY.md) | Data integrity and auditability strategy |
+| [enterprise_api/docs/RELEASE_READINESS.md](./enterprise_api/docs/RELEASE_READINESS.md) | Staging parity and release readiness checklist |
+| [enterprise_api/docs/API_CONTRACT_CLIENT_READINESS.md](./enterprise_api/docs/API_CONTRACT_CLIENT_READINESS.md) | OpenAPI contract + SDK readiness checklist |
+| [enterprise_api/docs/USAGE_ANALYTICS_REPORTING.md](./enterprise_api/docs/USAGE_ANALYTICS_REPORTING.md) | Usage analytics and customer reporting plan |
+| [enterprise_api/docs/TESTING_VALIDATION.md](./enterprise_api/docs/TESTING_VALIDATION.md) | Testing and validation checklist |
+| [enterprise_api/docs/DISASTER_RECOVERY_RUNBOOK.md](./enterprise_api/docs/DISASTER_RECOVERY_RUNBOOK.md) | Disaster recovery runbook |
 | [enterprise_api/docs/DEPLOYMENT.md](./enterprise_api/docs/DEPLOYMENT.md) | Deployment guide |
 | [enterprise_api/docs/QUICKSTART.md](./enterprise_api/docs/QUICKSTART.md) | Quick start guide |
 | [enterprise_api/docs/LICENSING_API.md](./enterprise_api/docs/LICENSING_API.md) | Licensing API reference (agreements, content, payouts) |
@@ -235,6 +248,7 @@ Use this index to jump directly to the documentation you need.
 |----------|---------|
 | [PRDs/CURRENT/](./PRDs/CURRENT/) | Active PRDs |
 | [PRDs/CURRENT/PRD_Enterprise_API_Production_Readiness_Blockers.md](./PRDs/CURRENT/PRD_Enterprise_API_Production_Readiness_Blockers.md) | Production readiness blockers for enterprise API |
+| [PRDs/CURRENT/PRD_Enterprise_API_Mypy_Errors_Overview.md](./PRDs/CURRENT/PRD_Enterprise_API_Mypy_Errors_Overview.md) | Mypy error inventory and remediation plan |
 | [PRDs/CURRENT/PRD_Python_SDK_WBS.md](./PRDs/CURRENT/PRD_Python_SDK_WBS.md) | Python SDK production readiness WBS |
 | [docs/PRD.md](./docs/PRD.md) | Main product requirements |
 

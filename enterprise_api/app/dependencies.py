@@ -229,21 +229,29 @@ async def get_current_organization(
     if org_context:
         # Normalize the response to ensure consistent structure
         org_context = _normalize_org_context(org_context)
-    elif api_key in DEMO_KEYS:
-        # 2. Fall back to demo keys (development/testing)
-        logger.debug(f"Using demo key: {api_key[:20]}...")
-        org_context = _normalize_org_context(DEMO_KEYS[api_key].copy())
-    elif settings.demo_api_key and api_key == settings.demo_api_key:
-        # 3. Legacy demo key support (from settings)
-        logger.debug("Using legacy demo key from settings")
-        org_context = _normalize_org_context(DEMO_KEYS.get("demo-api-key-for-testing", {}).copy())
     else:
-        # 4. Invalid key
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid API key",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        is_demo_candidate = api_key in DEMO_KEYS or (settings.demo_api_key and api_key == settings.demo_api_key)
+        if settings.is_production and is_demo_candidate and not settings.is_demo_key_allowlisted(api_key):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        if api_key in DEMO_KEYS:
+            # 2. Fall back to demo keys (development/testing)
+            logger.debug(f"Using demo key: {api_key[:20]}...")
+            org_context = _normalize_org_context(DEMO_KEYS[api_key].copy())
+        elif settings.demo_api_key and api_key == settings.demo_api_key:
+            # 3. Legacy demo key support (from settings)
+            logger.debug("Using legacy demo key from settings")
+            org_context = _normalize_org_context(DEMO_KEYS.get("demo-api-key-for-testing", {}).copy())
+        else:
+            # 4. Invalid key
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid API key",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
     # Set request.state for metrics middleware
     request.state.organization_id = org_context.get("organization_id")
@@ -408,7 +416,14 @@ async def require_super_admin(
     organization: Dict,
 ) -> Dict:
     features = organization.get("features", {})
-    if not isinstance(features, dict) or not features.get("is_super_admin", False):
+    permissions = organization.get("permissions", [])
+    if not isinstance(permissions, list):
+        permissions = []
+
+    is_super_admin = isinstance(features, dict) and features.get("is_super_admin", False)
+    has_admin_scope = "admin" in permissions
+
+    if not is_super_admin and not has_admin_scope:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Super admin access required",

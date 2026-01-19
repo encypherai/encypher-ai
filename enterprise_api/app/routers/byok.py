@@ -8,12 +8,15 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.database import get_db
 from app.dependencies import get_current_organization
 from app.schemas.admin import PublicKeyListResponse, PublicKeyRegisterRequest, PublicKeyRegisterResponse
 from app.services.admin_service import PublicKeyService
 from app.utils.c2pa_trust_list import (
+    C2PA_TRUST_LIST_URL,
     get_trust_anchor_subjects,
+    get_trust_list_metadata,
     validate_certificate_chain,
 )
 
@@ -178,6 +181,10 @@ class TrustListResponse(BaseModel):
     success: bool = True
     trusted_cas: list[str] = Field(default_factory=list)
     trust_list_url: str = "https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem"
+    trust_list_fingerprint: Optional[str] = None
+    trust_list_loaded_at: Optional[str] = None
+    trust_list_source: Optional[str] = None
+    trust_list_count: Optional[str] = None
 
 
 @router.get(
@@ -194,9 +201,16 @@ async def list_trusted_cas() -> TrustListResponse:
     these CAs (or their subordinate CAs) can be used for BYOK signing.
     """
     subjects = get_trust_anchor_subjects()
+    metadata = get_trust_list_metadata()
+    trust_list_url = settings.c2pa_trust_list_url or C2PA_TRUST_LIST_URL
     return TrustListResponse(
         success=True,
         trusted_cas=subjects,
+        trust_list_url=trust_list_url,
+        trust_list_fingerprint=metadata.get("fingerprint"),
+        trust_list_loaded_at=metadata.get("loaded_at"),
+        trust_list_source=metadata.get("source"),
+        trust_list_count=metadata.get("count"),
     )
 
 

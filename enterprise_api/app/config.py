@@ -4,9 +4,9 @@ Uses Pydantic Settings for environment variable management.
 """
 
 from functools import lru_cache
-from typing import ClassVar, Optional
-
+import ipaddress
 import re
+from typing import ClassVar, Optional
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -64,8 +64,23 @@ class Settings(BaseSettings):
     # CORS - comma-separated list of allowed origins
     allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 
+    # Trusted hosts - comma-separated list
+    allowed_hosts: str = "api.encypherai.com"
+
+    # Trusted proxy IPs (comma-separated list)
+    trusted_proxy_ips: str = ""
+
+    # C2PA trust list pinning/refresh
+    c2pa_trust_list_url: Optional[str] = None
+    c2pa_trust_list_sha256: Optional[str] = None
+    c2pa_trust_list_refresh_hours: int = 24
+
+    # Embedding signature secret for public verification (HMAC)
+    embedding_signature_secret: Optional[str] = None
+
     # Demo / sandbox API key support
     demo_api_key: Optional[str] = None
+    demo_key_allowlist: Optional[str] = None
     demo_organization_id: str = "org_demo"
     demo_organization_name: str = "Encypher Demo Organization"
     demo_private_key_hex: Optional[str] = None
@@ -130,6 +145,17 @@ class Settings(BaseSettings):
         return self.environment == "production"
 
     @property
+    def demo_key_allowlist_set(self) -> set[str]:
+        """Return allowlisted demo keys for production gating."""
+        if not self.demo_key_allowlist:
+            return set()
+        return {item.strip() for item in self.demo_key_allowlist.split(",") if item.strip()}
+
+    def is_demo_key_allowlisted(self, api_key: str) -> bool:
+        """Check whether a demo key is allowlisted for production."""
+        return api_key in self.demo_key_allowlist_set
+
+    @property
     def demo_private_key_bytes(self) -> Optional[bytes]:
         """Return demo private key bytes if configured."""
         key_hex = self.demo_private_key_hex or self.secret_key
@@ -153,6 +179,39 @@ class Settings(BaseSettings):
             return None
 
         return value
+
+    @property
+    def embedding_signature_secret_bytes(self) -> Optional[bytes]:
+        """Return embedding signature secret bytes if configured."""
+        if not self.embedding_signature_secret:
+            return None
+
+        secret = self.embedding_signature_secret.strip()
+        if not secret:
+            return None
+
+        if re.fullmatch(r"[0-9a-fA-F]+", secret) and len(secret) % 2 == 0:
+            return bytes.fromhex(secret)
+
+        return secret.encode("utf-8")
+
+    @property
+    def trusted_proxy_ips_set(self) -> set[str]:
+        """Return trusted proxy IP allowlist."""
+        if not self.trusted_proxy_ips:
+            return set()
+
+        values = set()
+        for entry in self.trusted_proxy_ips.split(","):
+            candidate = entry.strip()
+            if not candidate:
+                continue
+            try:
+                ipaddress.ip_address(candidate)
+            except ValueError:
+                continue
+            values.add(candidate)
+        return values
 
 
 @lru_cache()

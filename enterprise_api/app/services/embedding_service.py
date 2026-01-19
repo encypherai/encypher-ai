@@ -13,6 +13,7 @@ import logging
 import secrets
 import time
 import unicodedata
+import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, cast
@@ -30,6 +31,7 @@ except ImportError:
     raise ImportError("encypher-ai package not found. Please install: pip install encypher-ai")
 
 from app.models.content_reference import ContentReference
+from app.utils.embedding_signature import compute_signature_hash
 from app.services.status_service import status_service
 
 logger = logging.getLogger(__name__)
@@ -183,19 +185,17 @@ class EmbeddingService:
         # Phase 1: Join ORIGINAL segments (for C2PA wrapper with correct Merkle root hash)
         # Phase 2: Add minimal embeddings per sentence AFTER C2PA wrapper
         per_segment_uuid_mode = manifest_mode == "minimal_uuid"
-        uuid_module = None
-        if per_segment_uuid_mode:
-            import uuid as uuid_module
         full_document_parts = []
-        segment_embeddings = []  # Store individual segment embeddings for later
+        segment_embeddings: list[tuple[str, Dict[str, Any]]] = []  # Store individual segment embeddings for later
 
         for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
             # Store ORIGINAL segment for C2PA wrapper (no embeddings yet)
             full_document_parts.append(segment)
 
             # Prepare minimal embedding data for this segment (will apply after C2PA)
+            minimal_metadata: Dict[str, Any]
             if per_segment_uuid_mode:
-                manifest_uuid = str(uuid_module.uuid4()) if uuid_module else None
+                manifest_uuid = str(uuid.uuid4())
                 minimal_metadata = {"manifest_uuid": manifest_uuid}
             else:
                 minimal_metadata = {
@@ -229,7 +229,7 @@ class EmbeddingService:
                 document_id=document_id,
                 text_content=segment,
                 text_preview=segment[:200] if segment else None,
-                signature_hash="",  # Signature is in the C2PA wrapper
+                signature_hash=compute_signature_hash(content_id),
                 c2pa_manifest_url=c2pa_manifest_url,
                 c2pa_manifest_hash=c2pa_manifest_hash,
                 license_type=license_info.get("type") if license_info else None,
@@ -380,9 +380,7 @@ class EmbeddingService:
 
         # Handle lightweight_uuid manifest mode (Professional+ feature)
         elif manifest_mode == "lightweight_uuid":
-            import uuid as uuid_module
-
-            manifest_uuid = str(uuid_module.uuid4())
+            manifest_uuid = str(uuid.uuid4())
             logger.info(f"Using lightweight UUID manifest mode for document {document_id}, uuid={manifest_uuid}")
 
             # Store full manifest data in database for later retrieval
@@ -444,9 +442,7 @@ class EmbeddingService:
 
         # Handle hybrid manifest mode (Enterprise feature)
         elif manifest_mode == "hybrid":
-            import uuid as uuid_module
-
-            manifest_uuid = str(uuid_module.uuid4())
+            manifest_uuid = str(uuid.uuid4())
             logger.info(f"Using hybrid manifest mode for document {document_id}")
 
             # First, embed lightweight UUID per sentence (already done in embedded_segments)

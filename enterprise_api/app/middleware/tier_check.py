@@ -81,12 +81,17 @@ class TierCheckMiddleware:
 
         For now, returns a default for testing.
         """
-        # TODO: Implement actual organization extraction from auth
-        # org = request.state.organization
-        # return org.tier
+        tier_value = getattr(request.state, "tier", None)
+        if not tier_value:
+            return None
 
-        # Default to enterprise for testing
-        return OrganizationTier.ENTERPRISE
+        if isinstance(tier_value, OrganizationTier):
+            return tier_value
+
+        try:
+            return OrganizationTier(str(tier_value))
+        except ValueError:
+            return None
 
     def _has_feature_access(self, path: str, tier: Optional[OrganizationTier]) -> bool:
         """Check if the tier has access to the feature."""
@@ -135,11 +140,11 @@ def check_tier_access(required_tier: OrganizationTier, feature_name: str) -> Cal
 
     async def dependency(request: Request):
         """Check if organization has required tier."""
-        # TODO: Get actual organization from auth
-        # org = request.state.organization
+        tier_value = getattr(request.state, "tier", None)
+        if not tier_value:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key required")
 
-        # For now, assume enterprise tier for testing
-        current_tier = OrganizationTier.ENTERPRISE
+        current_tier = tier_value if isinstance(tier_value, OrganizationTier) else OrganizationTier(str(tier_value))
 
         tier_levels = {OrganizationTier.FREE: 0, OrganizationTier.PROFESSIONAL: 1, OrganizationTier.ENTERPRISE: 2}
 

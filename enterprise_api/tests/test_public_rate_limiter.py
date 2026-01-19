@@ -37,7 +37,7 @@ class TestPublicAPIRateLimiter:
 
     def test_get_client_ip_forwarded(self):
         """Test getting client IP from X-Forwarded-For header."""
-        limiter = PublicAPIRateLimiter()
+        limiter = PublicAPIRateLimiter(trusted_proxy_ips={"192.168.1.1"})
 
         # Mock request
         request = Mock(spec=Request)
@@ -51,7 +51,7 @@ class TestPublicAPIRateLimiter:
 
     def test_get_client_ip_real_ip(self):
         """Test getting client IP from X-Real-IP header."""
-        limiter = PublicAPIRateLimiter()
+        limiter = PublicAPIRateLimiter(trusted_proxy_ips={"192.168.1.1"})
 
         # Mock request
         request = Mock(spec=Request)

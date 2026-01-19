@@ -139,7 +139,7 @@ async def run_benchmark(files: list[Path], url: str, output_dir: Path, mode: str
 
         async def worker(file_path: Path):
             text = file_path.read_text(encoding="utf-8")
-            payload = {}
+            payload: dict[str, str | list[str]] = {}
 
             if mode == "c2pa":
                 payload = {"text": text, "title": "Benchmark Doc"}

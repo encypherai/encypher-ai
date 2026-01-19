@@ -1241,6 +1241,28 @@ ENCRYPTION_NONCE=<hex_string>
 ```bash
 # Comma-separated list of allowed origins
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,https://dashboard.encypherai.com
+
+# Trusted hosts for Host header validation
+ALLOWED_HOSTS=api.encypherai.com
+
+# Trusted proxy IPs (comma-separated) to honor forwarded headers
+TRUSTED_PROXY_IPS=10.0.0.10,10.0.0.11
+
+# Embedding signature secret (required in production for public verification)
+EMBEDDING_SIGNATURE_SECRET=<hex_or_ascii_secret>
+```
+
+#### C2PA Trust List Configuration
+
+```bash
+# Optional override for the upstream trust list URL
+C2PA_TRUST_LIST_URL=https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TRUST-LIST.pem
+
+# Optional SHA-256 pin (hex) to prevent trust list tampering
+C2PA_TRUST_LIST_SHA256=<sha256_hex>
+
+# Refresh interval (hours) for reloading the trust list
+C2PA_TRUST_LIST_REFRESH_HOURS=24
 ```
 
 ---

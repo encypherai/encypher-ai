@@ -21,7 +21,7 @@ from .sentence import segment_sentences
 from .word import segment_words_normalized, segment_words_simple
 
 DefaultSegmenter: Optional[type] = None
-segment_sentences_default: Optional[Callable[[str, bool], list[str]]] = None
+segment_sentences_default: Optional[Callable[..., list[str]]] = None
 segment_words_default: Optional[Callable[[str, bool], list[str]]] = None
 normalize_for_hashing: Optional[Callable[[str, bool, bool], str]] = None
 normalize_unicode: Optional[Callable[[str], str]] = None

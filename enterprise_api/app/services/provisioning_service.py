@@ -6,12 +6,13 @@ from external services (SDK, WordPress plugin, CLI, etc.)
 """
 
 import hashlib
+import json
 import logging
 import secrets
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Tuple
 
-from sqlalchemy import select
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization, OrganizationTier
@@ -116,45 +117,74 @@ class ProvisioningService:
 
         if existing_org:
             logger.info(f"Organization {org_id} already exists for {email}")
-            # Generate new API key for existing org
-            api_key = ProvisioningService.generate_api_key()
-            return existing_org, api_key, user_id
+            org = existing_org
+        else:
+            # Generate organization name if not provided
+            if not organization_name:
+                # Use email domain as organization name
+                domain = email.split("@")[1]
+                organization_name = domain.split(".")[0].title()
 
-        # Generate organization name if not provided
-        if not organization_name:
-            # Use email domain as organization name
-            domain = email.split("@")[1]
-            organization_name = domain.split(".")[0].title()
+            # Map tier string to enum
+            tier_map = {
+                "free": OrganizationTier.FREE,
+                "professional": OrganizationTier.PROFESSIONAL,
+                "enterprise": OrganizationTier.ENTERPRISE,
+            }
+            tier_enum = tier_map.get(tier.lower(), OrganizationTier.FREE)
 
-        # Map tier string to enum
-        tier_map = {"free": OrganizationTier.FREE, "professional": OrganizationTier.PROFESSIONAL, "enterprise": OrganizationTier.ENTERPRISE}
-        tier_enum = tier_map.get(tier.lower(), OrganizationTier.FREE)
+            # Create organization
+            org = Organization(
+                organization_id=org_id,
+                name=organization_name,
+                email=email,
+                tier=tier_enum,
+                merkle_enabled=(tier_enum == OrganizationTier.ENTERPRISE),
+                advanced_analytics_enabled=(tier_enum in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE]),
+                bulk_operations_enabled=(tier_enum in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE]),
+                api_calls_this_month=0,
+                merkle_encoding_calls_this_month=0,
+                merkle_attribution_calls_this_month=0,
+                merkle_plagiarism_calls_this_month=0,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
 
-        # Create organization
-        org = Organization(
-            organization_id=org_id,
-            name=organization_name,
-            tier=tier_enum,
-            merkle_enabled=(tier_enum == OrganizationTier.ENTERPRISE),
-            advanced_analytics_enabled=(tier_enum in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE]),
-            bulk_operations_enabled=(tier_enum in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE]),
-            api_calls_this_month=0,
-            merkle_encoding_calls_this_month=0,
-            merkle_attribution_calls_this_month=0,
-            merkle_plagiarism_calls_this_month=0,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
-        )
-
-        db.add(org)
-        await db.commit()
-        await db.refresh(org)
+            db.add(org)
+            await db.commit()
+            await db.refresh(org)
 
         # Generate API key
         api_key = ProvisioningService.generate_api_key()
+        key_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+        key_prefix = api_key[:12]
+        key_id = f"key_{api_key[-12:]}"
+        scopes = ["sign", "verify", "lookup"]
 
-        # TODO: Store API key in database (api_keys table)
-        # For now, we just return it
+        await db.execute(
+            text(
+                """
+                INSERT INTO api_keys (
+                    id, organization_id, name, key_hash, key_prefix,
+                    scopes, created_at, expires_at, is_active
+                ) VALUES (
+                    :id, :org_id, :name, :key_hash, :key_prefix,
+                    CAST(:scopes AS jsonb), :created_at, :expires_at, true
+                )
+                """
+            ),
+            {
+                "id": key_id,
+                "org_id": org.organization_id,
+                "name": "Provisioned Key",
+                "key_hash": key_hash,
+                "key_prefix": key_prefix,
+                "scopes": json.dumps(scopes),
+                "created_at": datetime.utcnow(),
+                "expires_at": None,
+            },
+        )
+        await db.commit()
 
         # Log provisioning event
         logger.info(f"Auto-provisioned organization {org_id} for {email} from {source} with tier {tier}")
@@ -227,7 +257,60 @@ class ProvisioningService:
         }
 
     @staticmethod
-    async def revoke_api_key(db: AsyncSession, key_id: str, reason: Optional[str] = None) -> bool:
+    async def create_api_key(
+        db: AsyncSession,
+        organization_id: str,
+        name: Optional[str] = None,
+        scopes: Optional[list[str]] = None,
+        expires_in_days: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        api_key = ProvisioningService.generate_api_key()
+        key_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
+        key_prefix = api_key[:12]
+        key_id = f"key_{api_key[-12:]}"
+
+        permissions = scopes or ["sign", "verify", "lookup"]
+        created_at = datetime.utcnow()
+        expires_at = None
+        if expires_in_days:
+            expires_at = created_at + timedelta(days=expires_in_days)
+
+        await db.execute(
+            text(
+                """
+                INSERT INTO api_keys (
+                    id, organization_id, name, key_hash, key_prefix,
+                    scopes, created_at, expires_at, is_active
+                ) VALUES (
+                    :id, :org_id, :name, :key_hash, :key_prefix,
+                    CAST(:scopes AS jsonb), :created_at, :expires_at, true
+                )
+                """
+            ),
+            {
+                "id": key_id,
+                "org_id": organization_id,
+                "name": name or "Provisioned Key",
+                "key_hash": key_hash,
+                "key_prefix": key_prefix,
+                "scopes": json.dumps(permissions),
+                "created_at": created_at,
+                "expires_at": expires_at,
+            },
+        )
+        await db.commit()
+
+        return {
+            "api_key": api_key,
+            "key_id": key_id,
+            "organization_id": organization_id,
+            "created_at": created_at,
+            "expires_at": expires_at,
+            "scopes": permissions,
+        }
+
+    @staticmethod
+    async def revoke_api_key(db: AsyncSession, key_id: str, organization_id: str, reason: Optional[str] = None) -> bool:
         """
         Revoke an API key.
 
@@ -239,8 +322,28 @@ class ProvisioningService:
         Returns:
             True if revoked, False if not found
         """
-        # TODO: Implement API key revocation in database
-        logger.info(f"Revoking API key {key_id}: {reason}")
+        result = await db.execute(
+            text(
+                """
+                UPDATE api_keys
+                SET is_active = false, revoked_at = :revoked_at, updated_at = :updated_at
+                WHERE id = :key_id AND organization_id = :org_id AND revoked_at IS NULL
+                RETURNING id
+                """
+            ),
+            {
+                "key_id": key_id,
+                "org_id": organization_id,
+                "revoked_at": datetime.utcnow(),
+                "updated_at": datetime.utcnow(),
+            },
+        )
+        row = result.fetchone()
+        await db.commit()
+        if not row:
+            return False
+
+        logger.info(f"Revoked API key {key_id} for org {organization_id}: {reason}")
         return True
 
     @staticmethod
@@ -255,8 +358,37 @@ class ProvisioningService:
         Returns:
             List of API key information
         """
-        # TODO: Implement API key listing from database
-        return []
+        result = await db.execute(
+            text(
+                """
+                SELECT id, name, key_prefix, scopes, created_at, expires_at, last_used_at, is_active, revoked_at
+                FROM api_keys
+                WHERE organization_id = :org_id
+                ORDER BY created_at DESC
+                """
+            ),
+            {"org_id": organization_id},
+        )
+        rows = result.fetchall()
+        keys: list[Dict[str, Any]] = []
+        for row in rows:
+            scopes = row.scopes or []
+            if isinstance(scopes, str):
+                scopes = json.loads(scopes)
+            keys.append(
+                {
+                    "id": row.id,
+                    "name": row.name,
+                    "key_prefix": row.key_prefix,
+                    "scopes": scopes,
+                    "created_at": row.created_at,
+                    "expires_at": row.expires_at,
+                    "last_used_at": row.last_used_at,
+                    "is_active": bool(row.is_active) and row.revoked_at is None,
+                    "revoked_at": row.revoked_at,
+                }
+            )
+        return keys
 
     @staticmethod
     async def validate_api_key(db: AsyncSession, api_key: str) -> Optional[Organization]:

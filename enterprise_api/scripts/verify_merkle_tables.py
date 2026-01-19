@@ -19,7 +19,9 @@ async def verify_tables():
     print("=" * 60)
     print("Verifying Merkle Tree Tables")
     print("=" * 60)
-    print(f"Database: {settings.database_url.split('@')[1] if '@' in settings.database_url else 'Unknown'}\n")
+    database_url = settings.database_url or ""
+    database_label = database_url.split("@", 1)[1] if database_url and "@" in database_url else "Unknown"
+    print(f"Database: {database_label}\n")
 
     async with engine.begin() as conn:
         # Check tables

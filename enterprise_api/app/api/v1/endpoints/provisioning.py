@@ -9,8 +9,9 @@ import logging
 import time
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 from app.config import settings
 from app.database import get_db
@@ -33,7 +34,7 @@ router = APIRouter(prefix="/provisioning", tags=["Provisioning"])
 
 
 def _require_provisioning_token(x_provisioning_token: str | None) -> None:
-    if settings.environment != "production":
+    if not settings.is_production:
         return
 
     expected = (settings.provisioning_token or "").strip()
@@ -120,10 +121,6 @@ async def auto_provision(
 
         _require_provisioning_token(x_provisioning_token)
 
-        # TODO: Validate provisioning token in production
-        # if x_provisioning_token:
-        #     validate_provisioning_token(x_provisioning_token)
-
         # Auto-provision organization, user, and API key
         org, api_key, user_id = await ProvisioningService.auto_provision(
             db=db,
@@ -207,23 +204,32 @@ async def create_api_key(
     """
     _require_provisioning_token(x_provisioning_token)
 
-    # Generate API key
-    api_key = ProvisioningService.generate_api_key()
+    org_row = await db.execute(text("SELECT id, tier FROM organizations WHERE id = :org_id"), {"org_id": request.organization_id})
+    org = org_row.fetchone()
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
-    # TODO: Store in database with expiration, scopes, etc.
+    key_data = await ProvisioningService.create_api_key(
+        db=db,
+        organization_id=request.organization_id,
+        name=request.name,
+        scopes=request.scopes,
+        expires_in_days=request.expires_in_days,
+    )
 
     return APIKeyResponse(
-        api_key=api_key,
-        key_id=f"key_{api_key[-12:]}",
-        organization_id="org_demo",  # TODO: Get from auth
-        tier="free",
-        created_at=datetime.utcnow(),
-        expires_at=None,
+        api_key=key_data["api_key"],
+        key_id=key_data["key_id"],
+        organization_id=key_data["organization_id"],
+        tier=str(org.tier),
+        created_at=key_data["created_at"],
+        expires_at=key_data["expires_at"],
     )
 
 
 @router.get("/api-keys", response_model=APIKeyListResponse, summary="List API Keys", description="List all API keys for an organization")
 async def list_api_keys(
+    organization_id: str = Query(..., description="Organization identifier"),
     db: AsyncSession = Depends(get_db),
     x_provisioning_token: str = Header(None, description="Provisioning token (optional)"),
     # TODO: Add authentication dependency
@@ -239,8 +245,9 @@ async def list_api_keys(
     """
     _require_provisioning_token(x_provisioning_token)
 
-    # TODO: Get organization from auth
-    organization_id = "org_demo"
+    org_row = await db.execute(text("SELECT id FROM organizations WHERE id = :org_id"), {"org_id": organization_id})
+    if not org_row.fetchone():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
 
     keys = await ProvisioningService.list_api_keys(db, organization_id)
 
@@ -265,7 +272,16 @@ async def revoke_api_key(
     """
     _require_provisioning_token(x_provisioning_token)
 
-    success = await ProvisioningService.revoke_api_key(db=db, key_id=key_id, reason=request.reason)
+    org_row = await db.execute(text("SELECT id FROM organizations WHERE id = :org_id"), {"org_id": request.organization_id})
+    if not org_row.fetchone():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    success = await ProvisioningService.revoke_api_key(
+        db=db,
+        key_id=key_id,
+        organization_id=request.organization_id,
+        reason=request.reason,
+    )
 
     if not success:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API key not found")

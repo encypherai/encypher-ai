@@ -8,13 +8,15 @@ import logging
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import cast
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi import Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,7 +38,7 @@ from app.routers import (
     lookup,
     onboarding,
     signing,
-    status,
+    status as status_router,
     streaming,
     team,
     tools,
@@ -44,6 +46,7 @@ from app.routers import (
     verification,
     webhooks,
 )
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.session_service import session_service
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
 from app.utils.db_startup import ensure_database_ready
@@ -129,12 +132,33 @@ async def lifespan(app: FastAPI):
 
     # Load C2PA trust list for BYOK certificate validation
     try:
-        from app.utils.c2pa_trust_list import fetch_trust_list, set_trust_anchors_pem
+        from app.utils.c2pa_trust_list import (
+            C2PA_TRUST_LIST_URL,
+            get_trust_list_metadata,
+            refresh_trust_list,
+            trust_list_needs_refresh,
+        )
 
-        trust_pem = await fetch_trust_list()
-        count = set_trust_anchors_pem(trust_pem)
-        logger.info(f"C2PA trust list loaded: {count} trust anchors")
+        trust_list_url = settings.c2pa_trust_list_url or C2PA_TRUST_LIST_URL
+        if trust_list_needs_refresh(settings.c2pa_trust_list_refresh_hours):
+            count = await refresh_trust_list(
+                url=trust_list_url,
+                expected_sha256=settings.c2pa_trust_list_sha256,
+            )
+        else:
+            metadata = get_trust_list_metadata()
+            count = int(metadata.get("count") or 0)
+
+        metadata = get_trust_list_metadata()
+        logger.info(
+            "C2PA trust list loaded: %s trust anchors (fingerprint=%s)",
+            count,
+            metadata.get("fingerprint"),
+        )
     except Exception as e:
+        if settings.is_production:
+            logger.error("Failed to load C2PA trust list: %s", e)
+            raise
         logger.warning(f"Failed to load C2PA trust list: {e}. BYOK certificate validation may not work.")
 
     try:
@@ -165,38 +189,74 @@ app = FastAPI(
 )
 
 
-# CORS middleware - parse ALLOWED_ORIGINS env var
-def get_cors_origins():
-    """Get CORS origins from ALLOWED_ORIGINS env var.
-
-    Always includes localhost origins for development.
-    Use '*' in ALLOWED_ORIGINS to allow all origins.
-    """
+def build_cors_settings() -> dict[str, object]:
+    """Return CORS settings derived from configuration."""
     origins = [origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()]
+    allow_credentials = True
 
-    # Always allow localhost for development/demos
-    localhost_origins = [
-        "http://localhost:3000",
-        "http://localhost:3001",
-        "http://localhost:3050",
-        "http://localhost:3051",
-    ]
-    for origin in localhost_origins:
-        if origin not in origins:
-            origins.append(origin)
+    if not settings.is_production:
+        localhost_origins = [
+            "http://localhost:3000",
+            "http://localhost:3001",
+            "http://localhost:3050",
+            "http://localhost:3051",
+        ]
+        for origin in localhost_origins:
+            if origin not in origins:
+                origins.append(origin)
+
+    if "*" in origins:
+        origins = ["*"]
+        allow_credentials = False
 
     logger.info(f"CORS allowed origins: {origins}")
-    return origins
+    return {
+        "allow_origins": origins,
+        "allow_credentials": allow_credentials,
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
 
 
-cors_origins = get_cors_origins()
+def build_trusted_hosts() -> list[str]:
+    """Return trusted host list for TrustedHostMiddleware."""
+    host_values = [host.strip() for host in settings.allowed_hosts.split(",") if host.strip()]
+    extra_hosts = [settings.marketing_domain, settings.infrastructure_domain]
+    for host in extra_hosts:
+        if host and host not in host_values:
+            host_values.append(host)
+        if host and not host.startswith("www."):
+            www_host = f"www.{host}"
+            if www_host not in host_values:
+                host_values.append(www_host)
+        if host == settings.infrastructure_domain:
+            for subdomain in ("api", "verify"):
+                subdomain_host = f"{subdomain}.{host}"
+                if subdomain_host not in host_values:
+                    host_values.append(subdomain_host)
+
+    if not settings.is_production:
+        for host in ("localhost", "127.0.0.1", "test", "testserver"):
+            if host not in host_values:
+                host_values.append(host)
+
+    return host_values
+
+
+cors_settings = build_cors_settings()
+allow_origins = cast(list[str], cors_settings["allow_origins"])
+allow_credentials = cast(bool, cors_settings["allow_credentials"])
+allow_methods = cast(list[str], cors_settings["allow_methods"])
+allow_headers = cast(list[str], cors_settings["allow_headers"])
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=allow_origins,
+    allow_credentials=allow_credentials,
+    allow_methods=allow_methods,
+    allow_headers=allow_headers,
 )
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=build_trusted_hosts())
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Add metrics middleware for analytics
 from app.middleware.metrics_middleware import MetricsMiddleware
@@ -478,13 +538,8 @@ _DOCS_PAGE_HTML = """
 """
 
 
-@app.get("/docs", include_in_schema=False)
-async def docs_landing() -> HTMLResponse:
-    return HTMLResponse(_DOCS_PAGE_HTML, media_type="text/html")
-
-
-@app.get("/docs/openapi.json", include_in_schema=False)
-async def public_openapi() -> JSONResponse:
+def build_public_openapi() -> JSONResponse:
+    """Build filtered OpenAPI response for public docs."""
     base = get_openapi(
         title=app.title,
         version=app.version,
@@ -494,8 +549,29 @@ async def public_openapi() -> JSONResponse:
     return JSONResponse(_filter_openapi_for_public(base))
 
 
+def build_public_docs_html() -> HTMLResponse:
+    """Build HTML for public docs landing page."""
+    return HTMLResponse(_DOCS_PAGE_HTML, media_type="text/html")
+
+
+@app.get("/docs", include_in_schema=False)
+async def docs_landing(request: Request) -> HTMLResponse:
+    if not settings.enable_public_api_docs:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+    return build_public_docs_html()
+
+
+@app.get("/docs/openapi.json", include_in_schema=False)
+async def public_openapi(request: Request) -> JSONResponse:
+    if not settings.enable_public_api_docs:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
+    return build_public_openapi()
+
+
 @app.get("/docs/swagger", include_in_schema=False)
-async def public_swagger_ui() -> HTMLResponse:
+async def public_swagger_ui(request: Request) -> HTMLResponse:
+    if not settings.enable_public_api_docs:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not Found")
     return get_swagger_ui_html(
         openapi_url="/docs/openapi.json",
         title="Encypher Enterprise API - Docs",
@@ -534,7 +610,7 @@ async def root():
         "name": "Encypher Enterprise API",
         "version": "1.0.0-preview",
         "description": "C2PA-compliant content signing and verification",
-        "docs": f"{settings.api_base_url}/docs" if not settings.is_production else None,
+        "docs": f"{settings.api_base_url}/docs" if settings.enable_public_api_docs else None,
         "status": "preview",  # Will change to "production" after C2PA spec publication
     }
 
@@ -557,7 +633,7 @@ app.include_router(usage.router, prefix="/api/v1", tags=["Usage"])
 app.include_router(audit.router, prefix="/api/v1", tags=["Audit"])
 app.include_router(team.router, prefix="/api/v1", tags=["Team Management"])
 app.include_router(coalition.router, prefix="/api/v1", tags=["Coalition"])
-app.include_router(status.router, prefix="/api/v1", tags=["Status & Revocation"])
+app.include_router(status_router.router, prefix="/api/v1", tags=["Status & Revocation"])
 app.include_router(batch.router)
 app.include_router(tools.router, prefix="/api/v1", tags=["Public Tools"])
 

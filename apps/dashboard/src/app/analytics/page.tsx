@@ -1,9 +1,18 @@
 'use client';
 
-import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent } from '@encypher/design-system';
+import {
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@encypher/design-system';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import { useState } from 'react';
+import { ActivityFeed } from '../../components/ActivityFeed';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient from '../../lib/api';
 import { exportAnalyticsData, exportTimeSeriesData } from '../../lib/exportCsv';
@@ -20,6 +29,24 @@ function StatCardSkeleton() {
       </CardContent>
     </Card>
   );
+}
+
+function formatDateRange(start?: string, end?: string): string {
+  if (!start || !end) return '';
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+  return `${startDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })} – ${endDate.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+  })}`;
+}
+
+function formatShortDate(dateStr: string): string {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
 function ChartSkeleton() {
@@ -68,9 +95,38 @@ export default function AnalyticsPage() {
   const stats = statsQuery.data;
   const timeSeries = timeSeriesQuery.data || [];
   const isLoading = statsQuery.isLoading;
+  const isTimeSeriesLoading = timeSeriesQuery.isLoading;
 
   // Format numbers
   const formatNumber = (num: number) => num?.toLocaleString() ?? '0';
+
+  const periodLabel = stats
+    ? formatDateRange(stats.period_start, stats.period_end)
+    : `Last ${timeRange} days`;
+
+  const peakDay = timeSeries.reduce<null | { timestamp: string; count: number }>((max, day) => {
+    if (!max || day.count > max.count) return day;
+    return max;
+  }, null);
+  const averageDailyCalls = timeSeries.length && stats?.total_api_calls
+    ? Math.round(stats.total_api_calls / timeSeries.length)
+    : 0;
+  const signShare = stats?.total_api_calls
+    ? (stats.total_documents_signed / stats.total_api_calls) * 100
+    : 0;
+  const verifyShare = stats?.total_api_calls
+    ? (stats.total_verifications / stats.total_api_calls) * 100
+    : 0;
+  const successRate = stats?.success_rate ?? 0;
+  const errorRate = Math.max(0, 100 - successRate);
+  const avgResponseTime = stats?.avg_response_time_ms ?? 0;
+  const responseStatus = avgResponseTime
+    ? avgResponseTime <= 350
+      ? { label: 'Healthy', variant: 'success' as const }
+      : avgResponseTime <= 650
+        ? { label: 'Monitor', variant: 'warning' as const }
+        : { label: 'At Risk', variant: 'destructive' as const }
+    : { label: '—', variant: 'secondary' as const };
 
   // Get max value for chart scaling
   const maxValue = Math.max(...timeSeries.map(d => d.count), 1);
@@ -82,6 +138,7 @@ export default function AnalyticsPage() {
         <p className="text-muted-foreground">
           Track your API usage, performance metrics, and activity history
         </p>
+        <p className="text-xs text-muted-foreground mt-2">Reporting window: {periodLabel}</p>
       </div>
 
       {/* Time Range Selector + Export */}
@@ -114,7 +171,23 @@ export default function AnalyticsPage() {
             <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Export CSV
+            Export Summary
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (timeSeries.length > 0) {
+                exportTimeSeriesData(timeSeries);
+                toast.success('Time series exported');
+              }
+            }}
+            disabled={timeSeries.length === 0}
+          >
+            <svg className="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v16h16m-4-9l-4 4-2-2-4 4" />
+            </svg>
+            Export Time Series
           </Button>
         </div>
       </div>
@@ -184,37 +257,151 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      {/* Usage Chart */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>API Calls Over Time</CardTitle>
-          <CardDescription>Daily API usage for the selected period</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {timeSeriesQuery.isLoading ? (
-            <ChartSkeleton />
-          ) : timeSeries.length === 0 ? (
-            <div className="h-64 flex items-center justify-center text-muted-foreground">
-              No data available for this period
-            </div>
-          ) : (
-            <div className="h-64 flex items-end justify-between space-x-2">
-              {timeSeries.slice(-14).map((day, idx) => (
-                <div key={idx} className="flex-1 flex flex-col items-center">
-                  <div 
-                    className="w-full bg-columbia-blue rounded-t hover:bg-blue-ncs transition-colors cursor-pointer"
-                    style={{ height: `${(day.count / maxValue) * 100}%`, minHeight: day.count > 0 ? '4px' : '0' }}
-                    title={`${day.count} calls`}
-                  />
-                  <div className="text-xs text-muted-foreground mt-2">
-                    {new Date(day.timestamp).toLocaleDateString('en-US', { weekday: 'short' })}
+      {/* Usage Chart + Highlights */}
+      <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>API Calls Over Time</CardTitle>
+            <CardDescription>Daily API usage for the selected period</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isTimeSeriesLoading ? (
+              <ChartSkeleton />
+            ) : timeSeries.length === 0 ? (
+              <div className="h-64 flex items-center justify-center text-muted-foreground">
+                No data available for this period
+              </div>
+            ) : (
+              <div className="h-64 flex items-end justify-between space-x-2">
+                {timeSeries.slice(-14).map((day, idx) => (
+                  <div key={idx} className="flex-1 flex flex-col items-center">
+                    <div
+                      className="w-full bg-columbia-blue rounded-t hover:bg-blue-ncs transition-colors cursor-pointer"
+                      style={{ height: `${(day.count / maxValue) * 100}%`, minHeight: day.count > 0 ? '4px' : '0' }}
+                      title={`${day.count} calls`}
+                    />
+                    <div className="text-xs text-muted-foreground mt-2">
+                      {new Date(day.timestamp).toLocaleDateString('en-US', { weekday: 'short' })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Usage Highlights</CardTitle>
+              <CardDescription>Key signals for the selected period</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Peak day</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {peakDay ? formatShortDate(peakDay.timestamp) : '—'}
+                    </p>
+                  </div>
+                  <Badge variant="secondary" size="sm">
+                    {peakDay ? `${formatNumber(peakDay.count)} calls` : 'No data'}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Average per day</p>
+                    <p className="text-sm font-medium text-slate-800 dark:text-slate-100">
+                      {averageDailyCalls ? `${formatNumber(averageDailyCalls)} calls` : '—'}
+                    </p>
+                  </div>
+                  <Badge variant="outline" size="sm">{periodLabel}</Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-xs text-muted-foreground">Signing share</p>
+                    <p className="text-lg font-semibold text-delft-blue dark:text-white">
+                      {signShare ? signShare.toFixed(1) : '0'}%
+                    </p>
+                  </div>
+                  <div className="rounded-lg border border-border bg-muted/30 p-3">
+                    <p className="text-xs text-muted-foreground">Verification share</p>
+                    <p className="text-lg font-semibold text-delft-blue dark:text-white">
+                      {verifyShare ? verifyShare.toFixed(1) : '0'}%
+                    </p>
                   </div>
                 </div>
-              ))}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Response Health</CardTitle>
+              <CardDescription>Latency and success posture</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Current status</p>
+                  <p className="text-sm font-medium text-slate-800 dark:text-slate-100">{responseStatus.label}</p>
+                </div>
+                <Badge variant={responseStatus.variant} size="sm">
+                  {avgResponseTime ? `${avgResponseTime.toFixed(0)}ms avg` : 'No data'}
+                </Badge>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Success rate</p>
+                  <p className="text-lg font-semibold text-emerald-600">
+                    {successRate.toFixed(1)}%
+                  </p>
+                </div>
+                <div className="rounded-lg border border-border bg-muted/30 p-3">
+                  <p className="text-xs text-muted-foreground">Error rate</p>
+                  <p className="text-lg font-semibold text-amber-600">
+                    {errorRate.toFixed(1)}%
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/20 p-3 text-xs text-muted-foreground">
+                Target latency under 400ms for real-time signing and verification workloads.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Activity Timeline + Ops Notes */}
+      <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="lg:col-span-2">
+          <ActivityFeed title="Activity Timeline" limit={6} />
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Operational Notes</CardTitle>
+            <CardDescription>Daily signals for your team</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-blue-ncs" />
+                <span>Audit log exports are refreshed every 15 minutes for enterprise teams.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                <span>Set webhook alerts when error rate exceeds 5% in a 30-minute window.</span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+                <span>Daily usage snapshots are available for compliance reporting.</span>
+              </li>
+            </ul>
+            <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+              Need deeper detail? Visit the audit logs page for structured event history.
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Info Cards */}
       <div className="grid md:grid-cols-2 gap-6">

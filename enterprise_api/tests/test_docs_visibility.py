@@ -3,12 +3,13 @@ from fastapi.openapi.utils import get_openapi
 from fastapi import HTTPException
 
 from app.dependencies import require_super_admin
-from app.main import app, docs_landing, public_openapi
+from app.main import app, build_public_docs_html, build_public_openapi
 
 
 @pytest.mark.asyncio
-async def test_docs_landing_page_is_branded_with_swagger() -> None:
-    resp = await docs_landing()
+async def test_docs_landing_page_is_branded_with_swagger(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("app.main.settings.enable_public_api_docs", True)
+    resp = build_public_docs_html()
     assert resp.status_code == 200
     assert "text/html" in resp.media_type
     body = resp.body.decode("utf-8")
@@ -23,8 +24,9 @@ async def test_docs_landing_page_is_branded_with_swagger() -> None:
 
 
 @pytest.mark.asyncio
-async def test_public_openapi_excludes_internal_tags() -> None:
-    resp = await public_openapi()
+async def test_public_openapi_excludes_internal_tags(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("app.main.settings.enable_public_api_docs", True)
+    resp = build_public_openapi()
     assert resp.status_code == 200
     data = resp.body
     assert isinstance(data, (bytes, bytearray))
@@ -47,8 +49,9 @@ async def test_internal_openapi_exists_and_full_spec_includes_licensing() -> Non
 
 
 @pytest.mark.asyncio
-async def test_openapi_does_not_advertise_deprecated_tools_endpoints() -> None:
-    public_resp = await public_openapi()
+async def test_openapi_does_not_advertise_deprecated_tools_endpoints(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr("app.main.settings.enable_public_api_docs", True)
+    public_resp = build_public_openapi()
     assert public_resp.status_code == 200
     public_text = public_resp.body.decode("utf-8")
     assert "/api/v1/tools/encode" not in public_text
@@ -71,3 +74,16 @@ async def test_require_super_admin_enforces_feature_flag() -> None:
 
     org = await require_super_admin({"organization_id": "org_test", "features": {"is_super_admin": True}})
     assert org["organization_id"] == "org_test"
+
+
+@pytest.mark.asyncio
+async def test_require_super_admin_allows_admin_scope() -> None:
+    org = await require_super_admin(
+        {
+            "organization_id": "org_admin_scope",
+            "features": {"is_super_admin": False},
+            "permissions": ["admin"],
+        }
+    )
+
+    assert org["organization_id"] == "org_admin_scope"
