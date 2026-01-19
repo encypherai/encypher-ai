@@ -1,6 +1,7 @@
 """
 Coalition Service - Main Application
 """
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
@@ -23,14 +24,14 @@ async def lifespan(app: FastAPI):
     """Lifespan events"""
     # Startup
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    
+
     # Ensure database is ready and run migrations
     ensure_database_ready(
         database_url=settings.DATABASE_URL,
         service_name=settings.SERVICE_NAME,
         alembic_config_path="alembic.ini",
         run_migrations=True,
-        exit_on_failure=True
+        exit_on_failure=True,
     )
 
     yield

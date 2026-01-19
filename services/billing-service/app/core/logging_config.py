@@ -1,6 +1,7 @@
 """
 Structured logging configuration using structlog.
 """
+
 import logging
 import sys
 import structlog
@@ -10,7 +11,7 @@ from pythonjsonlogger import jsonlogger
 def setup_logging(log_level: str = "INFO"):
     """
     Configure structured logging for the application.
-    
+
     Args:
         log_level: Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
     """
@@ -31,7 +32,7 @@ def setup_logging(log_level: str = "INFO"):
             # Decode unicode
             structlog.processors.UnicodeDecoder(),
             # Render as JSON
-            structlog.processors.JSONRenderer()
+            structlog.processors.JSONRenderer(),
         ],
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
@@ -43,13 +44,7 @@ def setup_logging(log_level: str = "INFO"):
     handler = logging.StreamHandler(sys.stdout)
 
     # JSON formatter for standard logging
-    formatter = jsonlogger.JsonFormatter(
-        '%(timestamp)s %(level)s %(name)s %(message)s',
-        rename_fields={
-            'levelname': 'level',
-            'asctime': 'timestamp'
-        }
-    )
+    formatter = jsonlogger.JsonFormatter("%(timestamp)s %(level)s %(name)s %(message)s", rename_fields={"levelname": "level", "asctime": "timestamp"})
     handler.setFormatter(formatter)
 
     # Configure root logger

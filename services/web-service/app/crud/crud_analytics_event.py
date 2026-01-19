@@ -26,7 +26,7 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
         user_id: str | None = None,
         device_type: str | None = None,
         browser: str | None = None,
-        os: str | None = None
+        os: str | None = None,
     ) -> AnalyticsEvent:
         """Create a new analytics event with additional metadata"""
         # Convert the Pydantic model to a dict
@@ -53,55 +53,23 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
         db.refresh(db_obj)
         return db_obj
 
-    def get_events_by_session(
-        self, db: Session, *, session_id: str, limit: int = 100
-    ) -> list[AnalyticsEvent]:
+    def get_events_by_session(self, db: Session, *, session_id: str, limit: int = 100) -> list[AnalyticsEvent]:
         """Get all events for a specific session"""
-        return (
-            db.query(self.model)
-            .filter(self.model.session_id == session_id)
-            .order_by(self.model.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        return db.query(self.model).filter(self.model.session_id == session_id).order_by(self.model.created_at.desc()).limit(limit).all()
 
-    def get_events_by_user(
-        self, db: Session, *, user_id: str, limit: int = 100
-    ) -> list[AnalyticsEvent]:
+    def get_events_by_user(self, db: Session, *, user_id: str, limit: int = 100) -> list[AnalyticsEvent]:
         """Get all events for a specific user"""
-        return (
-            db.query(self.model)
-            .filter(self.model.user_id == user_id)
-            .order_by(self.model.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        return db.query(self.model).filter(self.model.user_id == user_id).order_by(self.model.created_at.desc()).limit(limit).all()
 
-    def get_events_by_type(
-        self, db: Session, *, event_type: str, limit: int = 100
-    ) -> list[AnalyticsEvent]:
+    def get_events_by_type(self, db: Session, *, event_type: str, limit: int = 100) -> list[AnalyticsEvent]:
         """Get all events of a specific type"""
-        return (
-            db.query(self.model)
-            .filter(self.model.event_type == event_type)
-            .order_by(self.model.created_at.desc())
-            .limit(limit)
-            .all()
-        )
+        return db.query(self.model).filter(self.model.event_type == event_type).order_by(self.model.created_at.desc()).limit(limit).all()
 
     def get_page_views(
-        self,
-        db: Session,
-        *,
-        page_url: str | None = None,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None,
-        limit: int = 100
+        self, db: Session, *, page_url: str | None = None, start_date: datetime | None = None, end_date: datetime | None = None, limit: int = 100
     ) -> list[AnalyticsEvent]:
         """Get page view events with optional filters"""
-        query = db.query(self.model).filter(
-            self.model.event_type == "page_view"
-        )
+        query = db.query(self.model).filter(self.model.event_type == "page_view")
 
         if page_url:
             query = query.filter(self.model.page_url.like(f"%{page_url}%"))
@@ -114,18 +82,9 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
 
         return query.order_by(self.model.created_at.desc()).limit(limit).all()
 
-    def get_event_counts_by_type(
-        self,
-        db: Session,
-        *,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None
-    ) -> dict[str, int]:
+    def get_event_counts_by_type(self, db: Session, *, start_date: datetime | None = None, end_date: datetime | None = None) -> dict[str, int]:
         """Get counts of events grouped by event type"""
-        query = db.query(
-            self.model.event_type,
-            func.count(self.model.id).label("count")
-        ).group_by(self.model.event_type)
+        query = db.query(self.model.event_type, func.count(self.model.id).label("count")).group_by(self.model.event_type)
 
         if start_date:
             query = query.filter(self.model.created_at >= start_date)
@@ -135,6 +94,7 @@ class CRUDAnalyticsEvent(CRUDBase[AnalyticsEvent, AnalyticsEventCreate, Analytic
 
         result = query.all()
         return {row[0]: row[1] for row in result}
+
 
 # Create an instance of the CRUDAnalyticsEvent class
 analytics_event = CRUDAnalyticsEvent(AnalyticsEvent)

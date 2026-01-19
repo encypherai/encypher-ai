@@ -1,6 +1,7 @@
 """
 Schemas package.
 """
+
 from app.schemas.coalition import (
     AdminCoalitionOverview,
     CoalitionMember,

@@ -68,7 +68,7 @@ REDIS_URL=redis://localhost:6379/0
 DEMO_API_KEY=demo-local-key
 
 # CORS (allow WordPress localhost)
-CORS_ORIGINS=http://localhost:8080,http://localhost:3000
+CORS_ORIGINS=http://localhost:8085,http://localhost:3000
 
 # Signature Settings (for testing)
 USE_TEST_SIGNATURES=true
@@ -165,7 +165,7 @@ services:
   wordpress:
     image: wordpress:latest
     ports:
-      - "8080:80"
+      - "8085:80"
     environment:
       WORDPRESS_DB_HOST: db
       WORDPRESS_DB_USER: wordpress
@@ -214,7 +214,7 @@ docker-compose ps
 
 #### Step 3: Access WordPress
 
-Open browser to: `http://localhost:8080`
+Open browser to: `http://localhost:8085`
 
 **Initial Setup:**
 1. Choose language: English
@@ -244,7 +244,7 @@ Open browser to: `http://localhost:8080`
 **Via Docker:**
 The plugin is already mounted in the container. Just activate it.
 
-1. Go to: `http://localhost:8080/wp-admin`
+1. Go to: `http://localhost:8085/wp-admin`
 2. Login with admin credentials
 3. Navigate to: **Plugins → Installed Plugins**
 4. Find "Encypher C2PA Content Authentication"
@@ -512,7 +512,7 @@ AND meta_key LIKE '_encypher%';
 **Objective:** Verify badge appears on published posts.
 
 **Steps:**
-1. Open a marked post on the frontend: `http://localhost:8080/[post-slug]`
+1. Open a marked post on the frontend: `http://localhost:8085/[post-slug]`
 2. Look for Encypher icon in bottom-right corner
 3. Hover over icon (should scale up)
 4. Click icon
@@ -708,7 +708,7 @@ WHERE p.post_type = 'post' AND p.post_status = 'publish';
 
 **Test sign endpoint:**
 ```powershell
-curl -X POST http://localhost:8080/wp-json/encypher-provenance/v1/sign `
+curl -X POST http://localhost:8085/wp-json/encypher-provenance/v1/sign `
   -H "X-WP-Nonce: [GET_FROM_BROWSER]" `
   -H "Content-Type: application/json" `
   -d '{"post_id": 1}'
@@ -716,7 +716,7 @@ curl -X POST http://localhost:8080/wp-json/encypher-provenance/v1/sign `
 
 **Test verify endpoint:**
 ```powershell
-curl -X POST http://localhost:8080/wp-json/encypher-provenance/v1/verify `
+curl -X POST http://localhost:8085/wp-json/encypher-provenance/v1/verify `
   -H "X-WP-Nonce: [GET_FROM_BROWSER]" `
   -H "Content-Type: application/json" `
   -d '{"post_id": 1}'
@@ -724,7 +724,7 @@ curl -X POST http://localhost:8080/wp-json/encypher-provenance/v1/verify `
 
 **Test status endpoint:**
 ```powershell
-curl http://localhost:8080/wp-json/encypher-provenance/v1/status?post_id=1 `
+curl http://localhost:8085/wp-json/encypher-provenance/v1/status?post_id=1 `
   -H "X-WP-Nonce: [GET_FROM_BROWSER]"
 ```
 
@@ -798,7 +798,7 @@ Write-Host "Waiting for WordPress to start..." -ForegroundColor Yellow
 Start-Sleep -Seconds 10
 
 # Check WordPress
-$wpHealth = Invoke-WebRequest -Uri "http://localhost:8080" -UseBasicParsing
+$wpHealth = Invoke-WebRequest -Uri "http://localhost:8085" -UseBasicParsing
 if ($wpHealth.StatusCode -eq 200) {
     Write-Host "✓ WordPress is running" -ForegroundColor Green
 } else {
@@ -808,8 +808,8 @@ if ($wpHealth.StatusCode -eq 200) {
 
 Write-Host "`n✓ Test environment ready!" -ForegroundColor Green
 Write-Host "`nAccess points:" -ForegroundColor Cyan
-Write-Host "  - WordPress: http://localhost:8080" -ForegroundColor White
-Write-Host "  - WordPress Admin: http://localhost:8080/wp-admin" -ForegroundColor White
+Write-Host "  - WordPress: http://localhost:8085" -ForegroundColor White
+Write-Host "  - WordPress Admin: http://localhost:8085/wp-admin" -ForegroundColor White
 Write-Host "  - Enterprise API: http://localhost:8000" -ForegroundColor White
 Write-Host "  - API Docs: http://localhost:8000/docs" -ForegroundColor White
 Write-Host "  - phpMyAdmin: http://localhost:8081" -ForegroundColor White
@@ -828,7 +828,7 @@ Write-Host "`nPress Ctrl+C to stop services" -ForegroundColor Yellow
 You now have a complete local testing environment:
 
 ✅ **Enterprise API** running on `http://localhost:8000`  
-✅ **WordPress Site** running on `http://localhost:8080`  
+✅ **WordPress Site** running on `http://localhost:8085`  
 ✅ **Plugin Installed** and configured  
 ✅ **Sample Content** ready for testing  
 ✅ **End-to-End Tests** documented  

@@ -10,7 +10,7 @@ Method | HTTP request | Description
 
 
 # **batch_verify_embeddings_api_v1_public_verify_batch_post**
-> BatchVerifyResponse batch_verify_embeddings_api_v1_public_verify_batch_post(app_schemas_embeddings_batch_verify_request, authorization=authorization)
+> BatchVerifyResponse batch_verify_embeddings_api_v1_public_verify_batch_post(batch_verify_request, authorization=authorization)
 
 Batch Verify Embeddings (Public - No Auth Required)
 
@@ -32,7 +32,7 @@ Verify multiple embeddings in a single request.
 
 ```python
 import encypher
-from encypher.models.app_schemas_embeddings_batch_verify_request import AppSchemasEmbeddingsBatchVerifyRequest
+from encypher.models.batch_verify_request import BatchVerifyRequest
 from encypher.models.batch_verify_response import BatchVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
@@ -48,12 +48,12 @@ configuration = encypher.Configuration(
 with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.PublicVerificationApi(api_client)
-    app_schemas_embeddings_batch_verify_request = encypher.AppSchemasEmbeddingsBatchVerifyRequest() # AppSchemasEmbeddingsBatchVerifyRequest | 
+    batch_verify_request = encypher.BatchVerifyRequest() # BatchVerifyRequest | 
     authorization = 'authorization_example' # str |  (optional)
 
     try:
         # Batch Verify Embeddings (Public - No Auth Required)
-        api_response = api_instance.batch_verify_embeddings_api_v1_public_verify_batch_post(app_schemas_embeddings_batch_verify_request, authorization=authorization)
+        api_response = api_instance.batch_verify_embeddings_api_v1_public_verify_batch_post(batch_verify_request, authorization=authorization)
         print("The response of PublicVerificationApi->batch_verify_embeddings_api_v1_public_verify_batch_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -67,7 +67,7 @@ with encypher.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **app_schemas_embeddings_batch_verify_request** | [**AppSchemasEmbeddingsBatchVerifyRequest**](AppSchemasEmbeddingsBatchVerifyRequest.md)|  | 
+ **batch_verify_request** | [**BatchVerifyRequest**](BatchVerifyRequest.md)|  | 
  **authorization** | **str**|  | [optional] 
 
 ### Return type

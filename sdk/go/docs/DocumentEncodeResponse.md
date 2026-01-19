@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **Roots** | [**map[string]MerkleRootResponse**](MerkleRootResponse.md) | Dictionary mapping segmentation level to Merkle root | 
 **TotalSegments** | **map[string]int32** | Number of segments at each level | 
 **ProcessingTimeMs** | **float32** | Processing time in milliseconds | 
+**FuzzyIndex** | Pointer to **map[string]interface{}** |  | [optional] 
 
 ## Methods
 
@@ -171,6 +172,41 @@ and a boolean to check if the value has been set.
 SetProcessingTimeMs sets ProcessingTimeMs field to given value.
 
 
+### GetFuzzyIndex
+
+`func (o *DocumentEncodeResponse) GetFuzzyIndex() map[string]interface{}`
+
+GetFuzzyIndex returns the FuzzyIndex field if non-nil, zero value otherwise.
+
+### GetFuzzyIndexOk
+
+`func (o *DocumentEncodeResponse) GetFuzzyIndexOk() (*map[string]interface{}, bool)`
+
+GetFuzzyIndexOk returns a tuple with the FuzzyIndex field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetFuzzyIndex
+
+`func (o *DocumentEncodeResponse) SetFuzzyIndex(v map[string]interface{})`
+
+SetFuzzyIndex sets FuzzyIndex field to given value.
+
+### HasFuzzyIndex
+
+`func (o *DocumentEncodeResponse) HasFuzzyIndex() bool`
+
+HasFuzzyIndex returns a boolean if a field has been set.
+
+### SetFuzzyIndexNil
+
+`func (o *DocumentEncodeResponse) SetFuzzyIndexNil(b bool)`
+
+ SetFuzzyIndexNil sets the value for FuzzyIndex to be an explicit nil
+
+### UnsetFuzzyIndex
+`func (o *DocumentEncodeResponse) UnsetFuzzyIndex()`
+
+UnsetFuzzyIndex ensures that no value is present for FuzzyIndex, not even an explicit nil
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

@@ -30,10 +30,10 @@ Analysis of current streaming support reveals **partial implementation** across 
 
 **Enterprise API (`enterprise_api/`):**
 - ✅ Streaming router in `app/routers/streaming.py` with:
-  - `POST /api/v1/stream/sign` (SSE)
-  - `WS /api/v1/stream/sign` and `WS /api/v1/stream/chat`
-  - `POST /api/v1/stream/session/create`, `POST /api/v1/stream/session/{id}/close`
-  - `GET /api/v1/stream/events`, `GET /api/v1/stream/runs/{run_id}`, `GET /api/v1/stream/stats`, `GET /api/v1/stream/health`
+  - `POST /api/v1/sign/stream` (SSE)
+  - `WS /api/v1/sign/stream` and `WS /api/v1/chat/stream`
+  - `POST /api/v1/sign/stream/sessions`, `POST /api/v1/sign/stream/sessions/{id}/close`
+  - `GET /api/v1/sign/stream/sessions/{session_id}/events`, `GET /api/v1/sign/stream/runs/{run_id}`, `GET /api/v1/sign/stream/stats`, `GET /api/v1/sign/stream/health`
 - ✅ Chat router in `app/routers/chat.py` with OpenAI-compatible streaming endpoint
 - ✅ Redis-backed session state via `session_service`
 
@@ -73,8 +73,8 @@ Analysis of current streaming support reveals **partial implementation** across 
 **Goal:** WebSocket and SSE endpoints with session management
 
 **Deliverables:**
-- WebSocket endpoint: `WS /api/v1/stream/sign`
-- SSE endpoint: `GET /api/v1/stream/events`
+- WebSocket endpoint: `WS /api/v1/sign/stream`
+- SSE endpoint: `GET /api/v1/sign/stream/sessions/{session_id}/events`
 - Session management with Redis
 - Connection pooling and rate limiting
 - Authentication middleware
@@ -182,15 +182,15 @@ docs/guides/KAFKA_INTEGRATION.md
 ### Key Endpoints
 
 **WebSocket:**
-- `WS /api/v1/stream/sign` - Real-time signing
-- `WS /api/v1/stream/chat` - Chat wrapper
+- `WS /api/v1/sign/stream` - Real-time signing
+- `WS /api/v1/chat/stream` - Chat wrapper
 
 **SSE:**
-- `GET /api/v1/stream/events` - Server-Sent Events
+- `GET /api/v1/sign/stream/sessions/{session_id}/events` - Server-Sent Events
 
 **REST:**
-- `POST /api/v1/stream/session/create` - Create session
-- `POST /api/v1/stream/session/{id}/close` - Close session
+- `POST /api/v1/sign/stream/sessions` - Create session
+- `POST /api/v1/sign/stream/sessions/{id}/close` - Close session
 - `POST /api/v1/kafka/producer/configure` - Configure Kafka
 - `POST /api/v1/kafka/consumer/subscribe` - Subscribe to topics
 

@@ -67,12 +67,13 @@ class CreateManifestResponse(BaseModel):
 
 class TrustAnchorResponse(BaseModel):
     """Response for trust anchor lookup.
-    
+
     Enables external C2PA validators to verify Encypher-signed content
     by providing the signer's public key.
-    
+
     See: https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_trust_lists
     """
+
     signer_id: str = Field(..., description="The signer identifier")
     signer_name: str = Field(..., description="Human-readable signer name")
     public_key: str = Field(..., description="PEM-encoded public key")
@@ -278,32 +279,32 @@ async def get_trust_anchor(
 ) -> TrustAnchorResponse:
     """
     Lookup a trust anchor (public key) for external C2PA validators.
-    
+
     This endpoint enables third-party validators to verify Encypher-signed
     content by providing the signer's public key. This implements the
     "Private Credential Store" model per C2PA spec §14.4.3.
-    
+
     **Special signer IDs:**
     - `encypher.public` or `org_demo`: Returns Encypher's official demo/free-tier key
     - `demo-*`: Returns demo/test keys (non-production)
-    
+
     **C2PA Spec Reference:**
     https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_trust_lists
     """
     await public_rate_limiter(request, endpoint_type="trust_anchor_lookup")
-    
+
     # Handle Encypher's official public key (free tier / demo)
     # Also includes org_encypher_marketing which uses the shared demo key
     DEMO_SIGNER_IDS = {"encypher.public", settings.demo_organization_id, "org_encypher_marketing"}
     if signer_id in DEMO_SIGNER_IDS or signer_id.startswith("demo-"):
         demo_private_key = get_demo_private_key()
         demo_public_key = demo_private_key.public_key()
-        
+
         public_key_pem = demo_public_key.public_bytes(
             encoding=serialization.Encoding.PEM,
             format=serialization.PublicFormat.SubjectPublicKeyInfo,
         ).decode("utf-8")
-        
+
         return TrustAnchorResponse(
             signer_id=signer_id,
             signer_name="Encypher Demo / Free Tier",
@@ -315,7 +316,7 @@ async def get_trust_anchor(
             revoked=False,
             trust_anchor_type="platform",
         )
-    
+
     # Lookup organization metadata
     result = await db.execute(
         text("""
@@ -331,7 +332,7 @@ async def get_trust_anchor(
         {"org_id": signer_id},
     )
     row = result.fetchone()
-    
+
     if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -340,9 +341,9 @@ async def get_trust_anchor(
                 "message": f"No trust anchor found for signer_id '{signer_id}'",
             },
         )
-    
+
     org_id, org_name, cert_status, created_at, cert_expiry = row
-    
+
     # Load public key using existing utility (handles encrypted private key -> public key derivation)
     try:
         public_key = await load_organization_public_key(signer_id, db)
@@ -354,20 +355,20 @@ async def get_trust_anchor(
                 "message": f"Organization '{signer_id}' has no public key configured: {e}",
             },
         )
-    
+
     # Convert to PEM format
     public_key_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     ).decode("utf-8")
-    
+
     # Determine revocation status
     revoked = cert_status in ("revoked", "expired") if cert_status else False
-    
+
     # Format timestamps
     issued_at_str = created_at.isoformat() if created_at else None
     expires_at_str = cert_expiry.isoformat() if cert_expiry else None
-    
+
     return TrustAnchorResponse(
         signer_id=org_id,
         signer_name=org_name or org_id,

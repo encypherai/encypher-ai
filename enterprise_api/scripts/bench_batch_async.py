@@ -3,6 +3,7 @@ Synthetic benchmark for batch signing throughput.
 
 Uses in-memory SQLite plus mocked signing to measure scheduler overhead.
 """
+
 import argparse
 import asyncio
 import time
@@ -22,6 +23,7 @@ async def run_benchmark(documents: int, worker_limit: int, simulate_ms: float, l
     delay = simulate_ms / 1000
 
     if logic_only:
+
         async def fake_process_sign_item(*, item, **_):
             await asyncio.sleep(delay)
             return WorkerResult(
@@ -57,10 +59,7 @@ async def run_benchmark(documents: int, worker_limit: int, simulate_ms: float, l
         "api_key": "bench-key",
         "is_demo": True,
     }
-    items = [
-        BatchItemPayload(document_id=f"doc-{i}", text=f"payload {i}")
-        for i in range(documents)
-    ]
+    items = [BatchItemPayload(document_id=f"doc-{i}", text=f"payload {i}") for i in range(documents)]
     request = BatchSignRequest(
         mode="c2pa",
         segmentation_level="sentence",

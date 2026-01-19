@@ -1,6 +1,7 @@
 """
 Demo corpus generation endpoints.
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.models.user import User

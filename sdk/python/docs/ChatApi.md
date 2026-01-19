@@ -4,12 +4,12 @@ All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**chat_health_check_api_v1_stream_chat_health_get**](ChatApi.md#chat_health_check_api_v1_stream_chat_health_get) | **GET** /api/v1/stream/chat/health | Chat Health Check
-[**openai_compatible_chat_api_v1_stream_chat_openai_compatible_post**](ChatApi.md#openai_compatible_chat_api_v1_stream_chat_openai_compatible_post) | **POST** /api/v1/stream/chat/openai-compatible | Openai Compatible Chat
+[**chat_health_check_api_v1_chat_health_get**](ChatApi.md#chat_health_check_api_v1_chat_health_get) | **GET** /api/v1/chat/health | Chat Health Check
+[**openai_compatible_chat_api_v1_chat_completions_post**](ChatApi.md#openai_compatible_chat_api_v1_chat_completions_post) | **POST** /api/v1/chat/completions | Openai Compatible Chat
 
 
-# **chat_health_check_api_v1_stream_chat_health_get**
-> object chat_health_check_api_v1_stream_chat_health_get()
+# **chat_health_check_api_v1_chat_health_get**
+> object chat_health_check_api_v1_chat_health_get()
 
 Chat Health Check
 
@@ -40,11 +40,11 @@ with encypher.ApiClient(configuration) as api_client:
 
     try:
         # Chat Health Check
-        api_response = api_instance.chat_health_check_api_v1_stream_chat_health_get()
-        print("The response of ChatApi->chat_health_check_api_v1_stream_chat_health_get:\n")
+        api_response = api_instance.chat_health_check_api_v1_chat_health_get()
+        print("The response of ChatApi->chat_health_check_api_v1_chat_health_get:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling ChatApi->chat_health_check_api_v1_stream_chat_health_get: %s\n" % e)
+        print("Exception when calling ChatApi->chat_health_check_api_v1_chat_health_get: %s\n" % e)
 ```
 
 
@@ -74,8 +74,8 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **openai_compatible_chat_api_v1_stream_chat_openai_compatible_post**
-> object openai_compatible_chat_api_v1_stream_chat_openai_compatible_post(chat_completion_request)
+# **openai_compatible_chat_api_v1_chat_completions_post**
+> object openai_compatible_chat_api_v1_chat_completions_post(chat_completion_request)
 
 Openai Compatible Chat
 
@@ -88,7 +88,7 @@ Args:
     request: Chat completion request
     organization: Authenticated organization
     db: Database session
-    
+
 Returns:
     Chat completion response (streaming or non-streaming)
 
@@ -126,11 +126,11 @@ with encypher.ApiClient(configuration) as api_client:
 
     try:
         # Openai Compatible Chat
-        api_response = api_instance.openai_compatible_chat_api_v1_stream_chat_openai_compatible_post(chat_completion_request)
-        print("The response of ChatApi->openai_compatible_chat_api_v1_stream_chat_openai_compatible_post:\n")
+        api_response = api_instance.openai_compatible_chat_api_v1_chat_completions_post(chat_completion_request)
+        print("The response of ChatApi->openai_compatible_chat_api_v1_chat_completions_post:\n")
         pprint(api_response)
     except Exception as e:
-        print("Exception when calling ChatApi->openai_compatible_chat_api_v1_stream_chat_openai_compatible_post: %s\n" % e)
+        print("Exception when calling ChatApi->openai_compatible_chat_api_v1_chat_completions_post: %s\n" % e)
 ```
 
 

@@ -63,8 +63,7 @@ BUILTIN_TEMPLATES: Dict[str, Dict[str, Any]] = {
         "is_public": True,
         "created_at": None,
         "updated_at": None,
-    }
-    ,
+    },
     "tmpl_builtin_rag_allowed_with_attribution_v1": {
         "id": "tmpl_builtin_rag_allowed_with_attribution_v1",
         "name": "RAG Allowed (Attribution Required)",

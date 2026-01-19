@@ -34,9 +34,9 @@ docs/APIKeysAPI.md
 docs/AccountAPI.md
 docs/AccountInfo.md
 docs/AccountResponse.md
-docs/AppSchemasEmbeddingsBatchVerifyRequest.md
-docs/AppSchemasEmbeddingsErrorResponse.md
+docs/AppSchemasBatchBatchVerifyRequest.md
 docs/AppSchemasEmbeddingsRightsMetadata.md
+docs/AppSchemasMerkleErrorResponse.md
 docs/BYOKAPI.md
 docs/BatchAPI.md
 docs/BatchItemPayload.md
@@ -48,7 +48,7 @@ docs/BatchSummary.md
 docs/BatchVerifyRequest.md
 docs/BatchVerifyResponse.md
 docs/BatchVerifyResult.md
-docs/BodyCreateStreamingSessionApiV1StreamSessionCreatePost.md
+docs/BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md
 docs/C2PAAssertionValidateRequest.md
 docs/C2PAAssertionValidateResponse.md
 docs/C2PAAssertionValidationResult.md
@@ -108,6 +108,8 @@ docs/FingerprintDetectResponse.md
 docs/FingerprintEncodeRequest.md
 docs/FingerprintEncodeResponse.md
 docs/FingerprintMatch.md
+docs/FuzzyFingerprintConfig.md
+docs/FuzzySearchConfig.md
 docs/HTTPValidationError.md
 docs/HealthAPI.md
 docs/InfoAPI.md
@@ -199,9 +201,9 @@ go.mod
 go.sum
 model_account_info.go
 model_account_response.go
-model_app__schemas__embeddings__batch_verify_request.go
-model_app__schemas__embeddings__error_response.go
+model_app__schemas__batch__batch_verify_request.go
 model_app__schemas__embeddings__rights_metadata.go
+model_app__schemas__merkle__error_response.go
 model_batch_item_payload.go
 model_batch_item_result.go
 model_batch_response_data.go
@@ -211,7 +213,7 @@ model_batch_summary.go
 model_batch_verify_request.go
 model_batch_verify_response.go
 model_batch_verify_result.go
-model_body_create_streaming_session_api_v1_stream_session_create_post.go
+model_body_create_streaming_session_api_v1_sign_stream_sessions_post.go
 model_c2_pa_assertion_validate_request.go
 model_c2_pa_assertion_validate_response.go
 model_c2_pa_assertion_validation_result.go
@@ -264,6 +266,8 @@ model_fingerprint_detect_response.go
 model_fingerprint_encode_request.go
 model_fingerprint_encode_response.go
 model_fingerprint_match.go
+model_fuzzy_fingerprint_config.go
+model_fuzzy_search_config.go
 model_http_validation_error.go
 model_key_create_request.go
 model_key_create_response.go

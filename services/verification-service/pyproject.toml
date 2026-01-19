@@ -1,6 +1,6 @@
 [project]
 name = "encypher-verification-service"
-version = "1.0.1"
+version = "1.0.2"
 description = "Document verification microservice for Encypher platform"
 readme = "README.md"
 requires-python = ">=3.11"

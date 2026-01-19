@@ -13,6 +13,7 @@ import {
   Input,
 } from '@encypher/design-system';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { useOrganization } from '../../contexts/OrganizationContext';
 
 interface AuditLog {
   id: string;
@@ -53,7 +54,8 @@ export default function AuditLogsPage() {
 
   const userTier = (session?.user as any)?.tier || 'starter';
   const hasAuditFeature = ['business', 'enterprise'].includes(userTier);
-  const orgId = (session?.user as any)?.organizationId;
+  const { activeOrganization, isLoading: orgLoading } = useOrganization();
+  const orgId = activeOrganization?.id;
 
   // Fetch audit logs
   const { data: logs, isLoading, error } = useQuery({
@@ -118,6 +120,11 @@ export default function AuditLogsPage() {
           <p className="text-muted-foreground mt-1">
             Track all activity in your organization
           </p>
+          {activeOrganization && (
+            <p className="text-xs text-muted-foreground mt-2">
+              Active organization: <span className="font-medium text-foreground">{activeOrganization.name}</span>
+            </p>
+          )}
         </div>
 
         {/* Search */}
@@ -136,7 +143,7 @@ export default function AuditLogsPage() {
         {/* Logs Table */}
         <Card>
           <CardContent className="p-0">
-            {isLoading ? (
+            {isLoading || orgLoading ? (
               <div className="p-8 text-center text-muted-foreground">
                 Loading audit logs...
               </div>

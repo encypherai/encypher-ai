@@ -41,11 +41,11 @@ async def saml_metadata(org_id: str = Query(...)):
     acs_url = f"{settings.API_URL}/api/v1/auth/saml/acs"
 
     xml = (
-        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<EntityDescriptor xmlns=\"urn:oasis:names:tc:SAML:2.0:metadata\" "
-        f"entityID=\"{entity_id}\">"
-        "<SPSSODescriptor protocolSupportEnumeration=\"urn:oasis:names:tc:SAML:2.0:protocol\">"
-        f"<AssertionConsumerService Binding=\"urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST\" Location=\"{acs_url}\" index=\"0\"/>"
+        '<?xml version="1.0" encoding="UTF-8"?>'
+        '<EntityDescriptor xmlns="urn:oasis:names:tc:SAML:2.0:metadata" '
+        f'entityID="{entity_id}">'
+        '<SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">'
+        f'<AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="{acs_url}" index="0"/>'
         "</SPSSODescriptor>"
         "</EntityDescriptor>"
     )
@@ -68,9 +68,7 @@ async def saml_login(org_id: str = Query(...), return_to: str = Query("")):
 
     saml_request = base64.b64encode(f"dummy-saml-request:{org_id}".encode("utf-8")).decode("ascii")
 
-    redirect_url = (
-        f"{settings.DASHBOARD_URL}/sso/saml?SAMLRequest={quote_plus(saml_request)}&RelayState={quote_plus(relay_state)}"
-    )
+    redirect_url = f"{settings.DASHBOARD_URL}/sso/saml?SAMLRequest={quote_plus(saml_request)}&RelayState={quote_plus(relay_state)}"
 
     return RedirectResponse(url=redirect_url, status_code=status.HTTP_302_FOUND)
 

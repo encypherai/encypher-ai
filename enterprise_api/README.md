@@ -56,6 +56,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 - ✅ **Merkle Tree Encoding**: Hierarchical content fingerprinting with court-admissible evidence generation
 - ✅ **Source Attribution**: Find original sources of quoted content
 - ✅ **Plagiarism Detection**: Detect unauthorized content reuse
+- ✅ **Fuzzy Fingerprinting**: Locality-sensitive fingerprints for paraphrased attribution (index on encode, search on verify advanced)
 - ✅ **Invisible Embeddings**: Unicode-based portable content tracking
 - ✅ **Custom C2PA Assertions**: Define custom assertion types
 - ✅ **Assertion Templates**: Pre-built templates for various industries
@@ -88,7 +89,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 |----------|--------|------|------|-------------|--------------|
 | `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
 | `/api/v1/sign/advanced` | POST | ✅ | Professional+ | Sign content with advanced embedding controls | Key Service, Coalition Service (optional) |
-| `/api/v1/verify/advanced` | POST | ✅ | Professional+ | Verify signed content + optional attribution/plagiarism analysis | Key Service |
+| `/api/v1/verify/advanced` | POST | ✅ | All (features gated) | Advanced verification with optional attribution/plagiarism analysis | Key Service |
 | `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
 | `/api/v1/verify/{document_id}` | GET | ❌ | Public | Verify a previously signed document by ID | None |
 | `/api/v1/verify/signature` | POST | ❌ | Public | Verify a signature payload | None |
@@ -117,7 +118,13 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 |----------|--------|------|------|-------------|
 | `/api/v1/enterprise/merkle/encode` | POST | ✅ | Professional+ | Encode document into Merkle tree |
 
-Deprecated attribution and plagiarism endpoints have been removed. Use `/api/v1/verify/advanced` with `include_attribution=true` or `detect_plagiarism=true`.
+Deprecated Merkle attribution/plagiarism endpoints return HTTP 410 and redirect to `/api/v1/verify/advanced`.
+
+### Enterprise Embeddings Endpoint
+
+| Endpoint | Method | Auth | Tier | Description |
+|----------|--------|------|------|-------------|
+| `/api/v1/sign/advanced` | POST | ✅ | Professional+ | Sign content with advanced embeddings and Merkle integration |
 
 ### Streaming Merkle Endpoints (NEW - Patent FIG. 5)
 
@@ -190,15 +197,15 @@ Look up content across multiple sources with chronological ordering.
 
 | Endpoint | Method | Auth | Tier | Description |
 |----------|--------|------|------|-------------|
-| `/api/v1/stream/sign` | POST/WS | ✅ | Professional+ | Real-time signing via SSE (POST) and WebSocket (WS) |
-| `/api/v1/stream/chat` | WS | ✅ | Professional+ | WebSocket chat stream (signing wrapper) |
-| `/api/v1/stream/chat/openai-compatible` | POST | ✅ | Professional+ | OpenAI-compatible SSE chat completions with signing |
-| `/api/v1/stream/chat/health` | GET | ❌ | Public | Streaming chat health check |
-| `/api/v1/stream/events` | GET | ✅ | Professional+ | Server-Sent Events (SSE) heartbeat and events |
-| `/api/v1/stream/session/create` | POST | ✅ | Professional+ | Create streaming session |
-| `/api/v1/stream/session/{session_id}/close` | POST | ✅ | Professional+ | Close streaming session |
-| `/api/v1/stream/runs/{run_id}` | GET | ✅ | Professional+ | Get streaming run state |
-| `/api/v1/stream/stats` | GET | ✅ | Professional+ | Get organization streaming statistics |
+| `/api/v1/sign/stream` | POST/WS | ✅ | Professional+ | Real-time signing via SSE (POST) and WebSocket (WS) |
+| `/api/v1/sign/stream/sessions` | POST | ✅ | Professional+ | Create streaming session |
+| `/api/v1/sign/stream/sessions/{session_id}/events` | GET | ✅ | Professional+ | Server-Sent Events (SSE) heartbeat and events |
+| `/api/v1/sign/stream/sessions/{session_id}/close` | POST | ✅ | Professional+ | Close streaming session |
+| `/api/v1/sign/stream/runs/{run_id}` | GET | ✅ | Professional+ | Get streaming run state |
+| `/api/v1/sign/stream/stats` | GET | ✅ | Professional+ | Get organization streaming statistics |
+| `/api/v1/chat/stream` | WS | ✅ | Professional+ | WebSocket chat stream (signing wrapper) |
+| `/api/v1/chat/completions` | POST | ✅ | Professional+ | OpenAI-compatible SSE chat completions with signing |
+| `/api/v1/chat/health` | GET | ❌ | Public | Streaming chat health check |
 
 ### Account, Keys, BYOK, Documents, and Webhooks
 
@@ -285,6 +292,7 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ Custom metadata
 - ✅ Streaming support (WebSocket/SSE)
 - ✅ **Lightweight UUID Manifest**: Smaller payload footprint (NEW)
+- ✅ **Minimal UUID Manifest**: UUID-only signed pointer to full manifest (NEW)
 - ✅ **Streaming Merkle Tree**: Real-time LLM signing (NEW)
 - ✅ Priority support
 - ✅ Coalition membership (70% publisher / 30% Encypher revenue share)
@@ -590,6 +598,11 @@ Get usage statistics for your organization's current billing period.
 
 Encode documents into Merkle trees for sentence-level tracking.
 
+Optionally enable fuzzy fingerprint indexing (SimHash) in the same request to
+tag sentence/paragraph segments with locality-sensitive fingerprints. This
+enables detection of paraphrasing, misquotes, and lightly edited reuse while
+tying every match back to the original work with Merkle proofs.
+
 **Endpoint:** `POST /api/v1/enterprise/merkle/encode`
 
 **Request:**
@@ -598,7 +611,12 @@ Encode documents into Merkle trees for sentence-level tracking.
 {
   "text": "Your document content here...",
   "document_id": "doc_abc123",
-  "segmentation_levels": ["sentence", "paragraph"]
+  "segmentation_levels": ["sentence", "paragraph"],
+  "fuzzy_fingerprint": {
+    "enabled": true,
+    "levels": ["sentence", "paragraph"],
+    "include_document_fingerprint": false
+  }
 }
 ```
 
@@ -620,17 +638,30 @@ Encode documents into Merkle trees for sentence-level tracking.
       "node_count": 8
     }
   ],
+  "fuzzy_index": {
+    "indexed_segments": 50,
+    "levels": {
+      "sentence": 42,
+      "paragraph": 8
+    }
+  },
   "encoding_time_ms": 123
 }
 ```
 
+**Verify with fuzzy search:** Use `POST /api/v1/verify/advanced` with
+`fuzzy_search.enabled=true` to return paraphrase/misquote matches, similarity
+scores, and optional Merkle proofs.
+
 ---
 
-### Source Attribution
+### Source Attribution (Deprecated Endpoint)
 
-Find original sources of content using Merkle tree matching.
+The legacy Merkle attribution endpoint now returns HTTP 410. Use the advanced verification endpoint instead.
 
-**Endpoint:** `POST /api/v1/enterprise/merkle/attribute`
+**Replacement Endpoint:** `POST /api/v1/verify/advanced` with `include_attribution=true`
+
+**Deprecated Endpoint:** `POST /api/v1/enterprise/merkle/attribute`
 
 **Request:**
 
@@ -663,11 +694,13 @@ Find original sources of content using Merkle tree matching.
 
 ---
 
-### Plagiarism Detection
+### Plagiarism Detection (Deprecated Endpoint)
 
-Detect if content is plagiarized from signed documents.
+The legacy plagiarism endpoint now returns HTTP 410. Use the advanced verification endpoint instead.
 
-**Endpoint:** `POST /api/v1/enterprise/merkle/detect-plagiarism`
+**Replacement Endpoint:** `POST /api/v1/verify/advanced` with `detect_plagiarism=true`
+
+**Deprecated Endpoint:** `POST /api/v1/enterprise/merkle/detect-plagiarism`
 
 **Request:**
 
@@ -704,7 +737,9 @@ Detect if content is plagiarized from signed documents.
 
 ### Invisible Signed Embeddings (Professional+)
 
-Embed signed references directly into content so it can be extracted and verified later.
+Embed signed references directly into content so it can be extracted and verified later. With
+`manifest_mode="minimal_uuid"`, each segment receives a UUID-only pointer while a full C2PA manifest
+is appended at the document end by default (set `disable_c2pa=true` to skip the document-level manifest).
 
 **Endpoint:** `POST /api/v1/sign/advanced`
 
@@ -715,6 +750,7 @@ Embed signed references directly into content so it can be extracted and verifie
   "document_id": "article_001",
   "text": "Full article text...",
   "segmentation_level": "sentence",
+  "manifest_mode": "minimal_uuid",
   "c2pa_manifest_url": "https://...",
   "license": {
     "type": "All Rights Reserved",
@@ -722,6 +758,8 @@ Embed signed references directly into content so it can be extracted and verifie
   }
 }
 ```
+
+**Manifest Modes:** `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`
 
 **Response:**
 

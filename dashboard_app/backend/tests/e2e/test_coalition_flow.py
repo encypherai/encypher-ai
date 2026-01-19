@@ -2,6 +2,7 @@
 End-to-end tests for coalition user flow.
 Tests the complete user journey from signup to revenue tracking.
 """
+
 from datetime import datetime, timedelta
 
 import pytest
@@ -17,11 +18,7 @@ from app.models.user import User
 class TestCoalitionUserJourney:
     """Test complete coalition user journey."""
 
-    async def test_complete_coalition_flow(
-        self,
-        client: AsyncClient,
-        db: AsyncSession
-    ):
+    async def test_complete_coalition_flow(self, client: AsyncClient, db: AsyncSession):
         """
         Test complete flow:
         1. User signs up (auto-enrolled in coalition)
@@ -31,22 +28,13 @@ class TestCoalitionUserJourney:
         5. User views stats and revenue
         """
         # Step 1: User signup (simulated - coalition member created)
-        user = User(
-            email="test@example.com",
-            username="testuser",
-            hashed_password="hashed_password",
-            is_active=True
-        )
+        user = User(email="test@example.com", username="testuser", hashed_password="hashed_password", is_active=True)
         db.add(user)
         await db.commit()
         await db.refresh(user)
 
         # Auto-enroll in coalition
-        member = CoalitionMember(
-            user_id=user.id,
-            status="active",
-            joined_at=datetime.utcnow()
-        )
+        member = CoalitionMember(user_id=user.id, status="active", joined_at=datetime.utcnow())
         db.add(member)
         await db.commit()
 
@@ -55,10 +43,10 @@ class TestCoalitionUserJourney:
         for i in range(5):
             content = ContentItem(
                 user_id=user.id,
-                title=f"Article {i+1}",
+                title=f"Article {i + 1}",
                 content_type="article",
                 word_count=1000 + i * 100,
-                signed_at=datetime.utcnow() - timedelta(days=i)
+                signed_at=datetime.utcnow() - timedelta(days=i),
             )
             db.add(content)
             content_items.append(content)
@@ -67,13 +55,7 @@ class TestCoalitionUserJourney:
         # Step 3: AI company accesses content
         for content in content_items[:3]:  # Access first 3 items
             await db.refresh(content)
-            log = ContentAccessLog(
-                content_id=content.id,
-                user_id=user.id,
-                ai_company="OpenAI",
-                access_type="training",
-                accessed_at=datetime.utcnow()
-            )
+            log = ContentAccessLog(content_id=content.id, user_id=user.id, ai_company="OpenAI", access_type="training", accessed_at=datetime.utcnow())
             db.add(log)
         await db.commit()
 
@@ -85,7 +67,7 @@ class TestCoalitionUserJourney:
             period_start=datetime.utcnow() - timedelta(days=30),
             period_end=datetime.utcnow(),
             status="paid",
-            paid_at=datetime.utcnow()
+            paid_at=datetime.utcnow(),
         )
         db.add(transaction)
         await db.commit()
@@ -101,10 +83,7 @@ class TestCoalitionUserJourney:
         assert len(content_items) == 5
 
         # Verify access logs created
-        access_logs = await db.execute(
-            "SELECT COUNT(*) FROM content_access_logs WHERE user_id = :user_id",
-            {"user_id": str(user.id)}
-        )
+        access_logs = await db.execute("SELECT COUNT(*) FROM content_access_logs WHERE user_id = :user_id", {"user_id": str(user.id)})
         assert access_logs.scalar() == 3
 
         # Verify revenue transaction
@@ -117,13 +96,7 @@ class TestCoalitionUserJourney:
 class TestCoalitionAdminFlow:
     """Test admin coalition management flow."""
 
-    async def test_admin_creates_licensing_agreement(
-        self,
-        client: AsyncClient,
-        admin_user: User,
-        admin_auth_headers: dict,
-        db: AsyncSession
-    ):
+    async def test_admin_creates_licensing_agreement(self, client: AsyncClient, admin_user: User, admin_auth_headers: dict, db: AsyncSession):
         """
         Test admin flow:
         1. Admin creates licensing agreement
@@ -135,50 +108,26 @@ class TestCoalitionAdminFlow:
         # In real implementation, this would be through API
 
         # Step 2: Create test content and access logs
-        user = User(
-            email="member@example.com",
-            username="member",
-            hashed_password="hashed",
-            is_active=True
-        )
+        user = User(email="member@example.com", username="member", hashed_password="hashed", is_active=True)
         db.add(user)
         await db.commit()
         await db.refresh(user)
 
-        member = CoalitionMember(
-            user_id=user.id,
-            status="active",
-            joined_at=datetime.utcnow()
-        )
+        member = CoalitionMember(user_id=user.id, status="active", joined_at=datetime.utcnow())
         db.add(member)
 
-        content = ContentItem(
-            user_id=user.id,
-            title="Test Content",
-            content_type="article",
-            word_count=1500,
-            signed_at=datetime.utcnow()
-        )
+        content = ContentItem(user_id=user.id, title="Test Content", content_type="article", word_count=1500, signed_at=datetime.utcnow())
         db.add(content)
         await db.commit()
         await db.refresh(content)
 
         # AI company accesses content
-        log = ContentAccessLog(
-            content_id=content.id,
-            user_id=user.id,
-            ai_company="Anthropic",
-            access_type="training",
-            accessed_at=datetime.utcnow()
-        )
+        log = ContentAccessLog(content_id=content.id, user_id=user.id, ai_company="Anthropic", access_type="training", accessed_at=datetime.utcnow())
         db.add(log)
         await db.commit()
 
         # Step 3: Admin views overview
-        response = await client.get(
-            "/api/v1/coalition/admin/overview",
-            headers=admin_auth_headers
-        )
+        response = await client.get("/api/v1/coalition/admin/overview", headers=admin_auth_headers)
 
         assert response.status_code == 200
         data = response.json()
@@ -192,7 +141,7 @@ class TestCoalitionAdminFlow:
             currency="USD",
             period_start=datetime.utcnow() - timedelta(days=30),
             period_end=datetime.utcnow(),
-            status="pending"
+            status="pending",
         )
         db.add(transaction)
         await db.commit()
@@ -207,13 +156,7 @@ class TestCoalitionAdminFlow:
 class TestCoalitionContentLifecycle:
     """Test content lifecycle in coalition."""
 
-    async def test_content_from_creation_to_revenue(
-        self,
-        client: AsyncClient,
-        test_user: User,
-        auth_headers: dict,
-        db: AsyncSession
-    ):
+    async def test_content_from_creation_to_revenue(self, client: AsyncClient, test_user: User, auth_headers: dict, db: AsyncSession):
         """
         Test content lifecycle:
         1. Content created and signed
@@ -225,11 +168,7 @@ class TestCoalitionContentLifecycle:
         7. Revenue distributed to user
         """
         # Step 1: Create coalition member
-        member = CoalitionMember(
-            user_id=test_user.id,
-            status="active",
-            joined_at=datetime.utcnow()
-        )
+        member = CoalitionMember(user_id=test_user.id, status="active", joined_at=datetime.utcnow())
         db.add(member)
         await db.commit()
 
@@ -240,32 +179,19 @@ class TestCoalitionContentLifecycle:
             "content_type": "article",
             "word_count": 2500,
             "content_hash": "abc123def456",
-            "signed_at": datetime.utcnow().isoformat()
+            "signed_at": datetime.utcnow().isoformat(),
         }
 
-        response = await client.post(
-            "/api/v1/coalition/content",
-            json=content_data,
-            headers=auth_headers
-        )
+        response = await client.post("/api/v1/coalition/content", json=content_data, headers=auth_headers)
 
         assert response.status_code == 201
         content = response.json()
         content_id = content["id"]
 
         # Step 3-5: AI company accesses content
-        log_data = {
-            "content_id": content_id,
-            "ai_company": "Google",
-            "access_type": "training",
-            "accessed_at": datetime.utcnow().isoformat()
-        }
+        log_data = {"content_id": content_id, "ai_company": "Google", "access_type": "training", "accessed_at": datetime.utcnow().isoformat()}
 
-        response = await client.post(
-            "/api/v1/coalition/access-log",
-            json=log_data,
-            headers=auth_headers
-        )
+        response = await client.post("/api/v1/coalition/access-log", json=log_data, headers=auth_headers)
 
         assert response.status_code == 201
 
@@ -278,16 +204,13 @@ class TestCoalitionContentLifecycle:
             period_start=datetime.utcnow() - timedelta(days=30),
             period_end=datetime.utcnow(),
             status="paid",
-            paid_at=datetime.utcnow()
+            paid_at=datetime.utcnow(),
         )
         db.add(transaction)
         await db.commit()
 
         # Verify complete flow
-        response = await client.get(
-            "/api/v1/coalition/stats",
-            headers=auth_headers
-        )
+        response = await client.get("/api/v1/coalition/stats", headers=auth_headers)
 
         assert response.status_code == 200
         stats = response.json()
@@ -300,11 +223,7 @@ class TestCoalitionContentLifecycle:
 class TestCoalitionScalability:
     """Test coalition with multiple users and content."""
 
-    async def test_coalition_with_multiple_members(
-        self,
-        client: AsyncClient,
-        db: AsyncSession
-    ):
+    async def test_coalition_with_multiple_members(self, client: AsyncClient, db: AsyncSession):
         """
         Test coalition scalability:
         1. Create 10 coalition members
@@ -317,32 +236,17 @@ class TestCoalitionScalability:
 
         # Create 10 members
         for i in range(10):
-            user = User(
-                email=f"user{i}@example.com",
-                username=f"user{i}",
-                hashed_password="hashed",
-                is_active=True
-            )
+            user = User(email=f"user{i}@example.com", username=f"user{i}", hashed_password="hashed", is_active=True)
             db.add(user)
             await db.flush()
 
-            member = CoalitionMember(
-                user_id=user.id,
-                status="active",
-                joined_at=datetime.utcnow()
-            )
+            member = CoalitionMember(user_id=user.id, status="active", joined_at=datetime.utcnow())
             db.add(member)
             members.append(member)
 
             # Each creates 5 content items
             for j in range(5):
-                content = ContentItem(
-                    user_id=user.id,
-                    title=f"Article {i}-{j}",
-                    content_type="article",
-                    word_count=1000,
-                    signed_at=datetime.utcnow()
-                )
+                content = ContentItem(user_id=user.id, title=f"Article {i}-{j}", content_type="article", word_count=1000, signed_at=datetime.utcnow())
                 db.add(content)
                 all_content.append(content)
 
@@ -356,20 +260,14 @@ class TestCoalitionScalability:
         for content in all_content[:20]:
             await db.refresh(content)
             log = ContentAccessLog(
-                content_id=content.id,
-                user_id=content.user_id,
-                ai_company="OpenAI",
-                access_type="training",
-                accessed_at=datetime.utcnow()
+                content_id=content.id, user_id=content.user_id, ai_company="OpenAI", access_type="training", accessed_at=datetime.utcnow()
             )
             db.add(log)
 
         await db.commit()
 
         # Verify access logs
-        access_count = await db.execute(
-            "SELECT COUNT(*) FROM content_access_logs"
-        )
+        access_count = await db.execute("SELECT COUNT(*) FROM content_access_logs")
         assert access_count.scalar() == 20
 
 
@@ -378,12 +276,7 @@ class TestCoalitionScalability:
 class TestCoalitionErrorHandling:
     """Test error handling in coalition flows."""
 
-    async def test_duplicate_content_handling(
-        self,
-        client: AsyncClient,
-        test_user: User,
-        auth_headers: dict
-    ):
+    async def test_duplicate_content_handling(self, client: AsyncClient, test_user: User, auth_headers: dict):
         """Test handling of duplicate content submissions."""
         content_data = {
             "user_id": str(test_user.id),
@@ -391,45 +284,29 @@ class TestCoalitionErrorHandling:
             "content_type": "article",
             "word_count": 1500,
             "content_hash": "duplicate123",
-            "signed_at": datetime.utcnow().isoformat()
+            "signed_at": datetime.utcnow().isoformat(),
         }
 
         # First submission should succeed
-        response1 = await client.post(
-            "/api/v1/coalition/content",
-            json=content_data,
-            headers=auth_headers
-        )
+        response1 = await client.post("/api/v1/coalition/content", json=content_data, headers=auth_headers)
         assert response1.status_code == 201
 
         # Second submission with same hash should handle gracefully
         # (Implementation dependent - might return existing or error)
-        response2 = await client.post(
-            "/api/v1/coalition/content",
-            json=content_data,
-            headers=auth_headers
-        )
+        response2 = await client.post("/api/v1/coalition/content", json=content_data, headers=auth_headers)
         # Accept either 201 (created new) or 409 (conflict)
         assert response2.status_code in [201, 409]
 
-    async def test_invalid_access_log(
-        self,
-        client: AsyncClient,
-        auth_headers: dict
-    ):
+    async def test_invalid_access_log(self, client: AsyncClient, auth_headers: dict):
         """Test handling of invalid access log data."""
         log_data = {
             "content_id": "00000000-0000-0000-0000-000000000000",  # Non-existent
             "ai_company": "TestCompany",
             "access_type": "training",
-            "accessed_at": datetime.utcnow().isoformat()
+            "accessed_at": datetime.utcnow().isoformat(),
         }
 
-        response = await client.post(
-            "/api/v1/coalition/access-log",
-            json=log_data,
-            headers=auth_headers
-        )
+        response = await client.post("/api/v1/coalition/access-log", json=log_data, headers=auth_headers)
 
         # Should handle gracefully (either 404 or 400)
         assert response.status_code in [400, 404, 500]

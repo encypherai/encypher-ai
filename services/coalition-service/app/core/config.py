@@ -5,6 +5,7 @@ Environment Variables:
 - Shared: CONTENT_DATABASE_URL, REDIS_URL, ALLOWED_ORIGINS, AUTH_SERVICE_URL
 - Service-specific: REVENUE_SPLIT_*, MIN_PAYOUT_THRESHOLD, AUTO_ONBOARD_FREE_TIER
 """
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 

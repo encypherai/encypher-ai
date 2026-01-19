@@ -21,12 +21,12 @@ async def test_sdk_python_metadata_has_mit_license_and_urls() -> None:
     pyproject = repo_root / "sdk" / "python" / "pyproject.toml"
     text = _read_text(pyproject)
 
-    assert "name = \"encypher\"" in text
+    assert 'name = "encypher"' in text
     assert "license" in text
     assert "MIT" in text
 
-    assert "Documentation = \"https://api.encypherai.com/docs\"" in text
-    assert "Repository = \"https://github.com/encypherai/encypherai-commercial\"" in text
+    assert 'Documentation = "https://api.encypherai.com/docs"' in text
+    assert 'Repository = "https://github.com/encypherai/encypherai-commercial"' in text
 
 
 @pytest.mark.asyncio

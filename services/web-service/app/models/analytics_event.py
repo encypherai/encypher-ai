@@ -9,6 +9,7 @@ from app.db.base import Base
 
 class AnalyticsEvent(Base):
     """Model for tracking user interactions and events on the marketing site."""
+
     __tablename__ = "analytics_events"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -20,7 +21,7 @@ class AnalyticsEvent(Base):
 
     # Session and user tracking
     session_id = Column(String(100), index=True)  # Client-side session ID
-    user_id = Column(String(100), index=True)     # If user is authenticated
+    user_id = Column(String(100), index=True)  # If user is authenticated
 
     # Page context
     page_url = Column(Text, nullable=False)

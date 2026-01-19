@@ -21,7 +21,7 @@ try {
 Write-Host ""
 Write-Host "Step 3: Testing WordPress..." -ForegroundColor Yellow
 try {
-    $response = Invoke-WebRequest -Uri "http://localhost:8080" -Method GET
+    $response = Invoke-WebRequest -Uri "http://localhost:8085" -Method GET
     Write-Host "✓ WordPress is responding" -ForegroundColor Green
 } catch {
     Write-Host "✗ WordPress is not responding" -ForegroundColor Red
@@ -38,10 +38,10 @@ docker-compose logs enterprise-api --tail=20 | Select-String "C2PA" | Select-Obj
 
 Write-Host ""
 Write-Host "=== Next Steps ===" -ForegroundColor Cyan
-Write-Host "1. Go to http://localhost:8080/wp-admin" -ForegroundColor White
+Write-Host "1. Go to http://localhost:8085/wp-admin" -ForegroundColor White
 Write-Host "2. Edit post #9 and make a small change" -ForegroundColor White
 Write-Host "3. Click 'Update'" -ForegroundColor White
-Write-Host "4. View post at http://localhost:8080/?p=9" -ForegroundColor White
+Write-Host "4. View post at http://localhost:8085/?p=9" -ForegroundColor White
 Write-Host "5. Look for the C2PA badge (bottom-right corner)" -ForegroundColor White
 Write-Host "6. Click the badge to verify" -ForegroundColor White
 Write-Host ""

@@ -1,7 +1,8 @@
 """Customer-facing BYOK (Bring Your Own Key) endpoints."""
+
 import logging
 from datetime import datetime
-from typing import Optional
+from typing import Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field, validator
@@ -56,6 +57,9 @@ async def register_public_key(
     db: AsyncSession = Depends(get_db),
 ) -> PublicKeyRegisterResponse:
     org_id = organization.get("organization_id")
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
+    org_id = cast(str, org_id)
 
     result = await PublicKeyService.register_public_key(
         db=db,
@@ -86,6 +90,9 @@ async def list_public_keys(
     db: AsyncSession = Depends(get_db),
 ) -> PublicKeyListResponse:
     org_id = organization.get("organization_id")
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
+    org_id = cast(str, org_id)
 
     result = await PublicKeyService.list_public_keys(
         db=db,
@@ -108,6 +115,9 @@ async def revoke_public_key(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     org_id = organization.get("organization_id")
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
+    org_id = cast(str, org_id)
 
     result = await PublicKeyService.revoke_public_key(
         db=db,
@@ -129,8 +139,10 @@ async def revoke_public_key(
 # Certificate Upload (CA-Signed BYOK)
 # =============================================================================
 
+
 class CertificateUploadRequest(BaseModel):
     """Request to upload a CA-signed certificate for BYOK."""
+
     certificate_pem: str = Field(
         ...,
         description="PEM-encoded X.509 certificate (must chain to C2PA trusted CA)",
@@ -154,6 +166,7 @@ class CertificateUploadRequest(BaseModel):
 
 class CertificateUploadResponse(BaseModel):
     """Response for certificate upload."""
+
     success: bool = True
     data: Optional[dict] = None
     error: Optional[str] = None
@@ -161,6 +174,7 @@ class CertificateUploadResponse(BaseModel):
 
 class TrustListResponse(BaseModel):
     """Response listing trusted CAs."""
+
     success: bool = True
     trusted_cas: list[str] = Field(default_factory=list)
     trust_list_url: str = "https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem"
@@ -175,7 +189,7 @@ class TrustListResponse(BaseModel):
 async def list_trusted_cas() -> TrustListResponse:
     """
     List Certificate Authorities trusted for BYOK certificate validation.
-    
+
     These CAs are from the official C2PA trust list. Certificates issued by
     these CAs (or their subordinate CAs) can be used for BYOK signing.
     """
@@ -200,49 +214,56 @@ async def upload_certificate(
 ) -> CertificateUploadResponse:
     """
     Upload a CA-signed certificate for BYOK.
-    
+
     The certificate must chain to a CA in the C2PA trust list:
     - Google C2PA Root CA
     - SSL.com C2PA Root CAs
     - DigiCert C2PA Root CAs
     - Adobe, Trufo, vivo, Xiaomi, Irdeto
-    
+
     Enterprise customers can obtain certificates from these CAs and upload
     them here to use their own signing identity.
     """
     org_id = organization.get("organization_id")
-    
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
+    org_id = cast(str, org_id)
+
     # Validate certificate chains to C2PA trust anchor
     is_valid, error_msg, parsed_cert = validate_certificate_chain(
         cert_pem=request.certificate_pem,
         chain_pem=request.chain_pem,
     )
-    
+
     if not is_valid:
         logger.warning(f"Certificate validation failed for org {org_id}: {error_msg}")
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=f"Certificate validation failed: {error_msg}. "
-                   f"Certificate must chain to a C2PA-trusted CA. "
-                   f"See GET /byok/trusted-cas for the list of trusted CAs.",
+            f"Certificate must chain to a C2PA-trusted CA. "
+            f"See GET /byok/trusted-cas for the list of trusted CAs.",
         )
-    
+
     # Extract certificate info
     from cryptography.hazmat.primitives import serialization
-    
+
+    if parsed_cert is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Certificate parsing failed")
+
     cert_subject = parsed_cert.subject.rfc4514_string()
     cert_issuer = parsed_cert.issuer.rfc4514_string()
     cert_expiry = parsed_cert.not_valid_after_utc
-    
+
     # Extract public key PEM for storage
     public_key = parsed_cert.public_key()
     public_key_pem = public_key.public_bytes(
         encoding=serialization.Encoding.PEM,
         format=serialization.PublicFormat.SubjectPublicKeyInfo,
     ).decode()
-    
+
     # Determine key algorithm
     from cryptography.hazmat.primitives.asymmetric import ec, ed25519, rsa
+
     if isinstance(public_key, ed25519.Ed25519PublicKey):
         key_algorithm = "Ed25519"
     elif isinstance(public_key, ec.EllipticCurvePublicKey):
@@ -251,7 +272,7 @@ async def upload_certificate(
         key_algorithm = f"RSA-{public_key.key_size}"
     else:
         key_algorithm = "Unknown"
-    
+
     # Register the public key
     result = await PublicKeyService.register_public_key(
         db=db,
@@ -260,15 +281,16 @@ async def upload_certificate(
         key_name=request.key_name or f"CA-signed: {cert_subject[:50]}",
         key_algorithm=key_algorithm,
     )
-    
+
     if not result.get("success"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=result.get("error", "Failed to register certificate"),
         )
-    
+
     # Also update organization's certificate fields for verification
     from sqlalchemy import text
+
     try:
         await db.execute(
             text("""
@@ -286,15 +308,15 @@ async def upload_certificate(
                 "now": datetime.utcnow(),
                 "expiry": cert_expiry,
                 "org_id": org_id,
-            }
+            },
         )
         await db.commit()
     except Exception as e:
         logger.error(f"Failed to update organization certificate: {e}")
         # Don't fail - the public key was registered successfully
-    
+
     logger.info(f"Certificate uploaded for org {org_id}: subject={cert_subject}, issuer={cert_issuer}")
-    
+
     return CertificateUploadResponse(
         success=True,
         data={
@@ -304,5 +326,5 @@ async def upload_certificate(
             "algorithm": key_algorithm,
             "expires_at": cert_expiry.isoformat(),
             "fingerprint": result["data"]["key_fingerprint"],
-        }
+        },
     )

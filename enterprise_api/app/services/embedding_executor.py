@@ -4,9 +4,11 @@ API endpoints for minimal signed embeddings.
 Enterprise tier endpoints for creating and managing content embeddings.
 Built on top of the free encypher-ai package with enterprise features.
 """
+
 import logging
 import time
-from typing import Dict
+from typing import Any, Dict, List, Optional, Union, cast
+from uuid import UUID
 
 import unicodedata
 
@@ -14,6 +16,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.merkle import MerkleRoot
 from app.schemas.embeddings import (
     EmbeddingInfo,
     EncodeWithEmbeddingsRequest,
@@ -22,6 +25,7 @@ from app.schemas.embeddings import (
     MerkleTreeLevelInfo,
 )
 from app.services.embedding_service import EmbeddingService
+from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.status_service import status_service
 from app.services.merkle_service import MerkleService
 from app.utils.crypto_utils import load_organization_private_key
@@ -34,6 +38,7 @@ logger = logging.getLogger(__name__)
 # Document Encoding with Embeddings
 # ============================================================================
 
+
 async def encode_document_with_embeddings(
     *,
     request: EncodeWithEmbeddingsRequest,
@@ -42,13 +47,13 @@ async def encode_document_with_embeddings(
 ) -> EncodeWithEmbeddingsResponse:
     """
     Encode a document with invisible signed embeddings using encypher-ai.
-    
+
     Enterprise features:
     - Merkle tree integration for hierarchical authentication
     - Database storage for content tracking
     - Per-sentence invisible embeddings
     - Public verification API
-    
+
     Args:
     """
     start_time = time.time()
@@ -64,14 +69,15 @@ async def encode_document_with_embeddings(
             organization["organization_name"],
             request.segmentation_level,
         )
-        
+
         # Load organization's private key for signing
         # For user-level orgs (is_demo=true), use the demo key
         is_demo = organization.get("is_demo", False)
-        
+
         if is_demo or organization_id.startswith("user_"):
             # Use demo key for user-level orgs and demo accounts
             from app.utils.crypto_utils import get_demo_private_key
+
             private_key = get_demo_private_key()
             signer_id = organization_id
             logger.info(f"Using demo key for org {organization_id}")
@@ -86,18 +92,17 @@ async def encode_document_with_embeddings(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail={
                         "code": "NO_PRIVATE_KEY",
-                        "message": "Organization has no private key configured. "
-                        "Please complete certificate onboarding first.",
+                        "message": "Organization has no private key configured. Please complete certificate onboarding first.",
                         "details": str(e),
                     },
                 )
-        
+
         # === API Feature Augmentation Tier Gating (TEAM_044) ===
         # Check tier requirements for advanced features
         tier = organization.get("tier", "starter").lower()
         tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
         org_tier_level = tier_levels.get(tier, 0)
-        
+
         # Lightweight UUID requires Professional+
         if request.manifest_mode == "lightweight_uuid" and org_tier_level < 1:
             raise HTTPException(
@@ -110,7 +115,20 @@ async def encode_document_with_embeddings(
                     "upgrade_url": "/billing/upgrade",
                 },
             )
-        
+
+        # Minimal UUID requires Professional+
+        if request.manifest_mode == "minimal_uuid" and org_tier_level < 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Minimal UUID manifest mode requires Professional tier or higher",
+                    "required_tier": "professional",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+
         # Hybrid manifest mode requires Enterprise
         if request.manifest_mode == "hybrid" and org_tier_level < 3:
             raise HTTPException(
@@ -123,7 +141,7 @@ async def encode_document_with_embeddings(
                     "upgrade_url": "/billing/upgrade",
                 },
             )
-        
+
         # Distributed embedding requires Business+
         if request.embedding_strategy == "distributed" and org_tier_level < 2:
             raise HTTPException(
@@ -136,7 +154,7 @@ async def encode_document_with_embeddings(
                     "upgrade_url": "/billing/upgrade",
                 },
             )
-        
+
         # Distributed redundant (ECC) requires Enterprise
         if request.embedding_strategy == "distributed_redundant" and org_tier_level < 3:
             raise HTTPException(
@@ -149,7 +167,7 @@ async def encode_document_with_embeddings(
                     "upgrade_url": "/billing/upgrade",
                 },
             )
-        
+
         # Dual binding requires Business+
         if request.add_dual_binding and org_tier_level < 2:
             raise HTTPException(
@@ -162,23 +180,21 @@ async def encode_document_with_embeddings(
                     "upgrade_url": "/billing/upgrade",
                 },
             )
-        
+
         logger.info(
             f"Tier gating passed for org {organization_id} (tier={tier}): "
             f"manifest_mode={request.manifest_mode}, embedding_strategy={request.embedding_strategy}"
         )
-        
+
         # Validate custom assertions and/or template-based assertions if provided.
         # Templates are meant to be usable by Business+ customers while schema/template authoring
         # remains Enterprise-only.
-        raw_assertions = []
+        raw_assertions: List[Dict[str, Any]] = []
 
         effective_template_id = request.template_id
         if effective_template_id is None:
             row = await db.execute(
-                text(
-                    "SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"
-                ),
+                text("SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"),
                 {"org_id": organization_id},
             )
             effective_template_id = row.scalar_one_or_none()
@@ -188,9 +204,7 @@ async def encode_document_with_embeddings(
             custom_assertions_enabled = False
             if isinstance(features, dict):
                 custom_assertions_enabled = features.get("custom_assertions", False)
-            custom_assertions_enabled = custom_assertions_enabled or organization.get(
-                "custom_assertions_enabled", False
-            )
+            custom_assertions_enabled = custom_assertions_enabled or organization.get("custom_assertions_enabled", False)
 
             if not custom_assertions_enabled:
                 raise HTTPException(
@@ -214,9 +228,7 @@ async def encode_document_with_embeddings(
             custom_assertions_enabled = False
             if isinstance(features, dict):
                 custom_assertions_enabled = features.get("custom_assertions", False)
-            custom_assertions_enabled = custom_assertions_enabled or organization.get(
-                "custom_assertions_enabled", False
-            )
+            custom_assertions_enabled = custom_assertions_enabled or organization.get("custom_assertions_enabled", False)
 
             if not custom_assertions_enabled:
                 raise HTTPException(
@@ -236,10 +248,7 @@ async def encode_document_with_embeddings(
                 select(C2PAAssertionTemplate)
                 .where(
                     C2PAAssertionTemplate.id == effective_template_id,
-                    (
-                        (C2PAAssertionTemplate.organization_id == organization_id)
-                        | (C2PAAssertionTemplate.is_public)
-                    ),
+                    ((C2PAAssertionTemplate.organization_id == organization_id) | (C2PAAssertionTemplate.is_public)),
                     C2PAAssertionTemplate.is_active,
                 )
                 .limit(1)
@@ -247,9 +256,9 @@ async def encode_document_with_embeddings(
             result = await db.execute(stmt)
             template = result.scalar_one_or_none()
 
-            template_data = None
+            template_data: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
             if template:
-                template_data = template.template_data or {}
+                template_data = cast(Union[Dict[str, Any], List[Dict[str, Any]]], template.template_data or {})
             else:
                 from app.services.c2pa_builtin_templates import get_builtin_template
 
@@ -266,11 +275,15 @@ async def encode_document_with_embeddings(
                     },
                 )
 
-            assertions_payload = []
+            assertions_payload: List[Dict[str, Any]] = []
             if isinstance(template_data, dict):
-                assertions_payload = template_data.get("assertions") or []
+                assertions_payload = [
+                    assertion
+                    for assertion in (template_data.get("assertions") or [])
+                    if isinstance(assertion, dict)
+                ]
             elif isinstance(template_data, list):
-                assertions_payload = template_data
+                assertions_payload = [assertion for assertion in template_data if isinstance(assertion, dict)]
 
             for assertion in assertions_payload:
                 if not isinstance(assertion, dict):
@@ -290,6 +303,7 @@ async def encode_document_with_embeddings(
             raw_assertions.extend(request.custom_assertions)
 
         try:
+            await ensure_organization_exists(db, organization)
             _list_index, bit_index, status_list_url = await status_service.allocate_status_index(
                 db=db,
                 organization_id=organization_id,
@@ -313,14 +327,18 @@ async def encode_document_with_embeddings(
             from app.services.c2pa_validator import validator
 
             # Fetch registered schemas for this organization
-            registered_schemas = {}
+            registered_schemas: Dict[str, Dict[str, Any]] = {}
             for assertion in raw_assertions:
                 label = assertion.get("label")
                 if label and label not in registered_schemas:
-                    stmt = select(C2PASchema).where(
-                        C2PASchema.label == label,
-                        ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public)),
-                    ).order_by(C2PASchema.created_at.desc())
+                    stmt = (
+                        select(C2PASchema)
+                        .where(
+                            C2PASchema.label == label,
+                            ((C2PASchema.organization_id == organization_id) | (C2PASchema.is_public)),
+                        )
+                        .order_by(C2PASchema.created_at.desc())
+                    )
                     result = await db.execute(stmt)
                     schema_model = result.scalar_one_or_none()
                     if schema_model:
@@ -344,9 +362,7 @@ async def encode_document_with_embeddings(
                 )
 
             validated_assertions = raw_assertions
-            logger.info(
-                f"Validated {len(validated_assertions)} custom assertions for document {request.document_id}"
-            )
+            logger.info(f"Validated {len(validated_assertions)} custom assertions for document {request.document_id}")
         elif raw_assertions:
             # Use assertions without validation
             validated_assertions = raw_assertions
@@ -365,20 +381,22 @@ async def encode_document_with_embeddings(
         else:
             validated_assertions = list(validated_assertions)
         validated_assertions.append(status_assertion)
-        
+
         # Initialize embedding service with organization's key
         embedding_service = EmbeddingService(private_key, signer_id)
-        
+
         # Free tier (document-level): Skip Merkle tree and segmentation
         # Just create ONE C2PA wrapper for the entire document
-        if request.segmentation_level == 'document':
+        merkle_root_id: Optional[UUID] = None
+        if request.segmentation_level == "document":
             logger.info("Document-level signing (free tier) - no segmentation")
             from app.utils.merkle import compute_leaf_hash
+
             segments = [document_text]  # Single segment = entire document
             leaf_hashes = [compute_leaf_hash(document_text)]  # Single hash for entire document
             merkle_root_id = None  # No Merkle tree for free tier
-            merkle_root = None
-            merkle_roots: Dict[str, object] = {}
+            merkle_root: Optional[MerkleRoot] = None
+            merkle_roots: Dict[str, MerkleRoot] = {}
             merkle_trees = None
         else:
             merkle_levels = request.segmentation_levels
@@ -415,7 +433,7 @@ async def encode_document_with_embeddings(
             )
 
             merkle_root = merkle_roots.get(request.segmentation_level) or next(iter(merkle_roots.values()))
-            merkle_root_id = merkle_root.id
+            merkle_root_id = cast(UUID, merkle_root.id)
 
             merkle_trees = {
                 level: MerkleTreeLevelInfo(
@@ -426,24 +444,23 @@ async def encode_document_with_embeddings(
                 )
                 for level, root in merkle_roots.items()
             }
-            
+
             # Get segments and hashes
             from app.utils.segmentation import HierarchicalSegmenter
+
             segmenter = HierarchicalSegmenter(document_text, include_words=False)
             segments = segmenter.get_segments(request.segmentation_level)
-            
+
             # Compute leaf hashes
             from app.utils.merkle import compute_leaf_hash
+
             leaf_hashes = [compute_leaf_hash(segment) for segment in segments]
-        
+
         # Step 3: Generate minimal signed embeddings
         license_info = None
         if request.license:
-            license_info = {
-                'type': request.license.type,
-                'url': request.license.url
-            }
-        
+            license_info = {"type": request.license.type, "url": request.license.url}
+
         # Returns: (embeddings_list, full_document_with_c2pa_wrapper)
         embeddings, embedded_content = await embedding_service.create_embeddings(
             db=db,
@@ -467,7 +484,7 @@ async def encode_document_with_embeddings(
             add_dual_binding=request.add_dual_binding,
             disable_c2pa=request.disable_c2pa,
         )
-        
+
         # Step 4: Convert embeddings to response format
         embedding_infos = []
         for emb in embeddings:
@@ -478,53 +495,43 @@ async def encode_document_with_embeddings(
                 signature=None,  # No visible signature with invisible embeddings
                 embedding=None,  # No visible embedding string
                 verification_url=None,  # Verification is done by extracting from text
-                leaf_hash=emb.leaf_hash
+                leaf_hash=emb.leaf_hash,
             )
             embedding_infos.append(info)
-        
+
         # Step 5: embedded_content already contains the full document
         # with minimal embeddings per sentence + ONE C2PA wrapper at the end
-        
+
         # Extract instance_id from the embedded C2PA manifest
         instance_id = None
         extracted_manifest = None
         try:
             from encypher.core.unicode_metadata import UnicodeMetadata
+
             extracted = UnicodeMetadata.extract_metadata(embedded_content)
             if extracted:
                 extracted_manifest = extracted
-                if 'instance_id' in extracted:
-                    instance_id = extracted['instance_id']
+                if "instance_id" in extracted:
+                    instance_id = extracted["instance_id"]
                     logger.info(f"Extracted instance_id from manifest: {instance_id}")
         except Exception as e:
             logger.warning(f"Could not extract instance_id from manifest: {e}")
-        
+
         processing_time_ms = (time.time() - start_time) * 1000
-        
-        logger.info(
-            f"Successfully encoded document {request.document_id} with "
-            f"{len(embeddings)} invisible embeddings in {processing_time_ms:.2f}ms"
-        )
-        
+
+        logger.info(f"Successfully encoded document {request.document_id} with {len(embeddings)} invisible embeddings in {processing_time_ms:.2f}ms")
+
         # Build Merkle tree info (None for free tier)
         merkle_tree_info = None
         if merkle_root:
-            merkle_tree_info = MerkleTreeInfo(
-                root_hash=merkle_root.root_hash,
-                total_leaves=merkle_root.leaf_count,
-                tree_depth=merkle_root.tree_depth
-            )
-        
+            merkle_tree_info = MerkleTreeInfo(root_hash=merkle_root.root_hash, total_leaves=merkle_root.leaf_count, tree_depth=merkle_root.tree_depth)
+
         # Build metadata response
         if extracted_manifest:
             response_metadata = extracted_manifest
         else:
-            response_metadata = {
-                'instance_id': instance_id,
-                'action': request.action,
-                'previous_instance_id': request.previous_instance_id
-            }
-        
+            response_metadata = {"instance_id": instance_id, "action": request.action, "previous_instance_id": request.previous_instance_id}
+
         return EncodeWithEmbeddingsResponse(
             success=True,
             document_id=request.document_id,
@@ -533,27 +540,21 @@ async def encode_document_with_embeddings(
             embeddings=embedding_infos,
             embedded_content=embedded_content,
             statistics={
-                'total_sentences': len(segments),
-                'embeddings_created': len(embeddings),
-                'processing_time_ms': round(processing_time_ms, 2),
-                'uses_invisible_embeddings': True,
-                'segmentation_level': request.segmentation_level,
-                'tier': 'free' if request.segmentation_level == 'document' else 'enterprise'
+                "total_sentences": len(segments),
+                "embeddings_created": len(embeddings),
+                "processing_time_ms": round(processing_time_ms, 2),
+                "uses_invisible_embeddings": True,
+                "segmentation_level": request.segmentation_level,
+                "tier": "free" if request.segmentation_level == "document" else "enterprise",
             },
-            metadata=response_metadata
+            metadata=response_metadata,
         )
-        
+
     except ValueError as e:
         logger.error(f"Validation error encoding document: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error encoding document with embeddings: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to encode document with embeddings"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to encode document with embeddings")

@@ -22,10 +22,7 @@ def test_ensure_database_ready_passes_database_url_to_migrations(monkeypatch: py
             exit_on_failure=False,
         )
 
-        assert (
-            mock_run_migrations.call_args.kwargs.get("database_url")
-            == "postgresql://passed-user:passed-pass@passed-host:5432/passed_db"
-        )
+        assert mock_run_migrations.call_args.kwargs.get("database_url") == "postgresql://passed-user:passed-pass@passed-host:5432/passed_db"
 
 
 def test_run_migrations_if_needed_prefers_explicit_database_url(monkeypatch: pytest.MonkeyPatch) -> None:

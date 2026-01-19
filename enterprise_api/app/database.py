@@ -7,6 +7,7 @@ Two-Database Architecture:
 
 Uses SQLAlchemy with asyncpg for async PostgreSQL operations.
 """
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import declarative_base
 
@@ -77,10 +78,11 @@ Base = declarative_base()
 # DEPENDENCY INJECTION
 # ============================================
 
+
 async def get_db():
     """
     Get a session for the CORE database (customer/billing data).
-    
+
     Use this for:
     - Organization lookups
     - API key validation
@@ -115,7 +117,7 @@ async def get_core_db():
 async def get_content_db():
     """
     Get a session for the CONTENT database (verification data).
-    
+
     Use this for:
     - Document storage
     - Sentence records

@@ -1,4 +1,5 @@
 """Team management router for Business+ tier organizations."""
+
 import secrets
 from datetime import datetime, timedelta, timezone
 from enum import Enum
@@ -19,10 +20,11 @@ router = APIRouter(prefix="/org/members", tags=["Team Management"])
 
 class TeamRole(str, Enum):
     """Team member roles with hierarchical permissions."""
-    OWNER = "owner"      # Full access, can transfer ownership
-    ADMIN = "admin"      # Full access except ownership transfer
-    MEMBER = "member"    # Can sign/verify, view analytics
-    VIEWER = "viewer"    # Read-only access
+
+    OWNER = "owner"  # Full access, can transfer ownership
+    ADMIN = "admin"  # Full access except ownership transfer
+    MEMBER = "member"  # Can sign/verify, view analytics
+    VIEWER = "viewer"  # Read-only access
 
 
 # Role hierarchy for permission checks
@@ -36,6 +38,7 @@ ROLE_HIERARCHY = {
 
 class TeamMember(BaseModel):
     """Team member details."""
+
     id: str
     user_id: str
     email: str
@@ -49,6 +52,7 @@ class TeamMember(BaseModel):
 
 class TeamMemberListResponse(BaseModel):
     """List of team members."""
+
     organization_id: str
     members: List[TeamMember]
     total: int
@@ -57,6 +61,7 @@ class TeamMemberListResponse(BaseModel):
 
 class InviteRequest(BaseModel):
     """Request to invite a new team member."""
+
     email: EmailStr
     role: TeamRole = TeamRole.MEMBER
     name: Optional[str] = None
@@ -64,6 +69,7 @@ class InviteRequest(BaseModel):
 
 class InviteResponse(BaseModel):
     """Response after sending an invite."""
+
     success: bool
     invite_id: str
     email: str
@@ -74,6 +80,7 @@ class InviteResponse(BaseModel):
 
 class PendingInvite(BaseModel):
     """Pending team invitation."""
+
     id: str
     email: str
     role: str
@@ -85,15 +92,16 @@ class PendingInvite(BaseModel):
 
 class UpdateRoleRequest(BaseModel):
     """Request to update a member's role."""
+
     role: TeamRole
 
 
 # Tier limits for team members
 TIER_MEMBER_LIMITS = {
-    "starter": 1,        # Owner only
-    "professional": 5,   # Small team
-    "business": 10,      # Medium team
-    "enterprise": -1,    # Unlimited
+    "starter": 1,  # Owner only
+    "professional": 5,  # Small team
+    "business": 10,  # Medium team
+    "enterprise": -1,  # Unlimited
     "strategic_partner": -1,
 }
 
@@ -109,7 +117,7 @@ async def check_team_management_enabled(
                 "code": "FEATURE_NOT_AVAILABLE",
                 "message": "Team management is only available on Business and Enterprise tiers",
                 "upgrade_url": "/billing/upgrade",
-            }
+            },
         )
     return organization
 
@@ -122,7 +130,7 @@ async def get_member_role(
     """Get the role of a user in an organization."""
     result = await db.execute(
         text("SELECT role FROM organization_members WHERE organization_id = :org_id AND user_id = :user_id"),
-        {"org_id": organization_id, "user_id": user_id}
+        {"org_id": organization_id, "user_id": user_id},
     )
     row = result.fetchone()
     return TeamRole(row.role) if row else None
@@ -135,14 +143,11 @@ async def require_admin_role(
     """Require admin or owner role for team management operations."""
     user_id = organization.get("user_id") or organization.get("api_key_owner_id")
     if not user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User context required for team management"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User context required for team management")
+
     # Check if user has admin/owner role in the database
     role = await get_member_role(db, organization["organization_id"], user_id)
-    
+
     # If no role found in DB but this is a demo/test key with owner tier features,
     # assume owner role for testing purposes
     if role is None:
@@ -151,17 +156,11 @@ async def require_admin_role(
             # For demo keys with team_management enabled, assume owner role
             role = TeamRole.OWNER
         else:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Admin or Owner role required for this operation"
-            )
-    
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin or Owner role required for this operation")
+
     if role not in [TeamRole.OWNER, TeamRole.ADMIN]:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin or Owner role required for this operation"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin or Owner role required for this operation")
+
     organization["current_user_role"] = role
     return organization
 
@@ -177,7 +176,7 @@ async def list_team_members(
     org_id = organization["organization_id"]
     tier = organization.get("tier", "starter")
     max_members = TIER_MEMBER_LIMITS.get(tier, 1)
-    
+
     result = await db.execute(
         text("""
             SELECT om.id, om.user_id, u.email, u.name, om.role, om.joined_at
@@ -193,10 +192,10 @@ async def list_team_members(
                 END,
                 om.joined_at
         """),
-        {"org_id": org_id}
+        {"org_id": org_id},
     )
     rows = result.fetchall()
-    
+
     members = [
         TeamMember(
             id=row.id,
@@ -211,7 +210,7 @@ async def list_team_members(
         )
         for row in rows
     ]
-    
+
     return TeamMemberListResponse(
         organization_id=org_id,
         members=members,
@@ -229,21 +228,20 @@ async def invite_member(
 ) -> InviteResponse:
     """
     Invite a new member to the organization.
-    
+
     Sends an email invitation that expires in 7 days.
     """
     org_id = organization["organization_id"]
     tier = organization.get("tier", "starter")
     max_members = TIER_MEMBER_LIMITS.get(tier, 1)
     inviter_id = organization.get("user_id") or organization.get("api_key_owner_id")
-    
+    if not inviter_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inviter ID missing")
+
     # Check member limit
-    count_result = await db.execute(
-        text("SELECT COUNT(*) FROM organization_members WHERE organization_id = :org_id"),
-        {"org_id": org_id}
-    )
+    count_result = await db.execute(text("SELECT COUNT(*) FROM organization_members WHERE organization_id = :org_id"), {"org_id": org_id})
     current_count = count_result.scalar() or 0
-    
+
     if max_members > 0 and current_count >= max_members:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -251,9 +249,9 @@ async def invite_member(
                 "code": "MEMBER_LIMIT_REACHED",
                 "message": f"Your plan allows up to {max_members} team members",
                 "upgrade_url": "/billing/upgrade",
-            }
+            },
         )
-    
+
     # Check if already a member
     existing = await db.execute(
         text("""
@@ -261,40 +259,31 @@ async def invite_member(
             JOIN users u ON om.user_id = u.id
             WHERE om.organization_id = :org_id AND u.email = :email
         """),
-        {"org_id": org_id, "email": request.email}
+        {"org_id": org_id, "email": request.email},
     )
     if existing.fetchone():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This email is already a team member"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This email is already a team member")
+
     # Check for pending invite
     pending = await db.execute(
         text("""
             SELECT id FROM organization_invites 
             WHERE organization_id = :org_id AND email = :email AND status = 'pending'
         """),
-        {"org_id": org_id, "email": request.email}
+        {"org_id": org_id, "email": request.email},
     )
     if pending.fetchone():
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="An invitation is already pending for this email"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="An invitation is already pending for this email")
+
     # Cannot invite as owner
     if request.role == TeamRole.OWNER:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot invite as owner. Use transfer ownership instead."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot invite as owner. Use transfer ownership instead.")
+
     # Create invite
     invite_id = f"inv_{uuid4().hex[:16]}"
     invite_token = secrets.token_urlsafe(32)
     expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-    
+
     await db.execute(
         text("""
             INSERT INTO organization_invites (
@@ -314,9 +303,9 @@ async def invite_member(
             "invited_by": inviter_id,
             "token": invite_token,
             "expires_at": expires_at,
-        }
+        },
     )
-    
+
     # Log audit event
     await log_audit_event(
         db=db,
@@ -328,12 +317,12 @@ async def invite_member(
         resource_id=invite_id,
         details={"email": request.email, "role": request.role.value},
     )
-    
+
     await db.commit()
-    
+
     # TODO: Send email invitation in background
     # background_tasks.add_task(send_invite_email, request.email, invite_token, org_id)
-    
+
     return InviteResponse(
         success=True,
         invite_id=invite_id,
@@ -353,7 +342,7 @@ async def list_pending_invites(
     List all pending invitations.
     """
     org_id = organization["organization_id"]
-    
+
     result = await db.execute(
         text("""
             SELECT id, email, role, invited_by, status, expires_at, created_at
@@ -361,10 +350,10 @@ async def list_pending_invites(
             WHERE organization_id = :org_id AND status = 'pending'
             ORDER BY created_at DESC
         """),
-        {"org_id": org_id}
+        {"org_id": org_id},
     )
     rows = result.fetchall()
-    
+
     return [
         PendingInvite(
             id=row.id,
@@ -389,7 +378,7 @@ async def revoke_invite(
     Revoke a pending invitation.
     """
     org_id = organization["organization_id"]
-    
+
     result = await db.execute(
         text("""
             UPDATE organization_invites
@@ -397,18 +386,15 @@ async def revoke_invite(
             WHERE id = :invite_id AND organization_id = :org_id AND status = 'pending'
             RETURNING email
         """),
-        {"invite_id": invite_id, "org_id": org_id}
+        {"invite_id": invite_id, "org_id": org_id},
     )
     row = result.fetchone()
-    
+
     if not row:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invitation not found or already processed"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invitation not found or already processed")
+
     await db.commit()
-    
+
     return {"success": True, "message": f"Invitation to {row.email} revoked"}
 
 
@@ -421,57 +407,43 @@ async def update_member_role(
 ):
     """
     Update a team member's role.
-    
+
     Admins can change roles of members and viewers.
     Only owners can change admin roles.
     """
     org_id = organization["organization_id"]
     current_role = organization.get("current_user_role")
     actor_id = organization.get("user_id") or organization.get("api_key_owner_id")
-    
+    if not actor_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Actor ID missing")
+
     # Get target member
     result = await db.execute(
-        text("SELECT user_id, role FROM organization_members WHERE id = :id AND organization_id = :org_id"),
-        {"id": member_id, "org_id": org_id}
+        text("SELECT user_id, role FROM organization_members WHERE id = :id AND organization_id = :org_id"), {"id": member_id, "org_id": org_id}
     )
     member = result.fetchone()
-    
+
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Team member not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team member not found")
+
     target_role = TeamRole(member.role)
-    
+
     # Cannot change owner role
     if target_role == TeamRole.OWNER:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot change owner role. Use transfer ownership instead."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change owner role. Use transfer ownership instead.")
+
     # Cannot promote to owner
     if request.role == TeamRole.OWNER:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot promote to owner. Use transfer ownership instead."
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot promote to owner. Use transfer ownership instead.")
+
     # Admins cannot change other admins
     if current_role == TeamRole.ADMIN and target_role == TeamRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only owners can modify admin roles"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners can modify admin roles")
+
     # Admins cannot promote to admin
     if current_role == TeamRole.ADMIN and request.role == TeamRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only owners can promote to admin"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners can promote to admin")
+
     # Update role
     await db.execute(
         text("""
@@ -484,9 +456,9 @@ async def update_member_role(
             "org_id": org_id,
             "role": request.role.value,
             "updated_at": datetime.now(timezone.utc),
-        }
+        },
     )
-    
+
     # Log audit event
     await log_audit_event(
         db=db,
@@ -498,9 +470,9 @@ async def update_member_role(
         resource_id=member_id,
         details={"old_role": target_role.value, "new_role": request.role.value},
     )
-    
+
     await db.commit()
-    
+
     return {
         "success": True,
         "member_id": member_id,
@@ -517,13 +489,15 @@ async def remove_member(
 ):
     """
     Remove a team member from the organization.
-    
+
     Cannot remove the owner.
     """
     org_id = organization["organization_id"]
     current_role = organization.get("current_user_role")
     actor_id = organization.get("user_id") or organization.get("api_key_owner_id")
-    
+    if not actor_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Actor ID missing")
+
     # Get target member
     result = await db.execute(
         text("""
@@ -532,38 +506,26 @@ async def remove_member(
             JOIN users u ON om.user_id = u.id
             WHERE om.id = :id AND om.organization_id = :org_id
         """),
-        {"id": member_id, "org_id": org_id}
+        {"id": member_id, "org_id": org_id},
     )
     member = result.fetchone()
-    
+
     if not member:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Team member not found"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team member not found")
+
     target_role = TeamRole(member.role)
-    
+
     # Cannot remove owner
     if target_role == TeamRole.OWNER:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot remove the organization owner"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot remove the organization owner")
+
     # Admins cannot remove other admins
     if current_role == TeamRole.ADMIN and target_role == TeamRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only owners can remove admins"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners can remove admins")
+
     # Delete member
-    await db.execute(
-        text("DELETE FROM organization_members WHERE id = :id AND organization_id = :org_id"),
-        {"id": member_id, "org_id": org_id}
-    )
-    
+    await db.execute(text("DELETE FROM organization_members WHERE id = :id AND organization_id = :org_id"), {"id": member_id, "org_id": org_id})
+
     # Log audit event
     await log_audit_event(
         db=db,
@@ -575,9 +537,9 @@ async def remove_member(
         resource_id=member_id,
         details={"email": member.email, "role": target_role.value},
     )
-    
+
     await db.commit()
-    
+
     return {
         "success": True,
         "message": f"Removed {member.email} from the organization",
@@ -592,11 +554,11 @@ async def accept_invite(
 ):
     """
     Accept a team invitation.
-    
+
     This endpoint is called after the user authenticates.
     """
     now = datetime.now(timezone.utc)
-    
+
     # Find and validate invite
     result = await db.execute(
         text("""
@@ -604,31 +566,22 @@ async def accept_invite(
             FROM organization_invites
             WHERE token = :token AND status = 'pending'
         """),
-        {"token": token}
+        {"token": token},
     )
     invite = result.fetchone()
-    
+
     if not invite:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid or expired invitation"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid or expired invitation")
+
     if invite.expires_at < now:
         # Mark as expired
-        await db.execute(
-            text("UPDATE organization_invites SET status = 'expired' WHERE id = :id"),
-            {"id": invite.id}
-        )
+        await db.execute(text("UPDATE organization_invites SET status = 'expired' WHERE id = :id"), {"id": invite.id})
         await db.commit()
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="This invitation has expired"
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This invitation has expired")
+
     # Create team member
     member_id = f"mem_{uuid4().hex[:16]}"
-    
+
     await db.execute(
         text("""
             INSERT INTO organization_members (
@@ -647,17 +600,14 @@ async def accept_invite(
             "role": invite.role,
             "invited_at": now,
             "accepted_at": now,
-        }
+        },
     )
-    
+
     # Update invite status
-    await db.execute(
-        text("UPDATE organization_invites SET status = 'accepted', accepted_at = :now WHERE id = :id"),
-        {"id": invite.id, "now": now}
-    )
-    
+    await db.execute(text("UPDATE organization_invites SET status = 'accepted', accepted_at = :now WHERE id = :id"), {"id": invite.id, "now": now})
+
     await db.commit()
-    
+
     return {
         "success": True,
         "member_id": member_id,

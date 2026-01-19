@@ -1,6 +1,7 @@
 """
 Sentence parsing and hashing utilities.
 """
+
 import hashlib
 import re
 import unicodedata
@@ -21,7 +22,7 @@ def parse_sentences(text: str) -> List[str]:
     """
     # Split on sentence terminators followed by whitespace
     # This handles periods, exclamation marks, and question marks
-    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = re.split(r"(?<=[.!?])\s+", text)
 
     # Clean and filter empty sentences
     sentences = [s.strip() for s in sentences if s.strip()]
@@ -40,7 +41,7 @@ def compute_sentence_hash(sentence: str) -> str:
         Hexadecimal hash string
     """
     normalized = unicodedata.normalize("NFC", sentence)
-    return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def compute_text_hash(text: str) -> str:
@@ -54,4 +55,4 @@ def compute_text_hash(text: str) -> str:
         Hexadecimal hash string
     """
     normalized = unicodedata.normalize("NFC", text)
-    return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()

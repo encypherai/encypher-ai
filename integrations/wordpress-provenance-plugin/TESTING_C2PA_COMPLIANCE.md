@@ -24,7 +24,7 @@
 ## Testing Instructions
 
 ### Step 1: Update a Post
-1. Navigate to http://localhost:8080/wp-admin
+1. Navigate to http://localhost:8085/wp-admin
 2. Edit post #9 (or any published post)
 3. Make a small change to the content
 4. Click "Update"
@@ -61,7 +61,7 @@ Status: 201 - Created
 - "Successfully added C2PA wrapper" (one wrapper for entire document)
 
 ### Step 4: View Post on Frontend
-1. Navigate to http://localhost:8080/?p=9
+1. Navigate to http://localhost:8085/?p=9
 2. Look for the floating C2PA badge (bottom-right corner)
 3. Click the badge to open verification modal
 

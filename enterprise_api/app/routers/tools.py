@@ -4,6 +4,7 @@ Tools router for public encode/decode demo endpoints.
 These endpoints use a demo key for the public website tools,
 allowing users to try encoding/decoding without authentication.
 """
+
 import logging
 import re
 from typing import Any, Dict, Literal, Optional
@@ -27,18 +28,17 @@ router = APIRouter(prefix="/tools", tags=["Public Tools"])
 # Request/Response Models
 # =============================================================================
 
+
 class EncodeToolRequest(BaseModel):
     """Request model for encoding text with metadata."""
-    
+
     original_text: str = Field(
-        ..., 
+        ...,
         description="The original text to embed metadata into.",
         min_length=1,
         max_length=100000,
     )
-    target: Optional[Literal[
-        "whitespace", "punctuation", "first_letter", "last_letter", "all_characters"
-    ]] = Field(
+    target: Optional[Literal["whitespace", "punctuation", "first_letter", "last_letter", "all_characters"]] = Field(
         "first_letter",
         description="Where to embed metadata.",
     )
@@ -58,7 +58,7 @@ class EncodeToolRequest(BaseModel):
 
 class EncodeToolResponse(BaseModel):
     """Response model for encoding."""
-    
+
     encoded_text: str = Field(..., description="Text with embedded metadata.")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Metadata that was embedded.")
     error: Optional[str] = None
@@ -66,9 +66,9 @@ class EncodeToolResponse(BaseModel):
 
 class DecodeToolRequest(BaseModel):
     """Request model for decoding text."""
-    
+
     encoded_text: str = Field(
-        ..., 
+        ...,
         description="The text containing embedded metadata.",
         min_length=1,
         max_length=100000,
@@ -77,7 +77,7 @@ class DecodeToolRequest(BaseModel):
 
 class VerifyVerdict(BaseModel):
     """Verification verdict details."""
-    
+
     valid: bool = False
     tampered: bool = False
     reason_code: str = "UNKNOWN"
@@ -88,7 +88,7 @@ class VerifyVerdict(BaseModel):
 
 class EmbeddingResult(BaseModel):
     """Result for a single embedding found in text."""
-    
+
     index: int = Field(..., description="Index of this embedding (0-based)")
     metadata: Optional[Dict[str, Any]] = None
     verification_status: Literal["Success", "Failure", "Key Not Found", "Not Attempted", "Error"] = "Not Attempted"
@@ -100,7 +100,7 @@ class EmbeddingResult(BaseModel):
 
 class DecodeToolResponse(BaseModel):
     """Response model for decoding."""
-    
+
     metadata: Optional[Dict[str, Any]] = None
     verification_status: Literal["Success", "Failure", "Key Not Found", "Not Attempted", "Error"] = "Not Attempted"
     error: Optional[str] = None
@@ -122,17 +122,17 @@ _demo_signer_id = "org_demo"
 
 def _get_demo_keys():
     """Get demo keys for public tools.
-    
+
     IMPORTANT: This MUST use the same key source as embedding_executor.py
     to ensure content signed with user API keys can be verified.
     Both use crypto_utils.get_demo_private_key() which loads from
     settings.demo_private_key_bytes (hex format).
     """
     global _demo_private_key, _demo_public_key
-    
+
     if _demo_private_key is not None:
         return _demo_private_key, _demo_public_key
-    
+
     # Use the SAME key loading function as embedding_executor.py
     # This ensures signing and verification use the same key
     _demo_private_key = get_demo_private_key()
@@ -150,27 +150,25 @@ def _get_target_enum(target_str: str) -> MetadataTarget:
         "last_letter": MetadataTarget.LAST_LETTER,
         "all_characters": MetadataTarget.ALL_CHARACTERS,
     }
-    
+
     target_lower = (target_str or "first_letter").lower()
     if target_lower not in target_map:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid target: {target_str}. Must be one of: {list(target_map.keys())}"
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid target: {target_str}. Must be one of: {list(target_map.keys())}"
         )
     return target_map[target_lower]
-
-
 
 
 # =============================================================================
 # Endpoints
 # =============================================================================
 
+
 @router.post("/encode", response_model=EncodeToolResponse, include_in_schema=False)
 async def encode_text(request: EncodeToolRequest) -> EncodeToolResponse:
     """
     Encode text with embedded metadata using the demo key.
-    
+
     This is a public endpoint for interactive demos and evaluation.
     """
     logger.info("Public tools /tools/encode called (deprecated)")
@@ -188,7 +186,7 @@ async def decode_text(
 ) -> DecodeToolResponse:
     """
     Decode and verify text containing embedded metadata.
-    
+
     This is a public endpoint for interactive demos and evaluation.
     If multiple embeddings are present, results are returned per embedding.
     Verification is performed when the corresponding signer public key can be resolved.

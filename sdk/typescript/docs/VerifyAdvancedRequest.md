@@ -13,6 +13,7 @@ Name | Type
 `minMatchPercentage` | number
 `segmentationLevel` | string
 `searchScope` | string
+`fuzzySearch` | [FuzzySearchConfig](FuzzySearchConfig.md)
 
 ## Example
 
@@ -28,6 +29,7 @@ const example = {
   "minMatchPercentage": null,
   "segmentationLevel": null,
   "searchScope": null,
+  "fuzzySearch": null,
 } satisfies VerifyAdvancedRequest
 
 console.log(example)

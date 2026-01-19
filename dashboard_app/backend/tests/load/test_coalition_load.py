@@ -4,6 +4,7 @@ Tests system performance under high load (10K+ members).
 
 Run with: locust -f test_coalition_load.py --host=http://localhost:8000
 """
+
 import random
 import uuid
 from datetime import datetime
@@ -13,55 +14,36 @@ from locust import HttpUser, between, task
 
 class CoalitionMemberUser(HttpUser):
     """Simulates a coalition member accessing the system."""
-    
+
     wait_time = between(1, 5)  # Wait 1-5 seconds between tasks
-    
+
     def on_start(self):
         """Called when a simulated user starts."""
         # Simulate login
         self.user_id = str(uuid.uuid4())
         self.auth_token = "test_token"  # In real test, get from auth endpoint
-        self.headers = {
-            "Authorization": f"Bearer {self.auth_token}",
-            "Content-Type": "application/json"
-        }
-    
+        self.headers = {"Authorization": f"Bearer {self.auth_token}", "Content-Type": "application/json"}
+
     @task(10)
     def view_coalition_stats(self):
         """Most common task: viewing coalition stats."""
-        self.client.get(
-            "/api/v1/coalition/stats",
-            headers=self.headers,
-            name="GET /coalition/stats"
-        )
-    
+        self.client.get("/api/v1/coalition/stats", headers=self.headers, name="GET /coalition/stats")
+
     @task(5)
     def view_revenue(self):
         """View revenue breakdown."""
-        self.client.get(
-            "/api/v1/coalition/revenue",
-            headers=self.headers,
-            name="GET /coalition/revenue"
-        )
-    
+        self.client.get("/api/v1/coalition/revenue", headers=self.headers, name="GET /coalition/revenue")
+
     @task(3)
     def view_top_content(self):
         """View top performing content."""
-        self.client.get(
-            "/api/v1/coalition/content/performance?limit=10",
-            headers=self.headers,
-            name="GET /coalition/content/performance"
-        )
-    
+        self.client.get("/api/v1/coalition/content/performance?limit=10", headers=self.headers, name="GET /coalition/content/performance")
+
     @task(2)
     def view_member_info(self):
         """View member information."""
-        self.client.get(
-            "/api/v1/coalition/member",
-            headers=self.headers,
-            name="GET /coalition/member"
-        )
-    
+        self.client.get("/api/v1/coalition/member", headers=self.headers, name="GET /coalition/member")
+
     @task(1)
     def create_content(self):
         """Create new content (less frequent)."""
@@ -71,49 +53,33 @@ class CoalitionMemberUser(HttpUser):
             "content_type": random.choice(["article", "blog", "social_post"]),
             "word_count": random.randint(500, 3000),
             "content_hash": str(uuid.uuid4()),
-            "signed_at": datetime.utcnow().isoformat()
+            "signed_at": datetime.utcnow().isoformat(),
         }
-        
-        self.client.post(
-            "/api/v1/coalition/content",
-            json=content_data,
-            headers=self.headers,
-            name="POST /coalition/content"
-        )
+
+        self.client.post("/api/v1/coalition/content", json=content_data, headers=self.headers, name="POST /coalition/content")
 
 
 class CoalitionAdminUser(HttpUser):
     """Simulates an admin user managing the coalition."""
-    
+
     wait_time = between(5, 15)  # Admins check less frequently
-    
+
     def on_start(self):
         """Called when admin user starts."""
         self.auth_token = "admin_token"  # In real test, get from auth endpoint
-        self.headers = {
-            "Authorization": f"Bearer {self.auth_token}",
-            "Content-Type": "application/json"
-        }
-    
+        self.headers = {"Authorization": f"Bearer {self.auth_token}", "Content-Type": "application/json"}
+
     @task(5)
     def view_admin_overview(self):
         """View coalition overview."""
-        self.client.get(
-            "/api/v1/coalition/admin/overview",
-            headers=self.headers,
-            name="GET /coalition/admin/overview"
-        )
-    
+        self.client.get("/api/v1/coalition/admin/overview", headers=self.headers, name="GET /coalition/admin/overview")
+
     @task(3)
     def view_members_list(self):
         """View list of members."""
         skip = random.randint(0, 100) * 50
-        self.client.get(
-            f"/api/v1/coalition/admin/members?skip={skip}&limit=50",
-            headers=self.headers,
-            name="GET /coalition/admin/members"
-        )
-    
+        self.client.get(f"/api/v1/coalition/admin/members?skip={skip}&limit=50", headers=self.headers, name="GET /coalition/admin/members")
+
     @task(1)
     def create_revenue_transaction(self):
         """Create revenue transaction (rare)."""
@@ -123,30 +89,22 @@ class CoalitionAdminUser(HttpUser):
             "currency": "USD",
             "period_start": "2025-01-01T00:00:00Z",
             "period_end": "2025-01-31T23:59:59Z",
-            "status": "pending"
+            "status": "pending",
         }
-        
-        self.client.post(
-            "/api/v1/coalition/revenue",
-            json=transaction_data,
-            headers=self.headers,
-            name="POST /coalition/revenue"
-        )
+
+        self.client.post("/api/v1/coalition/revenue", json=transaction_data, headers=self.headers, name="POST /coalition/revenue")
 
 
 class AICompanyUser(HttpUser):
     """Simulates an AI company accessing content."""
-    
+
     wait_time = between(0.1, 1)  # AI companies access frequently
-    
+
     def on_start(self):
         """Called when AI company starts."""
         self.api_key = "lic_test_key"
-        self.headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json"
-        }
-    
+        self.headers = {"Authorization": f"Bearer {self.api_key}", "Content-Type": "application/json"}
+
     @task(10)
     def access_content(self):
         """Access content from coalition pool."""
@@ -156,15 +114,10 @@ class AICompanyUser(HttpUser):
             "content_id": content_id,
             "ai_company": random.choice(["OpenAI", "Anthropic", "Google", "Meta"]),
             "access_type": random.choice(["training", "inference", "verification"]),
-            "accessed_at": datetime.utcnow().isoformat()
+            "accessed_at": datetime.utcnow().isoformat(),
         }
-        
-        self.client.post(
-            "/api/v1/coalition/access-log",
-            json=log_data,
-            headers=self.headers,
-            name="POST /coalition/access-log"
-        )
+
+        self.client.post("/api/v1/coalition/access-log", json=log_data, headers=self.headers, name="POST /coalition/access-log")
 
 
 """

@@ -1,4 +1,5 @@
 """SQLAlchemy database models for Notification Service"""
+
 import uuid
 
 from sqlalchemy import JSON, Column, DateTime, String
@@ -10,6 +11,7 @@ Base = declarative_base()
 
 class Notification(Base):
     """Notification model"""
+
     __tablename__ = "notifications"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))

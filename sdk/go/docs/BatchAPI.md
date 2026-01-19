@@ -77,7 +77,7 @@ Name | Type | Description  | Notes
 
 ## BatchVerifyApiV1BatchVerifyPost
 
-> BatchResponseEnvelope BatchVerifyApiV1BatchVerifyPost(ctx).BatchVerifyRequest(batchVerifyRequest).Execute()
+> BatchResponseEnvelope BatchVerifyApiV1BatchVerifyPost(ctx).AppSchemasBatchBatchVerifyRequest(appSchemasBatchBatchVerifyRequest).Execute()
 
 Batch Verify
 
@@ -96,11 +96,11 @@ import (
 )
 
 func main() {
-	batchVerifyRequest := *openapiclient.NewBatchVerifyRequest("Mode_example", "IdempotencyKey_example", []openapiclient.BatchItemPayload{*openapiclient.NewBatchItemPayload("DocumentId_example", "Text_example")}) // BatchVerifyRequest | 
+	appSchemasBatchBatchVerifyRequest := *openapiclient.NewAppSchemasBatchBatchVerifyRequest("Mode_example", "IdempotencyKey_example", []openapiclient.BatchItemPayload{*openapiclient.NewBatchItemPayload("DocumentId_example", "Text_example")}) // AppSchemasBatchBatchVerifyRequest | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.BatchAPI.BatchVerifyApiV1BatchVerifyPost(context.Background()).BatchVerifyRequest(batchVerifyRequest).Execute()
+	resp, r, err := apiClient.BatchAPI.BatchVerifyApiV1BatchVerifyPost(context.Background()).AppSchemasBatchBatchVerifyRequest(appSchemasBatchBatchVerifyRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `BatchAPI.BatchVerifyApiV1BatchVerifyPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
@@ -121,7 +121,7 @@ Other parameters are passed through a pointer to a apiBatchVerifyApiV1BatchVerif
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **batchVerifyRequest** | [**BatchVerifyRequest**](BatchVerifyRequest.md) |  | 
+ **appSchemasBatchBatchVerifyRequest** | [**AppSchemasBatchBatchVerifyRequest**](AppSchemasBatchBatchVerifyRequest.md) |  | 
 
 ### Return type
 

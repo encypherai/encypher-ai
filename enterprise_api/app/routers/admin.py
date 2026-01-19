@@ -10,6 +10,7 @@ IMPORTANT: These endpoints are tagged with "Admin" which is in _INTERNAL_DOC_TAG
 in main.py, so they will NOT appear in the public /docs endpoint.
 They are only visible in /internal/docs (requires super_admin).
 """
+
 import logging
 from datetime import datetime
 from typing import Optional
@@ -42,6 +43,7 @@ router = APIRouter(prefix="/admin", tags=["Admin"])
 # Platform Stats (Super Admin Only)
 # =============================================================================
 
+
 @router.get(
     "/stats",
     response_model=AdminStatsResponse,
@@ -60,6 +62,7 @@ async def get_platform_stats(
 # =============================================================================
 # User Management (Super Admin Only)
 # =============================================================================
+
 
 @router.get(
     "/users",
@@ -99,7 +102,7 @@ async def update_user_tier(
 ) -> TierUpdateResponse:
     """Update a user's tier."""
     admin_id = organization.get("organization_id") or organization.get("user_id")
-    
+
     result = await AdminService.update_user_tier(
         db=db,
         user_id=request.user_id,
@@ -107,13 +110,10 @@ async def update_user_tier(
         reason=request.reason,
         admin_id=admin_id,
     )
-    
+
     if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("error", "Failed to update tier")
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error", "Failed to update tier"))
+
     return TierUpdateResponse(success=True, data=result)
 
 
@@ -130,7 +130,7 @@ async def update_user_status(
 ) -> UserStatusUpdateResponse:
     """Update a user's status (suspend/activate)."""
     admin_id = organization.get("organization_id") or organization.get("user_id")
-    
+
     result = await AdminService.update_user_status(
         db=db,
         user_id=request.user_id,
@@ -138,19 +138,17 @@ async def update_user_status(
         reason=request.reason,
         admin_id=admin_id,
     )
-    
+
     if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("error", "Failed to update status")
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error", "Failed to update status"))
+
     return UserStatusUpdateResponse(success=True, data=result)
 
 
 # =============================================================================
 # Error Logs (Super Admin Only)
 # =============================================================================
+
 
 @router.get(
     "/error-logs",
@@ -185,6 +183,7 @@ async def get_error_logs(
 # BYOK Public Key Management (Enterprise Users)
 # =============================================================================
 
+
 @router.post(
     "/public-keys",
     response_model=PublicKeyRegisterResponse,
@@ -199,7 +198,7 @@ async def register_public_key(
 ) -> PublicKeyRegisterResponse:
     """
     Register a public key for BYOK verification.
-    
+
     Enterprise tier customers can register their own signing keys.
     When content signed with their private key is verified, we use
     the registered public key to validate the signature.
@@ -208,15 +207,16 @@ async def register_public_key(
     features = organization.get("features", {})
     byok_enabled = features.get("byok", False) or organization.get("byok_enabled", False)
     tier = organization.get("tier", "starter")
-    
+
     if not byok_enabled and tier not in ("enterprise", "strategic_partner", "business"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="BYOK (Bring Your Own Key) requires Business tier or higher. Please upgrade your plan."
+            status_code=status.HTTP_403_FORBIDDEN, detail="BYOK (Bring Your Own Key) requires Business tier or higher. Please upgrade your plan."
         )
-    
+
     org_id = organization.get("organization_id")
-    
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
+
     result = await PublicKeyService.register_public_key(
         db=db,
         organization_id=org_id,
@@ -224,17 +224,11 @@ async def register_public_key(
         key_name=request.key_name,
         key_algorithm=request.key_algorithm,
     )
-    
+
     if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("error", "Failed to register public key")
-        )
-    
-    return PublicKeyRegisterResponse(
-        success=True,
-        data=result.get("data")
-    )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error", "Failed to register public key"))
+
+    return PublicKeyRegisterResponse(success=True, data=result.get("data"))
 
 
 @router.get(
@@ -250,13 +244,15 @@ async def list_public_keys(
 ) -> PublicKeyListResponse:
     """List public keys for the organization."""
     org_id = organization.get("organization_id")
-    
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
+
     result = await PublicKeyService.list_public_keys(
         db=db,
         organization_id=org_id,
         include_revoked=include_revoked,
     )
-    
+
     return PublicKeyListResponse(success=True, data=result.get("data", {}))
 
 
@@ -273,18 +269,17 @@ async def revoke_public_key(
 ):
     """Revoke a public key."""
     org_id = organization.get("organization_id")
-    
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
+
     result = await PublicKeyService.revoke_public_key(
         db=db,
         organization_id=org_id,
         key_id=key_id,
         reason=reason,
     )
-    
+
     if not result.get("success"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=result.get("error", "Failed to revoke public key")
-        )
-    
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error", "Failed to revoke public key"))
+
     return {"success": True, "data": result.get("data")}

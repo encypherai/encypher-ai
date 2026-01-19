@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **min_match_percentage** | **float** |  | [optional] [default to 0.0]
 **segmentation_level** | **str** |  | [optional] [default to 'sentence']
 **search_scope** | **str** |  | [optional] [default to 'organization']
+**fuzzy_search** | [**FuzzySearchConfig**](FuzzySearchConfig.md) |  | [optional] 
 
 ## Example
 

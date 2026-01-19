@@ -7,6 +7,7 @@ Trusted CAs from https://github.com/c2pa-org/conformance-public/blob/main/trust-
 - DigiCert (RSA4096/ECC P384 Root for C2PA G1)
 - Adobe, Trufo, vivo, Xiaomi, Irdeto
 """
+
 import logging
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple
@@ -32,6 +33,7 @@ _trust_anchors_pem: Optional[str] = None
 async def fetch_trust_list() -> str:
     """Fetch latest C2PA trust list from GitHub."""
     import httpx
+
     async with httpx.AsyncClient() as client:
         resp = await client.get(C2PA_TRUST_LIST_URL, timeout=30.0)
         resp.raise_for_status()
@@ -43,13 +45,13 @@ def _split_pem_chain(pem_data: str) -> List[str]:
     certs = []
     current = []
     in_cert = False
-    for line in pem_data.split('\n'):
-        if '-----BEGIN CERTIFICATE-----' in line:
+    for line in pem_data.split("\n"):
+        if "-----BEGIN CERTIFICATE-----" in line:
             in_cert = True
             current = [line]
-        elif '-----END CERTIFICATE-----' in line:
+        elif "-----END CERTIFICATE-----" in line:
             current.append(line)
-            certs.append('\n'.join(current))
+            certs.append("\n".join(current))
             in_cert = False
         elif in_cert:
             current.append(line)
@@ -88,7 +90,10 @@ def get_trust_anchor_subjects() -> List[str]:
     for cert in get_trust_anchors():
         cn = cert.subject.get_attributes_for_oid(x509.oid.NameOID.COMMON_NAME)
         if cn:
-            subjects.append(cn[0].value)
+            value = cn[0].value
+            if isinstance(value, bytes):
+                value = value.decode("utf-8", errors="ignore")
+            subjects.append(str(value))
     return subjects
 
 
@@ -153,7 +158,7 @@ def validate_certificate_chain(
 ) -> Tuple[bool, Optional[str], Optional[Certificate]]:
     """
     Validate certificate chains to a C2PA trusted root.
-    
+
     Returns: (is_valid, error_message, parsed_certificate)
     """
     try:

@@ -1,6 +1,7 @@
 """
 Pydantic schemas for Key Service
 """
+
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -9,20 +10,24 @@ from datetime import datetime
 # API Key Schemas
 class ApiKeyCreate(BaseModel):
     """Schema for creating an API key"""
+
     name: str = Field(..., min_length=1, max_length=100)
     description: Optional[str] = None
     permissions: List[str] = Field(default=["sign", "verify", "read"])
     expires_at: Optional[datetime] = None
+    organization_id: Optional[str] = None
 
 
 class ApiKeyResponse(BaseModel):
     """Schema for API key response (with actual key - only shown once)"""
+
     id: str
     name: str
     key: str  # Only returned on creation
     fingerprint: str
     permissions: List[str]
     created_at: datetime
+    organization_id: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -30,6 +35,7 @@ class ApiKeyResponse(BaseModel):
 
 class ApiKeyInfo(BaseModel):
     """Schema for API key info (without actual key)"""
+
     id: str
     name: str
     key_prefix: str  # e.g., "ency_abc..."
@@ -42,6 +48,7 @@ class ApiKeyInfo(BaseModel):
     created_at: datetime
     expires_at: Optional[datetime]
     description: Optional[str]
+    organization_id: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -49,6 +56,7 @@ class ApiKeyInfo(BaseModel):
 
 class ApiKeyUpdate(BaseModel):
     """Schema for updating an API key"""
+
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     description: Optional[str] = None
     permissions: Optional[List[str]] = None
@@ -56,11 +64,13 @@ class ApiKeyUpdate(BaseModel):
 
 class ApiKeyVerify(BaseModel):
     """Schema for verifying an API key"""
+
     key: str
 
 
 class ApiKeyVerifyResponse(BaseModel):
     """Schema for API key verification response"""
+
     valid: bool
     key_id: Optional[str] = None
     user_id: Optional[str] = None
@@ -71,11 +81,13 @@ class ApiKeyVerifyResponse(BaseModel):
 # Key Rotation Schemas
 class KeyRotationRequest(BaseModel):
     """Schema for key rotation request"""
+
     reason: Optional[str] = None
 
 
 class KeyRotationResponse(BaseModel):
     """Schema for key rotation response"""
+
     old_key_id: str
     new_key: ApiKeyResponse
     message: str
@@ -84,6 +96,7 @@ class KeyRotationResponse(BaseModel):
 # Usage Schemas
 class KeyUsageStats(BaseModel):
     """Schema for key usage statistics"""
+
     key_id: str
     total_requests: int
     last_used: Optional[datetime]
@@ -94,9 +107,11 @@ class KeyUsageStats(BaseModel):
 # Response Schemas
 class MessageResponse(BaseModel):
     """Generic message response"""
+
     message: str
 
 
 class ErrorResponse(BaseModel):
     """Error response schema"""
+
     detail: str

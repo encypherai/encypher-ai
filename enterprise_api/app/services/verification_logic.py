@@ -7,6 +7,7 @@ logic can be reused by REST controllers and background jobs.
 
 Supports C2PA trust list validation for third-party signed content.
 """
+
 from __future__ import annotations
 
 import logging
@@ -20,10 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 try:
     from encypher import UnicodeMetadata
 except ImportError as exc:  # pragma: no cover - import guard
-    raise ImportError(
-        "encypher-ai package not found. "
-        "Install the preview version with C2PA verification support."
-    ) from exc
+    raise ImportError("encypher-ai package not found. Install the preview version with C2PA verification support.") from exc
 
 from app.models.response_models import VerifyVerdict
 from app.services.certificate_service import ResolvedCertificate, certificate_resolver
@@ -65,9 +63,11 @@ def _coerce_manifest(raw: Any) -> Dict[str, Any]:
     for attr in ("model_dump", "dict"):
         if hasattr(raw, attr):
             try:
-                return getattr(raw, attr)()
+                payload = getattr(raw, attr)()
+                if isinstance(payload, dict):
+                    return payload
             except Exception:  # pragma: no cover - defensive
-                if hasattr(raw, 'content') and raw.content:
+                if hasattr(raw, "content") and raw.content:
                     return {}
                 else:
                     return {}
@@ -77,7 +77,7 @@ def _coerce_manifest(raw: Any) -> Dict[str, Any]:
 def _find_status_assertion(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """
     Find the status list assertion in a C2PA manifest.
-    
+
     TEAM_002: Looks for org.encypher.status assertion containing
     StatusList2021Entry data.
     """
@@ -87,13 +87,16 @@ def _find_status_assertion(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]
             if isinstance(assertion, dict):
                 label = assertion.get("label", "")
                 if label == "org.encypher.status":
-                    return assertion.get("data", {})
-    
+                    data = assertion.get("data")
+                    if isinstance(data, dict):
+                        return data
+                    return None
+
     # Also check custom_metadata for backward compatibility
     custom = manifest.get("custom_metadata", {})
     if isinstance(custom, dict) and "statusListCredential" in custom:
         return custom
-    
+
     return None
 
 
@@ -168,6 +171,7 @@ def determine_reason_code(
 @dataclass
 class C2PACertificateResult:
     """Result of C2PA certificate extraction and validation."""
+
     public_key: Optional[Any] = None
     signer_info: Optional[str] = None
     is_trusted: bool = False
@@ -178,71 +182,69 @@ class C2PACertificateResult:
 def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
     """
     Extract certificate from C2PA manifest in text and validate against trust list.
-    
+
     Returns C2PACertificateResult with public key and trust status.
     Always returns the public key if found, even if untrusted.
     """
     result = C2PACertificateResult()
-    
+
     try:
         import base64
         from cryptography.hazmat.primitives import serialization
         from encypher.interop.c2pa.text_wrapper import find_and_decode
         from encypher.interop.c2pa.jumbf import deserialize_jumbf_payload
         from encypher.core.signing import extract_certificates_from_cose
-        
+
         # Extract manifest from text
         manifest_bytes, _clean_text, _span = find_and_decode(text)
         if manifest_bytes is None:
             return result
-        
+
         # Deserialize JUMBF to get COSE signature
         manifest_store = deserialize_jumbf_payload(manifest_bytes)
         if not isinstance(manifest_store, dict):
             return result
-        
+
         cose_sign1_b64 = manifest_store.get("cose_sign1")
         if not cose_sign1_b64:
             return result
-        
+
         cose_bytes = base64.b64decode(cose_sign1_b64)
-        
+
         # Extract certificates from COSE x5chain
         try:
             certs = extract_certificates_from_cose(cose_bytes)
         except ValueError:
             # No x5chain in COSE - not an error, just no embedded cert
             return result
-        
+
         if not certs:
             return result
-        
+
         # Get the leaf certificate
         leaf_cert = certs[0]
         result.has_certificate = True
         result.public_key = leaf_cert.public_key()
-        
+
         # Extract signer info from certificate
         from cryptography.x509.oid import NameOID
+
         try:
             cn = leaf_cert.subject.get_attributes_for_oid(NameOID.COMMON_NAME)
             result.signer_info = cn[0].value if cn else str(leaf_cert.subject)
         except Exception:
             result.signer_info = str(leaf_cert.subject)
-        
+
         # Build PEM for validation
         leaf_pem = leaf_cert.public_bytes(serialization.Encoding.PEM).decode()
-        
+
         chain_pem = None
         if len(certs) > 1:
-            chain_pem = "\n".join(
-                cert.public_bytes(serialization.Encoding.PEM).decode()
-                for cert in certs[1:]
-            )
-        
+            chain_pem = "\n".join(cert.public_bytes(serialization.Encoding.PEM).decode() for cert in certs[1:])
+
         # Validate against C2PA trust list
         is_valid, error_msg, _ = validate_certificate_chain(leaf_pem, chain_pem)
-        
+
         if is_valid:
             result.is_trusted = True
             logger.info(f"C2PA trust list validation succeeded: {result.signer_info}")
@@ -250,9 +252,9 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
             result.is_trusted = False
             result.trust_error = error_msg
             logger.info(f"C2PA certificate found but untrusted: {result.signer_info} - {error_msg}")
-        
+
         return result
-            
+
     except ValueError:
         # No C2PA wrapper found - not an error
         return result
@@ -263,7 +265,7 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
 
 async def execute_verification(*, payload_text: str, db: AsyncSession) -> VerificationExecution:
     """Run UnicodeMetadata verification with cached certificate resolution.
-    
+
     Resolution order:
     1. Demo organization key (for testing)
     2. User-level orgs (free tier, use demo key)
@@ -274,7 +276,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     await certificate_resolver.refresh_cache(db)
     missing_signers: Set[str] = set()
     revoked_signers: Set[str] = set()
-    
+
     # Pre-extract C2PA certificate for trust list validation
     c2pa_cert_result = _extract_and_validate_c2pa_certificate(payload_text)
     used_untrusted_cert = False  # Track if we used an untrusted certificate
@@ -283,11 +285,11 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
         nonlocal used_untrusted_cert
         from app.config import settings
         from app.utils.crypto_utils import get_demo_private_key
-        
+
         # Handle demo organization
         if signer_id == settings.demo_organization_id:
             return get_demo_private_key().public_key()
-        
+
         # Handle user-level orgs (free tier) - they use the demo key
         if signer_id.startswith("user_"):
             logger.info(f"Using demo key for user org {signer_id}")
@@ -298,7 +300,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
             if not cert.is_active():
                 revoked_signers.add(signer_id)
             return cert.public_key
-        
+
         # Fallback: Use embedded certificate from COSE x5chain
         # Even if untrusted, we can verify signature and show manifest
         if c2pa_cert_result.public_key is not None:
@@ -308,7 +310,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
                 logger.info(f"Using untrusted certificate for signer: {signer_id} (will mark as untrusted)")
                 used_untrusted_cert = True
             return c2pa_cert_result.public_key
-        
+
         missing_signers.add(signer_id)
         return None
 
@@ -337,7 +339,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     revocation_check_error = None
     revocation_status_list_url = None
     revocation_bit_index = None
-    
+
     if is_valid and signer_id and manifest_dict:
         # Try to check revocation status from manifest assertions
         try:
@@ -345,7 +347,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
             if status_assertion:
                 status_list_url = status_assertion.get("statusListCredential")
                 bit_index_str = status_assertion.get("statusListIndex")
-                
+
                 if status_list_url and bit_index_str:
                     bit_index = int(bit_index_str)
                     revocation_status_list_url = status_list_url
@@ -363,10 +365,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
                         document_revoked = True
                         is_valid = False
                         revocation_reason = "Document has been revoked by publisher"
-                        logger.info(
-                            f"Document revoked: signer={signer_id}, "
-                            f"list={status_list_url}, bit={bit_index}"
-                        )
+                        logger.info(f"Document revoked: signer={signer_id}, list={status_list_url}, bit={bit_index}")
                     else:
                         revocation_check_status = "active"
         except Exception as e:
@@ -451,16 +450,11 @@ def build_verdict(
     if execution.untrusted_signer:
         details["untrusted_signer"] = True
         details["trust_warning"] = (
-            "Certificate not in C2PA trust list. Signature is cryptographically valid "
-            "but signer identity is not verified by a trusted CA."
+            "Certificate not in C2PA trust list. Signature is cryptographically valid but signer identity is not verified by a trusted CA."
         )
 
     timestamp = parse_manifest_timestamp(execution.manifest)
-    signer_name = (
-        execution.resolved_cert.organization_name
-        if execution.resolved_cert
-        else (execution.signer_id or None)
-    )
+    signer_name = execution.resolved_cert.organization_name if execution.resolved_cert else (execution.signer_id or None)
 
     tampered = False
     if not execution.is_valid and reason_code == "SIGNATURE_INVALID":

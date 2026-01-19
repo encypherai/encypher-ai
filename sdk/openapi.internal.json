@@ -3,7 +3,7 @@
   "info": {
     "title": "Encypher Enterprise API (Internal)",
     "description": "C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises",
-    "version": "1.0.1"
+    "version": "1.0.2"
   },
   "paths": {
     "/health": {
@@ -2079,14 +2079,14 @@
         ]
       }
     },
-    "/api/v1/stream/sign": {
+    "/api/v1/sign/stream": {
       "post": {
         "tags": [
           "Streaming"
         ],
         "summary": "Stream Signing",
         "description": "Stream signing progress via SSE.",
-        "operationId": "stream_signing_api_v1_stream_sign_post",
+        "operationId": "stream_signing_api_v1_sign_stream_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2119,14 +2119,14 @@
         ]
       }
     },
-    "/api/v1/stream/session/create": {
+    "/api/v1/sign/stream/sessions": {
       "post": {
         "tags": [
           "Streaming"
         ],
         "summary": "Create Streaming Session",
-        "description": "Create a new streaming session.\n\nArgs:\n    session_type: Type of session (websocket, sse, kafka)\n    metadata: Optional session metadata\n    signing_options: Optional signing configuration\n    organization: Authenticated organization\n    db: Database session\n    \nReturns:\n    Session creation result with session_id",
-        "operationId": "create_streaming_session_api_v1_stream_session_create_post",
+        "description": "Create a new streaming session.\n\nArgs:\n    session_type: Type of session (websocket, sse, kafka)\n    metadata: Optional session metadata\n    signing_options: Optional signing configuration\n    organization: Authenticated organization\n    db: Database session\n\nReturns:\n    Session creation result with session_id",
+        "operationId": "create_streaming_session_api_v1_sign_stream_sessions_post",
         "security": [
           {
             "HTTPBearer": []
@@ -2148,7 +2148,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Body_create_streaming_session_api_v1_stream_session_create_post"
+                "$ref": "#/components/schemas/Body_create_streaming_session_api_v1_sign_stream_sessions_post"
               }
             }
           }
@@ -2175,14 +2175,14 @@
         }
       }
     },
-    "/api/v1/stream/session/{session_id}/close": {
+    "/api/v1/sign/stream/sessions/{session_id}/close": {
       "post": {
         "tags": [
           "Streaming"
         ],
         "summary": "Close Streaming Session",
-        "description": "Close a streaming session.\n\nArgs:\n    session_id: Session identifier\n    organization: Authenticated organization\n    db: Database session\n    \nReturns:\n    Session closure result with stats",
-        "operationId": "close_streaming_session_api_v1_stream_session__session_id__close_post",
+        "description": "Close a streaming session.\n\nArgs:\n    session_id: Session identifier\n    organization: Authenticated organization\n    db: Database session\n\nReturns:\n    Session closure result with stats",
+        "operationId": "close_streaming_session_api_v1_sign_stream_sessions__session_id__close_post",
         "security": [
           {
             "HTTPBearer": []
@@ -2221,14 +2221,14 @@
         }
       }
     },
-    "/api/v1/stream/events": {
+    "/api/v1/sign/stream/sessions/{session_id}/events": {
       "get": {
         "tags": [
           "Streaming"
         ],
         "summary": "Sse Events Endpoint",
-        "description": "Server-Sent Events (SSE) endpoint for unidirectional streaming.\n\nArgs:\n    session_id: Session identifier\n    api_key: API key for authentication\n    \nReturns:\n    StreamingResponse with SSE events",
-        "operationId": "sse_events_endpoint_api_v1_stream_events_get",
+        "description": "Server-Sent Events (SSE) endpoint for unidirectional streaming (session scoped).\n\nArgs:\n    session_id: Session identifier\n    api_key: API key for authentication\n\nReturns:\n    StreamingResponse with SSE events",
+        "operationId": "sse_events_endpoint_api_v1_sign_stream_sessions__session_id__events_get",
         "security": [
           {
             "HTTPBearer": []
@@ -2237,7 +2237,7 @@
         "parameters": [
           {
             "name": "session_id",
-            "in": "query",
+            "in": "path",
             "required": true,
             "schema": {
               "type": "string",
@@ -2283,14 +2283,14 @@
         }
       }
     },
-    "/api/v1/stream/stats": {
+    "/api/v1/sign/stream/stats": {
       "get": {
         "tags": [
           "Streaming"
         ],
         "summary": "Get Streaming Stats",
-        "description": "Get streaming statistics for organization.\n\nArgs:\n    organization: Authenticated organization\n    \nReturns:\n    Streaming statistics",
-        "operationId": "get_streaming_stats_api_v1_stream_stats_get",
+        "description": "Get streaming statistics for organization.\n\nArgs:\n    organization: Authenticated organization\n\nReturns:\n    Streaming statistics",
+        "operationId": "get_streaming_stats_api_v1_sign_stream_stats_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2308,7 +2308,7 @@
         ]
       }
     },
-    "/api/v1/stream/health": {
+    "/api/v1/sign/stream/health": {
       "get": {
         "tags": [
           "Streaming",
@@ -2316,7 +2316,7 @@
         ],
         "summary": "Streaming Health Check",
         "description": "Health check endpoint for streaming service.\n\nReturns:\n    Health status of streaming components",
-        "operationId": "streaming_health_check_api_v1_stream_health_get",
+        "operationId": "streaming_health_check_api_v1_sign_stream_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -2334,14 +2334,14 @@
         ]
       }
     },
-    "/api/v1/stream/runs/{run_id}": {
+    "/api/v1/sign/stream/runs/{run_id}": {
       "get": {
         "tags": [
           "Streaming"
         ],
         "summary": "Get Stream Run",
         "description": "Return persisted streaming run state.",
-        "operationId": "get_stream_run_api_v1_stream_runs__run_id__get",
+        "operationId": "get_stream_run_api_v1_sign_stream_runs__run_id__get",
         "security": [
           {
             "HTTPBearer": []
@@ -2380,14 +2380,14 @@
         }
       }
     },
-    "/api/v1/stream/chat/openai-compatible": {
+    "/api/v1/chat/completions": {
       "post": {
         "tags": [
           "Chat"
         ],
         "summary": "Openai Compatible Chat",
-        "description": "OpenAI-compatible chat completion endpoint with signing.\n\nThis endpoint mimics the OpenAI Chat Completions API but adds\nC2PA signing to the response content.\n\nArgs:\n    request: Chat completion request\n    organization: Authenticated organization\n    db: Database session\n    \nReturns:\n    Chat completion response (streaming or non-streaming)",
-        "operationId": "openai_compatible_chat_api_v1_stream_chat_openai_compatible_post",
+        "description": "OpenAI-compatible chat completion endpoint with signing.\n\nThis endpoint mimics the OpenAI Chat Completions API but adds\nC2PA signing to the response content.\n\nArgs:\n    request: Chat completion request\n    organization: Authenticated organization\n    db: Database session\n\nReturns:\n    Chat completion response (streaming or non-streaming)",
+        "operationId": "openai_compatible_chat_api_v1_chat_completions_post",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2425,14 +2425,14 @@
         ]
       }
     },
-    "/api/v1/stream/chat/health": {
+    "/api/v1/chat/health": {
       "get": {
         "tags": [
           "Chat"
         ],
         "summary": "Chat Health Check",
         "description": "Health check for chat streaming endpoint.\n\nReturns:\n    Health status",
-        "operationId": "chat_health_check_api_v1_stream_chat_health_get",
+        "operationId": "chat_health_check_api_v1_chat_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -4228,7 +4228,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BatchVerifyRequest"
+                "$ref": "#/components/schemas/app__schemas__batch__BatchVerifyRequest"
               }
             }
           },
@@ -4297,7 +4297,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -4307,7 +4307,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -4317,7 +4317,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -4327,7 +4327,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "$ref": "#/components/schemas/app__schemas__merkle__ErrorResponse"
                 }
               }
             }
@@ -5661,7 +5661,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5671,7 +5671,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5681,7 +5681,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5730,7 +5730,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/app__schemas__embeddings__BatchVerifyRequest"
+                "$ref": "#/components/schemas/BatchVerifyRequest"
               }
             }
           }
@@ -5751,7 +5751,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5761,7 +5761,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5831,7 +5831,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5841,7 +5841,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -5851,7 +5851,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/app__schemas__embeddings__ErrorResponse"
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
@@ -7388,65 +7388,21 @@
       },
       "BatchVerifyRequest": {
         "properties": {
-          "mode": {
-            "type": "string",
-            "enum": [
-              "c2pa",
-              "embeddings"
-            ],
-            "title": "Mode",
-            "description": "Processing mode: 'c2pa' or 'embeddings'"
-          },
-          "segmentation_level": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "document",
-                  "paragraph",
-                  "sentence"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmentation Level",
-            "description": "Segmentation level (embeddings mode only)",
-            "default": "sentence"
-          },
-          "idempotency_key": {
-            "type": "string",
-            "maxLength": 128,
-            "minLength": 8,
-            "title": "Idempotency Key",
-            "description": "Caller-supplied key used to deduplicate retries"
-          },
-          "items": {
+          "references": {
             "items": {
-              "$ref": "#/components/schemas/BatchItemPayload"
+              "$ref": "#/components/schemas/VerifyEmbeddingRequest"
             },
             "type": "array",
-            "maxItems": 100,
-            "minItems": 1,
-            "title": "Items",
-            "description": "Documents to process (max 100)"
-          },
-          "fail_fast": {
-            "type": "boolean",
-            "title": "Fail Fast",
-            "description": "Abort remaining items upon the first error when set to true",
-            "default": false
+            "title": "References",
+            "description": "List of embeddings to verify"
           }
         },
         "type": "object",
         "required": [
-          "mode",
-          "idempotency_key",
-          "items"
+          "references"
         ],
         "title": "BatchVerifyRequest",
-        "description": "Batch verification request (shares schema for now)."
+        "description": "Request to verify multiple embeddings."
       },
       "BatchVerifyResponse": {
         "properties": {
@@ -7541,7 +7497,7 @@
         "title": "BatchVerifyResult",
         "description": "Result for a single embedding in batch verification."
       },
-      "Body_create_streaming_session_api_v1_stream_session_create_post": {
+      "Body_create_streaming_session_api_v1_sign_stream_sessions_post": {
         "properties": {
           "metadata": {
             "anyOf": [
@@ -7569,7 +7525,7 @@
           }
         },
         "type": "object",
-        "title": "Body_create_streaming_session_api_v1_stream_session_create_post"
+        "title": "Body_create_streaming_session_api_v1_sign_stream_sessions_post"
       },
       "C2PAAssertionValidateRequest": {
         "properties": {
@@ -9076,6 +9032,17 @@
               "date": "2024-10-28",
               "title": "My Document"
             }
+          },
+          "fuzzy_fingerprint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FuzzyFingerprintConfig"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional fuzzy fingerprint indexing configuration"
           }
         },
         "type": "object",
@@ -9128,6 +9095,19 @@
             "type": "number",
             "title": "Processing Time Ms",
             "description": "Processing time in milliseconds"
+          },
+          "fuzzy_index": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fuzzy Index",
+            "description": "Fuzzy fingerprint indexing summary, if enabled"
           }
         },
         "type": "object",
@@ -9998,34 +9978,39 @@
           "error": {
             "type": "string",
             "title": "Error",
-            "description": "Error type"
+            "description": "Error message"
           },
-          "message": {
-            "type": "string",
-            "title": "Message",
-            "description": "Human-readable error message"
-          },
-          "details": {
+          "detail": {
             "anyOf": [
               {
-                "additionalProperties": true,
-                "type": "object"
+                "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Details",
-            "description": "Additional error details"
+            "title": "Detail",
+            "description": "Detailed error information"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code",
+            "description": "Error code for programmatic handling"
           }
         },
         "type": "object",
         "required": [
-          "error",
-          "message"
+          "error"
         ],
         "title": "ErrorResponse",
-        "description": "Standard error response schema."
+        "description": "Error response."
       },
       "EvidenceGenerateRequest": {
         "properties": {
@@ -10786,6 +10771,110 @@
         ],
         "title": "FingerprintMatch",
         "description": "Details of a detected fingerprint match."
+      },
+      "FuzzyFingerprintConfig": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether to generate fuzzy fingerprints during encoding.",
+            "default": false
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm",
+            "description": "Fingerprint algorithm (currently simhash).",
+            "default": "simhash"
+          },
+          "levels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Levels",
+            "description": "Segmentation levels to fingerprint."
+          },
+          "include_document_fingerprint": {
+            "type": "boolean",
+            "title": "Include Document Fingerprint",
+            "description": "Whether to include a document-level fingerprint.",
+            "default": false
+          },
+          "fingerprint_bits": {
+            "type": "integer",
+            "maximum": 256.0,
+            "minimum": 32.0,
+            "title": "Fingerprint Bits",
+            "description": "Number of bits in the fingerprint.",
+            "default": 64
+          },
+          "bucket_bits": {
+            "type": "integer",
+            "maximum": 32.0,
+            "minimum": 8.0,
+            "title": "Bucket Bits",
+            "description": "Number of high-order bits used for bucket indexing.",
+            "default": 16
+          }
+        },
+        "type": "object",
+        "title": "FuzzyFingerprintConfig",
+        "description": "Configuration for fuzzy fingerprint indexing at encode time."
+      },
+      "FuzzySearchConfig": {
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "description": "Whether to run fuzzy fingerprint search.",
+            "default": false
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm",
+            "description": "Fingerprint algorithm (currently simhash).",
+            "default": "simhash"
+          },
+          "levels": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Levels",
+            "description": "Segmentation levels to search."
+          },
+          "similarity_threshold": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Similarity Threshold",
+            "description": "Similarity threshold for matches (0-1).",
+            "default": 0.82
+          },
+          "max_candidates": {
+            "type": "integer",
+            "maximum": 200.0,
+            "minimum": 1.0,
+            "title": "Max Candidates",
+            "description": "Maximum number of candidate matches to return.",
+            "default": 20
+          },
+          "include_merkle_proof": {
+            "type": "boolean",
+            "title": "Include Merkle Proof",
+            "description": "Whether to include Merkle proofs for matches.",
+            "default": true
+          },
+          "fallback_when_no_binding": {
+            "type": "boolean",
+            "title": "Fallback When No Binding",
+            "description": "Only run fuzzy search when no embeddings are found.",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "FuzzySearchConfig",
+        "description": "Configuration for fuzzy fingerprint search during verification."
       },
       "HTTPValidationError": {
         "properties": {
@@ -14269,6 +14358,16 @@
             "type": "string",
             "title": "Search Scope",
             "default": "organization"
+          },
+          "fuzzy_search": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FuzzySearchConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -14708,68 +14807,67 @@
         "title": "WebhookUpdateResponse",
         "description": "Response after updating a webhook."
       },
-      "app__schemas__embeddings__BatchVerifyRequest": {
+      "app__schemas__batch__BatchVerifyRequest": {
         "properties": {
-          "references": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "c2pa",
+              "embeddings"
+            ],
+            "title": "Mode",
+            "description": "Processing mode: 'c2pa' or 'embeddings'"
+          },
+          "segmentation_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "document",
+                  "paragraph",
+                  "sentence"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmentation Level",
+            "description": "Segmentation level (embeddings mode only)",
+            "default": "sentence"
+          },
+          "idempotency_key": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 8,
+            "title": "Idempotency Key",
+            "description": "Caller-supplied key used to deduplicate retries"
+          },
+          "items": {
             "items": {
-              "$ref": "#/components/schemas/VerifyEmbeddingRequest"
+              "$ref": "#/components/schemas/BatchItemPayload"
             },
             "type": "array",
-            "title": "References",
-            "description": "List of embeddings to verify"
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Items",
+            "description": "Documents to process (max 100)"
+          },
+          "fail_fast": {
+            "type": "boolean",
+            "title": "Fail Fast",
+            "description": "Abort remaining items upon the first error when set to true",
+            "default": false
           }
         },
         "type": "object",
         "required": [
-          "references"
+          "mode",
+          "idempotency_key",
+          "items"
         ],
         "title": "BatchVerifyRequest",
-        "description": "Request to verify multiple embeddings."
-      },
-      "app__schemas__embeddings__ErrorResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Always false for errors",
-            "default": false
-          },
-          "error": {
-            "type": "string",
-            "title": "Error",
-            "description": "Error message"
-          },
-          "detail": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Detail",
-            "description": "Detailed error information"
-          },
-          "error_code": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error Code",
-            "description": "Error code for programmatic handling"
-          }
-        },
-        "type": "object",
-        "required": [
-          "error"
-        ],
-        "title": "ErrorResponse",
-        "description": "Error response."
+        "description": "Batch verification request (shares schema for now)."
       },
       "app__schemas__embeddings__RightsMetadata": {
         "properties": {
@@ -14849,6 +14947,46 @@
         },
         "type": "object",
         "title": "RightsMetadata"
+      },
+      "app__schemas__merkle__ErrorResponse": {
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "title": "Success",
+            "description": "Always false for errors",
+            "default": false
+          },
+          "error": {
+            "type": "string",
+            "title": "Error",
+            "description": "Error type"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "description": "Human-readable error message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details",
+            "description": "Additional error details"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "title": "ErrorResponse",
+        "description": "Standard error response schema."
       },
       "DocumentVerify": {
         "properties": {

@@ -126,3 +126,144 @@ async def test_verify_advanced_rejects_all_scope_for_non_enterprise(
     )
 
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_verify_advanced_runs_fuzzy_search_when_no_embeddings(
+    async_client: AsyncClient,
+    enterprise_auth_headers: dict,
+) -> None:
+    execution = SimpleNamespace(
+        is_valid=True,
+        signer_id="org_enterprise",
+        manifest={"document_id": "doc_test"},
+        missing_signers=set(),
+        revoked_signers=set(),
+        resolved_cert=None,
+        duration_ms=1,
+        exception_message=None,
+        document_revoked=False,
+        revocation_reason=None,
+        revocation_check_status=None,
+        revocation_check_error=None,
+        revocation_status_list_url=None,
+        revocation_bit_index=None,
+        untrusted_signer=False,
+        trust_status="trusted",
+    )
+
+    verdict = VerifyVerdict(
+        valid=True,
+        tampered=False,
+        reason_code="OK",
+        signer_id="org_enterprise",
+        signer_name="Enterprise Test Organization",
+        timestamp=None,
+        details={"manifest": {"document_id": "doc_test"}},
+        embeddings_found=0,
+        all_embeddings=None,
+    )
+
+    fuzzy_result = {
+        "matches_found": 1,
+        "matches": [{"document_id": "doc_source", "similarity": 0.92}],
+        "processing_time_ms": 3,
+    }
+
+    with (
+        patch("app.services.verification_logic.execute_verification", new=AsyncMock(return_value=execution)),
+        patch("app.services.verification_logic.determine_reason_code", return_value="OK"),
+        patch("app.services.verification_logic.build_verdict", return_value=verdict),
+        patch("app.utils.quota.QuotaManager.check_quota", new=AsyncMock(return_value=True)),
+        patch(
+            "app.services.fuzzy_fingerprint_service.fuzzy_fingerprint_service.search",
+            new=AsyncMock(return_value=fuzzy_result),
+        ) as mock_search,
+    ):
+        response = await async_client.post(
+            "/api/v1/verify/advanced",
+            json={
+                "text": "Unsigned content...",
+                "fuzzy_search": {"enabled": True},
+            },
+            headers=enterprise_auth_headers,
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["fuzzy_search"]["matches_found"] == 1
+    mock_search.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+async def test_verify_advanced_returns_fuzzy_merkle_proof(
+    async_client: AsyncClient,
+    enterprise_auth_headers: dict,
+) -> None:
+    execution = SimpleNamespace(
+        is_valid=True,
+        signer_id="org_enterprise",
+        manifest={"document_id": "doc_test"},
+        missing_signers=set(),
+        revoked_signers=set(),
+        resolved_cert=None,
+        duration_ms=1,
+        exception_message=None,
+        document_revoked=False,
+        revocation_reason=None,
+        revocation_check_status=None,
+        revocation_check_error=None,
+        revocation_status_list_url=None,
+        revocation_bit_index=None,
+        untrusted_signer=False,
+        trust_status="trusted",
+    )
+
+    verdict = VerifyVerdict(
+        valid=True,
+        tampered=False,
+        reason_code="OK",
+        signer_id="org_enterprise",
+        signer_name="Enterprise Test Organization",
+        timestamp=None,
+        details={"manifest": {"document_id": "doc_test"}},
+        embeddings_found=0,
+        all_embeddings=None,
+    )
+
+    fuzzy_result = {
+        "matches_found": 1,
+        "matches": [
+            {
+                "document_id": "doc_source",
+                "similarity": 0.92,
+                "merkle_proof": {"root_hash": "root", "leaf_hash": "leaf", "proof_path": []},
+            }
+        ],
+        "processing_time_ms": 3,
+    }
+
+    with (
+        patch("app.services.verification_logic.execute_verification", new=AsyncMock(return_value=execution)),
+        patch("app.services.verification_logic.determine_reason_code", return_value="OK"),
+        patch("app.services.verification_logic.build_verdict", return_value=verdict),
+        patch("app.utils.quota.QuotaManager.check_quota", new=AsyncMock(return_value=True)),
+        patch(
+            "app.services.fuzzy_fingerprint_service.fuzzy_fingerprint_service.search",
+            new=AsyncMock(return_value=fuzzy_result),
+        ),
+    ):
+        response = await async_client.post(
+            "/api/v1/verify/advanced",
+            json={
+                "text": "Unsigned content...",
+                "fuzzy_search": {"enabled": True, "include_merkle_proof": True},
+            },
+            headers=enterprise_auth_headers,
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    match = payload["fuzzy_search"]["matches"][0]
+    assert match["merkle_proof"]["root_hash"] == "root"

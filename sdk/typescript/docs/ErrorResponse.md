@@ -1,7 +1,7 @@
 
 # ErrorResponse
 
-Standard error response schema.
+Error response.
 
 ## Properties
 
@@ -9,8 +9,8 @@ Name | Type
 ------------ | -------------
 `success` | boolean
 `error` | string
-`message` | string
-`details` | { [key: string]: any; }
+`detail` | string
+`errorCode` | string
 
 ## Example
 
@@ -21,8 +21,8 @@ import type { ErrorResponse } from '@encypher/sdk'
 const example = {
   "success": null,
   "error": null,
-  "message": null,
-  "details": null,
+  "detail": null,
+  "errorCode": null,
 } satisfies ErrorResponse
 
 console.log(example)

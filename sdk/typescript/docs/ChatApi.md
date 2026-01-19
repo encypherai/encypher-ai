@@ -4,14 +4,14 @@ All URIs are relative to *https://api.encypherai.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**chatHealthCheckApiV1StreamChatHealthGet**](ChatApi.md#chathealthcheckapiv1streamchathealthget) | **GET** /api/v1/stream/chat/health | Chat Health Check |
-| [**openaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost**](ChatApi.md#openaicompatiblechatapiv1streamchatopenaicompatiblepost) | **POST** /api/v1/stream/chat/openai-compatible | Openai Compatible Chat |
+| [**chatHealthCheckApiV1ChatHealthGet**](ChatApi.md#chathealthcheckapiv1chathealthget) | **GET** /api/v1/chat/health | Chat Health Check |
+| [**openaiCompatibleChatApiV1ChatCompletionsPost**](ChatApi.md#openaicompatiblechatapiv1chatcompletionspost) | **POST** /api/v1/chat/completions | Openai Compatible Chat |
 
 
 
-## chatHealthCheckApiV1StreamChatHealthGet
+## chatHealthCheckApiV1ChatHealthGet
 
-> any chatHealthCheckApiV1StreamChatHealthGet()
+> any chatHealthCheckApiV1ChatHealthGet()
 
 Chat Health Check
 
@@ -24,14 +24,14 @@ import {
   Configuration,
   ChatApi,
 } from '@encypher/sdk';
-import type { ChatHealthCheckApiV1StreamChatHealthGetRequest } from '@encypher/sdk';
+import type { ChatHealthCheckApiV1ChatHealthGetRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
   const api = new ChatApi();
 
   try {
-    const data = await api.chatHealthCheckApiV1StreamChatHealthGet();
+    const data = await api.chatHealthCheckApiV1ChatHealthGet();
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -68,13 +68,13 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
-## openaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost
+## openaiCompatibleChatApiV1ChatCompletionsPost
 
-> any openaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost(chatCompletionRequest)
+> any openaiCompatibleChatApiV1ChatCompletionsPost(chatCompletionRequest)
 
 Openai Compatible Chat
 
-OpenAI-compatible chat completion endpoint with signing.  This endpoint mimics the OpenAI Chat Completions API but adds C2PA signing to the response content.  Args:     request: Chat completion request     organization: Authenticated organization     db: Database session      Returns:     Chat completion response (streaming or non-streaming)
+OpenAI-compatible chat completion endpoint with signing.  This endpoint mimics the OpenAI Chat Completions API but adds C2PA signing to the response content.  Args:     request: Chat completion request     organization: Authenticated organization     db: Database session  Returns:     Chat completion response (streaming or non-streaming)
 
 ### Example
 
@@ -83,7 +83,7 @@ import {
   Configuration,
   ChatApi,
 } from '@encypher/sdk';
-import type { OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePostRequest } from '@encypher/sdk';
+import type { OpenaiCompatibleChatApiV1ChatCompletionsPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
@@ -96,10 +96,10 @@ async function example() {
   const body = {
     // ChatCompletionRequest
     chatCompletionRequest: ...,
-  } satisfies OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePostRequest;
+  } satisfies OpenaiCompatibleChatApiV1ChatCompletionsPostRequest;
 
   try {
-    const data = await api.openaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost(body);
+    const data = await api.openaiCompatibleChatApiV1ChatCompletionsPost(body);
     console.log(data);
   } catch (error) {
     console.error(error);

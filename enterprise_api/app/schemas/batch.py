@@ -1,25 +1,27 @@
 """
 Pydantic schemas for batch signing and verification endpoints.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field, conlist, constr
+from pydantic import BaseModel, Field
 
 from app.models.response_models import ErrorDetail, VerifyVerdict
 
 BatchMode = Literal["c2pa", "embeddings"]
 SegmentationLevel = Literal["document", "paragraph", "sentence"]
 BatchItemStatusLiteral = Literal["ok", "error", "skipped"]
+BatchStatusLiteral = Literal["pending", "running", "completed", "failed", "canceled"]
 
 
 class BatchItemPayload(BaseModel):
     """Single document payload within a batch request."""
 
-    document_id: constr(min_length=1, max_length=255) = Field(..., description="Unique document identifier")
-    text: constr(min_length=1) = Field(..., description="Raw document text to process")
-    title: Optional[constr(max_length=255)] = Field(None, description="Optional title metadata")
+    document_id: str = Field(..., description="Unique document identifier", min_length=1, max_length=255)
+    text: str = Field(..., description="Raw document text to process", min_length=1)
+    title: Optional[str] = Field(None, description="Optional title metadata", max_length=255)
     metadata: Optional[Dict[str, Any]] = Field(
         None,
         description="Optional metadata dictionary forwarded to signing pipeline",
@@ -34,13 +36,17 @@ class BatchRequestBase(BaseModel):
         "sentence",
         description="Segmentation level (embeddings mode only)",
     )
-    idempotency_key: constr(min_length=8, max_length=128) = Field(
+    idempotency_key: str = Field(
         ...,
         description="Caller-supplied key used to deduplicate retries",
+        min_length=8,
+        max_length=128,
     )
-    items: conlist(BatchItemPayload, min_length=1, max_length=100) = Field(
+    items: List[BatchItemPayload] = Field(
         ...,
         description="Documents to process (max 100)",
+        min_length=1,
+        max_length=100,
     )
     fail_fast: bool = Field(
         False,
@@ -92,7 +98,7 @@ class BatchSummary(BaseModel):
     success_count: int = Field(..., description="How many items succeeded")
     failure_count: int = Field(..., description="How many items failed")
     mode: BatchMode = Field(..., description="Batch mode")
-    status: Literal["pending", "running", "completed", "failed", "canceled"] = Field(
+    status: BatchStatusLiteral = Field(
         ...,
         description="Batch lifecycle status",
     )
@@ -116,4 +122,3 @@ class BatchResponseEnvelope(BaseModel):
     data: Optional[BatchResponseData] = Field(None, description="Result payload when success is true")
     error: Optional[ErrorDetail] = Field(None, description="Error payload when success is false")
     correlation_id: str = Field(..., description="Request correlation identifier for tracing")
-

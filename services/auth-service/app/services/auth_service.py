@@ -7,6 +7,7 @@ from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
 from ..db.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken, Organization, OrganizationMember
+from .organization_service import OrganizationService
 from sqlalchemy.exc import IntegrityError
 from ..models.schemas import UserCreate, UserLogin
 from ..core.security import (
@@ -53,7 +54,7 @@ class AuthService:
     def create_user(db: Session, user_data: UserCreate) -> Tuple[User, bool]:
         """
         Create a new user with an auto-created personal organization.
-        
+
         Returns:
             Tuple of (user, is_new) where is_new indicates if user was just created
         """
@@ -73,12 +74,26 @@ class AuthService:
         db.add(db_user)
         try:
             db.flush()  # Get user ID before creating org
-            
-            # Auto-create personal organization for the user
-            # Free tier uses Encypher's signing keys; paid tiers can BYOK
-            org = AuthService._create_personal_organization(db, db_user)
-            db_user.default_organization_id = org.id
-            
+
+            # Auto-join to verified org domain if enabled; otherwise create personal org
+            org_service = OrganizationService(db)
+            auto_join_org_id = org_service.get_auto_join_org_for_email(db_user.email)
+            if auto_join_org_id:
+                member = OrganizationMember(
+                    organization_id=auto_join_org_id,
+                    user_id=db_user.id,
+                    role="member",
+                    status="active",
+                    accepted_at=datetime.utcnow(),
+                )
+                db.add(member)
+                db_user.default_organization_id = auto_join_org_id
+            else:
+                # Auto-create personal organization for the user
+                # Free tier uses Encypher's signing keys; paid tiers can BYOK
+                org = AuthService._create_personal_organization(db, db_user)
+                db_user.default_organization_id = org.id
+
             db.commit()
             db.refresh(db_user)
             return db_user, True
@@ -93,17 +108,17 @@ class AuthService:
     def _create_personal_organization(db: Session, user: User) -> Organization:
         """
         Create a personal organization for a new user.
-        
+
         - Free/starter tier: Uses Encypher's signing keys (no certificate_pem)
         - Paid tiers: Can bring their own keys (BYOK) via certificate_pem
-        
+
         The organization is created with minimal info - user fills in company name later.
         """
         import secrets
-        
+
         # Generate unique org ID
         org_id = f"org_{secrets.token_hex(8)}"
-        
+
         # Create organization with defaults
         # Name is empty - user will fill in later
         # Email matches user email for now
@@ -133,7 +148,7 @@ class AuthService:
         )
         db.add(org)
         db.flush()
-        
+
         # Add user as owner
         member_id = f"mem_{secrets.token_hex(8)}"
         member = OrganizationMember(
@@ -145,7 +160,7 @@ class AuthService:
             accepted_at=datetime.utcnow(),
         )
         db.add(member)
-        
+
         logger.info(f"Created personal organization {org.id} for user {user.id}")
         return org
 
@@ -310,7 +325,7 @@ class AuthService:
         """
         Create or update a user from an OAuth provider.
         Uses google_id/github_id columns per core_db schema.
-        
+
         Returns:
             Tuple of (user, is_new) where is_new indicates if user was just created
         """
@@ -365,12 +380,25 @@ class AuthService:
         user = User(**user_kwargs)
         db.add(user)
         db.flush()  # Get user ID before creating org
-        
-        # Auto-create personal organization for the user
-        # Free tier uses Encypher's signing keys; paid tiers can BYOK
-        org = AuthService._create_personal_organization(db, user)
-        user.default_organization_id = org.id
-        
+
+        org_service = OrganizationService(db)
+        auto_join_org_id = org_service.get_auto_join_org_for_email(user.email)
+        if auto_join_org_id:
+            member = OrganizationMember(
+                organization_id=auto_join_org_id,
+                user_id=user.id,
+                role="member",
+                status="active",
+                accepted_at=datetime.utcnow(),
+            )
+            db.add(member)
+            user.default_organization_id = auto_join_org_id
+        else:
+            # Auto-create personal organization for the user
+            # Free tier uses Encypher's signing keys; paid tiers can BYOK
+            org = AuthService._create_personal_organization(db, user)
+            user.default_organization_id = org.id
+
         db.commit()
         db.refresh(user)
         return user, True
@@ -482,11 +510,11 @@ class AuthService:
     def send_new_signup_notification(user: User, signup_method: str = "email") -> bool:
         """
         Send admin notification about new user signup.
-        
+
         Args:
             user: The newly created user
             signup_method: How they signed up (email, google, github)
-            
+
         Returns:
             True if sent successfully
         """
@@ -494,7 +522,7 @@ class AuthService:
         if not config.support_email:
             logger.warning("No support_email configured, skipping signup notification")
             return False
-        
+
         try:
             return _send_new_signup_admin_email(
                 config=config,

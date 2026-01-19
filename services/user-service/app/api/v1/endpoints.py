@@ -1,4 +1,5 @@
 """API endpoints for User Service v1"""
+
 from typing import List
 
 import httpx
@@ -17,10 +18,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     """Verify user token with auth service"""
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
-                headers={"Authorization": authorization}
-            )
+            response = await client.post(f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify", headers={"Authorization": authorization})
             if response.status_code != 200:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
             return response.json()

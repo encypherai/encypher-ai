@@ -16,7 +16,7 @@ from .startup import (
 
 __all__ = [
     "check_database_connection",
-    "run_migrations_if_needed", 
+    "run_migrations_if_needed",
     "ensure_database_ready",
     "DatabaseStartupError",
 ]

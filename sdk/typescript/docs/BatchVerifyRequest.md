@@ -1,17 +1,13 @@
 
 # BatchVerifyRequest
 
-Batch verification request (shares schema for now).
+Request to verify multiple embeddings.
 
 ## Properties
 
 Name | Type
 ------------ | -------------
-`mode` | string
-`segmentationLevel` | string
-`idempotencyKey` | string
-`items` | [Array&lt;BatchItemPayload&gt;](BatchItemPayload.md)
-`failFast` | boolean
+`references` | [Array&lt;VerifyEmbeddingRequest&gt;](VerifyEmbeddingRequest.md)
 
 ## Example
 
@@ -20,11 +16,7 @@ import type { BatchVerifyRequest } from '@encypher/sdk'
 
 // TODO: Update the object below with actual values
 const example = {
-  "mode": null,
-  "segmentationLevel": null,
-  "idempotencyKey": null,
-  "items": null,
-  "failFast": null,
+  "references": null,
 } satisfies BatchVerifyRequest
 
 console.log(example)

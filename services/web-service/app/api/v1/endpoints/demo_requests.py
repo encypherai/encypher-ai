@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
@@ -24,11 +23,10 @@ def create_demo_request(
 
     # Send email notifications
     background_tasks.add_task(send_demo_notification, demo_request, "general")
-    background_tasks.add_task(
-        send_demo_confirmation, demo_request.email, demo_request.name, "general"
-    )
+    background_tasks.add_task(send_demo_confirmation, demo_request.email, demo_request.name, "general")
 
     return demo_request
+
 
 @router.get("/{request_id}", response_model=schemas.DemoRequest)
 def read_demo_request(
@@ -48,6 +46,7 @@ def read_demo_request(
         )
     return demo_request
 
+
 @router.get("/", response_model=list[schemas.DemoRequest])
 def read_demo_requests(
     db: Session = Depends(deps.get_db),
@@ -61,6 +60,7 @@ def read_demo_requests(
     """
     demo_requests = crud.demo_request.get_multi(db, skip=skip, limit=limit)
     return demo_requests
+
 
 @router.put("/{request_id}", response_model=schemas.DemoRequest)
 def update_demo_request(

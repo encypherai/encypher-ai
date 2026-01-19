@@ -1,4 +1,5 @@
 """Quick test to verify spaCy is working."""
+
 import pytest
 
 

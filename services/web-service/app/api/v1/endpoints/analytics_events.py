@@ -8,6 +8,7 @@ from app.api import deps
 
 router = APIRouter()
 
+
 @router.post("/", response_model=schemas.AnalyticsEventResponse)
 def track_event(
     *,
@@ -24,14 +25,10 @@ def track_event(
     user_agent = request.headers.get("user-agent")
 
     # Create event
-    event = crud.analytics_event.create_with_metadata(
-        db=db,
-        obj_in=event_in,
-        ip_address=client_host,
-        user_agent=user_agent
-    )
+    event = crud.analytics_event.create_with_metadata(db=db, obj_in=event_in, ip_address=client_host, user_agent=user_agent)
 
     return schemas.AnalyticsEventResponse(success=True, event_id=event.event_id)
+
 
 @router.get("/session/{session_id}", response_model=list[schemas.AnalyticsEventInDB])
 def read_session_events(
@@ -44,7 +41,5 @@ def read_session_events(
     """
     Get all events for a specific session.
     """
-    events = crud.analytics_event.get_events_by_session(
-        db=db, session_id=session_id, limit=limit
-    )
+    events = crud.analytics_event.get_events_by_session(db=db, session_id=session_id, limit=limit)
     return events

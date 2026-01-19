@@ -3,6 +3,7 @@
 Tests the /api/v1/account and /api/v1/account/quota endpoints.
 Uses async fixtures from conftest.py for proper database and auth handling.
 """
+
 import pytest
 from httpx import AsyncClient
 
@@ -19,7 +20,7 @@ class TestGetAccountInfo:
     async def test_get_account_success(self, client: AsyncClient, auth_headers: dict):
         """Test successful account info retrieval with demo key."""
         response = await client.get("/api/v1/account", headers=auth_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -28,23 +29,19 @@ class TestGetAccountInfo:
         assert "tier" in data["data"]
         assert "features" in data["data"]
 
-    async def test_get_account_starter_tier(
-        self, client: AsyncClient, starter_auth_headers: dict
-    ):
+    async def test_get_account_starter_tier(self, client: AsyncClient, starter_auth_headers: dict):
         """Test account info for starter tier."""
         response = await client.get("/api/v1/account", headers=starter_auth_headers)
-        
+
         # May return 200 or 401 depending on whether starter key is seeded
         if response.status_code == 200:
             data = response.json()
             assert data["data"]["tier"] == "starter"
 
-    async def test_get_account_enterprise_tier(
-        self, client: AsyncClient, enterprise_auth_headers: dict
-    ):
+    async def test_get_account_enterprise_tier(self, client: AsyncClient, enterprise_auth_headers: dict):
         """Test account info for enterprise tier."""
         response = await client.get("/api/v1/account", headers=enterprise_auth_headers)
-        
+
         if response.status_code == 200:
             data = response.json()
             assert data["data"]["tier"] == "enterprise"
@@ -65,7 +62,7 @@ class TestGetAccountQuota:
     async def test_get_quota_success(self, client: AsyncClient, auth_headers: dict):
         """Test successful quota retrieval."""
         response = await client.get("/api/v1/account/quota", headers=auth_headers)
-        
+
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -75,7 +72,7 @@ class TestGetAccountQuota:
     async def test_quota_response_structure(self, client: AsyncClient, auth_headers: dict):
         """Test quota response has expected structure."""
         response = await client.get("/api/v1/account/quota", headers=auth_headers)
-        
+
         if response.status_code == 200:
             data = response.json()["data"]
             # Check metrics structure

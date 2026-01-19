@@ -11,6 +11,7 @@ Usage:
 Prerequisites:
     - Set STRIPE_API_KEY in your environment or .env file
 """
+
 import os
 import sys
 from pathlib import Path
@@ -43,8 +44,7 @@ def create_products_and_prices():
             "id": "professional",
             "name": "Encypher Professional",
             "description": (
-                "For growing publishers who need sentence-level tracking, "
-                "streaming signing, BYOK, and better coalition revenue share (70/30)."
+                "For growing publishers who need sentence-level tracking, streaming signing, BYOK, and better coalition revenue share (70/30)."
             ),
             "price_monthly_cents": 9900,  # $99
             "price_annual_cents": 95000,  # $950
@@ -64,8 +64,7 @@ def create_products_and_prices():
             "id": "business",
             "name": "Encypher Business",
             "description": (
-                "For major publishers who need Merkle infrastructure, "
-                "plagiarism detection, team features, and best coalition revenue share (75/25)."
+                "For major publishers who need Merkle infrastructure, plagiarism detection, team features, and best coalition revenue share (75/25)."
             ),
             "price_monthly_cents": 49900,  # $499
             "price_annual_cents": 479000,  # $4790
@@ -92,9 +91,7 @@ def create_products_and_prices():
 
         try:
             # Check if product already exists
-            existing_products = stripe.Product.search(
-                query=f"metadata['tier_id']:'{tier['id']}'"
-            )
+            existing_products = stripe.Product.search(query=f"metadata['tier_id']:'{tier['id']}'")
 
             if existing_products.data:
                 product = existing_products.data[0]
@@ -197,10 +194,7 @@ def create_billing_portal_config():
         }
 
         if configs.data:
-            config = stripe.billing_portal.Configuration.modify(
-                configs.data[0].id,
-                **portal_config
-            )
+            config = stripe.billing_portal.Configuration.modify(configs.data[0].id, **portal_config)
             print(f"   ✅ Updated portal configuration: {config.id}")
         else:
             config = stripe.billing_portal.Configuration.create(**portal_config)

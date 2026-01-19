@@ -71,7 +71,7 @@ def _load_verification_service_openapi(*, api_base_url: str) -> dict:
             "from fastapi import FastAPI; "
             "from fastapi.openapi.utils import get_openapi; "
             "from app.api.v1 import endpoints as v1_endpoints; "
-            "app = FastAPI(title='Encypher Verification Service', version='1.0.1', description='Document verification microservice'); "
+            "app = FastAPI(title='Encypher Verification Service', version='1.0.2', description='Document verification microservice'); "
             "app.include_router(v1_endpoints.router, prefix='/api/v1/verify', tags=['verification']); "
             "spec = get_openapi(title=app.title, version=app.version, description=app.description, routes=app.routes); "
             "spec['servers'] = [{'url': os.environ.get('API_BASE_URL', 'https://api.encypherai.com'), 'description': 'Production'}, {'url': 'http://localhost:8005', 'description': 'Local development'}]; "

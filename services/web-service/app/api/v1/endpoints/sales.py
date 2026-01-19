@@ -2,6 +2,7 @@
 API endpoints for Sales Contact forms.
 Handles enterprise, general, AI, and publisher sales inquiries.
 """
+
 import hashlib
 import logging
 
@@ -100,9 +101,7 @@ async def _create_sales_contact(
     except Exception as e:
         logger.error(f"Error creating sales contact ({context}): {e}")
         db.rollback()
-        raise HTTPException(
-            status_code=500, detail="Failed to submit contact request"
-        ) from e
+        raise HTTPException(status_code=500, detail="Failed to submit contact request") from e
 
 
 @router.post("/enterprise-requests")
@@ -113,9 +112,7 @@ async def create_enterprise_contact(
     db: Session = Depends(deps.get_db),
 ) -> dict:
     """Create a new enterprise sales contact request."""
-    return await _create_sales_contact(
-        contact_request, background_tasks, request, db, "enterprise"
-    )
+    return await _create_sales_contact(contact_request, background_tasks, request, db, "enterprise")
 
 
 @router.post("/general-requests")
@@ -126,6 +123,4 @@ async def create_general_contact(
     db: Session = Depends(deps.get_db),
 ) -> dict:
     """Create a new general sales contact request."""
-    return await _create_sales_contact(
-        contact_request, background_tasks, request, db, "general"
-    )
+    return await _create_sales_contact(contact_request, background_tasks, request, db, "general")

@@ -4,6 +4,7 @@ Robust Fingerprint API Endpoints (TEAM_044).
 These endpoints enable keyed fingerprint encoding and detection
 for content that survives text modifications.
 """
+
 import logging
 import time
 from typing import Dict
@@ -34,15 +35,15 @@ async def encode_fingerprint(
 ) -> FingerprintEncodeResponse:
     """
     Encode a robust fingerprint into text.
-    
+
     Fingerprints use secret-seeded placement of invisible markers
     that survive text modifications like paraphrasing or truncation.
-    
+
     **Tier Requirement:** Enterprise
     """
     start_time = time.time()
     organization_id = organization["organization_id"]
-    
+
     # Tier gating - Enterprise only
     tier = organization.get("tier", "starter").lower()
     tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
@@ -57,7 +58,7 @@ async def encode_fingerprint(
                 "upgrade_url": "/billing/upgrade",
             },
         )
-    
+
     try:
         fingerprinted_text, fingerprint_id, key_hash, markers_count = await fingerprint_service.encode_fingerprint(
             db=db,
@@ -68,14 +69,11 @@ async def encode_fingerprint(
             fingerprint_key=request.fingerprint_key,
             metadata=request.metadata,
         )
-        
+
         processing_time_ms = (time.time() - start_time) * 1000
-        
-        logger.info(
-            f"Encoded fingerprint {fingerprint_id} for org {organization_id}: "
-            f"{markers_count} markers, time={processing_time_ms:.2f}ms"
-        )
-        
+
+        logger.info(f"Encoded fingerprint {fingerprint_id} for org {organization_id}: {markers_count} markers, time={processing_time_ms:.2f}ms")
+
         return FingerprintEncodeResponse(
             success=True,
             document_id=request.document_id,
@@ -86,7 +84,7 @@ async def encode_fingerprint(
             processing_time_ms=round(processing_time_ms, 2),
             message=f"Fingerprint encoded with {markers_count} markers",
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to encode fingerprint: {e}", exc_info=True)
         raise HTTPException(
@@ -103,15 +101,15 @@ async def detect_fingerprint(
 ) -> FingerprintDetectResponse:
     """
     Detect a fingerprint in text.
-    
+
     Detection uses score-based matching with confidence threshold
     to identify fingerprinted content even after modifications.
-    
+
     **Tier Requirement:** Enterprise
     """
     start_time = time.time()
     organization_id = organization["organization_id"]
-    
+
     # Tier gating - Enterprise only
     tier = organization.get("tier", "starter").lower()
     tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
@@ -126,7 +124,7 @@ async def detect_fingerprint(
                 "upgrade_url": "/billing/upgrade",
             },
         )
-    
+
     try:
         detected, matches = await fingerprint_service.detect_fingerprint(
             db=db,
@@ -136,16 +134,13 @@ async def detect_fingerprint(
             confidence_threshold=request.confidence_threshold,
             return_positions=request.return_positions,
         )
-        
+
         processing_time_ms = (time.time() - start_time) * 1000
-        
+
         best_match = matches[0] if matches else None
-        
-        logger.info(
-            f"Fingerprint detection for org {organization_id}: "
-            f"detected={detected}, matches={len(matches)}, time={processing_time_ms:.2f}ms"
-        )
-        
+
+        logger.info(f"Fingerprint detection for org {organization_id}: detected={detected}, matches={len(matches)}, time={processing_time_ms:.2f}ms")
+
         return FingerprintDetectResponse(
             success=True,
             fingerprint_detected=detected,
@@ -154,7 +149,7 @@ async def detect_fingerprint(
             processing_time_ms=round(processing_time_ms, 2),
             message=f"Detection complete: {len(matches)} fingerprint(s) found" if detected else "No fingerprint detected",
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to detect fingerprint: {e}", exc_info=True)
         raise HTTPException(

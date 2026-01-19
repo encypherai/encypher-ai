@@ -21,13 +21,13 @@ func Test_encypher_StreamingAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
-	t.Run("Test StreamingAPIService CloseStreamingSessionApiV1StreamSessionSessionIdClosePost", func(t *testing.T) {
+	t.Run("Test StreamingAPIService CloseStreamingSessionApiV1SignStreamSessionsSessionIdClosePost", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
 		var sessionId string
 
-		resp, httpRes, err := apiClient.StreamingAPI.CloseStreamingSessionApiV1StreamSessionSessionIdClosePost(context.Background(), sessionId).Execute()
+		resp, httpRes, err := apiClient.StreamingAPI.CloseStreamingSessionApiV1SignStreamSessionsSessionIdClosePost(context.Background(), sessionId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -35,11 +35,11 @@ func Test_encypher_StreamingAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test StreamingAPIService CreateStreamingSessionApiV1StreamSessionCreatePost", func(t *testing.T) {
+	t.Run("Test StreamingAPIService CreateStreamingSessionApiV1SignStreamSessionsPost", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
-		resp, httpRes, err := apiClient.StreamingAPI.CreateStreamingSessionApiV1StreamSessionCreatePost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.StreamingAPI.CreateStreamingSessionApiV1SignStreamSessionsPost(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -47,13 +47,13 @@ func Test_encypher_StreamingAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test StreamingAPIService GetStreamRunApiV1StreamRunsRunIdGet", func(t *testing.T) {
+	t.Run("Test StreamingAPIService GetStreamRunApiV1SignStreamRunsRunIdGet", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
 		var runId string
 
-		resp, httpRes, err := apiClient.StreamingAPI.GetStreamRunApiV1StreamRunsRunIdGet(context.Background(), runId).Execute()
+		resp, httpRes, err := apiClient.StreamingAPI.GetStreamRunApiV1SignStreamRunsRunIdGet(context.Background(), runId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -61,11 +61,11 @@ func Test_encypher_StreamingAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test StreamingAPIService GetStreamingStatsApiV1StreamStatsGet", func(t *testing.T) {
+	t.Run("Test StreamingAPIService GetStreamingStatsApiV1SignStreamStatsGet", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
-		resp, httpRes, err := apiClient.StreamingAPI.GetStreamingStatsApiV1StreamStatsGet(context.Background()).Execute()
+		resp, httpRes, err := apiClient.StreamingAPI.GetStreamingStatsApiV1SignStreamStatsGet(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -73,11 +73,13 @@ func Test_encypher_StreamingAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test StreamingAPIService SseEventsEndpointApiV1StreamEventsGet", func(t *testing.T) {
+	t.Run("Test StreamingAPIService SseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGet", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
-		resp, httpRes, err := apiClient.StreamingAPI.SseEventsEndpointApiV1StreamEventsGet(context.Background()).Execute()
+		var sessionId string
+
+		resp, httpRes, err := apiClient.StreamingAPI.SseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGet(context.Background(), sessionId).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -85,11 +87,11 @@ func Test_encypher_StreamingAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test StreamingAPIService StreamSigningApiV1StreamSignPost", func(t *testing.T) {
+	t.Run("Test StreamingAPIService StreamSigningApiV1SignStreamPost", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
-		httpRes, err := apiClient.StreamingAPI.StreamSigningApiV1StreamSignPost(context.Background()).Execute()
+		httpRes, err := apiClient.StreamingAPI.StreamSigningApiV1SignStreamPost(context.Background()).Execute()
 
 		require.Nil(t, err)
 		assert.Equal(t, 200, httpRes.StatusCode)

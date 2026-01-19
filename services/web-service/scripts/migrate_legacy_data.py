@@ -12,6 +12,7 @@ from app.models.demo_request import DemoRequest
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 def migrate_demo_requests(legacy_db_url: str):
     """
     Migrate demo requests from legacy database to new web-service database.
@@ -30,10 +31,7 @@ def migrate_demo_requests(legacy_db_url: str):
             count = 0
             for row in result:
                 # Check if already exists (by email and created_at, or uuid)
-                existing = new_db.query(DemoRequest).filter(
-                    DemoRequest.email == row.email,
-                    DemoRequest.created_at == row.created_at
-                ).first()
+                existing = new_db.query(DemoRequest).filter(DemoRequest.email == row.email, DemoRequest.created_at == row.created_at).first()
 
                 if existing:
                     logger.info(f"Skipping existing record: {row.email}")
@@ -67,6 +65,7 @@ def migrate_demo_requests(legacy_db_url: str):
         new_db.rollback()
     finally:
         new_db.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Migrate legacy data")

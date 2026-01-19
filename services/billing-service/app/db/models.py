@@ -1,4 +1,5 @@
 """SQLAlchemy database models for Billing Service"""
+
 from sqlalchemy import Column, String, DateTime, JSON, Float, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -13,6 +14,7 @@ def generate_uuid():
 
 class Subscription(Base):
     """Subscription model"""
+
     __tablename__ = "subscriptions"
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -46,6 +48,7 @@ class Subscription(Base):
 
 class Invoice(Base):
     """Invoice model"""
+
     __tablename__ = "invoices"
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -78,6 +81,7 @@ class Invoice(Base):
 
 class Payment(Base):
     """Payment model"""
+
     __tablename__ = "payments"
 
     id = Column(String, primary_key=True, default=generate_uuid)

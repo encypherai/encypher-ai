@@ -30,6 +30,7 @@ MERKLE_OUT_DIR = WORK_DIR / "merkle_embedding"
 
 console = Console()
 
+
 def download_if_missing(url: str, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
     if dest.exists() and dest.stat().st_size > 0:
@@ -44,6 +45,7 @@ def download_if_missing(url: str, dest: Path) -> None:
         raise RuntimeError(f"Failed to download dump: {e}")
     console.print("[green]✓ Download complete[/green]")
 
+
 def simple_extract_dump(dump_path: Path, extract_dir: Path) -> None:
     """Minimal Wikipedia dump extractor."""
     out_file = extract_dir / "pages.json"
@@ -55,7 +57,7 @@ def simple_extract_dump(dump_path: Path, extract_dir: Path) -> None:
     page_buf = []
     capturing = False
     out_file.parent.mkdir(parents=True, exist_ok=True)
-    
+
     console.print("[cyan]→ Extracting dump (simple mode)...[/cyan]")
     with bz2.open(dump_path, mode="rt", encoding="utf-8", errors="ignore") as fin, out_file.open("w", encoding="utf-8") as fout:
         for line in fin:
@@ -78,6 +80,7 @@ def simple_extract_dump(dump_path: Path, extract_dir: Path) -> None:
                     capturing = False
     console.print(f"[green]✓ Extracted {count:,} pages[/green]")
 
+
 def prepare_txt_corpus(extract_dir: Path, prepared_dir: Path, limit: int) -> list[Path]:
     if prepared_dir.exists():
         files = list(prepared_dir.glob("article_*.txt"))
@@ -86,13 +89,13 @@ def prepare_txt_corpus(extract_dir: Path, prepared_dir: Path, limit: int) -> lis
             return sorted(files)[:limit]
         # If not enough, clear and rebuild (simplified)
         shutil.rmtree(prepared_dir)
-    
+
     prepared_dir.mkdir(parents=True, exist_ok=True)
-    
+
     files = []
     count = 0
     json_file = extract_dir / "pages.json"
-    
+
     if not json_file.exists():
         raise FileNotFoundError(f"Extracted JSON not found at {json_file}")
 
@@ -104,8 +107,9 @@ def prepare_txt_corpus(extract_dir: Path, prepared_dir: Path, limit: int) -> lis
                 obj = json.loads(line)
                 text = obj.get("text", "").strip()
                 title = obj.get("title", "")
-                if not text: continue
-                
+                if not text:
+                    continue
+
                 content = f"{title}\n\n{text}"
                 file_path = prepared_dir / f"article_{count:05d}.txt"
                 file_path.write_text(content, encoding="utf-8")
@@ -113,18 +117,19 @@ def prepare_txt_corpus(extract_dir: Path, prepared_dir: Path, limit: int) -> lis
                 count += 1
             except json.JSONDecodeError:
                 continue
-                
+
     console.print(f"[green]✓ Prepared {len(files)} files[/green]")
     return files
 
+
 async def run_benchmark(files: list[Path], url: str, output_dir: Path, mode: str, concurrency: int) -> float:
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Demo API Key for local testing
     headers = {"Authorization": "Bearer demo-key-load-test", "Content-Type": "application/json"}
-    
+
     sem = asyncio.Semaphore(concurrency)
-    
+
     async with httpx.AsyncClient(timeout=30.0) as client:
         # Warmup
         try:
@@ -135,17 +140,17 @@ async def run_benchmark(files: list[Path], url: str, output_dir: Path, mode: str
         async def worker(file_path: Path):
             text = file_path.read_text(encoding="utf-8")
             payload = {}
-            
+
             if mode == "c2pa":
                 payload = {"text": text, "title": "Benchmark Doc"}
             elif mode == "merkle":
                 payload = {"text": text, "document_id": file_path.stem, "segmentation_levels": ["sentence"]}
-            
+
             async with sem:
                 try:
                     resp = await client.post(url, json=payload, headers=headers)
                     resp.raise_for_status()
-                    
+
                     # Save output
                     out_file = output_dir / f"{file_path.stem}.{'signed.txt' if mode == 'c2pa' else 'merkle.json'}"
                     if mode == "c2pa":
@@ -153,13 +158,13 @@ async def run_benchmark(files: list[Path], url: str, output_dir: Path, mode: str
                         out_file.write_text(data.get("signed_text", ""), encoding="utf-8")
                     else:
                         out_file.write_text(resp.text, encoding="utf-8")
-                        
+
                 except Exception:
                     # console.print(f"[red]Error processing {file_path.name}: {e}[/red]")
                     pass
 
         start_time = time.time()
-        
+
         with Progress(
             SpinnerColumn(),
             TextColumn(f"[bold blue]{mode.upper()} Benchmark[/bold blue]"),
@@ -167,19 +172,20 @@ async def run_benchmark(files: list[Path], url: str, output_dir: Path, mode: str
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             TimeElapsedColumn(),
             TimeRemainingColumn(),
-            console=console
+            console=console,
         ) as progress:
             task = progress.add_task("Processing...", total=len(files))
-            
+
             tasks = []
             for f in files:
                 t = asyncio.create_task(worker(f))
                 t.add_done_callback(lambda _: progress.advance(task))
                 tasks.append(t)
-            
+
             await asyncio.gather(*tasks)
-            
+
     return time.time() - start_time
+
 
 def main():
     parser = argparse.ArgumentParser(description="5K Document Benchmark")
@@ -192,7 +198,7 @@ def main():
     wiki_dir = DATASET_DIR / "wikipedia"
     dump_path = wiki_dir / "simplewiki-latest-pages-articles.xml.bz2"
     extract_dir = wiki_dir / "extracted_json"
-    
+
     download_if_missing(DEFAULT_WIKI_DUMP_URL, dump_path)
     simple_extract_dump(dump_path, extract_dir)
     files = prepare_txt_corpus(extract_dir, PREPARED_DIR, args.limit)
@@ -205,7 +211,7 @@ def main():
     console.print("\n[bold]Starting C2PA Benchmark...[/bold]")
     c2pa_url = f"{args.base_url}/api/v1/sign"
     c2pa_time = asyncio.run(run_benchmark(files, c2pa_url, C2PA_OUT_DIR, "c2pa", args.concurrency))
-    
+
     # 3. Run Merkle Benchmark
     console.print("\n[bold]Starting Merkle Benchmark...[/bold]")
     merkle_url = f"{args.base_url}/api/v1/enterprise/merkle/encode"
@@ -216,16 +222,17 @@ def main():
     table.add_column("Metric", style="cyan")
     table.add_column("C2PA Sign", style="magenta")
     table.add_column("Merkle Encode", style="green")
-    
+
     c2pa_tps = len(files) / c2pa_time
     merkle_tps = len(files) / merkle_time
-    
+
     table.add_row("Total Time", f"{c2pa_time:.2f}s", f"{merkle_time:.2f}s")
     table.add_row("Throughput", f"{c2pa_tps:.2f} docs/s", f"{merkle_tps:.2f} docs/s")
-    table.add_row("Avg Latency", f"{(c2pa_time/len(files)*1000):.2f} ms", f"{(merkle_time/len(files)*1000):.2f} ms")
-    
+    table.add_row("Avg Latency", f"{(c2pa_time / len(files) * 1000):.2f} ms", f"{(merkle_time / len(files) * 1000):.2f} ms")
+
     console.print("\n")
     console.print(table)
+
 
 if __name__ == "__main__":
     main()

@@ -4,7 +4,7 @@
 ## Rule 1 — Quality Over Speed
 Good > Fast. Always. Prefer clean designs over quick fixes. Avoid wrappers/shims. Leave codebase better than found. Choose debt-free solutions.
 ## Rule 2 — Team Identity
-Each conversation = one team. On start: 1) Check `.teams/` for highest `TEAM_XXX` 2) Your ID = highest+1 3) Create `.teams/TEAM_XXX_<summary>.md` 4) ID permanent for session. Code comments: `# TEAM_XXX: Reason`
+Each conversation = one team. If chat history already assigns a TEAM_XXX, read that `.teams/TEAM_XXX_<summary>.md` first (do NOT create a new ID). Otherwise: 1) Check `.teams/` for highest `TEAM_XXX` 2) Your ID = highest+1 3) Create `.teams/TEAM_XXX_<summary>.md` 4) ID permanent for session. Code comments: `# TEAM_XXX: Reason`
 ## Rule 3 — SSOT
 | Artifact | Location |
 |----------|----------|
@@ -19,7 +19,7 @@ Each conversation = one team. On start: 1) Check `.teams/` for highest `TEAM_XXX
 ## Rule 5 — Session Start
 Before code: 1) Read README 2) Read active PRD 3) Read agents.md 4) Check .teams/ 5) Claim Team ID 6) Verify tests pass 7) Begin
 ## Rule 6 — Session End
-Before concluding: [ ] Tests pass [ ] Builds clean [ ] PRD updated [ ] Team file updated [ ] Blockers documented [ ] Handoff notes
+Before concluding: [ ] Tests pass [ ] Builds clean [ ] PRD updated [ ] Team file updated [ ] Blockers documented [ ] Handoff notes. Final response MUST include `TEAM_XXX` + concise status/handoff line.
 ## Rule 7 — Change Protocol
 1) Run tests (baseline) 2) Write new tests (TDD) 3) Minimal change 4) Run tests (no regression) 5) Fix before proceeding. Never modify fixtures without USER approval.
 ## Rule 8 — Context Efficiency
@@ -29,7 +29,9 @@ Maximize work while context loaded. Don't stop mid-PRD. Continue until complete 
 ## Rule 10 — Code Quality
 Python: `uv run ruff check .` / `ruff format .` / `mypy .` / `pytest` / `pip-audit`. JS: `npm run lint` / `format` / `test` / `audit`
 ## Rule 11 — Tool Usage
-1) Search First: Fast Context, find_by_name, grep_search 2) Read Before Edit: MUST read_file before edit 3) Absolute paths 4) Case-insensitive grep default
+1) Search First: Fast Context, find_by_name, grep_search 2) Read Before Edit: MUST read_file before edit 3) Absolute paths 4) Case-insensitive grep default 5) Commands are pre-approved in sandbox (run tests/lint/install deps/web lookups without asking)
+## Rule 11.1 — OS Preference
+Linux-first: use Linux paths/commands unless explicitly asked for Windows.
 ## Rule 12 — Breaking Changes > Compatibility
 Favor clean breaks. Move/rename → let compiler fail → fix sites → remove re-exports. No adapters for old code.
 ## Rule 13 — No Dead Code

@@ -1,6 +1,7 @@
 """
 Security utilities for key generation and validation
 """
+
 import secrets
 import hashlib
 from .config import settings

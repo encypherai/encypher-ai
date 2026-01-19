@@ -9,6 +9,7 @@ Provides:
 
 TEAM_002: Core service for document revocation system.
 """
+
 import base64
 import gzip
 import hashlib
@@ -17,7 +18,7 @@ import time
 from datetime import datetime, timezone
 from inspect import isawaitable
 from urllib.parse import urlparse
-from typing import Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, cast
 from uuid import uuid4
 
 import httpx
@@ -45,14 +46,14 @@ async def _await_if_needed(value):
 class StatusService:
     """
     Service for managing document revocation status via bitstring status lists.
-    
+
     Supports 10+ billion documents with O(1) status lookups.
     """
-    
+
     def __init__(self, cache_ttl_seconds: int = 300):
         """
         Initialize status service.
-        
+
         Args:
             cache_ttl_seconds: TTL for cached status lists (default 5 minutes)
         """
@@ -62,11 +63,11 @@ class StatusService:
         # TEAM_056: Basic SSRF hardening - only allow fetching from these hosts.
         # TEAM_056: Intentionally strict; expand only with explicit security review.
         self._allowed_status_list_hosts = {"status.encypherai.com"}
-    
+
     # -------------------------------------------------------------------------
     # Status Allocation (used during signing)
     # -------------------------------------------------------------------------
-    
+
     async def allocate_status_index(
         self,
         db: AsyncSession,
@@ -75,27 +76,28 @@ class StatusService:
     ) -> Tuple[int, int, str]:
         """
         Allocate a status list position for a new document.
-        
+
         This is called during document signing to reserve a bit position
         in the organization's status list.
-        
+
         Args:
             db: Database session
             organization_id: Organization ID
             document_id: Document ID being signed
-        
+
         Returns:
             Tuple of (list_index, bit_index, status_list_url)
-        
+
         Raises:
             ValueError: If allocation fails
         """
         # Find or create the current (non-full) list for this org
         metadata = await self._get_or_create_current_list(db, organization_id)
-        
-        list_index = metadata.list_index
-        bit_index = metadata.next_bit_index
-        
+        metadata_any = cast(Any, metadata)
+
+        list_index = int(metadata_any.list_index)
+        bit_index = int(metadata_any.next_bit_index)
+
         # Create the status entry
         entry = StatusListEntry(
             organization_id=organization_id,
@@ -105,30 +107,24 @@ class StatusService:
             revoked=False,
         )
         db.add(entry)
-        
+
         # Increment the allocation pointer
-        metadata.next_bit_index += 1
-        metadata.total_documents += 1
-        
+        metadata_any.next_bit_index = int(metadata_any.next_bit_index) + 1
+        metadata_any.total_documents = int(metadata_any.total_documents) + 1
+
         # Check if list is now full
-        if metadata.next_bit_index >= BITS_PER_LIST:
-            metadata.is_full = True
-            logger.info(
-                f"Status list {organization_id}/{list_index} is now full "
-                f"({BITS_PER_LIST} documents)"
-            )
-        
+        if int(metadata_any.next_bit_index) >= BITS_PER_LIST:
+            metadata_any.is_full = True
+            logger.info(f"Status list {organization_id}/{list_index} is now full ({BITS_PER_LIST} documents)")
+
         await db.flush()
-        
+
         status_list_url = self._build_status_list_url(organization_id, list_index)
-        
-        logger.debug(
-            f"Allocated status index for doc {document_id}: "
-            f"list={list_index}, bit={bit_index}"
-        )
-        
+
+        logger.debug(f"Allocated status index for doc {document_id}: list={list_index}, bit={bit_index}")
+
         return list_index, bit_index, status_list_url
-    
+
     async def _get_or_create_current_list(
         self,
         db: AsyncSession,
@@ -149,19 +145,17 @@ class StatusService:
             .limit(1)
         )
         metadata = await _await_if_needed(result.scalar_one_or_none())
-        
+
         if metadata:
-            return metadata
-        
+            return cast(StatusListMetadata, metadata)
+
         # No available list, create a new one
         # Find the highest list_index for this org
-        result = await db.execute(
-            select(func.max(StatusListMetadata.list_index))
-            .where(StatusListMetadata.organization_id == organization_id)
-        )
+        result = await db.execute(select(func.max(StatusListMetadata.list_index)).where(StatusListMetadata.organization_id == organization_id))
         max_index = await _await_if_needed(result.scalar())
-        new_index = (max_index or -1) + 1
-        
+        max_index_value = cast(Optional[int], max_index)
+        new_index = (max_index_value or -1) + 1
+
         metadata = StatusListMetadata(
             id=uuid4(),
             organization_id=organization_id,
@@ -174,23 +168,21 @@ class StatusService:
         )
         db.add(metadata)
         await db.flush()
-        
-        logger.info(
-            f"Created new status list for org {organization_id}: list_index={new_index}"
-        )
-        
+
+        logger.info(f"Created new status list for org {organization_id}: list_index={new_index}")
+
         return metadata
-    
+
     def _build_status_list_url(self, organization_id: str, list_index: int) -> str:
         """Build the canonical URL for a status list."""
         # TEAM_002: Make base URL configurable
-        base_url = getattr(settings, 'status_list_base_url', 'https://status.encypherai.com/v1')
+        base_url = getattr(settings, "status_list_base_url", "https://status.encypherai.com/v1")
         return f"{base_url}/{organization_id}/list/{list_index}"
-    
+
     # -------------------------------------------------------------------------
     # Revocation Status Checking (used during verification)
     # -------------------------------------------------------------------------
-    
+
     async def check_revocation(
         self,
         status_list_url: str,
@@ -198,13 +190,13 @@ class StatusService:
     ) -> Tuple[Optional[bool], Optional[str]]:
         """
         Check if a document is revoked.
-        
+
         Uses cached status lists for O(1) lookups.
-        
+
         Args:
             status_list_url: URL of the status list
             bit_index: Bit position in the list
-        
+
         Returns:
             Tuple of (is_revoked, error).
             - is_revoked=True/False when status could be determined.
@@ -212,20 +204,20 @@ class StatusService:
         """
         try:
             bitstring = await self._get_status_list(status_list_url)
-            
+
             # Check bit at index
             byte_index = bit_index // 8
             bit_position = 7 - (bit_index % 8)  # MSB first per W3C spec
-            
+
             if byte_index >= len(bitstring):
                 return False, None  # Index out of range = not revoked
-            
+
             return bool(bitstring[byte_index] & (1 << bit_position)), None
-            
+
         except Exception as e:
             logger.warning(f"Failed to check revocation status: {e}")
             return None, str(e)
-    
+
     async def check_revocation_from_db(
         self,
         db: AsyncSession,
@@ -234,41 +226,40 @@ class StatusService:
     ) -> Tuple[bool, Optional[str]]:
         """
         Check revocation status directly from database.
-        
+
         Use this for authoritative checks (e.g., in revocation API).
         For verification, prefer check_revocation() with cached lists.
-        
+
         Args:
             db: Database session
             organization_id: Organization ID
             document_id: Document ID
-        
+
         Returns:
             Tuple of (is_revoked, revocation_reason)
         """
         result = await db.execute(
-            select(StatusListEntry.revoked, StatusListEntry.revoked_reason)
-            .where(
+            select(StatusListEntry.revoked, StatusListEntry.revoked_reason).where(
                 StatusListEntry.organization_id == organization_id,
                 StatusListEntry.document_id == document_id,
             )
         )
         row = await _await_if_needed(result.first())
-        
+
         if not row:
             return False, None
-        
-        return row.revoked, row.revoked_reason
-    
+
+        return bool(row.revoked), cast(Optional[str], row.revoked_reason)
+
     async def _get_status_list(self, url: str) -> bytes:
         """
         Fetch and cache a status list.
-        
+
         Fetches a W3C StatusList2021Credential JSON-LD and decodes the compressed
         `credentialSubject.encodedList` bitstring.
         """
         now = time.time()
-        
+
         # Check cache
         if url in self._list_cache:
             data, expires = self._list_cache[url]
@@ -314,7 +305,7 @@ class StatusService:
     def invalidate_cache(self, url: Optional[str] = None) -> None:
         """
         Invalidate cached status lists.
-        
+
         Args:
             url: Specific URL to invalidate, or None for all
         """
@@ -322,11 +313,11 @@ class StatusService:
             self._list_cache.pop(url, None)
         else:
             self._list_cache.clear()
-    
+
     # -------------------------------------------------------------------------
     # Revocation Management
     # -------------------------------------------------------------------------
-    
+
     async def revoke_document(
         self,
         db: AsyncSession,
@@ -338,7 +329,7 @@ class StatusService:
     ) -> StatusListEntry:
         """
         Revoke a document.
-        
+
         Args:
             db: Database session
             organization_id: Organization ID
@@ -346,38 +337,38 @@ class StatusService:
             reason: Revocation reason code
             reason_detail: Optional detailed explanation
             revoked_by: User/API key performing revocation
-        
+
         Returns:
             Updated StatusListEntry
-        
+
         Raises:
             ValueError: If document not found
         """
         result = await db.execute(
-            select(StatusListEntry)
-            .where(
+            select(StatusListEntry).where(
                 StatusListEntry.organization_id == organization_id,
                 StatusListEntry.document_id == document_id,
             )
         )
         entry = await _await_if_needed(result.scalar_one_or_none())
-        
+
         if not entry:
             raise ValueError(f"Document {document_id} not found in status list")
-        
-        if entry.revoked:
+
+        entry_any = cast(Any, entry)
+        if entry_any.revoked:
             logger.warning(f"Document {document_id} is already revoked")
-            return entry
-        
+            return cast(StatusListEntry, entry)
+
         # Update entry
-        entry.revoked = True
-        entry.revoked_at = datetime.now(timezone.utc)
-        entry.revoked_reason = reason.value
-        entry.revoked_reason_detail = reason_detail
-        entry.revoked_by = revoked_by
-        entry.reinstated_at = None
-        entry.reinstated_by = None
-        
+        entry_any.revoked = True
+        entry_any.revoked_at = datetime.now(timezone.utc)
+        entry_any.revoked_reason = reason.value
+        entry_any.revoked_reason_detail = reason_detail
+        entry_any.revoked_by = revoked_by
+        entry_any.reinstated_at = None
+        entry_any.reinstated_by = None
+
         # Update metadata revoked count
         await db.execute(
             update(StatusListMetadata)
@@ -387,20 +378,17 @@ class StatusService:
             )
             .values(revoked_count=StatusListMetadata.revoked_count + 1)
         )
-        
+
         await db.flush()
-        
+
         # Invalidate cache for this list
-        status_list_url = self._build_status_list_url(organization_id, entry.list_index)
+        status_list_url = self._build_status_list_url(organization_id, int(entry_any.list_index))
         self.invalidate_cache(status_list_url)
-        
-        logger.info(
-            f"Revoked document {document_id} (org={organization_id}, "
-            f"reason={reason.value})"
-        )
-        
-        return entry
-    
+
+        logger.info(f"Revoked document {document_id} (org={organization_id}, reason={reason.value})")
+
+        return cast(StatusListEntry, entry)
+
     async def reinstate_document(
         self,
         db: AsyncSession,
@@ -410,40 +398,40 @@ class StatusService:
     ) -> StatusListEntry:
         """
         Reinstate a previously revoked document.
-        
+
         Args:
             db: Database session
             organization_id: Organization ID
             document_id: Document ID to reinstate
             reinstated_by: User/API key performing reinstatement
-        
+
         Returns:
             Updated StatusListEntry
-        
+
         Raises:
             ValueError: If document not found or not revoked
         """
         result = await db.execute(
-            select(StatusListEntry)
-            .where(
+            select(StatusListEntry).where(
                 StatusListEntry.organization_id == organization_id,
                 StatusListEntry.document_id == document_id,
             )
         )
         entry = await _await_if_needed(result.scalar_one_or_none())
-        
+
         if not entry:
             raise ValueError(f"Document {document_id} not found in status list")
-        
-        if not entry.revoked:
+
+        entry_any = cast(Any, entry)
+        if not entry_any.revoked:
             logger.warning(f"Document {document_id} is not revoked")
-            return entry
-        
+            return cast(StatusListEntry, entry)
+
         # Update entry
-        entry.revoked = False
-        entry.reinstated_at = datetime.now(timezone.utc)
-        entry.reinstated_by = reinstated_by
-        
+        entry_any.revoked = False
+        entry_any.reinstated_at = datetime.now(timezone.utc)
+        entry_any.reinstated_by = reinstated_by
+
         # Update metadata revoked count
         await db.execute(
             update(StatusListMetadata)
@@ -453,21 +441,21 @@ class StatusService:
             )
             .values(revoked_count=StatusListMetadata.revoked_count - 1)
         )
-        
+
         await db.flush()
-        
+
         # Invalidate cache for this list
-        status_list_url = self._build_status_list_url(organization_id, entry.list_index)
+        status_list_url = self._build_status_list_url(organization_id, int(entry_any.list_index))
         self.invalidate_cache(status_list_url)
-        
+
         logger.info(f"Reinstated document {document_id} (org={organization_id})")
-        
-        return entry
-    
+
+        return cast(StatusListEntry, entry)
+
     # -------------------------------------------------------------------------
     # Bitstring Generation
     # -------------------------------------------------------------------------
-    
+
     async def generate_status_list(
         self,
         db: AsyncSession,
@@ -476,19 +464,19 @@ class StatusService:
     ) -> Dict:
         """
         Generate a W3C StatusList2021 credential for a status list.
-        
+
         This creates the JSON structure that will be uploaded to CDN.
-        
+
         Args:
             db: Database session
             organization_id: Organization ID
             list_index: List index to generate
-        
+
         Returns:
             StatusList2021Credential as dict
         """
         start_time = time.perf_counter()
-        
+
         # Fetch all entries for this list
         result = await db.execute(
             select(StatusListEntry.bit_index, StatusListEntry.revoked)
@@ -499,47 +487,39 @@ class StatusService:
             .order_by(StatusListEntry.bit_index)
         )
         entries = await _await_if_needed(result.all())
-        
+
         # Build bitstring
         bitstring = bytearray(BYTES_PER_LIST)
-        
+
         for bit_index, revoked in entries:
             if revoked:
                 byte_index = bit_index // 8
                 bit_position = 7 - (bit_index % 8)  # MSB first
-                bitstring[byte_index] |= (1 << bit_position)
-        
+                bitstring[byte_index] |= 1 << bit_position
+
         # Compress and encode
         compressed = gzip.compress(bytes(bitstring), compresslevel=9)
-        encoded = base64.b64encode(compressed).decode('ascii')
-        
+        encoded = base64.b64encode(compressed).decode("ascii")
+
         # Build credential
         status_list_url = self._build_status_list_url(organization_id, list_index)
         issued = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-        
+
         credential = {
-            "@context": [
-                "https://www.w3.org/2018/credentials/v1",
-                "https://w3id.org/vc/status-list/2021/v1"
-            ],
+            "@context": ["https://www.w3.org/2018/credentials/v1", "https://w3id.org/vc/status-list/2021/v1"],
             "id": status_list_url,
             "type": ["VerifiableCredential", "StatusList2021Credential"],
             "issuer": f"did:web:encypherai.com:orgs:{organization_id}",
             "issued": issued,
-            "credentialSubject": {
-                "id": f"{status_list_url}#list",
-                "type": "StatusList2021",
-                "statusPurpose": "revocation",
-                "encodedList": encoded
-            }
+            "credentialSubject": {"id": f"{status_list_url}#list", "type": "StatusList2021", "statusPurpose": "revocation", "encodedList": encoded},
         }
-        
+
         # Calculate ETag
         etag = hashlib.sha256(encoded.encode()).hexdigest()[:16]
-        
+
         # Update metadata
         duration_ms = int((time.perf_counter() - start_time) * 1000)
-        
+
         await db.execute(
             update(StatusListMetadata)
             .where(
@@ -554,17 +534,15 @@ class StatusService:
                 cdn_etag=etag,
             )
         )
-        
+
         await db.flush()
-        
+
         logger.info(
-            f"Generated status list {organization_id}/{list_index}: "
-            f"{len(entries)} entries, {len(compressed)} bytes compressed, "
-            f"{duration_ms}ms"
+            f"Generated status list {organization_id}/{list_index}: {len(entries)} entries, {len(compressed)} bytes compressed, {duration_ms}ms"
         )
-        
+
         return credential
-    
+
     async def get_lists_needing_regeneration(
         self,
         db: AsyncSession,
@@ -572,29 +550,24 @@ class StatusService:
     ) -> list:
         """
         Find status lists that need regeneration.
-        
+
         A list needs regeneration if:
         - It has never been generated, OR
         - It was generated more than stale_threshold_seconds ago
-        
+
         Args:
             db: Database session
             stale_threshold_seconds: How old before considered stale
-        
+
         Returns:
             List of (organization_id, list_index) tuples
         """
         threshold = datetime.now(timezone.utc).timestamp() - stale_threshold_seconds
         threshold_dt = datetime.fromtimestamp(threshold, tz=timezone.utc)
-        
+
         result = await db.execute(
-            select(
-                StatusListMetadata.organization_id,
-                StatusListMetadata.list_index
-            )
-            .where(
-                (StatusListMetadata.last_generated_at.is_(None)) |
-                (StatusListMetadata.last_generated_at < threshold_dt)
+            select(StatusListMetadata.organization_id, StatusListMetadata.list_index).where(
+                (StatusListMetadata.last_generated_at.is_(None)) | (StatusListMetadata.last_generated_at < threshold_dt)
             )
         )
 

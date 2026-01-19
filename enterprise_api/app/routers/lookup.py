@@ -1,6 +1,7 @@
 """
 Lookup router for sentence provenance tracking.
 """
+
 import logging
 
 from fastapi import APIRouter, Depends
@@ -37,7 +38,7 @@ async def _do_lookup(request: LookupRequest, db: AsyncSession) -> LookupResponse
             WHERE sr.sentence_hash = :hash
             LIMIT 1
         """),
-        {"hash": sentence_hash}
+        {"hash": sentence_hash},
     )
 
     row = result.fetchone()
@@ -46,10 +47,7 @@ async def _do_lookup(request: LookupRequest, db: AsyncSession) -> LookupResponse
         logger.info(f"Sentence not found in database (hash: {sentence_hash})")
         return LookupResponse(success=True, found=False)
 
-    logger.info(
-        f"Sentence found: document='{row.document_title}', "
-        f"org='{row.organization_name}', index={row.sentence_index}"
-    )
+    logger.info(f"Sentence found: document='{row.document_title}', org='{row.organization_name}', index={row.sentence_index}")
 
     return LookupResponse(
         success=True,
@@ -58,15 +56,12 @@ async def _do_lookup(request: LookupRequest, db: AsyncSession) -> LookupResponse
         document_url=row.document_url,
         organization_name=row.organization_name,
         publication_date=row.publication_date,
-        sentence_index=row.sentence_index
+        sentence_index=row.sentence_index,
     )
 
 
 @router.post("/lookup", response_model=LookupResponse)
-async def lookup_sentence(
-    request: LookupRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def lookup_sentence(request: LookupRequest, db: AsyncSession = Depends(get_db)):
     """
     Look up sentence provenance by hash.
 
@@ -83,10 +78,7 @@ async def lookup_sentence(
 
 
 @router.post("/provenance/lookup", response_model=LookupResponse)
-async def provenance_lookup(
-    request: LookupRequest,
-    db: AsyncSession = Depends(get_db)
-):
+async def provenance_lookup(request: LookupRequest, db: AsyncSession = Depends(get_db)):
     """
     Look up sentence provenance by hash.
 

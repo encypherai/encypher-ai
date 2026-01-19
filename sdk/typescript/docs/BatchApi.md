@@ -83,7 +83,7 @@ example().catch(console.error);
 
 ## batchVerifyApiV1BatchVerifyPost
 
-> BatchResponseEnvelope batchVerifyApiV1BatchVerifyPost(batchVerifyRequest)
+> BatchResponseEnvelope batchVerifyApiV1BatchVerifyPost(appSchemasBatchBatchVerifyRequest)
 
 Batch Verify
 
@@ -107,8 +107,8 @@ async function example() {
   const api = new BatchApi(config);
 
   const body = {
-    // BatchVerifyRequest
-    batchVerifyRequest: ...,
+    // AppSchemasBatchBatchVerifyRequest
+    appSchemasBatchBatchVerifyRequest: ...,
   } satisfies BatchVerifyApiV1BatchVerifyPostRequest;
 
   try {
@@ -128,7 +128,7 @@ example().catch(console.error);
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **batchVerifyRequest** | [BatchVerifyRequest](BatchVerifyRequest.md) |  | |
+| **appSchemasBatchBatchVerifyRequest** | [AppSchemasBatchBatchVerifyRequest](AppSchemasBatchBatchVerifyRequest.md) |  | |
 
 ### Return type
 

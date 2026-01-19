@@ -8,6 +8,7 @@ Tests cover:
 - Error logs viewing
 - BYOK public key registration
 """
+
 import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -22,6 +23,7 @@ from app.schemas.admin import UserTier, UserStatus
 # =============================================================================
 # Test Fixtures
 # =============================================================================
+
 
 @pytest.fixture
 def super_admin_org():
@@ -83,6 +85,7 @@ def mock_db():
 # Platform Stats Tests
 # =============================================================================
 
+
 @pytest.fixture
 def client():
     """Test client for FastAPI app."""
@@ -95,10 +98,7 @@ class TestPlatformStats:
     def test_get_stats_requires_super_admin(self, client, starter_org):
         """Non-super-admin should be forbidden."""
         with patch("app.dependencies.get_current_organization", return_value=starter_org):
-            response = client.get(
-                "/api/v1/admin/stats",
-                headers={"Authorization": "Bearer test-token"}
-            )
+            response = client.get("/api/v1/admin/stats", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_get_stats_success(self, client, super_admin_org, mock_db):
@@ -111,13 +111,12 @@ class TestPlatformStats:
             "total_api_calls": 150000,
             "users_by_tier": {"starter": 60, "professional": 25, "business": 10, "enterprise": 5},
         }
-        
-        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
-             patch("app.routers.admin.AdminService.get_platform_stats", return_value=mock_stats):
-            response = client.get(
-                "/api/v1/admin/stats",
-                headers={"Authorization": "Bearer test-token"}
-            )
+
+        with (
+            patch("app.dependencies.get_current_organization", return_value=super_admin_org),
+            patch("app.routers.admin.AdminService.get_platform_stats", return_value=mock_stats),
+        ):
+            response = client.get("/api/v1/admin/stats", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["success"] is True
@@ -128,16 +127,14 @@ class TestPlatformStats:
 # User List Tests
 # =============================================================================
 
+
 class TestUserList:
     """Tests for GET /api/v1/admin/users endpoint."""
 
     def test_list_users_requires_super_admin(self, client, enterprise_org):
         """Non-super-admin should be forbidden."""
         with patch("app.dependencies.get_current_organization", return_value=enterprise_org):
-            response = client.get(
-                "/api/v1/admin/users",
-                headers={"Authorization": "Bearer test-token"}
-            )
+            response = client.get("/api/v1/admin/users", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_list_users_with_search(self, client, super_admin_org, mock_db):
@@ -148,13 +145,12 @@ class TestUserList:
             "page": 1,
             "page_size": 50,
         }
-        
-        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
-             patch("app.routers.admin.AdminService.list_users", return_value=mock_result):
-            response = client.get(
-                "/api/v1/admin/users?search=test",
-                headers={"Authorization": "Bearer test-token"}
-            )
+
+        with (
+            patch("app.dependencies.get_current_organization", return_value=super_admin_org),
+            patch("app.routers.admin.AdminService.list_users", return_value=mock_result),
+        ):
+            response = client.get("/api/v1/admin/users?search=test", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["success"] is True
@@ -165,6 +161,7 @@ class TestUserList:
 # Tier Update Tests
 # =============================================================================
 
+
 class TestTierUpdate:
     """Tests for POST /api/v1/admin/users/update-tier endpoint."""
 
@@ -174,7 +171,7 @@ class TestTierUpdate:
             response = client.post(
                 "/api/v1/admin/users/update-tier",
                 headers={"Authorization": "Bearer test-token"},
-                json={"user_id": "user_123", "new_tier": "enterprise"}
+                json={"user_id": "user_123", "new_tier": "enterprise"},
             )
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -187,13 +184,15 @@ class TestTierUpdate:
             "new_tier": "enterprise",
             "updated_at": datetime.utcnow().isoformat(),
         }
-        
-        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
-             patch("app.routers.admin.AdminService.update_user_tier", return_value=mock_result):
+
+        with (
+            patch("app.dependencies.get_current_organization", return_value=super_admin_org),
+            patch("app.routers.admin.AdminService.update_user_tier", return_value=mock_result),
+        ):
             response = client.post(
                 "/api/v1/admin/users/update-tier",
                 headers={"Authorization": "Bearer test-token"},
-                json={"user_id": "user_123", "new_tier": "enterprise", "reason": "Sales upgrade"}
+                json={"user_id": "user_123", "new_tier": "enterprise", "reason": "Sales upgrade"},
             )
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
@@ -206,7 +205,7 @@ class TestTierUpdate:
             response = client.post(
                 "/api/v1/admin/users/update-tier",
                 headers={"Authorization": "Bearer test-token"},
-                json={"user_id": "user_123", "new_tier": "invalid_tier"}
+                json={"user_id": "user_123", "new_tier": "invalid_tier"},
             )
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -215,16 +214,14 @@ class TestTierUpdate:
 # Error Logs Tests
 # =============================================================================
 
+
 class TestErrorLogs:
     """Tests for GET /api/v1/admin/error-logs endpoint."""
 
     def test_get_error_logs_requires_super_admin(self, client, enterprise_org):
         """Non-super-admin should be forbidden."""
         with patch("app.dependencies.get_current_organization", return_value=enterprise_org):
-            response = client.get(
-                "/api/v1/admin/error-logs",
-                headers={"Authorization": "Bearer test-token"}
-            )
+            response = client.get("/api/v1/admin/error-logs", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
     def test_get_error_logs_success(self, client, super_admin_org, mock_db):
@@ -244,13 +241,12 @@ class TestErrorLogs:
             "page": 1,
             "page_size": 50,
         }
-        
-        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
-             patch("app.routers.admin.AdminService.get_error_logs", return_value=mock_result):
-            response = client.get(
-                "/api/v1/admin/error-logs",
-                headers={"Authorization": "Bearer test-token"}
-            )
+
+        with (
+            patch("app.dependencies.get_current_organization", return_value=super_admin_org),
+            patch("app.routers.admin.AdminService.get_error_logs", return_value=mock_result),
+        ):
+            response = client.get("/api/v1/admin/error-logs", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["success"] is True
@@ -260,6 +256,7 @@ class TestErrorLogs:
 # =============================================================================
 # BYOK Public Key Tests
 # =============================================================================
+
 
 class TestPublicKeyRegistration:
     """Tests for BYOK public key management endpoints."""
@@ -277,7 +274,7 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
                 json={
                     "public_key_pem": self.SAMPLE_ED25519_PUBLIC_KEY,
                     "key_name": "Test Key",
-                }
+                },
             )
             assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -307,11 +304,13 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
                 "public_key_pem": self.SAMPLE_ED25519_PUBLIC_KEY,
                 "is_active": True,
                 "created_at": datetime.utcnow().isoformat(),
-            }
+            },
         }
-        
-        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
-             patch("app.routers.admin.PublicKeyService.register_public_key", return_value=mock_result):
+
+        with (
+            patch("app.dependencies.get_current_organization", return_value=super_admin_org),
+            patch("app.routers.admin.PublicKeyService.register_public_key", return_value=mock_result),
+        ):
             response = client.post(
                 "/api/v1/admin/public-keys",
                 headers={"Authorization": "Bearer test-token"},
@@ -319,7 +318,7 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
                     "public_key_pem": self.SAMPLE_ED25519_PUBLIC_KEY,
                     "key_name": "Test Key",
                     "key_algorithm": "Ed25519",
-                }
+                },
             )
             assert response.status_code == status.HTTP_201_CREATED
             data = response.json()
@@ -335,7 +334,7 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
                 json={
                     "public_key_pem": "not a valid pem",
                     "key_name": "Test Key",
-                }
+                },
             )
             assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
 
@@ -362,15 +361,14 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
                     }
                 ],
                 "total": 1,
-            }
+            },
         }
-        
-        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
-             patch("app.routers.admin.PublicKeyService.list_public_keys", return_value=mock_result):
-            response = client.get(
-                "/api/v1/admin/public-keys",
-                headers={"Authorization": "Bearer test-token"}
-            )
+
+        with (
+            patch("app.dependencies.get_current_organization", return_value=super_admin_org),
+            patch("app.routers.admin.PublicKeyService.list_public_keys", return_value=mock_result),
+        ):
+            response = client.get("/api/v1/admin/public-keys", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["success"] is True
@@ -383,15 +381,14 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
             "data": {
                 "key_id": "pk_123",
                 "revoked_at": datetime.utcnow().isoformat(),
-            }
+            },
         }
-        
-        with patch("app.dependencies.get_current_organization", return_value=super_admin_org), \
-             patch("app.routers.admin.PublicKeyService.revoke_public_key", return_value=mock_result):
-            response = client.delete(
-                "/api/v1/admin/public-keys/pk_123?reason=Key%20compromised",
-                headers={"Authorization": "Bearer test-token"}
-            )
+
+        with (
+            patch("app.dependencies.get_current_organization", return_value=super_admin_org),
+            patch("app.routers.admin.PublicKeyService.revoke_public_key", return_value=mock_result),
+        ):
+            response = client.delete("/api/v1/admin/public-keys/pk_123?reason=Key%20compromised", headers={"Authorization": "Bearer test-token"})
             assert response.status_code == status.HTTP_200_OK
             data = response.json()
             assert data["success"] is True
@@ -401,20 +398,21 @@ MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
 # Admin Service Unit Tests
 # =============================================================================
 
+
 class TestAdminService:
     """Unit tests for AdminService."""
 
     def test_compute_key_fingerprint(self):
         """Should compute consistent fingerprint for public key."""
         from app.services.admin_service import PublicKeyService
-        
+
         pem = """-----BEGIN PUBLIC KEY-----
 MCowBQYDK2VwAyEAGb9F2CMCwPz5K8VdBkPbVkPJPvPZMhLGpIRvXe5Rnvs=
 -----END PUBLIC KEY-----"""
-        
+
         fingerprint1 = PublicKeyService.compute_key_fingerprint(pem)
         fingerprint2 = PublicKeyService.compute_key_fingerprint(pem)
-        
+
         assert fingerprint1 == fingerprint2
         assert fingerprint1.startswith("SHA256:")
         assert len(fingerprint1) > 10

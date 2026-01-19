@@ -4,17 +4,13 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Mode** | **string** | Processing mode: &#39;c2pa&#39; or &#39;embeddings&#39; | 
-**SegmentationLevel** | Pointer to **NullableString** |  | [optional] 
-**IdempotencyKey** | **string** | Caller-supplied key used to deduplicate retries | 
-**Items** | [**[]BatchItemPayload**](BatchItemPayload.md) | Documents to process (max 100) | 
-**FailFast** | Pointer to **bool** | Abort remaining items upon the first error when set to true | [optional] [default to false]
+**References** | [**[]VerifyEmbeddingRequest**](VerifyEmbeddingRequest.md) | List of embeddings to verify | 
 
 ## Methods
 
 ### NewBatchVerifyRequest
 
-`func NewBatchVerifyRequest(mode string, idempotencyKey string, items []BatchItemPayload, ) *BatchVerifyRequest`
+`func NewBatchVerifyRequest(references []VerifyEmbeddingRequest, ) *BatchVerifyRequest`
 
 NewBatchVerifyRequest instantiates a new BatchVerifyRequest object
 This constructor will assign default values to properties that have it defined,
@@ -29,125 +25,25 @@ NewBatchVerifyRequestWithDefaults instantiates a new BatchVerifyRequest object
 This constructor will only assign default values to properties that have it defined,
 but it doesn't guarantee that properties required by API are set
 
-### GetMode
+### GetReferences
 
-`func (o *BatchVerifyRequest) GetMode() string`
+`func (o *BatchVerifyRequest) GetReferences() []VerifyEmbeddingRequest`
 
-GetMode returns the Mode field if non-nil, zero value otherwise.
+GetReferences returns the References field if non-nil, zero value otherwise.
 
-### GetModeOk
+### GetReferencesOk
 
-`func (o *BatchVerifyRequest) GetModeOk() (*string, bool)`
+`func (o *BatchVerifyRequest) GetReferencesOk() (*[]VerifyEmbeddingRequest, bool)`
 
-GetModeOk returns a tuple with the Mode field if it's non-nil, zero value otherwise
+GetReferencesOk returns a tuple with the References field if it's non-nil, zero value otherwise
 and a boolean to check if the value has been set.
 
-### SetMode
+### SetReferences
 
-`func (o *BatchVerifyRequest) SetMode(v string)`
+`func (o *BatchVerifyRequest) SetReferences(v []VerifyEmbeddingRequest)`
 
-SetMode sets Mode field to given value.
+SetReferences sets References field to given value.
 
-
-### GetSegmentationLevel
-
-`func (o *BatchVerifyRequest) GetSegmentationLevel() string`
-
-GetSegmentationLevel returns the SegmentationLevel field if non-nil, zero value otherwise.
-
-### GetSegmentationLevelOk
-
-`func (o *BatchVerifyRequest) GetSegmentationLevelOk() (*string, bool)`
-
-GetSegmentationLevelOk returns a tuple with the SegmentationLevel field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetSegmentationLevel
-
-`func (o *BatchVerifyRequest) SetSegmentationLevel(v string)`
-
-SetSegmentationLevel sets SegmentationLevel field to given value.
-
-### HasSegmentationLevel
-
-`func (o *BatchVerifyRequest) HasSegmentationLevel() bool`
-
-HasSegmentationLevel returns a boolean if a field has been set.
-
-### SetSegmentationLevelNil
-
-`func (o *BatchVerifyRequest) SetSegmentationLevelNil(b bool)`
-
- SetSegmentationLevelNil sets the value for SegmentationLevel to be an explicit nil
-
-### UnsetSegmentationLevel
-`func (o *BatchVerifyRequest) UnsetSegmentationLevel()`
-
-UnsetSegmentationLevel ensures that no value is present for SegmentationLevel, not even an explicit nil
-### GetIdempotencyKey
-
-`func (o *BatchVerifyRequest) GetIdempotencyKey() string`
-
-GetIdempotencyKey returns the IdempotencyKey field if non-nil, zero value otherwise.
-
-### GetIdempotencyKeyOk
-
-`func (o *BatchVerifyRequest) GetIdempotencyKeyOk() (*string, bool)`
-
-GetIdempotencyKeyOk returns a tuple with the IdempotencyKey field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetIdempotencyKey
-
-`func (o *BatchVerifyRequest) SetIdempotencyKey(v string)`
-
-SetIdempotencyKey sets IdempotencyKey field to given value.
-
-
-### GetItems
-
-`func (o *BatchVerifyRequest) GetItems() []BatchItemPayload`
-
-GetItems returns the Items field if non-nil, zero value otherwise.
-
-### GetItemsOk
-
-`func (o *BatchVerifyRequest) GetItemsOk() (*[]BatchItemPayload, bool)`
-
-GetItemsOk returns a tuple with the Items field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetItems
-
-`func (o *BatchVerifyRequest) SetItems(v []BatchItemPayload)`
-
-SetItems sets Items field to given value.
-
-
-### GetFailFast
-
-`func (o *BatchVerifyRequest) GetFailFast() bool`
-
-GetFailFast returns the FailFast field if non-nil, zero value otherwise.
-
-### GetFailFastOk
-
-`func (o *BatchVerifyRequest) GetFailFastOk() (*bool, bool)`
-
-GetFailFastOk returns a tuple with the FailFast field if it's non-nil, zero value otherwise
-and a boolean to check if the value has been set.
-
-### SetFailFast
-
-`func (o *BatchVerifyRequest) SetFailFast(v bool)`
-
-SetFailFast sets FailFast field to given value.
-
-### HasFailFast
-
-`func (o *BatchVerifyRequest) HasFailFast() bool`
-
-HasFailFast returns a boolean if a field has been set.
 
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)

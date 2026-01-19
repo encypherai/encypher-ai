@@ -46,7 +46,7 @@ def test_request_logging_redacts_scim_query_params(monkeypatch):
     monkeypatch.setattr(structlog, "get_logger", lambda: logger)
 
     client = TestClient(_build_app())
-    client.get('/scim/v2/Users?filter=userName%20eq%20%22user%40example.com%22')
+    client.get("/scim/v2/Users?filter=userName%20eq%20%22user%40example.com%22")
 
     kwargs = _request_started_kwargs(logger)
     assert kwargs is not None

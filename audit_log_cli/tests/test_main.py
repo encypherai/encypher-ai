@@ -6,8 +6,8 @@ from audit_log_cli.app.main import app  # Assuming 'app' is your Typer applicati
 
 runner = CliRunner()
 
-class TestAuditLogCli(unittest.TestCase):
 
+class TestAuditLogCli(unittest.TestCase):
     def test_generate_report_help(self):
         """Test the --help option for the generate-report command."""
         result = runner.invoke(app, ["generate-report", "--help"])
@@ -22,13 +22,13 @@ class TestAuditLogCli(unittest.TestCase):
         """Test calling generate-report without any input target or text."""
         result = runner.invoke(app, ["generate-report"])
         # Only check that the command fails with a non-zero exit code
-        self.assertNotEqual(result.exit_code, 0) # Should fail
+        self.assertNotEqual(result.exit_code, 0)  # Should fail
 
     def test_generate_report_mutually_exclusive_inputs(self):
         """Test calling generate-report with both --target and --text."""
         result = runner.invoke(app, ["generate-report", "--target", "./dummy.txt", "--text", "some text"])
         # Only check that the command fails with a non-zero exit code
-        self.assertNotEqual(result.exit_code, 0) # Should fail
+        self.assertNotEqual(result.exit_code, 0)  # Should fail
 
     # Placeholder for more tests (e.g., file processing, text processing, CSV output)
     # def test_generate_report_with_file(self):
@@ -37,5 +37,6 @@ class TestAuditLogCli(unittest.TestCase):
     #     # Assert: check CSV output, console messages, etc.
     #     pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

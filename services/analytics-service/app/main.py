@@ -1,4 +1,5 @@
 """Analytics Service - Main Application"""
+
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -22,38 +23,40 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.SERVICE_NAME}")
-    
+
     # Ensure database is ready and run migrations
     ensure_database_ready(
         database_url=settings.DATABASE_URL,
         service_name=settings.SERVICE_NAME,
         alembic_config_path="alembic.ini",
         run_migrations=True,
-        exit_on_failure=True
+        exit_on_failure=True,
     )
-    
+
     # Start Redis Stream consumer for processing metrics
     stream_consumer = None
     if settings.REDIS_URL:
         try:
             from .services.stream_consumer import start_stream_consumer, stop_stream_consumer
+
             stream_consumer = await start_stream_consumer(redis_url=settings.REDIS_URL)
             logger.info("Redis Stream consumer started")
         except Exception as e:
             logger.warning(f"Failed to start Redis Stream consumer: {e}")
             logger.warning("Analytics will only process direct API calls")
-    
+
     yield
-    
+
     # Stop stream consumer
     if stream_consumer:
         try:
             from .services.stream_consumer import stop_stream_consumer
+
             await stop_stream_consumer()
             logger.info("Redis Stream consumer stopped")
         except Exception as e:
             logger.error(f"Error stopping stream consumer: {e}")
-    
+
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
@@ -100,6 +103,7 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host=settings.SERVICE_HOST,

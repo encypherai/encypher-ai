@@ -1,6 +1,7 @@
 """
 Email service for sending notifications and confirmations.
 """
+
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -104,11 +105,11 @@ def send_demo_notification(
 
 Name: {demo_request.name}
 Email: {demo_request.email}
-Organization: {demo_request.organization or 'Not provided'}
-Role: {demo_request.role or 'Not provided'}
+Organization: {demo_request.organization or "Not provided"}
+Role: {demo_request.role or "Not provided"}
 
 Message:
-{demo_request.message or 'No message provided'}
+{demo_request.message or "No message provided"}
 
 Source: {demo_request.source}
 Request ID: {demo_request.uuid}
@@ -124,15 +125,15 @@ Request ID: {demo_request.uuid}
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Email:</strong></td>
             <td style="padding: 8px; border-bottom: 1px solid #eee;"><a href="mailto:{demo_request.email}">{demo_request.email}</a></td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Organization:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">{demo_request.organization or 'Not provided'}</td></tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">{demo_request.organization or "Not provided"}</td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Role:</strong></td>
-            <td style="padding: 8px; border-bottom: 1px solid #eee;">{demo_request.role or 'Not provided'}</td></tr>
+            <td style="padding: 8px; border-bottom: 1px solid #eee;">{demo_request.role or "Not provided"}</td></tr>
         <tr><td style="padding: 8px; border-bottom: 1px solid #eee;"><strong>Source:</strong></td>
             <td style="padding: 8px; border-bottom: 1px solid #eee;">{demo_request.source}</td></tr>
     </table>
     <h3 style="margin-top: 20px;">Message:</h3>
     <p style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
-        {demo_request.message or 'No message provided'}
+        {demo_request.message or "No message provided"}
     </p>
     <p style="color: #666; font-size: 12px; margin-top: 20px;">
         Request ID: {demo_request.uuid}
@@ -249,9 +250,7 @@ https://encypherai.com
 """
 
     # HTML version with proper branding
-    next_steps_html = "".join(
-        f'<li style="margin-bottom: 8px;">{step}</li>' for step in config["next_steps"]
-    )
+    next_steps_html = "".join(f'<li style="margin-bottom: 8px;">{step}</li>' for step in config["next_steps"])
 
     html = f"""
 <!DOCTYPE html>

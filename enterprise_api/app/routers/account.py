@@ -3,6 +3,7 @@ Account router for organization information and quota details.
 
 Provides endpoints for customers to view their account info, tier, features, and quota.
 """
+
 from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
@@ -363,19 +364,13 @@ async def get_account_quota(
 
     def build_metric(name: str, used: int, limit: int) -> QuotaMetric:
         if limit == -1:
-            return QuotaMetric(
-                name=name, used=used, limit=-1, remaining=-1, percentage_used=0.0
-            )
+            return QuotaMetric(name=name, used=used, limit=-1, remaining=-1, percentage_used=0.0)
         elif limit == 0:
-            return QuotaMetric(
-                name=name, used=used, limit=0, remaining=0, percentage_used=100.0 if used > 0 else 0.0
-            )
+            return QuotaMetric(name=name, used=used, limit=0, remaining=0, percentage_used=100.0 if used > 0 else 0.0)
         else:
             remaining = max(0, limit - used)
             percentage = (used / limit) * 100 if limit > 0 else 0.0
-            return QuotaMetric(
-                name=name, used=used, limit=limit, remaining=remaining, percentage_used=round(percentage, 2)
-            )
+            return QuotaMetric(name=name, used=used, limit=limit, remaining=remaining, percentage_used=round(percentage, 2))
 
     return QuotaResponse(
         data=QuotaInfo(

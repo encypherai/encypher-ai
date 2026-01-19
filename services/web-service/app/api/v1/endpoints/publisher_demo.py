@@ -2,6 +2,7 @@
 API endpoints for Publisher Demo feature.
 Handles demo requests and analytics events from the publisher-demo page.
 """
+
 import hashlib
 import logging
 from uuid import UUID
@@ -51,9 +52,7 @@ def send_emails_background(demo_request: DemoRequest) -> None:
         logger.error(f"Failed to send notification email: {e}")
 
     try:
-        send_demo_confirmation(
-            demo_request.email, demo_request.name, context="publisher-demo"
-        )
+        send_demo_confirmation(demo_request.email, demo_request.name, context="publisher-demo")
     except Exception as e:
         logger.error(f"Failed to send confirmation email: {e}")
 
@@ -92,10 +91,7 @@ async def create_demo_request(
         db.commit()
         db.refresh(db_demo_request)
 
-        logger.info(
-            f"Publisher Demo request created: {db_demo_request.uuid} "
-            f"from {demo_request_in.email} at {demo_request_in.organization}"
-        )
+        logger.info(f"Publisher Demo request created: {db_demo_request.uuid} from {demo_request_in.email} at {demo_request_in.organization}")
 
         # Send emails in background
         background_tasks.add_task(send_emails_background, db_demo_request)
@@ -157,9 +153,7 @@ async def track_analytics_event(
             "cta_button_clicked",
             "demo_form_submitted",
         ]:
-            logger.info(
-                f"Publisher Demo analytics: {event.event_name} (session: {event.session_id})"
-            )
+            logger.info(f"Publisher Demo analytics: {event.event_name} (session: {event.session_id})")
 
         return AnalyticsEventResponse(success=True)
 
@@ -179,9 +173,7 @@ async def get_demo_request(
     Get a demo request by UUID (for internal use).
     TODO: Add authentication/authorization for this endpoint.
     """
-    demo_request = (
-        db.query(DemoRequest).filter(DemoRequest.uuid == request_id).first()
-    )
+    demo_request = db.query(DemoRequest).filter(DemoRequest.uuid == request_id).first()
 
     if not demo_request:
         raise HTTPException(status_code=404, detail="Demo request not found")

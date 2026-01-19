@@ -1,6 +1,7 @@
 """
 Prometheus metrics for Coalition Service
 """
+
 from prometheus_fastapi_instrumentator import Instrumentator
 
 

@@ -28,12 +28,8 @@ log = logging.getLogger("policy_validator")
 
 @app.command()
 def validate_metadata(
-    input_path: str = typer.Option(
-        ..., "--input", "-i", help="Path to the directory or file to scan."
-    ),
-    policy_file: str = typer.Option(
-        ..., "--policy", "-p", help="Path to the JSON policy file."
-    ),
+    input_path: str = typer.Option(..., "--input", "-i", help="Path to the directory or file to scan."),
+    policy_file: str = typer.Option(..., "--policy", "-p", help="Path to the JSON policy file."),
     output_file: str = typer.Option(
         "validation_report.csv",
         "--output",
@@ -51,14 +47,10 @@ def validate_metadata(
     Validates Encypher metadata against a defined policy.
     """
     # 1. Load and parse the policy file
-    console.print(
-        f":shield: Loading policy from: [bold yellow]{policy_file}[/bold yellow]"
-    )
+    console.print(f":shield: Loading policy from: [bold yellow]{policy_file}[/bold yellow]")
     try:
         policy_data = load_policy(Path(policy_file))
-        console.print(
-            f":white_check_mark: Policy '{policy_data['policy_name']}' loaded successfully with {len(policy_data['rules'])} rules."
-        )
+        console.print(f":white_check_mark: Policy '{policy_data['policy_name']}' loaded successfully with {len(policy_data['rules'])} rules.")
     except (PolicySchemaError, FileNotFoundError, Exception) as e:
         console.print(f":x: Error loading policy file: {e}", style="bold red")
         log.error(f"Error loading policy file: {e}", exc_info=True)
@@ -66,9 +58,7 @@ def validate_metadata(
 
     # 2. Collect files to scan
     input_path = Path(input_path)
-    console.print(
-        f":magnifying_glass_tilted_left: Scanning input: [bold cyan]{input_path}[/bold cyan]"
-    )
+    console.print(f":magnifying_glass_tilted_left: Scanning input: [bold cyan]{input_path}[/bold cyan]")
 
     files_to_scan = []
     if input_path.is_file():
@@ -77,9 +67,7 @@ def validate_metadata(
         for root, _, files in os.walk(input_path):
             for file in files:
                 # Only scan text-based files (you might want to add more extensions)
-                if file.endswith(
-                    (".txt", ".md", ".json", ".py", ".js", ".html", ".css", ".xml")
-                ):
+                if file.endswith((".txt", ".md", ".json", ".py", ".js", ".html", ".css", ".xml")):
                     files_to_scan.append(Path(root) / file)
     else:
         console.print(f":x: Input path does not exist: {input_path}", style="bold red")
@@ -90,9 +78,7 @@ def validate_metadata(
         raise typer.Exit(code=0)
 
     console.print(f":page_facing_up: Found {len(files_to_scan)} files to scan.")
-    console.print(
-        f":page_facing_up: Validation report will be saved to: [bold green]{output_file}[/bold green]"
-    )
+    console.print(f":page_facing_up: Validation report will be saved to: [bold green]{output_file}[/bold green]")
 
     # 3. Initialize Encypher
     console.print("\n:gear: Initializing Encypher...")
@@ -105,9 +91,7 @@ def validate_metadata(
         task = progress.add_task("[cyan]Validating files...", total=len(files_to_scan))
 
         for file_path in files_to_scan:
-            progress.update(
-                task, description=f"[cyan]Validating: [bold]{file_path.name}[/bold]"
-            )
+            progress.update(task, description=f"[cyan]Validating: [bold]{file_path.name}[/bold]")
 
             try:
                 # Read file content
@@ -131,11 +115,7 @@ def validate_metadata(
                         "status": verification_result.status.name,
                         "policy_valid": is_valid,
                         "errors": validation_errors,
-                        "metadata": (
-                            dict(verification_result.metadata)
-                            if verification_result.metadata
-                            else {}
-                        ),
+                        "metadata": (dict(verification_result.metadata) if verification_result.metadata else {}),
                     }
                 else:
                     # No metadata found
@@ -153,18 +133,14 @@ def validate_metadata(
                 # Print detailed output if verbose mode is enabled
                 if verbose:
                     console.print(f"\nFile: {file_path}")
-                    console.print(
-                        f"  Status: {verification_result.status.name}, Verified: {verification_result.is_verified}"
-                    )
+                    console.print(f"  Status: {verification_result.status.name}, Verified: {verification_result.is_verified}")
                     console.print(f"  Policy Valid: {result['policy_valid']}")
                     if result["errors"]:
                         console.print("  Errors:")
                         for error in result["errors"]:
                             console.print(f"    - {error}")
                     if verification_result.metadata:
-                        console.print(
-                            f"  Metadata: {dict(verification_result.metadata)}"
-                        )
+                        console.print(f"  Metadata: {dict(verification_result.metadata)}")
 
             except Exception as e:
                 log.error(f"Error processing file {file_path}: {e}", exc_info=True)
@@ -214,9 +190,7 @@ def validate_metadata(
 
                 writer.writerow(row_data)
 
-        console.print(
-            f"\n:white_check_mark: Validation report saved to: [bold green]{output_file}[/bold green]"
-        )
+        console.print(f"\n:white_check_mark: Validation report saved to: [bold green]{output_file}[/bold green]")
     except Exception as e:
         console.print(f":x: Error writing CSV report: {e}", style="bold red")
         log.error(f"Error writing CSV report: {e}", exc_info=True)
@@ -237,9 +211,7 @@ def validate_metadata(
             style="yellow",
         )
     else:
-        console.print(
-            "\n:party_popper: All files comply with the policy!", style="green"
-        )
+        console.print("\n:party_popper: All files comply with the policy!", style="green")
 
 
 if __name__ == "__main__":

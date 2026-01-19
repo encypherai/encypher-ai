@@ -105,11 +105,7 @@ async def test_sign_advanced_merkle_index_opt_out_skips_merkle_quota(
     assert response.status_code == 201
 
     # Should not enforce Merkle indexing quota when opting out.
-    called_quota_types = [
-        call.kwargs.get("quota_type")
-        for call in check_quota.await_args_list
-        if call.kwargs.get("quota_type") is not None
-    ]
+    called_quota_types = [call.kwargs.get("quota_type") for call in check_quota.await_args_list if call.kwargs.get("quota_type") is not None]
     assert all(str(qt) != "QuotaType.MERKLE_ENCODING" for qt in called_quota_types)
 
     assert encode_mock.await_count == 1

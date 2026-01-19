@@ -1,6 +1,7 @@
 """
 Ensure each workspace package is importable when running pytest from the repo root.
 """
+
 from __future__ import annotations
 
 import sys
@@ -45,7 +46,23 @@ def _set_app_module(*paths: Path) -> None:
     app_module.__path__ = search_locations  # type: ignore[attr-defined]
     app_module.__spec__ = ModuleSpec("app", loader=None, is_package=True)
     app_module.__spec__.submodule_search_locations = search_locations  # type: ignore[attr-defined]
+    app_module.__version__ = _extract_app_version(paths)
     sys.modules["app"] = app_module
+
+
+def _extract_app_version(paths: tuple[Path, ...]) -> str:
+    for path in paths:
+        init_path = path / "__init__.py"
+        if not init_path.exists():
+            continue
+        for line in init_path.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("__version__") and "=" in stripped:
+                _, raw = stripped.split("=", 1)
+                value = raw.strip().strip('"').strip("'")
+                if value:
+                    return value
+    return "0.0.0-test"
 
 
 _ensure_workspace_paths()

@@ -1,4 +1,5 @@
 """Tests for coalition revenue tracking API endpoints."""
+
 import pytest
 from httpx import AsyncClient
 
@@ -13,10 +14,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/dashboard",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         # Verify response structure
         assert "organization_id" in data
         assert "tier" in data
@@ -37,10 +38,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/dashboard",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         current_period = data["current_period"]
         assert "period_start" in current_period
         assert "period_end" in current_period
@@ -62,10 +63,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/content-stats?months=6",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert "organization_id" in data
         assert "stats" in data
         assert isinstance(data["stats"], list)
@@ -87,10 +88,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/earnings?months=12",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert "organization_id" in data
         assert "earnings" in data
         assert isinstance(data["earnings"], list)
@@ -102,10 +103,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/earnings",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         if data["earnings"]:
             earning = data["earnings"][0]
             assert "id" in earning
@@ -124,10 +125,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/opt-out",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert data["success"] is True
         assert "message" in data
         assert "opted_out_at" in data
@@ -139,10 +140,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/opt-in",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert data["success"] is True
         assert "message" in data
 
@@ -153,13 +154,13 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/dashboard",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         tier = data["tier"]
         share = data["publisher_share_percent"]
-        
+
         # Verify tier-appropriate rev share
         expected_shares = {
             "starter": 65,
@@ -168,7 +169,7 @@ class TestCoalitionEndpoints:
             "enterprise": 85,
             "strategic_partner": 85,
         }
-        
+
         if tier in expected_shares:
             assert share == expected_shares[tier]
 
@@ -179,10 +180,10 @@ class TestCoalitionEndpoints:
             "/api/v1/coalition/dashboard",
             headers=auth_headers,
         )
-        
+
         assert response.status_code == 200
         data = response.json()
-        
+
         assert isinstance(data["coalition_member"], bool)
         assert isinstance(data["opted_out"], bool)
 
@@ -197,7 +198,7 @@ class TestCoalitionRevShareCalculation:
             "/api/v1/coalition/dashboard",
             headers=starter_auth_headers,
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             if data["tier"] == "starter":
@@ -210,7 +211,7 @@ class TestCoalitionRevShareCalculation:
             "/api/v1/coalition/dashboard",
             headers=professional_auth_headers,
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             if data["tier"] == "professional":
@@ -223,7 +224,7 @@ class TestCoalitionRevShareCalculation:
             "/api/v1/coalition/dashboard",
             headers=business_auth_headers,
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             if data["tier"] == "business":
@@ -236,7 +237,7 @@ class TestCoalitionRevShareCalculation:
             "/api/v1/coalition/dashboard",
             headers=enterprise_auth_headers,
         )
-        
+
         if response.status_code == 200:
             data = response.json()
             if data["tier"] == "enterprise":

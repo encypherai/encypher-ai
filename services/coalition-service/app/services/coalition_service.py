@@ -1,6 +1,7 @@
 """
 Coalition Service - Business Logic
 """
+
 import uuid
 from datetime import datetime, date
 from typing import Optional
@@ -40,9 +41,7 @@ class CoalitionService:
         Enroll a user in the coalition
         """
         # Check if user is already a member
-        existing_member = (
-            db.query(CoalitionMember).filter(CoalitionMember.user_id == request.user_id).first()
-        )
+        existing_member = db.query(CoalitionMember).filter(CoalitionMember.user_id == request.user_id).first()
 
         if existing_member:
             if existing_member.status == "opted_out":
@@ -177,12 +176,8 @@ class CoalitionService:
 
         # Revenue stats
         revenue_query = db.query(
-            func.sum(
-                func.case((MemberRevenue.status == "paid", MemberRevenue.revenue_amount), else_=0)
-            ).label("paid"),
-            func.sum(
-                func.case((MemberRevenue.status == "pending", MemberRevenue.revenue_amount), else_=0)
-            ).label("pending"),
+            func.sum(func.case((MemberRevenue.status == "paid", MemberRevenue.revenue_amount), else_=0)).label("paid"),
+            func.sum(func.case((MemberRevenue.status == "pending", MemberRevenue.revenue_amount), else_=0)).label("pending"),
         ).filter(MemberRevenue.member_id == member.id)
 
         revenue_stats_data = revenue_query.first()
@@ -207,15 +202,11 @@ class CoalitionService:
         )
 
         # Coalition-wide stats
-        total_members = db.query(func.count(CoalitionMember.id)).filter(
-            CoalitionMember.status == "active"
-        ).scalar()
+        total_members = db.query(func.count(CoalitionMember.id)).filter(CoalitionMember.status == "active").scalar()
 
         total_content_pool = db.query(func.count(CoalitionContent.id)).scalar()
 
-        active_agreements = db.query(func.count(LicensingAgreement.id)).filter(
-            LicensingAgreement.status == "active"
-        ).scalar()
+        active_agreements = db.query(func.count(LicensingAgreement.id)).filter(LicensingAgreement.status == "active").scalar()
 
         coalition_stats = CoalitionStats(
             total_members=total_members or 0,
@@ -294,11 +285,7 @@ class CoalitionService:
         Index signed content for coalition
         """
         # Check if content already indexed
-        existing_content = (
-            db.query(CoalitionContent)
-            .filter(CoalitionContent.document_id == document_id)
-            .first()
-        )
+        existing_content = db.query(CoalitionContent).filter(CoalitionContent.document_id == document_id).first()
 
         if existing_content:
             logger.info(
@@ -338,11 +325,7 @@ class CoalitionService:
         """
         Get coalition setting by key
         """
-        setting = (
-            db.query(CoalitionSettings)
-            .filter(CoalitionSettings.setting_key == setting_key)
-            .first()
-        )
+        setting = db.query(CoalitionSettings).filter(CoalitionSettings.setting_key == setting_key).first()
 
         if not setting:
             return None

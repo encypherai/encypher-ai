@@ -1,8 +1,9 @@
 """
 Tests for stream signing endpoint.
 
-Tests the SSE-based streaming signing endpoint at /api/v1/stream/sign.
+Tests the SSE-based streaming signing endpoint at /api/v1/sign/stream.
 """
+
 import json
 
 import pytest
@@ -44,17 +45,17 @@ def test_stream_signing_sends_events(monkeypatch):
 
     client = TestClient(app)
     response = client.post(
-        "/api/v1/stream/sign",  # Correct path with API prefix
+        "/api/v1/sign/stream",  # Correct path with API prefix
         json={"document_id": "doc-stream", "text": "hello streaming"},
         headers={"Authorization": "Bearer demo"},
     )
-    
+
     # Parse SSE events
     events = [block.strip() for block in response.text.strip().split("\n\n") if block.strip()]
-    
+
     # Should have start event
     assert events[0].startswith("event: start")
-    
+
     # Should have final event
     assert any(block.startswith("event: final") for block in events)
 
@@ -71,10 +72,10 @@ def test_stream_signing_requires_auth():
     """Test that stream signing requires authentication."""
     client = TestClient(app)
     response = client.post(
-        "/api/v1/stream/sign",
+        "/api/v1/sign/stream",
         json={"document_id": "doc-test", "text": "test content"},
         # No auth header
     )
-    
+
     # Should return 401 or 403
     assert response.status_code in [401, 403]

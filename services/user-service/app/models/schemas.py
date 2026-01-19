@@ -1,4 +1,5 @@
 """Pydantic schemas for User Service"""
+
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -7,6 +8,7 @@ from pydantic import BaseModel
 
 class ProfileUpdate(BaseModel):
     """Schema for updating profile"""
+
     display_name: Optional[str] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
@@ -18,6 +20,7 @@ class ProfileUpdate(BaseModel):
 
 class ProfileResponse(BaseModel):
     """Schema for profile response"""
+
     id: str
     user_id: str
     display_name: Optional[str]
@@ -34,12 +37,14 @@ class ProfileResponse(BaseModel):
 
 class TeamCreate(BaseModel):
     """Schema for creating team"""
+
     name: str
     description: Optional[str] = None
 
 
 class TeamResponse(BaseModel):
     """Schema for team response"""
+
     id: str
     name: str
     owner_id: str
@@ -53,4 +58,5 @@ class TeamResponse(BaseModel):
 
 class MessageResponse(BaseModel):
     """Generic message response"""
+
     message: str

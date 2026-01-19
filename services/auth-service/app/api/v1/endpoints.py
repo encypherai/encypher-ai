@@ -36,6 +36,7 @@ router = APIRouter()
 
 class SuperAdminPromoteRequest(BaseModel):
     """Request to promote a user to super admin"""
+
     email: EmailStr
 
 
@@ -446,11 +447,11 @@ async def oauth_exchange(
         email=email,
         name=name,
     )
-    
+
     # Send admin notification for new OAuth signups
     if is_new:
         AuthService.send_new_signup_notification(user, signup_method=provider)
-    
+
     access_token, refresh_token = AuthService.create_tokens(user)
     AuthService.store_refresh_token(
         db,
@@ -951,12 +952,13 @@ async def promote_to_super_admin(
 ):
     """
     Promote a user to super admin.
-    
+
     **Super Admin only** - Requires existing super admin privileges.
     """
     import structlog
+
     logger = structlog.get_logger(__name__)
-    
+
     # Verify token
     try:
         scheme, token = authorization.split()
@@ -978,10 +980,10 @@ async def promote_to_super_admin(
         )
 
     admin_user_id = payload["sub"]
-    
+
     # Require super admin access
     require_super_admin(db, admin_user_id)
-    
+
     # Find target user by email
     target_user = db.query(User).filter(User.email == request.email).first()
     if not target_user:
@@ -989,7 +991,7 @@ async def promote_to_super_admin(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with email {request.email} not found",
         )
-    
+
     # Check if already super admin
     if target_user.is_super_admin:
         return {
@@ -1002,18 +1004,18 @@ async def promote_to_super_admin(
             },
             "error": None,
         }
-    
+
     # Promote to super admin
     target_user.is_super_admin = True
     db.commit()
-    
+
     logger.info(
         "promote_super_admin_success",
         admin_user_id=admin_user_id,
         target_user_id=str(target_user.id),
         target_email=request.email,
     )
-    
+
     return {
         "success": True,
         "data": {
@@ -1034,13 +1036,14 @@ async def demote_from_super_admin(
 ):
     """
     Demote a user from super admin.
-    
+
     **Super Admin only** - Requires existing super admin privileges.
     Cannot demote yourself.
     """
     import structlog
+
     logger = structlog.get_logger(__name__)
-    
+
     # Verify token
     try:
         scheme, token = authorization.split()
@@ -1062,10 +1065,10 @@ async def demote_from_super_admin(
         )
 
     admin_user_id = payload["sub"]
-    
+
     # Require super admin access
     require_super_admin(db, admin_user_id)
-    
+
     # Find target user by email
     target_user = db.query(User).filter(User.email == request.email).first()
     if not target_user:
@@ -1073,14 +1076,14 @@ async def demote_from_super_admin(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with email {request.email} not found",
         )
-    
+
     # Cannot demote yourself
     if str(target_user.id) == admin_user_id:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Cannot demote yourself from super admin",
         )
-    
+
     # Check if not a super admin
     if not target_user.is_super_admin:
         return {
@@ -1093,18 +1096,18 @@ async def demote_from_super_admin(
             },
             "error": None,
         }
-    
+
     # Demote from super admin
     target_user.is_super_admin = False
     db.commit()
-    
+
     logger.info(
         "demote_super_admin_success",
         admin_user_id=admin_user_id,
         target_user_id=str(target_user.id),
         target_email=request.email,
     )
-    
+
     return {
         "success": True,
         "data": {
@@ -1124,7 +1127,7 @@ async def list_super_admins(
 ):
     """
     List all super admin users.
-    
+
     **Super Admin only** - Requires existing super admin privileges.
     """
     # Verify token
@@ -1148,13 +1151,13 @@ async def list_super_admins(
         )
 
     admin_user_id = payload["sub"]
-    
+
     # Require super admin access
     require_super_admin(db, admin_user_id)
-    
+
     # Get all super admins
     super_admins = db.query(User).filter(User.is_super_admin == True).all()
-    
+
     return {
         "success": True,
         "data": {

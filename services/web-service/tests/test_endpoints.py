@@ -2,6 +2,7 @@
 Integration tests for web-service endpoints.
 Tests all demo request and analytics endpoints.
 """
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -13,7 +14,7 @@ AI_DEMO_REQUEST = {
     "role": "ML Engineer",
     "message": "Testing AI demo request endpoint",
     "consent": True,
-    "source": "ai-demo-test"
+    "source": "ai-demo-test",
 }
 
 PUBLISHER_DEMO_REQUEST = {
@@ -23,7 +24,7 @@ PUBLISHER_DEMO_REQUEST = {
     "role": "Content Manager",
     "message": "Testing publisher demo request endpoint",
     "consent": True,
-    "source": "publisher-demo-test"
+    "source": "publisher-demo-test",
 }
 
 ENTERPRISE_SALES_REQUEST = {
@@ -33,7 +34,7 @@ ENTERPRISE_SALES_REQUEST = {
     "role": "CTO",
     "message": "Testing enterprise sales endpoint",
     "consent": True,
-    "source": "enterprise-sales-test"
+    "source": "enterprise-sales-test",
 }
 
 GENERAL_SALES_REQUEST = {
@@ -43,7 +44,7 @@ GENERAL_SALES_REQUEST = {
     "role": "Product Manager",
     "message": "Testing general sales endpoint",
     "consent": True,
-    "source": "general-sales-test"
+    "source": "general-sales-test",
 }
 
 ANALYTICS_EVENT = {
@@ -52,10 +53,7 @@ ANALYTICS_EVENT = {
     "session_id": "test-session-123",
     "page_url": "http://localhost:3000/test",
     "page_title": "Test Page",
-    "properties": {
-        "test_property": "test_value",
-        "source": "integration_test"
-    }
+    "properties": {"test_property": "test_value", "source": "integration_test"},
 }
 
 
@@ -118,9 +116,7 @@ def test_publisher_demo_analytics(client: TestClient):
 
 def test_publisher_demo_get_request(client: TestClient, publisher_demo_request_id: str):
     """Test getting a publisher demo request by ID"""
-    response = client.get(
-        f"/api/v1/publisher-demo/demo-requests/{publisher_demo_request_id}"
-    )
+    response = client.get(f"/api/v1/publisher-demo/demo-requests/{publisher_demo_request_id}")
     assert response.status_code == 200, response.text
     data = response.json()
     assert data["id"] == publisher_demo_request_id

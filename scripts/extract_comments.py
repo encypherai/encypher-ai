@@ -217,9 +217,7 @@ def extract_comments_from_docx(docx_path: Path) -> list[Comment]:
     return sorted_comments
 
 
-def format_output(
-    comments: list[Comment], output_path: Path, source_file: str
-) -> None:
+def format_output(comments: list[Comment], output_path: Path, source_file: str) -> None:
     """Format comments as markdown and write to output file."""
     lines = []
 
@@ -238,9 +236,7 @@ def format_output(
         lines.append("")
 
         # Metadata
-        date_str = (
-            comment.date.strftime("%Y-%m-%d %H:%M:%S") if comment.date else "Unknown"
-        )
+        date_str = comment.date.strftime("%Y-%m-%d %H:%M:%S") if comment.date else "Unknown"
         lines.append(f"- **Date:** {date_str}")
         lines.append(f"- **Author:** {comment.author}")
         lines.append("")
@@ -266,9 +262,7 @@ def format_output(
             lines.append("### Replies")
             lines.append("")
             for reply_idx, reply in enumerate(comment.replies, start=1):
-                reply_date = (
-                    reply.date.strftime("%Y-%m-%d %H:%M:%S") if reply.date else "Unknown"
-                )
+                reply_date = reply.date.strftime("%Y-%m-%d %H:%M:%S") if reply.date else "Unknown"
                 lines.append(f"{reply_idx}. **{reply.author}** ({reply_date}):")
                 lines.append(f"   {reply.text}")
                 lines.append("")

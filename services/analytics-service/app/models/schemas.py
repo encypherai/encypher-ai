@@ -1,4 +1,5 @@
 """Pydantic schemas for Analytics Service"""
+
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from datetime import datetime
@@ -6,6 +7,7 @@ from datetime import datetime
 
 class MetricCreate(BaseModel):
     """Schema for creating a metric"""
+
     metric_type: str = Field(..., min_length=1)
     service_name: str = Field(..., min_length=1)
     endpoint: Optional[str] = None
@@ -18,6 +20,7 @@ class MetricCreate(BaseModel):
 
 class MetricResponse(BaseModel):
     """Schema for metric response"""
+
     id: str
     user_id: str
     metric_type: str
@@ -32,6 +35,7 @@ class MetricResponse(BaseModel):
 
 class UsageStats(BaseModel):
     """Schema for usage statistics"""
+
     total_api_calls: int
     total_documents_signed: int
     total_verifications: int
@@ -44,6 +48,7 @@ class UsageStats(BaseModel):
 
 class ServiceMetrics(BaseModel):
     """Schema for service-specific metrics"""
+
     service_name: str
     total_requests: int
     success_count: int
@@ -54,6 +59,7 @@ class ServiceMetrics(BaseModel):
 
 class TimeSeriesData(BaseModel):
     """Schema for time series data"""
+
     timestamp: datetime
     value: float
     count: int
@@ -61,6 +67,7 @@ class TimeSeriesData(BaseModel):
 
 class AnalyticsReport(BaseModel):
     """Schema for analytics report"""
+
     user_id: str
     period_start: datetime
     period_end: datetime
@@ -71,11 +78,13 @@ class AnalyticsReport(BaseModel):
 
 class MessageResponse(BaseModel):
     """Generic message response"""
+
     message: str
 
 
 class PageviewEvent(BaseModel):
     """Schema for anonymous pageview events"""
+
     site_id: str = Field(..., min_length=1, max_length=100)
     path: str = Field(..., min_length=1, max_length=2048)
     referrer: Optional[str] = Field(default=None, max_length=2048)

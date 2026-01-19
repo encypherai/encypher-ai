@@ -4,6 +4,7 @@ Stripe webhook endpoints.
 Handles incoming webhooks from Stripe for subscription events,
 payment events, and Connect account events.
 """
+
 import logging
 from fastapi import APIRouter, Request, HTTPException, status, Header
 
@@ -14,21 +15,15 @@ router = APIRouter()
 
 
 @router.post("/webhooks/stripe")
-async def handle_stripe_webhook(
-    request: Request,
-    stripe_signature: str = Header(None, alias="Stripe-Signature")
-):
+async def handle_stripe_webhook(request: Request, stripe_signature: str = Header(None, alias="Stripe-Signature")):
     """
     Handle incoming Stripe webhooks.
-    
+
     This endpoint receives all Stripe webhook events and routes them
     to the appropriate handlers.
     """
     if not stripe_signature:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing Stripe-Signature header"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing Stripe-Signature header")
 
     # Get raw body
     payload = await request.body()
@@ -45,34 +40,22 @@ async def handle_stripe_webhook(
 
     except ValueError as e:
         logger.error(f"Webhook signature verification failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid webhook signature"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook signature")
     except Exception as e:
         logger.error(f"Webhook processing error: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Webhook processing failed"
-        )
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Webhook processing failed")
 
 
 @router.post("/webhooks/stripe/connect")
-async def handle_stripe_connect_webhook(
-    request: Request,
-    stripe_signature: str = Header(None, alias="Stripe-Signature")
-):
+async def handle_stripe_connect_webhook(request: Request, stripe_signature: str = Header(None, alias="Stripe-Signature")):
     """
     Handle Stripe Connect webhooks.
-    
+
     Separate endpoint for Connect-specific events like account updates
     and payout events.
     """
     if not stripe_signature:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Missing Stripe-Signature header"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing Stripe-Signature header")
 
     payload = await request.body()
 
@@ -90,25 +73,18 @@ async def handle_stripe_connect_webhook(
             charges_enabled = data.get("charges_enabled")
             payouts_enabled = data.get("payouts_enabled")
 
-            logger.info(
-                f"Connect account {account_id} updated: "
-                f"charges={charges_enabled}, payouts={payouts_enabled}"
-            )
+            logger.info(f"Connect account {account_id} updated: charges={charges_enabled}, payouts={payouts_enabled}")
 
             # TODO: Update organization's payout status in database
 
-            return {
-                "status": "success",
-                "account_id": account_id,
-                "payouts_enabled": payouts_enabled
-            }
+            return {"status": "success", "account_id": account_id, "payouts_enabled": payouts_enabled}
 
         elif event_type == "payout.paid":
             # Payout to publisher succeeded
             payout_id = data.get("id")
             amount = data.get("amount")
 
-            logger.info(f"Payout {payout_id} completed: ${amount/100:.2f}")
+            logger.info(f"Payout {payout_id} completed: ${amount / 100:.2f}")
 
             return {"status": "success", "payout_id": payout_id}
 
@@ -127,7 +103,4 @@ async def handle_stripe_connect_webhook(
 
     except ValueError as e:
         logger.error(f"Connect webhook signature verification failed: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid webhook signature"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid webhook signature")

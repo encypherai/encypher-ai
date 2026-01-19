@@ -14,7 +14,7 @@ config = context.config
 
 # Set the SQLAlchemy URL from environment variables
 # Convert the async URL to a sync URL for Alembic
-sync_url = settings.DATABASE_URL.replace('sqlite+aiosqlite', 'sqlite')
+sync_url = settings.DATABASE_URL.replace("sqlite+aiosqlite", "sqlite")
 config.set_main_option("sqlalchemy.url", sync_url)
 
 # Interpret the config file for Python logging.
@@ -69,10 +69,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

@@ -10,7 +10,7 @@ const WebSocket = require('ws');
 
 // Configuration
 const API_KEY = 'demo_key_12345'; // Replace with your API key
-const WS_URL = `ws://localhost:8000/api/v1/stream/sign?api_key=${API_KEY}`;
+const WS_URL = `ws://localhost:8000/api/v1/sign/stream?api_key=${API_KEY}`;
 
 async function testStreaming() {
     console.log('Connecting to', WS_URL);

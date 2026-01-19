@@ -3,6 +3,7 @@ Webhooks router for event notification management.
 
 Provides endpoints for registering, listing, and managing webhooks.
 """
+
 import hashlib
 import hmac
 import logging

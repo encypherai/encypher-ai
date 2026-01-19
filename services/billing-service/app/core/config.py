@@ -5,6 +5,7 @@ Environment Variables:
 - Shared: DATABASE_URL, REDIS_URL, ALLOWED_ORIGINS, AUTH_SERVICE_URL
 - Service-specific: STRIPE_* (all Stripe configuration)
 """
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 

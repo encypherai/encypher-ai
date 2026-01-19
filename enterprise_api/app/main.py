@@ -3,6 +3,7 @@ Encypher Enterprise API - Main Application
 
 FastAPI application for C2PA-compliant content signing and verification.
 """
+
 import logging
 import time
 from contextlib import asynccontextmanager
@@ -49,10 +50,7 @@ from app.utils.db_startup import ensure_database_ready
 from app.dependencies import require_super_admin_dep
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO if settings.is_production else logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO if settings.is_production else logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -60,26 +58,26 @@ def validate_startup_config():
     """Validate critical configuration before app starts. Logs clear errors."""
     errors = []
     warnings = []
-    
+
     # Check database URLs
     if not settings.core_database_url_resolved:
         errors.append("DATABASE_URL or CORE_DATABASE_URL is not set")
-    
+
     # Check encryption keys (required for key storage)
     if not settings.key_encryption_key:
         errors.append("KEY_ENCRYPTION_KEY is not set (required for private key encryption)")
     elif len(settings.key_encryption_key) != 64:
         errors.append(f"KEY_ENCRYPTION_KEY must be 64 hex chars, got {len(settings.key_encryption_key)}")
-    
+
     if not settings.encryption_nonce:
         errors.append("ENCRYPTION_NONCE is not set (required for private key encryption)")
     elif len(settings.encryption_nonce) != 24:
         errors.append(f"ENCRYPTION_NONCE must be 24 hex chars, got {len(settings.encryption_nonce)}")
-    
+
     # Check CORS origins for production
     if settings.is_production and "localhost" in settings.allowed_origins:
         warnings.append("ALLOWED_ORIGINS contains localhost in production mode")
-    
+
     # Log results
     if errors:
         logger.error("=" * 60)
@@ -88,20 +86,21 @@ def validate_startup_config():
             logger.error(f"  ✗ {err}")
         logger.error("=" * 60)
         raise RuntimeError(f"Startup failed: {len(errors)} configuration error(s). Check logs above.")
-    
+
     if warnings:
         logger.warning("Startup configuration warnings:")
         for warn in warnings:
             logger.warning(f"  ⚠ {warn}")
-    
+
     logger.info("✓ Startup configuration validated")
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Application lifespan handler replacing deprecated on_event startup/shutdown."""
     logger.info("Encypher Enterprise API starting up...")
     logger.info(f"Environment: {settings.environment}")
-    
+
     # Validate configuration before proceeding
     validate_startup_config()
     # Log database connection info (safely handle None)
@@ -111,37 +110,33 @@ async def lifespan(app: FastAPI):
         logger.info(f"SSL.com API: {settings.ssl_com_api_url}")
     else:
         logger.info("SSL.com API: Not configured (optional for staging)")
-    
+
     # Ensure database is ready and run migrations
-    ensure_database_ready(
-        database_url=db_url,
-        service_name="enterprise-api",
-        run_migrations=True,
-        exit_on_failure=True
-    )
-    
+    ensure_database_ready(database_url=db_url, service_name="enterprise-api", run_migrations=True, exit_on_failure=True)
+
     # Initialize Redis connection for session management
     try:
         await session_service.connect()
     except Exception as e:
         logger.warning(f"Failed to connect to Redis: {e}. Running without session persistence.")
-    
+
     # Initialize metrics service for analytics
     try:
         await init_metrics_service()
         logger.info("Metrics service initialized")
     except Exception as e:
         logger.warning(f"Failed to initialize metrics service: {e}. Running without metrics.")
-    
+
     # Load C2PA trust list for BYOK certificate validation
     try:
         from app.utils.c2pa_trust_list import fetch_trust_list, set_trust_anchors_pem
+
         trust_pem = await fetch_trust_list()
         count = set_trust_anchors_pem(trust_pem)
         logger.info(f"C2PA trust list loaded: {count} trust anchors")
     except Exception as e:
         logger.warning(f"Failed to load C2PA trust list: {e}. BYOK certificate validation may not work.")
-    
+
     try:
         yield
     finally:
@@ -157,39 +152,42 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"Error disconnecting from Redis: {e}")
 
+
 # Create FastAPI app
 app = FastAPI(
     title="Encypher Enterprise API",
     description="C2PA-compliant content signing and verification infrastructure for publishers, legal/finance firms, AI labs, and enterprises",
-    version="1.0.1",
+    version="1.0.2",
     docs_url=None,
     redoc_url=None,
     openapi_url=None,
     lifespan=lifespan,
 )
 
+
 # CORS middleware - parse ALLOWED_ORIGINS env var
 def get_cors_origins():
     """Get CORS origins from ALLOWED_ORIGINS env var.
-    
+
     Always includes localhost origins for development.
     Use '*' in ALLOWED_ORIGINS to allow all origins.
     """
     origins = [origin.strip() for origin in settings.allowed_origins.split(",") if origin.strip()]
-    
+
     # Always allow localhost for development/demos
     localhost_origins = [
         "http://localhost:3000",
-        "http://localhost:3001", 
+        "http://localhost:3001",
         "http://localhost:3050",
         "http://localhost:3051",
     ]
     for origin in localhost_origins:
         if origin not in origins:
             origins.append(origin)
-    
+
     logger.info(f"CORS allowed origins: {origins}")
     return origins
+
 
 cors_origins = get_cors_origins()
 app.add_middleware(
@@ -202,6 +200,7 @@ app.add_middleware(
 
 # Add metrics middleware for analytics
 from app.middleware.metrics_middleware import MetricsMiddleware
+
 app.add_middleware(MetricsMiddleware)
 
 
@@ -212,7 +211,8 @@ async def log_requests(request: Request, call_next):
     start_time = time.time()
 
     # Log request
-    logger.info(f"{request.method} {request.url.path} - Client: {request.client.host}")
+    client_host = request.client.host if request.client else "unknown"
+    logger.info(f"{request.method} {request.url.path} - Client: {client_host}")
 
     # Process request
     response = await call_next(request)
@@ -222,11 +222,7 @@ async def log_requests(request: Request, call_next):
     response.headers["X-Process-Time"] = str(process_time)
 
     # Log response
-    logger.info(
-        f"{request.method} {request.url.path} - "
-        f"Status: {response.status_code} - "
-        f"Time: {process_time:.4f}s"
-    )
+    logger.info(f"{request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.4f}s")
 
     return response
 
@@ -240,11 +236,7 @@ async def health_check():
     Returns:
         dict: Status and environment information
     """
-    return {
-        "status": "healthy",
-        "environment": settings.environment,
-        "version": "1.0.0-preview"
-    }
+    return {"status": "healthy", "environment": settings.environment, "version": "1.0.0-preview"}
 
 
 @app.get("/readyz", tags=["Health"])
@@ -368,11 +360,7 @@ async def docs_design_system_css() -> Response:
     globals_css = globals_path.read_text(encoding="utf-8")
 
     # globals.css imports theme.css; since we inline theme.css first, strip that import.
-    globals_css = "\n".join(
-        line
-        for line in globals_css.splitlines()
-        if "@import './theme.css'" not in line and "@import \"./theme.css\"" not in line
-    )
+    globals_css = "\n".join(line for line in globals_css.splitlines() if "@import './theme.css'" not in line and '@import "./theme.css"' not in line)
 
     bundled = f"{theme_css}\n\n{globals_css}\n"
     return Response(content=bundled, media_type="text/css")
@@ -403,7 +391,7 @@ async def docs_static_asset(filename: str) -> Response:
     return Response(content=content, media_type=content_type)
 
 
-_DOCS_PAGE_HTML = '''
+_DOCS_PAGE_HTML = """
 <!doctype html>
 <html lang="en">
 <head>
@@ -487,7 +475,7 @@ _DOCS_PAGE_HTML = '''
   </script>
 </body>
 </html>
-'''
+"""
 
 
 @app.get("/docs", include_in_schema=False)
@@ -547,7 +535,7 @@ async def root():
         "version": "1.0.0-preview",
         "description": "C2PA-compliant content signing and verification",
         "docs": f"{settings.api_base_url}/docs" if not settings.is_production else None,
-        "status": "preview"  # Will change to "production" after C2PA spec publication
+        "status": "preview",  # Will change to "production" after C2PA spec publication
     }
 
 
@@ -596,11 +584,7 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={
             "success": False,
-            "error": {
-                "code": "E_INTERNAL",
-                "message": "An unexpected error occurred",
-                "details": str(exc) if settings.is_development else None
-            },
+            "error": {"code": "E_INTERNAL", "message": "An unexpected error occurred", "details": str(exc) if settings.is_development else None},
             "correlation_id": correlation_id,
         },
     )
@@ -620,10 +604,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         if "message" not in error_payload:
             error_payload["message"] = "Request failed"
     else:
-        error_payload = {
-            "code": "E_HTTP",
-            "message": str(detail)
-        }
+        error_payload = {"code": "E_HTTP", "message": str(detail)}
 
     payload = {
         "success": False,

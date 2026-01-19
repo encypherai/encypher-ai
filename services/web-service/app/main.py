@@ -19,18 +19,14 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting web-service")
-    
+
     # Ensure database is ready and run migrations
     db_url = str(settings.SQLALCHEMY_DATABASE_URI) if settings.SQLALCHEMY_DATABASE_URI else None
     if db_url:
         ensure_database_ready(
-            database_url=db_url,
-            service_name="web-service",
-            alembic_config_path="alembic.ini",
-            run_migrations=True,
-            exit_on_failure=True
+            database_url=db_url, service_name="web-service", alembic_config_path="alembic.ini", run_migrations=True, exit_on_failure=True
         )
-    
+
     yield
     logger.info("Shutting down web-service")
 
@@ -62,6 +58,7 @@ elif settings.BACKEND_CORS_ORIGINS:
     )
 
 app.include_router(api_router, prefix=settings.API_V1_STR)
+
 
 @app.get("/health")
 def health_check():

@@ -3,6 +3,7 @@ Documents router for document management.
 
 Provides endpoints for listing, viewing, and managing signed documents.
 """
+
 import logging
 from datetime import datetime
 from typing import List, Optional
@@ -114,6 +115,8 @@ async def list_documents(
     Supports pagination, search, and filtering by status and date range.
     """
     org_id = organization.get("organization_id")
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
     offset = (page - 1) * page_size
 
     # Build query with filters
@@ -264,8 +267,8 @@ async def get_document(
             word_count=None,
             url=row.url,
             signer_id=None,
-            revoked_at=revocation_row.revoked_at.isoformat() if getattr(revocation_row, "revoked_at", None) else None,
-            revoked_reason=revocation_row.revoked_reason if getattr(revocation_row, "revoked_reason", None) else None,
+            revoked_at=revocation_row.revoked_at.isoformat() if revocation_row and getattr(revocation_row, "revoked_at", None) else None,
+            revoked_reason=revocation_row.revoked_reason if revocation_row and getattr(revocation_row, "revoked_reason", None) else None,
         )
     )
 
@@ -300,12 +303,14 @@ async def get_document_history(
     history: List[dict] = []
 
     # Add signing event
-    history.append({
-        "action": "signed",
-        "timestamp": doc_row.created_at.isoformat() if doc_row.created_at else "",
-        "actor": "api",
-        "details": "Document signed with C2PA manifest",
-    })
+    history.append(
+        {
+            "action": "signed",
+            "timestamp": doc_row.created_at.isoformat() if doc_row.created_at else "",
+            "actor": "api",
+            "details": "Document signed with C2PA manifest",
+        }
+    )
 
     # Check for revocation events in status_list_entries
     revoke_result = await db.execute(
@@ -322,19 +327,23 @@ async def get_document_history(
 
     for revoke_row in revoke_rows:
         if revoke_row.revoked_at:
-            history.append({
-                "action": "revoked",
-                "timestamp": revoke_row.revoked_at.isoformat(),
-                "actor": revoke_row.revoked_by or "api",
-                "details": f"Reason: {revoke_row.revoked_reason}" if revoke_row.revoked_reason else None,
-            })
+            history.append(
+                {
+                    "action": "revoked",
+                    "timestamp": revoke_row.revoked_at.isoformat(),
+                    "actor": revoke_row.revoked_by or "api",
+                    "details": f"Reason: {revoke_row.revoked_reason}" if revoke_row.revoked_reason else None,
+                }
+            )
         if revoke_row.reinstated_at:
-            history.append({
-                "action": "reinstated",
-                "timestamp": revoke_row.reinstated_at.isoformat(),
-                "actor": "api",
-                "details": "Document reinstated",
-            })
+            history.append(
+                {
+                    "action": "reinstated",
+                    "timestamp": revoke_row.reinstated_at.isoformat(),
+                    "actor": "api",
+                    "details": "Document reinstated",
+                }
+            )
 
     # Sort by timestamp descending
     history.sort(key=lambda x: x["timestamp"], reverse=True)
@@ -364,6 +373,8 @@ async def delete_document(
     The document is not permanently deleted but marked as deleted.
     """
     org_id = organization.get("organization_id")
+    if not org_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Organization ID missing")
 
     # Verify document exists
     doc_result = await content_db.execute(
@@ -387,7 +398,7 @@ async def delete_document(
                 document_id=document_id,
                 reason=RevocationReason.PUBLISHER_REQUEST,
                 reason_detail=reason or "Document deleted via API",
-                user_id="api",
+                revoked_by="api",
             )
         except Exception as e:
             logger.warning(f"Failed to revoke document {document_id}: {e}")

@@ -3,6 +3,7 @@ Integration tests for signing workflow.
 
 Uses PostgreSQL via Docker for full compatibility.
 """
+
 import os
 import unicodedata
 import uuid
@@ -82,13 +83,7 @@ async def test_sign_without_auth():
     """Test signing endpoint without authentication."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post(
-            "/api/v1/sign",
-            json={
-                "text": "Test content.",
-                "document_title": "Test Document"
-            }
-        )
+        response = await client.post("/api/v1/sign", json={"text": "Test content.", "document_title": "Test Document"})
         # Should return 403 (no credentials) or 401 (invalid credentials)
         assert response.status_code in [401, 403]
 
@@ -98,12 +93,7 @@ async def test_verify_endpoint():
     """Test verification endpoint (public, no auth required)."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post(
-            "/api/v1/verify",
-            json={
-                "text": "Some text without a manifest"
-            }
-        )
+        response = await client.post("/api/v1/verify", json={"text": "Some text without a manifest"})
         assert response.status_code == 410
         data = response.json()
         assert data["success"] is False
@@ -115,12 +105,7 @@ async def test_lookup_endpoint():
     """Test lookup endpoint (public, no auth required)."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
-        response = await client.post(
-            "/api/v1/lookup",
-            json={
-                "sentence_text": "This sentence doesn't exist."
-            }
-        )
+        response = await client.post("/api/v1/lookup", json={"sentence_text": "This sentence doesn't exist."})
         assert response.status_code == 200
         data = response.json()
         assert data["success"] is True
@@ -162,10 +147,7 @@ async def _truncate_all_tables(
     """Truncate test tables in PostgreSQL."""
     async with session_factory() as session:
         # Use PostgreSQL TRUNCATE with CASCADE
-        truncate_sql = (
-            "TRUNCATE TABLE audit_logs, sentence_records, documents, "
-            "api_keys, organizations RESTART IDENTITY CASCADE"
-        )
+        truncate_sql = "TRUNCATE TABLE audit_logs, sentence_records, documents, api_keys, organizations RESTART IDENTITY CASCADE"
         try:
             await session.execute(text(truncate_sql))
             await session.commit()
@@ -428,15 +410,12 @@ async def real_db_session_factory():
     """
     Create a PostgreSQL session factory for integration tests.
     Uses the Docker PostgreSQL instance for full compatibility.
-    
+
     Note: Uses core database for organization/key data.
     Content data (documents, sentences) goes to content database.
     """
     # Use PostgreSQL from Docker - Core database for org/key data
-    db_url = os.getenv(
-        "CORE_DATABASE_URL",
-        "postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core"
-    )
+    db_url = os.getenv("CORE_DATABASE_URL", "postgresql+asyncpg://encypher:encypher_dev_password@postgres-core:5432/encypher_core")
 
     engine = create_async_engine(
         db_url,
@@ -508,20 +487,17 @@ async def test_sign_verify_lookup_flow_with_real_database(real_db_session_factor
     [
         (
             "plain_text",
-            "Plain text example validates signing for prose content. "
-            "Metadata persists across multiple sentences.",
+            "Plain text example validates signing for prose content. Metadata persists across multiple sentences.",
             "article",
         ),
         (
             "xml",
-            "<note><to>Integration</to><from>Tester</from>"
-            "<body>XML payload metadata works. Verification succeeds.</body></note>",
+            "<note><to>Integration</to><from>Tester</from><body>XML payload metadata works. Verification succeeds.</body></note>",
             "article",
         ),
         (
             "html",
-            "<html><body><p>HTML document includes metadata embedding.</p>"
-            "<p>Lookup should resolve correctly.</p></body></html>",
+            "<html><body><p>HTML document includes metadata embedding.</p><p>Lookup should resolve correctly.</p></body></html>",
             "article",
         ),
         (
@@ -531,18 +507,12 @@ async def test_sign_verify_lookup_flow_with_real_database(real_db_session_factor
         ),
         (
             "tsx",
-            'import React from "react";\n'
-            "export const IntegrationComponent = () => (\n"
-            '  <div>Metadata test for TSX content.</div>\n'
-            ");",
+            'import React from "react";\nexport const IntegrationComponent = () => (\n  <div>Metadata test for TSX content.</div>\n);',
             "ai_output",
         ),
         (
             "js",
-            'export function integrationExample() {\n'
-            '  console.log("Metadata embedding succeeds.");\n'
-            "  return true;\n"
-            "}",
+            'export function integrationExample() {\n  console.log("Metadata embedding succeeds.");\n  return true;\n}',
             "ai_output",
         ),
     ],

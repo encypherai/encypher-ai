@@ -12,6 +12,7 @@ Tests:
 3. Key service (generate, verify, list keys)
 4. Cross-service communication
 """
+
 import sys
 from datetime import datetime
 
@@ -32,12 +33,13 @@ BASE_URLS = {
 # Traefik handles routing in production (port 80/443)
 # For local testing, we test services directly
 
+
 class TestResults:
     def __init__(self):
         self.passed = 0
         self.failed = 0
         self.errors = []
-    
+
     def record(self, name: str, passed: bool, error: str = None):
         if passed:
             self.passed += 1
@@ -46,10 +48,10 @@ class TestResults:
             self.failed += 1
             self.errors.append((name, error))
             print(f"  ✗ {name}: {error}")
-    
+
     def summary(self):
         total = self.passed + self.failed
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Results: {self.passed}/{total} passed")
         if self.errors:
             print("\nFailed tests:")
@@ -57,13 +59,15 @@ class TestResults:
                 print(f"  - {name}: {error}")
         return self.failed == 0
 
+
 results = TestResults()
+
 
 def test_health_endpoints():
     """Test health endpoints for all services"""
     print("\n1. Health Endpoint Tests")
     print("-" * 30)
-    
+
     for service, url in BASE_URLS.items():
         try:
             resp = requests.get(f"{url}/health", timeout=5)
@@ -77,44 +81,39 @@ def test_health_endpoints():
         except Exception as e:
             results.record(f"{service}-service health", False, str(e))
 
+
 def test_auth_flow():
     """Test authentication flow"""
     print("\n2. Authentication Flow Tests")
     print("-" * 30)
-    
+
     # Generate unique email
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     test_email = f"test_{timestamp}@example.com"
     test_password = "TestPassword123!"
-    
+
     # Test signup
     try:
         resp = requests.post(
-            f"{BASE_URLS['auth']}/api/v1/auth/signup",
-            json={"email": test_email, "password": test_password, "name": "Test User"},
-            timeout=10
+            f"{BASE_URLS['auth']}/api/v1/auth/signup", json={"email": test_email, "password": test_password, "name": "Test User"}, timeout=10
         )
         signup_success = resp.status_code == 200 or resp.status_code == 201
         results.record("Signup", signup_success, None if signup_success else resp.text[:100])
-        
+
         if not signup_success:
             return None
-        
+
         user_id = resp.json().get("data", {}).get("id")
     except Exception as e:
         results.record("Signup", False, str(e))
         return None
-    
+
     # Verify email directly in DB (would need docker exec in real test)
     # For now, we'll try login and expect it to fail without verification
-    
+
     # Test login (may fail if email not verified)
     try:
-        resp = requests.post(
-            f"{BASE_URLS['auth']}/api/v1/auth/login",
-            json={"email": test_email, "password": test_password},
-            timeout=10
-        )
+        resp = requests.post(f"{BASE_URLS['auth']}/api/v1/auth/login", json={"email": test_email, "password": test_password}, timeout=10)
         # Login might fail due to email verification requirement
         if resp.status_code == 200:
             token = resp.json().get("data", {}).get("access_token")
@@ -131,57 +130,48 @@ def test_auth_flow():
         results.record("Login", False, str(e))
         return None
 
+
 def test_key_service(token: str = None):
     """Test key service endpoints"""
     print("\n3. Key Service Tests")
     print("-" * 30)
-    
+
     if not token:
         results.record("Key service (skipped - no token)", True)
         return
-    
+
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     # Generate key
     try:
         resp = requests.post(
-            f"{BASE_URLS['key']}/api/v1/keys/generate",
-            json={"name": "Test Key", "permissions": ["sign", "verify"]},
-            headers=headers,
-            timeout=10
+            f"{BASE_URLS['key']}/api/v1/keys/generate", json={"name": "Test Key", "permissions": ["sign", "verify"]}, headers=headers, timeout=10
         )
         if resp.status_code == 200:
             key_data = resp.json()
             api_key = key_data.get("key")
             results.record("Generate API key", api_key is not None)
-            
+
             # Verify key
             if api_key:
-                resp = requests.post(
-                    f"{BASE_URLS['key']}/api/v1/keys/verify",
-                    json={"key": api_key},
-                    timeout=10
-                )
+                resp = requests.post(f"{BASE_URLS['key']}/api/v1/keys/verify", json={"key": api_key}, timeout=10)
                 results.record("Verify API key", resp.status_code == 200 and resp.json().get("valid"))
         else:
             results.record("Generate API key", False, f"Status {resp.status_code}")
     except Exception as e:
         results.record("Key service", False, str(e))
 
+
 def test_analytics_service(token: str = None):
     """Test analytics service endpoints"""
     print("\n4. Analytics Service Tests")
     print("-" * 30)
-    
+
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    
+
     try:
         # Test usage endpoint
-        resp = requests.get(
-            f"{BASE_URLS['analytics']}/api/v1/analytics/usage",
-            headers=headers,
-            timeout=10
-        )
+        resp = requests.get(f"{BASE_URLS['analytics']}/api/v1/analytics/usage", headers=headers, timeout=10)
         # May return 401 without token, which is expected
         if resp.status_code in [200, 401, 403]:
             results.record("Analytics usage endpoint", True)
@@ -190,19 +180,17 @@ def test_analytics_service(token: str = None):
     except Exception as e:
         results.record("Analytics service", False, str(e))
 
+
 def test_billing_service(token: str = None):
     """Test billing service endpoints"""
     print("\n5. Billing Service Tests")
     print("-" * 30)
-    
+
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    
+
     try:
         # Test plans endpoint (public)
-        resp = requests.get(
-            f"{BASE_URLS['billing']}/api/v1/billing/plans",
-            timeout=10
-        )
+        resp = requests.get(f"{BASE_URLS['billing']}/api/v1/billing/plans", timeout=10)
         if resp.status_code in [200, 404]:  # 404 if endpoint not implemented
             results.record("Billing plans endpoint", True)
         else:
@@ -210,21 +198,17 @@ def test_billing_service(token: str = None):
     except Exception as e:
         results.record("Billing service", False, str(e))
 
+
 def test_encoding_service(token: str = None):
     """Test encoding service endpoints"""
     print("\n6. Encoding Service Tests")
     print("-" * 30)
-    
+
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    
+
     try:
         # Test encode endpoint
-        resp = requests.post(
-            f"{BASE_URLS['encoding']}/api/v1/encode",
-            json={"content": "Test content for encoding"},
-            headers=headers,
-            timeout=10
-        )
+        resp = requests.post(f"{BASE_URLS['encoding']}/api/v1/encode", json={"content": "Test content for encoding"}, headers=headers, timeout=10)
         # May return 401/403 without proper auth
         if resp.status_code in [200, 401, 403, 404, 422]:
             results.record("Encoding endpoint", True)
@@ -233,18 +217,15 @@ def test_encoding_service(token: str = None):
     except Exception as e:
         results.record("Encoding service", False, str(e))
 
+
 def test_verification_service():
     """Test verification service endpoints"""
     print("\n7. Verification Service Tests")
     print("-" * 30)
-    
+
     try:
         # Test verify endpoint
-        resp = requests.post(
-            f"{BASE_URLS['verification']}/api/v1/verify",
-            json={"content": "Test content"},
-            timeout=10
-        )
+        resp = requests.post(f"{BASE_URLS['verification']}/api/v1/verify", json={"content": "Test content"}, timeout=10)
         # May return various status codes depending on implementation
         if resp.status_code in [200, 400, 401, 403, 404, 422]:
             results.record("Verification endpoint", True)
@@ -253,20 +234,17 @@ def test_verification_service():
     except Exception as e:
         results.record("Verification service", False, str(e))
 
+
 def test_coalition_service(token: str = None):
     """Test coalition service endpoints"""
     print("\n8. Coalition Service Tests")
     print("-" * 30)
-    
+
     headers = {"Authorization": f"Bearer {token}"} if token else {}
-    
+
     try:
         # Test members endpoint
-        resp = requests.get(
-            f"{BASE_URLS['coalition']}/api/v1/coalition/members",
-            headers=headers,
-            timeout=10
-        )
+        resp = requests.get(f"{BASE_URLS['coalition']}/api/v1/coalition/members", headers=headers, timeout=10)
         if resp.status_code in [200, 401, 403, 404]:
             results.record("Coalition members endpoint", True)
         else:
@@ -274,11 +252,12 @@ def test_coalition_service(token: str = None):
     except Exception as e:
         results.record("Coalition service", False, str(e))
 
+
 def test_traefik_routing():
     """Test Traefik routing (if running)"""
     print("\n9. Traefik Routing Tests (Optional)")
     print("-" * 30)
-    
+
     # Traefik runs on port 80/443 - only test if running
     try:
         resp = requests.get("http://localhost:8080/api/overview", timeout=2)
@@ -289,11 +268,12 @@ def test_traefik_routing():
     except requests.exceptions.ConnectionError:
         print("  ⊘ Traefik not running (optional for direct service testing)")
 
+
 def main():
     print("=" * 50)
     print("Encypher Microservices Integration Tests")
     print("=" * 50)
-    
+
     # Run all tests
     test_health_endpoints()
     token = test_auth_flow()
@@ -304,10 +284,11 @@ def main():
     test_verification_service()
     test_coalition_service(token)
     test_traefik_routing()
-    
+
     # Print summary
     success = results.summary()
     sys.exit(0 if success else 1)
+
 
 if __name__ == "__main__":
     main()

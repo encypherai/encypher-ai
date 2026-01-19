@@ -216,11 +216,7 @@ class TestScimUsersContract:
 
         from app.db.models import OrganizationMember
 
-        member_add_calls = [
-            call
-            for call in mock_db.add.call_args_list
-            if call.args and isinstance(call.args[0], OrganizationMember)
-        ]
+        member_add_calls = [call for call in mock_db.add.call_args_list if call.args and isinstance(call.args[0], OrganizationMember)]
         assert len(member_add_calls) == 1
 
     def test_get_user_returns_404_when_not_found(self, client, scim_auth):

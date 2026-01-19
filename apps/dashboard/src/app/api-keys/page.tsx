@@ -18,6 +18,7 @@ import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { ApiAccessGate } from '../../components/ApiAccessGate';
 import { exportApiKeys } from '../../lib/exportCsv';
+import { useOrganization } from '../../contexts/OrganizationContext';
 
 // Modal component for creating API keys
 function CreateKeyModal({
@@ -174,15 +175,17 @@ export default function ApiKeysPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const queryClient = useQueryClient();
+  const { activeOrganization, isLoading: orgLoading } = useOrganization();
+  const orgId = activeOrganization?.id;
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [generatedKey, setGeneratedKey] = useState('');
 
   const apiKeysQuery = useQuery({
-    queryKey: ['api-keys'],
+    queryKey: ['api-keys', orgId],
     queryFn: async () => {
       if (!accessToken) throw new Error('You must be signed in to manage API keys.');
-      const response = await apiClient.getApiKeys(accessToken);
+      const response = await apiClient.getApiKeys(accessToken, orgId);
       return normalizeApiKeys(response);
     },
     enabled: Boolean(accessToken),
@@ -196,7 +199,8 @@ export default function ApiKeysPage() {
         'sign',
         'verify',
         'read',
-      ]);
+      ],
+      orgId);
       return response;
     },
     onSuccess: (data) => {
@@ -209,7 +213,7 @@ export default function ApiKeysPage() {
         toast.success('API key created.');
       }
       setIsModalOpen(false);
-      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      queryClient.invalidateQueries({ queryKey: ['api-keys', orgId] });
     },
     onError: (err: any) => {
       toast.error(err?.message || 'Failed to create API key.');
@@ -227,7 +231,7 @@ export default function ApiKeysPage() {
     },
     onSuccess: () => {
       toast.success('API key deleted.');
-      queryClient.invalidateQueries({ queryKey: ['api-keys'] });
+      queryClient.invalidateQueries({ queryKey: ['api-keys', orgId] });
     },
     onError: (err: any) => {
       toast.error(err?.message || 'Failed to delete API key.');
@@ -236,7 +240,7 @@ export default function ApiKeysPage() {
 
   const apiKeys = apiKeysQuery.data ?? [];
   const isLoadingSession = status === 'loading';
-  const isLoadingKeys = apiKeysQuery.isLoading || !accessToken;
+  const isLoadingKeys = apiKeysQuery.isLoading || !accessToken || orgLoading;
 
   const handleCopyKey = (key: string) => {
     navigator.clipboard.writeText(key);
@@ -382,6 +386,11 @@ export default function ApiKeysPage() {
               <p className="text-muted-foreground">
                 Generate and manage API keys for your WordPress plugin, SDKs, or custom integrations.
               </p>
+              {activeOrganization && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Active organization: <span className="font-medium text-foreground">{activeOrganization.name}</span>
+                </p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               {apiKeys.length > 0 && (

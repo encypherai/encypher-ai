@@ -246,7 +246,7 @@ http:
       priority: 100
 
     api-streaming:
-      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/stream`)"
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/sign/stream`)"
       service: enterprise-api
       entryPoints:
         - websecure

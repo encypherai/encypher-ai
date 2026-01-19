@@ -151,12 +151,8 @@ async def test_readme_endpoint_tables_match_openapi_schema() -> None:
     extra_in_readme = sorted(readme_endpoints - openapi_endpoints)
 
     if missing_in_readme or extra_in_readme:
-        missing_block = "\n".join(
-            f"- {method} {path}" for method, path in missing_in_readme[:200]
-        )
-        extra_block = "\n".join(
-            f"- {method} {path}" for method, path in extra_in_readme[:200]
-        )
+        missing_block = "\n".join(f"- {method} {path}" for method, path in missing_in_readme[:200])
+        extra_block = "\n".join(f"- {method} {path}" for method, path in extra_in_readme[:200])
         raise AssertionError(
             "README/OpenAPI endpoint drift detected.\n\n"
             f"Missing in README (OpenAPI -> README): {len(missing_in_readme)}\n"

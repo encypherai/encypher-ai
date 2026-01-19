@@ -21,11 +21,11 @@ func Test_encypher_ChatAPIService(t *testing.T) {
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
 
-	t.Run("Test ChatAPIService ChatHealthCheckApiV1StreamChatHealthGet", func(t *testing.T) {
+	t.Run("Test ChatAPIService ChatHealthCheckApiV1ChatHealthGet", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
-		resp, httpRes, err := apiClient.ChatAPI.ChatHealthCheckApiV1StreamChatHealthGet(context.Background()).Execute()
+		resp, httpRes, err := apiClient.ChatAPI.ChatHealthCheckApiV1ChatHealthGet(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)
@@ -33,11 +33,11 @@ func Test_encypher_ChatAPIService(t *testing.T) {
 
 	})
 
-	t.Run("Test ChatAPIService OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost", func(t *testing.T) {
+	t.Run("Test ChatAPIService OpenaiCompatibleChatApiV1ChatCompletionsPost", func(t *testing.T) {
 
 		t.Skip("skip test")  // remove to run test
 
-		resp, httpRes, err := apiClient.ChatAPI.OpenaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost(context.Background()).Execute()
+		resp, httpRes, err := apiClient.ChatAPI.OpenaiCompatibleChatApiV1ChatCompletionsPost(context.Background()).Execute()
 
 		require.Nil(t, err)
 		require.NotNil(t, resp)

@@ -1,6 +1,7 @@
 """
 API endpoints for Encoding Service v1
 """
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -32,10 +33,7 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
     """
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(
-                f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
-                headers={"Authorization": authorization}
-            )
+            response = await client.post(f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify", headers={"Authorization": authorization})
 
             if response.status_code != 200:
                 raise HTTPException(
@@ -60,9 +58,9 @@ async def sign_document(
 ):
     """
     Sign a document with cryptographic signature
-    
+
     **Important:** Requires a valid API key
-    
+
     - **content**: Document content to sign
     - **metadata**: Optional metadata to include
     - **format**: Document format (text, json, markdown)
@@ -135,7 +133,7 @@ async def embed_metadata(
 ):
     """
     Embed metadata into document without signing
-    
+
     - **content**: Document content
     - **metadata**: Metadata to embed
     - **format**: Document format
@@ -178,7 +176,7 @@ async def list_documents(
 ):
     """
     List all documents for the current user
-    
+
     - **limit**: Maximum number of documents to return
     """
     documents = EncodingService.get_user_documents(db, current_user["id"], limit)
@@ -193,7 +191,7 @@ async def get_document(
 ):
     """
     Get details of a specific document
-    
+
     - **document_id**: Document ID
     """
     document = EncodingService.get_document(db, document_id, current_user["id"])
@@ -215,7 +213,7 @@ async def get_manifest(
 ):
     """
     Get the manifest for a document
-    
+
     - **document_id**: Document ID
     """
     document = EncodingService.get_document(db, document_id, current_user["id"])

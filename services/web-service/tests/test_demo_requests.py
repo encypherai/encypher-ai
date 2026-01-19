@@ -11,7 +11,7 @@ def test_create_demo_request(client: TestClient):
         "role": "Developer",
         "message": "Interested in a demo.",
         "source": "test",
-        "consent": True
+        "consent": True,
     }
     response = client.post(f"{settings.API_V1_STR}/demo-requests/", json=data)
     assert response.status_code == 200
@@ -21,6 +21,7 @@ def test_create_demo_request(client: TestClient):
     assert "id" in content
     assert "uuid" in content
 
+
 def test_create_demo_request_invalid_email(client: TestClient):
     data = {
         "name": "Test User",
@@ -29,7 +30,7 @@ def test_create_demo_request_invalid_email(client: TestClient):
         "role": "Developer",
         "message": "Interested in a demo.",
         "source": "test",
-        "consent": True
+        "consent": True,
     }
     response = client.post(f"{settings.API_V1_STR}/demo-requests/", json=data)
     assert response.status_code == 422

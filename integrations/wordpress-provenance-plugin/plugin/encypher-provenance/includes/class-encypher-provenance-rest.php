@@ -461,10 +461,16 @@ class Rest
         // Get raw post content to preserve invisible Unicode characters
         $raw_content = get_post_field('post_content', $post_id, 'raw');
 
+        $settings = get_option('encypher_assurance_settings', []);
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
+        $use_advanced = in_array($tier, ['professional', 'business', 'enterprise'], true);
+        $endpoint = $use_advanced ? '/verify/advanced' : '/verify';
+        $require_auth = $use_advanced;
+
         // Check for cached verification (disabled in development, 5 minute cache in production)
         // Set WP_DEBUG to true in wp-config.php for development mode
         $cache_enabled = !defined('WP_DEBUG') || !WP_DEBUG;
-        $cache_key = 'encypher_verify_' . $post_id . '_' . md5($raw_content);
+        $cache_key = 'encypher_verify_' . $post_id . '_' . md5($raw_content . '|' . $endpoint);
         
         if ($cache_enabled) {
             $cached = get_transient($cache_key);
@@ -481,8 +487,32 @@ class Rest
             'text' => $raw_content,
         ];
 
-        error_log(sprintf('Encypher: Calling /verify for post %d (content length: %d)', $post_id, strlen($raw_content)));
-        $response = $this->call_backend('/verify', $payload, false);
+        if ($use_advanced) {
+            $payload['segmentation_level'] = 'sentence';
+            $payload['search_scope'] = 'organization';
+            $payload['include_attribution'] = false;
+            $payload['detect_plagiarism'] = false;
+            $payload['include_heat_map'] = false;
+            $payload['min_match_percentage'] = 0.0;
+        }
+
+        $verification_mode = $use_advanced ? 'advanced' : 'standard';
+        error_log(sprintf('Encypher: Calling %s for post %d (content length: %d)', $endpoint, $post_id, strlen($raw_content)));
+        $response = $this->call_backend($endpoint, $payload, $require_auth);
+        if (is_wp_error($response) && $use_advanced) {
+            $error_data = $response->get_error_data();
+            $status_code = is_array($error_data) && isset($error_data['status']) ? (int) $error_data['status'] : null;
+            $fallback = $response->get_error_code() === 'missing_api_key' || in_array($status_code, [401, 403], true);
+            if ($fallback) {
+                error_log(sprintf(
+                    'Encypher: Advanced verification unavailable for post %d (%s). Falling back to /verify.',
+                    $post_id,
+                    $response->get_error_message()
+                ));
+                $response = $this->call_backend('/verify', ['text' => $raw_content], false);
+                $verification_mode = 'standard';
+            }
+        }
         if (is_wp_error($response)) {
             error_log(sprintf('Encypher: Verification API error for post %d: %s', $post_id, $response->get_error_message()));
             return $response;
@@ -498,6 +528,11 @@ class Rest
             'metadata' => null,
             'error' => null,
             'cached' => false,
+            'verification_mode' => $verification_mode,
+            'correlation_id' => null,
+            'attribution' => null,
+            'plagiarism' => null,
+            'fuzzy_search' => null,
         ];
 
         if (isset($response['success']) && $response['success'] && isset($response['data']) && is_array($response['data'])) {
@@ -510,6 +545,18 @@ class Rest
             $normalized['verified_at'] = isset($verdict['timestamp']) ? (string) $verdict['timestamp'] : null;
             if (isset($verdict['details']) && is_array($verdict['details']) && isset($verdict['details']['manifest']) && is_array($verdict['details']['manifest'])) {
                 $normalized['metadata'] = $verdict['details']['manifest'];
+            }
+            if (isset($response['correlation_id'])) {
+                $normalized['correlation_id'] = (string) $response['correlation_id'];
+            }
+            if (isset($response['attribution']) && is_array($response['attribution'])) {
+                $normalized['attribution'] = $response['attribution'];
+            }
+            if (isset($response['plagiarism']) && is_array($response['plagiarism'])) {
+                $normalized['plagiarism'] = $response['plagiarism'];
+            }
+            if (isset($response['fuzzy_search']) && is_array($response['fuzzy_search'])) {
+                $normalized['fuzzy_search'] = $response['fuzzy_search'];
             }
             if (!$normalized['valid']) {
                 $normalized['error'] = $normalized['tampered']

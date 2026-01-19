@@ -4,6 +4,7 @@ Multi-Source Hash Table Lookup API Endpoints (TEAM_044 - Patent FIG. 8).
 These endpoints enable lookup of content across multiple sources
 with chronological ordering and authority ranking.
 """
+
 import logging
 import time
 from typing import Dict
@@ -32,22 +33,22 @@ async def multi_source_lookup(
 ) -> MultiSourceLookupResponse:
     """
     Look up content across multiple sources.
-    
+
     Returns all matching sources with linked-list tracking,
     chronological ordering, and optional authority ranking.
-    
+
     **Tier Requirement:** Business+ (Authority ranking requires Enterprise)
-    
+
     Patent Reference: FIG. 8 - Multi-Source Hash Table Lookup
     """
     start_time = time.time()
     organization_id = organization["organization_id"]
-    
+
     # Tier gating - Business+ for basic, Enterprise for authority
     tier = organization.get("tier", "starter").lower()
     tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
     org_tier_level = tier_levels.get(tier, 0)
-    
+
     if org_tier_level < 2:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -59,7 +60,7 @@ async def multi_source_lookup(
                 "upgrade_url": "/billing/upgrade",
             },
         )
-    
+
     # Authority ranking requires Enterprise
     if request.include_authority_score and org_tier_level < 3:
         raise HTTPException(
@@ -72,7 +73,7 @@ async def multi_source_lookup(
                 "upgrade_url": "/billing/upgrade",
             },
         )
-    
+
     try:
         sources, query_hash, original_source = await multi_source_service.lookup_sources(
             db=db,
@@ -83,18 +84,15 @@ async def multi_source_lookup(
             include_authority_score=request.include_authority_score,
             max_results=request.max_results,
         )
-        
+
         processing_time_ms = (time.time() - start_time) * 1000
-        
+
         # Determine if sources form a chain
         has_chain = len(sources) > 1
         chain_length = len(sources)
-        
-        logger.info(
-            f"Multi-source lookup for org {organization_id}: "
-            f"found {len(sources)} sources, time={processing_time_ms:.2f}ms"
-        )
-        
+
+        logger.info(f"Multi-source lookup for org {organization_id}: found {len(sources)} sources, time={processing_time_ms:.2f}ms")
+
         return MultiSourceLookupResponse(
             success=True,
             query_hash=query_hash,
@@ -106,7 +104,7 @@ async def multi_source_lookup(
             processing_time_ms=round(processing_time_ms, 2),
             message=f"Found {len(sources)} source(s) for the queried content",
         )
-        
+
     except Exception as e:
         logger.error(f"Failed to perform multi-source lookup: {e}", exc_info=True)
         raise HTTPException(

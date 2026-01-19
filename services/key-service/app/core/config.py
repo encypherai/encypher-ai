@@ -5,6 +5,7 @@ Environment Variables:
 - Shared: DATABASE_URL, REDIS_URL, JWT_SECRET_KEY, ALLOWED_ORIGINS, AUTH_SERVICE_URL
 - Service-specific: KEY_PREFIX, KEY_LENGTH
 """
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import List
 

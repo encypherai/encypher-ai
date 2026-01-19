@@ -1,6 +1,7 @@
 """
 Batch request persistence models for bulk signing and verification.
 """
+
 from __future__ import annotations
 
 import uuid
@@ -32,7 +33,7 @@ class BatchRequestType(str, Enum):
 
     SIGN = "sign"
     VERIFY = "verify"
-    
+
     def __str__(self):
         return self.value
 
@@ -112,9 +113,7 @@ class BatchItem(Base):
     """ORM model for persisted batch results."""
 
     __tablename__ = "batch_items"
-    __table_args__ = (
-        Index("ix_batch_items_document_status", "document_id", "status"),
-    )
+    __table_args__ = (Index("ix_batch_items_document_status", "document_id", "status"),)
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     batch_request_id = Column(

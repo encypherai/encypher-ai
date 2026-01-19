@@ -3,13 +3,15 @@ AWS KMS Signer Implementation.
 
 Adapts AWS KMS to the Encypher Signer protocol.
 """
+
 import logging
-from typing import Optional
+from typing import Optional, cast
 
 import boto3
 from botocore.exceptions import ClientError
 
 logger = logging.getLogger(__name__)
+
 
 class AWSSigner:
     """
@@ -54,13 +56,8 @@ class AWSSigner:
         try:
             # AWS KMS expects 'Message' to be bytes.
             # For ED25519, MessageType must be 'RAW'.
-            response = self.client.sign(
-                KeyId=self.key_id,
-                Message=data,
-                MessageType="RAW",
-                SigningAlgorithm="ED25519"
-            )
-            signature = response["Signature"]
+            response = self.client.sign(KeyId=self.key_id, Message=data, MessageType="RAW", SigningAlgorithm="ED25519")
+            signature = cast(bytes, response["Signature"])
             return signature
         except ClientError as e:
             logger.error(f"AWS KMS Signing failed: {e}")

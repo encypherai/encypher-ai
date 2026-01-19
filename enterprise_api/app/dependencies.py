@@ -34,6 +34,7 @@ async def get_current_organization_dep(
     )
     return await maybe_org if inspect.isawaitable(maybe_org) else maybe_org
 
+
 # Demo key configurations for local testing (when Key Service unavailable)
 # These match the seeded test organizations
 DEMO_KEYS = {
@@ -46,6 +47,7 @@ DEMO_KEYS = {
             "team_management": True,
             "audit_logs": True,
             "merkle_enabled": True,
+            "fuzzy_fingerprint": True,
             "bulk_operations": True,
             "sentence_tracking": True,
             "streaming": True,
@@ -69,6 +71,7 @@ DEMO_KEYS = {
             "team_management": False,
             "audit_logs": False,
             "merkle_enabled": False,
+            "fuzzy_fingerprint": False,
             "bulk_operations": False,
             "sentence_tracking": False,
             "streaming": False,
@@ -92,6 +95,7 @@ DEMO_KEYS = {
             "team_management": False,
             "audit_logs": False,
             "merkle_enabled": False,
+            "fuzzy_fingerprint": False,
             "bulk_operations": False,
             "sentence_tracking": True,
             "streaming": True,
@@ -117,6 +121,7 @@ DEMO_KEYS = {
             "team_management": True,
             "audit_logs": True,
             "merkle_enabled": True,
+            "fuzzy_fingerprint": False,
             "bulk_operations": True,
             "sentence_tracking": True,
             "streaming": True,
@@ -142,6 +147,7 @@ DEMO_KEYS = {
             "team_management": True,
             "audit_logs": True,
             "merkle_enabled": True,
+            "fuzzy_fingerprint": True,
             "bulk_operations": True,
             "sentence_tracking": True,
             "streaming": True,
@@ -168,6 +174,7 @@ DEMO_KEYS = {
             "team_management": False,
             "audit_logs": False,
             "merkle_enabled": False,
+            "fuzzy_fingerprint": False,
             "bulk_operations": False,
             "sentence_tracking": False,
             "streaming": False,
@@ -192,10 +199,10 @@ async def get_current_organization(
 ) -> Dict:
     """
     Validate API key and return organization context.
-    
+
     Uses Key Service /validate endpoint for unified authentication.
     Falls back to demo keys for local development.
-    
+
     Also sets request.state for metrics middleware.
 
     Returns:
@@ -218,7 +225,7 @@ async def get_current_organization(
 
     # 1. Try Key Service first (production path)
     org_context = await key_service_client.validate_key(api_key)
-    
+
     if org_context:
         # Normalize the response to ensure consistent structure
         org_context = _normalize_org_context(org_context)
@@ -237,13 +244,13 @@ async def get_current_organization(
             detail="Invalid API key",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Set request.state for metrics middleware
     request.state.organization_id = org_context.get("organization_id")
     request.state.user_id = org_context.get("user_id") or org_context.get("api_key_owner_id")
     request.state.api_key_id = org_context.get("api_key_id")
     request.state.tier = org_context.get("tier")
-    
+
     return org_context
 
 
@@ -253,12 +260,12 @@ def _normalize_org_context(org_context: Dict) -> Dict:
     features = org_context.get("features", {})
     if not isinstance(features, dict):
         features = {}
-    
+
     # Ensure permissions is a list
     permissions = org_context.get("permissions", [])
     if not isinstance(permissions, list):
         permissions = ["sign", "verify", "lookup"]
-    
+
     # Map permissions to can_* for backward compatibility
     result = {
         **org_context,
@@ -281,6 +288,7 @@ def _normalize_org_context(org_context: Dict) -> Dict:
         "byok_enabled": features.get("byok", False),
         "sso_enabled": features.get("sso", False),
         "custom_assertions_enabled": features.get("custom_assertions", False),
+        "fuzzy_fingerprint_enabled": features.get("fuzzy_fingerprint", False),
         "max_team_members": features.get("max_team_members", 1),
     }
     return result
@@ -382,7 +390,7 @@ async def require_read_permission(
 ) -> Dict:
     """
     Require that the organization has read permission (basic authenticated access).
-    
+
     This is a general-purpose dependency for endpoints that only require
     authentication without specific feature permissions.
 

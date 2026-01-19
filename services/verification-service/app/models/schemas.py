@@ -1,4 +1,5 @@
 """Pydantic schemas for Verification Service"""
+
 from pydantic import BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
@@ -6,6 +7,7 @@ from datetime import datetime
 
 class SignatureVerify(BaseModel):
     """Schema for signature verification"""
+
     content: str = Field(..., min_length=1)
     signature: str
     public_key_pem: str
@@ -13,18 +15,21 @@ class SignatureVerify(BaseModel):
 
 class DocumentVerify(BaseModel):
     """Schema for complete document verification"""
+
     document_id: str
     content: str = Field(..., min_length=1)
 
 
 class TamperCheck(BaseModel):
     """Schema for tampering check"""
+
     document_id: str
     current_content: str
 
 
 class VerificationResponse(BaseModel):
     """Schema for verification response"""
+
     is_valid: bool
     is_tampered: bool
     signature_valid: bool
@@ -42,6 +47,7 @@ class VerificationResponse(BaseModel):
 
 class VerificationHistory(BaseModel):
     """Schema for verification history"""
+
     id: str
     document_id: str
     is_valid: bool
@@ -55,6 +61,7 @@ class VerificationHistory(BaseModel):
 
 class VerificationStats(BaseModel):
     """Schema for verification statistics"""
+
     total_verifications: int
     valid_verifications: int
     invalid_verifications: int
@@ -65,9 +72,11 @@ class VerificationStats(BaseModel):
 
 class MessageResponse(BaseModel):
     """Generic message response"""
+
     message: str
 
 
 class ErrorResponse(BaseModel):
     """Error response schema"""
+
     detail: str

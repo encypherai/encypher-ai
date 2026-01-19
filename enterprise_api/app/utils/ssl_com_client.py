@@ -1,7 +1,8 @@
 """
 SSL.com API client for certificate provisioning.
 """
-from typing import Dict
+
+from typing import Any, Dict, cast
 
 import httpx
 
@@ -36,8 +37,8 @@ class SSLComClient:
         country: str,
         email: str,
         validity_years: int = 2,
-        product_id: str = "106"
-    ) -> Dict:
+        product_id: str = "106",
+    ) -> Dict[str, Any]:
         """
         Create SSL.com code signing certificate order.
 
@@ -94,7 +95,7 @@ class SSLComClient:
                 },
             )
         response.raise_for_status()
-        data = response.json()
+        data = cast(Dict[str, Any], response.json())
         # Normalize SWS response keys to expected fields
         if self._is_sws():
             # SWS returns 'ref' as the order reference and may include 'validation_url'
@@ -105,7 +106,7 @@ class SSLComClient:
             }
         return data
 
-    async def get_order_status(self, order_id: str) -> Dict:
+    async def get_order_status(self, order_id: str) -> Dict[str, Any]:
         """
         Poll order status.
 
@@ -134,9 +135,9 @@ class SSLComClient:
                 headers={"Authorization": f"Bearer {self.api_key}"},
             )
         response.raise_for_status()
-        return response.json()
+        return cast(Dict[str, Any], response.json())
 
-    async def download_certificate(self, order_id: str) -> Dict:
+    async def download_certificate(self, order_id: str) -> Dict[str, Any]:
         """
         Download issued certificate and chain.
 
@@ -170,7 +171,7 @@ class SSLComClient:
                 headers={"Authorization": f"Bearer {self.api_key}"},
             )
         response.raise_for_status()
-        return response.json()
+        return cast(Dict[str, Any], response.json())
 
     async def close(self):
         """Close the HTTP client."""

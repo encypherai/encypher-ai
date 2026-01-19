@@ -8,9 +8,9 @@ docs/APIKeysApi.md
 docs/AccountApi.md
 docs/AccountInfo.md
 docs/AccountResponse.md
-docs/AppSchemasEmbeddingsBatchVerifyRequest.md
-docs/AppSchemasEmbeddingsErrorResponse.md
+docs/AppSchemasBatchBatchVerifyRequest.md
 docs/AppSchemasEmbeddingsRightsMetadata.md
+docs/AppSchemasMerkleErrorResponse.md
 docs/BYOKApi.md
 docs/BatchApi.md
 docs/BatchItemPayload.md
@@ -22,7 +22,7 @@ docs/BatchSummary.md
 docs/BatchVerifyRequest.md
 docs/BatchVerifyResponse.md
 docs/BatchVerifyResult.md
-docs/BodyCreateStreamingSessionApiV1StreamSessionCreatePost.md
+docs/BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md
 docs/C2PAAssertionValidateRequest.md
 docs/C2PAAssertionValidateResponse.md
 docs/C2PAAssertionValidationResult.md
@@ -82,6 +82,8 @@ docs/FingerprintDetectResponse.md
 docs/FingerprintEncodeRequest.md
 docs/FingerprintEncodeResponse.md
 docs/FingerprintMatch.md
+docs/FuzzyFingerprintConfig.md
+docs/FuzzySearchConfig.md
 docs/HTTPValidationError.md
 docs/HealthApi.md
 docs/InfoApi.md
@@ -204,9 +206,9 @@ encypher/exceptions.py
 encypher/models/__init__.py
 encypher/models/account_info.py
 encypher/models/account_response.py
-encypher/models/app_schemas_embeddings_batch_verify_request.py
-encypher/models/app_schemas_embeddings_error_response.py
+encypher/models/app_schemas_batch_batch_verify_request.py
 encypher/models/app_schemas_embeddings_rights_metadata.py
+encypher/models/app_schemas_merkle_error_response.py
 encypher/models/batch_item_payload.py
 encypher/models/batch_item_result.py
 encypher/models/batch_response_data.py
@@ -216,7 +218,7 @@ encypher/models/batch_summary.py
 encypher/models/batch_verify_request.py
 encypher/models/batch_verify_response.py
 encypher/models/batch_verify_result.py
-encypher/models/body_create_streaming_session_api_v1_stream_session_create_post.py
+encypher/models/body_create_streaming_session_api_v1_sign_stream_sessions_post.py
 encypher/models/c2_pa_assertion_validate_request.py
 encypher/models/c2_pa_assertion_validate_response.py
 encypher/models/c2_pa_assertion_validation_result.py
@@ -269,6 +271,8 @@ encypher/models/fingerprint_detect_response.py
 encypher/models/fingerprint_encode_request.py
 encypher/models/fingerprint_encode_response.py
 encypher/models/fingerprint_match.py
+encypher/models/fuzzy_fingerprint_config.py
+encypher/models/fuzzy_search_config.py
 encypher/models/http_validation_error.py
 encypher/models/key_create_request.py
 encypher/models/key_create_response.py
@@ -354,9 +358,9 @@ test/test_account_api.py
 test/test_account_info.py
 test/test_account_response.py
 test/test_api_keys_api.py
-test/test_app_schemas_embeddings_batch_verify_request.py
-test/test_app_schemas_embeddings_error_response.py
+test/test_app_schemas_batch_batch_verify_request.py
 test/test_app_schemas_embeddings_rights_metadata.py
+test/test_app_schemas_merkle_error_response.py
 test/test_batch_api.py
 test/test_batch_item_payload.py
 test/test_batch_item_result.py
@@ -367,7 +371,7 @@ test/test_batch_summary.py
 test/test_batch_verify_request.py
 test/test_batch_verify_response.py
 test/test_batch_verify_result.py
-test/test_body_create_streaming_session_api_v1_stream_session_create_post.py
+test/test_body_create_streaming_session_api_v1_sign_stream_sessions_post.py
 test/test_byok_api.py
 test/test_c2_pa_assertion_validate_request.py
 test/test_c2_pa_assertion_validate_response.py
@@ -428,6 +432,8 @@ test/test_fingerprint_detect_response.py
 test/test_fingerprint_encode_request.py
 test/test_fingerprint_encode_response.py
 test/test_fingerprint_match.py
+test/test_fuzzy_fingerprint_config.py
+test/test_fuzzy_search_config.py
 test/test_health_api.py
 test/test_http_validation_error.py
 test/test_info_api.py

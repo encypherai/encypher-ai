@@ -1,14 +1,15 @@
 """Check how the text is being segmented into sentences."""
+
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path('../enterprise_api').resolve()))
+sys.path.insert(0, str(Path("../enterprise_api").resolve()))
 
 from app.services.segmentation_service import SegmentationService
 
 # Read the original article
-article_path = Path('../outputs/wikipedia_prepared/part_00000/article_0000000.txt')
-original_text = article_path.read_text(encoding='utf-8')
+article_path = Path("../outputs/wikipedia_prepared/part_00000/article_0000000.txt")
+original_text = article_path.read_text(encoding="utf-8")
 
 print("=" * 80)
 print("SEGMENTATION ANALYSIS")
@@ -19,7 +20,7 @@ print(f"Original lines: {len(original_text.splitlines())}")
 
 # Segment the text
 segmenter = SegmentationService()
-segments = segmenter.segment_text(original_text, level='sentence')
+segments = segmenter.segment_text(original_text, level="sentence")
 
 print("\nSegmentation Results:")
 print(f"  - Total segments: {len(segments)}")
@@ -50,7 +51,7 @@ print("SEGMENTATION QUALITY CHECK")
 print("=" * 80)
 
 # Count segments that look like proper sentences
-proper_sentences = sum(1 for s in segments if s.strip().endswith(('.', '!', '?', ']]')))
+proper_sentences = sum(1 for s in segments if s.strip().endswith((".", "!", "?", "]]")))
 print(f"  - Segments ending with sentence punctuation: {proper_sentences}/{len(segments)}")
 
 # Check for very short segments (might indicate over-segmentation)

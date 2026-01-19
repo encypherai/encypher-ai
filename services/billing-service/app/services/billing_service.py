@@ -1,4 +1,5 @@
 """Billing service business logic"""
+
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
@@ -171,18 +172,12 @@ class BillingService:
     @staticmethod
     def get_user_subscription(db: Session, user_id: str) -> Optional[Subscription]:
         """Get active subscription for user"""
-        return db.query(Subscription).filter(
-            Subscription.user_id == user_id,
-            Subscription.status == "active"
-        ).first()
+        return db.query(Subscription).filter(Subscription.user_id == user_id, Subscription.status == "active").first()
 
     @staticmethod
     def cancel_subscription(db: Session, subscription_id: str, user_id: str) -> bool:
         """Cancel a subscription"""
-        subscription = db.query(Subscription).filter(
-            Subscription.id == subscription_id,
-            Subscription.user_id == user_id
-        ).first()
+        subscription = db.query(Subscription).filter(Subscription.id == subscription_id, Subscription.user_id == user_id).first()
 
         if not subscription:
             return False
@@ -196,9 +191,7 @@ class BillingService:
     @staticmethod
     def get_invoices(db: Session, user_id: str, limit: int = 100) -> List[Invoice]:
         """Get invoices for user"""
-        return db.query(Invoice).filter(
-            Invoice.user_id == user_id
-        ).order_by(Invoice.created_at.desc()).limit(limit).all()
+        return db.query(Invoice).filter(Invoice.user_id == user_id).order_by(Invoice.created_at.desc()).limit(limit).all()
 
     @staticmethod
     def get_billing_stats(db: Session, user_id: Optional[str] = None) -> Dict[str, Any]:
@@ -211,16 +204,12 @@ class BillingService:
         canceled_subs = query.filter(Subscription.status == "canceled").count()
 
         # Calculate MRR
-        mrr = db.query(func.sum(Subscription.amount)).filter(
-            Subscription.status == "active",
-            Subscription.billing_cycle == "monthly"
-        ).scalar() or 0.0
+        mrr = db.query(func.sum(Subscription.amount)).filter(Subscription.status == "active", Subscription.billing_cycle == "monthly").scalar() or 0.0
 
         # Add yearly subscriptions (divided by 12)
-        yearly_mrr = db.query(func.sum(Subscription.amount)).filter(
-            Subscription.status == "active",
-            Subscription.billing_cycle == "yearly"
-        ).scalar() or 0.0
+        yearly_mrr = (
+            db.query(func.sum(Subscription.amount)).filter(Subscription.status == "active", Subscription.billing_cycle == "yearly").scalar() or 0.0
+        )
         mrr += yearly_mrr / 12
 
         invoice_query = db.query(Invoice)

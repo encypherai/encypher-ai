@@ -8,6 +8,7 @@ This script:
 3. Generates test API keys
 4. (Optional) Generates test keypair for the organization
 """
+
 import asyncio
 import asyncpg
 import os
@@ -44,9 +45,7 @@ async def init_database():
         print(" Database schema initialized")
 
         # Check if test organization exists
-        existing = await conn.fetchval(
-            "SELECT organization_id FROM organizations WHERE organization_id = 'test_org_001'"
-        )
+        existing = await conn.fetchval("SELECT organization_id FROM organizations WHERE organization_id = 'test_org_001'")
 
         if existing:
             print("9  Test organization already exists")
@@ -73,43 +72,41 @@ async def init_database():
 
             # Serialize private key
             private_bytes = private_key.private_bytes(
-                encoding=serialization.Encoding.Raw,
-                format=serialization.PrivateFormat.Raw,
-                encryption_algorithm=serialization.NoEncryption()
+                encoding=serialization.Encoding.Raw, format=serialization.PrivateFormat.Raw, encryption_algorithm=serialization.NoEncryption()
             )
 
             # Encrypt
             aesgcm = AESGCM(bytes.fromhex(key_encryption_key))
-            encrypted_key = aesgcm.encrypt(
-                bytes.fromhex(encryption_nonce),
-                private_bytes,
-                None
-            )
+            encrypted_key = aesgcm.encrypt(bytes.fromhex(encryption_nonce), private_bytes, None)
 
             # Store encrypted key
-            await conn.execute("""
+            await conn.execute(
+                """
                 UPDATE organizations
                 SET private_key_encrypted = $1
                 WHERE organization_id = 'test_org_001'
-            """, encrypted_key)
+            """,
+                encrypted_key,
+            )
             print(" Keypair generated and stored (encrypted)")
         else:
             print("   Encryption keys not set - skipping keypair storage")
 
         # Check if test API key exists
-        existing_key = await conn.fetchval(
-            "SELECT api_key FROM api_keys WHERE organization_id = 'test_org_001'"
-        )
+        existing_key = await conn.fetchval("SELECT api_key FROM api_keys WHERE organization_id = 'test_org_001'")
 
         if existing_key:
             print(f"9  Test API key already exists: {existing_key}")
         else:
             # Generate test API key
             test_api_key = f"encypher_test_{secrets.token_urlsafe(32)}"
-            await conn.execute("""
+            await conn.execute(
+                """
                 INSERT INTO api_keys (api_key, organization_id, key_name)
                 VALUES ($1, 'test_org_001', 'Test API Key')
-            """, test_api_key)
+            """,
+                test_api_key,
+            )
             print(f" Test API key created: {test_api_key}")
             print("\n=Ë Save this API key for testing:")
             print(f"   {test_api_key}\n")
@@ -127,6 +124,7 @@ async def init_database():
 if __name__ == "__main__":
     # Load environment variables
     from dotenv import load_dotenv
+
     load_dotenv()
 
     asyncio.run(init_database())

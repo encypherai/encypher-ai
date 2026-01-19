@@ -28,7 +28,7 @@ The Streaming API provides real-time content signing capabilities for streaming 
 - ⏳ Advanced monitoring
 
 ### Phase 3 (Planned)
-- ✅ OpenAI-compatible streaming endpoint (WebSocket `/api/v1/stream/chat` implemented; client wrappers still evolving)
+- ✅ OpenAI-compatible streaming endpoint (`POST /api/v1/chat/completions` with `stream=true`)
 - ⏳ LangChain integration
 - ⏳ LlamaIndex integration
 
@@ -54,7 +54,7 @@ Signed Content
 
 ### 1. Create Streaming Session
 
-**POST** `/api/v1/stream/session/create`
+**POST** `/api/v1/sign/stream/sessions`
 
 Create a new streaming session.
 
@@ -86,9 +86,11 @@ Create a new streaming session.
 
 ### 2. WebSocket Streaming
 
-**WS** `/api/v1/stream/sign?api_key=YOUR_API_KEY`
+**WS** `/api/v1/sign/stream?api_key=YOUR_API_KEY`
 
 Real-time content signing via WebSocket.
+
+**Optional Chat Wrapper:** `WS /api/v1/chat/stream` (same protocol; optimized for chat clients)
 
 **Client → Server Messages:**
 
@@ -151,7 +153,7 @@ Real-time content signing via WebSocket.
 
 ### 3. Close Session
 
-**POST** `/api/v1/stream/session/{session_id}/close`
+**POST** `/api/v1/sign/stream/sessions/{session_id}/close`
 
 Close a streaming session and get final statistics.
 
@@ -170,7 +172,7 @@ Close a streaming session and get final statistics.
 
 ### 4. Server-Sent Events (SSE)
 
-**GET** `/api/v1/stream/events?session_id=SESSION_ID&api_key=YOUR_API_KEY`
+**GET** `/api/v1/sign/stream/sessions/{session_id}/events?api_key=YOUR_API_KEY`
 
 Unidirectional event streaming via SSE.
 
@@ -190,7 +192,7 @@ data: {"document_id": "doc_123", "status": "signed"}
 
 ### 5. Streaming Statistics
 
-**GET** `/api/v1/stream/stats`
+**GET** `/api/v1/sign/stream/stats`
 
 Get streaming statistics for your organization.
 
@@ -204,6 +206,12 @@ Get streaming statistics for your organization.
 }
 ```
 
+### 6. OpenAI-Compatible Chat Completions (SSE)
+
+**POST** `/api/v1/chat/completions`
+
+Provide `stream=true` and `sign_response=true` to receive OpenAI-compatible SSE chunks with Encypher signing metadata.
+
 ---
 
 ## Usage Examples
@@ -216,7 +224,7 @@ import websockets
 import json
 
 async def stream_content():
-    uri = "ws://localhost:8000/api/v1/stream/sign?api_key=YOUR_KEY"
+    uri = "ws://localhost:8000/api/v1/sign/stream?api_key=YOUR_KEY"
     
     async with websockets.connect(uri) as websocket:
         # Wait for connection confirmation
@@ -253,7 +261,7 @@ asyncio.run(stream_content())
 ### JavaScript WebSocket Client
 
 ```javascript
-const ws = new WebSocket('ws://localhost:8000/api/v1/stream/sign?api_key=YOUR_KEY');
+const ws = new WebSocket('ws://localhost:8000/api/v1/sign/stream?api_key=YOUR_KEY');
 
 ws.onopen = () => {
     console.log('Connected');
@@ -315,7 +323,7 @@ SSL_COM_API_KEY=your_ssl_com_key
 
 ### Session Lifecycle
 
-1. **Create Session** - Initialize with `POST /stream/session/create`
+1. **Create Session** - Initialize with `POST /sign/stream/sessions`
 2. **Connect** - Establish WebSocket connection
 3. **Stream** - Send chunks and receive signed content
 4. **Finalize** - Close stream with `{"type": "finalize"}`
@@ -385,7 +393,7 @@ uv run pytest tests/integration/test_streaming_e2e.py -v
 npm install -g wscat
 
 # Connect
-wscat -c "ws://localhost:8000/api/v1/stream/sign?api_key=test"
+wscat -c "ws://localhost:8000/api/v1/sign/stream?api_key=test"
 
 # Send message
 {"type": "chunk", "content": "Test chunk. "}

@@ -1,6 +1,6 @@
 [project]
 name = "encypher-enterprise-api"
-version = "1.0.1"
+version = "1.0.2"
 description = "Enterprise API for C2PA-compliant content signing and verification"
 requires-python = ">=3.10"
 dependencies = [

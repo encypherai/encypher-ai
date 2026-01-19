@@ -4,6 +4,7 @@ Pricing configuration for Encypher subscription tiers.
 This module defines the official pricing tiers, features, and limits
 that are used across the platform.
 """
+
 from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List
@@ -11,6 +12,7 @@ from typing import Any, Dict, List
 
 class BillingCycle(str, Enum):
     """Billing cycle options"""
+
     MONTHLY = "monthly"
     ANNUAL = "annual"
 
@@ -18,6 +20,7 @@ class BillingCycle(str, Enum):
 @dataclass
 class PricingTier:
     """Definition of a pricing tier"""
+
     id: str
     name: str
     display_name: str
@@ -61,7 +64,6 @@ PRICING_TIERS: Dict[str, PricingTier] = {
         },
         coalition_rev_share={"publisher": 65, "encypher": 35},
     ),
-    
     "professional": PricingTier(
         id="professional",
         name="Professional",
@@ -94,7 +96,6 @@ PRICING_TIERS: Dict[str, PricingTier] = {
         coalition_rev_share={"publisher": 70, "encypher": 30},
         popular=True,
     ),
-    
     "business": PricingTier(
         id="business",
         name="Business",
@@ -128,7 +129,6 @@ PRICING_TIERS: Dict[str, PricingTier] = {
         },
         coalition_rev_share={"publisher": 75, "encypher": 25},
     ),
-    
     "enterprise": PricingTier(
         id="enterprise",
         name="Enterprise",
@@ -163,7 +163,6 @@ PRICING_TIERS: Dict[str, PricingTier] = {
         coalition_rev_share={"publisher": 80, "encypher": 20},
         enterprise=True,
     ),
-    
     "strategic_partner": PricingTier(
         id="strategic_partner",
         name="Strategic Partner",
@@ -230,7 +229,4 @@ def get_all_tiers() -> List[Dict[str, Any]]:
 
 def get_public_tiers() -> List[Dict[str, Any]]:
     """Get tiers that should be shown on public pricing page (excludes strategic partner)"""
-    return [
-        tier_dict for tier_dict in get_all_tiers()
-        if tier_dict["id"] != "strategic_partner"
-    ]
+    return [tier_dict for tier_dict in get_all_tiers() if tier_dict["id"] != "strategic_partner"]

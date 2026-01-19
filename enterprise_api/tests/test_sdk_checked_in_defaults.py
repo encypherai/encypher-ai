@@ -15,9 +15,9 @@ async def test_checked_in_sdk_runtimes_do_not_default_to_localhost() -> None:
     ts_runtime = repo_root / "sdk" / "typescript" / "src" / "runtime.ts"
     rust_config = repo_root / "sdk" / "rust" / "src" / "apis" / "configuration.rs"
 
-    assert "http://localhost\"" not in python_config.read_text(encoding="utf-8")
-    assert "http://localhost\"" not in ts_runtime.read_text(encoding="utf-8")
-    assert "http://localhost\"" not in rust_config.read_text(encoding="utf-8")
+    assert 'http://localhost"' not in python_config.read_text(encoding="utf-8")
+    assert 'http://localhost"' not in ts_runtime.read_text(encoding="utf-8")
+    assert 'http://localhost"' not in rust_config.read_text(encoding="utf-8")
 
 
 @pytest.mark.asyncio

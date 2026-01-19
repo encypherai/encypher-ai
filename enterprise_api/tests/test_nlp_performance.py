@@ -25,19 +25,19 @@ def test_spacy_reloads_every_time():
         mock_doc.sents = [mock_sent]
         mock_nlp.return_value = mock_doc
         mock_load.return_value = mock_nlp
-        
+
         # First call
         segment_sentences_advanced("First text.")
-        
+
         # Second call
         segment_sentences_advanced("Second text.")
-        
+
         # Check call count
         # If it's not cached, it will be 2
         # If it IS cached, it will be 1
-        
+
         # Assert it is 1 (demonstrating the fix)
         assert mock_load.call_count == 1
-        
+
         # Also verify it was called with the correct model
         mock_load.assert_called_with("en_core_web_sm")

@@ -139,4 +139,3 @@ def downgrade() -> None:
     batch_item_status_enum.drop(op.get_bind(), checkfirst=True)
     batch_status_enum.drop(op.get_bind(), checkfirst=True)
     batch_request_type.drop(op.get_bind(), checkfirst=True)
-

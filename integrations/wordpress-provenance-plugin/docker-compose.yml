@@ -68,7 +68,7 @@ services:
       enterprise-api:
         condition: service_started
     ports:
-      - "8080:80"
+      - "8085:80"
     environment:
       WORDPRESS_DB_HOST: wp-db:3306
       WORDPRESS_DB_USER: wordpress
@@ -76,8 +76,8 @@ services:
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DEBUG: "1"
       WORDPRESS_CONFIG_EXTRA: |
-        define( 'WP_HOME', 'http://localhost:8080' );
-        define( 'WP_SITEURL', 'http://localhost:8080' );
+        define( 'WP_HOME', 'http://localhost:8085' );
+        define( 'WP_SITEURL', 'http://localhost:8085' );
     volumes:
       - wordpress-data:/var/www/html
       - ./plugin/encypher-provenance:/var/www/html/wp-content/plugins/encypher-provenance

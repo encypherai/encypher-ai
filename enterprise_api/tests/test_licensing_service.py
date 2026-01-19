@@ -8,6 +8,7 @@ Tests the licensing service business logic including:
 - Revenue distribution calculations
 - Payout processing
 """
+
 from datetime import date, timedelta
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -114,7 +115,7 @@ class TestAgreementLifecycle:
         existing_agreement.agreement_name = "Old Name"
         existing_agreement.total_value = Decimal("100000.00")
 
-        with patch.object(LicensingService, 'get_agreement', return_value=existing_agreement):
+        with patch.object(LicensingService, "get_agreement", return_value=existing_agreement):
             update_data = LicensingAgreementUpdate(
                 agreement_name="New Name",
                 total_value=Decimal("150000.00"),
@@ -134,7 +135,7 @@ class TestAgreementLifecycle:
         existing_agreement.id = uuid4()
         existing_agreement.status = AgreementStatus.ACTIVE
 
-        with patch.object(LicensingService, 'get_agreement', return_value=existing_agreement):
+        with patch.object(LicensingService, "get_agreement", return_value=existing_agreement):
             result = await LicensingService.terminate_agreement(db, existing_agreement.id)
 
             assert result.status == AgreementStatus.TERMINATED
@@ -145,7 +146,7 @@ class TestAgreementLifecycle:
         """Test terminating non-existent agreement returns None."""
         db = AsyncMock()
 
-        with patch.object(LicensingService, 'get_agreement', return_value=None):
+        with patch.object(LicensingService, "get_agreement", return_value=None):
             result = await LicensingService.terminate_agreement(db, uuid4())
 
             assert result is None
@@ -158,9 +159,10 @@ class TestAPIKeyVerification:
     async def test_verify_valid_api_key(self):
         """Test verifying a valid API key."""
         db = AsyncMock()
-        
+
         # Create a real API key and hash for testing
         from app.utils.api_key import generate_api_key
+
         api_key, api_key_hash, prefix = generate_api_key()
 
         company = MagicMock(spec=AICompany)
@@ -168,9 +170,7 @@ class TestAPIKeyVerification:
         company.api_key_hash = api_key_hash
         company.status = AgreementStatus.ACTIVE
 
-        db.execute = AsyncMock(return_value=MagicMock(
-            scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[company])))
-        ))
+        db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[company])))))
 
         result = await LicensingService.verify_ai_company_access(db, api_key)
 
@@ -186,9 +186,7 @@ class TestAPIKeyVerification:
         company.api_key_hash = "invalid_hash"
         company.status = AgreementStatus.ACTIVE
 
-        db.execute = AsyncMock(return_value=MagicMock(
-            scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[company])))
-        ))
+        db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[company])))))
 
         result = await LicensingService.verify_ai_company_access(db, "lic_invalid_key_here_1234567890abcdef1234567890abcdef1234567890abcdef12345678")
 
@@ -198,9 +196,7 @@ class TestAPIKeyVerification:
     async def test_verify_api_key_no_companies(self):
         """Test verifying API key when no companies exist."""
         db = AsyncMock()
-        db.execute = AsyncMock(return_value=MagicMock(
-            scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))
-        ))
+        db.execute = AsyncMock(return_value=MagicMock(scalars=MagicMock(return_value=MagicMock(all=MagicMock(return_value=[])))))
 
         result = await LicensingService.verify_ai_company_access(db, "lic_any_key_1234567890abcdef1234567890abcdef1234567890abcdef1234567890")
 
@@ -250,7 +246,7 @@ class TestRevenueDistribution:
     async def test_calculate_distribution_70_30_split(self):
         """Test 70/30 revenue split calculation."""
         db = AsyncMock()
-        
+
         # Mock agreement with $120,000 annual value
         agreement = MagicMock(spec=LicensingAgreement)
         agreement.id = uuid4()
@@ -260,8 +256,8 @@ class TestRevenueDistribution:
         agreement.agreement_type = AgreementType.SUBSCRIPTION
         agreement.get_monthly_value = MagicMock(return_value=Decimal("10000.00"))
 
-        with patch.object(LicensingService, 'get_agreement', return_value=agreement):
-            with patch.object(LicensingService, 'get_access_logs', return_value=[]):
+        with patch.object(LicensingService, "get_agreement", return_value=agreement):
+            with patch.object(LicensingService, "get_access_logs", return_value=[]):
                 db.flush = AsyncMock()
                 db.commit = AsyncMock()
                 db.refresh = AsyncMock()
@@ -302,8 +298,8 @@ class TestRevenueDistribution:
             MagicMock(member_id=member2_id, content_id=content1_id),
         ]
 
-        with patch.object(LicensingService, 'get_agreement', return_value=agreement):
-            with patch.object(LicensingService, 'get_access_logs', return_value=access_logs):
+        with patch.object(LicensingService, "get_agreement", return_value=agreement):
+            with patch.object(LicensingService, "get_access_logs", return_value=access_logs):
                 db.flush = AsyncMock()
                 db.commit = AsyncMock()
                 db.refresh = AsyncMock()
@@ -324,7 +320,7 @@ class TestRevenueDistribution:
         """Test distribution fails for non-existent agreement."""
         db = AsyncMock()
 
-        with patch.object(LicensingService, 'get_agreement', return_value=None):
+        with patch.object(LicensingService, "get_agreement", return_value=None):
             distribution_data = RevenueDistributionCreate(
                 agreement_id=uuid4(),
                 period_start=date.today() - timedelta(days=30),
@@ -357,8 +353,8 @@ class TestPayoutProcessing:
         member_revenue2.status = PayoutStatus.PENDING
         member_revenue2.revenue_amount = Decimal("2000.00")
 
-        with patch.object(LicensingService, 'get_distribution', return_value=distribution):
-            with patch.object(LicensingService, 'get_member_revenues', return_value=[member_revenue1, member_revenue2]):
+        with patch.object(LicensingService, "get_distribution", return_value=distribution):
+            with patch.object(LicensingService, "get_member_revenues", return_value=[member_revenue1, member_revenue2]):
                 db.commit = AsyncMock()
 
                 result = await LicensingService.process_payouts(db, distribution.id)
@@ -380,7 +376,7 @@ class TestPayoutProcessing:
         distribution.id = uuid4()
         distribution.status = DistributionStatus.PENDING
 
-        with patch.object(LicensingService, 'get_distribution', return_value=distribution):
+        with patch.object(LicensingService, "get_distribution", return_value=distribution):
             with pytest.raises(ValueError, match="must be completed"):
                 await LicensingService.process_payouts(db, distribution.id)
 
@@ -389,7 +385,7 @@ class TestPayoutProcessing:
         """Test payout fails if distribution not found."""
         db = AsyncMock()
 
-        with patch.object(LicensingService, 'get_distribution', return_value=None):
+        with patch.object(LicensingService, "get_distribution", return_value=None):
             with pytest.raises(ValueError, match="not found"):
                 await LicensingService.process_payouts(db, uuid4())
 

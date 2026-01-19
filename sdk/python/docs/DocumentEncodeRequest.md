@@ -11,6 +11,7 @@ Name | Type | Description | Notes
 **segmentation_levels** | **List[str]** | Segmentation levels to encode (word/sentence/paragraph/section) | [optional] [default to [sentence]]
 **include_words** | **bool** | Whether to include word-level segmentation | [optional] [default to False]
 **metadata** | **Dict[str, object]** |  | [optional] 
+**fuzzy_fingerprint** | [**FuzzyFingerprintConfig**](FuzzyFingerprintConfig.md) |  | [optional] 
 
 ## Example
 

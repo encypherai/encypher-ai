@@ -1,6 +1,7 @@
 """
 Email service for sending emails from the application.
 """
+
 import logging
 import smtplib
 from email.mime.multipart import MIMEMultipart
@@ -11,6 +12,7 @@ from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
+
 async def send_email(
     to_email: str,
     subject: str,
@@ -20,14 +22,14 @@ async def send_email(
 ) -> bool:
     """
     Send an email using the configured SMTP server.
-    
+
     Args:
         to_email: Recipient email address
         subject: Email subject
         html_content: HTML content of the email
         text_content: Plain text content (optional, will be generated from HTML if not provided)
         from_email: Sender email address (defaults to settings.EMAILS_FROM_EMAIL)
-        
+
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
@@ -36,7 +38,7 @@ async def send_email(
         logger.info(f"Would send email to {to_email} with subject: {subject}")
         logger.info(f"Content: {html_content}")
         return True
-    
+
     # In production, actually send the email
     try:
         # Create message
@@ -44,31 +46,27 @@ async def send_email(
         message["Subject"] = subject
         message["From"] = from_email or settings.EMAILS_FROM_EMAIL
         message["To"] = to_email
-        
+
         # Add text part if provided
         if text_content:
             message.attach(MIMEText(text_content, "plain"))
-        
+
         # Add HTML part
         message.attach(MIMEText(html_content, "html"))
-        
+
         # Connect to SMTP server and send
         with smtplib.SMTP(settings.SMTP_HOST, settings.SMTP_PORT) as server:
             if settings.SMTP_TLS:
                 server.starttls()
-            
+
             if settings.SMTP_USER and settings.SMTP_PASSWORD:
                 server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            
-            server.sendmail(
-                message["From"],
-                [to_email],
-                message.as_string()
-            )
-        
+
+            server.sendmail(message["From"], [to_email], message.as_string())
+
         logger.info(f"Email sent successfully to {to_email}")
         return True
-    
+
     except Exception as e:
         logger.error(f"Failed to send email to {to_email}: {str(e)}")
         return False
@@ -77,16 +75,16 @@ async def send_email(
 async def send_password_reset_email(email: str, reset_url: str) -> bool:
     """
     Send a password reset email with a link to reset the password.
-    
+
     Args:
         email: Recipient email address
         reset_url: URL for resetting the password
-        
+
     Returns:
         bool: True if email was sent successfully, False otherwise
     """
     subject = "Password Reset - Encypher Dashboard"
-    
+
     html_content = f"""
     <html>
     <body>
@@ -105,7 +103,7 @@ async def send_password_reset_email(email: str, reset_url: str) -> bool:
     </body>
     </html>
     """
-    
+
     text_content = f"""
     Reset Your Password
     
@@ -120,10 +118,5 @@ async def send_password_reset_email(email: str, reset_url: str) -> bool:
     Thank you,
     The Encypher Team
     """
-    
-    return await send_email(
-        to_email=email,
-        subject=subject,
-        html_content=html_content,
-        text_content=text_content
-    )
+
+    return await send_email(to_email=email, subject=subject, html_content=html_content, text_content=text_content)

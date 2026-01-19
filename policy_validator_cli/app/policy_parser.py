@@ -7,7 +7,9 @@ from typing import Any, Dict
 
 class PolicySchemaError(Exception):
     """Custom exception for policy schema validation errors."""
+
     pass
+
 
 def load_policy(policy_path: Path) -> Dict[str, Any]:
     """Loads and validates the basic structure of a policy JSON file."""
@@ -15,7 +17,7 @@ def load_policy(policy_path: Path) -> Dict[str, Any]:
         raise FileNotFoundError(f"Policy file not found: {policy_path}")
 
     try:
-        with open(policy_path, encoding='utf-8') as f:
+        with open(policy_path, encoding="utf-8") as f:
             policy_data = json.load(f)
     except json.JSONDecodeError as e:
         raise PolicySchemaError(f"Invalid JSON in policy file {policy_path}: {e}")
@@ -42,9 +44,13 @@ def load_policy(policy_path: Path) -> Dict[str, Any]:
         if "key" not in rule or not isinstance(rule["key"], str):
             raise PolicySchemaError(f"Rule at index {idx} in policy file {policy_path} missing 'key' or key is not a string.")
         if "required" not in rule or not isinstance(rule["required"], bool):
-            raise PolicySchemaError(f"Rule '{rule.get('key')}' (index {idx}) in policy file {policy_path} missing 'required' field or it's not a boolean.")
+            raise PolicySchemaError(
+                f"Rule '{rule.get('key')}' (index {idx}) in policy file {policy_path} missing 'required' field or it's not a boolean."
+            )
         if "type" in rule and rule["type"] not in ["string", "integer", "boolean", "number"]:
-             raise PolicySchemaError(f"Rule '{rule.get('key')}' (index {idx}) has an invalid 'type': {rule['type']}. Supported types: string, integer, boolean, number.")
+            raise PolicySchemaError(
+                f"Rule '{rule.get('key')}' (index {idx}) has an invalid 'type': {rule['type']}. Supported types: string, integer, boolean, number."
+            )
         if "allowed_values" in rule and not isinstance(rule["allowed_values"], list):
             raise PolicySchemaError(f"Rule '{rule.get('key')}' (index {idx}) has 'allowed_values' but it's not a list.")
 

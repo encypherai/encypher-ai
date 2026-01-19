@@ -10,13 +10,14 @@ import {
   Input,
   Badge,
 } from '@encypher/design-system';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+import { useOrganization } from '../../contexts/OrganizationContext';
 
 const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
@@ -60,8 +61,9 @@ const normalizeProfile = (raw: any): Profile => ({
 export default function SettingsPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const queryClient = useQueryClient();
-  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'organization'>('profile');
+  const { activeOrganization, isLoading: orgLoading } = useOrganization();
+  const orgId = activeOrganization?.id;
   const [profile, setProfile] = useState<Profile>({
     name: '',
     email: '',
@@ -76,6 +78,8 @@ export default function SettingsPage() {
   const [newEmail, setNewEmail] = useState('');
   const [emailChangePassword, setEmailChangePassword] = useState('');
   const [pendingEmailChange, setPendingEmailChange] = useState<string | null>(null);
+  const [domainName, setDomainName] = useState('');
+  const [domainEmail, setDomainEmail] = useState('');
 
   const profileQuery = useQuery({
     queryKey: ['profile'],
@@ -181,6 +185,63 @@ export default function SettingsPage() {
 
   const isLoading = status === 'loading' || profileQuery.isLoading;
 
+  const domainClaimsQuery = useQuery({
+    queryKey: ['domain-claims', orgId],
+    queryFn: async () => {
+      if (!accessToken || !orgId) return [];
+      return apiClient.listDomainClaims(accessToken, orgId);
+    },
+    enabled: Boolean(accessToken && orgId),
+    refetchOnWindowFocus: false,
+  });
+
+  const createDomainClaimMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken || !orgId) throw new Error('You must be signed in.');
+      return apiClient.createDomainClaim(accessToken, orgId, {
+        domain: domainName,
+        verification_email: domainEmail,
+      });
+    },
+    onSuccess: () => {
+      toast.success('Domain claim created. Check your inbox to verify email ownership.');
+      setDomainName('');
+      setDomainEmail('');
+      domainClaimsQuery.refetch();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to create domain claim.');
+    },
+  });
+
+  const verifyDnsMutation = useMutation({
+    mutationFn: async (claimId: string) => {
+      if (!accessToken || !orgId) throw new Error('You must be signed in.');
+      return apiClient.verifyDomainClaimDns(accessToken, orgId, claimId);
+    },
+    onSuccess: () => {
+      toast.success('DNS verification successful.');
+      domainClaimsQuery.refetch();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'DNS verification failed.');
+    },
+  });
+
+  const updateAutoJoinMutation = useMutation({
+    mutationFn: async ({ claimId, enabled }: { claimId: string; enabled: boolean }) => {
+      if (!accessToken || !orgId) throw new Error('You must be signed in.');
+      return apiClient.updateDomainAutoJoin(accessToken, orgId, claimId, enabled);
+    },
+    onSuccess: () => {
+      toast.success('Auto-join setting updated.');
+      domainClaimsQuery.refetch();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to update auto-join setting.');
+    },
+  });
+
   const handleProfileSave = (e: React.FormEvent) => {
     e.preventDefault();
     updateProfileMutation.mutate(profile);
@@ -207,6 +268,19 @@ export default function SettingsPage() {
     requestEmailChangeMutation.mutate({ newEmail, password: emailChangePassword });
   };
 
+  const handleCreateDomainClaim = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!domainName.trim()) {
+      toast.error('Please enter a domain.');
+      return;
+    }
+    if (!domainEmail.trim()) {
+      toast.error('Please enter a verification email.');
+      return;
+    }
+    createDomainClaimMutation.mutate();
+  };
+
   return (
     <DashboardLayout>
       <div className="mb-8">
@@ -219,7 +293,7 @@ export default function SettingsPage() {
             <Card>
               <CardContent className="p-4">
                 <nav className="space-y-1">
-                  {['profile', 'security', 'notifications'].map((tab) => (
+                  {['profile', 'security', 'notifications', 'organization'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab as typeof activeTab)}
@@ -460,6 +534,113 @@ export default function SettingsPage() {
                         {updateProfileMutation.isPending ? 'Saving…' : 'Save preferences'}
                       </Button>
                     </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {activeTab === 'organization' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Organization domains</CardTitle>
+                  <CardDescription>
+                    Verify your company domain to enable automatic org joins for matching emails.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {orgLoading ? (
+                    <div className="text-muted-foreground">Loading organization…</div>
+                  ) : !orgId ? (
+                    <div className="text-muted-foreground">Select an organization to manage domain claims.</div>
+                  ) : (
+                    <>
+                      <form className="space-y-4" onSubmit={handleCreateDomainClaim}>
+                        <div className="grid md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Domain</label>
+                            <Input
+                              placeholder="example.com"
+                              value={domainName}
+                              onChange={(e) => setDomainName(e.target.value)}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Verification email</label>
+                            <Input
+                              type="email"
+                              placeholder="admin@example.com"
+                              value={domainEmail}
+                              onChange={(e) => setDomainEmail(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <Button type="submit" variant="primary" disabled={createDomainClaimMutation.isPending}>
+                          {createDomainClaimMutation.isPending ? 'Submitting…' : 'Request verification'}
+                        </Button>
+                      </form>
+
+                      <div className="border-t border-border pt-6">
+                        <h4 className="text-sm font-semibold mb-3">Domain claims</h4>
+                        {domainClaimsQuery.isLoading ? (
+                          <div className="text-muted-foreground">Loading domain claims…</div>
+                        ) : (domainClaimsQuery.data ?? []).length === 0 ? (
+                          <div className="text-muted-foreground">No domain claims yet.</div>
+                        ) : (
+                          <div className="space-y-4">
+                            {(domainClaimsQuery.data ?? []).map((claim) => (
+                              <div key={claim.id} className="border border-border rounded-lg p-4 space-y-3">
+                                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                                  <div>
+                                    <div className="font-medium">{claim.domain}</div>
+                                    <div className="text-xs text-muted-foreground">{claim.verification_email}</div>
+                                  </div>
+                                  <Badge variant="outline">{claim.status}</Badge>
+                                </div>
+                                <div className="text-xs text-muted-foreground">
+                                  DNS TXT:{' '}
+                                  <span className="font-mono">
+                                    {claim.dns_txt_record || `encypher-domain-claim=${claim.dns_token}`}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col md:flex-row gap-3 md:items-center md:justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => verifyDnsMutation.mutate(claim.id)}
+                                      disabled={verifyDnsMutation.isPending}
+                                    >
+                                      Verify DNS
+                                    </Button>
+                                    {claim.status === 'verified' && (
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <span className="text-muted-foreground">Auto-join</span>
+                                        <input
+                                          type="checkbox"
+                                          checked={claim.auto_join_enabled}
+                                          onChange={(e) =>
+                                            updateAutoJoinMutation.mutate({
+                                              claimId: claim.id,
+                                              enabled: e.target.checked,
+                                            })
+                                          }
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {claim.verified_at
+                                      ? `Verified ${new Date(claim.verified_at).toLocaleDateString()}`
+                                      : 'Awaiting verification'}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
                 </CardContent>
               </Card>

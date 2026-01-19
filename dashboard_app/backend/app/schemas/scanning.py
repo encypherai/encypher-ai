@@ -1,6 +1,7 @@
 """
 Pydantic schemas for directory scanning workflow.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, List, Literal, Optional
@@ -17,19 +18,13 @@ class DirectoryScanRequest(BaseModel):
 
     directory_path: str = Field(..., description="Absolute path to the directory to scan.")
     recursive: bool = Field(default=True, description="Recurse into sub-directories when true.")
-    include_extensions: Optional[List[str]] = Field(
-        default=None, description="Optional whitelist of extensions (e.g. ['.txt', '.md'])."
-    )
+    include_extensions: Optional[List[str]] = Field(default=None, description="Optional whitelist of extensions (e.g. ['.txt', '.md']).")
     exclude_patterns: Optional[List[str]] = Field(
         default=None, description="Optional fnmatch-style patterns to skip (matched against absolute path)."
     )
     encoding: str = Field(default="utf-8", description="Text encoding used when reading files.")
-    mark_unmarked: bool = Field(
-        default=False, description="When true, unmarked files will be signed via Enterprise API."
-    )
-    sign_output_mode: Literal["sidecar", "overwrite"] = Field(
-        default="sidecar", description="Writing strategy when marking unmarked files."
-    )
+    mark_unmarked: bool = Field(default=False, description="When true, unmarked files will be signed via Enterprise API.")
+    sign_output_mode: Literal["sidecar", "overwrite"] = Field(default="sidecar", description="Writing strategy when marking unmarked files.")
     schema: Dict[str, Any] = Field(
         default_factory=dict,
         description="Template dict used to populate sign request metadata per file (same as directory signing).",

@@ -11,6 +11,7 @@ import sys
 # Add the app directory to the path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
+
 def test_imports():
     """Test that all modules can be imported."""
     print("=" * 60)
@@ -25,6 +26,7 @@ def test_imports():
     print("1. Testing models import...")
     try:
         from app.models.licensing import AgreementStatus
+
         print("   ✓ All models imported successfully")
         print("     - AICompany, LicensingAgreement, ContentAccessLog")
         print("     - RevenueDistribution, MemberRevenue")
@@ -62,8 +64,9 @@ def test_imports():
     print("4. Testing service layer import...")
     try:
         from app.services.licensing_service import LicensingService
+
         print("   ✓ LicensingService imported successfully")
-        service_methods = [m for m in dir(LicensingService) if not m.startswith('_')]
+        service_methods = [m for m in dir(LicensingService) if not m.startswith("_")]
         print(f"     - Available methods ({len(service_methods)}): {', '.join(service_methods[:5])}...")
         tests_passed += 1
     except Exception as e:
@@ -86,6 +89,7 @@ def test_imports():
     print("6. Testing router import...")
     try:
         from app.routers.licensing import router
+
         print("   ✓ Licensing router imported successfully")
         print(f"     - Prefix: {router.prefix}")
         print(f"     - Number of routes: {len(router.routes)}")
@@ -99,6 +103,7 @@ def test_imports():
     print("7. Checking migration file...")
     try:
         import os
+
         migration_file = "alembic/versions/add_licensing_agreement_management.py"
         if os.path.exists(migration_file):
             print(f"   ✓ Migration file exists: {migration_file}")
@@ -115,8 +120,9 @@ def test_imports():
     print("8. Testing main app integration...")
     try:
         from app.main import app
+
         # Check if licensing router is included
-        licensing_routes = [r for r in app.routes if hasattr(r, 'path') and '/licensing' in r.path]
+        licensing_routes = [r for r in app.routes if hasattr(r, "path") and "/licensing" in r.path]
         if licensing_routes:
             print("   ✓ Licensing router integrated into main app")
             print(f"     - Found {len(licensing_routes)} licensing routes")
@@ -146,6 +152,7 @@ def test_imports():
         print()
         print("✗ SOME TESTS FAILED - Please review the errors above")
         return 1
+
 
 if __name__ == "__main__":
     exit_code = test_imports()

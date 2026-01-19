@@ -1,6 +1,7 @@
 """
 Blacklisted token model for token revocation.
 """
+
 from sqlalchemy import Column, DateTime, Integer, String, func
 
 from app.core.database import Base
@@ -11,6 +12,7 @@ class BlacklistedToken(Base):
     Model for storing revoked/blacklisted tokens.
     This is used to implement token revocation on logout.
     """
+
     __tablename__ = "blacklisted_tokens"
 
     id = Column(Integer, primary_key=True, index=True)

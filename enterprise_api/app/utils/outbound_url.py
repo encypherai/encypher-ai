@@ -32,22 +32,8 @@ def validate_https_public_url(url: str, *, resolve_dns: bool = False) -> None:
         for _family, _socktype, _proto, _canon, sockaddr in addrs:
             ip_str = sockaddr[0]
             ip = ipaddress.ip_address(ip_str)
-            if (
-                ip.is_loopback
-                or ip.is_private
-                or ip.is_link_local
-                or ip.is_reserved
-                or ip.is_multicast
-                or ip.is_unspecified
-            ):
+            if ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
                 raise ValueError("untrusted url")
     else:
-        if (
-            ip.is_loopback
-            or ip.is_private
-            or ip.is_link_local
-            or ip.is_reserved
-            or ip.is_multicast
-            or ip.is_unspecified
-        ):
+        if ip.is_loopback or ip.is_private or ip.is_link_local or ip.is_reserved or ip.is_multicast or ip.is_unspecified:
             raise ValueError("untrusted url")

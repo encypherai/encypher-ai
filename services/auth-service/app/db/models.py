@@ -72,6 +72,9 @@ class User(Base):
     api_access_use_case = Column(Text, nullable=True)  # User's stated use case for API access
     api_access_denial_reason = Column(Text, nullable=True)  # Reason if denied
 
+    # Team management
+    default_organization_id = Column(String(64), nullable=True)
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
@@ -196,6 +199,7 @@ class Organization(Base):
     # Relationships
     members = relationship("OrganizationMember", back_populates="organization", cascade="all, delete-orphan")
     invitations = relationship("OrganizationInvitation", back_populates="organization", cascade="all, delete-orphan")
+    domain_claims = relationship("OrganizationDomainClaim", back_populates="organization", cascade="all, delete-orphan")
     audit_logs = relationship("OrganizationAuditLog", back_populates="organization", cascade="all, delete-orphan")
 
     def __repr__(self):
@@ -272,6 +276,37 @@ class OrganizationInvitation(Base):
 
     def __repr__(self):
         return f"<OrganizationInvitation(org={self.organization_id}, email={self.email}, status={self.status})>"
+
+
+class OrganizationDomainClaim(Base):
+    """Organization domain claim for verification and auto-join settings"""
+
+    __tablename__ = "organization_domain_claims"
+
+    id = Column(String(64), primary_key=True, default=lambda: generate_prefixed_id("odc"))
+    organization_id = Column(String(64), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False)
+    domain = Column(String(255), nullable=False)
+    verification_email = Column(String(255), nullable=False)
+
+    dns_token = Column(String(255), nullable=False)
+    email_token = Column(String(255), nullable=False)
+
+    status = Column(String(32), nullable=False, default="pending")  # pending, verified, rejected, expired
+    dns_verified_at = Column(DateTime(timezone=True), nullable=True)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
+    verified_at = Column(DateTime(timezone=True), nullable=True)
+
+    auto_join_enabled = Column(Boolean, default=False)
+    created_by = Column(String(64), ForeignKey("users.id"), nullable=False)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    organization = relationship("Organization", back_populates="domain_claims")
+    creator = relationship("User", foreign_keys=[created_by])
+
+    def __repr__(self):
+        return f"<OrganizationDomainClaim(org={self.organization_id}, domain={self.domain}, status={self.status})>"
 
 
 class OrganizationAuditLog(Base):

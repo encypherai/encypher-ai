@@ -3,6 +3,7 @@ SQLAlchemy database models for Key Service
 
 Uses the unified schema from services/migrations/001_core_schema.sql
 """
+
 from sqlalchemy import Column, String, Boolean, DateTime, Text, Integer, ForeignKey
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.declarative import declarative_base
@@ -19,6 +20,7 @@ def generate_uuid():
 
 class Organization(Base):
     """Organization model - the billing entity"""
+
     __tablename__ = "organizations"
 
     id = Column(String(64), primary_key=True)
@@ -27,10 +29,10 @@ class Organization(Base):
     email = Column(String(255), nullable=False, unique=True)
 
     # Subscription
-    tier = Column(String(32), nullable=False, default='starter')
+    tier = Column(String(32), nullable=False, default="starter")
     stripe_customer_id = Column(String(255), unique=True)
     stripe_subscription_id = Column(String(255))
-    subscription_status = Column(String(32), default='active')
+    subscription_status = Column(String(32), default="active")
 
     # Features (JSONB)
     features = Column(JSONB, nullable=False, default={})
@@ -50,13 +52,14 @@ class Organization(Base):
 
 class ApiKey(Base):
     """API Key model - unified schema"""
+
     __tablename__ = "api_keys"
 
     id = Column(String(64), primary_key=True, default=lambda: f"key_{uuid.uuid4().hex[:16]}")
 
     # Owner - can be organization_id OR user_id depending on context
     # For dashboard users without orgs, we use user_id
-    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=True, index=True)
+    organization_id = Column(String(64), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=True, index=True)
     user_id = Column(String(64), nullable=True, index=True)  # For users without orgs
 
     # Key information
@@ -92,11 +95,12 @@ class ApiKey(Base):
 
 class KeyUsage(Base):
     """API Key usage tracking"""
+
     __tablename__ = "key_usage"
 
     id = Column(String(64), primary_key=True, default=lambda: f"ku_{uuid.uuid4().hex[:12]}")
-    key_id = Column(String(64), ForeignKey('api_keys.id', ondelete='CASCADE'), nullable=False, index=True)
-    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=False, index=True)
+    key_id = Column(String(64), ForeignKey("api_keys.id", ondelete="CASCADE"), nullable=False, index=True)
+    organization_id = Column(String(64), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Request information
     endpoint = Column(String(255), nullable=True)
@@ -116,12 +120,13 @@ class KeyUsage(Base):
 
 class KeyRotation(Base):
     """API Key rotation history"""
+
     __tablename__ = "key_rotations"
 
     id = Column(String(64), primary_key=True, default=lambda: f"kr_{uuid.uuid4().hex[:12]}")
     old_key_id = Column(String(64), nullable=False, index=True)
     new_key_id = Column(String(64), nullable=False, index=True)
-    organization_id = Column(String(64), ForeignKey('organizations.id', ondelete='CASCADE'), nullable=False, index=True)
+    organization_id = Column(String(64), ForeignKey("organizations.id", ondelete="CASCADE"), nullable=False, index=True)
 
     # Rotation information
     reason = Column(String(255), nullable=True)

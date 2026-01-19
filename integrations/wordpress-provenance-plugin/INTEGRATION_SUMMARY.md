@@ -63,10 +63,13 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 }
 ```
 
-### 2. Verification Endpoint
-**Endpoint:** `POST /api/v1/public/extract-and-verify`  
-**Purpose:** Extract and verify invisible C2PA embeddings from text  
-**Authentication:** Not required (public endpoint)
+### 2. Verification Endpoints
+**Endpoints:**
+- `POST /api/v1/verify/advanced` (Professional+ authenticated verification)
+- `POST /api/v1/verify` (public verification fallback)
+- `POST /api/v1/public/extract-and-verify` (public extraction + verification)
+**Purpose:** Verify embedded C2PA manifests and optionally run attribution/plagiarism analysis.  
+**Authentication:** Required for `/verify/advanced`, optional for public endpoints.
 
 **Request Format:**
 ```json
@@ -120,7 +123,7 @@ The WordPress C2PA plugin has been successfully integrated with the Enterprise A
 **2. Verify Content**
 - **Endpoint:** `POST /wp-json/encypher-provenance/v1/verify`
 - **Purpose:** Verify C2PA manifest in post content
-- **Calls:** Enterprise API `/verify`
+- **Calls:** Enterprise API `/verify/advanced` for Pro/Enterprise tiers with fallback to `/verify`
 - **Permission:** `edit_post` capability required
 
 **3. Get Status**

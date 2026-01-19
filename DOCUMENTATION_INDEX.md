@@ -219,6 +219,8 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose |
 |----------|---------|
 | [docs/architecture/BACKEND_ARCHITECTURE.md](./docs/architecture/BACKEND_ARCHITECTURE.md) | Backend system design |
+| [docs/architecture/MINIMAL_UUID_EMBEDDING_FLOW.html](./docs/architecture/MINIMAL_UUID_EMBEDDING_FLOW.html) | HTML diagram of minimal_uuid signing + verification flow |
+| [docs/architecture/EMBEDDING_ICON_DEMO.html](./docs/architecture/EMBEDDING_ICON_DEMO.html) | Interactive article demo with embedding icons + payload details |
 | [docs/architecture/SUBDOMAIN_STRATEGY.md](./docs/architecture/SUBDOMAIN_STRATEGY.md) | Domain strategy |
 | [docs/architecture/CORRECTED_MIGRATION_PLAN.md](./docs/architecture/CORRECTED_MIGRATION_PLAN.md) | Migration planning |
 
@@ -232,6 +234,7 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose |
 |----------|---------|
 | [PRDs/CURRENT/](./PRDs/CURRENT/) | Active PRDs |
+| [PRDs/CURRENT/PRD_Enterprise_API_Production_Readiness_Blockers.md](./PRDs/CURRENT/PRD_Enterprise_API_Production_Readiness_Blockers.md) | Production readiness blockers for enterprise API |
 | [PRDs/CURRENT/PRD_Python_SDK_WBS.md](./PRDs/CURRENT/PRD_Python_SDK_WBS.md) | Python SDK production readiness WBS |
 | [docs/PRD.md](./docs/PRD.md) | Main product requirements |
 

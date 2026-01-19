@@ -1,6 +1,7 @@
 """
 Directory signing orchestration leveraging the Enterprise API.
 """
+
 from __future__ import annotations
 
 import fnmatch
@@ -240,11 +241,7 @@ async def _sign_file_via_api(
 
     signed_path: Optional[str] = None
     if request.output_mode != "dry_run" and signed_text is not None:
-        target_path = (
-            file_path
-            if request.output_mode == "overwrite"
-            else _sidecar_path(file_path)
-        )
+        target_path = file_path if request.output_mode == "overwrite" else _sidecar_path(file_path)
         try:
             target_path.write_text(signed_text, encoding=request.encoding)
             signed_path = str(target_path)

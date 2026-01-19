@@ -1,4 +1,5 @@
 """SQLAlchemy database models for Analytics Service"""
+
 from sqlalchemy import Column, String, Integer, DateTime, JSON, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
@@ -13,6 +14,7 @@ def generate_uuid():
 
 class UsageMetric(Base):
     """Usage metrics model"""
+
     __tablename__ = "usage_metrics"
 
     id = Column(String, primary_key=True, default=generate_uuid)
@@ -46,6 +48,7 @@ class UsageMetric(Base):
 
 class AggregatedMetric(Base):
     """Pre-aggregated metrics for performance"""
+
     __tablename__ = "aggregated_metrics"
 
     id = Column(String, primary_key=True, default=generate_uuid)

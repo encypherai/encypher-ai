@@ -1,4 +1,4 @@
-# @encypher/sdk@1.0.1
+# @encypher/sdk@1.0.2
 
 A TypeScript SDK client for the api.encypherai.com API.
 
@@ -91,8 +91,8 @@ All URIs are relative to *https://api.encypherai.com*
 *C2PACustomAssertionsApi* | [**updateSchemaApiV1EnterpriseC2paSchemasSchemaIdPut**](docs/C2PACustomAssertionsApi.md#updateschemaapiv1enterprisec2paschemasschemaidput) | **PUT** /api/v1/enterprise/c2pa/schemas/{schema_id} | Update Schema
 *C2PACustomAssertionsApi* | [**updateTemplateApiV1EnterpriseC2paTemplatesTemplateIdPut**](docs/C2PACustomAssertionsApi.md#updatetemplateapiv1enterprisec2patemplatestemplateidput) | **PUT** /api/v1/enterprise/c2pa/templates/{template_id} | Update Template
 *C2PACustomAssertionsApi* | [**validateAssertionApiV1EnterpriseC2paValidatePost**](docs/C2PACustomAssertionsApi.md#validateassertionapiv1enterprisec2pavalidatepost) | **POST** /api/v1/enterprise/c2pa/validate | Validate Assertion
-*ChatApi* | [**chatHealthCheckApiV1StreamChatHealthGet**](docs/ChatApi.md#chathealthcheckapiv1streamchathealthget) | **GET** /api/v1/stream/chat/health | Chat Health Check
-*ChatApi* | [**openaiCompatibleChatApiV1StreamChatOpenaiCompatiblePost**](docs/ChatApi.md#openaicompatiblechatapiv1streamchatopenaicompatiblepost) | **POST** /api/v1/stream/chat/openai-compatible | Openai Compatible Chat
+*ChatApi* | [**chatHealthCheckApiV1ChatHealthGet**](docs/ChatApi.md#chathealthcheckapiv1chathealthget) | **GET** /api/v1/chat/health | Chat Health Check
+*ChatApi* | [**openaiCompatibleChatApiV1ChatCompletionsPost**](docs/ChatApi.md#openaicompatiblechatapiv1chatcompletionspost) | **POST** /api/v1/chat/completions | Openai Compatible Chat
 *CoalitionApi* | [**getCoalitionDashboardApiV1CoalitionDashboardGet**](docs/CoalitionApi.md#getcoalitiondashboardapiv1coalitiondashboardget) | **GET** /api/v1/coalition/dashboard | Get Coalition Dashboard
 *CoalitionApi* | [**getCoalitionDashboardApiV1CoalitionDashboardGet_0**](docs/CoalitionApi.md#getcoalitiondashboardapiv1coalitiondashboardget_0) | **GET** /api/v1/coalition/dashboard | Get Coalition Dashboard
 *CoalitionApi* | [**getContentStatsApiV1CoalitionContentStatsGet**](docs/CoalitionApi.md#getcontentstatsapiv1coalitioncontentstatsget) | **GET** /api/v1/coalition/content-stats | Get Content Stats
@@ -141,12 +141,12 @@ All URIs are relative to *https://api.encypherai.com*
 *StatusRevocationApi* | [**reinstateDocumentApiV1StatusDocumentsDocumentIdReinstatePost_0**](docs/StatusRevocationApi.md#reinstatedocumentapiv1statusdocumentsdocumentidreinstatepost_0) | **POST** /api/v1/status/documents/{document_id}/reinstate | Reinstate Document
 *StatusRevocationApi* | [**revokeDocumentApiV1StatusDocumentsDocumentIdRevokePost**](docs/StatusRevocationApi.md#revokedocumentapiv1statusdocumentsdocumentidrevokepost) | **POST** /api/v1/status/documents/{document_id}/revoke | Revoke Document
 *StatusRevocationApi* | [**revokeDocumentApiV1StatusDocumentsDocumentIdRevokePost_0**](docs/StatusRevocationApi.md#revokedocumentapiv1statusdocumentsdocumentidrevokepost_0) | **POST** /api/v1/status/documents/{document_id}/revoke | Revoke Document
-*StreamingApi* | [**closeStreamingSessionApiV1StreamSessionSessionIdClosePost**](docs/StreamingApi.md#closestreamingsessionapiv1streamsessionsessionidclosepost) | **POST** /api/v1/stream/session/{session_id}/close | Close Streaming Session
-*StreamingApi* | [**createStreamingSessionApiV1StreamSessionCreatePost**](docs/StreamingApi.md#createstreamingsessionapiv1streamsessioncreatepost) | **POST** /api/v1/stream/session/create | Create Streaming Session
-*StreamingApi* | [**getStreamRunApiV1StreamRunsRunIdGet**](docs/StreamingApi.md#getstreamrunapiv1streamrunsrunidget) | **GET** /api/v1/stream/runs/{run_id} | Get Stream Run
-*StreamingApi* | [**getStreamingStatsApiV1StreamStatsGet**](docs/StreamingApi.md#getstreamingstatsapiv1streamstatsget) | **GET** /api/v1/stream/stats | Get Streaming Stats
-*StreamingApi* | [**sseEventsEndpointApiV1StreamEventsGet**](docs/StreamingApi.md#sseeventsendpointapiv1streameventsget) | **GET** /api/v1/stream/events | Sse Events Endpoint
-*StreamingApi* | [**streamSigningApiV1StreamSignPost**](docs/StreamingApi.md#streamsigningapiv1streamsignpost) | **POST** /api/v1/stream/sign | Stream Signing
+*StreamingApi* | [**closeStreamingSessionApiV1SignStreamSessionsSessionIdClosePost**](docs/StreamingApi.md#closestreamingsessionapiv1signstreamsessionssessionidclosepost) | **POST** /api/v1/sign/stream/sessions/{session_id}/close | Close Streaming Session
+*StreamingApi* | [**createStreamingSessionApiV1SignStreamSessionsPost**](docs/StreamingApi.md#createstreamingsessionapiv1signstreamsessionspost) | **POST** /api/v1/sign/stream/sessions | Create Streaming Session
+*StreamingApi* | [**getStreamRunApiV1SignStreamRunsRunIdGet**](docs/StreamingApi.md#getstreamrunapiv1signstreamrunsrunidget) | **GET** /api/v1/sign/stream/runs/{run_id} | Get Stream Run
+*StreamingApi* | [**getStreamingStatsApiV1SignStreamStatsGet**](docs/StreamingApi.md#getstreamingstatsapiv1signstreamstatsget) | **GET** /api/v1/sign/stream/stats | Get Streaming Stats
+*StreamingApi* | [**sseEventsEndpointApiV1SignStreamSessionsSessionIdEventsGet**](docs/StreamingApi.md#sseeventsendpointapiv1signstreamsessionssessionideventsget) | **GET** /api/v1/sign/stream/sessions/{session_id}/events | Sse Events Endpoint
+*StreamingApi* | [**streamSigningApiV1SignStreamPost**](docs/StreamingApi.md#streamsigningapiv1signstreampost) | **POST** /api/v1/sign/stream | Stream Signing
 *StreamingMerkleApi* | [**addSegmentToSessionApiV1EnterpriseStreamMerkleSegmentPost**](docs/StreamingMerkleApi.md#addsegmenttosessionapiv1enterprisestreammerklesegmentpost) | **POST** /api/v1/enterprise/stream/merkle/segment | Add Segment To Session
 *StreamingMerkleApi* | [**finalizeStreamingSessionApiV1EnterpriseStreamMerkleFinalizePost**](docs/StreamingMerkleApi.md#finalizestreamingsessionapiv1enterprisestreammerklefinalizepost) | **POST** /api/v1/enterprise/stream/merkle/finalize | Finalize Streaming Session
 *StreamingMerkleApi* | [**getSessionStatusApiV1EnterpriseStreamMerkleStatusPost**](docs/StreamingMerkleApi.md#getsessionstatusapiv1enterprisestreammerklestatuspost) | **POST** /api/v1/enterprise/stream/merkle/status | Get Session Status
@@ -181,9 +181,9 @@ All URIs are relative to *https://api.encypherai.com*
 
 - [AccountInfo](docs/AccountInfo.md)
 - [AccountResponse](docs/AccountResponse.md)
-- [AppSchemasEmbeddingsBatchVerifyRequest](docs/AppSchemasEmbeddingsBatchVerifyRequest.md)
-- [AppSchemasEmbeddingsErrorResponse](docs/AppSchemasEmbeddingsErrorResponse.md)
+- [AppSchemasBatchBatchVerifyRequest](docs/AppSchemasBatchBatchVerifyRequest.md)
 - [AppSchemasEmbeddingsRightsMetadata](docs/AppSchemasEmbeddingsRightsMetadata.md)
+- [AppSchemasMerkleErrorResponse](docs/AppSchemasMerkleErrorResponse.md)
 - [BatchItemPayload](docs/BatchItemPayload.md)
 - [BatchItemResult](docs/BatchItemResult.md)
 - [BatchResponseData](docs/BatchResponseData.md)
@@ -193,7 +193,7 @@ All URIs are relative to *https://api.encypherai.com*
 - [BatchVerifyRequest](docs/BatchVerifyRequest.md)
 - [BatchVerifyResponse](docs/BatchVerifyResponse.md)
 - [BatchVerifyResult](docs/BatchVerifyResult.md)
-- [BodyCreateStreamingSessionApiV1StreamSessionCreatePost](docs/BodyCreateStreamingSessionApiV1StreamSessionCreatePost.md)
+- [BodyCreateStreamingSessionApiV1SignStreamSessionsPost](docs/BodyCreateStreamingSessionApiV1SignStreamSessionsPost.md)
 - [C2PAAssertionValidateRequest](docs/C2PAAssertionValidateRequest.md)
 - [C2PAAssertionValidateResponse](docs/C2PAAssertionValidateResponse.md)
 - [C2PAAssertionValidationResult](docs/C2PAAssertionValidationResult.md)
@@ -246,6 +246,8 @@ All URIs are relative to *https://api.encypherai.com*
 - [FingerprintEncodeRequest](docs/FingerprintEncodeRequest.md)
 - [FingerprintEncodeResponse](docs/FingerprintEncodeResponse.md)
 - [FingerprintMatch](docs/FingerprintMatch.md)
+- [FuzzyFingerprintConfig](docs/FuzzyFingerprintConfig.md)
+- [FuzzySearchConfig](docs/FuzzySearchConfig.md)
 - [HTTPValidationError](docs/HTTPValidationError.md)
 - [KeyCreateRequest](docs/KeyCreateRequest.md)
 - [KeyCreateResponse](docs/KeyCreateResponse.md)
@@ -335,8 +337,8 @@ This TypeScript SDK client supports the [Fetch API](https://fetch.spec.whatwg.or
 and is automatically generated by the
 [OpenAPI Generator](https://openapi-generator.tech) project:
 
-- API version: `1.0.1`
-- Package version: `1.0.1`
+- API version: `1.0.2`
+- Package version: `1.0.2`
 - Generator version: `7.17.0`
 - Build package: `org.openapitools.codegen.languages.TypeScriptFetchClientCodegen`
 

@@ -1,6 +1,7 @@
 """
 API endpoints for Enterprise API-backed signing workflows.
 """
+
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status

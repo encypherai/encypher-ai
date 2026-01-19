@@ -2,6 +2,7 @@
 Directory scanning service to detect signed/unsigned files and optionally mark
 unmarked files by calling the Enterprise API.
 """
+
 from __future__ import annotations
 
 from collections.abc import AsyncIterator

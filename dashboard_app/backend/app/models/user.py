@@ -1,6 +1,7 @@
 """
 User model for authentication and authorization.
 """
+
 from sqlalchemy import Boolean, Column, Integer, String
 from sqlalchemy.sql import func
 from sqlalchemy.sql.sqltypes import DateTime
@@ -10,6 +11,7 @@ from app.core.database import Base
 
 class User(Base):
     """User model for authentication and authorization."""
+
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)

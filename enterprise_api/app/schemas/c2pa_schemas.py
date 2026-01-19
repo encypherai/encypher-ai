@@ -1,14 +1,17 @@
 """
 Pydantic schemas for C2PA custom assertions API.
 """
+
 from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
 # Schema Management Schemas
 
+
 class C2PASchemaCreate(BaseModel):
     """Request schema for creating a C2PA assertion schema."""
+
     name: str = Field(..., description="Human-readable name for the schema")
     label: str = Field(..., description="Full assertion label (e.g., 'com.acme.legal.v1')")
     version: str = Field("1.0", description="Schema version (e.g., 'v1', '1.0.0')")
@@ -19,6 +22,7 @@ class C2PASchemaCreate(BaseModel):
 
 class C2PASchemaUpdate(BaseModel):
     """Request schema for updating a C2PA assertion schema."""
+
     json_schema: Optional[Dict[str, Any]] = Field(None, description="Updated JSON Schema")
     description: Optional[str] = Field(None, description="Updated description")
     is_public: Optional[bool] = Field(None, description="Updated public flag")
@@ -26,6 +30,7 @@ class C2PASchemaUpdate(BaseModel):
 
 class C2PASchemaResponse(BaseModel):
     """Response schema for C2PA assertion schema."""
+
     id: str
     name: str
     label: str
@@ -41,6 +46,7 @@ class C2PASchemaResponse(BaseModel):
 
 class C2PASchemaListResponse(BaseModel):
     """Response schema for listing C2PA schemas."""
+
     schemas: List[C2PASchemaResponse]
     total: int
     page: int
@@ -49,14 +55,17 @@ class C2PASchemaListResponse(BaseModel):
 
 # Assertion Validation Schemas
 
+
 class C2PAAssertionValidateRequest(BaseModel):
     """Request schema for validating a C2PA assertion."""
+
     label: str = Field(..., description="Assertion label to validate")
     data: Dict[str, Any] = Field(..., description="Assertion data to validate")
 
 
 class C2PAAssertionValidationResult(BaseModel):
     """Validation result for a single assertion."""
+
     label: str
     valid: bool
     errors: List[str] = Field(default_factory=list)
@@ -65,14 +74,17 @@ class C2PAAssertionValidationResult(BaseModel):
 
 class C2PAAssertionValidateResponse(BaseModel):
     """Response schema for assertion validation."""
+
     valid: bool
     assertions: List[C2PAAssertionValidationResult]
 
 
 # Template Schemas
 
+
 class C2PATemplateCreate(BaseModel):
     """Request schema for creating an assertion template."""
+
     name: str = Field(..., description="Template name")
     schema_id: str = Field(..., description="ID of the schema this template uses")
     template_data: Dict[str, Any] = Field(..., description="Template data/configuration")
@@ -83,6 +95,7 @@ class C2PATemplateCreate(BaseModel):
 
 class C2PATemplateUpdate(BaseModel):
     """Request schema for updating an assertion template."""
+
     name: Optional[str] = Field(None, description="Updated name")
     description: Optional[str] = Field(None, description="Updated description")
     template_data: Optional[Dict[str, Any]] = Field(None, description="Updated template data")
@@ -92,6 +105,7 @@ class C2PATemplateUpdate(BaseModel):
 
 class C2PATemplateResponse(BaseModel):
     """Response schema for assertion template."""
+
     id: str
     name: str
     description: Optional[str]
@@ -108,6 +122,7 @@ class C2PATemplateResponse(BaseModel):
 
 class C2PATemplateListResponse(BaseModel):
     """Response schema for listing templates."""
+
     templates: List[C2PATemplateResponse]
     total: int
     page: int
@@ -116,14 +131,17 @@ class C2PATemplateListResponse(BaseModel):
 
 # Enhanced Embedding Request with Custom Assertions
 
+
 class CustomAssertion(BaseModel):
     """Custom C2PA assertion."""
+
     label: str = Field(..., description="Assertion label (e.g., 'c2pa.location.v1')")
     data: Dict[str, Any] = Field(..., description="Assertion data")
 
 
 class EnhancedEncodeRequest(BaseModel):
     """Enhanced encoding request with custom assertions support."""
+
     text: str = Field(..., description="Text content to encode")
     document_id: str = Field(..., description="Unique document identifier")
     action: str = Field("c2pa.created", description="C2PA action (e.g., 'c2pa.created', 'c2pa.edited')")

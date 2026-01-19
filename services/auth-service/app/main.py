@@ -16,6 +16,7 @@ from .db.models import Base
 from .db.session import engine
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
+from .middleware.request_size_limit import RequestSizeLimitMiddleware
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
@@ -28,7 +29,7 @@ def _send_startup_test_email():
     """Send a test email on startup to verify email configuration."""
     from encypher_commercial_shared.email import EmailConfig, send_email
     from datetime import datetime
-    
+
     config = EmailConfig(
         smtp_host=settings.SMTP_HOST,
         smtp_port=settings.SMTP_PORT,
@@ -38,7 +39,7 @@ def _send_startup_test_email():
         email_from=settings.EMAIL_FROM,
         email_from_name=settings.EMAIL_FROM_NAME,
     )
-    
+
     timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
     html_content = f"""
 <!DOCTYPE html>
@@ -57,7 +58,7 @@ def _send_startup_test_email():
 </body>
 </html>
 """
-    
+
     plain_content = f"""
 Auth Service Started Successfully
 
@@ -68,7 +69,7 @@ SMTP Host: {settings.SMTP_HOST}
 
 — Encypher System
 """
-    
+
     success = send_email(
         config=config,
         to_email=settings.ADMIN_EMAIL,
@@ -76,12 +77,12 @@ SMTP Host: {settings.SMTP_HOST}
         html_content=html_content,
         plain_content=plain_content.strip(),
     )
-    
+
     if success:
         logger.info(f"Startup test email sent to {settings.ADMIN_EMAIL}")
     else:
         logger.error(f"Failed to send startup test email to {settings.ADMIN_EMAIL}")
-    
+
     return success
 
 
@@ -128,6 +129,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Add request size limits before logging
+app.add_middleware(
+    RequestSizeLimitMiddleware,
+    max_body_size=settings.AUTH_MAX_REQUEST_BODY_BYTES,
 )
 
 # Add request logging middleware

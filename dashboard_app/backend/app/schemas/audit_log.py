@@ -1,6 +1,7 @@
 """
 Pydantic schemas for audit log-related API requests and responses.
 """
+
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -9,6 +10,7 @@ from pydantic import BaseModel
 
 class AuditLogBase(BaseModel):
     """Base audit log schema with common attributes."""
+
     source: str
     is_verified: bool
     status: str
@@ -21,11 +23,13 @@ class AuditLogBase(BaseModel):
 
 class AuditLogCreate(AuditLogBase):
     """Schema for creating a new audit log entry."""
+
     pass
 
 
 class AuditLogUpdate(BaseModel):
     """Schema for updating an audit log entry."""
+
     is_verified: Optional[bool] = None
     status: Optional[str] = None
     event_data: Optional[Dict[str, Any]] = None  # Extracted metadata or other event-specific data
@@ -37,6 +41,7 @@ class AuditLogUpdate(BaseModel):
 
 class AuditLogInDB(AuditLogBase):
     """Schema for audit log stored in the database."""
+
     id: int
     verification_time: datetime
     created_at: datetime
@@ -44,16 +49,19 @@ class AuditLogInDB(AuditLogBase):
 
     class Config:
         """Pydantic config."""
+
         from_attributes = True
 
 
 class AuditLog(AuditLogInDB):
     """Schema for audit log response."""
+
     pass
 
 
 class AuditLogStats(BaseModel):
     """Schema for audit log statistics."""
+
     total_documents: int
     verified_count: int
     unverified_count: int
@@ -84,10 +92,10 @@ class AuditLogPage(BaseModel):
                             "department": "Security",
                             "source_type": "API",
                             "created_at": "2023-10-26T10:00:00Z",
-                            "updated_at": "2023-10-26T10:00:00Z"
+                            "updated_at": "2023-10-26T10:00:00Z",
                         }
                     ],
-                    "total": 100
+                    "total": 100,
                 }
             ]
         }
@@ -96,6 +104,7 @@ class AuditLogPage(BaseModel):
 
 class AuditLogFilters(BaseModel):
     """Schema for filtering audit logs."""
+
     start_date: Optional[datetime] = None
     end_date: Optional[datetime] = None
     status: Optional[str] = None

@@ -89,9 +89,16 @@ class Settings(BaseSettings):
     PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
 
     # ===========================================
+    # SERVICE-SPECIFIC: Auth Limits
+    # ===========================================
+    AUTH_MAX_PASSWORD_LENGTH: int = 256
+    AUTH_MAX_REQUEST_BODY_BYTES: int = 65536
+
+    # ===========================================
     # INTERNAL SERVICE URLS (for service-to-service)
     # ===========================================
     COALITION_SERVICE_URL: str = "http://localhost:8009"
+    NOTIFICATION_SERVICE_URL: str = "http://localhost:8008"
 
     model_config = SettingsConfigDict(
         env_file=".env",

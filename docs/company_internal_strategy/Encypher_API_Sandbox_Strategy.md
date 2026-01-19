@@ -2,7 +2,7 @@
 
 ## Standards-Based Text Provenance Demonstration
 
-**Last Updated:** January 8, 2026  
+**Last Updated:** January 17, 2026  
 **Status:** Post-Standard Publication (C2PA 2.3 Released)  
 **Version:** 3.1  
 **Distribution:** Product & Engineering Teams
@@ -66,6 +66,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Formal notice capability  
 - Performance intelligence  
 - Public verification API (no auth required)  
+- **Fuzzy fingerprint attribution**: Detect paraphrasing, misquotes, and lightly edited reuse while linking back to original sources with Merkle proofs  
 - **Message: "This enables licensing, governance, and attribution intelligence"**
 
 ---
@@ -336,7 +337,7 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 
 - Sign content with C2PA manifest  
 - Demo: Show request/response with document ID and verification URL  
-- Highlight: \<100ms response time
+- Highlight: <100ms response time
 
 **POST /api/v1/verify**
 
@@ -350,27 +351,34 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 - Demo: Find original source of any sentence  
 - Highlight: Context window with surrounding sentences
 
+### Advanced Verification (Professional+)
+
+**POST /api/v1/verify/advanced**
+
+- Consolidated attribution + plagiarism analysis  
+- Demo: Show attribution matches and plagiarism report  
+- Highlight: `include_attribution=true`, `detect_plagiarism=true`, plus `fuzzy_search.enabled=true` for paraphrase/misquote detection
+
 ### Enterprise Endpoints
 
 **POST /api/v1/enterprise/merkle/encode**
 
-- Encode document into Merkle tree for sentence tracking  
-- Demo: Show tree structure and node count  
-- Highlight: Patent-pending sentence-level hashing
+- Encode document into Merkle tree for sentence tracking  \
+- Demo: Show tree structure and node count  \
+- Highlight: Sentence-level hashing and attribution readiness
 
-**POST /api/v1/enterprise/merkle/attribute**
+**Optional: Fuzzy fingerprint indexing (same request)**
 
-- Find source documents using Merkle tree matching  
-- Demo: Source attribution with similarity scores  
-- Highlight: Performance intelligence
+- Add `fuzzy_fingerprint.enabled=true` to index SimHash fingerprints at sentence/paragraph levels  
+- Commercial value: capture paraphrasing, misquotes, and lightly edited reuse while tying each match back to the original work with Merkle proofs
 
 **POST /api/v1/enterprise/embeddings/encode-with-embeddings**
 
-- Create invisible signed embeddings using Unicode variation selectors  
+- Create invisible signed embeddings for extraction/verification  
 - Demo: Show invisible embedding in action  
 - Highlight: Zero visible footprint, survives copy-paste
 
-**GET /api/v1/public/verify/{ref\_id}** (No Auth Required)
+**GET /api/v1/public/verify/{ref_id}** (No Auth Required)
 
 - Public verification of embeddings  
 - Demo: Third-party verification without API key  
@@ -378,19 +386,19 @@ Demonstrate the transformation from unmarked text (no proof of origin) to crypto
 
 ### Streaming Endpoints (NEW)
 
-**WS /api/v1/stream/sign**
+**WS /api/v1/sign/stream**
 
 - Real-time WebSocket signing for LLM outputs  
 - Demo: Live streaming with incremental signing  
 - Highlight: Sign as you generate
 
-**GET /api/v1/stream/events**
+**GET /api/v1/sign/stream/sessions/{session_id}/events**
 
 - Server-Sent Events (SSE) for streaming  
 - Demo: Alternative to WebSocket for simpler integration  
 - Highlight: HTTP-based streaming
 
-**POST /api/v1/stream/session/create**
+**POST /api/v1/sign/stream/sessions**
 
 - Create streaming session with configuration  
 - Demo: Session management for long-running streams
@@ -539,7 +547,7 @@ Every interaction highlights:
 
 ### Engagement Metrics:
 
-- Time in sandbox: \>5 minutes average  
+- Time in sandbox: >5 minutes average  
 - Features tested: 3+ per session  
 - Copy-paste test performed: 60% of sessions  
 - Comparison viewed: 80% of sessions
@@ -579,7 +587,7 @@ The sandbox proves: **Unmarked text has no proof. C2PA provides proof. Our enhan
 
 ## Document Control
 
-**Last Updated:** October 31, 2025  
+**Last Updated:** January 17, 2026  
 **Status:** Post-Customer Discovery Update  
 **Distribution:** Product & Engineering Teams  
 **Next Review:** January 2026  

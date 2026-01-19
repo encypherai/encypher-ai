@@ -3,6 +3,7 @@ Webhook dispatcher service for sending event notifications.
 
 Handles queuing, delivery, and retry logic for webhook events.
 """
+
 import asyncio
 import hashlib
 import hmac
@@ -65,11 +66,7 @@ class WebhookDispatcher:
         Returns:
             Hex-encoded signature
         """
-        return hmac.new(
-            secret.encode(),
-            payload.encode(),
-            hashlib.sha256
-        ).hexdigest()
+        return hmac.new(secret.encode(), payload.encode(), hashlib.sha256).hexdigest()
 
     async def dispatch_event(
         self,
@@ -101,7 +98,7 @@ class WebhookDispatcher:
                     AND is_active = true
                     AND :event_type = ANY(events)
                 """),
-                {"org_id": organization_id, "event_type": event_type}
+                {"org_id": organization_id, "event_type": event_type},
             )
             webhooks = result.fetchall()
 
@@ -196,7 +193,7 @@ class WebhookDispatcher:
                 "payload": payload,
                 "max_attempts": self.MAX_ATTEMPTS,
                 "created_at": datetime.now(timezone.utc),
-            }
+            },
         )
         await db.commit()
 
@@ -290,7 +287,7 @@ class WebhookDispatcher:
                     "response_time": elapsed_ms,
                     "success": success,
                     "now": datetime.now(timezone.utc),
-                }
+                },
             )
 
             # Update webhook stats
@@ -304,7 +301,7 @@ class WebhookDispatcher:
                             last_success_at = :now
                         WHERE id = :webhook_id
                     """),
-                    {"webhook_id": webhook_id, "now": datetime.now(timezone.utc)}
+                    {"webhook_id": webhook_id, "now": datetime.now(timezone.utc)},
                 )
             else:
                 await db.execute(
@@ -321,7 +318,7 @@ class WebhookDispatcher:
                         "webhook_id": webhook_id,
                         "now": datetime.now(timezone.utc),
                         "reason": f"HTTP {response.status_code}",
-                    }
+                    },
                 )
 
             await db.commit()
@@ -360,7 +357,7 @@ class WebhookDispatcher:
                     error_message = :error
                 WHERE id = :delivery_id
             """),
-            {"delivery_id": delivery_id, "error": error_message}
+            {"delivery_id": delivery_id, "error": error_message},
         )
 
         await db.execute(
@@ -377,7 +374,7 @@ class WebhookDispatcher:
                 "webhook_id": webhook_id,
                 "now": datetime.now(timezone.utc),
                 "reason": error_message,
-            }
+            },
         )
 
         await db.commit()
@@ -404,7 +401,7 @@ async def emit_document_signed(
             "title": title,
             "document_type": document_type,
             "verification_url": f"https://api.encypherai.com/api/v1/verify/{document_id}",
-        }
+        },
     )
 
 
@@ -420,7 +417,7 @@ async def emit_document_revoked(
         data={
             "document_id": document_id,
             "reason": reason,
-        }
+        },
     )
 
 
@@ -441,7 +438,7 @@ async def emit_quota_warning(
             "limit": limit,
             "percentage": percentage,
             "message": f"Your {metric} usage is at {percentage:.1f}% of your limit",
-        }
+        },
     )
 
 
@@ -457,7 +454,7 @@ async def emit_key_created(
         data={
             "key_id": key_id,
             "key_name": key_name,
-        }
+        },
     )
 
 
@@ -471,5 +468,5 @@ async def emit_key_revoked(
         organization_id=organization_id,
         data={
             "key_id": key_id,
-        }
+        },
     )

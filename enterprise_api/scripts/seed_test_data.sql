@@ -12,14 +12,14 @@ INSERT INTO organizations (
     sentences_tracked_this_month, batch_operations_this_month,
     merkle_enabled, advanced_analytics_enabled, bulk_operations_enabled,
     sentence_tracking_enabled, streaming_enabled, byok_enabled,
-    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled,
+    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled, fuzzy_fingerprint_enabled,
     coalition_member, coalition_rev_share_publisher, coalition_rev_share_encypher,
     created_at, updated_at
 )
 VALUES (
     'org_demo', 'Encypher Demo Organization', 'demo', 'demo@encypher.ai', 'demo',
     10000, 0, 0, 0, 0, 0,
-    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
     TRUE, 65, 35,
     NOW(), NOW()
 )
@@ -41,14 +41,14 @@ INSERT INTO organizations (
     sentences_tracked_this_month, batch_operations_this_month,
     merkle_enabled, advanced_analytics_enabled, bulk_operations_enabled,
     sentence_tracking_enabled, streaming_enabled, byok_enabled,
-    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled,
+    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled, fuzzy_fingerprint_enabled,
     coalition_member, coalition_rev_share_publisher, coalition_rev_share_encypher,
     created_at, updated_at
 )
 VALUES (
     'org_starter', 'Starter Test Organization', 'publisher', 'starter@test.encypher.ai', 'starter',
     10000, 0, 0, 0, 0, 0,
-    FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+    FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     TRUE, 65, 35,
     NOW(), NOW()
 )
@@ -73,14 +73,14 @@ INSERT INTO organizations (
     sentences_tracked_this_month, batch_operations_this_month,
     merkle_enabled, advanced_analytics_enabled, bulk_operations_enabled,
     sentence_tracking_enabled, streaming_enabled, byok_enabled,
-    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled,
+    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled, fuzzy_fingerprint_enabled,
     coalition_member, coalition_rev_share_publisher, coalition_rev_share_encypher,
     created_at, updated_at
 )
 VALUES (
     'org_professional', 'Professional Test Organization', 'publisher', 'professional@test.encypher.ai', 'professional',
     100000, 0, 0, 0, 0, 0,
-    FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE,
+    FALSE, TRUE, FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     TRUE, 70, 30,
     NOW(), NOW()
 )
@@ -106,14 +106,14 @@ INSERT INTO organizations (
     sentences_tracked_this_month, batch_operations_this_month,
     merkle_enabled, advanced_analytics_enabled, bulk_operations_enabled,
     sentence_tracking_enabled, streaming_enabled, byok_enabled,
-    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled,
+    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled, fuzzy_fingerprint_enabled,
     coalition_member, coalition_rev_share_publisher, coalition_rev_share_encypher,
     created_at, updated_at
 )
 VALUES (
     'org_business', 'Business Test Organization', 'enterprise', 'business@test.encypher.ai', 'business',
     500000, 0, 0, 0, 0, 0,
-    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE,
+    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, FALSE, TRUE, FALSE,
     TRUE, 80, 20,
     NOW(), NOW()
 )
@@ -156,14 +156,14 @@ INSERT INTO organizations (
     sentences_tracked_this_month, batch_operations_this_month,
     merkle_enabled, advanced_analytics_enabled, bulk_operations_enabled,
     sentence_tracking_enabled, streaming_enabled, byok_enabled,
-    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled,
+    team_management_enabled, audit_logs_enabled, sso_enabled, custom_assertions_enabled, fuzzy_fingerprint_enabled,
     coalition_member, coalition_rev_share_publisher, coalition_rev_share_encypher,
     created_at, updated_at
 )
 VALUES (
     'org_enterprise', 'Enterprise Test Organization', 'enterprise', 'enterprise@test.encypher.ai', 'enterprise',
     -1, 0, 0, 0, 0, 0,  -- -1 = unlimited
-    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
+    TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE, TRUE,
     TRUE, 85, 15,
     NOW(), NOW()
 )
