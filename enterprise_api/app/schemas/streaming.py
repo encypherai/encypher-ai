@@ -94,12 +94,12 @@ class StreamMerkleFinalizeRequest(BaseModel):
 
     session_id: str = Field(..., description="Session ID to finalize")
     embed_manifest: bool = Field(default=True, description="Whether to embed C2PA manifest into the final document")
-    manifest_mode: str = Field(default="full", description="Manifest mode: full, lightweight_uuid, hybrid")
+    manifest_mode: str = Field(default="full", description="Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid")
     action: str = Field(default="c2pa.created", description="C2PA action type: c2pa.created or c2pa.edited")
 
     @validator("manifest_mode")
     def validate_manifest_mode(cls, v):
-        allowed = ["full", "lightweight_uuid", "hybrid"]
+        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid"]
         if v not in allowed:
             raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
         return v

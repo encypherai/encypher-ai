@@ -25,6 +25,7 @@ from app.schemas.embeddings import (
     MerkleTreeLevelInfo,
 )
 from app.services.embedding_service import EmbeddingService
+from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.status_service import status_service
 from app.services.merkle_service import MerkleService
 from app.utils.crypto_utils import load_organization_private_key
@@ -109,6 +110,19 @@ async def encode_document_with_embeddings(
                 detail={
                     "code": "FEATURE_NOT_AVAILABLE",
                     "message": "Lightweight UUID manifest mode requires Professional tier or higher",
+                    "required_tier": "professional",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+
+        # Minimal UUID requires Professional+
+        if request.manifest_mode == "minimal_uuid" and org_tier_level < 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "Minimal UUID manifest mode requires Professional tier or higher",
                     "required_tier": "professional",
                     "current_tier": tier,
                     "upgrade_url": "/billing/upgrade",
@@ -289,6 +303,7 @@ async def encode_document_with_embeddings(
             raw_assertions.extend(request.custom_assertions)
 
         try:
+            await ensure_organization_exists(db, organization)
             _list_index, bit_index, status_list_url = await status_service.allocate_status_index(
                 db=db,
                 organization_id=organization_id,

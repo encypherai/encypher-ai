@@ -120,7 +120,7 @@ class EmbeddingService:
         custom_assertions: Optional[List[Dict[str, Any]]] = None,  # Custom C2PA assertions
         digital_source_type: Optional[str] = None,  # IPTC digital source type
         # === API Feature Augmentation (TEAM_044) ===
-        manifest_mode: str = "full",  # full, lightweight_uuid, hybrid
+        manifest_mode: str = "full",  # full, lightweight_uuid, minimal_uuid, hybrid
         embedding_strategy: str = "single_point",  # single_point, distributed, distributed_redundant
         distribution_target: Optional[str] = None,  # whitespace, punctuation, all_chars
         add_dual_binding: bool = False,  # Enable dual-binding manifest
@@ -182,6 +182,10 @@ class EmbeddingService:
         # Build the full document - TWO PHASE APPROACH:
         # Phase 1: Join ORIGINAL segments (for C2PA wrapper with correct Merkle root hash)
         # Phase 2: Add minimal embeddings per sentence AFTER C2PA wrapper
+        per_segment_uuid_mode = manifest_mode == "minimal_uuid"
+        uuid_module = None
+        if per_segment_uuid_mode:
+            import uuid as uuid_module
         full_document_parts = []
         segment_embeddings = []  # Store individual segment embeddings for later
 
@@ -190,12 +194,31 @@ class EmbeddingService:
             full_document_parts.append(segment)
 
             # Prepare minimal embedding data for this segment (will apply after C2PA)
-            minimal_metadata = {"leaf_hash": leaf_hash, "leaf_index": idx, "document_id": document_id, "organization_id": organization_id}
+            if per_segment_uuid_mode:
+                manifest_uuid = str(uuid_module.uuid4()) if uuid_module else None
+                minimal_metadata = {"manifest_uuid": manifest_uuid}
+            else:
+                minimal_metadata = {
+                    "leaf_hash": leaf_hash,
+                    "leaf_index": idx,
+                    "document_id": document_id,
+                    "organization_id": organization_id,
+                }
             segment_embeddings.append((segment, minimal_metadata))
 
             # Create ContentReference object for database storage (enterprise feature)
             # Generate collision-resistant 63-bit id to avoid PK conflicts under concurrency
             content_id = secrets.randbits(63)
+
+            embedding_metadata = {
+                "version": "v1",
+                "created_by": "embedding_service",
+                "uses_encypher_ai": True,
+                "signer_id": self.signer_id,
+            }
+            if per_segment_uuid_mode:
+                embedding_metadata["manifest_uuid"] = minimal_metadata.get("manifest_uuid")
+                embedding_metadata["manifest_mode"] = "minimal_uuid"
 
             reference = ContentReference(
                 id=content_id,  # Use unique random ID
@@ -212,7 +235,7 @@ class EmbeddingService:
                 license_type=license_info.get("type") if license_info else None,
                 license_url=license_info.get("url") if license_info else None,
                 expires_at=expires_at,
-                embedding_metadata={"version": "v1", "created_by": "embedding_service", "uses_encypher_ai": True, "signer_id": self.signer_id},
+                embedding_metadata=embedding_metadata,
             )
 
             references_to_insert.append(reference)
@@ -246,6 +269,7 @@ class EmbeddingService:
             "organization_id": organization_id,
             "merkle_root_id": str(merkle_root_id) if merkle_root_id else None,
             "total_segments": len(segments),
+            "manifest_mode": manifest_mode,
         }
 
         if c2pa_manifest_url:
@@ -328,24 +352,31 @@ class EmbeddingService:
 
         # Handle C2PA opt-out
         if disable_c2pa:
-            # Use basic metadata format instead of C2PA
-            logger.info(f"C2PA disabled for document {document_id}, using basic metadata format")
-            try:
-                embedded_document = UnicodeMetadata.embed_metadata(
-                    text=full_document,
-                    private_key=self.private_key,
-                    signer_id=self.signer_id,
-                    timestamp=current_timestamp,
-                    custom_metadata=document_metadata,
-                    metadata_format="basic",  # Basic format when C2PA disabled
-                    add_hard_binding=False,
-                    distribute_across_targets=use_distributed,
-                    target=target_for_embedding,
+            if per_segment_uuid_mode:
+                logger.info(
+                    "C2PA disabled for document %s; skipping document-level manifest for minimal_uuid",
+                    document_id,
                 )
-                logger.info(f"Successfully added basic metadata to document {document_id}")
-            except Exception as e:
-                logger.error(f"Failed to add basic metadata to document: {e}")
-                raise ValueError(f"Basic metadata embedding failed: {e}")
+                embedded_document = full_document
+            else:
+                # Use basic metadata format instead of C2PA
+                logger.info(f"C2PA disabled for document {document_id}, using basic metadata format")
+                try:
+                    embedded_document = UnicodeMetadata.embed_metadata(
+                        text=full_document,
+                        private_key=self.private_key,
+                        signer_id=self.signer_id,
+                        timestamp=current_timestamp,
+                        custom_metadata=document_metadata,
+                        metadata_format="basic",  # Basic format when C2PA disabled
+                        add_hard_binding=False,
+                        distribute_across_targets=use_distributed,
+                        target=target_for_embedding,
+                    )
+                    logger.info(f"Successfully added basic metadata to document {document_id}")
+                except Exception as e:
+                    logger.error(f"Failed to add basic metadata to document: {e}")
+                    raise ValueError(f"Basic metadata embedding failed: {e}")
 
         # Handle lightweight_uuid manifest mode (Professional+ feature)
         elif manifest_mode == "lightweight_uuid":
@@ -382,6 +413,34 @@ class EmbeddingService:
             except Exception as e:
                 logger.error(f"Failed to embed lightweight UUID: {e}")
                 raise ValueError(f"Lightweight UUID embedding failed: {e}")
+
+        # Handle minimal_uuid manifest mode (Professional+ feature)
+        elif manifest_mode == "minimal_uuid":
+            logger.info(
+                "Using minimal UUID manifest mode for document %s with per-segment UUID pointers",
+                document_id,
+            )
+
+            try:
+                embedded_document = UnicodeMetadata.embed_metadata(
+                    text=full_document,
+                    private_key=self.private_key,
+                    signer_id=self.signer_id,
+                    timestamp=current_timestamp,
+                    custom_metadata=document_metadata,
+                    metadata_format=metadata_format,
+                    add_hard_binding=add_hard_binding,
+                    claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
+                    actions=c2pa_actions,
+                    ingredients=c2pa_ingredients,
+                    custom_assertions=final_custom_assertions,
+                    distribute_across_targets=use_distributed,
+                    target=target_for_embedding,
+                )
+                logger.info(f"Successfully added C2PA wrapper to minimal_uuid document {document_id}")
+            except Exception as e:
+                logger.error(f"Failed to embed minimal UUID with C2PA wrapper: {e}")
+                raise ValueError(f"Minimal UUID embedding failed: {e}")
 
         # Handle hybrid manifest mode (Enterprise feature)
         elif manifest_mode == "hybrid":
@@ -560,23 +619,39 @@ class EmbeddingService:
             if not isinstance(custom_metadata, dict):
                 custom_metadata = {}
 
-            document_id = custom_metadata.get("document_id")
-            organization_id = custom_metadata.get("organization_id")
-            leaf_index = custom_metadata.get("leaf_index")
-
-            if not all([document_id, organization_id, leaf_index is not None]):
-                logger.warning("Missing enterprise metadata in embedding")
-                return None
-
-            # Look up ContentReference in database (enterprise feature)
-            result = await db.execute(
-                select(ContentReference).where(
-                    ContentReference.document_id == document_id,
-                    ContentReference.organization_id == organization_id,
-                    ContentReference.leaf_index == leaf_index,
+            manifest_uuid = custom_metadata.get("manifest_uuid")
+            if manifest_uuid:
+                result = await db.execute(
+                    select(ContentReference).where(
+                        ContentReference.embedding_metadata["manifest_uuid"].as_string() == manifest_uuid
+                    )
                 )
-            )
-            reference = result.scalar_one_or_none()
+                reference = result.scalar_one_or_none()
+                if reference:
+                    document_id = reference.document_id
+                    organization_id = reference.organization_id
+                    leaf_index = reference.leaf_index
+                else:
+                    logger.warning("Reference not found for manifest_uuid=%s", manifest_uuid)
+                    return None
+            else:
+                document_id = custom_metadata.get("document_id")
+                organization_id = custom_metadata.get("organization_id")
+                leaf_index = custom_metadata.get("leaf_index")
+
+                if not all([document_id, organization_id, leaf_index is not None]):
+                    logger.warning("Missing enterprise metadata in embedding")
+                    return None
+
+                # Look up ContentReference in database (enterprise feature)
+                result = await db.execute(
+                    select(ContentReference).where(
+                        ContentReference.document_id == document_id,
+                        ContentReference.organization_id == organization_id,
+                        ContentReference.leaf_index == leaf_index,
+                    )
+                )
+                reference = result.scalar_one_or_none()
 
             if not reference:
                 logger.warning(f"Reference not found in database: doc={document_id}, org={organization_id}, leaf={leaf_index}")

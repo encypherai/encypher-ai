@@ -2,10 +2,41 @@
 Pydantic schemas for Auth Service
 """
 
-from enum import Enum
-from pydantic import BaseModel, EmailStr, Field, field_validator
-from typing import Optional, List
+import re
 from datetime import datetime
+from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from app.core.config import settings
+
+
+HTML_TAG_RE = re.compile(r"<[^>]+>")
+URL_LIKE_RE = re.compile(r"(https?://|www\.)", re.IGNORECASE)
+
+
+def canonicalize_email(value: str) -> str:
+    cleaned = value.strip()
+    if "@" not in cleaned:
+        return cleaned.lower()
+    local_part, domain_part = cleaned.split("@", 1)
+    domain_part = domain_part.lower().strip()
+    local_part = local_part.strip()
+    if "+" in local_part:
+        local_part = local_part.split("+", 1)[0]
+    if domain_part in {"gmail.com", "googlemail.com"}:
+        local_part = local_part.replace(".", "")
+    return f"{local_part.lower()}@{domain_part}"
+
+
+def sanitize_name(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    cleaned = HTML_TAG_RE.sub("", value).strip()
+    if URL_LIKE_RE.search(cleaned):
+        raise ValueError("Name must not contain URLs")
+    return cleaned
 
 
 # TEAM_006: API Access Gating - Status enum (mirrors db model)
@@ -25,18 +56,33 @@ class UserBase(BaseModel):
     email: EmailStr
     name: Optional[str] = None
 
+    @field_validator("email", mode="before")
+    @classmethod
+    def canonicalize_email_field(cls, value: str) -> str:
+        return canonicalize_email(value)
+
+    @field_validator("name", mode="before")
+    @classmethod
+    def sanitize_name_field(cls, value: Optional[str]) -> Optional[str]:
+        return sanitize_name(value)
+
 
 class UserCreate(UserBase):
     """Schema for user creation"""
 
-    password: str = Field(..., min_length=8)
+    password: str = Field(..., min_length=8, max_length=settings.AUTH_MAX_PASSWORD_LENGTH)
 
 
 class UserLogin(BaseModel):
     """Schema for user login"""
 
     email: EmailStr
-    password: str
+    password: str = Field(..., max_length=settings.AUTH_MAX_PASSWORD_LENGTH)
+
+    @field_validator("email", mode="before")
+    @classmethod
+    def canonicalize_email_field(cls, value: str) -> str:
+        return canonicalize_email(value)
 
 
 class UserResponse(UserBase):
@@ -124,7 +170,7 @@ class PasswordResetConfirm(BaseModel):
     """Password reset confirmation schema"""
 
     token: str
-    new_password: str = Field(..., min_length=8)
+    new_password: str = Field(..., min_length=8, max_length=settings.AUTH_MAX_PASSWORD_LENGTH)
 
 
 # Response Schemas

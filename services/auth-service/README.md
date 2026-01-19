@@ -285,6 +285,8 @@ See `.env.example` for all available configuration options.
 - `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
 - `GITHUB_CLIENT_ID` - GitHub OAuth client ID
 - `GITHUB_CLIENT_SECRET` - GitHub OAuth client secret
+- `AUTH_MAX_PASSWORD_LENGTH` - Maximum password length (default: 256)
+- `AUTH_MAX_REQUEST_BODY_BYTES` - Max request body size in bytes (default: 65536)
 
 ### Email Configuration
 

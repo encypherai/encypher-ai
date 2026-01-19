@@ -58,16 +58,17 @@ try:
 except Exception:
     HAVE_RICH = False
 
-# SDK imports
-try:
-    from encypher_enterprise import EncypherClient
-    from encypher_enterprise.async_client import AsyncEncypherClient
-    from encypher_enterprise.batch import RepositorySigner
-    from encypher_enterprise.verification import RepositoryVerifier
-except Exception:
-    print("Error: enterprise SDK is not available in this workspace.")
-    print("Make sure 'enterprise_sdk' is part of the UV workspace and synced.")
-    raise
+def _load_enterprise_sdk():
+    try:
+        from encypher_enterprise import EncypherClient
+        from encypher_enterprise.async_client import AsyncEncypherClient
+        from encypher_enterprise.batch import RepositorySigner
+        from encypher_enterprise.verification import RepositoryVerifier
+    except Exception as exc:
+        print("Error: enterprise SDK is not available in this workspace.")
+        print("Make sure 'enterprise_sdk' is part of the UV workspace and synced.")
+        raise RuntimeError("Enterprise SDK unavailable") from exc
+    return EncypherClient, AsyncEncypherClient, RepositorySigner, RepositoryVerifier
 
 
 DEFAULT_DATASETS_DIR = Path("datasets")
@@ -287,6 +288,8 @@ def sign_corpus(prepared_dir: Path, concurrency: int, use_sentence_tracking: boo
     if not api_key:
         raise RuntimeError("ENCYPHER_API_KEY is not set. Export it for local signing.")
 
+    EncypherClient, AsyncEncypherClient, RepositorySigner, _ = _load_enterprise_sdk()
+
     # Prefer async client to utilize concurrency
     aclient = AsyncEncypherClient(api_key=api_key, base_url=base_url)
     signer = RepositorySigner(aclient, use_sentence_tracking=use_sentence_tracking, max_concurrent=concurrency)
@@ -335,6 +338,8 @@ def verify_signed(prepared_dir: Path, base_url: str = "http://localhost:9000") -
     api_key = os.getenv("ENCYPHER_API_KEY")
     if not api_key:
         raise RuntimeError("ENCYPHER_API_KEY is not set. Export it for local verification.")
+
+    EncypherClient, _, _, RepositoryVerifier = _load_enterprise_sdk()
 
     client = EncypherClient(api_key=api_key, base_url=base_url)
     verifier = RepositoryVerifier(client)
@@ -418,6 +423,96 @@ async def encode_merkle_async(files: list[Path], base_url: str, concurrency: int
     return Stats(total_files=len(files), total_time_s=total, per_file_times=per_file)
 
 
+async def encode_minimal_uuid_async(files: list[Path], base_url: str, output_dir: Path, concurrency: int) -> Stats:
+    api_key = os.getenv("ENCYPHER_API_KEY")
+    if not api_key:
+        raise RuntimeError("ENCYPHER_API_KEY is not set. Export it for local signing.")
+    import httpx
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    headers = {"Authorization": f"Bearer {api_key}"}
+    url = base_url.rstrip("/") + "/api/v1/sign/advanced"
+    sem = asyncio.Semaphore(concurrency)
+    start = time.perf_counter()
+    per_file: list[float] = []
+    async with httpx.AsyncClient(timeout=120.0, headers=headers) as client:
+
+        async def worker(path: Path) -> None:
+            text = path.read_text(encoding="utf-8")
+            data = {
+                "document_id": path.stem,
+                "text": text,
+                "segmentation_level": "sentence",
+                "manifest_mode": "minimal_uuid",
+            }
+            t0 = time.perf_counter()
+            async with sem:
+                r = await client.post(url, json=data)
+            r.raise_for_status()
+            response_json = r.json()
+            embedded = response_json.get("embedded_content")
+            if embedded:
+                out = output_dir / f"{path.stem}.embedded{path.suffix}"
+                out.write_text(embedded, encoding="utf-8")
+            meta_out = output_dir / f"{path.stem}.response.json"
+            meta_out.write_text(json.dumps(response_json, indent=2), encoding="utf-8")
+            per_file.append(time.perf_counter() - t0)
+
+        if HAVE_RICH:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[bold]Signing minimal_uuid + C2PA..."),
+                BarColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+            ) as progress:
+                task = progress.add_task("embed", total=len(files))
+                for f in files:
+                    await worker(f)
+                    progress.update(task, advance=1)
+        else:
+            for f in files:
+                await worker(f)
+    total = time.perf_counter() - start
+    return Stats(total_files=len(files), total_time_s=total, per_file_times=per_file)
+
+
+async def verify_extract_and_verify_async(embedded_files: list[Path], base_url: str, concurrency: int) -> Stats:
+    import httpx
+
+    url = base_url.rstrip("/") + "/api/v1/public/extract-and-verify"
+    sem = asyncio.Semaphore(concurrency)
+    start = time.perf_counter()
+    per_file: list[float] = []
+    async with httpx.AsyncClient(timeout=60.0) as client:
+
+        async def worker(path: Path) -> None:
+            text = path.read_text(encoding="utf-8")
+            t0 = time.perf_counter()
+            async with sem:
+                r = await client.post(url, json={"text": text})
+            r.raise_for_status()
+            per_file.append(time.perf_counter() - t0)
+
+        if HAVE_RICH:
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[bold]Extract-and-verify sample..."),
+                BarColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
+            ) as progress:
+                task = progress.add_task("verify", total=len(embedded_files))
+                for f in embedded_files:
+                    await worker(f)
+                    progress.update(task, advance=1)
+        else:
+            for f in embedded_files:
+                await worker(f)
+    total = time.perf_counter() - start
+    return Stats(total_files=len(embedded_files), total_time_s=total, per_file_times=per_file)
+
+
 async def encode_embeddings_async(files: list[Path], base_url: str, concurrency: int) -> Stats:
     api_key = os.getenv("ENCYPHER_API_KEY")
     if not api_key:
@@ -478,7 +573,12 @@ def main() -> None:
     parser.add_argument("--concurrency", type=int, default=0, help="Max concurrent signing tasks (0=auto)")
     parser.add_argument("--extract-procs", type=int, default=0, help="WikiExtractor processes (0=auto)")
     parser.add_argument("--base-url", default="http://localhost:9000", help="Enterprise API base URL")
-    parser.add_argument("--mode", choices=["c2pa", "merkle", "embeddings"], default="c2pa", help="Operation mode")
+    parser.add_argument(
+        "--mode",
+        choices=["c2pa", "merkle", "embeddings", "minimal_uuid"],
+        default="c2pa",
+        help="Operation mode",
+    )
     parser.add_argument("--no-verify", action="store_true", help="Skip verification stage")
     parser.add_argument("--verify-sample", type=int, default=0, help="Verify only N files (0=all)")
     parser.add_argument("--verify-concurrency", type=int, default=0, help="Verification concurrency (0=auto)")
@@ -536,6 +636,10 @@ def main() -> None:
     elif args.mode == "embeddings":
         embed_stats = asyncio.run(encode_embeddings_async(files, args.base_url, concurrency))
         print_stats("Embeddings", embed_stats)
+    elif args.mode == "minimal_uuid":
+        minimal_out_dir = work_dir / "minimal_uuid_outputs"
+        embed_stats = asyncio.run(encode_minimal_uuid_async(files, args.base_url, minimal_out_dir, concurrency))
+        print_stats("Minimal UUID", embed_stats)
 
     # 5) Verification controls (only for c2pa where .signed files exist)
     if args.mode == "c2pa" and not args.no_verify:
@@ -578,6 +682,17 @@ def main() -> None:
         else:
             verify_stats = verify_signed(prepared_dir, base_url=args.base_url)
             print_stats("Verification", verify_stats)
+    elif args.mode == "minimal_uuid" and not args.no_verify:
+        minimal_out_dir = work_dir / "minimal_uuid_outputs"
+        embedded_files = sorted(minimal_out_dir.glob("*.embedded.txt"))
+        if not embedded_files:
+            print("No embedded outputs found for extract-and-verify.")
+        else:
+            verify_sample = args.verify_sample if args.verify_sample > 0 else len(embedded_files)
+            sample_files = embedded_files[:verify_sample]
+            verify_concurrency = detect_optimal_concurrency(args.verify_concurrency)
+            verify_stats = asyncio.run(verify_extract_and_verify_async(sample_files, args.base_url, verify_concurrency))
+            print_stats("Extract-and-Verify", verify_stats)
 
 
 if __name__ == "__main__":

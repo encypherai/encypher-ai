@@ -292,6 +292,7 @@ For full details, see [docs/LICENSING_API.md](./docs/LICENSING_API.md).
 - ✅ Custom metadata
 - ✅ Streaming support (WebSocket/SSE)
 - ✅ **Lightweight UUID Manifest**: Smaller payload footprint (NEW)
+- ✅ **Minimal UUID Manifest**: UUID-only signed pointer to full manifest (NEW)
 - ✅ **Streaming Merkle Tree**: Real-time LLM signing (NEW)
 - ✅ Priority support
 - ✅ Coalition membership (70% publisher / 30% Encypher revenue share)
@@ -736,7 +737,9 @@ The legacy plagiarism endpoint now returns HTTP 410. Use the advanced verificati
 
 ### Invisible Signed Embeddings (Professional+)
 
-Embed signed references directly into content so it can be extracted and verified later.
+Embed signed references directly into content so it can be extracted and verified later. With
+`manifest_mode="minimal_uuid"`, each segment receives a UUID-only pointer while a full C2PA manifest
+is appended at the document end by default (set `disable_c2pa=true` to skip the document-level manifest).
 
 **Endpoint:** `POST /api/v1/sign/advanced`
 
@@ -747,6 +750,7 @@ Embed signed references directly into content so it can be extracted and verifie
   "document_id": "article_001",
   "text": "Full article text...",
   "segmentation_level": "sentence",
+  "manifest_mode": "minimal_uuid",
   "c2pa_manifest_url": "https://...",
   "license": {
     "type": "All Rights Reserved",
@@ -754,6 +758,8 @@ Embed signed references directly into content so it can be extracted and verifie
   }
 }
 ```
+
+**Manifest Modes:** `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`
 
 **Response:**
 

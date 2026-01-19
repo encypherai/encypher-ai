@@ -72,7 +72,8 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     action: str = Field(default="c2pa.created", description="C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)")
     # === API Feature Augmentation (TEAM_044) ===
     manifest_mode: str = Field(
-        default="full", description="Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier."
+        default="full",
+        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid. Availability depends on plan tier.",
     )
     embedding_strategy: str = Field(
         default="single_point",
@@ -124,7 +125,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
 
     @validator("manifest_mode")
     def validate_manifest_mode(cls, v):
-        allowed = ["full", "lightweight_uuid", "hybrid"]
+        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid"]
         if v not in allowed:
             raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
         return v

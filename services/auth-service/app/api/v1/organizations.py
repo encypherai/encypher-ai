@@ -8,7 +8,7 @@ import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 
 from ...db.models import User
@@ -749,7 +749,7 @@ class AcceptInvitationNewUser(BaseModel):
     """Schema for accepting invitation with new account"""
 
     name: str
-    password: str
+    password: str = Field(..., min_length=8, max_length=settings.AUTH_MAX_PASSWORD_LENGTH)
 
 
 @router.get("/invitations/{token}")
@@ -798,10 +798,6 @@ async def accept_invitation_new_user(
 ):
     """Accept an invitation and create a new account"""
     from passlib.context import CryptContext
-
-    # Validate password
-    if len(data.password) < 8:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters")
 
     # Hash password
     pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")

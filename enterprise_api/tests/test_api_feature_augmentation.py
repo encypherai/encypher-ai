@@ -217,7 +217,7 @@ class TestEmbeddingServiceManifestModes:
 
     def test_all_manifest_modes_valid(self):
         """All manifest modes should be valid in schema."""
-        for mode in ["full", "lightweight_uuid", "hybrid"]:
+        for mode in ["full", "lightweight_uuid", "minimal_uuid", "hybrid"]:
             request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode=mode)
             assert request.manifest_mode == mode
 
@@ -244,6 +244,11 @@ class TestTierGatingRequirements:
         request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="lightweight_uuid")
         # Schema accepts it, tier gating happens at API level
         assert request.manifest_mode == "lightweight_uuid"
+
+    def test_minimal_uuid_requires_professional(self):
+        """Minimal UUID should be marked as Professional+ feature."""
+        request = EncodeWithEmbeddingsRequest(document_id="test-doc", text="Test content.", manifest_mode="minimal_uuid")
+        assert request.manifest_mode == "minimal_uuid"
 
     def test_distributed_requires_business(self):
         """Distributed embedding should be marked as Business+ feature."""
@@ -353,6 +358,13 @@ class TestStreamMerkleFinalizeRequest:
 
         request = StreamMerkleFinalizeRequest(session_id="session-123", manifest_mode="lightweight_uuid")
         assert request.manifest_mode == "lightweight_uuid"
+
+    def test_finalize_request_minimal_uuid(self):
+        """Finalize with minimal_uuid manifest mode should work."""
+        from app.schemas.streaming import StreamMerkleFinalizeRequest
+
+        request = StreamMerkleFinalizeRequest(session_id="session-123", manifest_mode="minimal_uuid")
+        assert request.manifest_mode == "minimal_uuid"
 
     def test_finalize_request_invalid_manifest_mode(self):
         """Invalid manifest mode should raise error."""

@@ -482,14 +482,59 @@ async def extract_and_verify_embedding(
                 logger.warning(f"Text preview (last 200): ...{extract_request.text[-200:]}")
                 return ExtractAndVerifyResponse(valid=False, error="No invisible embedding found in text")
 
-            # Extract signer_id from claim_generator (format: "Encypher Enterprise API/org_demo")
-            # The signer_id is the part after the last slash
-            claim_generator = extracted_metadata.get("claim_generator", "")
-            if "/" in claim_generator:
-                signer_id = claim_generator.split("/")[-1]
-                logger.info(f"Extracted signer_id from claim_generator: {signer_id}")
+            signer_id = extracted_metadata.get("signer_id")
+            if signer_id:
+                logger.info(f"Extracted signer_id from metadata: {signer_id}")
             else:
-                logger.warning(f"Could not extract signer_id from claim_generator: {claim_generator}")
+                # Extract signer_id from claim_generator (format: "Encypher Enterprise API/org_demo")
+                # The signer_id is the part after the last slash
+                claim_generator = extracted_metadata.get("claim_generator", "")
+                if "/" in claim_generator:
+                    signer_candidate = claim_generator.split("/")[-1]
+                    if signer_candidate.startswith(("org_", "user_")):
+                        signer_id = signer_candidate
+                        logger.info(f"Extracted signer_id from claim_generator: {signer_id}")
+                    else:
+                        logger.info(
+                            "Claim generator does not contain org/user signer id: %s",
+                            claim_generator,
+                        )
+
+            if not signer_id:
+                custom_metadata = extracted_metadata.get("custom_metadata") or {}
+                if isinstance(custom_metadata, dict) and custom_metadata.get("organization_id"):
+                    signer_id = custom_metadata.get("organization_id")
+                    logger.info(f"Extracted signer_id from custom metadata: {signer_id}")
+
+            if not signer_id:
+                assertions = extracted_metadata.get("assertions", [])
+                for assertion in assertions:
+                    if assertion.get("label") == "org.encypher.metadata":
+                        data = assertion.get("data", {})
+                        if isinstance(data, dict) and data.get("organization_id"):
+                            signer_id = data.get("organization_id")
+                            logger.info(f"Extracted signer_id from assertions: {signer_id}")
+                            break
+
+            if not signer_id:
+                assertions = extracted_metadata.get("assertions", [])
+                for assertion in assertions:
+                    if assertion.get("label") == "c2pa.actions.v1":
+                        actions = assertion.get("data", {}).get("actions", [])
+                        for action in actions:
+                            agent = action.get("softwareAgent")
+                            if isinstance(agent, str) and "/" in agent:
+                                candidate = agent.split("/")[-1]
+                                if candidate.startswith(("org_", "user_")):
+                                    signer_id = candidate
+                                    logger.info(f"Extracted signer_id from action agent: {signer_id}")
+                                    break
+                        if signer_id:
+                            break
+
+            if not signer_id:
+                claim_generator = extracted_metadata.get("claim_generator", "")
+                logger.warning(f"Could not extract signer_id from metadata. claim_generator={claim_generator}")
                 return ExtractAndVerifyResponse(valid=False, error="Invalid metadata format - missing signer information")
 
             # Load the public key for this signer
@@ -543,6 +588,10 @@ async def extract_and_verify_embedding(
         document_id = None
         organization_id = signer_id if signer_id.startswith("org_") else None
         leaf_index = None
+        manifest_uuid = None
+        payload_format = payload.get("format") if isinstance(payload, dict) else None
+        payload_version = payload.get("version") if isinstance(payload, dict) else None
+        payload_timestamp = payload.get("timestamp") if isinstance(payload, dict) else None
 
         # Check if payload itself has the metadata (from legacy/basic format)
         if payload.get("custom_metadata"):
@@ -552,6 +601,7 @@ async def extract_and_verify_embedding(
             if custom_metadata.get("organization_id"):
                 organization_id = custom_metadata.get("organization_id")
             leaf_index = custom_metadata.get("leaf_index")
+            manifest_uuid = custom_metadata.get("manifest_uuid")
 
         # Also check assertions for C2PA format
         assertions = payload.get("assertions", [])
@@ -564,16 +614,34 @@ async def extract_and_verify_embedding(
                     document_id = data.get("document_id")
                 if data.get("organization_id"):
                     organization_id = data.get("organization_id")
+                if data.get("manifest_uuid"):
+                    manifest_uuid = data.get("manifest_uuid")
 
             # Also check actions for implicit metadata if needed
             if assertion.get("label") == "c2pa.actions.v1":
                 pass
 
+        if payload_format is None:
+            payload_format = extracted_metadata.get("format")
+        if payload_format is None and isinstance(payload, dict) and payload.get("@context"):
+            payload_format = "c2pa"
+
         logger.info(f"C2PA verification successful for signer: {signer_id}. DocID: {document_id}")
 
         reference = None
         # Look up ContentReference in database (enterprise feature) if we have enough info
-        if document_id and organization_id:
+        if manifest_uuid:
+            result = await db.execute(
+                select(ContentReference).where(
+                    ContentReference.embedding_metadata["manifest_uuid"].as_string() == manifest_uuid
+                )
+            )
+            reference = result.scalar_one_or_none()
+            if reference:
+                document_id = reference.document_id
+                organization_id = reference.organization_id
+                leaf_index = reference.leaf_index
+        elif document_id and organization_id:
             # If leaf_index is missing (full doc), maybe we look for the first one or just by doc_id?
             # For extract-and-verify of a full document, we might not have a specific leaf_index.
             # But ContentReference is per-leaf.
@@ -601,10 +669,10 @@ async def extract_and_verify_embedding(
                 verified_at=datetime.utcnow(),
                 metadata={
                     "signer_id": signer_id,
-                    "timestamp": payload.get("timestamp"),
+                    "timestamp": payload_timestamp,
                     "custom_metadata": custom_metadata,
-                    "format": payload.get("format"),
-                    "version": payload.get("version"),
+                    "format": payload_format,
+                    "version": payload_version,
                 },
                 error="Valid embedding but not found in enterprise database",
             )
@@ -673,10 +741,10 @@ async def extract_and_verify_embedding(
             licensing=licensing_info,
             metadata={
                 "signer_id": signer_id,
-                "timestamp": payload.get("timestamp"),
+                "timestamp": payload_timestamp,
                 "custom_metadata": custom_metadata,
-                "format": payload.get("format"),
-                "version": payload.get("version"),
+                "format": payload_format,
+                "version": payload_version,
             },
         )
 

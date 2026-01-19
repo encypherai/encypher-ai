@@ -102,12 +102,12 @@ A `docker-compose.yml` is provided so you can run WordPress, MySQL, PostgreSQL, 
    cd integrations/wordpress-provenance-plugin
    docker compose up --build
    ```
-   - WordPress: `http://localhost:8080`
+   - WordPress: `http://localhost:8085`
    - Enterprise API: `http://localhost:8001`
 2. Install WordPress (first run only):
    ```bash
    docker compose run --rm wp-cli core install \
-     --url=http://localhost:8080 \
+     --url=http://localhost:8085 \
      --title="Encypher Local" \
      --admin_user=admin \
      --admin_password=admin \
@@ -117,7 +117,7 @@ A `docker-compose.yml` is provided so you can run WordPress, MySQL, PostgreSQL, 
    ```bash
    docker compose run --rm wp-cli plugin activate encypher-provenance
    ```
-4. Sign in at `http://localhost:8080/wp-admin`, choose **Encypher > Settings**, and configure:
+4. Sign in at `http://localhost:8085/wp-admin`, choose **Encypher > Settings**, and configure:
    - **API Base URL:** `http://enterprise-api:8000/api/v1`
    - **API Key:** `demo-local-key`
    - Enable automatic verification if desired.

@@ -16,6 +16,7 @@ from .db.models import Base
 from .db.session import engine
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
+from .middleware.request_size_limit import RequestSizeLimitMiddleware
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
@@ -128,6 +129,12 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Add request size limits before logging
+app.add_middleware(
+    RequestSizeLimitMiddleware,
+    max_body_size=settings.AUTH_MAX_REQUEST_BODY_BYTES,
 )
 
 # Add request logging middleware

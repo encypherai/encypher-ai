@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Embedding Icon Demo - Blog Article</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Manrope:wght@400;600&family=JetBrains+Mono:wght@400;600&display=swap");
+
+      :root {
+        --bg: #f8f4ef;
+        --ink: #1b1c1f;
+        --muted: #6a6f76;
+        --accent: #e46c2c;
+        --accent-dark: #b74a12;
+        --panel: #ffffff;
+        --line: #e7ddd4;
+        --shadow: rgba(51, 31, 14, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: linear-gradient(180deg, #fff7ef 0%, #f8f4ef 45%, #f4efe9 100%);
+        color: var(--ink);
+        font-family: "Manrope", "Segoe UI", sans-serif;
+      }
+
+      main {
+        max-width: 880px;
+        margin: 0 auto;
+        padding: 56px 24px 96px;
+      }
+
+      header {
+        margin-bottom: 32px;
+      }
+
+      h1 {
+        font-family: "DM Serif Display", serif;
+        font-size: clamp(2.2rem, 3vw, 3.1rem);
+        margin: 0 0 12px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 1.05rem;
+        max-width: 720px;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 18px;
+        font-size: 0.95rem;
+        color: var(--muted);
+      }
+
+      .article {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 20px;
+        padding: 36px 32px;
+        box-shadow: 0 24px 60px var(--shadow);
+      }
+
+      .article p {
+        font-size: 1.05rem;
+        line-height: 1.7;
+      }
+
+      .embedding {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .embed-trigger {
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        padding: 0;
+        margin-left: 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .embed-icon {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid var(--accent);
+        display: grid;
+        place-items: center;
+        color: var(--accent-dark);
+        font-weight: 600;
+        font-size: 0.75rem;
+        background: #fff;
+        box-shadow: 0 6px 16px rgba(228, 108, 44, 0.2);
+      }
+
+      details.embed-details {
+        display: inline-flex;
+      }
+
+      details.embed-details summary {
+        list-style: none;
+      }
+
+      details.embed-details summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .embed-panel {
+        position: absolute;
+        top: 30px;
+        left: 0;
+        z-index: 10;
+        width: min(320px, 80vw);
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px 16px;
+        box-shadow: 0 16px 40px rgba(36, 22, 10, 0.18);
+        font-size: 0.9rem;
+        color: var(--ink);
+      }
+
+      .embed-panel h4 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+        color: var(--accent-dark);
+      }
+
+      .embed-panel p {
+        margin: 0 0 8px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+
+      .embed-panel code {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.82rem;
+        color: #2b1c10;
+        background: #fdf0e6;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+
+      .legend {
+        margin-top: 24px;
+        display: grid;
+        gap: 12px;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+
+      .legend-card {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 12px 14px;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+
+      .legend-card strong {
+        color: var(--ink);
+      }
+
+      .footer-note {
+        margin-top: 32px;
+        color: var(--muted);
+        font-size: 0.92rem;
+      }
+
+      @media (max-width: 640px) {
+        .article {
+          padding: 28px 20px;
+        }
+
+        .embed-panel {
+          left: auto;
+          right: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Signal in the Noise: The Next Step for Authentic News</h1>
+        <p class="subtitle">
+          This one-page demo shows where embeddings would be placed inside a story. Click each icon to
+          see the embedding type and payload fields.
+        </p>
+        <div class="meta">
+          <span>January 18, 2026</span>
+          <span>By Encypher Labs</span>
+          <span>Category: Media Integrity</span>
+        </div>
+      </header>
+
+      <section class="article">
+        <p>
+          The newsroom push for provenance has moved from theory to tangible workflows.
+          <span class="embedding">
+            Every sentence can carry its own invisible proof
+            <details class="embed-details">
+              <summary class="embed-trigger" aria-label="View embedding details">
+                <span class="embed-icon">E</span>
+              </summary>
+              <div class="embed-panel">
+                <h4>Segment-level Minimal Embedding</h4>
+                <p>Embedded per sentence with metadata_format="basic".</p>
+                <code>{"segment_ref":"8c1f-...","leaf_index":12}</code>
+              </div>
+            </details>
+          </span>
+          , while the overall story remains tied to a verified, court-admissible manifest stored in the
+          enterprise database.
+        </p>
+
+        <p>
+          When the article is signed, the system normalizes the text to NFC and writes a full C2PA
+          manifest at the end of the document.
+          <span class="embedding">
+            That manifest can include licensing and attribution claims
+            <details class="embed-details">
+              <summary class="embed-trigger" aria-label="View embedding details">
+                <span class="embed-icon">C</span>
+              </summary>
+              <div class="embed-panel">
+                <h4>Document-level C2PA Manifest</h4>
+                <p>Embedded once at file end with metadata_format="manifest".</p>
+                <code>{"instance_id":"4d2f-...","claim_generator":"encypher"}</code>
+              </div>
+            </details>
+          </span>
+          without disturbing the reading experience.
+        </p>
+
+        <p>
+          For ultra-compact delivery, the minimal_uuid mode embeds only a UUID pointer while keeping
+          the full manifest in the database.
+          <span class="embedding">
+            This is ideal for syndication and copy/paste workflows
+            <details class="embed-details">
+              <summary class="embed-trigger" aria-label="View embedding details">
+                <span class="embed-icon">U</span>
+              </summary>
+              <div class="embed-panel">
+                <h4>minimal_uuid Pointer</h4>
+                <p>UUID-only payload, signed with UnicodeMetadata.</p>
+                <code>{"manifest_uuid":"550e8400-e29b-41d4-a716-446655440000"}</code>
+              </div>
+            </details>
+          </span>
+          and still resolves to the full manifest during verification.
+        </p>
+
+        <p>
+          Editors can surface trust indicators in-line, and verification services can pull the
+          authoritative manifest with a single lookup. The result is a publishing pipeline that is both
+          compact and resilient, with cryptographic proof baked into every paragraph.
+        </p>
+      </section>
+
+      <section class="legend">
+        <div class="legend-card">
+          <strong>E</strong> = Segment-level minimal embedding (per sentence)
+        </div>
+        <div class="legend-card">
+          <strong>C</strong> = Full C2PA manifest (document-level)
+        </div>
+        <div class="legend-card">
+          <strong>U</strong> = minimal_uuid pointer (UUID-only payload)
+        </div>
+      </section>
+
+      <p class="footer-note">
+        Tip: replace the example payloads with real values from your signing response for demos.
+      </p>
+    </main>
+  </body>
+</html>

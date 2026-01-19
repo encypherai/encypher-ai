@@ -5,7 +5,7 @@ Tests the new encypher-ai integration for invisible embeddings.
 """
 
 from unittest.mock import AsyncMock, MagicMock
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import pytest
 
@@ -152,6 +152,36 @@ class TestEmbeddingServiceInvisible:
         assert len(added_refs) == 1
         assert added_refs[0].c2pa_manifest_url == c2pa_manifest_url
         assert added_refs[0].license_type == "All Rights Reserved"
+
+    @pytest.mark.asyncio
+    async def test_create_embeddings_minimal_uuid_per_segment(self, service, db_session):
+        """Minimal UUID mode should embed UUID-only payloads per segment."""
+        organization_id = "org_001"
+        document_id = "doc_minimal_uuid"
+        merkle_root_id = uuid4()
+        segments = ["First sentence.", "Second sentence."]
+        leaf_hashes = ["hash1", "hash2"]
+
+        embeddings, _ = await service.create_embeddings(
+            db=db_session,
+            organization_id=organization_id,
+            document_id=document_id,
+            merkle_root_id=merkle_root_id,
+            segments=segments,
+            leaf_hashes=leaf_hashes,
+            manifest_mode="minimal_uuid",
+            disable_c2pa=True,
+        )
+
+        assert len(embeddings) == 2
+        db_session.add_all.assert_called_once()
+        added_refs = db_session.add_all.call_args[0][0]
+        assert len(added_refs) == 2
+        for ref in added_refs:
+            assert ref.embedding_metadata.get("manifest_mode") == "minimal_uuid"
+            manifest_uuid = ref.embedding_metadata.get("manifest_uuid")
+            assert manifest_uuid is not None
+            UUID(str(manifest_uuid))
 
     @pytest.mark.asyncio
     async def test_create_embeddings_mismatched_lengths(self, service, db_session):
