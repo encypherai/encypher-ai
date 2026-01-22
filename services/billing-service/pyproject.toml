@@ -20,6 +20,7 @@ dependencies = [
     "structlog>=25.5.0",
     "python-json-logger>=4.0.0",
     "stripe>=7.0.0",
+    "encypher-commercial-shared",
 ]
 
 [project.optional-dependencies]
@@ -52,3 +53,11 @@ python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.uv.workspace]
+members = [
+    "shared_libs",
+]
+
+[tool.uv.sources]
+encypher-commercial-shared = { workspace = true }

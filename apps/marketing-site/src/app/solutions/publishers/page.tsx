@@ -111,7 +111,7 @@ export default function PublishersPage() {
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Unlimited C2PA signing</span>
+                    <span>C2PA signing (1K/mo)</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />

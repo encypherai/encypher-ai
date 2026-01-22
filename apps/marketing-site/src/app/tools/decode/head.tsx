@@ -4,11 +4,11 @@ export default function Head() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Encypher Decode Tool",
+    "name": "Encypher Verify Tool",
     "applicationCategory": "Utility",
     "operatingSystem": "All",
-    "url": "https://encypherai.com/tools/decode",
-    "description": "Extract and verify embedded metadata from text using Encypher's Unicode-powered decoder. Free, secure, and privacy-preserving.",
+    "url": "https://encypherai.com/tools/verify",
+    "description": "Verify signed text and inspect embedded metadata with Encypher's provenance tool. Free, secure, and privacy-preserving.",
     "offers": {
       "@type": "Offer",
       "price": "0",
@@ -17,15 +17,15 @@ export default function Head() {
   };
   return (
     <>
-      <link rel="canonical" href="https://encypherai.com/tools/decode" />
-      <meta property="og:title" content="Decode Metadata from Text | Encypher Tool" />
-      <meta property="og:description" content="Extract and verify embedded metadata from text using Encypher's Unicode-powered decoder. Free, secure, and privacy-preserving." />
-      <meta property="og:url" content="https://encypherai.com/tools/decode" />
+      <link rel="canonical" href="https://encypherai.com/tools/verify" />
+      <meta property="og:title" content="Verify Signed Text | Encypher Tool" />
+      <meta property="og:description" content="Verify signed text and inspect embedded metadata with Encypher's provenance tool. Free, secure, and privacy-preserving." />
+      <meta property="og:url" content="https://encypherai.com/tools/verify" />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Encypher" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Decode Metadata from Text | Encypher Tool" />
-      <meta name="twitter:description" content="Extract and verify embedded metadata from text using Encypher's Unicode-powered decoder. Free, secure, and privacy-preserving." />
+      <meta name="twitter:title" content="Verify Signed Text | Encypher Tool" />
+      <meta name="twitter:description" content="Verify signed text and inspect embedded metadata with Encypher's provenance tool. Free, secure, and privacy-preserving." />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </>
   );

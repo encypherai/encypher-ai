@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback, ReactNode } from 'react';
 import { useSession } from 'next-auth/react';
 
 interface Organization {
@@ -31,9 +31,12 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const [activeOrganization, setActiveOrgState] = useState<Organization | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const hasFetchedRef = useRef(false);
 
-  const fetchOrganizations = async () => {
-    if (!session) {
+  const accessToken = (session?.user as any)?.accessToken as string | undefined;
+
+  const fetchOrganizations = useCallback(async () => {
+    if (!accessToken) {
       setIsLoading(false);
       return;
     }
@@ -41,12 +44,6 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     try {
       setIsLoading(true);
       setError(null);
-      
-      const accessToken = (session?.user as any)?.accessToken;
-      if (!accessToken) {
-        setIsLoading(false);
-        return;
-      }
 
       // NEXT_PUBLIC_API_URL already includes /api/v1
       const response = await fetch(
@@ -81,11 +78,17 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [accessToken]);
 
   useEffect(() => {
-    fetchOrganizations();
-  }, [session]);
+    if (accessToken && !hasFetchedRef.current) {
+      hasFetchedRef.current = true;
+      fetchOrganizations();
+    } else if (!accessToken) {
+      hasFetchedRef.current = false;
+      setIsLoading(false);
+    }
+  }, [accessToken, fetchOrganizations]);
 
   const setActiveOrganization = (org: Organization) => {
     setActiveOrgState(org);

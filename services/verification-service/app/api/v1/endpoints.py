@@ -2,7 +2,7 @@
 
 import time
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -117,7 +117,10 @@ async def get_current_user(authorization: str = Header(None)) -> Optional[dict]:
         return None
 
 
-async def get_optional_organization(authorization: str = Header(None)) -> Optional[dict]:
+async def get_optional_organization(
+    request: Request,
+    authorization: str = Header(None),
+) -> Optional[dict]:
     # TEAM_065: POST /api/v1/verify is public; only validate API key when provided.
     if not authorization:
         return None
@@ -157,6 +160,10 @@ async def get_optional_organization(authorization: str = Header(None)) -> Option
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    request.state.organization_id = data.get("organization_id")
+    request.state.user_id = data.get("user_id") or data.get("api_key_owner_id")
+    request.state.api_key_id = data.get("api_key_id")
+    request.state.tier = data.get("tier")
     return data
 
 

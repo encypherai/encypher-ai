@@ -147,7 +147,7 @@ TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
 # -1 means unlimited
 TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
     OrganizationTier.STARTER: {
-        QuotaType.C2PA_SIGNATURES: 10000,  # Soft cap for abuse prevention (marketed as "unlimited")
+        QuotaType.C2PA_SIGNATURES: 1000,  # Soft cap for abuse prevention
         QuotaType.SENTENCES_TRACKED: 0,  # Not available
         QuotaType.MERKLE_ENCODING: 0,  # Not available
         QuotaType.MERKLE_ATTRIBUTION: 0,

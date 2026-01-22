@@ -4,12 +4,12 @@
 import React, { useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Copy } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { trackToolEvent } from "@/lib/toolsAnalytics";
 
 // Temporary replacement for Copy icon to debug import issue
 const Copy = (props: any) => <span {...props}>📋</span>;
@@ -89,10 +89,16 @@ async function toolsApiCall<T>(path: string, options: RequestInit = {}): Promise
   return response.json();
 }
 
+async function verifyEncodedText(encodedText: string): Promise<DecodeToolResponse> {
+  return toolsApiCall<DecodeToolResponse>("/api/tools/verify", {
+    method: "POST",
+    body: JSON.stringify({ encoded_text: encodedText }),
+  });
+}
+
 export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps) {
   const [mode, setMode] = useState<"encode" | "decode">(initialMode ?? "encode");
   const [inputText, setInputText] = useState("");
-  const [c2paClaimGenerator, setC2paClaimGenerator] = useState("Encypher Demo UI");
   const [c2paProvenance, setC2paProvenance] = useState("");
   const [output, setOutput] = useState<string | null>(null);
   const [lastDecodeResponse, setLastDecodeResponse] = useState<DecodeToolResponse | null>(null);
@@ -103,7 +109,19 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
   const copyBtnRef = useRef<HTMLButtonElement>(null);
 
   const handleModeToggle = () => {
-    setMode(mode === "encode" ? "decode" : "encode");
+    const nextMode = mode === "encode" ? "decode" : "encode";
+    trackToolEvent({
+      eventName: "tools_mode_toggle",
+      pageUrl: window.location.href,
+      pageTitle: document.title,
+      referrer: document.referrer,
+      userAgent: navigator.userAgent,
+      properties: {
+        from: mode === "encode" ? "sign" : "verify",
+        to: nextMode === "encode" ? "sign" : "verify",
+      },
+    });
+    setMode(nextMode);
     setInputText("");
     setOutput(null);
     setLastDecodeResponse(null);
@@ -138,17 +156,27 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
     setError(null);
     setOutput(null);
     setLastDecodeResponse(null);
+    const startedAt = Date.now();
+    trackToolEvent({
+      eventName: mode === "encode" ? "tools_sign_started" : "tools_verify_started",
+      pageUrl: window.location.href,
+      pageTitle: document.title,
+      referrer: document.referrer,
+      userAgent: navigator.userAgent,
+      properties: {
+        mode: mode === "encode" ? "sign" : "verify",
+        inputLength: inputText.length,
+      },
+    });
 
     try {
       if (mode === "encode") {
         const body = {
           original_text: inputText,
-          target: "first_letter",
           metadata_format: "c2pa_v2_2",
           ai_info: {
-            claim_generator: c2paClaimGenerator,
-            provenance: c2paProvenance
-          }
+            provenance: c2paProvenance,
+          },
         };
 
         const response = await toolsApiCall<{ encoded_text: string, metadata?: any }>("/api/tools/sign", {
@@ -157,51 +185,121 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
         });
 
         if (response && response.encoded_text) {
+          trackToolEvent({
+            eventName: "tools_sign_success",
+            pageUrl: window.location.href,
+            pageTitle: document.title,
+            referrer: document.referrer,
+            userAgent: navigator.userAgent,
+            properties: {
+              mode: "sign",
+              inputLength: inputText.length,
+              outputLength: response.encoded_text.length,
+              durationMs: Date.now() - startedAt,
+            },
+          });
           setOutput(response.encoded_text);
           
           // Automatically verify to get full manifest details for consistent display
           try {
-            const verifyResponse = await toolsApiCall<DecodeToolResponse>("/api/tools/verify", {
-              method: "POST",
-              body: JSON.stringify({ encoded_text: response.encoded_text }),
-            });
+            const verifyResponse = await verifyEncodedText(response.encoded_text);
 
-            if (verifyResponse && verifyResponse.verification_status === 'Success') {
-               setLastDecodeResponse(verifyResponse);
+            if (verifyResponse && verifyResponse.verification_status === "Success") {
+              trackToolEvent({
+                eventName: "tools_verify_after_sign_success",
+                pageUrl: window.location.href,
+                pageTitle: document.title,
+                referrer: document.referrer,
+                userAgent: navigator.userAgent,
+                properties: {
+                  mode: "verify",
+                  inputLength: response.encoded_text.length,
+                  embeddingsFound: verifyResponse.embeddings_found || 0,
+                  durationMs: Date.now() - startedAt,
+                },
+              });
+              setLastDecodeResponse(verifyResponse);
             } else {
-               // Fallback
-               setLastDecodeResponse({ 
-                   verification_status: 'Success', 
-                   metadata: { manifest: response.metadata },
-                   raw_hidden_data: { valid: true, signer_name: "org_demo (Demo Key)", reason_code: "CREATED" } as any 
-               });
+              trackToolEvent({
+                eventName: "tools_verify_after_sign_fallback",
+                pageUrl: window.location.href,
+                pageTitle: document.title,
+                referrer: document.referrer,
+                userAgent: navigator.userAgent,
+                properties: {
+                  mode: "verify",
+                  inputLength: response.encoded_text.length,
+                  status: verifyResponse?.verification_status ?? "unknown",
+                  durationMs: Date.now() - startedAt,
+                },
+              });
+              // Fallback
+              setLastDecodeResponse({
+                verification_status: "Success",
+                metadata: { manifest: response.metadata },
+                raw_hidden_data: { valid: true, signer_name: "org_demo (Demo Key)", reason_code: "CREATED" } as any,
+              });
             }
           } catch (e) {
-             // Fallback
-             setLastDecodeResponse({ 
-                 verification_status: 'Success', 
-                 metadata: { manifest: response.metadata },
-                 raw_hidden_data: { valid: true, signer_name: "org_demo (Demo Key)", reason_code: "CREATED" } as any 
-             });
+            trackToolEvent({
+              eventName: "tools_verify_after_sign_error",
+              pageUrl: window.location.href,
+              pageTitle: document.title,
+              referrer: document.referrer,
+              userAgent: navigator.userAgent,
+              properties: {
+                mode: "verify",
+                inputLength: response.encoded_text.length,
+                durationMs: Date.now() - startedAt,
+              },
+            });
+            // Fallback
+            setLastDecodeResponse({
+              verification_status: "Success",
+              metadata: { manifest: response.metadata },
+              raw_hidden_data: { valid: true, signer_name: "org_demo (Demo Key)", reason_code: "CREATED" } as any,
+            });
           }
         } else {
-          throw new Error("Encoding failed: Invalid response from server.");
+          throw new Error("Signing failed: Invalid response from server.");
         }
       } else { // decode
-        const body = { encoded_text: inputText };
-        const response = await toolsApiCall<DecodeToolResponse>("/api/tools/verify", {
-          method: "POST",
-          body: JSON.stringify(body),
-        });
+        const response = await verifyEncodedText(inputText);
 
         if (!response) {
-          throw new Error("Decoding failed: Empty response from server.");
+          throw new Error("Verification failed: Empty response from server.");
         }
+        trackToolEvent({
+          eventName: "tools_verify_success",
+          pageUrl: window.location.href,
+          pageTitle: document.title,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          properties: {
+            mode: "verify",
+            inputLength: inputText.length,
+            embeddingsFound: response.embeddings_found || 0,
+            durationMs: Date.now() - startedAt,
+          },
+        });
         setLastDecodeResponse(response);
         setOutput(null);
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.detail || err.message || "An unexpected error occurred.";
+      trackToolEvent({
+        eventName: mode === "encode" ? "tools_sign_error" : "tools_verify_error",
+        pageUrl: window.location.href,
+        pageTitle: document.title,
+        referrer: document.referrer,
+        userAgent: navigator.userAgent,
+        properties: {
+          mode: mode === "encode" ? "sign" : "verify",
+          inputLength: inputText.length,
+          errorMessage,
+          durationMs: Date.now() - startedAt,
+        },
+      });
       setError(errorMessage);
       toast({
         title: "Error",
@@ -215,9 +313,31 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text).then(
       () => {
+        trackToolEvent({
+          eventName: "tools_output_copied",
+          pageUrl: window.location.href,
+          pageTitle: document.title,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          properties: {
+            mode: mode === "encode" ? "sign" : "verify",
+            outputLength: text.length,
+          },
+        });
         toast({ title: "Copied to clipboard!" });
       },
       (err) => {
+        trackToolEvent({
+          eventName: "tools_copy_failed",
+          pageUrl: window.location.href,
+          pageTitle: document.title,
+          referrer: document.referrer,
+          userAgent: navigator.userAgent,
+          properties: {
+            mode: mode === "encode" ? "sign" : "verify",
+            outputLength: text.length,
+          },
+        });
         toast({ title: "Copy failed", description: `Could not copy text: ${err}` });
       }
     );
@@ -315,9 +435,9 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
       <Card>
         <CardHeader>
           <CardTitle className="flex justify-between items-center">
-            <span className="text-lg sm:text-xl">Encypher Encode/Decode Tool</span>
+            <span className="text-lg sm:text-xl">Encypher Sign/Verify Tool</span>
             <Button onClick={handleModeToggle} variant="outline" size="sm">
-              Switch to {mode === "encode" ? "Decode" : "Encode"}
+              Switch to {mode === "encode" ? "Verify" : "Sign"}
             </Button>
           </CardTitle>
         </CardHeader>
@@ -325,11 +445,11 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
           <div className="space-y-6">
             <div className="space-y-2">
               <Label htmlFor="input-text" className="font-bold">
-                {mode === "encode" ? "Text to Encode" : "Text to Decode"}
+                {mode === "encode" ? "Text to Sign" : "Text to Verify"}
               </Label>
               <Textarea
                 id="input-text"
-                placeholder={mode === 'encode' ? 'Enter the text you want to embed information into...' : 'Paste the text containing hidden information...'}
+                placeholder={mode === 'encode' ? 'Enter the text you want to sign with provenance metadata...' : 'Paste signed text to verify authenticity...'}
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
                 className="min-h-[150px] font-mono text-sm"
@@ -338,10 +458,6 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
 
             {mode === 'encode' && (
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="c2pa-claim-generator" className="font-bold">Claim Generator</Label>
-                  <Input id="c2pa-claim-generator" value={c2paClaimGenerator} onChange={(e) => setC2paClaimGenerator(e.target.value)} />
-                </div>
                 <div className="space-y-2">
                   <Label htmlFor="c2pa-provenance" className="font-bold">Provenance</Label>
                   <Textarea
@@ -355,12 +471,12 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
             )}
 
             <div className="text-xs text-muted-foreground">
-              <em>Note: For demo use only. All encoding uses a server-side demo key. Private keys are not required or accepted here.</em>
+              <em>Note: For demo use only. All signing uses a server-side demo key. Private keys are not required or accepted here.</em>
             </div>
 
             <div className="mt-6">
               <Button onClick={handleProcess} disabled={loading || !inputText} className="w-full">
-                {loading ? "Processing..." : (mode === "encode" ? "Encode Text" : "Decode Text")}
+                {loading ? "Processing..." : (mode === "encode" ? "Sign Text" : "Verify Text")}
               </Button>
             </div>
 
@@ -373,7 +489,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
 
             {output && mode === "encode" && (
               <Alert className="bg-muted border-muted-foreground/30">
-                <AlertTitle>Encoded Text</AlertTitle>
+                <AlertTitle>Signed Text</AlertTitle>
                 <AlertDescription>
                   <div className="flex items-center gap-2">
                     <span className="break-all font-mono text-sm">{output}</span>

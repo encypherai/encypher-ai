@@ -340,6 +340,33 @@ class KeyService:
         return True
 
     @staticmethod
+    def revoke_keys_by_user(
+        db: Session,
+        organization_id: str,
+        target_user_id: str,
+        actor_user_id: str,
+    ) -> int:
+        """Revoke all API keys in an organization created by a specific user"""
+        query = db.query(ApiKey).filter(
+            ApiKey.organization_id == organization_id,
+            ApiKey.created_by == target_user_id,
+            ApiKey.is_revoked == False,
+        )
+
+        revoked_count = query.update(
+            {
+                ApiKey.is_revoked: True,
+                ApiKey.is_active: False,
+                ApiKey.revoked_at: datetime.utcnow(),
+                ApiKey.updated_at: datetime.utcnow(),
+            },
+            synchronize_session=False,
+        )
+        db.commit()
+
+        return revoked_count
+
+    @staticmethod
     def rotate_key(
         db: Session,
         key_id: str,

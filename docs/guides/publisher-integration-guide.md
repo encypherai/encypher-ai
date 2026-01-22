@@ -54,7 +54,7 @@ export ENCYPHER_API_KEY="ek_live_abc123def456..."
 **Perfect for:** Blogs, small news sites, individual journalists
 
 ### What You Get
-- 10,000 C2PA signatures/month
+- 1,000 C2PA signatures/month
 - Sign & verify endpoints
 - Basic verification badges
 

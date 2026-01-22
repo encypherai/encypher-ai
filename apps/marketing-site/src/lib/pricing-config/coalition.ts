@@ -46,7 +46,7 @@ export function calculatePublisherEarnings(
 export const COALITION_VALUE_PROPS = {
   starter: {
     headline: 'Get paid when AI uses your content',
-    subheadline: 'Zero risk, pure upside. Sign unlimited content for free.',
+    subheadline: 'Zero risk, pure upside. Sign up to 1K articles/month for free.',
   },
   professional: {
     headline: 'Track every sentence, earn more',

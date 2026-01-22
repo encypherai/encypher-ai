@@ -763,12 +763,22 @@ class OrganizationService:
     # AUDIT LOGS
     # ==========================================
 
-    def get_audit_logs(self, org_id: str, limit: int = 50, offset: int = 0, action_filter: Optional[str] = None) -> List[OrganizationAuditLog]:
+    def get_audit_logs(
+        self,
+        org_id: str,
+        limit: int = 50,
+        offset: int = 0,
+        action_filter: Optional[str] = None,
+        user_id_filter: Optional[str] = None,
+    ) -> List[OrganizationAuditLog]:
         """Get audit logs for an organization"""
         query = self.db.query(OrganizationAuditLog).filter(OrganizationAuditLog.organization_id == org_id)
 
         if action_filter:
             query = query.filter(OrganizationAuditLog.action.like(f"{action_filter}%"))
+
+        if user_id_filter:
+            query = query.filter(OrganizationAuditLog.user_id == user_id_filter)
 
         return query.order_by(OrganizationAuditLog.created_at.desc()).offset(offset).limit(limit).all()
 

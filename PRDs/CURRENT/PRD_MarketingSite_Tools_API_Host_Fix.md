@@ -23,7 +23,7 @@ The marketing site proxies encode/decode requests through Next.js API routes. Th
 - [ ] 4.0 Verification
   - [x] 4.0.1 Run marketing-site unit tests
   - [x] 4.0.2 Run marketing-site linting
-  - [ ] 4.0.3 Manual encode/decode verification
+  - [x] 4.0.3 Manual encode/decode verification (✅ puppeteer)
 
 ## Success Criteria
 - The sign/verify proxy routes default to `https://api.encypherai.com` in production when env vars are unset.

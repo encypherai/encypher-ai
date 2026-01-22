@@ -4,11 +4,11 @@ export default function Head() {
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
-    "name": "Encypher Encode Tool",
+    "name": "Encypher Sign Tool",
     "applicationCategory": "Utility",
     "operatingSystem": "All",
-    "url": "https://encypherai.com/tools/encode",
-    "description": "Embed secure metadata into your text using Unicode variation selectors. Try Encypher's free online encoder tool for digital provenance and authenticity.",
+    "url": "https://encypherai.com/tools/sign",
+    "description": "Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity.",
     "offers": {
       "@type": "Offer",
       "price": "0",
@@ -17,15 +17,15 @@ export default function Head() {
   };
   return (
     <>
-      <link rel="canonical" href="https://encypherai.com/tools/encode" />
-      <meta property="og:title" content="Encode Text with Metadata | Encypher Tool" />
-      <meta property="og:description" content="Embed secure metadata into your text using Unicode variation selectors. Try Encypher's free online encoder tool for digital provenance and authenticity." />
-      <meta property="og:url" content="https://encypherai.com/tools/encode" />
+      <link rel="canonical" href="https://encypherai.com/tools/sign" />
+      <meta property="og:title" content="Sign Text with Metadata | Encypher Tool" />
+      <meta property="og:description" content="Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity." />
+      <meta property="og:url" content="https://encypherai.com/tools/sign" />
       <meta property="og:type" content="website" />
       <meta property="og:site_name" content="Encypher" />
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content="Encode Text with Metadata | Encypher Tool" />
-      <meta name="twitter:description" content="Embed secure metadata into your text using Unicode variation selectors. Try Encypher's free online encoder tool for digital provenance and authenticity." />
+      <meta name="twitter:title" content="Sign Text with Metadata | Encypher Tool" />
+      <meta name="twitter:description" content="Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity." />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
     </>
   );

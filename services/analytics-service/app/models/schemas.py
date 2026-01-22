@@ -76,6 +76,16 @@ class AnalyticsReport(BaseModel):
     time_series: List[TimeSeriesData]
 
 
+class ActivityItem(BaseModel):
+    """Schema for activity feed entries"""
+
+    id: str
+    type: str
+    description: str
+    timestamp: datetime
+    metadata: Optional[Dict[str, Any]] = None
+
+
 class MessageResponse(BaseModel):
     """Generic message response"""
 

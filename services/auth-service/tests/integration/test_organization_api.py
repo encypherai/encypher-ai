@@ -279,6 +279,39 @@ class TestOrganizationAPI:
             assert data["data"][0]["action"] == "organization.created"
 
     @pytest.mark.asyncio
+    async def test_create_audit_log(self, auth_headers):
+        """Test creating an audit log entry"""
+        async with httpx.AsyncClient() as client:
+            create_response = await client.post(
+                f"{BASE_URL}/api/v1/organizations",
+                headers={"Authorization": auth_headers["Authorization"]},
+                json={"name": "Audit Log Create Org", "email": f"auditcreate_{secrets.token_hex(4)}@example.com"},
+            )
+            org_id = create_response.json()["data"]["id"]
+
+            create_log = await client.post(
+                f"{BASE_URL}/api/v1/organizations/{org_id}/audit-logs",
+                headers={"Authorization": auth_headers["Authorization"]},
+                json={
+                    "action": "api_key.created",
+                    "resource_type": "api_key",
+                    "resource_id": "key_test_123",
+                    "details": {"key_name": "Primary"},
+                },
+            )
+
+            assert create_log.status_code == 200
+            log_payload = create_log.json()
+            assert log_payload["success"] is True
+
+            response = await client.get(
+                f"{BASE_URL}/api/v1/organizations/{org_id}/audit-logs", headers={"Authorization": auth_headers["Authorization"]}
+            )
+            data = response.json()
+            actions = [log["action"] for log in data["data"]]
+            assert "api_key.created" in actions
+
+    @pytest.mark.asyncio
     async def test_unauthorized_access(self):
         """Test that unauthorized requests are rejected"""
         async with httpx.AsyncClient() as client:

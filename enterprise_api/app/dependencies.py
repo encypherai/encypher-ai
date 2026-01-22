@@ -10,8 +10,9 @@ Unified Authentication Architecture:
 
 import inspect
 import logging
-from typing import Dict
+from typing import Dict, Optional
 
+import httpx
 from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
@@ -432,6 +433,68 @@ async def require_super_admin(
 
 
 async def require_super_admin_dep(
-    organization: Dict = Depends(get_current_organization_dep),
+    request: Request,
+    background_tasks: BackgroundTasks,
+    credentials: HTTPAuthorizationCredentials | None = Security(security),
 ) -> Dict:
-    return await require_super_admin(organization)
+    if credentials is None or not credentials.credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="API key required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    try:
+        organization = await get_current_organization_dep(
+            request=request,
+            background_tasks=background_tasks,
+            credentials=credentials,
+        )
+        return await require_super_admin(organization)
+    except HTTPException as exc:
+        if exc.status_code != status.HTTP_401_UNAUTHORIZED:
+            raise
+
+    admin_context = await _get_super_admin_from_jwt(credentials.credentials)
+    if not admin_context:
+        raise
+
+    request.state.organization_id = admin_context.get("organization_id")
+    request.state.user_id = admin_context.get("user_id")
+    request.state.api_key_id = admin_context.get("api_key_id")
+    request.state.tier = admin_context.get("tier")
+    return await require_super_admin(admin_context)
+
+
+async def _get_super_admin_from_jwt(token: str) -> Optional[Dict]:
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.auth_service_url}/api/v1/auth/verify",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5.0,
+            )
+    except httpx.RequestError:
+        logger.warning("Auth service unavailable while verifying admin JWT")
+        return None
+
+    if response.status_code != status.HTTP_200_OK:
+        return None
+
+    payload = response.json()
+    user = payload.get("data") if isinstance(payload, dict) and payload.get("success") else None
+    if not isinstance(user, dict) or not user.get("is_super_admin"):
+        return None
+
+    user_id = user.get("id")
+    return {
+        "organization_id": f"user_{user_id}" if user_id else "user_admin",
+        "organization_name": user.get("email") or "Admin",
+        "tier": "enterprise",
+        "features": {"is_super_admin": True},
+        "permissions": ["admin", "sign", "verify", "lookup"],
+        "can_sign": True,
+        "can_verify": True,
+        "can_lookup": True,
+        "user_id": user_id,
+    }

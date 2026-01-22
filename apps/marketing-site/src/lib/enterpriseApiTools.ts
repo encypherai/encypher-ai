@@ -84,15 +84,13 @@ export function buildSignBasicRequest(input: EncodeToolRequestLike): SignBasicRe
   };
 
   const customAssertions: Array<{ label: string; data: Record<string, unknown> }> = [];
-  const claimGenerator = input.ai_info?.claim_generator;
   const provenance = input.ai_info?.provenance;
 
-  if (claimGenerator || provenance) {
+  if (provenance) {
     customAssertions.push({
-      label: "c2pa.generative-ai",
+      label: "org.encypher.provenance",
       data: {
-        softwareAgent: claimGenerator || "Encypher Marketing Site",
-        description: provenance || "Content signed via marketing site tools",
+        text: provenance,
       },
     });
   }

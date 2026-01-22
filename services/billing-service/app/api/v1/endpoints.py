@@ -362,7 +362,7 @@ async def get_usage_stats(
     # TODO: Get actual usage from analytics service
     # For now, return placeholder data
     usage_data = {
-        "c2pa_signatures": {"used": 0, "limit": limits.get("c2pa_signatures", 10000)},
+        "c2pa_signatures": {"used": 0, "limit": limits.get("c2pa_signatures", 1000)},
         "sentences_tracked": {"used": 0, "limit": limits.get("sentences_tracked", 0)},
         "api_calls": {"used": 0, "limit": -1},  # Unlimited
         "verifications": {"used": 0, "limit": -1},  # Unlimited

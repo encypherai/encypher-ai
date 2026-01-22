@@ -19,6 +19,7 @@ interface AuditLog {
   id: string;
   action: string;
   actor_id: string;
+  actor_email?: string;
   resource_type: string;
   resource_id?: string;
   details?: Record<string, unknown>;
@@ -49,6 +50,7 @@ function getActionColor(action: string): string {
 export default function AuditLogsPage() {
   const { data: session } = useSession();
   const [searchQuery, setSearchQuery] = useState('');
+  const [userIdFilter, setUserIdFilter] = useState<string>('');
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
@@ -57,14 +59,40 @@ export default function AuditLogsPage() {
   const { activeOrganization, isLoading: orgLoading } = useOrganization();
   const orgId = activeOrganization?.id;
 
-  // Fetch audit logs
-  const { data: logs, isLoading, error } = useQuery({
-    queryKey: ['audit-logs', orgId, page],
+  // Fetch team members for filter dropdown
+  const { data: members } = useQuery({
+    queryKey: ['org-members', orgId],
     queryFn: async () => {
       if (!orgId) return [];
       const accessToken = (session?.user as any)?.accessToken;
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/audit-logs?limit=${pageSize}&offset=${(page - 1) * pageSize}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/members`,
+        {
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
+      );
+      if (!response.ok) return [];
+      const data = await response.json();
+      return data.data || [];
+    },
+    enabled: hasAuditFeature && !!orgId && !!session,
+  });
+
+  // Fetch audit logs
+  const { data: logs, isLoading, error } = useQuery({
+    queryKey: ['audit-logs', orgId, page, userIdFilter],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const accessToken = (session?.user as any)?.accessToken;
+      const params = new URLSearchParams({
+        limit: String(pageSize),
+        offset: String((page - 1) * pageSize),
+      });
+      if (userIdFilter) {
+        params.append('user_id_filter', userIdFilter);
+      }
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/audit-logs?${params}`,
         {
           headers: {
             Authorization: `Bearer ${accessToken}`,
@@ -127,16 +155,30 @@ export default function AuditLogsPage() {
           )}
         </div>
 
-        {/* Search */}
+        {/* Search and Filters */}
         <Card className="mb-6">
           <CardContent className="p-4">
-            <Input
-              type="text"
-              placeholder="Search by action or resource..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="max-w-md"
-            />
+            <div className="flex gap-4 flex-wrap">
+              <Input
+                type="text"
+                placeholder="Search by action or resource..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="max-w-md flex-1"
+              />
+              <select
+                value={userIdFilter}
+                onChange={(e) => setUserIdFilter(e.target.value)}
+                className="w-[240px] px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">All members</option>
+                {members?.map((member: any) => (
+                  <option key={member.user_id} value={member.user_id}>
+                    {member.user_email || member.user_name || member.user_id}
+                  </option>
+                ))}
+              </select>
+            </div>
           </CardContent>
         </Card>
 
@@ -161,6 +203,7 @@ export default function AuditLogsPage() {
                   <thead>
                     <tr className="border-b bg-muted/50">
                       <th className="text-left py-3 px-4 font-medium text-sm">Timestamp</th>
+                      <th className="text-left py-3 px-4 font-medium text-sm">Actor</th>
                       <th className="text-left py-3 px-4 font-medium text-sm">Action</th>
                       <th className="text-left py-3 px-4 font-medium text-sm">Resource</th>
                       <th className="text-left py-3 px-4 font-medium text-sm">Details</th>
@@ -171,6 +214,14 @@ export default function AuditLogsPage() {
                       <tr key={log.id} className="border-b hover:bg-muted/30">
                         <td className="py-3 px-4 text-sm font-mono text-muted-foreground">
                           {formatDate(log.created_at)}
+                        </td>
+                        <td className="py-3 px-4 text-sm">
+                          <div className="font-medium">{log.actor_email || 'System'}</div>
+                          {log.actor_id && (
+                            <div className="text-xs text-muted-foreground font-mono">
+                              {log.actor_id.slice(0, 8)}...
+                            </div>
+                          )}
                         </td>
                         <td className="py-3 px-4">
                           <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getActionColor(log.action)}`}>

@@ -10,11 +10,12 @@ import {
 } from '@encypher/design-system';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import apiClient, { PlanInfo, Invoice, BillingUsageStats, CoalitionSummary } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { getSelfServeTiers, type TierConfig } from '@/lib/pricing-config';
+import { useOrganization } from '../../contexts/OrganizationContext';
+import { formatRevShare, getTier, getSelfServeTiers, type TierConfig } from '@/lib/pricing-config';
 
 /**
  * Convert shared pricing config to API-compatible PlanInfo format.
@@ -49,6 +50,7 @@ const FALLBACK_PLANS: PlanInfo[] = getSelfServeTiers().map(tierConfigToPlanInfo)
 export default function BillingPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
+  const { activeOrganization } = useOrganization();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
 
   // Fetch plans from API
@@ -123,9 +125,17 @@ export default function BillingPage() {
   const invoices = billingQuery.data?.invoices || [];
   const usage = billingQuery.data?.usage;
   const coalition = billingQuery.data?.coalition;
-  const currentTier = subscription?.tier || 'starter';
+  const organizationTier = activeOrganization?.tier;
+  const currentTier = subscription?.tier || organizationTier || 'starter';
+  const currentTierLabel = subscription?.plan_name
+    || plans.find(plan => plan.tier === currentTier)?.name
+    || (currentTier === 'enterprise' ? 'Enterprise' : 'Starter');
   // TEAM_061: Enterprise pricing terms (rev share) should not be displayed in the dashboard UI.
-  const isEnterpriseTier = subscription?.tier === 'enterprise';
+  const isEnterpriseTier = currentTier === 'enterprise';
+  const currentTierConfig = getTier(currentTier as TierConfig['id']);
+  const tierOrder: TierConfig['id'][] = ['starter', 'professional', 'business', 'enterprise'];
+  const currentTierIndex = tierOrder.indexOf(currentTierConfig.id);
+  const shouldHidePopularBadge = currentTierIndex > tierOrder.indexOf('professional');
   const isLoading = status === 'loading' || billingQuery.isLoading || plansQuery.isLoading;
 
   // Get price based on billing cycle
@@ -160,14 +170,14 @@ export default function BillingPage() {
           <CardHeader>
             <CardTitle>Current Plan</CardTitle>
             <CardDescription>
-              {isLoading ? 'Loading plan information…' : subscription?.plan_name || 'Starter (Free)'}
+              {isLoading ? 'Loading plan information…' : currentTierLabel}
             </CardDescription>
           </CardHeader>
           <CardContent className={isEnterpriseTier ? 'grid md:grid-cols-3 gap-6' : 'grid md:grid-cols-4 gap-6'}>
             <div>
               <p className="text-sm text-muted-foreground mb-1">Plan</p>
               <p className="text-2xl font-bold text-delft-blue dark:text-white">
-                {subscription?.plan_name || 'Starter'}
+                {currentTierLabel}
               </p>
               <p className="text-muted-foreground">
                 {subscription ? `$${subscription.amount}/${subscription.billing_cycle === 'annual' ? 'year' : 'month'}` : 'Free'}
@@ -185,11 +195,9 @@ export default function BillingPage() {
             </div>
             {!isEnterpriseTier && (
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Coalition Rev Share</p>
+                <p className="text-sm text-muted-foreground mb-1">Coalition Revenue</p>
                 <p className="text-foreground">
-                  {subscription?.coalition_rev_share 
-                    ? `${subscription.coalition_rev_share.publisher}% you / ${subscription.coalition_rev_share.encypher}% Encypher`
-                    : '65% you / 35% Encypher'}
+                  {formatRevShare(currentTierConfig)}
                 </p>
               </div>
             )}
@@ -277,7 +285,7 @@ export default function BillingPage() {
                 {isLoading ? (
                   <span className="inline-block h-4 w-32 bg-muted animate-pulse rounded" />
                 ) : coalition ? (
-                  isEnterpriseTier ? 'Coalition earnings summary' : `${coalition.publisher_share_percent}% revenue share`
+                  isEnterpriseTier ? 'Coalition earnings summary' : formatRevShare(currentTierConfig)
                 ) : (
                   'Join the coalition to earn'
                 )}
@@ -384,7 +392,8 @@ export default function BillingPage() {
             {plans.map((plan) => {
               const isCurrent = currentTier === plan.id || (currentTier === 'starter' && plan.id === 'starter');
               const price = getPrice(plan);
-              const revShare = plan.coalition_rev_share;
+              const tierConfig = getTier(plan.id as TierConfig['id']);
+              const revShareLabel = formatRevShare(tierConfig);
               
               return (
                 <div 
@@ -409,7 +418,7 @@ export default function BillingPage() {
                     </div>
                   )}
                   {/* Popular Badge (only show if not current) */}
-                  {plan.popular && !isCurrent && (
+                  {plan.popular && !isCurrent && !shouldHidePopularBadge && (
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                       <span className="inline-block px-4 py-1.5 text-xs font-semibold rounded-full shadow-md bg-blue-ncs text-white">
                         Most Popular
@@ -439,7 +448,7 @@ export default function BillingPage() {
                   <div className="bg-blue-ncs/10 rounded-lg p-3 mb-4 text-center">
                     <p className="text-xs text-muted-foreground">Coalition Revenue</p>
                     <p className="text-sm font-semibold text-blue-ncs">
-                      {revShare.publisher}% you / {revShare.encypher}% Encypher
+                      {revShareLabel}
                     </p>
                   </div>
                   
@@ -479,7 +488,21 @@ export default function BillingPage() {
             })}
             
             {/* Enterprise Card */}
-            <div className="bg-card rounded-xl p-6 relative flex flex-col border border-border hover:border-blue-ncs/30 hover:shadow-md transition-all">
+            <div className={`bg-card rounded-xl p-6 relative flex flex-col transition-all ${
+              isEnterpriseTier
+                ? 'border-2 border-green-500 shadow-lg ring-2 ring-green-500/20'
+                : 'border border-border hover:border-blue-ncs/30 hover:shadow-md'
+            }`}>
+              {isEnterpriseTier && (
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-full shadow-md bg-green-500 text-white">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Current plan
+                  </span>
+                </div>
+              )}
               {/* Tier Name */}
               <div className="pt-2 mb-4">
                 <h3 className="text-xl font-bold text-foreground">Enterprise</h3>
@@ -534,11 +557,16 @@ export default function BillingPage() {
               {/* CTA Button */}
               <div className="mt-auto">
                 <Button
-                  variant="outline"
+                  variant={isEnterpriseTier ? 'outline' : 'outline'}
                   fullWidth
-                  onClick={() => window.location.href = 'mailto:sales@encypherai.com?subject=Enterprise%20Inquiry'}
+                  disabled={isEnterpriseTier}
+                  className={isEnterpriseTier ? 'border-green-500 text-green-600 cursor-default hover:bg-green-50' : ''}
+                  onClick={() => {
+                    if (isEnterpriseTier) return;
+                    window.location.href = 'mailto:sales@encypherai.com?subject=Enterprise%20Inquiry';
+                  }}
                 >
-                  Contact Sales
+                  {isEnterpriseTier ? '✓ Your Plan' : 'Contact Sales'}
                 </Button>
               </div>
             </div>

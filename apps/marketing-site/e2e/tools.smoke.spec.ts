@@ -10,12 +10,12 @@ test("tools page loads", async ({ page, request }) => {
 
   await expect(page.getByRole("heading", { name: "Encypher Tools" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Encode/Decode" }).click();
-  await expect(page).toHaveURL(/\/tools\/encode-decode/);
+  await page.getByRole("link", { name: "Sign/Verify" }).click();
+  await expect(page).toHaveURL(/\/tools\/sign-verify/);
 
-  await expect(page.getByRole("heading", { name: "Encypher Encode/Decode Tool" })).toBeVisible();
-  await expect(page.getByRole("button", { name: /Switch to Decode/i })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Encypher Sign/Verify Tool" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Switch to Verify/i })).toBeVisible();
 
   await page.getByRole("button", { name: /Switch to/i }).click();
-  await expect(page.getByRole("button", { name: /Switch to Encode/i })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Switch to Sign/i })).toBeVisible();
 });

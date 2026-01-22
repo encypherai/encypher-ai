@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient, { PendingAccessRequest } from '../../lib/api';
+import UserActivityModal from '../../components/UserActivityModal';
 
 // Stat card component matching dashboard design
 function StatCard({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
@@ -93,6 +94,7 @@ export default function AdminPage() {
   const [search, setSearch] = useState('');
   const [denyReason, setDenyReason] = useState('');
   const [denyingUserId, setDenyingUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // TEAM_006: Check if user is super admin via API
   const superAdminQuery = useQuery({
@@ -124,6 +126,16 @@ export default function AdminPage() {
       return normalizeAdminUsers(response);
     },
     enabled: Boolean(accessToken) && isSuperAdmin,
+  });
+
+  const usageCountsQuery = useQuery({
+    queryKey: ['admin-usage-counts', usersQuery.data],
+    queryFn: async () => {
+      if (!accessToken || !usersQuery.data) return {};
+      const userIds = usersQuery.data.map((user: AdminUser) => user.id);
+      return apiClient.getAdminUsageCounts(accessToken, userIds, 30);
+    },
+    enabled: Boolean(accessToken) && isSuperAdmin && Boolean(usersQuery.data),
   });
 
   // TEAM_006: Pending API access requests
@@ -250,6 +262,7 @@ export default function AdminPage() {
   const users = usersQuery.data ?? [];
   const stats = statsQuery.data;
   const pendingCount = pendingRequestsQuery.data?.length ?? 0;
+  const realUsageCounts = usageCountsQuery.data ?? {};
 
   return (
     <DashboardLayout>
@@ -513,7 +526,7 @@ export default function AdminPage() {
                       </select>
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-700 dark:text-slate-300">
-                      {user.usageThisMonth.toLocaleString()} calls
+                      {(realUsageCounts[user.id] ?? user.usageThisMonth ?? 0).toLocaleString()} calls
                     </td>
                     <td className="px-6 py-4">
                       <Badge variant={user.status === 'active' ? 'success' : 'error'}>
@@ -522,6 +535,12 @@ export default function AdminPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => setSelectedUserId(user.id)}
+                          className="px-3 py-1.5 text-xs font-medium text-blue-ncs hover:text-delft-blue transition-colors"
+                        >
+                          View Logs
+                        </button>
                         <button
                           onClick={() => toggleStatusMutation.mutate({ userId: user.id, enabled: user.status !== 'active' })}
                           className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
@@ -543,6 +562,17 @@ export default function AdminPage() {
           </div>
         </div>
       </div>
+
+      {/* User Activity Modal */}
+      {selectedUserId && (
+        <UserActivityModal
+          userId={selectedUserId}
+          userEmail={users.find((u) => u.id === selectedUserId)?.email || ''}
+          accessToken={accessToken || ''}
+          isOpen={Boolean(selectedUserId)}
+          onClose={() => setSelectedUserId(null)}
+        />
+      )}
     </DashboardLayout>
   );
 }

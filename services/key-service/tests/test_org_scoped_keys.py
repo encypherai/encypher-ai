@@ -124,3 +124,34 @@ def test_generate_key_with_org_calls_service(client, monkeypatch, user_override)
     payload = response.json()
     assert captured["organization_id"] == "org_123"
     assert payload["organization_id"] == "org_123"
+
+
+def test_revoke_keys_by_user_calls_service(client, monkeypatch, user_override):
+    from app.api.v1 import endpoints
+
+    async def fake_fetch_org_role(authorization: str, org_id: str, user_id: str):
+        return "manager"
+
+    captured = {}
+
+    def fake_revoke_keys_by_user(db, organization_id: str, target_user_id: str, actor_user_id: str):
+        captured["organization_id"] = organization_id
+        captured["target_user_id"] = target_user_id
+        captured["actor_user_id"] = actor_user_id
+        return 3
+
+    monkeypatch.setattr(endpoints, "_fetch_org_role", fake_fetch_org_role)
+    monkeypatch.setattr(endpoints.KeyService, "revoke_keys_by_user", fake_revoke_keys_by_user)
+
+    response = client.post(
+        "/api/v1/keys/revoke-by-user",
+        json={"organization_id": "org_123", "user_id": "user_999"},
+        headers={"Authorization": "Bearer test"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["revoked_count"] == 3
+    assert captured["organization_id"] == "org_123"
+    assert captured["target_user_id"] == "user_999"
+    assert captured["actor_user_id"] == "user_123"

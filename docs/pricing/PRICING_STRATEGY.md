@@ -46,7 +46,7 @@ This document defines the unified pricing strategy across all Encypher propertie
 
 | Category | Feature | Included |
 |----------|---------|----------|
-| **Signing** | C2PA manifest signing | ✅ Unlimited* |
+| **Signing** | C2PA manifest signing | ✅ 1,000/month |
 | **Signing** | Sentence-level tracking | ❌ |
 | **Signing** | Merkle tree encoding | ❌ |
 | **Verification** | Public verification pages | ✅ Unlimited |
@@ -61,10 +61,10 @@ This document defines the unified pricing strategy across all Encypher propertie
 | **Coalition** | Auto-join licensing coalition | ✅ |
 | **Coalition** | Revenue share | 65% publisher / 35% Encypher |
 
-*Soft cap at 10,000/month for abuse prevention. 99% of legitimate users never hit this.
+*Soft cap at 1,000/month for abuse prevention. 99% of legitimate users never hit this.
 
 #### Value Proposition
-"Sign unlimited content for free. Get paid when AI companies use your content for training. Zero risk, pure upside."
+"Sign up to 1,000 articles/month for free. Get paid when AI companies use your content for training. Zero risk, pure upside."
 
 ---
 
@@ -550,7 +550,7 @@ NET TO ENCYPHER:        $455 / year
 | Feature | Starter | Pro | Business | Enterprise |
 |---------|---------|-----|----------|------------|
 | **QUOTAS** | | | | |
-| C2PA signatures/month | Unlimited* | Unlimited | Unlimited | Unlimited |
+| C2PA signatures/month | 1,000 | Unlimited | Unlimited | Unlimited |
 | Tracked sentences/month | 0 | 50,000 | 500,000 | Unlimited |
 | API keys | 2 | 10 | 50 | Unlimited |
 | Rate limit (req/sec) | 10 | 50 | 200 | Unlimited |
@@ -572,7 +572,7 @@ NET TO ENCYPHER:        $455 / year
 | **BYOK** | | | | |
 | Bring Your Own Keys | ❌ | ✅ | ✅ | ✅ |
 
-*Soft cap at 10,000/month for abuse prevention
+*Soft cap at 1,000/month for abuse prevention
 
 ---
 
@@ -587,7 +587,7 @@ NET TO ENCYPHER:        $455 / year
 - **Required:** Encypher-branded verification button
 
 **Limits:**
-- Same as Starter tier (unlimited C2PA, no sentence tracking)
+- Same as Starter tier (1,000 C2PA/month, no sentence tracking)
 - Auto-joins licensing coalition (65/35)
 
 **Purpose:**

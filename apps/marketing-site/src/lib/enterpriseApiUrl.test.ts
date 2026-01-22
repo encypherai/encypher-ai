@@ -1,4 +1,4 @@
-import { resolveEnterpriseApiUrl } from "./enterpriseApiUrl";
+import { resolveEnterpriseApiUrl, resolvePublicEnterpriseApiUrl } from "./enterpriseApiUrl";
 
 describe("resolveEnterpriseApiUrl", () => {
   it("prefers configured Enterprise API URL", () => {
@@ -55,6 +55,24 @@ describe("resolveEnterpriseApiUrl", () => {
 
   it("falls back to localhost when not in production", () => {
     const url = resolveEnterpriseApiUrl({ env: {}, nodeEnv: "development" });
+
+    expect(url).toBe("http://localhost:9000");
+  });
+
+  it("resolves public enterprise API URL from NEXT_PUBLIC_ENTERPRISE_API_URL", () => {
+    const url = resolvePublicEnterpriseApiUrl({
+      env: {
+        NEXT_PUBLIC_ENTERPRISE_API_URL: "https://public-api.encypherai.com",
+        ENTERPRISE_API_URL: "https://private-api.encypherai.com",
+      },
+      nodeEnv: "production",
+    });
+
+    expect(url).toBe("https://public-api.encypherai.com");
+  });
+
+  it("falls back to public defaults when public env vars are missing", () => {
+    const url = resolvePublicEnterpriseApiUrl({ env: {}, nodeEnv: "development" });
 
     expect(url).toBe("http://localhost:9000");
   });

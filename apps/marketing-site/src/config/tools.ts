@@ -10,19 +10,19 @@ export type ToolLink = {
 
 export const toolLinks: ToolLink[] = [
   {
-    name: "Encode/Decode",
-    description: "Embed or extract secure metadata in your text using Unicode-powered tools.",
-    href: "/tools/encode-decode",
+    name: "Sign/Verify",
+    description: "Sign content with secure metadata or verify authenticity using the Encypher tool.",
+    href: "/tools/sign-verify",
   },
   {
-    name: "Encode Only",
-    description: "Encode metadata into text (Unicode variation selectors).",
-    href: "/tools/encode",
+    name: "Sign Only",
+    description: "Sign text with cryptographic provenance metadata.",
+    href: "/tools/sign",
   },
   {
-    name: "Decode Only",
-    description: "Extract metadata from text (Unicode variation selectors).",
-    href: "/tools/decode",
+    name: "Verify Only",
+    description: "Verify signed text and inspect embedded metadata.",
+    href: "/tools/verify",
   },
   // Only include tools that exist in frontend/src/app/tools/
   // Removed non-existent tools: encode-file, decode-file, encode-ads-coremetadata-file, scan-ads-coremetadata-file

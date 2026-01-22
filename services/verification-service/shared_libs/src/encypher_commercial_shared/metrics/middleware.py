@@ -77,9 +77,12 @@ class MetricsMiddleware(BaseHTTPMiddleware):
     ) -> Response:
         """Process request and record metrics."""
         path = request.url.path
+        
+        logger.info(f"MetricsMiddleware.dispatch called for path={path}")
 
         # Skip excluded paths
         if self._should_exclude(path):
+            logger.info(f"MetricsMiddleware: Skipping excluded path {path}")
             return await call_next(request)
 
         # Record start time
@@ -117,16 +120,28 @@ class MetricsMiddleware(BaseHTTPMiddleware):
         user_id = getattr(request.state, "user_id", None)
         api_key_id = getattr(request.state, "api_key_id", None)
 
+        # Debug logging for verification endpoint
+        if "/verify" in path:
+            logger.info(
+                f"MetricsMiddleware: path={path}, org_id={organization_id}, "
+                f"user_id={user_id}, api_key_id={api_key_id}, status={response.status_code}"
+            )
+
         # Fallback: try to get from request headers or path
         if not organization_id:
             organization_id = self._extract_org_from_request(request)
 
-        # Only record metrics if we have an organization
-        if organization_id:
-            # Determine metric type based on endpoint
-            metric_type = self._get_metric_type(path, request.method)
+        # Use placeholder for anonymous/unauthenticated requests
+        # This ensures all API calls are tracked in analytics
+        if not organization_id:
+            organization_id = "anonymous"
+            user_id = "anonymous"
 
-            # Emit metric (non-blocking)
+        # Determine metric type based on endpoint
+        metric_type = self._get_metric_type(path, request.method)
+
+        # Emit metric (non-blocking)
+        try:
             await self.metrics_client.emit(
                 metric_type=metric_type,
                 organization_id=organization_id,
@@ -139,6 +154,9 @@ class MetricsMiddleware(BaseHTTPMiddleware):
                 request_size_bytes=request_size,
                 response_size_bytes=response_size,
             )
+            logger.info(f"MetricsMiddleware: ✓ Metric emitted for {path}")
+        except Exception as e:
+            logger.error(f"MetricsMiddleware: ✗ Failed to emit metric: {e}", exc_info=True)
 
         return response
 

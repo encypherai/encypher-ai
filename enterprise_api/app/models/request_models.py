@@ -54,6 +54,10 @@ class SignRequest(BaseModel):
     document_type: str = Field(default="article", description="Document type: article | legal_brief | contract | ai_output")
     claim_generator: Optional[str] = Field(default=None, description="Optional claim generator identifier for C2PA manifests.")
     actions: Optional[List[Dict[str, Any]]] = Field(default=None, description="Optional list of C2PA action assertions to include.")
+    custom_assertions: Optional[List[Dict[str, Any]]] = Field(
+        default=None,
+        description="Optional list of custom C2PA assertions to include in the manifest.",
+    )
 
     template_id: Optional[str] = Field(
         None,

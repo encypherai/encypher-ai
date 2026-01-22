@@ -9,7 +9,7 @@ interface ActivityItem {
   id: string;
   type: 'api_call' | 'key_created' | 'key_revoked' | 'sign' | 'verify' | 'login' | 'settings_changed';
   description: string;
-  timestamp: Date;
+  timestamp: string;
   metadata?: {
     status?: number;
     latency_ms?: number;
@@ -32,8 +32,9 @@ const activityIcons: Record<ActivityItem['type'], { icon: string; color: string;
   settings_changed: { icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z', color: 'text-amber-600', bg: 'bg-amber-100' },
 };
 
-function formatTimeAgo(date: Date): string {
+function formatTimeAgo(dateValue: string): string {
   const now = new Date();
+  const date = new Date(dateValue);
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
@@ -61,94 +62,6 @@ function getStatusVariant(status?: number): 'success' | 'warning' | 'destructive
   return 'destructive';
 }
 
-// Mock data for demo - in production this would come from an API
-const mockActivities: ActivityItem[] = [
-  {
-    id: '1',
-    type: 'api_call',
-    description: 'Signing request completed for newsroom article',
-    timestamp: new Date(Date.now() - 4 * 60000),
-    metadata: {
-      status: 201,
-      latency_ms: 312,
-      endpoint: '/v1/sign',
-      method: 'POST',
-      api_key: 'prod_newsroom_4f2c',
-      location: 'New York, US',
-      request_id: 'req_9c12f2d',
-    },
-  },
-  {
-    id: '2',
-    type: 'verify',
-    description: 'Verification checks passed for syndicated content',
-    timestamp: new Date(Date.now() - 18 * 60000),
-    metadata: {
-      status: 200,
-      latency_ms: 224,
-      endpoint: '/v1/verify',
-      method: 'POST',
-      api_key: 'prod_newsroom_4f2c',
-      location: 'Chicago, US',
-      request_id: 'req_7d84e8a',
-    },
-  },
-  {
-    id: '3',
-    type: 'sign',
-    description: 'Batch signing job queued for 120 assets',
-    timestamp: new Date(Date.now() - 45 * 60000),
-    metadata: {
-      status: 202,
-      latency_ms: 410,
-      endpoint: '/v1/sign/batch',
-      method: 'POST',
-      api_key: 'studio_batch_21a9',
-      region: 'eu-west-1',
-    },
-  },
-  {
-    id: '4',
-    type: 'api_call',
-    description: 'Key rotated after security policy update',
-    timestamp: new Date(Date.now() - 2 * 3600000),
-    metadata: {
-      status: 204,
-      latency_ms: 180,
-      endpoint: '/v1/keys/rotate',
-      method: 'POST',
-      api_key: 'prod_keys_37b1',
-      location: 'London, UK',
-    },
-  },
-  {
-    id: '5',
-    type: 'login',
-    description: 'Admin login from Chrome on macOS',
-    timestamp: new Date(Date.now() - 7 * 3600000),
-    metadata: {
-      status: 200,
-      latency_ms: 96,
-      endpoint: '/v1/auth/login',
-      method: 'POST',
-      location: 'San Francisco, US',
-    },
-  },
-  {
-    id: '6',
-    type: 'settings_changed',
-    description: 'Updated webhook alert thresholds',
-    timestamp: new Date(Date.now() - 26 * 3600000),
-    metadata: {
-      status: 200,
-      latency_ms: 184,
-      endpoint: '/v1/settings/alerts',
-      method: 'PATCH',
-      api_key: 'ops_monitor_8d2f',
-      region: 'us-east-1',
-    },
-  },
-];
 
 interface ActivityFeedProps {
   limit?: number;
@@ -166,19 +79,26 @@ export function ActivityFeed({
   const { data: session } = useSession();
   const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
 
-  // In production, this would fetch from the API
+  // Fetch from analytics-service activity feed
   const activitiesQuery = useQuery({
     queryKey: ['activity-feed'],
     queryFn: async () => {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockActivities;
+      if (!accessToken) return [];
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/activity?days=7&limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to load activity feed');
+      }
+      return response.json();
     },
     enabled: Boolean(accessToken),
     refetchOnWindowFocus: false,
   });
 
-  const activities = (activitiesQuery.data ?? []).slice(0, limit);
+  const activities = ((activitiesQuery.data ?? []) as ActivityItem[]).slice(0, limit);
   const isLoading = activitiesQuery.isLoading;
 
   if (isLoading) {

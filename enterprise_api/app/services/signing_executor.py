@@ -27,12 +27,22 @@ from app.database import content_session_factory, core_session_factory
 from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
 from app.services.organization_bootstrap import ensure_organization_exists
-from app.services.status_service import status_service
+from app.services.status_list_service import status_service
 from app.utils.coalition_client import CoalitionClient
 from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
 from app.utils.sentence_parser import compute_sentence_hash, compute_text_hash, parse_sentences
 
 logger = logging.getLogger(__name__)
+
+STARTER_CUSTOM_ASSERTION_LIMIT = 1
+
+
+def _get_custom_assertion_limit(tier: str) -> Optional[int]:
+    if tier == "starter":
+        return STARTER_CUSTOM_ASSERTION_LIMIT
+    return None
+
+
 coalition_client = CoalitionClient(settings.coalition_service_url)
 
 
@@ -92,6 +102,22 @@ async def execute_signing(
     try:
         custom_assertions: Optional[List[Dict[str, Any]]] = None
         raw_assertions: List[Dict[str, Any]] = []
+
+        tier = str(organization.get("tier", "starter")).lower()
+        request_custom_assertions = list(request.custom_assertions or [])
+        if request_custom_assertions:
+            assertion_limit = _get_custom_assertion_limit(tier)
+            if assertion_limit is not None and len(request_custom_assertions) > assertion_limit:
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "code": "CUSTOM_ASSERTION_LIMIT_EXCEEDED",
+                        "message": f"Starter tier supports up to {assertion_limit} custom assertion(s) per sign request",
+                        "current_tier": tier,
+                        "upgrade_url": "/billing/upgrade",
+                    },
+                )
+            raw_assertions.extend(request_custom_assertions)
 
         effective_template_id = request.template_id
         if effective_template_id is None:

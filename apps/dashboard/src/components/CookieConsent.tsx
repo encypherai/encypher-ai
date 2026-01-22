@@ -12,8 +12,12 @@ import * as CookieConsent from 'vanilla-cookieconsent';
  */
 export default function CookieConsentBanner() {
   const initialized = useRef(false);
-  
+  const disableCookieConsent = process.env.NEXT_PUBLIC_DISABLE_COOKIE_CONSENT === 'true';
+
   useEffect(() => {
+    if (disableCookieConsent) {
+      return;
+    }
     // Prevent double initialization in React Strict Mode
     if (initialized.current) return;
     initialized.current = true;

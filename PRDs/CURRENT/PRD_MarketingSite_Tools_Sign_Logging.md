@@ -17,7 +17,7 @@ The marketing site sign tool currently returns 500s in production without action
 - [x] 1.2 Identify missing validation and error logging gaps.
 
 ### 2.0 Tests
-- [ ] 2.1 Add unit coverage for sign request builder/validation helpers.
+- [x] 2.1 Add unit coverage for sign request builder/validation helpers. — ✅ npm test
 
 ### 3.0 Implementation
 - [x] 3.1 Add structured logging for sign proxy request/response paths.
@@ -33,4 +33,5 @@ The marketing site sign tool currently returns 500s in production without action
 - Unit tests cover helper logic used by the sign proxy.
 
 ## Completion Notes
-- _TBD_
+- Updated sign payload defaults and provenance-only assertions for marketing-site tools.
+- Enabled base /sign custom assertions with starter-tier limit to embed provenance in manifests.

@@ -99,3 +99,79 @@ async def test_sign_basic_applies_builtin_template_assertions() -> None:
         assertion.get("label") == "c2pa.training-mining.v1" and assertion.get("data", {}).get("use", {}).get("ai_training") is False
         for assertion in called_assertions
     )
+
+
+@pytest.mark.asyncio
+async def test_sign_basic_allows_single_custom_assertion_for_starter() -> None:
+    request = SignRequest(
+        text="Hello world.",
+        document_type="article",
+        custom_assertions=[{"label": "com.encypher.provenance", "data": {"text": "demo provenance"}}],
+    )
+
+    organization = {
+        "organization_id": "org_starter",
+        "organization_name": "Starter",
+        "tier": "starter",
+        "is_demo": True,
+        "features": {},
+        "custom_assertions_enabled": False,
+    }
+
+    db = AsyncMock()
+    db.execute = AsyncMock(return_value=_FakeScalarResult())
+
+    content_db = AsyncMock()
+    core_db = AsyncMock()
+    allocate_mock = AsyncMock(return_value=(0, 1, "https://status.encypherai.com/v1/org_starter/list/0"))
+
+    with (
+        patch(
+            "app.services.signing_executor.status_service.allocate_status_index",
+            new=allocate_mock,
+        ),
+        patch("app.services.signing_executor._index_in_coalition", new=AsyncMock(return_value=None)),
+        patch("app.services.signing_executor.content_session_factory", new=lambda: _FakeSessionCtx(content_db)),
+        patch("app.services.signing_executor.core_session_factory", new=lambda: _FakeSessionCtx(core_db)),
+        patch("app.services.signing_executor.UnicodeMetadata.embed_metadata", return_value="signed") as mock_embed,
+    ):
+        result = await execute_signing(request=request, organization=organization, db=db)
+
+    assert result.success is True
+    called_assertions = mock_embed.call_args.kwargs.get("custom_assertions")
+    assert called_assertions is not None
+    assert any(
+        assertion.get("label") == "com.encypher.provenance" and assertion.get("data", {}).get("text") == "demo provenance"
+        for assertion in called_assertions
+    )
+
+
+@pytest.mark.asyncio
+async def test_sign_basic_enforces_custom_assertion_limit_for_starter() -> None:
+    request = SignRequest(
+        text="Hello world.",
+        document_type="article",
+        custom_assertions=[
+            {"label": "com.encypher.provenance", "data": {"text": "first"}},
+            {"label": "com.encypher.provenance", "data": {"text": "second"}},
+        ],
+    )
+
+    organization = {
+        "organization_id": "org_starter",
+        "organization_name": "Starter",
+        "tier": "starter",
+        "is_demo": True,
+        "features": {},
+        "custom_assertions_enabled": False,
+    }
+
+    db = AsyncMock()
+
+    with (
+        patch("app.services.signing_executor._index_in_coalition", new=AsyncMock(return_value=None)),
+    ):
+        with pytest.raises(HTTPException) as exc_info:
+            await execute_signing(request=request, organization=organization, db=db)
+
+    assert exc_info.value.status_code == 403

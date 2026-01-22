@@ -31,7 +31,6 @@ describe("enterpriseApiTools", () => {
       original_text: "hello world",
       custom_metadata: { campaign: "winter" },
       ai_info: {
-        claim_generator: "Encypher Marketing Site",
         provenance: "Marketing tool",
       },
     });
@@ -41,10 +40,9 @@ describe("enterpriseApiTools", () => {
     expect(req.metadata).toEqual({ campaign: "winter" });
     expect(req.custom_assertions).toEqual([
       {
-        label: "c2pa.generative-ai",
+        label: "org.encypher.provenance",
         data: {
-          softwareAgent: "Encypher Marketing Site",
-          description: "Marketing tool",
+          text: "Marketing tool",
         },
       },
     ]);

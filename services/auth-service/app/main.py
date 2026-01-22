@@ -13,13 +13,14 @@ from .api.v1.organizations import router as organizations_router
 from .api.v1.saml import router as saml_router
 from .api.scim import router as scim_router
 from .db.models import Base
-from .db.session import engine
+from .db.session import SessionLocal, engine
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
 from .middleware.request_size_limit import RequestSizeLimitMiddleware
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
+from .services.super_admin_service import ensure_super_admin_user
 
 # Configure structured logging
 logger = setup_logging(settings.LOG_LEVEL)
@@ -100,6 +101,12 @@ async def lifespan(app: FastAPI):
         run_migrations=True,
         exit_on_failure=True,
     )
+
+    db = SessionLocal()
+    try:
+        ensure_super_admin_user(db)
+    finally:
+        db.close()
 
     # Send startup test email if enabled
     if settings.SEND_STARTUP_EMAIL:

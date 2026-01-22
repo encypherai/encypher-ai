@@ -109,6 +109,10 @@ const nextConfig = {
       { source: '/features', destination: '/platform', permanent: true },
 
       { source: '/about', destination: '/company', permanent: true },
+
+      { source: '/tools/encode-decode', destination: '/tools/sign-verify', permanent: true },
+      { source: '/tools/encode', destination: '/tools/sign', permanent: true },
+      { source: '/tools/decode', destination: '/tools/verify', permanent: true },
     ];
   },
   async rewrites() {

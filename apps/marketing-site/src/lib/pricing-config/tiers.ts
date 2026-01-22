@@ -32,7 +32,7 @@ export const PRICING_TIERS: TiersConfig = {
       encypher: 35,
     },
     features: [
-      'Unlimited C2PA signing',
+      'C2PA signing (1K/mo)',
       'Unlimited verifications',
       '2 API keys',
       'Community support',
@@ -42,7 +42,7 @@ export const PRICING_TIERS: TiersConfig = {
     limits: {
       apiKeys: 2,
       rateLimit: 10,
-      c2paSignatures: 10000, // Soft cap for abuse prevention
+      c2paSignatures: 1000, // Soft cap for abuse prevention
       sentencesTracked: 0,   // Not available
     },
     target: 'Bloggers, small publishers',

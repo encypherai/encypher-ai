@@ -33,7 +33,7 @@ export default function SignupPage() {
   const [registeredEmail, setRegisteredEmail] = useState('');
 
   const handleNameBlur = (event: React.FocusEvent<HTMLInputElement>) => {
-    // TEAM_112: sanitize on blur using the latest input value.
+    // TEAM_115: sanitize on blur using the latest input value.
     const sanitizedName = sanitizeName(event.target.value);
     if (sanitizedName !== formData.name) {
       setFormData((prev) => ({ ...prev, name: sanitizedName }));
@@ -216,7 +216,7 @@ export default function SignupPage() {
         </div>
 
         {/* Signup Card */}
-        <Card className="shadow-2xl">
+        <Card className="shadow-2xl bg-white">
           <CardHeader>
             <CardTitle>Get Started Free</CardTitle>
             <CardDescription>1,000 signatures/month • No credit card required</CardDescription>

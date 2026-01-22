@@ -56,6 +56,108 @@ interface SeatInfo {
   unlimited: boolean;
 }
 
+interface ApiKeysByMemberProps {
+  orgId: string;
+  members: TeamMember[];
+  accessToken: string | undefined;
+}
+
+function ApiKeysByMember({ orgId, members, accessToken }: ApiKeysByMemberProps) {
+  const queryClient = useQueryClient();
+  const [expandedMember, setExpandedMember] = useState<string | null>(null);
+
+  const { data: apiKeys, isLoading } = useQuery({
+    queryKey: ['org-api-keys', orgId],
+    queryFn: async () => {
+      if (!accessToken) return [];
+      const response = await apiClient.getApiKeys(accessToken, orgId);
+      return response || [];
+    },
+    enabled: !!accessToken && !!orgId,
+  });
+
+  const revokeKeysByUserMutation = useMutation({
+    mutationFn: async (userId: string) => {
+      if (!accessToken) throw new Error('Not authenticated');
+      return apiClient.revokeKeysByUser(accessToken, orgId, userId);
+    },
+    onSuccess: (data, userId) => {
+      queryClient.invalidateQueries({ queryKey: ['org-api-keys', orgId] });
+      toast.success(`Revoked ${data.revoked_count} API key(s) for user`);
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to revoke keys');
+    },
+  });
+
+  const keysByMember = members.map((member) => ({
+    member,
+    keys: (apiKeys || []).filter((key: any) => key.created_by === member.user_id || key.user_id === member.user_id),
+  }));
+
+  if (isLoading) {
+    return <div className="text-center py-4 text-muted-foreground">Loading API keys...</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      {keysByMember.map(({ member, keys }) => (
+        <div key={member.user_id} className="border border-border rounded-lg">
+          <button
+            onClick={() => setExpandedMember(expandedMember === member.user_id ? null : member.user_id)}
+            className="w-full flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <div className="text-sm font-medium">{member.user_email || member.user_name}</div>
+              <Badge variant="secondary">{keys.length} key{keys.length !== 1 ? 's' : ''}</Badge>
+            </div>
+            <div className="flex items-center gap-2">
+              {keys.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Revoke all ${keys.length} API key(s) for ${member.user_email || member.user_name}?`)) {
+                      revokeKeysByUserMutation.mutate(member.user_id);
+                    }
+                  }}
+                  className="text-destructive hover:text-destructive"
+                >
+                  Revoke All
+                </Button>
+              )}
+              <svg
+                className={`w-5 h-5 transition-transform ${expandedMember === member.user_id ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+          </button>
+          {expandedMember === member.user_id && keys.length > 0 && (
+            <div className="px-4 pb-4 space-y-2">
+              {keys.map((key: any) => (
+                <div key={key.id} className="flex items-center justify-between p-3 bg-muted/30 rounded text-sm">
+                  <div>
+                    <div className="font-medium">{key.name}</div>
+                    <div className="text-xs text-muted-foreground font-mono">{key.fingerprint?.slice(0, 16)}...</div>
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {new Date(key.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function TeamPage() {
   const { data: session } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
@@ -467,6 +569,21 @@ export default function TeamPage() {
                   </div>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* API Keys by Member */}
+        {hasTeamFeature && orgId && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">API Keys by Member</CardTitle>
+              <p className="text-sm text-muted-foreground mt-1">
+                View and manage API keys created by team members
+              </p>
+            </CardHeader>
+            <CardContent>
+              <ApiKeysByMember orgId={orgId} members={members} accessToken={accessToken} />
             </CardContent>
           </Card>
         )}

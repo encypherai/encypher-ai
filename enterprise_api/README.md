@@ -386,6 +386,8 @@ For up-to-date per-tier limits and quotas, see [FEATURE_MATRIX.md](../FEATURE_MA
 
 Sign content with C2PA-compliant manifest.
 
+Starter tier supports up to 1 custom assertion per request on this endpoint.
+
 **Dependencies**: Key Service (required), Coalition Service (optional)
 
 **Request:**
@@ -405,6 +407,14 @@ Sign content with C2PA-compliant manifest.
       "editor": "John Smith"
     }
   },
+  "custom_assertions": [
+    {
+      "label": "org.encypher.provenance",
+      "data": {
+        "text": "User-supplied provenance text"
+      }
+    }
+  ],
   "use_sentence_tracking": true
 }
 ```
@@ -1047,7 +1057,7 @@ Rate limits are enforced per organization with tier-aware limits. All responses 
 
 | Tier | Requests/Second | Requests/Minute | Monthly Quota |
 |------|-----------------|-----------------|---------------|
-| Starter | 10 | 600 | 10,000 |
+| Starter | 10 | 600 | 1,000 |
 | Professional | 50 | 3,000 | 100,000 |
 | Business | 200 | 12,000 | 500,000 |
 | Enterprise | Unlimited | Unlimited | Unlimited |
