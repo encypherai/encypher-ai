@@ -6,6 +6,8 @@ SKIP_FRONTEND=0
 CLEAN_START=0
 SKIP_DOCKER_LOGS=0
 REBUILD_SERVICES=0
+SKIP_STRIPE_LISTEN=0
+STRIPE_WEBHOOK_FORWARD_URL="${STRIPE_WEBHOOK_FORWARD_URL:-localhost:8007/api/v1/webhooks/stripe}"
 
 usage() {
   cat <<'EOF'
@@ -17,6 +19,7 @@ Options:
   --clean-start       Clean rebuild (docker volumes, next caches, node cache)
   --rebuild           Rebuild application services (non-database)
   --skip-docker-logs  Skip streaming Docker logs
+  --skip-stripe-listen  Skip starting Stripe CLI webhook listener
   -h, --help          Show this help message
 
 Examples:
@@ -43,6 +46,9 @@ while [[ $# -gt 0 ]]; do
       ;;
     --skip-docker-logs)
       SKIP_DOCKER_LOGS=1
+      ;;
+    --skip-stripe-listen)
+      SKIP_STRIPE_LISTEN=1
       ;;
     -h|--help)
       usage
@@ -222,6 +228,7 @@ DASHBOARD_PID=""
 MARKETING_TAIL_PID=""
 DASHBOARD_TAIL_PID=""
 DOCKER_LOG_PID=""
+STRIPE_LISTEN_PID=""
 
 cleanup() {
   step "" "Shutting down..."
@@ -234,6 +241,9 @@ cleanup() {
   fi
   if [[ -n "${DOCKER_LOG_PID}" ]]; then
     kill "${DOCKER_LOG_PID}" >/dev/null 2>&1 || true
+  fi
+  if [[ -n "${STRIPE_LISTEN_PID}" ]]; then
+    kill "${STRIPE_LISTEN_PID}" >/dev/null 2>&1 || true
   fi
 
   if [[ -n "${MARKETING_PID}" ]]; then
@@ -287,6 +297,19 @@ if [[ "$SKIP_FRONTEND" -eq 0 ]]; then
   DASHBOARD_TAIL_PID="$!"
 else
   ok "Skipping frontends (--skip-frontend)"
+fi
+
+if [[ "$SKIP_STRIPE_LISTEN" -eq 0 ]]; then
+  step "" "Starting Stripe webhook listener"
+  if command -v stripe >/dev/null 2>&1; then
+    stripe listen --forward-to "${STRIPE_WEBHOOK_FORWARD_URL}" &
+    STRIPE_LISTEN_PID="$!"
+    ok "Stripe CLI listening → ${STRIPE_WEBHOOK_FORWARD_URL}"
+  else
+    warn "Stripe CLI not found; install it or run with --skip-stripe-listen"
+  fi
+else
+  ok "Skipping Stripe webhook listener (--skip-stripe-listen)"
 fi
 
 if [[ "$SKIP_DOCKER" -eq 0 && "$SKIP_DOCKER_LOGS" -eq 0 ]]; then

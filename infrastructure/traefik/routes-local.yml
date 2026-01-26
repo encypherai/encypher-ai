@@ -84,6 +84,14 @@ http:
       middlewares:
         - cors-api
 
+    billing-webhooks-router:
+      rule: "PathPrefix(`/api/v1/webhooks`)"
+      service: billing-service
+      entryPoints:
+        - web
+      middlewares:
+        - cors-api
+
     # ============================================
     # ENCODING -> Encoding Service (8004)
     # ============================================

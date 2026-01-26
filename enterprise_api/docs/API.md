@@ -77,6 +77,8 @@ X-RateLimit-Reset: 2025-02-01T00:00:00Z
 
 Sign content with C2PA manifest.
 
+Starter tier supports up to 1 custom assertion per request.
+
 **Authentication:** Required
 **Permission:** `can_sign`
 
@@ -86,7 +88,15 @@ Sign content with C2PA manifest.
   "text": "Content to sign",
   "document_title": "Optional title",
   "document_url": "https://example.com/article",
-  "document_type": "article"
+  "document_type": "article",
+  "custom_assertions": [
+    {
+      "label": "org.encypher.user-provenance",
+      "data": {
+        "text": "User-supplied provenance text"
+      }
+    }
+  ]
 }
 ```
 
@@ -97,6 +107,7 @@ Sign content with C2PA manifest.
 - `document_type` (string, optional): Document type
   - Options: `article`, `legal_brief`, `contract`, `ai_output`
   - Default: `article`
+- `custom_assertions` (array, optional): Custom C2PA assertions for provenance metadata
 
 **Response:**
 ```json

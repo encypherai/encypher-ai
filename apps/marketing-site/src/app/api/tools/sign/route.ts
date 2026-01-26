@@ -58,23 +58,42 @@ export async function POST(request: NextRequest) {
       body: JSON.stringify(signRequest),
     });
 
-    const data = await upstream
-      .json()
-      .catch(() => ({ detail: "Upstream returned invalid JSON" }));
+    const rawBody = await upstream.text();
+    let data: Record<string, unknown> | null = null;
+    if (rawBody) {
+      try {
+        data = JSON.parse(rawBody) as Record<string, unknown>;
+      } catch (parseError) {
+        console.error(`${logPrefix} upstream invalid json`, {
+          requestId,
+          status: upstream.status,
+          parseError: parseError instanceof Error ? parseError.message : String(parseError),
+          rawBody,
+        });
+      }
+    }
 
     if (!upstream.ok) {
       console.error(`${logPrefix} upstream error`, {
         requestId,
         status: upstream.status,
-        detail: data?.detail || data?.error?.message || data?.error,
+        detail: data?.detail || data?.error?.message || data?.error || rawBody,
       });
       const detail =
         (typeof data?.detail === "string" && data.detail) ||
         data?.detail?.message ||
         data?.error?.message ||
+        rawBody ||
         `Request failed with status ${upstream.status}`;
 
       return NextResponse.json({ detail }, { status: upstream.status });
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { detail: "Upstream returned invalid JSON", raw: rawBody || null },
+        { status: 502 }
+      );
     }
 
     console.info(`${logPrefix} upstream success`, {

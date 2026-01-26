@@ -88,7 +88,7 @@ export function buildSignBasicRequest(input: EncodeToolRequestLike): SignBasicRe
 
   if (provenance) {
     customAssertions.push({
-      label: "org.encypher.provenance",
+      label: "org.encypher.user-provenance",
       data: {
         text: provenance,
       },

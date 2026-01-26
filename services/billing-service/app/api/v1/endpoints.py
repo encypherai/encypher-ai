@@ -48,6 +48,27 @@ class PortalResponse(BaseModel):
     portal_url: str
 
 
+def _build_subscription_response(subscription: SubscriptionCreate | SubscriptionResponse | object) -> SubscriptionResponse:
+    if isinstance(subscription, SubscriptionResponse):
+        return subscription
+    return SubscriptionResponse(
+        id=subscription.id,
+        user_id=subscription.user_id,
+        organization_id=getattr(subscription, "organization_id", None),
+        plan_id=subscription.plan_id,
+        plan_name=subscription.plan_name,
+        tier=subscription.plan_id,
+        status=subscription.status,
+        billing_cycle=subscription.billing_cycle,
+        amount=subscription.amount,
+        currency=subscription.currency,
+        current_period_start=subscription.current_period_start,
+        current_period_end=subscription.current_period_end,
+        cancel_at_period_end=subscription.cancel_at_period_end,
+        created_at=subscription.created_at,
+    )
+
+
 async def get_current_user(authorization: str = Header(...)) -> dict:
     """Verify user token with auth service"""
     try:
@@ -58,7 +79,14 @@ async def get_current_user(authorization: str = Header(...)) -> dict:
                     status_code=status.HTTP_401_UNAUTHORIZED,
                     detail="Invalid authentication credentials",
                 )
-            return response.json()
+            payload = response.json()
+            if isinstance(payload, dict) and "data" in payload:
+                data = payload["data"]
+                # Map default_organization_id to organization_id for convenience
+                if "default_organization_id" in data and "organization_id" not in data:
+                    data["organization_id"] = data["default_organization_id"]
+                return data
+            return payload
     except httpx.RequestError:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -79,7 +107,7 @@ async def create_subscription(
             user_id=current_user["id"],
             subscription_data=subscription_data,
         )
-        return subscription
+        return _build_subscription_response(subscription)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -101,7 +129,7 @@ async def get_subscription(
             detail="No active subscription found",
         )
 
-    return subscription
+    return _build_subscription_response(subscription)
 
 
 @router.delete("/subscription/{subscription_id}", response_model=MessageResponse)
@@ -184,7 +212,7 @@ async def create_checkout_session(
         )
 
         # Default URLs
-        base_url = settings.API_GATEWAY_URL.replace("/api", "")
+        base_url = settings.DASHBOARD_URL
         success_url = request.success_url or f"{base_url}/billing?success=true"
         cancel_url = request.cancel_url or f"{base_url}/billing?canceled=true"
 
@@ -195,6 +223,10 @@ async def create_checkout_session(
             success_url=success_url,
             cancel_url=cancel_url,
             organization_id=current_user.get("organization_id"),
+            metadata={
+                "user_id": current_user.get("id") or "",
+                "organization_id": current_user.get("organization_id") or "",
+            },
         )
 
         return CheckoutResponse(
@@ -229,7 +261,7 @@ async def get_billing_portal(
         )
 
         # Default return URL
-        base_url = settings.API_GATEWAY_URL.replace("/api", "")
+        base_url = settings.DASHBOARD_URL
         portal_return_url = return_url or f"{base_url}/billing"
 
         # Create portal session
@@ -258,7 +290,7 @@ async def upgrade_subscription(
     """
     target_tier = request.target_tier
 
-    # If upgrading to a paid tier, redirect to checkout
+    # If moving to a paid tier, route through Stripe confirmation
     if target_tier in [TierName.PROFESSIONAL, TierName.BUSINESS]:
         price_id = get_stripe_price_id(target_tier.value, request.billing_cycle)
 
@@ -269,18 +301,42 @@ async def upgrade_subscription(
             )
 
         try:
+            existing_subscription = BillingService.get_user_subscription(db, current_user["id"])
             customer = await StripeService.get_or_create_customer(
                 email=current_user.get("email"),
                 organization_id=current_user.get("organization_id"),
             )
 
-            base_url = settings.API_GATEWAY_URL.replace("/api", "")
+            base_url = settings.DASHBOARD_URL
+            if existing_subscription and existing_subscription.stripe_subscription_id:
+                portal_session = await StripeService.create_billing_portal_session(
+                    customer_id=customer.id,
+                    return_url=f"{base_url}/billing",
+                    flow_data={
+                        "type": "subscription_update",
+                        "subscription_update": {
+                            "subscription": existing_subscription.stripe_subscription_id,
+                        },
+                    },
+                )
+                return UpgradeResponse(
+                    success=True,
+                    checkout_url=portal_session.url,
+                    message="Redirecting to Stripe to confirm your plan change.",
+                    new_tier=target_tier.value,
+                )
+
+            # No active subscription yet -> use Checkout to create it
             session = await StripeService.create_checkout_session(
                 customer_id=customer.id,
                 price_id=price_id,
                 success_url=f"{base_url}/billing?upgrade=success",
                 cancel_url=f"{base_url}/billing?upgrade=canceled",
                 organization_id=current_user.get("organization_id"),
+                metadata={
+                    "user_id": current_user.get("id") or "",
+                    "organization_id": current_user.get("organization_id") or "",
+                },
             )
 
             return UpgradeResponse(
@@ -303,14 +359,41 @@ async def upgrade_subscription(
             message="Enterprise plans require custom pricing. Please contact sales@encypherai.com",
         )
 
-    # For Starter (downgrade), process immediately
+    # For Starter (downgrade), redirect to Stripe Billing Portal for confirmation
     elif target_tier == TierName.STARTER:
-        # TODO: Cancel Stripe subscription and downgrade
-        return UpgradeResponse(
-            success=True,
-            message="Your subscription will be downgraded to Starter at the end of your billing period.",
-            new_tier="starter",
-        )
+        try:
+            existing_subscription = BillingService.get_user_subscription(db, current_user["id"])
+            customer = await StripeService.get_or_create_customer(
+                email=current_user.get("email"),
+                organization_id=current_user.get("organization_id"),
+            )
+            base_url = settings.DASHBOARD_URL
+            subscription_id = (
+                existing_subscription.stripe_subscription_id if existing_subscription else None
+            )
+            portal_session = await StripeService.create_billing_portal_session(
+                customer_id=customer.id,
+                return_url=f"{base_url}/billing",
+                flow_data={
+                    "type": "subscription_cancel",
+                    "subscription_cancel": {
+                        "subscription": subscription_id,
+                    },
+                }
+                if subscription_id
+                else None,
+            )
+            return UpgradeResponse(
+                success=True,
+                checkout_url=portal_session.url,
+                message="Redirecting to Stripe to confirm your downgrade.",
+                new_tier="starter",
+            )
+        except Exception as e:
+            return UpgradeResponse(
+                success=False,
+                message=f"Failed to open billing portal: {str(e)}",
+            )
 
     return UpgradeResponse(
         success=False,

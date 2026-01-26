@@ -10,12 +10,13 @@ import {
 } from '@encypher/design-system';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useRef, Suspense } from 'react';
 import { toast } from 'sonner';
+import { useSearchParams } from 'next/navigation';
 import apiClient, { PlanInfo, Invoice, BillingUsageStats, CoalitionSummary } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
-import { formatRevShare, getTier, getSelfServeTiers, type TierConfig } from '@/lib/pricing-config';
+import { getTier, getSelfServeTiers, type TierConfig } from '@/lib/pricing-config';
 
 /**
  * Convert shared pricing config to API-compatible PlanInfo format.
@@ -47,11 +48,13 @@ function tierConfigToPlanInfo(tier: TierConfig): PlanInfo {
 // Fallback plans from shared config (excludes enterprise)
 const FALLBACK_PLANS: PlanInfo[] = getSelfServeTiers().map(tierConfigToPlanInfo);
 
-export default function BillingPage() {
+function BillingPageContent() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
-  const { activeOrganization } = useOrganization();
+  const { activeOrganization, refetch: refetchOrganization } = useOrganization();
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
+  const searchParams = useSearchParams();
+  const hasRefetchedAfterCheckout = useRef(false);
 
   // Fetch plans from API
   const plansQuery = useQuery({
@@ -75,6 +78,21 @@ export default function BillingPage() {
     },
     enabled: Boolean(accessToken),
   });
+
+  useEffect(() => {
+    if (!accessToken) return;
+    const success = searchParams.get('success');
+    const upgrade = searchParams.get('upgrade');
+    const isCheckoutSuccess = success === 'true' || upgrade === 'success';
+    if (isCheckoutSuccess && !hasRefetchedAfterCheckout.current) {
+      billingQuery.refetch();
+      refetchOrganization();
+      hasRefetchedAfterCheckout.current = true;
+    }
+    if (!isCheckoutSuccess) {
+      hasRefetchedAfterCheckout.current = false;
+    }
+  }, [accessToken, billingQuery, refetchOrganization, searchParams]);
 
   // Upgrade mutation - redirects to Stripe Checkout
   const upgradeMutation = useMutation({
@@ -126,15 +144,25 @@ export default function BillingPage() {
   const usage = billingQuery.data?.usage;
   const coalition = billingQuery.data?.coalition;
   const organizationTier = activeOrganization?.tier;
-  const currentTier = subscription?.tier || organizationTier || 'starter';
-  const currentTierLabel = subscription?.plan_name
+  const subscriptionTier = subscription?.tier && subscription.tier !== 'unknown' ? subscription.tier : undefined;
+  const currentTier = subscriptionTier || organizationTier || 'starter';
+  // Derive label from currentTier (which is already validated), not from subscription.plan_name which may be stale
+  const currentTierConfig = getTier(currentTier as TierConfig['id']) ?? getTier('starter');
+  const currentTierLabel = currentTierConfig?.name 
     || plans.find(plan => plan.tier === currentTier)?.name
     || (currentTier === 'enterprise' ? 'Enterprise' : 'Starter');
+  // Get subscription price info - use subscription amount if valid, otherwise derive from tier config
+  const currentPrice = subscription?.amount && subscription.amount > 0 
+    ? subscription.amount 
+    : (currentTierConfig?.price?.monthly ?? 0);
+  const currentBillingCycle = subscription?.billing_cycle || 'monthly';
+  const isDowngradeScheduled = Boolean(subscription?.cancel_at_period_end);
+  const downgradeEffectiveDate = subscription?.current_period_end;
+  const downgradeTargetLabel = getTier('starter')?.name ?? 'Starter';
   // TEAM_061: Enterprise pricing terms (rev share) should not be displayed in the dashboard UI.
   const isEnterpriseTier = currentTier === 'enterprise';
-  const currentTierConfig = getTier(currentTier as TierConfig['id']);
   const tierOrder: TierConfig['id'][] = ['starter', 'professional', 'business', 'enterprise'];
-  const currentTierIndex = tierOrder.indexOf(currentTierConfig.id);
+  const currentTierIndex = currentTierConfig ? tierOrder.indexOf(currentTierConfig.id) : tierOrder.indexOf('starter');
   const shouldHidePopularBadge = currentTierIndex > tierOrder.indexOf('professional');
   const isLoading = status === 'loading' || billingQuery.isLoading || plansQuery.isLoading;
 
@@ -168,7 +196,7 @@ export default function BillingPage() {
         {/* Current Plan Card */}
         <Card className="border-columbia-blue">
           <CardHeader>
-            <CardTitle>Current Plan</CardTitle>
+            <CardTitle>{isDowngradeScheduled ? 'Current Plan (Downgrade Scheduled)' : 'Current Plan'}</CardTitle>
             <CardDescription>
               {isLoading ? 'Loading plan information…' : currentTierLabel}
             </CardDescription>
@@ -180,27 +208,39 @@ export default function BillingPage() {
                 {currentTierLabel}
               </p>
               <p className="text-muted-foreground">
-                {subscription ? `$${subscription.amount}/${subscription.billing_cycle === 'annual' ? 'year' : 'month'}` : 'Free'}
+                {currentPrice > 0 
+                  ? `$${currentPrice}/${currentBillingCycle === 'annual' ? 'year' : 'month'}` 
+                  : 'Free'}
+              </p>
+              {isDowngradeScheduled && downgradeEffectiveDate && (
+                <p className="mt-2 text-xs text-amber-600">
+                  Access ends {formatDate(downgradeEffectiveDate)}
+                </p>
+              )}
+            </div>
+            {isDowngradeScheduled && (
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Next Plan</p>
+                <p className="text-2xl font-bold text-delft-blue dark:text-white">
+                  {downgradeTargetLabel}
+                </p>
+                <p className="text-muted-foreground">Free</p>
+              </div>
+            )}
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Status</p>
+              <p className="text-foreground capitalize">
+                {isDowngradeScheduled ? 'Downgrade scheduled' : subscription?.status || 'Active'}
               </p>
             </div>
             <div>
-              <p className="text-sm text-muted-foreground mb-1">Status</p>
-              <p className="text-foreground capitalize">{subscription?.status || 'Active'}</p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Renews</p>
+              <p className="text-sm text-muted-foreground mb-1">
+                {isDowngradeScheduled ? 'Ends' : 'Renews'}
+              </p>
               <p className="text-foreground">
                 {subscription?.current_period_end ? formatDate(subscription.current_period_end) : '—'}
               </p>
             </div>
-            {!isEnterpriseTier && (
-              <div>
-                <p className="text-sm text-muted-foreground mb-1">Coalition Revenue</p>
-                <p className="text-foreground">
-                  {formatRevShare(currentTierConfig)}
-                </p>
-              </div>
-            )}
           </CardContent>
           {subscription && (
             <div className="px-6 pb-6">
@@ -285,7 +325,7 @@ export default function BillingPage() {
                 {isLoading ? (
                   <span className="inline-block h-4 w-32 bg-muted animate-pulse rounded" />
                 ) : coalition ? (
-                  isEnterpriseTier ? 'Coalition earnings summary' : formatRevShare(currentTierConfig)
+                  'Coalition earnings summary'
                 ) : (
                   'Join the coalition to earn'
                 )}
@@ -391,9 +431,9 @@ export default function BillingPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {plans.map((plan) => {
               const isCurrent = currentTier === plan.id || (currentTier === 'starter' && plan.id === 'starter');
+              const planIndex = tierOrder.indexOf(plan.id as TierConfig['id']);
+              const isDowngrade = planIndex !== -1 && planIndex < currentTierIndex;
               const price = getPrice(plan);
-              const tierConfig = getTier(plan.id as TierConfig['id']);
-              const revShareLabel = formatRevShare(tierConfig);
               
               return (
                 <div 
@@ -444,14 +484,6 @@ export default function BillingPage() {
                     )}
                   </div>
 
-                  {/* Coalition Rev Share Badge */}
-                  <div className="bg-blue-ncs/10 rounded-lg p-3 mb-4 text-center">
-                    <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                    <p className="text-sm font-semibold text-blue-ncs">
-                      {revShareLabel}
-                    </p>
-                  </div>
-                  
                   {/* Features List */}
                   <ul className="space-y-2.5 text-sm mb-6 flex-1">
                     {plan.features.map((feature) => (
@@ -473,14 +505,11 @@ export default function BillingPage() {
                       className={isCurrent ? 'border-green-500 text-green-600 cursor-default hover:bg-green-50' : ''}
                       onClick={() => {
                         if (isCurrent) return;
-                        if (plan.id === 'starter') {
-                          toast.info('Contact support to downgrade your plan.');
-                        } else {
-                          upgradeMutation.mutate({ tier: plan.id, cycle: billingCycle });
-                        }
+                        // All tier changes go through the upgrade endpoint (including downgrades)
+                        upgradeMutation.mutate({ tier: plan.id, cycle: billingCycle });
                       }}
                     >
-                      {isCurrent ? '✓ Your Plan' : plan.id === 'starter' ? 'Downgrade' : 'Upgrade'}
+                      {isCurrent ? '✓ Your Plan' : isDowngrade ? 'Downgrade' : 'Upgrade'}
                     </Button>
                   </div>
                 </div>
@@ -618,5 +647,36 @@ export default function BillingPage() {
         </section>
       </div>
     </DashboardLayout>
+  );
+}
+
+export default function BillingPage() {
+  return (
+    <Suspense fallback={
+      <DashboardLayout>
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Billing & Subscription</h2>
+            <p className="text-muted-foreground">Loading billing information...</p>
+          </div>
+          <Card className="border-columbia-blue">
+            <CardHeader>
+              <CardTitle>Current Plan</CardTitle>
+              <CardDescription>Loading...</CardDescription>
+            </CardHeader>
+            <CardContent className="grid md:grid-cols-4 gap-6">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-4 w-20 bg-muted rounded mb-2" />
+                  <div className="h-8 w-32 bg-muted rounded" />
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </DashboardLayout>
+    }>
+      <BillingPageContent />
+    </Suspense>
   );
 }

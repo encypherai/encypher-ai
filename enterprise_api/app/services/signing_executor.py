@@ -27,7 +27,7 @@ from app.database import content_session_factory, core_session_factory
 from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
 from app.services.organization_bootstrap import ensure_organization_exists
-from app.services.status_list_service import status_service
+from app.services.status_service import status_service
 from app.utils.coalition_client import CoalitionClient
 from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
 from app.utils.sentence_parser import compute_sentence_hash, compute_text_hash, parse_sentences

@@ -83,6 +83,17 @@ http:
       tls: {}
       priority: 100
 
+    api-billing-webhooks:
+      rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/webhooks`)"
+      service: billing-service
+      entryPoints:
+        - websecure
+        - web
+      middlewares:
+        - cors-api
+      tls: {}
+      priority: 100
+
     api-users:
       rule: "Host(`api.encypherai.com`) && PathPrefix(`/api/v1/users`)"
       service: user-service

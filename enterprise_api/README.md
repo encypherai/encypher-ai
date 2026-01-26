@@ -409,7 +409,7 @@ Starter tier supports up to 1 custom assertion per request on this endpoint.
   },
   "custom_assertions": [
     {
-      "label": "org.encypher.provenance",
+      "label": "org.encypher.user-provenance",
       "data": {
         "text": "User-supplied provenance text"
       }

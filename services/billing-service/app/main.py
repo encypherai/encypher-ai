@@ -10,6 +10,7 @@ from .api.v1.endpoints import router as v1_router
 from .api.v1.stripe_webhooks import router as webhook_router
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
+from .services.price_cache import price_cache
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
@@ -33,6 +34,25 @@ async def lifespan(app: FastAPI):
         run_migrations=True,
         exit_on_failure=True,
     )
+
+    # Validate Stripe price configuration on startup
+    if settings.STRIPE_API_KEY:
+        logger.info("Validating Stripe price configuration...")
+        try:
+            validation_results = await price_cache.validate_prices_on_startup()
+            valid_count = sum(1 for v in validation_results.values() if v)
+            total_count = len(validation_results)
+            
+            if valid_count == total_count:
+                logger.info(f"✅ All {total_count} Stripe prices validated successfully")
+            else:
+                logger.warning(f"⚠️  Only {valid_count}/{total_count} Stripe prices validated")
+                logger.warning("Service will continue, but some checkout flows may fail")
+        except Exception as e:
+            logger.error(f"Failed to validate Stripe prices: {e}")
+            logger.warning("Service will continue without price validation")
+    else:
+        logger.warning("STRIPE_API_KEY not set - skipping price validation")
 
     yield
     logger.info(f"Shutting down {settings.SERVICE_NAME}")

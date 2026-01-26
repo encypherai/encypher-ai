@@ -40,7 +40,7 @@ describe("enterpriseApiTools", () => {
     expect(req.metadata).toEqual({ campaign: "winter" });
     expect(req.custom_assertions).toEqual([
       {
-        label: "org.encypher.provenance",
+        label: "org.encypher.user-provenance",
         data: {
           text: "Marketing tool",
         },

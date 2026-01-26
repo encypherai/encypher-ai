@@ -5,7 +5,7 @@ Organization API endpoints for team management
 import logging
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
@@ -160,6 +160,18 @@ class OrganizationUpdate(BaseModel):
     slug: Optional[str] = None
 
 
+class InternalTierUpdateRequest(BaseModel):
+    tier: str
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    subscription_status: Optional[str] = None
+
+
+class InternalTierUpdateResponse(BaseModel):
+    success: bool = True
+    data: dict = Field(default_factory=dict)
+
+
 class OrganizationResponse(BaseModel):
     id: str
     name: str
@@ -303,6 +315,33 @@ async def create_organization(
         org = org_service.create_organization(name=org_data.name, email=org_data.email, owner_user_id=actor_user_id)
 
         return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/internal/{org_id}/tier", response_model=InternalTierUpdateResponse, include_in_schema=False)
+async def update_organization_tier_internal(
+    org_id: str,
+    payload: InternalTierUpdateRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    else:
+        logger.warning("internal_service_token_missing")
+
+    org_service = OrganizationService(db)
+    try:
+        org = org_service.update_tier_internal(
+            org_id=org_id,
+            tier=payload.tier,
+            stripe_customer_id=payload.stripe_customer_id,
+            stripe_subscription_id=payload.stripe_subscription_id,
+            subscription_status=payload.subscription_status,
+        )
+        return InternalTierUpdateResponse(success=True, data=OrganizationResponse.model_validate(org).model_dump())
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

@@ -387,6 +387,8 @@ services:
     volumes:
       - ./services/billing-service:/app
     command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && echo 'Starting billing-service...' && uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload"]
+    env_file:
+      - ./services/billing-service/.env
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_billing
@@ -399,14 +401,6 @@ services:
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
       API_GATEWAY_URL: http://localhost:8000
-      # Stripe Configuration - Set these in .env file or override here
-      STRIPE_API_KEY: ${STRIPE_API_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_CONNECT_WEBHOOK_SECRET: ${STRIPE_CONNECT_WEBHOOK_SECRET:-}
-      STRIPE_PRICE_PROFESSIONAL_MONTHLY: ${STRIPE_PRICE_PROFESSIONAL_MONTHLY:-}
-      STRIPE_PRICE_PROFESSIONAL_ANNUAL: ${STRIPE_PRICE_PROFESSIONAL_ANNUAL:-}
-      STRIPE_PRICE_BUSINESS_MONTHLY: ${STRIPE_PRICE_BUSINESS_MONTHLY:-}
-      STRIPE_PRICE_BUSINESS_ANNUAL: ${STRIPE_PRICE_BUSINESS_ANNUAL:-}
     depends_on:
       postgres:
         condition: service_healthy

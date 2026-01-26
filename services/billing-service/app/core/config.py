@@ -44,6 +44,8 @@ class Settings(BaseSettings):
     # ===========================================
     AUTH_SERVICE_URL: str = "http://localhost:8001"
     ANALYTICS_SERVICE_URL: str = "http://localhost:8006"
+    DASHBOARD_URL: str = "http://localhost:3001"
+    INTERNAL_SERVICE_TOKEN: str = ""
 
     # ===========================================
     # SERVICE-SPECIFIC: Stripe Configuration
@@ -51,6 +53,7 @@ class Settings(BaseSettings):
     STRIPE_API_KEY: str = ""
     STRIPE_WEBHOOK_SECRET: str = ""
     STRIPE_CONNECT_WEBHOOK_SECRET: str = ""
+    STRIPE_BILLING_PORTAL_CONFIG_ID: str = ""
 
     # Stripe Price IDs (set after creating products in Stripe)
     STRIPE_PRICE_PROFESSIONAL_MONTHLY: str = ""
@@ -69,5 +72,27 @@ class Settings(BaseSettings):
     def allowed_origins_list(self) -> List[str]:
         return [origin.strip() for origin in self.ALLOWED_ORIGINS.split(",")]
 
+    def validate_stripe_config(self) -> None:
+        """Validate Stripe configuration at startup."""
+        if not self.STRIPE_API_KEY:
+            raise ValueError("STRIPE_API_KEY is required")
+        
+        # Validate price IDs are set (except in test environments)
+        if self.ENVIRONMENT == "production":
+            required_prices = [
+                ("STRIPE_PRICE_PROFESSIONAL_MONTHLY", self.STRIPE_PRICE_PROFESSIONAL_MONTHLY),
+                ("STRIPE_PRICE_PROFESSIONAL_ANNUAL", self.STRIPE_PRICE_PROFESSIONAL_ANNUAL),
+                ("STRIPE_PRICE_BUSINESS_MONTHLY", self.STRIPE_PRICE_BUSINESS_MONTHLY),
+                ("STRIPE_PRICE_BUSINESS_ANNUAL", self.STRIPE_PRICE_BUSINESS_ANNUAL),
+            ]
+            
+            missing = [name for name, value in required_prices if not value]
+            if missing:
+                raise ValueError(f"Missing Stripe price IDs in production: {', '.join(missing)}")
+
 
 settings = Settings()
+
+# Validate Stripe config on import (fails fast if misconfigured)
+if settings.STRIPE_API_KEY:
+    settings.validate_stripe_config()

@@ -110,6 +110,7 @@ class UserResponse(UserBase):
     is_active: bool = True
     email_verified: bool = False
     is_super_admin: bool = False  # TEAM_006: Super admin flag
+    default_organization_id: Optional[str] = None  # TEAM_128: For billing service tier sync
 
     class Config:
         from_attributes = True

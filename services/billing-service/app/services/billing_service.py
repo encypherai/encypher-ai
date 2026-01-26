@@ -171,8 +171,28 @@ class BillingService:
 
     @staticmethod
     def get_user_subscription(db: Session, user_id: str) -> Optional[Subscription]:
-        """Get active subscription for user"""
-        return db.query(Subscription).filter(Subscription.user_id == user_id, Subscription.status == "active").first()
+        """Get active subscription for user, preferring ones with valid Stripe data"""
+        # First try to find a subscription with a valid stripe_subscription_id and known tier
+        sub = (
+            db.query(Subscription)
+            .filter(
+                Subscription.user_id == user_id,
+                Subscription.status == "active",
+                Subscription.stripe_subscription_id.isnot(None),
+                Subscription.plan_id != "unknown",
+            )
+            .order_by(Subscription.created_at.desc())
+            .first()
+        )
+        if sub:
+            return sub
+        # Fall back to any active subscription
+        return (
+            db.query(Subscription)
+            .filter(Subscription.user_id == user_id, Subscription.status == "active")
+            .order_by(Subscription.created_at.desc())
+            .first()
+        )
 
     @staticmethod
     def cancel_subscription(db: Session, subscription_id: str, user_id: str) -> bool:
