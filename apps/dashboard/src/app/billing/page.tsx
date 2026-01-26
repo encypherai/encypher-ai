@@ -36,10 +36,6 @@ function tierConfigToPlanInfo(tier: TierConfig): PlanInfo {
       api_keys: tier.limits.apiKeys,
       rate_limit: tier.limits.rateLimit,
     },
-    coalition_rev_share: {
-      publisher: tier.revShare.publisher,
-      encypher: tier.revShare.encypher,
-    },
     popular: tier.popular,
     enterprise: tier.enterprise,
   };
@@ -434,6 +430,7 @@ function BillingPageContent() {
               const planIndex = tierOrder.indexOf(plan.id as TierConfig['id']);
               const isDowngrade = planIndex !== -1 && planIndex < currentTierIndex;
               const price = getPrice(plan);
+              const displayFeatures = plan.features.filter((feature) => !/(\b\d+\s*%\b.*\b(revenue\s*share|rev\s*share)\b|\brevenue\s*share\b|\brev\s*share\b)/i.test(feature));
               
               return (
                 <div 
@@ -486,7 +483,7 @@ function BillingPageContent() {
 
                   {/* Features List */}
                   <ul className="space-y-2.5 text-sm mb-6 flex-1">
-                    {plan.features.map((feature) => (
+                    {displayFeatures.map((feature) => (
                       <li key={feature} className="flex items-start gap-2">
                         <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

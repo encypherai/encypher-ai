@@ -150,7 +150,7 @@ interface PlanInfo {
   price_annual: number;
   features: string[];
   limits: Record<string, number>;
-  coalition_rev_share: { publisher: number; encypher: number };
+  coalition_rev_share?: { publisher: number; encypher: number };
   popular?: boolean;
   enterprise?: boolean;
 }
