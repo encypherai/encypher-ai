@@ -4,9 +4,32 @@ Pre-built email functions for common use cases.
 These functions combine template rendering with sending for convenience.
 """
 
+import html
+import re
 from typing import Any, Optional
 
 from .sender import EmailConfig, render_template, send_email
+
+
+HTML_TAG_RE = re.compile(r"<[^>]+>")
+URL_LIKE_RE = re.compile(r"(https?://|www\.)", re.IGNORECASE)
+
+
+def sanitize_user_name(user_name: Optional[str]) -> Optional[str]:
+    if not user_name:
+        return None
+    cleaned = HTML_TAG_RE.sub("", user_name).strip()
+    if not cleaned:
+        return None
+    if URL_LIKE_RE.search(cleaned):
+        return None
+    return cleaned
+
+
+def _escape_html(value: Optional[str]) -> Optional[str]:
+    if value is None:
+        return None
+    return html.escape(value, quote=True)
 
 
 def send_verification_email(
@@ -33,17 +56,19 @@ def send_verification_email(
     base_url = config.dashboard_url or config.frontend_url
     verification_url = f"{base_url}/auth/verify-email?token={verification_token}"
 
+    safe_user_name = sanitize_user_name(user_name)
+
     html_content = render_template(
         "email_verification.html",
         subject="Verify your email address",
-        user_name=user_name,
+        user_name=safe_user_name,
         verification_url=verification_url,
     )
 
     plain_content = f"""
 Verify your email address
 
-Hi{" " + user_name if user_name else ""},
+Hi{" " + safe_user_name if safe_user_name else ""},
 
 Thanks for signing up for Encypher! To complete your registration, please verify your email address by visiting:
 
@@ -87,17 +112,19 @@ def send_welcome_email(
     """
     dashboard_url = config.dashboard_url or f"{config.frontend_url}/dashboard"
 
+    safe_user_name = sanitize_user_name(user_name)
+
     html_content = render_template(
         "welcome.html",
         subject="Welcome to Encypher!",
-        user_name=user_name,
+        user_name=safe_user_name,
         dashboard_url=dashboard_url,
     )
 
     plain_content = f"""
 Welcome to Encypher!
 
-Hi{" " + user_name if user_name else ""},
+Hi{" " + safe_user_name if safe_user_name else ""},
 
 Your email has been verified and your account is now active. You're all set to start embedding cryptographic proof of origin in your content.
 
@@ -151,10 +178,12 @@ def send_password_reset_email(
     base_url = config.dashboard_url or config.frontend_url
     reset_url = f"{base_url}/reset-password/{reset_token}"
 
+    safe_user_name = sanitize_user_name(user_name)
+
     html_content = render_template(
         "password_reset.html",
         subject="Reset your password",
-        user_name=user_name,
+        user_name=safe_user_name,
         reset_url=reset_url,
         ip_address=ip_address,
     )
@@ -162,7 +191,7 @@ def send_password_reset_email(
     plain_content = f"""
 Reset your password
 
-Hi{" " + user_name if user_name else ""},
+Hi{" " + safe_user_name if safe_user_name else ""},
 
 We received a request to reset the password for your Encypher account. Visit the link below to create a new password:
 
@@ -212,12 +241,15 @@ def send_api_access_request_admin_email(
     base_url = config.dashboard_url or config.frontend_url
     admin_url = f"{base_url}/admin/api-access"
 
+    safe_requester_name = sanitize_user_name(requester_name)
+    safe_requester_name_html = _escape_html(safe_requester_name)
+
     plain_content = f"""
 New API Access Request
 
 A user has requested API access:
 
-Name: {requester_name or "Not provided"}
+Name: {safe_requester_name or "Not provided"}
 Email: {requester_email}
 Requested: {requested_at}
 
@@ -237,7 +269,7 @@ Review this request at: {admin_url}
     <h2 style="color: #1d3557;">New API Access Request</h2>
     <p>A user has requested API access:</p>
     <table style="border-collapse: collapse; margin: 20px 0;">
-        <tr><td style="padding: 8px; font-weight: bold;">Name:</td><td style="padding: 8px;">{requester_name or "Not provided"}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Name:</td><td style="padding: 8px;">{safe_requester_name_html or "Not provided"}</td></tr>
         <tr><td style="padding: 8px; font-weight: bold;">Email:</td><td style="padding: 8px;">{requester_email}</td></tr>
         <tr><td style="padding: 8px; font-weight: bold;">Requested:</td><td style="padding: 8px;">{requested_at}</td></tr>
     </table>
@@ -270,10 +302,13 @@ def send_api_access_approved_email(
     base_url = config.dashboard_url or config.frontend_url
     api_keys_url = f"{base_url}/settings/api-keys"
 
+    safe_user_name = sanitize_user_name(user_name)
+    safe_user_name_html = _escape_html(safe_user_name)
+
     plain_content = f"""
 API Access Approved!
 
-Hi{" " + user_name if user_name else ""},
+Hi{" " + safe_user_name if safe_user_name else ""},
 
 Great news! Your API access request has been approved.
 
@@ -290,7 +325,7 @@ Get started: {api_keys_url}
 <head><title>API Access Approved</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
     <h2 style="color: #2d6a4f;">🎉 API Access Approved!</h2>
-    <p>Hi{" " + user_name if user_name else ""},</p>
+    <p>Hi{" " + safe_user_name_html if safe_user_name_html else ""},</p>
     <p>Great news! Your API access request has been approved.</p>
     <p>You can now generate API keys and start using the Encypher API.</p>
     <p><a href="{api_keys_url}" style="display: inline-block; background: #2d6a4f; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px;">Generate API Keys</a></p>
@@ -321,10 +356,13 @@ def send_api_access_denied_email(
     """
     reason_text = denial_reason or "Your use case did not meet our current requirements."
 
+    safe_user_name = sanitize_user_name(user_name)
+    safe_user_name_html = _escape_html(safe_user_name)
+
     plain_content = f"""
 API Access Request Update
 
-Hi{" " + user_name if user_name else ""},
+Hi{" " + safe_user_name if safe_user_name else ""},
 
 Thank you for your interest in the Encypher API. After reviewing your request, we were unable to approve it at this time.
 
@@ -341,7 +379,7 @@ If you believe this was in error or would like to provide additional information
 <head><title>API Access Request Update</title></head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; padding: 20px;">
     <h2 style="color: #1d3557;">API Access Request Update</h2>
-    <p>Hi{" " + user_name if user_name else ""},</p>
+    <p>Hi{" " + safe_user_name_html if safe_user_name_html else ""},</p>
     <p>Thank you for your interest in the Encypher API. After reviewing your request, we were unable to approve it at this time.</p>
     <p style="background: #f4f7fa; padding: 15px; border-radius: 8px;"><strong>Reason:</strong> {reason_text}</p>
     <p>If you believe this was in error or would like to provide additional information, please reply to this email.</p>
@@ -388,12 +426,15 @@ def send_new_signup_admin_email(
         "github": "GitHub OAuth",
     }.get(signup_method, signup_method.title())
 
+    safe_user_name = sanitize_user_name(user_name)
+    safe_user_name_html = _escape_html(safe_user_name)
+
     plain_content = f"""
 New User Signup
 
 A new user has signed up for Encypher:
 
-Name: {user_name or "Not provided"}
+Name: {safe_user_name or "Not provided"}
 Email: {user_email}
 Method: {method_display}
 
@@ -408,7 +449,7 @@ Method: {method_display}
     <h2 style="color: #1d3557;">🎉 New User Signup</h2>
     <p>A new user has signed up for Encypher:</p>
     <table style="border-collapse: collapse; margin: 20px 0;">
-        <tr><td style="padding: 8px; font-weight: bold;">Name:</td><td style="padding: 8px;">{user_name or "Not provided"}</td></tr>
+        <tr><td style="padding: 8px; font-weight: bold;">Name:</td><td style="padding: 8px;">{safe_user_name_html or "Not provided"}</td></tr>
         <tr><td style="padding: 8px; font-weight: bold;">Email:</td><td style="padding: 8px;">{user_email}</td></tr>
         <tr><td style="padding: 8px; font-weight: bold;">Method:</td><td style="padding: 8px;">{method_display}</td></tr>
     </table>
