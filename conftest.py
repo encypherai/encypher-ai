@@ -8,6 +8,7 @@ import sys
 import types
 from importlib.machinery import ModuleSpec
 from pathlib import Path
+from typing import Any, cast
 
 ROOT = Path(__file__).resolve().parent
 ENTERPRISE_APP_PATH = ROOT / "enterprise_api" / "app"
@@ -43,10 +44,10 @@ def _set_app_module(*paths: Path) -> None:
     search_locations = desired_locations
     app_module = types.ModuleType("app")
     app_module.__package__ = "app"
-    app_module.__path__ = search_locations  # type: ignore[attr-defined]
+    app_module.__path__ = search_locations
     app_module.__spec__ = ModuleSpec("app", loader=None, is_package=True)
-    app_module.__spec__.submodule_search_locations = search_locations  # type: ignore[attr-defined]
-    app_module.__version__ = _extract_app_version(paths)
+    app_module.__spec__.submodule_search_locations = search_locations
+    cast(Any, app_module).__version__ = _extract_app_version(paths)
     sys.modules["app"] = app_module
 
 
@@ -92,10 +93,12 @@ def _ensure_tests_namespace() -> None:
     tests_module = sys.modules.get("tests")
     if tests_module is None:
         tests_module = types.ModuleType("tests")
-        tests_module.__path__ = []  # type: ignore[attr-defined]
+        tests_module.__path__ = []
+        tests_module.__spec__ = ModuleSpec("tests", loader=None, is_package=True)
+        tests_module.__spec__.submodule_search_locations = []
         sys.modules["tests"] = tests_module
 
-    combined_paths = list(getattr(tests_module, "__path__", []))  # type: ignore[arg-type]
+    combined_paths = list(getattr(tests_module, "__path__", []))
 
     for path in candidate_paths:
         if path.exists():
@@ -103,7 +106,10 @@ def _ensure_tests_namespace() -> None:
             if path_str not in combined_paths:
                 combined_paths.append(path_str)
 
-    tests_module.__path__ = combined_paths  # type: ignore[attr-defined]
+    tests_module.__path__ = combined_paths
+    if tests_module.__spec__ is None:
+        tests_module.__spec__ = ModuleSpec("tests", loader=None, is_package=True)
+    tests_module.__spec__.submodule_search_locations = combined_paths
 
 
 _ensure_tests_namespace()
