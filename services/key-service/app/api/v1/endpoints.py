@@ -170,7 +170,9 @@ async def generate_key(
             elif "super_admin" not in key_data.permissions:
                 key_data.permissions = list(key_data.permissions) + ["super_admin"]
 
-        db_key, api_key = KeyService.create_key(db, current_user["id"], key_data, organization_id=organization_id)
+        db_key, api_key = KeyService.create_key(
+            db, current_user["id"], key_data, organization_id=organization_id, authorization=authorization
+        )
 
         if request is not None:
             request.state.organization_id = organization_id
@@ -345,7 +347,9 @@ async def rotate_key(
     if organization_id and not current_user.get("is_super_admin"):
         await _require_org_key_permission(authorization, organization_id, current_user["id"])
 
-    result = KeyService.rotate_key(db, key_id, current_user["id"], rotation_data.reason, organization_id=organization_id)
+    result = KeyService.rotate_key(
+        db, key_id, current_user["id"], rotation_data.reason, organization_id=organization_id, authorization=authorization
+    )
 
     if not result:
         raise HTTPException(

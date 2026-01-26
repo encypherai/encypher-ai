@@ -6,8 +6,10 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+import httpx
+import logging
 
-from ..db.models import ApiKey, KeyUsage, KeyRotation
+from ..db.models import ApiKey, KeyUsage, KeyRotation, Organization
 from ..models.schemas import ApiKeyCreate, ApiKeyUpdate
 from ..core.security import (
     generate_api_key,
@@ -15,10 +17,80 @@ from ..core.security import (
     verify_api_key_format,
     generate_key_fingerprint,
 )
+from ..core.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 class KeyService:
     """API Key management service"""
+
+    @staticmethod
+    def _ensure_organization_exists(db: Session, organization_id: str, authorization: str) -> bool:
+        """
+        Ensure the organization exists in the key-service database.
+
+        If the organization doesn't exist locally, fetch it from auth-service
+        and create a local copy for foreign key integrity.
+
+        Args:
+            db: Database session
+            organization_id: The organization ID to ensure exists
+            authorization: Bearer token to authenticate with auth-service
+
+        Returns:
+            True if organization exists or was created, False on failure
+        """
+        # Check if org already exists locally
+        existing_org = db.query(Organization).filter(Organization.id == organization_id).first()
+        if existing_org:
+            return True
+
+        # Fetch organization info from auth-service
+        try:
+            with httpx.Client(timeout=10.0) as client:
+                response = client.get(
+                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/{organization_id}",
+                    headers={"Authorization": authorization},
+                )
+
+                if response.status_code != 200:
+                    logger.error(f"Failed to fetch org {organization_id} from auth-service: {response.status_code}")
+                    return False
+
+                payload = response.json()
+                org_data = payload.get("data") if isinstance(payload, dict) else payload
+
+                if not org_data:
+                    logger.error(f"No org data returned for {organization_id}")
+                    return False
+
+                # Create local organization record
+                local_org = Organization(
+                    id=org_data.get("id", organization_id),
+                    name=org_data.get("name", "Unknown Organization"),
+                    slug=org_data.get("slug"),
+                    email=org_data.get("email", f"{organization_id}@placeholder.local"),
+                    tier=org_data.get("tier", "starter"),
+                    features=org_data.get("features", {}),
+                    monthly_api_limit=org_data.get("monthly_api_limit", 10000),
+                    monthly_api_usage=org_data.get("monthly_api_usage", 0),
+                    coalition_member=org_data.get("coalition_member", True),
+                    coalition_rev_share=org_data.get("coalition_rev_share", 65),
+                )
+
+                db.add(local_org)
+                db.commit()
+                logger.info(f"Created local org record for {organization_id}")
+                return True
+
+        except httpx.RequestError as e:
+            logger.error(f"Failed to connect to auth-service: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Error ensuring org exists: {e}")
+            db.rollback()
+            return False
 
     @staticmethod
     def _ensure_user_has_organization(db: Session, user_id: str) -> Optional[str]:
@@ -39,14 +111,33 @@ class KeyService:
         return None
 
     @staticmethod
-    def create_key(db: Session, user_id: str, key_data: ApiKeyCreate, organization_id: str = None) -> Tuple[ApiKey, str]:
+    def create_key(
+        db: Session,
+        user_id: str,
+        key_data: ApiKeyCreate,
+        organization_id: str = None,
+        authorization: str = None,
+    ) -> Tuple[ApiKey, str]:
         """
         Create a new API key
         Returns: (ApiKey model, actual key string)
 
         If organization_id is not provided, looks up user's default organization.
+
+        Args:
+            db: Database session
+            user_id: ID of the user creating the key
+            key_data: Key creation data (name, permissions, etc.)
+            organization_id: Optional organization ID to link the key to
+            authorization: Bearer token for auth-service calls (required if organization_id is set)
         """
         from sqlalchemy import text
+
+        # If organization_id is provided, ensure it exists in our local DB
+        # This syncs the org from auth-service if needed
+        if organization_id and authorization:
+            if not KeyService._ensure_organization_exists(db, organization_id, authorization):
+                raise ValueError(f"Organization {organization_id} not found or could not be synced")
 
         # Generate new API key
         api_key = generate_api_key()
@@ -373,6 +464,7 @@ class KeyService:
         user_id: str,
         reason: Optional[str] = None,
         organization_id: Optional[str] = None,
+        authorization: str = None,
     ) -> Optional[Tuple[ApiKey, str]]:
         """
         Rotate an API key (create new one, revoke old one)
@@ -396,6 +488,7 @@ class KeyService:
             user_id,
             new_key_data,
             organization_id=organization_id or old_key.organization_id,
+            authorization=authorization,
         )
 
         # Revoke old key
