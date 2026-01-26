@@ -32,7 +32,7 @@ export const PRICING_TIERS: TiersConfig = {
       encypher: 35,
     },
     features: [
-      'Unlimited C2PA signing',
+      'C2PA signing (1K/mo)',
       'Unlimited verifications',
       '2 API keys',
       'Community support',
@@ -42,7 +42,7 @@ export const PRICING_TIERS: TiersConfig = {
     limits: {
       apiKeys: 2,
       rateLimit: 10,
-      c2paSignatures: 10000, // Soft cap for abuse prevention
+      c2paSignatures: 1000, // Soft cap for abuse prevention
       sentencesTracked: 0,   // Not available
     },
     target: 'Bloggers, small publishers',
@@ -97,7 +97,7 @@ export const PRICING_TIERS: TiersConfig = {
     features: [
       'Everything in Professional',
       'Merkle encodings (10K/mo)',
-      'Plagiarism detection (5K/mo)',
+      'Similarity detection (5K/mo)',
       'Source attribution (50K lookups/mo)',
       'Batch operations (100 docs)',
       '50 API keys',
@@ -194,7 +194,18 @@ export function formatPrice(tier: TierConfig, period: 'monthly' | 'annual' = 'mo
 
 /**
  * Format revenue share for display
+ * Note: Per PRD, specific percentages are removed from public marketing pages.
+ * Actual terms are discussed during sales consultation.
  */
 export function formatRevShare(tier: TierConfig): string {
-  return `${tier.revShare.publisher}% you / ${tier.revShare.encypher}% Encypher`;
+  if (tier.enterprise) {
+    return 'Best terms available';
+  }
+  if (tier.id === 'business') {
+    return 'Premium revenue share';
+  }
+  if (tier.id === 'professional') {
+    return 'Enhanced revenue share';
+  }
+  return 'Standard revenue share';
 }

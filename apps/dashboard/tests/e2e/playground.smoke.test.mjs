@@ -25,6 +25,21 @@ function getFreePort() {
   });
 }
 
+async function waitForLoginPage(page, baseUrl) {
+  let title = '';
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await page.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded' });
+    const h1 = await page.waitForSelector('h1', { timeout: 15_000 });
+    title = await h1.evaluate((el) => el.textContent || '');
+    if (/sign into your account/i.test(title)) {
+      return;
+    }
+    // TEAM_112: Avoid Puppeteer waitForTimeout in Node test runner.
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+  }
+  assert.match(title, /sign into your account/i);
+}
+
 function startDashboardDevServer() {
   return new Promise(async (resolve, reject) => {
     const requestedPort = process.env.DASHBOARD_E2E_PORT || String(await getFreePort());
@@ -134,10 +149,7 @@ describe('Dashboard Playground (smoke)', () => {
 
   it('renders the login page', async () => {
     const page = await browser.newPage();
-    await page.goto(`${dashboardUrl}/login`, { waitUntil: 'domcontentloaded' });
-    const h1 = await page.waitForSelector('h1', { timeout: 15_000 });
-    const title = await h1.evaluate((el) => el.textContent || '');
-    assert.match(title, /sign into your account/i);
+    await waitForLoginPage(page, dashboardUrl);
     await page.close();
   });
 

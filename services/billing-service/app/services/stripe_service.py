@@ -11,14 +11,131 @@ Handles:
 """
 
 import logging
+from datetime import datetime
 from typing import Optional, Dict, Any, List
 
 import stripe
 from stripe import StripeError
+import httpx
+
+from ..db.session import SessionLocal
+from ..db.models import Subscription
+from ..services.billing_service import PRICING_TIERS
 
 from ..core.config import settings
+from .price_cache import get_stripe_price_id
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_tier_from_price_id(price_id: Optional[str]) -> Optional[str]:
+    if not price_id:
+        return None
+    if price_id in {settings.STRIPE_PRICE_PROFESSIONAL_MONTHLY, settings.STRIPE_PRICE_PROFESSIONAL_ANNUAL}:
+        return "professional"
+    if price_id in {settings.STRIPE_PRICE_BUSINESS_MONTHLY, settings.STRIPE_PRICE_BUSINESS_ANNUAL}:
+        return "business"
+    return None
+
+
+async def _sync_org_tier(
+    *,
+    organization_id: str,
+    tier: str,
+    stripe_customer_id: Optional[str],
+    stripe_subscription_id: Optional[str],
+    subscription_status: Optional[str],
+) -> None:
+    if not organization_id:
+        logger.warning("missing_organization_id_for_webhook_sync")
+        return
+
+    payload = {
+        "tier": tier,
+        "stripe_customer_id": stripe_customer_id,
+        "stripe_subscription_id": stripe_subscription_id,
+        "subscription_status": subscription_status,
+    }
+    headers = {}
+    if settings.INTERNAL_SERVICE_TOKEN:
+        headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/tier",
+            json=payload,
+            headers=headers,
+        )
+        if response.status_code >= 400:
+            logger.error(f"auth_service_tier_update_failed: status={response.status_code}, body={response.text}")
+        else:
+            logger.info(f"auth_service_tier_update_success: organization_id={organization_id}, tier={tier}")
+
+
+def _get_tier_pricing(tier: str) -> Dict[str, Any]:
+    return PRICING_TIERS.get(tier, {})
+
+
+def _upsert_subscription_record(
+    *,
+    user_id: Optional[str],
+    organization_id: Optional[str],
+    tier: Optional[str],
+    subscription: Optional[Dict[str, Any]],
+    customer_id: Optional[str],
+    price_id: Optional[str],
+) -> None:
+    if not subscription or not subscription.get("id"):
+        return
+
+    stripe_subscription_id = subscription.get("id")
+    status = subscription.get("status")
+    billing_cycle = subscription.get("items", {}).get("data", [{}])[0].get("price", {}).get("recurring", {}).get("interval")
+    current_period_start = subscription.get("current_period_start")
+    current_period_end = subscription.get("current_period_end")
+
+    plan_config = _get_tier_pricing(tier or "")
+    plan_name = plan_config.get("name", tier or "Unknown")
+    amount = plan_config.get("price_monthly", 0) if billing_cycle == "month" else plan_config.get("price_annual", 0)
+
+    db = SessionLocal()
+    try:
+        existing = db.query(Subscription).filter(Subscription.stripe_subscription_id == stripe_subscription_id).first()
+        if existing:
+            existing.status = status or existing.status
+            existing.plan_id = tier or existing.plan_id
+            existing.plan_name = plan_name
+            existing.billing_cycle = "monthly" if billing_cycle == "month" else "annual"
+            existing.amount = amount
+            existing.stripe_customer_id = customer_id or existing.stripe_customer_id
+            existing.extra_data = {
+                "stripe_price_id": price_id,
+                "stripe_subscription": subscription,
+            }
+        else:
+            db.add(
+                Subscription(
+                    user_id=user_id or "unknown",
+                    organization_id=organization_id,
+                    plan_id=tier or "unknown",
+                    plan_name=plan_name,
+                    status=status or "active",
+                    billing_cycle="monthly" if billing_cycle == "month" else "annual",
+                    amount=amount,
+                    currency="usd",
+                    current_period_start=datetime.utcfromtimestamp(current_period_start) if current_period_start else datetime.utcnow(),
+                    current_period_end=datetime.utcfromtimestamp(current_period_end) if current_period_end else datetime.utcnow(),
+                    stripe_subscription_id=stripe_subscription_id,
+                    stripe_customer_id=customer_id,
+                    extra_data={
+                        "stripe_price_id": price_id,
+                        "stripe_subscription": subscription,
+                    },
+                )
+            )
+        db.commit()
+    finally:
+        db.close()
 
 # Initialize Stripe
 stripe.api_key = settings.STRIPE_API_KEY
@@ -126,6 +243,20 @@ class StripeService:
             logger.error(f"Failed to get/create customer: {e}")
             raise
 
+    @staticmethod
+    async def list_active_subscriptions(customer_id: str, limit: int = 1) -> List[stripe.Subscription]:
+        """List active subscriptions for a customer."""
+        try:
+            subscriptions = stripe.Subscription.list(
+                customer=customer_id,
+                status="active",
+                limit=limit,
+            )
+            return subscriptions.data
+        except StripeError as e:
+            logger.error(f"Failed to list subscriptions for {customer_id}: {e}")
+            return []
+
     # =========================================================================
     # Checkout Sessions
     # =========================================================================
@@ -171,6 +302,7 @@ class StripeService:
                 "subscription_data": {
                     "metadata": session_metadata,
                 },
+                "customer_update": {"name": "auto", "address": "auto"},
                 "allow_promotion_codes": True,
                 "billing_address_collection": "required",
                 "tax_id_collection": {"enabled": True},
@@ -220,7 +352,11 @@ class StripeService:
     # =========================================================================
 
     @staticmethod
-    async def create_billing_portal_session(customer_id: str, return_url: str) -> stripe.billing_portal.Session:
+    async def create_billing_portal_session(
+        customer_id: str,
+        return_url: str,
+        flow_data: Optional[Dict[str, Any]] = None,
+    ) -> stripe.billing_portal.Session:
         """
         Create a Stripe Billing Portal session.
 
@@ -228,10 +364,16 @@ class StripeService:
         and view invoices.
         """
         try:
-            session = stripe.billing_portal.Session.create(
-                customer=customer_id,
-                return_url=return_url,
-            )
+            session_params: Dict[str, Any] = {
+                "customer": customer_id,
+                "return_url": return_url,
+            }
+            if settings.STRIPE_BILLING_PORTAL_CONFIG_ID:
+                session_params["configuration"] = settings.STRIPE_BILLING_PORTAL_CONFIG_ID
+            if flow_data:
+                session_params["flow_data"] = flow_data
+
+            session = stripe.billing_portal.Session.create(**session_params)
 
             logger.info(f"Created billing portal session for customer {customer_id}")
             return session
@@ -277,7 +419,12 @@ class StripeService:
             raise
 
     @staticmethod
-    async def update_subscription(subscription_id: str, new_price_id: str, proration_behavior: str = "create_prorations") -> stripe.Subscription:
+    async def update_subscription(
+        subscription_id: str,
+        new_price_id: str,
+        proration_behavior: str = "create_prorations",
+        metadata: Optional[Dict[str, str]] = None,
+    ) -> stripe.Subscription:
         """
         Update subscription to a new price (upgrade/downgrade).
 
@@ -292,15 +439,21 @@ class StripeService:
         try:
             subscription = stripe.Subscription.retrieve(subscription_id)
 
-            updated = stripe.Subscription.modify(
-                subscription_id,
-                items=[
+            update_params: Dict[str, Any] = {
+                "items": [
                     {
                         "id": subscription["items"]["data"][0].id,
                         "price": new_price_id,
                     }
                 ],
-                proration_behavior=proration_behavior,
+                "proration_behavior": proration_behavior,
+            }
+            if metadata:
+                update_params["metadata"] = metadata
+
+            updated = stripe.Subscription.modify(
+                subscription_id,
+                **update_params,
             )
 
             logger.info(f"Updated subscription {subscription_id} to price {new_price_id}")
@@ -407,11 +560,33 @@ class StripeService:
         subscription_id = session.get("subscription")
         customer_id = session.get("customer")
 
-        # TODO: Update organization subscription in database
-        # This should:
-        # 1. Update organization tier based on subscription
-        # 2. Sync feature flags
-        # 3. Update coalition rev share
+        tier = None
+        if subscription_id:
+            try:
+                subscription = stripe.Subscription.retrieve(subscription_id)
+                subscription_metadata = subscription.get("metadata", {})
+                subscription_org_id = subscription_metadata.get("organization_id") or organization_id
+                user_id = subscription_metadata.get("user_id")
+                price_id = subscription["items"]["data"][0]["price"]["id"] if subscription.get("items") else None
+                tier = _resolve_tier_from_price_id(price_id)
+                if tier:
+                    await _sync_org_tier(
+                        organization_id=subscription_org_id,
+                        tier=tier,
+                        stripe_customer_id=customer_id,
+                        stripe_subscription_id=subscription_id,
+                        subscription_status=subscription.get("status"),
+                    )
+                _upsert_subscription_record(
+                    user_id=user_id,
+                    organization_id=subscription_org_id,
+                    tier=tier,
+                    subscription=subscription,
+                    customer_id=customer_id,
+                    price_id=price_id,
+                )
+            except StripeError as e:
+                logger.error(f"Failed to retrieve subscription for checkout: {e}")
 
         return {
             "status": "success",
@@ -419,32 +594,99 @@ class StripeService:
             "organization_id": organization_id,
             "subscription_id": subscription_id,
             "customer_id": customer_id,
+            "tier": tier,
         }
 
     @staticmethod
     async def _handle_subscription_created(subscription: Dict) -> Dict[str, Any]:
         """Handle new subscription creation."""
         logger.info(f"Subscription created: {subscription.get('id')}")
-        return {"status": "success", "action": "subscription_created"}
+        metadata = subscription.get("metadata", {})
+        organization_id = metadata.get("organization_id")
+        user_id = metadata.get("user_id")
+        customer_id = subscription.get("customer")
+        price_id = subscription["items"]["data"][0]["price"]["id"] if subscription.get("items") else None
+        tier = _resolve_tier_from_price_id(price_id)
+
+        if tier:
+            await _sync_org_tier(
+                organization_id=organization_id,
+                tier=tier,
+                stripe_customer_id=customer_id,
+                stripe_subscription_id=subscription.get("id"),
+                subscription_status=subscription.get("status"),
+            )
+
+        _upsert_subscription_record(
+            user_id=user_id,
+            organization_id=organization_id,
+            tier=tier,
+            subscription=subscription,
+            customer_id=customer_id,
+            price_id=price_id,
+        )
+
+        return {"status": "success", "action": "subscription_created", "tier": tier}
 
     @staticmethod
     async def _handle_subscription_updated(subscription: Dict) -> Dict[str, Any]:
         """Handle subscription update (upgrade/downgrade)."""
         logger.info(f"Subscription updated: {subscription.get('id')}")
+        metadata = subscription.get("metadata", {})
+        organization_id = metadata.get("organization_id")
+        user_id = metadata.get("user_id")
+        customer_id = subscription.get("customer")
+        price_id = subscription["items"]["data"][0]["price"]["id"] if subscription.get("items") else None
+        tier = _resolve_tier_from_price_id(price_id)
 
-        # Check if this is a tier change
-        # TODO: Update organization tier if needed
+        if tier:
+            await _sync_org_tier(
+                organization_id=organization_id,
+                tier=tier,
+                stripe_customer_id=customer_id,
+                stripe_subscription_id=subscription.get("id"),
+                subscription_status=subscription.get("status"),
+            )
+    
+        _upsert_subscription_record(
+            user_id=user_id,
+            organization_id=organization_id,
+            tier=tier,
+            subscription=subscription,
+            customer_id=customer_id,
+            price_id=price_id,
+        )
 
-        return {"status": "success", "action": "subscription_updated"}
+        return {"status": "success", "action": "subscription_updated", "tier": tier}
 
     @staticmethod
     async def _handle_subscription_deleted(subscription: Dict) -> Dict[str, Any]:
         """Handle subscription cancellation."""
         logger.info(f"Subscription deleted: {subscription.get('id')}")
+        metadata = subscription.get("metadata", {})
+        organization_id = metadata.get("organization_id")
+        user_id = metadata.get("user_id")
+        customer_id = subscription.get("customer")
 
-        # TODO: Downgrade organization to Starter tier
+        await _sync_org_tier(
+            organization_id=organization_id,
+            tier="starter",
+            stripe_customer_id=customer_id,
+            stripe_subscription_id=subscription.get("id"),
+            subscription_status=subscription.get("status"),
+        )
 
-        return {"status": "success", "action": "subscription_canceled"}
+        price_id = subscription.get("items", {}).get("data", [{}])[0].get("price", {}).get("id")
+        _upsert_subscription_record(
+            user_id=user_id,
+            organization_id=organization_id,
+            tier="starter",
+            subscription=subscription,
+            customer_id=customer_id,
+            price_id=price_id,
+        )
+
+        return {"status": "success", "action": "subscription_canceled", "tier": "starter"}
 
     @staticmethod
     async def _handle_invoice_paid(invoice: Dict) -> Dict[str, Any]:
@@ -632,31 +874,5 @@ class StripeService:
             raise
 
 
-def get_stripe_price_id(tier: str, billing_cycle: str) -> Optional[str]:
-    """
-    Get Stripe price ID for a tier and billing cycle.
-
-    Args:
-        tier: Tier name (professional, business)
-        billing_cycle: "monthly" or "annual"
-
-    Returns:
-        Stripe price ID or None
-    """
-    price_map = {
-        "professional": {
-            "monthly": settings.STRIPE_PRICE_PROFESSIONAL_MONTHLY,
-            "annual": settings.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
-        },
-        "business": {
-            "monthly": settings.STRIPE_PRICE_BUSINESS_MONTHLY,
-            "annual": settings.STRIPE_PRICE_BUSINESS_ANNUAL,
-        },
-    }
-
-    tier_prices = price_map.get(tier)
-    if not tier_prices:
-        return None
-
-    price_id = tier_prices.get(billing_cycle)
-    return price_id if price_id else None
+# Keep this for backward compatibility
+__all__ = ["StripeService", "get_stripe_price_id"]

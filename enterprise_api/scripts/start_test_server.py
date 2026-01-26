@@ -133,7 +133,10 @@ def main():
         import threading
 
         def stream_output():
-            for line in proc.stdout:
+            stdout = proc.stdout
+            if stdout is None:
+                return
+            for line in stdout:
                 print(line, end="")
                 sys.stdout.flush()
 

@@ -24,9 +24,16 @@ from ...models.schemas import (
     ApiAccessApproval,
     ApiAccessDenial,
     PendingAccessRequestList,
+    TierUpdateRequest,
+    TierUpdateResponse,
+    UserStatusUpdateRequest,
+    UserStatusUpdateResponse,
+    RoleUpdateRequest,
+    RoleUpdateResponse,
 )
 from ...services.auth_service import AuthService
 from ...services.api_access_service import ApiAccessService
+from ...services.admin_service import AdminService
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
 from pydantic import BaseModel, EmailStr
@@ -781,6 +788,216 @@ async def list_pending_access_requests(
         },
         "error": None,
     }
+
+
+@router.get("/admin/stats", response_model=None)
+async def get_admin_stats(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """Return platform stats for the admin dashboard."""
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    stats = AdminService.get_platform_stats(db)
+    return {
+        "success": True,
+        "data": stats,
+        "error": None,
+    }
+
+
+@router.get("/admin/users", response_model=None)
+async def list_admin_users(
+    authorization: str = Header(...),
+    search: Optional[str] = None,
+    tier: Optional[str] = None,
+    page: int = 1,
+    page_size: int = 50,
+    db: Session = Depends(get_db),
+):
+    """List users for the admin dashboard."""
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    result = AdminService.list_users(
+        db=db,
+        search=search,
+        tier=tier,
+        page=page,
+        page_size=page_size,
+    )
+    return {
+        "success": True,
+        "data": result,
+        "error": None,
+    }
+
+
+@router.post("/admin/users/update-tier", response_model=TierUpdateResponse)
+async def update_admin_user_tier(
+    request: TierUpdateRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """Update a user's tier (super admin only)."""
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    result = AdminService.update_user_tier(
+        db=db,
+        user_id=request.user_id,
+        new_tier=request.new_tier.value,
+        reason=request.reason,
+        admin_id=admin_user_id,
+    )
+
+    if not result.get("success"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error"))
+
+    return TierUpdateResponse(success=True, data=result)
+
+
+@router.post("/admin/users/update-status", response_model=UserStatusUpdateResponse)
+async def update_admin_user_status(
+    request: UserStatusUpdateRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """Suspend or activate a user (super admin only)."""
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    result = AdminService.update_user_status(
+        db=db,
+        user_id=request.user_id,
+        status=request.status.value,
+        reason=request.reason,
+        admin_id=admin_user_id,
+    )
+
+    if not result.get("success"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error"))
+
+    return UserStatusUpdateResponse(success=True, data=result)
+
+
+@router.post("/admin/users/update-role", response_model=RoleUpdateResponse)
+async def update_admin_user_role(
+    request: RoleUpdateRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """Update a user's role within their organization (super admin only)."""
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    result = AdminService.update_user_role(
+        db=db,
+        user_id=request.user_id,
+        new_role=request.new_role,
+        admin_id=admin_user_id,
+    )
+
+    if not result.get("success"):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=result.get("error"))
+
+    return RoleUpdateResponse(success=True, data=result)
 
 
 @router.post("/admin/approve-api-access", response_model=None)

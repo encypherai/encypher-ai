@@ -491,7 +491,7 @@ export default function PricingPage() {
                 <tbody>
                   <tr className="border-b border-border/50">
                     <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">C2PA Signing</td>
-                    <td className="text-center py-3 px-2 md:px-4">10K/mo</td>
+                    <td className="text-center py-3 px-2 md:px-4">1K/mo</td>
                     <td className="text-center py-3 px-2 md:px-4 bg-primary/5">Unlimited</td>
                     <td className="text-center py-3 px-2 md:px-4">Unlimited</td>
                     <td className="text-center py-3 px-2 md:px-4">Unlimited</td>

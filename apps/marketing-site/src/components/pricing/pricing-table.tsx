@@ -10,7 +10,7 @@ const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboar
 
 // Marketing-specific tier descriptions (more persuasive than generic)
 const TIER_DESCRIPTIONS: Record<string, string> = {
-  starter: 'Perfect for bloggers and small publishers. Sign unlimited content, join the licensing coalition, and earn when AI companies use your content.',
+  starter: 'Perfect for bloggers and small publishers. Sign up to 1K articles/month, join the licensing coalition, and earn when AI companies use your content.',
   professional: 'For regional news and niche publications. Track every sentence, know when your content appears in AI outputs, and earn a better revenue share.',
   business: 'For major digital publishers. Enterprise-grade content tracking, similarity detection, team collaboration, and the best self-serve revenue share.',
   enterprise: 'For global media giants and wire services. Full platform access, dedicated support, custom SLAs, and the best revenue share terms.',

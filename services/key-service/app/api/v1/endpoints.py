@@ -2,7 +2,7 @@
 API endpoints for Key Service v1
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 import httpx
@@ -19,6 +19,8 @@ from ...models.schemas import (
     KeyRotationResponse,
     MessageResponse,
     KeyUsageStats,
+    RevokeKeysByUserRequest,
+    RevokeKeysByUserResponse,
 )
 from ...services.key_service import KeyService
 from ...core.config import settings
@@ -26,6 +28,32 @@ from ...core.config import settings
 router = APIRouter()
 
 ROLE_CAN_MANAGE_KEYS = {"owner", "admin", "manager"}
+
+
+async def _emit_audit_log(
+    authorization: str,
+    organization_id: Optional[str],
+    action: str,
+    resource_type: Optional[str] = None,
+    resource_id: Optional[str] = None,
+    details: Optional[dict] = None,
+) -> None:
+    if not organization_id:
+        return
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/{organization_id}/audit-logs",
+                headers={"Authorization": authorization},
+                json={
+                    "action": action,
+                    "resource_type": resource_type,
+                    "resource_id": resource_id,
+                    "details": details,
+                },
+            )
+    except httpx.RequestError:
+        return
 
 
 async def get_current_user(authorization: str = Header(...)) -> dict:
@@ -117,6 +145,7 @@ async def generate_key(
     db: Session = Depends(get_db),
     authorization: str = Header(...),
     current_user: dict = Depends(get_current_user),
+    request: Request = None,
 ):
     """
     Generate a new API key
@@ -143,7 +172,12 @@ async def generate_key(
 
         db_key, api_key = KeyService.create_key(db, current_user["id"], key_data, organization_id=organization_id)
 
-        return ApiKeyResponse(
+        if request is not None:
+            request.state.organization_id = organization_id
+            request.state.user_id = current_user["id"]
+            request.state.api_key_id = db_key.id
+
+        response = ApiKeyResponse(
             id=db_key.id,
             name=db_key.name,
             key=api_key,  # Only time the actual key is returned!
@@ -151,7 +185,18 @@ async def generate_key(
             permissions=db_key.permissions,
             created_at=db_key.created_at,
             organization_id=db_key.organization_id,
+            user_id=db_key.user_id,
+            created_by=db_key.created_by,
         )
+        await _emit_audit_log(
+            authorization,
+            organization_id,
+            "api_key.created",
+            resource_type="api_key",
+            resource_id=db_key.id,
+            details={"key_name": db_key.name},
+        )
+        return response
     except HTTPException:
         raise
     except Exception as e:
@@ -267,6 +312,14 @@ async def revoke_key(
             detail="API key not found",
         )
 
+    await _emit_audit_log(
+        authorization,
+        organization_id,
+        "api_key.revoked",
+        resource_type="api_key",
+        resource_id=key_id,
+    )
+
     return {"message": "API key revoked successfully"}
 
 
@@ -302,7 +355,7 @@ async def rotate_key(
 
     new_db_key, new_api_key = result
 
-    return KeyRotationResponse(
+    response = KeyRotationResponse(
         old_key_id=key_id,
         new_key=ApiKeyResponse(
             id=new_db_key.id,
@@ -312,9 +365,51 @@ async def rotate_key(
             permissions=new_db_key.permissions,
             created_at=new_db_key.created_at,
             organization_id=new_db_key.organization_id,
+            user_id=new_db_key.user_id,
+            created_by=new_db_key.created_by,
         ),
         message="Key rotated successfully. Old key has been revoked.",
     )
+
+    await _emit_audit_log(
+        authorization,
+        organization_id,
+        "api_key.rotated",
+        resource_type="api_key",
+        resource_id=key_id,
+        details={"new_key_id": new_db_key.id, "reason": rotation_data.reason},
+    )
+
+    return response
+
+
+@router.post("/revoke-by-user", response_model=RevokeKeysByUserResponse)
+async def revoke_keys_by_user(
+    payload: RevokeKeysByUserRequest,
+    db: Session = Depends(get_db),
+    authorization: str = Header(...),
+    current_user: dict = Depends(get_current_user),
+):
+    """Revoke all API keys created by a specific user within an organization"""
+    if not current_user.get("is_super_admin"):
+        await _require_org_key_permission(authorization, payload.organization_id, current_user["id"])
+
+    revoked_count = KeyService.revoke_keys_by_user(
+        db,
+        organization_id=payload.organization_id,
+        target_user_id=payload.user_id,
+        actor_user_id=current_user["id"],
+    )
+
+    await _emit_audit_log(
+        authorization,
+        payload.organization_id,
+        "api_key.bulk_revoked",
+        resource_type="api_key",
+        details={"target_user_id": payload.user_id, "revoked_count": revoked_count},
+    )
+
+    return {"revoked_count": revoked_count}
 
 
 @router.post("/verify", response_model=ApiKeyVerifyResponse)
@@ -350,6 +445,7 @@ async def verify_key(
 async def validate_key_with_org(
     verify_data: ApiKeyVerify,
     db: Session = Depends(get_db),
+    request: Request = None,
 ):
     """
     Validate an API key and return full organization context.
@@ -373,6 +469,11 @@ async def validate_key_with_org(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or expired API key",
         )
+
+    if request is not None:
+        request.state.organization_id = org_context.get("organization_id")
+        request.state.user_id = org_context.get("user_id")
+        request.state.api_key_id = org_context.get("key_id")
 
     return {
         "success": True,

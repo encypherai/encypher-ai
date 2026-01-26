@@ -32,6 +32,7 @@ async def test_public_verify_c2pa_is_validation_only(async_client: AsyncClient, 
 
     await db.execute(text("DELETE FROM content_references WHERE id = :id"), {"id": ref_id_int})
 
+    signature_hash = "2" * 64
     reference = ContentReference(
         id=ref_id_int,
         merkle_root_id=merkle_root_id,
@@ -40,7 +41,7 @@ async def test_public_verify_c2pa_is_validation_only(async_client: AsyncClient, 
         organization_id="org_demo",
         document_id="doc_c2pa_semantics",
         text_preview="hello",
-        signature_hash="2" * 64,
+        signature_hash=signature_hash,
         c2pa_manifest_url="https://example.com/manifest.json",
         c2pa_manifest_hash=None,
     )
@@ -60,7 +61,7 @@ async def test_public_verify_c2pa_is_validation_only(async_client: AsyncClient, 
     )
 
     with patch("app.api.v1.public.verify.c2pa_verifier.verify_manifest_url", return_value=result):
-        response = await async_client.get(f"/api/v1/public/verify/{ref_id_hex}?signature=aaaaaaaa")
+        response = await async_client.get(f"/api/v1/public/verify/{ref_id_hex}?signature={signature_hash[:8]}")
 
     assert response.status_code == 200
     payload = response.json()

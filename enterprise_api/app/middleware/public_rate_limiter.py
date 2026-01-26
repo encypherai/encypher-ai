@@ -7,12 +7,15 @@ Uses in-memory storage with sliding window algorithm.
 For production, consider upgrading to Redis-based rate limiting.
 """
 
+import ipaddress
 import logging
 import time
 from collections import defaultdict
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Set, Tuple
 
 from fastapi import HTTPException, Request, status
+
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -38,13 +41,15 @@ class PublicAPIRateLimiter:
         "default": {"requests_per_hour": 500, "window_seconds": 3600},
     }
 
-    def __init__(self):
+    def __init__(self, trusted_proxy_ips: Optional[Set[str]] = None):
         """Initialize rate limiter."""
         # Track requests: {(ip, endpoint): [(timestamp, count), ...]}
         self.requests: Dict[Tuple[str, str], list] = defaultdict(list)
 
         # Track violations for potential blocking
         self.violations: Dict[str, int] = defaultdict(int)
+
+        self.trusted_proxy_ips: Set[str] = set(trusted_proxy_ips or set())
 
         logger.info("PublicAPIRateLimiter initialized")
 
@@ -72,18 +77,32 @@ class PublicAPIRateLimiter:
         Returns:
             Client IP address
         """
-        # Check for forwarded IP (behind proxy)
-        forwarded = request.headers.get("X-Forwarded-For")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
+        client_host = request.client.host if request.client else "unknown"
+        if client_host in self.trusted_proxy_ips:
+            forwarded_ip = self._parse_forwarded_ip(request.headers.get("X-Forwarded-For"))
+            if forwarded_ip:
+                return forwarded_ip
 
-        # Check for real IP
-        real_ip = request.headers.get("X-Real-IP")
-        if real_ip:
-            return real_ip
+            real_ip = self._parse_forwarded_ip(request.headers.get("X-Real-IP"))
+            if real_ip:
+                return real_ip
 
-        # Fall back to direct connection IP
-        return request.client.host if request.client else "unknown"
+        return client_host
+
+    @staticmethod
+    def _parse_forwarded_ip(raw_value: Optional[str]) -> Optional[str]:
+        if not raw_value:
+            return None
+
+        candidate = raw_value.split(",")[0].strip()
+        if not candidate:
+            return None
+
+        try:
+            ipaddress.ip_address(candidate)
+        except ValueError:
+            return None
+        return candidate
 
     def check_rate_limit(self, request: Request, endpoint_type: str = "default") -> Tuple[bool, Optional[str], Optional[int]]:
         """
@@ -267,4 +286,4 @@ class PublicAPIRateLimiter:
 
 
 # Global rate limiter instance
-public_rate_limiter = PublicAPIRateLimiter()
+public_rate_limiter = PublicAPIRateLimiter(trusted_proxy_ips=settings.trusted_proxy_ips_set)

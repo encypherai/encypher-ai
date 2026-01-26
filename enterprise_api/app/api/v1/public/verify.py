@@ -7,7 +7,9 @@ third-party verification of embedded content.
 Now supports invisible Unicode embeddings from encypher-ai package.
 """
 
+import hmac
 import logging
+import re
 from datetime import datetime
 from typing import Any, Dict, Optional, cast
 
@@ -42,6 +44,20 @@ router = APIRouter(prefix="/public", tags=["Public - Verification"])
 
 MAX_EXTRACT_AND_VERIFY_BYTES = 2 * 1024 * 1024
 MAX_VERIFY_BATCH_BYTES = 256 * 1024
+
+SIGNATURE_PATTERN = re.compile(r"^[0-9a-fA-F]{8,64}$")
+
+
+def _signature_matches(signature_hash: Optional[str], provided: str) -> bool:
+    if not signature_hash:
+        return False
+
+    full_hash = signature_hash.lower()
+    provided_lower = provided.lower()
+    if len(provided_lower) > len(full_hash):
+        return False
+
+    return hmac.compare_digest(full_hash[: len(provided_lower)], provided_lower)
 
 
 # ============================================================================
@@ -159,8 +175,11 @@ async def verify_embedding(
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ref_id format (must be 8 hex characters)")
 
         # Validate signature format
-        if len(signature) < 8:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid signature format (must be at least 8 hex characters)")
+        if not SIGNATURE_PATTERN.fullmatch(signature):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid signature format (must be 8-64 hex characters)",
+            )
 
         # Look up content reference by ref_id
         try:
@@ -173,6 +192,10 @@ async def verify_embedding(
 
         if not reference:
             logger.warning(f"Verification failed for ref_id: {ref_id}")
+            return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Invalid signature or reference not found")
+
+        if not _signature_matches(reference.signature_hash, signature):
+            logger.warning(f"Signature mismatch for ref_id: {ref_id}")
             return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Invalid signature or reference not found")
 
         # Get associated Merkle root
@@ -206,11 +229,12 @@ async def verify_embedding(
             # Verify the C2PA manifest (async)
             c2pa_result = await c2pa_verifier.verify_manifest_url(manifest_url)
 
+            validation_type = "cryptographic" if c2pa_result.signatures and all(sig.verified for sig in c2pa_result.signatures) else "non_cryptographic"
             c2pa_info = C2PAInfo(
                 manifest_url=manifest_url,
                 manifest_hash=reference.c2pa_manifest_hash or c2pa_result.manifest_hash,
                 validated=c2pa_result.valid,
-                validation_type="non_cryptographic",
+                validation_type=validation_type,
                 validation_details=c2pa_result.to_dict() if c2pa_result else None,
             )
 
@@ -344,13 +368,24 @@ async def batch_verify_embeddings(
                 result = await db.execute(select(ContentReference).where(ContentReference.id == ref_id_int))
                 reference = result.scalar_one_or_none()
 
-                if reference:
+                if not SIGNATURE_PATTERN.fullmatch(ref_req.signature):
+                    results.append(
+                        BatchVerifyResult(
+                            ref_id=ref_req.ref_id,
+                            valid=False,
+                            error="Invalid signature or reference not found",
+                        )
+                    )
+                    invalid_count += 1
+                    continue
+
+                if reference and _signature_matches(reference.signature_hash, ref_req.signature):
                     results.append(
                         BatchVerifyResult(ref_id=ref_req.ref_id, valid=True, document_id=reference.document_id, text_preview=reference.text_preview)
                     )
                     valid_count += 1
                 else:
-                    results.append(BatchVerifyResult(ref_id=ref_req.ref_id, valid=False, error="Invalid signature or not found"))
+                    results.append(BatchVerifyResult(ref_id=ref_req.ref_id, valid=False, error="Invalid signature or reference not found"))
                     invalid_count += 1
 
             except Exception as e:
@@ -711,11 +746,12 @@ async def extract_and_verify_embedding(
         if reference.c2pa_manifest_url:
             manifest_url = cast(str, reference.c2pa_manifest_url)
             c2pa_result = await c2pa_verifier.verify_manifest_url(manifest_url)
+            validation_type = "cryptographic" if c2pa_result.signatures and all(sig.verified for sig in c2pa_result.signatures) else "non_cryptographic"
             c2pa_info = C2PAInfo(
                 manifest_url=manifest_url,
                 manifest_hash=reference.c2pa_manifest_hash or c2pa_result.manifest_hash,
                 validated=c2pa_result.valid,
-                validation_type="non_cryptographic",
+                validation_type=validation_type,
                 validation_details=c2pa_result.to_dict() if c2pa_result else None,
             )
 

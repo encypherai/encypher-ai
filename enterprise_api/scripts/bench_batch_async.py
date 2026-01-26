@@ -7,33 +7,42 @@ Uses in-memory SQLite plus mocked signing to measure scheduler overhead.
 import argparse
 import asyncio
 import time
+from typing import Any, Dict
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.models.batch import BatchItem, BatchRequest
+from app.models.batch import BatchItem, BatchItemStatus, BatchRequest
 from app.models.response_models import SignResponse
 from app.schemas.batch import BatchItemPayload, BatchSignRequest
 from app.services import batch_service as batch_service_module
-from app.services.batch_service import BatchItemStatus, BatchService, WorkerResult
+from app.services.batch_service import BatchService, WorkerResult
 
 
 async def run_benchmark(documents: int, worker_limit: int, simulate_ms: float, logic_only: bool) -> None:
-    service = BatchService(worker_limit=worker_limit, max_items=documents)
     delay = simulate_ms / 1000
+    service: BatchService
 
     if logic_only:
+        class BenchmarkBatchService(BatchService):
+            async def _process_sign_item(
+                self,
+                *,
+                request: BatchSignRequest,
+                organization: Dict[str, Any],
+                item: BatchItemPayload,
+                duration_start: float,
+            ) -> WorkerResult:
+                await asyncio.sleep(delay)
+                return WorkerResult(
+                    document_id=item.document_id,
+                    state=BatchItemStatus.SUCCESS,
+                    duration_ms=int(simulate_ms),
+                )
 
-        async def fake_process_sign_item(*, item, **_):
-            await asyncio.sleep(delay)
-            return WorkerResult(
-                document_id=item.document_id,
-                state=BatchItemStatus.SUCCESS,
-                duration_ms=int(simulate_ms),
-            )
-
-        service._process_sign_item = fake_process_sign_item  # type: ignore[attr-defined]
+        service = BenchmarkBatchService(worker_limit=worker_limit, max_items=documents)
     else:
+        service = BatchService(worker_limit=worker_limit, max_items=documents)
         engine = create_async_engine("sqlite+aiosqlite:///:memory:", echo=False)
         session_factory = async_sessionmaker(engine, expire_on_commit=False)
         async with engine.begin() as conn:
@@ -50,7 +59,7 @@ async def run_benchmark(documents: int, worker_limit: int, simulate_ms: float, l
                 verification_url="http://verify.local",
             )
 
-        batch_service_module.execute_signing = fake_execute_signing
+        setattr(batch_service_module, "execute_signing", fake_execute_signing)
         batch_service_module.async_session_factory = session_factory
 
     organization = {

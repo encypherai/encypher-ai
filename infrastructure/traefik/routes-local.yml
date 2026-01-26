@@ -22,6 +22,8 @@ http:
       service: key-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
 
     # ============================================
     # AUTHENTICATION -> Auth Service (8001)
@@ -31,6 +33,9 @@ http:
       service: auth-service
       entryPoints:
         - web
+      priority: 10
+      middlewares:
+        - cors-api
 
     # ============================================
     # ORGANIZATIONS -> Auth Service (8001)
@@ -41,6 +46,9 @@ http:
       service: auth-service
       entryPoints:
         - web
+      priority: 10
+      middlewares:
+        - cors-api
 
     # ============================================
     # USER MANAGEMENT -> User Service (8002)
@@ -50,6 +58,8 @@ http:
       service: user-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
 
     # ============================================
     # ANALYTICS -> Analytics Service (8006)
@@ -59,6 +69,9 @@ http:
       service: analytics-service
       entryPoints:
         - web
+      priority: 10
+      middlewares:
+        - cors-api
 
     # ============================================
     # BILLING -> Billing Service (8007)
@@ -68,6 +81,16 @@ http:
       service: billing-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
+
+    billing-webhooks-router:
+      rule: "PathPrefix(`/api/v1/webhooks`)"
+      service: billing-service
+      entryPoints:
+        - web
+      middlewares:
+        - cors-api
 
     # ============================================
     # ENCODING -> Encoding Service (8004)
@@ -77,6 +100,8 @@ http:
       service: encoding-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
 
     # ============================================
     # VERIFICATION -> Verification Service (8005)
@@ -94,12 +119,16 @@ http:
       service: verification-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
 
     coalition-router:
       rule: "PathPrefix(`/api/v1/coalition`)"
       service: coalition-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
 
     # ============================================
     # NOTIFICATIONS -> Notification Service (8008)
@@ -109,6 +138,8 @@ http:
       service: notification-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
 
     # ============================================
     # WEB SERVICE -> Marketing forms + analytics (8002)
@@ -118,6 +149,8 @@ http:
       service: web-service
       entryPoints:
         - web
+      middlewares:
+        - cors-api
 
     # ============================================
     # C2PA SIGNING/VERIFICATION -> Enterprise API (9000)
@@ -129,6 +162,8 @@ http:
       entryPoints:
         - web
       priority: 1  # Lower priority, matches last
+      middlewares:
+        - cors-api
 
     # ============================================
     # HEALTH CHECK (Traefik itself)
@@ -150,6 +185,8 @@ http:
       entryPoints:
         - web
       priority: 10  # Higher priority than catch-all
+      middlewares:
+        - cors-api
 
     # ============================================
     # ROOT LANDING -> Enterprise API (9000)
@@ -161,6 +198,30 @@ http:
       entryPoints:
         - web
       priority: 10
+      middlewares:
+        - cors-api
+
+  middlewares:
+    cors-api:
+      headers:
+        accessControlAllowMethods:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "DELETE"
+          - "OPTIONS"
+          - "PATCH"
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "X-Request-ID"
+          - "X-API-Key"
+        accessControlAllowOriginList:
+          - "http://localhost:3000"
+          - "http://localhost:3001"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 86400
+        addVaryHeader: true
 
   services:
     auth-service:

@@ -4,28 +4,28 @@ import { Metadata } from "next";
 import { getSiteUrl } from "@/lib/env";
 
 export const metadata: Metadata = {
-  title: "Encode Text with Metadata | Encypher Tool",
-  description: "Embed secure metadata into your text using Unicode variation selectors. Try Encypher's free online encoder tool for digital provenance and authenticity.",
+  title: "Sign Text with Metadata | Encypher Tool",
+  description: "Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity.",
   keywords: [
-    "encode text",
-    "metadata embedding",
+    "sign text",
+    "metadata signing",
     "unicode metadata",
     "Encypher",
     "digital provenance",
     "content authenticity",
-    "secure encoding tool"
+    "secure signing tool"
   ],
   openGraph: {
-    title: "Encode Text with Metadata | Encypher Tool",
-    description: "Embed secure metadata into your text using Unicode variation selectors. Try Encypher's free online encoder tool for digital provenance and authenticity.",
-    url: "https://encypherai.com/tools/encode",
+    title: "Sign Text with Metadata | Encypher Tool",
+    description: "Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity.",
+    url: "https://encypherai.com/tools/sign",
     siteName: "Encypher",
     type: "website"
   },
   twitter: {
     card: "summary_large_image",
-    title: "Encode Text with Metadata | Encypher Tool",
-    description: "Embed secure metadata into your text using Unicode variation selectors. Try Encypher's free online encoder tool for digital provenance and authenticity."
+    title: "Sign Text with Metadata | Encypher Tool",
+    description: "Sign text with secure metadata using Encypher's provenance tool. Try Encypher's free online signing tool for digital authenticity."
   },
   metadataBase: new URL(getSiteUrl()),
 };
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 export default function EncodePage() {
   return (
     <main className="max-w-2xl mx-auto py-12 px-4">
-      <h1 className="text-3xl font-bold mb-6">Encode Text with Metadata</h1>
+      <h1 className="text-3xl font-bold mb-6">Sign Text with Metadata</h1>
       <EncodeDecodeTool initialMode="encode" />
     </main>
   );

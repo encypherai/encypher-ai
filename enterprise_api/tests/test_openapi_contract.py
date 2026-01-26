@@ -2,13 +2,13 @@ import json
 
 import pytest
 
-from app.main import public_openapi
+from app.main import build_public_openapi
 
 
 @pytest.mark.asyncio
 async def test_public_openapi_includes_sign_advanced() -> None:
     """Verify /sign/advanced is in public OpenAPI and legacy embeddings endpoints are removed."""
-    resp = await public_openapi()
+    resp = build_public_openapi()
     assert resp.status_code == 200
 
     payload = json.loads(resp.body.decode("utf-8"))

@@ -10,7 +10,7 @@
     "start": "next start -p ${PORT:-3001}",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
-    "test:e2e": "node --test tests/e2e/*.test.mjs"
+    "test:e2e": "node --test --test-concurrency=1 tests/e2e/*.test.mjs"
   },
   "dependencies": {
     "@encypher/design-system": "file:./design-system",

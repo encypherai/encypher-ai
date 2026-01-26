@@ -122,6 +122,50 @@ class TestPlatformStats:
             assert data["success"] is True
             assert data["data"]["total_users"] == 100
 
+    def test_get_stats_allows_super_admin_jwt(self, client, mock_db):
+        """Super admin JWT should authorize stats when API key validation fails."""
+        mock_stats = {
+            "total_users": 50,
+            "active_users": 20,
+            "paying_customers": 5,
+            "mrr": 1200,
+            "total_api_calls": 9000,
+            "users_by_tier": {"starter": 45, "professional": 5},
+        }
+        mock_response = MagicMock()
+        mock_response.status_code = status.HTTP_200_OK
+        mock_response.json.return_value = {
+            "success": True,
+            "data": {
+                "id": "user_admin_1",
+                "email": "erik.svilich@encypherai.com",
+                "name": "Erik Svilich",
+                "is_super_admin": True,
+            },
+            "error": None,
+        }
+
+        mock_http_client = AsyncMock()
+        mock_http_client.post = AsyncMock(return_value=mock_response)
+        mock_async_client = AsyncMock()
+        mock_async_client.__aenter__.return_value = mock_http_client
+        mock_async_client.__aexit__.return_value = None
+
+        with (
+            patch("app.dependencies.key_service_client") as mock_key_service,
+            patch("app.dependencies.httpx.AsyncClient", return_value=mock_async_client),
+            patch("app.routers.admin.AdminService.get_platform_stats", return_value=mock_stats),
+        ):
+            mock_key_service.validate_key = AsyncMock(return_value=None)
+            response = client.get(
+                "/api/v1/admin/stats",
+                headers={"Authorization": "Bearer fake.jwt.token"},
+            )
+            assert response.status_code == status.HTTP_200_OK
+            data = response.json()
+            assert data["success"] is True
+            assert data["data"]["total_users"] == 50
+
 
 # =============================================================================
 # User List Tests

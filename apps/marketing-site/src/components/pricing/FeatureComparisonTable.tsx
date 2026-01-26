@@ -34,7 +34,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
       {
         name: 'C2PA Document Signing',
         description: 'POST /api/v1/sign - Sign content with C2PA manifest',
-        starter: '10K/mo',
+        starter: '1K/mo',
         professional: 'Unlimited',
         business: 'Unlimited',
         enterprise: 'Unlimited',

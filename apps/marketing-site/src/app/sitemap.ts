@@ -8,9 +8,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const staticUrls: MetadataRoute.Sitemap = [
     { url: `${base}/`, lastModified: now },
     { url: `${base}/tools`, lastModified: now },
-    { url: `${base}/tools/encode`, lastModified: now },
-    { url: `${base}/tools/decode`, lastModified: now },
-    { url: `${base}/tools/encode-decode`, lastModified: now },
+    { url: `${base}/tools/sign`, lastModified: now },
+    { url: `${base}/tools/verify`, lastModified: now },
+    { url: `${base}/tools/sign-verify`, lastModified: now },
     { url: `${base}/demo`, lastModified: now },
     { url: `${base}/ai-demo`, lastModified: now },
     { url: `${base}/publisher-demo`, lastModified: now },

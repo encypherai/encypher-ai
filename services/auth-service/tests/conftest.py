@@ -82,6 +82,20 @@ sys.modules.setdefault("encypher.core", encypher_core_module)
 sys.modules.setdefault("encypher.core.keys", encypher_keys_module)
 sys.modules.setdefault("encypher.core.unicode_metadata", encypher_unicode_module)
 
+jwt_module = types.ModuleType("jwt")
+jwt_module.ExpiredSignatureError = type("ExpiredSignatureError", (Exception,), {})
+jwt_module.InvalidTokenError = type("InvalidTokenError", (Exception,), {})
+jwt_module.DecodeError = type("DecodeError", (Exception,), {})
+
+
+def _jwt_stub(*_args, **_kwargs):
+    raise jwt_module.InvalidTokenError("jwt stub")
+
+
+jwt_module.encode = _jwt_stub
+jwt_module.decode = _jwt_stub
+sys.modules.setdefault("jwt", jwt_module)
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient

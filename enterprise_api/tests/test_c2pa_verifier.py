@@ -5,9 +5,11 @@ Tests for C2PA manifest verification utility.
 from __future__ import annotations
 
 import socket
+import base64
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from cryptography.hazmat.primitives import serialization
 
 from app.utils.c2pa_verifier import (
     C2PAAssertion,
@@ -15,6 +17,9 @@ from app.utils.c2pa_verifier import (
     C2PAVerifier,
     verify_c2pa_manifest,
 )
+from encypher.core.keys import generate_ed25519_key_pair
+from encypher.core.payloads import serialize_c2pa_payload_to_cbor
+from encypher.core.signing import sign_c2pa_cose
 
 
 class TestC2PAVerificationResult:
@@ -164,6 +169,43 @@ class TestC2PAVerifier:
         assert len(result.assertions) == 1
         assert len(result.signatures) == 1
         assert result.manifest_hash is not None
+
+    def test_verify_manifest_data_with_cose_signature(self):
+        """Test cryptographic COSE signature verification."""
+        private_key, public_key = generate_ed25519_key_pair()
+
+        manifest_payload = {
+            "@context": "https://c2pa.org/schemas/v2.2/c2pa.jsonld",
+            "instance_id": "urn:uuid:test",
+            "claim_generator": "Test Generator",
+            "assertions": [{"label": "c2pa.actions", "data": {"actions": ["created"]}}],
+        }
+        payload_bytes = serialize_c2pa_payload_to_cbor(manifest_payload)
+        cose_bytes = sign_c2pa_cose(private_key, payload_bytes)
+        cose_b64 = base64.b64encode(cose_bytes).decode("utf-8")
+
+        public_key_pem = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        ).decode("utf-8")
+
+        manifest_data = {
+            "claim_generator": manifest_payload["claim_generator"],
+            "assertions": manifest_payload["assertions"],
+            "signature_info": {
+                "issuer": "Test Issuer",
+                "alg": "EdDSA",
+                "cose_sign1": cose_b64,
+                "public_key_pem": public_key_pem,
+            },
+        }
+
+        verifier = C2PAVerifier()
+        result = verifier.verify_manifest_data(manifest_data)
+
+        assert result.valid is True
+        assert result.signatures
+        assert result.signatures[0].verified is True
 
     @pytest.mark.asyncio
     async def test_verify_manifest_url_success(self):

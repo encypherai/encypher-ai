@@ -5,7 +5,7 @@ Organization API endpoints for team management
 import logging
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
 from sqlalchemy.orm import Session
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field
@@ -160,6 +160,18 @@ class OrganizationUpdate(BaseModel):
     slug: Optional[str] = None
 
 
+class InternalTierUpdateRequest(BaseModel):
+    tier: str
+    stripe_customer_id: Optional[str] = None
+    stripe_subscription_id: Optional[str] = None
+    subscription_status: Optional[str] = None
+
+
+class InternalTierUpdateResponse(BaseModel):
+    success: bool = True
+    data: dict = Field(default_factory=dict)
+
+
 class OrganizationResponse(BaseModel):
     id: str
     name: str
@@ -296,13 +308,40 @@ async def create_organization(
     _: None = Depends(rate_limiter("org_create", limit=5, window_sec=60)),
 ):
     """Create a new organization with the current user as owner"""
-    user_id = await get_current_user_id(request, db)
+    actor_user_id = await get_current_user_id(request, db)
 
     try:
         org_service = OrganizationService(db)
-        org = org_service.create_organization(name=org_data.name, email=org_data.email, owner_user_id=user_id)
+        org = org_service.create_organization(name=org_data.name, email=org_data.email, owner_user_id=actor_user_id)
 
         return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/internal/{org_id}/tier", response_model=InternalTierUpdateResponse, include_in_schema=False)
+async def update_organization_tier_internal(
+    org_id: str,
+    payload: InternalTierUpdateRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    else:
+        logger.warning("internal_service_token_missing")
+
+    org_service = OrganizationService(db)
+    try:
+        org = org_service.update_tier_internal(
+            org_id=org_id,
+            tier=payload.tier,
+            stripe_customer_id=payload.stripe_customer_id,
+            stripe_subscription_id=payload.stripe_subscription_id,
+            subscription_status=payload.subscription_status,
+        )
+        return InternalTierUpdateResponse(success=True, data=OrganizationResponse.model_validate(org).model_dump())
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -466,12 +505,12 @@ async def get_organization(
     db: Session = Depends(get_db),
 ):
     """Get organization details"""
-    user_id = await get_current_user_id(request, db)
+    actor_user_id = await get_current_user_id(request, db)
 
     org_service = OrganizationService(db)
 
     # Check access
-    if not org_service.can_user_access_org(org_id, user_id):
+    if not org_service.can_user_access_org(org_id, actor_user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     org = org_service.get_organization(org_id)
@@ -517,12 +556,12 @@ async def list_members(
     db: Session = Depends(get_db),
 ):
     """List all members of an organization"""
-    user_id = await get_current_user_id(request, db)
+    actor_user_id = await get_current_user_id(request, db)
 
     org_service = OrganizationService(db)
 
     # Check access
-    if not org_service.can_user_access_org(org_id, user_id):
+    if not org_service.can_user_access_org(org_id, actor_user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     members = org_service.get_members(org_id)
@@ -845,15 +884,16 @@ async def get_audit_logs(
     limit: int = 50,
     offset: int = 0,
     action: Optional[str] = None,
+    user_id_filter: Optional[str] = None,
     db: Session = Depends(get_db),
 ):
     """Get organization audit logs"""
-    user_id = await get_current_user_id(request, db)
+    actor_user_id = await get_current_user_id(request, db)
 
     org_service = OrganizationService(db)
 
     # Check access (any member can view audit logs)
-    if not org_service.can_user_access_org(org_id, user_id):
+    if not org_service.can_user_access_org(org_id, actor_user_id):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
 
     logs = org_service.get_audit_logs(
@@ -861,6 +901,48 @@ async def get_audit_logs(
         limit=min(limit, 100),  # Cap at 100
         offset=offset,
         action_filter=action,
+        user_id_filter=user_id_filter,
     )
 
     return {"success": True, "data": [AuditLogResponse.model_validate(log).model_dump() for log in logs], "error": None}
+
+
+class AuditLogCreate(BaseModel):
+    action: str
+    resource_type: Optional[str] = None
+    resource_id: Optional[str] = None
+    details: Optional[dict] = None
+
+
+@router.post("/{org_id}/audit-logs")
+async def create_audit_log(
+    org_id: str,
+    payload: AuditLogCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Create an audit log entry"""
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+
+    if not org_service.can_user_access_org(org_id, user_id):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied")
+
+    org_service._log_action(
+        org_id=org_id,
+        user_id=user_id,
+        action=payload.action,
+        resource_type=payload.resource_type,
+        resource_id=payload.resource_id,
+        details=payload.details,
+    )
+    db.commit()
+
+    logs = org_service.get_audit_logs(org_id=org_id, limit=1, offset=0)
+    created_log = logs[0] if logs else None
+
+    return {
+        "success": True,
+        "data": AuditLogResponse.model_validate(created_log).model_dump() if created_log else None,
+        "error": None,
+    }

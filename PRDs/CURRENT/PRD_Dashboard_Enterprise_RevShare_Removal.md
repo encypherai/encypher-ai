@@ -16,6 +16,10 @@ Enterprise pricing terms should not be displayed as explicit revenue-share perce
   - [x] 1.0.1 Add e2e test coverage for enterprise rev-share removal — ✅ dashboard test:e2e
   - [x] 1.0.2 Update `apps/dashboard/src/app/billing/page.tsx` to hide enterprise rev-share display
   - [x] 1.0.3 Verification — ✅ dashboard lint ✅ dashboard test:e2e
+- [x] 1.1 Remove remaining coalition rev-share percentage references from Billing UI
+  - [x] 1.1.1 Remove coalition revenue percentage labels from Current Plan and plan cards
+  - [x] 1.1.2 Remove tier-specific rev-share description from Coalition Earnings header
+  - [x] 1.1.3 Verification — ✅ dashboard lint ✅ dashboard test:e2e
 
 ## Success Criteria
 - No instances of `80% you / 20% Encypher` are visible in the dashboard UI.
@@ -24,4 +28,5 @@ Enterprise pricing terms should not be displayed as explicit revenue-share perce
 
 ## Completion Notes
 - Removed enterprise rev-share display from the Current Plan card, Coalition Earnings header, and the Enterprise plan card.
+- Removed all remaining coalition revenue share percentage references from the billing page UI.
 - Added regression test to ensure `80% you / 20% Encypher` is not present in the billing page source.

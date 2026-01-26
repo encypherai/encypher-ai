@@ -890,11 +890,13 @@ export default function PlaygroundPage() {
                   onChange={(e) => setSelectedApiKey(e.target.value)}
                   className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
                 >
-                  {!selectedEndpoint.requiresAuth && <option value="none">No Auth Required</option>}
-                  <option value="custom">API Key (Paste Below)</option>
                   <option value="generated">API Key (Generate for Playground)</option>
+                  <option value="custom">API Key (Paste Below)</option>
                   <option value="session">Session Token (Dashboard Only)</option>
                 </select>
+                <p className="text-xs text-muted-foreground mt-2">
+                  All playground requests use authentication so they appear in your activity timeline.
+                </p>
               </div>
 
               {selectedApiKey === 'custom' && (

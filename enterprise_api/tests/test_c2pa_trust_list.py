@@ -8,7 +8,15 @@ from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.x509.oid import NameOID
 
-from app.utils.c2pa_trust_list import set_trust_anchors_pem, validate_certificate_chain
+from app.utils import c2pa_trust_list as trust_list
+from app.utils.c2pa_trust_list import (
+    compute_trust_list_sha256,
+    get_trust_list_metadata,
+    refresh_trust_list,
+    set_trust_anchors_pem,
+    trust_list_needs_refresh,
+    validate_certificate_chain,
+)
 
 
 def _new_key() -> rsa.RSAPrivateKey:
@@ -135,6 +143,63 @@ def test_validate_certificate_chain_signature_mismatch_fails() -> None:
     ok, err, _parsed = validate_certificate_chain(_pem(leaf), _pem(intermediate))
     assert ok is False
     assert err
+
+
+def test_compute_trust_list_sha256_returns_hex() -> None:
+    _root_key, root = _make_root_ca(cn="C2PA Test Root")
+    pem_data = _pem(root)
+    fingerprint = compute_trust_list_sha256(pem_data)
+
+    assert len(fingerprint) == 64
+    int(fingerprint, 16)
+
+
+def test_trust_list_metadata_tracks_source_and_fingerprint() -> None:
+    _root_key, root = _make_root_ca(cn="C2PA Test Root")
+    pem_data = _pem(root)
+    fingerprint = compute_trust_list_sha256(pem_data)
+
+    count = set_trust_anchors_pem(pem_data, source="unit-test", expected_sha256=fingerprint)
+    metadata = get_trust_list_metadata()
+
+    assert metadata["fingerprint"] == fingerprint
+    assert metadata["source"] == "unit-test"
+    assert metadata["count"] == str(count)
+    assert metadata["loaded_at"]
+
+
+def test_trust_list_needs_refresh_based_on_age(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(trust_list, "_trust_list_loaded_at", None)
+    assert trust_list_needs_refresh(24) is True
+
+    now = datetime.now(timezone.utc)
+    monkeypatch.setattr(trust_list, "_trust_list_loaded_at", now - timedelta(hours=25))
+    assert trust_list_needs_refresh(24) is True
+
+    monkeypatch.setattr(trust_list, "_trust_list_loaded_at", now - timedelta(hours=1))
+    assert trust_list_needs_refresh(24) is False
+
+
+@pytest.mark.asyncio
+async def test_refresh_trust_list_enforces_sha256_pinning(monkeypatch: pytest.MonkeyPatch) -> None:
+    _root_key, root = _make_root_ca(cn="C2PA Test Root")
+    pem_data = _pem(root)
+    fingerprint = compute_trust_list_sha256(pem_data)
+
+    async def _fetch(url: str) -> str:
+        return pem_data
+
+    monkeypatch.setattr(trust_list, "fetch_trust_list", _fetch)
+
+    count = await refresh_trust_list(url="https://example.com/trust.pem", expected_sha256=fingerprint)
+    metadata = get_trust_list_metadata()
+
+    assert metadata["fingerprint"] == fingerprint
+    assert metadata["source"] == "https://example.com/trust.pem"
+    assert metadata["count"] == str(count)
+
+    with pytest.raises(ValueError):
+        await refresh_trust_list(url="https://example.com/trust.pem", expected_sha256="deadbeef")
 
 
 def test_validate_certificate_chain_expired_leaf_fails() -> None:

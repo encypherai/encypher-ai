@@ -28,6 +28,8 @@ class ApiKeyResponse(BaseModel):
     permissions: List[str]
     created_at: datetime
     organization_id: Optional[str] = None
+    user_id: Optional[str] = None
+    created_by: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -49,6 +51,8 @@ class ApiKeyInfo(BaseModel):
     expires_at: Optional[datetime]
     description: Optional[str]
     organization_id: Optional[str] = None
+    user_id: Optional[str] = None
+    created_by: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -91,6 +95,19 @@ class KeyRotationResponse(BaseModel):
     old_key_id: str
     new_key: ApiKeyResponse
     message: str
+
+
+class RevokeKeysByUserRequest(BaseModel):
+    """Schema for revoking all API keys for a user in an organization"""
+
+    organization_id: str
+    user_id: str
+
+
+class RevokeKeysByUserResponse(BaseModel):
+    """Schema for revoke-by-user response"""
+
+    revoked_count: int
 
 
 # Usage Schemas

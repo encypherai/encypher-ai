@@ -1,5 +1,9 @@
+import os
 import sys
 from pathlib import Path
+
+
+os.environ.setdefault("DATABASE_URL", "sqlite:///:memory:")
 
 
 def _import_stream_consumer():

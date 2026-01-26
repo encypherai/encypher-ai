@@ -147,6 +147,9 @@ services:
     container_name: encypher-auth-service
     ports:
       - "8001:8001"
+    volumes:
+      - ./services/auth-service:/app
+    command: ["sh", "-c", "echo 'Running database migrations...' && alembic upgrade head && echo 'Starting auth-service...' && uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_auth
@@ -178,6 +181,9 @@ services:
     container_name: encypher-user-service
     ports:
       - "8002:8002"
+    volumes:
+      - ./services/user-service:/app
+    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8002 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_users
@@ -206,6 +212,9 @@ services:
     container_name: encypher-key-service
     ports:
       - "8003:8003"
+    volumes:
+      - ./services/key-service:/app
+    command: ["sh", "-c", "echo 'Running database migrations...' && alembic upgrade head && echo 'Starting key-service...' && uvicorn app.main:app --host 0.0.0.0 --port 8003 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_keys
@@ -235,6 +244,9 @@ services:
     container_name: encypher-encoding-service
     ports:
       - "8004:8004"
+    volumes:
+      - ./services/encoding-service:/app
+    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8004 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_encoding
@@ -271,6 +283,9 @@ services:
     container_name: encypher-verification-service
     ports:
       - "8005:8005"
+    volumes:
+      - ./services/verification-service:/app
+    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_verification
@@ -305,6 +320,9 @@ services:
     container_name: encypher-coalition-service
     ports:
       - "8009:8009"
+    volumes:
+      - ./services/coalition-service:/app
+    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8009 --reload"]
     environment:
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_coalition
       REDIS_URL: redis://redis-cache:6379
@@ -335,6 +353,9 @@ services:
     container_name: encypher-analytics-service
     ports:
       - "8006:8006"
+    volumes:
+      - ./services/analytics-service:/app
+    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8006 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_analytics
@@ -363,6 +384,11 @@ services:
     container_name: encypher-billing-service
     ports:
       - "8007:8007"
+    volumes:
+      - ./services/billing-service:/app
+    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && echo 'Starting billing-service...' && uvicorn app.main:app --host 0.0.0.0 --port 8007 --reload"]
+    env_file:
+      - ./services/billing-service/.env
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_billing
@@ -375,14 +401,6 @@ services:
       LOG_LEVEL: INFO
       ALLOWED_ORIGINS: http://localhost:3001,http://localhost:3002,https://s-dashboard.encypherai.com,https://s-www.encypherai.com,https://api.encypherai.com
       API_GATEWAY_URL: http://localhost:8000
-      # Stripe Configuration - Set these in .env file or override here
-      STRIPE_API_KEY: ${STRIPE_API_KEY:-}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
-      STRIPE_CONNECT_WEBHOOK_SECRET: ${STRIPE_CONNECT_WEBHOOK_SECRET:-}
-      STRIPE_PRICE_PROFESSIONAL_MONTHLY: ${STRIPE_PRICE_PROFESSIONAL_MONTHLY:-}
-      STRIPE_PRICE_PROFESSIONAL_ANNUAL: ${STRIPE_PRICE_PROFESSIONAL_ANNUAL:-}
-      STRIPE_PRICE_BUSINESS_MONTHLY: ${STRIPE_PRICE_BUSINESS_MONTHLY:-}
-      STRIPE_PRICE_BUSINESS_ANNUAL: ${STRIPE_PRICE_BUSINESS_ANNUAL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -401,6 +419,9 @@ services:
     container_name: encypher-notification-service
     ports:
       - "8008:8008"
+    volumes:
+      - ./services/notification-service:/app
+    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8008 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_notifications
@@ -434,6 +455,7 @@ services:
     container_name: encypher-enterprise-api
     ports:
       - "9000:8000"
+    command: ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"]
     environment:
       # Database (service-specific - matches production)
       # Enterprise API owns the content database for C2PA documents

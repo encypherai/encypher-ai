@@ -162,6 +162,7 @@ class AnalyticsService:
             "total_verifications": int(total_verifications),
             "success_rate": float(success_rate),
             "avg_response_time_ms": float(avg_response_time),
+            "total_keys_generated": 0,
             "period_start": start_date,
             "period_end": end_date,
         }
@@ -329,7 +330,6 @@ class AnalyticsService:
 
             return time_series
 
-        # Daily aggregation
         results = (
             db.query(
                 UsageMetric.date,
@@ -351,7 +351,7 @@ class AnalyticsService:
 
         time_series = []
         for date_str, count, value in results:
-            timestamp = datetime.strptime(date_str, "%Y-%m-%d")
+            timestamp = datetime.strptime(str(date_str), "%Y-%m-%d")
             time_series.append(
                 {
                     "timestamp": timestamp,
@@ -361,3 +361,72 @@ class AnalyticsService:
             )
 
         return time_series
+
+    @staticmethod
+    def get_activity_feed(
+        db: Session,
+        user_id: str,
+        start_date: datetime,
+        end_date: datetime,
+        limit: int = 10,
+    ) -> List[UsageMetric]:
+        """Get recent activity items for a user or organization."""
+        from sqlalchemy import or_
+
+        def user_or_org_filter():
+            return or_(
+                UsageMetric.user_id == user_id,
+                UsageMetric.organization_id == user_id,
+            )
+
+        return (
+            db.query(UsageMetric)
+            .filter(
+                and_(
+                    user_or_org_filter(),
+                    UsageMetric.created_at >= start_date,
+                    UsageMetric.created_at <= end_date,
+                )
+            )
+            .order_by(UsageMetric.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+    @staticmethod
+    def describe_activity(metric: UsageMetric) -> Dict[str, Any]:
+        """Map a UsageMetric into dashboard activity feed fields."""
+        metric_type = (metric.metric_type or "").lower()
+        status_code = metric.status_code
+        endpoint = metric.endpoint or ""
+        description = "API call completed"
+        activity_type = "api_call"
+
+        if "document_signed" in metric_type or "sign" in endpoint:
+            description = "Signing request completed"
+            activity_type = "sign"
+        elif "document_verified" in metric_type or "verify" in endpoint:
+            description = "Verification request completed"
+            activity_type = "verify"
+
+        if status_code is not None and status_code >= 400:
+            description = f"Request failed with status {status_code}"
+            activity_type = "api_call"
+
+        metadata: Dict[str, Any] = {
+            "status": status_code,
+            "latency_ms": metric.response_time_ms,
+            "endpoint": endpoint or None,
+            "method": None,
+            "region": None,
+            "request_id": metric.meta.get("request_id") if isinstance(metric.meta, dict) else None,
+            "api_key": metric.meta.get("api_key_prefix") if isinstance(metric.meta, dict) else None,
+        }
+
+        return {
+            "id": metric.id,
+            "type": activity_type,
+            "description": description,
+            "timestamp": metric.created_at,
+            "metadata": {k: v for k, v in metadata.items() if v is not None},
+        }

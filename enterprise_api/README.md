@@ -386,6 +386,8 @@ For up-to-date per-tier limits and quotas, see [FEATURE_MATRIX.md](../FEATURE_MA
 
 Sign content with C2PA-compliant manifest.
 
+Starter tier supports up to 1 custom assertion per request on this endpoint.
+
 **Dependencies**: Key Service (required), Coalition Service (optional)
 
 **Request:**
@@ -405,6 +407,14 @@ Sign content with C2PA-compliant manifest.
       "editor": "John Smith"
     }
   },
+  "custom_assertions": [
+    {
+      "label": "org.encypher.user-provenance",
+      "data": {
+        "text": "User-supplied provenance text"
+      }
+    }
+  ],
   "use_sentence_tracking": true
 }
 ```
@@ -1047,7 +1057,7 @@ Rate limits are enforced per organization with tier-aware limits. All responses 
 
 | Tier | Requests/Second | Requests/Minute | Monthly Quota |
 |------|-----------------|-----------------|---------------|
-| Starter | 10 | 600 | 10,000 |
+| Starter | 10 | 600 | 1,000 |
 | Professional | 50 | 3,000 | 100,000 |
 | Business | 200 | 12,000 | 500,000 |
 | Enterprise | Unlimited | Unlimited | Unlimited |
@@ -1241,6 +1251,28 @@ ENCRYPTION_NONCE=<hex_string>
 ```bash
 # Comma-separated list of allowed origins
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001,https://dashboard.encypherai.com
+
+# Trusted hosts for Host header validation
+ALLOWED_HOSTS=api.encypherai.com
+
+# Trusted proxy IPs (comma-separated) to honor forwarded headers
+TRUSTED_PROXY_IPS=10.0.0.10,10.0.0.11
+
+# Embedding signature secret (required in production for public verification)
+EMBEDDING_SIGNATURE_SECRET=<hex_or_ascii_secret>
+```
+
+#### C2PA Trust List Configuration
+
+```bash
+# Optional override for the upstream trust list URL
+C2PA_TRUST_LIST_URL=https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TRUST-LIST.pem
+
+# Optional SHA-256 pin (hex) to prevent trust list tampering
+C2PA_TRUST_LIST_SHA256=<sha256_hex>
+
+# Refresh interval (hours) for reloading the trust list
+C2PA_TRUST_LIST_REFRESH_HOURS=24
 ```
 
 ---

@@ -7,8 +7,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { signIn } from 'next-auth/react';
 
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+const getApiBase = () => {
+  if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
+    return `${window.location.origin}/api/v1`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1';
+};
+
+const NAME_URL_REGEX = /(https?:\/\/|www\.)/i;
+const HTML_TAG_REGEX = /<[^>]*>/g;
+
+const sanitizeName = (value: string) => value.replace(HTML_TAG_REGEX, '').trim();
 
 export default function SignupPage() {
   const router = useRouter();
@@ -23,17 +32,57 @@ export default function SignupPage() {
   const [success, setSuccess] = useState(false);
   const [registeredEmail, setRegisteredEmail] = useState('');
 
+  const handleNameBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    // TEAM_115: sanitize on blur using the latest input value.
+    const sanitizedName = sanitizeName(event.target.value);
+    if (sanitizedName !== formData.name) {
+      setFormData((prev) => ({ ...prev, name: sanitizedName }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const form = new FormData(e.currentTarget as HTMLFormElement);
+    const rawName = String(form.get('name') ?? formData.name);
+    const rawEmail = String(form.get('email') ?? formData.email);
+    const rawPassword = String(form.get('password') ?? formData.password);
+    const rawConfirmPassword = String(form.get('confirmPassword') ?? formData.confirmPassword);
+
+    const sanitizedName = sanitizeName(rawName);
+    if (!sanitizedName) {
+      setError('Full name is required');
+      return;
+    }
+
+    if (NAME_URL_REGEX.test(sanitizedName)) {
+      setError('Name cannot contain URLs');
+      return;
+    }
+
+    if (sanitizedName !== formData.name) {
+      setFormData((prev) => ({ ...prev, name: sanitizedName }));
+    } else if (
+      rawName !== formData.name ||
+      rawEmail !== formData.email ||
+      rawPassword !== formData.password ||
+      rawConfirmPassword !== formData.confirmPassword
+    ) {
+      setFormData({
+        name: rawName,
+        email: rawEmail,
+        password: rawPassword,
+        confirmPassword: rawConfirmPassword,
+      });
+    }
 
     // Validation
-    if (formData.password !== formData.confirmPassword) {
+    if (rawPassword !== rawConfirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    if (formData.password.length < 8) {
+    if (rawPassword.length < 8) {
       setError('Password must be at least 8 characters');
       return;
     }
@@ -42,13 +91,14 @@ export default function SignupPage() {
 
     try {
       // Call API Gateway signup (SRF)
-      const res = await fetch(`${API_BASE}/auth/signup`, {
+      const apiBase = getApiBase().replace(/\/$/, '');
+      const res = await fetch(`${apiBase}/auth/signup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
+          name: sanitizedName,
+          email: rawEmail,
+          password: rawPassword,
         }),
       });
 
@@ -56,7 +106,7 @@ export default function SignupPage() {
 
       if (res.ok && data.success) {
         // Show success state with email verification notice
-        setRegisteredEmail(formData.email);
+        setRegisteredEmail(rawEmail);
         setSuccess(true);
       } else {
         setError(data.detail || data.message || data.error?.message || 'Failed to create account');
@@ -94,7 +144,9 @@ export default function SignupPage() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
               </div>
-              <CardTitle className="text-2xl">Check Your Email</CardTitle>
+              <CardTitle className="text-2xl" data-testid="signup-success-title">
+                Check Your Email
+              </CardTitle>
               <CardDescription>
                 We've sent a verification link to
                 <span className="block font-semibold text-foreground mt-1">{registeredEmail}</span>
@@ -164,7 +216,7 @@ export default function SignupPage() {
         </div>
 
         {/* Signup Card */}
-        <Card className="shadow-2xl">
+        <Card className="shadow-2xl bg-white">
           <CardHeader>
             <CardTitle>Get Started Free</CardTitle>
             <CardDescription>1,000 signatures/month • No credit card required</CardDescription>
@@ -172,7 +224,11 @@ export default function SignupPage() {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg text-sm">
+                <div
+                  className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-lg text-sm"
+                  role="alert"
+                  data-testid="signup-error"
+                >
                   {error}
                 </div>
               )}
@@ -183,10 +239,12 @@ export default function SignupPage() {
                 </label>
                 <Input
                   id="name"
+                  name="name"
                   type="text"
                   placeholder="John Doe"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                  onBlur={handleNameBlur}
                   required
                   disabled={loading}
                 />
@@ -198,10 +256,11 @@ export default function SignupPage() {
                 </label>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="you@example.com"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   required
                   disabled={loading}
                 />
@@ -213,10 +272,11 @@ export default function SignupPage() {
                 </label>
                 <Input
                   id="password"
+                  name="password"
                   type="password"
                   placeholder="••••••••"
                   value={formData.password}
-                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, password: e.target.value }))}
                   required
                   disabled={loading}
                 />
@@ -231,10 +291,11 @@ export default function SignupPage() {
                 </label>
                 <Input
                   id="confirmPassword"
+                  name="confirmPassword"
                   type="password"
                   placeholder="••••••••"
                   value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
                   required
                   disabled={loading}
                 />

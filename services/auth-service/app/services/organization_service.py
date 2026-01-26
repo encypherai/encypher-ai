@@ -115,6 +115,134 @@ class OrganizationService:
         self.db.commit()
         return org
 
+    def _get_tier_config(self, tier: str) -> Optional[dict]:
+        tier_config = {
+            "starter": {
+                "max_seats": 1,
+                "monthly_api_limit": 10000,
+                "coalition_rev_share": 65,
+                "features": {
+                    "team_management": False,
+                    "audit_logs": False,
+                    "merkle_enabled": False,
+                    "bulk_operations": False,
+                    "sentence_tracking": False,
+                    "streaming": True,
+                    "byok": False,
+                    "sso": False,
+                    "custom_assertions": False,
+                },
+            },
+            "professional": {
+                "max_seats": 1,
+                "monthly_api_limit": 100000,
+                "coalition_rev_share": 70,
+                "features": {
+                    "team_management": False,
+                    "audit_logs": False,
+                    "merkle_enabled": False,
+                    "bulk_operations": False,
+                    "sentence_tracking": True,
+                    "streaming": True,
+                    "byok": False,
+                    "sso": False,
+                    "custom_assertions": False,
+                },
+            },
+            "business": {
+                "max_seats": 5,
+                "monthly_api_limit": 500000,
+                "coalition_rev_share": 75,
+                "features": {
+                    "team_management": True,
+                    "audit_logs": True,
+                    "merkle_enabled": True,
+                    "bulk_operations": True,
+                    "sentence_tracking": True,
+                    "streaming": True,
+                    "byok": True,
+                    "sso": False,
+                    "custom_assertions": True,
+                },
+            },
+            "enterprise": {
+                "max_seats": -1,
+                "monthly_api_limit": -1,
+                "coalition_rev_share": 80,
+                "features": {
+                    "team_management": True,
+                    "audit_logs": True,
+                    "merkle_enabled": True,
+                    "bulk_operations": True,
+                    "sentence_tracking": True,
+                    "streaming": True,
+                    "byok": True,
+                    "sso": True,
+                    "custom_assertions": True,
+                },
+            },
+            "strategic_partner": {
+                "max_seats": -1,
+                "monthly_api_limit": -1,
+                "coalition_rev_share": 85,
+                "features": {
+                    "team_management": True,
+                    "audit_logs": True,
+                    "merkle_enabled": True,
+                    "bulk_operations": True,
+                    "sentence_tracking": True,
+                    "streaming": True,
+                    "byok": True,
+                    "sso": True,
+                    "custom_assertions": True,
+                },
+            },
+        }
+        return tier_config.get(tier)
+
+    def update_tier_internal(
+        self,
+        *,
+        org_id: str,
+        tier: str,
+        stripe_customer_id: Optional[str] = None,
+        stripe_subscription_id: Optional[str] = None,
+        subscription_status: Optional[str] = None,
+    ) -> Organization:
+        org = self.get_organization(org_id)
+        if not org:
+            raise ValueError("Organization not found")
+
+        config = self._get_tier_config(tier)
+        if not config:
+            raise ValueError(f"Invalid tier: {tier}")
+
+        previous_tier = org.tier
+        org.tier = tier
+        org.max_seats = config["max_seats"]
+        org.monthly_api_limit = config["monthly_api_limit"]
+        org.features = config["features"]
+        org.coalition_rev_share = config["coalition_rev_share"]
+
+        if stripe_customer_id:
+            org.stripe_customer_id = stripe_customer_id
+        if stripe_subscription_id:
+            org.stripe_subscription_id = stripe_subscription_id
+        if subscription_status:
+            org.subscription_status = subscription_status
+
+        self._log_action(
+            org_id=org_id,
+            user_id=None,
+            action="subscription.tier_updated",
+            resource_type="organization",
+            resource_id=org_id,
+            details={"previous_tier": previous_tier, "new_tier": tier, "subscription_status": subscription_status},
+        )
+
+        self.db.commit()
+        return org
+
     def get_organization(self, org_id: str) -> Optional[Organization]:
         """Get organization by ID"""
         return self.db.query(Organization).filter(Organization.id == org_id).first()
@@ -763,19 +891,29 @@ class OrganizationService:
     # AUDIT LOGS
     # ==========================================
 
-    def get_audit_logs(self, org_id: str, limit: int = 50, offset: int = 0, action_filter: Optional[str] = None) -> List[OrganizationAuditLog]:
+    def get_audit_logs(
+        self,
+        org_id: str,
+        limit: int = 50,
+        offset: int = 0,
+        action_filter: Optional[str] = None,
+        user_id_filter: Optional[str] = None,
+    ) -> List[OrganizationAuditLog]:
         """Get audit logs for an organization"""
         query = self.db.query(OrganizationAuditLog).filter(OrganizationAuditLog.organization_id == org_id)
 
         if action_filter:
             query = query.filter(OrganizationAuditLog.action.like(f"{action_filter}%"))
 
+        if user_id_filter:
+            query = query.filter(OrganizationAuditLog.user_id == user_id_filter)
+
         return query.order_by(OrganizationAuditLog.created_at.desc()).offset(offset).limit(limit).all()
 
     def _log_action(
         self,
         org_id: str,
-        user_id: str,
+        user_id: Optional[str],
         action: str,
         resource_type: Optional[str] = None,
         resource_id: Optional[str] = None,
@@ -785,8 +923,11 @@ class OrganizationService:
     ):
         """Log an action to the audit log"""
         # Get user email
-        user = self.db.query(User).filter(User.id == user_id).first()
-        user_email = user.email if user else None
+        user = None
+        user_email = None
+        if user_id:
+            user = self.db.query(User).filter(User.id == user_id).first()
+            user_email = user.email if user else None
 
         log = OrganizationAuditLog(
             organization_id=org_id,

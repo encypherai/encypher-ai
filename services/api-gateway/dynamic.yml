@@ -41,6 +41,15 @@ http:
       middlewares:
         - cors
 
+    api-billing-webhooks:
+      rule: "PathPrefix(`/api/v1/webhooks`)"
+      service: billing-service
+      entryPoints:
+        - web
+      priority: 100
+      middlewares:
+        - cors
+
     # User Service - user profiles
     api-users:
       rule: "PathPrefix(`/api/v1/users`) || PathPrefix(`/api/v1/profile`)"

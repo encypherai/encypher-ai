@@ -5,6 +5,8 @@ Provides authentication for enterprise API endpoints using API keys.
 Delegates to key-service for validation to support both org-level and user-level keys.
 """
 
+import hashlib
+import json
 import logging
 from datetime import datetime
 from typing import Dict, Optional
@@ -84,6 +86,8 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
 
     # Demo key bypass for local testing
     if settings.demo_api_key and api_key == settings.demo_api_key:
+        if settings.is_production and not settings.is_demo_key_allowlisted(api_key):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key", headers={"WWW-Authenticate": "Bearer"})
         logger.info("Request authenticated with demo key")
         return {
             "api_key": api_key,
@@ -142,20 +146,32 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
 
     # Fall back to local database lookup for legacy keys
     try:
+        key_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
         result = await db.execute(
             text(
                 """
                 SELECT
-                    ak.api_key, ak.organization_id, ak.revoked, ak.expires_at,
-                    ak.can_sign, ak.can_verify, ak.can_lookup,
-                    o.organization_name, o.organization_type, o.tier,
-                    o.monthly_quota, o.api_calls_this_month, o.private_key_encrypted
+                    ak.id AS api_key_id,
+                    ak.organization_id,
+                    ak.scopes,
+                    ak.expires_at,
+                    ak.is_active,
+                    ak.revoked_at,
+                    ak.last_used_at,
+                    o.name AS organization_name,
+                    o.tier,
+                    o.monthly_api_limit,
+                    o.monthly_api_usage,
+                    o.private_key_encrypted,
+                    o.features,
+                    o.coalition_member,
+                    o.coalition_rev_share
                 FROM api_keys ak
-                JOIN organizations o ON ak.organization_id = o.organization_id
-                WHERE ak.api_key = :api_key
+                JOIN organizations o ON ak.organization_id = o.id
+                WHERE ak.key_hash = :key_hash
                 """
             ),
-            {"api_key": api_key},
+            {"key_hash": key_hash},
         )
         row = result.fetchone()
 
@@ -164,7 +180,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key", headers={"WWW-Authenticate": "Bearer"})
 
         # Check if revoked
-        if row.revoked:
+        if row.revoked_at is not None or row.is_active is False:
             logger.warning(f"Authentication failed: Revoked API key for org {row.organization_id}")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key has been revoked", headers={"WWW-Authenticate": "Bearer"})
 
@@ -174,7 +190,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="API key has expired", headers={"WWW-Authenticate": "Bearer"})
 
         # Check quota (if not on unlimited plan)
-        if row.tier != "enterprise" and row.api_calls_this_month >= row.monthly_quota:
+        if row.monthly_api_limit not in (-1, None) and row.monthly_api_usage >= row.monthly_api_limit:
             logger.warning(f"Authentication failed: Quota exceeded for org {row.organization_id}")
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Monthly API quota exceeded. Please upgrade your plan or wait until next month."
@@ -184,31 +200,40 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
         await db.execute(
             text(
                 """
-                UPDATE api_keys SET last_used_at = :last_used_at WHERE api_key = :api_key;
-                UPDATE organizations SET api_calls_this_month = api_calls_this_month + 1 
-                WHERE organization_id = :organization_id;
+                UPDATE api_keys SET last_used_at = :last_used_at WHERE id = :api_key_id;
+                UPDATE organizations SET monthly_api_usage = monthly_api_usage + 1
+                WHERE id = :organization_id;
                 """
             ),
-            {"api_key": api_key, "last_used_at": datetime.utcnow(), "organization_id": row.organization_id},
+            {"api_key_id": row.api_key_id, "last_used_at": datetime.utcnow(), "organization_id": row.organization_id},
         )
         await db.commit()
+
+        scopes = row.scopes or []
+        if isinstance(scopes, str):
+            scopes = json.loads(scopes)
+        if "admin" in scopes:
+            scopes = list({*scopes, "sign", "verify", "lookup", "read"})
 
         logger.info(f"Request authenticated via local DB for org {row.organization_id}")
 
         # Return organization details
         return {
-            "api_key": row.api_key,
+            "api_key": api_key,
+            "api_key_id": row.api_key_id,
             "organization_id": row.organization_id,
             "organization_name": row.organization_name,
-            "organization_type": row.organization_type,
             "tier": row.tier,
-            "can_sign": row.can_sign,
-            "can_verify": row.can_verify,
-            "can_lookup": row.can_lookup,
-            "monthly_quota": row.monthly_quota,
-            "api_calls_this_month": row.api_calls_this_month + 1,  # Include current call
+            "can_sign": "sign" in scopes,
+            "can_verify": "verify" in scopes,
+            "can_lookup": "lookup" in scopes or "read" in scopes,
+            "monthly_quota": row.monthly_api_limit,
+            "api_calls_this_month": row.monthly_api_usage + 1,
             "is_demo": False,
             "private_key_encrypted": row.private_key_encrypted,
+            "features": row.features if isinstance(row.features, dict) else {},
+            "coalition_member": row.coalition_member,
+            "coalition_rev_share": row.coalition_rev_share,
         }
 
     except HTTPException:

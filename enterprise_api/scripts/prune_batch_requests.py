@@ -5,7 +5,10 @@ Cleanup utility for batch request retention.
 import asyncio
 from datetime import datetime, timezone
 
+from typing import cast
+
 from sqlalchemy import delete, select
+from sqlalchemy.engine import CursorResult
 
 from app.database import async_session_factory
 from app.models.batch import BatchItem, BatchRequest
@@ -19,8 +22,8 @@ async def prune() -> None:
         request_result = await session.execute(delete(BatchRequest).where(BatchRequest.expires_at < cutoff))
         await session.commit()
 
-        items_deleted = item_result.rowcount or 0
-        requests_deleted = request_result.rowcount or 0
+        items_deleted = cast(CursorResult, item_result).rowcount or 0
+        requests_deleted = cast(CursorResult, request_result).rowcount or 0
         print(f"Removed {requests_deleted} batch requests and {items_deleted} batch items.")
 
 

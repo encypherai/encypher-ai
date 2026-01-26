@@ -8,15 +8,15 @@ import Link from "next/link";
 
 // Create a client component that uses useSearchParams
 function EncodeDecodeContent() {
-  // Read ?mode=encode or ?mode=decode from URL
+  // Read ?mode=sign or ?mode=verify from URL
   const searchParams = useSearchParams();
   let initialMode: "encode" | "decode" = "encode";
   const modeParam = searchParams?.get("mode");
-  if (modeParam === "decode") initialMode = "decode";
+  if (modeParam === "decode" || modeParam === "verify") initialMode = "decode";
 
   return (
     <>
-      <h1 className="text-3xl font-bold mb-6">Encypher Encode/Decode Tool</h1>
+      <h1 className="text-3xl font-bold mb-6">Encypher Sign/Verify Tool</h1>
       <EncodeDecodeTool initialMode={initialMode} />
     </>
   );

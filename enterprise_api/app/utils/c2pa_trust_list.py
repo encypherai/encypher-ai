@@ -8,8 +8,9 @@ Trusted CAs from https://github.com/c2pa-org/conformance-public/blob/main/trust-
 - Adobe, Trufo, vivo, Xiaomi, Irdeto
 """
 
+import hashlib
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple
 
 from cryptography import x509
@@ -28,16 +29,24 @@ C2PA_TRUST_LIST_URL = "https://raw.githubusercontent.com/c2pa-org/conformance-pu
 
 _trust_anchors: Optional[List[Certificate]] = None
 _trust_anchors_pem: Optional[str] = None
+_trust_list_fingerprint: Optional[str] = None
+_trust_list_loaded_at: Optional[datetime] = None
+_trust_list_source: Optional[str] = None
 
 
-async def fetch_trust_list() -> str:
+async def fetch_trust_list(url: str = C2PA_TRUST_LIST_URL) -> str:
     """Fetch latest C2PA trust list from GitHub."""
     import httpx
 
     async with httpx.AsyncClient() as client:
-        resp = await client.get(C2PA_TRUST_LIST_URL, timeout=30.0)
+        resp = await client.get(url, timeout=30.0)
         resp.raise_for_status()
         return resp.text
+
+
+def compute_trust_list_sha256(pem_data: str) -> str:
+    """Return SHA-256 fingerprint for trust list PEM payload."""
+    return hashlib.sha256(pem_data.encode("utf-8")).hexdigest()
 
 
 def _split_pem_chain(pem_data: str) -> List[str]:
@@ -70,11 +79,24 @@ def load_trust_anchors_from_pem(pem_data: str) -> List[Certificate]:
     return certs
 
 
-def set_trust_anchors_pem(pem_data: str) -> int:
+def set_trust_anchors_pem(
+    pem_data: str,
+    *,
+    source: Optional[str] = None,
+    expected_sha256: Optional[str] = None,
+) -> int:
     """Set trust anchors from PEM data. Returns count loaded."""
-    global _trust_anchors, _trust_anchors_pem
+    global _trust_anchors, _trust_anchors_pem, _trust_list_fingerprint, _trust_list_loaded_at, _trust_list_source
+
+    fingerprint = compute_trust_list_sha256(pem_data)
+    if expected_sha256 and fingerprint.lower() != expected_sha256.lower():
+        raise ValueError("C2PA trust list fingerprint mismatch")
+
     _trust_anchors_pem = pem_data
     _trust_anchors = load_trust_anchors_from_pem(pem_data)
+    _trust_list_fingerprint = fingerprint
+    _trust_list_loaded_at = datetime.now(timezone.utc)
+    _trust_list_source = source
     logger.info(f"Loaded {len(_trust_anchors)} C2PA trust anchors")
     return len(_trust_anchors)
 
@@ -95,6 +117,32 @@ def get_trust_anchor_subjects() -> List[str]:
                 value = value.decode("utf-8", errors="ignore")
             subjects.append(str(value))
     return subjects
+
+
+def get_trust_list_metadata() -> dict[str, Optional[str]]:
+    """Return metadata about the loaded trust list."""
+    loaded_at = _trust_list_loaded_at.isoformat() if _trust_list_loaded_at else None
+    return {
+        "fingerprint": _trust_list_fingerprint,
+        "loaded_at": loaded_at,
+        "source": _trust_list_source,
+        "count": str(len(_trust_anchors)) if _trust_anchors is not None else None,
+    }
+
+
+def trust_list_needs_refresh(max_age_hours: int) -> bool:
+    """Return True when trust list should be refreshed based on age."""
+    if max_age_hours <= 0:
+        return False
+    if _trust_list_loaded_at is None:
+        return True
+    return datetime.now(timezone.utc) - _trust_list_loaded_at >= timedelta(hours=max_age_hours)
+
+
+async def refresh_trust_list(*, url: str, expected_sha256: Optional[str]) -> int:
+    """Fetch and load trust list from URL with optional SHA-256 pinning."""
+    pem_data = await fetch_trust_list(url)
+    return set_trust_anchors_pem(pem_data, source=url, expected_sha256=expected_sha256)
 
 
 def _is_certificate_valid_now(cert: Certificate) -> bool:

@@ -11,20 +11,16 @@
 // 
 // IMPORTANT: NEXT_PUBLIC_API_URL should include /api/v1 suffix
 // e.g., http://localhost:8000/api/v1 or https://api.encypherai.com/api/v1
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:8000/api/v1'
+    : 'https://api.encypherai.com/api/v1');
 
 if (process.env.NODE_ENV === 'development') {
   console.info(`[dashboard] Using API base URL: ${API_BASE_URL}`);
 }
 
-// All services use the same base URL - Traefik routes based on path:
-//   /keys/*       -> key-service
-//   /auth/*       -> auth-service
-//   /analytics/*  -> analytics-service
-//   /billing/*    -> billing-service
-//   /users/*      -> user-service
-//   /verify/*     -> verification-service
-//   /coalition/*  -> coalition-service
 const AUTH_SERVICE_URL = API_BASE_URL;
 const KEY_SERVICE_URL = API_BASE_URL;
 const ANALYTICS_SERVICE_URL = API_BASE_URL;
@@ -48,6 +44,8 @@ interface ApiKeyInfo {
   created_at: string;
   last_used_at?: string;
   is_revoked: boolean;
+  user_id?: string | null;
+  created_by?: string | null;
 }
 
 interface ApiKeyCreateResponse {
@@ -58,6 +56,8 @@ interface ApiKeyCreateResponse {
   permissions: string[];
   created_at: string;
   organization_id?: string | null;
+  user_id?: string | null;
+  created_by?: string | null;
 }
 
 interface UsageStats {
@@ -466,6 +466,20 @@ const apiClient = {
     );
   },
 
+  /**
+   * Revoke all API keys created by a specific user in an organization
+   */
+  async revokeKeysByUser(accessToken: string, organizationId: string, userId: string): Promise<{ revoked_count: number }> {
+    return fetchWithAuth<{ revoked_count: number }>(
+      `${KEY_SERVICE_URL}/keys/revoke-by-user`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ organization_id: organizationId, user_id: userId }),
+      }
+    );
+  },
+
   // ============================================
   // Organizations (auth-service)
   // ============================================
@@ -704,7 +718,7 @@ const apiClient = {
    */
   async getAdminStats(accessToken: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${API_BASE_URL}/admin/stats`,
+      `${AUTH_SERVICE_URL}/auth/admin/stats`,
       accessToken
     );
     return response.data;
@@ -720,7 +734,7 @@ const apiClient = {
     if (page) params.append('page', page.toString());
     
     const queryString = params.toString();
-    const url = `${API_BASE_URL}/admin/users${queryString ? `?${queryString}` : ''}`;
+    const url = `${AUTH_SERVICE_URL}/auth/admin/users${queryString ? `?${queryString}` : ''}`;
     
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
       url,
@@ -734,7 +748,7 @@ const apiClient = {
    */
   async updateUserTier(accessToken: string, userId: string, newTier: string, reason?: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${API_BASE_URL}/admin/users/update-tier`,
+      `${AUTH_SERVICE_URL}/auth/admin/users/update-tier`,
       accessToken,
       {
         method: 'POST',
@@ -749,7 +763,7 @@ const apiClient = {
    */
   async toggleUserStatus(accessToken: string, userId: string, enabled: boolean, reason?: string): Promise<unknown> {
     const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
-      `${API_BASE_URL}/admin/users/update-status`,
+      `${AUTH_SERVICE_URL}/auth/admin/users/update-status`,
       accessToken,
       {
         method: 'POST',
@@ -789,11 +803,29 @@ const apiClient = {
   },
 
   /**
+   * Update a user's role (super admin only)
+   */
+  async updateUserRole(accessToken: string, userId: string, newRole: string): Promise<unknown> {
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${AUTH_SERVICE_URL}/auth/admin/users/update-role`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, new_role: newRole }),
+      }
+    );
+    return response.data;
+  },
+
+  /**
    * Legacy method for backward compatibility
    */
   async updateAdminUser(accessToken: string, userId: string, data: { tier?: string; role?: string }): Promise<unknown> {
     if (data.tier) {
       return this.updateUserTier(accessToken, userId, data.tier);
+    }
+    if (data.role) {
+      return this.updateUserRole(accessToken, userId, data.role);
     }
     return { success: true };
   },
@@ -1127,6 +1159,65 @@ const apiClient = {
     
     const data = await response.json().catch(() => ({}));
     return { data };
+  },
+
+  // ============================================
+  // Admin Analytics (Usage Counts & Activity Logs)
+  // ============================================
+
+  /**
+   * Get usage counts for multiple users (admin only)
+   */
+  async getAdminUsageCounts(accessToken: string, userIds: string[], days: number = 30): Promise<Record<string, number>> {
+    const response = await fetch(`${ANALYTICS_SERVICE_URL}/analytics/admin/usage-counts`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ user_ids: userIds, days }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch usage counts');
+    }
+    
+    const data = await response.json();
+    return data.usage_counts || {};
+  },
+
+  /**
+   * Get activity logs for a specific user (admin only)
+   */
+  async getUserActivityLogs(
+    accessToken: string,
+    userId: string,
+    options: { days?: number; limit?: number; offset?: number; metricType?: string } = {}
+  ): Promise<{
+    activities: Array<{
+      id: string;
+      type: string;
+      description: string;
+      timestamp: string;
+      metadata: Record<string, any>;
+    }>;
+    total: number;
+    limit: number;
+    offset: number;
+    has_more: boolean;
+  }> {
+    const params = new URLSearchParams();
+    if (options.days) params.append('days', options.days.toString());
+    if (options.limit) params.append('limit', options.limit.toString());
+    if (options.offset) params.append('offset', options.offset.toString());
+    if (options.metricType) params.append('metric_type', options.metricType);
+
+    const response = await fetchWithAuth<any>(
+      `${ANALYTICS_SERVICE_URL}/analytics/user/${userId}/activity?${params.toString()}`,
+      accessToken
+    );
+    
+    return response;
   },
 };
 

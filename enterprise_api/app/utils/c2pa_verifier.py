@@ -7,6 +7,7 @@ manifest verification capabilities. It can be used both server-side and in the S
 C2PA manifests provide cryptographic proof of content provenance and authenticity.
 """
 
+import base64
 import hashlib
 import ipaddress
 import json
@@ -18,6 +19,13 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 import httpx
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+
+from app.utils.c2pa_trust_list import validate_certificate_chain
+from encypher.core.payloads import deserialize_c2pa_payload_from_cbor
+from encypher.core.signing import extract_certificates_from_cose, verify_c2pa_cose
 
 logger = logging.getLogger(__name__)
 
@@ -340,7 +348,10 @@ class C2PAVerifier:
             manifest_data: Manifest data
             result: Result object to populate
         """
-        signature_info = manifest_data.get("signature_info", {})
+        signature_info = manifest_data.get("signature_info", {}) or {}
+        cose_sign1 = signature_info.get("cose_sign1") or manifest_data.get("cose_sign1")
+        if cose_sign1:
+            signature_info = {**signature_info, "cose_sign1": cose_sign1}
 
         if not signature_info:
             result.warnings.append("No signature information found")
@@ -358,14 +369,14 @@ class C2PAVerifier:
             result.warnings.append("Invalid signature timestamp")
 
         # Extract algorithm
-        algorithm = signature_info.get("alg", "unknown")
+        algorithm = signature_info.get("alg", "EdDSA")
 
         # Verify signature
-        verified = self._verify_signature(signature_info)
+        verified = self._verify_signature(signature_info, manifest_data, result)
 
         result.signatures.append(C2PASignature(issuer=issuer, time=time, algorithm=algorithm, verified=verified))
 
-    def _verify_signature(self, signature_info: Dict[str, Any]) -> bool:
+    def _verify_signature(self, signature_info: Dict[str, Any], manifest_data: Dict[str, Any], result: C2PAVerificationResult) -> bool:
         """
         Verify a signature.
 
@@ -375,16 +386,70 @@ class C2PAVerifier:
         Returns:
             True if signature is valid
         """
-        # TODO: Implement actual cryptographic signature verification
-        # This would require:
-        # 1. Extracting the public key
-        # 2. Verifying the signature against the manifest data
-        # 3. Checking certificate chain
-        # 4. Validating timestamp
+        cose_b64 = signature_info.get("cose_sign1")
+        if not cose_b64:
+            result.warnings.append("Signature missing COSE data; cryptographic verification skipped")
+            return False
 
-        # For now, we do basic validation
-        required_fields = ["issuer", "alg"]
-        return all(field in signature_info for field in required_fields)
+        try:
+            cose_bytes = base64.b64decode(cose_b64)
+        except (ValueError, TypeError) as exc:
+            result.errors.append(f"Invalid COSE signature encoding: {exc}")
+            return False
+
+        public_key = None
+        chain_pem = None
+        try:
+            certificates = extract_certificates_from_cose(cose_bytes)
+        except ValueError:
+            certificates = []
+
+        if certificates:
+            leaf_cert = certificates[0]
+            public_key = leaf_cert.public_key()
+            leaf_pem = leaf_cert.public_bytes(serialization.Encoding.PEM).decode()
+            if len(certificates) > 1:
+                chain_pem = "\n".join(cert.public_bytes(serialization.Encoding.PEM).decode() for cert in certificates[1:])
+
+            is_valid, error_msg, _ = validate_certificate_chain(leaf_pem, chain_pem)
+            if not is_valid:
+                result.warnings.append(f"Certificate chain untrusted: {error_msg}")
+        else:
+            public_key_pem = signature_info.get("public_key_pem")
+            if public_key_pem:
+                try:
+                    public_key = load_pem_public_key(public_key_pem.encode("utf-8"))
+                except Exception as exc:
+                    result.errors.append(f"Invalid public key: {exc}")
+                    return False
+            else:
+                result.errors.append("No public key available for signature verification")
+                return False
+
+        try:
+            payload_bytes = verify_c2pa_cose(public_key, cose_bytes)
+        except InvalidSignature:
+            result.errors.append("COSE signature verification failed")
+            return False
+        except Exception as exc:
+            result.errors.append(f"COSE signature verification error: {exc}")
+            return False
+
+        try:
+            payload = deserialize_c2pa_payload_from_cbor(payload_bytes)
+        except Exception as exc:
+            result.errors.append(f"Failed to decode COSE payload: {exc}")
+            return False
+
+        if isinstance(payload, dict):
+            if "claim_generator" in manifest_data and payload.get("claim_generator") != manifest_data.get("claim_generator"):
+                result.errors.append("Manifest claim_generator mismatch with COSE payload")
+                return False
+            if "assertions" in manifest_data and payload.get("assertions") != manifest_data.get("assertions"):
+                result.errors.append("Manifest assertions mismatch with COSE payload")
+                return False
+
+        return True
 
 
 # Global verifier instance

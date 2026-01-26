@@ -36,8 +36,8 @@ def _normalize_url(url: str) -> str:
 
 
 # Two-database architecture
-CORE_DATABASE_URL = os.getenv("CORE_DATABASE_URL") or os.getenv("DATABASE_URL")
-CONTENT_DATABASE_URL = os.getenv("CONTENT_DATABASE_URL") or os.getenv("DATABASE_URL")
+CORE_DATABASE_URL: str | None = os.getenv("CORE_DATABASE_URL") or os.getenv("DATABASE_URL")
+CONTENT_DATABASE_URL: str | None = os.getenv("CONTENT_DATABASE_URL") or os.getenv("DATABASE_URL")
 
 # Fallback for local development
 if not CORE_DATABASE_URL:
@@ -45,9 +45,17 @@ if not CORE_DATABASE_URL:
 if not CONTENT_DATABASE_URL:
     CONTENT_DATABASE_URL = "postgresql://encypher:encypher_dev_password@postgres:5432/encypher"
 
+if CORE_DATABASE_URL is None:
+    raise RuntimeError("CORE_DATABASE_URL not configured")
+if CONTENT_DATABASE_URL is None:
+    raise RuntimeError("CONTENT_DATABASE_URL not configured")
+
+CORE_DATABASE_URL_STR: str = CORE_DATABASE_URL
+CONTENT_DATABASE_URL_STR: str = CONTENT_DATABASE_URL
+
 # Normalize URLs for SQLAlchemy
-CORE_DATABASE_URL = _normalize_url(CORE_DATABASE_URL)
-CONTENT_DATABASE_URL = _normalize_url(CONTENT_DATABASE_URL)
+CORE_DATABASE_URL_STR = _normalize_url(CORE_DATABASE_URL_STR)
+CONTENT_DATABASE_URL_STR = _normalize_url(CONTENT_DATABASE_URL_STR)
 
 # Migration file paths
 MIGRATIONS_DIR = Path(__file__).parent.parent.parent / "services" / "migrations"
@@ -71,6 +79,11 @@ def parse_db_url(url: str) -> dict:
         "port": int(host_port[1]) if len(host_port) > 1 else 5432,
         "database": host_db[1].split("?")[0] if len(host_db) > 1 else "railway",
     }
+
+
+def format_db_label(url: str) -> str:
+    """Return a friendly label for the database URL."""
+    return url.split("@", 1)[1] if "@" in url else "Not configured"
 
 
 async def wait_for_postgres(db_url: str, db_name: str, max_retries: int = 30, delay: float = 2.0) -> bool:
@@ -196,7 +209,7 @@ async def verify_setup():
 
     # Verify Core DB
     print("\n  Core Database:")
-    core_engine = create_async_engine(CORE_DATABASE_URL, echo=False)
+    core_engine = create_async_engine(CORE_DATABASE_URL_STR, echo=False)
     try:
         async with core_engine.begin() as conn:
             # Check organizations
@@ -223,7 +236,7 @@ async def verify_setup():
 
     # Verify Content DB
     print("\n  Content Database:")
-    content_engine = create_async_engine(CONTENT_DATABASE_URL, echo=False)
+    content_engine = create_async_engine(CONTENT_DATABASE_URL_STR, echo=False)
     try:
         async with content_engine.begin() as conn:
             # Check tables exist
@@ -249,24 +262,24 @@ async def main():
     print("=" * 50)
     print("Enterprise API Database Initialization")
     print("=" * 50)
-    print(f"Core DB: {CORE_DATABASE_URL.split('@')[1] if '@' in CORE_DATABASE_URL else 'Not configured'}")
-    print(f"Content DB: {CONTENT_DATABASE_URL.split('@')[1] if '@' in CONTENT_DATABASE_URL else 'Not configured'}")
+    print(f"Core DB: {format_db_label(CORE_DATABASE_URL_STR)}")
+    print(f"Content DB: {format_db_label(CONTENT_DATABASE_URL_STR)}")
     print(f"Migrations Dir: {MIGRATIONS_DIR}")
 
     # Wait for Core PostgreSQL
-    if not await wait_for_postgres(CORE_DATABASE_URL, "Core"):
+    if not await wait_for_postgres(CORE_DATABASE_URL_STR, "Core"):
         print("Warning: Core database not ready, continuing anyway...")
 
     # Wait for Content PostgreSQL (might be same as core)
-    if CONTENT_DATABASE_URL != CORE_DATABASE_URL:
-        if not await wait_for_postgres(CONTENT_DATABASE_URL, "Content"):
+    if CONTENT_DATABASE_URL_STR != CORE_DATABASE_URL_STR:
+        if not await wait_for_postgres(CONTENT_DATABASE_URL_STR, "Content"):
             print("Warning: Content database not ready, continuing anyway...")
 
     # Run Core DB migrations
-    await run_migrations(CORE_DATABASE_URL, CORE_MIGRATIONS, "Core")
+    await run_migrations(CORE_DATABASE_URL_STR, CORE_MIGRATIONS, "Core")
 
     # Run Content DB migrations
-    await run_migrations(CONTENT_DATABASE_URL, CONTENT_MIGRATIONS, "Content")
+    await run_migrations(CONTENT_DATABASE_URL_STR, CONTENT_MIGRATIONS, "Content")
 
     # Verify
     await verify_setup()

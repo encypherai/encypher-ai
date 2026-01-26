@@ -119,6 +119,8 @@ Optional:
 - `SERVICE_PORT` - Port (default: 8007)
 - `STRIPE_API_KEY` - Stripe API key
 - `STRIPE_WEBHOOK_SECRET` - Stripe webhook secret
+- `STRIPE_BILLING_PORTAL_CONFIG_ID` - Billing portal configuration ID (enables plan changes)
+- `INTERNAL_SERVICE_TOKEN` - Shared token for auth-service tier sync
 
 ## License
 

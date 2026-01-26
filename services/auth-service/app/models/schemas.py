@@ -49,6 +49,23 @@ class ApiAccessStatus(str, Enum):
     DENIED = "denied"
 
 
+class UserTier(str, Enum):
+    """Available user tiers for admin updates."""
+
+    STARTER = "starter"
+    PROFESSIONAL = "professional"
+    BUSINESS = "business"
+    ENTERPRISE = "enterprise"
+    STRATEGIC_PARTNER = "strategic_partner"
+
+
+class UserStatus(str, Enum):
+    """User account status for admin updates."""
+
+    ACTIVE = "active"
+    SUSPENDED = "suspended"
+
+
 # User Schemas
 class UserBase(BaseModel):
     """Base user schema"""
@@ -93,6 +110,7 @@ class UserResponse(UserBase):
     is_active: bool = True
     email_verified: bool = False
     is_super_admin: bool = False  # TEAM_006: Super admin flag
+    default_organization_id: Optional[str] = None  # TEAM_128: For billing service tier sync
 
     class Config:
         from_attributes = True
@@ -250,3 +268,52 @@ class PendingAccessRequestList(BaseModel):
 
     requests: List[PendingAccessRequest]
     total: int
+
+
+# ============================================
+# Admin User Updates
+# ============================================
+
+
+class TierUpdateRequest(BaseModel):
+    """Request to update a user's tier."""
+
+    user_id: str = Field(..., description="User ID to update")
+    new_tier: UserTier = Field(..., description="New tier to assign")
+    reason: Optional[str] = Field(None, description="Reason for tier change")
+
+
+class TierUpdateResponse(BaseModel):
+    """Response for tier update."""
+
+    success: bool = True
+    data: dict = Field(default_factory=dict)
+
+
+class UserStatusUpdateRequest(BaseModel):
+    """Request to update a user's status."""
+
+    user_id: str = Field(..., description="User ID to update")
+    status: UserStatus = Field(..., description="New account status")
+    reason: Optional[str] = Field(None, description="Reason for status change")
+
+
+class UserStatusUpdateResponse(BaseModel):
+    """Response for status update."""
+
+    success: bool = True
+    data: dict = Field(default_factory=dict)
+
+
+class RoleUpdateRequest(BaseModel):
+    """Request to update a user's role within an organization."""
+
+    user_id: str = Field(..., description="User ID to update")
+    new_role: str = Field(..., description="New role to assign (member, manager, admin)")
+
+
+class RoleUpdateResponse(BaseModel):
+    """Response for role update."""
+
+    success: bool = True
+    data: dict = Field(default_factory=dict)

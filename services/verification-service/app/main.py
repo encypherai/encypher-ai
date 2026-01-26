@@ -10,17 +10,22 @@ from .core.logging_config import setup_logging
 from .api.v1 import endpoints as v1_endpoints
 from .monitoring.metrics import setup_metrics
 from .middleware.logging import RequestLoggingMiddleware
+from encypher_commercial_shared.metrics import MetricsClient, MetricsMiddleware, set_metrics_client
 from .db.session import get_db
 
 # Import database startup utilities
 from encypher_commercial_shared.db import ensure_database_ready
 
 logger = setup_logging(settings.LOG_LEVEL).bind(service=settings.SERVICE_NAME)
+metrics_client = MetricsClient(redis_url=settings.REDIS_URL, service_name=settings.SERVICE_NAME)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Starting {settings.SERVICE_NAME}")
+
+    await metrics_client.connect()
+    set_metrics_client(metrics_client)
 
     # Ensure database is ready and run migrations
     ensure_database_ready(
@@ -32,6 +37,7 @@ async def lifespan(app: FastAPI):
     )
 
     yield
+    await metrics_client.disconnect()
     logger.info(f"Shutting down {settings.SERVICE_NAME}")
 
 
@@ -52,6 +58,9 @@ app.add_middleware(
 
 # Add request logging middleware
 app.add_middleware(RequestLoggingMiddleware)
+
+# Add metrics middleware for analytics
+app.add_middleware(MetricsMiddleware, metrics_client=metrics_client)
 
 # Set up Prometheus metrics
 setup_metrics(app)

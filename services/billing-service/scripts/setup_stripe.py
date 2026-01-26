@@ -160,7 +160,7 @@ def create_products_and_prices():
     return results
 
 
-def create_billing_portal_config():
+def create_billing_portal_config(results):
     """Create or update the Stripe Billing Portal configuration."""
 
     print("🔧 Configuring Billing Portal...")
@@ -168,6 +168,15 @@ def create_billing_portal_config():
     try:
         # Check for existing configuration
         configs = stripe.billing_portal.Configuration.list(limit=1)
+
+        allowed_products = []
+        for tier_id, tier_data in results.items():
+            allowed_products.append(
+                {
+                    "product": tier_data["product_id"],
+                    "prices": [tier_data["price_monthly"], tier_data["price_annual"]],
+                }
+            )
 
         portal_config = {
             "business_profile": {
@@ -189,6 +198,7 @@ def create_billing_portal_config():
                     "enabled": True,
                     "default_allowed_updates": ["price"],
                     "proration_behavior": "create_prorations",
+                    "products": allowed_products,
                 },
             },
         }
@@ -265,10 +275,12 @@ def main():
     results = create_products_and_prices()
 
     # Configure billing portal
-    create_billing_portal_config()
+    portal_config_id = create_billing_portal_config(results)
 
     # Print configuration
     print_env_config(results)
+    if portal_config_id:
+        print(f"STRIPE_BILLING_PORTAL_CONFIG_ID={portal_config_id}")
 
 
 if __name__ == "__main__":

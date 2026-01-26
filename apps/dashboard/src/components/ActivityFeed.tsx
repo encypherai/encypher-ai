@@ -1,17 +1,25 @@
 'use client';
 
-import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { Card, CardHeader, CardTitle, CardContent } from '@encypher/design-system';
+import { Badge, Card, CardHeader, CardTitle, CardContent } from '@encypher/design-system';
 
 interface ActivityItem {
   id: string;
   type: 'api_call' | 'key_created' | 'key_revoked' | 'sign' | 'verify' | 'login' | 'settings_changed';
   description: string;
-  timestamp: Date;
-  metadata?: Record<string, string | number>;
+  timestamp: string;
+  metadata?: {
+    status?: number;
+    latency_ms?: number;
+    endpoint?: string;
+    method?: string;
+    api_key?: string;
+    location?: string;
+    request_id?: string;
+    region?: string;
+  };
 }
 
 const activityIcons: Record<ActivityItem['type'], { icon: string; color: string; bg: string }> = {
@@ -24,8 +32,9 @@ const activityIcons: Record<ActivityItem['type'], { icon: string; color: string;
   settings_changed: { icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z', color: 'text-amber-600', bg: 'bg-amber-100' },
 };
 
-function formatTimeAgo(date: Date): string {
+function formatTimeAgo(dateValue: string): string {
   const now = new Date();
+  const date = new Date(dateValue);
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
   const diffHours = Math.floor(diffMs / 3600000);
@@ -38,38 +47,58 @@ function formatTimeAgo(date: Date): string {
   return date.toLocaleDateString();
 }
 
-// Mock data for demo - in production this would come from an API
-const mockActivities: ActivityItem[] = [
-  { id: '1', type: 'sign', description: 'Signed document via API', timestamp: new Date(Date.now() - 5 * 60000) },
-  { id: '2', type: 'verify', description: 'Verified content authenticity', timestamp: new Date(Date.now() - 15 * 60000) },
-  { id: '3', type: 'api_call', description: 'API call to /v1/sign endpoint', timestamp: new Date(Date.now() - 30 * 60000), metadata: { status: 200 } },
-  { id: '4', type: 'key_created', description: 'Created new API key "Production"', timestamp: new Date(Date.now() - 2 * 3600000) },
-  { id: '5', type: 'login', description: 'Logged in from Chrome on Windows', timestamp: new Date(Date.now() - 24 * 3600000) },
-];
+function formatLatency(latencyMs?: number): string | null {
+  if (!latencyMs && latencyMs !== 0) return null;
+  if (latencyMs >= 1000) {
+    return `${(latencyMs / 1000).toFixed(2)}s`;
+  }
+  return `${Math.round(latencyMs)}ms`;
+}
+
+function getStatusVariant(status?: number): 'success' | 'warning' | 'destructive' | 'secondary' {
+  if (!status) return 'secondary';
+  if (status >= 200 && status < 300) return 'success';
+  if (status >= 400 && status < 500) return 'warning';
+  return 'destructive';
+}
+
 
 interface ActivityFeedProps {
   limit?: number;
   showHeader?: boolean;
   compact?: boolean;
+  title?: string;
 }
 
-export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: ActivityFeedProps) {
+export function ActivityFeed({
+  limit = 5,
+  showHeader = true,
+  compact = false,
+  title = 'Recent Activity',
+}: ActivityFeedProps) {
   const { data: session } = useSession();
   const accessToken = (session?.user as Record<string, unknown>)?.accessToken as string | undefined;
 
-  // In production, this would fetch from the API
+  // Fetch from analytics-service activity feed
   const activitiesQuery = useQuery({
     queryKey: ['activity-feed'],
     queryFn: async () => {
-      // Mock API call - replace with actual API
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return mockActivities;
+      if (!accessToken) return [];
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/analytics/activity?days=7&limit=${limit}`, {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (!response.ok) {
+        throw new Error('Failed to load activity feed');
+      }
+      return response.json();
     },
     enabled: Boolean(accessToken),
     refetchOnWindowFocus: false,
   });
 
-  const activities = (activitiesQuery.data ?? []).slice(0, limit);
+  const activities = ((activitiesQuery.data ?? []) as ActivityItem[]).slice(0, limit);
   const isLoading = activitiesQuery.isLoading;
 
   if (isLoading) {
@@ -77,7 +106,7 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
       <Card>
         {showHeader && (
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>{title}</CardTitle>
           </CardHeader>
         )}
         <CardContent className={showHeader ? '' : 'pt-6'}>
@@ -102,7 +131,7 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
       <Card>
         {showHeader && (
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>{title}</CardTitle>
           </CardHeader>
         )}
         <CardContent className={showHeader ? '' : 'pt-6'}>
@@ -124,7 +153,7 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
     <Card>
       {showHeader && (
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Recent Activity</CardTitle>
+          <CardTitle>{title}</CardTitle>
           <Link href="/audit-logs" className="text-sm text-blue-ncs hover:underline">
             View all
           </Link>
@@ -134,6 +163,20 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
         <div className={compact ? 'space-y-2' : 'space-y-4'}>
           {activities.map((activity) => {
             const iconConfig = activityIcons[activity.type];
+            const latency = formatLatency(activity.metadata?.latency_ms);
+            const endpoint = activity.metadata?.endpoint
+              ? `${activity.metadata?.method ?? 'POST'} ${activity.metadata.endpoint}`
+              : null;
+            const statusVariant = getStatusVariant(activity.metadata?.status);
+            const detailItems = [
+              { label: 'Endpoint', value: endpoint },
+              { label: 'Latency', value: latency },
+              { label: 'Status', value: activity.metadata?.status ? String(activity.metadata.status) : null },
+              { label: 'Key', value: activity.metadata?.api_key },
+              { label: 'Origin', value: activity.metadata?.location },
+              { label: 'Region', value: activity.metadata?.region },
+              { label: 'Request ID', value: activity.metadata?.request_id },
+            ].filter((item) => Boolean(item.value));
             return (
               <div
                 key={activity.id}
@@ -148,24 +191,50 @@ export function ActivityFeed({ limit = 5, showHeader = true, compact = false }: 
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <p className={`text-slate-700 ${compact ? 'text-sm' : ''}`}>
-                    {activity.description}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {formatTimeAgo(activity.timestamp)}
-                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className={`text-slate-800 dark:text-slate-100 font-medium ${compact ? 'text-sm' : ''}`}>
+                      {activity.description}
+                    </p>
+                    {activity.type === 'api_call' && (
+                      <Badge variant="secondary" size="sm">
+                        API Call
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                    <span>{formatTimeAgo(activity.timestamp)}</span>
+                    {activity.metadata?.location && <span>• {activity.metadata.location}</span>}
+                  </div>
+                  {detailItems.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {detailItems.map((item) => (
+                        <div
+                          key={item.label}
+                          className="flex items-center gap-1 rounded-full bg-muted/60 px-2.5 py-1 text-[11px] text-muted-foreground"
+                        >
+                          <span className="uppercase tracking-wide text-[10px]">{item.label}</span>
+                          <span className="font-medium text-slate-700 dark:text-slate-200">
+                            {item.value}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                {/* Metadata badge */}
-                {activity.metadata?.status && (
-                  <span className={`text-xs px-2 py-0.5 rounded-full ${
-                    activity.metadata.status === 200 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-red-100 text-red-700'
-                  }`}>
-                    {activity.metadata.status}
-                  </span>
-                )}
+                {/* Metadata badges */}
+                <div className="flex flex-col items-end gap-2">
+                  {activity.metadata?.status && (
+                    <Badge variant={statusVariant} size="sm">
+                      Status {activity.metadata.status}
+                    </Badge>
+                  )}
+                  {latency && (
+                    <Badge variant="outline" size="sm">
+                      Latency {latency}
+                    </Badge>
+                  )}
+                </div>
               </div>
             );
           })}

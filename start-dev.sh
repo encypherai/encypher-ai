@@ -4,6 +4,10 @@ set -euo pipefail
 SKIP_DOCKER=0
 SKIP_FRONTEND=0
 CLEAN_START=0
+SKIP_DOCKER_LOGS=0
+REBUILD_SERVICES=0
+SKIP_STRIPE_LISTEN=0
+STRIPE_WEBHOOK_FORWARD_URL="${STRIPE_WEBHOOK_FORWARD_URL:-localhost:8007/api/v1/webhooks/stripe}"
 
 usage() {
   cat <<'EOF'
@@ -13,10 +17,14 @@ Options:
   --skip-docker       Skip starting Docker services (use if already running)
   --skip-frontend     Skip starting frontend applications
   --clean-start       Clean rebuild (docker volumes, next caches, node cache)
+  --rebuild           Rebuild application services (non-database)
+  --skip-docker-logs  Skip streaming Docker logs
+  --skip-stripe-listen  Skip starting Stripe CLI webhook listener
   -h, --help          Show this help message
 
 Examples:
   ./start-dev.sh
+  ./start-dev.sh --rebuild
   ./start-dev.sh --clean-start
   ./start-dev.sh --skip-docker
 EOF
@@ -24,6 +32,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --rebuild)
+      REBUILD_SERVICES=1
+      ;;
     --skip-docker)
       SKIP_DOCKER=1
       ;;
@@ -32,6 +43,12 @@ while [[ $# -gt 0 ]]; do
       ;;
     --clean-start)
       CLEAN_START=1
+      ;;
+    --skip-docker-logs)
+      SKIP_DOCKER_LOGS=1
+      ;;
+    --skip-stripe-listen)
+      SKIP_STRIPE_LISTEN=1
       ;;
     -h|--help)
       usage
@@ -165,6 +182,12 @@ if [[ "$SKIP_DOCKER" -eq 0 ]]; then
     ${COMPOSE} -f docker-compose.full-stack.yml down >/dev/null 2>&1 || true
   fi
 
+  if [[ "$REBUILD_SERVICES" -eq 1 ]]; then
+    step "  " "Rebuilding application services..."
+    SERVICES_TO_BUILD="auth-service user-service key-service encoding-service verification-service coalition-service analytics-service billing-service notification-service enterprise-api"
+    ${COMPOSE} -f docker-compose.full-stack.yml build $SERVICES_TO_BUILD
+  fi
+
   if [[ "$CLEAN_START" -eq 1 ]]; then
     ${COMPOSE} -f docker-compose.full-stack.yml up -d --build --force-recreate
   else
@@ -204,6 +227,8 @@ MARKETING_PID=""
 DASHBOARD_PID=""
 MARKETING_TAIL_PID=""
 DASHBOARD_TAIL_PID=""
+DOCKER_LOG_PID=""
+STRIPE_LISTEN_PID=""
 
 cleanup() {
   step "" "Shutting down..."
@@ -213,6 +238,12 @@ cleanup() {
   fi
   if [[ -n "${DASHBOARD_TAIL_PID}" ]]; then
     kill "${DASHBOARD_TAIL_PID}" >/dev/null 2>&1 || true
+  fi
+  if [[ -n "${DOCKER_LOG_PID}" ]]; then
+    kill "${DOCKER_LOG_PID}" >/dev/null 2>&1 || true
+  fi
+  if [[ -n "${STRIPE_LISTEN_PID}" ]]; then
+    kill "${STRIPE_LISTEN_PID}" >/dev/null 2>&1 || true
   fi
 
   if [[ -n "${MARKETING_PID}" ]]; then
@@ -266,6 +297,60 @@ if [[ "$SKIP_FRONTEND" -eq 0 ]]; then
   DASHBOARD_TAIL_PID="$!"
 else
   ok "Skipping frontends (--skip-frontend)"
+fi
+
+if [[ "$SKIP_STRIPE_LISTEN" -eq 0 ]]; then
+  step "" "Starting Stripe webhook listener"
+  if command -v stripe >/dev/null 2>&1; then
+    stripe listen --forward-to "${STRIPE_WEBHOOK_FORWARD_URL}" &
+    STRIPE_LISTEN_PID="$!"
+    ok "Stripe CLI listening → ${STRIPE_WEBHOOK_FORWARD_URL}"
+  else
+    warn "Stripe CLI not found; install it or run with --skip-stripe-listen"
+  fi
+else
+  ok "Skipping Stripe webhook listener (--skip-stripe-listen)"
+fi
+
+if [[ "$SKIP_DOCKER" -eq 0 && "$SKIP_DOCKER_LOGS" -eq 0 ]]; then
+  step "" "Streaming Docker logs"
+  require_cmd awk
+  require_cmd stdbuf
+  LOG_COLOR_RESET="\033[0m"
+  stdbuf -oL -eL ${COMPOSE} -f docker-compose.full-stack.yml logs -f --tail=50 \
+    | awk -v reset="$LOG_COLOR_RESET" '
+      BEGIN {
+        color["traefik"]="\033[38;5;39m"
+        color["postgres"]="\033[38;5;69m"
+        color["redis-cache"]="\033[38;5;73m"
+        color["redis-celery"]="\033[38;5;73m"
+        color["auth-service"]="\033[38;5;112m"
+        color["key-service"]="\033[38;5;178m"
+        color["enterprise-api"]="\033[38;5;81m"
+        color["analytics-service"]="\033[38;5;141m"
+        color["verification-service"]="\033[38;5;141m"
+        color["billing-service"]="\033[38;5;214m"
+        color["notification-service"]="\033[38;5;173m"
+        color["user-service"]="\033[38;5;110m"
+        color["encoding-service"]="\033[38;5;76m"
+        color["coalition-service"]="\033[38;5;212m"
+        color["grafana"]="\033[38;5;208m"
+        color["prometheus"]="\033[38;5;244m"
+        color["jaeger"]="\033[38;5;216m"
+      }
+      {
+        split($0, parts, "|")
+        service=parts[1]
+        gsub(/[[:space:]]+$/, "", service)
+        msg=substr($0, length(parts[1]) + 2)
+        if (service in color) {
+          printf "%s[%s]%s%s\n", color[service], service, reset, msg
+        } else {
+          print $0
+        }
+      }
+    ' &
+  DOCKER_LOG_PID="$!"
 fi
 
 step "6/6" "Summary"
