@@ -1,6 +1,6 @@
 [project]
 name = "c2pa-text"
-version = "1.0.2"
+version = "1.0.3"
 description = "Reference implementation for embedding C2PA manifests in text using Unicode variation selectors"
 authors = [
     {name = "Encypher Corporation", email = "contact@encypherai.com"},
