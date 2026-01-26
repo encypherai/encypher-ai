@@ -65,7 +65,7 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 
     # Trusted hosts - comma-separated list
-    allowed_hosts: str = "api.encypherai.com"
+    allowed_hosts: str = "api.encypherai.com,*.up.railway.app"
 
     # Trusted proxy IPs (comma-separated list)
     trusted_proxy_ips: str = ""
