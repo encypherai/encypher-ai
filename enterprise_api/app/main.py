@@ -16,9 +16,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
-from starlette.middleware.trustedhost import TrustedHostMiddleware
+from starlette.datastructures import Headers
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.types import ASGIApp, Receive, Scope, Send
 
 from app.api.v1.api import api_router as api_v1_router
 from app.config import settings
@@ -243,6 +244,64 @@ def build_trusted_hosts() -> list[str]:
     return host_values
 
 
+class EncypherTrustedHostMiddleware:
+    def __init__(
+        self,
+        app: ASGIApp,
+        allowed_hosts: list[str],
+        exempt_paths: set[str] | None = None,
+    ) -> None:
+        self.app = app
+        self.allowed_hosts = allowed_hosts
+        self.exempt_paths = exempt_paths or {"/health", "/readyz"}
+        self._has_wildcard = "*" in allowed_hosts
+
+    def _is_allowed(self, host: str) -> bool:
+        if self._has_wildcard:
+            return True
+        for pattern in self.allowed_hosts:
+            if pattern.startswith("*."):
+                suffix = pattern[2:]
+                if host == suffix or host.endswith(f".{suffix}"):
+                    return True
+                continue
+            if host == pattern:
+                return True
+        return False
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path") or ""
+        if path in self.exempt_paths:
+            await self.app(scope, receive, send)
+            return
+
+        headers = Headers(scope=scope)
+        raw_host = headers.get("host")
+        if raw_host is None:
+            await self.app(scope, receive, send)
+            return
+
+        host = raw_host.split(":", 1)[0]
+        if self._is_allowed(host):
+            await self.app(scope, receive, send)
+            return
+
+        logger.warning(
+            "Rejected host header: host=%s raw_host=%s x_forwarded_host=%s allowed_hosts=%s path=%s",
+            host,
+            raw_host,
+            headers.get("x-forwarded-host"),
+            self.allowed_hosts,
+            path,
+        )
+        response = PlainTextResponse("Invalid host header", status_code=400)
+        await response(scope, receive, send)
+
+
 cors_settings = build_cors_settings()
 allow_origins = cast(list[str], cors_settings["allow_origins"])
 allow_credentials = cast(bool, cors_settings["allow_credentials"])
@@ -255,7 +314,7 @@ app.add_middleware(
     allow_methods=allow_methods,
     allow_headers=allow_headers,
 )
-app.add_middleware(TrustedHostMiddleware, allowed_hosts=build_trusted_hosts())
+app.add_middleware(EncypherTrustedHostMiddleware, allowed_hosts=build_trusted_hosts())
 app.add_middleware(SecurityHeadersMiddleware)
 
 # Add metrics middleware for analytics
