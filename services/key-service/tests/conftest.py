@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 from sqlalchemy.exc import ProgrammingError
+from sqlalchemy.exc import InternalError
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -81,6 +82,7 @@ def mock_db(dummy_org_row):
             return None
 
         def rollback(self):
+            self.rolled_back = True
             return None
 
         def close(self):
@@ -94,6 +96,7 @@ def mock_db_missing_certificate_column(dummy_org_row_without_certificate_pem):
     class _DB:
         def __init__(self):
             self.execute_calls = 0
+            self.rolled_back = False
 
         def execute(self, *args, **kwargs):
             self.execute_calls += 1
@@ -109,6 +112,14 @@ def mock_db_missing_certificate_column(dummy_org_row_without_certificate_pem):
                 )
 
             if self.execute_calls == 2:
+                if not self.rolled_back:
+                    raise InternalError(
+                        statement_text,
+                        params,
+                        Exception(
+                            "current transaction is aborted, commands ignored until end of transaction block"
+                        ),
+                    )
                 return _DummyResult(dummy_org_row_without_certificate_pem)
 
             return _DummyResult(None)
@@ -117,6 +128,7 @@ def mock_db_missing_certificate_column(dummy_org_row_without_certificate_pem):
             return None
 
         def rollback(self):
+            self.rolled_back = True
             return None
 
         def close(self):

@@ -25,6 +25,7 @@ We will move to the long-term ideal microservices architecture where each servic
 - [x] 2.3 Enterprise-api: Compose auth context by calling key-service `validate-minimal` then auth-service internal org-context endpoint (feature-flagged)
 - [x] 2.4 Add internal token wiring to enterprise-api config and callers
 - [x] 2.5 Enterprise-api: bootstrap org row when composing org context (avoid signing key/template lookups failing due to missing local org record)
+- [x] 2.6 Enterprise-api: auto-provision per-org encrypted signing key when missing (config-gated; default on)
 
 ### 3.0 Rollout / Backward Compatibility
 - [ ] 3.1 Add feature flag `KEY_VALIDATION_V2=true|false` (default false) for safe rollout
@@ -38,6 +39,7 @@ We will move to the long-term ideal microservices architecture where each servic
 
 ### 5.0 Testing & Validation
 - [x] 5.1 Key-service unit tests passing — ✅ pytest
+- [x] 5.1.1 Key-service: validate-key rollback+fallback when `organizations.certificate_pem` missing — ✅ pytest
 - [x] 5.2 Auth-service unit tests passing — ✅ pytest
 - [x] 5.3 Enterprise-api unit tests passing — ✅ pytest
 - [ ] 5.4 End-to-end smoke test: create key in dashboard, sign via enterprise-api — ✅ manual

@@ -391,6 +391,12 @@ class KeyService:
         except ProgrammingError as exc:
             message = str(getattr(exc, "orig", exc)).lower()
             if "certificate_pem" in message and ("does not exist" in message or "undefinedcolumn" in message):
+                # The failed SELECT leaves the transaction in an aborted state on Postgres.
+                # We must rollback before retrying any subsequent SQL.
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
                 result = db.execute(query_without_certificate, {"key_hash": key_hash}).fetchone()
             else:
                 raise
