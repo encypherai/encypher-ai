@@ -7,6 +7,7 @@ from __future__ import annotations
 import logging
 from typing import Dict
 
+from app.config import settings
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 def _should_bootstrap(org_id: str, organization: Dict) -> bool:
+    if settings.compose_org_context_via_auth_service:
+        return True
     if org_id.startswith("user_"):
         return True
     if organization.get("is_demo", False):

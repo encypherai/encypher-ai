@@ -70,6 +70,8 @@ async def encode_document_with_embeddings(
             request.segmentation_level,
         )
 
+        await ensure_organization_exists(db, organization)
+
         # Load organization's private key for signing
         # For user-level orgs (is_demo=true), use the demo key
         is_demo = organization.get("is_demo", False)

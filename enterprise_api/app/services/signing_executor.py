@@ -73,6 +73,8 @@ async def execute_signing(
     is_demo_org = organization.get("is_demo", False)
     org_id = organization["organization_id"]
 
+    await ensure_organization_exists(db, organization)
+
     # Load organization's private key
     # For demo orgs (including user-level keys), use demo key but keep actual org_id as signer
     # This allows verification to look up the org and find they use the demo key
