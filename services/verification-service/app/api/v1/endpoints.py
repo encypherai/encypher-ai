@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Header, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError, ProgrammingError
 from typing import List, Optional
 import httpx
 import json
@@ -397,17 +398,34 @@ async def verify_text(
         and isinstance(extracted_manifest_uuid, str)
         and extracted_manifest_uuid.strip()
     ):
-        exists_row = db.execute(
-            text(
-                """
-                SELECT 1
-                FROM content_references
-                WHERE embedding_metadata->>'manifest_uuid' = :manifest_uuid
-                LIMIT 1
-                """
-            ),
-            {"manifest_uuid": extracted_manifest_uuid},
-        ).fetchone()
+        try:
+            exists_row = db.execute(
+                text(
+                    """
+                    SELECT 1
+                    FROM content_references
+                    WHERE embedding_metadata->>'manifest_uuid' = :manifest_uuid
+                    LIMIT 1
+                    """
+                ),
+                {"manifest_uuid": extracted_manifest_uuid},
+            ).fetchone()
+        except (ProgrammingError, OperationalError) as exc:
+            verdict = VerifyVerdict(
+                valid=False,
+                tampered=False,
+                reason_code="CONTENT_DB_NOT_READY",
+                signer_id=extracted_signer_id,
+                signer_name=extracted_signer_id,
+                timestamp=None,
+                details={
+                    "manifest": extracted_metadata or {},
+                    "manifest_uuid": extracted_manifest_uuid,
+                    "payload_bytes": payload_bytes,
+                    "exception": str(exc),
+                },
+            )
+            return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
 
         if not exists_row:
             verdict = VerifyVerdict(

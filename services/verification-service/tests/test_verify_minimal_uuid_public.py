@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from cryptography.hazmat.primitives import serialization
+from sqlalchemy.exc import ProgrammingError
 
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
@@ -124,4 +125,50 @@ def test_verify_minimal_uuid_public_missing_record_returns_reference_not_found(c
     assert payload["success"] is True
     assert payload["data"]["valid"] is False
     assert payload["data"]["reason_code"] == "REFERENCE_NOT_FOUND"
+    assert payload["data"]["signer_id"] == signer_id
+
+
+def test_verify_minimal_uuid_public_missing_table_returns_content_db_not_ready(client, mock_db, monkeypatch) -> None:
+    private_key, public_key = generate_ed25519_key_pair()
+    signer_id = "org_a18f662bf1287480"
+    manifest_uuid = "7d6b04d7-7e7e-4f59-86b1-9b59211c6d8a"
+
+    signed_text = UnicodeMetadata.embed_metadata(
+        text="hello world",
+        private_key=private_key,
+        signer_id=signer_id,
+        metadata_format="basic",
+        target=MetadataTarget.WHITESPACE,
+        custom_metadata={"manifest_uuid": manifest_uuid},
+        add_hard_binding=False,
+    )
+
+    mock_db.execute.side_effect = ProgrammingError(
+        "SELECT 1 FROM content_references",
+        {"manifest_uuid": manifest_uuid},
+        Exception("relation \"content_references\" does not exist"),
+    )
+
+    dummy_response = _DummyResponse(
+        200,
+        {
+            "signer_id": signer_id,
+            "signer_name": "Test Org",
+            "public_key": _pem_from_public_key(public_key),
+            "public_key_algorithm": "Ed25519",
+        },
+    )
+
+    monkeypatch.setattr(
+        verify_endpoints.httpx,
+        "AsyncClient",
+        lambda: _DummyAsyncClient(dummy_response),
+    )
+
+    response = client.post("/api/v1/verify", json={"text": signed_text})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["valid"] is False
+    assert payload["data"]["reason_code"] == "CONTENT_DB_NOT_READY"
     assert payload["data"]["signer_id"] == signer_id
