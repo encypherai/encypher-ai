@@ -2,12 +2,16 @@ import pytest
 from httpx import AsyncClient
 from unittest.mock import AsyncMock, patch
 
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.config import settings
 
 
 @pytest.mark.asyncio
-async def test_sign_advanced_composed_org_missing_bootstraps_and_returns_no_private_key(
+async def test_sign_advanced_composed_org_missing_bootstraps_and_auto_provisions_key(
     async_client: AsyncClient,
+    db: AsyncSession,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setattr(settings, "compose_org_context_via_auth_service", True)
@@ -46,9 +50,14 @@ async def test_sign_advanced_composed_org_missing_bootstraps_and_returns_no_priv
             headers=headers,
         )
 
-    assert response.status_code == 400
-    payload = response.json()
-    assert payload["success"] is False
-    assert payload["error"]["code"] == "NO_PRIVATE_KEY"
-    assert "No private key found" in payload["error"]["details"]
-    assert payload["correlation_id"]
+    assert response.status_code == 201
+
+    row = (
+        await db.execute(
+            text("SELECT private_key_encrypted, public_key FROM organizations WHERE id = :org_id"),
+            {"org_id": org_id},
+        )
+    ).fetchone()
+    assert row is not None
+    assert row.private_key_encrypted
+    assert row.public_key

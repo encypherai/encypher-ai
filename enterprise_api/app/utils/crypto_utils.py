@@ -2,6 +2,7 @@
 Cryptographic utilities for key management and encryption.
 """
 
+import os
 import logging
 from typing import Optional, cast
 
@@ -20,6 +21,9 @@ from app.utils.aws_signer import AWSSigner
 logger = logging.getLogger(__name__)
 
 _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
+
+_ENCRYPTED_KEY_PREFIX = b"EPK1"
+_ENCRYPTED_KEY_NONCE_LEN = 12
 
 
 async def load_organization_private_key(organization_id: str, db: AsyncSession) -> SigningKey:
@@ -63,16 +67,47 @@ async def load_organization_private_key(organization_id: str, db: AsyncSession) 
     encrypted_key = row.private_key_encrypted
 
     if not encrypted_key:
-        # If no local key, maybe check for KMS config from settings or another source?
-        # For scaffolding, we raise error if local key missing AND no KMS logic active.
-        raise ValueError(f"No private key found for organization {organization_id}")
+        if settings.auto_provision_signing_keys:
+            private_key, public_key = generate_ed25519_keypair()
+            encrypted_private_key = encrypt_private_key(private_key)
+            serialized_public_key = serialize_public_key(public_key)
 
-    # Decrypt using AES-GCM
-    aesgcm = AESGCM(settings.key_encryption_key_bytes)
-    private_key_bytes = aesgcm.decrypt(settings.encryption_nonce_bytes, bytes(encrypted_key), None)
+            update_result = await db.execute(
+                text(
+                    """
+                    UPDATE organizations
+                    SET private_key_encrypted = :private_key_encrypted,
+                        public_key = :public_key
+                    WHERE id = :org_id
+                      AND (kms_key_id IS NULL OR kms_key_id = '')
+                      AND (private_key_encrypted IS NULL OR OCTET_LENGTH(private_key_encrypted) = 0)
+                    RETURNING id
+                    """
+                ),
+                {
+                    "org_id": organization_id,
+                    "private_key_encrypted": encrypted_private_key,
+                    "public_key": serialized_public_key,
+                },
+            )
+            if update_result.fetchone():
+                await db.flush()
+                return private_key
 
-    # Load Ed25519 private key
-    return ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
+            refreshed = await db.execute(
+                text("SELECT private_key_encrypted, kms_key_id, kms_region FROM organizations WHERE id = :org_id"),
+                {"org_id": organization_id},
+            )
+            row = refreshed.fetchone()
+            if row and row.kms_key_id:
+                kms_region = row.kms_region or "us-east-1"
+                return AWSSigner(key_id=row.kms_key_id, region_name=kms_region)
+            encrypted_key = row.private_key_encrypted if row else None
+
+        if not encrypted_key:
+            raise ValueError(f"No private key found for organization {organization_id}")
+
+    return decrypt_private_key(bytes(encrypted_key))
 
 
 async def load_organization_public_key(organization_id: str, db: AsyncSession) -> ed25519.Ed25519PublicKey:
@@ -143,9 +178,10 @@ def encrypt_private_key(private_key: ed25519.Ed25519PrivateKey) -> bytes:
 
     # Encrypt using AES-GCM
     aesgcm = AESGCM(settings.key_encryption_key_bytes)
-    encrypted = aesgcm.encrypt(settings.encryption_nonce_bytes, private_bytes, None)
+    nonce = os.urandom(_ENCRYPTED_KEY_NONCE_LEN)
+    encrypted = aesgcm.encrypt(nonce, private_bytes, None)
 
-    return encrypted
+    return _ENCRYPTED_KEY_PREFIX + nonce + encrypted
 
 
 def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
@@ -162,11 +198,18 @@ def decrypt_private_key(encrypted_key: bytes) -> ed25519.Ed25519PrivateKey:
         ValueError: If decryption fails
     """
     try:
-        # Decrypt using AES-GCM
         aesgcm = AESGCM(settings.key_encryption_key_bytes)
-        private_key_bytes = aesgcm.decrypt(settings.encryption_nonce_bytes, encrypted_key, None)
 
-        # Load Ed25519 private key
+        if encrypted_key.startswith(_ENCRYPTED_KEY_PREFIX) and len(encrypted_key) > (
+            len(_ENCRYPTED_KEY_PREFIX) + _ENCRYPTED_KEY_NONCE_LEN
+        ):
+            offset = len(_ENCRYPTED_KEY_PREFIX)
+            nonce = encrypted_key[offset : offset + _ENCRYPTED_KEY_NONCE_LEN]
+            ciphertext = encrypted_key[offset + _ENCRYPTED_KEY_NONCE_LEN :]
+            private_key_bytes = aesgcm.decrypt(nonce, ciphertext, None)
+        else:
+            private_key_bytes = aesgcm.decrypt(settings.encryption_nonce_bytes, encrypted_key, None)
+
         return ed25519.Ed25519PrivateKey.from_private_bytes(private_key_bytes)
     except Exception as e:
         raise ValueError(f"Failed to decrypt private key: {str(e)}")

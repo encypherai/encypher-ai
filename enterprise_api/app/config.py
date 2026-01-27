@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     key_encryption_key: str
     encryption_nonce: str
 
+    auto_provision_signing_keys: bool = True
+
     # SSL.com (optional for staging/development)
     ssl_com_api_key: Optional[str] = None
     ssl_com_account_key: Optional[str] = None
