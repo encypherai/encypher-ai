@@ -24,6 +24,7 @@ We will move to the long-term ideal microservices architecture where each servic
 - [x] 2.2 Key-service: Add `/api/v1/keys/validate-minimal` (no `organizations` join); return key identity + permissions + organization_id/user_id only
 - [x] 2.3 Enterprise-api: Compose auth context by calling key-service `validate-minimal` then auth-service internal org-context endpoint (feature-flagged)
 - [x] 2.4 Add internal token wiring to enterprise-api config and callers
+- [x] 2.5 Enterprise-api: bootstrap org row when composing org context (avoid signing key/template lookups failing due to missing local org record)
 
 ### 3.0 Rollout / Backward Compatibility
 - [ ] 3.1 Add feature flag `KEY_VALIDATION_V2=true|false` (default false) for safe rollout
