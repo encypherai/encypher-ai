@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { OnboardingModal, useIsNewUser } from '../components/onboarding/OnboardingModal';
 import apiClient from '../lib/api';
+import { useOrganization } from '../contexts/OrganizationContext';
 
 // Icons as components for cleaner code
 const IconKey = () => (
@@ -96,6 +97,8 @@ function ApiKeysSkeleton() {
 export default function DashboardPage() {
   const { session, status, accessToken, isLoading } = useRequireAuth();
   const isNewUser = useIsNewUser();
+  const { activeOrganization } = useOrganization();
+  const orgId = activeOrganization?.id;
 
   const [greeting, setGreeting] = useState('Hello');
 
@@ -128,19 +131,19 @@ export default function DashboardPage() {
 
   // Fetch API keys
   const keysQuery = useQuery({
-    queryKey: ['api-keys-summary'],
+    queryKey: ['api-keys-summary', orgId],
     queryFn: async () => {
       if (!accessToken) throw new Error('Not authenticated');
-      return apiClient.getApiKeys(accessToken);
+      return apiClient.getApiKeys(accessToken, orgId);
     },
-    enabled: Boolean(accessToken),
+    enabled: Boolean(accessToken && orgId),
     refetchOnWindowFocus: false,
   });
 
   const stats = statsQuery.data;
   const apiKeys = keysQuery.data || [];
   const isLoadingStats = statsQuery.isLoading;
-  const isLoadingKeys = keysQuery.isLoading;
+  const isLoadingKeys = keysQuery.isLoading || !orgId;
 
   // Format numbers with commas
   const formatNumber = (num: number) => num?.toLocaleString() ?? '0';

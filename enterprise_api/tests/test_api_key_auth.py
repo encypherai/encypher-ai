@@ -5,10 +5,12 @@ Unit tests for API Key Authentication.
 from datetime import datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
+import httpx
 import pytest
 from fastapi import HTTPException
 
 from app.middleware.api_key_auth import (
+    _normalize_service_base_url,
     authenticate_api_key,
     get_api_key_from_header,
     require_verification_permission,
@@ -203,6 +205,74 @@ class TestAuthenticateAPIKey:
         assert result["tier"] == "enterprise"
         assert result["can_sign"] is True
         assert result["is_demo"] is False
+
+    @pytest.mark.asyncio
+    @patch("app.middleware.api_key_auth.get_key_service_client")
+    @patch("app.middleware.api_key_auth.settings")
+    async def test_key_service_valid_key(self, mock_settings, mock_get_client):
+        mock_settings.demo_api_key = None
+
+        response = Mock()
+        response.status_code = 200
+        response.json = Mock(
+            return_value={
+                "success": True,
+                "data": {
+                    "organization_id": "org_ks_123",
+                    "organization_name": "Key Service Org",
+                    "tier": "starter",
+                    "permissions": ["sign", "verify", "read"],
+                    "monthly_api_limit": 10_000,
+                    "monthly_api_usage": 0,
+                    "features": {},
+                    "coalition_member": True,
+                    "coalition_rev_share": 65,
+                },
+            }
+        )
+
+        client = Mock()
+        client.post = AsyncMock(return_value=response)
+        mock_get_client.return_value = client
+
+        db = AsyncMock()
+        result = await authenticate_api_key(api_key="ency_test_12345678901234567890", db=db)
+
+        assert result["organization_id"] == "org_ks_123"
+        assert result["can_sign"] is True
+        assert result["can_verify"] is True
+        assert result["can_lookup"] is True
+
+        client.post.assert_awaited_once_with("/api/v1/keys/validate", json={"key": "ency_test_12345678901234567890"})
+
+    @pytest.mark.asyncio
+    @patch("app.middleware.api_key_auth.get_key_service_client")
+    @patch("app.middleware.api_key_auth.settings")
+    async def test_key_service_unavailable_for_new_style_key_raises_503(self, mock_settings, mock_get_client):
+        mock_settings.demo_api_key = None
+
+        request = httpx.Request("POST", "http://key-service.local/api/v1/keys/validate")
+        client = Mock()
+        client.post = AsyncMock(side_effect=httpx.ConnectError("boom", request=request))
+        mock_get_client.return_value = client
+
+        db = AsyncMock()
+        with pytest.raises(HTTPException) as exc_info:
+            await authenticate_api_key(api_key="ency_test_12345678901234567890", db=db)
+
+        assert exc_info.value.status_code == 503
+        assert "key service" in exc_info.value.detail.lower()
+
+
+class TestNormalizeServiceBaseURL:
+    def test_strips_api_v1_suffix(self):
+        assert _normalize_service_base_url("http://localhost:8003/api/v1") == "http://localhost:8003"
+
+    def test_strips_trailing_slash(self):
+        assert _normalize_service_base_url("http://localhost:8003/") == "http://localhost:8003"
+
+    def test_leaves_clean_url_unchanged(self):
+        assert _normalize_service_base_url("http://localhost:8003") == "http://localhost:8003"
 
 
 class TestRequireEmbeddingPermission:

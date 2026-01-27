@@ -34,19 +34,39 @@ import requests
 DEFAULT_BASE_URL = "https://api.encypherai.com"
 
 # Example 1-page article for demonstration
-EXAMPLE_ARTICLE = """The Future of Content Authentication
+EXAMPLE_ARTICLE = """As Co-Chair of the C2PA Text Provenance Task Force, I authored Section A.7 of the specification-published January 8, 2026-alongside Google, BBC, OpenAI, Adobe, and Microsoft. We built Encypher to implement it in production.
 
-In an era of rapidly advancing artificial intelligence, the ability to verify the authenticity and origin of digital content has become critically important. Publishers, journalists, and content creators face unprecedented challenges in protecting their work and establishing trust with their audiences.
+The Problem
 
-Traditional methods of content protection, such as watermarks and metadata, have proven insufficient against modern threats. Visible watermarks can be cropped or edited out, while metadata can be easily stripped or modified. What the industry needs is a more robust solution that embeds authentication directly into the content itself.
+Text on the open web has no cryptographic proof of origin. Creators can't prove their work is theirs when it's scraped, distributed, or used to train AI. AI companies can claim "we didn't know it was yours" as an innocent infringement defense. We enable proof of authorship.
 
-Invisible steganographic embeddings offer a promising approach. By encoding cryptographic signatures into the text using Unicode variation selectors, content can carry its provenance information in a way that survives copy-paste operations, reformatting, and even partial extraction. Each sentence becomes independently verifiable, allowing readers to confirm authenticity even when only a portion of the original content is shared.
+What We Built
 
-The technology works by inserting invisible Unicode characters between visible characters in the text. These characters encode a compressed digital signature that links each segment to its original source. When the text is copied and pasted, these invisible markers travel with it, maintaining the chain of provenance.
+Cryptographic watermarking embedded directly into text. Invisible to readers. Survives copy-paste, B2B distribution, web scraping, and data processing. Mathematical proof of origin at sentence-level granularity.
 
-For publishers, this means being able to track how their content spreads across the internet. For readers, it provides a mechanism to verify that what they're reading actually came from the claimed source. And for the broader ecosystem, it establishes a foundation for accountability in digital content distribution.
+For Publishers and Creators:
 
-As AI-generated content becomes increasingly sophisticated and difficult to distinguish from human-created work, these authentication mechanisms will become essential infrastructure for maintaining trust in our information landscape."""
+- Serve formal notice. Prove willful infringement after notification, 3x damages territory.
+- Verify quote integrity when AI claims "According to [Your Publication]..."
+- Protect your brand from hallucinations.
+- Transform unmarked content into licensing-ready assets.
+
+For AI Labs Building Responsibly:
+
+- Compatible infrastructure for marked content in training pipelines
+- Quote integrity verification to protect your reputation
+- Performance intelligence from sentence-level attribution
+
+Let's Connect If:
+
+- You're actively managing AI copyright litigation or licensing negotiations
+- You understand that infrastructure gets built collaboratively, not competitively
+- You want to help define standards for content licensing
+
+→ Publishers: encypherai.com/publisher-demo 
+→ AI Labs: encypherai.com/ai-demo
+
+P.S. Paste this into encypherai.com/tools/verify to see the embedded signature. That's the technology we're building for the entire web."""
 
 
 def sign_document(base_url: str, api_key: str, text: str, document_id: str) -> dict:

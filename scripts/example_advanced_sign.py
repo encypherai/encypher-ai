@@ -400,7 +400,7 @@ Examples:
     text = args.text
     if args.text_file:
         try:
-            with open(args.text_file, "r") as f:
+            with open(args.text_file) as f:
                 text = f.read()
         except Exception as e:
             print(f"Error reading text file: {e}", file=sys.stderr)

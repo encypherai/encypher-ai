@@ -196,6 +196,14 @@ describe('Signup validation (client)', () => {
     await page.type('input#email', 'user@example.com');
     await page.type('input#password', 'SecurePass123!');
     await page.type('input#confirmPassword', 'SecurePass123!');
+    await page.waitForFunction(
+      () => {
+        const form = document.querySelector('form');
+        return form && !form.hasAttribute('action') && typeof form.onsubmit !== 'function';
+      },
+      { timeout: 5_000 }
+    );
+    await new Promise((resolve) => setTimeout(resolve, 500));
     log('submitting form');
     await page.click('button[type="submit"]');
 

@@ -10,6 +10,7 @@ import json
 import logging
 from datetime import datetime
 from typing import Dict, Optional
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 from fastapi import Depends, Header, HTTPException, status
@@ -25,12 +26,29 @@ logger = logging.getLogger(__name__)
 _key_service_client: Optional[httpx.AsyncClient] = None
 
 
+def _normalize_service_base_url(raw_url: str) -> str:
+    raw_url = (raw_url or "").strip()
+    if not raw_url:
+        return raw_url
+
+    raw_url = raw_url.rstrip("/")
+
+    parsed = urlparse(raw_url)
+    path = parsed.path.rstrip("/")
+    if path.endswith("/api/v1"):
+        path = path[: -len("/api/v1")]
+    path = path.rstrip("/")
+
+    normalized = parsed._replace(path=path)
+    return urlunparse(normalized)
+
+
 def get_key_service_client() -> httpx.AsyncClient:
     """Get or create the key-service HTTP client."""
     global _key_service_client
     if _key_service_client is None:
         _key_service_client = httpx.AsyncClient(
-            base_url=settings.key_service_url,
+            base_url=_normalize_service_base_url(settings.key_service_url),
             timeout=10.0,
         )
     return _key_service_client
@@ -137,7 +155,23 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
         elif response.status_code == 401:
             logger.warning("Authentication failed via key-service: Invalid API key")
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid API key", headers={"WWW-Authenticate": "Bearer"})
+        else:
+            if api_key.startswith("ency_"):
+                logger.warning(
+                    "Key-service returned unexpected status for new-style key; treating as service unavailable",
+                    extra={"status_code": response.status_code},
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                    detail="Key service unavailable or misconfigured",
+                )
     except httpx.RequestError as e:
+        if api_key.startswith("ency_"):
+            logger.warning(f"Key-service unavailable for new-style key: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Key service unavailable or misconfigured",
+            )
         logger.warning(f"Key-service unavailable, falling back to local DB: {e}")
     except HTTPException:
         raise
