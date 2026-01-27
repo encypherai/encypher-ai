@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     AUTH_SERVICE_URL: str = "http://localhost:8001"
     KEY_SERVICE_URL: str = "http://localhost:8003"
     ENCODING_SERVICE_URL: str = "http://localhost:8004"
+    ENTERPRISE_API_URL: str = "https://api.encypherai.com"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -66,6 +66,30 @@ router = APIRouter()
 MAX_VERIFY_BYTES = 2 * 1024 * 1024
 
 
+async def _fetch_trust_anchor_public_key_pem(*, signer_id: str) -> str | None:
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.ENTERPRISE_API_URL}/api/v1/public/c2pa/trust-anchors/{signer_id}",
+                timeout=5.0,
+            )
+    except httpx.RequestError:
+        return None
+
+    if response.status_code != 200:
+        return None
+
+    payload = response.json()
+    if not isinstance(payload, dict):
+        return None
+
+    public_key_pem = payload.get("public_key")
+    if not isinstance(public_key_pem, str) or not public_key_pem.strip():
+        return None
+
+    return public_key_pem
+
+
 def _count_variation_selectors(text: str) -> int:
     count = 0
     for ch in text:
@@ -301,6 +325,7 @@ async def _is_embedded_c2pa_key_trusted(text: str) -> bool:
 async def verify_text(
     verify_request: VerifyRequest,
     organization: Optional[dict] = Depends(get_optional_organization),
+    db: Session = Depends(get_db),
 ):
     logger = structlog.get_logger(__name__)
     correlation_id = f"req-{uuid4().hex}"
@@ -346,6 +371,67 @@ async def verify_text(
         except Exception:
             public_key = None
 
+    # Public minimal_uuid path:
+    # If unauthenticated, attempt to resolve org signer keys via trust-anchor lookup
+    # and ensure the embedded manifest_uuid exists in the content DB.
+    extracted_metadata = None
+    try:
+        extracted_metadata = UnicodeMetadata.extract_metadata(verify_request.text)
+    except Exception:
+        extracted_metadata = None
+
+    extracted_signer_id = None
+    extracted_manifest_uuid = None
+    if isinstance(extracted_metadata, dict):
+        extracted_signer_id = extracted_metadata.get("signer_id")
+        custom_metadata = extracted_metadata.get("custom_metadata")
+        if isinstance(custom_metadata, dict):
+            extracted_manifest_uuid = custom_metadata.get("manifest_uuid")
+
+    trust_anchor_public_key = None
+    if (
+        not organization_id
+        and not certificate_pem
+        and isinstance(extracted_signer_id, str)
+        and extracted_signer_id.startswith("org_")
+        and isinstance(extracted_manifest_uuid, str)
+        and extracted_manifest_uuid.strip()
+    ):
+        exists_row = db.execute(
+            text(
+                """
+                SELECT 1
+                FROM content_references
+                WHERE embedding_metadata->>'manifest_uuid' = :manifest_uuid
+                LIMIT 1
+                """
+            ),
+            {"manifest_uuid": extracted_manifest_uuid},
+        ).fetchone()
+
+        if not exists_row:
+            verdict = VerifyVerdict(
+                valid=False,
+                tampered=False,
+                reason_code="REFERENCE_NOT_FOUND",
+                signer_id=extracted_signer_id,
+                signer_name=extracted_signer_id,
+                timestamp=None,
+                details={
+                    "manifest": extracted_metadata or {},
+                    "manifest_uuid": extracted_manifest_uuid,
+                    "payload_bytes": payload_bytes,
+                },
+            )
+            return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+
+        trust_anchor_pem = await _fetch_trust_anchor_public_key_pem(signer_id=extracted_signer_id)
+        if trust_anchor_pem:
+            try:
+                trust_anchor_public_key = load_public_key_from_data(trust_anchor_pem)
+            except Exception:
+                trust_anchor_public_key = None
+
     embedded_public_key = _extract_embedded_c2pa_public_key(verify_request.text)
     embedded_trusted = await _is_embedded_c2pa_key_trusted(verify_request.text)
 
@@ -362,6 +448,8 @@ async def verify_text(
             return _demo_public_key()
         if organization_id and signer_id == organization_id:
             return public_key
+        if trust_anchor_public_key is not None and signer_id == extracted_signer_id:
+            return trust_anchor_public_key
         if embedded_public_key is not None:
             return embedded_public_key
         return None
