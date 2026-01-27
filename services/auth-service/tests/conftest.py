@@ -48,8 +48,12 @@ def _send_email_stub(*_args, **_kwargs):
     return True
 
 
+def _render_template_stub(*_args, **_kwargs):
+    return "<p>HTML</p>"
+
+
 shared_email_module.EmailConfig = _EmailConfig
-shared_email_module.build_invitation_email = _build_invitation_email
+shared_email_module.render_template = _render_template_stub
 shared_email_module.generate_token = _generate_token
 shared_email_module.send_verification_email = _send_email_stub
 shared_email_module.send_welcome_email = _send_email_stub
@@ -88,12 +92,16 @@ jwt_module.InvalidTokenError = type("InvalidTokenError", (Exception,), {})
 jwt_module.DecodeError = type("DecodeError", (Exception,), {})
 
 
-def _jwt_stub(*_args, **_kwargs):
-    raise jwt_module.InvalidTokenError("jwt stub")
+def _jwt_encode_stub(*_args, **_kwargs):
+    return "stub.jwt.token"
 
 
-jwt_module.encode = _jwt_stub
-jwt_module.decode = _jwt_stub
+def _jwt_decode_stub(*_args, **_kwargs):
+    return {}
+
+
+jwt_module.encode = _jwt_encode_stub
+jwt_module.decode = _jwt_decode_stub
 sys.modules.setdefault("jwt", jwt_module)
 
 import pytest

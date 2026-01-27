@@ -3,6 +3,7 @@ Organization API endpoints for team management
 """
 
 import logging
+import html
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status, Request, Header
@@ -18,7 +19,7 @@ from ...services.organization_service import OrganizationService
 import dns.resolver
 from ...services.auth_service import AuthService
 from ...deps.rate_limit import rate_limiter
-from encypher_commercial_shared.email import EmailConfig, build_invitation_email
+from encypher_commercial_shared.email import EmailConfig
 
 router = APIRouter(prefix="/organizations", tags=["organizations"])
 logger = logging.getLogger(__name__)
@@ -39,6 +40,57 @@ def _get_email_config() -> EmailConfig:
     )
 
 
+def _build_invitation_email(
+    *,
+    config: EmailConfig,
+    inviter_name: Optional[str],
+    inviter_email: str,
+    organization_name: str,
+    role: str,
+    invitation_token: str,
+    message: Optional[str],
+    expires_at: Optional[datetime],
+) -> tuple[str, str, str]:
+    base_url = config.dashboard_url or config.frontend_url
+    invitation_url = f"{base_url}/invitations/accept?token={invitation_token}"
+
+    safe_inviter_name = html.escape(inviter_name, quote=True) if inviter_name else None
+    safe_inviter_email = html.escape(inviter_email, quote=True)
+    safe_org_name = html.escape(organization_name, quote=True)
+    safe_role = html.escape(role, quote=True)
+    safe_message = html.escape(message, quote=True) if message else None
+
+    subject = f"You're invited to join {organization_name} on Encypher"
+    html_lines: list[str] = [
+        f"<p>You have been invited to join <strong>{safe_org_name}</strong>.</p>",
+        f"<p>Role: <strong>{safe_role}</strong></p>",
+    ]
+    if safe_inviter_name:
+        html_lines.append(f"<p>Invited by: {safe_inviter_name} ({safe_inviter_email})</p>")
+    else:
+        html_lines.append(f"<p>Invited by: {safe_inviter_email}</p>")
+    if safe_message:
+        html_lines.append(f"<p>Message: {safe_message}</p>")
+    html_lines.append(f"<p><a href=\"{invitation_url}\">Accept invitation</a></p>")
+    if expires_at:
+        html_lines.append(f"<p>Expires at: {expires_at.isoformat()} UTC</p>")
+    html_content = "\n".join(html_lines)
+
+    plain_lines: list[str] = [
+        f"You have been invited to join {organization_name}.",
+        f"Role: {role}",
+        f"Invited by: {inviter_name + ' ' if inviter_name else ''}<{inviter_email}>",
+    ]
+    if message:
+        plain_lines.append(f"Message: {message}")
+    plain_lines.append(f"Accept invitation: {invitation_url}")
+    if expires_at:
+        plain_lines.append(f"Expires at: {expires_at.isoformat()} UTC")
+    plain_content = "\n".join(plain_lines)
+
+    return subject, html_content, plain_content
+
+
 async def _send_invitation_email(
     *,
     authorization: str,
@@ -52,7 +104,7 @@ async def _send_invitation_email(
     expires_at: Optional[datetime],
 ) -> None:
     config = _get_email_config()
-    subject, html_content, plain_content = build_invitation_email(
+    subject, html_content, plain_content = _build_invitation_email(
         config=config,
         inviter_name=inviter_name,
         inviter_email=inviter_email,
