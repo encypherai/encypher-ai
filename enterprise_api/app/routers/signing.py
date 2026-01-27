@@ -5,7 +5,7 @@ import asyncio
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization_dep, require_sign_permission
 from app.middleware.api_rate_limiter import api_rate_limiter
 from app.models.request_models import SignRequest
@@ -106,7 +106,8 @@ async def sign_content(
 async def sign_advanced(
     request: EncodeWithEmbeddingsRequest,
     organization: dict = Depends(get_current_organization_dep),
-    db: AsyncSession = Depends(get_db),
+    core_db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
 ) -> EncodeWithEmbeddingsResponse:
     tier = (organization.get("tier") or "starter").lower().replace("-", "_")
     allowed_tiers = {"professional", "business", "enterprise", "strategic_partner", "demo"}
@@ -122,4 +123,9 @@ async def sign_advanced(
             detail="Your API key does not have permission to sign content",
         )
 
-    return await encode_document_with_embeddings(request=request, organization=organization, db=db)
+    return await encode_document_with_embeddings(
+        request=request,
+        organization=organization,
+        core_db=core_db,
+        content_db=content_db,
+    )

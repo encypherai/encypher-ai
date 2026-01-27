@@ -18,7 +18,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import async_session_factory
+from app.database import async_session_factory, content_session_factory, core_session_factory
 from app.models.batch import (
     DEFAULT_RETENTION_DAYS,
     BatchItem,
@@ -389,50 +389,59 @@ class BatchService:
         item: BatchItemPayload,
         duration_start: float,
     ) -> WorkerResult:
-        async with async_session_factory() as worker_session:
-            if request.mode == "c2pa":
-                sign_request = SignRequest(
+        async with core_session_factory() as core_session, content_session_factory() as content_session:
+            try:
+                if request.mode == "c2pa":
+                    sign_request = SignRequest(
+                        text=item.text,
+                        document_id=item.document_id,
+                        document_title=item.title or item.document_id,
+                    )
+                    sign_response = await execute_signing(
+                        request=sign_request,
+                        organization=organization,
+                        db=core_session,
+                        document_id=item.document_id,
+                    )
+                    await core_session.commit()
+                    duration_ms = int((time.perf_counter() - duration_start) * 1000)
+                    stats = {"total_sentences": sign_response.total_sentences, "duration_ms": duration_ms}
+                    return WorkerResult(
+                        document_id=sign_response.document_id,
+                        state="completed",
+                        signed_text=sign_response.signed_text,
+                        statistics=stats,
+                        duration_ms=duration_ms,
+                    )
+
+                embed_request = EncodeWithEmbeddingsRequest(
+                    document_id=item.document_id,
                     text=item.text,
-                    document_id=item.document_id,
-                    document_title=item.title or item.document_id,
+                    segmentation_level=request.segmentation_level or "sentence",
+                    metadata=item.metadata,
                 )
-                sign_response = await execute_signing(
-                    request=sign_request,
+                embed_response = await encode_document_with_embeddings(
+                    request=embed_request,
                     organization=organization,
-                    db=worker_session,
-                    document_id=item.document_id,
+                    core_db=core_session,
+                    content_db=content_session,
                 )
+                await core_session.commit()
+                await content_session.commit()
                 duration_ms = int((time.perf_counter() - duration_start) * 1000)
-                stats = {"total_sentences": sign_response.total_sentences, "duration_ms": duration_ms}
+                stats = dict(embed_response.statistics or {})
+                stats["duration_ms"] = duration_ms
                 return WorkerResult(
-                    document_id=sign_response.document_id,
+                    document_id=embed_response.document_id,
                     state="completed",
-                    signed_text=sign_response.signed_text,
+                    embedded_content=embed_response.embedded_content,
                     statistics=stats,
                     duration_ms=duration_ms,
                 )
-
-            embed_request = EncodeWithEmbeddingsRequest(
-                document_id=item.document_id,
-                text=item.text,
-                segmentation_level=request.segmentation_level or "sentence",
-                metadata=item.metadata,
-            )
-            embed_response = await encode_document_with_embeddings(
-                request=embed_request,
-                organization=organization,
-                db=worker_session,
-            )
-            duration_ms = int((time.perf_counter() - duration_start) * 1000)
-            stats = dict(embed_response.statistics or {})
-            stats["duration_ms"] = duration_ms
-            return WorkerResult(
-                document_id=embed_response.document_id,
-                state="completed",
-                embedded_content=embed_response.embedded_content,
-                statistics=stats,
-                duration_ms=duration_ms,
-            )
+            except Exception:
+                await core_session.rollback()
+                await content_session.rollback()
+                raise
 
     async def _process_verify_item(
         self,

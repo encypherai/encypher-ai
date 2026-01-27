@@ -43,7 +43,8 @@ async def encode_document_with_embeddings(
     *,
     request: EncodeWithEmbeddingsRequest,
     organization: Dict,
-    db: AsyncSession,
+    core_db: AsyncSession,
+    content_db: AsyncSession,
 ) -> EncodeWithEmbeddingsResponse:
     """
     Encode a document with invisible signed embeddings using encypher-ai.
@@ -70,7 +71,7 @@ async def encode_document_with_embeddings(
             request.segmentation_level,
         )
 
-        await ensure_organization_exists(db, organization)
+        await ensure_organization_exists(core_db, organization)
 
         # Load organization's private key for signing
         # For user-level orgs (is_demo=true), use the demo key
@@ -85,7 +86,7 @@ async def encode_document_with_embeddings(
             logger.info(f"Using demo key for org {organization_id}")
         else:
             try:
-                private_key = await load_organization_private_key(organization_id, db)
+                private_key = await load_organization_private_key(organization_id, core_db)
                 # organization_id already has "org_" prefix (e.g., "org_demo")
                 signer_id = organization_id
             except ValueError as e:
@@ -195,7 +196,7 @@ async def encode_document_with_embeddings(
 
         effective_template_id = request.template_id
         if effective_template_id is None:
-            row = await db.execute(
+            row = await core_db.execute(
                 text("SELECT default_c2pa_template_id FROM organizations WHERE id = :org_id"),
                 {"org_id": organization_id},
             )
@@ -255,7 +256,7 @@ async def encode_document_with_embeddings(
                 )
                 .limit(1)
             )
-            result = await db.execute(stmt)
+            result = await core_db.execute(stmt)
             template = result.scalar_one_or_none()
 
             template_data: Optional[Union[Dict[str, Any], List[Dict[str, Any]]]] = None
@@ -305,9 +306,9 @@ async def encode_document_with_embeddings(
             raw_assertions.extend(request.custom_assertions)
 
         try:
-            await ensure_organization_exists(db, organization)
+            await ensure_organization_exists(core_db, organization)
             _list_index, bit_index, status_list_url = await status_service.allocate_status_index(
-                db=db,
+                db=core_db,
                 organization_id=organization_id,
                 document_id=request.document_id,
             )
@@ -341,7 +342,7 @@ async def encode_document_with_embeddings(
                         )
                         .order_by(C2PASchema.created_at.desc())
                     )
-                    result = await db.execute(stmt)
+                    result = await core_db.execute(stmt)
                     schema_model = result.scalar_one_or_none()
                     if schema_model:
                         registered_schemas[label] = schema_model.json_schema
@@ -411,7 +412,7 @@ async def encode_document_with_embeddings(
 
             if index_for_attribution:
                 await QuotaManager.check_quota(
-                    db=db,
+                    db=core_db,
                     organization_id=organization_id,
                     quota_type=QuotaType.MERKLE_ENCODING,
                     increment=len(merkle_levels),
@@ -425,7 +426,7 @@ async def encode_document_with_embeddings(
             )
 
             merkle_roots = await MerkleService.encode_document(
-                db=db,
+                db=content_db,
                 organization_id=organization_id,
                 document_id=request.document_id,
                 text=document_text,
@@ -465,7 +466,7 @@ async def encode_document_with_embeddings(
 
         # Returns: (embeddings_list, full_document_with_c2pa_wrapper)
         embeddings, embedded_content = await embedding_service.create_embeddings(
-            db=db,
+            db=content_db,
             organization_id=organization_id,
             document_id=request.document_id,
             merkle_root_id=merkle_root_id,  # None for free tier

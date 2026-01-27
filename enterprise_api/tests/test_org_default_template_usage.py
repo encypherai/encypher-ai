@@ -148,7 +148,12 @@ async def test_sign_advanced_applies_org_default_template_assertions(
             new=AsyncMock(return_value=([], "signed")),
         ) as mock_create,
     ):
-        await encode_document_with_embeddings(request=request, organization=organization, db=db)
+        await encode_document_with_embeddings(
+            request=request,
+            organization=organization,
+            core_db=db,
+            content_db=db,
+        )
 
     called_assertions = mock_create.call_args.kwargs.get("custom_assertions")
     assert called_assertions is not None

@@ -18,7 +18,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_db
+from app.database import get_content_db, get_db
 from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
 from app.middleware.public_rate_limiter import public_rate_limiter
 from app.models.content_reference import ContentReference
@@ -131,7 +131,8 @@ async def verify_embedding(
     ref_id: str,
     request: Request,
     signature: str = Query(..., description="HMAC signature (8+ hex characters)"),
-    db: AsyncSession = Depends(get_db),
+    core_db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
     api_key: Optional[str] = Depends(get_api_key_from_header),
 ) -> VerifyEmbeddingResponse:
     """
@@ -157,7 +158,7 @@ async def verify_embedding(
     organization = None
     if api_key:
         try:
-            organization = await authenticate_api_key(api_key=api_key, db=db)
+            organization = await authenticate_api_key(api_key=api_key, db=core_db)
             logger.info(f"Authenticated verification request from org {organization['organization_id']}")
         except HTTPException as e:
             # Log but don't fail - fall back to unauthenticated access
@@ -187,7 +188,7 @@ async def verify_embedding(
         except ValueError:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid ref_id format (must be hex)")
 
-        result = await db.execute(select(ContentReference).where(ContentReference.id == ref_id_int))
+        result = await content_db.execute(select(ContentReference).where(ContentReference.id == ref_id_int))
         reference = result.scalar_one_or_none()
 
         if not reference:
@@ -199,7 +200,7 @@ async def verify_embedding(
             return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Invalid signature or reference not found")
 
         # Get associated Merkle root
-        result = await db.execute(select(MerkleRoot).where(MerkleRoot.id == reference.merkle_root_id))
+        result = await content_db.execute(select(MerkleRoot).where(MerkleRoot.id == reference.merkle_root_id))
         merkle_root = result.scalar_one_or_none()
 
         if not merkle_root:
@@ -299,7 +300,11 @@ async def verify_embedding(
     },
 )
 async def batch_verify_embeddings(
-    batch_request: BatchVerifyRequest, request: Request, db: AsyncSession = Depends(get_db), api_key: Optional[str] = Depends(get_api_key_from_header)
+    batch_request: BatchVerifyRequest,
+    request: Request,
+    core_db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
+    api_key: Optional[str] = Depends(get_api_key_from_header),
 ) -> BatchVerifyResponse:
     """
     Verify multiple embeddings in batch.
@@ -324,7 +329,7 @@ async def batch_verify_embeddings(
     organization = None
     if api_key:
         try:
-            organization = await authenticate_api_key(api_key=api_key, db=db)
+            organization = await authenticate_api_key(api_key=api_key, db=core_db)
             logger.info(f"Authenticated batch verification from org {organization['organization_id']}")
         except HTTPException as e:
             # Log but don't fail - fall back to unauthenticated access
@@ -365,7 +370,7 @@ async def batch_verify_embeddings(
                     invalid_count += 1
                     continue
 
-                result = await db.execute(select(ContentReference).where(ContentReference.id == ref_id_int))
+                result = await content_db.execute(select(ContentReference).where(ContentReference.id == ref_id_int))
                 reference = result.scalar_one_or_none()
 
                 if not SIGNATURE_PATTERN.fullmatch(ref_req.signature):
@@ -450,7 +455,8 @@ async def batch_verify_embeddings(
 async def extract_and_verify_embedding(
     extract_request: ExtractAndVerifyRequest,
     request: Request,
-    db: AsyncSession = Depends(get_db),
+    core_db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
     api_key: Optional[str] = Depends(get_api_key_from_header),
 ) -> ExtractAndVerifyResponse:
     """
@@ -475,7 +481,7 @@ async def extract_and_verify_embedding(
     organization = None
     if api_key:
         try:
-            organization = await authenticate_api_key(api_key=api_key, db=db)
+            organization = await authenticate_api_key(api_key=api_key, db=core_db)
             logger.info(f"Authenticated extract-and-verify from org {organization['organization_id']}")
         except HTTPException as e:
             logger.warning(f"Authentication failed, falling back to public access: {e.detail}")
@@ -580,7 +586,7 @@ async def extract_and_verify_embedding(
                     # We look up the public key in our database to verify the signer's identity.
                     # This implements the "Trust" part of the verification.
                     # For user_ orgs, load_organization_public_key returns the demo key.
-                    public_key = await load_organization_public_key(signer_id, db)
+                    public_key = await load_organization_public_key(signer_id, core_db)
                 except ValueError:
                     # Signer is unknown to our Trust Anchor
                     logger.warning(f"Signer ID {signer_id} not found in Trust Anchor database")
@@ -666,7 +672,7 @@ async def extract_and_verify_embedding(
         reference = None
         # Look up ContentReference in database (enterprise feature) if we have enough info
         if manifest_uuid:
-            result = await db.execute(
+            result = await content_db.execute(
                 select(ContentReference).where(
                     ContentReference.embedding_metadata["manifest_uuid"].as_string() == manifest_uuid
                 )
@@ -691,7 +697,7 @@ async def extract_and_verify_embedding(
                 # Just get the first one to validate existence
                 query = query.limit(1)
 
-            result = await db.execute(query)
+            result = await content_db.execute(query)
             reference = result.scalar_one_or_none()
 
         if not reference and document_id:
@@ -718,7 +724,7 @@ async def extract_and_verify_embedding(
             return ExtractAndVerifyResponse(valid=False, error="Embedding has expired")
 
         # Get associated Merkle root
-        merkle_result = await db.execute(select(MerkleRoot).where(MerkleRoot.id == reference.merkle_root_id))
+        merkle_result = await content_db.execute(select(MerkleRoot).where(MerkleRoot.id == reference.merkle_root_id))
         merkle_root = merkle_result.scalar_one_or_none()
 
         # Build full response with enterprise metadata
