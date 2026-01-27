@@ -52,6 +52,9 @@ class Settings(BaseSettings):
     auth_service_url: str = "http://localhost:8001"
     key_service_url: str = "http://localhost:8003"
 
+    internal_service_token: Optional[str] = None
+    compose_org_context_via_auth_service: bool = False
+
     # Rate limiting
     rate_limit_per_minute: int = 60
     batch_worker_limit: int = 8

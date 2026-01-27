@@ -172,6 +172,11 @@ class InternalTierUpdateResponse(BaseModel):
     data: dict = Field(default_factory=dict)
 
 
+class InternalOrgContextResponse(BaseModel):
+    success: bool = True
+    data: dict = Field(default_factory=dict)
+
+
 class OrganizationResponse(BaseModel):
     id: str
     name: str
@@ -317,6 +322,39 @@ async def create_organization(
         return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.get("/internal/{org_id}/context", response_model=InternalOrgContextResponse, include_in_schema=False)
+async def get_organization_context_internal(
+    org_id: str,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    else:
+        logger.warning("internal_service_token_missing")
+
+    org_service = OrganizationService(db)
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    return InternalOrgContextResponse(
+        success=True,
+        data={
+            "id": org.id,
+            "name": org.name,
+            "tier": org.tier,
+            "features": org.features or {},
+            "monthly_api_limit": org.monthly_api_limit,
+            "monthly_api_usage": org.monthly_api_usage,
+            "coalition_member": org.coalition_member,
+            "coalition_rev_share": org.coalition_rev_share,
+            "certificate_pem": org.certificate_pem,
+        },
+    )
 
 
 @router.post("/internal/{org_id}/tier", response_model=InternalTierUpdateResponse, include_in_schema=False)

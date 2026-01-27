@@ -48,6 +48,36 @@ class KeyServiceClient:
 
         return None
 
+    async def validate_key_minimal(self, api_key: str) -> Optional[Dict[str, Any]]:
+        """Validate an API key and return minimal key identity/permissions.
+
+        This calls the key-service "validate-minimal" endpoint which is designed
+        for the long-term architecture where services do not rely on duplicated
+        tables (e.g., organizations).
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/api/v1/keys/validate-minimal",
+                    json={"key": api_key},
+                    timeout=5.0,
+                )
+        except httpx.ConnectError:
+            logger.warning("Key Service unavailable for validate-minimal")
+            return None
+        except Exception as e:
+            logger.error(f"Key Service call failed (validate-minimal): {e}")
+            return None
+
+        if response.status_code != 200:
+            return None
+
+        data = cast(Dict[str, Any], response.json())
+        if data.get("success") and data.get("data"):
+            return cast(Dict[str, Any], data["data"])
+
+        return None
+
     def _cache_key(self, api_key: str) -> str:
         return f"{self.cache_prefix}{api_key}"
 

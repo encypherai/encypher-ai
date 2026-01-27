@@ -39,7 +39,7 @@ def test_generate_key_emits_metrics(monkeypatch):
     metrics_client = DummyMetricsClient()
     client = _build_app(metrics_client)
 
-    def fake_create_key(_db, user_id, key_data, organization_id=None):
+    def fake_create_key(_db, user_id, key_data, organization_id=None, authorization=None):
         db_key = SimpleNamespace(
             id="key_123",
             name=key_data.name,
@@ -47,6 +47,8 @@ def test_generate_key_emits_metrics(monkeypatch):
             permissions=key_data.permissions,
             created_at=datetime.utcnow(),
             organization_id=organization_id,
+            user_id=user_id,
+            created_by=user_id,
         )
         return db_key, "ency_test"
 

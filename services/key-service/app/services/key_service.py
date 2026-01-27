@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.exc import ProgrammingError
 import httpx
 import logging
 
@@ -249,6 +250,74 @@ class KeyService:
         return db_key
 
     @staticmethod
+    def verify_key_minimal(db: Session, api_key: str) -> Optional[dict]:
+        """Verify an API key and return minimal key identity/permissions.
+
+        This method is intended for the long-term architecture where each service
+        owns its data and no service relies on duplicated/shared tables.
+
+        Returns:
+            dict with key_id, organization_id, user_id, permissions
+            or None if invalid
+        """
+        from sqlalchemy import text
+
+        if not verify_api_key_format(api_key):
+            return None
+
+        key_hash = hash_api_key(api_key)
+
+        result = db.execute(
+            text(
+                """
+                SELECT
+                    k.id as key_id,
+                    k.organization_id,
+                    k.user_id,
+                    k.permissions as key_permissions,
+                    k.is_active,
+                    k.is_revoked,
+                    k.expires_at
+                FROM api_keys k
+                WHERE k.key_hash = :key_hash
+                """
+            ),
+            {"key_hash": key_hash},
+        ).fetchone()
+
+        if not result:
+            return None
+
+        if not result.is_active or result.is_revoked:
+            return None
+
+        if result.expires_at and result.expires_at < datetime.utcnow():
+            return None
+
+        try:
+            db.execute(
+                text(
+                    """
+                    UPDATE api_keys
+                    SET last_used_at = NOW(), usage_count = usage_count + 1
+                    WHERE key_hash = :key_hash
+                    """
+                ),
+                {"key_hash": key_hash},
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+
+        permissions = result.key_permissions if isinstance(result.key_permissions, list) else []
+        return {
+            "key_id": result.key_id,
+            "organization_id": result.organization_id,
+            "user_id": result.user_id,
+            "permissions": permissions,
+        }
+
+    @staticmethod
     def verify_key_with_org(db: Session, api_key: str) -> Optional[dict]:
         """
         Verify an API key and return full organization context.
@@ -274,8 +343,7 @@ class KeyService:
         # First try: Query key with organization join (org-level keys)
         # Note: certificate_pem column will be added by auth-service migration 005
         # For now, we query without it and fetch separately if needed
-        result = db.execute(
-            text("""
+        query_with_certificate = text("""
             SELECT 
                 k.id as key_id,
                 k.organization_id,
@@ -295,9 +363,37 @@ class KeyService:
             FROM api_keys k
             LEFT JOIN organizations o ON k.organization_id = o.id
             WHERE k.key_hash = :key_hash
-        """),
-            {"key_hash": key_hash},
-        ).fetchone()
+        """)
+
+        query_without_certificate = text("""
+            SELECT 
+                k.id as key_id,
+                k.organization_id,
+                k.user_id,
+                k.permissions as key_permissions,
+                k.is_active,
+                k.is_revoked,
+                k.expires_at,
+                o.name as organization_name,
+                o.tier,
+                o.features,
+                o.monthly_api_limit,
+                o.monthly_api_usage,
+                o.coalition_member,
+                o.coalition_rev_share
+            FROM api_keys k
+            LEFT JOIN organizations o ON k.organization_id = o.id
+            WHERE k.key_hash = :key_hash
+        """)
+
+        try:
+            result = db.execute(query_with_certificate, {"key_hash": key_hash}).fetchone()
+        except ProgrammingError as exc:
+            message = str(getattr(exc, "orig", exc)).lower()
+            if "certificate_pem" in message and ("does not exist" in message or "undefinedcolumn" in message):
+                result = db.execute(query_without_certificate, {"key_hash": key_hash}).fetchone()
+            else:
+                raise
 
         if not result:
             return None
@@ -383,7 +479,7 @@ class KeyService:
             "monthly_api_usage": result.monthly_api_usage,
             "coalition_member": result.coalition_member,
             "coalition_rev_share": result.coalition_rev_share,
-            "certificate_pem": result.certificate_pem,
+            "certificate_pem": getattr(result, "certificate_pem", None),
         }
 
     @staticmethod

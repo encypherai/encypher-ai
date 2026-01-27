@@ -17,6 +17,7 @@ from fastapi import BackgroundTasks, Depends, HTTPException, Request, Security, 
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.config import settings
+from app.services.auth_service_client import auth_service_client
 from app.services.key_service_client import key_service_client
 
 logger = logging.getLogger(__name__)
@@ -224,8 +225,29 @@ async def get_current_organization(
     api_key = credentials.credentials
     org_context = None
 
-    # 1. Try Key Service first (production path)
-    org_context = await key_service_client.validate_key(api_key)
+    if settings.compose_org_context_via_auth_service:
+        key_context = await key_service_client.validate_key_minimal(api_key)
+        if key_context and key_context.get("organization_id"):
+            org_data = await auth_service_client.get_organization_context(str(key_context["organization_id"]))
+            if org_data:
+                org_context = {
+                    "api_key_id": key_context.get("key_id"),
+                    "organization_id": key_context.get("organization_id"),
+                    "organization_name": org_data.get("name"),
+                    "tier": org_data.get("tier"),
+                    "features": org_data.get("features", {}),
+                    "permissions": key_context.get("permissions", []),
+                    "monthly_api_limit": org_data.get("monthly_api_limit"),
+                    "monthly_api_usage": org_data.get("monthly_api_usage"),
+                    "coalition_member": org_data.get("coalition_member", True),
+                    "coalition_rev_share": org_data.get("coalition_rev_share", 65),
+                    "certificate_pem": org_data.get("certificate_pem"),
+                    "user_id": key_context.get("user_id"),
+                }
+
+    if org_context is None:
+        # 1. Try Key Service first (production path)
+        org_context = await key_service_client.validate_key(api_key)
 
     if org_context:
         # Normalize the response to ensure consistent structure

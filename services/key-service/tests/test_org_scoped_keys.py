@@ -99,7 +99,7 @@ def test_generate_key_with_org_calls_service(client, monkeypatch, user_override)
 
     captured = {}
 
-    def fake_create_key(db, user_id: str, key_data, organization_id: str = None):
+    def fake_create_key(db, user_id: str, key_data, organization_id: str = None, authorization: str = None):
         captured["organization_id"] = organization_id
         db_key = SimpleNamespace(
             id="key_123",
@@ -108,6 +108,8 @@ def test_generate_key_with_org_calls_service(client, monkeypatch, user_override)
             permissions=key_data.permissions,
             created_at=datetime.utcnow(),
             organization_id=organization_id,
+            user_id=user_id,
+            created_by=user_id,
         )
         return db_key, "ency_test"
 

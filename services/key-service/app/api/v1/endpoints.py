@@ -485,6 +485,31 @@ async def validate_key_with_org(
     }
 
 
+@router.post("/validate-minimal")
+async def validate_key_minimal(
+    verify_data: ApiKeyVerify,
+    db: Session = Depends(get_db),
+    request: Request = None,
+):
+    key_context = KeyService.verify_key_minimal(db, verify_data.key)
+
+    if not key_context:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired API key",
+        )
+
+    if request is not None:
+        request.state.organization_id = key_context.get("organization_id")
+        request.state.user_id = key_context.get("user_id")
+        request.state.api_key_id = key_context.get("key_id")
+
+    return {
+        "success": True,
+        "data": key_context,
+    }
+
+
 @router.get("/{key_id}/usage", response_model=KeyUsageStats)
 async def get_key_usage(
     key_id: str,
