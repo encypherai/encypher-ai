@@ -8,7 +8,7 @@ import hashlib
 import logging
 import re
 import time
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, cast
 
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -134,7 +134,7 @@ class FuzzyFingerprintService:
                         fingerprint_value=fingerprint_value,
                         fingerprint_bits=bits,
                         fingerprint_bucket=bucket,
-                        text_preview=segment[:200],
+                        text_preview=None,
                     )
                 )
             indexed_levels[level] = len(segments)
@@ -172,6 +172,7 @@ class FuzzyFingerprintService:
         segmenter = HierarchicalSegmenter(text, include_words=False)
         matches: Dict[str, Dict[str, Any]] = {}
         root_ids: set[str] = set()
+        query_previews: Dict[Tuple[str, int], str] = {}
 
         for level in levels:
             if level == "document":
@@ -183,10 +184,11 @@ class FuzzyFingerprintService:
 
             query_fingerprints: List[Tuple[int, int]] = []
             buckets: set[int] = set()
-            for segment in segments:
+            for index, segment in enumerate(segments):
                 fingerprint_value, bucket = self._fingerprint_segment(segment, bits, bucket_bits)
                 query_fingerprints.append((fingerprint_value, bits))
                 buckets.add(bucket)
+                query_previews[(level, index)] = segment[:200]
 
             if not buckets:
                 continue
@@ -215,13 +217,15 @@ class FuzzyFingerprintService:
                     existing = matches.get(key)
                     if existing and existing["similarity"] >= similarity:
                         continue
+                    segmentation_level = cast(str, candidate.segmentation_level)
+                    segment_index = int(cast(int, candidate.segment_index or 0))
                     match_payload = {
                         "document_id": candidate.document_id,
                         "organization_id": candidate.organization_id,
-                        "segmentation_level": candidate.segmentation_level,
+                        "segmentation_level": segmentation_level,
                         "segment_index": candidate.segment_index,
                         "similarity": round(similarity, 4),
-                        "text_preview": candidate.text_preview,
+                        "text_preview": query_previews.get((segmentation_level, segment_index)),
                         "leaf_hash": candidate.leaf_hash,
                         "merkle_root_id": str(candidate.merkle_root_id) if candidate.merkle_root_id else None,
                     }

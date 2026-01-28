@@ -80,8 +80,8 @@ def sign_document(base_url: str, api_key: str, text: str, document_id: str) -> d
         json={
             "document_id": document_id,
             "text": text,
-            "segmentation_level": "sentence",
-            "manifest_mode": "lightweight_uuid",
+            "segmentation_level": "document",
+            "manifest_mode": "minimal_uuid",
             "embedding_strategy": "single_point",
             "disable_c2pa": True,
             "embedding_options": {

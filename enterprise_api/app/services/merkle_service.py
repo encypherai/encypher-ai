@@ -94,7 +94,7 @@ class MerkleService:
                         "parent_hash": None,  # Could be computed if needed
                         "left_child_hash": node.left.hash if node.left else None,
                         "right_child_hash": node.right.hash if node.right and node.right != node.left else None,
-                        "text_content": node.content if node.is_leaf else None,
+                        "text_content": None,
                         "segment_metadata": node.metadata,  # Match model column name
                     }
                     subhashes_data.append(subhash_data)

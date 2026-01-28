@@ -6,7 +6,53 @@ from unittest.mock import AsyncMock, patch
 import pytest
 from httpx import AsyncClient
 
+from app.crud import merkle as merkle_crud
 from app.models.response_models import VerifyVerdict
+from app.utils.merkle import MerkleTree
+from app.utils.segmentation import HierarchicalSegmenter
+
+
+async def _seed_merkle_root(
+    *,
+    content_db,
+    organization_id: str,
+    document_id: str,
+    text: str,
+    segmentation_level: str = "sentence",
+) -> None:
+    segmenter = HierarchicalSegmenter(text, include_words=False)
+    segments = segmenter.get_segments(segmentation_level)
+    tree = MerkleTree(segments, segmentation_level=segmentation_level)
+
+    root = await merkle_crud.create_merkle_root(
+        db=content_db,
+        organization_id=organization_id,
+        document_id=document_id,
+        root_hash=tree.root.hash,
+        tree_depth=tree.tree_depth,
+        leaf_count=tree.total_leaves,
+        segmentation_level=segmentation_level,
+        metadata={},
+    )
+
+    subhashes_data = []
+    for node in tree.leaves:
+        subhashes_data.append(
+            {
+                "hash_value": node.hash,
+                "root_id": root.id,
+                "node_type": "leaf",
+                "depth_level": node.depth,
+                "position_index": node.position,
+                "parent_hash": None,
+                "left_child_hash": None,
+                "right_child_hash": None,
+                "text_content": None,
+                "segment_metadata": node.metadata,
+            }
+        )
+
+    await merkle_crud.bulk_create_merkle_subhashes(content_db, subhashes_data)
 
 
 @pytest.mark.asyncio
@@ -112,6 +158,143 @@ async def test_verify_advanced_returns_verification_and_optional_merkle_outputs(
     assert payload["data"]["reason_code"] == "OK"
     assert "attribution" in payload
     assert "plagiarism" in payload
+    assert payload["attribution"]["query_preview"] == "Signed content..."[:200]
+    assert "text_content" not in payload["attribution"]["sources"][0]
+
+
+@pytest.mark.asyncio
+async def test_verify_advanced_reports_tamper_detection_and_localization(
+    async_client: AsyncClient,
+    enterprise_auth_headers: dict,
+    content_db,
+) -> None:
+    text = "First sentence. Second sentence."
+    document_id = "doc_tamper_match"
+    await _seed_merkle_root(
+        content_db=content_db,
+        organization_id="org_enterprise",
+        document_id=document_id,
+        text=text,
+    )
+
+    execution = SimpleNamespace(
+        is_valid=True,
+        signer_id="org_enterprise",
+        manifest={"custom_metadata": {"document_id": document_id, "organization_id": "org_enterprise"}},
+        missing_signers=set(),
+        revoked_signers=set(),
+        resolved_cert=None,
+        duration_ms=1,
+        exception_message=None,
+        document_revoked=False,
+        revocation_reason=None,
+        revocation_check_status=None,
+        revocation_check_error=None,
+        revocation_status_list_url=None,
+        revocation_bit_index=None,
+        untrusted_signer=False,
+        trust_status="trusted",
+    )
+
+    verdict = VerifyVerdict(
+        valid=True,
+        tampered=False,
+        reason_code="OK",
+        signer_id="org_enterprise",
+        signer_name="Enterprise Test Organization",
+        timestamp=None,
+        details={"manifest": {"document_id": document_id}},
+        embeddings_found=0,
+        all_embeddings=None,
+    )
+
+    with (
+        patch("app.services.verification_logic.execute_verification", new=AsyncMock(return_value=execution)),
+        patch("app.services.verification_logic.determine_reason_code", return_value="OK"),
+        patch("app.services.verification_logic.build_verdict", return_value=verdict),
+    ):
+        response = await async_client.post(
+            "/api/v1/verify/advanced",
+            json={"text": text, "segmentation_level": "sentence"},
+            headers=enterprise_auth_headers,
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["tamper_detection"]["status"] == "computed"
+    assert payload["tamper_detection"]["root_match"] is True
+    assert payload["tamper_localization"]["counts"] == {"changed": 0, "inserted": 0, "deleted": 0}
+    assert payload["tamper_localization"]["events"] == []
+
+
+@pytest.mark.asyncio
+async def test_verify_advanced_localization_detects_changes(
+    async_client: AsyncClient,
+    enterprise_auth_headers: dict,
+    content_db,
+) -> None:
+    stored_text = "First sentence. Second sentence."
+    tampered_text = "First sentence. Altered sentence."
+    document_id = "doc_tamper_changed"
+    await _seed_merkle_root(
+        content_db=content_db,
+        organization_id="org_enterprise",
+        document_id=document_id,
+        text=stored_text,
+    )
+
+    execution = SimpleNamespace(
+        is_valid=True,
+        signer_id="org_enterprise",
+        manifest={"custom_metadata": {"document_id": document_id, "organization_id": "org_enterprise"}},
+        missing_signers=set(),
+        revoked_signers=set(),
+        resolved_cert=None,
+        duration_ms=1,
+        exception_message=None,
+        document_revoked=False,
+        revocation_reason=None,
+        revocation_check_status=None,
+        revocation_check_error=None,
+        revocation_status_list_url=None,
+        revocation_bit_index=None,
+        untrusted_signer=False,
+        trust_status="trusted",
+    )
+
+    verdict = VerifyVerdict(
+        valid=False,
+        tampered=True,
+        reason_code="SIGNATURE_INVALID",
+        signer_id="org_enterprise",
+        signer_name="Enterprise Test Organization",
+        timestamp=None,
+        details={"manifest": {"document_id": document_id}},
+        embeddings_found=0,
+        all_embeddings=None,
+    )
+
+    with (
+        patch("app.services.verification_logic.execute_verification", new=AsyncMock(return_value=execution)),
+        patch("app.services.verification_logic.determine_reason_code", return_value="SIGNATURE_INVALID"),
+        patch("app.services.verification_logic.build_verdict", return_value=verdict),
+    ):
+        response = await async_client.post(
+            "/api/v1/verify/advanced",
+            json={"text": tampered_text, "segmentation_level": "sentence"},
+            headers=enterprise_auth_headers,
+        )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["tamper_detection"]["root_match"] is False
+    assert payload["tamper_localization"]["counts"]["changed"] > 0
+    previews = [
+        preview
+        for event in payload["tamper_localization"]["events"]
+        for preview in event.get("request_previews", [])
+    ]
+    assert any("Altered sentence" in preview for preview in previews)
 
 
 @pytest.mark.asyncio
@@ -193,6 +376,7 @@ async def test_verify_advanced_runs_fuzzy_search_when_no_embeddings(
     payload = response.json()
     assert payload["success"] is True
     assert payload["fuzzy_search"]["matches_found"] == 1
+    assert payload["soft_match"] == payload["fuzzy_search"]
     mock_search.assert_awaited_once()
 
 

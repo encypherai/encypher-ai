@@ -127,6 +127,7 @@ class EmbeddingService:
         distribution_target: Optional[str] = None,  # whitespace, punctuation, all_chars
         add_dual_binding: bool = False,  # Enable dual-binding manifest
         disable_c2pa: bool = False,  # Opt-out of C2PA embedding
+        processing_metadata: Optional[Dict[str, Any]] = None,
     ) -> Tuple[List[EmbeddingReference], str]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
@@ -216,6 +217,8 @@ class EmbeddingService:
                 "uses_encypher_ai": True,
                 "signer_id": self.signer_id,
             }
+            if processing_metadata:
+                embedding_metadata["processing"] = processing_metadata
             if per_segment_uuid_mode:
                 embedding_metadata["manifest_uuid"] = minimal_metadata.get("manifest_uuid")
                 embedding_metadata["manifest_mode"] = "minimal_uuid"
@@ -227,8 +230,8 @@ class EmbeddingService:
                 leaf_index=idx,
                 organization_id=organization_id,
                 document_id=document_id,
-                text_content=segment,
-                text_preview=segment[:200] if segment else None,
+                text_content=None,
+                text_preview=None,
                 signature_hash=compute_signature_hash(content_id),
                 c2pa_manifest_url=c2pa_manifest_url,
                 c2pa_manifest_hash=c2pa_manifest_hash,
@@ -271,6 +274,8 @@ class EmbeddingService:
             "total_segments": len(segments),
             "manifest_mode": manifest_mode,
         }
+        if processing_metadata:
+            document_metadata["processing"] = processing_metadata
 
         if c2pa_manifest_url:
             document_metadata["c2pa_manifest_url"] = c2pa_manifest_url
@@ -511,7 +516,7 @@ class EmbeddingService:
             ref_any = cast(Any, ref)
             ref_any.instance_id = extracted_instance_id
             ref_any.previous_instance_id = previous_instance_id
-            ref_any.manifest_data = extracted_manifest
+            ref_any.manifest_data = None
 
         # Create embedding references for each segment
         # Each segment has its own minimal embedding + the full document has ONE C2PA wrapper
@@ -624,16 +629,16 @@ class EmbeddingService:
                 )
                 reference = result.scalar_one_or_none()
                 if reference:
-                    document_id = reference.document_id
-                    organization_id = reference.organization_id
-                    leaf_index = reference.leaf_index
+                    document_id = cast(Optional[str], reference.document_id)
+                    organization_id = cast(Optional[str], reference.organization_id)
+                    leaf_index = cast(Optional[int], reference.leaf_index)
                 else:
                     logger.warning("Reference not found for manifest_uuid=%s", manifest_uuid)
                     return None
             else:
-                document_id = custom_metadata.get("document_id")
-                organization_id = custom_metadata.get("organization_id")
-                leaf_index = custom_metadata.get("leaf_index")
+                document_id = cast(Optional[str], custom_metadata.get("document_id"))
+                organization_id = cast(Optional[str], custom_metadata.get("organization_id"))
+                leaf_index = cast(Optional[int], custom_metadata.get("leaf_index"))
 
                 if not all([document_id, organization_id, leaf_index is not None]):
                     logger.warning("Missing enterprise metadata in embedding")

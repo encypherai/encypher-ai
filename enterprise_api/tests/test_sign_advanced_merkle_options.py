@@ -109,3 +109,47 @@ async def test_sign_advanced_merkle_index_opt_out_skips_merkle_quota(
     assert all(str(qt) != "QuotaType.MERKLE_ENCODING" for qt in called_quota_types)
 
     assert encode_mock.await_count == 1
+
+
+@pytest.mark.asyncio
+async def test_sign_advanced_passes_processing_metadata(
+    async_client: AsyncClient,
+    business_auth_headers: dict,
+) -> None:
+    mock_sentence_root = SimpleNamespace(id="mrk_sentence", root_hash="root_sentence", leaf_count=2, tree_depth=1)
+
+    class _FakeSegmenter:
+        def __init__(self, text: str, include_words: bool = False):
+            self._text = text
+
+        def get_segments(self, level: str):
+            return ["Hello world.", "Second sentence."]
+
+    with (
+        patch(
+            "app.services.embedding_executor.MerkleService.encode_document",
+            new=AsyncMock(return_value={"sentence": mock_sentence_root}),
+        ),
+        patch("app.utils.segmentation.HierarchicalSegmenter", new=_FakeSegmenter),
+        patch(
+            "app.services.embedding_service.EmbeddingService.create_embeddings",
+            new=AsyncMock(return_value=([], "signed")),
+        ) as mock_create,
+    ):
+        response = await async_client.post(
+            "/api/v1/sign/advanced",
+            json={
+                "document_id": "doc_adv_processing_001",
+                "text": "Hello world. Second sentence.",
+                "segmentation_level": "sentence",
+            },
+            headers=business_auth_headers,
+        )
+
+    assert response.status_code == 201
+
+    processing = mock_create.call_args.kwargs.get("processing_metadata")
+    assert processing is not None
+    assert processing["canonicalization_version"] == "v1"
+    assert processing["segmentation"]["primary_level"] == "sentence"
+    assert processing["hashing"]["leaf"]["unicode_normalization"] == "NFC"

@@ -111,7 +111,7 @@ class ExtractAndVerifyResponse(BaseModel):
     - CAPTCHA required after repeated failures
     
     **Privacy:**
-    - Only returns text preview (first 200 characters)
+    - Does not return DB-stored text
     - Full text content is NOT exposed
     - Internal document IDs are mapped to public IDs
     
@@ -195,7 +195,8 @@ async def verify_embedding(
             logger.warning(f"Verification failed for ref_id: {ref_id}")
             return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Invalid signature or reference not found")
 
-        if not _signature_matches(reference.signature_hash, signature):
+        signature_hash = cast(Optional[str], reference.signature_hash)
+        if not _signature_matches(signature_hash, signature):
             logger.warning(f"Signature mismatch for ref_id: {ref_id}")
             return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Invalid signature or reference not found")
 
@@ -207,8 +208,8 @@ async def verify_embedding(
             logger.error(f"Merkle root not found for reference: {ref_id}")
             return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Associated Merkle root not found")
 
-        # Build response with metadata
-        content_info = ContentInfo(text_preview=reference.text_preview or "", leaf_hash=reference.leaf_hash, leaf_index=reference.leaf_index)
+        # Build response with metadata (no DB-backed text)
+        content_info = ContentInfo(text_preview=None, leaf_hash=reference.leaf_hash, leaf_index=reference.leaf_index)
 
         # Extract document metadata
         doc_metadata = cast(Dict[str, Any], merkle_root.doc_metadata or {})
@@ -384,10 +385,9 @@ async def batch_verify_embeddings(
                     invalid_count += 1
                     continue
 
-                if reference and _signature_matches(reference.signature_hash, ref_req.signature):
-                    results.append(
-                        BatchVerifyResult(ref_id=ref_req.ref_id, valid=True, document_id=reference.document_id, text_preview=reference.text_preview)
-                    )
+                signature_hash = cast(Optional[str], reference.signature_hash) if reference else None
+                if reference and _signature_matches(signature_hash, ref_req.signature):
+                    results.append(BatchVerifyResult(ref_id=ref_req.ref_id, valid=True, document_id=reference.document_id))
                     valid_count += 1
                 else:
                     results.append(BatchVerifyResult(ref_id=ref_req.ref_id, valid=False, error="Invalid signature or reference not found"))
@@ -519,8 +519,7 @@ async def extract_and_verify_embedding(
             logger.info(f"extract_metadata returned: {type(extracted_metadata)} = {extracted_metadata}")
 
             if not extracted_metadata:
-                logger.warning(f"No metadata found in text. Text preview (first 200): {extract_request.text[:200]}...")
-                logger.warning(f"Text preview (last 200): ...{extract_request.text[-200:]}")
+                logger.warning("No metadata found in text. payload_chars=%s", len(extract_request.text))
                 return ExtractAndVerifyResponse(valid=False, error="No invisible embedding found in text")
 
             signer_id = extracted_metadata.get("signer_id")
@@ -727,8 +726,12 @@ async def extract_and_verify_embedding(
         merkle_result = await content_db.execute(select(MerkleRoot).where(MerkleRoot.id == reference.merkle_root_id))
         merkle_root = merkle_result.scalar_one_or_none()
 
-        # Build full response with enterprise metadata
-        content_info = ContentInfo(text_preview=reference.text_preview or "", leaf_hash=reference.leaf_hash, leaf_index=reference.leaf_index)
+        # Build full response with enterprise metadata (preview from request text only)
+        content_info = ContentInfo(
+            text_preview=extract_request.text[:200] if extract_request.text else None,
+            leaf_hash=reference.leaf_hash,
+            leaf_index=reference.leaf_index,
+        )
 
         # Extract document metadata
         doc_metadata = cast(Dict[str, Any], merkle_root.doc_metadata) if merkle_root else {}

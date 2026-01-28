@@ -4,22 +4,29 @@ Verification router for C2PA manifest verification.
 Provides both HTML-friendly verification pages and JSON APIs used by SDKs.
 """
 
+import difflib
 import time
-from typing import Any, Dict, Optional, cast
+import unicodedata
+from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from uuid import uuid4
+from uuid import UUID, uuid4
 
-from app.database import get_db
+from app.crud import merkle as merkle_crud
+from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization_dep
+from app.models.merkle import MerkleRoot
 from app.models.request_models import VerifyRequest
 from app.schemas.fuzzy_fingerprint import FuzzySearchConfig
 from app.services import verification_logic
 from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
 from app.services.merkle_service import MerkleService
+from app.utils.merkle import MerkleTree, compute_leaf_hash
+from app.utils.segmentation import HierarchicalSegmenter
 from app.utils.quota import QuotaManager, QuotaType
 
 router = APIRouter()
@@ -34,6 +41,66 @@ class VerifyAdvancedRequest(BaseModel):
     segmentation_level: str = Field(default="sentence")
     search_scope: str = Field(default="organization")
     fuzzy_search: Optional[FuzzySearchConfig] = Field(default=None)
+
+
+def _extract_manifest_metadata(manifest: Dict[str, Any]) -> Dict[str, Any]:
+    metadata: Dict[str, Any] = {}
+    if not isinstance(manifest, dict):
+        return metadata
+
+    def _merge(payload: Any) -> None:
+        if isinstance(payload, dict):
+            metadata.update(payload)
+
+    _merge(manifest.get("custom_metadata"))
+    nested_manifest = manifest.get("manifest")
+    if isinstance(nested_manifest, dict):
+        _merge(nested_manifest.get("custom_metadata"))
+
+    assertions = manifest.get("assertions", [])
+    if isinstance(assertions, list):
+        for assertion in assertions:
+            if not isinstance(assertion, dict):
+                continue
+            if assertion.get("label") == "org.encypher.metadata":
+                _merge(assertion.get("data"))
+
+    return metadata
+
+
+def _build_localization_events(
+    *,
+    stored_hashes: List[str],
+    request_hashes: List[str],
+    request_segments: List[str],
+) -> Dict[str, Any]:
+    matcher = difflib.SequenceMatcher(a=stored_hashes, b=request_hashes, autojunk=False)
+    events: List[Dict[str, Any]] = []
+    counts = {"changed": 0, "inserted": 0, "deleted": 0}
+
+    for tag, i1, i2, j1, j2 in matcher.get_opcodes():
+        if tag == "equal":
+            continue
+        if tag == "replace":
+            event_type = "changed"
+            counts["changed"] += max(j2 - j1, i2 - i1)
+        elif tag == "insert":
+            event_type = "inserted"
+            counts["inserted"] += j2 - j1
+        else:
+            event_type = "deleted"
+            counts["deleted"] += i2 - i1
+
+        events.append(
+            {
+                "type": event_type,
+                "stored_range": [i1, i2],
+                "request_range": [j1, j2],
+                "request_previews": [segment[:200] for segment in request_segments[j1:j2]] if j2 > j1 else [],
+            }
+        )
+
+    return {"events": events, "counts": counts}
 
 
 @router.get("/verify/{document_id}", include_in_schema=False)
@@ -60,6 +127,7 @@ async def verify_advanced(
     request: VerifyAdvancedRequest,
     organization: dict = Depends(get_current_organization_dep),
     db: AsyncSession = Depends(get_db),
+    content_db: AsyncSession = Depends(get_content_db),
 ):
     tier = (organization.get("tier") or "starter").lower().replace("-", "_")
     tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3, "strategic_partner": 3, "demo": 3}
@@ -102,6 +170,85 @@ async def verify_advanced(
         "correlation_id": correlation_id,
     }
 
+    manifest_metadata = _extract_manifest_metadata(execution.manifest)
+    document_id = manifest_metadata.get("document_id")
+    organization_id = manifest_metadata.get("organization_id") or execution.signer_id
+
+    tamper_detection: Optional[Dict[str, Any]] = None
+    tamper_localization: Optional[Dict[str, Any]] = None
+
+    if document_id and organization_id:
+        statement = (
+            select(MerkleRoot)
+            .where(
+                MerkleRoot.document_id == document_id,
+                MerkleRoot.organization_id == organization_id,
+                MerkleRoot.segmentation_level == request.segmentation_level,
+            )
+            .order_by(MerkleRoot.created_at.desc())
+            .limit(1)
+        )
+        merkle_result = await content_db.execute(statement)
+        merkle_root = merkle_result.scalar_one_or_none()
+
+        if merkle_root:
+            normalized_text = unicodedata.normalize("NFC", request.text)
+            segmenter = HierarchicalSegmenter(normalized_text, include_words=False)
+            try:
+                segments = segmenter.get_segments(request.segmentation_level)
+            except ValueError:
+                segments = []
+
+            if segments:
+                tree = MerkleTree(segments, segmentation_level=request.segmentation_level)
+                computed_root_hash = tree.root.hash
+                root_match = computed_root_hash == merkle_root.root_hash
+
+                tamper_detection = {
+                    "status": "computed",
+                    "segmentation_level": request.segmentation_level,
+                    "root_match": root_match,
+                    "stored_root_hash": merkle_root.root_hash,
+                    "computed_root_hash": computed_root_hash,
+                    "segment_count": len(segments),
+                }
+
+                root_id = cast(UUID, merkle_root.id)
+                stored_subhashes = await merkle_crud.find_subhashes_by_root(
+                    db=content_db,
+                    root_id=root_id,
+                    node_type="leaf",
+                )
+                stored_subhashes = sorted(stored_subhashes, key=lambda item: item.position_index)
+                stored_hashes = [cast(str, subhash.hash_value) for subhash in stored_subhashes]
+                request_hashes = [compute_leaf_hash(segment) for segment in segments]
+
+                tamper_localization = _build_localization_events(
+                    stored_hashes=stored_hashes,
+                    request_hashes=request_hashes,
+                    request_segments=segments,
+                )
+            else:
+                tamper_detection = {
+                    "status": "no_segments",
+                    "segmentation_level": request.segmentation_level,
+                    "segment_count": 0,
+                }
+        else:
+            tamper_detection = {
+                "status": "root_not_found",
+                "segmentation_level": request.segmentation_level,
+            }
+    else:
+        tamper_detection = {
+            "status": "metadata_missing",
+            "segmentation_level": request.segmentation_level,
+        }
+
+    response_payload["tamper_detection"] = tamper_detection
+    if tamper_localization is not None:
+        response_payload["tamper_localization"] = tamper_localization
+
     if request.include_attribution:
         if org_tier_level < 1:
             raise HTTPException(
@@ -139,6 +286,7 @@ async def verify_advanced(
 
         response_payload["attribution"] = {
             "query_hash": query_hash,
+            "query_preview": request.text[:200],
             "matches_found": len(sources),
             "sources": [
                 {
@@ -147,7 +295,6 @@ async def verify_advanced(
                     "root_hash": root.root_hash,
                     "segmentation_level": root.segmentation_level,
                     "matched_hash": subhash.hash_value,
-                    "text_content": getattr(subhash, "text_content", None),
                     "confidence": 1.0,
                 }
                 for subhash, root in sources
@@ -233,6 +380,7 @@ async def verify_advanced(
                 config=fuzzy_config,
                 search_scope=scope,
             )
+        response_payload["soft_match"] = response_payload["fuzzy_search"]
 
     return JSONResponse(status_code=status.HTTP_200_OK, content=response_payload)
 

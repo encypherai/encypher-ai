@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+from typing import Dict, Optional
 
 from sqlalchemy import engine_from_config, pool
 
@@ -31,9 +32,11 @@ target_metadata = Base.metadata
 # ... etc.
 
 
-def get_url():
+def get_url() -> str:
     """Get database URL from settings."""
-    url = settings.database_url
+    url = settings.database_url or ""
+    if not url:
+        raise RuntimeError("DATABASE_URL is not configured")
     # Convert async URL to sync for Alembic
     if url.startswith("postgresql+asyncpg://"):
         url = url.replace("postgresql+asyncpg://", "postgresql://")
@@ -71,7 +74,8 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    configuration = config.get_section(config.config_ini_section)
+    configuration = config.get_section(config.config_ini_section) or {}
+    configuration = dict(configuration)
     configuration["sqlalchemy.url"] = get_url()
     connectable = engine_from_config(
         configuration,

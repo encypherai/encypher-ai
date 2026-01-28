@@ -96,6 +96,7 @@ async def test_public_verify_accepts_matching_signature_prefix(async_client: Asy
     payload = response.json()
     assert payload["valid"] is True
     assert payload["document"]["document_id"] == "doc_signature_match"
+    assert payload["content"]["text_preview"] is None
 
 
 @pytest.mark.asyncio
@@ -160,5 +161,6 @@ async def test_public_verify_batch_enforces_signature_match(async_client: AsyncC
     assert payload["valid_count"] == 1
     assert payload["invalid_count"] == 1
     assert payload["results"][0]["valid"] is True
+    assert payload["results"][0]["text_preview"] is None
     assert payload["results"][1]["valid"] is False
     assert payload["results"][1]["error"] == "Invalid signature or reference not found"

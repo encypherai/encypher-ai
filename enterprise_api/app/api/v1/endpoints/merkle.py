@@ -31,6 +31,7 @@ from app.schemas.merkle import (
 from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
 from app.services.merkle_service import MerkleService
 from app.utils.quota import QuotaManager, QuotaType
+from app.utils.segmentation import build_processing_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -131,6 +132,14 @@ async def encode_document(
     try:
         logger.info(f"Encoding document {request.document_id} for org {organization_id} at levels: {request.segmentation_levels}")
 
+        processing_metadata = build_processing_metadata(
+            segmentation_level=request.segmentation_levels[0] if request.segmentation_levels else None,
+            segmentation_levels=request.segmentation_levels,
+            include_words=request.include_words,
+        )
+        metadata = dict(request.metadata or {})
+        metadata["processing"] = processing_metadata
+
         # Encode the document
         roots: Dict[str, MerkleRoot] = await MerkleService.encode_document(
             db=db,
@@ -138,7 +147,7 @@ async def encode_document(
             document_id=request.document_id,
             text=request.text,
             segmentation_levels=request.segmentation_levels,
-            metadata=request.metadata,
+            metadata=metadata,
             include_words=request.include_words,
         )
 

@@ -204,7 +204,7 @@ class VerifyEmbeddingRequest(BaseModel):
 class ContentInfo(BaseModel):
     """Content information from verification."""
 
-    text_preview: str = Field(..., description="First 200 characters of content")
+    text_preview: Optional[str] = Field(None, description="Optional preview derived from submitted text")
     leaf_hash: str = Field(..., description="Cryptographic hash of full content")
     leaf_index: int = Field(..., description="Position in document")
 

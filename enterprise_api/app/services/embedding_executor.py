@@ -30,6 +30,7 @@ from app.services.status_service import status_service
 from app.services.merkle_service import MerkleService
 from app.utils.crypto_utils import load_organization_private_key
 from app.utils.quota import QuotaManager, QuotaType
+from app.utils.segmentation import build_processing_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -391,6 +392,7 @@ async def encode_document_with_embeddings(
         # Free tier (document-level): Skip Merkle tree and segmentation
         # Just create ONE C2PA wrapper for the entire document
         merkle_root_id: Optional[UUID] = None
+        processing_metadata: Optional[Dict[str, Any]] = None
         if request.segmentation_level == "document":
             logger.info("Document-level signing (free tier) - no segmentation")
             from app.utils.merkle import compute_leaf_hash
@@ -401,10 +403,24 @@ async def encode_document_with_embeddings(
             merkle_root: Optional[MerkleRoot] = None
             merkle_roots: Dict[str, MerkleRoot] = {}
             merkle_trees = None
+            processing_metadata = build_processing_metadata(
+                segmentation_level=request.segmentation_level,
+                segmentation_levels=None,
+                include_words=False,
+            )
         else:
             merkle_levels = request.segmentation_levels
             if not merkle_levels:
                 merkle_levels = [request.segmentation_level]
+
+            processing_metadata = build_processing_metadata(
+                segmentation_level=request.segmentation_level,
+                segmentation_levels=merkle_levels,
+                include_words=False,
+            )
+
+            merkle_metadata = dict(request.metadata or {})
+            merkle_metadata["processing"] = processing_metadata
 
             index_for_attribution = request.index_for_attribution
             if index_for_attribution is None:
@@ -431,7 +447,7 @@ async def encode_document_with_embeddings(
                 document_id=request.document_id,
                 text=document_text,
                 segmentation_levels=merkle_levels,
-                metadata=request.metadata,
+                metadata=merkle_metadata,
                 include_words=False,
             )
 
@@ -480,6 +496,7 @@ async def encode_document_with_embeddings(
             previous_instance_id=request.previous_instance_id,
             custom_assertions=validated_assertions,  # Pass validated custom assertions
             digital_source_type=request.digital_source_type,  # Pass digital source type
+            processing_metadata=processing_metadata,
             # === API Feature Augmentation (TEAM_044) ===
             manifest_mode=request.manifest_mode,
             embedding_strategy=request.embedding_strategy,

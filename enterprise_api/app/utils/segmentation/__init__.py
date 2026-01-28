@@ -16,6 +16,7 @@ from typing import Callable, Optional
 
 from .hierarchical import HierarchicalSegmenter, build_hierarchical_structure
 from .paragraph import segment_paragraphs
+from .policy import build_processing_metadata
 from .section import segment_sections
 from .sentence import segment_sentences
 from .word import segment_words_normalized, segment_words_simple
@@ -77,6 +78,7 @@ __all__ = [
     "normalize_unicode",
     "DEFAULT_AVAILABLE",
     "SPACY_AVAILABLE",
+    "build_processing_metadata",
     # Basic segmentation
     "segment_sentences",
     "segment_paragraphs",
