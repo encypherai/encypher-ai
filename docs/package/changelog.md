@@ -2,6 +2,15 @@
 
 This document provides a chronological list of notable changes for each version of Encypher.
 
+## 3.0.4 (2026-01-30)
+
+### Fixed
+- Verified C2PA hard binding exclusions using byte offsets from the text wrapper instead of codepoint positions.
+- Accepted `c2pa.actions.v2` assertions during verification (v1 or v2 allowed).
+
+### Changed
+- Confirmed claim label emission as `c2pa.claim.v2` for v2.3 manifests.
+
 ## 3.0.3 (2026-01-16)
 
 ### Fixed

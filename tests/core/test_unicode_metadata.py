@@ -602,6 +602,36 @@ class TestUnicodeMetadata:
         assert manifest_payload.get("ai_info") == manifest_metadata.get("ai_info")
         assert manifest_payload.get("custom_claims") == manifest_metadata.get("custom_claims")
 
+    def test_c2pa_manifest_uses_v2_actions_and_metadata(self, key_pair_1, sample_text):
+        """C2PA manifests should emit v2 actions and metadata assertions for v2.3 compliance."""
+        private_key, _ = key_pair_1
+        signer_id = "signer_1"
+        now = datetime.now(timezone.utc)
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=sample_text,
+            private_key=private_key,
+            signer_id=signer_id,
+            metadata_format="c2pa",
+            actions=[
+                {
+                    "label": "c2pa.created",
+                    "when": now.isoformat(),
+                    "softwareAgent": "pytest",
+                }
+            ],
+            custom_metadata={"title": "C2PA v2.3 metadata", "description": "Test metadata assertion"},
+        )
+
+        extracted_manifest = UnicodeMetadata.extract_metadata(embedded_text)
+        assert isinstance(extracted_manifest, dict)
+        assertions = extracted_manifest.get("assertions", [])
+        assertion_labels = {assertion.get("label") for assertion in assertions if isinstance(assertion, dict)}
+
+        assert "c2pa.actions.v2" in assertion_labels
+        assert "c2pa.metadata" in assertion_labels
+        assert extracted_manifest.get("claim_label") == "c2pa.claim.v2"
+
     def test_embed_metadata_omit_keys(self, key_pair_1, sample_text, public_key_provider):
         private_key, _ = key_pair_1
         signer_id = "signer_1"
