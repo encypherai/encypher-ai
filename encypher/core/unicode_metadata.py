@@ -11,7 +11,6 @@ import copy
 import hashlib
 import json
 import re
-import unicodedata
 import uuid
 from datetime import date, datetime, timezone
 from typing import Any, Callable, Literal, Optional, Union, cast
@@ -403,6 +402,7 @@ class UnicodeMetadata:
                 distribute_across_targets=distribute_across_targets,
                 add_hard_binding=add_hard_binding,
                 custom_assertions=custom_assertions,
+                custom_metadata=custom_metadata,
             )
         # --- Start: Input Validation ---
         if not isinstance(text, str):
@@ -758,6 +758,7 @@ class UnicodeMetadata:
         claim_generator: Optional[str],
         actions: Optional[list[dict[str, Any]]],
         ingredients: Optional[list[dict[str, Any]]],
+        custom_metadata: Optional[dict[str, Any]],
         iso_timestamp: Optional[str],
         target: Optional[Union[str, MetadataTarget]],
         distribute_across_targets: bool,
@@ -779,6 +780,7 @@ class UnicodeMetadata:
             claim_generator: A string identifying the software agent creating the claim.
             actions: A list of action dictionaries to include in the manifest.
             ingredients: A list of ingredient dictionaries for provenance chain.
+            custom_metadata: Custom metadata to emit as a c2pa.metadata assertion.
             iso_timestamp: The ISO 8601 formatted timestamp for the actions.
             target: The embedding target strategy.
             distribute_across_targets: If True, distribute bits across multiple targets.
@@ -837,15 +839,32 @@ class UnicodeMetadata:
                 "@context": c2pa_context_url,
                 "instance_id": instance_id,
                 "claim_generator": claim_gen,
+                "claim_label": "c2pa.claim.v2",
                 "assertions": [],
             }
 
             # Add ingredients for provenance chain (if provided)
             if ingredients:
                 c2pa_manifest["ingredients"] = ingredients
+                c2pa_manifest["assertions"].append(
+                    {
+                        "label": "c2pa.ingredient.v3",
+                        "data": {"ingredients": copy.deepcopy(ingredients)},
+                        "kind": "Ingredient",
+                    }
+                )
 
             actions_data: dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
-            c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
+            c2pa_manifest["assertions"].append({"label": "c2pa.actions.v2", "data": actions_data, "kind": "Actions"})
+
+            if custom_metadata:
+                c2pa_manifest["assertions"].append(
+                    {
+                        "label": "c2pa.metadata",
+                        "data": copy.deepcopy(custom_metadata),
+                        "kind": "Metadata",
+                    }
+                )
 
             # Add custom assertions if provided
             if custom_assertions:
@@ -883,7 +902,7 @@ class UnicodeMetadata:
             manifest_for_hashing["assertions"].append(placeholder_soft_binding)
 
             actions_data_copy = next(
-                (a["data"] for a in manifest_for_hashing["assertions"] if a.get("label") == "c2pa.actions.v1"),
+                (a["data"] for a in manifest_for_hashing["assertions"] if a.get("label") == "c2pa.actions.v2"),
                 None,
             )
             if actions_data_copy and isinstance(actions_data_copy.get("actions"), list):
@@ -1007,23 +1026,13 @@ class UnicodeMetadata:
                 logger.warning("C2PA format indicated but no text wrapper found.")
                 return False, signer_id, None
 
-            wrapper_segment = text[span[0] : span[1]]
-            normalized_full_text = unicodedata.normalize("NFC", text)
-            normalized_index = normalized_full_text.rfind(wrapper_segment)
-            if normalized_index < 0:
-                logger.warning("Unable to locate wrapper segment in normalized text during verification.")
-                return False, signer_id, None
-
-            exclusion_start = len(normalized_full_text[:normalized_index].encode("utf-8"))
-            exclusion_length = len(wrapper_segment.encode("utf-8"))
-
             return cls._verify_c2pa(
                 original_text=text,
                 outer_payload=outer_payload,
                 public_key_resolver=public_key_resolver,
                 return_payload_on_failure=return_payload_on_failure,
                 require_hard_binding=require_hard_binding,
-                wrapper_exclusion=(exclusion_start, exclusion_length),
+                wrapper_exclusion=span,
             )
 
         # --- Legacy Format Verification ('basic', 'manifest', 'cbor_manifest') ---
@@ -1222,12 +1231,16 @@ class UnicodeMetadata:
         # b) Check for mandatory assertions
         assertions = c2pa_manifest.get("assertions", [])
         assertion_labels = {a.get("label") for a in assertions if isinstance(a, dict)}
-        required_assertions = {"c2pa.actions.v1", "c2pa.soft_binding.v1"}
+        required_assertions = {"c2pa.soft_binding.v1"}
         if require_hard_binding:
             required_assertions.add("c2pa.hash.data.v1")
         if not required_assertions.issubset(assertion_labels):
             missing = required_assertions - assertion_labels
             logger.warning(f"C2PA verification: Manifest missing required assertions: {missing}")
+            return False, signer_id, c2pa_manifest
+
+        if not ("c2pa.actions.v1" in assertion_labels or "c2pa.actions.v2" in assertion_labels):
+            logger.warning("C2PA verification: Manifest missing actions assertion (v1 or v2).")
             return False, signer_id, c2pa_manifest
 
         # --- 3. Soft Binding Verification (Deterministic Hashing) ---
