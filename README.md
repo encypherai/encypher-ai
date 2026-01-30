@@ -56,7 +56,7 @@ Our implementation uses the official `c2pa-text` library to encode C2PA manifest
 
 Learn more about [Encypher's relationship with C2PA](https://docs.encypherai.com/package/user-guide/c2pa-relationship/) in our documentation.
 
-### C2PA `@context` compatibility configuration (v3.0.3+)
+### C2PA `@context` compatibility configuration (v3.0.4+)
 
 `encypher-ai` allows production services to control the emitted and accepted C2PA schema contexts via environment variables:
 
