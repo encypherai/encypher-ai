@@ -68,6 +68,19 @@ async function waitForSignupForm(page, baseUrl, log) {
   throw lastError;
 }
 
+async function waitForReactHydration(page, log) {
+  log?.('waiting for React hydration');
+  await page.waitForFunction(
+    () => {
+      const form = document.querySelector('form');
+      if (!form) return false;
+      return Object.keys(form).some((key) => key.startsWith('__reactFiber') || key.startsWith('__reactProps'));
+    },
+    { timeout: 10_000 }
+  );
+  await new Promise((resolve) => setTimeout(resolve, 200));
+}
+
 function startDashboardDevServer() {
   return new Promise(async (resolve, reject) => {
     const requestedPort = process.env.DASHBOARD_E2E_PORT || String(await getFreePort());
@@ -173,6 +186,7 @@ describe('Signup validation (client)', () => {
     const page = await browser.newPage();
     const log = attachSignupDebug(page, 'rejects-url');
     await waitForSignupForm(page, dashboardUrl, log);
+    await waitForReactHydration(page, log);
     log('installing signup fetch blocker');
     await page.evaluate(() => {
       window.__signupRequests = 0;
@@ -196,14 +210,6 @@ describe('Signup validation (client)', () => {
     await page.type('input#email', 'user@example.com');
     await page.type('input#password', 'SecurePass123!');
     await page.type('input#confirmPassword', 'SecurePass123!');
-    await page.waitForFunction(
-      () => {
-        const form = document.querySelector('form');
-        return form && !form.hasAttribute('action') && typeof form.onsubmit !== 'function';
-      },
-      { timeout: 5_000 }
-    );
-    await new Promise((resolve) => setTimeout(resolve, 500));
     log('submitting form');
     await page.click('button[type="submit"]');
 
@@ -220,6 +226,7 @@ describe('Signup validation (client)', () => {
     const page = await browser.newPage();
     const log = attachSignupDebug(page, 'sanitize-html');
     await waitForSignupForm(page, dashboardUrl, log);
+    await waitForReactHydration(page, log);
     log('installing fetch override to capture payload');
     await page.evaluate(() => {
       window.__signupPayload = null;
@@ -261,18 +268,6 @@ describe('Signup validation (client)', () => {
     await page.type('input#email', 'user@example.com');
     await page.type('input#password', 'SecurePass123!');
     await page.type('input#confirmPassword', 'SecurePass123!');
-    // TEAM_112: Wait for React hydration by checking form has JS event handlers attached.
-    log('waiting for React hydration');
-    await page.waitForFunction(
-      () => {
-        const form = document.querySelector('form');
-        // Check if React has attached event listeners (form won't have action attr if hydrated)
-        return form && !form.hasAttribute('action') && typeof form.onsubmit !== 'function';
-      },
-      { timeout: 5_000 }
-    );
-    // Small delay to ensure React event handlers are fully attached
-    await new Promise((resolve) => setTimeout(resolve, 500));
     log('submitting form');
     await page.click('button[type="submit"]');
     log('waiting for payload capture');

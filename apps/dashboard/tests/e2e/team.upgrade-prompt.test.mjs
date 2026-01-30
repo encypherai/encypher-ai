@@ -30,12 +30,14 @@ function startDashboardDevServer() {
     const requestedPort = process.env.DASHBOARD_E2E_PORT || String(await getFreePort());
     const baseUrl = `http://localhost:${requestedPort}`;
     const nextBin = `${DASHBOARD_ROOT}/node_modules/.bin/next`;
+    console.log(`[e2e] Starting dashboard dev server on ${baseUrl}`);
     const proc = spawn(nextBin, ['dev', '-p', requestedPort], {
       cwd: DASHBOARD_ROOT,
       env: {
         ...process.env,
         NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET || 'test-secret',
         NEXTAUTH_URL: process.env.NEXTAUTH_URL || baseUrl,
+        NEXT_PUBLIC_E2E_TEST: process.env.NEXT_PUBLIC_E2E_TEST || 'true',
       },
       stdio: ['ignore', 'pipe', 'pipe'],
     });
@@ -57,6 +59,7 @@ function startDashboardDevServer() {
       if (!ready && /(ready|started server|local:)/i.test(text)) {
         ready = true;
         cleanup();
+        console.log('[e2e] Dashboard dev server ready');
         resolve({ proc, baseUrl });
       }
     };
@@ -72,15 +75,32 @@ function startDashboardDevServer() {
       }
     };
 
+    const onError = (err) => {
+      if (!ready) {
+        cleanup();
+        reject(new Error(`Dashboard dev server spawn failed: ${err.message}`));
+      }
+    };
+
     const cleanup = () => {
       proc.stdout?.off('data', onData);
       proc.stderr?.off('data', onData);
       proc.off('exit', onExit);
+      proc.off('error', onError);
     };
 
     proc.stdout?.on('data', onData);
     proc.stderr?.on('data', onData);
     proc.on('exit', onExit);
+    proc.on('error', onError);
+
+    setTimeout(() => {
+      if (!ready) {
+        cleanup();
+        proc.kill('SIGTERM');
+        reject(new Error(`Dashboard dev server did not become ready in time. Recent output:\n\n${output}`));
+      }
+    }, 60_000);
   });
 }
 
@@ -107,19 +127,22 @@ describe('team page upgrade prompt', () => {
 
   it('shows upgrade prompt for unauthenticated users', async () => {
     const page = await browser.newPage();
-    await page.goto(`${server.baseUrl}/team`, { waitUntil: 'domcontentloaded' });
-    await page.waitForFunction(() => {
-      const text = document.body?.innerText || '';
-      return /Team Management/i.test(text) || /Upgrade to Business/i.test(text) || /Sign in/i.test(text);
-    });
-    const content = await page.content();
-    const url = page.url();
-    if (/signin/i.test(url) || /Sign in/i.test(content)) {
-      assert.match(content, /Sign in/i);
-    } else {
-      assert.match(content, /Team Management/i);
-      assert.match(content, /Upgrade to Business/i);
+    try {
+      await page.goto(`${server.baseUrl}/team`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      await page.waitForFunction(() => {
+        const text = document.body?.innerText || '';
+        return /Team Management/i.test(text) || /Upgrade to Business/i.test(text) || /Sign in/i.test(text);
+      }, { timeout: 15_000 });
+      const content = await page.content();
+      const url = page.url();
+      if (/signin/i.test(url) || /Sign in/i.test(content)) {
+        assert.match(content, /Sign in/i);
+      } else {
+        assert.match(content, /Team Management/i);
+        assert.match(content, /Upgrade to Business/i);
+      }
+    } finally {
+      await page.close();
     }
-    await page.close();
   });
 });

@@ -239,6 +239,101 @@ class TestCreateInvitation(TestOrganizationService):
                         trial_months=trial_months,
                     )
 
+    @pytest.mark.parametrize(
+        ("first_name", "last_name"),
+        [(None, "Doe"), ("Jane", None), ("", "Doe"), ("Jane", "")],
+    )
+    def test_trial_invite_requires_names(self, service, mock_db, mock_org, first_name, last_name):
+        """Trial invites require first and last name."""
+        with patch.object(service, "_has_permission", return_value=True):
+            with patch.object(service, "get_seat_count", return_value={"used": 0, "max": 5, "available": 5, "unlimited": False}):
+                mock_db.query.return_value.filter.return_value.first.side_effect = [None, None]
+
+                with pytest.raises(ValueError, match="first and last name"):
+                    service.create_invitation(
+                        org_id=mock_org.id,
+                        email="new@example.com",
+                        role="member",
+                        inviter_user_id="admin_user",
+                        first_name=first_name,
+                        last_name=last_name,
+                        tier="business",
+                        trial_months=2,
+                    )
+
+
+class TestCreateTrialInvitationForNewOrg(TestOrganizationService):
+    """Tests for create_trial_invitation_for_new_org."""
+
+    def test_creates_org_and_owner_invite(self, service):
+        invitation = MagicMock(spec=OrganizationInvitation)
+        org = MagicMock(spec=Organization)
+        org.id = "org_new"
+
+        with patch.object(service, "create_organization_without_owner", return_value=org) as create_org:
+            with patch.object(service, "create_invitation", return_value=invitation) as create_invitation:
+                result = service.create_trial_invitation_for_new_org(
+                    organization_name="New Org",
+                    email="invitee@example.com",
+                    first_name="Jane",
+                    last_name="Doe",
+                    tier="business",
+                    trial_months=2,
+                    inviter_user_id="admin_user",
+                )
+
+        assert result == invitation
+        create_org.assert_called_once_with(
+            name="New Org",
+            email="invitee@example.com",
+            tier="starter",
+            created_by="admin_user",
+        )
+        create_invitation.assert_called_once_with(
+            org_id="org_new",
+            email="invitee@example.com",
+            role="owner",
+            inviter_user_id="admin_user",
+            message=None,
+            first_name="Jane",
+            last_name="Doe",
+            organization_name="New Org",
+            tier="business",
+            trial_months=2,
+            allow_owner=True,
+            skip_permission=True,
+            skip_seat_check=True,
+        )
+
+    @pytest.mark.parametrize("organization_name", [None, ""])
+    def test_requires_org_name(self, service, organization_name):
+        with pytest.raises(ValueError, match="Organization name is required"):
+            service.create_trial_invitation_for_new_org(
+                organization_name=organization_name,
+                email="invitee@example.com",
+                first_name="Jane",
+                last_name="Doe",
+                tier="business",
+                trial_months=2,
+                inviter_user_id="admin_user",
+            )
+
+    @pytest.mark.parametrize(
+        ("first_name", "last_name"),
+        [(None, "Doe"), ("Jane", None), ("", "Doe"), ("Jane", "")],
+    )
+    def test_requires_first_and_last_name(self, service, first_name, last_name):
+        with pytest.raises(ValueError, match="first and last name"):
+            service.create_trial_invitation_for_new_org(
+                organization_name="New Org",
+                email="invitee@example.com",
+                first_name=first_name,
+                last_name=last_name,
+                tier="business",
+                trial_months=2,
+                inviter_user_id="admin_user",
+            )
+
 
 class TestDomainClaims(TestOrganizationService):
     """Tests for domain claim logic"""

@@ -2,7 +2,7 @@
 API endpoints for Auth Service v1
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 import httpx
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -868,6 +868,44 @@ async def list_admin_users(
     return {
         "success": True,
         "data": result,
+        "error": None,
+    }
+
+
+@router.get("/admin/organizations/search", response_model=None)
+async def search_admin_organizations(
+    authorization: str = Header(...),
+    query: str = Query(..., min_length=1, description="Search by name, email, slug, or ID"),
+    limit: int = Query(10, ge=1, le=50, description="Max results"),
+    db: Session = Depends(get_db),
+):
+    """Search organizations for admin typeahead."""
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    results = AdminService.search_organizations(db=db, query=query, limit=limit)
+    return {
+        "success": True,
+        "data": results,
         "error": None,
     }
 

@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient, { PendingAccessRequest } from '../../lib/api';
@@ -62,6 +62,14 @@ type AdminUser = {
   createdAt?: string;
 };
 
+type OrganizationOption = {
+  id: string;
+  name: string;
+  email: string;
+  tier: string;
+  slug?: string | null;
+};
+
 const normalizeAdminUsers = (payload: any): { users: AdminUser[]; total: number; page: number; pageSize: number; totalPages: number } => {
   const data = payload?.data ?? payload ?? {};
   const rows = data?.users ?? data ?? [];
@@ -79,7 +87,7 @@ const normalizeAdminUsers = (payload: any): { users: AdminUser[]; total: number;
   }));
   const total = data?.total ?? payload?.total ?? users.length;
   const page = data?.page ?? payload?.page ?? 1;
-  const pageSize = data?.page_size ?? payload?.page_size ?? users.length || 10;
+  const pageSize = (data?.page_size ?? payload?.page_size ?? users.length) || 10;
   const totalPages = data?.total_pages ?? payload?.total_pages ?? (pageSize ? Math.ceil(total / pageSize) : 1);
   return { users, total, page, pageSize, totalPages };
 };
@@ -105,7 +113,12 @@ export default function AdminPage() {
   const [denyingUserId, setDenyingUserId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [inviteOrgId, setInviteOrgId] = useState('');
+  const [orgSearch, setOrgSearch] = useState('');
+  const [selectedOrg, setSelectedOrg] = useState<OrganizationOption | null>(null);
   const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteFirstName, setInviteFirstName] = useState('');
+  const [inviteLastName, setInviteLastName] = useState('');
+  const [inviteOrgName, setInviteOrgName] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
   const [inviteTier, setInviteTier] = useState('');
   const [inviteTrialMonths, setInviteTrialMonths] = useState('');
@@ -132,6 +145,15 @@ export default function AdminPage() {
     enabled: Boolean(accessToken) && isSuperAdmin,
   });
 
+  const orgSearchQuery = useQuery<OrganizationOption[]>({
+    queryKey: ['admin-org-search', orgSearch],
+    queryFn: async () => {
+      if (!accessToken) return [];
+      return apiClient.searchAdminOrganizations(accessToken, orgSearch.trim(), 10) as OrganizationOption[];
+    },
+    enabled: Boolean(accessToken) && isSuperAdmin && orgSearch.trim().length >= 2 && !selectedOrg,
+  });
+
   const usersQuery = useQuery({
     queryKey: ['admin-users', search, page, pageSize],
     queryFn: async () => {
@@ -153,27 +175,54 @@ export default function AdminPage() {
   });
 
   const inviteMutation = useMutation({
-    mutationFn: async ({
-      orgId,
-      email,
-      role,
-      tier,
-      trial_months,
-    }: {
-      orgId: string;
-      email: string;
-      role: string;
-      tier?: string;
-      trial_months?: number;
-    }) => {
+    mutationFn: async (
+      payload:
+        | {
+            mode: 'existing';
+            orgId: string;
+            email: string;
+            role: string;
+            first_name?: string;
+            last_name?: string;
+            tier?: string;
+            trial_months?: number;
+          }
+        | {
+            mode: 'new-org';
+            email: string;
+            first_name: string;
+            last_name: string;
+            organization_name: string;
+            tier: string;
+            trial_months: number;
+          }
+    ) => {
       if (!accessToken) throw new Error('You must be signed in.');
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations`, {
+      const endpoint =
+        payload.mode === 'existing'
+          ? `${process.env.NEXT_PUBLIC_API_URL}/organizations/${payload.orgId}/invitations`
+          : `${process.env.NEXT_PUBLIC_API_URL}/organizations/invitations/trial`;
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ email, role, tier, trial_months }),
+        body: JSON.stringify(payload.mode === 'existing' ? {
+          email: payload.email,
+          role: payload.role,
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          tier: payload.tier,
+          trial_months: payload.trial_months,
+        } : {
+          email: payload.email,
+          first_name: payload.first_name,
+          last_name: payload.last_name,
+          organization_name: payload.organization_name,
+          tier: payload.tier,
+          trial_months: payload.trial_months,
+        }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -184,9 +233,14 @@ export default function AdminPage() {
     onSuccess: () => {
       setInviteOrgId('');
       setInviteEmail('');
+      setInviteFirstName('');
+      setInviteLastName('');
+      setInviteOrgName('');
       setInviteRole('member');
       setInviteTier('');
       setInviteTrialMonths('');
+      setOrgSearch('');
+      setSelectedOrg(null);
       toast.success('Invitation sent successfully.');
     },
     onError: (error: Error) => {
@@ -267,6 +321,13 @@ export default function AdminPage() {
     onError: (err: any) => toast.error(err?.message || 'Failed to update user status.'),
   });
 
+  useEffect(() => {
+    const totalPages = usersQuery.data?.totalPages ?? 1;
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, usersQuery.data?.totalPages]);
+
   // Loading states
   if (status === 'loading') {
     return (
@@ -322,15 +383,9 @@ export default function AdminPage() {
   const pendingCount = pendingRequestsQuery.data?.length ?? 0;
   const realUsageCounts = usageCountsQuery.data ?? {};
 
-  useEffect(() => {
-    if (totalPages > 0 && page > totalPages) {
-      setPage(totalPages);
-    }
-  }, [page, totalPages]);
-
   const handleSendInvite = () => {
-    if (!inviteOrgId || !inviteEmail) {
-      toast.error('Organization ID and email are required.');
+    if (!inviteEmail) {
+      toast.error('Invitee email is required.');
       return;
     }
 
@@ -346,15 +401,56 @@ export default function AdminPage() {
         toast.error('Trial months must be between 1 and 24.');
         return;
       }
+      if (!inviteFirstName.trim() || !inviteLastName.trim()) {
+        toast.error('First and last name are required for trial invitations.');
+        return;
+      }
+    }
+
+    if (!inviteOrgId && !(tierValue && inviteTrialMonths)) {
+      toast.error('Select an organization for standard invitations.');
+      return;
+    }
+
+    if (!inviteOrgId && tierValue && inviteTrialMonths) {
+      if (!inviteOrgName.trim()) {
+        toast.error('Organization name is required to create a trial for a new org.');
+        return;
+      }
+      inviteMutation.mutate({
+        mode: 'new-org',
+        email: inviteEmail,
+        first_name: inviteFirstName.trim(),
+        last_name: inviteLastName.trim(),
+        organization_name: inviteOrgName.trim(),
+        tier: tierValue,
+        trial_months: trialMonthsValue!,
+      });
+      return;
     }
 
     inviteMutation.mutate({
+      mode: 'existing',
       orgId: inviteOrgId,
       email: inviteEmail,
       role: inviteRole,
+      first_name: inviteFirstName.trim() || undefined,
+      last_name: inviteLastName.trim() || undefined,
       tier: tierValue,
       trial_months: trialMonthsValue,
     });
+  };
+
+  const handleOrgSearchChange = (value: string) => {
+    setOrgSearch(value);
+    setInviteOrgId('');
+    setSelectedOrg(null);
+  };
+
+  const handleOrgSelect = (org: OrganizationOption) => {
+    setSelectedOrg(org);
+    setInviteOrgId(org.id);
+    setOrgSearch(`${org.name} (${org.id})`);
   };
 
   const handlePageSizeChange = (value: number) => {
@@ -448,14 +544,50 @@ export default function AdminPage() {
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Organization ID</label>
-                <input
-                  type="text"
-                  placeholder="org_123"
-                  value={inviteOrgId}
-                  onChange={(e) => setInviteOrgId(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
-                />
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Organization Lookup</label>
+                <div className="relative mt-1">
+                  <input
+                    type="text"
+                    placeholder="Search by org name, slug, or ID"
+                    value={orgSearch}
+                    onChange={(e) => handleOrgSearchChange(e.target.value)}
+                    data-testid="invite-org-search"
+                    className="w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  />
+                  {selectedOrg && (
+                    <button
+                      type="button"
+                      onClick={() => handleOrgSearchChange('')}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600"
+                    >
+                      Clear
+                    </button>
+                  )}
+                  {orgSearchQuery.isLoading && !selectedOrg && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 border-2 border-blue-ncs border-t-transparent rounded-full animate-spin" />
+                  )}
+                  {orgSearchQuery.data && orgSearchQuery.data.length > 0 && !selectedOrg && (
+                    <div className="absolute z-10 mt-2 w-full rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg">
+                      {orgSearchQuery.data.map((org: OrganizationOption) => (
+                        <button
+                          key={org.id}
+                          type="button"
+                          onClick={() => handleOrgSelect(org)}
+                          data-testid={`invite-org-option-${org.id}`}
+                          className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                        >
+                          <div className="font-medium text-slate-900 dark:text-white">{org.name}</div>
+                          <div className="text-xs text-slate-500">{org.id} • {org.email}</div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {selectedOrg && (
+                  <div className="mt-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/40 px-3 py-2 text-xs text-slate-600 dark:text-slate-300">
+                    Selected: <span className="font-semibold">{selectedOrg.name}</span> ({selectedOrg.id})
+                  </div>
+                )}
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Invitee Email</label>
@@ -463,30 +595,76 @@ export default function AdminPage() {
                   type="email"
                   placeholder="invitee@company.com"
                   value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setInviteEmail(e.target.value)}
+                  data-testid="invite-email"
                   className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">First Name</label>
+                  <input
+                    type="text"
+                    placeholder="Jane"
+                    value={inviteFirstName}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setInviteFirstName(e.target.value)}
+                    data-testid="invite-first-name"
+                    className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Last Name</label>
+                  <input
+                    type="text"
+                    placeholder="Doe"
+                    value={inviteLastName}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setInviteLastName(e.target.value)}
+                    data-testid="invite-last-name"
+                    className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  />
+                </div>
               </div>
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Role</label>
                 <select
                   value={inviteRole}
-                  onChange={(e) => setInviteRole(e.target.value)}
-                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setInviteRole(e.target.value)}
+                  data-testid="invite-role"
+                  disabled={!selectedOrg}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white disabled:opacity-60"
                 >
                   <option value="admin">Admin</option>
                   <option value="manager">Manager</option>
                   <option value="member">Member</option>
                   <option value="viewer">Viewer</option>
                 </select>
+                {!selectedOrg && (
+                  <p className="mt-1 text-[11px] text-slate-400">New org trials set the invitee as owner.</p>
+                )}
               </div>
             </div>
+            {!selectedOrg && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="md:col-span-2">
+                  <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">New Organization Name</label>
+                  <input
+                    type="text"
+                    placeholder="Acme Labs"
+                    value={inviteOrgName}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) => setInviteOrgName(e.target.value)}
+                    data-testid="invite-org-name"
+                    className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  />
+                </div>
+              </div>
+            )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Trial Tier</label>
                 <select
                   value={inviteTier}
-                  onChange={(e) => setInviteTier(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLSelectElement>) => setInviteTier(e.target.value)}
+                  data-testid="invite-tier"
                   className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 >
                   <option value="">Select tier</option>
@@ -502,7 +680,8 @@ export default function AdminPage() {
                   max={24}
                   placeholder="e.g. 2"
                   value={inviteTrialMonths}
-                  onChange={(e) => setInviteTrialMonths(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setInviteTrialMonths(e.target.value)}
+                  data-testid="invite-trial-months"
                   className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
                 />
               </div>
@@ -510,6 +689,7 @@ export default function AdminPage() {
                 <button
                   onClick={handleSendInvite}
                   disabled={inviteMutation.isPending}
+                  data-testid="invite-submit"
                   className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-ncs rounded-lg hover:bg-delft-blue transition-colors disabled:opacity-50"
                 >
                   {inviteMutation.isPending ? 'Sending...' : 'Send Trial Invite'}

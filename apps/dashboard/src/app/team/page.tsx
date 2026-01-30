@@ -173,8 +173,6 @@ export default function TeamPage() {
   
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
-  const [inviteTier, setInviteTier] = useState('');
-  const [inviteTrialMonths, setInviteTrialMonths] = useState('');
   const [showInviteForm, setShowInviteForm] = useState(Boolean(process.env.NEXT_PUBLIC_E2E_TEST));
   const [showCreateOrgForm, setShowCreateOrgForm] = useState(false);
   const [orgName, setOrgName] = useState('');
@@ -186,17 +184,6 @@ export default function TeamPage() {
   // Check if user has Business+ tier
   const userTier = (session?.user as any)?.tier || 'starter';
   const hasTeamFeature = ['business', 'enterprise'].includes(userTier);
-
-  const superAdminQuery = useQuery({
-    queryKey: ['is-super-admin'],
-    queryFn: async () => {
-      if (!accessToken) return false;
-      return apiClient.isSuperAdmin(accessToken);
-    },
-    enabled: Boolean(accessToken),
-  });
-
-  const isSuperAdmin = superAdminQuery.data ?? false;
 
   const createOrgMutation = useMutation({
     mutationFn: async ({ name, email }: { name: string; email: string }) => {
@@ -280,13 +267,9 @@ export default function TeamPage() {
     mutationFn: async ({
       email,
       role,
-      tier,
-      trial_months,
     }: {
       email: string;
       role: string;
-      tier?: string;
-      trial_months?: number;
     }) => {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations`, {
         method: 'POST',
@@ -294,7 +277,7 @@ export default function TeamPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ email, role, tier, trial_months }),
+        body: JSON.stringify({ email, role }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -307,8 +290,6 @@ export default function TeamPage() {
       queryClient.invalidateQueries({ queryKey: ['org-seats'] });
       setInviteEmail('');
       setInviteRole('member');
-      setInviteTier('');
-      setInviteTrialMonths('');
       setShowInviteForm(false);
       toast.success('Invitation sent successfully');
     },
@@ -320,25 +301,9 @@ export default function TeamPage() {
   const handleSendInvite = () => {
     if (!inviteEmail) return;
 
-    const tierValue = inviteTier ? inviteTier : undefined;
-    const trialMonthsValue = inviteTrialMonths ? Number(inviteTrialMonths) : undefined;
-
-    if (isSuperAdmin && (tierValue || inviteTrialMonths)) {
-      if (!tierValue || !inviteTrialMonths) {
-        toast.error('Select both a tier and trial months for trial invitations.');
-        return;
-      }
-      if (Number.isNaN(trialMonthsValue) || trialMonthsValue! < 1 || trialMonthsValue! > 24) {
-        toast.error('Trial months must be between 1 and 24.');
-        return;
-      }
-    }
-
     inviteMutation.mutate({
       email: inviteEmail,
       role: inviteRole,
-      tier: tierValue,
-      trial_months: trialMonthsValue,
     });
   };
 
@@ -586,42 +551,6 @@ export default function TeamPage() {
                     Cancel
                   </Button>
                 </div>
-
-                {isSuperAdmin && (
-                  <div className="rounded-lg border border-dashed border-border/80 bg-muted/30 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
-                      Trial settings (super admin)
-                    </p>
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="flex-1">
-                        <label className="text-xs font-medium text-muted-foreground">Tier</label>
-                        <select
-                          value={inviteTier}
-                          onChange={(e) => setInviteTier(e.target.value)}
-                          className="w-full h-10 mt-1 px-3 border border-border rounded-lg bg-background text-foreground"
-                          data-testid="invite-tier"
-                        >
-                          <option value="">Select tier</option>
-                          <option value="business">Business</option>
-                          <option value="enterprise">Enterprise</option>
-                        </select>
-                      </div>
-                      <div className="flex-1">
-                        <label className="text-xs font-medium text-muted-foreground">Trial months</label>
-                        <Input
-                          type="number"
-                          min={1}
-                          max={24}
-                          placeholder="e.g. 2"
-                          value={inviteTrialMonths}
-                          onChange={(e) => setInviteTrialMonths(e.target.value)}
-                          className="mt-1"
-                          data-testid="invite-trial-months"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>

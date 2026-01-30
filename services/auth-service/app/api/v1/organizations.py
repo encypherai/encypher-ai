@@ -45,6 +45,7 @@ def _get_email_config() -> EmailConfig:
 def _build_invitation_email(
     *,
     config: EmailConfig,
+    recipient_name: Optional[str],
     inviter_name: Optional[str],
     inviter_email: str,
     organization_name: str,
@@ -63,9 +64,11 @@ def _build_invitation_email(
     safe_org_name = html.escape(organization_name, quote=True)
     safe_role = html.escape(role, quote=True)
     safe_message = html.escape(message, quote=True) if message else None
+    safe_recipient_name = html.escape(recipient_name, quote=True) if recipient_name else None
 
     subject = f"You're invited to join {organization_name} on Encypher"
     html_lines: list[str] = [
+        f"<p>{'Hi ' + safe_recipient_name + ',' if safe_recipient_name else 'Hello,'}</p>",
         f"<p>You have been invited to join <strong>{safe_org_name}</strong>.</p>",
         f"<p>Role: <strong>{safe_role}</strong></p>",
     ]
@@ -85,6 +88,7 @@ def _build_invitation_email(
     html_content = "\n".join(html_lines)
 
     plain_lines: list[str] = [
+        f"{f'Hi {recipient_name},' if recipient_name else 'Hello,'}",
         f"You have been invited to join {organization_name}.",
         f"Role: {role}",
         f"Invited by: {inviter_name + ' ' if inviter_name else ''}<{inviter_email}>",
@@ -107,6 +111,7 @@ async def _send_invitation_email(
     *,
     authorization: str,
     recipient_email: str,
+    recipient_name: Optional[str],
     inviter_name: Optional[str],
     inviter_email: str,
     organization_name: str,
@@ -120,6 +125,7 @@ async def _send_invitation_email(
     config = _get_email_config()
     subject, html_content, plain_content = _build_invitation_email(
         config=config,
+        recipient_name=recipient_name,
         inviter_name=inviter_name,
         inviter_email=inviter_email,
         organization_name=organization_name,
@@ -142,6 +148,7 @@ async def _send_invitation_email(
             "role": role,
             "tier": tier,
             "trial_months": trial_months,
+            "recipient_name": recipient_name,
         },
     }
 
@@ -318,6 +325,15 @@ class InvitationCreate(BaseModel):
     message: Optional[str] = None
 
 
+class TrialInvitationCreate(BaseModel):
+    email: EmailStr
+    first_name: str
+    last_name: str
+    organization_name: str
+    tier: UserTier
+    trial_months: int = Field(..., ge=1, le=24)
+
+
 class InvitationResponse(BaseModel):
     id: str
     email: str
@@ -404,6 +420,55 @@ async def create_organization(
         org = org_service.create_organization(name=org_data.name, email=org_data.email, owner_user_id=actor_user_id)
 
         return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/invitations/trial")
+async def create_trial_invitation_for_new_org(
+    invitation_data: TrialInvitationCreate,
+    request: Request,
+    db: Session = Depends(get_db),
+    _: None = Depends(rate_limiter("org_invite", limit=20, window_sec=60)),
+):
+    """Send a trial invitation for a new organization."""
+    user_id = await get_current_user_id(request, db)
+
+    try:
+        require_super_admin(db, user_id)
+
+        org_service = OrganizationService(db)
+        invitation = org_service.create_trial_invitation_for_new_org(
+            organization_name=invitation_data.organization_name,
+            email=invitation_data.email,
+            first_name=invitation_data.first_name,
+            last_name=invitation_data.last_name,
+            tier=invitation_data.tier.value,
+            trial_months=invitation_data.trial_months,
+            inviter_user_id=user_id,
+        )
+
+        inviter = db.query(User).filter(User.id == user_id).first()
+        recipient_name = " ".join([invitation_data.first_name, invitation_data.last_name]).strip()
+        if inviter:
+            await _send_invitation_email(
+                authorization=request.headers.get("Authorization", ""),
+                recipient_email=invitation.email,
+                recipient_name=recipient_name,
+                inviter_name=inviter.name,
+                inviter_email=inviter.email,
+                organization_name=invitation.organization_name or invitation_data.organization_name,
+                role=invitation.role,
+                invitation_token=invitation.token,
+                message=invitation.message,
+                expires_at=invitation.expires_at,
+                tier=invitation.tier,
+                trial_months=invitation.trial_months,
+            )
+
+        return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
+    except PermissionError as e:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
@@ -817,9 +882,13 @@ async def create_invitation(
         org = org_service.get_organization(org_id)
         organization_name = invitation.organization_name or (org.name if org else "")
         if inviter and organization_name:
+            recipient_name = " ".join(
+                part for part in [invitation.first_name, invitation.last_name] if part
+            ).strip()
             await _send_invitation_email(
                 authorization=request.headers.get("Authorization", ""),
                 recipient_email=invitation.email,
+                recipient_name=recipient_name or None,
                 inviter_name=inviter.name,
                 inviter_email=inviter.email,
                 organization_name=organization_name,
@@ -898,9 +967,13 @@ async def resend_invitation(
         org = org_service.get_organization(org_id)
         organization_name = invitation.organization_name or (org.name if org else "")
         if inviter and organization_name:
+            recipient_name = " ".join(
+                part for part in [invitation.first_name, invitation.last_name] if part
+            ).strip()
             await _send_invitation_email(
                 authorization=request.headers.get("Authorization", ""),
                 recipient_email=invitation.email,
+                recipient_name=recipient_name or None,
                 inviter_name=inviter.name,
                 inviter_email=inviter.email,
                 organization_name=organization_name,

@@ -25,11 +25,11 @@ The admin dashboard currently shows seeded placeholder data and omits real auth-
 
 ### 3.0 Dashboard Integration
 - [x] 3.1 Update dashboard API client to call auth-service admin endpoints.
-- [ ] 3.2 Validate user list and stats show live auth-service data.
+- [x] 3.2 Validate user list and stats show live auth-service data.
 
 ### 4.0 Verification
-- [ ] 4.1 Run linters and relevant tests — ✅ pytest, ✅ ruff check (dashboard lint warnings pending)
-- [ ] 4.2 Manual admin dashboard verification.
+- [x] 4.1 Run linters and relevant tests — ✅ pytest, ✅ ruff check (auth-service), ⚠️ dashboard lint warnings, ✅ dashboard e2e (admin invite flow)
+- [x] 4.2 Manual admin dashboard verification.
 
 ## Success Criteria
 - Admin stats show live counts derived from auth-service organizations.
@@ -39,6 +39,8 @@ The admin dashboard currently shows seeded placeholder data and omits real auth-
 
 ## Completion Notes
 - Added auth-service admin tier/status update endpoints and wired dashboard admin client to route through Traefik.
-- Tests: ✅ `uv run ruff check app/` (auth-service), ✅ `uv run pytest tests/test_admin_dashboard_data.py`.
-- Dashboard lint still reports existing warnings; manual admin dashboard verification pending.
+- Added admin org lookup endpoint + typeahead for trial invites; removed team trial invite controls.
+- Tests: ✅ `uv run ruff check app/` (auth-service), ✅ `uv run pytest tests/test_admin_dashboard_data.py`, ✅ `npm run test:e2e -- tests/e2e/team.invite-trial.test.mjs`.
+- Manual verification: created local super admin and verified admin stats + trial invite org lookup in `/admin`.
+- Dashboard lint still reports existing warnings.
 - Enforced super admin flag for `erik.svilich@encypherai.com` at auth-service startup with ✅ `uv run pytest tests/test_super_admin_startup.py`.

@@ -90,6 +90,26 @@ class OrganizationService:
     def create_organization(self, name: str, email: str, owner_user_id: str, tier: str = "starter") -> Organization:
         """Create a new organization with the user as owner"""
 
+        org = self._create_organization_record(name=name, email=email, tier=tier)
+
+        # Add owner as first member
+        owner_member = OrganizationMember(organization_id=org.id, user_id=owner_user_id, role="owner", status="active", accepted_at=datetime.utcnow())
+        self.db.add(owner_member)
+
+        # Log the creation
+        self._log_action(org.id, owner_user_id, "organization.created", "organization", org.id, {"name": name, "tier": tier})
+
+        self.db.commit()
+        return org
+
+    def create_organization_without_owner(self, name: str, email: str, tier: str, created_by: str) -> Organization:
+        """Create an organization without assigning a member yet."""
+        org = self._create_organization_record(name=name, email=email, tier=tier)
+        self._log_action(org.id, created_by, "organization.created", "organization", org.id, {"name": name, "tier": tier})
+        self.db.commit()
+        return org
+
+    def _create_organization_record(self, *, name: str, email: str, tier: str) -> Organization:
         # Generate unique slug
         base_slug = generate_slug(name)
         slug = base_slug
@@ -110,15 +130,6 @@ class OrganizationService:
         org = Organization(name=name, slug=slug, email=email, tier=tier, max_seats=max_seats)
         self.db.add(org)
         self.db.flush()  # Get the org.id
-
-        # Add owner as first member
-        owner_member = OrganizationMember(organization_id=org.id, user_id=owner_user_id, role="owner", status="active", accepted_at=datetime.utcnow())
-        self.db.add(owner_member)
-
-        # Log the creation
-        self._log_action(org.id, owner_user_id, "organization.created", "organization", org.id, {"name": name, "tier": tier})
-
-        self.db.commit()
         return org
 
     def _get_tier_config(self, tier: str) -> Optional[dict]:
@@ -629,20 +640,24 @@ class OrganizationService:
         organization_name: Optional[str] = None,
         tier: Optional[str] = None,
         trial_months: Optional[int] = None,
+        allow_owner: bool = False,
+        skip_permission: bool = False,
+        skip_seat_check: bool = False,
     ) -> OrganizationInvitation:
         """Create an invitation to join the organization"""
         # Validate role
-        if role not in ROLE_HIERARCHY or role == "owner":
+        if role not in ROLE_HIERARCHY or (role == "owner" and not allow_owner):
             raise ValueError(f"Invalid role for invitation: {role}")
 
         # Check permission
-        if not self._has_permission(org_id, inviter_user_id, ROLE_CAN_INVITE):
+        if not skip_permission and not self._has_permission(org_id, inviter_user_id, ROLE_CAN_INVITE):
             raise PermissionError("You don't have permission to invite members")
 
         # Check seat limit
-        seat_info = self.get_seat_count(org_id)
-        if not seat_info["unlimited"] and seat_info["available"] <= 0:
-            raise ValueError("No seats available. Upgrade your plan to add more team members.")
+        if not skip_seat_check:
+            seat_info = self.get_seat_count(org_id)
+            if not seat_info["unlimited"] and seat_info["available"] <= 0:
+                raise ValueError("No seats available. Upgrade your plan to add more team members.")
 
         if tier:
             config = self._get_tier_config(tier)
@@ -654,6 +669,10 @@ class OrganizationService:
 
         if bool(tier) ^ bool(trial_months):
             raise ValueError("Trial invitations require both tier and trial months")
+
+        if tier and trial_months:
+            if not (first_name or "").strip() or not (last_name or "").strip():
+                raise ValueError("Trial invitations require first and last name")
 
         # Check if user is already a member
         existing_user = self.db.query(User).filter(User.email == email).first()
@@ -706,6 +725,46 @@ class OrganizationService:
 
         self.db.commit()
         return invitation
+
+    def create_trial_invitation_for_new_org(
+        self,
+        *,
+        organization_name: Optional[str],
+        email: str,
+        first_name: Optional[str],
+        last_name: Optional[str],
+        tier: str,
+        trial_months: int,
+        inviter_user_id: str,
+    ) -> OrganizationInvitation:
+        if not organization_name or not organization_name.strip():
+            raise ValueError("Organization name is required")
+
+        if not (first_name or "").strip() or not (last_name or "").strip():
+            raise ValueError("Trial invitations require first and last name")
+
+        org = self.create_organization_without_owner(
+            name=organization_name.strip(),
+            email=email,
+            tier="starter",
+            created_by=inviter_user_id,
+        )
+
+        return self.create_invitation(
+            org_id=org.id,
+            email=email,
+            role="owner",
+            inviter_user_id=inviter_user_id,
+            message=None,
+            first_name=first_name,
+            last_name=last_name,
+            organization_name=organization_name.strip(),
+            tier=tier,
+            trial_months=trial_months,
+            allow_owner=True,
+            skip_permission=True,
+            skip_seat_check=True,
+        )
 
     def get_pending_invitations(self, org_id: str) -> List[OrganizationInvitation]:
         """Get all pending invitations for an organization"""

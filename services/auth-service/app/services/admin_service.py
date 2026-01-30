@@ -116,6 +116,37 @@ class AdminService:
         }
 
     @staticmethod
+    def search_organizations(
+        db: Session,
+        query: str,
+        limit: int = 10,
+    ) -> list[Dict[str, Any]]:
+        search_filter = or_(
+            Organization.name.ilike(f"%{query}%"),
+            Organization.email.ilike(f"%{query}%"),
+            Organization.id.ilike(f"%{query}%"),
+            Organization.slug.ilike(f"%{query}%"),
+        )
+        orgs = (
+            db.query(Organization)
+            .filter(search_filter)
+            .order_by(Organization.created_at.desc())
+            .limit(limit)
+            .all()
+        )
+
+        return [
+            {
+                "id": org.id,
+                "name": org.name,
+                "email": org.email,
+                "tier": org.tier,
+                "slug": org.slug,
+            }
+            for org in orgs
+        ]
+
+    @staticmethod
     def update_user_tier(
         db: Session,
         user_id: str,

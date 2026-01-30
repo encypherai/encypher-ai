@@ -623,6 +623,18 @@ const apiClient = {
   },
 
   /**
+   * Search organizations for admin typeahead
+   */
+  async searchAdminOrganizations(accessToken: string, query: string, limit = 10): Promise<unknown[]> {
+    const params = new URLSearchParams({ query, limit: limit.toString() });
+    const response = await fetchWithAuth<{ success: boolean; data: unknown[] }>(
+      `${AUTH_SERVICE_URL}/auth/admin/organizations/search?${params.toString()}`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  /**
    * Get pending API access requests (admin only)
    */
   async getPendingAccessRequests(accessToken: string): Promise<PendingAccessRequest[]> {

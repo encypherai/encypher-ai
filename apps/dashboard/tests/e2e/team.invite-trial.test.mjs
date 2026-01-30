@@ -111,21 +111,9 @@ async function installApiMocks(page, dashboardUrl) {
   const testOrg = {
     id: 'org_trial',
     name: 'Trial Org',
-    slug: null,
+    slug: 'trial-org',
     email: 'billing@trial-org.test',
     tier: 'business',
-    max_seats: 5,
-    subscription_status: 'active',
-    created_at: new Date().toISOString(),
-  };
-
-  const seatInfo = {
-    used: 0,
-    active: 0,
-    pending: 0,
-    max: 5,
-    available: 5,
-    unlimited: false,
   };
 
   const invitations = [
@@ -238,23 +226,18 @@ async function installApiMocks(page, dashboardUrl) {
       return;
     }
 
-    if (method === 'GET' && url.startsWith(`${apiBase}/organizations`)) {
+    if (method === 'GET' && url.startsWith(`${apiBase}/auth/admin/stats`)) {
+      await jsonRespond(request, { success: true, data: { total_users: 1, active_users: 1, paying_customers: 1, mrr: 499 }, error: null });
+      return;
+    }
+
+    if (method === 'GET' && url.startsWith(`${apiBase}/auth/admin/users`)) {
+      await jsonRespond(request, { success: true, data: { users: [], total: 0, page: 1, page_size: 10, total_pages: 1 }, error: null });
+      return;
+    }
+
+    if (method === 'GET' && url.startsWith(`${apiBase}/auth/admin/organizations/search`)) {
       await jsonRespond(request, { success: true, data: [testOrg], error: null });
-      return;
-    }
-
-    if (method === 'GET' && url.startsWith(`${apiBase}/organizations/${testOrg.id}/seats`)) {
-      await jsonRespond(request, { success: true, data: seatInfo, error: null });
-      return;
-    }
-
-    if (method === 'GET' && url.startsWith(`${apiBase}/organizations/${testOrg.id}/members`)) {
-      await jsonRespond(request, { success: true, data: [], error: null });
-      return;
-    }
-
-    if (method === 'GET' && url.startsWith(`${apiBase}/organizations/${testOrg.id}/invitations`)) {
-      await jsonRespond(request, { success: true, data: invitations, error: null });
       return;
     }
 
@@ -266,8 +249,16 @@ async function installApiMocks(page, dashboardUrl) {
     if (method === 'POST' && url.startsWith(`${apiBase}/organizations/${testOrg.id}/invitations`)) {
       const body = request.postData() || '{}';
       console.log(`[e2e] Captured invite payload: ${body}`);
-      resolveInvitePayload(JSON.parse(body));
+      resolveInvitePayload({ mode: 'existing', payload: JSON.parse(body) });
       await jsonRespond(request, { success: true, data: { id: 'inv_new' }, error: null });
+      return;
+    }
+
+    if (method === 'POST' && url.startsWith(`${apiBase}/organizations/invitations/trial`)) {
+      const body = request.postData() || '{}';
+      console.log(`[e2e] Captured new org invite payload: ${body}`);
+      resolveInvitePayload({ mode: 'new-org', payload: JSON.parse(body) });
+      await jsonRespond(request, { success: true, data: { id: 'inv_new_org' }, error: null });
       return;
     }
 
@@ -277,7 +268,7 @@ async function installApiMocks(page, dashboardUrl) {
   return { invitePayloadPromise };
 }
 
-describe('team invite trial flow', () => {
+describe('admin invite trial flow', () => {
   let server;
   let browser;
 
@@ -298,7 +289,7 @@ describe('team invite trial flow', () => {
     }
   });
 
-  it('sends tiered trial invites for super admins', { timeout: 120_000 }, async () => {
+  it('sends tiered trial invites for existing orgs', { timeout: 120_000 }, async () => {
     const page = await browser.newPage();
     console.log('[e2e] Installing API mocks');
     const { invitePayloadPromise } = await installApiMocks(page, server.baseUrl);
@@ -315,24 +306,20 @@ describe('team invite trial flow', () => {
       console.log(`[e2e][requestfailed] ${request.method()} ${request.url()} ${failure?.errorText || ''}`);
     });
 
-    console.log('[e2e] Navigating to team page');
-    await page.goto(`${server.baseUrl}/team`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
-    await page.waitForFunction(() => {
-      const text = document.body?.textContent || '';
-      return text.includes('Trial: business');
-    }, { timeout: 15_000 });
-    const content = await page.content();
-    assert.match(content, /Trial: business/i);
+    console.log('[e2e] Navigating to admin page');
+    await page.goto(`${server.baseUrl}/admin`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.waitForSelector('[data-testid="invite-org-search"]', { timeout: 15_000 });
 
-    console.log('[e2e] Opening invite form');
-    await page.waitForSelector('[data-testid="invite-email"]', { timeout: 15_000 });
-
-    await page.waitForSelector('[data-testid="invite-submit"]', { timeout: 15_000 });
-    await page.waitForSelector('[data-testid="invite-tier"]', { timeout: 15_000 });
+    console.log('[e2e] Searching organization');
+    await page.type('[data-testid="invite-org-search"]', 'Trial');
+    await page.waitForSelector('[data-testid="invite-org-option-org_trial"]', { timeout: 15_000 });
+    await page.click('[data-testid="invite-org-option-org_trial"]');
 
     console.log('[e2e] Filling invite form');
     await page.type('[data-testid="invite-email"]', 'new@trial-org.test');
     await page.select('[data-testid="invite-role"]', 'member');
+    await page.type('[data-testid="invite-first-name"]', 'New');
+    await page.type('[data-testid="invite-last-name"]', 'Invitee');
     await page.select('[data-testid="invite-tier"]', 'business');
     await page.type('[data-testid="invite-trial-months"]', '3');
 
@@ -346,10 +333,50 @@ describe('team invite trial flow', () => {
       }),
     ]);
     assert.ok(payload, 'Invite payload was not captured.');
-    assert.equal(payload.email, 'new@trial-org.test');
-    assert.equal(payload.role, 'member');
-    assert.equal(payload.tier, 'business');
-    assert.equal(payload.trial_months, 3);
+    assert.equal(payload.mode, 'existing');
+    assert.equal(payload.payload.email, 'new@trial-org.test');
+    assert.equal(payload.payload.role, 'member');
+    assert.equal(payload.payload.first_name, 'New');
+    assert.equal(payload.payload.last_name, 'Invitee');
+    assert.equal(payload.payload.tier, 'business');
+    assert.equal(payload.payload.trial_months, 3);
+
+    await page.close();
+  });
+
+  it('creates a new org when none selected', { timeout: 120_000 }, async () => {
+    const page = await browser.newPage();
+    console.log('[e2e] Installing API mocks for new org flow');
+    const { invitePayloadPromise } = await installApiMocks(page, server.baseUrl);
+    console.log('[e2e] API mocks ready');
+
+    await page.goto(`${server.baseUrl}/admin`, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+    await page.waitForSelector('[data-testid="invite-org-search"]', { timeout: 15_000 });
+
+    await page.type('[data-testid="invite-email"]', 'founder@newco.test');
+    await page.type('[data-testid="invite-first-name"]', 'Alex');
+    await page.type('[data-testid="invite-last-name"]', 'Founder');
+    await page.type('[data-testid="invite-org-name"]', 'NewCo');
+    await page.select('[data-testid="invite-tier"]', 'enterprise');
+    await page.type('[data-testid="invite-trial-months"]', '6');
+
+    await page.click('[data-testid="invite-submit"]');
+
+    const payload = await Promise.race([
+      invitePayloadPromise,
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timed out waiting for invite payload')), 20_000);
+      }),
+    ]);
+
+    assert.ok(payload, 'Invite payload was not captured.');
+    assert.equal(payload.mode, 'new-org');
+    assert.equal(payload.payload.email, 'founder@newco.test');
+    assert.equal(payload.payload.first_name, 'Alex');
+    assert.equal(payload.payload.last_name, 'Founder');
+    assert.equal(payload.payload.organization_name, 'NewCo');
+    assert.equal(payload.payload.tier, 'enterprise');
+    assert.equal(payload.payload.trial_months, 6);
 
     await page.close();
   });

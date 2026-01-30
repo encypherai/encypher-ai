@@ -79,6 +79,35 @@ class TestAdminDashboardUsers:
         assert payload["data"]["total"] == 0
 
 
+class TestAdminOrganizationSearch:
+    def test_admin_org_search_requires_super_admin(self, client):
+        with (
+            patch("app.api.v1.endpoints.AuthService.verify_access_token", return_value={"sub": "user_1"}),
+            patch("app.api.v1.endpoints.verify_super_admin", return_value=False),
+        ):
+            response = client.get(
+                "/api/v1/auth/admin/organizations/search?query=encypher",
+                headers={"Authorization": "Bearer test-token"},
+            )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    def test_admin_org_search_success(self, client):
+        orgs = [{"id": "org_1", "name": "Encypher", "email": "billing@encypher.ai", "tier": "business", "slug": "encypher"}]
+        with (
+            patch("app.api.v1.endpoints.AuthService.verify_access_token", return_value={"sub": "user_admin"}),
+            patch("app.api.v1.endpoints.verify_super_admin", return_value=True),
+            patch("app.api.v1.endpoints.AdminService.search_organizations", return_value=orgs),
+        ):
+            response = client.get(
+                "/api/v1/auth/admin/organizations/search?query=encypher",
+                headers={"Authorization": "Bearer test-token"},
+            )
+        assert response.status_code == status.HTTP_200_OK
+        payload = response.json()
+        assert payload["success"] is True
+        assert payload["data"][0]["id"] == "org_1"
+
+
 class TestAdminTierUpdates:
     def test_update_tier_requires_super_admin(self, client):
         with (
