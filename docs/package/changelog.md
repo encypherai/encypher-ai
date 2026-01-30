@@ -2,6 +2,15 @@
 
 This document provides a chronological list of notable changes for each version of Encypher.
 
+## 3.0.4 (2026-01-30)
+
+### Added
+- Updated C2PA manifest generation to emit `c2pa.actions.v2` and `c2pa.claim.v2` for 2.3 conformance.
+- Added `c2pa.metadata` JSON-LD assertion support for custom metadata payloads.
+
+### Fixed
+- Verification now accepts either `c2pa.actions.v1` or `c2pa.actions.v2` assertions to support mixed manifests.
+
 ## 3.0.3 (2026-01-16)
 
 ### Fixed
