@@ -399,6 +399,7 @@ class UnicodeMetadata:
                 claim_generator=claim_generator,
                 actions=actions,
                 ingredients=ingredients,
+                custom_metadata=custom_metadata,
                 iso_timestamp=iso_timestamp,
                 target=target,
                 distribute_across_targets=distribute_across_targets,
@@ -759,6 +760,7 @@ class UnicodeMetadata:
         claim_generator: Optional[str],
         actions: Optional[list[dict[str, Any]]],
         ingredients: Optional[list[dict[str, Any]]],
+        custom_metadata: Optional[dict[str, Any]],
         iso_timestamp: Optional[str],
         target: Optional[Union[str, MetadataTarget]],
         distribute_across_targets: bool,
@@ -833,10 +835,13 @@ class UnicodeMetadata:
         c2pa_context_url = settings.get("c2pa_context_url", "https://c2pa.org/schemas/v2.3/c2pa.jsonld")
 
         MAX_ITERATIONS = 6
+        actions_label = "c2pa.actions.v2"
+
         for _ in range(MAX_ITERATIONS):
             c2pa_manifest: C2PAPayload = {
                 "@context": c2pa_context_url,
                 "instance_id": instance_id,
+                "claim_label": "c2pa.claim.v2",
                 "claim_generator": claim_gen,
                 "assertions": [],
             }
@@ -846,7 +851,16 @@ class UnicodeMetadata:
                 c2pa_manifest["ingredients"] = ingredients
 
             actions_data: dict[str, Any] = {"actions": copy.deepcopy(base_actions)}
-            c2pa_manifest["assertions"].append({"label": "c2pa.actions.v1", "data": actions_data, "kind": "Actions"})
+            c2pa_manifest["assertions"].append({"label": actions_label, "data": actions_data, "kind": "Actions"})
+
+            if custom_metadata:
+                c2pa_manifest["assertions"].append(
+                    {
+                        "label": "c2pa.metadata",
+                        "data": copy.deepcopy(custom_metadata),
+                        "kind": "Metadata",
+                    }
+                )
 
             # Add custom assertions if provided
             if custom_assertions:
@@ -883,10 +897,7 @@ class UnicodeMetadata:
             }
             manifest_for_hashing["assertions"].append(placeholder_soft_binding)
 
-            actions_data_copy = next(
-                (a["data"] for a in manifest_for_hashing["assertions"] if a.get("label") == "c2pa.actions.v1"),
-                None,
-            )
+            actions_data_copy = next((a["data"] for a in manifest_for_hashing["assertions"] if a.get("label") == actions_label), None)
             if actions_data_copy and isinstance(actions_data_copy.get("actions"), list):
                 actions_data_copy["actions"].append(copy.deepcopy(wm_action))
 
@@ -1223,11 +1234,14 @@ class UnicodeMetadata:
         # b) Check for mandatory assertions
         assertions = c2pa_manifest.get("assertions", [])
         assertion_labels = {a.get("label") for a in assertions if isinstance(a, dict)}
-        required_assertions = {"c2pa.actions.v1", "c2pa.soft_binding.v1"}
+        required_actions = {"c2pa.actions.v1", "c2pa.actions.v2"}
+        required_assertions = {"c2pa.soft_binding.v1"}
         if require_hard_binding:
             required_assertions.add("c2pa.hash.data.v1")
-        if not required_assertions.issubset(assertion_labels):
+        if not (required_actions & assertion_labels) or not required_assertions.issubset(assertion_labels):
             missing = required_assertions - assertion_labels
+            if not (required_actions & assertion_labels):
+                missing = missing | required_actions
             logger.warning(f"C2PA verification: Manifest missing required assertions: {missing}")
             return False, signer_id, c2pa_manifest
 
