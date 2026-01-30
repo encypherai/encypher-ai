@@ -4,6 +4,13 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"
 
+if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  echo "Usage: ./stop-dev.sh"
+  echo
+  echo "Stops Docker containers and local frontend dev servers."
+  exit 0
+fi
+
 step() {
   echo
   echo "[$1] $2"

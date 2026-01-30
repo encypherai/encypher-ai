@@ -119,7 +119,7 @@ def get_standard_templates() -> List[Dict[str, Any]]:
             "category": "news",
             "is_public": True,
             "assertions": [
-                {"label": "c2pa.actions.v1", "description": "Track content lifecycle"},
+                {"label": "c2pa.actions.v2", "description": "Track content lifecycle"},
                 {
                     "label": "c2pa.training-mining.v1",
                     "description": "AI training permissions",
@@ -135,7 +135,7 @@ def get_standard_templates() -> List[Dict[str, Any]]:
             "category": "legal",
             "is_public": True,
             "assertions": [
-                {"label": "c2pa.actions.v1", "description": "Complete audit trail"},
+                {"label": "c2pa.actions.v2", "description": "Complete audit trail"},
                 {
                     "label": "c2pa.training-mining.v1",
                     "description": "Prohibit AI use",
@@ -152,7 +152,7 @@ def get_standard_templates() -> List[Dict[str, Any]]:
             "category": "academic",
             "is_public": True,
             "assertions": [
-                {"label": "c2pa.actions.v1", "description": "Research workflow tracking"},
+                {"label": "c2pa.actions.v2", "description": "Research workflow tracking"},
                 {
                     "label": "c2pa.training-mining.v1",
                     "description": "AI permissions for research",
@@ -169,7 +169,7 @@ def get_standard_templates() -> List[Dict[str, Any]]:
             "category": "publisher",
             "is_public": True,
             "assertions": [
-                {"label": "c2pa.actions.v1", "description": "Publication workflow"},
+                {"label": "c2pa.actions.v2", "description": "Publication workflow"},
                 {
                     "label": "c2pa.training-mining.v1",
                     "description": "Copyright protection",

@@ -4,6 +4,9 @@ Organization Service - Business logic for team management
 
 from datetime import datetime, timedelta
 from typing import Optional, List
+import logging
+
+import httpx
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
@@ -15,6 +18,7 @@ from ..db.models import (
     OrganizationDomainClaim,
     User,
 )
+from ..core.config import settings
 import secrets
 import re
 
@@ -49,6 +53,8 @@ DOMAIN_LIMITS_BY_TIER = {
 }
 
 DOMAIN_REGEX = re.compile(r"^[a-z0-9.-]+\.[a-z]{2,}$")
+
+logger = logging.getLogger(__name__)
 
 
 def generate_slug(name: str) -> str:
@@ -611,7 +617,19 @@ class OrganizationService:
     # INVITATIONS
     # ==========================================
 
-    def create_invitation(self, org_id: str, email: str, role: str, inviter_user_id: str, message: Optional[str] = None) -> OrganizationInvitation:
+    def create_invitation(
+        self,
+        org_id: str,
+        email: str,
+        role: str,
+        inviter_user_id: str,
+        message: Optional[str] = None,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        organization_name: Optional[str] = None,
+        tier: Optional[str] = None,
+        trial_months: Optional[int] = None,
+    ) -> OrganizationInvitation:
         """Create an invitation to join the organization"""
         # Validate role
         if role not in ROLE_HIERARCHY or role == "owner":
@@ -625,6 +643,17 @@ class OrganizationService:
         seat_info = self.get_seat_count(org_id)
         if not seat_info["unlimited"] and seat_info["available"] <= 0:
             raise ValueError("No seats available. Upgrade your plan to add more team members.")
+
+        if tier:
+            config = self._get_tier_config(tier)
+            if not config:
+                raise ValueError(f"Invalid tier: {tier}")
+
+        if trial_months is not None and trial_months < 1:
+            raise ValueError("Trial months must be at least 1")
+
+        if bool(tier) ^ bool(trial_months):
+            raise ValueError("Trial invitations require both tier and trial months")
 
         # Check if user is already a member
         existing_user = self.db.query(User).filter(User.email == email).first()
@@ -653,6 +682,11 @@ class OrganizationService:
         invitation = OrganizationInvitation(
             organization_id=org_id,
             email=email,
+            first_name=first_name,
+            last_name=last_name,
+            organization_name=organization_name,
+            tier=tier,
+            trial_months=trial_months,
             role=role,
             invited_by=inviter_user_id,
             message=message,
@@ -661,7 +695,14 @@ class OrganizationService:
         self.db.add(invitation)
 
         # Log the invitation
-        self._log_action(org_id, inviter_user_id, "member.invited", "invitation", invitation.id, {"email": email, "role": role})
+        self._log_action(
+            org_id,
+            inviter_user_id,
+            "member.invited",
+            "invitation",
+            invitation.id,
+            {"email": email, "role": role, "tier": tier, "trial_months": trial_months},
+        )
 
         self.db.commit()
         return invitation
@@ -699,6 +740,7 @@ class OrganizationService:
 
         # Get organization name
         org = self.get_organization(invitation.organization_id)
+        organization_name = invitation.organization_name or (org.name if org else "Unknown")
 
         # Get inviter name
         inviter = self.db.query(User).filter(User.id == invitation.invited_by).first()
@@ -710,11 +752,15 @@ class OrganizationService:
             "valid": True,
             "status": invitation.status,
             "email": invitation.email,
+            "first_name": invitation.first_name,
+            "last_name": invitation.last_name,
             "role": invitation.role,
-            "organization_name": org.name if org else "Unknown",
+            "organization_name": organization_name,
             "organization_id": invitation.organization_id,
             "inviter_name": inviter.name or inviter.email if inviter else "Unknown",
             "message": invitation.message,
+            "tier": invitation.tier,
+            "trial_months": invitation.trial_months,
             "expires_at": invitation.expires_at.isoformat(),
             "user_exists": existing_user is not None,
         }
@@ -760,6 +806,26 @@ class OrganizationService:
         invitation.status = "accepted"
         invitation.accepted_at = datetime.utcnow()
 
+        if invitation.tier:
+            subscription_status = "trialing" if invitation.trial_months else None
+            org = self.update_tier_internal(
+                org_id=invitation.organization_id,
+                tier=invitation.tier,
+                subscription_status=subscription_status,
+            )
+            if invitation.trial_months:
+                self._apply_trial_metadata(
+                    org=org,
+                    tier=invitation.tier,
+                    trial_months=invitation.trial_months,
+                )
+                self._sync_trial_to_billing(
+                    organization_id=invitation.organization_id,
+                    user_id=user.id,
+                    tier=invitation.tier,
+                    trial_months=invitation.trial_months,
+                )
+
         # Log the acceptance
         self._log_action(
             invitation.organization_id, user_id, "member.joined", "member", member.id, {"role": invitation.role, "invitation_id": invitation.id}
@@ -768,7 +834,7 @@ class OrganizationService:
         self.db.commit()
         return member
 
-    def accept_invitation_new_user(self, token: str, name: str, password_hash: str) -> tuple:
+    def accept_invitation_new_user(self, token: str, name: Optional[str], password_hash: str) -> tuple:
         """Accept an invitation and create a new user account
 
         Returns: (user, member) tuple
@@ -791,11 +857,16 @@ class OrganizationService:
         if existing_user:
             raise ValueError("An account with this email already exists. Please log in to accept the invitation.")
 
+        resolved_name = name
+        if not resolved_name:
+            name_parts = [invitation.first_name, invitation.last_name]
+            resolved_name = " ".join(part for part in name_parts if part).strip() or None
+
         # Create new user
         user = User(
             email=invitation.email,
             password_hash=password_hash,
-            name=name,
+            name=resolved_name,
             email_verified=True,  # Email is verified via invitation
             email_verified_at=datetime.utcnow(),
             is_active=True,
@@ -819,6 +890,26 @@ class OrganizationService:
         invitation.status = "accepted"
         invitation.accepted_at = datetime.utcnow()
 
+        if invitation.tier:
+            subscription_status = "trialing" if invitation.trial_months else None
+            org = self.update_tier_internal(
+                org_id=invitation.organization_id,
+                tier=invitation.tier,
+                subscription_status=subscription_status,
+            )
+            if invitation.trial_months:
+                self._apply_trial_metadata(
+                    org=org,
+                    tier=invitation.tier,
+                    trial_months=invitation.trial_months,
+                )
+                self._sync_trial_to_billing(
+                    organization_id=invitation.organization_id,
+                    user_id=user.id,
+                    tier=invitation.tier,
+                    trial_months=invitation.trial_months,
+                )
+
         # Log the acceptance
         self._log_action(
             invitation.organization_id,
@@ -831,6 +922,51 @@ class OrganizationService:
 
         self.db.commit()
         return user, member
+
+    def _sync_trial_to_billing(
+        self,
+        *,
+        organization_id: str,
+        user_id: str,
+        tier: str,
+        trial_months: int,
+    ) -> None:
+        if not settings.BILLING_SERVICE_URL:
+            logger.warning("billing_service_url_missing")
+            return
+
+        payload = {
+            "organization_id": organization_id,
+            "user_id": user_id,
+            "tier": tier,
+            "trial_months": trial_months,
+        }
+        headers = {}
+        if settings.INTERNAL_SERVICE_TOKEN:
+            headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+
+        try:
+            with httpx.Client(timeout=10) as client:
+                response = client.post(
+                    f"{settings.BILLING_SERVICE_URL}/api/v1/billing/internal/trials",
+                    json=payload,
+                    headers=headers,
+                )
+                if response.status_code >= 400:
+                    logger.warning(
+                        "billing_trial_sync_failed",
+                        status=response.status_code,
+                        response=response.text,
+                    )
+        except httpx.RequestError as exc:
+            logger.warning("billing_trial_sync_request_failed", error=str(exc))
+
+    def _apply_trial_metadata(self, *, org: Organization, tier: str, trial_months: int) -> None:
+        now = datetime.utcnow()
+        org.trial_tier = tier
+        org.trial_months = trial_months
+        org.trial_started_at = now
+        org.trial_ends_at = now + timedelta(days=trial_months * 30)
 
     def cancel_invitation(self, org_id: str, invitation_id: str, actor_user_id: str) -> bool:
         """Cancel a pending invitation"""

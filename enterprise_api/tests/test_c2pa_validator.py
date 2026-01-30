@@ -23,6 +23,12 @@ class TestC2PAValidator:
             assert is_valid is True
             assert error is None
 
+    def test_standard_c2pa_assertions_include_v2_3_labels(self):
+        """Validator should recognize v2.3 assertion labels."""
+        assert "c2pa.actions.v2" in self.validator.standard_assertions
+        assert "c2pa.ingredient.v3" in self.validator.standard_assertions
+        assert "c2pa.metadata" in self.validator.standard_assertions
+
     def test_validate_custom_namespaced_action(self):
         """Test validation of custom namespaced actions."""
         is_valid, error = self.validator.validate_action("com.acme.custom_action")
@@ -34,6 +40,51 @@ class TestC2PAValidator:
         is_valid, error = self.validator.validate_action("invalid_action")
         assert is_valid is False
         assert "Invalid action format" in error
+
+    # Ingredient Assertion Tests
+
+    def test_validate_ingredient_assertion_valid(self):
+        """Test validation of valid ingredient assertion."""
+        label = "c2pa.ingredient.v3"
+        data = {
+            "ingredients": [
+                {"title": "Previous version", "instance_id": "abc-123", "relationship": "inputTo"},
+                {"title": "Source", "instance_id": "def-456", "relationship": "componentOf"},
+            ]
+        }
+
+        is_valid, errors, warnings = self.validator.validate_assertion(label, data)
+        assert is_valid is True
+        assert len(errors) == 0
+
+    def test_validate_ingredient_assertion_invalid_relationship(self):
+        """Test validation fails for invalid ingredient relationship."""
+        label = "c2pa.ingredient.v3"
+        data = {"ingredients": [{"title": "Bad", "instance_id": "abc-123", "relationship": "parentOf"}]}
+
+        is_valid, errors, warnings = self.validator.validate_assertion(label, data)
+        assert is_valid is False
+        assert any("relationship" in str(error).lower() for error in errors)
+
+    # Metadata Assertion Tests
+
+    def test_validate_metadata_assertion_requires_context(self):
+        """Test validation fails when metadata lacks JSON-LD context."""
+        label = "c2pa.metadata"
+        data = {"identifier": "doc_001", "document_id": "doc_001"}
+
+        is_valid, errors, warnings = self.validator.validate_assertion(label, data)
+        assert is_valid is False
+        assert any("@context" in str(error) for error in errors)
+
+    def test_validate_metadata_assertion_valid(self):
+        """Test validation of valid JSON-LD metadata assertion."""
+        label = "c2pa.metadata"
+        data = {"@context": "https://schema.org", "@type": "CreativeWork", "identifier": "doc_001"}
+
+        is_valid, errors, warnings = self.validator.validate_assertion(label, data)
+        assert is_valid is True
+        assert len(errors) == 0
 
     # Location Assertion Tests
 

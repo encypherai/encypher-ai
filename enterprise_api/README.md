@@ -29,7 +29,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 ### Why Encypher API?
 
-- **🔒 C2PA 2.2 Compliant**: Industry-standard content authenticity
+- **🔒 C2PA 2.3 Compliant**: Industry-standard content authenticity
 - **⚡ High Performance**: <100ms verification, 1000+ req/s capacity
 - **🔗 Microservices Architecture**: Scalable, resilient, database-per-service design
 - **📊 Advanced Features**: Merkle tree authentication, evidence generation, granular attribution
@@ -43,7 +43,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 ### Complete Feature List
 
 #### Core Capabilities
-- ✅ **C2PA-Compliant Signing**: Full C2PA 2.2 text manifest support
+- ✅ **C2PA-Compliant Signing**: Full C2PA 2.3 text manifest support
 - ✅ **Content Verification**: Cryptographic verification with tamper detection
 - ✅ **Granular Attribution**: Track provenance of individual sentences
 - ✅ **Public Verification Pages**: Shareable verification URLs

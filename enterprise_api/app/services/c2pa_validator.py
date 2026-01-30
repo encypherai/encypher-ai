@@ -36,13 +36,14 @@ STANDARD_C2PA_ACTIONS = {
 
 # Standard C2PA assertion labels
 STANDARD_C2PA_ASSERTIONS = {
-    "c2pa.actions.v1",
+    "c2pa.actions.v2",
     "c2pa.hash.data.v1",
     "c2pa.soft_binding.v1",
+    "c2pa.metadata",
     "c2pa.location.v1",
     "c2pa.thumbnail.v1",
     "c2pa.data_hash.v1",
-    "c2pa.ingredient.v1",
+    "c2pa.ingredient.v3",
     "c2pa.training-mining.v1",
     "c2pa.claim_review.v1",
     "c2pa.creative_work.v1",
@@ -60,6 +61,7 @@ class C2PAValidator:
 
     def __init__(self):
         self.schema_cache: Dict[str, Any] = {}
+        self.standard_assertions = STANDARD_C2PA_ASSERTIONS
         self._load_standard_schemas()
 
     def _load_standard_schemas(self):
@@ -129,6 +131,39 @@ class C2PAValidator:
                 "thumbnail": {"type": "string"},  # Base64 encoded
             },
             "required": ["format", "thumbnail"],
+        }
+
+        # Ingredient assertion schema
+        self.schema_cache["c2pa.ingredient.v3"] = {
+            "type": "object",
+            "properties": {
+                "ingredients": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "title": {"type": "string"},
+                            "instance_id": {"type": "string"},
+                            "relationship": {"type": "string", "enum": ["componentOf", "inputTo"]},
+                            "c2pa_manifest": {"type": "object"},
+                        },
+                        "required": ["instance_id", "relationship"],
+                    },
+                    "minItems": 1,
+                }
+            },
+            "required": ["ingredients"],
+        }
+
+        # Metadata assertion schema (JSON-LD)
+        self.schema_cache["c2pa.metadata"] = {
+            "type": "object",
+            "properties": {
+                "@context": {"type": "string"},
+                "@type": {"type": "string"},
+                "identifier": {"type": "string"},
+            },
+            "required": ["@context"],
         }
 
         self.schema_cache["com.encypher.rights.v1"] = {

@@ -1,12 +1,12 @@
 # Encypher C2PA Compliance Reference
 
-This document maps Encypher's implementation to the C2PA Technical Specification 2.2.
+This document maps Encypher's implementation to the C2PA Technical Specification 2.3.
 
 ## Quick Links to C2PA Specification
 
-- [C2PA Specification 2.2](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html)
-- [C2PA Implementation Guidance](https://spec.c2pa.org/specifications/specifications/2.2/guidance/Guidance.html)
-- [C2PA Security Considerations](https://spec.c2pa.org/specifications/specifications/2.0/security/Security_Considerations.html)
+- [C2PA Specification 2.3](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html)
+- [C2PA Implementation Guidance 2.3](https://spec.c2pa.org/specifications/specifications/2.3/guidance/Guidance.html)
+- [C2PA Security Considerations](https://spec.c2pa.org/specifications/specifications/2.3/specs/Security_Considerations.html)
 - [C2PA Trust Lists](https://spec.c2pa.org/conformance-explorer/)
 
 ---
@@ -58,12 +58,14 @@ Encypher supports the following C2PA assertion types:
 
 | Assertion Label | Spec Reference | Purpose |
 |-----------------|----------------|---------|
-| `c2pa.created` | [§8.2](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_c2pa_created) | Creation timestamp and source type |
-| `c2pa.actions.v1` | [§8.3](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_c2pa_actions_v1) | Action history |
-| `c2pa.hash.data.v1` | [§8.4](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_c2pa_hash_data_v1) | Content binding (hard binding) |
-| `c2pa.soft_binding.v1` | [§8.5](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_c2pa_soft_binding_v1) | Soft binding for watermarks |
-| `c2pa.training-mining.v1` | [§8.6](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_c2pa_training_mining_v1) | AI training/mining permissions |
+| `c2pa.created` | [§8.2](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_created) | Creation timestamp and source type |
+| `c2pa.actions.v2` | [§8.3](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_actions_v2) | Action history |
+| `c2pa.hash.data.v1` | [§8.4](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_hash_data_v1) | Content binding (hard binding) |
+| `c2pa.soft_binding.v1` | [§8.5](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_soft_binding_v1) | Soft binding for watermarks |
+| `c2pa.training-mining.v1` | [§8.6](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_c2pa_training_mining_v1) | AI training/mining permissions |
 | `c2pa.watermarked` | §8.3 (action) | Watermark embedding action |
+| `c2pa.ingredient.v3` | [§9.8](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_ingredients) | Provenance chain |
+| `c2pa.metadata` | [§9.10](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_metadata_assertion) | JSON-LD metadata |
 
 ---
 
@@ -71,9 +73,9 @@ Encypher supports the following C2PA assertion types:
 
 | Algorithm | Spec Reference | Encypher Implementation |
 |-----------|----------------|-------------------------|
-| Ed25519 | [§15.2](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_signature_algorithms) | Primary signing algorithm |
+| Ed25519 | [§15.2](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_signature_algorithms) | Primary signing algorithm |
 | SHA-256 | §15.3 | Content hashing |
-| COSE Sign1 | [§15.4](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_cose_sign1) | Signature container format |
+| COSE Sign1 | [§15.4](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_cose_sign1) | Signature container format |
 | CBOR | §15.5 | Manifest serialization |
 
 ---
@@ -82,7 +84,7 @@ Encypher supports the following C2PA assertion types:
 
 | Requirement | Spec Reference | Encypher Status |
 |-------------|----------------|-----------------|
-| RFC 3161 compliance | [§15.8](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html#_time_stamp_authority) | 🔧 Planned (optional feature) |
+| RFC 3161 compliance | [§15.8](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#_time_stamp_authority) | 🔧 Planned (optional feature) |
 | TSA Trust List | §14.4.2 | 🔧 Planned (DigiCert/SSL.com) |
 | `sigTst2` COSE header | §15.8.2 | 🔧 Planned |
 
@@ -132,8 +134,8 @@ Encypher supports the following C2PA assertion types:
 
 ## References
 
-1. [C2PA Technical Specification 2.2](https://spec.c2pa.org/specifications/specifications/2.2/specs/C2PA_Specification.html)
-2. [C2PA Implementation Guidance 2.2](https://spec.c2pa.org/specifications/specifications/2.2/guidance/Guidance.html)
+1. [C2PA Technical Specification 2.3](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html)
+2. [C2PA Implementation Guidance 2.3](https://spec.c2pa.org/specifications/specifications/2.3/guidance/Guidance.html)
 3. [C2PA Conformance Program](https://c2pa.org/conformance/)
 4. [Content Authenticity Initiative](https://contentauthenticity.org/)
 5. [RFC 3161 - Time-Stamp Protocol](https://www.ietf.org/rfc/rfc3161.txt)

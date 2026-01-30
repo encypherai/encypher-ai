@@ -19,6 +19,8 @@ interface InvitationDetails {
   message?: string;
   expires_at: string;
   user_exists: boolean;
+  tier?: string | null;
+  trial_months?: number | null;
 }
 
 export default function InvitationPage() {
@@ -260,6 +262,17 @@ export default function InvitationPage() {
               <p className="text-sm text-muted-foreground mt-2">
                 as a <span className="font-medium capitalize">{invitation.role}</span>
               </p>
+              {(invitation.tier || invitation.trial_months) && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  Trial:{' '}
+                  {invitation.tier
+                    ? invitation.tier.charAt(0).toUpperCase() + invitation.tier.slice(1)
+                    : 'Tier pending'}
+                  {invitation.trial_months
+                    ? ` · ${invitation.trial_months} month${invitation.trial_months === 1 ? '' : 's'}`
+                    : ''}
+                </p>
+              )}
             </div>
 
             {invitation.message && (

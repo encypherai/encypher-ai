@@ -170,6 +170,42 @@ class BillingService:
         return subscription
 
     @staticmethod
+    def create_trial_subscription(
+        *,
+        db: Session,
+        user_id: str,
+        organization_id: str,
+        tier: str,
+        trial_months: int,
+    ) -> Subscription:
+        """Create a trial subscription record for an organization."""
+        plan = PRICING_TIERS.get(tier)
+        if not plan:
+            raise ValueError(f"Invalid tier: {tier}")
+
+        now = datetime.utcnow()
+        period_end = now + timedelta(days=trial_months * 30)
+
+        subscription = Subscription(
+            user_id=user_id,
+            organization_id=organization_id,
+            plan_id=tier,
+            plan_name=plan["name"],
+            status="trialing",
+            billing_cycle="monthly",
+            amount=plan["price_monthly"],
+            currency="usd",
+            current_period_start=now,
+            current_period_end=period_end,
+        )
+
+        db.add(subscription)
+        db.commit()
+        db.refresh(subscription)
+
+        return subscription
+
+    @staticmethod
     def get_user_subscription(db: Session, user_id: str) -> Optional[Subscription]:
         """Get active subscription for user, preferring ones with valid Stripe data"""
         # First try to find a subscription with a valid stripe_subscription_id and known tier

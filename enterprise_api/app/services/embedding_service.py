@@ -283,6 +283,22 @@ class EmbeddingService:
         if license_info:
             document_metadata["license"] = license_info
 
+        document_metadata_jsonld: Dict[str, Any] = {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "identifier": document_id,
+            "name": document_id,
+            "manifest_mode": manifest_mode,
+            "publisher": {
+                "@type": "Organization",
+                "identifier": organization_id,
+            },
+        }
+        if license_info and license_info.get("url"):
+            document_metadata_jsonld["license"] = license_info.get("url")
+        if c2pa_manifest_url:
+            document_metadata_jsonld["url"] = c2pa_manifest_url
+
         # Build C2PA actions list
         action_data = {
             "label": action,  # "c2pa.created" or "c2pa.edited"
@@ -321,25 +337,22 @@ class EmbeddingService:
                         {
                             "title": "Previous version",
                             "instance_id": previous_instance_id,
-                            "relationship": "parentOf",
+                            "relationship": "inputTo",
                             "c2pa_manifest": previous_ref.manifest_data,
                         }
                     ]
                     document_metadata["previous_instance_id"] = previous_instance_id
+                    document_metadata_jsonld["isBasedOn"] = {
+                        "@type": "CreativeWork",
+                        "identifier": previous_instance_id,
+                    }
                 else:
                     logger.warning(f"Previous manifest not found for instance_id: {previous_instance_id}")
             except Exception as e:
                 logger.error(f"Error fetching previous manifest: {e}")
 
-        # Convert document_metadata to a custom assertion for C2PA compliance
-        # encypher-ai embed_metadata drops custom_metadata when format is "c2pa",
-        # so we must pass it as an assertion.
-        encypher_metadata_assertion = {"label": "org.encypher.metadata", "data": document_metadata}
-
         # Create a new list for assertions to avoid modifying the input list if it's reused
-        final_custom_assertions = [encypher_metadata_assertion]
-        if custom_assertions:
-            final_custom_assertions.extend(custom_assertions)
+        final_custom_assertions = list(custom_assertions) if custom_assertions else []
 
         # === API Feature Augmentation (TEAM_044) ===
         # Handle different manifest modes and embedding strategies
@@ -430,7 +443,7 @@ class EmbeddingService:
                     private_key=self.private_key,
                     signer_id=self.signer_id,
                     timestamp=current_timestamp,
-                    custom_metadata=document_metadata,
+                    custom_metadata=document_metadata_jsonld,
                     metadata_format=metadata_format,
                     add_hard_binding=add_hard_binding,
                     claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
@@ -458,7 +471,7 @@ class EmbeddingService:
                     private_key=self.private_key,
                     signer_id=self.signer_id,
                     timestamp=current_timestamp,
-                    custom_metadata=document_metadata,
+                    custom_metadata=document_metadata_jsonld,
                     metadata_format=metadata_format,
                     add_hard_binding=add_hard_binding,
                     claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",
@@ -484,7 +497,7 @@ class EmbeddingService:
                     private_key=self.private_key,
                     signer_id=self.signer_id,
                     timestamp=current_timestamp,
-                    custom_metadata=document_metadata,
+                    custom_metadata=document_metadata_jsonld,
                     metadata_format=metadata_format,
                     add_hard_binding=add_hard_binding,
                     claim_generator=f"encypher-enterprise-api/{self._get_api_version()}",

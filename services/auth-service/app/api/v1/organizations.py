@@ -16,8 +16,10 @@ from ...db.models import User
 from ...db.session import get_db
 from ...core.config import settings
 from ...services.organization_service import OrganizationService
+from ...models.schemas import UserTier
 import dns.resolver
 from ...services.auth_service import AuthService
+from .endpoints import require_super_admin
 from ...deps.rate_limit import rate_limiter
 from encypher_commercial_shared.email import EmailConfig
 
@@ -50,6 +52,8 @@ def _build_invitation_email(
     invitation_token: str,
     message: Optional[str],
     expires_at: Optional[datetime],
+    tier: Optional[str],
+    trial_months: Optional[int],
 ) -> tuple[str, str, str]:
     base_url = config.dashboard_url or config.frontend_url
     invitation_url = f"{base_url}/invitations/accept?token={invitation_token}"
@@ -65,6 +69,10 @@ def _build_invitation_email(
         f"<p>You have been invited to join <strong>{safe_org_name}</strong>.</p>",
         f"<p>Role: <strong>{safe_role}</strong></p>",
     ]
+    if tier:
+        html_lines.append(f"<p>Tier: <strong>{html.escape(tier, quote=True)}</strong></p>")
+    if trial_months:
+        html_lines.append(f"<p>Trial: <strong>{trial_months} month(s)</strong></p>")
     if safe_inviter_name:
         html_lines.append(f"<p>Invited by: {safe_inviter_name} ({safe_inviter_email})</p>")
     else:
@@ -81,6 +89,10 @@ def _build_invitation_email(
         f"Role: {role}",
         f"Invited by: {inviter_name + ' ' if inviter_name else ''}<{inviter_email}>",
     ]
+    if tier:
+        plain_lines.append(f"Tier: {tier}")
+    if trial_months:
+        plain_lines.append(f"Trial: {trial_months} month(s)")
     if message:
         plain_lines.append(f"Message: {message}")
     plain_lines.append(f"Accept invitation: {invitation_url}")
@@ -102,6 +114,8 @@ async def _send_invitation_email(
     invitation_token: str,
     message: Optional[str],
     expires_at: Optional[datetime],
+    tier: Optional[str],
+    trial_months: Optional[int],
 ) -> None:
     config = _get_email_config()
     subject, html_content, plain_content = _build_invitation_email(
@@ -113,6 +127,8 @@ async def _send_invitation_email(
         invitation_token=invitation_token,
         message=message,
         expires_at=expires_at,
+        tier=tier,
+        trial_months=trial_months,
     )
 
     payload = {
@@ -124,6 +140,8 @@ async def _send_invitation_email(
             "plain_content": plain_content,
             "organization_name": organization_name,
             "role": role,
+            "tier": tier,
+            "trial_months": trial_months,
         },
     }
 
@@ -235,6 +253,10 @@ class OrganizationResponse(BaseModel):
     slug: Optional[str]
     email: str
     tier: str
+    trial_tier: Optional[str] = None
+    trial_months: Optional[int] = None
+    trial_started_at: Optional[datetime] = None
+    trial_ends_at: Optional[datetime] = None
     max_seats: int
     subscription_status: str
     coalition_rev_share: int
@@ -287,6 +309,11 @@ class MemberResponse(BaseModel):
 
 class InvitationCreate(BaseModel):
     email: EmailStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    organization_name: Optional[str] = None
+    tier: Optional[UserTier] = None
+    trial_months: Optional[int] = Field(default=None, ge=1, le=24)
     role: str = "member"
     message: Optional[str] = None
 
@@ -294,6 +321,11 @@ class InvitationCreate(BaseModel):
 class InvitationResponse(BaseModel):
     id: str
     email: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    organization_name: Optional[str] = None
+    tier: Optional[str] = None
+    trial_months: Optional[int] = None
     role: str
     status: str
     message: Optional[str] = None
@@ -764,24 +796,39 @@ async def create_invitation(
     user_id = await get_current_user_id(request, db)
 
     try:
+        if invitation_data.trial_months:
+            require_super_admin(db, user_id)
+
         org_service = OrganizationService(db)
         invitation = org_service.create_invitation(
-            org_id=org_id, email=invitation_data.email, role=invitation_data.role, inviter_user_id=user_id, message=invitation_data.message
+            org_id=org_id,
+            email=invitation_data.email,
+            role=invitation_data.role,
+            inviter_user_id=user_id,
+            message=invitation_data.message,
+            first_name=invitation_data.first_name,
+            last_name=invitation_data.last_name,
+            organization_name=invitation_data.organization_name,
+            tier=invitation_data.tier.value if invitation_data.tier else None,
+            trial_months=invitation_data.trial_months,
         )
 
         inviter = db.query(User).filter(User.id == user_id).first()
         org = org_service.get_organization(org_id)
-        if inviter and org:
+        organization_name = invitation.organization_name or (org.name if org else "")
+        if inviter and organization_name:
             await _send_invitation_email(
                 authorization=request.headers.get("Authorization", ""),
                 recipient_email=invitation.email,
                 inviter_name=inviter.name,
                 inviter_email=inviter.email,
-                organization_name=org.name,
+                organization_name=organization_name,
                 role=invitation.role,
                 invitation_token=invitation.token,
                 message=invitation.message,
                 expires_at=invitation.expires_at,
+                tier=invitation.tier,
+                trial_months=invitation.trial_months,
             )
 
         return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
@@ -849,17 +896,20 @@ async def resend_invitation(
 
         inviter = db.query(User).filter(User.id == user_id).first()
         org = org_service.get_organization(org_id)
-        if inviter and org:
+        organization_name = invitation.organization_name or (org.name if org else "")
+        if inviter and organization_name:
             await _send_invitation_email(
                 authorization=request.headers.get("Authorization", ""),
                 recipient_email=invitation.email,
                 inviter_name=inviter.name,
                 inviter_email=inviter.email,
-                organization_name=org.name,
+                organization_name=organization_name,
                 role=invitation.role,
                 invitation_token=invitation.token,
                 message=invitation.message,
                 expires_at=invitation.expires_at,
+                tier=invitation.tier,
+                trial_months=invitation.trial_months,
             )
 
         return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
@@ -877,7 +927,7 @@ async def resend_invitation(
 class AcceptInvitationNewUser(BaseModel):
     """Schema for accepting invitation with new account"""
 
-    name: str
+    name: Optional[str] = None
     password: str = Field(..., min_length=8, max_length=settings.AUTH_MAX_PASSWORD_LENGTH)
 
 

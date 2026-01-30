@@ -727,11 +727,18 @@ const apiClient = {
   /**
    * List all users with optional filtering (super admin only)
    */
-  async getAdminUsers(accessToken: string, search?: string, tier?: string, page?: number): Promise<unknown> {
+  async getAdminUsers(
+    accessToken: string,
+    search?: string,
+    tier?: string,
+    page?: number,
+    pageSize?: number
+  ): Promise<unknown> {
     const params = new URLSearchParams();
     if (search) params.append('search', search);
     if (tier) params.append('tier', tier);
     if (page) params.append('page', page.toString());
+    if (pageSize) params.append('page_size', pageSize.toString());
     
     const queryString = params.toString();
     const url = `${AUTH_SERVICE_URL}/auth/admin/users${queryString ? `?${queryString}` : ''}`;

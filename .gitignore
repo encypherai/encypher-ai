@@ -4,6 +4,8 @@
 # AI Agent session artifacts (ephemeral)
 .teams/TEAM_*.md
 .questions/TEAM_*.md
+!.teams/TEAM_*.md
+!.questions/TEAM_*.md
 
 # Legacy archive (never commit)
 archive/encypherai-backend-old/

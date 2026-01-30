@@ -45,6 +45,8 @@ interface Invitation {
   status: string;
   expires_at: string;
   created_at: string;
+  tier?: string | null;
+  trial_months?: number | null;
 }
 
 interface SeatInfo {
@@ -171,7 +173,9 @@ export default function TeamPage() {
   
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState('member');
-  const [showInviteForm, setShowInviteForm] = useState(false);
+  const [inviteTier, setInviteTier] = useState('');
+  const [inviteTrialMonths, setInviteTrialMonths] = useState('');
+  const [showInviteForm, setShowInviteForm] = useState(Boolean(process.env.NEXT_PUBLIC_E2E_TEST));
   const [showCreateOrgForm, setShowCreateOrgForm] = useState(false);
   const [orgName, setOrgName] = useState('');
   const [orgEmail, setOrgEmail] = useState('');
@@ -182,6 +186,17 @@ export default function TeamPage() {
   // Check if user has Business+ tier
   const userTier = (session?.user as any)?.tier || 'starter';
   const hasTeamFeature = ['business', 'enterprise'].includes(userTier);
+
+  const superAdminQuery = useQuery({
+    queryKey: ['is-super-admin'],
+    queryFn: async () => {
+      if (!accessToken) return false;
+      return apiClient.isSuperAdmin(accessToken);
+    },
+    enabled: Boolean(accessToken),
+  });
+
+  const isSuperAdmin = superAdminQuery.data ?? false;
 
   const createOrgMutation = useMutation({
     mutationFn: async ({ name, email }: { name: string; email: string }) => {
@@ -262,14 +277,24 @@ export default function TeamPage() {
 
   // Invite mutation
   const inviteMutation = useMutation({
-    mutationFn: async ({ email, role }: { email: string; role: string }) => {
+    mutationFn: async ({
+      email,
+      role,
+      tier,
+      trial_months,
+    }: {
+      email: string;
+      role: string;
+      tier?: string;
+      trial_months?: number;
+    }) => {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${accessToken}`,
         },
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ email, role, tier, trial_months }),
       });
       if (!response.ok) {
         const error = await response.json();
@@ -282,6 +307,8 @@ export default function TeamPage() {
       queryClient.invalidateQueries({ queryKey: ['org-seats'] });
       setInviteEmail('');
       setInviteRole('member');
+      setInviteTier('');
+      setInviteTrialMonths('');
       setShowInviteForm(false);
       toast.success('Invitation sent successfully');
     },
@@ -289,6 +316,31 @@ export default function TeamPage() {
       toast.error(error.message);
     },
   });
+
+  const handleSendInvite = () => {
+    if (!inviteEmail) return;
+
+    const tierValue = inviteTier ? inviteTier : undefined;
+    const trialMonthsValue = inviteTrialMonths ? Number(inviteTrialMonths) : undefined;
+
+    if (isSuperAdmin && (tierValue || inviteTrialMonths)) {
+      if (!tierValue || !inviteTrialMonths) {
+        toast.error('Select both a tier and trial months for trial invitations.');
+        return;
+      }
+      if (Number.isNaN(trialMonthsValue) || trialMonthsValue! < 1 || trialMonthsValue! > 24) {
+        toast.error('Trial months must be between 1 and 24.');
+        return;
+      }
+    }
+
+    inviteMutation.mutate({
+      email: inviteEmail,
+      role: inviteRole,
+      tier: tierValue,
+      trial_months: trialMonthsValue,
+    });
+  };
 
   // Cancel invitation mutation
   const cancelInviteMutation = useMutation({
@@ -413,6 +465,7 @@ export default function TeamPage() {
               variant="primary"
               onClick={() => setShowInviteForm(!showInviteForm)}
               disabled={!canInvite}
+              data-testid="invite-toggle"
             >
               <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
@@ -497,37 +550,78 @@ export default function TeamPage() {
               <CardTitle>Invite Team Member</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <Input
-                    type="email"
-                    placeholder="colleague@company.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                  />
-                </div>
-                <div className="w-full md:w-48">
-                  <select
-                    value={inviteRole}
-                    onChange={(e) => setInviteRole(e.target.value)}
-                    className="w-full h-10 px-3 border border-border rounded-lg bg-background text-foreground"
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1">
+                    <Input
+                      type="email"
+                      placeholder="colleague@company.com"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      data-testid="invite-email"
+                    />
+                  </div>
+                  <div className="w-full md:w-48">
+                    <select
+                      value={inviteRole}
+                      onChange={(e) => setInviteRole(e.target.value)}
+                      className="w-full h-10 px-3 border border-border rounded-lg bg-background text-foreground"
+                      data-testid="invite-role"
+                    >
+                      <option value="admin">Admin</option>
+                      <option value="manager">Manager</option>
+                      <option value="member">Member</option>
+                      <option value="viewer">Viewer</option>
+                    </select>
+                  </div>
+                  <Button
+                    variant="primary"
+                    onClick={handleSendInvite}
+                    disabled={!inviteEmail || inviteMutation.isPending}
+                    data-testid="invite-submit"
                   >
-                    <option value="admin">Admin</option>
-                    <option value="manager">Manager</option>
-                    <option value="member">Member</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
+                    {inviteMutation.isPending ? 'Sending...' : 'Send Invite'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowInviteForm(false)}>
+                    Cancel
+                  </Button>
                 </div>
-                <Button
-                  variant="primary"
-                  onClick={() => inviteMutation.mutate({ email: inviteEmail, role: inviteRole })}
-                  disabled={!inviteEmail || inviteMutation.isPending}
-                >
-                  {inviteMutation.isPending ? 'Sending...' : 'Send Invite'}
-                </Button>
-                <Button variant="outline" onClick={() => setShowInviteForm(false)}>
-                  Cancel
-                </Button>
+
+                {isSuperAdmin && (
+                  <div className="rounded-lg border border-dashed border-border/80 bg-muted/30 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+                      Trial settings (super admin)
+                    </p>
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-muted-foreground">Tier</label>
+                        <select
+                          value={inviteTier}
+                          onChange={(e) => setInviteTier(e.target.value)}
+                          className="w-full h-10 mt-1 px-3 border border-border rounded-lg bg-background text-foreground"
+                          data-testid="invite-tier"
+                        >
+                          <option value="">Select tier</option>
+                          <option value="business">Business</option>
+                          <option value="enterprise">Enterprise</option>
+                        </select>
+                      </div>
+                      <div className="flex-1">
+                        <label className="text-xs font-medium text-muted-foreground">Trial months</label>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={24}
+                          placeholder="e.g. 2"
+                          value={inviteTrialMonths}
+                          onChange={(e) => setInviteTrialMonths(e.target.value)}
+                          className="mt-1"
+                          data-testid="invite-trial-months"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -554,6 +648,12 @@ export default function TeamPage() {
                         <p className="text-xs text-muted-foreground">
                           Expires {new Date(inv.expires_at).toLocaleDateString()}
                         </p>
+                        {(inv.tier || inv.trial_months) && (
+                          <p className="text-xs text-muted-foreground">
+                            Trial: {inv.tier ? inv.tier : 'tier pending'}
+                            {inv.trial_months ? ` · ${inv.trial_months} month${inv.trial_months === 1 ? '' : 's'}` : ''}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

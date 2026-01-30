@@ -219,6 +219,26 @@ class TestCreateInvitation(TestOrganizationService):
                 with pytest.raises(ValueError, match="already pending"):
                     service.create_invitation(org_id=mock_org.id, email="existing@example.com", role="member", inviter_user_id="admin_user")
 
+    @pytest.mark.parametrize(
+        ("tier", "trial_months"),
+        [("business", None), (None, 2)],
+    )
+    def test_requires_tier_and_trial_months_pair(self, service, mock_db, mock_org, tier, trial_months):
+        """Trial invites require both tier and trial_months."""
+        with patch.object(service, "_has_permission", return_value=True):
+            with patch.object(service, "get_seat_count", return_value={"used": 0, "max": 5, "available": 5, "unlimited": False}):
+                mock_db.query.return_value.filter.return_value.first.side_effect = [None, None]
+
+                with pytest.raises(ValueError, match="Trial invitations require both tier and trial months"):
+                    service.create_invitation(
+                        org_id=mock_org.id,
+                        email="new@example.com",
+                        role="member",
+                        inviter_user_id="admin_user",
+                        tier=tier,
+                        trial_months=trial_months,
+                    )
+
 
 class TestDomainClaims(TestOrganizationService):
     """Tests for domain claim logic"""
@@ -330,6 +350,104 @@ class TestAcceptInvitation(TestOrganizationService):
 
             with pytest.raises(ValueError, match="different email"):
                 service.accept_invitation(token="test_token", user_id="user123")
+
+    def test_applies_trial_metadata_for_existing_user(self, service, mock_db):
+        """Ensure trial invites apply org metadata and sync billing for existing users."""
+        invitation = MagicMock(spec=OrganizationInvitation)
+        invitation.status = "pending"
+        invitation.expires_at = datetime.utcnow() + timedelta(days=1)
+        invitation.email = "invitee@example.com"
+        invitation.organization_id = "org_123"
+        invitation.role = "member"
+        invitation.invited_by = "user_inviter"
+        invitation.created_at = datetime.utcnow()
+        invitation.tier = "business"
+        invitation.trial_months = 3
+
+        user = MagicMock(spec=User)
+        user.id = "user_123"
+        user.email = "invitee@example.com"
+
+        mock_db.query.return_value.filter.return_value.first.return_value = user
+
+        org = MagicMock(spec=Organization)
+
+        with patch.object(service, "get_invitation_by_token", return_value=invitation):
+            with patch.object(service, "get_member", return_value=None):
+                with patch.object(service, "_log_action"):
+                    with patch.object(service, "update_tier_internal", return_value=org) as update_tier:
+                        with patch.object(service, "_apply_trial_metadata") as apply_trial:
+                            with patch.object(service, "_sync_trial_to_billing") as sync_trial:
+                                service.accept_invitation(token="token_123", user_id=user.id)
+
+        update_tier.assert_called_once_with(
+            org_id="org_123",
+            tier="business",
+            subscription_status="trialing",
+        )
+        apply_trial.assert_called_once_with(org=org, tier="business", trial_months=3)
+        sync_trial.assert_called_once_with(
+            organization_id="org_123",
+            user_id=user.id,
+            tier="business",
+            trial_months=3,
+        )
+
+
+class TestAcceptInvitationNewUser(TestOrganizationService):
+    """Tests for accept_invitation_new_user"""
+
+    def test_applies_trial_tier_and_syncs_billing(self, service, mock_db):
+        """Ensure trial-tier invites update org tier and sync billing."""
+        invitation = MagicMock(spec=OrganizationInvitation)
+        invitation.status = "pending"
+        invitation.expires_at = datetime.utcnow() + timedelta(days=1)
+        invitation.email = "invitee@example.com"
+        invitation.first_name = "Jane"
+        invitation.last_name = "Doe"
+        invitation.organization_id = "org_123"
+        invitation.role = "member"
+        invitation.invited_by = "user_inviter"
+        invitation.created_at = datetime.utcnow()
+        invitation.tier = "business"
+        invitation.trial_months = 2
+
+        query = MagicMock()
+        query.filter.return_value.first.return_value = None
+        mock_db.query.return_value = query
+
+        def _flush():
+            if mock_db.add.call_args_list:
+                user_obj = mock_db.add.call_args_list[0][0][0]
+                user_obj.id = "user_123"
+
+        mock_db.flush.side_effect = _flush
+
+        with patch.object(service, "get_invitation_by_token", return_value=invitation):
+            with patch.object(service, "_log_action"):
+                org = MagicMock(spec=Organization)
+                with patch.object(service, "update_tier_internal", return_value=org) as update_tier:
+                    with patch.object(service, "_apply_trial_metadata") as apply_trial:
+                        with patch.object(service, "_sync_trial_to_billing") as sync_trial:
+                            user, member = service.accept_invitation_new_user(
+                                token="token_123",
+                                name=None,
+                                password_hash="hash",
+                            )
+
+        update_tier.assert_called_once_with(
+            org_id="org_123",
+            tier="business",
+            subscription_status="trialing",
+        )
+        apply_trial.assert_called_once_with(org=org, tier="business", trial_months=2)
+        sync_trial.assert_called_once_with(
+            organization_id="org_123",
+            user_id=user.id,
+            tier="business",
+            trial_months=2,
+        )
+        assert member.organization_id == "org_123"
 
 
 class TestPermissionHelpers(TestOrganizationService):

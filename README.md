@@ -257,7 +257,7 @@ We maintain **two distinct architectures** for different use cases and customer 
 ### Prerequisites
 
 - **Python 3.9+** with [UV](https://github.com/astral-sh/uv) package manager
-- **Node.js 18+** with pnpm (for web applications)
+- **Node.js 24+ LTS** with npm (for web applications)
 - **Git** for version control
 
 ### Quick Start
@@ -290,8 +290,25 @@ Stop everything with:
 # Install UV if not already installed
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install root dependencies
-uv sync
+# Install dependencies
+# For Linux/macOS full-stack dev, use workspace sync so service deps (e.g., enterprise_api) are available from repo root.
+uv sync --all-packages
+```
+
+#### 2.5 Full-Stack Local Dev (Linux/macOS)
+
+```bash
+# Install all dependencies (Python + Next.js apps)
+./setup-dev.sh
+
+# Start Docker full stack + optionally start Next.js frontends
+./start-dev.sh
+
+# Remote access over Tailscale/SSH (bind Next.js to all interfaces)
+# Example: NEXT_HOST=0.0.0.0 ./start-dev.sh
+
+# Stop everything
+./stop-dev.sh
 ```
 
 #### 3. Choose Your Tool

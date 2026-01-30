@@ -3,7 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import apiClient, { PendingAccessRequest } from '../../lib/api';
@@ -62,9 +62,10 @@ type AdminUser = {
   createdAt?: string;
 };
 
-const normalizeAdminUsers = (payload: any): AdminUser[] => {
-  const rows = payload?.data?.users ?? payload?.data ?? payload?.users ?? payload ?? [];
-  return (Array.isArray(rows) ? rows : []).map((row: any, idx: number) => ({
+const normalizeAdminUsers = (payload: any): { users: AdminUser[]; total: number; page: number; pageSize: number; totalPages: number } => {
+  const data = payload?.data ?? payload ?? {};
+  const rows = data?.users ?? data ?? [];
+  const users = (Array.isArray(rows) ? rows : []).map((row: any, idx: number) => ({
     id: String(row.id ?? row.user_id ?? idx),
     name: row.name ?? row.full_name ?? 'Unknown',
     email: row.email ?? '',
@@ -76,6 +77,11 @@ const normalizeAdminUsers = (payload: any): AdminUser[] => {
     lastActive: row.last_active_at ?? row.last_login ?? '',
     createdAt: row.created_at ?? row.joined_at ?? '',
   }));
+  const total = data?.total ?? payload?.total ?? users.length;
+  const page = data?.page ?? payload?.page ?? 1;
+  const pageSize = data?.page_size ?? payload?.page_size ?? users.length || 10;
+  const totalPages = data?.total_pages ?? payload?.total_pages ?? (pageSize ? Math.ceil(total / pageSize) : 1);
+  return { users, total, page, pageSize, totalPages };
 };
 
 const normalizeAdminStats = (payload: any): AdminStats => ({
@@ -92,9 +98,17 @@ export default function AdminPage() {
   const queryClient = useQueryClient();
 
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [customPageSize, setCustomPageSize] = useState('');
   const [denyReason, setDenyReason] = useState('');
   const [denyingUserId, setDenyingUserId] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [inviteOrgId, setInviteOrgId] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('member');
+  const [inviteTier, setInviteTier] = useState('');
+  const [inviteTrialMonths, setInviteTrialMonths] = useState('');
 
   // TEAM_006: Check if user is super admin via API
   const superAdminQuery = useQuery({
@@ -119,10 +133,10 @@ export default function AdminPage() {
   });
 
   const usersQuery = useQuery({
-    queryKey: ['admin-users', search],
+    queryKey: ['admin-users', search, page, pageSize],
     queryFn: async () => {
       if (!accessToken) throw new Error('You must be signed in.');
-      const response = await apiClient.getAdminUsers(accessToken, search);
+      const response = await apiClient.getAdminUsers(accessToken, search, undefined, page, pageSize);
       return normalizeAdminUsers(response);
     },
     enabled: Boolean(accessToken) && isSuperAdmin,
@@ -131,11 +145,53 @@ export default function AdminPage() {
   const usageCountsQuery = useQuery({
     queryKey: ['admin-usage-counts', usersQuery.data],
     queryFn: async () => {
-      if (!accessToken || !usersQuery.data) return {};
-      const userIds = usersQuery.data.map((user: AdminUser) => user.id);
+      if (!accessToken || !usersQuery.data?.users) return {};
+      const userIds = usersQuery.data.users.map((user: AdminUser) => user.id);
       return apiClient.getAdminUsageCounts(accessToken, userIds, 30);
     },
     enabled: Boolean(accessToken) && isSuperAdmin && Boolean(usersQuery.data),
+  });
+
+  const inviteMutation = useMutation({
+    mutationFn: async ({
+      orgId,
+      email,
+      role,
+      tier,
+      trial_months,
+    }: {
+      orgId: string;
+      email: string;
+      role: string;
+      tier?: string;
+      trial_months?: number;
+    }) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/organizations/${orgId}/invitations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ email, role, tier, trial_months }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.detail || 'Failed to send invitation');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      setInviteOrgId('');
+      setInviteEmail('');
+      setInviteRole('member');
+      setInviteTier('');
+      setInviteTrialMonths('');
+      toast.success('Invitation sent successfully.');
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
   });
 
   // TEAM_006: Pending API access requests
@@ -259,10 +315,68 @@ export default function AdminPage() {
     );
   }
 
-  const users = usersQuery.data ?? [];
+  const users = usersQuery.data?.users ?? [];
+  const totalUsers = usersQuery.data?.total ?? 0;
+  const totalPages = usersQuery.data?.totalPages ?? 1;
   const stats = statsQuery.data;
   const pendingCount = pendingRequestsQuery.data?.length ?? 0;
   const realUsageCounts = usageCountsQuery.data ?? {};
+
+  useEffect(() => {
+    if (totalPages > 0 && page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [page, totalPages]);
+
+  const handleSendInvite = () => {
+    if (!inviteOrgId || !inviteEmail) {
+      toast.error('Organization ID and email are required.');
+      return;
+    }
+
+    const tierValue = inviteTier ? inviteTier : undefined;
+    const trialMonthsValue = inviteTrialMonths ? Number(inviteTrialMonths) : undefined;
+
+    if (tierValue || inviteTrialMonths) {
+      if (!tierValue || !inviteTrialMonths) {
+        toast.error('Select both a tier and trial months for trial invitations.');
+        return;
+      }
+      if (Number.isNaN(trialMonthsValue) || trialMonthsValue! < 1 || trialMonthsValue! > 24) {
+        toast.error('Trial months must be between 1 and 24.');
+        return;
+      }
+    }
+
+    inviteMutation.mutate({
+      orgId: inviteOrgId,
+      email: inviteEmail,
+      role: inviteRole,
+      tier: tierValue,
+      trial_months: trialMonthsValue,
+    });
+  };
+
+  const handlePageSizeChange = (value: number) => {
+    setPageSize(value);
+    setPage(1);
+    setCustomPageSize('');
+  };
+
+  const handleApplyCustomPageSize = () => {
+    const parsed = Number(customPageSize);
+    if (!parsed || parsed < 1 || parsed > 500) {
+      toast.error('Custom page size must be between 1 and 500.');
+      return;
+    }
+    handlePageSizeChange(parsed);
+  };
+
+  const handleShowAll = () => {
+    if (totalUsers > 0) {
+      handlePageSizeChange(totalUsers);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -318,6 +432,94 @@ export default function AdminPage() {
               </svg>
             }
           />
+        </div>
+
+        {/* Trial Invitations */}
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900 dark:text-white">Trial Invitations</h2>
+                <p className="text-sm text-slate-500 dark:text-slate-400">Send tiered trial invites on behalf of an organization</p>
+              </div>
+              <Badge variant="warning">Super Admin</Badge>
+            </div>
+          </div>
+          <div className="p-6 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Organization ID</label>
+                <input
+                  type="text"
+                  placeholder="org_123"
+                  value={inviteOrgId}
+                  onChange={(e) => setInviteOrgId(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Invitee Email</label>
+                <input
+                  type="email"
+                  placeholder="invitee@company.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Role</label>
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                >
+                  <option value="admin">Admin</option>
+                  <option value="manager">Manager</option>
+                  <option value="member">Member</option>
+                  <option value="viewer">Viewer</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Trial Tier</label>
+                <select
+                  value={inviteTier}
+                  onChange={(e) => setInviteTier(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                >
+                  <option value="">Select tier</option>
+                  <option value="business">Business</option>
+                  <option value="enterprise">Enterprise</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold uppercase tracking-wide text-slate-500">Trial Months</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={24}
+                  placeholder="e.g. 2"
+                  value={inviteTrialMonths}
+                  onChange={(e) => setInviteTrialMonths(e.target.value)}
+                  className="mt-1 w-full px-3 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  onClick={handleSendInvite}
+                  disabled={inviteMutation.isPending}
+                  className="w-full px-4 py-2 text-sm font-medium text-white bg-blue-ncs rounded-lg hover:bg-delft-blue transition-colors disabled:opacity-50"
+                >
+                  {inviteMutation.isPending ? 'Sending...' : 'Send Trial Invite'}
+                </button>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">
+              Include both a tier and trial months to issue a trial. Leave blank to send a standard invite.
+            </p>
+          </div>
         </div>
 
         {/* Pending API Access Requests */}
@@ -441,7 +643,7 @@ export default function AdminPage() {
 
         {/* User Directory */}
         <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-900 dark:text-white">User Directory</h2>
@@ -455,9 +657,53 @@ export default function AdminPage() {
                   type="text"
                   placeholder="Search by name, email, or plan..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                  }}
                   className="w-full sm:w-80 pl-10 pr-4 py-2 text-sm border border-slate-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-transparent"
                 />
+              </div>
+            </div>
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+              <p className="text-xs text-slate-500">
+                Showing {users.length} of {totalUsers} users
+              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs text-slate-500">Rows per page</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+                  className="px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                >
+                  {[10, 25, 50, 100].map((size) => (
+                    <option key={size} value={size}>{size}</option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleShowAll}
+                  disabled={totalUsers === 0}
+                  className="px-2 py-1 text-xs font-medium text-blue-ncs border border-blue-ncs rounded-md hover:bg-blue-ncs/10 disabled:opacity-50"
+                >
+                  Show all
+                </button>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min={1}
+                    max={500}
+                    placeholder="Custom"
+                    value={customPageSize}
+                    onChange={(e) => setCustomPageSize(e.target.value)}
+                    className="w-24 px-2 py-1 text-xs border border-slate-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                  />
+                  <button
+                    onClick={handleApplyCustomPageSize}
+                    className="px-2 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700"
+                  >
+                    Apply
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -559,6 +805,27 @@ export default function AdminPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <p className="text-xs text-slate-500">
+              Page {page} of {totalPages}
+            </p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(Math.max(1, page - 1))}
+                disabled={page <= 1}
+                className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page >= totalPages}
+                className="px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
           </div>
         </div>
       </div>

@@ -169,7 +169,7 @@ The service will be available at `http://localhost:8001`
 
 **POST /api/v1/organizations/:id/invitations**
 - Send an invitation to join the organization (Manager+ only)
-- Body: `{ "email": "new@example.com", "role": "member", "message": "Welcome!" }`
+- Body: `{ "email": "new@example.com", "first_name": "Jane", "last_name": "Doe", "organization_name": "Acme", "tier": "business", "trial_months": 3, "role": "member", "message": "Welcome!" }`
 - Returns: Invitation object
 
 **GET /api/v1/organizations/:id/invitations**
@@ -194,7 +194,7 @@ The service will be available at `http://localhost:8001`
 
 **POST /api/v1/organizations/invitations/:token/accept-new**
 - Accept invitation and create new account
-- Body: `{ "name": "John Doe", "password": "securepass123" }`
+- Body: `{ "name": "John Doe", "password": "securepass123" }` (name optional if provided on invite)
 - Returns: User object, membership, and auth tokens
 
 ### Audit Logs

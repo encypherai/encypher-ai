@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 import httpx
 
 from ...db.session import get_db
@@ -46,6 +46,22 @@ class PortalResponse(BaseModel):
     """Response with billing portal URL"""
 
     portal_url: str
+
+
+class InternalTrialRequest(BaseModel):
+    """Internal request to provision a trial subscription."""
+
+    organization_id: str
+    user_id: str
+    tier: TierName
+    trial_months: int = Field(ge=1, le=24)
+
+
+class InternalTrialResponse(BaseModel):
+    """Response for internal trial provisioning."""
+
+    success: bool = True
+    data: SubscriptionResponse
 
 
 def _build_subscription_response(subscription: SubscriptionCreate | SubscriptionResponse | object) -> SubscriptionResponse:
@@ -169,6 +185,29 @@ async def get_stats(
     """Get billing statistics"""
     stats = BillingService.get_billing_stats(db, current_user["id"])
     return BillingStats(**stats)
+
+
+@router.post("/internal/trials", response_model=InternalTrialResponse, include_in_schema=False)
+async def create_trial_subscription_internal(
+    payload: InternalTrialRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    try:
+        subscription = BillingService.create_trial_subscription(
+            db=db,
+            user_id=payload.user_id,
+            organization_id=payload.organization_id,
+            tier=payload.tier.value,
+            trial_months=payload.trial_months,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    return InternalTrialResponse(success=True, data=_build_subscription_response(subscription))
 
 
 @router.get("/health")

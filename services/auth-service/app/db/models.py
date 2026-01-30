@@ -162,6 +162,12 @@ class Organization(Base):
     # Subscription & Tier
     tier = Column(String(32), nullable=False, default="starter")
 
+    # Trial metadata
+    trial_tier = Column(String(32), nullable=True)
+    trial_months = Column(Integer, nullable=True)
+    trial_started_at = Column(DateTime(timezone=True), nullable=True)
+    trial_ends_at = Column(DateTime(timezone=True), nullable=True)
+
     # Stripe Integration
     stripe_customer_id = Column(String(255), unique=True, nullable=True)
     stripe_subscription_id = Column(String(255), nullable=True)
@@ -252,6 +258,11 @@ class OrganizationInvitation(Base):
 
     # Invitation details
     email = Column(String(255), nullable=False)
+    first_name = Column(String(100), nullable=True)
+    last_name = Column(String(100), nullable=True)
+    organization_name = Column(String(255), nullable=True)
+    tier = Column(String(32), nullable=True)
+    trial_months = Column(Integer, nullable=True)
     role = Column(String(32), nullable=False, default="member")  # admin, manager, member, viewer
 
     # Token for accepting invitation

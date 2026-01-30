@@ -1,6 +1,6 @@
-# Global Agent Directives (AI-Optimized)
+# Global Agent Directives
 ## Rule 0 — Tests First (TDD)
-**Tests are #1 priority. No exceptions.** Task NOT complete until: 1) Unit/Integration tests pass (`uv run pytest`/`npm test`) 2) Frontend: Puppeteer verification 3) Both automated AND manual for UI. TDD: Write tests BEFORE impl → red → green → refactor. Mark complete: `- [x] 2.1.3 Task — ✅ pytest ✅ puppeteer`
+**Tests are #1 priority. No exceptions.** Task NOT complete until: 1) Unit/Integration tests pass (`uv run pytest`/`npm test`) 2) Frontend: Puppeteer verification 3) Both automated AND manual for UI. TDD: Write tests BEFORE impl → red → green → refactor. Mark complete: `- [x] 2.1.3 Task — ✅ pytest ✅ puppeteer` 
 ## Rule 1 — Quality Over Speed
 Good > Fast. Always. Prefer clean designs over quick fixes. Avoid wrappers/shims. Leave codebase better than found. Choose debt-free solutions.
 ## Rule 2 — Team Identity
@@ -25,9 +25,9 @@ Before concluding: [ ] Tests pass [ ] Builds clean [ ] PRD updated [ ] Team file
 ## Rule 8 — Context Efficiency
 Maximize work while context loaded. Don't stop mid-PRD. Continue until complete or blocked. Batch changes. Use as many tool calls as needed.
 ## Rule 9 — Package Management (Python)
-**UV ONLY.** ✅ `uv add pkg` / `uv add --dev pkg` / `uv remove pkg` / `uv sync` / `uv run cmd`. ❌ Never: `pip install` / `uv pip install` / `poetry add` / manual pyproject.toml deps. Manual edits OK for: version, metadata, tool configs. Security: `uv run pip-audit`
+**UV ONLY.** ✅ `uv add pkg` / `uv add --dev pkg` / `uv remove pkg` / `uv sync` / `uv run cmd`. ❌ Never: `pip install` / `uv pip install` / `poetry add` / manual pyproject.toml deps. Manual edits OK for: version, metadata, tool configs. Security: `uv run pip-audit` 
 ## Rule 10 — Code Quality
-Python: `uv run ruff check .` / `ruff format .` / `mypy .` / `pytest` / `pip-audit`. JS: `npm run lint` / `format` / `test` / `audit`
+Python: `uv run ruff check .` / `ruff format .` / `mypy .` / `pytest` / `pip-audit`. JS: `npm run lint` / `format` / `test` / `audit` 
 ## Rule 11 — Tool Usage
 1) Search First: Fast Context, find_by_name, grep_search 2) Read Before Edit: MUST read_file before edit 3) Absolute paths 4) Case-insensitive grep default 5) Commands are pre-approved in sandbox (run tests/lint/install deps/web lookups without asking)
 ## Rule 11.1 — OS Preference

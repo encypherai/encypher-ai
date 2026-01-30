@@ -256,6 +256,8 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose |
 |----------|---------|
 | [docs/c2pa/Manifests_Text.adoc](./docs/c2pa/Manifests_Text.adoc) | C2PA 2.2 text manifest specification |
+| [docs/c2pa/C2PA_2.3_CONFORMANCE_CHECKLIST.md](./docs/c2pa/C2PA_2.3_CONFORMANCE_CHECKLIST.md) | C2PA 2.3 conformance checklist + evidence references |
+| [docs/c2pa/C2PA_2.3_EVIDENCE_BUNDLE.md](./docs/c2pa/C2PA_2.3_EVIDENCE_BUNDLE.md) | C2PA 2.3 submission evidence bundle |
 
 ---
 

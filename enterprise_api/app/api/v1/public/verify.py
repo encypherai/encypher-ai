@@ -559,7 +559,7 @@ async def extract_and_verify_embedding(
             if not signer_id:
                 assertions = extracted_metadata.get("assertions", [])
                 for assertion in assertions:
-                    if assertion.get("label") == "c2pa.actions.v1":
+                    if assertion.get("label") in {"c2pa.actions.v1", "c2pa.actions.v2"}:
                         actions = assertion.get("data", {}).get("actions", [])
                         for action in actions:
                             agent = action.get("softwareAgent")
@@ -656,6 +656,11 @@ async def extract_and_verify_embedding(
                     organization_id = data.get("organization_id")
                 if data.get("manifest_uuid"):
                     manifest_uuid = data.get("manifest_uuid")
+            if assertion.get("label") == "c2pa.metadata":
+                data = assertion.get("data", {})
+                custom_metadata.update(data)
+                if data.get("identifier"):
+                    document_id = data.get("identifier")
 
             # Also check actions for implicit metadata if needed
             if assertion.get("label") == "c2pa.actions.v1":

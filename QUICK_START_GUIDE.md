@@ -11,11 +11,29 @@ This guide will get you up and running in **15 minutes**.
 Before you begin, ensure you have:
 
 - ✅ **Python 3.9+** installed
-- ✅ **Node.js 18+** installed (for web apps)
+- ✅ **Node.js 24+ LTS** installed (for web apps)
 - ✅ **UV** package manager ([install guide](https://github.com/astral-sh/uv))
 - ✅ **Git** for version control
 - ✅ **PostgreSQL** (for services/API)
 - ✅ **Code editor** (VS Code recommended)
+
+---
+
+## 🐧 Linux/macOS Full-Stack Dev (Recommended)
+
+```bash
+# From repo root
+./setup-dev.sh
+
+# Start full stack (Docker Compose + optional frontends)
+./start-dev.sh
+
+# Remote access over Tailscale/SSH (bind Next.js to all interfaces)
+# Example: NEXT_HOST=0.0.0.0 ./start-dev.sh
+
+# Stop everything
+./stop-dev.sh
+```
 
 ---
 
@@ -453,7 +471,7 @@ npm install
 
 ### Environment Setup
 - [ ] Install Python 3.9+
-- [ ] Install Node.js 18+
+- [ ] Install Node.js 24+ LTS
 - [ ] Install UV package manager
 - [ ] Install PostgreSQL
 - [ ] Install Redis (optional)

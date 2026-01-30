@@ -10,8 +10,8 @@
     "rimraf": "^5.0.5"
   },
   "scripts": {
-    "dev": "node log-analytics-env.js && npx next dev",
-    "dev:webpack": "node log-analytics-env.js && npx next dev",
+    "dev": "node log-analytics-env.js && npx next dev --hostname 0.0.0.0",
+    "dev:webpack": "node log-analytics-env.js && npx next dev --hostname 0.0.0.0",
     "prebuild": "node scripts/sync-pricing-config.js",
     "build": "node log-analytics-env.js && npx next build",
     "start": "npx next start -p $PORT",
