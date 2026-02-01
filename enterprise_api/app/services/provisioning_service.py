@@ -23,7 +23,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.organization import Organization, OrganizationTier
 from app.utils.feature_flags import TIER_FEATURES
 from app.utils.quota import TIER_QUOTAS, QuotaType
-from app.core.config import settings
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 
