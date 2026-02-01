@@ -293,6 +293,10 @@ class ProvisioningService:
             headers = {}
             if authorization:
                 headers["Authorization"] = authorization
+            
+            # Add internal service token for auth-service internal endpoints
+            if hasattr(settings, 'INTERNAL_SERVICE_TOKEN') and settings.INTERNAL_SERVICE_TOKEN:
+                headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
                 
             async with httpx.AsyncClient(timeout=10.0) as client:
                 # Check if org already has certificate
