@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.dependencies import get_current_organization
+from app.services.provisioning_service import ProvisioningService
 
 router = APIRouter(prefix="/keys", tags=["API Keys"])
 logger = logging.getLogger(__name__)
@@ -234,6 +235,14 @@ async def create_key(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="User-level keys cannot create organization keys",
         )
+
+    # Auto-provision certificate if needed (before creating key)
+    org_name = organization.get("organization_name", org_id)
+    await ProvisioningService._ensure_organization_certificate(
+        organization_id=org_id,
+        organization_name=org_name,
+        authorization=None,  # No auth header in this context
+    )
 
     # Check key limit based on tier
     tier = organization.get("tier", "starter")

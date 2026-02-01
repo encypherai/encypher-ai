@@ -533,6 +533,37 @@ async def update_organization_tier_internal(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
+class CertificateUpdateRequest(BaseModel):
+    certificate_pem: str = Field(..., description="PEM-encoded certificate")
+
+
+@router.patch("/internal/{org_id}/certificate", include_in_schema=False)
+async def update_organization_certificate_internal(
+    org_id: str,
+    payload: CertificateUpdateRequest,
+    internal_token: Optional[str] = Header(None, alias="X-Internal-Token"),
+    db: Session = Depends(get_db),
+):
+    if settings.INTERNAL_SERVICE_TOKEN:
+        if not internal_token or internal_token != settings.INTERNAL_SERVICE_TOKEN:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
+    else:
+        logger.warning("internal_service_token_missing")
+
+    org_service = OrganizationService(db)
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    org.certificate_pem = payload.certificate_pem
+    org.certificate_status = "active"
+    db.commit()
+    db.refresh(org)
+
+    logger.info(f"Updated certificate for organization {org_id}")
+    return {"success": True, "data": {"organization_id": org_id, "certificate_updated": True}}
+
+
 # ==========================================
 # DOMAIN CLAIM ENDPOINTS
 # ==========================================

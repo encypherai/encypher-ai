@@ -219,6 +219,38 @@ uv run pytest -m "not slow"
 
 ---
 
+## Live Production E2E Tests
+
+These tests exercise the production API directly and are **opt-in**. They are located in
+`enterprise_api/tests/e2e_live` and are skipped unless explicitly enabled.
+
+### Configuration
+
+Provide credentials via environment variables or a local `.env.prod` file stored in
+`enterprise_api/tests/e2e_live/.env.prod` (gitignored).
+
+Supported variables:
+
+- `LIVE_API_TESTS=true` (required to run)
+- `LIVE_API_KEY` (production test org API key)
+- `LIVE_API_BASE_URL` (defaults to `https://api.encypherai.com` when set in `.env.prod`)
+- `LIVE_API_TIMEOUT` (optional timeout in seconds, default 30)
+
+`.env.prod` example:
+
+```bash
+API_KEY=ency_...
+BASE_URL=https://api.encypherai.com
+```
+
+### Run Live Tests
+
+```bash
+LIVE_API_TESTS=true uv run pytest enterprise_api/tests/e2e_live -m e2e
+```
+
+---
+
 ## CI/CD Integration
 
 ### GitHub Actions Example

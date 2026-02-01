@@ -60,8 +60,19 @@ http:
       middlewares:
         - cors
 
-    # Verification Service - ALL verification endpoints
-    # Routes all /api/v1/verify* to verification-service for independent scaling
+    # Advanced Verification - routed to enterprise-api (attribution, plagiarism, analytics)
+    # MUST have higher priority than catch-all api-verify route
+    api-verify-advanced:
+      rule: "PathPrefix(`/api/v1/verify/advanced`)"
+      service: enterprise-api
+      entryPoints:
+        - web
+      priority: 110
+      middlewares:
+        - cors
+
+    # Verification Service - basic verification endpoints
+    # Routes /api/v1/verify (but NOT /api/v1/verify/advanced) to verification-service
     api-verify:
       rule: "PathPrefix(`/api/v1/verify`)"
       service: verification-service

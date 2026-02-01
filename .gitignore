@@ -6,6 +6,7 @@
 .questions/TEAM_*.md
 !.teams/TEAM_*.md
 !.questions/TEAM_*.md
+.tmp/*
 
 # Legacy archive (never commit)
 archive/encypherai-backend-old/
@@ -108,6 +109,8 @@ celerybeat.pid
 
 # Environments
 .env
+.env.prod
+.env.dev
 **/.env.local
 **/.env.*.local
 .venv
