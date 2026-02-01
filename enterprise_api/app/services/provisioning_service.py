@@ -160,6 +160,13 @@ class ProvisioningService:
             await db.commit()
             await db.refresh(org)
 
+        # Auto-provision certificate if needed
+        await ProvisioningService._ensure_organization_certificate(
+            organization_id=org.organization_id,
+            organization_name=org.name,
+            authorization=None,
+        )
+
         # Generate API key
         api_key = ProvisioningService.generate_api_key()
         key_hash = hashlib.sha256(api_key.encode("utf-8")).hexdigest()
