@@ -1,5 +1,8 @@
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from datetime import datetime, timedelta
 
 from encypher.core.keys import generate_ed25519_key_pair
 from encypher.core.unicode_metadata import MetadataTarget, UnicodeMetadata
@@ -37,6 +40,27 @@ def _pem_from_public_key(public_key) -> str:
     ).decode("ascii")
 
 
+def _pem_from_certificate(private_key, public_key) -> str:
+    subject = issuer = x509.Name(
+        [
+            x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
+            x509.NameAttribute(NameOID.ORGANIZATION_NAME, "Test Org"),
+            x509.NameAttribute(NameOID.COMMON_NAME, "org_test"),
+        ]
+    )
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(subject)
+        .issuer_name(issuer)
+        .public_key(public_key)
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(datetime.utcnow())
+        .not_valid_after(datetime.utcnow() + timedelta(days=3650))
+        .sign(private_key, algorithm=None)
+    )
+    return cert.public_bytes(serialization.Encoding.PEM).decode("ascii")
+
+
 def test_verify_missing_api_key_allows_public_verification(client) -> None:
     demo_private_key = ed25519.Ed25519PrivateKey.from_private_bytes(b"\x00" * 32)
     signer_id = "user_123"
@@ -67,6 +91,57 @@ def test_verify_org_encypher_marketing_uses_secret_key_for_demo_verification(cli
     )
 
     response = client.post("/api/v1/verify", json={"text": signed_text})
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert payload["data"]["valid"] is True
+    assert payload["data"]["reason_code"] == "OK"
+    assert payload["data"]["signer_id"] == signer_id
+
+
+def test_verify_valid_signed_text_with_certificate_pem_returns_200(client, monkeypatch) -> None:
+    private_key, public_key = generate_ed25519_key_pair()
+    signer_id = "org_test"
+    signed_text = UnicodeMetadata.embed_metadata(
+        text="hello world",
+        private_key=private_key,
+        signer_id=signer_id,
+        metadata_format="c2pa",
+        target=MetadataTarget.WHITESPACE,
+    )
+
+    dummy_response = _DummyResponse(
+        200,
+        {
+            "success": True,
+            "data": {
+                "key_id": "key_123",
+                "organization_id": "org_test",
+                "organization_name": "Test Org",
+                "tier": "starter",
+                "features": {},
+                "permissions": ["verify"],
+                "monthly_api_limit": 10000,
+                "monthly_api_usage": 0,
+                "coalition_member": False,
+                "coalition_rev_share": 0,
+                "certificate_pem": _pem_from_certificate(private_key, public_key),
+            },
+        },
+    )
+
+    monkeypatch.setattr(
+        verify_endpoints.httpx,
+        "AsyncClient",
+        lambda: _DummyAsyncClient(dummy_response),
+    )
+
+    response = client.post(
+        "/api/v1/verify",
+        json={"text": signed_text},
+        headers={"Authorization": "Bearer valid-api-key"},
+    )
+
     assert response.status_code == 200
     payload = response.json()
     assert payload["success"] is True

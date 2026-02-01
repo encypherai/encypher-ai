@@ -32,6 +32,7 @@ except ModuleNotFoundError:  # pragma: no cover - fallback for OpenAPI generatio
     structlog = _StructlogFallback()
 
 from encypher.core.keys import load_public_key_from_data
+from cryptography import x509
 from encypher.core.payloads import deserialize_jumbf_payload
 from encypher.core.unicode_metadata import UnicodeMetadata
 from encypher.core.signing import extract_certificates_from_cose
@@ -368,7 +369,11 @@ async def verify_text(
     public_key = None
     if certificate_pem:
         try:
-            public_key = load_public_key_from_data(certificate_pem)
+            if isinstance(certificate_pem, str) and "BEGIN CERTIFICATE" in certificate_pem:
+                cert = x509.load_pem_x509_certificate(certificate_pem.encode("utf-8"))
+                public_key = cert.public_key()
+            else:
+                public_key = load_public_key_from_data(certificate_pem)
         except Exception:
             public_key = None
 
