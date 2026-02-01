@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     AUTH_SERVICE_URL: str = "http://localhost:8001"
 
     # ===========================================
+    # SHARED: Internal Service Authentication (from shared vars)
+    # ===========================================
+    INTERNAL_SERVICE_TOKEN: str = ""
+
+    # ===========================================
     # SERVICE-SPECIFIC: Key Generation
     # ===========================================
     KEY_PREFIX: str = "ency_"
