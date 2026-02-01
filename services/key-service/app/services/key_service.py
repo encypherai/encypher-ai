@@ -32,6 +32,40 @@ class KeyService:
     """API Key management service"""
 
     @staticmethod
+    def _fetch_org_certificate_pem(organization_id: str) -> Optional[str]:
+        if not settings.AUTH_SERVICE_URL:
+            return None
+
+        headers = {}
+        if settings.INTERNAL_SERVICE_TOKEN:
+            headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
+
+        try:
+            with httpx.Client(timeout=5.0) as client:
+                response = client.get(
+                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/context",
+                    headers=headers,
+                )
+        except httpx.RequestError as exc:
+            logger.warning(f"Failed to fetch org certificate for {organization_id}: {exc}")
+            return None
+
+        if response.status_code != 200:
+            logger.warning(
+                "Failed to fetch org certificate for %s: %s %s",
+                organization_id,
+                response.status_code,
+                response.text,
+            )
+            return None
+
+        payload = response.json()
+        if not isinstance(payload, dict):
+            return None
+
+        return payload.get("data", {}).get("certificate_pem")
+
+    @staticmethod
     def _ensure_organization_certificate(
         organization_id: str,
         organization_name: str,
@@ -576,6 +610,10 @@ class KeyService:
             }
 
         # Return organization context for org-level keys
+        certificate_pem = getattr(result, "certificate_pem", None)
+        if not certificate_pem and result.organization_id:
+            certificate_pem = KeyService._fetch_org_certificate_pem(result.organization_id)
+
         return {
             "key_id": result.key_id,
             "organization_id": result.organization_id,
@@ -587,7 +625,7 @@ class KeyService:
             "monthly_api_usage": result.monthly_api_usage,
             "coalition_member": result.coalition_member,
             "coalition_rev_share": result.coalition_rev_share,
-            "certificate_pem": getattr(result, "certificate_pem", None),
+            "certificate_pem": certificate_pem,
         }
 
     @staticmethod
