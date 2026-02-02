@@ -10,6 +10,7 @@ import unicodedata
 from typing import Any, Dict, List, Optional, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import select
@@ -382,7 +383,7 @@ async def verify_advanced(
             )
         response_payload["soft_match"] = response_payload["fuzzy_search"]
 
-    return JSONResponse(status_code=status.HTTP_200_OK, content=response_payload)
+    return JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder(response_payload))
 
 
 @router.post("/verify", include_in_schema=False)

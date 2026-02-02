@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -100,12 +101,13 @@ async def test_verify_advanced_returns_verification_and_optional_merkle_outputs(
     )
     mock_subhash = SimpleNamespace(hash_value="deadbeef", text_content=None)
 
+    scan_timestamp = datetime.now(timezone.utc)
     mock_report = SimpleNamespace(
         id="rpt_1",
         target_document_id=None,
         total_segments=2,
         matched_segments=1,
-        scan_timestamp="2026-01-15T00:00:00Z",
+        scan_timestamp=scan_timestamp,
         source_documents=[
             {
                 "document_id": "doc_source",
@@ -160,6 +162,7 @@ async def test_verify_advanced_returns_verification_and_optional_merkle_outputs(
     assert "plagiarism" in payload
     assert payload["attribution"]["query_preview"] == "Signed content..."[:200]
     assert "text_content" not in payload["attribution"]["sources"][0]
+    assert payload["plagiarism"]["scan_timestamp"] == scan_timestamp.isoformat()
 
 
 @pytest.mark.asyncio
