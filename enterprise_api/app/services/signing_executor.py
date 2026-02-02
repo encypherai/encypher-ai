@@ -27,6 +27,7 @@ from app.database import content_session_factory, core_session_factory
 from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
 from app.services.organization_bootstrap import ensure_organization_exists
+from app.services.provisioning_service import ProvisioningService
 from app.services.status_service import status_service
 from app.utils.coalition_client import CoalitionClient
 from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
@@ -74,6 +75,14 @@ async def execute_signing(
     org_id = organization["organization_id"]
 
     await ensure_organization_exists(db, organization)
+
+    if not is_demo_org and not org_id.startswith("user_"):
+        await ProvisioningService._ensure_organization_certificate(
+            db=db,
+            organization_id=org_id,
+            organization_name=organization.get("organization_name") or org_id,
+            authorization=None,
+        )
 
     # Load organization's private key
     # For demo orgs (including user-level keys), use demo key but keep actual org_id as signer

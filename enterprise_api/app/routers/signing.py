@@ -13,6 +13,7 @@ from app.models.response_models import SignResponse
 from app.observability.metrics import increment
 from app.schemas.embeddings import EncodeWithEmbeddingsRequest, EncodeWithEmbeddingsResponse
 from app.services.embedding_executor import encode_document_with_embeddings
+from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.signing_executor import execute_signing
 from app.services.webhook_dispatcher import emit_document_signed
 from app.utils.quota import QuotaManager, QuotaType
@@ -53,6 +54,8 @@ async def sign_content(
             detail=detail,
             headers=api_rate_limiter.get_headers(result),
         )
+
+    await ensure_organization_exists(db, organization)
 
     # Check monthly quota for C2PA signatures (1 per document)
     await QuotaManager.check_quota(

@@ -20,7 +20,7 @@ This library serves as:
 
 ### Tech Stack
 - **Language**: Python 3.9+
-- **Core Dependency**: `encypher-ai` (v2.2.0+)
+- **Core Dependency**: `encypher-ai` (v3.0.4+)
 - **Package Manager**: UV
 - **Testing**: pytest, pytest-cov
 - **Code Quality**: black, ruff, mypy
@@ -164,7 +164,7 @@ uv run mypy encypher_commercial_shared/
 - Future commercial tools
 
 ### Dependencies (Upstream)
-- **encypher-ai** - Core library (v2.2.0+)
+- **encypher-ai** - Core library (v3.0.4+)
 - Standard library only (no other external deps)
 
 ### Design Philosophy
@@ -432,7 +432,7 @@ uv pip install -e .
 uv pip show encypher-ai
 
 # Ensure compatible version
-uv add 'encypher-ai>=2.2.0,<3.0.0'
+uv add 'encypher-ai>=3.0.4,<4.0.0'
 ```
 
 ### Test Failures

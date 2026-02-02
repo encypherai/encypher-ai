@@ -108,17 +108,20 @@ http:
     # All /api/v1/verify endpoints handled by verification-service
     # ============================================
     verify-advanced-router:
-      rule: "Path(`/api/v1/verify/advanced`)"
+      rule: "PathPrefix(`/api/v1/verify/advanced`)"
       service: enterprise-api
       entryPoints:
         - web
-      priority: 11
+      priority: 110
+      middlewares:
+        - cors-api
 
     verify-router:
       rule: "PathPrefix(`/api/v1/verify`)"
       service: verification-service
       entryPoints:
         - web
+      priority: 100
       middlewares:
         - cors-api
 

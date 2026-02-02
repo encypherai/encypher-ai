@@ -21,7 +21,7 @@ dependencies = [
     "structlog>=25.5.0",
     "python-json-logger>=4.0.0",
     "rich>=14.3.1",
-    "encypher-ai>=3.0.3",
+    "encypher-ai>=3.0.4,<4.0.0",
 ]
 
 [project.optional-dependencies]

@@ -25,6 +25,7 @@ from app.schemas.embeddings import (
     MerkleTreeLevelInfo,
 )
 from app.services.embedding_service import EmbeddingService
+from app.services.provisioning_service import ProvisioningService
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.status_service import status_service
 from app.services.merkle_service import MerkleService
@@ -73,6 +74,14 @@ async def encode_document_with_embeddings(
         )
 
         await ensure_organization_exists(core_db, organization)
+
+        if not organization.get("is_demo", False) and not organization_id.startswith("user_"):
+            await ProvisioningService._ensure_organization_certificate(
+                db=core_db,
+                organization_id=organization_id,
+                organization_name=organization.get("organization_name") or organization_id,
+                authorization=None,
+            )
 
         # Load organization's private key for signing
         # For user-level orgs (is_demo=true), use the demo key

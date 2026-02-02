@@ -156,6 +156,7 @@ services:
       REDIS_URL: redis://redis-cache:6379
       # Shared config
       JWT_SECRET_KEY: dev_jwt_secret_key_change_in_production_min_32_chars
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-dev-internal-token}
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
       MARKETING_SITE_URL: http://localhost:3000
       DASHBOARD_URL: http://localhost:3001
@@ -223,6 +224,7 @@ services:
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
       ENVIRONMENT: development
       LOG_LEVEL: INFO
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-dev-internal-token}
       # Service-specific
       SERVICE_NAME: key-service
       SERVICE_PORT: 8003
@@ -480,6 +482,8 @@ services:
       LOG_LEVEL: DEBUG
       SERVICE_NAME: enterprise-api
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3050,http://localhost:3051,https://staging.encypherai.com,https://dashboard-staging.encypherai.com,https://encypherai.com,https://www.encypherai.com,https://dashboard.encypherai.com
+      COMPOSE_ORG_CONTEXT_VIA_AUTH_SERVICE: "true"
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-dev-internal-token}
       # Internal service URLs (for cross-service API calls)
       AUTH_SERVICE_URL: http://auth-service:8001
       KEY_SERVICE_URL: http://key-service:8003

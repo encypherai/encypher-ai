@@ -42,7 +42,7 @@ We will move to the long-term ideal microservices architecture where each servic
 - [x] 5.1.1 Key-service: validate-key rollback+fallback when `organizations.certificate_pem` missing — ✅ pytest
 - [x] 5.2 Auth-service unit tests passing — ✅ pytest
 - [x] 5.3 Enterprise-api unit tests passing — ✅ pytest
-- [ ] 5.4 End-to-end smoke test: create key in dashboard, sign via enterprise-api — ✅ manual
+- [x] 5.4 End-to-end smoke test: create key in dashboard, sign via enterprise-api — ✅ pytest (local e2e)
 
 ## Rollout Notes
 
@@ -67,4 +67,4 @@ Deploy order:
 - All tests passing with verification markers.
 
 ## Completion Notes
-(Write on completion.)
+- Local E2E sign/verify via Traefik passes (`LOCAL_API_TESTS=true uv run pytest enterprise_api/tests/e2e_local`).

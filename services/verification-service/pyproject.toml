@@ -20,7 +20,7 @@ dependencies = [
     "prometheus-fastapi-instrumentator>=7.1.0",
     "structlog>=25.5.0",
     "python-json-logger>=4.0.0",
-    "encypher-ai==3.0.3",
+    "encypher-ai>=3.0.4,<4.0.0",
 ]
 
 [project.optional-dependencies]

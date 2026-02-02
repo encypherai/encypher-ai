@@ -19,3 +19,7 @@
 
 ## Notes
 - Local stack running via start-dev.sh; run tests before any push.
+- Updated microservice/shared_libs `encypher-ai` dependency ranges to `>=3.0.4,<4.0.0`.
+- Updated shared libs agent guides to reflect `encypher-ai` 3.0.4+.
+- Tests: `uv run ruff check .` (repo root), `uv run pytest services/verification-service/tests/test_verify_api_key_auth.py`, `uv run pytest services/key-service/tests/test_validate_key_with_org.py`.
+- Encoding-service has no `tests/` directory (pytest returned file not found).

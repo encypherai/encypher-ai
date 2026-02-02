@@ -1311,6 +1311,20 @@ curl -X POST https://api-staging.encypherai.com/api/v1/sign \
   }'
 ```
 
+### Local E2E Tests (Sign/Verify)
+
+1. **Start Enterprise API locally** (see Local Development Setup below).
+2. **Configure local test credentials:**
+   ```bash
+   cd enterprise_api/tests/e2e_local
+   cp .env.local.example .env.local
+   # Edit API_KEY/BASE_URL if needed
+   ```
+3. **Run local E2E suite:**
+   ```bash
+   LOCAL_API_TESTS=true uv run pytest enterprise_api/tests/e2e_local -m e2e
+   ```
+
 ### Local Development Setup
 
 1. **Start Required Services:**

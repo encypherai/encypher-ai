@@ -45,6 +45,7 @@ services:
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: dev-secret-key-change-in-production
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-dev-internal-token}
       LOG_LEVEL: DEBUG
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
     depends_on:
@@ -116,6 +117,8 @@ services:
       DEMO_API_KEY: "demo-key-123"
       DEMO_PRIVATE_KEY_HEX: "0000000000000000000000000000000000000000000000000000000000000000"
       ENVIRONMENT: development
+      COMPOSE_ORG_CONTEXT_VIA_AUTH_SERVICE: "true"
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-dev-internal-token}
     depends_on:
       postgres:
         condition: service_healthy
@@ -173,6 +176,7 @@ services:
       ALLOWED_ORIGINS: http://localhost:3000,http://localhost:3001
       ENVIRONMENT: development
       LOG_LEVEL: INFO
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-local-dev-internal-token}
       # Service-specific
       SERVICE_NAME: key-service
       SERVICE_PORT: 8003
