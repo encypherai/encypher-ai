@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 from typing import Optional, List, Tuple
 from sqlalchemy.orm import Session
 from sqlalchemy import func
-from sqlalchemy.exc import ProgrammingError
 import httpx
 import logging
 
@@ -442,31 +441,6 @@ class KeyService:
         # Hash the key
         key_hash = hash_api_key(api_key)
 
-        # First try: Query key with organization join (org-level keys)
-        # Note: certificate_pem column will be added by auth-service migration 005
-        # For now, we query without it and fetch separately if needed
-        query_with_certificate = text("""
-            SELECT 
-                k.id as key_id,
-                k.organization_id,
-                k.user_id,
-                k.permissions as key_permissions,
-                k.is_active,
-                k.is_revoked,
-                k.expires_at,
-                o.name as organization_name,
-                o.tier,
-                o.features,
-                o.monthly_api_limit,
-                o.monthly_api_usage,
-                o.coalition_member,
-                o.coalition_rev_share,
-                o.certificate_pem
-            FROM api_keys k
-            LEFT JOIN organizations o ON k.organization_id = o.id
-            WHERE k.key_hash = :key_hash
-        """)
-
         query_without_certificate = text("""
             SELECT 
                 k.id as key_id,
@@ -488,20 +462,7 @@ class KeyService:
             WHERE k.key_hash = :key_hash
         """)
 
-        try:
-            result = db.execute(query_with_certificate, {"key_hash": key_hash}).fetchone()
-        except ProgrammingError as exc:
-            message = str(getattr(exc, "orig", exc)).lower()
-            if "certificate_pem" in message and ("does not exist" in message or "undefinedcolumn" in message):
-                # The failed SELECT leaves the transaction in an aborted state on Postgres.
-                # We must rollback before retrying any subsequent SQL.
-                try:
-                    db.rollback()
-                except Exception:
-                    pass
-                result = db.execute(query_without_certificate, {"key_hash": key_hash}).fetchone()
-            else:
-                raise
+        result = db.execute(query_without_certificate, {"key_hash": key_hash}).fetchone()
 
         if not result:
             return None

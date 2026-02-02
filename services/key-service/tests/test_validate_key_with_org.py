@@ -1,7 +1,12 @@
-from fastapi.testclient import TestClient
+def test_validate_key_returns_certificate_pem(client, monkeypatch) -> None:
+    from app.services.key_service import KeyService
 
+    monkeypatch.setattr(
+        KeyService,
+        "_fetch_org_certificate_pem",
+        lambda _org_id: "-----BEGIN PUBLIC KEY-----\nZm9v\n-----END PUBLIC KEY-----\n",
+    )
 
-def test_validate_key_returns_certificate_pem(client) -> None:
     api_key = "ency_" + ("a" * 32)
     response = client.post("/api/v1/keys/validate", json={"key": api_key})
 
@@ -11,11 +16,10 @@ def test_validate_key_returns_certificate_pem(client) -> None:
     assert payload["data"]["certificate_pem"].startswith("-----BEGIN PUBLIC KEY-----")
 
 
-def test_validate_key_missing_certificate_column_returns_none(test_app, mock_db_missing_certificate_column) -> None:
-    from app.db.session import get_db
+def test_validate_key_returns_none_when_no_certificate(client, monkeypatch) -> None:
+    from app.services.key_service import KeyService
 
-    test_app.dependency_overrides[get_db] = lambda: mock_db_missing_certificate_column
-    client = TestClient(test_app)
+    monkeypatch.setattr(KeyService, "_fetch_org_certificate_pem", lambda _org_id: None)
 
     api_key = "ency_" + ("a" * 32)
     response = client.post("/api/v1/keys/validate", json={"key": api_key})
@@ -26,16 +30,8 @@ def test_validate_key_missing_certificate_column_returns_none(test_app, mock_db_
     assert payload["data"]["certificate_pem"] is None
 
 
-def test_validate_key_fetches_certificate_from_auth_service_when_missing_column(
-    test_app,
-    mock_db_missing_certificate_column,
-    monkeypatch,
-) -> None:
-    from app.db.session import get_db
+def test_validate_key_fetches_certificate_from_auth_service(monkeypatch, client) -> None:
     from app.core.config import settings
-
-    test_app.dependency_overrides[get_db] = lambda: mock_db_missing_certificate_column
-    client = TestClient(test_app)
 
     monkeypatch.setattr(settings, "INTERNAL_SERVICE_TOKEN", "internal-token", raising=False)
 

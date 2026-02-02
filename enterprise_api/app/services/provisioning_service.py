@@ -9,7 +9,7 @@ import hashlib
 import json
 import logging
 import secrets
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 import httpx
@@ -342,7 +342,14 @@ class ProvisioningService:
                         format=serialization.PublicFormat.Raw,
                     )
                     if existing_key_bytes == public_key_bytes:
-                        if not existing_row.certificate_expiry or existing_row.certificate_expiry > datetime.utcnow():
+                        now = datetime.now(timezone.utc)
+                        expiry = existing_row.certificate_expiry
+                        if expiry is not None:
+                            if expiry.tzinfo is None:
+                                expiry = expiry.replace(tzinfo=timezone.utc)
+                            else:
+                                expiry = expiry.astimezone(timezone.utc)
+                        if not expiry or expiry > now:
                             logger.debug("Organization %s already has a matching certificate", organization_id)
                             return True
                 except Exception as exc:
@@ -356,14 +363,15 @@ class ProvisioningService:
                 ]
             )
 
-            certificate_expiry = datetime.utcnow() + timedelta(days=3650)
+            now = datetime.now(timezone.utc)
+            certificate_expiry = now + timedelta(days=3650)
             cert = (
                 x509.CertificateBuilder()
                 .subject_name(subject)
                 .issuer_name(issuer)
                 .public_key(public_key)
                 .serial_number(x509.random_serial_number())
-                .not_valid_before(datetime.utcnow())
+                .not_valid_before(now)
                 .not_valid_after(certificate_expiry)
                 .sign(signing_key, algorithm=None)
             )
@@ -386,7 +394,7 @@ class ProvisioningService:
                     "cert_pem": cert_pem,
                     "chain_pem": "",
                     "status": OrganizationCertificateStatus.ACTIVE.value,
-                    "rotated_at": datetime.utcnow(),
+                    "rotated_at": now,
                     "expiry": certificate_expiry,
                     "org_id": organization_id,
                 },

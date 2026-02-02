@@ -131,6 +131,92 @@ async def test_ensure_organization_certificate_uses_signing_key(db, monkeypatch)
 
 
 @pytest.mark.asyncio
+async def test_ensure_organization_certificate_handles_naive_expiry(db, monkeypatch) -> None:
+    organization_id = "org_cert_naive"
+    organization_name = "Naive Expiry Org"
+    private_key = ed25519.Ed25519PrivateKey.generate()
+    public_key = private_key.public_key()
+    encrypted_private_key = encrypt_private_key(private_key)
+    serialized_public_key = serialize_public_key(public_key)
+
+    now = datetime.utcnow()
+    cert = (
+        x509.CertificateBuilder()
+        .subject_name(
+            x509.Name(
+                [
+                    x509.NameAttribute(x509.oid.NameOID.COUNTRY_NAME, "US"),
+                    x509.NameAttribute(x509.oid.NameOID.ORGANIZATION_NAME, organization_name),
+                    x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, organization_id),
+                ]
+            )
+        )
+        .issuer_name(
+            x509.Name(
+                [
+                    x509.NameAttribute(x509.oid.NameOID.COUNTRY_NAME, "US"),
+                    x509.NameAttribute(x509.oid.NameOID.ORGANIZATION_NAME, organization_name),
+                    x509.NameAttribute(x509.oid.NameOID.COMMON_NAME, organization_id),
+                ]
+            )
+        )
+        .public_key(public_key)
+        .serial_number(x509.random_serial_number())
+        .not_valid_before(now)
+        .not_valid_after(now + timedelta(days=3650))
+        .sign(private_key, algorithm=None)
+    )
+    cert_pem = cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
+
+    await db.execute(
+        text(
+            """
+            INSERT INTO organizations (
+                id, name, email, tier, monthly_api_limit, monthly_api_usage,
+                coalition_member, coalition_rev_share, private_key_encrypted, public_key,
+                certificate_pem, certificate_expiry, created_at, updated_at
+            ) VALUES (
+                :id, :name, :email, :tier, :monthly_api_limit, 0,
+                TRUE, 65, :private_key_encrypted, :public_key,
+                :certificate_pem, :certificate_expiry, NOW(), NOW()
+            )
+            """
+        ),
+        {
+            "id": organization_id,
+            "name": organization_name,
+            "email": "naive-expiry@encypherai.com",
+            "tier": "starter",
+            "monthly_api_limit": 10000,
+            "private_key_encrypted": encrypted_private_key,
+            "public_key": serialized_public_key,
+            "certificate_pem": cert_pem,
+            "certificate_expiry": now + timedelta(days=3650),
+        },
+    )
+    await db.commit()
+
+    monkeypatch.setattr(settings, "internal_service_token", "internal-token")
+    monkeypatch.setattr(settings, "auth_service_url", "http://auth-service")
+
+    result = await ProvisioningService._ensure_organization_certificate(
+        db=db,
+        organization_id=organization_id,
+        organization_name=organization_name,
+        authorization=None,
+    )
+
+    assert result is True
+
+    cert_row = await db.execute(
+        text("SELECT certificate_pem FROM organizations WHERE id = :org_id"),
+        {"org_id": organization_id},
+    )
+    stored_cert = cert_row.fetchone()[0]
+    assert stored_cert == cert_pem
+
+
+@pytest.mark.asyncio
 async def test_internal_ensure_certificate_endpoint_requires_token(async_client, monkeypatch) -> None:
     monkeypatch.setattr(settings, "internal_service_token", "internal-token")
 
