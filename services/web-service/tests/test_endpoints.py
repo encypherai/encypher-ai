@@ -168,8 +168,8 @@ def test_legacy_demo_request(client: TestClient):
     assert "uuid" in data
 
 
-def test_legacy_analytics(client: TestClient):
-    """Test legacy generic analytics endpoint"""
+def test_marketing_analytics(client: TestClient):
+    """Test marketing analytics endpoint"""
     event = {
         "event_type": "page_view",
         "event_name": "legacy_test_event",
@@ -177,7 +177,7 @@ def test_legacy_analytics(client: TestClient):
         "page_url": "http://localhost:3000/legacy",
     }
     response = client.post(
-        "/api/v1/analytics/",
+        "/api/v1/marketing-analytics/",
         json=event,
     )
     assert response.status_code == 200, response.text

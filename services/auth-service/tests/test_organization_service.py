@@ -133,6 +133,21 @@ class TestCreateOrganization(TestOrganizationService):
         # Note: In a real test, we'd verify the actual max_seats value
 
 
+class TestTierConfig(TestOrganizationService):
+    """Tests for tier configuration feature flags."""
+
+    @pytest.mark.parametrize("tier", ["enterprise", "strategic_partner"])
+    def test_fuzzy_fingerprint_enabled_for_enterprise_tiers(self, service, tier):
+        config = service._get_tier_config(tier)
+        assert config is not None
+        assert config["features"].get("fuzzy_fingerprint") is True
+
+    def test_fuzzy_fingerprint_disabled_for_lower_tiers(self, service):
+        config = service._get_tier_config("business")
+        assert config is not None
+        assert config["features"].get("fuzzy_fingerprint") is not True
+
+
 class TestGetUserRole(TestOrganizationService):
     """Tests for get_user_role"""
 

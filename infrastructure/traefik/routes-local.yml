@@ -145,10 +145,10 @@ http:
         - cors-api
 
     # ============================================
-    # WEB SERVICE -> Marketing forms + analytics (8002)
+    # WEB SERVICE -> Marketing forms + marketing analytics (8002)
     # ============================================
     web-service-router:
-      rule: "PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`)"
+      rule: "PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`) || PathPrefix(`/api/v1/marketing-analytics`)"
       service: web-service
       entryPoints:
         - web

@@ -185,9 +185,9 @@ http:
       tls: {}
       priority: 100
 
-    # Marketing Web Service (forms + analytics)
+    # Marketing Web Service (forms + marketing analytics)
     api-web-service:
-      rule: "Host(`api.encypherai.com`) && (PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`))"
+      rule: "Host(`api.encypherai.com`) && (PathPrefix(`/api/v1/ai-demo`) || PathPrefix(`/api/v1/publisher-demo`) || PathPrefix(`/api/v1/sales`) || PathPrefix(`/api/v1/demo-requests`) || PathPrefix(`/api/v1/marketing-analytics`))"
       service: web-service
       entryPoints:
         - websecure

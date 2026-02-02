@@ -22,7 +22,7 @@ Backend service for the Encypher marketing website, handling demo requests, sale
 | `/api/v1/sales/enterprise-requests` | POST | Submit enterprise sales inquiry |
 | `/api/v1/sales/general-requests` | POST | Submit general sales inquiry |
 | `/api/v1/demo-requests` | POST/GET | Legacy generic demo requests |
-| `/api/v1/analytics` | POST | Legacy generic analytics |
+| `/api/v1/marketing-analytics` | POST | Marketing analytics events |
 | `/health` | GET | Health check |
 
 ## Setup

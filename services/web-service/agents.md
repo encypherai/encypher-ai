@@ -17,7 +17,7 @@ It is designed to be a lightweight service separate from the core `enterprise_ap
 | `/api/v1/sales/enterprise-requests` | POST | Enterprise sales inquiries |
 | `/api/v1/sales/general-requests` | POST | General sales inquiries |
 | `/api/v1/demo-requests` | POST/GET | Legacy generic demo requests |
-| `/api/v1/analytics` | POST | Legacy generic analytics |
+| `/api/v1/marketing-analytics` | POST | Marketing analytics |
 | `/health` | GET | Health check |
 
 ## Responsibilities

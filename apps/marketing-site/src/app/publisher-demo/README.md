@@ -82,8 +82,8 @@ Submit a demo request from the form.
 }
 ```
 
-### POST /api/v1/analytics/events
-Track user interactions and scroll events.
+### POST /api/v1/marketing-analytics/events
+Track user interactions and scroll events via the marketing analytics endpoint.
 
 **Request:**
 ```json
