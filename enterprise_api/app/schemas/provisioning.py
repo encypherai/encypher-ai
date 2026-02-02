@@ -186,6 +186,26 @@ class APIKeyRevokeRequest(BaseModel):
 
 
 # ============================================================================
+# Internal Certificate Provisioning Schemas
+# ============================================================================
+
+
+class InternalEnsureCertificateRequest(BaseModel):
+    """Request schema for internal certificate provisioning."""
+
+    organization_id: str = Field(..., description="Organization identifier")
+    organization_name: Optional[str] = Field(None, description="Organization name for certificate CN")
+
+
+class InternalEnsureCertificateResponse(BaseModel):
+    """Response schema for internal certificate provisioning."""
+
+    success: bool = Field(..., description="Whether the certificate provisioning succeeded")
+    data: Dict[str, Any] = Field(default_factory=dict, description="Provisioning metadata")
+    error: Optional[str] = Field(None, description="Error message, if any")
+
+
+# ============================================================================
 # User Account Schemas
 # ============================================================================
 

@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     # SHARED: Internal Service URLs (from shared vars)
     # ===========================================
     AUTH_SERVICE_URL: str = "http://localhost:8001"
+    ENTERPRISE_API_URL: str = "http://enterprise-api:8000"
 
     # ===========================================
     # SHARED: Internal Service Authentication (from shared vars)

@@ -20,9 +20,14 @@ from cryptography.x509.oid import NameOID
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.organization import Organization, OrganizationTier
+from app.models.organization import Organization, OrganizationTier, OrganizationCertificateStatus
 from app.utils.feature_flags import TIER_FEATURES
 from app.utils.quota import TIER_QUOTAS, QuotaType
+from app.utils.crypto_utils import (
+    extract_public_key_from_certificate,
+    load_organization_private_key,
+    load_organization_public_key,
+)
 from app.config import settings
 
 logger = logging.getLogger(__name__)
@@ -271,6 +276,7 @@ class ProvisioningService:
 
     @staticmethod
     async def _ensure_organization_certificate(
+        db: AsyncSession,
         organization_id: str,
         organization_name: str,
         authorization: Optional[str] = None,
@@ -293,68 +299,125 @@ class ProvisioningService:
             headers = {}
             if authorization:
                 headers["Authorization"] = authorization
-            
-            # Add internal service token for auth-service internal endpoints
-            if hasattr(settings, 'INTERNAL_SERVICE_TOKEN') and settings.INTERNAL_SERVICE_TOKEN:
-                headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
-                
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                # Check if org already has certificate
-                context_response = await client.get(
-                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/context",
-                    headers=headers,
-                )
-                
-                if context_response.status_code == 200:
-                    context_data = context_response.json()
-                    if context_data.get("data", {}).get("certificate_pem"):
-                        logger.debug(f"Organization {organization_id} already has certificate")
-                        return True
-                
-                # Generate self-signed Ed25519 certificate
-                private_key = ed25519.Ed25519PrivateKey.generate()
-                public_key = private_key.public_key()
-                
-                # Create certificate
-                subject = issuer = x509.Name([
+
+            if settings.internal_service_token:
+                headers["X-Internal-Token"] = settings.internal_service_token
+
+            try:
+                signing_key = await load_organization_private_key(organization_id, db)
+            except ValueError as exc:
+                logger.warning("Unable to load signing key for %s: %s", organization_id, exc)
+                return False
+
+            if not isinstance(signing_key, ed25519.Ed25519PrivateKey):
+                try:
+                    await load_organization_public_key(organization_id, db)
+                except ValueError as exc:
+                    logger.warning("Unable to load public key for %s: %s", organization_id, exc)
+                logger.warning("Signing key type not supported for certificate provisioning: %s", organization_id)
+                return False
+
+            public_key = signing_key.public_key()
+            public_key_bytes = public_key.public_bytes(
+                encoding=serialization.Encoding.Raw,
+                format=serialization.PublicFormat.Raw,
+            )
+
+            existing_result = await db.execute(
+                text(
+                    """
+                    SELECT certificate_pem, certificate_expiry
+                    FROM organizations
+                    WHERE id = :org_id
+                    """
+                ),
+                {"org_id": organization_id},
+            )
+            existing_row = existing_result.fetchone()
+            if existing_row and existing_row.certificate_pem:
+                try:
+                    existing_key = extract_public_key_from_certificate(existing_row.certificate_pem)
+                    existing_key_bytes = existing_key.public_bytes(
+                        encoding=serialization.Encoding.Raw,
+                        format=serialization.PublicFormat.Raw,
+                    )
+                    if existing_key_bytes == public_key_bytes:
+                        if not existing_row.certificate_expiry or existing_row.certificate_expiry > datetime.utcnow():
+                            logger.debug("Organization %s already has a matching certificate", organization_id)
+                            return True
+                except Exception as exc:
+                    logger.warning("Failed to parse existing certificate for %s: %s", organization_id, exc)
+
+            subject = issuer = x509.Name(
+                [
                     x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
                     x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization_name or organization_id),
                     x509.NameAttribute(NameOID.COMMON_NAME, organization_id),
-                ])
-                
-                cert = (
-                    x509.CertificateBuilder()
-                    .subject_name(subject)
-                    .issuer_name(issuer)
-                    .public_key(public_key)
-                    .serial_number(x509.random_serial_number())
-                    .not_valid_before(datetime.utcnow())
-                    .not_valid_after(datetime.utcnow() + timedelta(days=3650))  # 10 years
-                    .sign(private_key, algorithm=None)  # Ed25519 doesn't need hash algorithm
-                )
-                
-                # Serialize certificate to PEM
-                cert_pem = cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
-                
-                # Update organization certificate via auth-service internal endpoint
+                ]
+            )
+
+            certificate_expiry = datetime.utcnow() + timedelta(days=3650)
+            cert = (
+                x509.CertificateBuilder()
+                .subject_name(subject)
+                .issuer_name(issuer)
+                .public_key(public_key)
+                .serial_number(x509.random_serial_number())
+                .not_valid_before(datetime.utcnow())
+                .not_valid_after(certificate_expiry)
+                .sign(signing_key, algorithm=None)
+            )
+
+            cert_pem = cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
+
+            await db.execute(
+                text(
+                    """
+                    UPDATE organizations
+                    SET certificate_pem = :cert_pem,
+                        certificate_chain = :chain_pem,
+                        certificate_status = :status,
+                        certificate_rotated_at = :rotated_at,
+                        certificate_expiry = :expiry
+                    WHERE id = :org_id
+                    """
+                ),
+                {
+                    "cert_pem": cert_pem,
+                    "chain_pem": "",
+                    "status": OrganizationCertificateStatus.ACTIVE.value,
+                    "rotated_at": datetime.utcnow(),
+                    "expiry": certificate_expiry,
+                    "org_id": organization_id,
+                },
+            )
+            await db.commit()
+
+            if not settings.auth_service_url:
+                logger.warning("auth_service_url not configured; certificate stored only locally")
+                return True
+
+            async with httpx.AsyncClient(timeout=10.0) as client:
                 update_response = await client.patch(
-                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/certificate",
+                    f"{settings.auth_service_url}/api/v1/organizations/internal/{organization_id}/certificate",
                     json={"certificate_pem": cert_pem},
                     headers=headers,
                 )
-                
-                if update_response.status_code in (200, 201):
-                    logger.info(f"Auto-provisioned self-signed certificate for organization {organization_id}")
-                    return True
-                else:
-                    logger.warning(
-                        f"Failed to provision certificate for {organization_id}: "
-                        f"{update_response.status_code} {update_response.text}"
-                    )
-                    return False
-                    
+
+            if update_response.status_code in (200, 201):
+                logger.info("Auto-provisioned self-signed certificate for organization %s", organization_id)
+                return True
+
+            logger.warning(
+                "Failed to provision certificate for %s: %s %s",
+                organization_id,
+                update_response.status_code,
+                update_response.text,
+            )
+            return False
+
         except Exception as e:
-            logger.error(f"Error ensuring certificate for {organization_id}: {e}", exc_info=True)
+            logger.error("Error ensuring certificate for %s: %s", organization_id, e, exc_info=True)
             return False
 
     @staticmethod
@@ -376,6 +439,7 @@ class ProvisioningService:
         
         # Auto-provision certificate if needed
         await ProvisioningService._ensure_organization_certificate(
+            db=db,
             organization_id=organization_id,
             organization_name=org_name,
             authorization=authorization,

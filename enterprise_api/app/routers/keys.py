@@ -239,6 +239,7 @@ async def create_key(
     # Auto-provision certificate if needed (before creating key)
     org_name = organization.get("organization_name", org_id)
     await ProvisioningService._ensure_organization_certificate(
+        db=db,
         organization_id=org_id,
         organization_name=org_name,
         authorization=None,  # No auth header in this context

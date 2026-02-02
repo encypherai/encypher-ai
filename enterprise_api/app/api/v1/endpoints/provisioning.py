@@ -23,6 +23,8 @@ from app.schemas.provisioning import (
     APIKeyRevokeRequest,
     AutoProvisionRequest,
     AutoProvisionResponse,
+    InternalEnsureCertificateRequest,
+    InternalEnsureCertificateResponse,
     UserAccountCreateRequest,
     UserAccountResponse,
 )
@@ -50,6 +52,15 @@ def _require_provisioning_token(x_provisioning_token: str | None) -> None:
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid provisioning token",
         )
+
+
+def _require_internal_token(internal_token: str | None) -> None:
+    expected = (settings.internal_service_token or "").strip()
+    if not expected:
+        logger.warning("internal_service_token_missing")
+        return
+    if not internal_token or internal_token.strip() != expected:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid internal token")
 
 
 # ============================================================================
@@ -339,6 +350,52 @@ async def create_user_account(
         role=request.role or "member",
         created_at=datetime.utcnow(),
         is_active=True,
+    )
+
+
+# ==========================================================================
+# Internal Certificate Provisioning Endpoint
+# ==========================================================================
+
+
+@router.post(
+    "/internal/ensure-certificate",
+    response_model=InternalEnsureCertificateResponse,
+    include_in_schema=False,
+)
+async def ensure_certificate_internal(
+    request: InternalEnsureCertificateRequest,
+    db: AsyncSession = Depends(get_db),
+    internal_token: str | None = Header(None, alias="X-Internal-Token"),
+) -> InternalEnsureCertificateResponse:
+    _require_internal_token(internal_token)
+
+    org_row = await db.execute(
+        text("SELECT name FROM organizations WHERE id = :org_id"),
+        {"org_id": request.organization_id},
+    )
+    org = org_row.fetchone()
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    org_name = request.organization_name or org.name
+
+    success = await ProvisioningService._ensure_organization_certificate(
+        db=db,
+        organization_id=request.organization_id,
+        organization_name=org_name,
+        authorization=None,
+    )
+
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to provision certificate",
+        )
+
+    return InternalEnsureCertificateResponse(
+        success=True,
+        data={"organization_id": request.organization_id},
     )
 
 

@@ -10,11 +10,6 @@ from sqlalchemy.exc import ProgrammingError
 import httpx
 import logging
 
-from cryptography.hazmat.primitives.asymmetric import ed25519
-from cryptography.hazmat.primitives import serialization
-from cryptography import x509
-from cryptography.x509.oid import NameOID
-
 from ..db.models import ApiKey, KeyUsage, KeyRotation, Organization
 from ..models.schemas import ApiKeyCreate, ApiKeyUpdate
 from ..core.security import (
@@ -73,9 +68,9 @@ class KeyService:
     ) -> bool:
         """
         Ensure organization has a signing certificate.
-        
-        If the organization doesn't have a certificate, auto-provision a self-signed
-        Ed25519 certificate via auth-service.
+
+        Delegates provisioning to enterprise-api so certificates align with
+        the organization's signing key.
         
         Args:
             organization_id: Organization identifier
@@ -86,69 +81,40 @@ class KeyService:
             True if certificate exists or was created, False on failure
         """
         try:
+            if not settings.ENTERPRISE_API_URL:
+                logger.warning("enterprise_api_url_missing")
+                return False
+
             headers = {}
             if authorization:
                 headers["Authorization"] = authorization
-            
-            # Add internal service token for auth-service internal endpoints
-            if hasattr(settings, 'INTERNAL_SERVICE_TOKEN') and settings.INTERNAL_SERVICE_TOKEN:
+
+            if settings.INTERNAL_SERVICE_TOKEN:
                 headers["X-Internal-Token"] = settings.INTERNAL_SERVICE_TOKEN
-                
+
+            payload = {
+                "organization_id": organization_id,
+                "organization_name": organization_name,
+            }
+
             with httpx.Client(timeout=10.0) as client:
-                # Check if org already has certificate
-                context_response = client.get(
-                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/context",
+                update_response = client.post(
+                    f"{settings.ENTERPRISE_API_URL}/api/v1/provisioning/internal/ensure-certificate",
+                    json=payload,
                     headers=headers,
                 )
-                
-                if context_response.status_code == 200:
-                    context_data = context_response.json()
-                    if context_data.get("data", {}).get("certificate_pem"):
-                        logger.debug(f"Organization {organization_id} already has certificate")
-                        return True
-                
-                # Generate self-signed Ed25519 certificate
-                private_key = ed25519.Ed25519PrivateKey.generate()
-                public_key = private_key.public_key()
-                
-                # Create certificate
-                subject = issuer = x509.Name([
-                    x509.NameAttribute(NameOID.COUNTRY_NAME, "US"),
-                    x509.NameAttribute(NameOID.ORGANIZATION_NAME, organization_name or organization_id),
-                    x509.NameAttribute(NameOID.COMMON_NAME, organization_id),
-                ])
-                
-                cert = (
-                    x509.CertificateBuilder()
-                    .subject_name(subject)
-                    .issuer_name(issuer)
-                    .public_key(public_key)
-                    .serial_number(x509.random_serial_number())
-                    .not_valid_before(datetime.utcnow())
-                    .not_valid_after(datetime.utcnow() + timedelta(days=3650))  # 10 years
-                    .sign(private_key, algorithm=None)  # Ed25519 doesn't need hash algorithm
-                )
-                
-                # Serialize certificate to PEM
-                cert_pem = cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
-                
-                # Update organization certificate via auth-service internal endpoint
-                update_response = client.patch(
-                    f"{settings.AUTH_SERVICE_URL}/api/v1/organizations/internal/{organization_id}/certificate",
-                    json={"certificate_pem": cert_pem},
-                    headers=headers,
-                )
-                
-                if update_response.status_code in (200, 201):
-                    logger.info(f"Auto-provisioned self-signed certificate for organization {organization_id}")
-                    return True
-                else:
-                    logger.warning(
-                        f"Failed to provision certificate for {organization_id}: "
-                        f"{update_response.status_code} {update_response.text}"
-                    )
-                    return False
-                    
+
+            if update_response.status_code == 200:
+                logger.info("Auto-provisioned certificate via enterprise-api for %s", organization_id)
+                return True
+
+            logger.warning(
+                "Failed to provision certificate for %s: %s %s",
+                organization_id,
+                update_response.status_code,
+                update_response.text,
+            )
+            return False
         except Exception as e:
             logger.error(f"Error ensuring certificate for {organization_id}: {e}", exc_info=True)
             return False
