@@ -769,7 +769,15 @@ is appended at the document end by default (set `disable_c2pa=true` to skip the 
 }
 ```
 
-**Manifest Modes:** `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`
+**Manifest Modes:** `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`
+
+**New: `zw_embedding` Mode (Professional+)**
+- Uses zero-width Unicode characters (ZWNJ, ZWJ, CGJ, MVS) for invisible signatures
+- 128 chars per sentence (no magic number, contiguous sequence detection)
+- **Word-compatible**: Survives Microsoft Word copy-paste perfectly
+- Detected by scanning for 128 contiguous base-4 characters
+- No visible spaces or gaps in any text editor
+- Ideal for portable content tracking across web, Word, PDF, etc.
 
 **Response:**
 
