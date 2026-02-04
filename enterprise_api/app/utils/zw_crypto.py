@@ -7,14 +7,16 @@ Key features:
 - Base-4 Word-safe encoding using ZWNJ, ZWJ, CGJ, MVS (no ZWSP - Word strips it!)
 - Ed25519 signatures for full document signing
 - HMAC-SHA256 for minimal signed UUIDs (sentence-level)
-- Magic number for format detection
-- Compact encoding: 132 chars per minimal signature (33% smaller than base-3)
+- Contiguous sequence detection (no magic number needed)
+- Compact encoding: 128 chars per minimal signature
 - Works in Word, Google Docs, PDF, all browsers
 
 Word Compatibility Discovery:
 - ZWSP (U+200B) is STRIPPED by Microsoft Word during copy/paste
-- ZWNJ (U+200C), ZWJ (U+200D), CGJ (U+034F), MVS (U+180E) all survive
+- WJ (U+2060) APPEARS AS SPACE in Microsoft Word - cannot use!
+- ZWNJ (U+200C), ZWJ (U+200D), CGJ (U+034F), MVS (U+180E) all survive perfectly
 - Base-4 encoding with these 4 chars gives optimal size + Word compatibility
+- Signatures detected by 128 contiguous base-4 chars (no magic number needed)
 """
 
 import hashlib
@@ -46,32 +48,24 @@ from cryptography.hazmat.backends import default_backend
 # - MVS  (U+180E) = 3 - Mongolian Vowel Separator
 #
 # Each byte = 4 chars (4^4 = 256)
-# Minimal signed UUID = 32 bytes = 128 chars + 4 magic = 132 chars
-# This is 33% smaller than base-3 (196 chars) while being Word-compatible!
+# Minimal signed UUID = 32 bytes = 128 chars (no magic number)
+# Signatures detected by 128 contiguous base-4 characters
+# This is 35% smaller than base-3 (196 chars) while being Word-compatible!
 # =============================================================================
 
-# Word-safe invisible characters (NO ZWSP!)
+# Word-safe invisible characters (ONLY these 4 work in Word!)
 ZWNJ = "\u200C"  # 0 - Zero-Width Non-Joiner
 ZWJ = "\u200D"   # 1 - Zero-Width Joiner
 CGJ = "\u034F"   # 2 - Combining Grapheme Joiner
 MVS = "\u180E"   # 3 - Mongolian Vowel Separator
 
-# 5th character for magic numbers ONLY (not used in base-4 encoding)
-# This ensures magic numbers can NEVER appear accidentally in encoded data
-WJ = "\u2060"    # Word Joiner - Word-safe, never used in payload encoding
-
-# Legacy ZWSP (kept for backward compatibility detection, but NOT used in new signatures)
-ZWSP = "\u200B"  # NOT USED - Word strips this!
-
-# Character set for base-4 encoding (4 chars only - WJ is reserved for magic)
+# Character set for base-4 encoding
 CHARS_BASE4 = [ZWNJ, ZWJ, CGJ, MVS]
+CHARS_BASE4_SET = set(CHARS_BASE4)  # For fast lookup
 
-# Magic number for Word-safe format (uses WJ to prevent accidental matches)
-# Pattern: WJ + ZWJ + ZWNJ + CGJ (WJ ensures this can't appear in base-4 data)
-ZW_MAGIC_V1 = WJ + ZWJ + ZWNJ + CGJ
-
-# Legacy magic (for backward compatibility detection)
-ZW_MAGIC_LEGACY = ZWSP + ZWNJ + ZWSP + ZWJ
+# NOT USED - These characters don't work in Microsoft Word:
+# ZWSP (U+200B) - STRIPPED by Word during copy/paste
+# WJ (U+2060) - APPEARS AS SPACE in Word (visible!)
 
 
 def encode_byte_zw(byte_value: int) -> str:
@@ -467,22 +461,19 @@ def verify_uuid_reference_zw(
 
 
 # =============================================================================
-# MINIMAL SIGNED UUID - Most Compact Cryptographically Secure Format
+# MINIMAL SIGNED UUID - Sentence-level provenance
 # =============================================================================
 #
-# This is the most lightweight per-sentence signature possible:
+# For sentence-level tracking, we use a minimal format:
 # - UUID: 16 bytes (database reference)
 # - HMAC: 16 bytes (cryptographic proof)
 # - Total: 32 bytes = 128 chars (base-4 encoding)
 #
+# Detection: 128 contiguous base-4 characters (no magic number needed)
 # All other data (merkle info, signer details, manifest) lives in the database.
 #
 # Word-compatible: Uses only ZWNJ, ZWJ, CGJ, MVS (no ZWSP!)
 # =============================================================================
-
-# Magic number for minimal signed UUID format
-# Pattern: WJ + ZWNJ + CGJ + MVS (uses WJ to prevent accidental matches in base-4 data)
-ZW_MAGIC_MINI = WJ + ZWNJ + CGJ + MVS
 
 
 def create_minimal_signed_uuid(
@@ -493,11 +484,12 @@ def create_minimal_signed_uuid(
     Create the most compact cryptographically signed UUID possible.
     
     Format (32 bytes = 128 chars with base-4):
-    - Magic number: 4 chars (format detection)
     - UUID: 16 bytes = 64 chars (database reference)
     - HMAC-SHA256: 16 bytes = 64 chars (cryptographic proof)
     
-    Total: 4 + 64 + 64 = 132 characters
+    Total: 128 characters (all invisible, Word-compatible)
+    
+    Detection: 128 contiguous base-4 characters (no magic number needed)
     
     Security:
     - 128-bit UUID uniqueness
@@ -506,14 +498,15 @@ def create_minimal_signed_uuid(
     
     Word Compatibility:
     - Uses only ZWNJ, ZWJ, CGJ, MVS (no ZWSP which Word strips!)
-    - 33% smaller than base-3 encoding
+    - No WJ (appears as space in Word!)
+    - 35% smaller than base-3 encoding
     
     Args:
         sentence_uuid: UUID for this sentence (stored in DB with full metadata)
         signing_key: 32-byte secret key for HMAC (org-specific)
     
     Returns:
-        132 invisible characters (Word-compatible)
+        128 invisible characters (Word-compatible)
     """
     if len(signing_key) < 32:
         raise ValueError("Signing key must be at least 32 bytes")
@@ -530,38 +523,32 @@ def create_minimal_signed_uuid(
     payload = uuid_bytes + hmac_truncated  # 32 bytes
     encoded_payload = encode_bytes_zw(payload)  # 128 chars (base-4)
     
-    return ZW_MAGIC_MINI + encoded_payload  # 4 + 128 = 132 chars
+    return encoded_payload  # 128 chars (no magic number)
 
 
 def verify_minimal_signed_uuid(
-    text: str,
+    signature: str,
     signing_key: bytes,
 ) -> Tuple[bool, Optional[UUID]]:
     """
-    Verify a minimal signed UUID and extract the UUID.
+    Verify a minimal signed UUID (128 chars) and extract the UUID.
     
     Args:
-        text: Text containing minimal signed UUID
+        signature: 128-character signature string (base-4 encoded)
         signing_key: 32-byte secret key for HMAC verification
     
     Returns:
         Tuple of (is_valid, uuid)
     """
-    # Find magic number
-    idx = text.find(ZW_MAGIC_MINI)
-    if idx == -1:
-        return False, None
-    
-    # Extract payload (32 bytes = 128 chars after magic with base-4)
-    payload_start = idx + 4  # After magic
-    payload_end = payload_start + 128  # 32 bytes × 4 chars/byte
-    
-    if len(text) < payload_end:
+    if len(signature) != 128:
         return False, None
     
     try:
-        encoded_payload = text[payload_start:payload_end]
-        payload = decode_bytes_zw(encoded_payload)
+        # Decode the 128-char signature
+        payload = decode_bytes_zw(signature)
+        
+        if len(payload) != 32:
+            return False, None
         
         # Split into UUID and HMAC
         uuid_bytes = payload[:16]
@@ -584,41 +571,75 @@ def verify_minimal_signed_uuid(
         return False, None
 
 
+def find_all_minimal_signed_uuids(text: str) -> list[tuple[int, int, str]]:
+    """
+    Find all minimal signed UUIDs by detecting 128 contiguous base-4 characters.
+    
+    This is the key innovation: signatures are detected by finding sequences of
+    exactly 128 contiguous base-4 characters. Natural text will never have such
+    long sequences of invisible characters, so false positives are virtually impossible.
+    
+    Args:
+        text: Text potentially containing signatures
+    
+    Returns:
+        List of (start_pos, end_pos, signature_string) tuples
+    """
+    signatures = []
+    i = 0
+    
+    while i < len(text):
+        # Check if we're at start of a base-4 sequence
+        if text[i] in CHARS_BASE4_SET:
+            # Count contiguous base-4 chars
+            start = i
+            while i < len(text) and text[i] in CHARS_BASE4_SET:
+                i += 1
+            length = i - start
+            
+            # If we have at least 128 chars, extract signatures
+            # (could be multiple signatures concatenated)
+            while length >= 128:
+                sig = text[start:start+128]
+                signatures.append((start, start+128, sig))
+                start += 128
+                length -= 128
+        else:
+            i += 1
+    
+    return signatures
+
+
 def extract_minimal_signed_uuid(text: str) -> Optional[str]:
     """
-    Extract minimal signed UUID from text.
+    Extract first minimal signed UUID from text.
     
     Args:
         text: Text containing minimal signed UUID
     
     Returns:
-        The minimal signed UUID string (132 chars) or None
+        The minimal signed UUID string (128 chars) or None
     """
-    idx = text.find(ZW_MAGIC_MINI)
-    if idx == -1:
-        return None
-    
-    end = idx + 4 + 128  # magic + payload (base-4)
-    if len(text) < end:
-        return None
-    
-    return text[idx:end]
+    sigs = find_all_minimal_signed_uuids(text)
+    return sigs[0][2] if sigs else None
 
 
 def remove_minimal_signed_uuid(text: str) -> str:
     """
-    Remove minimal signed UUID from text.
+    Remove all minimal signed UUIDs from text.
     
     Args:
-        text: Text with minimal signed UUID
+        text: Text with minimal signed UUIDs
     
     Returns:
-        Clean text with signature removed
+        Clean text with all signatures removed
     """
-    sig = extract_minimal_signed_uuid(text)
-    if sig:
-        return text.replace(sig, '')
-    return text
+    sigs = find_all_minimal_signed_uuids(text)
+    result = text
+    # Remove in reverse order to maintain positions
+    for start, end, sig in reversed(sigs):
+        result = result[:start] + result[end:]
+    return result
 
 
 def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes:
@@ -640,35 +661,7 @@ def derive_signing_key_from_private_key(private_key: Ed25519PrivateKey) -> bytes
     return hashlib.sha256(b"encypher-hmac-key:" + private_bytes).digest()
 
 
-def find_all_minimal_signed_uuids(text: str) -> list[tuple[int, int, str]]:
-    """
-    Find all minimal signed UUIDs in text.
-    
-    Args:
-        text: Text to search
-    
-    Returns:
-        List of (start_index, end_index, signature_string) tuples
-    """
-    results = []
-    idx = 0
-    sig_len = 4 + 128  # magic + payload (base-4)
-    
-    while idx < len(text):
-        pos = text.find(ZW_MAGIC_MINI, idx)
-        if pos == -1:
-            break
-        
-        end = pos + sig_len
-        if end <= len(text):
-            sig = text[pos:end]
-            results.append((pos, end, sig))
-            # Skip past this entire signature to avoid finding magic within payload
-            idx = end
-        else:
-            break
-    
-    return results
+# Duplicate removed - using contiguous sequence detection version above
 
 
 # =============================================================================
