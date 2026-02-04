@@ -99,7 +99,7 @@ class StreamMerkleFinalizeRequest(BaseModel):
 
     @validator("manifest_mode")
     def validate_manifest_mode(cls, v):
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid"]
+        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding"]
         if v not in allowed:
             raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
         return v

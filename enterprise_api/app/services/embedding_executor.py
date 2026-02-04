@@ -142,6 +142,19 @@ async def encode_document_with_embeddings(
                 },
             )
 
+        # ZW Embedding requires Professional+ (Word-compatible, 132 chars/sentence)
+        if request.manifest_mode == "zw_embedding" and org_tier_level < 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "ZW embedding mode requires Professional tier or higher",
+                    "required_tier": "professional",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+
         # Hybrid manifest mode requires Enterprise
         if request.manifest_mode == "hybrid" and org_tier_level < 3:
             raise HTTPException(
@@ -436,12 +449,16 @@ async def encode_document_with_embeddings(
                 index_for_attribution = org_tier_level >= 1
 
             if index_for_attribution:
+                # Pass features dict with nma_member flag for quota check
+                quota_features = dict(organization.get("features", {}))
+                if organization.get("nma_member"):
+                    quota_features["nma_member"] = True
                 await QuotaManager.check_quota(
                     db=core_db,
                     organization_id=organization_id,
                     quota_type=QuotaType.MERKLE_ENCODING,
                     increment=len(merkle_levels),
-                    features=organization.get("features", {}),
+                    features=quota_features,
                 )
 
             logger.info(

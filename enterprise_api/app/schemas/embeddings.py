@@ -73,7 +73,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     # === API Feature Augmentation (TEAM_044) ===
     manifest_mode: str = Field(
         default="full",
-        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid. Availability depends on plan tier.",
+        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid, zw_embedding. zw_embedding uses Word-compatible zero-width characters (132 chars/sentence). Availability depends on plan tier.",
     )
     embedding_strategy: str = Field(
         default="single_point",
@@ -125,7 +125,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
 
     @validator("manifest_mode")
     def validate_manifest_mode(cls, v):
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid"]
+        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding"]
         if v not in allowed:
             raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
         return v

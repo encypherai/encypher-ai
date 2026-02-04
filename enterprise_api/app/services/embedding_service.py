@@ -33,6 +33,11 @@ except ImportError:
 from app.models.content_reference import ContentReference
 from app.utils.embedding_signature import compute_signature_hash
 from app.services.status_service import status_service
+from app.utils.zw_crypto import (
+    create_minimal_signed_uuid,
+    derive_signing_key_from_private_key,
+    embed_signature_safely,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -245,23 +250,28 @@ class EmbeddingService:
 
         # Step 2: Create minimal embeddings for each segment FIRST
         # Then add ONE C2PA wrapper at the end
+        # NOTE: Skip this for zw_embedding mode (it handles embeddings in its own branch)
         embedded_segments = []
-        for idx, (segment, minimal_metadata) in enumerate(segment_embeddings):
-            try:
-                # Add minimal invisible embedding to this segment
-                embedded_segment = UnicodeMetadata.embed_metadata(
-                    text=segment,
-                    private_key=self.private_key,
-                    signer_id=self.signer_id,
-                    timestamp=current_timestamp,
-                    custom_metadata=minimal_metadata,
-                    metadata_format="basic",  # Minimal format, not full C2PA
-                    add_hard_binding=False,  # No hard binding for sentence-level
-                )
-                embedded_segments.append(embedded_segment)
-            except Exception as e:
-                logger.warning(f"Failed to add minimal embedding to segment {idx}: {e}, using plain text")
-                embedded_segments.append(segment)
+        if manifest_mode != "zw_embedding":
+            for idx, (segment, minimal_metadata) in enumerate(segment_embeddings):
+                try:
+                    # Add minimal invisible embedding to this segment
+                    embedded_segment = UnicodeMetadata.embed_metadata(
+                        text=segment,
+                        private_key=self.private_key,
+                        signer_id=self.signer_id,
+                        timestamp=current_timestamp,
+                        custom_metadata=minimal_metadata,
+                        metadata_format="basic",  # Minimal format, not full C2PA
+                        add_hard_binding=False,  # No hard binding for sentence-level
+                    )
+                    embedded_segments.append(embedded_segment)
+                except Exception as e:
+                    logger.warning(f"Failed to add minimal embedding to segment {idx}: {e}, using plain text")
+                    embedded_segments.append(segment)
+        else:
+            # For zw_embedding, use original segments (embeddings added in zw_embedding branch)
+            embedded_segments = segments
 
         # Join embedded segments with space separator
         full_document = " ".join(embedded_segments)
@@ -487,6 +497,53 @@ class EmbeddingService:
             except Exception as e:
                 logger.error(f"Failed to add hybrid manifest: {e}")
                 raise ValueError(f"Hybrid manifest embedding failed: {e}")
+
+        # Handle zw_embedding manifest mode (Word-compatible, 132 chars/sentence)
+        elif manifest_mode == "zw_embedding":
+            logger.info(
+                "Using zw_embedding manifest mode for document %s with Word-compatible signatures",
+                document_id,
+            )
+
+            try:
+                # Derive HMAC signing key from org's private key
+                signing_key = derive_signing_key_from_private_key(self.private_key)
+
+                # Build document with ZW signatures per segment
+                zw_embedded_segments = []
+                for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
+                    # Generate UUID for this segment
+                    segment_uuid = uuid.uuid4()
+
+                    # Create minimal signed UUID (132 chars, Word-compatible)
+                    zw_signature = create_minimal_signed_uuid(segment_uuid, signing_key)
+
+                    # Embed signature safely (before terminal punctuation)
+                    embedded_segment = embed_signature_safely(segment, zw_signature)
+                    zw_embedded_segments.append(embedded_segment)
+
+                    # Update the reference with ZW-specific metadata
+                    if idx < len(references_to_insert):
+                        ref_any = cast(Any, references_to_insert[idx])
+                        if hasattr(ref_any, "embedding_metadata"):
+                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
+                            ref_any.embedding_metadata["manifest_mode"] = "zw_embedding"
+                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
+                            ref_any.embedding_metadata["zw_signature_length"] = len(zw_signature)
+
+                # Join segments to form embedded document (no C2PA wrapper)
+                embedded_document = " ".join(zw_embedded_segments)
+                document_metadata["manifest_mode"] = "zw_embedding"
+                document_metadata["zw_encoding"] = "base4_word_safe"
+                document_metadata["signature_chars_per_segment"] = 132
+
+                logger.info(
+                    f"Successfully embedded ZW signatures for document {document_id}: "
+                    f"{len(segments)} segments, 132 chars each"
+                )
+            except Exception as e:
+                logger.error(f"Failed to embed ZW signatures: {e}")
+                raise ValueError(f"ZW embedding failed: {e}")
 
         # Default: full C2PA manifest mode
         else:

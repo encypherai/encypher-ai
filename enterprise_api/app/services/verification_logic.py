@@ -27,6 +27,11 @@ from app.models.response_models import VerifyVerdict
 from app.services.certificate_service import ResolvedCertificate, certificate_resolver
 from app.services.status_service import status_service
 from app.utils.c2pa_trust_list import validate_certificate_chain
+from app.utils.zw_crypto import (
+    ZW_MAGIC_MINI,
+    verify_minimal_signed_uuid,
+    find_all_minimal_signed_uuids,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -263,6 +268,11 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
         return result
 
 
+def detect_zw_embeddings(text: str) -> bool:
+    """Check if text contains ZW (zero-width) embeddings."""
+    return ZW_MAGIC_MINI in text
+
+
 async def execute_verification(*, payload_text: str, db: AsyncSession) -> VerificationExecution:
     """Run UnicodeMetadata verification with cached certificate resolution.
 
@@ -271,6 +281,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     2. User-level orgs (free tier, use demo key)
     3. Registered organization certificates/BYOK keys
     4. C2PA trust list (for third-party signed content with embedded x5chain)
+    5. ZW embeddings (Word-compatible, requires signing key from DB)
     """
 
     await certificate_resolver.refresh_cache(db)
