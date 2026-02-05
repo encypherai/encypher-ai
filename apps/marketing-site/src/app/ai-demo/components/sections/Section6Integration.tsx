@@ -133,31 +133,34 @@ export default function Section6Integration({ isActive, onComplete, onAnimationS
               </div>
             </div>
             <pre className="text-[11px] sm:text-xs text-slate-200 leading-relaxed">
-              <code>{`# Streaming Support (Critical for Chat Applications)
-from encypher_enterprise import StreamingSigner
+              <code>{`# Simple API - Available Now
+from encypher.client import EncypherClient
+
+client = EncypherClient(api_key="ency_...")
+result = client.sign(text="Content to sign")
+print(result.signed_text)
+
+# Verify signed content
+verification = client.verify(text=result.signed_text)
+print(verification.valid)  # True
+
+# Streaming Support (Coming Soon)
+from encypher.streaming import StreamingSigner
 
 signer = StreamingSigner(client)
 for chunk in openai_stream:
     signed_chunk = signer.process_chunk(chunk)
     print(signed_chunk, end='')
-final_text = signer.finalize()  # Complete signed text
+final_text = signer.finalize()
 
-# OpenAI Integration (Drop-in Replacement)
-from encypher_enterprise.integrations.openai import EncypherOpenAI
+# OpenAI Integration (Coming Soon)
+from encypher.integrations.openai import EncypherOpenAI
 
 client = EncypherOpenAI(
     openai_api_key="sk-...",
-    encypher_api_key="encypher_..."
+    encypher_api_key="ency_..."
 )
-# Normal OpenAI usage - automatically signed with C2PA!
-response = client.chat.completions.create(model="gpt-4", ...)
-
-# Simple API
-from encypher_enterprise import EncypherClient
-
-client = EncypherClient(api_key="encypher_...")
-result = client.sign("Content to sign", title="My Document")
-verification = client.verify(result.signed_text)`}</code>
+response = client.chat.completions.create(model="gpt-4", ...)`}</code>
             </pre>
           </motion.div>
         </div>

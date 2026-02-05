@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Shield, Zap, Users, FileText, BarChart3, Lock, Globe, ArrowRight, Download, ExternalLink } from "lucide-react";
+import { CheckCircle, Shield, Zap, Users, FileText, BarChart3, Lock, Globe, ArrowRight, Download } from "lucide-react";
 import AISummary from "@/components/seo/AISummary";
 
 export const metadata: Metadata = {
@@ -167,10 +167,10 @@ export default function WordPressPage() {
                   Get Free API Key
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-slate-600 text-white hover:bg-slate-800" asChild>
-                <Link href="https://github.com/encypherai/encypherai-commercial/tree/main/integrations/wordpress-provenance-plugin" target="_blank">
-                  <ExternalLink className="mr-2 h-5 w-5" />
-                  View on GitHub
+              <Button size="lg" variant="outline" className="border-slate-500 bg-slate-700/50 text-white hover:bg-slate-700" asChild>
+                <Link href="/pricing">
+                  View Pricing
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
             </div>
