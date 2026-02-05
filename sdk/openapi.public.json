@@ -1327,46 +1327,23 @@
         "tags": [
           "Signing"
         ],
-        "summary": "Sign with advanced embedding controls",
-        "description": "Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).\n\nTier requirements are enforced server-side (typically Professional+ depending on selected options).",
+        "summary": "REMOVED - Use POST /sign with options instead",
+        "description": "**⚠️ REMOVED: This endpoint has been removed.**\n\nPlease use `POST /sign` with options instead.\n\nMigration example:\n```json\n// Old /sign/advanced request\n{\n    \"document_id\": \"doc1\",\n    \"text\": \"...\",\n    \"segmentation_level\": \"sentence\"\n}\n\n// New /sign request\n{\n    \"text\": \"...\",\n    \"document_id\": \"doc1\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```",
         "operationId": "sign_advanced_api_v1_sign_advanced_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EncodeWithEmbeddingsRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EncodeWithEmbeddingsResponse"
-                }
+                "schema": {}
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+          "410": {
+            "description": "Endpoint removed"
           }
         },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        "deprecated": true
       }
     },
     "/api/v1/verify/advanced": {

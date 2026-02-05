@@ -339,6 +339,14 @@ class Admin
             'encypher-provenance-settings',
             'encypher_assurance_coalition_section'
         );
+
+        add_settings_field(
+            'encypher_assurance_nma_member',
+            __('NMA Membership', 'encypher-provenance'),
+            [$this, 'render_nma_member_field'],
+            'encypher-provenance-settings',
+            'encypher_assurance_coalition_section'
+        );
     }
 
     public function sanitize_settings(array $settings): array
@@ -436,6 +444,9 @@ class Admin
             $sanitized['coalition_enabled'] = isset($settings['coalition_enabled']) ? (bool) $settings['coalition_enabled'] : true; // Optional for pro/enterprise
             $sanitized['show_branding'] = isset($settings['show_branding']) ? (bool) $settings['show_branding'] : true;
         }
+
+        // NMA (News Media Alliance) membership - extends free tier with sentence-level embeddings
+        $sanitized['nma_member'] = isset($settings['nma_member']) ? (bool) $settings['nma_member'] : false;
         
         return $sanitized;
     }
@@ -1736,6 +1747,71 @@ class Admin
             </div>
             <?php
         }
+    }
+
+    /**
+     * Render NMA (News Media Alliance) member field.
+     * NMA members on free tier get sentence-level minimal embeddings + C2PA manifest.
+     */
+    public function render_nma_member_field(): void
+    {
+        $options = get_option('encypher_assurance_settings', []);
+        $tier = isset($options['tier']) ? $options['tier'] : 'starter';
+        $nma_member = isset($options['nma_member']) ? (bool) $options['nma_member'] : false;
+        
+        // Only show for free tier - Pro/Enterprise already have these features
+        if ('starter' !== $tier) {
+            ?>
+            <p class="description" style="color:#666;">
+                <span class="dashicons dashicons-info" style="vertical-align: middle;"></span>
+                <?php esc_html_e('NMA membership benefits are included in your Professional/Enterprise tier.', 'encypher-provenance'); ?>
+            </p>
+            <input type="hidden" name="encypher_assurance_settings[nma_member]" value="0" />
+            <?php
+            return;
+        }
+        
+        ?>
+        <label>
+            <input type="checkbox" name="encypher_assurance_settings[nma_member]" value="1" <?php checked($nma_member, true); ?> />
+            <?php esc_html_e('I am a News Media Alliance member', 'encypher-provenance'); ?>
+        </label>
+        
+        <?php if ($nma_member): ?>
+            <div style="background:#e8f5e9; padding:15px; border-left:4px solid #4caf50; margin:10px 0;">
+                <p style="margin:0 0 10px 0;">
+                    <strong style="color:#2e7d32;"><span class="dashicons dashicons-awards" style="vertical-align: middle;"></span> <?php esc_html_e('NMA Member Benefits Active', 'encypher-provenance'); ?></strong>
+                </p>
+                <p style="margin:0; font-size:13px;">
+                    <?php esc_html_e('As an NMA member, your free tier includes enhanced features:', 'encypher-provenance'); ?>
+                </p>
+                <ul style="margin:10px 0 0 20px; font-size:13px;">
+                    <li><strong><?php esc_html_e('Sentence-level embeddings', 'encypher-provenance'); ?></strong> — <?php esc_html_e('Granular content attribution for AI licensing', 'encypher-provenance'); ?></li>
+                    <li><strong><?php esc_html_e('C2PA manifest', 'encypher-provenance'); ?></strong> — <?php esc_html_e('Industry-standard provenance metadata', 'encypher-provenance'); ?></li>
+                    <li><strong><?php esc_html_e('Merkle tree indexing', 'encypher-provenance'); ?></strong> — <?php esc_html_e('Attribution-ready content for coalition licensing', 'encypher-provenance'); ?></li>
+                </ul>
+                <p style="margin:10px 0 0 0; font-size:12px; color:#666;">
+                    <?php esc_html_e('These features are provided through the Encypher-NMA partnership to support news publishers in the AI content economy.', 'encypher-provenance'); ?>
+                </p>
+            </div>
+        <?php else: ?>
+            <div style="background:#fff3e0; padding:15px; border-left:4px solid #ff9800; margin:10px 0;">
+                <p style="margin:0 0 10px 0;">
+                    <strong style="color:#e65100;"><span class="dashicons dashicons-megaphone" style="vertical-align: middle;"></span> <?php esc_html_e('NMA Member? Unlock Enhanced Features', 'encypher-provenance'); ?></strong>
+                </p>
+                <p style="margin:0; font-size:13px;">
+                    <?php esc_html_e('News Media Alliance members get free access to sentence-level embeddings and C2PA manifests—features normally reserved for Professional tier.', 'encypher-provenance'); ?>
+                </p>
+                <p style="margin:10px 0 0 0;">
+                    <a href="https://www.newsmediaalliance.org/membership/" class="button button-secondary" target="_blank">
+                        <?php esc_html_e('Learn About NMA Membership', 'encypher-provenance'); ?>
+                    </a>
+                    <a href="https://encypherai.com/nma-partnership" class="button button-link" target="_blank">
+                        <?php esc_html_e('Encypher-NMA Partnership →', 'encypher-provenance'); ?>
+                    </a>
+                </p>
+            </div>
+        <?php endif;
     }
 
     public function render_dashboard_widget(): void

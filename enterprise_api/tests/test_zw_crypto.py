@@ -1,38 +1,30 @@
 """
 Tests for zero-width cryptographic embedding (zw_crypto module).
 
-Tests the new zw_embedding mode that uses only ZWSP/ZWNJ/ZWJ characters
+Tests the zw_embedding mode that uses only ZWNJ/ZWJ/CGJ/MVS characters
 for Word-compatible invisible signatures.
+
+Note: Full-document signing functions (create_zw_signature, verify_zw_signature, etc.)
+were removed as they used magic numbers which don't work in Microsoft Word.
+Only minimal signed UUID functions (contiguous sequence detection) are supported.
 """
 
-import hashlib
-import json
-from datetime import datetime, timezone
 from uuid import uuid4
 
 import pytest
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from app.utils.zw_crypto import (
-    ZW_MAGIC_V1,
-    ZW_MAGIC_MINI,
     CHARS_BASE4,
+    CHARS_BASE4_SET,
     ZWNJ,
     ZWJ,
     CGJ,
     MVS,
-    WJ,
-    ZWSP,
     encode_byte_zw,
     decode_byte_zw,
     encode_bytes_zw,
     decode_bytes_zw,
-    create_zw_signature,
-    verify_zw_signature,
-    extract_zw_signature,
-    remove_zw_signature,
-    create_uuid_reference_zw,
-    verify_uuid_reference_zw,
     create_minimal_signed_uuid,
     verify_minimal_signed_uuid,
     extract_minimal_signed_uuid,
@@ -42,6 +34,9 @@ from app.utils.zw_crypto import (
     derive_signing_key_from_private_key,
     create_safely_embedded_sentence,
 )
+
+# ZWSP for tampering tests (this char is stripped by Word)
+ZWSP = "\u200B"
 
 
 @pytest.fixture
@@ -89,392 +84,29 @@ def test_encode_decode_bytes():
             assert char in CHARS_BASE4
 
 
-def test_magic_number():
-    """Test magic number is unique and detectable."""
-    from app.utils.zw_crypto import WJ
-    
-    magic = ZW_MAGIC_V1
-    
-    # Should be 4 characters
-    assert len(magic) == 4
-    
-    # Should contain only Word-safe chars (no ZWSP!)
-    # Magic uses WJ + base-4 chars to prevent accidental matches in encoded data
-    ALLOWED_MAGIC_CHARS = CHARS_BASE4 + [WJ]
-    for char in magic:
-        assert char in ALLOWED_MAGIC_CHARS, f"Magic contains non-Word-safe char: U+{ord(char):04X}"
-    
-    # Should start with WJ (to prevent accidental matches in base-4 data)
-    assert magic[0] == WJ, "Magic should start with WJ to prevent false positives"
-    
-    # Should be unique pattern (WJ + ZWJ + ZWNJ + CGJ)
-    assert magic == WJ + ZWJ + ZWNJ + CGJ
-    
-    # Should be findable in text
-    text = f"Hello {magic} World"
-    assert magic in text
-    assert text.find(magic) == 6
-
-
-def test_create_zw_signature(test_keypair):
-    """Test creating a ZW signature with base-4 encoding."""
-    private_key, public_key = test_keypair
-    
-    text = "This is a test document."
-    signer_id = "test_signer_001"
-    
-    signature = create_zw_signature(text, private_key, signer_id)
-    
-    # Should start with magic number
-    assert signature.startswith(ZW_MAGIC_V1)
-    
-    # Should contain only Word-safe chars (no ZWSP!)
-    # Magic uses WJ, payload uses base-4
-    ALLOWED_CHARS = CHARS_BASE4 + [WJ]
-    for char in signature:
-        assert char in ALLOWED_CHARS, f"Non-Word-safe character: U+{ord(char):04X}"
-    
-    # Should be reasonable length with base-4 encoding
-    # Minimum: 4 + 4 + 8 + (small payload) + 256 = ~300+ chars
-    assert len(signature) > 280
-    
-    print(f"✓ Signature created: {len(signature)} chars (base-4, Word-safe)")
-
-
-def test_verify_zw_signature(test_keypair):
-    """Test verifying a ZW signature."""
-    private_key, public_key = test_keypair
-    
-    text = "This is a test document."
-    signer_id = "test_signer_001"
-    metadata = {"document_id": "test_doc_001"}
-    
-    # Create signature
-    signature = create_zw_signature(text, private_key, signer_id, metadata)
-    signed_text = text + signature
-    
-    # Verify signature
-    is_valid, payload = verify_zw_signature(signed_text, public_key)
-    
-    assert is_valid, "Signature should be valid"
-    assert payload is not None
-    assert payload["signer_id"] == signer_id
-    assert "timestamp" in payload
-    assert "content_hash" in payload
-    assert payload["metadata"] == metadata
-    
-    # Verify content hash
-    expected_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
-    assert payload["content_hash"] == expected_hash
-    
-    print(f"✓ Signature verified successfully")
-
-
-def test_tamper_detection(test_keypair):
-    """Test that content tampering is detected."""
-    private_key, public_key = test_keypair
-    
-    original_text = "This is the original text."
-    signer_id = "test_signer_001"
-    
-    # Create signature
-    signature = create_zw_signature(original_text, private_key, signer_id)
-    signed_text = original_text + signature
-    
-    # Tamper with content
-    tampered_text = "This is MODIFIED text." + signature
-    
-    # Verify should fail due to hash mismatch
-    is_valid, payload = verify_zw_signature(tampered_text, public_key)
-    
-    assert not is_valid, "Signature should be invalid for tampered content"
-    assert payload is not None
-    assert payload.get("content_tampered") == True
-    
-    print(f"✓ Tampering detected correctly")
-
-
-def test_wrong_key_verification(test_keypair):
-    """Test that verification fails with wrong public key."""
-    private_key, public_key = test_keypair
-    
-    # Generate a different keypair
-    wrong_private_key = Ed25519PrivateKey.generate()
-    wrong_public_key = wrong_private_key.public_key()
-    
-    text = "This is a test document."
-    signer_id = "test_signer_001"
-    
-    # Create signature with first key
-    signature = create_zw_signature(text, private_key, signer_id)
-    signed_text = text + signature
-    
-    # Try to verify with wrong key
-    is_valid, payload = verify_zw_signature(signed_text, wrong_public_key)
-    
-    assert not is_valid, "Signature should be invalid with wrong key"
-    
-    print(f"✓ Wrong key rejected correctly")
-
-
-def test_extract_zw_signature(test_keypair):
-    """Test extracting ZW signature from text."""
-    private_key, public_key = test_keypair
-    
-    text = "This is a test document."
-    signer_id = "test_signer_001"
-    
-    signature = create_zw_signature(text, private_key, signer_id)
-    signed_text = text + signature
-    
-    # Extract signature
-    extracted = extract_zw_signature(signed_text)
-    
-    assert extracted is not None
-    assert extracted == signature
-    
-    print(f"✓ Signature extracted: {len(extracted)} chars")
-
-
-def test_remove_zw_signature(test_keypair):
-    """Test removing ZW signature from text."""
-    private_key, public_key = test_keypair
-    
-    text = "This is a test document."
-    signer_id = "test_signer_001"
-    
-    signature = create_zw_signature(text, private_key, signer_id)
-    signed_text = text + signature
-    
-    # Remove signature
-    clean_text = remove_zw_signature(signed_text)
-    
-    assert clean_text == text
-    assert ZW_MAGIC_V1 not in clean_text
-    
-    print(f"✓ Signature removed, clean text recovered")
-
-
-def test_uuid_reference_creation(test_keypair):
-    """Test creating UUID reference with ZW signature."""
-    private_key, public_key = test_keypair
-    
-    text = "This is a test document."
-    doc_uuid = uuid4()
-    signer_id = "test_signer_001"
-    metadata = {"organization_id": "org_test"}
-    
-    # Create UUID reference
-    signed_text = create_uuid_reference_zw(
-        text, doc_uuid, private_key, signer_id, metadata
-    )
-    
-    # Should contain original text
-    assert text in signed_text
-    
-    # Should contain ZW signature
-    assert ZW_MAGIC_V1 in signed_text
-    
-    # Should be invisible (only Word-safe chars added, no ZWSP!)
-    # Magic uses WJ, payload uses base-4
-    added_chars = signed_text[len(text):]
-    ALLOWED_CHARS = CHARS_BASE4 + [WJ]
-    for char in added_chars:
-        assert char in ALLOWED_CHARS, f"Non-Word-safe char: U+{ord(char):04X}"
-    
-    print(f"✓ UUID reference created: {len(added_chars)} chars (Word-safe)")
-
-
-def test_uuid_reference_verification(test_keypair):
-    """Test verifying UUID reference."""
-    private_key, public_key = test_keypair
-    
-    text = "This is a test document."
-    doc_uuid = uuid4()
-    signer_id = "test_signer_001"
-    metadata = {"organization_id": "org_test"}
-    
-    # Create UUID reference
-    signed_text = create_uuid_reference_zw(
-        text, doc_uuid, private_key, signer_id, metadata
-    )
-    
-    # Verify UUID reference
-    is_valid, extracted_uuid, payload = verify_uuid_reference_zw(
-        signed_text, public_key
-    )
-    
-    if not is_valid:
-        print(f"DEBUG: Verification failed")
-        print(f"  is_valid: {is_valid}")
-        print(f"  extracted_uuid: {extracted_uuid}")
-        print(f"  payload: {payload}")
-    
-    assert is_valid, "UUID reference should be valid"
-    assert extracted_uuid == doc_uuid
-    assert payload is not None
-    assert payload["signer_id"] == signer_id
-    # UUID is nested in metadata
-    assert payload["metadata"]["uuid"] == str(doc_uuid)
-    assert payload["metadata"]["organization_id"] == metadata["organization_id"]
-    
-    print(f"✓ UUID reference verified: {extracted_uuid}")
-
-
-def test_multiple_documents(test_keypair):
-    """Test signing multiple documents with same key."""
-    private_key, public_key = test_keypair
-    signer_id = "test_signer_001"
-    
-    documents = [
-        "First document content.",
-        "Second document with different text.",
-        "Third document is longer and has more content to sign.",
-    ]
-    
-    signed_docs = []
-    for doc in documents:
-        signature = create_zw_signature(doc, private_key, signer_id)
-        signed_docs.append(doc + signature)
-    
-    # Verify all documents
-    for i, signed_doc in enumerate(signed_docs):
-        is_valid, payload = verify_zw_signature(signed_doc, public_key)
-        assert is_valid, f"Document {i} should be valid"
-        
-        # Verify content hash matches original
-        clean_text = remove_zw_signature(signed_doc)
-        expected_hash = hashlib.sha256(clean_text.encode('utf-8')).hexdigest()
-        assert payload["content_hash"] == expected_hash
-    
-    print(f"✓ All {len(documents)} documents verified")
-
-
-def test_signature_size_analysis(test_keypair):
-    """Analyze signature sizes for different payload sizes."""
-    private_key, public_key = test_keypair
-    signer_id = "test_signer_001"
-    
-    test_cases = [
-        ("Short", "Hello"),
-        ("Medium", "This is a medium length document with some content."),
-        ("Long", "This is a much longer document. " * 50),
-    ]
-    
-    print("\n=== Signature Size Analysis ===")
-    for name, text in test_cases:
-        signature = create_zw_signature(text, private_key, signer_id)
-        
-        # Calculate components
-        magic_size = 4
-        version_size = 6
-        len_size = 12
-        sig_size = 64 * 6  # Ed25519 signature = 64 bytes = 384 chars
-        payload_size = len(signature) - magic_size - version_size - len_size - sig_size
-        
-        print(f"\n{name} text ({len(text)} chars):")
-        print(f"  Total signature: {len(signature)} ZW chars")
-        print(f"  - Magic: {magic_size} chars")
-        print(f"  - Version: {version_size} chars")
-        print(f"  - Length: {len_size} chars")
-        print(f"  - Payload: {payload_size} chars")
-        print(f"  - Signature: {sig_size} chars")
-        print(f"  Overhead: {len(signature) / len(text):.2f}x")
-
-
-def test_word_compatibility():
-    """
-    Test that ZW signatures use only Word-compatible characters.
-    
-    This is a critical test - if this fails, the signature won't be
-    invisible in Microsoft Word.
-    
-    Word-safe chars: ZWNJ (U+200C), ZWJ (U+200D), CGJ (U+034F), MVS (U+180E)
-    NOT Word-safe: ZWSP (U+200B) - Word strips this!
-    """
-    private_key = Ed25519PrivateKey.generate()
-    public_key = private_key.public_key()
-    
-    text = "This text will be tested in Microsoft Word."
-    signer_id = "test_signer_001"
-    
-    signature = create_zw_signature(text, private_key, signer_id)
-    
-    # Word-safe character code points (base-4 + WJ for magic)
-    word_safe_cps = {0x200C, 0x200D, 0x034F, 0x180E, 0x2060}  # ZWNJ, ZWJ, CGJ, MVS, WJ
-    
-    # Verify ONLY Word-safe chars (no ZWSP, no variation selectors)
-    forbidden_chars = set()
-    for char in signature:
-        cp = ord(char)
-        # Check for variation selectors
-        if 0xFE00 <= cp <= 0xFE0F:  # VS1-VS16
-            forbidden_chars.add(f"VS{cp - 0xFE00 + 1} (U+{cp:04X})")
-        elif 0xE0100 <= cp <= 0xE01EF:  # VS17-VS256
-            forbidden_chars.add(f"VS{cp - 0xE0100 + 17} (U+{cp:06X})")
-        # Check for ZWSP (Word strips this!)
-        elif cp == 0x200B:
-            forbidden_chars.add("ZWSP (U+200B) - Word strips this!")
-        # Only allow Word-safe chars
-        elif cp not in word_safe_cps:
-            forbidden_chars.add(f"U+{cp:04X}")
-    
-    assert len(forbidden_chars) == 0, (
-        f"Signature contains non-Word-safe characters: {forbidden_chars}"
-    )
-    
-    print(f"✓ Word compatibility verified: {len(signature)} chars, all Word-safe")
-
-
-def test_copy_paste_preservation():
-    """
-    Test that signatures are preserved during copy/paste.
-    
-    This is a manual test - the signature should survive copy/paste
-    operations in Word, Google Docs, etc.
-    """
-    private_key = Ed25519PrivateKey.generate()
-    public_key = private_key.public_key()
-    
-    text = "Copy this text into Word and paste it back."
-    signer_id = "test_signer_001"
-    
-    signature = create_zw_signature(text, private_key, signer_id)
-    signed_text = text + signature
-    
-    print("\n=== Copy/Paste Test ===")
-    print("1. Copy the text below:")
-    print(f"\n{signed_text}\n")
-    print("2. Paste into Microsoft Word")
-    print("3. Copy from Word and paste back here")
-    print("4. Verify signature is still present")
-    print(f"\nSignature length: {len(signature)} chars")
-    print(f"Total length: {len(signed_text)} chars")
-
-
 # =============================================================================
 # MINIMAL SIGNED UUID TESTS
 # =============================================================================
+# Note: Full-document signing tests (test_magic_number, test_create_zw_signature,
+# test_verify_zw_signature, etc.) were removed as those functions used magic
+# numbers which don't work in Microsoft Word (WJ appears as visible space).
+# =============================================================================
+
 
 def test_minimal_signed_uuid_creation(test_keypair):
-    """Test creating a minimal signed UUID with base-4 encoding."""
+    """Test creating a minimal signed UUID with base-4 encoding (no magic number)."""
     private_key, _ = test_keypair
     signing_key = derive_signing_key_from_private_key(private_key)
     
     sentence_uuid = uuid4()
     signature = create_minimal_signed_uuid(sentence_uuid, signing_key)
     
-    # Should be exactly 132 chars (4 magic + 128 payload with base-4)
-    assert len(signature) == 132, f"Expected 132 chars, got {len(signature)}"
+    # Should be exactly 128 chars (no magic number, just UUID + HMAC)
+    assert len(signature) == 128, f"Expected 128 chars, got {len(signature)}"
     
-    # Should start with mini magic number
-    assert signature.startswith(ZW_MAGIC_MINI)
-    
-    # Should contain only Word-safe chars (no ZWSP!)
-    # Magic uses WJ, payload uses base-4
-    ALLOWED_CHARS = CHARS_BASE4 + [WJ]
+    # Should contain only Word-safe base-4 chars (no ZWSP, no WJ!)
     for char in signature:
-        assert char in ALLOWED_CHARS, f"Non-Word-safe character: U+{ord(char):04X}"
+        assert char in CHARS_BASE4, f"Non-Word-safe character: U+{ord(char):04X}"
     
     print(f"✓ Minimal signed UUID created: {len(signature)} chars (base-4, Word-safe)")
 
@@ -491,8 +123,12 @@ def test_minimal_signed_uuid_verification(test_keypair):
     text = "This is a test sentence."
     signed_text = text + signature
     
-    # Verify
-    is_valid, extracted_uuid = verify_minimal_signed_uuid(signed_text, signing_key)
+    # Extract signature from text first (verify_minimal_signed_uuid expects exactly 128 chars)
+    extracted_sig = extract_minimal_signed_uuid(signed_text)
+    assert extracted_sig is not None, "Should find signature in text"
+    
+    # Verify the extracted signature
+    is_valid, extracted_uuid = verify_minimal_signed_uuid(extracted_sig, signing_key)
     
     assert is_valid, "Signature should be valid"
     assert extracted_uuid == sentence_uuid, "UUID should match"
@@ -582,42 +218,17 @@ def test_minimal_signed_uuid_sentence_level():
     print(f"  Overhead: {overhead} ZW chars ({overhead / len(sentences):.0f} per sentence)")
 
 
-def test_minimal_signed_uuid_size_comparison():
-    """Compare sizes of different signature formats."""
-    private_key = Ed25519PrivateKey.generate()
-    signing_key = derive_signing_key_from_private_key(private_key)
-    
-    text = "This is a test sentence."
-    sentence_uuid = uuid4()
-    
-    # Minimal signed UUID
-    mini_sig = create_minimal_signed_uuid(sentence_uuid, signing_key)
-    
-    # Full ZW signature
-    full_sig = create_zw_signature(text, private_key, "test_signer")
-    
-    print(f"\n=== Signature Size Comparison ===")
-    print(f"Minimal signed UUID: {len(mini_sig)} ZW chars ({len(mini_sig) // 6} bytes)")
-    print(f"Full ZW signature:   {len(full_sig)} ZW chars (~{len(full_sig) // 6} bytes)")
-    print(f"Savings: {len(full_sig) - len(mini_sig)} chars ({(1 - len(mini_sig)/len(full_sig))*100:.1f}% smaller)")
-    
-    # For 50 sentences
-    print(f"\nFor 50 sentences:")
-    print(f"  Minimal: 50 × {len(mini_sig)} = {50 * len(mini_sig):,} ZW chars")
-    print(f"  Full:    50 × {len(full_sig)} = {50 * len(full_sig):,} ZW chars")
-
-
 def test_minimal_signed_uuid_word_compatibility():
-    """Verify minimal signed UUID uses only Word-compatible chars."""
+    """Verify minimal signed UUID uses only Word-compatible chars (no magic, no WJ)."""
     signing_key = b"test_signing_key_32_bytes_long!!"
     sentence_uuid = uuid4()
     
     signature = create_minimal_signed_uuid(sentence_uuid, signing_key)
     
-    # Word-safe character code points (base-4 + WJ for magic)
-    word_safe_cps = {0x200C, 0x200D, 0x034F, 0x180E, 0x2060}  # ZWNJ, ZWJ, CGJ, MVS, WJ
+    # Word-safe character code points (base-4 only, no WJ since it appears as space in Word)
+    word_safe_cps = {0x200C, 0x200D, 0x034F, 0x180E}  # ZWNJ, ZWJ, CGJ, MVS
     
-    # Verify ONLY Word-safe chars (no ZWSP, no variation selectors)
+    # Verify ONLY Word-safe chars (no ZWSP, no WJ, no variation selectors)
     forbidden = set()
     for char in signature:
         cp = ord(char)
@@ -627,6 +238,8 @@ def test_minimal_signed_uuid_word_compatibility():
             forbidden.add(f"VS{cp - 0xE0100 + 17}")
         elif cp == 0x200B:
             forbidden.add("ZWSP (U+200B) - Word strips this!")
+        elif cp == 0x2060:
+            forbidden.add("WJ (U+2060) - Appears as space in Word!")
         elif cp not in word_safe_cps:
             forbidden.add(f"U+{cp:04X}")
     
@@ -720,16 +333,18 @@ def test_safe_embedding_with_real_signature():
     # Should end with period (signature before it)
     assert embedded.endswith("."), f"Should end with period, got: ...{embedded[-10:]}"
     
-    # Should contain the signature
-    assert ZW_MAGIC_MINI in embedded, "Should contain magic number"
+    # Should contain the signature (detected via contiguous sequence detection)
+    found_sigs = find_all_minimal_signed_uuids(embedded)
+    assert len(found_sigs) > 0, "Should contain signature"
     
-    # Verify signature is valid
-    is_valid, extracted_uuid = verify_minimal_signed_uuid(embedded, signing_key)
+    # Extract and verify signature (verify expects exactly 128 chars)
+    sig = extract_minimal_signed_uuid(embedded)
+    assert sig is not None, "Should extract signature"
+    is_valid, extracted_uuid = verify_minimal_signed_uuid(sig, signing_key)
     assert is_valid, "Signature should be valid"
     assert extracted_uuid == sentence_uuid, "UUID should match"
     
     # Clean text should match original
-    sig = extract_minimal_signed_uuid(embedded)
     clean = embedded.replace(sig, '')
     assert clean == sentence, f"Clean text should match original: {clean}"
     
@@ -793,8 +408,6 @@ def test_safe_embedding_sentence_level():
 
 if __name__ == "__main__":
     # Run tests
-    import sys
-    
     print("Running ZW Crypto Tests...\n")
     
     # Generate test keypair
@@ -802,30 +415,18 @@ if __name__ == "__main__":
     public_key = private_key.public_key()
     keypair = (private_key, public_key)
     
-    # Run all tests
+    # Base encoding tests
+    print("--- Base-4 Encoding Tests ---\n")
     test_encode_decode_byte()
     test_encode_decode_bytes()
-    test_magic_number()
-    test_create_zw_signature(keypair)
-    test_verify_zw_signature(keypair)
-    test_tamper_detection(keypair)
-    test_wrong_key_verification(keypair)
-    test_extract_zw_signature(keypair)
-    test_remove_zw_signature(keypair)
-    test_uuid_reference_creation(keypair)
-    test_uuid_reference_verification(keypair)
-    test_multiple_documents(keypair)
-    test_signature_size_analysis(keypair)
-    test_word_compatibility()
     
-    # Minimal signed UUID tests
+    # Minimal signed UUID tests (contiguous sequence detection, no magic)
     print("\n--- Minimal Signed UUID Tests ---\n")
     test_minimal_signed_uuid_creation(keypair)
     test_minimal_signed_uuid_verification(keypair)
     test_minimal_signed_uuid_wrong_key(keypair)
     test_minimal_signed_uuid_tampering()
     test_minimal_signed_uuid_sentence_level()
-    test_minimal_signed_uuid_size_comparison()
     test_minimal_signed_uuid_word_compatibility()
     
     # Safe embedding tests

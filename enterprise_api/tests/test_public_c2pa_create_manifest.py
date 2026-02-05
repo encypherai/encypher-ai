@@ -142,19 +142,23 @@ async def test_create_manifest_output_works_with_sign_and_verify(
         json=sign_payload,
         headers=auth_headers,
     )
-    assert sign_response.status_code == 200
+    assert sign_response.status_code == 201
     sign_data = sign_response.json()
     assert sign_data["success"] is True
-    assert isinstance(sign_data.get("signed_text"), str) and sign_data["signed_text"]
+    # Unified response: data.document.signed_text
+    document = sign_data.get("data", {}).get("document", {})
+    signed_text = document.get("signed_text")
+    assert isinstance(signed_text, str) and signed_text
 
+    # /api/v1/verify is deprecated, use /api/v1/verify/advanced instead
     verify_response = await async_client.post(
-        "/api/v1/verify",
-        json={"text": sign_data["signed_text"]},
+        "/api/v1/verify/advanced",
+        json={"text": signed_text},
+        headers=auth_headers,
     )
-    assert verify_response.status_code == 410
+    assert verify_response.status_code == 200
     verify_data = verify_response.json()
-    assert verify_data["success"] is False
-    assert verify_data["error"]["code"] == "ENDPOINT_DEPRECATED"
+    assert verify_data["success"] is True
 
 
 @pytest.mark.asyncio

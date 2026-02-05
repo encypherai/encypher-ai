@@ -5,7 +5,7 @@ import {
 } from "./enterpriseApiTools";
 
 describe("enterpriseApiTools", () => {
-  it("buildSignAdvancedRequest maps encode payload to /sign/advanced request", () => {
+  it("buildSignAdvancedRequest maps encode payload to unified /sign request with options", () => {
     const req = buildSignAdvancedRequest({
       original_text: "hello world",
       metadata_format: "c2pa_v2_2",
@@ -16,8 +16,8 @@ describe("enterpriseApiTools", () => {
     });
 
     expect(req.text).toBe("hello world");
-    expect(req.segmentation_level).toBe("sentence");
-    expect(req.action).toBe("c2pa.created");
+    expect(req.options?.segmentation_level).toBe("sentence");
+    expect(req.options?.action).toBe("c2pa.created");
     expect(req.metadata).toEqual(
       expect.objectContaining({
         claim_generator: "Encypher Demo UI",
@@ -26,7 +26,7 @@ describe("enterpriseApiTools", () => {
     );
   });
 
-  it("buildSignBasicRequest maps encode payload to /sign request", () => {
+  it("buildSignBasicRequest maps encode payload to unified /sign request", () => {
     const req = buildSignBasicRequest({
       original_text: "hello world",
       custom_metadata: { campaign: "winter" },
@@ -36,9 +36,9 @@ describe("enterpriseApiTools", () => {
     });
 
     expect(req.text).toBe("hello world");
-    expect(req.action).toBe("c2pa.created");
+    expect(req.options?.action).toBe("c2pa.created");
     expect(req.metadata).toEqual({ campaign: "winter" });
-    expect(req.custom_assertions).toEqual([
+    expect(req.options?.custom_assertions).toEqual([
       {
         label: "org.encypher.user-provenance",
         data: {

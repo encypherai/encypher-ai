@@ -33,15 +33,15 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
     features: [
       {
         name: 'C2PA Document Signing',
-        description: 'POST /api/v1/sign - Sign content with C2PA manifest',
+        description: 'POST /api/v1/sign - Sign content with C2PA manifest (features gated by tier via options)',
         starter: '1K/mo',
         professional: 'Unlimited',
         business: 'Unlimited',
         enterprise: 'Unlimited',
       },
       {
-        name: 'Advanced Document Signing',
-        description: 'POST /api/v1/sign/advanced - Advanced signing controls (tier-gated server-side)',
+        name: 'Advanced Signing Options',
+        description: 'Sentence segmentation, attribution indexing, custom assertions via /sign options',
         starter: false,
         professional: true,
         business: true,
@@ -86,7 +86,7 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
       },
       {
         name: 'Public Verification API',
-        description: 'POST /api/v1/public/extract-and-verify (no auth)',
+        description: 'POST /api/v1/verify (no auth for basic, API key for Merkle proof)',
         starter: true,
         professional: true,
         business: true,

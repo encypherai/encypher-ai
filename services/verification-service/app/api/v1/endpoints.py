@@ -46,7 +46,16 @@ except ImportError:  # pragma: no cover
 
 
 from ...db.session import get_db
-from ...models.enterprise_schemas import ErrorDetail, VerifyRequest, VerifyResponse, VerifyVerdict
+from ...models.enterprise_schemas import (
+    ErrorDetail,
+    VerifyRequest,
+    VerifyResponse,
+    VerifyVerdict,
+    DocumentInfo,
+    C2PAInfo,
+    LicensingInfo,
+    MerkleProofInfo,
+)
 from ...models.schemas import (
     SignatureVerify,
     DocumentVerify,
@@ -626,13 +635,71 @@ async def verify_text(
         variation_selectors=vs_count,
     )
 
+    # Build rich response with document info, C2PA details, and licensing (all free)
+    document_info = None
+    c2pa_info = None
+    licensing_info = None
+    merkle_proof_info = None
+
+    # Extract document info from manifest
+    if isinstance(manifest, dict):
+        custom_metadata = manifest.get("custom_metadata", {})
+        if isinstance(custom_metadata, dict):
+            document_info = DocumentInfo(
+                document_id=custom_metadata.get("document_id") or custom_metadata.get("manifest_uuid"),
+                title=custom_metadata.get("title"),
+                author=custom_metadata.get("author"),
+                document_type=custom_metadata.get("document_type"),
+            )
+            # Extract licensing info
+            if custom_metadata.get("license_type") or custom_metadata.get("license_url"):
+                licensing_info = LicensingInfo(
+                    license_type=custom_metadata.get("license_type"),
+                    license_url=custom_metadata.get("license_url"),
+                    usage_terms=custom_metadata.get("usage_terms"),
+                    attribution_required=custom_metadata.get("attribution_required", False),
+                )
+
+    # Build C2PA info if we have a C2PA wrapper
+    if has_c2pa_wrapper and isinstance(manifest, dict):
+        c2pa_info = C2PAInfo(
+            validated=is_valid,
+            validation_type="cryptographic" if is_valid else None,
+            manifest_hash=manifest.get("manifest_hash"),
+        )
+        # Include assertions if present
+        if manifest.get("assertions"):
+            c2pa_info.assertions = manifest.get("assertions")
+
+    # Include Merkle proof only if requested AND user has API key (paid feature)
+    include_merkle = False
+    if verify_request.options and verify_request.options.include_merkle_proof:
+        if organization_id:  # Has valid API key
+            include_merkle = True
+
+    if include_merkle and isinstance(manifest, dict):
+        custom_metadata = manifest.get("custom_metadata", {})
+        if isinstance(custom_metadata, dict) and custom_metadata.get("merkle_root"):
+            merkle_proof_info = MerkleProofInfo(
+                root_hash=custom_metadata.get("merkle_root"),
+                leaf_hash=custom_metadata.get("leaf_hash"),
+                leaf_index=custom_metadata.get("leaf_index"),
+                verified=is_valid,
+            )
+
     verdict = VerifyVerdict(
         valid=is_valid,
         tampered=(not is_valid and reason_code == "SIGNATURE_INVALID"),
         reason_code=reason_code,
         signer_id=signer_id,
         signer_name=(organization_name if (signer_id and signer_id == organization_id) else signer_id),
+        organization_id=organization_id if signer_id == organization_id else (extracted_signer_id if extracted_signer_id else None),
+        organization_name=organization_name,
         timestamp=None,
+        document=document_info,
+        c2pa=c2pa_info,
+        licensing=licensing_info,
+        merkle_proof=merkle_proof_info,
         details={
             "manifest": manifest or {},
             "duration_ms": duration_ms,

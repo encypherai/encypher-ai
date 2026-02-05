@@ -34,6 +34,19 @@ const signRetryBtn = document.getElementById('sign-retry');
 const signErrorMessageEl = document.getElementById('sign-error-message');
 const openSettingsBtn = document.getElementById('open-settings');
 
+// DOM elements - Advanced options
+const tierBadgeEl = document.getElementById('tier-badge');
+const toggleAdvancedBtn = document.getElementById('toggle-advanced');
+const advancedPanelEl = document.getElementById('advanced-panel');
+const signInvisibleEl = document.getElementById('sign-invisible');
+const signDocTypeEl = document.getElementById('sign-doc-type');
+const signMerkleEl = document.getElementById('sign-merkle');
+const signAttributionEl = document.getElementById('sign-attribution');
+const proFeaturesEl = document.getElementById('pro-features');
+
+// Account info cache
+let accountInfo = null;
+
 // Tab elements
 const tabs = document.querySelectorAll('.popup__tab');
 let currentTab = 'verify';
@@ -187,12 +200,74 @@ async function checkApiKeyAndShowSignState() {
     
     if (result.apiKey) {
       showSignState('ready');
+      // Fetch account info to get tier
+      fetchAccountInfo(result.apiKey);
     } else {
       showSignState('no-key');
     }
   } catch (error) {
     console.error('Error checking API key:', error);
     showSignState('no-key');
+  }
+}
+
+/**
+ * Fetch account info to determine tier and features
+ */
+async function fetchAccountInfo(apiKey) {
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'GET_ACCOUNT_INFO',
+      apiKey: apiKey
+    });
+    
+    if (response && response.success) {
+      accountInfo = response.data;
+      updateTierDisplay(accountInfo);
+    }
+  } catch (error) {
+    console.error('Error fetching account info:', error);
+  }
+}
+
+/**
+ * Update tier badge and feature availability
+ */
+function updateTierDisplay(info) {
+  if (!tierBadgeEl) return;
+  
+  const tier = (info?.tier || 'free').toLowerCase();
+  const tierConfig = {
+    free: { icon: '🆓', name: 'Free Tier', class: 'free' },
+    starter: { icon: '🚀', name: 'Starter', class: 'free' },
+    professional: { icon: '⚡', name: 'Professional', class: 'professional' },
+    business: { icon: '🏢', name: 'Business', class: 'business' },
+    enterprise: { icon: '🏛️', name: 'Enterprise', class: 'enterprise' },
+    demo: { icon: '🧪', name: 'Demo', class: 'professional' }
+  };
+  
+  const config = tierConfig[tier] || tierConfig.free;
+  
+  tierBadgeEl.className = `popup__tier-badge popup__tier-badge--${config.class}`;
+  tierBadgeEl.innerHTML = `
+    <span class="popup__tier-icon">${config.icon}</span>
+    <span class="popup__tier-name">${config.name}</span>
+  `;
+  
+  // Enable pro features for professional+ tiers
+  const isPro = ['professional', 'business', 'enterprise', 'demo'].includes(tier);
+  
+  if (signMerkleEl) {
+    signMerkleEl.disabled = !isPro;
+  }
+  if (signAttributionEl) {
+    signAttributionEl.disabled = !isPro;
+  }
+  
+  // Hide upgrade prompt for pro users
+  if (proFeaturesEl && isPro) {
+    proFeaturesEl.querySelector('.popup__upgrade-link')?.remove();
+    proFeaturesEl.querySelector('.popup__pro-badge').textContent = 'ENABLED';
   }
 }
 
@@ -219,6 +294,12 @@ async function signContent() {
     return;
   }
   
+  // Gather advanced options
+  const useInvisible = signInvisibleEl?.checked ?? true;
+  const docType = signDocTypeEl?.value || 'article';
+  const useMerkle = signMerkleEl?.checked && !signMerkleEl?.disabled;
+  const useAttribution = signAttributionEl?.checked && !signAttributionEl?.disabled;
+  
   // Disable button and show loading
   signBtn.disabled = true;
   signBtn.textContent = 'Signing...';
@@ -227,7 +308,13 @@ async function signContent() {
     const response = await chrome.runtime.sendMessage({
       type: 'SIGN_CONTENT',
       text: text,
-      title: title || undefined
+      title: title || undefined,
+      options: {
+        useInvisible,
+        documentType: docType,
+        useMerkle,
+        useAttribution
+      }
     });
     
     if (response && response.success) {
@@ -298,6 +385,13 @@ copySignedBtn?.addEventListener('click', copySignedOutput);
 signAnotherBtn?.addEventListener('click', resetSignForm);
 signRetryBtn?.addEventListener('click', () => showSignState('ready'));
 openSettingsBtn?.addEventListener('click', openSettings);
+
+// Event listener - Advanced options toggle
+toggleAdvancedBtn?.addEventListener('click', () => {
+  const isOpen = advancedPanelEl.hidden;
+  advancedPanelEl.hidden = !isOpen;
+  toggleAdvancedBtn.classList.toggle('open', isOpen);
+});
 
 // Initialize
 document.addEventListener('DOMContentLoaded', loadTabState);

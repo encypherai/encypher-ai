@@ -10,9 +10,9 @@ This guide walks you through integrating Encypher's C2PA content authentication 
 
 | Tier | Best For | Key Features | Integration Time |
 |------|----------|--------------|------------------|
-| **Starter** | Small publishers, blogs | Basic signing & verification | 1-2 hours |
-| **Professional** | News organizations | + Advanced signing (`/sign/advanced`), sentence tracking, lightweight UUID manifest, streaming Merkle | 2-4 hours |
-| **Business** | Large publishers | + Webhooks, bulk operations (`/batch/*`), Merkle trees, BYOK, distributed embedding, dual-binding, multi-source lookup | 4-8 hours |
+| **Starter** | Small publishers, blogs | Basic signing & verification via `/sign` | 1-2 hours |
+| **Professional** | News organizations | + Advanced options (sentence segmentation, attribution) via `/sign` options, streaming Merkle | 2-4 hours |
+| **Business** | Large publishers | + Webhooks, batch operations via `/sign` documents array, Merkle trees, BYOK, distributed embedding, dual-binding | 4-8 hours |
 | **Enterprise** | Media conglomerates | + SSO/SAML, custom assertions, evidence generation, robust fingerprinting, authority ranking | 1-2 days |
 
 ---
@@ -230,7 +230,7 @@ def on_article_display(article: dict) -> dict:
 ### What You Get
 - Unlimited C2PA signatures
 - Sentence-level tracking (plagiarism detection)
-- Advanced signing (`/sign/advanced`) (Professional+)
+- Advanced signing options via `/sign` (Professional+)
 - **Lightweight UUID Manifest** - Smaller payload footprint (NEW)
 - **Streaming Merkle Tree** - Real-time LLM output signing (NEW)
 

@@ -59,6 +59,47 @@
         </div>
       </section>
 
+      <!-- Signing Settings -->
+      <section class="options__section">
+        <h2>Signing</h2>
+        
+        <div class="options__field options__field--checkbox">
+          <input type="checkbox" id="defaultInvisible" checked>
+          <label for="defaultInvisible">
+            <strong>Use invisible embeddings by default</strong>
+            <span>Embed C2PA metadata using invisible Unicode characters</span>
+          </label>
+        </div>
+
+        <div class="options__field options__field--checkbox">
+          <input type="checkbox" id="autoReplaceContent" checked>
+          <label for="autoReplaceContent">
+            <strong>Auto-replace content after signing</strong>
+            <span>Automatically replace editor content with signed version</span>
+          </label>
+        </div>
+
+        <div class="options__field">
+          <label for="defaultDocType">Default Document Type</label>
+          <select id="defaultDocType">
+            <option value="article">Article</option>
+            <option value="blog_post">Blog Post</option>
+            <option value="social_media">Social Media</option>
+            <option value="press_release">Press Release</option>
+            <option value="legal">Legal Document</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div class="options__field options__field--checkbox">
+          <input type="checkbox" id="showEditorButtons">
+          <label for="showEditorButtons">
+            <strong>Show sign buttons on text editors</strong>
+            <span>Display floating sign buttons on detected WYSIWYG editors</span>
+          </label>
+        </div>
+      </section>
+
       <!-- Advanced Settings -->
       <section class="options__section">
         <h2>Advanced</h2>
@@ -80,6 +121,26 @@
         <div class="options__field">
           <label for="cacheTtl">Cache Duration (minutes)</label>
           <input type="number" id="cacheTtl" min="1" max="60" value="5">
+        </div>
+      </section>
+
+      <!-- Analytics Settings -->
+      <section class="options__section">
+        <h2>Analytics</h2>
+        <p class="options__description">
+          Help improve Encypher by sharing anonymous usage data about where signed content is found.
+        </p>
+        
+        <div class="options__field options__field--checkbox">
+          <input type="checkbox" id="analyticsEnabled" checked>
+          <label for="analyticsEnabled">
+            <strong>Enable discovery analytics</strong>
+            <span>Report where embeddings are found and who created them (no personal data)</span>
+          </label>
+        </div>
+        
+        <div class="options__analytics-info" id="analyticsInfo">
+          <span id="analyticsStatus">Analytics enabled</span>
         </div>
       </section>
 

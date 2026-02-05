@@ -1,5 +1,5 @@
 // API client for Encypher Enterprise API
-// Uses authenticated /sign/advanced endpoint for sentence-level provenance
+// Uses unified /sign endpoint with tier-gated options
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
@@ -50,15 +50,15 @@ export interface VerifyResponse {
 }
 
 /**
- * Encode content with sentence-level provenance.
+ * Encode content with sentence-level provenance using unified /sign endpoint.
  * 
- * If API_KEY is provided, uses /sign/advanced for full Merkle tree + sentence-level embeddings.
+ * If API_KEY is provided, uses /sign with options for full Merkle tree + sentence-level embeddings.
  * If no API_KEY (local dev), falls back to /tools/encode for basic C2PA embedding.
  */
 export async function encodeContent(request: EncodeRequest): Promise<EncodeResponse> {
   // Use authenticated endpoint if API key is available, otherwise use public tools endpoint
-  const useAdvancedEndpoint = !!API_KEY;
-  const endpoint = useAdvancedEndpoint ? '/api/v1/sign/advanced' : '/api/v1/tools/encode';
+  const useSignEndpoint = !!API_KEY;
+  const endpoint = useSignEndpoint ? '/api/v1/sign' : '/api/v1/tools/encode';
   
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
@@ -67,22 +67,24 @@ export async function encodeContent(request: EncodeRequest): Promise<EncodeRespo
     headers['Authorization'] = `Bearer ${API_KEY}`;
   }
 
-  const body = useAdvancedEndpoint 
+  const body = useSignEndpoint 
     ? {
-        document_id: request.document_id,
         text: request.text,
-        segmentation_level: request.segmentation_level || 'sentence',
-        action: 'c2pa.created',
+        document_id: request.document_id,
+        document_title: request.document_title || 'News Article',
         metadata: {
-          title: request.document_title || 'News Article',
           document_type: request.document_type || 'article',
           source: 'NMA Demo',
           ...request.metadata,
         },
-        embedding_options: {
-          format: 'plain',
-          method: 'data-attribute',
-          include_text: true,
+        options: {
+          segmentation_level: request.segmentation_level || 'sentence',
+          action: 'c2pa.created',
+          embedding_options: {
+            format: 'plain',
+            method: 'invisible',
+            include_text: true,
+          },
         },
       }
     : {
@@ -104,17 +106,19 @@ export async function encodeContent(request: EncodeRequest): Promise<EncodeRespo
 
   const data = await response.json();
   
-  // Handle different response formats from /sign/advanced vs /tools/encode
-  if (useAdvancedEndpoint) {
-    // /sign/advanced response format
+  // Handle different response formats from /sign vs /tools/encode
+  if (useSignEndpoint) {
+    // Unified /sign response format
+    const result = data.data?.document || data.data || data;
     return {
       success: data.success,
-      document_id: data.document_id,
-      embedded_content: data.embedded_content,
-      total_sentences: data.statistics?.total_sentences || data.embeddings?.length,
-      merkle_tree: data.merkle_tree,
-      embeddings: data.embeddings,
-      metadata: data.metadata,
+      document_id: result.document_id,
+      embedded_content: result.signed_text || result.embedded_content,
+      verification_url: result.verification_url,
+      total_sentences: result.total_segments || result.total_sentences,
+      merkle_root: result.merkle_root,
+      embeddings: result.embeddings,
+      metadata: result.metadata,
     };
   } else {
     // /tools/encode response format - simpler, just encoded_text

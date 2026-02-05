@@ -33,15 +33,16 @@ async def test_sign_advanced_embeds_rights_assertion(
         ) as mock_create,
     ):
         response = await async_client.post(
-            "/api/v1/sign/advanced",
+            "/api/v1/sign",
             json={
-                "document_id": "doc_adv_rights_001",
                 "text": "Hello world.",
-                "segmentation_level": "sentence",
-                "rights": {
-                    "copyright_holder": "Example Publisher",
-                    "license_url": "https://example.com/license",
-                    "syndication_allowed": False,
+                "options": {
+                    "segmentation_level": "sentence",
+                    "rights": {
+                        "copyright_holder": "Example Publisher",
+                        "license_url": "https://example.com/license",
+                        "syndication_allowed": False,
+                    },
                 },
             },
             headers=business_auth_headers,

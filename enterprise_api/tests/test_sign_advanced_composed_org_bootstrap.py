@@ -42,9 +42,8 @@ async def test_sign_advanced_composed_org_missing_bootstraps_and_auto_provisions
         patch("app.dependencies.auth_service_client.get_organization_context", new=AsyncMock(return_value=org_data)),
     ):
         response = await async_client.post(
-            "/api/v1/sign/advanced",
+            "/api/v1/sign",
             json={
-                "document_id": "doc_bootstrap_001",
                 "text": "Hello world. Advanced signing.",
             },
             headers=headers,

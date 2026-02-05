@@ -81,14 +81,63 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 
 ---
 
-## 📋 Complete API Endpoint Reference
+## � Tier Feature Matrix
+
+### Signing Features (`/api/v1/sign/v2`)
+
+| Feature | Free/Starter | Professional | Business | Enterprise |
+|---------|:------------:|:------------:|:--------:|:----------:|
+| Basic C2PA signing | ✅ | ✅ | ✅ | ✅ |
+| Document-level signing | ✅ | ✅ | ✅ | ✅ |
+| Sentence segmentation | ❌ | ✅ | ✅ | ✅ |
+| Paragraph segmentation | ❌ | ✅ | ✅ | ✅ |
+| Section segmentation | ❌ | ✅ | ✅ | ✅ |
+| Word segmentation | ❌ | ❌ | ❌ | ✅ |
+| Advanced manifest modes | ❌ | ✅ | ✅ | ✅ |
+| Embedding strategies | ❌ | ✅ | ✅ | ✅ |
+| Attribution indexing | ❌ | ✅ | ✅ | ✅ |
+| Custom assertions | ❌ | ❌ | ✅ | ✅ |
+| Assertion templates | ❌ | ❌ | ✅ | ✅ |
+| Rights metadata | ❌ | ❌ | ✅ | ✅ |
+| Dual binding | ❌ | ❌ | ❌ | ✅ |
+| Content fingerprinting | ❌ | ❌ | ❌ | ✅ |
+| **Batch size limit** | 1 | 10 | 50 | 100 |
+
+### Verification Features (`/api/v1/verify`)
+
+| Feature | Free/Starter | Professional | Business | Enterprise |
+|---------|:------------:|:------------:|:--------:|:----------:|
+| Basic verification | ✅ | ✅ | ✅ | ✅ |
+| C2PA details | ✅ | ✅ | ✅ | ✅ |
+| Document info | ✅ | ✅ | ✅ | ✅ |
+| Licensing info | ✅ | ✅ | ✅ | ✅ |
+| Merkle proof | ❌ | ✅ | ✅ | ✅ |
+| Attribution lookup | ❌ | ✅ | ✅ | ✅ |
+| Plagiarism detection | ❌ | ❌ | ✅ | ✅ |
+| Fuzzy matching | ❌ | ❌ | ❌ | ✅ |
+
+### Account Features
+
+| Feature | Free/Starter | Professional | Business | Enterprise |
+|---------|:------------:|:------------:|:--------:|:----------:|
+| API keys | ✅ | ✅ | ✅ | ✅ |
+| Usage analytics | ✅ | ✅ | ✅ | ✅ |
+| BYOK (own keys) | ❌ | ✅ | ✅ | ✅ |
+| Team management | ❌ | ❌ | ✅ | ✅ |
+| Audit logs | ❌ | ❌ | ✅ | ✅ |
+| Webhooks | ❌ | ❌ | ✅ | ✅ |
+| SSO/SAML | ❌ | ❌ | ❌ | ✅ |
+
+---
+
+## � Complete API Endpoint Reference
 
 ### Core Endpoints
 
 | Endpoint | Method | Auth | Tier | Description | Dependencies |
 |----------|--------|------|------|-------------|--------------|
-| `/api/v1/sign` | POST | ✅ | All | Sign content with C2PA manifest | Key Service, Coalition Service (optional) |
-| `/api/v1/sign/advanced` | POST | ✅ | Professional+ | Sign content with advanced embedding controls | Key Service, Coalition Service (optional) |
+| `/api/v1/sign` | POST | ✅ | All (features gated) | Sign content with C2PA manifest - features gated by tier | Key Service, Coalition Service (optional) |
+| `/api/v1/sign/advanced` | POST | ✅ | - | ⚠️ **REMOVED** - Returns 410 Gone, use `/sign` with options | - |
 | `/api/v1/verify/advanced` | POST | ✅ | All (features gated) | Advanced verification with optional attribution/plagiarism analysis | Key Service |
 | `/api/v1/verify` | POST | ❌ | Public | Verify signed content | None |
 | `/api/v1/verify/{document_id}` | GET | ❌ | Public | Verify a previously signed document by ID | None |

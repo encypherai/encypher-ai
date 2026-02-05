@@ -27,13 +27,14 @@ async def test_sign_advanced_uses_content_db_for_embedding_persistence(
         new=AsyncMock(side_effect=_fake_create_embeddings),
     ):
         response = await async_client.post(
-            "/api/v1/sign/advanced",
+            "/api/v1/sign",
             json={
-                "document_id": "doc_db_route_001",
                 "text": "Hello world.",
-                "segmentation_level": "sentence",
-                "manifest_mode": "minimal_uuid",
-                "disable_c2pa": True,
+                "options": {
+                    "segmentation_level": "sentence",
+                    "manifest_mode": "minimal_uuid",
+                    "disable_c2pa": True,
+                },
             },
             headers=professional_auth_headers,
         )

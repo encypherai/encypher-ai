@@ -99,3 +99,57 @@ class PageviewEvent(BaseModel):
     path: str = Field(..., min_length=1, max_length=2048)
     referrer: Optional[str] = Field(default=None, max_length=2048)
     user_agent: Optional[str] = Field(default=None, max_length=512)
+
+
+class DiscoveryEvent(BaseModel):
+    """Schema for embedding discovery events from Chrome extension"""
+
+    timestamp: datetime
+    eventType: str = Field(default="embedding_discovered")
+    pageUrl: str = Field(..., max_length=2048)
+    pageDomain: str = Field(..., max_length=255)
+    pageTitle: Optional[str] = Field(default=None, max_length=512)
+    # Embedding owner info
+    signerId: Optional[str] = Field(default=None, max_length=255)
+    signerName: Optional[str] = Field(default=None, max_length=255)
+    organizationId: Optional[str] = Field(default=None, max_length=255)
+    documentId: Optional[str] = Field(default=None, max_length=255)
+    # Verification result
+    verified: bool = False
+    verificationStatus: Optional[str] = Field(default=None, max_length=50)
+    markerType: Optional[str] = Field(default=None, max_length=50)
+    # Context
+    embeddingCount: int = Field(default=1, ge=1)
+    # Extension metadata
+    extensionVersion: Optional[str] = Field(default=None, max_length=50)
+    sessionId: Optional[str] = Field(default=None, max_length=100)
+
+
+class DiscoveryBatchRequest(BaseModel):
+    """Schema for batch discovery events from Chrome extension"""
+
+    events: List[DiscoveryEvent]
+    source: str = Field(default="chrome_extension", max_length=50)
+    version: Optional[str] = Field(default=None, max_length=50)
+
+
+class DiscoveryResponse(BaseModel):
+    """Response for discovery event submission"""
+
+    success: bool
+    data: Optional[Dict[str, Any]] = None
+    error: Optional[str] = None
+
+
+class DiscoveryStats(BaseModel):
+    """Statistics for embedding discoveries"""
+
+    total_discoveries: int
+    verified_count: int
+    invalid_count: int
+    unique_domains: int
+    unique_signers: int
+    top_domains: List[Dict[str, Any]]
+    top_signers: List[Dict[str, Any]]
+    period_start: datetime
+    period_end: datetime

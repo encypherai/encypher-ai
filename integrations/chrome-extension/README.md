@@ -1,16 +1,42 @@
 # Encypher C2PA Verifier - Chrome Extension
 
-A browser extension that automatically detects and verifies C2PA-signed content on any webpage, displaying trust badges for verified content. Also supports signing content directly from the browser.
+A browser extension that automatically detects and verifies C2PA-signed content on any webpage, displaying trust badges for verified content. Also supports signing content directly from the browser and inline signing in WYSIWYG editors.
 
 ## Features
 
+### Verification
 - **Auto-Detection**: Scans pages for C2PA and Encypher text embeddings using Unicode variation selectors
 - **Verification Badges**: Shows inline badges on verified content blocks
 - **Popup Summary**: Quick overview of verified/pending/invalid content on the page
-- **Content Signing**: Sign text directly from the extension popup (requires API key)
-- **Options Page**: Configure API key, base URL, and verification settings
+- **Context Menu**: Right-click to verify selected text
 - **Caching**: Verification results are cached to avoid redundant API calls
 - **Dynamic Content**: Observes DOM changes to detect newly loaded content
+
+### Content Signing
+- **Popup Signing**: Sign text directly from the extension popup (requires API key)
+- **WYSIWYG Editor Integration**: Floating sign buttons on detected text editors
+- **Context Menu Signing**: Right-click to sign selected text or sign & copy to clipboard
+- **Advanced Options**: Document type, invisible embeddings, Merkle tree (Pro), attribution tracking (Pro)
+- **Tier-Aware**: Shows account tier and enables features based on subscription level
+
+### Supported Editors
+The extension automatically detects and adds signing capabilities to:
+- Generic `contenteditable` elements
+- `<textarea>` elements
+- TinyMCE
+- CKEditor (4 & 5)
+- Quill
+- ProseMirror / Tiptap
+- Draft.js (React)
+- Medium Editor
+- Froala
+- Summernote
+
+### Settings
+- **API Key Management**: Securely store and test your API key
+- **Verification Settings**: Auto-verify, show badges
+- **Signing Preferences**: Default document type, invisible embeddings, auto-replace content
+- **Advanced**: Custom API URL, cache duration
 
 ## Installation (Development)
 
@@ -23,25 +49,28 @@ A browser extension that automatically detects and verifies C2PA-signed content 
 
 ```
 chrome-extension/
-├── manifest.json           # Extension manifest (Manifest V3)
+├── manifest.json              # Extension manifest (Manifest V3)
 ├── background/
-│   └── service-worker.js   # Background service worker for API calls
+│   └── service-worker.js      # Background service worker for API calls
 ├── content/
-│   ├── detector.js         # Content script for C2PA detection
-│   └── badge.css           # Styles for verification badges
+│   ├── detector.js            # Content script for C2PA detection
+│   ├── badge.css              # Styles for verification badges
+│   ├── editor-signer.js       # WYSIWYG editor detection and signing
+│   └── editor-signer.css      # Styles for editor signing UI
 ├── popup/
-│   ├── popup.html          # Extension popup UI (Verify + Sign tabs)
-│   ├── popup.css           # Popup styles
-│   └── popup.js            # Popup logic
+│   ├── popup.html             # Extension popup UI (Verify + Sign tabs)
+│   ├── popup.css              # Popup styles
+│   └── popup.js               # Popup logic
 ├── options/
-│   ├── options.html        # Settings page
-│   ├── options.css         # Settings styles
-│   └── options.js          # Settings logic
-├── icons/                  # Extension icons
+│   ├── options.html           # Settings page
+│   ├── options.css            # Settings styles
+│   └── options.js             # Settings logic
+├── icons/                     # Extension icons
 └── tests/
-    ├── detector.test.js    # Unit tests
-    ├── e2e/                # Puppeteer E2E tests
-    └── fixtures/           # Test HTML pages
+    ├── detector.test.js       # Unit tests
+    ├── editor-signer.test.js  # Editor signer tests
+    ├── e2e/                   # Puppeteer E2E tests
+    └── fixtures/              # Test HTML pages
 ```
 
 ## How It Works
@@ -71,7 +100,16 @@ chrome-extension/
 
 ## API Endpoints Used
 
-- `POST /api/v1/public/verify` - Public verification endpoint (no auth required)
+### Public (No Auth Required)
+- `POST /api/v1/verify` - Verify signed content (C2PA details free, Merkle proof requires API key)
+- `GET /api/v1/public/verify/{ref_id}` - Verify by reference ID
+- `POST /api/v1/public/verify/batch` - Batch verify embeddings
+- `POST /api/v1/public/c2pa/validate-manifest` - Validate manifest structure
+- `GET /api/v1/public/c2pa/trust-anchors/{signer_id}` - Lookup trust anchor
+
+### Authenticated (API Key Required)
+- `POST /api/v1/sign` - Sign content with C2PA manifest (features gated by tier via options)
+- `GET /api/v1/account` - Get account info and tier
 
 ## Privacy
 

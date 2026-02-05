@@ -19,6 +19,10 @@ from ...models.schemas import (
     AnalyticsReport,
     PageviewEvent,
     ActivityItem,
+    DiscoveryEvent,
+    DiscoveryBatchRequest,
+    DiscoveryResponse,
+    DiscoveryStats,
 )
 from ...services.analytics_service import AnalyticsService
 from ...core.config import settings
@@ -321,6 +325,219 @@ async def record_pageview(event: PageviewEvent, request: Request, db: Session = 
 async def health_check():
     """Health check endpoint"""
     return {"status": "healthy", "service": "analytics-service"}
+
+
+# ============================================
+# Public Discovery Analytics Endpoints
+# ============================================
+
+_discovery_rl_store = {}
+
+
+def _discovery_rate_limit(ip: str, limit: int = 100, window_sec: int = 60):
+    """Rate limit for discovery endpoint - more permissive than pageview"""
+    import time
+
+    now = time.time()
+    key = ("discovery", ip)
+    timestamps = _discovery_rl_store.get(key, [])
+    cutoff = now - window_sec
+    timestamps = [t for t in timestamps if t >= cutoff]
+    if len(timestamps) >= limit:
+        raise HTTPException(status_code=status.HTTP_429_TOO_MANY_REQUESTS, detail="Rate limit exceeded")
+    timestamps.append(now)
+    _discovery_rl_store[key] = timestamps
+
+
+@router.post("/discovery", response_model=DiscoveryResponse, status_code=status.HTTP_202_ACCEPTED)
+async def record_discovery_events(
+    batch: DiscoveryBatchRequest,
+    request: Request,
+    db: Session = Depends(get_db),
+    authorization: str = Header(default=None),
+):
+    """
+    Record embedding discovery events from Chrome extension.
+    
+    This is a public endpoint that accepts anonymous discovery reports.
+    If an API key is provided, events are associated with the organization.
+    
+    - **events**: List of discovery events
+    - **source**: Source of events (e.g., "chrome_extension")
+    - **version**: Extension version
+    """
+    # Determine client IP for rate limiting
+    ip = request.headers.get("x-forwarded-for")
+    if ip:
+        ip = ip.split(",")[0].strip()
+    else:
+        ip = request.client.host if request.client else "unknown"
+    
+    _discovery_rate_limit(ip, limit=100, window_sec=60)
+    
+    # Try to get organization from auth if token provided
+    organization_id = None
+    if authorization:
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{settings.AUTH_SERVICE_URL}/api/v1/auth/verify",
+                    headers={"Authorization": authorization}
+                )
+                if response.status_code == 200:
+                    payload = response.json()
+                    if isinstance(payload, dict) and payload.get("success"):
+                        user_data = payload.get("data", {})
+                        organization_id = user_data.get("organization_id")
+        except Exception:
+            pass  # Continue without org association
+    
+    try:
+        events_recorded = 0
+        for event in batch.events:
+            # Record each discovery as a metric
+            AnalyticsService.record_metric(
+                db=db,
+                user_id=organization_id or "anonymous",
+                metric_data=MetricCreate(
+                    metric_type="embedding_discovery",
+                    service_name="chrome_extension",
+                    endpoint=event.pageDomain,
+                    count=event.embeddingCount,
+                    value=1 if event.verified else 0,
+                    response_time_ms=None,
+                    status_code=200 if event.verified else 400,
+                    metadata={
+                        "page_url": event.pageUrl,
+                        "page_domain": event.pageDomain,
+                        "page_title": event.pageTitle,
+                        "signer_id": event.signerId,
+                        "signer_name": event.signerName,
+                        "organization_id": event.organizationId,
+                        "document_id": event.documentId,
+                        "verified": event.verified,
+                        "verification_status": event.verificationStatus,
+                        "marker_type": event.markerType,
+                        "extension_version": event.extensionVersion or batch.version,
+                        "session_id": event.sessionId,
+                        "source": batch.source,
+                        "client_ip": ip,
+                    },
+                ),
+                organization_id=organization_id,
+            )
+            events_recorded += 1
+        
+        return DiscoveryResponse(
+            success=True,
+            data={
+                "events_recorded": events_recorded,
+                "message": "Discovery events recorded successfully"
+            },
+            error=None
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to record discovery events: {str(e)}"
+        )
+
+
+@router.get("/discovery/stats", response_model=DiscoveryStats)
+async def get_discovery_stats(
+    days: int = Query(default=30, ge=1, le=365),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get discovery statistics for the authenticated organization.
+    
+    - **days**: Number of days to look back (default: 30)
+    """
+    from sqlalchemy import func, distinct
+    
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=days)
+    
+    user_id = current_user.get("id") or current_user.get("user_id")
+    org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+    
+    # Query discovery metrics
+    base_query = db.query(UsageMetric).filter(
+        UsageMetric.metric_type == "embedding_discovery",
+        UsageMetric.created_at >= start_date,
+        UsageMetric.created_at <= end_date,
+    )
+    
+    # Filter by organization if not admin
+    user_role = current_user.get("role", "").lower()
+    is_admin = bool(current_user.get("is_super_admin")) or user_role in ("admin", "super_admin")
+    
+    if not is_admin:
+        # Show discoveries where this org's content was found
+        base_query = base_query.filter(
+            UsageMetric.meta["organization_id"].astext == org_id
+        )
+    
+    # Get total counts
+    total_discoveries = base_query.count()
+    verified_count = base_query.filter(UsageMetric.meta["verified"].astext == "true").count()
+    invalid_count = total_discoveries - verified_count
+    
+    # Get unique domains
+    unique_domains = db.query(func.count(distinct(UsageMetric.endpoint))).filter(
+        UsageMetric.metric_type == "embedding_discovery",
+        UsageMetric.created_at >= start_date,
+    ).scalar() or 0
+    
+    # Get unique signers
+    unique_signers = db.query(func.count(distinct(UsageMetric.meta["signer_id"].astext))).filter(
+        UsageMetric.metric_type == "embedding_discovery",
+        UsageMetric.created_at >= start_date,
+        UsageMetric.meta["signer_id"].astext.isnot(None),
+    ).scalar() or 0
+    
+    # Get top domains
+    top_domains_query = db.query(
+        UsageMetric.endpoint,
+        func.count(UsageMetric.id).label("count")
+    ).filter(
+        UsageMetric.metric_type == "embedding_discovery",
+        UsageMetric.created_at >= start_date,
+    ).group_by(UsageMetric.endpoint).order_by(func.count(UsageMetric.id).desc()).limit(10).all()
+    
+    top_domains = [{"domain": d[0], "count": d[1]} for d in top_domains_query if d[0]]
+    
+    # Get top signers
+    top_signers_query = db.query(
+        UsageMetric.meta["signer_id"].astext.label("signer_id"),
+        UsageMetric.meta["signer_name"].astext.label("signer_name"),
+        func.count(UsageMetric.id).label("count")
+    ).filter(
+        UsageMetric.metric_type == "embedding_discovery",
+        UsageMetric.created_at >= start_date,
+        UsageMetric.meta["signer_id"].astext.isnot(None),
+    ).group_by(
+        UsageMetric.meta["signer_id"].astext,
+        UsageMetric.meta["signer_name"].astext
+    ).order_by(func.count(UsageMetric.id).desc()).limit(10).all()
+    
+    top_signers = [
+        {"signer_id": s[0], "signer_name": s[1], "count": s[2]} 
+        for s in top_signers_query if s[0]
+    ]
+    
+    return DiscoveryStats(
+        total_discoveries=total_discoveries,
+        verified_count=verified_count,
+        invalid_count=invalid_count,
+        unique_domains=unique_domains,
+        unique_signers=unique_signers,
+        top_domains=top_domains,
+        top_signers=top_signers,
+        period_start=start_date,
+        period_end=end_date,
+    )
 
 
 # ============================================

@@ -10,28 +10,30 @@ export type EncodeToolRequestLike = {
   } | null;
 };
 
-export type SignAdvancedRequest = {
-  document_id: string;
+// Unified sign request - all features via options object
+export type UnifiedSignRequest = {
   text: string;
-  segmentation_level: "sentence";
-  action: "c2pa.created";
+  document_id?: string;
+  document_title?: string;
   metadata?: Record<string, unknown>;
-  custom_assertions?: Array<{ label: string; data: Record<string, unknown> }>;
-  validate_assertions: false;
-  embedding_options: {
-    format: "plain";
-    method: "data-attribute";
-    include_text: true;
+  options?: {
+    document_type?: string;
+    segmentation_level?: "document" | "sentence" | "paragraph";
+    action?: "c2pa.created" | "c2pa.edited";
+    index_for_attribution?: boolean;
+    custom_assertions?: Array<{ label: string; data: Record<string, unknown> }>;
+    validate_assertions?: boolean;
+    embedding_options?: {
+      format?: "plain";
+      method?: "invisible" | "data-attribute";
+      include_text?: boolean;
+    };
   };
 };
 
-export type SignBasicRequest = {
-  document_id: string;
-  text: string;
-  action: "c2pa.created";
-  metadata?: Record<string, unknown>;
-  custom_assertions?: Array<{ label: string; data: Record<string, unknown> }>;
-};
+// Legacy type aliases for backward compatibility
+export type SignAdvancedRequest = UnifiedSignRequest;
+export type SignBasicRequest = UnifiedSignRequest;
 
 export type VerifyResponseLike = {
   success: boolean;
@@ -78,7 +80,11 @@ function randomDocId(): string {
   return `doc_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 }
 
-export function buildSignBasicRequest(input: EncodeToolRequestLike): SignBasicRequest {
+/**
+ * Build a basic sign request for the unified /sign endpoint.
+ * Uses minimal options suitable for starter tier.
+ */
+export function buildSignBasicRequest(input: EncodeToolRequestLike): UnifiedSignRequest {
   const metadataPayload: Record<string, unknown> = {
     ...(input.custom_metadata || {}),
   };
@@ -96,15 +102,21 @@ export function buildSignBasicRequest(input: EncodeToolRequestLike): SignBasicRe
   }
 
   return {
-    document_id: randomDocId(),
     text: input.original_text,
-    action: "c2pa.created",
+    document_id: randomDocId(),
     metadata: Object.keys(metadataPayload).length ? metadataPayload : undefined,
-    custom_assertions: customAssertions.length ? customAssertions : undefined,
+    options: {
+      action: "c2pa.created",
+      custom_assertions: customAssertions.length ? customAssertions : undefined,
+    },
   };
 }
 
-export function buildSignAdvancedRequest(input: EncodeToolRequestLike): SignAdvancedRequest {
+/**
+ * Build an advanced sign request for the unified /sign endpoint.
+ * Uses options that require Professional+ tier (sentence segmentation, etc).
+ */
+export function buildSignAdvancedRequest(input: EncodeToolRequestLike): UnifiedSignRequest {
   const metadata_payload: Record<string, unknown> = {
     ...(input.custom_metadata || {}),
     ...(input.ai_info || {}),
@@ -126,17 +138,19 @@ export function buildSignAdvancedRequest(input: EncodeToolRequestLike): SignAdva
   }
 
   return {
-    document_id: randomDocId(),
     text: input.original_text,
-    segmentation_level: "sentence",
-    action: "c2pa.created",
+    document_id: randomDocId(),
     metadata: Object.keys(metadata_payload).length ? metadata_payload : undefined,
-    custom_assertions: custom_assertions.length ? custom_assertions : undefined,
-    validate_assertions: false,
-    embedding_options: {
-      format: "plain",
-      method: "data-attribute",
-      include_text: true,
+    options: {
+      segmentation_level: "sentence",
+      action: "c2pa.created",
+      custom_assertions: custom_assertions.length ? custom_assertions : undefined,
+      validate_assertions: false,
+      embedding_options: {
+        format: "plain",
+        method: "invisible",
+        include_text: true,
+      },
     },
   };
 }

@@ -4,7 +4,7 @@ export const PLAYGROUND_ENDPOINTS = [
     name: 'Sign Content',
     method: 'POST',
     path: '/sign',
-    description: 'Sign content (requires an API key with sign permission).',
+    description: 'Sign content with C2PA manifest. Features are tier-gated via options.',
     category: 'Signing',
     requiresAuth: true,
     authType: 'apikey',
@@ -13,18 +13,20 @@ export const PLAYGROUND_ENDPOINTS = [
       {
         text: 'Hello, world.',
         document_title: 'Example Document',
-        document_type: 'article',
+        options: {
+          document_type: 'article',
+        },
       },
       null,
       2
     ),
   },
   {
-    id: 'sign-advanced',
-    name: 'Sign (Advanced)',
+    id: 'sign-with-options',
+    name: 'Sign (With Options)',
     method: 'POST',
-    path: '/sign/advanced',
-    description: 'Sign with advanced embedding controls (typically Professional+).',
+    path: '/sign',
+    description: 'Sign with advanced options (sentence segmentation, attribution, etc). Features gated by tier.',
     category: 'Signing',
     requiresAuth: true,
     authType: 'apikey',
@@ -32,12 +34,14 @@ export const PLAYGROUND_ENDPOINTS = [
     docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify(
       {
-        document_id: 'doc_example_123',
         text: 'Hello, world.',
-        segmentation_level: 'sentence',
-        action: 'c2pa.created',
-        manifest_mode: 'full',
-        embedding_strategy: 'single_point',
+        document_title: 'Example Document',
+        options: {
+          document_type: 'article',
+          segmentation_level: 'sentence',
+          index_for_attribution: true,
+          action: 'c2pa.created',
+        },
       },
       null,
       2

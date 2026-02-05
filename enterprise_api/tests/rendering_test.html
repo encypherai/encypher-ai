@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZW+VS Rendering Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+        .test-string {
+            font-size: 18px;
+            padding: 10px;
+            background: white;
+            border: 1px solid #ccc;
+            margin: 10px 0;
+        }
+        .expected {
+            color: #666;
+            font-style: italic;
+        }
+        code {
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Zero-Width + Variation Selector Rendering Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Magic Number (4 chars)</h2>
+        <p class="expected">Expected: Both lines should look identical</p>
+        <div class="test-string">The quick brown fox jumps over the lazy dog.</div>
+        <div class="test-string">The quick​︀​︁brown fox jumps over the lazy dog.</div>
+        <p><small>Second line contains: ZWSP+VS1+ZWSP+VS2 after "quick"</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 2: Encoded Data (56 chars)</h2>
+        <p class="expected">Expected: Both lines should look identical</p>
+        <div class="test-string">Hello World</div>
+        <div class="test-string">Hello​︀​︁​︅​︃​︄​︅​︄​︃​︅​︂​︄​︅​︅​︄World</div>
+        <p><small>Second line contains: Magic number + "SECRET" encoded (56 invisible chars)</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 3: Multiple Embeddings</h2>
+        <p class="expected">Expected: Should look like normal paragraph</p>
+        <div class="test-string">
+            This is​︀​︁ a test​︀​︂ paragraph with​︀​︃ multiple embedded​︀​︄ magic numbers.​︀​︅ 
+            Each word​︀​︆ has an​︀​︇ invisible marker​︀​︈ that should​︀​︉ not affect​︀​︊ rendering.
+        </div>
+        <p><small>Contains 10 magic number markers (different VS combinations)</small></p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 4: Copy/Paste Test</h2>
+        <p>Copy the text below and paste into:</p>
+        <ul>
+            <li>Microsoft Word</li>
+            <li>Google Docs</li>
+            <li>Notepad/TextEdit</li>
+            <li>Email client</li>
+        </ul>
+        <div class="test-string" contenteditable="true">
+            The quick​︀​︁brown fox jumps over the lazy dog. This sentence​︀​︂contains invisible markers.
+        </div>
+        <p class="expected">After pasting, the text should look normal with no visible artifacts.</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Test 5: Font Compatibility</h2>
+        <p>Same text in different fonts:</p>
+        <div class="test-string" style="font-family: Arial;">Arial: The quick​︀​︁brown fox</div>
+        <div class="test-string" style="font-family: 'Times New Roman';">Times: The quick​︀​︁brown fox</div>
+        <div class="test-string" style="font-family: 'Courier New';">Courier: The quick​︀​︁brown fox</div>
+        <div class="test-string" style="font-family: Georgia;">Georgia: The quick​︀​︁brown fox</div>
+        <div class="test-string" style="font-family: Verdana;">Verdana: The quick​︀​︁brown fox</div>
+        <p class="expected">All fonts should render identically (no visible markers)</p>
+    </div>
+
+    <div class="test-section">
+        <h2>Instructions for PDF Testing</h2>
+        <ol>
+            <li>Print this page to PDF (Ctrl+P / Cmd+P → Save as PDF)</li>
+            <li>Open the PDF in different viewers:
+                <ul>
+                    <li>Adobe Acrobat Reader</li>
+                    <li>Chrome PDF viewer</li>
+                    <li>macOS Preview</li>
+                    <li>Firefox PDF viewer</li>
+                </ul>
+            </li>
+            <li>Verify that invisible markers remain invisible</li>
+            <li>Try selecting and copying text from PDF</li>
+        </ol>
+    </div>
+
+    <div class="test-section">
+        <h2>Character Inspector</h2>
+        <p>Paste text here to see character breakdown:</p>
+        <textarea id="inspector" style="width: 100%; height: 100px; font-family: monospace;"></textarea>
+        <div id="output" style="margin-top: 10px; font-family: monospace; font-size: 12px;"></div>
+    </div>
+
+    <script>
+        document.getElementById('inspector').addEventListener('input', function(e) {
+            const text = e.target.value;
+            const output = document.getElementById('output');
+            let html = '';
+            
+            for (let i = 0; i < text.length; i++) {
+                const char = text[i];
+                const code = char.charCodeAt(0);
+                const hex = code.toString(16).toUpperCase().padStart(4, '0');
+                
+                let name = '';
+                if (code === 0x200B) name = 'ZWSP';
+                else if (code === 0x200C) name = 'ZWNJ';
+                else if (code === 0x200D) name = 'ZWJ';
+                else if (code >= 0xFE00 && code <= 0xFE0F) name = `VS${code - 0xFE00 + 1}`;
+                else name = char;
+                
+                const isInvisible = (code === 0x200B || code === 0x200C || code === 0x200D || 
+                                    (code >= 0xFE00 && code <= 0xFE0F));
+                const color = isInvisible ? 'color: red; font-weight: bold;' : '';
+                
+                html += `<div style="${color}">${i}: U+${hex} - ${name}</div>`;
+            }
+            
+            output.innerHTML = html || '<em>Paste text to inspect...</em>';
+        });
+    </script>
+</body>
+</html>

@@ -28,7 +28,6 @@ from app.services.certificate_service import ResolvedCertificate, certificate_re
 from app.services.status_service import status_service
 from app.utils.c2pa_trust_list import validate_certificate_chain
 from app.utils.zw_crypto import (
-    ZW_MAGIC_MINI,
     verify_minimal_signed_uuid,
     find_all_minimal_signed_uuids,
 )
@@ -269,8 +268,9 @@ def _extract_and_validate_c2pa_certificate(text: str) -> C2PACertificateResult:
 
 
 def detect_zw_embeddings(text: str) -> bool:
-    """Check if text contains ZW (zero-width) embeddings."""
-    return ZW_MAGIC_MINI in text
+    """Check if text contains ZW (zero-width) embeddings using contiguous sequence detection."""
+    # Use find_all_minimal_signed_uuids which detects 128 contiguous base-4 characters
+    return len(find_all_minimal_signed_uuids(text)) > 0
 
 
 async def execute_verification(*, payload_text: str, db: AsyncSession) -> VerificationExecution:

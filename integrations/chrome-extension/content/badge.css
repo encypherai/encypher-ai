@@ -63,11 +63,47 @@
   color: white;
 }
 
-/* Badge icon */
+/* Badge icon - Encypher logo */
 .encypher-badge__icon {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 18px;
+  height: 18px;
+}
+
+.encypher-badge__icon svg {
+  width: 100%;
+  height: 100%;
+  color: white;
+}
+
+/* Status overlay for non-verified states */
+.encypher-badge__status {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 12px;
+  height: 12px;
+  background: #EF4444;
+  border-radius: 50%;
+  font-size: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid white;
+}
+
+.encypher-badge--pending .encypher-badge__status {
+  background: #F59E0B;
+}
+
+.encypher-badge--revoked .encypher-badge__status {
+  background: #8B5CF6;
+}
+
+.encypher-badge--error .encypher-badge__status {
+  background: #6B7280;
 }
 
 /* Tooltip */

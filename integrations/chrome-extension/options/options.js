@@ -19,6 +19,16 @@ const cacheTtlInput = document.getElementById('cacheTtl');
 const clearCacheBtn = document.getElementById('clearCache');
 const resetSettingsBtn = document.getElementById('resetSettings');
 
+// Signing settings
+const defaultInvisibleCheckbox = document.getElementById('defaultInvisible');
+const autoReplaceContentCheckbox = document.getElementById('autoReplaceContent');
+const defaultDocTypeSelect = document.getElementById('defaultDocType');
+const showEditorButtonsCheckbox = document.getElementById('showEditorButtons');
+
+// Analytics settings
+const analyticsEnabledCheckbox = document.getElementById('analyticsEnabled');
+const analyticsStatusEl = document.getElementById('analyticsStatus');
+
 // Default settings
 const DEFAULT_SETTINGS = {
   apiKey: '',
@@ -26,7 +36,14 @@ const DEFAULT_SETTINGS = {
   showBadges: true,
   apiBaseUrl: 'https://api.encypherai.com',
   customApiUrl: '',
-  cacheTtl: 5
+  cacheTtl: 5,
+  // Signing defaults
+  defaultInvisible: true,
+  autoReplaceContent: true,
+  defaultDocType: 'article',
+  showEditorButtons: true,
+  // Analytics
+  analyticsEnabled: true
 };
 
 /**
@@ -60,8 +77,34 @@ async function loadSettings() {
     }
     
     cacheTtlInput.value = result.cacheTtl;
+    
+    // Signing settings
+    if (defaultInvisibleCheckbox) defaultInvisibleCheckbox.checked = result.defaultInvisible;
+    if (autoReplaceContentCheckbox) autoReplaceContentCheckbox.checked = result.autoReplaceContent;
+    if (defaultDocTypeSelect) defaultDocTypeSelect.value = result.defaultDocType;
+    if (showEditorButtonsCheckbox) showEditorButtonsCheckbox.checked = result.showEditorButtons;
+    
+    // Analytics settings
+    if (analyticsEnabledCheckbox) analyticsEnabledCheckbox.checked = result.analyticsEnabled;
+    updateAnalyticsStatus();
   } catch (error) {
     console.error('Error loading settings:', error);
+  }
+}
+
+/**
+ * Update analytics status display
+ */
+async function updateAnalyticsStatus() {
+  try {
+    const summary = await chrome.runtime.sendMessage({ type: 'GET_ANALYTICS_SUMMARY' });
+    if (analyticsStatusEl && summary) {
+      analyticsStatusEl.textContent = summary.enabled 
+        ? `Analytics enabled (${summary.queuedEvents} events queued)`
+        : 'Analytics disabled';
+    }
+  } catch (e) {
+    // Ignore errors
   }
 }
 
@@ -244,6 +287,53 @@ clearCacheBtn.addEventListener('click', async () => {
   setTimeout(() => {
     clearCacheBtn.textContent = 'Clear Verification Cache';
   }, 2000);
+});
+
+// Signing settings event listeners
+defaultInvisibleCheckbox?.addEventListener('change', async () => {
+  await saveSetting('defaultInvisible', defaultInvisibleCheckbox.checked);
+  chrome.runtime.sendMessage({ 
+    type: 'SETTINGS_UPDATED', 
+    setting: 'defaultInvisible', 
+    value: defaultInvisibleCheckbox.checked 
+  });
+});
+
+autoReplaceContentCheckbox?.addEventListener('change', async () => {
+  await saveSetting('autoReplaceContent', autoReplaceContentCheckbox.checked);
+  chrome.runtime.sendMessage({ 
+    type: 'SETTINGS_UPDATED', 
+    setting: 'autoReplaceContent', 
+    value: autoReplaceContentCheckbox.checked 
+  });
+});
+
+defaultDocTypeSelect?.addEventListener('change', async () => {
+  await saveSetting('defaultDocType', defaultDocTypeSelect.value);
+  chrome.runtime.sendMessage({ 
+    type: 'SETTINGS_UPDATED', 
+    setting: 'defaultDocType', 
+    value: defaultDocTypeSelect.value 
+  });
+});
+
+showEditorButtonsCheckbox?.addEventListener('change', async () => {
+  await saveSetting('showEditorButtons', showEditorButtonsCheckbox.checked);
+  chrome.runtime.sendMessage({ 
+    type: 'SETTINGS_UPDATED', 
+    setting: 'showEditorButtons', 
+    value: showEditorButtonsCheckbox.checked 
+  });
+});
+
+// Analytics settings event listener
+analyticsEnabledCheckbox?.addEventListener('change', async () => {
+  await saveSetting('analyticsEnabled', analyticsEnabledCheckbox.checked);
+  chrome.runtime.sendMessage({ 
+    type: 'SET_ANALYTICS_ENABLED', 
+    enabled: analyticsEnabledCheckbox.checked 
+  });
+  updateAnalyticsStatus();
 });
 
 // Reset settings

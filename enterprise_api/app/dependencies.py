@@ -87,6 +87,33 @@ DEMO_KEYS = {
         "monthly_api_usage": 0,
         "coalition_member": True,
         "coalition_rev_share": 65,
+        "nma_member": False,
+    },
+    # NMA (News Media Alliance) member - starter tier with sentence-level embeddings
+    "nma-starter-api-key-for-testing": {
+        "organization_id": "org_nma_starter",
+        "organization_name": "NMA Member Test Organization",
+        "tier": "starter",
+        "is_demo": True,
+        "features": {
+            "team_management": False,
+            "audit_logs": False,
+            "merkle_enabled": True,  # NMA members get Merkle trees
+            "fuzzy_fingerprint": False,
+            "bulk_operations": False,
+            "sentence_tracking": True,  # NMA members get sentence-level tracking
+            "streaming": False,
+            "byok": False,
+            "sso": False,
+            "custom_assertions": False,
+            "max_team_members": 1,
+        },
+        "permissions": ["sign", "verify"],
+        "monthly_api_limit": 10000,
+        "monthly_api_usage": 0,
+        "coalition_member": True,
+        "coalition_rev_share": 65,
+        "nma_member": True,  # NMA membership flag
     },
     "professional-api-key-for-testing": {
         "organization_id": "org_professional",
@@ -321,6 +348,8 @@ def _normalize_org_context(org_context: Dict) -> Dict:
         "custom_assertions_enabled": features.get("custom_assertions", False),
         "fuzzy_fingerprint_enabled": features.get("fuzzy_fingerprint", False),
         "max_team_members": features.get("max_team_members", 1),
+        # NMA (News Media Alliance) membership - extends starter tier with sentence-level embeddings
+        "nma_member": org_context.get("nma_member", False),
     }
     return result
 

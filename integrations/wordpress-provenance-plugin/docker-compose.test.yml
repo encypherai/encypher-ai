@@ -42,6 +42,7 @@ services:
       - ./plugin/encypher-provenance:/var/www/html/wp-content/plugins/encypher-provenance
     extra_hosts:
       - "host.docker.internal:host-gateway"
+      - "api.encypherai.com:host-gateway"
 
   wp-cli:
     image: wordpress:cli
@@ -58,6 +59,9 @@ services:
     volumes:
       - wordpress-test-data:/var/www/html
       - ./plugin/encypher-provenance:/var/www/html/wp-content/plugins/encypher-provenance
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      - "api.encypherai.com:host-gateway"
 
 volumes:
   wordpress-test-db-data:

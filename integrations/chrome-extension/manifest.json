@@ -7,7 +7,8 @@
     "activeTab",
     "storage",
     "clipboardWrite",
-    "contextMenus"
+    "contextMenus",
+    "scripting"
   ],
   "host_permissions": [
     "https://api.encypherai.com/*",
@@ -36,14 +37,14 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content/detector.js"],
-      "css": ["content/badge.css"],
+      "js": ["content/detector.js", "content/editor-signer.js"],
+      "css": ["content/badge.css", "content/editor-signer.css"],
       "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
     {
-      "resources": ["icons/*", "content/badge.css"],
+      "resources": ["icons/*", "content/badge.css", "content/editor-signer.css"],
       "matches": ["<all_urls>"]
     }
   ]

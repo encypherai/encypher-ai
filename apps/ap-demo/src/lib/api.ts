@@ -1,5 +1,5 @@
 // API client for Encypher Enterprise API
-// Uses authenticated /sign/advanced endpoint for sentence-level provenance
+// Uses unified /sign endpoint with tier-gated options
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com';
 const API_KEY = process.env.NEXT_PUBLIC_API_KEY || '';
@@ -50,32 +50,34 @@ export interface VerifyResponse {
 }
 
 /**
- * Encode content with sentence-level provenance using /sign/advanced.
+ * Encode content with sentence-level provenance using unified /sign endpoint.
  * Creates Merkle tree + C2PA manifest with invisible embeddings per sentence.
- * Requires a valid API key with sign permission (Professional+ tier).
+ * Requires a valid API key with sign permission. Features gated by tier.
  */
 export async function encodeContent(request: EncodeRequest): Promise<EncodeResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/v1/sign/advanced`, {
+  const response = await fetch(`${API_BASE_URL}/api/v1/sign`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${API_KEY}`,
     },
     body: JSON.stringify({
-      document_id: request.document_id,
       text: request.text,
-      segmentation_level: request.segmentation_level || 'sentence',
-      action: 'c2pa.created',
+      document_id: request.document_id,
+      document_title: request.document_title || 'AP News Article',
       metadata: {
-        title: request.document_title || 'AP News Article',
         document_type: request.document_type || 'article',
         source: 'AP Demo',
         ...request.metadata,
       },
-      embedding_options: {
-        format: 'plain',
-        method: 'data-attribute',
-        include_text: true,
+      options: {
+        segmentation_level: request.segmentation_level || 'sentence',
+        action: 'c2pa.created',
+        embedding_options: {
+          format: 'plain',
+          method: 'invisible',
+          include_text: true,
+        },
       },
     }),
   });
@@ -87,15 +89,18 @@ export async function encodeContent(request: EncodeRequest): Promise<EncodeRespo
 
   const data = await response.json();
   
-  // The embedded_content contains the text with invisible C2PA manifests per sentence
+  // Handle new unified response format
+  const result = data.data?.document || data.data || data;
+  
   return {
     success: data.success,
-    document_id: data.document_id,
-    embedded_content: data.embedded_content,
-    total_sentences: data.statistics?.total_sentences || data.embeddings?.length,
-    merkle_tree: data.merkle_tree,
-    embeddings: data.embeddings,
-    metadata: data.metadata,
+    document_id: result.document_id,
+    embedded_content: result.signed_text || result.embedded_content,
+    verification_url: result.verification_url,
+    total_sentences: result.total_segments || result.total_sentences,
+    merkle_root: result.merkle_root,
+    embeddings: result.embeddings,
+    metadata: result.metadata,
   };
 }
 

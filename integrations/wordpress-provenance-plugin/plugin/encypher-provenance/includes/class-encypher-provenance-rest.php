@@ -247,51 +247,83 @@ class Rest
         }
         
         $is_starter = ($tier === 'starter');
+        $is_nma_member = isset($settings['nma_member']) ? (bool) $settings['nma_member'] : false;
 
-        if ($is_starter) {
-            $payload = [
-                'text' => $clean_content,
-                'document_id' => 'wp_post_' . $post_id,
-                'document_title' => $post->post_title,
-                'document_url' => get_permalink($post),
+        // Generate unique document_id per signing instance to avoid collisions on re-signing
+        // Format: wp_post_{post_id}_v{timestamp}_{random}
+        $unique_document_id = sprintf(
+            'wp_post_%d_v%d_%s',
+            $post_id,
+            time(),
+            substr(md5(uniqid((string) $post_id, true)), 0, 8)
+        );
+        
+        // Build unified /sign request with tier-gated options
+        // Features are automatically gated server-side based on API key tier
+        $payload = [
+            'text' => $clean_content,
+            'document_id' => $unique_document_id,
+            'document_title' => $post->post_title,
+            'document_url' => get_permalink($post),
+            'metadata' => [
+                'author' => get_the_author_meta('display_name', $post->post_author),
+                'published_at' => $post->post_date,
+                'wordpress_post_id' => $post_id,
+                'tier' => $tier,
+                'nma_member' => $is_nma_member,
+                'organization_name' => $organization_name,
+                'signing_mode' => $signing_mode,
+            ],
+            'options' => [
                 'document_type' => 'article',
                 'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_ASSURANCE_VERSION,
-            ];
-            $response = $this->call_backend('/sign', $payload, true);
-        } else {
-            $payload = [
-                'document_id' => 'wp_post_' . $post_id,
-                'text' => $clean_content,
-                'segmentation_level' => 'sentence',
                 'action' => $action_type,
-                'previous_instance_id' => $previous_instance_id,
-                'metadata' => [
-                    'title' => $post->post_title,
-                    'author' => get_the_author_meta('display_name', $post->post_author),
-                    'published_at' => $post->post_date,
-                    'url' => get_permalink($post),
-                    'wordpress_post_id' => $post_id,
-                    'tier' => $tier,
-                    'organization_name' => $organization_name,
-                    'signing_mode' => $signing_mode,
-                ],
-            ];
-
-            if (isset($metadata['license_type'])) {
-                $payload['license'] = [
-                    'type' => sanitize_text_field($metadata['license_type']),
-                    'url' => isset($metadata['license_url']) ? esc_url_raw($metadata['license_url']) : '',
-                ];
-            }
-
-            $response = $this->call_backend('/sign/advanced', $payload, true);
+            ],
+        ];
+        
+        // Add previous_instance_id for edit provenance chain
+        if ($previous_instance_id) {
+            $payload['options']['previous_instance_id'] = $previous_instance_id;
         }
+        
+        // Add segmentation for paid tiers or NMA members
+        if (!$is_starter || $is_nma_member) {
+            $payload['options']['segmentation_level'] = 'sentence';
+            $payload['options']['index_for_attribution'] = true;
+            
+            if ($is_nma_member && $is_starter) {
+                error_log(sprintf(
+                    'Encypher: NMA member signing post %d with sentence-level embeddings',
+                    $post_id
+                ));
+            }
+        }
+        
+        // Add license info if provided
+        if (isset($metadata['license_type'])) {
+            $payload['options']['license'] = [
+                'type' => sanitize_text_field($metadata['license_type']),
+                'url' => isset($metadata['license_url']) ? esc_url_raw($metadata['license_url']) : '',
+            ];
+        }
+        
+        // Use unified /sign endpoint - features gated by tier server-side
+        $response = $this->call_backend('/sign', $payload, true);
         if (is_wp_error($response)) {
             return $response;
         }
 
+        // Handle new unified response format: { success, data: { document: {...} }, meta: {...} }
+        // Also support legacy format for backward compatibility
+        $result = $response;
+        if (isset($response['data']['document'])) {
+            $result = $response['data']['document'];
+        } elseif (isset($response['data'])) {
+            $result = $response['data'];
+        }
+
         // Extract embedded content from Enterprise API response
-        $embedded_content = $response['embedded_content'] ?? ($response['signed_text'] ?? null);
+        $embedded_content = $result['signed_text'] ?? ($result['embedded_content'] ?? null);
         if (! is_string($embedded_content) || '' === $embedded_content) {
             return new WP_Error('invalid_response', __('Unexpected response from Enterprise API.', 'encypher-provenance'), ['status' => 502]);
         }
@@ -318,19 +350,20 @@ class Rest
             $post_id
         ));
 
-        $document_id = isset($response['document_id']) ? sanitize_text_field((string) $response['document_id']) : '';
-        $merkle_tree = $response['merkle_tree'] ?? [];
-        $statistics = $response['statistics'] ?? [];
+        $document_id = isset($result['document_id']) ? sanitize_text_field((string) $result['document_id']) : '';
+        $merkle_root = $result['merkle_root'] ?? null;
         $total_sentences = 0;
-        if (isset($response['total_sentences'])) {
-            $total_sentences = (int) $response['total_sentences'];
-        } elseif (isset($statistics['total_sentences'])) {
-            $total_sentences = (int) $statistics['total_sentences'];
+        if (isset($result['total_segments'])) {
+            $total_sentences = (int) $result['total_segments'];
+        } elseif (isset($result['total_sentences'])) {
+            $total_sentences = (int) $result['total_sentences'];
         }
 
         $instance_id = '';
-        if (!empty($response['metadata']['instance_id'])) {
-            $instance_id = sanitize_text_field((string) $response['metadata']['instance_id']);
+        if (!empty($result['instance_id'])) {
+            $instance_id = sanitize_text_field((string) $result['instance_id']);
+        } elseif (!empty($result['metadata']['instance_id'])) {
+            $instance_id = sanitize_text_field((string) $result['metadata']['instance_id']);
         }
         $verification_id = $instance_id ?: $document_id;
         $verification_url = $verification_id ? home_url('/c2pa-verify/') . urlencode($verification_id) : '';
@@ -346,11 +379,8 @@ class Rest
             return $updated;
         }
 
-        // Extract instance_id from response for provenance chain
-        $new_instance_id = null;
-        if (!empty($response['metadata']['instance_id'])) {
-            $new_instance_id = sanitize_text_field($response['metadata']['instance_id']);
-        }
+        // Extract instance_id from result for provenance chain
+        $new_instance_id = $instance_id ?: null;
         
         // Store metadata about the C2PA marking
         update_post_meta($post_id, '_encypher_marked', true);
@@ -383,14 +413,13 @@ class Rest
         delete_post_meta($post_id, '_encypher_action_type');
         
         // Store Merkle tree info
-        if (!empty($merkle_tree)) {
-            update_post_meta($post_id, '_encypher_merkle_root_hash', $merkle_tree['root_hash'] ?? '');
-            update_post_meta($post_id, '_encypher_merkle_total_leaves', $merkle_tree['total_leaves'] ?? 0);
+        if (!empty($merkle_root)) {
+            update_post_meta($post_id, '_encypher_merkle_root_hash', $merkle_root);
         }
-        $this->persist_merkle_snapshot($post_id, is_array($merkle_tree) ? $merkle_tree : []);
+        $this->persist_merkle_snapshot($post_id, $merkle_root ? ['root_hash' => $merkle_root] : []);
         $this->persist_sentence_segments(
             $post_id,
-            isset($response['embeddings']) && is_array($response['embeddings']) ? $response['embeddings'] : []
+            isset($result['embeddings']) && is_array($result['embeddings']) ? $result['embeddings'] : []
         );
         
         // Clear any pending marking flags

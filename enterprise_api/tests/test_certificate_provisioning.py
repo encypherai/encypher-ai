@@ -50,6 +50,13 @@ async def test_ensure_organization_certificate_uses_signing_key(db, monkeypatch)
     encrypted_private_key = encrypt_private_key(private_key)
     serialized_public_key = serialize_public_key(public_key)
 
+    # Clean up any existing test data first
+    await db.execute(
+        text("DELETE FROM organizations WHERE id = :id"),
+        {"id": organization_id},
+    )
+    await db.commit()
+
     await db.execute(
         text(
             """
@@ -167,6 +174,13 @@ async def test_ensure_organization_certificate_handles_naive_expiry(db, monkeypa
         .sign(private_key, algorithm=None)
     )
     cert_pem = cert.public_bytes(serialization.Encoding.PEM).decode("utf-8")
+
+    # Clean up any existing test data first
+    await db.execute(
+        text("DELETE FROM organizations WHERE id = :id"),
+        {"id": organization_id},
+    )
+    await db.commit()
 
     await db.execute(
         text(

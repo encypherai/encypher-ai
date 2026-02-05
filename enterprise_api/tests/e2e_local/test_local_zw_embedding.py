@@ -13,7 +13,7 @@ import uuid
 
 import pytest
 
-from app.utils.zw_crypto import ZW_MAGIC_MINI, CHARS_BASE4
+from app.utils.zw_crypto import CHARS_BASE4, find_all_minimal_signed_uuids
 
 
 def _unique_document_id(prefix: str) -> str:
@@ -72,11 +72,12 @@ async def test_local_zw_embedding_sign_and_verify(
     assert embedded_content is not None, "Response should contain embedded_content"
     assert isinstance(embedded_content, str)
 
-    # Verify ZW signatures are present
-    assert ZW_MAGIC_MINI in embedded_content, "Embedded content should contain ZW signature magic"
+    # Verify ZW signatures are present (detected via contiguous sequence detection)
+    found_signatures = find_all_minimal_signed_uuids(embedded_content)
+    assert len(found_signatures) > 0, "Embedded content should contain ZW signatures"
     
     # Count signatures (should be 3 for 3 sentences)
-    signature_count = embedded_content.count(ZW_MAGIC_MINI)
+    signature_count = len(found_signatures)
     assert signature_count == 3, f"Expected 3 ZW signatures, found {signature_count}"
 
     # Verify Word compatibility (no ZWSP!)
@@ -127,7 +128,7 @@ async def test_local_zw_embedding_signature_size(
     local_auth_headers,
     local_api_config,
 ) -> None:
-    """Test that ZW embedding signatures are exactly 132 chars per sentence."""
+    """Test that ZW embedding signatures are exactly 128 chars per sentence (no magic number)."""
     _assert_local_base_url(local_api_config.base_url)
     document_id = _unique_document_id("local_zw_size")
     original_text = "Single sentence for size test."
@@ -152,10 +153,10 @@ async def test_local_zw_embedding_signature_size(
     # Calculate overhead
     overhead = len(embedded_content) - len(original_text)
     
-    # Should be exactly 132 chars for one sentence
-    assert overhead == 132, f"Expected 132 char overhead per sentence, got {overhead}"
+    # Should be exactly 128 chars for one sentence (no magic number)
+    assert overhead == 128, f"Expected 128 char overhead per sentence, got {overhead}"
     
-    print(f"✓ ZW signature size verified: {overhead} chars (132 expected)")
+    print(f"✓ ZW signature size verified: {overhead} chars (128 expected)")
 
 
 @pytest.mark.e2e
@@ -195,19 +196,20 @@ async def test_local_zw_embedding_multiple_sentences(
     embedded_content = sign_payload.get("embedded_content")
     assert embedded_content is not None
 
-    # Count signatures
-    signature_count = embedded_content.count(ZW_MAGIC_MINI)
+    # Count signatures (via contiguous sequence detection)
+    found_signatures = find_all_minimal_signed_uuids(embedded_content)
+    signature_count = len(found_signatures)
     expected_count = len(sentences)
     assert signature_count == expected_count, (
         f"Expected {expected_count} signatures for {expected_count} sentences, "
         f"found {signature_count}"
     )
 
-    # Calculate total overhead
+    # Calculate total overhead (128 chars per signature, no magic number)
     overhead = len(embedded_content) - len(original_text)
-    expected_overhead = 132 * expected_count
+    expected_overhead = 128 * expected_count
     assert overhead == expected_overhead, (
-        f"Expected {expected_overhead} chars overhead ({expected_count} × 132), "
+        f"Expected {expected_overhead} chars overhead ({expected_count} × 128), "
         f"got {overhead}"
     )
 

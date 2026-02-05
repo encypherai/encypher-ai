@@ -75,11 +75,56 @@
 
         <div id="sign-ready" class="popup__state" hidden>
           <div class="popup__sign-form">
+            <div class="popup__tier-badge" id="tier-badge">
+              <span class="popup__tier-icon">🆓</span>
+              <span class="popup__tier-name">Free Tier</span>
+            </div>
             <label for="sign-text">Text to Sign</label>
-            <textarea id="sign-text" placeholder="Paste or type text to sign..." rows="6"></textarea>
+            <textarea id="sign-text" placeholder="Paste or type text to sign..." rows="5"></textarea>
             <div class="popup__sign-options">
               <label for="sign-title">Title (optional)</label>
               <input type="text" id="sign-title" placeholder="Document title">
+            </div>
+            <div class="popup__advanced-options" id="advanced-options">
+              <button type="button" class="popup__advanced-toggle" id="toggle-advanced">
+                <span>Advanced Options</span>
+                <span class="popup__advanced-arrow">▼</span>
+              </button>
+              <div class="popup__advanced-panel" id="advanced-panel" hidden>
+                <div class="popup__sign-options">
+                  <label>
+                    <input type="checkbox" id="sign-invisible" checked>
+                    Use invisible embeddings
+                  </label>
+                </div>
+                <div class="popup__sign-options">
+                  <label for="sign-doc-type">Document Type</label>
+                  <select id="sign-doc-type">
+                    <option value="article">Article</option>
+                    <option value="blog_post">Blog Post</option>
+                    <option value="social_media">Social Media</option>
+                    <option value="press_release">Press Release</option>
+                    <option value="legal">Legal Document</option>
+                    <option value="other">Other</option>
+                  </select>
+                </div>
+                <div class="popup__pro-feature" id="pro-features">
+                  <div class="popup__pro-badge">PRO</div>
+                  <div class="popup__pro-options">
+                    <label>
+                      <input type="checkbox" id="sign-merkle" disabled>
+                      Enable Merkle tree (granular verification)
+                    </label>
+                    <label>
+                      <input type="checkbox" id="sign-attribution" disabled>
+                      Enable attribution tracking
+                    </label>
+                  </div>
+                  <a href="https://dashboard.encypherai.com/billing/upgrade" target="_blank" class="popup__upgrade-link">
+                    Upgrade to Professional →
+                  </a>
+                </div>
+              </div>
             </div>
             <button id="sign-btn" class="popup__btn popup__btn--primary popup__btn--full">
               ✍ Sign Content

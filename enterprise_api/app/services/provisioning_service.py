@@ -167,6 +167,7 @@ class ProvisioningService:
 
         # Auto-provision certificate if needed
         await ProvisioningService._ensure_organization_certificate(
+            db=db,
             organization_id=org.organization_id,
             organization_name=org.name,
             authorization=None,
@@ -439,7 +440,7 @@ class ProvisioningService:
     ) -> Dict[str, Any]:
         # Get organization name for certificate provisioning
         org_result = await db.execute(
-            text("SELECT name FROM organizations WHERE organization_id = :org_id"),
+            text("SELECT name FROM organizations WHERE id = :org_id"),
             {"org_id": organization_id},
         )
         org_row = org_result.fetchone()

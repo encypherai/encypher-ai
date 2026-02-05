@@ -41,22 +41,30 @@ async def test_sign_basic_org_default_template_requires_business(
     )
     await db.commit()
 
-    request = SignRequest(text="Hello world.", document_type="article")
+    try:
+        request = SignRequest(text="Hello world.", document_type="article")
 
-    organization = {
-        "organization_id": "org_starter",
-        "organization_name": "Starter",
-        "tier": "starter",
-        "is_demo": True,
-        "features": {"custom_assertions": False},
-        "custom_assertions_enabled": False,
-    }
+        organization = {
+            "organization_id": "org_starter",
+            "organization_name": "Starter",
+            "tier": "starter",
+            "is_demo": True,
+            "features": {"custom_assertions": False},
+            "custom_assertions_enabled": False,
+        }
 
-    with patch("app.services.signing_executor._index_in_coalition", new=AsyncMock(return_value=None)):
-        with pytest.raises(HTTPException) as exc_info:
-            await execute_signing(request=request, organization=organization, db=db)
+        with patch("app.services.signing_executor._index_in_coalition", new=AsyncMock(return_value=None)):
+            with pytest.raises(HTTPException) as exc_info:
+                await execute_signing(request=request, organization=organization, db=db)
 
-    assert exc_info.value.status_code == 403
+        assert exc_info.value.status_code == 403
+    finally:
+        # Clean up: reset default_c2pa_template_id to NULL
+        await db.execute(
+            text("UPDATE organizations SET default_c2pa_template_id = NULL WHERE id = :org_id"),
+            {"org_id": "org_starter"},
+        )
+        await db.commit()
 
 
 @pytest.mark.asyncio

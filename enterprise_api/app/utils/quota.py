@@ -265,8 +265,16 @@ class QuotaManager:
             return True
 
         # Check if this is a demo key (doesn't require database lookup)
+        # NMA starter orgs (org_nma_*) are also demo keys
         is_demo_key = (
-            (features and features.get("is_demo", False)) or organization_id.startswith("org_demo") or organization_id.startswith("org_encypher")
+            (features and features.get("is_demo", False))
+            or organization_id.startswith("org_demo")
+            or organization_id.startswith("org_encypher")
+            or organization_id.startswith("org_nma_")
+            or organization_id.startswith("org_starter")
+            or organization_id.startswith("org_professional")
+            or organization_id.startswith("org_business")
+            or organization_id.startswith("org_enterprise")
         )
 
         if is_demo_key:
@@ -274,10 +282,32 @@ class QuotaManager:
             tier = _coerce_tier(tier_override or "starter")
             quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
 
+            # NMA (News Media Alliance) members on starter tier get access to merkle features
+            # Check if this is an NMA member - flag can be in features dict or at top level
+            is_nma_member = features and (features.get("nma_member", False) or features.get("sentence_tracking", False))
+            if is_nma_member and quota_type in (QuotaType.MERKLE_ENCODING, QuotaType.MERKLE_ATTRIBUTION):
+                # NMA members get limited merkle access (same as professional tier limits)
+                nma_limit = QuotaManager.get_quota_limit(OrganizationTier.PROFESSIONAL, quota_type)
+                logger.debug(f"NMA member {organization_id}: allowing {quota_type.value} (NMA limit: {nma_limit})")
+                return True
+
             # Demo keys with quota_limit = -1 or high limits are unlimited
             if quota_limit == -1 or quota_limit > 100000:
                 logger.debug(f"Demo key {organization_id}: allowing {quota_type.value} (unlimited)")
                 return True
+
+            # Check if feature is enabled in features dict (overrides tier-based limits)
+            if features and quota_limit == 0:
+                feature_map = {
+                    QuotaType.MERKLE_ENCODING: "merkle_enabled",
+                    QuotaType.MERKLE_ATTRIBUTION: "merkle_enabled",
+                    QuotaType.FUZZY_INDEX: "fuzzy_fingerprint",
+                    QuotaType.FUZZY_SEARCH: "fuzzy_fingerprint",
+                }
+                feature_key = feature_map.get(quota_type)
+                if feature_key and features.get(feature_key, False):
+                    logger.debug(f"Demo key {organization_id}: allowing {quota_type.value} via feature flag")
+                    return True
 
             # For demo keys with limits, allow without tracking (stateless)
             logger.debug(f"Demo key {organization_id}: allowing {quota_type.value} (limit: {quota_limit}, no tracking)")

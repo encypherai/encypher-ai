@@ -17,11 +17,12 @@ async def test_sign_advanced_template_requires_custom_assertions_feature(
     professional_auth_headers: dict,
 ) -> None:
     response = await async_client.post(
-        "/api/v1/sign/advanced",
+        "/api/v1/sign",
         json={
-            "document_id": "doc_adv_tpl_001",
             "text": "Hello world.",
-            "template_id": "tmpl_does_not_matter",
+            "options": {
+                "template_id": "tmpl_does_not_matter",
+            },
         },
         headers=professional_auth_headers,
     )
@@ -142,13 +143,14 @@ async def test_sign_advanced_applies_template_assertions(
         ) as mock_create,
     ):
         response = await async_client.post(
-            "/api/v1/sign/advanced",
+            "/api/v1/sign",
             json={
-                "document_id": "doc_adv_tpl_002",
                 "text": "Hello world.",
-                "segmentation_level": "sentence",
-                "template_id": template_id,
-                "validate_assertions": True,
+                "options": {
+                    "segmentation_level": "sentence",
+                    "template_id": template_id,
+                    "validate_assertions": True,
+                },
             },
             headers=business_auth_headers,
         )
@@ -189,13 +191,14 @@ async def test_sign_advanced_applies_builtin_template_assertions(
         ) as mock_create,
     ):
         response = await async_client.post(
-            "/api/v1/sign/advanced",
+            "/api/v1/sign",
             json={
-                "document_id": "doc_adv_tpl_builtin_001",
                 "text": "Hello world.",
-                "segmentation_level": "sentence",
-                "template_id": "tmpl_builtin_no_ai_training_v1",
-                "validate_assertions": True,
+                "options": {
+                    "segmentation_level": "sentence",
+                    "template_id": "tmpl_builtin_no_ai_training_v1",
+                    "validate_assertions": True,
+                },
             },
             headers=business_auth_headers,
         )
