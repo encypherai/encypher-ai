@@ -22,25 +22,87 @@ import (
 type SigningAPI interface {
 
 	/*
-	SignAdvancedApiV1SignAdvancedPost Sign with advanced embedding controls
+	SignAdvancedApiV1SignAdvancedPost REMOVED - Use POST /sign with options instead
 
-	Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).
+	**⚠️ REMOVED: This endpoint has been removed.**
 
-Tier requirements are enforced server-side (typically Professional+ depending on selected options).
+Please use `POST /sign` with options instead.
+
+Migration example:
+```json
+// Old /sign/advanced request
+{
+    "document_id": "doc1",
+    "text": "...",
+    "segmentation_level": "sentence"
+}
+
+// New /sign request
+{
+    "text": "...",
+    "document_id": "doc1",
+    "options": {
+        "segmentation_level": "sentence"
+    }
+}
+```
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiSignAdvancedApiV1SignAdvancedPostRequest
+
+	Deprecated
 	*/
 	SignAdvancedApiV1SignAdvancedPost(ctx context.Context) ApiSignAdvancedApiV1SignAdvancedPostRequest
 
 	// SignAdvancedApiV1SignAdvancedPostExecute executes the request
-	//  @return EncodeWithEmbeddingsResponse
-	SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAdvancedApiV1SignAdvancedPostRequest) (*EncodeWithEmbeddingsResponse, *http.Response, error)
+	//  @return interface{}
+	// Deprecated
+	SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAdvancedApiV1SignAdvancedPostRequest) (interface{}, *http.Response, error)
 
 	/*
-	SignContentApiV1SignPost Sign Content
+	SignContentApiV1SignPost Sign content with C2PA manifest
 
-	Sign content with a C2PA manifest.
+	Sign content with C2PA manifest. Features are gated by tier.
+
+**Tier Feature Matrix:**
+
+| Feature | Free/Starter | Professional | Business | Enterprise |
+|---------|--------------|--------------|----------|------------|
+| Basic C2PA signing | ✅ | ✅ | ✅ | ✅ |
+| Sentence segmentation | ❌ | ✅ | ✅ | ✅ |
+| Advanced manifest modes | ❌ | ✅ | ✅ | ✅ |
+| Attribution indexing | ❌ | ✅ | ✅ | ✅ |
+| Custom assertions | ❌ | ❌ | ✅ | ✅ |
+| Rights metadata | ❌ | ❌ | ✅ | ✅ |
+| Dual binding | ❌ | ❌ | ❌ | ✅ |
+| Fingerprinting | ❌ | ❌ | ❌ | ✅ |
+| Batch size | 1 | 10 | 50 | 100 |
+
+**Single Document:**
+```json
+{
+    "text": "Content to sign...",
+    "document_title": "My Article",
+    "options": {
+        "segmentation_level": "sentence"
+    }
+}
+```
+
+**Batch (Professional+):**
+```json
+{
+    "documents": [
+        {"text": "First doc...", "document_title": "Doc 1"},
+        {"text": "Second doc...", "document_title": "Doc 2"}
+    ],
+    "options": {
+        "segmentation_level": "sentence"
+    }
+}
+```
+
+The response includes `meta.features_gated` showing features available at higher tiers.
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiSignContentApiV1SignPostRequest
@@ -48,8 +110,8 @@ Tier requirements are enforced server-side (typically Professional+ depending on
 	SignContentApiV1SignPost(ctx context.Context) ApiSignContentApiV1SignPostRequest
 
 	// SignContentApiV1SignPostExecute executes the request
-	//  @return SignResponse
-	SignContentApiV1SignPostExecute(r ApiSignContentApiV1SignPostRequest) (*SignResponse, *http.Response, error)
+	//  @return interface{}
+	SignContentApiV1SignPostExecute(r ApiSignContentApiV1SignPostRequest) (interface{}, *http.Response, error)
 }
 
 // SigningAPIService SigningAPI service
@@ -58,27 +120,42 @@ type SigningAPIService service
 type ApiSignAdvancedApiV1SignAdvancedPostRequest struct {
 	ctx context.Context
 	ApiService SigningAPI
-	encodeWithEmbeddingsRequest *EncodeWithEmbeddingsRequest
 }
 
-func (r ApiSignAdvancedApiV1SignAdvancedPostRequest) EncodeWithEmbeddingsRequest(encodeWithEmbeddingsRequest EncodeWithEmbeddingsRequest) ApiSignAdvancedApiV1SignAdvancedPostRequest {
-	r.encodeWithEmbeddingsRequest = &encodeWithEmbeddingsRequest
-	return r
-}
-
-func (r ApiSignAdvancedApiV1SignAdvancedPostRequest) Execute() (*EncodeWithEmbeddingsResponse, *http.Response, error) {
+func (r ApiSignAdvancedApiV1SignAdvancedPostRequest) Execute() (interface{}, *http.Response, error) {
 	return r.ApiService.SignAdvancedApiV1SignAdvancedPostExecute(r)
 }
 
 /*
-SignAdvancedApiV1SignAdvancedPost Sign with advanced embedding controls
+SignAdvancedApiV1SignAdvancedPost REMOVED - Use POST /sign with options instead
 
-Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).
+**⚠️ REMOVED: This endpoint has been removed.**
 
-Tier requirements are enforced server-side (typically Professional+ depending on selected options).
+Please use `POST /sign` with options instead.
+
+Migration example:
+```json
+// Old /sign/advanced request
+{
+    "document_id": "doc1",
+    "text": "...",
+    "segmentation_level": "sentence"
+}
+
+// New /sign request
+{
+    "text": "...",
+    "document_id": "doc1",
+    "options": {
+        "segmentation_level": "sentence"
+    }
+}
+```
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiSignAdvancedApiV1SignAdvancedPostRequest
+
+Deprecated
 */
 func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPost(ctx context.Context) ApiSignAdvancedApiV1SignAdvancedPostRequest {
 	return ApiSignAdvancedApiV1SignAdvancedPostRequest{
@@ -88,13 +165,14 @@ func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPost(ctx context.Contex
 }
 
 // Execute executes the request
-//  @return EncodeWithEmbeddingsResponse
-func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAdvancedApiV1SignAdvancedPostRequest) (*EncodeWithEmbeddingsResponse, *http.Response, error) {
+//  @return interface{}
+// Deprecated
+func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAdvancedApiV1SignAdvancedPostRequest) (interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *EncodeWithEmbeddingsResponse
+		localVarReturnValue  interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SigningAPIService.SignAdvancedApiV1SignAdvancedPost")
@@ -107,12 +185,9 @@ func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAd
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.encodeWithEmbeddingsRequest == nil {
-		return localVarReturnValue, nil, reportError("encodeWithEmbeddingsRequest is required and must be specified")
-	}
 
 	// to determine the Content-Type header
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// set Content-Type header
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -128,8 +203,6 @@ func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAd
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// body params
-	localVarPostBody = r.encodeWithEmbeddingsRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err
@@ -152,16 +225,6 @@ func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAd
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
 		}
-		if localVarHTTPResponse.StatusCode == 422 {
-			var v HTTPValidationError
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-		}
 		return localVarReturnValue, localVarHTTPResponse, newErr
 	}
 
@@ -180,22 +243,62 @@ func (a *SigningAPIService) SignAdvancedApiV1SignAdvancedPostExecute(r ApiSignAd
 type ApiSignContentApiV1SignPostRequest struct {
 	ctx context.Context
 	ApiService SigningAPI
-	signRequest *SignRequest
+	unifiedSignRequest *UnifiedSignRequest
 }
 
-func (r ApiSignContentApiV1SignPostRequest) SignRequest(signRequest SignRequest) ApiSignContentApiV1SignPostRequest {
-	r.signRequest = &signRequest
+func (r ApiSignContentApiV1SignPostRequest) UnifiedSignRequest(unifiedSignRequest UnifiedSignRequest) ApiSignContentApiV1SignPostRequest {
+	r.unifiedSignRequest = &unifiedSignRequest
 	return r
 }
 
-func (r ApiSignContentApiV1SignPostRequest) Execute() (*SignResponse, *http.Response, error) {
+func (r ApiSignContentApiV1SignPostRequest) Execute() (interface{}, *http.Response, error) {
 	return r.ApiService.SignContentApiV1SignPostExecute(r)
 }
 
 /*
-SignContentApiV1SignPost Sign Content
+SignContentApiV1SignPost Sign content with C2PA manifest
 
-Sign content with a C2PA manifest.
+Sign content with C2PA manifest. Features are gated by tier.
+
+**Tier Feature Matrix:**
+
+| Feature | Free/Starter | Professional | Business | Enterprise |
+|---------|--------------|--------------|----------|------------|
+| Basic C2PA signing | ✅ | ✅ | ✅ | ✅ |
+| Sentence segmentation | ❌ | ✅ | ✅ | ✅ |
+| Advanced manifest modes | ❌ | ✅ | ✅ | ✅ |
+| Attribution indexing | ❌ | ✅ | ✅ | ✅ |
+| Custom assertions | ❌ | ❌ | ✅ | ✅ |
+| Rights metadata | ❌ | ❌ | ✅ | ✅ |
+| Dual binding | ❌ | ❌ | ❌ | ✅ |
+| Fingerprinting | ❌ | ❌ | ❌ | ✅ |
+| Batch size | 1 | 10 | 50 | 100 |
+
+**Single Document:**
+```json
+{
+    "text": "Content to sign...",
+    "document_title": "My Article",
+    "options": {
+        "segmentation_level": "sentence"
+    }
+}
+```
+
+**Batch (Professional+):**
+```json
+{
+    "documents": [
+        {"text": "First doc...", "document_title": "Doc 1"},
+        {"text": "Second doc...", "document_title": "Doc 2"}
+    ],
+    "options": {
+        "segmentation_level": "sentence"
+    }
+}
+```
+
+The response includes `meta.features_gated` showing features available at higher tiers.
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiSignContentApiV1SignPostRequest
@@ -208,13 +311,13 @@ func (a *SigningAPIService) SignContentApiV1SignPost(ctx context.Context) ApiSig
 }
 
 // Execute executes the request
-//  @return SignResponse
-func (a *SigningAPIService) SignContentApiV1SignPostExecute(r ApiSignContentApiV1SignPostRequest) (*SignResponse, *http.Response, error) {
+//  @return interface{}
+func (a *SigningAPIService) SignContentApiV1SignPostExecute(r ApiSignContentApiV1SignPostRequest) (interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *SignResponse
+		localVarReturnValue  interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "SigningAPIService.SignContentApiV1SignPost")
@@ -227,8 +330,8 @@ func (a *SigningAPIService) SignContentApiV1SignPostExecute(r ApiSignContentApiV
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := url.Values{}
 	localVarFormParams := url.Values{}
-	if r.signRequest == nil {
-		return localVarReturnValue, nil, reportError("signRequest is required and must be specified")
+	if r.unifiedSignRequest == nil {
+		return localVarReturnValue, nil, reportError("unifiedSignRequest is required and must be specified")
 	}
 
 	// to determine the Content-Type header
@@ -249,7 +352,7 @@ func (a *SigningAPIService) SignContentApiV1SignPostExecute(r ApiSignContentApiV
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// body params
-	localVarPostBody = r.signRequest
+	localVarPostBody = r.unifiedSignRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
 	if err != nil {
 		return localVarReturnValue, nil, err

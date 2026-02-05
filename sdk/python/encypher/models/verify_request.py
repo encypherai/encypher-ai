@@ -18,8 +18,9 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing_extensions import Annotated
+from encypher.models.verify_options import VerifyOptions
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -28,7 +29,8 @@ class VerifyRequest(BaseModel):
     VerifyRequest
     """ # noqa: E501
     text: Annotated[str, Field(min_length=1, strict=True)]
-    __properties: ClassVar[List[str]] = ["text"]
+    options: Optional[VerifyOptions] = None
+    __properties: ClassVar[List[str]] = ["text", "options"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -69,6 +71,14 @@ class VerifyRequest(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of options
+        if self.options:
+            _dict['options'] = self.options.to_dict()
+        # set to None if options (nullable) is None
+        # and model_fields_set contains the field
+        if self.options is None and "options" in self.model_fields_set:
+            _dict['options'] = None
+
         return _dict
 
     @classmethod
@@ -81,7 +91,8 @@ class VerifyRequest(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "text": obj.get("text")
+            "text": obj.get("text"),
+            "options": VerifyOptions.from_dict(obj["options"]) if obj.get("options") is not None else None
         })
         return _obj
 

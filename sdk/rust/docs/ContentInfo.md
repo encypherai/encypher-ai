@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**text_preview** | **String** | First 200 characters of content | 
+**text_preview** | Option<**String**> |  | [optional]
 **leaf_hash** | **String** | Cryptographic hash of full content | 
 **leaf_index** | **i32** | Position in document | 
 

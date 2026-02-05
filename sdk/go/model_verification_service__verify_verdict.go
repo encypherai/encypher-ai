@@ -20,14 +20,20 @@ import (
 // checks if the VerificationServiceVerifyVerdict type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &VerificationServiceVerifyVerdict{}
 
-// VerificationServiceVerifyVerdict struct for VerificationServiceVerifyVerdict
+// VerificationServiceVerifyVerdict Core verification result.
 type VerificationServiceVerifyVerdict struct {
 	Valid bool `json:"valid"`
 	Tampered bool `json:"tampered"`
 	ReasonCode string `json:"reason_code"`
 	SignerId NullableString `json:"signer_id,omitempty"`
 	SignerName NullableString `json:"signer_name,omitempty"`
+	OrganizationId NullableString `json:"organization_id,omitempty"`
+	OrganizationName NullableString `json:"organization_name,omitempty"`
 	Timestamp NullableTime `json:"timestamp,omitempty"`
+	Document NullableDocumentInfo `json:"document,omitempty"`
+	C2pa NullableC2PAInfo `json:"c2pa,omitempty"`
+	Licensing NullableLicensingInfo `json:"licensing,omitempty"`
+	MerkleProof NullableMerkleProofInfo `json:"merkle_proof,omitempty"`
 	Details map[string]interface{} `json:"details,omitempty"`
 }
 
@@ -209,6 +215,90 @@ func (o *VerificationServiceVerifyVerdict) UnsetSignerName() {
 	o.SignerName.Unset()
 }
 
+// GetOrganizationId returns the OrganizationId field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *VerificationServiceVerifyVerdict) GetOrganizationId() string {
+	if o == nil || IsNil(o.OrganizationId.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.OrganizationId.Get()
+}
+
+// GetOrganizationIdOk returns a tuple with the OrganizationId field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *VerificationServiceVerifyVerdict) GetOrganizationIdOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.OrganizationId.Get(), o.OrganizationId.IsSet()
+}
+
+// HasOrganizationId returns a boolean if a field has been set.
+func (o *VerificationServiceVerifyVerdict) HasOrganizationId() bool {
+	if o != nil && o.OrganizationId.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetOrganizationId gets a reference to the given NullableString and assigns it to the OrganizationId field.
+func (o *VerificationServiceVerifyVerdict) SetOrganizationId(v string) {
+	o.OrganizationId.Set(&v)
+}
+// SetOrganizationIdNil sets the value for OrganizationId to be an explicit nil
+func (o *VerificationServiceVerifyVerdict) SetOrganizationIdNil() {
+	o.OrganizationId.Set(nil)
+}
+
+// UnsetOrganizationId ensures that no value is present for OrganizationId, not even an explicit nil
+func (o *VerificationServiceVerifyVerdict) UnsetOrganizationId() {
+	o.OrganizationId.Unset()
+}
+
+// GetOrganizationName returns the OrganizationName field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *VerificationServiceVerifyVerdict) GetOrganizationName() string {
+	if o == nil || IsNil(o.OrganizationName.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.OrganizationName.Get()
+}
+
+// GetOrganizationNameOk returns a tuple with the OrganizationName field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *VerificationServiceVerifyVerdict) GetOrganizationNameOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.OrganizationName.Get(), o.OrganizationName.IsSet()
+}
+
+// HasOrganizationName returns a boolean if a field has been set.
+func (o *VerificationServiceVerifyVerdict) HasOrganizationName() bool {
+	if o != nil && o.OrganizationName.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetOrganizationName gets a reference to the given NullableString and assigns it to the OrganizationName field.
+func (o *VerificationServiceVerifyVerdict) SetOrganizationName(v string) {
+	o.OrganizationName.Set(&v)
+}
+// SetOrganizationNameNil sets the value for OrganizationName to be an explicit nil
+func (o *VerificationServiceVerifyVerdict) SetOrganizationNameNil() {
+	o.OrganizationName.Set(nil)
+}
+
+// UnsetOrganizationName ensures that no value is present for OrganizationName, not even an explicit nil
+func (o *VerificationServiceVerifyVerdict) UnsetOrganizationName() {
+	o.OrganizationName.Unset()
+}
+
 // GetTimestamp returns the Timestamp field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *VerificationServiceVerifyVerdict) GetTimestamp() time.Time {
 	if o == nil || IsNil(o.Timestamp.Get()) {
@@ -249,6 +339,174 @@ func (o *VerificationServiceVerifyVerdict) SetTimestampNil() {
 // UnsetTimestamp ensures that no value is present for Timestamp, not even an explicit nil
 func (o *VerificationServiceVerifyVerdict) UnsetTimestamp() {
 	o.Timestamp.Unset()
+}
+
+// GetDocument returns the Document field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *VerificationServiceVerifyVerdict) GetDocument() DocumentInfo {
+	if o == nil || IsNil(o.Document.Get()) {
+		var ret DocumentInfo
+		return ret
+	}
+	return *o.Document.Get()
+}
+
+// GetDocumentOk returns a tuple with the Document field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *VerificationServiceVerifyVerdict) GetDocumentOk() (*DocumentInfo, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Document.Get(), o.Document.IsSet()
+}
+
+// HasDocument returns a boolean if a field has been set.
+func (o *VerificationServiceVerifyVerdict) HasDocument() bool {
+	if o != nil && o.Document.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetDocument gets a reference to the given NullableDocumentInfo and assigns it to the Document field.
+func (o *VerificationServiceVerifyVerdict) SetDocument(v DocumentInfo) {
+	o.Document.Set(&v)
+}
+// SetDocumentNil sets the value for Document to be an explicit nil
+func (o *VerificationServiceVerifyVerdict) SetDocumentNil() {
+	o.Document.Set(nil)
+}
+
+// UnsetDocument ensures that no value is present for Document, not even an explicit nil
+func (o *VerificationServiceVerifyVerdict) UnsetDocument() {
+	o.Document.Unset()
+}
+
+// GetC2pa returns the C2pa field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *VerificationServiceVerifyVerdict) GetC2pa() C2PAInfo {
+	if o == nil || IsNil(o.C2pa.Get()) {
+		var ret C2PAInfo
+		return ret
+	}
+	return *o.C2pa.Get()
+}
+
+// GetC2paOk returns a tuple with the C2pa field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *VerificationServiceVerifyVerdict) GetC2paOk() (*C2PAInfo, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.C2pa.Get(), o.C2pa.IsSet()
+}
+
+// HasC2pa returns a boolean if a field has been set.
+func (o *VerificationServiceVerifyVerdict) HasC2pa() bool {
+	if o != nil && o.C2pa.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetC2pa gets a reference to the given NullableC2PAInfo and assigns it to the C2pa field.
+func (o *VerificationServiceVerifyVerdict) SetC2pa(v C2PAInfo) {
+	o.C2pa.Set(&v)
+}
+// SetC2paNil sets the value for C2pa to be an explicit nil
+func (o *VerificationServiceVerifyVerdict) SetC2paNil() {
+	o.C2pa.Set(nil)
+}
+
+// UnsetC2pa ensures that no value is present for C2pa, not even an explicit nil
+func (o *VerificationServiceVerifyVerdict) UnsetC2pa() {
+	o.C2pa.Unset()
+}
+
+// GetLicensing returns the Licensing field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *VerificationServiceVerifyVerdict) GetLicensing() LicensingInfo {
+	if o == nil || IsNil(o.Licensing.Get()) {
+		var ret LicensingInfo
+		return ret
+	}
+	return *o.Licensing.Get()
+}
+
+// GetLicensingOk returns a tuple with the Licensing field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *VerificationServiceVerifyVerdict) GetLicensingOk() (*LicensingInfo, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Licensing.Get(), o.Licensing.IsSet()
+}
+
+// HasLicensing returns a boolean if a field has been set.
+func (o *VerificationServiceVerifyVerdict) HasLicensing() bool {
+	if o != nil && o.Licensing.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetLicensing gets a reference to the given NullableLicensingInfo and assigns it to the Licensing field.
+func (o *VerificationServiceVerifyVerdict) SetLicensing(v LicensingInfo) {
+	o.Licensing.Set(&v)
+}
+// SetLicensingNil sets the value for Licensing to be an explicit nil
+func (o *VerificationServiceVerifyVerdict) SetLicensingNil() {
+	o.Licensing.Set(nil)
+}
+
+// UnsetLicensing ensures that no value is present for Licensing, not even an explicit nil
+func (o *VerificationServiceVerifyVerdict) UnsetLicensing() {
+	o.Licensing.Unset()
+}
+
+// GetMerkleProof returns the MerkleProof field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *VerificationServiceVerifyVerdict) GetMerkleProof() MerkleProofInfo {
+	if o == nil || IsNil(o.MerkleProof.Get()) {
+		var ret MerkleProofInfo
+		return ret
+	}
+	return *o.MerkleProof.Get()
+}
+
+// GetMerkleProofOk returns a tuple with the MerkleProof field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *VerificationServiceVerifyVerdict) GetMerkleProofOk() (*MerkleProofInfo, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.MerkleProof.Get(), o.MerkleProof.IsSet()
+}
+
+// HasMerkleProof returns a boolean if a field has been set.
+func (o *VerificationServiceVerifyVerdict) HasMerkleProof() bool {
+	if o != nil && o.MerkleProof.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetMerkleProof gets a reference to the given NullableMerkleProofInfo and assigns it to the MerkleProof field.
+func (o *VerificationServiceVerifyVerdict) SetMerkleProof(v MerkleProofInfo) {
+	o.MerkleProof.Set(&v)
+}
+// SetMerkleProofNil sets the value for MerkleProof to be an explicit nil
+func (o *VerificationServiceVerifyVerdict) SetMerkleProofNil() {
+	o.MerkleProof.Set(nil)
+}
+
+// UnsetMerkleProof ensures that no value is present for MerkleProof, not even an explicit nil
+func (o *VerificationServiceVerifyVerdict) UnsetMerkleProof() {
+	o.MerkleProof.Unset()
 }
 
 // GetDetails returns the Details field value if set, zero value otherwise.
@@ -302,8 +560,26 @@ func (o VerificationServiceVerifyVerdict) ToMap() (map[string]interface{}, error
 	if o.SignerName.IsSet() {
 		toSerialize["signer_name"] = o.SignerName.Get()
 	}
+	if o.OrganizationId.IsSet() {
+		toSerialize["organization_id"] = o.OrganizationId.Get()
+	}
+	if o.OrganizationName.IsSet() {
+		toSerialize["organization_name"] = o.OrganizationName.Get()
+	}
 	if o.Timestamp.IsSet() {
 		toSerialize["timestamp"] = o.Timestamp.Get()
+	}
+	if o.Document.IsSet() {
+		toSerialize["document"] = o.Document.Get()
+	}
+	if o.C2pa.IsSet() {
+		toSerialize["c2pa"] = o.C2pa.Get()
+	}
+	if o.Licensing.IsSet() {
+		toSerialize["licensing"] = o.Licensing.Get()
+	}
+	if o.MerkleProof.IsSet() {
+		toSerialize["merkle_proof"] = o.MerkleProof.Get()
 	}
 	if !IsNil(o.Details) {
 		toSerialize["details"] = o.Details

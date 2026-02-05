@@ -20,7 +20,7 @@ pub struct StreamMerkleFinalizeRequest {
     /// Whether to embed C2PA manifest into the final document
     #[serde(rename = "embed_manifest", skip_serializing_if = "Option::is_none")]
     pub embed_manifest: Option<bool>,
-    /// Manifest mode: full, lightweight_uuid, hybrid
+    /// Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid
     #[serde(rename = "manifest_mode", skip_serializing_if = "Option::is_none")]
     pub manifest_mode: Option<String>,
     /// C2PA action type: c2pa.created or c2pa.edited

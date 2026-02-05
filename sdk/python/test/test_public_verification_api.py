@@ -36,7 +36,7 @@ class TestPublicVerificationApi(unittest.TestCase):
     def test_extract_and_verify_embedding_api_v1_public_extract_and_verify_post(self) -> None:
         """Test case for extract_and_verify_embedding_api_v1_public_extract_and_verify_post
 
-        Extract and Verify Invisible Embedding (Public - No Auth Required)
+        DEPRECATED - Use POST /api/v1/verify instead
         """
         pass
 

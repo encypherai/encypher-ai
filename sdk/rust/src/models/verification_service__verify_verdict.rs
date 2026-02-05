@@ -11,6 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// VerificationServiceVerifyVerdict : Core verification result.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct VerificationServiceVerifyVerdict {
     #[serde(rename = "valid")]
@@ -23,13 +24,26 @@ pub struct VerificationServiceVerifyVerdict {
     pub signer_id: Option<Option<String>>,
     #[serde(rename = "signer_name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub signer_name: Option<Option<String>>,
+    #[serde(rename = "organization_id", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub organization_id: Option<Option<String>>,
+    #[serde(rename = "organization_name", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub organization_name: Option<Option<String>>,
     #[serde(rename = "timestamp", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
     pub timestamp: Option<Option<String>>,
+    #[serde(rename = "document", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub document: Option<Option<Box<models::DocumentInfo>>>,
+    #[serde(rename = "c2pa", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub c2pa: Option<Option<Box<models::C2PaInfo>>>,
+    #[serde(rename = "licensing", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub licensing: Option<Option<Box<models::LicensingInfo>>>,
+    #[serde(rename = "merkle_proof", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub merkle_proof: Option<Option<Box<models::MerkleProofInfo>>>,
     #[serde(rename = "details", skip_serializing_if = "Option::is_none")]
     pub details: Option<std::collections::HashMap<String, serde_json::Value>>,
 }
 
 impl VerificationServiceVerifyVerdict {
+    /// Core verification result.
     pub fn new(valid: bool, tampered: bool, reason_code: String) -> VerificationServiceVerifyVerdict {
         VerificationServiceVerifyVerdict {
             valid,
@@ -37,7 +51,13 @@ impl VerificationServiceVerifyVerdict {
             reason_code,
             signer_id: None,
             signer_name: None,
+            organization_id: None,
+            organization_name: None,
             timestamp: None,
+            document: None,
+            c2pa: None,
+            licensing: None,
+            merkle_proof: None,
             details: None,
         }
     }

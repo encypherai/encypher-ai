@@ -1,5 +1,6 @@
 # VerificationServiceVerifyVerdict
 
+Core verification result.
 
 ## Properties
 
@@ -10,7 +11,13 @@ Name | Type | Description | Notes
 **reason_code** | **str** |  | 
 **signer_id** | **str** |  | [optional] 
 **signer_name** | **str** |  | [optional] 
+**organization_id** | **str** |  | [optional] 
+**organization_name** | **str** |  | [optional] 
 **timestamp** | **datetime** |  | [optional] 
+**document** | [**DocumentInfo**](DocumentInfo.md) |  | [optional] 
+**c2pa** | [**C2PAInfo**](C2PAInfo.md) |  | [optional] 
+**licensing** | [**LicensingInfo**](LicensingInfo.md) |  | [optional] 
+**merkle_proof** | [**MerkleProofInfo**](MerkleProofInfo.md) |  | [optional] 
 **details** | **Dict[str, object]** |  | [optional] 
 
 ## Example

@@ -1,5 +1,6 @@
 # RightsMetadata
 
+Rights and licensing metadata to embed in signed content.
 
 ## Properties
 

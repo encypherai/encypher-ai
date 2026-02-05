@@ -1811,29 +1811,36 @@
         "tags": [
           "Signing"
         ],
-        "summary": "Sign Content",
-        "description": "Sign content with a C2PA manifest.",
+        "summary": "Sign content with C2PA manifest",
+        "description": "Sign content with C2PA manifest. Features are gated by tier.\n\n**Tier Feature Matrix:**\n\n| Feature | Free/Starter | Professional | Business | Enterprise |\n|---------|--------------|--------------|----------|------------|\n| Basic C2PA signing | \u2705 | \u2705 | \u2705 | \u2705 |\n| Sentence segmentation | \u274c | \u2705 | \u2705 | \u2705 |\n| Advanced manifest modes | \u274c | \u2705 | \u2705 | \u2705 |\n| Attribution indexing | \u274c | \u2705 | \u2705 | \u2705 |\n| Custom assertions | \u274c | \u274c | \u2705 | \u2705 |\n| Rights metadata | \u274c | \u274c | \u2705 | \u2705 |\n| Dual binding | \u274c | \u274c | \u274c | \u2705 |\n| Fingerprinting | \u274c | \u274c | \u274c | \u2705 |\n| Batch size | 1 | 10 | 50 | 100 |\n\n**Single Document:**\n```json\n{\n    \"text\": \"Content to sign...\",\n    \"document_title\": \"My Article\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```\n\n**Batch (Professional+):**\n```json\n{\n    \"documents\": [\n        {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},\n        {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}\n    ],\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```\n\nThe response includes `meta.features_gated` showing features available at higher tiers.",
         "operationId": "sign_content_api_v1_sign_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SignRequest"
+                "$ref": "#/components/schemas/UnifiedSignRequest"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "200": {
-            "description": "Successful Response",
+          "201": {
+            "description": "Content signed successfully",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SignResponse"
-                }
+                "schema": {}
               }
             }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "403": {
+            "description": "Feature requires higher tier"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
           },
           "422": {
             "description": "Validation Error",
@@ -1858,46 +1865,23 @@
         "tags": [
           "Signing"
         ],
-        "summary": "Sign with advanced embedding controls",
-        "description": "Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).\n\nTier requirements are enforced server-side (typically Professional+ depending on selected options).",
+        "summary": "REMOVED - Use POST /sign with options instead",
+        "description": "**\u26a0\ufe0f REMOVED: This endpoint has been removed.**\n\nPlease use `POST /sign` with options instead.\n\nMigration example:\n```json\n// Old /sign/advanced request\n{\n    \"document_id\": \"doc1\",\n    \"text\": \"...\",\n    \"segmentation_level\": \"sentence\"\n}\n\n// New /sign request\n{\n    \"text\": \"...\",\n    \"document_id\": \"doc1\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```",
         "operationId": "sign_advanced_api_v1_sign_advanced_post",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/EncodeWithEmbeddingsRequest"
-              }
-            }
-          },
-          "required": true
-        },
         "responses": {
-          "201": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EncodeWithEmbeddingsResponse"
-                }
+                "schema": {}
               }
             }
           },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
+          "410": {
+            "description": "Endpoint removed"
           }
         },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        "deprecated": true
       }
     },
     "/api/v1/verify/advanced": {
@@ -3182,6 +3166,8 @@
             "required": false,
             "schema": {
               "type": "integer",
+              "maximum": 24,
+              "minimum": 1,
               "default": 6,
               "title": "Months"
             }
@@ -4477,6 +4463,17 @@
         "operationId": "list_api_keys_api_v1_provisioning_api_keys_get",
         "parameters": [
           {
+            "name": "organization_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Organization identifier",
+              "title": "Organization Id"
+            },
+            "description": "Organization identifier"
+          },
+          {
             "name": "x-provisioning-token",
             "in": "header",
             "required": false,
@@ -5605,7 +5602,7 @@
           "Public - Verification"
         ],
         "summary": "Verify Embedding (Public - No Auth Required)",
-        "description": "Verify a minimal signed embedding and retrieve associated metadata.\n    \n    **This endpoint is PUBLIC and does NOT require authentication.**\n    \n    Third parties can use this endpoint to:\n    - Verify authenticity of content with embedded markers\n    - Retrieve document metadata (title, author, organization)\n    - Access C2PA manifest information\n    - View licensing terms\n    - Get Merkle proof for cryptographic verification\n    \n    **Rate Limiting:**\n    - 1000 requests/hour per IP address\n    - CAPTCHA required after repeated failures\n    \n    **Privacy:**\n    - Only returns text preview (first 200 characters)\n    - Full text content is NOT exposed\n    - Internal document IDs are mapped to public IDs\n    \n    **Example Usage:**\n    ```\n    GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ\n    ```",
+        "description": "Verify a minimal signed embedding and retrieve associated metadata.\n    \n    **This endpoint is PUBLIC and does NOT require authentication.**\n    \n    Third parties can use this endpoint to:\n    - Verify authenticity of content with embedded markers\n    - Retrieve document metadata (title, author, organization)\n    - Access C2PA manifest information\n    - View licensing terms\n    - Get Merkle proof for cryptographic verification\n    \n    **Rate Limiting:**\n    - 1000 requests/hour per IP address\n    - CAPTCHA required after repeated failures\n    \n    **Privacy:**\n    - Does not return DB-stored text\n    - Full text content is NOT exposed\n    - Internal document IDs are mapped to public IDs\n    \n    **Example Usage:**\n    ```\n    GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ\n    ```",
         "operationId": "verify_embedding_api_v1_public_verify__ref_id__get",
         "parameters": [
           {
@@ -5784,77 +5781,30 @@
         "tags": [
           "Public - Verification"
         ],
-        "summary": "Extract and Verify Invisible Embedding (Public - No Auth Required)",
-        "description": "Extract and verify invisible Unicode embedding from text using encypher-ai.\n    \n    **This endpoint is PUBLIC and does NOT require authentication.**\n    \n    This is the NEW verification method for invisible embeddings:\n    - Extracts invisible Unicode variation selector embeddings\n    - Verifies cryptographic signature using encypher-ai\n    - Returns enterprise metadata (Merkle tree, document info, etc.)\n    \n    **How it works:**\n    1. Text contains invisible Unicode variation selectors\n    2. encypher-ai extracts and verifies the embedded metadata\n    3. Enterprise API looks up Merkle tree and document info\n    4. Returns full verification result with all metadata\n    \n    **Rate Limiting:**\n    - 1000 requests/hour per IP address\n    \n    **Example Usage:**\n    ```json\n    POST /api/v1/public/extract-and-verify\n    {\n      \"text\": \"Content with invisible embedding...\"\n    }\n    ```",
+        "summary": "DEPRECATED - Use POST /api/v1/verify instead",
+        "description": "**\u26a0\ufe0f DEPRECATED: This endpoint is deprecated and will be removed.**\n    \n    Please use `POST /api/v1/verify` instead, which provides:\n    - Full C2PA trust chain validation\n    - Document info, licensing, and C2PA details (all free)\n    - Merkle proof (with API key)\n    - Better performance via verification-service",
         "operationId": "extract_and_verify_embedding_api_v1_public_extract_and_verify_post",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ExtractAndVerifyRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
-            "description": "Embedding extracted and verified",
+            "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExtractAndVerifyResponse"
-                }
+                "schema": {}
               }
             }
           },
-          "400": {
-            "description": "Invalid request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "No embedding found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Rate limit exceeded",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+          "301": {
+            "description": "Redirect to /api/v1/verify"
           },
           "422": {
             "description": "Validation Error",
@@ -5866,7 +5816,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/v1/public/c2pa/validate-manifest": {
@@ -6426,6 +6377,11 @@
     "schemas": {
       "APIKeyCreateRequest": {
         "properties": {
+          "organization_id": {
+            "type": "string",
+            "title": "Organization Id",
+            "description": "Organization identifier"
+          },
           "name": {
             "anyOf": [
               {
@@ -6438,7 +6394,9 @@
             ],
             "title": "Name",
             "description": "Friendly name for the API key",
-            "example": "Production Key"
+            "examples": [
+              "Production Key"
+            ]
           },
           "expires_in_days": {
             "anyOf": [
@@ -6453,7 +6411,9 @@
             ],
             "title": "Expires In Days",
             "description": "Number of days until expiration (null for no expiration)",
-            "example": 90
+            "examples": [
+              90
+            ]
           },
           "scopes": {
             "anyOf": [
@@ -6469,13 +6429,18 @@
             ],
             "title": "Scopes",
             "description": "API scopes/permissions",
-            "example": [
-              "merkle:read",
-              "merkle:write"
+            "examples": [
+              [
+                "merkle:read",
+                "merkle:write"
+              ]
             ]
           }
         },
         "type": "object",
+        "required": [
+          "organization_id"
+        ],
         "title": "APIKeyCreateRequest",
         "description": "Request schema for creating an API key."
       },
@@ -6559,8 +6524,20 @@
       },
       "APIKeyRevokeRequest": {
         "properties": {
-          "key_id": {
+          "organization_id": {
             "type": "string",
+            "title": "Organization Id",
+            "description": "Organization identifier"
+          },
+          "key_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Key Id",
             "description": "API key identifier to revoke"
           },
@@ -6575,12 +6552,14 @@
             ],
             "title": "Reason",
             "description": "Reason for revocation",
-            "example": "Key compromised"
+            "examples": [
+              "Key compromised"
+            ]
           }
         },
         "type": "object",
         "required": [
-          "key_id"
+          "organization_id"
         ],
         "title": "APIKeyRevokeRequest",
         "description": "Request schema for revoking an API key."
@@ -6878,7 +6857,9 @@
             "format": "email",
             "title": "Email",
             "description": "User email address",
-            "example": "user@example.com"
+            "examples": [
+              "user@example.com"
+            ]
           },
           "organization_name": {
             "anyOf": [
@@ -6893,13 +6874,17 @@
             ],
             "title": "Organization Name",
             "description": "Organization name (auto-generated if not provided)",
-            "example": "Acme Corp"
+            "examples": [
+              "Acme Corp"
+            ]
           },
           "source": {
             "type": "string",
             "title": "Source",
             "description": "Source of the provisioning request",
-            "example": "wordpress"
+            "examples": [
+              "wordpress"
+            ]
           },
           "source_metadata": {
             "anyOf": [
@@ -6913,11 +6898,13 @@
             ],
             "title": "Source Metadata",
             "description": "Additional metadata from the source",
-            "example": {
-              "plugin_version": "1.2.3",
-              "site_url": "https://example.com",
-              "wordpress_version": "6.4"
-            }
+            "examples": [
+              {
+                "plugin_version": "1.2.3",
+                "site_url": "https://example.com",
+                "wordpress_version": "6.4"
+              }
+            ]
           },
           "tier": {
             "anyOf": [
@@ -6931,7 +6918,9 @@
             "title": "Tier",
             "description": "Initial tier (free/professional/enterprise)",
             "default": "free",
-            "example": "free"
+            "examples": [
+              "free"
+            ]
           },
           "auto_activate": {
             "type": "boolean",
@@ -8518,9 +8507,16 @@
       "ContentInfo": {
         "properties": {
           "text_preview": {
-            "type": "string",
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Text Preview",
-            "description": "First 200 characters of content"
+            "description": "Optional preview derived from submitted text"
           },
           "leaf_hash": {
             "type": "string",
@@ -8535,7 +8531,6 @@
         },
         "type": "object",
         "required": [
-          "text_preview",
           "leaf_hash",
           "leaf_index"
         ],
@@ -8985,14 +8980,18 @@
             "minLength": 1,
             "title": "Document Id",
             "description": "Unique identifier for the document",
-            "example": "doc_2024_article_001"
+            "examples": [
+              "doc_2024_article_001"
+            ]
           },
           "text": {
             "type": "string",
             "minLength": 1,
             "title": "Text",
             "description": "Document text content to encode",
-            "example": "This is the first sentence. This is the second sentence."
+            "examples": [
+              "This is the first sentence. This is the second sentence."
+            ]
           },
           "segmentation_levels": {
             "items": {
@@ -9004,9 +9003,11 @@
             "default": [
               "sentence"
             ],
-            "example": [
-              "sentence",
-              "paragraph"
+            "examples": [
+              [
+                "sentence",
+                "paragraph"
+              ]
             ]
           },
           "include_words": {
@@ -9027,11 +9028,13 @@
             ],
             "title": "Metadata",
             "description": "Optional document metadata (title, author, etc.)",
-            "example": {
-              "author": "John Doe",
-              "date": "2024-10-28",
-              "title": "My Document"
-            }
+            "examples": [
+              {
+                "author": "John Doe",
+                "date": "2024-10-28",
+                "title": "My Document"
+              }
+            ]
           },
           "fuzzy_fingerprint": {
             "anyOf": [
@@ -9367,111 +9370,30 @@
         "title": "EarningsSummary",
         "description": "Earnings summary for a period."
       },
-      "EmbeddingInfo": {
-        "properties": {
-          "leaf_index": {
-            "type": "integer",
-            "title": "Leaf Index",
-            "description": "Position in document (0-indexed)"
-          },
-          "text": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Text",
-            "description": "Text containing the embedding (if include_text=true)"
-          },
-          "ref_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Ref Id",
-            "description": "Deprecated"
-          },
-          "signature": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Signature",
-            "description": "Deprecated"
-          },
-          "embedding": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Embedding",
-            "description": "Deprecated"
-          },
-          "verification_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Verification Url",
-            "description": "Deprecated"
-          },
-          "leaf_hash": {
-            "type": "string",
-            "title": "Leaf Hash",
-            "description": "Cryptographic hash of the signed text segment"
-          }
-        },
-        "type": "object",
-        "required": [
-          "leaf_index",
-          "leaf_hash"
-        ],
-        "title": "EmbeddingInfo",
-        "description": "Information about a single embedding."
-      },
       "EmbeddingOptions": {
         "properties": {
           "format": {
             "type": "string",
             "title": "Format",
-            "description": "Output format: html, markdown, json, pdf, plain",
-            "default": "html"
+            "description": "Output format: plain, html, markdown, json",
+            "default": "plain"
           },
           "method": {
             "type": "string",
             "title": "Method",
-            "description": "Embedding method: data-attribute, span, comment",
-            "default": "data-attribute"
+            "description": "Embedding method: invisible (zero-width Unicode), data-attribute, span, comment",
+            "default": "invisible"
           },
           "include_text": {
             "type": "boolean",
             "title": "Include Text",
-            "description": "Whether to return text with embeddings",
+            "description": "Whether to return text with embeddings in response",
             "default": true
           }
         },
         "type": "object",
         "title": "EmbeddingOptions",
-        "description": "Options for embedding generation."
+        "description": "Options for embedding generation output format."
       },
       "EmbeddingVerdict": {
         "properties": {
@@ -9589,324 +9511,6 @@
         ],
         "title": "EmbeddingVerdict",
         "description": "Verification verdict for a single embedding."
-      },
-      "EncodeWithEmbeddingsRequest": {
-        "properties": {
-          "document_id": {
-            "type": "string",
-            "title": "Document Id",
-            "description": "Unique document identifier"
-          },
-          "text": {
-            "type": "string",
-            "title": "Text",
-            "description": "Full document text to encode"
-          },
-          "segmentation_level": {
-            "type": "string",
-            "title": "Segmentation Level",
-            "description": "Segmentation level: document (free tier, no segmentation), sentence, paragraph, section, word",
-            "default": "sentence"
-          },
-          "segmentation_levels": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Segmentation Levels",
-            "description": "Optional list of Merkle segmentation levels to build/index (sentence, paragraph, section). Defaults to [segmentation_level]."
-          },
-          "index_for_attribution": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Index For Attribution",
-            "description": "Whether to enforce Merkle indexing quotas for attribution workflows. Defaults to true for paid tiers."
-          },
-          "action": {
-            "type": "string",
-            "title": "Action",
-            "description": "C2PA action type: c2pa.created (new content) or c2pa.edited (modified content)",
-            "default": "c2pa.created"
-          },
-          "manifest_mode": {
-            "type": "string",
-            "title": "Manifest Mode",
-            "description": "Controls manifest detail level. Options: full, lightweight_uuid, hybrid. Availability depends on plan tier.",
-            "default": "full"
-          },
-          "embedding_strategy": {
-            "type": "string",
-            "title": "Embedding Strategy",
-            "description": "Controls embedding placement strategy. Options: single_point, distributed, distributed_redundant. Availability depends on plan tier.",
-            "default": "single_point"
-          },
-          "distribution_target": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Distribution Target",
-            "description": "Target characters for distributed embedding: whitespace, punctuation, all_chars. Only used when embedding_strategy is distributed or distributed_redundant."
-          },
-          "add_dual_binding": {
-            "type": "boolean",
-            "title": "Add Dual Binding",
-            "description": "Enable additional integrity binding. Availability depends on plan tier.",
-            "default": false
-          },
-          "disable_c2pa": {
-            "type": "boolean",
-            "title": "Disable C2Pa",
-            "description": "Opt-out of C2PA embedding. When true, only basic metadata is embedded.",
-            "default": false
-          },
-          "previous_instance_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Previous Instance Id",
-            "description": "Previous manifest instance_id for edit provenance chain (required if action=c2pa.edited)"
-          },
-          "metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata",
-            "description": "Optional document metadata (title, author, etc.)"
-          },
-          "c2pa_manifest_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "C2Pa Manifest Url",
-            "description": "Optional C2PA manifest URL"
-          },
-          "c2pa_manifest_hash": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "C2Pa Manifest Hash",
-            "description": "Optional C2PA manifest hash"
-          },
-          "custom_assertions": {
-            "anyOf": [
-              {
-                "items": {
-                  "additionalProperties": true,
-                  "type": "object"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Custom Assertions",
-            "description": "Custom C2PA assertions to include in manifest"
-          },
-          "template_id": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Template Id",
-            "description": "Template ID to use for assertions"
-          },
-          "validate_assertions": {
-            "type": "boolean",
-            "title": "Validate Assertions",
-            "description": "Whether to validate custom assertions against registered schemas",
-            "default": true
-          },
-          "digital_source_type": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Digital Source Type",
-            "description": "IPTC digital source type URI (e.g., 'http://cv.iptc.org/newscodes/digitalsourcetype/trainedAlgorithmicMedia' for AI-generated content)"
-          },
-          "license": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/LicenseInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional license information"
-          },
-          "rights": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/app__schemas__embeddings__RightsMetadata"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional rights metadata to embed (Business+)."
-          },
-          "embedding_options": {
-            "$ref": "#/components/schemas/EmbeddingOptions",
-            "description": "Embedding generation options"
-          },
-          "expires_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Expires At",
-            "description": "Optional expiration datetime for embeddings"
-          }
-        },
-        "type": "object",
-        "required": [
-          "document_id",
-          "text"
-        ],
-        "title": "EncodeWithEmbeddingsRequest",
-        "description": "Request to encode document with minimal signed embeddings."
-      },
-      "EncodeWithEmbeddingsResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Whether encoding succeeded",
-            "default": true
-          },
-          "document_id": {
-            "type": "string",
-            "title": "Document Id",
-            "description": "Document identifier"
-          },
-          "merkle_tree": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/MerkleTreeInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Merkle tree information (None for free tier)"
-          },
-          "merkle_trees": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "$ref": "#/components/schemas/MerkleTreeLevelInfo"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Merkle Trees",
-            "description": "Optional mapping of segmentation level to Merkle tree metadata."
-          },
-          "embeddings": {
-            "items": {
-              "$ref": "#/components/schemas/EmbeddingInfo"
-            },
-            "type": "array",
-            "title": "Embeddings",
-            "description": "List of generated embeddings"
-          },
-          "embedded_content": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Embedded Content",
-            "description": "Content with embeddings injected (if format specified)"
-          },
-          "statistics": {
-            "additionalProperties": true,
-            "type": "object",
-            "title": "Statistics",
-            "description": "Processing statistics"
-          },
-          "metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata",
-            "description": "C2PA manifest metadata including instance_id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "document_id",
-          "embeddings",
-          "statistics"
-        ],
-        "title": "EncodeWithEmbeddingsResponse",
-        "description": "Response from encoding document with embeddings."
       },
       "ErrorDetail": {
         "properties": {
@@ -10321,114 +9925,6 @@
         ],
         "title": "ExtractAndVerifyRequest",
         "description": "Request to extract and verify invisible embedding from text."
-      },
-      "ExtractAndVerifyResponse": {
-        "properties": {
-          "valid": {
-            "type": "boolean",
-            "title": "Valid",
-            "description": "Whether embedding is valid"
-          },
-          "verified_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Verified At",
-            "description": "Verification timestamp"
-          },
-          "content": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ContentInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Content information"
-          },
-          "document": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/DocumentInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Document information"
-          },
-          "merkle_proof": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/MerkleProofInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Merkle proof information"
-          },
-          "c2pa": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/C2PAInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "C2PA information"
-          },
-          "licensing": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/LicensingInfo"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Licensing information"
-          },
-          "metadata": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Metadata",
-            "description": "Verified metadata from embedding"
-          },
-          "error": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Error",
-            "description": "Error message if invalid"
-          }
-        },
-        "type": "object",
-        "required": [
-          "valid"
-        ],
-        "title": "ExtractAndVerifyResponse",
-        "description": "Response from extracting and verifying invisible embedding."
       },
       "FeatureFlags": {
         "properties": {
@@ -11855,65 +11351,6 @@
         "title": "MerkleRootResponse",
         "description": "Response schema for a single Merkle root."
       },
-      "MerkleTreeInfo": {
-        "properties": {
-          "root_hash": {
-            "type": "string",
-            "title": "Root Hash",
-            "description": "Root hash for the integrity proof"
-          },
-          "total_leaves": {
-            "type": "integer",
-            "title": "Total Leaves",
-            "description": "Number of leaf nodes"
-          },
-          "tree_depth": {
-            "type": "integer",
-            "title": "Tree Depth",
-            "description": "Height of the tree"
-          }
-        },
-        "type": "object",
-        "required": [
-          "root_hash",
-          "total_leaves",
-          "tree_depth"
-        ],
-        "title": "MerkleTreeInfo",
-        "description": "Merkle tree information."
-      },
-      "MerkleTreeLevelInfo": {
-        "properties": {
-          "root_hash": {
-            "type": "string",
-            "title": "Root Hash",
-            "description": "Root hash for the integrity proof"
-          },
-          "total_leaves": {
-            "type": "integer",
-            "title": "Total Leaves",
-            "description": "Number of leaf nodes"
-          },
-          "tree_depth": {
-            "type": "integer",
-            "title": "Tree Depth",
-            "description": "Height of the tree"
-          },
-          "indexed": {
-            "type": "boolean",
-            "title": "Indexed",
-            "description": "Whether the Merkle tree was indexed for attribution workflows"
-          }
-        },
-        "type": "object",
-        "required": [
-          "root_hash",
-          "total_leaves",
-          "tree_depth",
-          "indexed"
-        ],
-        "title": "MerkleTreeLevelInfo"
-      },
       "MultiSourceLookupRequest": {
         "properties": {
           "text_segment": {
@@ -12747,9 +12184,10 @@
           }
         },
         "type": "object",
-        "title": "RightsMetadata"
+        "title": "RightsMetadata",
+        "description": "Rights and licensing metadata to embed in signed content."
       },
-      "SignRequest": {
+      "SignDocument": {
         "properties": {
           "text": {
             "type": "string",
@@ -12798,10 +12236,33 @@
             "title": "Document Url",
             "description": "Optional document URL"
           },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional document metadata (title, author, etc.)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "SignDocument",
+        "description": "A single document in a batch sign request."
+      },
+      "SignOptions": {
+        "properties": {
           "document_type": {
             "type": "string",
             "title": "Document Type",
-            "description": "Document type: article | legal_brief | contract | ai_output",
+            "description": "Document type: article, legal_brief, contract, ai_output",
             "default": "article"
           },
           "claim_generator": {
@@ -12814,7 +12275,144 @@
               }
             ],
             "title": "Claim Generator",
-            "description": "Optional claim generator identifier for C2PA manifests."
+            "description": "Optional claim generator identifier for C2PA manifests"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action",
+            "description": "C2PA action type: c2pa.created (new) or c2pa.edited (modified)",
+            "default": "c2pa.created"
+          },
+          "previous_instance_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Instance Id",
+            "description": "Previous manifest instance_id for edit provenance chain (required if action=c2pa.edited)"
+          },
+          "digital_source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Digital Source Type",
+            "description": "IPTC digital source type URI (e.g., for AI-generated content)"
+          },
+          "segmentation_level": {
+            "type": "string",
+            "title": "Segmentation Level",
+            "description": "Segmentation level: document (free), sentence, paragraph, section (Professional+), word (Enterprise)",
+            "default": "document"
+          },
+          "segmentation_levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Segmentation Levels",
+            "description": "Optional list of Merkle segmentation levels to build (Professional+)"
+          },
+          "manifest_mode": {
+            "type": "string",
+            "title": "Manifest Mode",
+            "description": "Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding (Professional+)",
+            "default": "full"
+          },
+          "embedding_strategy": {
+            "type": "string",
+            "title": "Embedding Strategy",
+            "description": "Embedding strategy: single_point (free), distributed, distributed_redundant (Professional+)",
+            "default": "single_point"
+          },
+          "distribution_target": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Distribution Target",
+            "description": "Target for distributed embedding: whitespace, punctuation, all_chars (Professional+)"
+          },
+          "index_for_attribution": {
+            "type": "boolean",
+            "title": "Index For Attribution",
+            "description": "Index content for attribution/plagiarism detection (Professional+)",
+            "default": false
+          },
+          "custom_assertions": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Assertions",
+            "description": "Custom C2PA assertions to include in manifest (Business+)"
+          },
+          "template_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Template Id",
+            "description": "Assertion template ID to apply (Business+)"
+          },
+          "validate_assertions": {
+            "type": "boolean",
+            "title": "Validate Assertions",
+            "description": "Whether to validate custom assertions against registered schemas (Business+)",
+            "default": true
+          },
+          "rights": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RightsMetadata"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Rights and licensing metadata to embed (Business+)"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LicenseInfo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "License information (Business+)"
           },
           "actions": {
             "anyOf": [
@@ -12830,99 +12428,47 @@
               }
             ],
             "title": "Actions",
-            "description": "Optional list of C2PA action assertions to include."
+            "description": "Optional list of C2PA action assertions (Business+)"
           },
-          "template_id": {
+          "add_dual_binding": {
+            "type": "boolean",
+            "title": "Add Dual Binding",
+            "description": "Enable additional integrity binding (Enterprise)",
+            "default": false
+          },
+          "include_fingerprint": {
+            "type": "boolean",
+            "title": "Include Fingerprint",
+            "description": "Include robust fingerprint that survives modifications (Enterprise)",
+            "default": false
+          },
+          "disable_c2pa": {
+            "type": "boolean",
+            "title": "Disable C2Pa",
+            "description": "Opt-out of C2PA embedding, only basic metadata (Enterprise)",
+            "default": false
+          },
+          "embedding_options": {
+            "$ref": "#/components/schemas/EmbeddingOptions",
+            "description": "Embedding output format options"
+          },
+          "expires_at": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Template Id",
-            "description": "Optional assertion template to apply (Business+)."
-          },
-          "validate_assertions": {
-            "type": "boolean",
-            "title": "Validate Assertions",
-            "description": "Whether to validate template-based assertions (Business+).",
-            "default": true
-          },
-          "rights": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/RightsMetadata"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "description": "Optional rights metadata to embed (Business+)."
+            "title": "Expires At",
+            "description": "Optional expiration datetime for embeddings"
           }
         },
         "type": "object",
-        "required": [
-          "text"
-        ],
-        "title": "SignRequest",
-        "description": "Request model for signing content.",
-        "examples": [
-          {
-            "document_title": "Senate Passes Bill",
-            "document_type": "article",
-            "text": "The Senate passed a landmark bill today. The vote was 67-33."
-          }
-        ]
-      },
-      "SignResponse": {
-        "properties": {
-          "success": {
-            "type": "boolean",
-            "title": "Success",
-            "description": "Whether the operation was successful"
-          },
-          "document_id": {
-            "type": "string",
-            "title": "Document Id",
-            "description": "Unique document identifier"
-          },
-          "signed_text": {
-            "type": "string",
-            "title": "Signed Text",
-            "description": "Text with embedded C2PA manifest"
-          },
-          "total_sentences": {
-            "type": "integer",
-            "title": "Total Sentences",
-            "description": "Number of sentences signed"
-          },
-          "verification_url": {
-            "type": "string",
-            "title": "Verification Url",
-            "description": "URL for public verification"
-          }
-        },
-        "type": "object",
-        "required": [
-          "success",
-          "document_id",
-          "signed_text",
-          "total_sentences",
-          "verification_url"
-        ],
-        "title": "SignResponse",
-        "description": "Response model for signing operation.",
-        "examples": [
-          {
-            "document_id": "doc_abc123xyz",
-            "signed_text": "The Senate passed... [with invisible C2PA manifest]",
-            "success": true,
-            "total_sentences": 2,
-            "verification_url": "https://verify.encypherai.com/doc_abc123xyz"
-          }
-        ]
+        "title": "SignOptions",
+        "description": "Options for signing - features are gated by tier.\n\nTier Feature Matrix:\n\n| Feature                  | Free/Starter | Professional | Business | Enterprise |\n|--------------------------|--------------|--------------|----------|------------|\n| document_type            | \u2705           | \u2705           | \u2705       | \u2705         |\n| claim_generator          | \u2705           | \u2705           | \u2705       | \u2705         |\n| segmentation_level       | document     | all          | all      | all        |\n| manifest_mode            | full         | all          | all      | all        |\n| embedding_strategy       | single_point | all          | all      | all        |\n| index_for_attribution    | \u274c           | \u2705           | \u2705       | \u2705         |\n| custom_assertions        | \u274c           | \u274c           | \u2705       | \u2705         |\n| template_id              | \u274c           | \u274c           | \u2705       | \u2705         |\n| rights                   | \u274c           | \u274c           | \u2705       | \u2705         |\n| add_dual_binding         | \u274c           | \u274c           | \u274c       | \u2705         |\n| include_fingerprint      | \u274c           | \u274c           | \u274c       | \u2705         |\n| batch (documents array)  | 1            | 10           | 50       | 100        |"
       },
       "SignatureVerification": {
         "properties": {
@@ -13140,7 +12686,7 @@
           "manifest_mode": {
             "type": "string",
             "title": "Manifest Mode",
-            "description": "Manifest mode: full, lightweight_uuid, hybrid",
+            "description": "Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid",
             "default": "full"
           },
           "action": {
@@ -13897,11 +13443,174 @@
             "type": "string",
             "title": "Trust List Url",
             "default": "https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem"
+          },
+          "trust_list_fingerprint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trust List Fingerprint"
+          },
+          "trust_list_loaded_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trust List Loaded At"
+          },
+          "trust_list_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trust List Source"
+          },
+          "trust_list_count": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trust List Count"
           }
         },
         "type": "object",
         "title": "TrustListResponse",
         "description": "Response listing trusted CAs."
+      },
+      "UnifiedSignRequest": {
+        "properties": {
+          "text": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000000,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Text",
+            "description": "Content to sign (for single document)"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id",
+            "description": "Optional custom document identifier"
+          },
+          "document_title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Title",
+            "description": "Optional document title"
+          },
+          "document_url": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Url",
+            "description": "Optional document URL"
+          },
+          "metadata": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata",
+            "description": "Optional document metadata"
+          },
+          "documents": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SignDocument"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Documents",
+            "description": "List of documents for batch signing (Professional+)"
+          },
+          "options": {
+            "$ref": "#/components/schemas/SignOptions",
+            "description": "Signing options - features gated by tier"
+          }
+        },
+        "type": "object",
+        "title": "UnifiedSignRequest",
+        "description": "Unified sign request supporting single document or batch.\n\nFor single document signing:\n```json\n{\n    \"text\": \"Content to sign...\",\n    \"document_title\": \"My Article\",\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```\n\nFor batch signing (Professional+):\n```json\n{\n    \"documents\": [\n        {\"text\": \"First document...\", \"document_title\": \"Doc 1\"},\n        {\"text\": \"Second document...\", \"document_title\": \"Doc 2\"}\n    ],\n    \"options\": {\n        \"segmentation_level\": \"sentence\"\n    }\n}\n```",
+        "examples": [
+          {
+            "document_title": "Senate Passes Bill",
+            "options": {
+              "document_type": "article",
+              "segmentation_level": "sentence"
+            },
+            "text": "The Senate passed a landmark bill today. The vote was 67-33."
+          },
+          {
+            "documents": [
+              {
+                "document_title": "Article 1",
+                "text": "First article content..."
+              },
+              {
+                "document_title": "Article 2",
+                "text": "Second article content..."
+              }
+            ],
+            "options": {
+              "document_type": "article",
+              "segmentation_level": "sentence"
+            }
+          }
+        ]
       },
       "UpdateRoleRequest": {
         "properties": {
@@ -14046,7 +13755,9 @@
             ],
             "title": "Full Name",
             "description": "User's full name",
-            "example": "John Doe"
+            "examples": [
+              "John Doe"
+            ]
           },
           "organization_id": {
             "anyOf": [
@@ -14072,7 +13783,9 @@
             "title": "Role",
             "description": "User role (owner/admin/member)",
             "default": "member",
-            "example": "member"
+            "examples": [
+              "member"
+            ]
           },
           "send_welcome_email": {
             "type": "boolean",
@@ -14869,85 +14582,6 @@
         "title": "BatchVerifyRequest",
         "description": "Batch verification request (shares schema for now)."
       },
-      "app__schemas__embeddings__RightsMetadata": {
-        "properties": {
-          "copyright_holder": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Copyright Holder",
-            "description": "Copyright holder / publisher name"
-          },
-          "license_url": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "License Url",
-            "description": "URL to license terms"
-          },
-          "usage_terms": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Usage Terms",
-            "description": "Human-readable usage terms"
-          },
-          "syndication_allowed": {
-            "anyOf": [
-              {
-                "type": "boolean"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Syndication Allowed",
-            "description": "Whether downstream syndication is permitted"
-          },
-          "embargo_until": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Embargo Until",
-            "description": "Optional embargo end timestamp"
-          },
-          "contact_email": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Contact Email",
-            "description": "Contact email for licensing"
-          }
-        },
-        "type": "object",
-        "title": "RightsMetadata"
-      },
       "app__schemas__merkle__ErrorResponse": {
         "properties": {
           "success": {
@@ -14987,6 +14621,143 @@
         ],
         "title": "ErrorResponse",
         "description": "Standard error response schema."
+      },
+      "VerificationService__C2PAInfo": {
+        "properties": {
+          "manifest_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Url"
+          },
+          "manifest_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manifest Hash"
+          },
+          "validated": {
+            "type": "boolean",
+            "title": "Validated",
+            "default": false
+          },
+          "validation_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Validation Type"
+          },
+          "assertions": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assertions"
+          },
+          "certificate_chain": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Certificate Chain"
+          }
+        },
+        "type": "object",
+        "title": "C2PAInfo",
+        "description": "C2PA manifest information."
+      },
+      "VerificationService__DocumentInfo": {
+        "properties": {
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "author": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Author"
+          },
+          "published_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published At"
+          },
+          "document_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Type"
+          }
+        },
+        "type": "object",
+        "title": "DocumentInfo",
+        "description": "Document metadata from the embedding."
       },
       "DocumentVerify": {
         "properties": {
@@ -15036,6 +14807,110 @@
           "message"
         ],
         "title": "ErrorDetail"
+      },
+      "VerificationService__LicensingInfo": {
+        "properties": {
+          "license_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Type"
+          },
+          "license_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License Url"
+          },
+          "usage_terms": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usage Terms"
+          },
+          "attribution_required": {
+            "type": "boolean",
+            "title": "Attribution Required",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "LicensingInfo",
+        "description": "Content licensing information."
+      },
+      "VerificationService__MerkleProofInfo": {
+        "properties": {
+          "root_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Root Hash"
+          },
+          "leaf_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leaf Hash"
+          },
+          "leaf_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Leaf Index"
+          },
+          "proof_path": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proof Path"
+          },
+          "verified": {
+            "type": "boolean",
+            "title": "Verified",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "MerkleProofInfo",
+        "description": "Merkle tree proof information (paid feature)."
       },
       "SignatureVerify": {
         "properties": {
@@ -15225,12 +15100,41 @@
         "title": "VerificationStats",
         "description": "Schema for verification statistics"
       },
+      "VerifyOptions": {
+        "properties": {
+          "include_merkle_proof": {
+            "type": "boolean",
+            "title": "Include Merkle Proof",
+            "description": "Include Merkle proof details (requires API key)",
+            "default": false
+          },
+          "include_raw_manifest": {
+            "type": "boolean",
+            "title": "Include Raw Manifest",
+            "description": "Include raw C2PA manifest data",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "VerifyOptions",
+        "description": "Optional parameters for verification request."
+      },
       "VerifyRequest": {
         "properties": {
           "text": {
             "type": "string",
             "minLength": 1,
             "title": "Text"
+          },
+          "options": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VerifyOptions"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -15313,6 +15217,28 @@
             ],
             "title": "Signer Name"
           },
+          "organization_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Id"
+          },
+          "organization_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Name"
+          },
           "timestamp": {
             "anyOf": [
               {
@@ -15324,6 +15250,46 @@
               }
             ],
             "title": "Timestamp"
+          },
+          "document": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DocumentInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "c2pa": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/C2PAInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "licensing": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LicensingInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "merkle_proof": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MerkleProofInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "details": {
             "additionalProperties": true,
@@ -15337,7 +15303,8 @@
           "tampered",
           "reason_code"
         ],
-        "title": "VerifyVerdict"
+        "title": "VerifyVerdict",
+        "description": "Core verification result."
       }
     },
     "securitySchemes": {

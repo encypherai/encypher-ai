@@ -56,7 +56,6 @@ __all__ = [
     "AccountInfo",
     "AccountResponse",
     "AppSchemasBatchBatchVerifyRequest",
-    "AppSchemasEmbeddingsRightsMetadata",
     "AppSchemasMerkleErrorResponse",
     "BatchItemPayload",
     "BatchItemResult",
@@ -102,18 +101,14 @@ __all__ = [
     "DocumentStatusResponse",
     "DocumentVerify",
     "EarningsSummary",
-    "EmbeddingInfo",
     "EmbeddingOptions",
     "EmbeddingVerdict",
-    "EncodeWithEmbeddingsRequest",
-    "EncodeWithEmbeddingsResponse",
     "ErrorDetail",
     "ErrorResponse",
     "EvidenceGenerateRequest",
     "EvidenceGenerateResponse",
     "EvidencePackage",
     "ExtractAndVerifyRequest",
-    "ExtractAndVerifyResponse",
     "FeatureFlags",
     "FingerprintDetectRequest",
     "FingerprintDetectResponse",
@@ -137,8 +132,6 @@ __all__ = [
     "MerkleProofInfo",
     "MerkleProofItem",
     "MerkleRootResponse",
-    "MerkleTreeInfo",
-    "MerkleTreeLevelInfo",
     "MultiSourceLookupRequest",
     "MultiSourceLookupResponse",
     "PayoutSummary",
@@ -153,8 +146,8 @@ __all__ = [
     "RevocationResponse",
     "RevokeRequest",
     "RightsMetadata",
-    "SignRequest",
-    "SignResponse",
+    "SignDocument",
+    "SignOptions",
     "SignatureVerification",
     "SignatureVerify",
     "SourceRecord",
@@ -169,6 +162,7 @@ __all__ = [
     "StreamSignRequest",
     "TrustAnchorResponse",
     "TrustListResponse",
+    "UnifiedSignRequest",
     "UsageMetric",
     "UsageResponse",
     "ValidateManifestRequest",
@@ -177,12 +171,17 @@ __all__ = [
     "ValidationErrorLocInner",
     "VerificationHistory",
     "VerificationResponse",
+    "VerificationServiceC2PAInfo",
+    "VerificationServiceDocumentInfo",
     "VerificationServiceErrorDetail",
+    "VerificationServiceLicensingInfo",
+    "VerificationServiceMerkleProofInfo",
     "VerificationServiceVerifyVerdict",
     "VerificationStats",
     "VerifyAdvancedRequest",
     "VerifyEmbeddingRequest",
     "VerifyEmbeddingResponse",
+    "VerifyOptions",
     "VerifyRequest",
     "VerifyResponse",
     "VerifyVerdict",
@@ -239,7 +238,6 @@ from encypher.exceptions import ApiException as ApiException
 from encypher.models.account_info import AccountInfo as AccountInfo
 from encypher.models.account_response import AccountResponse as AccountResponse
 from encypher.models.app_schemas_batch_batch_verify_request import AppSchemasBatchBatchVerifyRequest as AppSchemasBatchBatchVerifyRequest
-from encypher.models.app_schemas_embeddings_rights_metadata import AppSchemasEmbeddingsRightsMetadata as AppSchemasEmbeddingsRightsMetadata
 from encypher.models.app_schemas_merkle_error_response import AppSchemasMerkleErrorResponse as AppSchemasMerkleErrorResponse
 from encypher.models.batch_item_payload import BatchItemPayload as BatchItemPayload
 from encypher.models.batch_item_result import BatchItemResult as BatchItemResult
@@ -285,18 +283,14 @@ from encypher.models.document_list_response import DocumentListResponse as Docum
 from encypher.models.document_status_response import DocumentStatusResponse as DocumentStatusResponse
 from encypher.models.document_verify import DocumentVerify as DocumentVerify
 from encypher.models.earnings_summary import EarningsSummary as EarningsSummary
-from encypher.models.embedding_info import EmbeddingInfo as EmbeddingInfo
 from encypher.models.embedding_options import EmbeddingOptions as EmbeddingOptions
 from encypher.models.embedding_verdict import EmbeddingVerdict as EmbeddingVerdict
-from encypher.models.encode_with_embeddings_request import EncodeWithEmbeddingsRequest as EncodeWithEmbeddingsRequest
-from encypher.models.encode_with_embeddings_response import EncodeWithEmbeddingsResponse as EncodeWithEmbeddingsResponse
 from encypher.models.error_detail import ErrorDetail as ErrorDetail
 from encypher.models.error_response import ErrorResponse as ErrorResponse
 from encypher.models.evidence_generate_request import EvidenceGenerateRequest as EvidenceGenerateRequest
 from encypher.models.evidence_generate_response import EvidenceGenerateResponse as EvidenceGenerateResponse
 from encypher.models.evidence_package import EvidencePackage as EvidencePackage
 from encypher.models.extract_and_verify_request import ExtractAndVerifyRequest as ExtractAndVerifyRequest
-from encypher.models.extract_and_verify_response import ExtractAndVerifyResponse as ExtractAndVerifyResponse
 from encypher.models.feature_flags import FeatureFlags as FeatureFlags
 from encypher.models.fingerprint_detect_request import FingerprintDetectRequest as FingerprintDetectRequest
 from encypher.models.fingerprint_detect_response import FingerprintDetectResponse as FingerprintDetectResponse
@@ -320,8 +314,6 @@ from encypher.models.lookup_response import LookupResponse as LookupResponse
 from encypher.models.merkle_proof_info import MerkleProofInfo as MerkleProofInfo
 from encypher.models.merkle_proof_item import MerkleProofItem as MerkleProofItem
 from encypher.models.merkle_root_response import MerkleRootResponse as MerkleRootResponse
-from encypher.models.merkle_tree_info import MerkleTreeInfo as MerkleTreeInfo
-from encypher.models.merkle_tree_level_info import MerkleTreeLevelInfo as MerkleTreeLevelInfo
 from encypher.models.multi_source_lookup_request import MultiSourceLookupRequest as MultiSourceLookupRequest
 from encypher.models.multi_source_lookup_response import MultiSourceLookupResponse as MultiSourceLookupResponse
 from encypher.models.payout_summary import PayoutSummary as PayoutSummary
@@ -336,8 +328,8 @@ from encypher.models.revocation_reason import RevocationReason as RevocationReas
 from encypher.models.revocation_response import RevocationResponse as RevocationResponse
 from encypher.models.revoke_request import RevokeRequest as RevokeRequest
 from encypher.models.rights_metadata import RightsMetadata as RightsMetadata
-from encypher.models.sign_request import SignRequest as SignRequest
-from encypher.models.sign_response import SignResponse as SignResponse
+from encypher.models.sign_document import SignDocument as SignDocument
+from encypher.models.sign_options import SignOptions as SignOptions
 from encypher.models.signature_verification import SignatureVerification as SignatureVerification
 from encypher.models.signature_verify import SignatureVerify as SignatureVerify
 from encypher.models.source_record import SourceRecord as SourceRecord
@@ -352,6 +344,7 @@ from encypher.models.stream_merkle_status_response import StreamMerkleStatusResp
 from encypher.models.stream_sign_request import StreamSignRequest as StreamSignRequest
 from encypher.models.trust_anchor_response import TrustAnchorResponse as TrustAnchorResponse
 from encypher.models.trust_list_response import TrustListResponse as TrustListResponse
+from encypher.models.unified_sign_request import UnifiedSignRequest as UnifiedSignRequest
 from encypher.models.usage_metric import UsageMetric as UsageMetric
 from encypher.models.usage_response import UsageResponse as UsageResponse
 from encypher.models.validate_manifest_request import ValidateManifestRequest as ValidateManifestRequest
@@ -360,12 +353,17 @@ from encypher.models.validation_error import ValidationError as ValidationError
 from encypher.models.validation_error_loc_inner import ValidationErrorLocInner as ValidationErrorLocInner
 from encypher.models.verification_history import VerificationHistory as VerificationHistory
 from encypher.models.verification_response import VerificationResponse as VerificationResponse
+from encypher.models.verification_service_c2_pa_info import VerificationServiceC2PAInfo as VerificationServiceC2PAInfo
+from encypher.models.verification_service_document_info import VerificationServiceDocumentInfo as VerificationServiceDocumentInfo
 from encypher.models.verification_service_error_detail import VerificationServiceErrorDetail as VerificationServiceErrorDetail
+from encypher.models.verification_service_licensing_info import VerificationServiceLicensingInfo as VerificationServiceLicensingInfo
+from encypher.models.verification_service_merkle_proof_info import VerificationServiceMerkleProofInfo as VerificationServiceMerkleProofInfo
 from encypher.models.verification_service_verify_verdict import VerificationServiceVerifyVerdict as VerificationServiceVerifyVerdict
 from encypher.models.verification_stats import VerificationStats as VerificationStats
 from encypher.models.verify_advanced_request import VerifyAdvancedRequest as VerifyAdvancedRequest
 from encypher.models.verify_embedding_request import VerifyEmbeddingRequest as VerifyEmbeddingRequest
 from encypher.models.verify_embedding_response import VerifyEmbeddingResponse as VerifyEmbeddingResponse
+from encypher.models.verify_options import VerifyOptions as VerifyOptions
 from encypher.models.verify_request import VerifyRequest as VerifyRequest
 from encypher.models.verify_response import VerifyResponse as VerifyResponse
 from encypher.models.verify_verdict import VerifyVerdict as VerifyVerdict

@@ -5,7 +5,7 @@ All URIs are relative to *https://api.encypherai.com*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**batch_verify_embeddings_api_v1_public_verify_batch_post**](PublicVerificationApi.md#batch_verify_embeddings_api_v1_public_verify_batch_post) | **POST** /api/v1/public/verify/batch | Batch Verify Embeddings (Public - No Auth Required)
-[**extract_and_verify_embedding_api_v1_public_extract_and_verify_post**](PublicVerificationApi.md#extract_and_verify_embedding_api_v1_public_extract_and_verify_post) | **POST** /api/v1/public/extract-and-verify | Extract and Verify Invisible Embedding (Public - No Auth Required)
+[**extract_and_verify_embedding_api_v1_public_extract_and_verify_post**](PublicVerificationApi.md#extract_and_verify_embedding_api_v1_public_extract_and_verify_post) | **POST** /api/v1/public/extract-and-verify | DEPRECATED - Use POST /api/v1/verify instead
 [**verify_embedding_api_v1_public_verify_ref_id_get**](PublicVerificationApi.md#verify_embedding_api_v1_public_verify_ref_id_get) | **GET** /api/v1/public/verify/{ref_id} | Verify Embedding (Public - No Auth Required)
 
 
@@ -43,10 +43,10 @@ No authorization required
 
 ## extract_and_verify_embedding_api_v1_public_extract_and_verify_post
 
-> models::ExtractAndVerifyResponse extract_and_verify_embedding_api_v1_public_extract_and_verify_post(extract_and_verify_request, authorization)
-Extract and Verify Invisible Embedding (Public - No Auth Required)
+> serde_json::Value extract_and_verify_embedding_api_v1_public_extract_and_verify_post(extract_and_verify_request)
+DEPRECATED - Use POST /api/v1/verify instead
 
-Extract and verify invisible Unicode embedding from text using encypher-ai.          **This endpoint is PUBLIC and does NOT require authentication.**          This is the NEW verification method for invisible embeddings:     - Extracts invisible Unicode variation selector embeddings     - Verifies cryptographic signature using encypher-ai     - Returns enterprise metadata (Merkle tree, document info, etc.)          **How it works:**     1. Text contains invisible Unicode variation selectors     2. encypher-ai extracts and verifies the embedded metadata     3. Enterprise API looks up Merkle tree and document info     4. Returns full verification result with all metadata          **Rate Limiting:**     - 1000 requests/hour per IP address          **Example Usage:**     ```json     POST /api/v1/public/extract-and-verify     {       \"text\": \"Content with invisible embedding...\"     }     ```
+**⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
 
 ### Parameters
 
@@ -54,11 +54,10 @@ Extract and verify invisible Unicode embedding from text using encypher-ai.     
 Name | Type | Description  | Required | Notes
 ------------- | ------------- | ------------- | ------------- | -------------
 **extract_and_verify_request** | [**ExtractAndVerifyRequest**](ExtractAndVerifyRequest.md) |  | [required] |
-**authorization** | Option<**String**> |  |  |
 
 ### Return type
 
-[**models::ExtractAndVerifyResponse**](ExtractAndVerifyResponse.md)
+[**serde_json::Value**](serde_json::Value.md)
 
 ### Authorization
 
@@ -77,7 +76,7 @@ No authorization required
 > models::VerifyEmbeddingResponse verify_embedding_api_v1_public_verify_ref_id_get(ref_id, signature, authorization)
 Verify Embedding (Public - No Auth Required)
 
-Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Only returns text preview (first 200 characters)     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
 
 ### Parameters
 

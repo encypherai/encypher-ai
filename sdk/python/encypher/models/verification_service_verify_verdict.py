@@ -20,21 +20,31 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from encypher.models.c2_pa_info import C2PAInfo
+from encypher.models.document_info import DocumentInfo
+from encypher.models.licensing_info import LicensingInfo
+from encypher.models.merkle_proof_info import MerkleProofInfo
 from typing import Optional, Set
 from typing_extensions import Self
 
 class VerificationServiceVerifyVerdict(BaseModel):
     """
-    VerificationServiceVerifyVerdict
+    Core verification result.
     """ # noqa: E501
     valid: StrictBool
     tampered: StrictBool
     reason_code: StrictStr
     signer_id: Optional[StrictStr] = None
     signer_name: Optional[StrictStr] = None
+    organization_id: Optional[StrictStr] = None
+    organization_name: Optional[StrictStr] = None
     timestamp: Optional[datetime] = None
+    document: Optional[DocumentInfo] = None
+    c2pa: Optional[C2PAInfo] = None
+    licensing: Optional[LicensingInfo] = None
+    merkle_proof: Optional[MerkleProofInfo] = None
     details: Optional[Dict[str, Any]] = None
-    __properties: ClassVar[List[str]] = ["valid", "tampered", "reason_code", "signer_id", "signer_name", "timestamp", "details"]
+    __properties: ClassVar[List[str]] = ["valid", "tampered", "reason_code", "signer_id", "signer_name", "organization_id", "organization_name", "timestamp", "document", "c2pa", "licensing", "merkle_proof", "details"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -75,6 +85,18 @@ class VerificationServiceVerifyVerdict(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of document
+        if self.document:
+            _dict['document'] = self.document.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of c2pa
+        if self.c2pa:
+            _dict['c2pa'] = self.c2pa.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of licensing
+        if self.licensing:
+            _dict['licensing'] = self.licensing.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of merkle_proof
+        if self.merkle_proof:
+            _dict['merkle_proof'] = self.merkle_proof.to_dict()
         # set to None if signer_id (nullable) is None
         # and model_fields_set contains the field
         if self.signer_id is None and "signer_id" in self.model_fields_set:
@@ -85,10 +107,40 @@ class VerificationServiceVerifyVerdict(BaseModel):
         if self.signer_name is None and "signer_name" in self.model_fields_set:
             _dict['signer_name'] = None
 
+        # set to None if organization_id (nullable) is None
+        # and model_fields_set contains the field
+        if self.organization_id is None and "organization_id" in self.model_fields_set:
+            _dict['organization_id'] = None
+
+        # set to None if organization_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.organization_name is None and "organization_name" in self.model_fields_set:
+            _dict['organization_name'] = None
+
         # set to None if timestamp (nullable) is None
         # and model_fields_set contains the field
         if self.timestamp is None and "timestamp" in self.model_fields_set:
             _dict['timestamp'] = None
+
+        # set to None if document (nullable) is None
+        # and model_fields_set contains the field
+        if self.document is None and "document" in self.model_fields_set:
+            _dict['document'] = None
+
+        # set to None if c2pa (nullable) is None
+        # and model_fields_set contains the field
+        if self.c2pa is None and "c2pa" in self.model_fields_set:
+            _dict['c2pa'] = None
+
+        # set to None if licensing (nullable) is None
+        # and model_fields_set contains the field
+        if self.licensing is None and "licensing" in self.model_fields_set:
+            _dict['licensing'] = None
+
+        # set to None if merkle_proof (nullable) is None
+        # and model_fields_set contains the field
+        if self.merkle_proof is None and "merkle_proof" in self.model_fields_set:
+            _dict['merkle_proof'] = None
 
         return _dict
 
@@ -107,7 +159,13 @@ class VerificationServiceVerifyVerdict(BaseModel):
             "reason_code": obj.get("reason_code"),
             "signer_id": obj.get("signer_id"),
             "signer_name": obj.get("signer_name"),
+            "organization_id": obj.get("organization_id"),
+            "organization_name": obj.get("organization_name"),
             "timestamp": obj.get("timestamp"),
+            "document": DocumentInfo.from_dict(obj["document"]) if obj.get("document") is not None else None,
+            "c2pa": C2PAInfo.from_dict(obj["c2pa"]) if obj.get("c2pa") is not None else None,
+            "licensing": LicensingInfo.from_dict(obj["licensing"]) if obj.get("licensing") is not None else None,
+            "merkle_proof": MerkleProofInfo.from_dict(obj["merkle_proof"]) if obj.get("merkle_proof") is not None else None,
             "details": obj.get("details")
         })
         return _obj

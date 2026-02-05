@@ -35,7 +35,10 @@ class TestVerifyRequest(unittest.TestCase):
         model = VerifyRequest()
         if include_optional:
             return VerifyRequest(
-                text = '0'
+                text = '0',
+                options = encypher.models.verify_options.VerifyOptions(
+                    include_merkle_proof = True, 
+                    include_raw_manifest = True, )
             )
         else:
             return VerifyRequest(

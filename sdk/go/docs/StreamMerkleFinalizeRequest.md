@@ -6,7 +6,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **SessionId** | **string** | Session ID to finalize | 
 **EmbedManifest** | Pointer to **bool** | Whether to embed C2PA manifest into the final document | [optional] [default to true]
-**ManifestMode** | Pointer to **string** | Manifest mode: full, lightweight_uuid, hybrid | [optional] [default to "full"]
+**ManifestMode** | Pointer to **string** | Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid | [optional] [default to "full"]
 **Action** | Pointer to **string** | C2PA action type: c2pa.created or c2pa.edited | [optional] [default to "c2pa.created"]
 
 ## Methods

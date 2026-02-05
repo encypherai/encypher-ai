@@ -25,7 +25,7 @@ type StreamMerkleFinalizeRequest struct {
 	SessionId string `json:"session_id"`
 	// Whether to embed C2PA manifest into the final document
 	EmbedManifest *bool `json:"embed_manifest,omitempty"`
-	// Manifest mode: full, lightweight_uuid, hybrid
+	// Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid
 	ManifestMode *string `json:"manifest_mode,omitempty"`
 	// C2PA action type: c2pa.created or c2pa.edited
 	Action *string `json:"action,omitempty"`

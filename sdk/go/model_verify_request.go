@@ -22,6 +22,7 @@ var _ MappedNullable = &VerifyRequest{}
 // VerifyRequest struct for VerifyRequest
 type VerifyRequest struct {
 	Text string `json:"text"`
+	Options NullableVerifyOptions `json:"options,omitempty"`
 }
 
 type _VerifyRequest VerifyRequest
@@ -68,6 +69,48 @@ func (o *VerifyRequest) SetText(v string) {
 	o.Text = v
 }
 
+// GetOptions returns the Options field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *VerifyRequest) GetOptions() VerifyOptions {
+	if o == nil || IsNil(o.Options.Get()) {
+		var ret VerifyOptions
+		return ret
+	}
+	return *o.Options.Get()
+}
+
+// GetOptionsOk returns a tuple with the Options field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *VerifyRequest) GetOptionsOk() (*VerifyOptions, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.Options.Get(), o.Options.IsSet()
+}
+
+// HasOptions returns a boolean if a field has been set.
+func (o *VerifyRequest) HasOptions() bool {
+	if o != nil && o.Options.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetOptions gets a reference to the given NullableVerifyOptions and assigns it to the Options field.
+func (o *VerifyRequest) SetOptions(v VerifyOptions) {
+	o.Options.Set(&v)
+}
+// SetOptionsNil sets the value for Options to be an explicit nil
+func (o *VerifyRequest) SetOptionsNil() {
+	o.Options.Set(nil)
+}
+
+// UnsetOptions ensures that no value is present for Options, not even an explicit nil
+func (o *VerifyRequest) UnsetOptions() {
+	o.Options.Unset()
+}
+
 func (o VerifyRequest) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -79,6 +122,9 @@ func (o VerifyRequest) MarshalJSON() ([]byte, error) {
 func (o VerifyRequest) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
 	toSerialize["text"] = o.Text
+	if o.Options.IsSet() {
+		toSerialize["options"] = o.Options.Get()
+	}
 	return toSerialize, nil
 }
 

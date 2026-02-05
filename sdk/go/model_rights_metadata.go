@@ -18,7 +18,7 @@ import (
 // checks if the RightsMetadata type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &RightsMetadata{}
 
-// RightsMetadata struct for RightsMetadata
+// RightsMetadata Rights and licensing metadata to embed in signed content.
 type RightsMetadata struct {
 	CopyrightHolder NullableString `json:"copyright_holder,omitempty"`
 	LicenseUrl NullableString `json:"license_url,omitempty"`

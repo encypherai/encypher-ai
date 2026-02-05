@@ -35,7 +35,7 @@ export interface StreamMerkleFinalizeRequest {
      */
     embedManifest?: boolean;
     /**
-     * Manifest mode: full, lightweight_uuid, hybrid
+     * Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid
      * @type {string}
      * @memberof StreamMerkleFinalizeRequest
      */

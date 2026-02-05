@@ -16,10 +16,8 @@ from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from encypher.models.encode_with_embeddings_request import EncodeWithEmbeddingsRequest
-from encypher.models.encode_with_embeddings_response import EncodeWithEmbeddingsResponse
-from encypher.models.sign_request import SignRequest
-from encypher.models.sign_response import SignResponse
+from typing import Any
+from encypher.models.unified_sign_request import UnifiedSignRequest
 
 from encypher.api_client import ApiClient, RequestSerialized
 from encypher.api_response import ApiResponse
@@ -42,7 +40,6 @@ class SigningApi:
     @validate_call
     def sign_advanced_api_v1_sign_advanced_post(
         self,
-        encode_with_embeddings_request: EncodeWithEmbeddingsRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -55,13 +52,11 @@ class SigningApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> EncodeWithEmbeddingsResponse:
-        """Sign with advanced embedding controls
+    ) -> object:
+        """(Deprecated) REMOVED - Use POST /sign with options instead
 
-        Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
+        **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
 
-        :param encode_with_embeddings_request: (required)
-        :type encode_with_embeddings_request: EncodeWithEmbeddingsRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -83,9 +78,9 @@ class SigningApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/sign/advanced is deprecated.", DeprecationWarning)
 
         _param = self._sign_advanced_api_v1_sign_advanced_post_serialize(
-            encode_with_embeddings_request=encode_with_embeddings_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -93,8 +88,8 @@ class SigningApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '201': "EncodeWithEmbeddingsResponse",
-            '422': "HTTPValidationError",
+            '200': "object",
+            '410': None,
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -110,7 +105,6 @@ class SigningApi:
     @validate_call
     def sign_advanced_api_v1_sign_advanced_post_with_http_info(
         self,
-        encode_with_embeddings_request: EncodeWithEmbeddingsRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -123,13 +117,11 @@ class SigningApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[EncodeWithEmbeddingsResponse]:
-        """Sign with advanced embedding controls
+    ) -> ApiResponse[object]:
+        """(Deprecated) REMOVED - Use POST /sign with options instead
 
-        Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
+        **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
 
-        :param encode_with_embeddings_request: (required)
-        :type encode_with_embeddings_request: EncodeWithEmbeddingsRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -151,9 +143,9 @@ class SigningApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/sign/advanced is deprecated.", DeprecationWarning)
 
         _param = self._sign_advanced_api_v1_sign_advanced_post_serialize(
-            encode_with_embeddings_request=encode_with_embeddings_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -161,8 +153,8 @@ class SigningApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '201': "EncodeWithEmbeddingsResponse",
-            '422': "HTTPValidationError",
+            '200': "object",
+            '410': None,
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -178,7 +170,6 @@ class SigningApi:
     @validate_call
     def sign_advanced_api_v1_sign_advanced_post_without_preload_content(
         self,
-        encode_with_embeddings_request: EncodeWithEmbeddingsRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -192,12 +183,10 @@ class SigningApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Sign with advanced embedding controls
+        """(Deprecated) REMOVED - Use POST /sign with options instead
 
-        Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
+        **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
 
-        :param encode_with_embeddings_request: (required)
-        :type encode_with_embeddings_request: EncodeWithEmbeddingsRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -219,9 +208,9 @@ class SigningApi:
         :type _host_index: int, optional
         :return: Returns the result object.
         """ # noqa: E501
+        warnings.warn("POST /api/v1/sign/advanced is deprecated.", DeprecationWarning)
 
         _param = self._sign_advanced_api_v1_sign_advanced_post_serialize(
-            encode_with_embeddings_request=encode_with_embeddings_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -229,8 +218,8 @@ class SigningApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '201': "EncodeWithEmbeddingsResponse",
-            '422': "HTTPValidationError",
+            '200': "object",
+            '410': None,
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -241,7 +230,6 @@ class SigningApi:
 
     def _sign_advanced_api_v1_sign_advanced_post_serialize(
         self,
-        encode_with_embeddings_request,
         _request_auth,
         _content_type,
         _headers,
@@ -267,8 +255,6 @@ class SigningApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if encode_with_embeddings_request is not None:
-            _body_params = encode_with_embeddings_request
 
 
         # set the HTTP header `Accept`
@@ -279,23 +265,9 @@ class SigningApi:
                 ]
             )
 
-        # set the HTTP header `Content-Type`
-        if _content_type:
-            _header_params['Content-Type'] = _content_type
-        else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
-            )
-            if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
 
         # authentication setting
         _auth_settings: List[str] = [
-            'HTTPBearer'
         ]
 
         return self.api_client.param_serialize(
@@ -319,7 +291,7 @@ class SigningApi:
     @validate_call
     def sign_content_api_v1_sign_post(
         self,
-        sign_request: SignRequest,
+        unified_sign_request: UnifiedSignRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -332,13 +304,13 @@ class SigningApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> SignResponse:
-        """Sign Content
+    ) -> object:
+        """Sign content with C2PA manifest
 
-        Sign content with a C2PA manifest.
+        Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
 
-        :param sign_request: (required)
-        :type sign_request: SignRequest
+        :param unified_sign_request: (required)
+        :type unified_sign_request: UnifiedSignRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -362,7 +334,7 @@ class SigningApi:
         """ # noqa: E501
 
         _param = self._sign_content_api_v1_sign_post_serialize(
-            sign_request=sign_request,
+            unified_sign_request=unified_sign_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -370,7 +342,10 @@ class SigningApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SignResponse",
+            '201': "object",
+            '400': None,
+            '403': None,
+            '429': None,
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -387,7 +362,7 @@ class SigningApi:
     @validate_call
     def sign_content_api_v1_sign_post_with_http_info(
         self,
-        sign_request: SignRequest,
+        unified_sign_request: UnifiedSignRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -400,13 +375,13 @@ class SigningApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[SignResponse]:
-        """Sign Content
+    ) -> ApiResponse[object]:
+        """Sign content with C2PA manifest
 
-        Sign content with a C2PA manifest.
+        Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
 
-        :param sign_request: (required)
-        :type sign_request: SignRequest
+        :param unified_sign_request: (required)
+        :type unified_sign_request: UnifiedSignRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -430,7 +405,7 @@ class SigningApi:
         """ # noqa: E501
 
         _param = self._sign_content_api_v1_sign_post_serialize(
-            sign_request=sign_request,
+            unified_sign_request=unified_sign_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -438,7 +413,10 @@ class SigningApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SignResponse",
+            '201': "object",
+            '400': None,
+            '403': None,
+            '429': None,
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -455,7 +433,7 @@ class SigningApi:
     @validate_call
     def sign_content_api_v1_sign_post_without_preload_content(
         self,
-        sign_request: SignRequest,
+        unified_sign_request: UnifiedSignRequest,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -469,12 +447,12 @@ class SigningApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Sign Content
+        """Sign content with C2PA manifest
 
-        Sign content with a C2PA manifest.
+        Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
 
-        :param sign_request: (required)
-        :type sign_request: SignRequest
+        :param unified_sign_request: (required)
+        :type unified_sign_request: UnifiedSignRequest
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -498,7 +476,7 @@ class SigningApi:
         """ # noqa: E501
 
         _param = self._sign_content_api_v1_sign_post_serialize(
-            sign_request=sign_request,
+            unified_sign_request=unified_sign_request,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -506,7 +484,10 @@ class SigningApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SignResponse",
+            '201': "object",
+            '400': None,
+            '403': None,
+            '429': None,
             '422': "HTTPValidationError",
         }
         response_data = self.api_client.call_api(
@@ -518,7 +499,7 @@ class SigningApi:
 
     def _sign_content_api_v1_sign_post_serialize(
         self,
-        sign_request,
+        unified_sign_request,
         _request_auth,
         _content_type,
         _headers,
@@ -544,8 +525,8 @@ class SigningApi:
         # process the header parameters
         # process the form parameters
         # process the body parameter
-        if sign_request is not None:
-            _body_params = sign_request
+        if unified_sign_request is not None:
+            _body_params = unified_sign_request
 
 
         # set the HTTP header `Accept`

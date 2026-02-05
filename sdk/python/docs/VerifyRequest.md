@@ -6,6 +6,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **text** | **str** |  | 
+**options** | [**VerifyOptions**](VerifyOptions.md) |  | [optional] 
 
 ## Example
 

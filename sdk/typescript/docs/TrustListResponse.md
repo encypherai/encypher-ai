@@ -10,6 +10,10 @@ Name | Type
 `success` | boolean
 `trustedCas` | Array&lt;string&gt;
 `trustListUrl` | string
+`trustListFingerprint` | string
+`trustListLoadedAt` | string
+`trustListSource` | string
+`trustListCount` | string
 
 ## Example
 
@@ -21,6 +25,10 @@ const example = {
   "success": null,
   "trustedCas": null,
   "trustListUrl": null,
+  "trustListFingerprint": null,
+  "trustListLoadedAt": null,
+  "trustListSource": null,
+  "trustListCount": null,
 } satisfies TrustListResponse
 
 console.log(example)

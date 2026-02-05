@@ -15,31 +15,18 @@
 
 import * as runtime from '../runtime';
 import type {
-  EncodeWithEmbeddingsRequest,
-  EncodeWithEmbeddingsResponse,
   HTTPValidationError,
-  SignRequest,
-  SignResponse,
+  UnifiedSignRequest,
 } from '../models/index';
 import {
-    EncodeWithEmbeddingsRequestFromJSON,
-    EncodeWithEmbeddingsRequestToJSON,
-    EncodeWithEmbeddingsResponseFromJSON,
-    EncodeWithEmbeddingsResponseToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
-    SignRequestFromJSON,
-    SignRequestToJSON,
-    SignResponseFromJSON,
-    SignResponseToJSON,
+    UnifiedSignRequestFromJSON,
+    UnifiedSignRequestToJSON,
 } from '../models/index';
 
-export interface SignAdvancedApiV1SignAdvancedPostRequest {
-    encodeWithEmbeddingsRequest: EncodeWithEmbeddingsRequest;
-}
-
 export interface SignContentApiV1SignPostRequest {
-    signRequest: SignRequest;
+    unifiedSignRequest: UnifiedSignRequest;
 }
 
 /**
@@ -50,36 +37,37 @@ export interface SignContentApiV1SignPostRequest {
  */
 export interface SigningApiInterface {
     /**
-     * Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
-     * @summary Sign with advanced embedding controls
-     * @param {EncodeWithEmbeddingsRequest} encodeWithEmbeddingsRequest 
+     * **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
+     * @summary REMOVED - Use POST /sign with options instead
+     * @param {*} [options] Override http request option.
+     * @deprecated
+     * @throws {RequiredError}
+     * @memberof SigningApiInterface
+     */
+    signAdvancedApiV1SignAdvancedPostRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>>;
+
+    /**
+     * **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
+     * REMOVED - Use POST /sign with options instead
+     * @deprecated
+     */
+    signAdvancedApiV1SignAdvancedPost(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any>;
+
+    /**
+     * Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
+     * @summary Sign content with C2PA manifest
+     * @param {UnifiedSignRequest} unifiedSignRequest 
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof SigningApiInterface
      */
-    signAdvancedApiV1SignAdvancedPostRaw(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>>;
+    signContentApiV1SignPostRaw(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>>;
 
     /**
-     * Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
-     * Sign with advanced embedding controls
+     * Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
+     * Sign content with C2PA manifest
      */
-    signAdvancedApiV1SignAdvancedPost(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse>;
-
-    /**
-     * Sign content with a C2PA manifest.
-     * @summary Sign Content
-     * @param {SignRequest} signRequest 
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof SigningApiInterface
-     */
-    signContentApiV1SignPostRaw(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SignResponse>>;
-
-    /**
-     * Sign content with a C2PA manifest.
-     * Sign Content
-     */
-    signContentApiV1SignPost(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SignResponse>;
+    signContentApiV1SignPost(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any>;
 
 }
 
@@ -89,31 +77,15 @@ export interface SigningApiInterface {
 export class SigningApi extends runtime.BaseAPI implements SigningApiInterface {
 
     /**
-     * Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
-     * Sign with advanced embedding controls
+     * **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
+     * REMOVED - Use POST /sign with options instead
+     * @deprecated
      */
-    async signAdvancedApiV1SignAdvancedPostRaw(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<EncodeWithEmbeddingsResponse>> {
-        if (requestParameters['encodeWithEmbeddingsRequest'] == null) {
-            throw new runtime.RequiredError(
-                'encodeWithEmbeddingsRequest',
-                'Required parameter "encodeWithEmbeddingsRequest" was null or undefined when calling signAdvancedApiV1SignAdvancedPost().'
-            );
-        }
-
+    async signAdvancedApiV1SignAdvancedPostRaw(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
         const queryParameters: any = {};
 
         const headerParameters: runtime.HTTPHeaders = {};
 
-        headerParameters['Content-Type'] = 'application/json';
-
-        if (this.configuration && this.configuration.accessToken) {
-            const token = this.configuration.accessToken;
-            const tokenString = await token("HTTPBearer", []);
-
-            if (tokenString) {
-                headerParameters["Authorization"] = `Bearer ${tokenString}`;
-            }
-        }
 
         let urlPath = `/api/v1/sign/advanced`;
 
@@ -122,30 +94,34 @@ export class SigningApi extends runtime.BaseAPI implements SigningApiInterface {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: EncodeWithEmbeddingsRequestToJSON(requestParameters['encodeWithEmbeddingsRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => EncodeWithEmbeddingsResponseFromJSON(jsonValue));
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<any>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
-     * Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
-     * Sign with advanced embedding controls
+     * **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
+     * REMOVED - Use POST /sign with options instead
+     * @deprecated
      */
-    async signAdvancedApiV1SignAdvancedPost(requestParameters: SignAdvancedApiV1SignAdvancedPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<EncodeWithEmbeddingsResponse> {
-        const response = await this.signAdvancedApiV1SignAdvancedPostRaw(requestParameters, initOverrides);
+    async signAdvancedApiV1SignAdvancedPost(initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
+        const response = await this.signAdvancedApiV1SignAdvancedPostRaw(initOverrides);
         return await response.value();
     }
 
     /**
-     * Sign content with a C2PA manifest.
-     * Sign Content
+     * Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
+     * Sign content with C2PA manifest
      */
-    async signContentApiV1SignPostRaw(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<SignResponse>> {
-        if (requestParameters['signRequest'] == null) {
+    async signContentApiV1SignPostRaw(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
+        if (requestParameters['unifiedSignRequest'] == null) {
             throw new runtime.RequiredError(
-                'signRequest',
-                'Required parameter "signRequest" was null or undefined when calling signContentApiV1SignPost().'
+                'unifiedSignRequest',
+                'Required parameter "unifiedSignRequest" was null or undefined when calling signContentApiV1SignPost().'
             );
         }
 
@@ -171,17 +147,21 @@ export class SigningApi extends runtime.BaseAPI implements SigningApiInterface {
             method: 'POST',
             headers: headerParameters,
             query: queryParameters,
-            body: SignRequestToJSON(requestParameters['signRequest']),
+            body: UnifiedSignRequestToJSON(requestParameters['unifiedSignRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => SignResponseFromJSON(jsonValue));
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<any>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
-     * Sign content with a C2PA manifest.
-     * Sign Content
+     * Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
+     * Sign content with C2PA manifest
      */
-    async signContentApiV1SignPost(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<SignResponse> {
+    async signContentApiV1SignPost(requestParameters: SignContentApiV1SignPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
         const response = await this.signContentApiV1SignPostRaw(requestParameters, initOverrides);
         return await response.value();
     }

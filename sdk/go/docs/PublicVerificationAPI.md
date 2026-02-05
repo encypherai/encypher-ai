@@ -5,7 +5,7 @@ All URIs are relative to *https://api.encypherai.com*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost**](PublicVerificationAPI.md#BatchVerifyEmbeddingsApiV1PublicVerifyBatchPost) | **Post** /api/v1/public/verify/batch | Batch Verify Embeddings (Public - No Auth Required)
-[**ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost**](PublicVerificationAPI.md#ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost) | **Post** /api/v1/public/extract-and-verify | Extract and Verify Invisible Embedding (Public - No Auth Required)
+[**ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost**](PublicVerificationAPI.md#ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost) | **Post** /api/v1/public/extract-and-verify | DEPRECATED - Use POST /api/v1/verify instead
 [**VerifyEmbeddingApiV1PublicVerifyRefIdGet**](PublicVerificationAPI.md#VerifyEmbeddingApiV1PublicVerifyRefIdGet) | **Get** /api/v1/public/verify/{ref_id} | Verify Embedding (Public - No Auth Required)
 
 
@@ -80,9 +80,9 @@ No authorization required
 
 ## ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost
 
-> ExtractAndVerifyResponse ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(ctx).ExtractAndVerifyRequest(extractAndVerifyRequest).Authorization(authorization).Execute()
+> interface{} ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(ctx).ExtractAndVerifyRequest(extractAndVerifyRequest).Execute()
 
-Extract and Verify Invisible Embedding (Public - No Auth Required)
+DEPRECATED - Use POST /api/v1/verify instead
 
 
 
@@ -100,16 +100,15 @@ import (
 
 func main() {
 	extractAndVerifyRequest := *openapiclient.NewExtractAndVerifyRequest("Text_example") // ExtractAndVerifyRequest | 
-	authorization := "authorization_example" // string |  (optional)
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.PublicVerificationAPI.ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(context.Background()).ExtractAndVerifyRequest(extractAndVerifyRequest).Authorization(authorization).Execute()
+	resp, r, err := apiClient.PublicVerificationAPI.ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(context.Background()).ExtractAndVerifyRequest(extractAndVerifyRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `PublicVerificationAPI.ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost`: ExtractAndVerifyResponse
+	// response from `ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost`: interface{}
 	fmt.Fprintf(os.Stdout, "Response from `PublicVerificationAPI.ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost`: %v\n", resp)
 }
 ```
@@ -126,11 +125,10 @@ Other parameters are passed through a pointer to a apiExtractAndVerifyEmbeddingA
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **extractAndVerifyRequest** | [**ExtractAndVerifyRequest**](ExtractAndVerifyRequest.md) |  | 
- **authorization** | **string** |  | 
 
 ### Return type
 
-[**ExtractAndVerifyResponse**](ExtractAndVerifyResponse.md)
+**interface{}**
 
 ### Authorization
 

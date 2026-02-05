@@ -19,7 +19,7 @@ use super::{Error, configuration, ContentType};
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SignAdvancedApiV1SignAdvancedPostError {
-    Status422(models::HttpValidationError),
+    Status410(),
     UnknownValue(serde_json::Value),
 }
 
@@ -27,15 +27,17 @@ pub enum SignAdvancedApiV1SignAdvancedPostError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SignContentApiV1SignPostError {
+    Status400(),
+    Status403(),
+    Status429(),
     Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }
 
 
-/// Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
-pub async fn sign_advanced_api_v1_sign_advanced_post(configuration: &configuration::Configuration, encode_with_embeddings_request: models::EncodeWithEmbeddingsRequest) -> Result<models::EncodeWithEmbeddingsResponse, Error<SignAdvancedApiV1SignAdvancedPostError>> {
-    // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_encode_with_embeddings_request = encode_with_embeddings_request;
+/// **⚠️ REMOVED: This endpoint has been removed.**  Please use `POST /sign` with options instead.  Migration example: ```json // Old /sign/advanced request {     \"document_id\": \"doc1\",     \"text\": \"...\",     \"segmentation_level\": \"sentence\" }  // New /sign request {     \"text\": \"...\",     \"document_id\": \"doc1\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```
+#[deprecated]
+pub async fn sign_advanced_api_v1_sign_advanced_post(configuration: &configuration::Configuration, ) -> Result<serde_json::Value, Error<SignAdvancedApiV1SignAdvancedPostError>> {
 
     let uri_str = format!("{}/api/v1/sign/advanced", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -43,10 +45,6 @@ pub async fn sign_advanced_api_v1_sign_advanced_post(configuration: &configurati
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
-    if let Some(ref token) = configuration.bearer_access_token {
-        req_builder = req_builder.bearer_auth(token.to_owned());
-    };
-    req_builder = req_builder.json(&p_body_encode_with_embeddings_request);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -63,8 +61,8 @@ pub async fn sign_advanced_api_v1_sign_advanced_post(configuration: &configurati
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::EncodeWithEmbeddingsResponse`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::EncodeWithEmbeddingsResponse`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -73,10 +71,10 @@ pub async fn sign_advanced_api_v1_sign_advanced_post(configuration: &configurati
     }
 }
 
-/// Sign content with a C2PA manifest.
-pub async fn sign_content_api_v1_sign_post(configuration: &configuration::Configuration, sign_request: models::SignRequest) -> Result<models::SignResponse, Error<SignContentApiV1SignPostError>> {
+/// Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** ```json {     \"text\": \"Content to sign...\",     \"document_title\": \"My Article\",     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  **Batch (Professional+):** ```json {     \"documents\": [         {\"text\": \"First doc...\", \"document_title\": \"Doc 1\"},         {\"text\": \"Second doc...\", \"document_title\": \"Doc 2\"}     ],     \"options\": {         \"segmentation_level\": \"sentence\"     } } ```  The response includes `meta.features_gated` showing features available at higher tiers.
+pub async fn sign_content_api_v1_sign_post(configuration: &configuration::Configuration, unified_sign_request: models::UnifiedSignRequest) -> Result<serde_json::Value, Error<SignContentApiV1SignPostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_body_sign_request = sign_request;
+    let p_body_unified_sign_request = unified_sign_request;
 
     let uri_str = format!("{}/api/v1/sign", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -87,7 +85,7 @@ pub async fn sign_content_api_v1_sign_post(configuration: &configuration::Config
     if let Some(ref token) = configuration.bearer_access_token {
         req_builder = req_builder.bearer_auth(token.to_owned());
     };
-    req_builder = req_builder.json(&p_body_sign_request);
+    req_builder = req_builder.json(&p_body_unified_sign_request);
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req).await?;
@@ -104,8 +102,8 @@ pub async fn sign_content_api_v1_sign_post(configuration: &configuration::Config
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::SignResponse`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::SignResponse`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
         }
     } else {
         let content = resp.text().await?;

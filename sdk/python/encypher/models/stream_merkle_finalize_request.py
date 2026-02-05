@@ -28,7 +28,7 @@ class StreamMerkleFinalizeRequest(BaseModel):
     """ # noqa: E501
     session_id: StrictStr = Field(description="Session ID to finalize")
     embed_manifest: Optional[StrictBool] = Field(default=True, description="Whether to embed C2PA manifest into the final document")
-    manifest_mode: Optional[StrictStr] = Field(default='full', description="Manifest mode: full, lightweight_uuid, hybrid")
+    manifest_mode: Optional[StrictStr] = Field(default='full', description="Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid")
     action: Optional[StrictStr] = Field(default='c2pa.created', description="C2PA action type: c2pa.created or c2pa.edited")
     __properties: ClassVar[List[str]] = ["session_id", "embed_manifest", "manifest_mode", "action"]
 

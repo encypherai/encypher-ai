@@ -1,6 +1,7 @@
 
 # VerificationServiceVerifyVerdict
 
+Core verification result.
 
 ## Properties
 
@@ -11,7 +12,13 @@ Name | Type
 `reasonCode` | string
 `signerId` | string
 `signerName` | string
+`organizationId` | string
+`organizationName` | string
 `timestamp` | Date
+`document` | [DocumentInfo](DocumentInfo.md)
+`c2pa` | [C2PAInfo](C2PAInfo.md)
+`licensing` | [LicensingInfo](LicensingInfo.md)
+`merkleProof` | [MerkleProofInfo](MerkleProofInfo.md)
 `details` | { [key: string]: any; }
 
 ## Example
@@ -26,7 +33,13 @@ const example = {
   "reasonCode": null,
   "signerId": null,
   "signerName": null,
+  "organizationId": null,
+  "organizationName": null,
   "timestamp": null,
+  "document": null,
+  "c2pa": null,
+  "licensing": null,
+  "merkleProof": null,
   "details": null,
 } satisfies VerificationServiceVerifyVerdict
 

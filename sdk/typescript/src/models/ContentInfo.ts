@@ -20,11 +20,11 @@ import { mapValues } from '../runtime';
  */
 export interface ContentInfo {
     /**
-     * First 200 characters of content
+     * 
      * @type {string}
      * @memberof ContentInfo
      */
-    textPreview: string;
+    textPreview?: string | null;
     /**
      * Cryptographic hash of full content
      * @type {string}
@@ -43,7 +43,6 @@ export interface ContentInfo {
  * Check if a given object implements the ContentInfo interface.
  */
 export function instanceOfContentInfo(value: object): value is ContentInfo {
-    if (!('textPreview' in value) || value['textPreview'] === undefined) return false;
     if (!('leafHash' in value) || value['leafHash'] === undefined) return false;
     if (!('leafIndex' in value) || value['leafIndex'] === undefined) return false;
     return true;
@@ -59,7 +58,7 @@ export function ContentInfoFromJSONTyped(json: any, ignoreDiscriminator: boolean
     }
     return {
         
-        'textPreview': json['text_preview'],
+        'textPreview': json['text_preview'] == null ? undefined : json['text_preview'],
         'leafHash': json['leaf_hash'],
         'leafIndex': json['leaf_index'],
     };

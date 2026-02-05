@@ -5,7 +5,7 @@ All URIs are relative to *https://api.encypherai.com*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**batch_verify_embeddings_api_v1_public_verify_batch_post**](PublicVerificationApi.md#batch_verify_embeddings_api_v1_public_verify_batch_post) | **POST** /api/v1/public/verify/batch | Batch Verify Embeddings (Public - No Auth Required)
-[**extract_and_verify_embedding_api_v1_public_extract_and_verify_post**](PublicVerificationApi.md#extract_and_verify_embedding_api_v1_public_extract_and_verify_post) | **POST** /api/v1/public/extract-and-verify | Extract and Verify Invisible Embedding (Public - No Auth Required)
+[**extract_and_verify_embedding_api_v1_public_extract_and_verify_post**](PublicVerificationApi.md#extract_and_verify_embedding_api_v1_public_extract_and_verify_post) | **POST** /api/v1/public/extract-and-verify | DEPRECATED - Use POST /api/v1/verify instead
 [**verify_embedding_api_v1_public_verify_ref_id_get**](PublicVerificationApi.md#verify_embedding_api_v1_public_verify_ref_id_get) | **GET** /api/v1/public/verify/{ref_id} | Verify Embedding (Public - No Auth Required)
 
 
@@ -95,35 +95,17 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **extract_and_verify_embedding_api_v1_public_extract_and_verify_post**
-> ExtractAndVerifyResponse extract_and_verify_embedding_api_v1_public_extract_and_verify_post(extract_and_verify_request, authorization=authorization)
+> object extract_and_verify_embedding_api_v1_public_extract_and_verify_post(extract_and_verify_request)
 
-Extract and Verify Invisible Embedding (Public - No Auth Required)
+DEPRECATED - Use POST /api/v1/verify instead
 
-Extract and verify invisible Unicode embedding from text using encypher-ai.
+**⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**
     
-    **This endpoint is PUBLIC and does NOT require authentication.**
-    
-    This is the NEW verification method for invisible embeddings:
-    - Extracts invisible Unicode variation selector embeddings
-    - Verifies cryptographic signature using encypher-ai
-    - Returns enterprise metadata (Merkle tree, document info, etc.)
-    
-    **How it works:**
-    1. Text contains invisible Unicode variation selectors
-    2. encypher-ai extracts and verifies the embedded metadata
-    3. Enterprise API looks up Merkle tree and document info
-    4. Returns full verification result with all metadata
-    
-    **Rate Limiting:**
-    - 1000 requests/hour per IP address
-    
-    **Example Usage:**
-    ```json
-    POST /api/v1/public/extract-and-verify
-    {
-      "text": "Content with invisible embedding..."
-    }
-    ```
+    Please use `POST /api/v1/verify` instead, which provides:
+    - Full C2PA trust chain validation
+    - Document info, licensing, and C2PA details (all free)
+    - Merkle proof (with API key)
+    - Better performance via verification-service
 
 ### Example
 
@@ -131,7 +113,6 @@ Extract and verify invisible Unicode embedding from text using encypher-ai.
 ```python
 import encypher
 from encypher.models.extract_and_verify_request import ExtractAndVerifyRequest
-from encypher.models.extract_and_verify_response import ExtractAndVerifyResponse
 from encypher.rest import ApiException
 from pprint import pprint
 
@@ -147,11 +128,10 @@ with encypher.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = encypher.PublicVerificationApi(api_client)
     extract_and_verify_request = encypher.ExtractAndVerifyRequest() # ExtractAndVerifyRequest | 
-    authorization = 'authorization_example' # str |  (optional)
 
     try:
-        # Extract and Verify Invisible Embedding (Public - No Auth Required)
-        api_response = api_instance.extract_and_verify_embedding_api_v1_public_extract_and_verify_post(extract_and_verify_request, authorization=authorization)
+        # DEPRECATED - Use POST /api/v1/verify instead
+        api_response = api_instance.extract_and_verify_embedding_api_v1_public_extract_and_verify_post(extract_and_verify_request)
         print("The response of PublicVerificationApi->extract_and_verify_embedding_api_v1_public_extract_and_verify_post:\n")
         pprint(api_response)
     except Exception as e:
@@ -166,11 +146,10 @@ with encypher.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **extract_and_verify_request** | [**ExtractAndVerifyRequest**](ExtractAndVerifyRequest.md)|  | 
- **authorization** | **str**|  | [optional] 
 
 ### Return type
 
-[**ExtractAndVerifyResponse**](ExtractAndVerifyResponse.md)
+**object**
 
 ### Authorization
 
@@ -185,10 +164,8 @@ No authorization required
 
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-**200** | Embedding extracted and verified |  -  |
-**400** | Invalid request |  -  |
-**404** | No embedding found |  -  |
-**429** | Rate limit exceeded |  -  |
+**200** | Successful Response |  -  |
+**301** | Redirect to /api/v1/verify |  -  |
 **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -214,7 +191,7 @@ Verify a minimal signed embedding and retrieve associated metadata.
     - CAPTCHA required after repeated failures
     
     **Privacy:**
-    - Only returns text preview (first 200 characters)
+    - Does not return DB-stored text
     - Full text content is NOT exposed
     - Internal document IDs are mapped to public IDs
     

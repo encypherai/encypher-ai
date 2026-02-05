@@ -29,9 +29,6 @@ pub enum BatchVerifyEmbeddingsApiV1PublicVerifyBatchPostError {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostError {
-    Status400(models::ErrorResponse),
-    Status404(models::ErrorResponse),
-    Status429(models::ErrorResponse),
     Status422(models::HttpValidationError),
     UnknownValue(serde_json::Value),
 }
@@ -90,20 +87,17 @@ pub async fn batch_verify_embeddings_api_v1_public_verify_batch_post(configurati
     }
 }
 
-/// Extract and verify invisible Unicode embedding from text using encypher-ai.          **This endpoint is PUBLIC and does NOT require authentication.**          This is the NEW verification method for invisible embeddings:     - Extracts invisible Unicode variation selector embeddings     - Verifies cryptographic signature using encypher-ai     - Returns enterprise metadata (Merkle tree, document info, etc.)          **How it works:**     1. Text contains invisible Unicode variation selectors     2. encypher-ai extracts and verifies the embedded metadata     3. Enterprise API looks up Merkle tree and document info     4. Returns full verification result with all metadata          **Rate Limiting:**     - 1000 requests/hour per IP address          **Example Usage:**     ```json     POST /api/v1/public/extract-and-verify     {       \"text\": \"Content with invisible embedding...\"     }     ```
-pub async fn extract_and_verify_embedding_api_v1_public_extract_and_verify_post(configuration: &configuration::Configuration, extract_and_verify_request: models::ExtractAndVerifyRequest, authorization: Option<&str>) -> Result<models::ExtractAndVerifyResponse, Error<ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostError>> {
+/// **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+#[deprecated]
+pub async fn extract_and_verify_embedding_api_v1_public_extract_and_verify_post(configuration: &configuration::Configuration, extract_and_verify_request: models::ExtractAndVerifyRequest) -> Result<serde_json::Value, Error<ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_extract_and_verify_request = extract_and_verify_request;
-    let p_header_authorization = authorization;
 
     let uri_str = format!("{}/api/v1/public/extract-and-verify", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
-    }
-    if let Some(param_value) = p_header_authorization {
-        req_builder = req_builder.header("authorization", param_value.to_string());
     }
     req_builder = req_builder.json(&p_body_extract_and_verify_request);
 
@@ -122,8 +116,8 @@ pub async fn extract_and_verify_embedding_api_v1_public_extract_and_verify_post(
         let content = resp.text().await?;
         match content_type {
             ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
-            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ExtractAndVerifyResponse`"))),
-            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ExtractAndVerifyResponse`")))),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `serde_json::Value`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `serde_json::Value`")))),
         }
     } else {
         let content = resp.text().await?;
@@ -132,7 +126,7 @@ pub async fn extract_and_verify_embedding_api_v1_public_extract_and_verify_post(
     }
 }
 
-/// Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Only returns text preview (first 200 characters)     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+/// Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
 pub async fn verify_embedding_api_v1_public_verify_ref_id_get(configuration: &configuration::Configuration, ref_id: &str, signature: &str, authorization: Option<&str>) -> Result<models::VerifyEmbeddingResponse, Error<VerifyEmbeddingApiV1PublicVerifyRefIdGetError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_ref_id = ref_id;

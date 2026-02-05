@@ -19,7 +19,6 @@ import type {
   BatchVerifyResponse,
   ErrorResponse,
   ExtractAndVerifyRequest,
-  ExtractAndVerifyResponse,
   HTTPValidationError,
   VerifyEmbeddingResponse,
 } from '../models/index';
@@ -32,8 +31,6 @@ import {
     ErrorResponseToJSON,
     ExtractAndVerifyRequestFromJSON,
     ExtractAndVerifyRequestToJSON,
-    ExtractAndVerifyResponseFromJSON,
-    ExtractAndVerifyResponseToJSON,
     HTTPValidationErrorFromJSON,
     HTTPValidationErrorToJSON,
     VerifyEmbeddingResponseFromJSON,
@@ -47,7 +44,6 @@ export interface BatchVerifyEmbeddingsApiV1PublicVerifyBatchPostRequest {
 
 export interface ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest {
     extractAndVerifyRequest: ExtractAndVerifyRequest;
-    authorization?: string | null;
 }
 
 export interface VerifyEmbeddingApiV1PublicVerifyRefIdGetRequest {
@@ -81,24 +77,25 @@ export interface PublicVerificationApiInterface {
     batchVerifyEmbeddingsApiV1PublicVerifyBatchPost(requestParameters: BatchVerifyEmbeddingsApiV1PublicVerifyBatchPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<BatchVerifyResponse>;
 
     /**
-     * Extract and verify invisible Unicode embedding from text using encypher-ai.          **This endpoint is PUBLIC and does NOT require authentication.**          This is the NEW verification method for invisible embeddings:     - Extracts invisible Unicode variation selector embeddings     - Verifies cryptographic signature using encypher-ai     - Returns enterprise metadata (Merkle tree, document info, etc.)          **How it works:**     1. Text contains invisible Unicode variation selectors     2. encypher-ai extracts and verifies the embedded metadata     3. Enterprise API looks up Merkle tree and document info     4. Returns full verification result with all metadata          **Rate Limiting:**     - 1000 requests/hour per IP address          **Example Usage:**     ```json     POST /api/v1/public/extract-and-verify     {       \"text\": \"Content with invisible embedding...\"     }     ```
-     * @summary Extract and Verify Invisible Embedding (Public - No Auth Required)
+     * **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+     * @summary DEPRECATED - Use POST /api/v1/verify instead
      * @param {ExtractAndVerifyRequest} extractAndVerifyRequest 
-     * @param {string} [authorization] 
      * @param {*} [options] Override http request option.
+     * @deprecated
      * @throws {RequiredError}
      * @memberof PublicVerificationApiInterface
      */
-    extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRaw(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExtractAndVerifyResponse>>;
+    extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRaw(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>>;
 
     /**
-     * Extract and verify invisible Unicode embedding from text using encypher-ai.          **This endpoint is PUBLIC and does NOT require authentication.**          This is the NEW verification method for invisible embeddings:     - Extracts invisible Unicode variation selector embeddings     - Verifies cryptographic signature using encypher-ai     - Returns enterprise metadata (Merkle tree, document info, etc.)          **How it works:**     1. Text contains invisible Unicode variation selectors     2. encypher-ai extracts and verifies the embedded metadata     3. Enterprise API looks up Merkle tree and document info     4. Returns full verification result with all metadata          **Rate Limiting:**     - 1000 requests/hour per IP address          **Example Usage:**     ```json     POST /api/v1/public/extract-and-verify     {       \"text\": \"Content with invisible embedding...\"     }     ```
-     * Extract and Verify Invisible Embedding (Public - No Auth Required)
+     * **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+     * DEPRECATED - Use POST /api/v1/verify instead
+     * @deprecated
      */
-    extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExtractAndVerifyResponse>;
+    extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any>;
 
     /**
-     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Only returns text preview (first 200 characters)     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
      * @summary Verify Embedding (Public - No Auth Required)
      * @param {string} refId 
      * @param {string} signature HMAC signature (8+ hex characters)
@@ -110,7 +107,7 @@ export interface PublicVerificationApiInterface {
     verifyEmbeddingApiV1PublicVerifyRefIdGetRaw(requestParameters: VerifyEmbeddingApiV1PublicVerifyRefIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VerifyEmbeddingResponse>>;
 
     /**
-     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Only returns text preview (first 200 characters)     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
      * Verify Embedding (Public - No Auth Required)
      */
     verifyEmbeddingApiV1PublicVerifyRefIdGet(requestParameters: VerifyEmbeddingApiV1PublicVerifyRefIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VerifyEmbeddingResponse>;
@@ -168,10 +165,11 @@ export class PublicVerificationApi extends runtime.BaseAPI implements PublicVeri
     }
 
     /**
-     * Extract and verify invisible Unicode embedding from text using encypher-ai.          **This endpoint is PUBLIC and does NOT require authentication.**          This is the NEW verification method for invisible embeddings:     - Extracts invisible Unicode variation selector embeddings     - Verifies cryptographic signature using encypher-ai     - Returns enterprise metadata (Merkle tree, document info, etc.)          **How it works:**     1. Text contains invisible Unicode variation selectors     2. encypher-ai extracts and verifies the embedded metadata     3. Enterprise API looks up Merkle tree and document info     4. Returns full verification result with all metadata          **Rate Limiting:**     - 1000 requests/hour per IP address          **Example Usage:**     ```json     POST /api/v1/public/extract-and-verify     {       \"text\": \"Content with invisible embedding...\"     }     ```
-     * Extract and Verify Invisible Embedding (Public - No Auth Required)
+     * **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+     * DEPRECATED - Use POST /api/v1/verify instead
+     * @deprecated
      */
-    async extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRaw(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<ExtractAndVerifyResponse>> {
+    async extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRaw(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<any>> {
         if (requestParameters['extractAndVerifyRequest'] == null) {
             throw new runtime.RequiredError(
                 'extractAndVerifyRequest',
@@ -185,10 +183,6 @@ export class PublicVerificationApi extends runtime.BaseAPI implements PublicVeri
 
         headerParameters['Content-Type'] = 'application/json';
 
-        if (requestParameters['authorization'] != null) {
-            headerParameters['authorization'] = String(requestParameters['authorization']);
-        }
-
 
         let urlPath = `/api/v1/public/extract-and-verify`;
 
@@ -200,20 +194,25 @@ export class PublicVerificationApi extends runtime.BaseAPI implements PublicVeri
             body: ExtractAndVerifyRequestToJSON(requestParameters['extractAndVerifyRequest']),
         }, initOverrides);
 
-        return new runtime.JSONApiResponse(response, (jsonValue) => ExtractAndVerifyResponseFromJSON(jsonValue));
+        if (this.isJsonMime(response.headers.get('content-type'))) {
+            return new runtime.JSONApiResponse<any>(response);
+        } else {
+            return new runtime.TextApiResponse(response) as any;
+        }
     }
 
     /**
-     * Extract and verify invisible Unicode embedding from text using encypher-ai.          **This endpoint is PUBLIC and does NOT require authentication.**          This is the NEW verification method for invisible embeddings:     - Extracts invisible Unicode variation selector embeddings     - Verifies cryptographic signature using encypher-ai     - Returns enterprise metadata (Merkle tree, document info, etc.)          **How it works:**     1. Text contains invisible Unicode variation selectors     2. encypher-ai extracts and verifies the embedded metadata     3. Enterprise API looks up Merkle tree and document info     4. Returns full verification result with all metadata          **Rate Limiting:**     - 1000 requests/hour per IP address          **Example Usage:**     ```json     POST /api/v1/public/extract-and-verify     {       \"text\": \"Content with invisible embedding...\"     }     ```
-     * Extract and Verify Invisible Embedding (Public - No Auth Required)
+     * **⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use `POST /api/v1/verify` instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
+     * DEPRECATED - Use POST /api/v1/verify instead
+     * @deprecated
      */
-    async extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<ExtractAndVerifyResponse> {
+    async extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(requestParameters: ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<any> {
         const response = await this.extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRaw(requestParameters, initOverrides);
         return await response.value();
     }
 
     /**
-     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Only returns text preview (first 200 characters)     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
      * Verify Embedding (Public - No Auth Required)
      */
     async verifyEmbeddingApiV1PublicVerifyRefIdGetRaw(requestParameters: VerifyEmbeddingApiV1PublicVerifyRefIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<runtime.ApiResponse<VerifyEmbeddingResponse>> {
@@ -258,7 +257,7 @@ export class PublicVerificationApi extends runtime.BaseAPI implements PublicVeri
     }
 
     /**
-     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Only returns text preview (first 200 characters)     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
+     * Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     ```     GET /api/v1/public/verify/a3f9c2e1?signature=8k3mP9xQ     ```
      * Verify Embedding (Public - No Auth Required)
      */
     async verifyEmbeddingApiV1PublicVerifyRefIdGet(requestParameters: VerifyEmbeddingApiV1PublicVerifyRefIdGetRequest, initOverrides?: RequestInit | runtime.InitOverrideFunction): Promise<VerifyEmbeddingResponse> {

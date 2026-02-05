@@ -21,9 +21,9 @@ import type { DocumentEncodeRequest } from '@encypher/sdk'
 
 // TODO: Update the object below with actual values
 const example = {
-  "documentId": doc_2024_article_001,
-  "text": This is the first sentence. This is the second sentence.,
-  "segmentationLevels": [sentence, paragraph],
+  "documentId": null,
+  "text": null,
+  "segmentationLevels": null,
   "includeWords": null,
   "metadata": null,
   "fuzzyFingerprint": null,

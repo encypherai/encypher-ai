@@ -29,14 +29,14 @@ class TestSigningApi(unittest.TestCase):
     def test_sign_advanced_api_v1_sign_advanced_post(self) -> None:
         """Test case for sign_advanced_api_v1_sign_advanced_post
 
-        Sign with advanced embedding controls
+        REMOVED - Use POST /sign with options instead
         """
         pass
 
     def test_sign_content_api_v1_sign_post(self) -> None:
         """Test case for sign_content_api_v1_sign_post
 
-        Sign Content
+        Sign content with C2PA manifest
         """
         pass
 

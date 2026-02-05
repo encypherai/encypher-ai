@@ -4,7 +4,7 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**TextPreview** | **string** | First 200 characters of content | 
+**TextPreview** | Pointer to **NullableString** |  | [optional] 
 **LeafHash** | **string** | Cryptographic hash of full content | 
 **LeafIndex** | **int32** | Position in document | 
 
@@ -12,7 +12,7 @@ Name | Type | Description | Notes
 
 ### NewContentInfo
 
-`func NewContentInfo(textPreview string, leafHash string, leafIndex int32, ) *ContentInfo`
+`func NewContentInfo(leafHash string, leafIndex int32, ) *ContentInfo`
 
 NewContentInfo instantiates a new ContentInfo object
 This constructor will assign default values to properties that have it defined,
@@ -46,7 +46,22 @@ and a boolean to check if the value has been set.
 
 SetTextPreview sets TextPreview field to given value.
 
+### HasTextPreview
 
+`func (o *ContentInfo) HasTextPreview() bool`
+
+HasTextPreview returns a boolean if a field has been set.
+
+### SetTextPreviewNil
+
+`func (o *ContentInfo) SetTextPreviewNil(b bool)`
+
+ SetTextPreviewNil sets the value for TextPreview to be an explicit nil
+
+### UnsetTextPreview
+`func (o *ContentInfo) UnsetTextPreview()`
+
+UnsetTextPreview ensures that no value is present for TextPreview, not even an explicit nil
 ### GetLeafHash
 
 `func (o *ContentInfo) GetLeafHash() string`

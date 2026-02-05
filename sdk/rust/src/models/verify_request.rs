@@ -15,12 +15,15 @@ use serde::{Deserialize, Serialize};
 pub struct VerifyRequest {
     #[serde(rename = "text")]
     pub text: String,
+    #[serde(rename = "options", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub options: Option<Option<Box<models::VerifyOptions>>>,
 }
 
 impl VerifyRequest {
     pub fn new(text: String) -> VerifyRequest {
         VerifyRequest {
             text,
+            options: None,
         }
     }
 }

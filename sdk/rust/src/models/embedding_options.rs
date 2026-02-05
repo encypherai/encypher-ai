@@ -11,22 +11,22 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
-/// EmbeddingOptions : Options for embedding generation.
+/// EmbeddingOptions : Options for embedding generation output format.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EmbeddingOptions {
-    /// Output format: html, markdown, json, pdf, plain
+    /// Output format: plain, html, markdown, json
     #[serde(rename = "format", skip_serializing_if = "Option::is_none")]
     pub format: Option<String>,
-    /// Embedding method: data-attribute, span, comment
+    /// Embedding method: invisible (zero-width Unicode), data-attribute, span, comment
     #[serde(rename = "method", skip_serializing_if = "Option::is_none")]
     pub method: Option<String>,
-    /// Whether to return text with embeddings
+    /// Whether to return text with embeddings in response
     #[serde(rename = "include_text", skip_serializing_if = "Option::is_none")]
     pub include_text: Option<bool>,
 }
 
 impl EmbeddingOptions {
-    /// Options for embedding generation.
+    /// Options for embedding generation output format.
     pub fn new() -> EmbeddingOptions {
         EmbeddingOptions {
             format: None,

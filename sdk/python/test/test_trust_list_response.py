@@ -39,7 +39,11 @@ class TestTrustListResponse(unittest.TestCase):
                 trusted_cas = [
                     ''
                     ],
-                trust_list_url = 'https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem'
+                trust_list_url = 'https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem',
+                trust_list_fingerprint = '',
+                trust_list_loaded_at = '',
+                trust_list_source = '',
+                trust_list_count = ''
             )
         else:
             return TrustListResponse(

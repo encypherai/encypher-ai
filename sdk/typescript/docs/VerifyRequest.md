@@ -7,6 +7,7 @@
 Name | Type
 ------------ | -------------
 `text` | string
+`options` | [VerifyOptions](VerifyOptions.md)
 
 ## Example
 
@@ -16,6 +17,7 @@ import type { VerifyRequest } from '@encypher/sdk'
 // TODO: Update the object below with actual values
 const example = {
   "text": null,
+  "options": null,
 } satisfies VerifyRequest
 
 console.log(example)

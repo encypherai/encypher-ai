@@ -9,6 +9,10 @@ Name | Type | Description | Notes
 **success** | **bool** |  | [optional] [default to True]
 **trusted_cas** | **List[str]** |  | [optional] 
 **trust_list_url** | **str** |  | [optional] [default to 'https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem']
+**trust_list_fingerprint** | **str** |  | [optional] 
+**trust_list_loaded_at** | **str** |  | [optional] 
+**trust_list_source** | **str** |  | [optional] 
+**trust_list_count** | **str** |  | [optional] 
 
 ## Example
 

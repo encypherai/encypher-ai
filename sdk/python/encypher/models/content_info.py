@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -26,7 +26,7 @@ class ContentInfo(BaseModel):
     """
     Content information from verification.
     """ # noqa: E501
-    text_preview: StrictStr = Field(description="First 200 characters of content")
+    text_preview: Optional[StrictStr] = None
     leaf_hash: StrictStr = Field(description="Cryptographic hash of full content")
     leaf_index: StrictInt = Field(description="Position in document")
     __properties: ClassVar[List[str]] = ["text_preview", "leaf_hash", "leaf_index"]
@@ -70,6 +70,11 @@ class ContentInfo(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if text_preview (nullable) is None
+        # and model_fields_set contains the field
+        if self.text_preview is None and "text_preview" in self.model_fields_set:
+            _dict['text_preview'] = None
+
         return _dict
 
     @classmethod

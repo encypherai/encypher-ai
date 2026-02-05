@@ -37,6 +37,30 @@ export interface TrustListResponse {
      * @memberof TrustListResponse
      */
     trustListUrl?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof TrustListResponse
+     */
+    trustListFingerprint?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof TrustListResponse
+     */
+    trustListLoadedAt?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof TrustListResponse
+     */
+    trustListSource?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof TrustListResponse
+     */
+    trustListCount?: string | null;
 }
 
 /**
@@ -59,6 +83,10 @@ export function TrustListResponseFromJSONTyped(json: any, ignoreDiscriminator: b
         'success': json['success'] == null ? undefined : json['success'],
         'trustedCas': json['trusted_cas'] == null ? undefined : json['trusted_cas'],
         'trustListUrl': json['trust_list_url'] == null ? undefined : json['trust_list_url'],
+        'trustListFingerprint': json['trust_list_fingerprint'] == null ? undefined : json['trust_list_fingerprint'],
+        'trustListLoadedAt': json['trust_list_loaded_at'] == null ? undefined : json['trust_list_loaded_at'],
+        'trustListSource': json['trust_list_source'] == null ? undefined : json['trust_list_source'],
+        'trustListCount': json['trust_list_count'] == null ? undefined : json['trust_list_count'],
     };
 }
 
@@ -76,6 +104,10 @@ export function TrustListResponseToJSONTyped(value?: TrustListResponse | null, i
         'success': value['success'],
         'trusted_cas': value['trustedCas'],
         'trust_list_url': value['trustListUrl'],
+        'trust_list_fingerprint': value['trustListFingerprint'],
+        'trust_list_loaded_at': value['trustListLoadedAt'],
+        'trust_list_source': value['trustListSource'],
+        'trust_list_count': value['trustListCount'],
     };
 }
 

@@ -5,7 +5,7 @@ All URIs are relative to *https://api.encypherai.com*
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
 | [**batchVerifyEmbeddingsApiV1PublicVerifyBatchPost**](PublicVerificationApi.md#batchverifyembeddingsapiv1publicverifybatchpost) | **POST** /api/v1/public/verify/batch | Batch Verify Embeddings (Public - No Auth Required) |
-| [**extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost**](PublicVerificationApi.md#extractandverifyembeddingapiv1publicextractandverifypost) | **POST** /api/v1/public/extract-and-verify | Extract and Verify Invisible Embedding (Public - No Auth Required) |
+| [**extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost**](PublicVerificationApi.md#extractandverifyembeddingapiv1publicextractandverifypost) | **POST** /api/v1/public/extract-and-verify | DEPRECATED - Use POST /api/v1/verify instead |
 | [**verifyEmbeddingApiV1PublicVerifyRefIdGet**](PublicVerificationApi.md#verifyembeddingapiv1publicverifyrefidget) | **GET** /api/v1/public/verify/{ref_id} | Verify Embedding (Public - No Auth Required) |
 
 
@@ -85,11 +85,11 @@ No authorization required
 
 ## extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost
 
-> ExtractAndVerifyResponse extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(extractAndVerifyRequest, authorization)
+> any extractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(extractAndVerifyRequest)
 
-Extract and Verify Invisible Embedding (Public - No Auth Required)
+DEPRECATED - Use POST /api/v1/verify instead
 
-Extract and verify invisible Unicode embedding from text using encypher-ai.          **This endpoint is PUBLIC and does NOT require authentication.**          This is the NEW verification method for invisible embeddings:     - Extracts invisible Unicode variation selector embeddings     - Verifies cryptographic signature using encypher-ai     - Returns enterprise metadata (Merkle tree, document info, etc.)          **How it works:**     1. Text contains invisible Unicode variation selectors     2. encypher-ai extracts and verifies the embedded metadata     3. Enterprise API looks up Merkle tree and document info     4. Returns full verification result with all metadata          **Rate Limiting:**     - 1000 requests/hour per IP address          **Example Usage:**     &#x60;&#x60;&#x60;json     POST /api/v1/public/extract-and-verify     {       \&quot;text\&quot;: \&quot;Content with invisible embedding...\&quot;     }     &#x60;&#x60;&#x60;
+**⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**          Please use &#x60;POST /api/v1/verify&#x60; instead, which provides:     - Full C2PA trust chain validation     - Document info, licensing, and C2PA details (all free)     - Merkle proof (with API key)     - Better performance via verification-service
 
 ### Example
 
@@ -107,8 +107,6 @@ async function example() {
   const body = {
     // ExtractAndVerifyRequest
     extractAndVerifyRequest: ...,
-    // string (optional)
-    authorization: authorization_example,
   } satisfies ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest;
 
   try {
@@ -129,11 +127,10 @@ example().catch(console.error);
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
 | **extractAndVerifyRequest** | [ExtractAndVerifyRequest](ExtractAndVerifyRequest.md) |  | |
-| **authorization** | `string` |  | [Optional] [Defaults to `undefined`] |
 
 ### Return type
 
-[**ExtractAndVerifyResponse**](ExtractAndVerifyResponse.md)
+**any**
 
 ### Authorization
 
@@ -148,10 +145,8 @@ No authorization required
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Embedding extracted and verified |  -  |
-| **400** | Invalid request |  -  |
-| **404** | No embedding found |  -  |
-| **429** | Rate limit exceeded |  -  |
+| **200** | Successful Response |  -  |
+| **301** | Redirect to /api/v1/verify |  -  |
 | **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
@@ -163,7 +158,7 @@ No authorization required
 
 Verify Embedding (Public - No Auth Required)
 
-Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Only returns text preview (first 200 characters)     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     &#x60;&#x60;&#x60;     GET /api/v1/public/verify/a3f9c2e1?signature&#x3D;8k3mP9xQ     &#x60;&#x60;&#x60;
+Verify a minimal signed embedding and retrieve associated metadata.          **This endpoint is PUBLIC and does NOT require authentication.**          Third parties can use this endpoint to:     - Verify authenticity of content with embedded markers     - Retrieve document metadata (title, author, organization)     - Access C2PA manifest information     - View licensing terms     - Get Merkle proof for cryptographic verification          **Rate Limiting:**     - 1000 requests/hour per IP address     - CAPTCHA required after repeated failures          **Privacy:**     - Does not return DB-stored text     - Full text content is NOT exposed     - Internal document IDs are mapped to public IDs          **Example Usage:**     &#x60;&#x60;&#x60;     GET /api/v1/public/verify/a3f9c2e1?signature&#x3D;8k3mP9xQ     &#x60;&#x60;&#x60;
 
 ### Example
 

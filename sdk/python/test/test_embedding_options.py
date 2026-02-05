@@ -35,8 +35,8 @@ class TestEmbeddingOptions(unittest.TestCase):
         model = EmbeddingOptions()
         if include_optional:
             return EmbeddingOptions(
-                format = 'html',
-                method = 'data-attribute',
+                format = 'plain',
+                method = 'invisible',
                 include_text = True
             )
         else:

@@ -1,7 +1,7 @@
 
 # EmbeddingOptions
 
-Options for embedding generation.
+Options for embedding generation output format.
 
 ## Properties
 

@@ -4,18 +4,18 @@ All URIs are relative to *https://api.encypherai.com*
 
 | Method | HTTP request | Description |
 |------------- | ------------- | -------------|
-| [**signAdvancedApiV1SignAdvancedPost**](SigningApi.md#signadvancedapiv1signadvancedpost) | **POST** /api/v1/sign/advanced | Sign with advanced embedding controls |
-| [**signContentApiV1SignPost**](SigningApi.md#signcontentapiv1signpost) | **POST** /api/v1/sign | Sign Content |
+| [**signAdvancedApiV1SignAdvancedPost**](SigningApi.md#signadvancedapiv1signadvancedpost) | **POST** /api/v1/sign/advanced | REMOVED - Use POST /sign with options instead |
+| [**signContentApiV1SignPost**](SigningApi.md#signcontentapiv1signpost) | **POST** /api/v1/sign | Sign content with C2PA manifest |
 
 
 
 ## signAdvancedApiV1SignAdvancedPost
 
-> EncodeWithEmbeddingsResponse signAdvancedApiV1SignAdvancedPost(encodeWithEmbeddingsRequest)
+> any signAdvancedApiV1SignAdvancedPost()
 
-Sign with advanced embedding controls
+REMOVED - Use POST /sign with options instead
 
-Sign a document while enabling advanced embedding controls (e.g., manifest options and distribution strategies).  Tier requirements are enforced server-side (typically Professional+ depending on selected options).
+**⚠️ REMOVED: This endpoint has been removed.**  Please use &#x60;POST /sign&#x60; with options instead.  Migration example: &#x60;&#x60;&#x60;json // Old /sign/advanced request {     \&quot;document_id\&quot;: \&quot;doc1\&quot;,     \&quot;text\&quot;: \&quot;...\&quot;,     \&quot;segmentation_level\&quot;: \&quot;sentence\&quot; }  // New /sign request {     \&quot;text\&quot;: \&quot;...\&quot;,     \&quot;document_id\&quot;: \&quot;doc1\&quot;,     \&quot;options\&quot;: {         \&quot;segmentation_level\&quot;: \&quot;sentence\&quot;     } } &#x60;&#x60;&#x60;
 
 ### Example
 
@@ -28,19 +28,10 @@ import type { SignAdvancedApiV1SignAdvancedPostRequest } from '@encypher/sdk';
 
 async function example() {
   console.log("🚀 Testing @encypher/sdk SDK...");
-  const config = new Configuration({ 
-    // Configure HTTP bearer authorization: HTTPBearer
-    accessToken: "YOUR BEARER TOKEN",
-  });
-  const api = new SigningApi(config);
-
-  const body = {
-    // EncodeWithEmbeddingsRequest
-    encodeWithEmbeddingsRequest: ...,
-  } satisfies SignAdvancedApiV1SignAdvancedPostRequest;
+  const api = new SigningApi();
 
   try {
-    const data = await api.signAdvancedApiV1SignAdvancedPost(body);
+    const data = await api.signAdvancedApiV1SignAdvancedPost();
     console.log(data);
   } catch (error) {
     console.error(error);
@@ -53,41 +44,38 @@ example().catch(console.error);
 
 ### Parameters
 
-
-| Name | Type | Description  | Notes |
-|------------- | ------------- | ------------- | -------------|
-| **encodeWithEmbeddingsRequest** | [EncodeWithEmbeddingsRequest](EncodeWithEmbeddingsRequest.md) |  | |
+This endpoint does not need any parameter.
 
 ### Return type
 
-[**EncodeWithEmbeddingsResponse**](EncodeWithEmbeddingsResponse.md)
+**any**
 
 ### Authorization
 
-[HTTPBearer](../README.md#HTTPBearer)
+No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: `application/json`
+- **Content-Type**: Not defined
 - **Accept**: `application/json`
 
 
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **201** | Successful Response |  -  |
-| **422** | Validation Error |  -  |
+| **200** | Successful Response |  -  |
+| **410** | Endpoint removed |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 
 ## signContentApiV1SignPost
 
-> SignResponse signContentApiV1SignPost(signRequest)
+> any signContentApiV1SignPost(unifiedSignRequest)
 
-Sign Content
+Sign content with C2PA manifest
 
-Sign content with a C2PA manifest.
+Sign content with C2PA manifest. Features are gated by tier.  **Tier Feature Matrix:**  | Feature | Free/Starter | Professional | Business | Enterprise | |---------|--------------|--------------|----------|------------| | Basic C2PA signing | ✅ | ✅ | ✅ | ✅ | | Sentence segmentation | ❌ | ✅ | ✅ | ✅ | | Advanced manifest modes | ❌ | ✅ | ✅ | ✅ | | Attribution indexing | ❌ | ✅ | ✅ | ✅ | | Custom assertions | ❌ | ❌ | ✅ | ✅ | | Rights metadata | ❌ | ❌ | ✅ | ✅ | | Dual binding | ❌ | ❌ | ❌ | ✅ | | Fingerprinting | ❌ | ❌ | ❌ | ✅ | | Batch size | 1 | 10 | 50 | 100 |  **Single Document:** &#x60;&#x60;&#x60;json {     \&quot;text\&quot;: \&quot;Content to sign...\&quot;,     \&quot;document_title\&quot;: \&quot;My Article\&quot;,     \&quot;options\&quot;: {         \&quot;segmentation_level\&quot;: \&quot;sentence\&quot;     } } &#x60;&#x60;&#x60;  **Batch (Professional+):** &#x60;&#x60;&#x60;json {     \&quot;documents\&quot;: [         {\&quot;text\&quot;: \&quot;First doc...\&quot;, \&quot;document_title\&quot;: \&quot;Doc 1\&quot;},         {\&quot;text\&quot;: \&quot;Second doc...\&quot;, \&quot;document_title\&quot;: \&quot;Doc 2\&quot;}     ],     \&quot;options\&quot;: {         \&quot;segmentation_level\&quot;: \&quot;sentence\&quot;     } } &#x60;&#x60;&#x60;  The response includes &#x60;meta.features_gated&#x60; showing features available at higher tiers.
 
 ### Example
 
@@ -107,8 +95,8 @@ async function example() {
   const api = new SigningApi(config);
 
   const body = {
-    // SignRequest
-    signRequest: ...,
+    // UnifiedSignRequest
+    unifiedSignRequest: ...,
   } satisfies SignContentApiV1SignPostRequest;
 
   try {
@@ -128,11 +116,11 @@ example().catch(console.error);
 
 | Name | Type | Description  | Notes |
 |------------- | ------------- | ------------- | -------------|
-| **signRequest** | [SignRequest](SignRequest.md) |  | |
+| **unifiedSignRequest** | [UnifiedSignRequest](UnifiedSignRequest.md) |  | |
 
 ### Return type
 
-[**SignResponse**](SignResponse.md)
+**any**
 
 ### Authorization
 
@@ -147,7 +135,10 @@ example().catch(console.error);
 ### HTTP response details
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
-| **200** | Successful Response |  -  |
+| **201** | Content signed successfully |  -  |
+| **400** | Invalid request |  -  |
+| **403** | Feature requires higher tier |  -  |
+| **429** | Rate limit exceeded |  -  |
 | **422** | Validation Error |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)

@@ -13,6 +13,14 @@
  */
 
 import { mapValues } from '../runtime';
+import type { VerifyOptions } from './VerifyOptions';
+import {
+    VerifyOptionsFromJSON,
+    VerifyOptionsFromJSONTyped,
+    VerifyOptionsToJSON,
+    VerifyOptionsToJSONTyped,
+} from './VerifyOptions';
+
 /**
  * 
  * @export
@@ -25,6 +33,12 @@ export interface VerifyRequest {
      * @memberof VerifyRequest
      */
     text: string;
+    /**
+     * 
+     * @type {VerifyOptions}
+     * @memberof VerifyRequest
+     */
+    options?: VerifyOptions | null;
 }
 
 /**
@@ -46,6 +60,7 @@ export function VerifyRequestFromJSONTyped(json: any, ignoreDiscriminator: boole
     return {
         
         'text': json['text'],
+        'options': json['options'] == null ? undefined : VerifyOptionsFromJSON(json['options']),
     };
 }
 
@@ -61,6 +76,7 @@ export function VerifyRequestToJSONTyped(value?: VerifyRequest | null, ignoreDis
     return {
         
         'text': value['text'],
+        'options': VerifyOptionsToJSON(value['options']),
     };
 }
 

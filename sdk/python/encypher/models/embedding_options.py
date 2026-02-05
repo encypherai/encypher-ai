@@ -24,11 +24,11 @@ from typing_extensions import Self
 
 class EmbeddingOptions(BaseModel):
     """
-    Options for embedding generation.
+    Options for embedding generation output format.
     """ # noqa: E501
-    format: Optional[StrictStr] = Field(default='html', description="Output format: html, markdown, json, pdf, plain")
-    method: Optional[StrictStr] = Field(default='data-attribute', description="Embedding method: data-attribute, span, comment")
-    include_text: Optional[StrictBool] = Field(default=True, description="Whether to return text with embeddings")
+    format: Optional[StrictStr] = Field(default='plain', description="Output format: plain, html, markdown, json")
+    method: Optional[StrictStr] = Field(default='invisible', description="Embedding method: invisible (zero-width Unicode), data-attribute, span, comment")
+    include_text: Optional[StrictBool] = Field(default=True, description="Whether to return text with embeddings in response")
     __properties: ClassVar[List[str]] = ["format", "method", "include_text"]
 
     model_config = ConfigDict(
@@ -82,8 +82,8 @@ class EmbeddingOptions(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "format": obj.get("format") if obj.get("format") is not None else 'html',
-            "method": obj.get("method") if obj.get("method") is not None else 'data-attribute',
+            "format": obj.get("format") if obj.get("format") is not None else 'plain',
+            "method": obj.get("method") if obj.get("method") is not None else 'invisible',
             "include_text": obj.get("include_text") if obj.get("include_text") is not None else True
         })
         return _obj

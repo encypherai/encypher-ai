@@ -4,16 +4,16 @@ All URIs are relative to *https://api.encypherai.com*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**SignAdvancedApiV1SignAdvancedPost**](SigningAPI.md#SignAdvancedApiV1SignAdvancedPost) | **Post** /api/v1/sign/advanced | Sign with advanced embedding controls
-[**SignContentApiV1SignPost**](SigningAPI.md#SignContentApiV1SignPost) | **Post** /api/v1/sign | Sign Content
+[**SignAdvancedApiV1SignAdvancedPost**](SigningAPI.md#SignAdvancedApiV1SignAdvancedPost) | **Post** /api/v1/sign/advanced | REMOVED - Use POST /sign with options instead
+[**SignContentApiV1SignPost**](SigningAPI.md#SignContentApiV1SignPost) | **Post** /api/v1/sign | Sign content with C2PA manifest
 
 
 
 ## SignAdvancedApiV1SignAdvancedPost
 
-> EncodeWithEmbeddingsResponse SignAdvancedApiV1SignAdvancedPost(ctx).EncodeWithEmbeddingsRequest(encodeWithEmbeddingsRequest).Execute()
+> interface{} SignAdvancedApiV1SignAdvancedPost(ctx).Execute()
 
-Sign with advanced embedding controls
+REMOVED - Use POST /sign with options instead
 
 
 
@@ -30,44 +30,39 @@ import (
 )
 
 func main() {
-	encodeWithEmbeddingsRequest := *openapiclient.NewEncodeWithEmbeddingsRequest("DocumentId_example", "Text_example") // EncodeWithEmbeddingsRequest | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.SigningAPI.SignAdvancedApiV1SignAdvancedPost(context.Background()).EncodeWithEmbeddingsRequest(encodeWithEmbeddingsRequest).Execute()
+	resp, r, err := apiClient.SigningAPI.SignAdvancedApiV1SignAdvancedPost(context.Background()).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `SigningAPI.SignAdvancedApiV1SignAdvancedPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `SignAdvancedApiV1SignAdvancedPost`: EncodeWithEmbeddingsResponse
+	// response from `SignAdvancedApiV1SignAdvancedPost`: interface{}
 	fmt.Fprintf(os.Stdout, "Response from `SigningAPI.SignAdvancedApiV1SignAdvancedPost`: %v\n", resp)
 }
 ```
 
 ### Path Parameters
 
-
+This endpoint does not need any parameter.
 
 ### Other Parameters
 
 Other parameters are passed through a pointer to a apiSignAdvancedApiV1SignAdvancedPostRequest struct via the builder pattern
 
 
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **encodeWithEmbeddingsRequest** | [**EncodeWithEmbeddingsRequest**](EncodeWithEmbeddingsRequest.md) |  | 
-
 ### Return type
 
-[**EncodeWithEmbeddingsResponse**](EncodeWithEmbeddingsResponse.md)
+**interface{}**
 
 ### Authorization
 
-[HTTPBearer](../README.md#HTTPBearer)
+No authorization required
 
 ### HTTP request headers
 
-- **Content-Type**: application/json
+- **Content-Type**: Not defined
 - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints)
@@ -77,9 +72,9 @@ Name | Type | Description  | Notes
 
 ## SignContentApiV1SignPost
 
-> SignResponse SignContentApiV1SignPost(ctx).SignRequest(signRequest).Execute()
+> interface{} SignContentApiV1SignPost(ctx).UnifiedSignRequest(unifiedSignRequest).Execute()
 
-Sign Content
+Sign content with C2PA manifest
 
 
 
@@ -96,16 +91,16 @@ import (
 )
 
 func main() {
-	signRequest := *openapiclient.NewSignRequest("Text_example") // SignRequest | 
+	unifiedSignRequest := *openapiclient.NewUnifiedSignRequest() // UnifiedSignRequest | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)
-	resp, r, err := apiClient.SigningAPI.SignContentApiV1SignPost(context.Background()).SignRequest(signRequest).Execute()
+	resp, r, err := apiClient.SigningAPI.SignContentApiV1SignPost(context.Background()).UnifiedSignRequest(unifiedSignRequest).Execute()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error when calling `SigningAPI.SignContentApiV1SignPost``: %v\n", err)
 		fmt.Fprintf(os.Stderr, "Full HTTP response: %v\n", r)
 	}
-	// response from `SignContentApiV1SignPost`: SignResponse
+	// response from `SignContentApiV1SignPost`: interface{}
 	fmt.Fprintf(os.Stdout, "Response from `SigningAPI.SignContentApiV1SignPost`: %v\n", resp)
 }
 ```
@@ -121,11 +116,11 @@ Other parameters are passed through a pointer to a apiSignContentApiV1SignPostRe
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **signRequest** | [**SignRequest**](SignRequest.md) |  | 
+ **unifiedSignRequest** | [**UnifiedSignRequest**](UnifiedSignRequest.md) |  | 
 
 ### Return type
 
-[**SignResponse**](SignResponse.md)
+**interface{}**
 
 ### Authorization
 

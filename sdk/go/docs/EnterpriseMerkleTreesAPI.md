@@ -29,7 +29,7 @@ import (
 )
 
 func main() {
-	documentEncodeRequest := *openapiclient.NewDocumentEncodeRequest("doc_2024_article_001", "This is the first sentence. This is the second sentence.") // DocumentEncodeRequest | 
+	documentEncodeRequest := *openapiclient.NewDocumentEncodeRequest("DocumentId_example", "Text_example") // DocumentEncodeRequest | 
 
 	configuration := openapiclient.NewConfiguration()
 	apiClient := openapiclient.NewAPIClient(configuration)

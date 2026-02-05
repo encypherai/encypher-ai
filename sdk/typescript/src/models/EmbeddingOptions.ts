@@ -14,25 +14,25 @@
 
 import { mapValues } from '../runtime';
 /**
- * Options for embedding generation.
+ * Options for embedding generation output format.
  * @export
  * @interface EmbeddingOptions
  */
 export interface EmbeddingOptions {
     /**
-     * Output format: html, markdown, json, pdf, plain
+     * Output format: plain, html, markdown, json
      * @type {string}
      * @memberof EmbeddingOptions
      */
     format?: string;
     /**
-     * Embedding method: data-attribute, span, comment
+     * Embedding method: invisible (zero-width Unicode), data-attribute, span, comment
      * @type {string}
      * @memberof EmbeddingOptions
      */
     method?: string;
     /**
-     * Whether to return text with embeddings
+     * Whether to return text with embeddings in response
      * @type {boolean}
      * @memberof EmbeddingOptions
      */

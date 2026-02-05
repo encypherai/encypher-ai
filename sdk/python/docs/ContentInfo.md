@@ -6,7 +6,7 @@ Content information from verification.
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**text_preview** | **str** | First 200 characters of content | 
+**text_preview** | **str** |  | [optional] 
 **leaf_hash** | **str** | Cryptographic hash of full content | 
 **leaf_index** | **int** | Position in document | 
 

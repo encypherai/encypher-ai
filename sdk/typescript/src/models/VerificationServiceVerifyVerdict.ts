@@ -13,8 +13,37 @@
  */
 
 import { mapValues } from '../runtime';
+import type { LicensingInfo } from './LicensingInfo';
+import {
+    LicensingInfoFromJSON,
+    LicensingInfoFromJSONTyped,
+    LicensingInfoToJSON,
+    LicensingInfoToJSONTyped,
+} from './LicensingInfo';
+import type { MerkleProofInfo } from './MerkleProofInfo';
+import {
+    MerkleProofInfoFromJSON,
+    MerkleProofInfoFromJSONTyped,
+    MerkleProofInfoToJSON,
+    MerkleProofInfoToJSONTyped,
+} from './MerkleProofInfo';
+import type { C2PAInfo } from './C2PAInfo';
+import {
+    C2PAInfoFromJSON,
+    C2PAInfoFromJSONTyped,
+    C2PAInfoToJSON,
+    C2PAInfoToJSONTyped,
+} from './C2PAInfo';
+import type { DocumentInfo } from './DocumentInfo';
+import {
+    DocumentInfoFromJSON,
+    DocumentInfoFromJSONTyped,
+    DocumentInfoToJSON,
+    DocumentInfoToJSONTyped,
+} from './DocumentInfo';
+
 /**
- * 
+ * Core verification result.
  * @export
  * @interface VerificationServiceVerifyVerdict
  */
@@ -51,10 +80,46 @@ export interface VerificationServiceVerifyVerdict {
     signerName?: string | null;
     /**
      * 
+     * @type {string}
+     * @memberof VerificationServiceVerifyVerdict
+     */
+    organizationId?: string | null;
+    /**
+     * 
+     * @type {string}
+     * @memberof VerificationServiceVerifyVerdict
+     */
+    organizationName?: string | null;
+    /**
+     * 
      * @type {Date}
      * @memberof VerificationServiceVerifyVerdict
      */
     timestamp?: Date | null;
+    /**
+     * 
+     * @type {DocumentInfo}
+     * @memberof VerificationServiceVerifyVerdict
+     */
+    document?: DocumentInfo | null;
+    /**
+     * 
+     * @type {C2PAInfo}
+     * @memberof VerificationServiceVerifyVerdict
+     */
+    c2pa?: C2PAInfo | null;
+    /**
+     * 
+     * @type {LicensingInfo}
+     * @memberof VerificationServiceVerifyVerdict
+     */
+    licensing?: LicensingInfo | null;
+    /**
+     * 
+     * @type {MerkleProofInfo}
+     * @memberof VerificationServiceVerifyVerdict
+     */
+    merkleProof?: MerkleProofInfo | null;
     /**
      * 
      * @type {{ [key: string]: any; }}
@@ -88,7 +153,13 @@ export function VerificationServiceVerifyVerdictFromJSONTyped(json: any, ignoreD
         'reasonCode': json['reason_code'],
         'signerId': json['signer_id'] == null ? undefined : json['signer_id'],
         'signerName': json['signer_name'] == null ? undefined : json['signer_name'],
+        'organizationId': json['organization_id'] == null ? undefined : json['organization_id'],
+        'organizationName': json['organization_name'] == null ? undefined : json['organization_name'],
         'timestamp': json['timestamp'] == null ? undefined : (new Date(json['timestamp'])),
+        'document': json['document'] == null ? undefined : DocumentInfoFromJSON(json['document']),
+        'c2pa': json['c2pa'] == null ? undefined : C2PAInfoFromJSON(json['c2pa']),
+        'licensing': json['licensing'] == null ? undefined : LicensingInfoFromJSON(json['licensing']),
+        'merkleProof': json['merkle_proof'] == null ? undefined : MerkleProofInfoFromJSON(json['merkle_proof']),
         'details': json['details'] == null ? undefined : json['details'],
     };
 }
@@ -109,7 +180,13 @@ export function VerificationServiceVerifyVerdictToJSONTyped(value?: Verification
         'reason_code': value['reasonCode'],
         'signer_id': value['signerId'],
         'signer_name': value['signerName'],
+        'organization_id': value['organizationId'],
+        'organization_name': value['organizationName'],
         'timestamp': value['timestamp'] == null ? value['timestamp'] : value['timestamp'].toISOString(),
+        'document': DocumentInfoToJSON(value['document']),
+        'c2pa': C2PAInfoToJSON(value['c2pa']),
+        'licensing': LicensingInfoToJSON(value['licensing']),
+        'merkle_proof': MerkleProofInfoToJSON(value['merkleProof']),
         'details': value['details'],
     };
 }

@@ -4,9 +4,9 @@
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**Format** | Pointer to **string** | Output format: html, markdown, json, pdf, plain | [optional] [default to "html"]
-**Method** | Pointer to **string** | Embedding method: data-attribute, span, comment | [optional] [default to "data-attribute"]
-**IncludeText** | Pointer to **bool** | Whether to return text with embeddings | [optional] [default to true]
+**Format** | Pointer to **string** | Output format: plain, html, markdown, json | [optional] [default to "plain"]
+**Method** | Pointer to **string** | Embedding method: invisible (zero-width Unicode), data-attribute, span, comment | [optional] [default to "invisible"]
+**IncludeText** | Pointer to **bool** | Whether to return text with embeddings in response | [optional] [default to true]
 
 ## Methods
 

@@ -16,8 +16,9 @@ from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from pydantic import StrictInt
+from pydantic import Field
 from typing import Any, Optional
+from typing_extensions import Annotated
 from encypher.models.usage_response import UsageResponse
 
 from encypher.api_client import ApiClient, RequestSerialized
@@ -41,7 +42,7 @@ class UsageApi:
     @validate_call
     def get_usage_history_api_v1_usage_history_get(
         self,
-        months: Optional[StrictInt] = None,
+        months: Optional[Annotated[int, Field(le=24, strict=True, ge=1)]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -109,7 +110,7 @@ class UsageApi:
     @validate_call
     def get_usage_history_api_v1_usage_history_get_with_http_info(
         self,
-        months: Optional[StrictInt] = None,
+        months: Optional[Annotated[int, Field(le=24, strict=True, ge=1)]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -177,7 +178,7 @@ class UsageApi:
     @validate_call
     def get_usage_history_api_v1_usage_history_get_without_preload_content(
         self,
-        months: Optional[StrictInt] = None,
+        months: Optional[Annotated[int, Field(le=24, strict=True, ge=1)]] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],

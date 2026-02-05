@@ -21,8 +21,7 @@ var _ MappedNullable = &ContentInfo{}
 
 // ContentInfo Content information from verification.
 type ContentInfo struct {
-	// First 200 characters of content
-	TextPreview string `json:"text_preview"`
+	TextPreview NullableString `json:"text_preview,omitempty"`
 	// Cryptographic hash of full content
 	LeafHash string `json:"leaf_hash"`
 	// Position in document
@@ -35,9 +34,8 @@ type _ContentInfo ContentInfo
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewContentInfo(textPreview string, leafHash string, leafIndex int32) *ContentInfo {
+func NewContentInfo(leafHash string, leafIndex int32) *ContentInfo {
 	this := ContentInfo{}
-	this.TextPreview = textPreview
 	this.LeafHash = leafHash
 	this.LeafIndex = leafIndex
 	return &this
@@ -51,28 +49,46 @@ func NewContentInfoWithDefaults() *ContentInfo {
 	return &this
 }
 
-// GetTextPreview returns the TextPreview field value
+// GetTextPreview returns the TextPreview field value if set, zero value otherwise (both if not set or set to explicit null).
 func (o *ContentInfo) GetTextPreview() string {
-	if o == nil {
+	if o == nil || IsNil(o.TextPreview.Get()) {
 		var ret string
 		return ret
 	}
-
-	return o.TextPreview
+	return *o.TextPreview.Get()
 }
 
-// GetTextPreviewOk returns a tuple with the TextPreview field value
+// GetTextPreviewOk returns a tuple with the TextPreview field value if set, nil otherwise
 // and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
 func (o *ContentInfo) GetTextPreviewOk() (*string, bool) {
 	if o == nil {
 		return nil, false
 	}
-	return &o.TextPreview, true
+	return o.TextPreview.Get(), o.TextPreview.IsSet()
 }
 
-// SetTextPreview sets field value
+// HasTextPreview returns a boolean if a field has been set.
+func (o *ContentInfo) HasTextPreview() bool {
+	if o != nil && o.TextPreview.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTextPreview gets a reference to the given NullableString and assigns it to the TextPreview field.
 func (o *ContentInfo) SetTextPreview(v string) {
-	o.TextPreview = v
+	o.TextPreview.Set(&v)
+}
+// SetTextPreviewNil sets the value for TextPreview to be an explicit nil
+func (o *ContentInfo) SetTextPreviewNil() {
+	o.TextPreview.Set(nil)
+}
+
+// UnsetTextPreview ensures that no value is present for TextPreview, not even an explicit nil
+func (o *ContentInfo) UnsetTextPreview() {
+	o.TextPreview.Unset()
 }
 
 // GetLeafHash returns the LeafHash field value
@@ -133,7 +149,9 @@ func (o ContentInfo) MarshalJSON() ([]byte, error) {
 
 func (o ContentInfo) ToMap() (map[string]interface{}, error) {
 	toSerialize := map[string]interface{}{}
-	toSerialize["text_preview"] = o.TextPreview
+	if o.TextPreview.IsSet() {
+		toSerialize["text_preview"] = o.TextPreview.Get()
+	}
 	toSerialize["leaf_hash"] = o.LeafHash
 	toSerialize["leaf_index"] = o.LeafIndex
 	return toSerialize, nil
@@ -144,7 +162,6 @@ func (o *ContentInfo) UnmarshalJSON(data []byte) (err error) {
 	// by unmarshalling the object into a generic map with string keys and checking
 	// that every required field exists as a key in the generic map.
 	requiredProperties := []string{
-		"text_preview",
 		"leaf_hash",
 		"leaf_index",
 	}

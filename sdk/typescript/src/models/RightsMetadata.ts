@@ -14,7 +14,7 @@
 
 import { mapValues } from '../runtime';
 /**
- * 
+ * Rights and licensing metadata to embed in signed content.
  * @export
  * @interface RightsMetadata
  */

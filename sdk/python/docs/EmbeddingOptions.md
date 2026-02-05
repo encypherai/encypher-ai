@@ -1,14 +1,14 @@
 # EmbeddingOptions
 
-Options for embedding generation.
+Options for embedding generation output format.
 
 ## Properties
 
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**format** | **str** | Output format: html, markdown, json, pdf, plain | [optional] [default to 'html']
-**method** | **str** | Embedding method: data-attribute, span, comment | [optional] [default to 'data-attribute']
-**include_text** | **bool** | Whether to return text with embeddings | [optional] [default to True]
+**format** | **str** | Output format: plain, html, markdown, json | [optional] [default to 'plain']
+**method** | **str** | Embedding method: invisible (zero-width Unicode), data-attribute, span, comment | [optional] [default to 'invisible']
+**include_text** | **bool** | Whether to return text with embeddings in response | [optional] [default to True]
 
 ## Example
 

@@ -8,7 +8,7 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **session_id** | **str** | Session ID to finalize | 
 **embed_manifest** | **bool** | Whether to embed C2PA manifest into the final document | [optional] [default to True]
-**manifest_mode** | **str** | Manifest mode: full, lightweight_uuid, hybrid | [optional] [default to 'full']
+**manifest_mode** | **str** | Manifest mode: full, lightweight_uuid, minimal_uuid, hybrid | [optional] [default to 'full']
 **action** | **str** | C2PA action type: c2pa.created or c2pa.edited | [optional] [default to 'c2pa.created']
 
 ## Example

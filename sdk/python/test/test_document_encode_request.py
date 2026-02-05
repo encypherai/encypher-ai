@@ -35,9 +35,11 @@ class TestDocumentEncodeRequest(unittest.TestCase):
         model = DocumentEncodeRequest()
         if include_optional:
             return DocumentEncodeRequest(
-                document_id = 'doc_2024_article_001',
-                text = 'This is the first sentence. This is the second sentence.',
-                segmentation_levels = [sentence, paragraph],
+                document_id = '0',
+                text = '0',
+                segmentation_levels = [
+                    ''
+                    ],
                 include_words = True,
                 metadata = {
                     'key' : null
@@ -54,8 +56,8 @@ class TestDocumentEncodeRequest(unittest.TestCase):
             )
         else:
             return DocumentEncodeRequest(
-                document_id = 'doc_2024_article_001',
-                text = 'This is the first sentence. This is the second sentence.',
+                document_id = '0',
+                text = '0',
         )
         """
 

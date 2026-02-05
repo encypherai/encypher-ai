@@ -40,7 +40,32 @@ class TestVerificationServiceVerifyVerdict(unittest.TestCase):
                 reason_code = '',
                 signer_id = '',
                 signer_name = '',
+                organization_id = '',
+                organization_name = '',
                 timestamp = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'),
+                document = encypher.models.document_info.DocumentInfo(
+                    document_id = '', 
+                    title = '', 
+                    published_at = datetime.datetime.strptime('2013-10-20 19:20:30.00', '%Y-%m-%d %H:%M:%S.%f'), 
+                    author = '', 
+                    organization = '', ),
+                c2pa = encypher.models.c2_pa_info.C2PAInfo(
+                    manifest_url = '', 
+                    manifest_hash = '', 
+                    validated = True, 
+                    validation_type = '', 
+                    validation_details = {
+                        'key' : null
+                        }, ),
+                licensing = encypher.models.licensing_info.LicensingInfo(
+                    license_type = '', 
+                    license_url = '', 
+                    usage_terms = '', 
+                    contact_email = '', ),
+                merkle_proof = encypher.models.merkle_proof_info.MerkleProofInfo(
+                    root_hash = '', 
+                    verified = True, 
+                    proof_url = '', ),
                 details = {
                     'key' : null
                     }

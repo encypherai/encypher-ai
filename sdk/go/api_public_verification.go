@@ -48,42 +48,27 @@ type PublicVerificationAPI interface {
 	BatchVerifyEmbeddingsApiV1PublicVerifyBatchPostExecute(r ApiBatchVerifyEmbeddingsApiV1PublicVerifyBatchPostRequest) (*BatchVerifyResponse, *http.Response, error)
 
 	/*
-	ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost Extract and Verify Invisible Embedding (Public - No Auth Required)
+	ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost DEPRECATED - Use POST /api/v1/verify instead
 
-	Extract and verify invisible Unicode embedding from text using encypher-ai.
+	**⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**
     
-    **This endpoint is PUBLIC and does NOT require authentication.**
-    
-    This is the NEW verification method for invisible embeddings:
-    - Extracts invisible Unicode variation selector embeddings
-    - Verifies cryptographic signature using encypher-ai
-    - Returns enterprise metadata (Merkle tree, document info, etc.)
-    
-    **How it works:**
-    1. Text contains invisible Unicode variation selectors
-    2. encypher-ai extracts and verifies the embedded metadata
-    3. Enterprise API looks up Merkle tree and document info
-    4. Returns full verification result with all metadata
-    
-    **Rate Limiting:**
-    - 1000 requests/hour per IP address
-    
-    **Example Usage:**
-    ```json
-    POST /api/v1/public/extract-and-verify
-    {
-      "text": "Content with invisible embedding..."
-    }
-    ```
+    Please use `POST /api/v1/verify` instead, which provides:
+    - Full C2PA trust chain validation
+    - Document info, licensing, and C2PA details (all free)
+    - Merkle proof (with API key)
+    - Better performance via verification-service
 
 	@param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
 	@return ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest
+
+	Deprecated
 	*/
 	ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(ctx context.Context) ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest
 
 	// ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostExecute executes the request
-	//  @return ExtractAndVerifyResponse
-	ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostExecute(r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) (*ExtractAndVerifyResponse, *http.Response, error)
+	//  @return interface{}
+	// Deprecated
+	ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostExecute(r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) (interface{}, *http.Response, error)
 
 	/*
 	VerifyEmbeddingApiV1PublicVerifyRefIdGet Verify Embedding (Public - No Auth Required)
@@ -104,7 +89,7 @@ type PublicVerificationAPI interface {
     - CAPTCHA required after repeated failures
     
     **Privacy:**
-    - Only returns text preview (first 200 characters)
+    - Does not return DB-stored text
     - Full text content is NOT exposed
     - Internal document IDs are mapped to public IDs
     
@@ -293,7 +278,6 @@ type ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest struct {
 	ctx context.Context
 	ApiService PublicVerificationAPI
 	extractAndVerifyRequest *ExtractAndVerifyRequest
-	authorization *string
 }
 
 func (r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) ExtractAndVerifyRequest(extractAndVerifyRequest ExtractAndVerifyRequest) ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest {
@@ -301,46 +285,25 @@ func (r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) Extr
 	return r
 }
 
-func (r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) Authorization(authorization string) ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest {
-	r.authorization = &authorization
-	return r
-}
-
-func (r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) Execute() (*ExtractAndVerifyResponse, *http.Response, error) {
+func (r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) Execute() (interface{}, *http.Response, error) {
 	return r.ApiService.ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostExecute(r)
 }
 
 /*
-ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost Extract and Verify Invisible Embedding (Public - No Auth Required)
+ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost DEPRECATED - Use POST /api/v1/verify instead
 
-Extract and verify invisible Unicode embedding from text using encypher-ai.
+**⚠️ DEPRECATED: This endpoint is deprecated and will be removed.**
     
-    **This endpoint is PUBLIC and does NOT require authentication.**
-    
-    This is the NEW verification method for invisible embeddings:
-    - Extracts invisible Unicode variation selector embeddings
-    - Verifies cryptographic signature using encypher-ai
-    - Returns enterprise metadata (Merkle tree, document info, etc.)
-    
-    **How it works:**
-    1. Text contains invisible Unicode variation selectors
-    2. encypher-ai extracts and verifies the embedded metadata
-    3. Enterprise API looks up Merkle tree and document info
-    4. Returns full verification result with all metadata
-    
-    **Rate Limiting:**
-    - 1000 requests/hour per IP address
-    
-    **Example Usage:**
-    ```json
-    POST /api/v1/public/extract-and-verify
-    {
-      "text": "Content with invisible embedding..."
-    }
-    ```
+    Please use `POST /api/v1/verify` instead, which provides:
+    - Full C2PA trust chain validation
+    - Document info, licensing, and C2PA details (all free)
+    - Merkle proof (with API key)
+    - Better performance via verification-service
 
  @param ctx context.Context - for authentication, logging, cancellation, deadlines, tracing, etc. Passed from http.Request or context.Background().
  @return ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest
+
+Deprecated
 */
 func (a *PublicVerificationAPIService) ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost(ctx context.Context) ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest {
 	return ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest{
@@ -350,13 +313,14 @@ func (a *PublicVerificationAPIService) ExtractAndVerifyEmbeddingApiV1PublicExtra
 }
 
 // Execute executes the request
-//  @return ExtractAndVerifyResponse
-func (a *PublicVerificationAPIService) ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostExecute(r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) (*ExtractAndVerifyResponse, *http.Response, error) {
+//  @return interface{}
+// Deprecated
+func (a *PublicVerificationAPIService) ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostExecute(r ApiExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPostRequest) (interface{}, *http.Response, error) {
 	var (
 		localVarHTTPMethod   = http.MethodPost
 		localVarPostBody     interface{}
 		formFiles            []formFile
-		localVarReturnValue  *ExtractAndVerifyResponse
+		localVarReturnValue  interface{}
 	)
 
 	localBasePath, err := a.client.cfg.ServerURLWithContext(r.ctx, "PublicVerificationAPIService.ExtractAndVerifyEmbeddingApiV1PublicExtractAndVerifyPost")
@@ -390,9 +354,6 @@ func (a *PublicVerificationAPIService) ExtractAndVerifyEmbeddingApiV1PublicExtra
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	if r.authorization != nil {
-		parameterAddToHeaderOrQuery(localVarHeaderParams, "authorization", r.authorization, "simple", "")
-	}
 	// body params
 	localVarPostBody = r.extractAndVerifyRequest
 	req, err := a.client.prepareRequest(r.ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, formFiles)
@@ -416,39 +377,6 @@ func (a *PublicVerificationAPIService) ExtractAndVerifyEmbeddingApiV1PublicExtra
 		newErr := &GenericOpenAPIError{
 			body:  localVarBody,
 			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v ErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v ErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 429 {
-			var v ErrorResponse
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarReturnValue, localVarHTTPResponse, newErr
-			}
-					newErr.error = formatErrorMessage(localVarHTTPResponse.Status, &v)
-					newErr.model = v
-			return localVarReturnValue, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 422 {
 			var v HTTPValidationError
@@ -517,7 +445,7 @@ Verify a minimal signed embedding and retrieve associated metadata.
     - CAPTCHA required after repeated failures
     
     **Privacy:**
-    - Only returns text preview (first 200 characters)
+    - Does not return DB-stored text
     - Full text content is NOT exposed
     - Internal document IDs are mapped to public IDs
     

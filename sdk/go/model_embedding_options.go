@@ -17,13 +17,13 @@ import (
 // checks if the EmbeddingOptions type satisfies the MappedNullable interface at compile time
 var _ MappedNullable = &EmbeddingOptions{}
 
-// EmbeddingOptions Options for embedding generation.
+// EmbeddingOptions Options for embedding generation output format.
 type EmbeddingOptions struct {
-	// Output format: html, markdown, json, pdf, plain
+	// Output format: plain, html, markdown, json
 	Format *string `json:"format,omitempty"`
-	// Embedding method: data-attribute, span, comment
+	// Embedding method: invisible (zero-width Unicode), data-attribute, span, comment
 	Method *string `json:"method,omitempty"`
-	// Whether to return text with embeddings
+	// Whether to return text with embeddings in response
 	IncludeText *bool `json:"include_text,omitempty"`
 }
 
@@ -33,9 +33,9 @@ type EmbeddingOptions struct {
 // will change when the set of required properties is changed
 func NewEmbeddingOptions() *EmbeddingOptions {
 	this := EmbeddingOptions{}
-	var format string = "html"
+	var format string = "plain"
 	this.Format = &format
-	var method string = "data-attribute"
+	var method string = "invisible"
 	this.Method = &method
 	var includeText bool = true
 	this.IncludeText = &includeText
@@ -47,9 +47,9 @@ func NewEmbeddingOptions() *EmbeddingOptions {
 // but it doesn't guarantee that properties required by API are set
 func NewEmbeddingOptionsWithDefaults() *EmbeddingOptions {
 	this := EmbeddingOptions{}
-	var format string = "html"
+	var format string = "plain"
 	this.Format = &format
-	var method string = "data-attribute"
+	var method string = "invisible"
 	this.Method = &method
 	var includeText bool = true
 	this.IncludeText = &includeText

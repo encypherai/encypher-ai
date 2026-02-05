@@ -14,9 +14,8 @@ use serde::{Deserialize, Serialize};
 /// ContentInfo : Content information from verification.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ContentInfo {
-    /// First 200 characters of content
-    #[serde(rename = "text_preview")]
-    pub text_preview: String,
+    #[serde(rename = "text_preview", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub text_preview: Option<Option<String>>,
     /// Cryptographic hash of full content
     #[serde(rename = "leaf_hash")]
     pub leaf_hash: String,
@@ -27,9 +26,9 @@ pub struct ContentInfo {
 
 impl ContentInfo {
     /// Content information from verification.
-    pub fn new(text_preview: String, leaf_hash: String, leaf_index: i32) -> ContentInfo {
+    pub fn new(leaf_hash: String, leaf_index: i32) -> ContentInfo {
         ContentInfo {
-            text_preview,
+            text_preview: None,
             leaf_hash,
             leaf_index,
         }

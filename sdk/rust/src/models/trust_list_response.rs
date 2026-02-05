@@ -20,6 +20,14 @@ pub struct TrustListResponse {
     pub trusted_cas: Option<Vec<String>>,
     #[serde(rename = "trust_list_url", skip_serializing_if = "Option::is_none")]
     pub trust_list_url: Option<String>,
+    #[serde(rename = "trust_list_fingerprint", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub trust_list_fingerprint: Option<Option<String>>,
+    #[serde(rename = "trust_list_loaded_at", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub trust_list_loaded_at: Option<Option<String>>,
+    #[serde(rename = "trust_list_source", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub trust_list_source: Option<Option<String>>,
+    #[serde(rename = "trust_list_count", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
+    pub trust_list_count: Option<Option<String>>,
 }
 
 impl TrustListResponse {
@@ -29,6 +37,10 @@ impl TrustListResponse {
             success: None,
             trusted_cas: None,
             trust_list_url: None,
+            trust_list_fingerprint: None,
+            trust_list_loaded_at: None,
+            trust_list_source: None,
+            trust_list_count: None,
         }
     }
 }

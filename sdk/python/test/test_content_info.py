@@ -41,7 +41,6 @@ class TestContentInfo(unittest.TestCase):
             )
         else:
             return ContentInfo(
-                text_preview = '',
                 leaf_hash = '',
                 leaf_index = 56,
         )

@@ -26,7 +26,7 @@ from typing_extensions import Self
 
 class RightsMetadata(BaseModel):
     """
-    RightsMetadata
+    Rights and licensing metadata to embed in signed content.
     """ # noqa: E501
     copyright_holder: Optional[Annotated[str, Field(strict=True, max_length=255)]] = None
     license_url: Optional[Annotated[str, Field(strict=True, max_length=1000)]] = None

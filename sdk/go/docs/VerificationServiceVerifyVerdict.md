@@ -9,7 +9,13 @@ Name | Type | Description | Notes
 **ReasonCode** | **string** |  | 
 **SignerId** | Pointer to **NullableString** |  | [optional] 
 **SignerName** | Pointer to **NullableString** |  | [optional] 
+**OrganizationId** | Pointer to **NullableString** |  | [optional] 
+**OrganizationName** | Pointer to **NullableString** |  | [optional] 
 **Timestamp** | Pointer to **NullableTime** |  | [optional] 
+**Document** | Pointer to [**NullableDocumentInfo**](DocumentInfo.md) |  | [optional] 
+**C2pa** | Pointer to [**NullableC2PAInfo**](C2PAInfo.md) |  | [optional] 
+**Licensing** | Pointer to [**NullableLicensingInfo**](LicensingInfo.md) |  | [optional] 
+**MerkleProof** | Pointer to [**NullableMerkleProofInfo**](MerkleProofInfo.md) |  | [optional] 
 **Details** | Pointer to **map[string]interface{}** |  | [optional] 
 
 ## Methods
@@ -161,6 +167,76 @@ HasSignerName returns a boolean if a field has been set.
 `func (o *VerificationServiceVerifyVerdict) UnsetSignerName()`
 
 UnsetSignerName ensures that no value is present for SignerName, not even an explicit nil
+### GetOrganizationId
+
+`func (o *VerificationServiceVerifyVerdict) GetOrganizationId() string`
+
+GetOrganizationId returns the OrganizationId field if non-nil, zero value otherwise.
+
+### GetOrganizationIdOk
+
+`func (o *VerificationServiceVerifyVerdict) GetOrganizationIdOk() (*string, bool)`
+
+GetOrganizationIdOk returns a tuple with the OrganizationId field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOrganizationId
+
+`func (o *VerificationServiceVerifyVerdict) SetOrganizationId(v string)`
+
+SetOrganizationId sets OrganizationId field to given value.
+
+### HasOrganizationId
+
+`func (o *VerificationServiceVerifyVerdict) HasOrganizationId() bool`
+
+HasOrganizationId returns a boolean if a field has been set.
+
+### SetOrganizationIdNil
+
+`func (o *VerificationServiceVerifyVerdict) SetOrganizationIdNil(b bool)`
+
+ SetOrganizationIdNil sets the value for OrganizationId to be an explicit nil
+
+### UnsetOrganizationId
+`func (o *VerificationServiceVerifyVerdict) UnsetOrganizationId()`
+
+UnsetOrganizationId ensures that no value is present for OrganizationId, not even an explicit nil
+### GetOrganizationName
+
+`func (o *VerificationServiceVerifyVerdict) GetOrganizationName() string`
+
+GetOrganizationName returns the OrganizationName field if non-nil, zero value otherwise.
+
+### GetOrganizationNameOk
+
+`func (o *VerificationServiceVerifyVerdict) GetOrganizationNameOk() (*string, bool)`
+
+GetOrganizationNameOk returns a tuple with the OrganizationName field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetOrganizationName
+
+`func (o *VerificationServiceVerifyVerdict) SetOrganizationName(v string)`
+
+SetOrganizationName sets OrganizationName field to given value.
+
+### HasOrganizationName
+
+`func (o *VerificationServiceVerifyVerdict) HasOrganizationName() bool`
+
+HasOrganizationName returns a boolean if a field has been set.
+
+### SetOrganizationNameNil
+
+`func (o *VerificationServiceVerifyVerdict) SetOrganizationNameNil(b bool)`
+
+ SetOrganizationNameNil sets the value for OrganizationName to be an explicit nil
+
+### UnsetOrganizationName
+`func (o *VerificationServiceVerifyVerdict) UnsetOrganizationName()`
+
+UnsetOrganizationName ensures that no value is present for OrganizationName, not even an explicit nil
 ### GetTimestamp
 
 `func (o *VerificationServiceVerifyVerdict) GetTimestamp() time.Time`
@@ -196,6 +272,146 @@ HasTimestamp returns a boolean if a field has been set.
 `func (o *VerificationServiceVerifyVerdict) UnsetTimestamp()`
 
 UnsetTimestamp ensures that no value is present for Timestamp, not even an explicit nil
+### GetDocument
+
+`func (o *VerificationServiceVerifyVerdict) GetDocument() DocumentInfo`
+
+GetDocument returns the Document field if non-nil, zero value otherwise.
+
+### GetDocumentOk
+
+`func (o *VerificationServiceVerifyVerdict) GetDocumentOk() (*DocumentInfo, bool)`
+
+GetDocumentOk returns a tuple with the Document field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetDocument
+
+`func (o *VerificationServiceVerifyVerdict) SetDocument(v DocumentInfo)`
+
+SetDocument sets Document field to given value.
+
+### HasDocument
+
+`func (o *VerificationServiceVerifyVerdict) HasDocument() bool`
+
+HasDocument returns a boolean if a field has been set.
+
+### SetDocumentNil
+
+`func (o *VerificationServiceVerifyVerdict) SetDocumentNil(b bool)`
+
+ SetDocumentNil sets the value for Document to be an explicit nil
+
+### UnsetDocument
+`func (o *VerificationServiceVerifyVerdict) UnsetDocument()`
+
+UnsetDocument ensures that no value is present for Document, not even an explicit nil
+### GetC2pa
+
+`func (o *VerificationServiceVerifyVerdict) GetC2pa() C2PAInfo`
+
+GetC2pa returns the C2pa field if non-nil, zero value otherwise.
+
+### GetC2paOk
+
+`func (o *VerificationServiceVerifyVerdict) GetC2paOk() (*C2PAInfo, bool)`
+
+GetC2paOk returns a tuple with the C2pa field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetC2pa
+
+`func (o *VerificationServiceVerifyVerdict) SetC2pa(v C2PAInfo)`
+
+SetC2pa sets C2pa field to given value.
+
+### HasC2pa
+
+`func (o *VerificationServiceVerifyVerdict) HasC2pa() bool`
+
+HasC2pa returns a boolean if a field has been set.
+
+### SetC2paNil
+
+`func (o *VerificationServiceVerifyVerdict) SetC2paNil(b bool)`
+
+ SetC2paNil sets the value for C2pa to be an explicit nil
+
+### UnsetC2pa
+`func (o *VerificationServiceVerifyVerdict) UnsetC2pa()`
+
+UnsetC2pa ensures that no value is present for C2pa, not even an explicit nil
+### GetLicensing
+
+`func (o *VerificationServiceVerifyVerdict) GetLicensing() LicensingInfo`
+
+GetLicensing returns the Licensing field if non-nil, zero value otherwise.
+
+### GetLicensingOk
+
+`func (o *VerificationServiceVerifyVerdict) GetLicensingOk() (*LicensingInfo, bool)`
+
+GetLicensingOk returns a tuple with the Licensing field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetLicensing
+
+`func (o *VerificationServiceVerifyVerdict) SetLicensing(v LicensingInfo)`
+
+SetLicensing sets Licensing field to given value.
+
+### HasLicensing
+
+`func (o *VerificationServiceVerifyVerdict) HasLicensing() bool`
+
+HasLicensing returns a boolean if a field has been set.
+
+### SetLicensingNil
+
+`func (o *VerificationServiceVerifyVerdict) SetLicensingNil(b bool)`
+
+ SetLicensingNil sets the value for Licensing to be an explicit nil
+
+### UnsetLicensing
+`func (o *VerificationServiceVerifyVerdict) UnsetLicensing()`
+
+UnsetLicensing ensures that no value is present for Licensing, not even an explicit nil
+### GetMerkleProof
+
+`func (o *VerificationServiceVerifyVerdict) GetMerkleProof() MerkleProofInfo`
+
+GetMerkleProof returns the MerkleProof field if non-nil, zero value otherwise.
+
+### GetMerkleProofOk
+
+`func (o *VerificationServiceVerifyVerdict) GetMerkleProofOk() (*MerkleProofInfo, bool)`
+
+GetMerkleProofOk returns a tuple with the MerkleProof field if it's non-nil, zero value otherwise
+and a boolean to check if the value has been set.
+
+### SetMerkleProof
+
+`func (o *VerificationServiceVerifyVerdict) SetMerkleProof(v MerkleProofInfo)`
+
+SetMerkleProof sets MerkleProof field to given value.
+
+### HasMerkleProof
+
+`func (o *VerificationServiceVerifyVerdict) HasMerkleProof() bool`
+
+HasMerkleProof returns a boolean if a field has been set.
+
+### SetMerkleProofNil
+
+`func (o *VerificationServiceVerifyVerdict) SetMerkleProofNil(b bool)`
+
+ SetMerkleProofNil sets the value for MerkleProof to be an explicit nil
+
+### UnsetMerkleProof
+`func (o *VerificationServiceVerifyVerdict) UnsetMerkleProof()`
+
+UnsetMerkleProof ensures that no value is present for MerkleProof, not even an explicit nil
 ### GetDetails
 
 `func (o *VerificationServiceVerifyVerdict) GetDetails() map[string]interface{}`

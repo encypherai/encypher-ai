@@ -22,6 +22,10 @@ type TrustListResponse struct {
 	Success *bool `json:"success,omitempty"`
 	TrustedCas []string `json:"trusted_cas,omitempty"`
 	TrustListUrl *string `json:"trust_list_url,omitempty"`
+	TrustListFingerprint NullableString `json:"trust_list_fingerprint,omitempty"`
+	TrustListLoadedAt NullableString `json:"trust_list_loaded_at,omitempty"`
+	TrustListSource NullableString `json:"trust_list_source,omitempty"`
+	TrustListCount NullableString `json:"trust_list_count,omitempty"`
 }
 
 // NewTrustListResponse instantiates a new TrustListResponse object
@@ -145,6 +149,174 @@ func (o *TrustListResponse) SetTrustListUrl(v string) {
 	o.TrustListUrl = &v
 }
 
+// GetTrustListFingerprint returns the TrustListFingerprint field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *TrustListResponse) GetTrustListFingerprint() string {
+	if o == nil || IsNil(o.TrustListFingerprint.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.TrustListFingerprint.Get()
+}
+
+// GetTrustListFingerprintOk returns a tuple with the TrustListFingerprint field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TrustListResponse) GetTrustListFingerprintOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TrustListFingerprint.Get(), o.TrustListFingerprint.IsSet()
+}
+
+// HasTrustListFingerprint returns a boolean if a field has been set.
+func (o *TrustListResponse) HasTrustListFingerprint() bool {
+	if o != nil && o.TrustListFingerprint.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTrustListFingerprint gets a reference to the given NullableString and assigns it to the TrustListFingerprint field.
+func (o *TrustListResponse) SetTrustListFingerprint(v string) {
+	o.TrustListFingerprint.Set(&v)
+}
+// SetTrustListFingerprintNil sets the value for TrustListFingerprint to be an explicit nil
+func (o *TrustListResponse) SetTrustListFingerprintNil() {
+	o.TrustListFingerprint.Set(nil)
+}
+
+// UnsetTrustListFingerprint ensures that no value is present for TrustListFingerprint, not even an explicit nil
+func (o *TrustListResponse) UnsetTrustListFingerprint() {
+	o.TrustListFingerprint.Unset()
+}
+
+// GetTrustListLoadedAt returns the TrustListLoadedAt field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *TrustListResponse) GetTrustListLoadedAt() string {
+	if o == nil || IsNil(o.TrustListLoadedAt.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.TrustListLoadedAt.Get()
+}
+
+// GetTrustListLoadedAtOk returns a tuple with the TrustListLoadedAt field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TrustListResponse) GetTrustListLoadedAtOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TrustListLoadedAt.Get(), o.TrustListLoadedAt.IsSet()
+}
+
+// HasTrustListLoadedAt returns a boolean if a field has been set.
+func (o *TrustListResponse) HasTrustListLoadedAt() bool {
+	if o != nil && o.TrustListLoadedAt.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTrustListLoadedAt gets a reference to the given NullableString and assigns it to the TrustListLoadedAt field.
+func (o *TrustListResponse) SetTrustListLoadedAt(v string) {
+	o.TrustListLoadedAt.Set(&v)
+}
+// SetTrustListLoadedAtNil sets the value for TrustListLoadedAt to be an explicit nil
+func (o *TrustListResponse) SetTrustListLoadedAtNil() {
+	o.TrustListLoadedAt.Set(nil)
+}
+
+// UnsetTrustListLoadedAt ensures that no value is present for TrustListLoadedAt, not even an explicit nil
+func (o *TrustListResponse) UnsetTrustListLoadedAt() {
+	o.TrustListLoadedAt.Unset()
+}
+
+// GetTrustListSource returns the TrustListSource field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *TrustListResponse) GetTrustListSource() string {
+	if o == nil || IsNil(o.TrustListSource.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.TrustListSource.Get()
+}
+
+// GetTrustListSourceOk returns a tuple with the TrustListSource field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TrustListResponse) GetTrustListSourceOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TrustListSource.Get(), o.TrustListSource.IsSet()
+}
+
+// HasTrustListSource returns a boolean if a field has been set.
+func (o *TrustListResponse) HasTrustListSource() bool {
+	if o != nil && o.TrustListSource.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTrustListSource gets a reference to the given NullableString and assigns it to the TrustListSource field.
+func (o *TrustListResponse) SetTrustListSource(v string) {
+	o.TrustListSource.Set(&v)
+}
+// SetTrustListSourceNil sets the value for TrustListSource to be an explicit nil
+func (o *TrustListResponse) SetTrustListSourceNil() {
+	o.TrustListSource.Set(nil)
+}
+
+// UnsetTrustListSource ensures that no value is present for TrustListSource, not even an explicit nil
+func (o *TrustListResponse) UnsetTrustListSource() {
+	o.TrustListSource.Unset()
+}
+
+// GetTrustListCount returns the TrustListCount field value if set, zero value otherwise (both if not set or set to explicit null).
+func (o *TrustListResponse) GetTrustListCount() string {
+	if o == nil || IsNil(o.TrustListCount.Get()) {
+		var ret string
+		return ret
+	}
+	return *o.TrustListCount.Get()
+}
+
+// GetTrustListCountOk returns a tuple with the TrustListCount field value if set, nil otherwise
+// and a boolean to check if the value has been set.
+// NOTE: If the value is an explicit nil, `nil, true` will be returned
+func (o *TrustListResponse) GetTrustListCountOk() (*string, bool) {
+	if o == nil {
+		return nil, false
+	}
+	return o.TrustListCount.Get(), o.TrustListCount.IsSet()
+}
+
+// HasTrustListCount returns a boolean if a field has been set.
+func (o *TrustListResponse) HasTrustListCount() bool {
+	if o != nil && o.TrustListCount.IsSet() {
+		return true
+	}
+
+	return false
+}
+
+// SetTrustListCount gets a reference to the given NullableString and assigns it to the TrustListCount field.
+func (o *TrustListResponse) SetTrustListCount(v string) {
+	o.TrustListCount.Set(&v)
+}
+// SetTrustListCountNil sets the value for TrustListCount to be an explicit nil
+func (o *TrustListResponse) SetTrustListCountNil() {
+	o.TrustListCount.Set(nil)
+}
+
+// UnsetTrustListCount ensures that no value is present for TrustListCount, not even an explicit nil
+func (o *TrustListResponse) UnsetTrustListCount() {
+	o.TrustListCount.Unset()
+}
+
 func (o TrustListResponse) MarshalJSON() ([]byte, error) {
 	toSerialize,err := o.ToMap()
 	if err != nil {
@@ -163,6 +335,18 @@ func (o TrustListResponse) ToMap() (map[string]interface{}, error) {
 	}
 	if !IsNil(o.TrustListUrl) {
 		toSerialize["trust_list_url"] = o.TrustListUrl
+	}
+	if o.TrustListFingerprint.IsSet() {
+		toSerialize["trust_list_fingerprint"] = o.TrustListFingerprint.Get()
+	}
+	if o.TrustListLoadedAt.IsSet() {
+		toSerialize["trust_list_loaded_at"] = o.TrustListLoadedAt.Get()
+	}
+	if o.TrustListSource.IsSet() {
+		toSerialize["trust_list_source"] = o.TrustListSource.Get()
+	}
+	if o.TrustListCount.IsSet() {
+		toSerialize["trust_list_count"] = o.TrustListCount.Get()
 	}
 	return toSerialize, nil
 }

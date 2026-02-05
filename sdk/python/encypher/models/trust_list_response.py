@@ -29,7 +29,11 @@ class TrustListResponse(BaseModel):
     success: Optional[StrictBool] = True
     trusted_cas: Optional[List[StrictStr]] = None
     trust_list_url: Optional[StrictStr] = 'https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem'
-    __properties: ClassVar[List[str]] = ["success", "trusted_cas", "trust_list_url"]
+    trust_list_fingerprint: Optional[StrictStr] = None
+    trust_list_loaded_at: Optional[StrictStr] = None
+    trust_list_source: Optional[StrictStr] = None
+    trust_list_count: Optional[StrictStr] = None
+    __properties: ClassVar[List[str]] = ["success", "trusted_cas", "trust_list_url", "trust_list_fingerprint", "trust_list_loaded_at", "trust_list_source", "trust_list_count"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -70,6 +74,26 @@ class TrustListResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # set to None if trust_list_fingerprint (nullable) is None
+        # and model_fields_set contains the field
+        if self.trust_list_fingerprint is None and "trust_list_fingerprint" in self.model_fields_set:
+            _dict['trust_list_fingerprint'] = None
+
+        # set to None if trust_list_loaded_at (nullable) is None
+        # and model_fields_set contains the field
+        if self.trust_list_loaded_at is None and "trust_list_loaded_at" in self.model_fields_set:
+            _dict['trust_list_loaded_at'] = None
+
+        # set to None if trust_list_source (nullable) is None
+        # and model_fields_set contains the field
+        if self.trust_list_source is None and "trust_list_source" in self.model_fields_set:
+            _dict['trust_list_source'] = None
+
+        # set to None if trust_list_count (nullable) is None
+        # and model_fields_set contains the field
+        if self.trust_list_count is None and "trust_list_count" in self.model_fields_set:
+            _dict['trust_list_count'] = None
+
         return _dict
 
     @classmethod
@@ -84,7 +108,11 @@ class TrustListResponse(BaseModel):
         _obj = cls.model_validate({
             "success": obj.get("success") if obj.get("success") is not None else True,
             "trusted_cas": obj.get("trusted_cas"),
-            "trust_list_url": obj.get("trust_list_url") if obj.get("trust_list_url") is not None else 'https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem'
+            "trust_list_url": obj.get("trust_list_url") if obj.get("trust_list_url") is not None else 'https://github.com/c2pa-org/conformance-public/blob/main/trust-list/C2PA-TRUST-LIST.pem',
+            "trust_list_fingerprint": obj.get("trust_list_fingerprint"),
+            "trust_list_loaded_at": obj.get("trust_list_loaded_at"),
+            "trust_list_source": obj.get("trust_list_source"),
+            "trust_list_count": obj.get("trust_list_count")
         })
         return _obj
 

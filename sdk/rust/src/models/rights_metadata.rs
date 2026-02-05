@@ -11,6 +11,7 @@
 use crate::models;
 use serde::{Deserialize, Serialize};
 
+/// RightsMetadata : Rights and licensing metadata to embed in signed content.
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct RightsMetadata {
     #[serde(rename = "copyright_holder", default, with = "::serde_with::rust::double_option", skip_serializing_if = "Option::is_none")]
@@ -28,6 +29,7 @@ pub struct RightsMetadata {
 }
 
 impl RightsMetadata {
+    /// Rights and licensing metadata to embed in signed content.
     pub fn new() -> RightsMetadata {
         RightsMetadata {
             copyright_holder: None,
