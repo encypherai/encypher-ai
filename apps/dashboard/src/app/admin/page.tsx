@@ -149,7 +149,7 @@ export default function AdminPage() {
     queryKey: ['admin-org-search', orgSearch],
     queryFn: async () => {
       if (!accessToken) return [];
-      return apiClient.searchAdminOrganizations(accessToken, orgSearch.trim(), 10) as OrganizationOption[];
+      return await apiClient.searchAdminOrganizations(accessToken, orgSearch.trim(), 10) as OrganizationOption[];
     },
     enabled: Boolean(accessToken) && isSuperAdmin && orgSearch.trim().length >= 2 && !selectedOrg,
   });

@@ -50,7 +50,7 @@ class Rest
             'text' => $text,
         ];
 
-        $response = $this->call_backend('/public/extract-and-verify', $payload, false);
+        $response = $this->call_backend('/verify', $payload, false);
         if (is_wp_error($response)) {
             return $response;
         }

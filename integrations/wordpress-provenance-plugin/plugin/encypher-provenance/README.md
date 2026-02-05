@@ -109,7 +109,7 @@ The plugin automatically embeds C2PA manifests when you publish or update posts:
 ### Verification Sidebar (Gutenberg)
 
 - The **Encypher Provenance** panel summarizes signing status, document ID, and verification URLs.
-- **Pro/Enterprise** tiers unlock sentence-level verifier chips (linking to `POST /api/v1/public/extract-and-verify` results) plus a Merkle snapshot card with one-click copy buttons.
+- **Pro/Enterprise** tiers unlock sentence-level verifier chips (linking to `POST /api/v1/verify` results) plus a Merkle snapshot card with one-click copy buttons.
 - Free tier users see inline upgrade prompts instead of the advanced UI.
 - The manifest viewer streams the exact JSON wrapper so editors can inspect every assertion without leaving WordPress.
 
@@ -124,7 +124,7 @@ POST /wp-json/encypher-provenance/v1/extract
 }
 ```
 
-The route proxies to Encypher's `POST /api/v1/public/extract-and-verify` so publishers can embed interactive checkers or build custom workflows around invisible embeddings.
+The route proxies to Encypher's `POST /api/v1/verify` so publishers can embed interactive checkers or build custom workflows around invisible embeddings.
 
 ### Analytics & Dashboard Coverage
 
