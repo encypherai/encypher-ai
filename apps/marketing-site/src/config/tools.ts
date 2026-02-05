@@ -24,6 +24,9 @@ export const toolLinks: ToolLink[] = [
     description: "Verify signed text and inspect embedded metadata.",
     href: "/tools/verify",
   },
-  // Only include tools that exist in frontend/src/app/tools/
-  // Removed non-existent tools: encode-file, decode-file, encode-ads-coremetadata-file, scan-ads-coremetadata-file
+  {
+    name: "WordPress Plugin",
+    description: "C2PA content authentication for WordPress. Protect your posts with cryptographic proof of authorship.",
+    href: "/tools/wordpress",
+  },
 ];

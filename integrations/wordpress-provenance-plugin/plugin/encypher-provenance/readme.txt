@@ -1,6 +1,6 @@
 === Encypher Provenance - C2PA Content Authentication ===
 Contributors: encypherai
-Tags: c2pa, content authenticity, provenance, authentication, verification, ai, misinformation
+Tags: c2pa, content authenticity, provenance, verification, ai detection, misinformation, plagiarism, copyright, digital signature, blockchain
 Requires at least: 6.0
 Tested up to: 6.5
 Requires PHP: 7.4
@@ -8,7 +8,7 @@ Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Embed cryptographic proof of origin into your WordPress content using C2PA standards. Fight misinformation with verifiable content authenticity.
+Protect your content with cryptographic proof of authorship. C2PA-compliant digital signatures prove when content was created, by whom, and detect AI-generated or tampered text. Fight misinformation, plagiarism, and content theft.
 
 == Description ==
 
