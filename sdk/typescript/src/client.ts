@@ -14,8 +14,9 @@
  * ```
  */
 
-import { Configuration, SigningApi, VerificationApi } from './apis';
-import type { SignRequest, VerifyRequest } from './models';
+import { Configuration } from './runtime';
+import { SigningApi, VerificationApi } from './apis';
+import type { UnifiedSignRequest, VerifyRequest } from './models';
 
 export interface EncypherClientOptions {
   apiKey: string;
@@ -37,12 +38,12 @@ export class EncypherClient {
     this.verification = new VerificationApi(this.config);
   }
 
-  async sign(request: SignRequest) {
-    return this.signing.signContentApiV1SignPost({ signRequest: request });
+  async sign(request: UnifiedSignRequest) {
+    return this.signing.signContentApiV1SignPost({ unifiedSignRequest: request });
   }
 
   async verify(request: VerifyRequest) {
-    return this.verification.verifyContentApiV1VerifyPost({ verifyRequest: request });
+    return this.verification.verifyTextApiV1VerifyPost({ verifyRequest: request });
   }
 }
 

@@ -2,14 +2,14 @@
 
 ## Overview
 
-The Encypher Enterprise API provides **C2PA-compliant content signing** with two endpoints:
+The Encypher Enterprise API provides **C2PA-compliant content signing** via a unified endpoint:
 
 | Endpoint | Tier | Description |
 |----------|------|-------------|
-| `POST /api/v1/sign` | All | Document-level C2PA manifest embedding |
-| `POST /api/v1/sign/advanced` | Professional+ | Sentence-level Merkle tree + per-sentence embeddings |
+| `POST /api/v1/sign` | All (features gated) | Unified signing with optional advanced features |
+| `POST /api/v1/sign/advanced` | - | ⚠️ **DEPRECATED** - Returns 410 Gone. Use `/sign` with `options` instead |
 
-Both endpoints use the `encypher-ai` package to embed **invisible C2PA manifests** using Unicode variation selectors.
+The unified `/sign` endpoint uses the `encypher-ai` package to embed **invisible C2PA manifests** using Unicode variation selectors. Advanced features (sentence segmentation, Merkle trees, etc.) are enabled via the `options` parameter and gated by tier.
 
 ## How Signing Works
 
@@ -25,7 +25,20 @@ Embeds a **single C2PA manifest** into the document:
 
 **Use case:** Simple content authentication for articles, blog posts, AI outputs.
 
-### `/sign/advanced` - Sentence-Level Signing (Professional+)
+### `/sign` with `options` - Advanced Signing (Professional+)
+
+The unified `/sign` endpoint supports advanced features via the `options` parameter:
+
+```json
+{
+  "text": "Your content...",
+  "options": {
+    "segmentation_level": "sentence",
+    "manifest_mode": "minimal_uuid",
+    "index_for_attribution": true
+  }
+}
+```
 
 Creates **per-sentence embeddings** with Merkle tree integration:
 
@@ -38,7 +51,7 @@ Creates **per-sentence embeddings** with Merkle tree integration:
 
 **Use case:** Granular plagiarism detection, sentence-level attribution, quote verification.
 
-**Future:** Distributed embedding strategy (spreading manifest across multiple characters for resilience) is planned but not yet implemented.
+**Note:** The legacy `/sign/advanced` endpoint is deprecated and returns 410 Gone.
 
 ## Key Management
 
@@ -104,19 +117,21 @@ The `encypher-ai` package handles the low-level embedding using the C2PA Text Ma
 
 ### Sign with Advanced Embeddings
 
-**Endpoint:** `POST /api/v1/sign/advanced`  
+**Endpoint:** `POST /api/v1/sign` (with `options`)  
 **Auth:** Required (API key)  
-**Tier:** Professional+
+**Tier:** Professional+ (for advanced options)
 
 **Request:**
 ```json
 {
-  "document_id": "article_001",
   "text": "Full article text...",
-  "segmentation_level": "sentence",
-  "c2pa_manifest_url": "https://...",
-  "license": {
-    "type": "All Rights Reserved",
+  "document_id": "article_001",
+  "options": {
+    "segmentation_level": "sentence",
+    "manifest_mode": "minimal_uuid"
+  },
+  "rights": {
+    "license_type": "All Rights Reserved",
     "contact_email": "licensing@example.com"
   }
 }
@@ -150,10 +165,10 @@ The `encypher-ai` package handles the low-level embedding using the C2PA Text Ma
 }
 ```
 
-### Public: Extract and Verify
+### Verify Advanced
 
-**Endpoint:** `POST /api/v1/public/extract-and-verify`  
-**Auth:** None (public)
+**Endpoint:** `POST /api/v1/verify/advanced`  
+**Auth:** Required (API key)
 
 **Request:**
 ```json
@@ -166,18 +181,16 @@ The `encypher-ai` package handles the low-level embedding using the C2PA Text Ma
 ```json
 {
   "success": true,
-  "embeddings_found": 5,
-  "verified": [
-    {
-      "ref_id": "a3f9c2e1",
-      "valid": true,
-      "signer_id": "org_technews",
-      "signer_name": "TechNews Corp",
-      "document_id": "article_001"
-    }
-  ]
+  "data": {
+    "valid": true,
+    "embeddings_found": true,
+    "signer_id": "org_technews",
+    "signer_name": "TechNews Corp"
+  }
 }
 ```
+
+**Note:** The legacy `/api/v1/public/extract-and-verify` endpoint is deprecated and returns 410 Gone.
 
 ### Public: Verify by Reference ID
 

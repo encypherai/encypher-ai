@@ -757,14 +757,16 @@ class EnterpriseEncypherClient:
             ]
         """
         response = requests.post(
-            f"{ENCYPHER_API_URL}/sign/advanced",
+            f"{ENCYPHER_API_URL}/sign",
             headers=self.headers,
             json={
-                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
                 "text": content,
-                "segmentation_level": "sentence",
+                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
                 "metadata": metadata,
                 "custom_assertions": custom_assertions,
+                "options": {
+                    "segmentation_level": "sentence",
+                },
             }
         )
         response.raise_for_status()
@@ -779,15 +781,17 @@ class EnterpriseEncypherClient:
     ) -> Dict:
         """Sign with a server-stored assertion template (Business+)."""
         response = requests.post(
-            f"{ENCYPHER_API_URL}/sign/advanced",
+            f"{ENCYPHER_API_URL}/sign",
             headers=self.headers,
             json={
-                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
                 "text": content,
-                "segmentation_level": "sentence",
+                "document_id": f"doc_{uuid.uuid4().hex[:16]}",
                 "metadata": metadata,
                 "template_id": template_id,
-                "validate_assertions": True,
+                "options": {
+                    "segmentation_level": "sentence",
+                    "validate_assertions": True,
+                },
             },
         )
         response.raise_for_status()
@@ -814,7 +818,7 @@ class EnterpriseEncypherClient:
             payload["validate_assertions"] = True
 
         response = requests.post(
-            f"{ENCYPHER_API_URL}/sign/advanced",
+            f"{ENCYPHER_API_URL}/sign",
             headers=self.headers,
             json=payload,
         )
@@ -1115,22 +1119,24 @@ response = requests.post(
 response.raise_for_status()
 ```
 
-Example: advanced signing with explicit rights metadata (`/sign/advanced`):
+Example: advanced signing with explicit rights metadata (`/sign` with options):
 
 ```python
 response = requests.post(
-    f"{ENCYPHER_API_URL}/sign/advanced",
+    f"{ENCYPHER_API_URL}/sign",
     headers=headers,
     json={
-        "document_id": f"doc_{uuid.uuid4().hex[:16]}",
         "text": content,
-        "segmentation_level": "sentence",
+        "document_id": f"doc_{uuid.uuid4().hex[:16]}",
         "rights": {
             "copyright_holder": "Example Publisher",
             "license_url": "https://example.com/license",
             "usage_terms": "RAG allowed with attribution.",
             "syndication_allowed": True,
             "contact_email": "licensing@example.com",
+        },
+        "options": {
+            "segmentation_level": "sentence",
         },
     },
 )
