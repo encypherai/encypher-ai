@@ -77,12 +77,12 @@ export async function POST(request: NextRequest) {
       console.error(`${logPrefix} upstream error`, {
         requestId,
         status: upstream.status,
-        detail: data?.detail || data?.error?.message || data?.error || rawBody,
+        detail: data?.detail || (data?.error as any)?.message || data?.error || rawBody,
       });
       const detail =
         (typeof data?.detail === "string" && data.detail) ||
-        data?.detail?.message ||
-        data?.error?.message ||
+        (data?.detail as any)?.message ||
+        (data?.error as any)?.message ||
         rawBody ||
         `Request failed with status ${upstream.status}`;
 
@@ -96,15 +96,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Unified /sign returns nested: { success, data: { document: { signed_text, ... } } }
+    const documentResult = (data as any)?.data?.document;
+    const signedText = documentResult?.signed_text
+      || data?.signed_text || data?.signed_content || data?.embedded_content;
+
     console.info(`${logPrefix} upstream success`, {
       requestId,
       status: upstream.status,
-      hasSignedText: Boolean(data?.signed_text || data?.signed_content || data?.embedded_content),
+      hasSignedText: Boolean(signedText),
     });
 
+    if (!signedText) {
+      console.error(`${logPrefix} no signed text in upstream response`, {
+        requestId,
+        topLevelKeys: Object.keys(data),
+      });
+      return NextResponse.json(
+        { detail: "Upstream returned no signed text" },
+        { status: 502 }
+      );
+    }
+
     return NextResponse.json({
-      encoded_text: data.signed_text || data.signed_content || data.embedded_content,
-      metadata: data.metadata,
+      encoded_text: signedText,
+      metadata: documentResult?.metadata || data?.metadata,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
