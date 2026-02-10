@@ -5,6 +5,8 @@
  * Runs in the background and communicates with content scripts.
  */
 
+import debugLog from './debug-logger.js';
+
 // API configuration (can be overridden by settings)
 let API_CONFIG = {
   baseUrl: 'https://api.encypherai.com',
@@ -33,6 +35,7 @@ chrome.storage.sync.get({ apiBaseUrl: 'https://api.encypherai.com', customApiUrl
   } else if (result.apiBaseUrl) {
     API_CONFIG.baseUrl = result.apiBaseUrl;
   }
+  debugLog.info('init', 'Service worker loaded', { apiBaseUrl: API_CONFIG.baseUrl });
 });
 
 // Cache for verification results (keyed by content hash)
@@ -153,7 +156,10 @@ async function verifyContent(text, options = {}) {
       headers['Authorization'] = `Bearer ${apiKey}`;
     }
 
-    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.verifyEndpoint}`, {
+    const verifyUrl = `${API_CONFIG.baseUrl}${API_CONFIG.verifyEndpoint}`;
+    debugLog.api('verify', `POST ${verifyUrl}`, { bodyLength: text.length, hasApiKey: !!apiKey });
+
+    const response = await fetch(verifyUrl, {
       method: 'POST',
       headers,
       body: JSON.stringify(requestBody),
@@ -164,6 +170,7 @@ async function verifyContent(text, options = {}) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      debugLog.error('verify', `HTTP ${response.status}`, errorData);
       return {
         success: false,
         error: errorData.error?.message || errorData.detail || `HTTP ${response.status}`,
@@ -172,6 +179,7 @@ async function verifyContent(text, options = {}) {
     }
 
     const data = await response.json();
+    debugLog.api('verify', 'Response OK', { valid: data.data?.valid, correlationId: data.correlation_id });
     
     // Handle the unified VerifyResponse format
     // Response: { success, data: VerifyVerdict, error, correlation_id }
@@ -268,7 +276,10 @@ async function signContent(text, title, options = {}) {
     }
 
     // Always use unified /sign endpoint - features gated by tier server-side
-    const response = await fetch(`${API_CONFIG.baseUrl}${API_CONFIG.signEndpoint}`, {
+    const signUrl = `${API_CONFIG.baseUrl}${API_CONFIG.signEndpoint}`;
+    debugLog.api('sign', `POST ${signUrl}`, { bodyLength: text.length, title, options });
+
+    const response = await fetch(signUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -282,6 +293,7 @@ async function signContent(text, title, options = {}) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      debugLog.error('sign', `HTTP ${response.status}`, errorData);
       
       if (response.status === 401) {
         return {
@@ -312,6 +324,7 @@ async function signContent(text, title, options = {}) {
     }
 
     const data = await response.json();
+    debugLog.api('sign', 'Response OK', { documentId: data.data?.document?.document_id, tier: data.meta?.tier });
     
     // Handle new unified response format: { success, data: { document: {...} }, meta: {...} }
     const result = data.data?.document || data.data || data;
@@ -512,6 +525,7 @@ async function getAccountInfo(apiKey) {
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const tabId = sender.tab?.id;
+  debugLog.msg('sw', `Received: ${message.type}`, { tabId, from: sender.tab?.url?.substring(0, 80) });
 
   switch (message.type) {
     case 'EMBEDDINGS_DETECTED':
@@ -599,10 +613,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true; // async response
 
+    case 'CONTENT_DEBUG_LOG':
+      // TEAM_151: Forward content script logs into the debug logger
+      debugLog[message.level?.toLowerCase() === 'error' ? 'error' :
+               message.level?.toLowerCase() === 'warn' ? 'warn' :
+               message.level === 'API' ? 'api' :
+               message.level === 'MSG' ? 'msg' :
+               message.level === 'DEBUG' ? 'debug' : 'info'](
+        message.category || 'content',
+        message.message || '',
+        message.data
+      );
+      sendResponse({ received: true });
+      break;
+
+    case 'GET_DEBUG_LOGS':
+      debugLog.getLogs().then(logs => sendResponse({ logs }));
+      return true; // async response
+
+    case 'CLEAR_DEBUG_LOGS':
+      debugLog.clearLogs().then(() => sendResponse({ cleared: true }));
+      return true;
+
+    case 'GET_DEV_MODE':
+      debugLog.isDevMode().then(devMode => sendResponse({ devMode }));
+      return true;
+
     case 'SETTINGS_UPDATED':
       // Update API config when settings change
       if (message.setting === 'apiBaseUrl') {
         API_CONFIG.baseUrl = message.value;
+        debugLog.info('settings', 'API URL changed', { newUrl: message.value });
       } else if (message.setting === 'cacheTtl') {
         // Could update cache TTL here
       }
@@ -777,4 +818,5 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
+debugLog.info('init', 'Encypher C2PA Verifier service worker initialized');
 console.log('Encypher C2PA Verifier service worker initialized');

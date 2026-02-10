@@ -40,7 +40,7 @@ const secondHalf = companyLogos.slice(Math.ceil(companyLogos.length / 2));
 
 export default function StandardsCompliance() {
   return (
-    <section className="py-12 w-full border-t border-border overflow-hidden" style={{backgroundColor: 'rgba(183, 213, 237, 0.3)'}}>
+    <section className="py-12 w-full border-t border-border overflow-hidden bg-columbia-blue/30 dark:bg-slate-800/50">
       <div className="container mx-auto px-4">
         <div className="text-center">
           <h3 className="text-2xl font-semibold text-muted-foreground uppercase tracking-wider mb-8">
@@ -55,7 +55,7 @@ export default function StandardsCompliance() {
                   fill
                   sizes="192px"
                   style={{objectFit: "contain"}}
-                  className="grayscale hover:grayscale-0 transition-all duration-300"
+                  className="grayscale hover:grayscale-0 transition-all duration-300 dark:invert"
                 />
               </a>
             </div>
@@ -67,7 +67,7 @@ export default function StandardsCompliance() {
                   fill
                   sizes="192px"
                   style={{objectFit: "contain"}}
-                  className="grayscale hover:grayscale-0 transition-all duration-300"
+                  className="grayscale hover:grayscale-0 transition-all duration-300 dark:invert"
                 />
               </a>
             </div>
@@ -93,7 +93,7 @@ export default function StandardsCompliance() {
                   height={40}
                   width={120}
                   style={{ objectFit: 'contain', width: 'auto', height: 40 }}
-                  className="grayscale"
+                  className="grayscale dark:invert"
                 />
               </div>
             ))}
@@ -112,7 +112,7 @@ export default function StandardsCompliance() {
                   height={40}
                   width={120}
                   style={{ objectFit: 'contain', width: 'auto', height: 40 }}
-                  className="grayscale"
+                  className="grayscale dark:invert"
                 />
               </div>
             ))}

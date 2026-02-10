@@ -88,6 +88,7 @@ export default function HomePage() {
                     fill
                     sizes="(max-width: 640px) 112px, (max-width: 768px) 128px, 144px"
                     style={{objectFit: "contain"}}
+                    className="dark:invert dark:brightness-200"
                     priority
                   />
                 </div>
@@ -98,6 +99,7 @@ export default function HomePage() {
                     fill
                     sizes="(max-width: 640px) 112px, (max-width: 768px) 128px, 144px"
                     style={{objectFit: "contain"}}
+                    className="dark:invert dark:brightness-200"
                     priority
                   />
                 </div>

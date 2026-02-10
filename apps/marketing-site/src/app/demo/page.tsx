@@ -6,8 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Navbar } from '@/components/layout/navbar';
-import { Footer } from '@/components/layout/footer';
 
 export default function DemoPage() {
   const [formData, setFormData] = useState({
@@ -60,21 +58,18 @@ export default function DemoPage() {
   };
 
   return (
-    <main className="min-h-screen flex flex-col bg-background">
-      <Navbar />
-      
-      <section className="flex-grow py-20 px-4">
-        <div className="container mx-auto max-w-2xl">
-          <div className="text-center mb-12">
-            <h1 className="text-4xl font-bold text-foreground mb-4">
-              Schedule a Demo
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              See how Encypher can protect your content and build trust with your audience.
-            </p>
-          </div>
+    <section className="py-20 px-4 bg-background">
+      <div className="container mx-auto max-w-2xl">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
+            Schedule a Demo
+          </h1>
+          <p className="text-xl text-muted-foreground">
+            See how Encypher can protect your content and build trust with your audience.
+          </p>
+        </div>
 
-          <Card className="bg-card">
+        <Card className="bg-card">
             <CardContent className="pt-6">
               {status === 'success' ? (
                 <div className="text-center py-12">
@@ -187,9 +182,8 @@ export default function DemoPage() {
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
-      <Footer />
-    </main>
+      </div>
+    </section>
   );
 }
+

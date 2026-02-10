@@ -15,17 +15,17 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const STORAGE_KEY = 'encypher_theme';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  // Default to 'light' instead of 'system' for consistent experience
-  const [theme, setThemeState] = useState<Theme>('light');
+  // Default to 'system' to auto-detect browser preference
+  const [theme, setThemeState] = useState<Theme>('system');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
-  // Initialize theme from localStorage (defaults to 'light' if not set)
+  // Initialize theme from localStorage (defaults to 'system' if not set)
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     if (stored && ['light', 'dark', 'system'].includes(stored)) {
       setThemeState(stored);
     }
-    // If no stored preference, keep default 'light' (don't set to 'system')
+    // If no stored preference, keep default 'system' to respect browser settings
   }, []);
 
   // Resolve system theme and apply

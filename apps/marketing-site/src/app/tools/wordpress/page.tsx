@@ -143,31 +143,30 @@ export default function WordPressPage() {
       />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900 text-white">
-        <div className="absolute inset-0 bg-grid-white/[0.02] bg-[size:60px_60px]" />
+      <section className="relative overflow-hidden bg-muted/30 border-b border-border">
         <div className="relative max-w-6xl mx-auto px-4 py-24 sm:py-32">
           <div className="text-center">
-            <Badge variant="secondary" className="mb-4 bg-blue-500/20 text-blue-300 border-blue-500/30">
+            <Badge variant="secondary" className="mb-4">
               C2PA Compliant
             </Badge>
             <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
               Protect Your WordPress Content with{" "}
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-cyan-400">
+              <span className="text-primary">
                 Cryptographic Proof
               </span>
             </h1>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
               Embed invisible digital signatures that prove when your content was created, by whom, 
               and whether it&apos;s been tampered with. Fight misinformation, plagiarism, and content theft.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-blue-600 hover:bg-blue-700 text-white" asChild>
+              <Button size="lg" asChild>
                 <Link href="https://dashboard.encypherai.com" target="_blank">
                   <Download className="mr-2 h-5 w-5" />
                   Get Free API Key
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-slate-500 bg-slate-700/50 text-white hover:bg-slate-700" asChild>
+              <Button size="lg" variant="outline" asChild>
                 <Link href="/pricing">
                   View Pricing
                   <ArrowRight className="ml-2 h-5 w-5" />
@@ -179,14 +178,14 @@ export default function WordPressPage() {
       </section>
 
       {/* Trust Bar */}
-      <section className="bg-slate-100 dark:bg-slate-800 py-8 border-y">
+      <section className="bg-muted/50 py-8 border-y border-border">
         <div className="max-w-6xl mx-auto px-4">
           <p className="text-center text-sm text-muted-foreground mb-4">
             Built on C2PA standards developed with industry leaders
           </p>
           <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
             {partners.map((partner) => (
-              <span key={partner} className="text-lg font-semibold text-slate-600 dark:text-slate-400">
+              <span key={partner} className="text-lg font-semibold text-foreground">
                 {partner}
               </span>
             ))}
@@ -206,9 +205,9 @@ export default function WordPressPage() {
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((feature) => (
-              <Card key={feature.title} className="border-2 hover:border-blue-500/50 transition-colors">
+              <Card key={feature.title} className="border-2 hover:border-primary/50 transition-colors">
                 <CardHeader>
-                  <feature.icon className="h-10 w-10 text-blue-600 mb-2" />
+                  <feature.icon className="h-10 w-10 text-primary mb-2" />
                   <CardTitle className="text-xl">{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -221,7 +220,7 @@ export default function WordPressPage() {
       </section>
 
       {/* How It Works */}
-      <section className="py-20 bg-slate-50 dark:bg-slate-900">
+      <section className="py-20 bg-muted/30 border-y border-border">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">How It Works</h2>
@@ -231,7 +230,7 @@ export default function WordPressPage() {
           </div>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                 1
               </div>
               <h3 className="text-xl font-semibold mb-2">Install & Configure</h3>
@@ -240,7 +239,7 @@ export default function WordPressPage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                 2
               </div>
               <h3 className="text-xl font-semibold mb-2">Write & Publish</h3>
@@ -249,7 +248,7 @@ export default function WordPressPage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
                 3
               </div>
               <h3 className="text-xl font-semibold mb-2">Readers Verify</h3>
@@ -274,10 +273,10 @@ export default function WordPressPage() {
             {tiers.map((tier) => (
               <Card 
                 key={tier.name} 
-                className={`relative ${tier.highlighted ? 'border-blue-500 border-2 shadow-lg' : ''}`}
+                className={`relative ${tier.highlighted ? 'border-primary border-2 shadow-lg' : ''}`}
               >
                 {tier.highlighted && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-blue-600">
+                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2">
                     Most Popular
                   </Badge>
                 )}
@@ -295,13 +294,13 @@ export default function WordPressPage() {
                   <ul className="space-y-3 mb-6">
                     {tier.features.map((feature) => (
                       <li key={feature} className="flex items-start gap-2">
-                        <CheckCircle className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
+                        <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
                   <Button 
-                    className={`w-full ${tier.highlighted ? 'bg-blue-600 hover:bg-blue-700' : ''}`}
+                    className="w-full"
                     variant={tier.highlighted ? 'default' : 'outline'}
                     asChild
                   >
@@ -318,7 +317,7 @@ export default function WordPressPage() {
       </section>
 
       {/* Use Cases */}
-      <section className="py-20 bg-slate-50 dark:bg-slate-900">
+      <section className="py-20 bg-muted/30 border-y border-border">
         <div className="max-w-6xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold mb-4">Who Uses Encypher Provenance?</h2>
@@ -369,13 +368,13 @@ export default function WordPressPage() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-blue-600 to-cyan-600 text-white">
+      <section className="py-20 bg-primary text-primary-foreground">
         <div className="max-w-4xl mx-auto px-4 text-center">
           <Globe className="h-16 w-16 mx-auto mb-6 opacity-80" />
           <h2 className="text-3xl sm:text-4xl font-bold mb-4">
             Ready to Protect Your Content?
           </h2>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
             Join thousands of publishers using C2PA standards to prove content authenticity. 
             Get started in minutes with our free tier.
           </p>
@@ -386,7 +385,7 @@ export default function WordPressPage() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button size="lg" variant="outline" className="bg-transparent border-white text-white hover:bg-white/10" asChild>
+            <Button size="lg" variant="outline" className="bg-transparent border-primary-foreground text-primary-foreground hover:bg-primary-foreground/10" asChild>
               <Link href="/pricing">
                 View Full Pricing
               </Link>
@@ -399,8 +398,8 @@ export default function WordPressPage() {
       <section className="py-20 bg-background">
         <div className="max-w-3xl mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Frequently Asked Questions</h2>
-          <div className="space-y-6">
-            <div>
+          <div className="space-y-8">
+            <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">What is C2PA?</h3>
               <p className="text-muted-foreground">
                 C2PA (Coalition for Content Provenance and Authenticity) is an open standard for content 
@@ -408,28 +407,28 @@ export default function WordPressPage() {
                 to cryptographically sign content to prove its origin and detect tampering.
               </p>
             </div>
-            <div>
+            <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Are the signatures visible?</h3>
               <p className="text-muted-foreground">
                 No. C2PA manifests are embedded using invisible Unicode variation selectors. They don&apos;t 
                 affect how your content looks but can be extracted for verification.
               </p>
             </div>
-            <div>
+            <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Does this work with Gutenberg and Classic Editor?</h3>
               <p className="text-muted-foreground">
                 Yes! The plugin supports both the block editor (Gutenberg) with a dedicated sidebar panel, 
                 and the Classic Editor with a meta box.
               </p>
             </div>
-            <div>
+            <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">What happens when I edit a signed post?</h3>
               <p className="text-muted-foreground">
                 The plugin automatically re-signs the content with a &quot;c2pa.edited&quot; action and maintains 
                 a provenance chain linking to the previous version, creating a complete edit history.
               </p>
             </div>
-            <div>
+            <div className="bg-card border border-border rounded-lg p-6">
               <h3 className="text-lg font-semibold mb-2">Is my content sent to external servers?</h3>
               <p className="text-muted-foreground">
                 Content is sent to Encypher&apos;s API for signing. We create cryptographic signatures but do 

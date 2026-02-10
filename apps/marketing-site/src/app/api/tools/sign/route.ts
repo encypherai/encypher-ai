@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { resolveEnterpriseApiUrl } from "@/lib/enterpriseApiUrl";
 import { buildSignBasicRequest } from "@/lib/enterpriseApiTools";
+import { parseJsonWithSizeLimit } from "@/lib/apiPayloadGuard";
 
 export const runtime = "nodejs";
 
@@ -9,7 +10,10 @@ export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
   const logPrefix = "[tools-sign]";
   try {
-    const body = await request.json();
+    // TEAM_152: Enforce payload size limit before parsing
+    const parsed = await parseJsonWithSizeLimit(request, { requestId, logPrefix });
+    if ("error" in parsed) return parsed.error;
+    const body = parsed.body;
 
     const originalText = typeof body?.original_text === "string" ? body.original_text : "";
     if (!originalText.trim()) {

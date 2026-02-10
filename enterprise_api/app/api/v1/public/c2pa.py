@@ -18,7 +18,7 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
-from app.database import get_db
+from app.database import get_db, get_content_db
 from app.dependencies import DEMO_KEYS, _normalize_org_context
 from app.middleware.api_key_auth import authenticate_api_key, get_api_key_from_header
 from app.middleware.public_rate_limiter import public_rate_limiter
@@ -379,4 +379,66 @@ async def get_trust_anchor(
         expires_at=expires_at_str,
         revoked=revoked,
         trust_anchor_type="organization",
+    )
+
+
+# ---------------------------------------------------------------------------
+# TEAM_156: ZW segment UUID resolution (used by verification-service)
+# ---------------------------------------------------------------------------
+
+
+class ZWResolveResponse(BaseModel):
+    """Response for ZW segment UUID resolution."""
+    segment_uuid: str
+    organization_id: str
+    document_id: Optional[str] = None
+
+
+@router.get(
+    "/zw/resolve/{segment_uuid}",
+    response_model=ZWResolveResponse,
+    summary="Resolve ZW segment UUID (Public, internal)",
+    responses={
+        404: {"description": "Segment UUID not found"},
+    },
+)
+async def resolve_zw_segment_uuid(
+    request: Request,
+    segment_uuid: str = Path(..., description="Segment UUID from ZW embedding"),
+    content_db: AsyncSession = Depends(get_content_db),
+) -> ZWResolveResponse:
+    """
+    Resolve a ZW (zero-width) embedding segment UUID to its organization.
+
+    Used internally by the verification-service to look up ZW embeddings
+    in the content database without needing direct DB access.
+    """
+    await public_rate_limiter(request, endpoint_type="trust_anchor_lookup")
+
+    result = await content_db.execute(
+        text(
+            """
+            SELECT organization_id, document_id
+            FROM content_references
+            WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
+            LIMIT 1
+            """
+        ),
+        {"seg_uuid": segment_uuid},
+    )
+    row = result.fetchone()
+
+    if not row:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "SEGMENT_NOT_FOUND",
+                "message": f"No content reference found for segment_uuid '{segment_uuid}'",
+            },
+        )
+
+    return ZWResolveResponse(
+        segment_uuid=segment_uuid,
+        organization_id=row.organization_id,
+        document_id=row.document_id,
     )

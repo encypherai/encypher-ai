@@ -26,6 +26,12 @@ CANDIDATES = [
     ("INVIS_TIMES", "\u2062", "Invisible Times"),
     ("INVIS_SEP", "\u2063", "Invisible Separator"),
     ("INVIS_PLUS", "\u2064", "Invisible Plus"),
+    # Unicode Tag Characters (Plane 14) - under investigation
+    ("TAG_SPACE", "\U000E0020", "Tag Space"),
+    ("TAG_A", "\U000E0041", "Tag Latin Capital Letter A"),
+    ("TAG_a", "\U000E0061", "Tag Latin Small Letter a"),
+    ("TAG_0", "\U000E0030", "Tag Digit Zero"),
+    ("TAG_CANCEL", "\U000E007F", "Cancel Tag"),
 ]
 
 

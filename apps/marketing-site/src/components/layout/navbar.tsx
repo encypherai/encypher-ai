@@ -62,7 +62,7 @@ export function Navbar() {
                 Solutions
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-background !bg-opacity-100 !backdrop-blur-none !bg-neutral-900 !shadow-lg">
+            <DropdownMenuContent align="start" className="bg-popover text-popover-foreground shadow-lg border border-border">
               <DropdownMenuItem asChild>
                 <Link href="/solutions/publishers">For Publishers</Link>
               </DropdownMenuItem>
@@ -90,7 +90,7 @@ export function Navbar() {
                 Tools
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="bg-background !bg-opacity-100 !backdrop-blur-none !bg-neutral-900 !shadow-lg">
+            <DropdownMenuContent align="start" className="bg-popover text-popover-foreground shadow-lg border border-border">
               {toolLinks.filter(t => !t.hiddenInMenu).map(t => (
                 <DropdownMenuItem key={t.href} asChild>
                   <Link href={t.href}>{t.name}</Link>

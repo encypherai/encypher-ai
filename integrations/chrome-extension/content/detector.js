@@ -9,6 +9,16 @@
  * - Encypher Marker: "ENCYPHER" (Encypher-specific format)
  */
 
+// TEAM_151: Lightweight content script logger (sends to service worker storage)
+function _debugLog(level, category, message, data) {
+  try {
+    chrome.runtime.sendMessage({
+      type: 'CONTENT_DEBUG_LOG',
+      level, category, message, data
+    }).catch(() => {});
+  } catch { /* ignore if extension context invalidated */ }
+}
+
 // C2PA Text Manifest magic bytes: "C2PATXT\0"
 const C2PA_MAGIC = [0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00];
 
@@ -242,6 +252,7 @@ function injectBadge(element, status, details) {
  * Scan the page for C2PA embeddings
  */
 async function scanPage() {
+  _debugLog('INFO', 'detector', `Scanning page: ${window.location.href}`);
   const nodes = findNodesWithEmbeddings();
   const detections = [];
   
@@ -251,6 +262,7 @@ async function scanPage() {
     
     const markerType = detectMarkerType(bytes);
     if (markerType) {
+      _debugLog('INFO', 'detector', `Found ${markerType} embedding (${bytes.length} bytes)`, { visibleTextLen: extractVisibleText(text).length });
       const containingBlock = getContainingBlock(node);
       const visibleText = extractVisibleText(text);
       
@@ -272,6 +284,7 @@ async function scanPage() {
   }
   
   // Notify service worker about detections
+  _debugLog('INFO', 'detector', `Scan complete: ${detections.length} embeddings found`);
   if (detections.length > 0) {
     chrome.runtime.sendMessage({
       type: 'EMBEDDINGS_DETECTED',
@@ -317,6 +330,7 @@ async function scanPage() {
     }
   } else {
     // No embeddings found
+    _debugLog('DEBUG', 'detector', 'No embeddings found on page');
     chrome.runtime.sendMessage({
       type: 'NO_EMBEDDINGS',
       url: window.location.href

@@ -1,17 +1,13 @@
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
-# Set working directory
 WORKDIR /app
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
-
-# Install UV
-RUN pip install uv
 
 # Copy shared library (synced from /shared_commercial_libs/)
 COPY shared_libs /shared_libs

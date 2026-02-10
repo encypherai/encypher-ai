@@ -273,6 +273,13 @@ def detect_zw_embeddings(text: str) -> bool:
     return len(find_all_minimal_signed_uuids(text)) > 0
 
 
+def detect_vs256_embeddings(text: str) -> bool:
+    """Check if text contains VS256 embeddings using magic prefix detection."""
+    from app.utils.vs256_crypto import find_all_minimal_signed_uuids as vs256_find_all
+
+    return len(vs256_find_all(text)) > 0
+
+
 async def execute_verification(*, payload_text: str, db: AsyncSession) -> VerificationExecution:
     """Run UnicodeMetadata verification with cached certificate resolution.
 
@@ -282,6 +289,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     3. Registered organization certificates/BYOK keys
     4. C2PA trust list (for third-party signed content with embedded x5chain)
     5. ZW embeddings (Word-compatible, requires signing key from DB)
+    6. VS256 embeddings (max density, requires signing key from DB)
     """
 
     await certificate_resolver.refresh_cache(db)

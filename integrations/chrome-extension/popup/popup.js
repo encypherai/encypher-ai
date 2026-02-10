@@ -44,8 +44,22 @@ const signMerkleEl = document.getElementById('sign-merkle');
 const signAttributionEl = document.getElementById('sign-attribution');
 const proFeaturesEl = document.getElementById('pro-features');
 
+// DOM elements - Debug tab
+const debugTabBtn = document.querySelector('.popup__tab--debug');
+const debugTabEl = document.getElementById('debug-tab');
+const debugLogsEl = document.getElementById('debug-logs');
+const debugCountEl = document.getElementById('debug-count');
+const debugRefreshBtn = document.getElementById('debug-refresh');
+const debugClearBtn = document.getElementById('debug-clear');
+const debugApiUrlEl = document.getElementById('debug-api-url');
+const debugFilters = document.querySelectorAll('.debug-panel__filter');
+
 // Account info cache
 let accountInfo = null;
+
+// Debug state
+let currentDebugFilter = 'all';
+let debugAutoRefreshInterval = null;
 
 // Tab elements
 const tabs = document.querySelectorAll('.popup__tab');
@@ -174,20 +188,31 @@ function switchTab(tabName) {
     tab.classList.toggle('popup__tab--active', tab.dataset.tab === tabName);
   });
   
+  // Hide all tab content first
+  loadingEl.hidden = true;
+  noContentEl.hidden = true;
+  contentFoundEl.hidden = true;
+  errorEl.hidden = true;
+  signTabEl.hidden = true;
+  debugTabEl.hidden = true;
+  
+  // Stop debug auto-refresh when leaving debug tab
+  if (debugAutoRefreshInterval) {
+    clearInterval(debugAutoRefreshInterval);
+    debugAutoRefreshInterval = null;
+  }
+  
   // Show/hide content
   if (tabName === 'verify') {
-    signTabEl.hidden = true;
     loadTabState();
   } else if (tabName === 'sign') {
-    // Hide verify states
-    loadingEl.hidden = true;
-    noContentEl.hidden = true;
-    contentFoundEl.hidden = true;
-    errorEl.hidden = true;
-    
-    // Show sign tab
     signTabEl.hidden = false;
     checkApiKeyAndShowSignState();
+  } else if (tabName === 'debug') {
+    debugTabEl.hidden = false;
+    loadDebugLogs();
+    // Auto-refresh every 2 seconds while debug tab is open
+    debugAutoRefreshInterval = setInterval(loadDebugLogs, 2000);
   }
 }
 
@@ -393,5 +418,128 @@ toggleAdvancedBtn?.addEventListener('click', () => {
   toggleAdvancedBtn.classList.toggle('open', isOpen);
 });
 
+/**
+ * TEAM_151: Check if dev mode is active and show debug tab
+ */
+async function checkDevMode() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GET_DEV_MODE' });
+    if (response && response.devMode) {
+      debugTabBtn.hidden = false;
+      
+      // Show the current API URL in the debug panel
+      const settings = await chrome.storage.sync.get({
+        apiBaseUrl: 'https://api.encypherai.com',
+        customApiUrl: ''
+      });
+      const url = settings.apiBaseUrl === 'custom' ? settings.customApiUrl : settings.apiBaseUrl;
+      if (debugApiUrlEl) debugApiUrlEl.textContent = url;
+    }
+  } catch (e) {
+    // Not in dev mode or service worker not ready
+  }
+}
+
+/**
+ * TEAM_151: Load and render debug logs from the service worker
+ */
+async function loadDebugLogs() {
+  try {
+    const response = await chrome.runtime.sendMessage({ type: 'GET_DEBUG_LOGS' });
+    if (!response || !response.logs) return;
+    
+    const logs = response.logs;
+    const filtered = currentDebugFilter === 'all'
+      ? logs
+      : logs.filter(l => l.level === currentDebugFilter);
+    
+    renderDebugLogs(filtered);
+    debugCountEl.textContent = `${filtered.length} of ${logs.length} entries`;
+  } catch (e) {
+    console.error('Error loading debug logs:', e);
+  }
+}
+
+/**
+ * TEAM_151: Render log entries into the debug panel
+ */
+function renderDebugLogs(logs) {
+  if (!logs || logs.length === 0) {
+    debugLogsEl.innerHTML = '<div class="debug-panel__empty">No logs yet. Interact with the extension to generate logs.</div>';
+    return;
+  }
+  
+  const wasScrolledToBottom = debugLogsEl.scrollTop + debugLogsEl.clientHeight >= debugLogsEl.scrollHeight - 20;
+  
+  debugLogsEl.innerHTML = logs.map(log => {
+    const time = new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const dataAttr = log.data ? ` data-json="${escapeAttr(JSON.stringify(log.data, null, 2))}"` : '';
+    const dataLink = log.data ? ' <span class="debug-log__data" onclick="toggleLogData(this)">+data</span>' : '';
+    
+    return `<div class="debug-log">
+      <span class="debug-log__time">${time}</span>
+      <span class="debug-log__level debug-log__level--${log.level}">${log.level}</span>
+      <span class="debug-log__cat">[${log.category}]</span>
+      <span class="debug-log__msg">${escapeHtmlDebug(log.message)}${dataLink}</span>
+    </div>${log.data ? `<div class="debug-log__data-expanded" hidden${dataAttr}></div>` : ''}`;
+  }).join('');
+  
+  // Auto-scroll to bottom if user was already at bottom
+  if (wasScrolledToBottom) {
+    debugLogsEl.scrollTop = debugLogsEl.scrollHeight;
+  }
+}
+
+/**
+ * TEAM_151: Escape HTML for safe display in debug panel
+ */
+function escapeHtmlDebug(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+/**
+ * TEAM_151: Escape attribute value
+ */
+function escapeAttr(text) {
+  return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// TEAM_151: Make toggleLogData available globally for inline onclick
+window.toggleLogData = function(el) {
+  const expanded = el.closest('.debug-log').nextElementSibling;
+  if (expanded && expanded.classList.contains('debug-log__data-expanded')) {
+    if (expanded.hidden) {
+      expanded.textContent = expanded.getAttribute('data-json');
+      expanded.hidden = false;
+      el.textContent = '-data';
+    } else {
+      expanded.hidden = true;
+      el.textContent = '+data';
+    }
+  }
+};
+
+// Event listeners - Debug tab
+debugRefreshBtn?.addEventListener('click', loadDebugLogs);
+
+debugClearBtn?.addEventListener('click', async () => {
+  await chrome.runtime.sendMessage({ type: 'CLEAR_DEBUG_LOGS' });
+  loadDebugLogs();
+});
+
+debugFilters.forEach(btn => {
+  btn.addEventListener('click', () => {
+    debugFilters.forEach(f => f.classList.remove('debug-panel__filter--active'));
+    btn.classList.add('debug-panel__filter--active');
+    currentDebugFilter = btn.dataset.level;
+    loadDebugLogs();
+  });
+});
+
 // Initialize
-document.addEventListener('DOMContentLoaded', loadTabState);
+document.addEventListener('DOMContentLoaded', () => {
+  loadTabState();
+  checkDevMode();
+});

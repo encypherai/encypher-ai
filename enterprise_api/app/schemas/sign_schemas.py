@@ -162,7 +162,7 @@ class SignOptions(BaseModel):
     )
     manifest_mode: str = Field(
         default="full",
-        description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding (Professional+)",
+        description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding, vs256_embedding (Professional+)",
     )
     embedding_strategy: str = Field(
         default="single_point",
@@ -257,7 +257,7 @@ class SignOptions(BaseModel):
     @field_validator("manifest_mode")
     @classmethod
     def validate_manifest_mode(cls, v: str) -> str:
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding"]
+        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "vs256_embedding"]
         if v not in allowed:
             raise ValueError(f"manifest_mode must be one of: {', '.join(allowed)}")
         return v

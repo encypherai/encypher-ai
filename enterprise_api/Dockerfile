@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
@@ -14,9 +14,8 @@ RUN apt-get update && \
 COPY enterprise_api/pyproject.toml enterprise_api/pyproject.toml
 COPY encypher-ai/pyproject.toml encypher-ai/pyproject.toml
 
-# Install project dependencies in editable mode for live reload during development
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir hatchling setuptools
+# Install build backends
+RUN uv pip install --system hatchling setuptools
 
 # Copy source code - c2pa-text needs parent README.md so copy whole directory
 COPY c2pa-text /app/c2pa-text
@@ -26,10 +25,10 @@ COPY services/migrations /app/services/migrations
 
 # Install c2pa-text first (dependency of encypher-ai), then encypher-ai, then enterprise_api
 # Also install asyncpg for database initialization and pytest for testing
-RUN pip install --no-cache-dir -e /app/c2pa-text/python && \
-    pip install --no-cache-dir -e /app/encypher-ai && \
-    pip install --no-cache-dir -e /app/enterprise_api && \
-    pip install --no-cache-dir asyncpg pytest pytest-asyncio httpx && \
+RUN uv pip install --system -e /app/c2pa-text/python && \
+    uv pip install --system -e /app/encypher-ai && \
+    uv pip install --system -e /app/enterprise_api && \
+    uv pip install --system asyncpg pytest pytest-asyncio httpx && \
     python -m spacy download en_core_web_sm
 
 WORKDIR /app/enterprise_api

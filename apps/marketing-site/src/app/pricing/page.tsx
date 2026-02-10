@@ -142,15 +142,11 @@ export default function PricingPage() {
                   <button
                     key={icp}
                     onClick={() => setActiveICP(icp)}
-                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all text-sm"
-                    style={isActive ? {
-                      backgroundColor: '#2a87c4',
-                      color: '#ffffff',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    } : {
-                      backgroundColor: '#e2e8f0',
-                      color: '#64748b'
-                    }}
+                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all text-sm ${
+                      isActive
+                        ? 'bg-blue-ncs text-white shadow-md'
+                        : 'bg-secondary text-muted-foreground'
+                    }`}
                   >
                     <IconComponent className="h-4 w-4" />
                     <span>{config.label}</span>
@@ -159,7 +155,7 @@ export default function PricingPage() {
               })}
             </div>
             {/* Desktop: Horizontal tabs */}
-            <div className="hidden sm:inline-flex rounded-lg p-1.5 gap-1" style={{ backgroundColor: '#e2e8f0' }}>
+            <div className="hidden sm:inline-flex rounded-lg p-1.5 gap-1 bg-secondary">
               {(['publishers', 'ai-labs', 'enterprises'] as const).map((icp) => {
                 const isActive = activeICP === icp;
                 const config = {
@@ -172,14 +168,11 @@ export default function PricingPage() {
                   <button
                     key={icp}
                     onClick={() => setActiveICP(icp)}
-                    className="flex items-center justify-center gap-2 py-3 px-6 rounded-md font-medium transition-all text-sm"
-                    style={isActive ? {
-                      backgroundColor: '#2a87c4',
-                      color: '#ffffff',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    } : {
-                      color: '#64748b'
-                    }}
+                    className={`flex items-center justify-center gap-2 py-3 px-6 rounded-md font-medium transition-all text-sm ${
+                      isActive
+                        ? 'bg-blue-ncs text-white shadow-md'
+                        : 'text-muted-foreground'
+                    }`}
                   >
                     <IconComponent className="h-4 w-4" />
                     <span>{config.label}</span>
@@ -231,6 +224,7 @@ export default function PricingPage() {
                 alt="C2PA Logo"
                 fill
                 style={{objectFit: 'contain'}}
+                className="dark:invert"
               />
             </div>
             <div className="relative h-8 w-24 md:h-10 md:w-32">
@@ -239,6 +233,7 @@ export default function PricingPage() {
                 alt="Content Authenticity Initiative Logo"
                 fill
                 style={{objectFit: 'contain'}}
+                className="dark:invert"
               />
             </div>
           </div>
