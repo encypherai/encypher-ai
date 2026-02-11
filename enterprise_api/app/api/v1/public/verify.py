@@ -33,6 +33,8 @@ from app.schemas.embeddings import (
     ErrorResponse,
     LicensingInfo,
     MerkleProofInfo,
+    SegmentLocation,
+    SignerIdentity,
     VerifyEmbeddingResponse,
 )
 from app.utils.c2pa_verifier import c2pa_verifier
@@ -208,8 +210,24 @@ async def verify_embedding(
             logger.error(f"Merkle root not found for reference: {ref_id}")
             return VerifyEmbeddingResponse(valid=False, ref_id=ref_id, error="Associated Merkle root not found")
 
+        # TEAM_165: Extract segment location from embedding_metadata (micro_c2pa mode)
+        embedding_meta = cast(Dict[str, Any], reference.embedding_metadata or {})
+        segment_location_info = None
+        location_data = embedding_meta.get("segment_location")
+        if location_data and isinstance(location_data, dict):
+            segment_location_info = SegmentLocation(
+                paragraph_index=location_data.get("paragraph_index", 0),
+                sentence_in_paragraph=location_data.get("sentence_in_paragraph", 0),
+                total_segments=embedding_meta.get("total_segments"),
+            )
+
         # Build response with metadata (no DB-backed text)
-        content_info = ContentInfo(text_preview=None, leaf_hash=reference.leaf_hash, leaf_index=reference.leaf_index)
+        content_info = ContentInfo(
+            text_preview=None,
+            leaf_hash=reference.leaf_hash,
+            leaf_index=reference.leaf_index,
+            segment_location=segment_location_info,
+        )
 
         # Extract document metadata
         doc_metadata = cast(Dict[str, Any], merkle_root.doc_metadata or {})
@@ -226,7 +244,18 @@ async def verify_embedding(
 
         # C2PA info (if available) - Now with actual verification!
         c2pa_info = None
-        if reference.c2pa_manifest_url:
+        # TEAM_165: micro_c2pa stores the full manifest in manifest_data (DB-backed)
+        ref_manifest_data = cast(Optional[Dict[str, Any]], reference.manifest_data)
+        if ref_manifest_data and embedding_meta.get("manifest_mode") in ("micro_c2pa", "micro_ecc_c2pa"):
+            c2pa_info = C2PAInfo(
+                manifest_url=None,
+                manifest_hash=reference.c2pa_manifest_hash,
+                validated=True,
+                validation_type="db_backed_manifest",
+                validation_details=None,
+                manifest_data=ref_manifest_data,
+            )
+        elif reference.c2pa_manifest_url:
             manifest_url = cast(str, reference.c2pa_manifest_url)
             # Verify the C2PA manifest (async)
             c2pa_result = await c2pa_verifier.verify_manifest_url(manifest_url)
@@ -250,6 +279,66 @@ async def verify_embedding(
                 contact_email=doc_metadata.get("contact_email"),
             )
 
+        # TEAM_165: Resolve signer identity and trust chain from org certificate
+        signer_identity_info = None
+        try:
+            from sqlalchemy import text as sql_text
+
+            org_id = reference.organization_id
+            cert_result = await db.execute(
+                sql_text(
+                    """
+                    SELECT name, certificate_pem, certificate_chain,
+                           certificate_status, certificate_expiry
+                    FROM organizations
+                    WHERE id = :org_id
+                    """
+                ),
+                {"org_id": org_id},
+            )
+            org_row = cert_result.fetchone()
+            if org_row:
+                org_name = org_row.name
+                cert_pem = org_row.certificate_pem
+                chain_pem = org_row.certificate_chain
+                cert_status = org_row.certificate_status or "none"
+                cert_expiry = org_row.certificate_expiry
+
+                # Determine if CA-backed: chain_pem is non-empty and cert is active
+                has_chain = bool(chain_pem and chain_pem.strip())
+                ca_backed = has_chain and cert_status == "active"
+
+                # Extract issuer from certificate if available
+                issuer_name = None
+                if cert_pem:
+                    try:
+                        from cryptography.x509 import load_pem_x509_certificate
+                        cert_obj = load_pem_x509_certificate(cert_pem.encode())
+                        issuer_rdn = cert_obj.issuer.rfc4514_string()
+                        subject_rdn = cert_obj.subject.rfc4514_string()
+                        issuer_name = "self-signed" if issuer_rdn == subject_rdn else issuer_rdn
+                    except Exception:
+                        issuer_name = "unknown"
+
+                if cert_status == "none" or not cert_pem:
+                    trust_level = "none"
+                elif ca_backed:
+                    trust_level = "ca_verified"
+                else:
+                    trust_level = "self_signed"
+
+                signer_identity_info = SignerIdentity(
+                    organization_id=org_id,
+                    organization_name=org_name,
+                    certificate_status=cert_status,
+                    ca_backed=ca_backed,
+                    issuer=issuer_name,
+                    certificate_expiry=cert_expiry,
+                    trust_level=trust_level,
+                )
+        except Exception as e:
+            logger.warning("Failed to resolve signer identity for ref %s: %s", ref_id, e)
+
         logger.info(f"Successfully verified ref_id: {ref_id}")
 
         return VerifyEmbeddingResponse(
@@ -260,6 +349,7 @@ async def verify_embedding(
             document=document_info,
             merkle_proof=merkle_proof_info,
             c2pa=c2pa_info,
+            signer_identity=signer_identity_info,
             licensing=licensing_info,
             verification_url=reference.to_verification_url(),
         )

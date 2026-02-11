@@ -133,11 +133,11 @@ async def test_sign_advanced_zw_embedding_metadata(
 
 
 @pytest.mark.asyncio
-async def test_sign_advanced_zw_embedding_requires_professional_tier(
+async def test_sign_advanced_zw_embedding_allowed_for_free_tier(
     async_client,
     starter_auth_headers: dict,
 ) -> None:
-    """Test that zw_embedding requires Professional tier."""
+    """TEAM_166: Free tier can use zw_embedding manifest mode."""
     response = await async_client.post(
         "/api/v1/sign",
         headers=starter_auth_headers,
@@ -149,12 +149,5 @@ async def test_sign_advanced_zw_embedding_requires_professional_tier(
         },
     )
 
-    # Should be forbidden for starter tier
-    assert response.status_code == 403, f"Expected 403 for starter tier, got {response.status_code}"
-
-    payload = response.json()
-    error = payload.get("error", {}) or payload.get("detail", {})
-    # Check for feature gating error
-    assert response.status_code == 403
-
-    print("✓ ZW embedding tier gating verified")
+    # TEAM_166: Free tier now has access to all manifest modes
+    assert response.status_code == 201, f"Expected 201 for free tier, got {response.status_code}"

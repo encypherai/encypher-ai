@@ -42,17 +42,19 @@ Sign content with C2PA manifest. Features are gated by tier.
 
 **Tier Feature Matrix:**
 
-| Feature | Free/Starter | Professional | Business | Enterprise |
-|---------|--------------|--------------|----------|------------|
-| Basic C2PA signing | ✅ | ✅ | ✅ | ✅ |
-| Sentence segmentation | ❌ | ✅ | ✅ | ✅ |
-| Advanced manifest modes | ❌ | ✅ | ✅ | ✅ |
-| Attribution indexing | ❌ | ✅ | ✅ | ✅ |
-| Custom assertions | ❌ | ❌ | ✅ | ✅ |
-| Rights metadata | ❌ | ❌ | ✅ | ✅ |
-| Dual binding | ❌ | ❌ | ❌ | ✅ |
-| Fingerprinting | ❌ | ❌ | ❌ | ✅ |
-| Batch size | 1 | 10 | 50 | 100 |
+| Feature | Free | Enterprise |
+|---------|------|------------|
+| Basic C2PA signing | ✅ | ✅ |
+| Sentence/paragraph/section segmentation | ✅ | ✅ |
+| Advanced manifest modes | ✅ | ✅ |
+| Attribution indexing | ✅ | ✅ |
+| Custom assertions | ✅ | ✅ |
+| Rights metadata | ✅ | ✅ |
+| Batch signing (up to 10) | ✅ | ✅ |
+| Word-level segmentation | ❌ | ✅ |
+| Dual binding | ❌ | ✅ |
+| Fingerprinting | ❌ | ✅ |
+| Batch size | 10 | 100 |
 
 **Single Document:**
 ```json
@@ -65,7 +67,7 @@ Sign content with C2PA manifest. Features are gated by tier.
 }
 ```
 
-**Batch (Professional+):**
+**Batch:**
 ```json
 {
     "documents": [
@@ -102,7 +104,8 @@ async def sign_content(
     Features are automatically gated based on the organization's tier.
     """
     correlation_id = f"req-{uuid.uuid4().hex[:12]}"
-    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    # TEAM_145: Default to free tier
+    tier = (organization.get("tier") or "free").lower().replace("-", "_")
     org_id = organization["organization_id"]
     
     # Get batch size for rate limiting

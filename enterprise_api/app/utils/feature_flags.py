@@ -58,40 +58,40 @@ class FeatureFlagManager:
 
     # Feature configuration mapping
     FEATURE_CONFIG: Dict[Feature, FeatureConfig] = {
-        # Merkle Tree Features - Professional+ (with quotas)
+        # Merkle Tree Features - Free tier gets basic, Enterprise gets advanced
         Feature.MERKLE_ENCODING: FeatureConfig(
             name="Sentence-Level Merkle Roots",
             description="Encode documents into Merkle trees with sentence-level granularity",
-            required_tier=OrganizationTier.PROFESSIONAL,
+            required_tier=OrganizationTier.FREE,
         ),
         Feature.MERKLE_ATTRIBUTION: FeatureConfig(
-            name="Source Attribution", description="Find source documents for text segments", required_tier=OrganizationTier.PROFESSIONAL
+            name="Source Attribution", description="Find source documents for text segments", required_tier=OrganizationTier.FREE
         ),
         Feature.MERKLE_PLAGIARISM: FeatureConfig(
             name="Plagiarism Detection",
             description="Detect plagiarism and generate reports",
-            required_tier=OrganizationTier.BUSINESS,  # Business+ only
+            required_tier=OrganizationTier.ENTERPRISE,
         ),
         Feature.MERKLE_PROOF_VERIFICATION: FeatureConfig(
-            name="Proof Verification", description="Verify Merkle proofs", required_tier=OrganizationTier.PROFESSIONAL
+            name="Proof Verification", description="Verify Merkle proofs", required_tier=OrganizationTier.FREE
         ),
         Feature.FUZZY_FINGERPRINTING: FeatureConfig(
             name="Fuzzy Fingerprinting",
             description="Locality-sensitive fingerprints for fuzzy attribution",
             required_tier=OrganizationTier.ENTERPRISE,
         ),
-        # Advanced Features - Professional+
+        # Advanced Features - Enterprise only
         Feature.BULK_OPERATIONS: FeatureConfig(
-            name="Bulk Operations", description="Batch process multiple documents", required_tier=OrganizationTier.PROFESSIONAL
+            name="Bulk Operations", description="Batch process multiple documents", required_tier=OrganizationTier.ENTERPRISE
         ),
         Feature.ADVANCED_ANALYTICS: FeatureConfig(
-            name="Advanced Analytics", description="Detailed usage analytics and insights", required_tier=OrganizationTier.PROFESSIONAL
+            name="Advanced Analytics", description="Detailed usage analytics and insights", required_tier=OrganizationTier.ENTERPRISE
         ),
         Feature.CUSTOM_SEGMENTATION: FeatureConfig(
-            name="Custom Segmentation", description="Define custom segmentation rules", required_tier=OrganizationTier.PROFESSIONAL
+            name="Custom Segmentation", description="Define custom segmentation rules", required_tier=OrganizationTier.ENTERPRISE
         ),
         Feature.API_WEBHOOKS: FeatureConfig(
-            name="API Webhooks", description="Receive webhooks for events", required_tier=OrganizationTier.PROFESSIONAL
+            name="API Webhooks", description="Receive webhooks for events", required_tier=OrganizationTier.ENTERPRISE
         ),
         # Performance Features - Enterprise Only
         Feature.PRIORITY_PROCESSING: FeatureConfig(
@@ -105,7 +105,7 @@ class FeatureFlagManager:
         ),
         # Support Features
         Feature.PREMIUM_SUPPORT: FeatureConfig(
-            name="Premium Support", description="24/7 premium support", required_tier=OrganizationTier.PROFESSIONAL
+            name="Premium Support", description="24/7 premium support", required_tier=OrganizationTier.ENTERPRISE
         ),
         Feature.SLA_GUARANTEE: FeatureConfig(name="SLA Guarantee", description="99.9% uptime SLA", required_tier=OrganizationTier.ENTERPRISE),
     }
@@ -132,9 +132,8 @@ class FeatureFlagManager:
         # Tier hierarchy
         tier_levels = {
             OrganizationTier.FREE: 0,
-            OrganizationTier.PROFESSIONAL: 1,
-            OrganizationTier.BUSINESS: 2,
-            OrganizationTier.ENTERPRISE: 3,
+            OrganizationTier.ENTERPRISE: 1,
+            OrganizationTier.STRATEGIC_PARTNER: 2,
         }
 
         current_level = tier_levels.get(tier, -1)
@@ -218,47 +217,43 @@ def check_feature_access(tier: OrganizationTier, feature: Feature) -> bool:
 
 
 # Tier feature matrix for documentation
+# TEAM_145: Consolidated to free/enterprise/strategic_partner
 TIER_FEATURES: Dict[OrganizationTier, Set[Feature]] = {
-    OrganizationTier.FREE: set(),
-    OrganizationTier.PROFESSIONAL: {
-        # Merkle features (with quotas)
+    OrganizationTier.FREE: {
         Feature.MERKLE_ENCODING,
         Feature.MERKLE_ATTRIBUTION,
         Feature.MERKLE_PROOF_VERIFICATION,
-        # Advanced features
-        Feature.ADVANCED_ANALYTICS,
-        Feature.CUSTOM_SEGMENTATION,
-        Feature.API_WEBHOOKS,
-        Feature.PREMIUM_SUPPORT,
-    },
-    OrganizationTier.BUSINESS: {
-        # All professional features
-        Feature.MERKLE_ENCODING,
-        Feature.MERKLE_ATTRIBUTION,
-        Feature.MERKLE_PROOF_VERIFICATION,
-        Feature.ADVANCED_ANALYTICS,
-        Feature.CUSTOM_SEGMENTATION,
-        Feature.API_WEBHOOKS,
-        Feature.PREMIUM_SUPPORT,
-        # Plus business features
-        Feature.MERKLE_PLAGIARISM,
-        Feature.BULK_OPERATIONS,
     },
     OrganizationTier.ENTERPRISE: {
-        # All business features
         Feature.MERKLE_ENCODING,
         Feature.MERKLE_ATTRIBUTION,
         Feature.MERKLE_PROOF_VERIFICATION,
         Feature.MERKLE_PLAGIARISM,
+        Feature.FUZZY_FINGERPRINTING,
         Feature.BULK_OPERATIONS,
         Feature.ADVANCED_ANALYTICS,
         Feature.CUSTOM_SEGMENTATION,
         Feature.API_WEBHOOKS,
-        Feature.PREMIUM_SUPPORT,
-        # Plus enterprise features
         Feature.PRIORITY_PROCESSING,
         Feature.DEDICATED_RESOURCES,
         Feature.CUSTOM_RATE_LIMITS,
+        Feature.PREMIUM_SUPPORT,
+        Feature.SLA_GUARANTEE,
+    },
+    OrganizationTier.STRATEGIC_PARTNER: {
+        Feature.MERKLE_ENCODING,
+        Feature.MERKLE_ATTRIBUTION,
+        Feature.MERKLE_PROOF_VERIFICATION,
+        Feature.MERKLE_PLAGIARISM,
+        Feature.FUZZY_FINGERPRINTING,
+        Feature.BULK_OPERATIONS,
+        Feature.ADVANCED_ANALYTICS,
+        Feature.CUSTOM_SEGMENTATION,
+        Feature.API_WEBHOOKS,
+        Feature.PRIORITY_PROCESSING,
+        Feature.DEDICATED_RESOURCES,
+        Feature.CUSTOM_RATE_LIMITS,
+        Feature.PREMIUM_SUPPORT,
         Feature.SLA_GUARANTEE,
     },
 }

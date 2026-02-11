@@ -46,10 +46,9 @@ COMMON_EMAIL_DOMAINS = {
 }
 
 DOMAIN_LIMITS_BY_TIER = {
-    "starter": 1,
-    "professional": 1,
-    "business": 3,
+    "free": 1,
     "enterprise": 10,
+    "strategic_partner": 10,
 }
 
 DOMAIN_REGEX = re.compile(r"^[a-z0-9.-]+\.[a-z]{2,}$")
@@ -87,7 +86,7 @@ class OrganizationService:
     # ORGANIZATION CRUD
     # ==========================================
 
-    def create_organization(self, name: str, email: str, owner_user_id: str, tier: str = "starter") -> Organization:
+    def create_organization(self, name: str, email: str, owner_user_id: str, tier: str = "free") -> Organization:
         """Create a new organization with the user as owner"""
 
         org = self._create_organization_record(name=name, email=email, tier=tier)
@@ -120,10 +119,9 @@ class OrganizationService:
 
         # Set max_seats based on tier
         max_seats = {
-            "starter": 1,
-            "professional": 1,
-            "business": 5,
+            "free": 1,
             "enterprise": -1,  # unlimited
+            "strategic_partner": -1,  # unlimited
         }.get(tier, 1)
 
         # Create organization
@@ -133,59 +131,31 @@ class OrganizationService:
         return org
 
     def _get_tier_config(self, tier: str) -> Optional[dict]:
+        # TEAM_145: Map legacy tier names
+        legacy_map = {"starter": "free", "professional": "free", "business": "free"}
+        tier = legacy_map.get(tier, tier)
+
         tier_config = {
-            "starter": {
+            "free": {
                 "max_seats": 1,
                 "monthly_api_limit": 10000,
-                "coalition_rev_share": 65,
+                "coalition_rev_share": 60,
                 "features": {
                     "team_management": False,
                     "audit_logs": False,
-                    "merkle_enabled": False,
-                    "bulk_operations": False,
-                    "sentence_tracking": False,
-                    "streaming": True,
-                    "byok": False,
-                    "sso": False,
-                    "custom_assertions": False,
-                },
-            },
-            "professional": {
-                "max_seats": 1,
-                "monthly_api_limit": 100000,
-                "coalition_rev_share": 70,
-                "features": {
-                    "team_management": False,
-                    "audit_logs": False,
-                    "merkle_enabled": False,
-                    "bulk_operations": False,
-                    "sentence_tracking": True,
-                    "streaming": True,
-                    "byok": False,
-                    "sso": False,
-                    "custom_assertions": False,
-                },
-            },
-            "business": {
-                "max_seats": 5,
-                "monthly_api_limit": 500000,
-                "coalition_rev_share": 75,
-                "features": {
-                    "team_management": True,
-                    "audit_logs": True,
                     "merkle_enabled": True,
-                    "bulk_operations": True,
+                    "bulk_operations": False,
                     "sentence_tracking": True,
                     "streaming": True,
-                    "byok": True,
+                    "byok": False,
                     "sso": False,
-                    "custom_assertions": True,
+                    "custom_assertions": False,
                 },
             },
             "enterprise": {
                 "max_seats": -1,
                 "monthly_api_limit": -1,
-                "coalition_rev_share": 80,
+                "coalition_rev_share": 60,
                 "features": {
                     "team_management": True,
                     "audit_logs": True,
@@ -202,7 +172,7 @@ class OrganizationService:
             "strategic_partner": {
                 "max_seats": -1,
                 "monthly_api_limit": -1,
-                "coalition_rev_share": 85,
+                "coalition_rev_share": 60,
                 "features": {
                     "team_management": True,
                     "audit_logs": True,

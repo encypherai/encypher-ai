@@ -7,15 +7,15 @@ from httpx import AsyncClient
 class TestTeamManagementEndpoints:
     """Test suite for /api/v1/org/members endpoints.
 
-    Uses business-api-key-for-testing which has Business tier with team management enabled.
+    TEAM_166: Uses enterprise-api-key-for-testing which has Enterprise tier with team management enabled.
     """
 
     @pytest.mark.asyncio
-    async def test_list_team_members_success(self, async_client: AsyncClient, business_auth_headers: dict):
-        """Test successful retrieval of team members (Business+ tier)."""
+    async def test_list_team_members_success(self, async_client: AsyncClient, enterprise_auth_headers: dict):
+        """Test successful retrieval of team members (Enterprise tier)."""
         response = await async_client.get(
             "/api/v1/org/members",
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
         assert response.status_code == 200
@@ -49,7 +49,7 @@ class TestTeamManagementEndpoints:
         assert data.get("error", {}).get("code") == "FEATURE_NOT_AVAILABLE"
 
     @pytest.mark.asyncio
-    async def test_invite_member_success(self, async_client: AsyncClient, business_admin_headers: dict):
+    async def test_invite_member_success(self, async_client: AsyncClient, enterprise_admin_headers: dict):
         """Test inviting a new team member."""
         import uuid
 
@@ -57,7 +57,7 @@ class TestTeamManagementEndpoints:
 
         response = await async_client.post(
             "/api/v1/org/members/invite",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
             json={
                 "email": unique_email,
                 "role": "member",
@@ -74,11 +74,11 @@ class TestTeamManagementEndpoints:
         assert "expires_at" in data
 
     @pytest.mark.asyncio
-    async def test_invite_member_invalid_email(self, async_client: AsyncClient, business_admin_headers: dict):
+    async def test_invite_member_invalid_email(self, async_client: AsyncClient, enterprise_admin_headers: dict):
         """Test inviting with invalid email."""
         response = await async_client.post(
             "/api/v1/org/members/invite",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
             json={
                 "email": "not-an-email",
                 "role": "member",
@@ -88,11 +88,11 @@ class TestTeamManagementEndpoints:
         assert response.status_code == 422  # Validation error
 
     @pytest.mark.asyncio
-    async def test_invite_member_invalid_role(self, async_client: AsyncClient, business_admin_headers: dict):
+    async def test_invite_member_invalid_role(self, async_client: AsyncClient, enterprise_admin_headers: dict):
         """Test inviting with invalid role."""
         response = await async_client.post(
             "/api/v1/org/members/invite",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
             json={
                 "email": "test@example.com",
                 "role": "superadmin",  # Invalid role
@@ -102,11 +102,11 @@ class TestTeamManagementEndpoints:
         assert response.status_code == 422
 
     @pytest.mark.asyncio
-    async def test_invite_as_owner_forbidden(self, async_client: AsyncClient, business_admin_headers: dict):
+    async def test_invite_as_owner_forbidden(self, async_client: AsyncClient, enterprise_admin_headers: dict):
         """Test cannot invite someone as owner."""
         response = await async_client.post(
             "/api/v1/org/members/invite",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
             json={
                 "email": "owner@example.com",
                 "role": "owner",
@@ -120,11 +120,11 @@ class TestTeamManagementEndpoints:
         assert "owner" in str(error_message).lower()
 
     @pytest.mark.asyncio
-    async def test_list_pending_invites(self, async_client: AsyncClient, business_admin_headers: dict):
+    async def test_list_pending_invites(self, async_client: AsyncClient, enterprise_admin_headers: dict):
         """Test listing pending invitations."""
         response = await async_client.get(
             "/api/v1/org/members/invites",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
         )
 
         assert response.status_code == 200
@@ -132,12 +132,12 @@ class TestTeamManagementEndpoints:
         assert isinstance(data, list)
 
     @pytest.mark.asyncio
-    async def test_revoke_invite(self, async_client: AsyncClient, business_admin_headers: dict):
+    async def test_revoke_invite(self, async_client: AsyncClient, enterprise_admin_headers: dict):
         """Test revoking a pending invitation."""
         # First create an invite
         invite_response = await async_client.post(
             "/api/v1/org/members/invite",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
             json={
                 "email": "revoke-test@example.com",
                 "role": "viewer",
@@ -150,7 +150,7 @@ class TestTeamManagementEndpoints:
             # Now revoke it
             response = await async_client.delete(
                 f"/api/v1/org/members/invites/{invite_id}",
-                headers=business_admin_headers,
+                headers=enterprise_admin_headers,
             )
 
             assert response.status_code == 200
@@ -158,11 +158,11 @@ class TestTeamManagementEndpoints:
             assert data["success"] is True
 
     @pytest.mark.asyncio
-    async def test_update_member_role(self, async_client: AsyncClient, business_owner_headers: dict, test_member_id: str):
+    async def test_update_member_role(self, async_client: AsyncClient, enterprise_owner_headers: dict, test_member_id: str):
         """Test updating a team member's role."""
         response = await async_client.patch(
             f"/api/v1/org/members/{test_member_id}/role",
-            headers=business_owner_headers,
+            headers=enterprise_owner_headers,
             json={"role": "admin"},
         )
 
@@ -170,11 +170,11 @@ class TestTeamManagementEndpoints:
         assert response.status_code in [200, 404]
 
     @pytest.mark.asyncio
-    async def test_update_owner_role_forbidden(self, async_client: AsyncClient, business_admin_headers: dict, owner_member_id: str):
+    async def test_update_owner_role_forbidden(self, async_client: AsyncClient, enterprise_admin_headers: dict, owner_member_id: str):
         """Test cannot change owner's role."""
         response = await async_client.patch(
             f"/api/v1/org/members/{owner_member_id}/role",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
             json={"role": "member"},
         )
 
@@ -182,22 +182,22 @@ class TestTeamManagementEndpoints:
         assert response.status_code in [400, 403, 404]
 
     @pytest.mark.asyncio
-    async def test_remove_member(self, async_client: AsyncClient, business_owner_headers: dict, test_member_id: str):
+    async def test_remove_member(self, async_client: AsyncClient, enterprise_owner_headers: dict, test_member_id: str):
         """Test removing a team member."""
         response = await async_client.delete(
             f"/api/v1/org/members/{test_member_id}",
-            headers=business_owner_headers,
+            headers=enterprise_owner_headers,
         )
 
         # May return 200 (success) or 404 (member not found)
         assert response.status_code in [200, 404]
 
     @pytest.mark.asyncio
-    async def test_remove_owner_forbidden(self, async_client: AsyncClient, business_admin_headers: dict, owner_member_id: str):
+    async def test_remove_owner_forbidden(self, async_client: AsyncClient, enterprise_admin_headers: dict, owner_member_id: str):
         """Test cannot remove the owner."""
         response = await async_client.delete(
             f"/api/v1/org/members/{owner_member_id}",
-            headers=business_admin_headers,
+            headers=enterprise_admin_headers,
         )
 
         # Should be forbidden
@@ -215,16 +215,15 @@ class TestTeamManagementEndpoints:
         assert response.status_code in [400, 404]
 
     @pytest.mark.asyncio
-    async def test_member_limit_enforcement(self, async_client: AsyncClient, business_auth_headers: dict):
+    async def test_member_limit_enforcement(self, async_client: AsyncClient, enterprise_auth_headers: dict):
         """Test that member limits are enforced based on tier."""
         response = await async_client.get(
             "/api/v1/org/members",
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
         assert response.status_code == 200
         data = response.json()
 
-        # Business tier should have max_members = 10
-        # (unless unlimited for enterprise)
-        assert data["max_members"] >= 1
+        # Enterprise tier has unlimited members (-1)
+        assert data["max_members"] == -1 or data["max_members"] >= 1

@@ -28,16 +28,16 @@ async def test_webhooks_requires_business_tier_on_create(
 @pytest.mark.asyncio
 async def test_webhooks_allows_business_tier_on_list(
     async_client: AsyncClient,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
-    response = await async_client.get("/api/v1/webhooks", headers=business_auth_headers)
+    response = await async_client.get("/api/v1/webhooks", headers=enterprise_auth_headers)
     assert response.status_code == 200
 
 
 @pytest.mark.asyncio
 async def test_webhook_test_rejects_untrusted_stored_url(
     async_client: AsyncClient,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
     db,
     monkeypatch,
 ) -> None:
@@ -60,7 +60,7 @@ async def test_webhook_test_rejects_untrusted_stored_url(
         ),
         {
             "id": webhook_id,
-            "org_id": "org_business",
+            "org_id": "org_enterprise",
             "url": "https://127.0.0.1/poisoned",
             "events": ["document.signed"],
         },
@@ -91,7 +91,7 @@ async def test_webhook_test_rejects_untrusted_stored_url(
     try:
         response = await async_client.post(
             f"/api/v1/webhooks/{webhook_id}/test",
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
         assert response.status_code == 400
     finally:

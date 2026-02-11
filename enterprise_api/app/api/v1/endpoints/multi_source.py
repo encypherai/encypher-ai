@@ -44,25 +44,12 @@ async def multi_source_lookup(
     start_time = time.time()
     organization_id = organization["organization_id"]
 
-    # Tier gating - Business+ for basic, Enterprise for authority
-    tier = organization.get("tier", "starter").lower()
-    tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
-    org_tier_level = tier_levels.get(tier, 0)
-
-    if org_tier_level < 2:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Multi-source lookup requires Business tier or higher",
-                "required_tier": "business",
-                "current_tier": tier,
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
+    # TEAM_145: Multi-source lookup available to all tiers; authority ranking requires Enterprise
+    tier = organization.get("tier", "free").lower()
+    is_enterprise = tier in {"enterprise", "strategic_partner", "demo"}
 
     # Authority ranking requires Enterprise
-    if request.include_authority_score and org_tier_level < 3:
+    if request.include_authority_score and not is_enterprise:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={

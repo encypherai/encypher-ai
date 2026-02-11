@@ -1,15 +1,15 @@
-"""Base-256 Variation Selector + Reed-Solomon Cryptographic Embedding (vs256_rs mode)
+"""Base-256 Variation Selector + Reed-Solomon Cryptographic Embedding (ECC mode)
 
-Extends vs256_embedding with Reed-Solomon error correction for partial
-copy-paste survivability.
+Extends the base VS256 encoding with Reed-Solomon error correction for
+partial copy-paste survivability, with full 128-bit HMAC security.
 
-Layout (36 VS chars total):
-- Magic prefix:     4 chars  (VS240-VS243, format marker — same as vs256)
-- UUID:            16 chars  (16 bytes, database reference)
-- HMAC-SHA256/64:   8 chars  (8 bytes truncated, cryptographic proof)
-- RS parity:        8 chars  (8 bytes, Reed-Solomon GF(256) parity)
+Layout (44 VS chars total):
+- Magic prefix:      4 chars  (VS240-VS243, format marker)
+- UUID:             16 chars  (16 bytes, database reference)
+- HMAC-SHA256/128:  16 chars  (16 bytes, 128-bit cryptographic proof)
+- RS parity:         8 chars  (8 bytes, Reed-Solomon GF(256) parity)
 
-Error correction capacity (reedsolo RS(32, 24)):
+Error correction capacity (reedsolo RS(40, 32)):
 - 8 parity symbols over GF(256)
 - Corrects up to 4 unknown errors (corrupted VS chars)
 - Corrects up to 8 known erasures (missing VS chars with known positions)
@@ -18,18 +18,16 @@ Error correction capacity (reedsolo RS(32, 24)):
 
 Security:
 - 128-bit UUID uniqueness (unguessable)
-- 64-bit HMAC security (truncated from 256-bit SHA-256)
-- 64-bit HMAC is sufficient: requires ~2^64 operations to forge, and the
-  primary verification path is DB lookup (UUID → org), not HMAC alone.
+- 128-bit HMAC security (truncated from 256-bit SHA-256)
+- Matches the security level of the non-ECC base mode (both 128-bit HMAC)
 - RS parity does NOT weaken HMAC: parity is computed over UUID+HMAC bytes,
   so an attacker still needs the signing key to produce a valid HMAC.
 
 Compatibility:
-- Same VS256 alphabet as vs256_embedding (VS1-VS256)
-- Same magic prefix (VS240-VS243) — detection is identical
-- Same 36-char total footprint
-- Backward-compatible detection: vs256_detect.py finds both formats
-- Verification distinguishes RS vs non-RS by attempting RS decode
+- Same VS256 alphabet (VS1-VS256)
+- Same magic prefix (VS240-VS243) — detection uses prefix + length
+- 44-char total footprint (8 chars more than non-ECC 36-char mode)
+- Detection distinguishes ECC (44 chars) from non-ECC (36 chars) by length
 """
 
 import hashlib
@@ -62,12 +60,12 @@ _RS = RSCodec(_RS_NSYM)
 
 # Layout constants
 UUID_BYTES = 16
-HMAC_BYTES = 8  # truncated HMAC-SHA256/64
-DATA_BYTES = UUID_BYTES + HMAC_BYTES  # 24
+HMAC_BYTES = 16  # HMAC-SHA256/128 (full 128-bit security)
+DATA_BYTES = UUID_BYTES + HMAC_BYTES  # 32
 PARITY_BYTES = _RS_NSYM  # 8
-PAYLOAD_BYTES = DATA_BYTES + PARITY_BYTES  # 32
+PAYLOAD_BYTES = DATA_BYTES + PARITY_BYTES  # 40
 PAYLOAD_CHARS = PAYLOAD_BYTES  # 1 char per byte (base-256)
-SIGNATURE_CHARS = MAGIC_PREFIX_LEN + PAYLOAD_CHARS  # 36 total
+SIGNATURE_CHARS = MAGIC_PREFIX_LEN + PAYLOAD_CHARS  # 44 total
 
 
 # =============================================================================
@@ -90,32 +88,32 @@ def create_minimal_signed_uuid(
     sentence_uuid: UUID,
     signing_key: bytes,
 ) -> str:
-    """Create a 36-char RS-protected VS256 signature.
+    """Create a 44-char RS-protected VS256 signature with 128-bit HMAC.
 
-    Layout: MAGIC(4) + UUID(16) + HMAC-64(8) + RS_PARITY(8) = 36 chars.
+    Layout: MAGIC(4) + UUID(16) + HMAC-128(16) + RS_PARITY(8) = 44 chars.
 
     Args:
         sentence_uuid: UUID for this sentence (stored in DB).
         signing_key: 32-byte secret key for HMAC.
 
     Returns:
-        36 VS characters (invisible in supported platforms).
+        44 VS characters (invisible in supported platforms).
     """
     if len(signing_key) < 32:
         raise ValueError("Signing key must be at least 32 bytes")
 
     uuid_bytes = sentence_uuid.bytes  # 16 bytes
 
-    # HMAC-SHA256 truncated to 8 bytes (64-bit security)
+    # HMAC-SHA256 truncated to 16 bytes (128-bit security)
     h = crypto_hmac.HMAC(signing_key, hashes.SHA256(), backend=default_backend())
     h.update(uuid_bytes)
-    hmac_truncated = h.finalize()[:HMAC_BYTES]  # 8 bytes
+    hmac_truncated = h.finalize()[:HMAC_BYTES]  # 16 bytes
 
-    # Data = UUID + HMAC-64 (24 bytes)
+    # Data = UUID + HMAC-128 (32 bytes)
     data = uuid_bytes + hmac_truncated
 
-    # RS encode: 24 data → 32 encoded (24 data + 8 parity)
-    rs_encoded = bytes(_RS.encode(data))  # 32 bytes
+    # RS encode: 32 data → 40 encoded (32 data + 8 parity)
+    rs_encoded = bytes(_RS.encode(data))  # 40 bytes
     assert len(rs_encoded) == PAYLOAD_BYTES
 
     # Encode as VS chars
@@ -133,10 +131,10 @@ def verify_minimal_signed_uuid(
     4 unknown errors (corrupted chars).
 
     Args:
-        signature: 36-char VS256 signature string.
+        signature: 44-char VS256 ECC signature string.
         signing_key: 32-byte secret key for HMAC verification.
         erase_positions: Optional list of 0-indexed positions within the
-            32-char payload (after magic prefix) that are known erasures.
+            40-char payload (after magic prefix) that are known erasures.
 
     Returns:
         (is_valid, uuid) — uuid is None on failure.
@@ -178,14 +176,28 @@ def verify_minimal_signed_uuid(
 
 
 def find_all_minimal_signed_uuids(text: str) -> list[tuple[int, int, str]]:
-    """Find all VS256 signatures (RS or non-RS) by magic prefix detection.
+    """Find all 44-char ECC VS256 signatures by magic prefix + length.
 
-    Identical to vs256_crypto.find_all_minimal_signed_uuids — the magic
-    prefix and total length are the same for both formats.
+    Scans for the 4-char magic prefix followed by exactly 40 valid VS chars.
+    This distinguishes ECC (44 chars) from non-ECC (36 chars) signatures.
     """
-    from app.utils.vs256_crypto import find_all_minimal_signed_uuids as _find
+    signatures = []
+    i = 0
+    text_len = len(text)
 
-    return _find(text)
+    while i <= text_len - SIGNATURE_CHARS:
+        if text[i] == MAGIC_PREFIX[0]:
+            if text[i : i + MAGIC_PREFIX_LEN] == MAGIC_PREFIX:
+                candidate = text[i : i + SIGNATURE_CHARS]
+                if len(candidate) == SIGNATURE_CHARS and all(
+                    ch in VS_CHAR_SET for ch in candidate[MAGIC_PREFIX_LEN:]
+                ):
+                    signatures.append((i, i + SIGNATURE_CHARS, candidate))
+                    i += SIGNATURE_CHARS
+                    continue
+        i += 1
+
+    return signatures
 
 
 # =============================================================================
@@ -220,7 +232,7 @@ def recover_from_partial_extraction(
 
     Args:
         extracted_chars: List of (position, char_or_None) tuples where
-            position is 0-35 (within the 36-char signature) and char is
+            position is 0-43 (within the 44-char signature) and char is
             the extracted VS char or None if missing.
 
     Returns:

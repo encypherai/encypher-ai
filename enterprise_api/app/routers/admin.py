@@ -206,11 +206,11 @@ async def register_public_key(
     # Check BYOK feature is enabled
     features = organization.get("features", {})
     byok_enabled = features.get("byok", False) or organization.get("byok_enabled", False)
-    tier = organization.get("tier", "starter")
+    tier = organization.get("tier", "free")
 
-    if not byok_enabled and tier not in ("enterprise", "strategic_partner", "business"):
+    if not byok_enabled and tier not in ("enterprise", "strategic_partner"):
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="BYOK (Bring Your Own Key) requires Business tier or higher. Please upgrade your plan."
+            status_code=status.HTTP_403_FORBIDDEN, detail="BYOK (Bring Your Own Key) requires Enterprise tier. Please upgrade your plan."
         )
 
     org_id = organization.get("organization_id")

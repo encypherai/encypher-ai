@@ -18,22 +18,27 @@ from sqlalchemy import (
 from sqlalchemy import (
     Enum as SQLEnum,
 )
+from sqlalchemy.dialects.postgresql import JSON
 from sqlalchemy.orm import synonym
 
 from app.database import Base
 
 
 class OrganizationTier(str, Enum):
-    """Organization tier levels matching pricing strategy."""
+    """Organization tier levels matching pricing strategy (Feb 2026).
 
-    STARTER = "starter"  # Free tier - C2PA only, 65/35 rev share
-    PROFESSIONAL = "professional"  # $99/mo - Sentence tracking, 70/30 rev share
-    BUSINESS = "business"  # $499/mo - Merkle + plagiarism, 75/25 rev share
-    ENTERPRISE = "enterprise"  # Custom - Full platform, 80/20 rev share
-    STRATEGIC_PARTNER = "strategic_partner"  # Invite only - 85/15 rev share
+    Only three tiers: free, enterprise, strategic_partner.
+    Add-ons are tracked separately on the Organization.add_ons JSON column.
+    """
 
-    # Legacy alias for backward compatibility
-    FREE = "starter"
+    FREE = "free"  # Free tier - signing, verification, coalition
+    ENTERPRISE = "enterprise"  # Custom - unlimited everything, all features
+    STRATEGIC_PARTNER = "strategic_partner"  # Invite only
+
+    # Legacy aliases — coerce old tier strings to FREE
+    STARTER = "free"
+    PROFESSIONAL = "free"
+    BUSINESS = "free"
 
 
 class OrganizationCertificateStatus(str, Enum):
@@ -68,7 +73,7 @@ class Organization(Base):
     organization_name = synonym("name")
     slug = Column(String(100), nullable=True, unique=True)
     email = Column(String(255), nullable=False, unique=True)
-    tier = Column(String(32), nullable=False, default="starter")
+    tier = Column(String(32), nullable=False, default="free")
 
     # Certificate metadata
     certificate_pem = Column(Text, nullable=True)
@@ -92,6 +97,10 @@ class Organization(Base):
     kms_key_id = Column(String(255), nullable=True)
     kms_region = Column(String(50), nullable=True)
 
+    # Purchased add-ons (JSON dict of add-on ID -> config/status)
+    # TEAM_145: Add-ons are independent of tier, tracked here
+    add_ons = Column(JSON, nullable=False, default=dict)
+
     # Feature flags
     merkle_enabled = Column(Boolean, default=False)
     advanced_analytics_enabled = Column(Boolean, default=False)
@@ -109,8 +118,8 @@ class Organization(Base):
 
     # Coalition settings
     coalition_member = Column(Boolean, default=True)  # Auto-join on free tier
-    coalition_rev_share_publisher = Column(Integer, default=65)  # Publisher's share (65-85%)
-    coalition_rev_share_encypher = Column(Integer, default=35)  # Encypher's share (15-35%)
+    coalition_rev_share_publisher = Column(Integer, default=60)  # Publisher's share
+    coalition_rev_share_encypher = Column(Integer, default=40)  # Encypher's share
     coalition_opted_out = Column(Boolean, default=False)
     coalition_opted_out_at = Column(TIMESTAMP(timezone=True), nullable=True)
 

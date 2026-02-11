@@ -7,8 +7,8 @@ from httpx import AsyncClient
 class TestAuditLogEndpoints:
     """Test suite for /api/v1/audit-logs endpoints.
 
-    Note: Audit logs are tier-gated (Business+ only).
-    Uses business-api-key-for-testing which has Business tier.
+    TEAM_166: Audit logs are available on all tiers (free+).
+    Uses enterprise-api-key-for-testing for success tests.
     """
 
     @pytest.mark.asyncio
@@ -81,18 +81,15 @@ class TestAuditLogEndpoints:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_get_audit_logs_tier_gated(self, async_client: AsyncClient, starter_auth_headers: dict):
-        """Test audit logs is tier-gated (requires Business+)."""
+    async def test_get_audit_logs_free_tier_allowed(self, async_client: AsyncClient, starter_auth_headers: dict):
+        """TEAM_166: Audit logs are available on free tier."""
         response = await async_client.get(
             "/api/v1/audit-logs",
             headers=starter_auth_headers,
         )
 
-        # Should return 403 for Starter/Demo tier
-        assert response.status_code == 403
-        data = response.json()
-        # Check in error object (our API format)
-        assert data.get("error", {}).get("code") == "FEATURE_NOT_AVAILABLE"
+        # Free tier now has audit_logs enabled
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
     async def test_export_audit_logs_json(self, async_client: AsyncClient, business_auth_headers: dict):

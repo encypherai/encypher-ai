@@ -51,11 +51,12 @@ class ApiAccessStatus(str, Enum):
 
 
 class UserTier(str, Enum):
-    """Available user tiers for admin updates."""
+    """Available user tiers for admin updates.
 
-    STARTER = "starter"
-    PROFESSIONAL = "professional"
-    BUSINESS = "business"
+    TEAM_145: Consolidated to free/enterprise/strategic_partner.
+    """
+
+    FREE = "free"
     ENTERPRISE = "enterprise"
     STRATEGIC_PARTNER = "strategic_partner"
 

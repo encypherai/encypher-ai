@@ -174,50 +174,24 @@ class AdminService:
 
         previous_tier = org.tier
 
+        # TEAM_145: Map legacy tier names
+        legacy_map = {"starter": "free", "professional": "free", "business": "free"}
+        new_tier = legacy_map.get(new_tier, new_tier)
+
         tier_config = {
-            "starter": {
+            "free": {
                 "max_seats": 1,
                 "monthly_api_limit": 10000,
                 "features": {
                     "team_management": False,
                     "audit_logs": False,
-                    "merkle_enabled": False,
-                    "bulk_operations": False,
-                    "sentence_tracking": False,
-                    "streaming": True,
-                    "byok": False,
-                    "sso": False,
-                    "custom_assertions": False,
-                },
-            },
-            "professional": {
-                "max_seats": 1,
-                "monthly_api_limit": 100000,
-                "features": {
-                    "team_management": False,
-                    "audit_logs": False,
-                    "merkle_enabled": False,
-                    "bulk_operations": False,
-                    "sentence_tracking": True,
-                    "streaming": True,
-                    "byok": False,
-                    "sso": False,
-                    "custom_assertions": False,
-                },
-            },
-            "business": {
-                "max_seats": 5,
-                "monthly_api_limit": 500000,
-                "features": {
-                    "team_management": True,
-                    "audit_logs": True,
                     "merkle_enabled": True,
-                    "bulk_operations": True,
+                    "bulk_operations": False,
                     "sentence_tracking": True,
                     "streaming": True,
-                    "byok": True,
+                    "byok": False,
                     "sso": False,
-                    "custom_assertions": True,
+                    "custom_assertions": False,
                 },
             },
             "enterprise": {

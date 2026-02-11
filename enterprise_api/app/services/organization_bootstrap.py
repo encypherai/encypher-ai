@@ -45,11 +45,11 @@ async def ensure_organization_exists(db: AsyncSession, organization: Dict) -> bo
         return False
 
     name = organization.get("organization_name") or "Demo Organization"
-    tier = organization.get("tier") or "starter"
+    tier = organization.get("tier") or "free"
     monthly_api_limit = organization.get("monthly_api_limit", 10000)
     monthly_api_usage = organization.get("monthly_api_usage", 0)
     coalition_member = organization.get("coalition_member", True)
-    coalition_rev_share = organization.get("coalition_rev_share", 65)
+    coalition_rev_share = organization.get("coalition_rev_share", 60)
     email = organization.get("email") or _derive_email(org_id)
 
     await db.execute(

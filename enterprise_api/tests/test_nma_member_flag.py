@@ -1,11 +1,9 @@
 """
 Tests for NMA (News Media Alliance) member flag functionality.
 
-NMA members on starter tier have special features enabled (sentence_tracking, merkle_enabled)
-but the unified /sign endpoint enforces tier-based feature gating.
-
-Note: /sign/advanced is deprecated (returns 410). Use /sign with options instead.
-Advanced options like segmentation_level and index_for_attribution require Professional tier.
+TEAM_166: All tiers (including free) now have access to segmentation_level,
+manifest_mode, and index_for_attribution. Only enterprise-only features
+(word segmentation, BYOK, SSO, etc.) are gated.
 """
 
 import pytest
@@ -18,7 +16,7 @@ def test_nma_demo_key_exists():
     """Verify NMA demo key is configured."""
     assert "nma-starter-api-key-for-testing" in DEMO_KEYS
     nma_key = DEMO_KEYS["nma-starter-api-key-for-testing"]
-    assert nma_key["tier"] == "starter"
+    assert nma_key["tier"] == "free"
     assert nma_key["nma_member"] is True
     assert nma_key["features"]["sentence_tracking"] is True
     assert nma_key["features"]["merkle_enabled"] is True
@@ -28,7 +26,7 @@ def test_regular_starter_key_not_nma():
     """Verify regular starter key is not NMA member."""
     assert "starter-api-key-for-testing" in DEMO_KEYS
     starter_key = DEMO_KEYS["starter-api-key-for-testing"]
-    assert starter_key["tier"] == "starter"
+    assert starter_key["tier"] == "free"
     assert starter_key.get("nma_member", False) is False
 
 
@@ -50,12 +48,12 @@ async def test_nma_member_can_use_basic_sign(async_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_regular_starter_cannot_access_advanced_options(async_client: AsyncClient):
-    """Regular starter tier users cannot use advanced signing options."""
+async def test_regular_free_can_access_advanced_options(async_client: AsyncClient):
+    """TEAM_166: Free tier users can use advanced signing options."""
     response = await async_client.post(
         "/api/v1/sign",
         json={
-            "text": "This is a test document from a regular starter user.",
+            "text": "This is a test document from a regular free user.",
             "options": {
                 "segmentation_level": "sentence",
                 "manifest_mode": "minimal_uuid",
@@ -63,12 +61,12 @@ async def test_regular_starter_cannot_access_advanced_options(async_client: Asyn
         },
         headers={"Authorization": "Bearer starter-api-key-for-testing"},
     )
-    assert response.status_code == 403, f"Regular starter should be denied advanced options: {response.text}"
+    assert response.status_code == 201, f"Free tier should access advanced options: {response.text}"
 
 
 @pytest.mark.asyncio
-async def test_nma_member_denied_advanced_options_without_tier(async_client: AsyncClient):
-    """NMA members on starter tier are denied advanced options that require Professional tier."""
+async def test_nma_member_can_use_advanced_options(async_client: AsyncClient):
+    """TEAM_166: NMA members on free tier can use advanced options (attribution indexing)."""
     response = await async_client.post(
         "/api/v1/sign",
         json={
@@ -80,17 +78,17 @@ async def test_nma_member_denied_advanced_options_without_tier(async_client: Asy
         },
         headers={"Authorization": "Bearer nma-starter-api-key-for-testing"},
     )
-    # NMA members on starter tier are denied advanced options - tier gating is enforced
-    assert response.status_code == 403, f"NMA member should be denied advanced options: {response.text}"
+    # TEAM_166: Free tier now has access to segmentation_level and index_for_attribution
+    assert response.status_code == 201, f"NMA member should access advanced options: {response.text}"
 
 
 @pytest.mark.asyncio
-async def test_professional_tier_can_access_advanced_options(async_client: AsyncClient):
-    """Professional tier users can use advanced signing options."""
+async def test_free_tier_can_access_advanced_options(async_client: AsyncClient):
+    """TEAM_166: Free tier (legacy professional key) can use advanced signing options."""
     response = await async_client.post(
         "/api/v1/sign",
         json={
-            "text": "This is a test document from Professional tier.",
+            "text": "This is a test document from free tier (legacy professional).",
             "options": {
                 "segmentation_level": "sentence",
                 "index_for_attribution": True,
@@ -98,7 +96,7 @@ async def test_professional_tier_can_access_advanced_options(async_client: Async
         },
         headers={"Authorization": "Bearer professional-api-key-for-testing"},
     )
-    assert response.status_code == 201, f"Professional should access advanced options: {response.text}"
+    assert response.status_code == 201, f"Free tier should access advanced options: {response.text}"
 
 
 @pytest.mark.asyncio

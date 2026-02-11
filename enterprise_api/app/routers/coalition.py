@@ -16,14 +16,7 @@ from app.dependencies import require_read_permission
 router = APIRouter(prefix="/coalition", tags=["Coalition"])
 
 
-# Tier-based revenue share configuration
-TIER_REV_SHARE = {
-    "starter": {"publisher": 65, "encypher": 35},
-    "professional": {"publisher": 70, "encypher": 30},
-    "business": {"publisher": 80, "encypher": 20},
-    "enterprise": {"publisher": 85, "encypher": 15},
-    "strategic_partner": {"publisher": 85, "encypher": 15},
-}
+from app.core.tier_config import get_tier_rev_share, coerce_tier_name as _coerce_tier_for_rev_share
 
 
 class ContentStats(BaseModel):
@@ -99,8 +92,8 @@ async def get_coalition_dashboard(
     Returns content stats, earnings, and payout information.
     """
     org_id = organization["organization_id"]
-    tier = organization.get("tier", "starter")
-    rev_share = TIER_REV_SHARE.get(tier, TIER_REV_SHARE["starter"])
+    tier = _coerce_tier_for_rev_share(organization.get("tier", "free"))
+    rev_share = get_tier_rev_share(tier)
 
     # Get coalition membership status
     coalition_member = organization.get("coalition_member", True)
@@ -524,7 +517,7 @@ async def attribute_deal_revenue(
         weight = member.sentences / total_sentences
 
         # Get tier-based rev share (or use org override)
-        rev_share = TIER_REV_SHARE.get(member.tier, TIER_REV_SHARE["starter"])
+        rev_share = get_tier_rev_share(member.tier)
         publisher_percent = member.coalition_rev_share_publisher or rev_share["publisher"]
 
         # Calculate earnings

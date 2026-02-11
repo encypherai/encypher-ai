@@ -110,111 +110,32 @@ async def encode_document_with_embeddings(
                     },
                 )
 
-        # === API Feature Augmentation Tier Gating (TEAM_044) ===
-        # Check tier requirements for advanced features
-        tier = organization.get("tier", "starter").lower()
-        tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
-        org_tier_level = tier_levels.get(tier, 0)
+        # === TEAM_145: Tier Gating (consolidated to free/enterprise/strategic_partner) ===
+        # Free tier now has access to most features. Only enterprise-only features are gated.
+        tier = organization.get("tier", "free").lower()
+        is_enterprise = tier in {"enterprise", "strategic_partner", "demo"}
 
-        # Lightweight UUID requires Professional+
-        if request.manifest_mode == "lightweight_uuid" and org_tier_level < 1:
+        # Dual binding requires Enterprise
+        if request.add_dual_binding and not is_enterprise:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "Lightweight UUID manifest mode requires Professional tier or higher",
-                    "required_tier": "professional",
-                    "current_tier": tier,
-                    "upgrade_url": "/billing/upgrade",
-                },
-            )
-
-        # Minimal UUID requires Professional+
-        if request.manifest_mode == "minimal_uuid" and org_tier_level < 1:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "Minimal UUID manifest mode requires Professional tier or higher",
-                    "required_tier": "professional",
-                    "current_tier": tier,
-                    "upgrade_url": "/billing/upgrade",
-                },
-            )
-
-        # ZW Embedding requires Professional+ (Word-compatible, 132 chars/sentence)
-        if request.manifest_mode == "zw_embedding" and org_tier_level < 1:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "ZW embedding mode requires Professional tier or higher",
-                    "required_tier": "professional",
-                    "current_tier": tier,
-                    "upgrade_url": "/billing/upgrade",
-                },
-            )
-
-        # VS256 Embedding requires Professional+ (max density, 36 chars/sentence, NOT Word-compatible)
-        if request.manifest_mode == "vs256_embedding" and org_tier_level < 1:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "VS256 embedding mode requires Professional tier or higher",
-                    "required_tier": "professional",
-                    "current_tier": tier,
-                    "upgrade_url": "/billing/upgrade",
-                },
-            )
-
-        # Hybrid manifest mode requires Enterprise
-        if request.manifest_mode == "hybrid" and org_tier_level < 3:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "Hybrid manifest mode requires Enterprise tier",
+                    "message": "Dual-binding manifest requires Enterprise tier",
                     "required_tier": "enterprise",
-                    "current_tier": tier,
-                    "upgrade_url": "/billing/upgrade",
-                },
-            )
-
-        # Distributed embedding requires Business+
-        if request.embedding_strategy == "distributed" and org_tier_level < 2:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "Distributed embedding requires Business tier or higher",
-                    "required_tier": "business",
                     "current_tier": tier,
                     "upgrade_url": "/billing/upgrade",
                 },
             )
 
         # Distributed redundant (ECC) requires Enterprise
-        if request.embedding_strategy == "distributed_redundant" and org_tier_level < 3:
+        if request.embedding_strategy == "distributed_redundant" and not is_enterprise:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail={
                     "code": "FEATURE_NOT_AVAILABLE",
                     "message": "Distributed redundant embedding (ECC) requires Enterprise tier",
                     "required_tier": "enterprise",
-                    "current_tier": tier,
-                    "upgrade_url": "/billing/upgrade",
-                },
-            )
-
-        # Dual binding requires Business+
-        if request.add_dual_binding and org_tier_level < 2:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "Dual-binding manifest requires Business tier or higher",
-                    "required_tier": "business",
                     "current_tier": tier,
                     "upgrade_url": "/billing/upgrade",
                 },
@@ -459,7 +380,8 @@ async def encode_document_with_embeddings(
 
             index_for_attribution = request.index_for_attribution
             if index_for_attribution is None:
-                index_for_attribution = org_tier_level >= 1
+                from app.core.tier_config import is_enterprise_tier
+                index_for_attribution = is_enterprise_tier(organization.get("tier", "free"))
 
             if index_for_attribution:
                 # Pass features dict with nma_member flag for quota check

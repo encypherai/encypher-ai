@@ -140,7 +140,7 @@ async def authenticate_api_key(api_key: Optional[str] = Depends(get_api_key_from
                     "organization_id": key_data.get("organization_id"),
                     "organization_name": key_data.get("organization_name", "Personal Account"),
                     "organization_type": "user" if key_data.get("is_demo") else "organization",
-                    "tier": key_data.get("tier", "starter"),
+                    "tier": key_data.get("tier", "free"),
                     "can_sign": "sign" in permissions or key_data.get("is_demo", False),
                     "can_verify": "verify" in permissions or key_data.get("is_demo", False),
                     "can_lookup": "read" in permissions or key_data.get("is_demo", False),

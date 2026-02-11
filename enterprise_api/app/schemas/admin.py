@@ -20,11 +20,12 @@ from pydantic import BaseModel, Field, validator
 
 
 class UserTier(str, Enum):
-    """Available user tiers."""
+    """Available user tiers.
 
-    STARTER = "starter"
-    PROFESSIONAL = "professional"
-    BUSINESS = "business"
+    TEAM_145: Consolidated to free/enterprise/strategic_partner.
+    """
+
+    FREE = "free"
     ENTERPRISE = "enterprise"
     STRATEGIC_PARTNER = "strategic_partner"
 
@@ -48,7 +49,7 @@ class AdminUserInfo(BaseModel):
     id: str = Field(..., description="User ID")
     email: str = Field(..., description="User email")
     name: Optional[str] = Field(None, description="User display name")
-    tier: str = Field(..., description="Current tier (starter, professional, business, enterprise)")
+    tier: str = Field(..., description="Current tier (free, enterprise, strategic_partner)")
     status: str = Field(default="active", description="Account status")
     organization_id: Optional[str] = Field(None, description="Organization ID if part of org")
     organization_name: Optional[str] = Field(None, description="Organization name")
@@ -98,7 +99,7 @@ class AdminStatsResponse(BaseModel):
                     "paying_customers": 20,
                     "mrr": 5000,
                     "total_api_calls": 150000,
-                    "users_by_tier": {"starter": 60, "professional": 25, "business": 10, "enterprise": 5},
+                    "users_by_tier": {"free": 80, "enterprise": 15, "strategic_partner": 5},
                 },
             }
         }
@@ -130,7 +131,7 @@ class TierUpdateResponse(BaseModel):
         json_schema_extra = {
             "example": {
                 "success": True,
-                "data": {"user_id": "user_abc123", "previous_tier": "professional", "new_tier": "enterprise", "updated_at": "2024-12-23T22:00:00Z"},
+                "data": {"user_id": "user_abc123", "previous_tier": "free", "new_tier": "enterprise", "updated_at": "2024-12-23T22:00:00Z"},
             }
         }
 

@@ -9,6 +9,14 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, validator
 
+from app.schemas.signing_constants import (
+    DISTRIBUTION_TARGETS,
+    EMBEDDING_STRATEGIES,
+    MANIFEST_MODES,
+    MERKLE_SEGMENTATION_LEVELS,
+    SEGMENTATION_LEVELS,
+)
+
 # ============================================================================
 # Embedding Creation Schemas
 # ============================================================================
@@ -73,7 +81,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
     # === API Feature Augmentation (TEAM_044) ===
     manifest_mode: str = Field(
         default="full",
-        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid, zw_embedding. zw_embedding uses Word-compatible zero-width characters (132 chars/sentence). Availability depends on plan tier.",
+        description="Controls manifest detail level. Options: full, lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro, micro_ecc, micro_c2pa, micro_ecc_c2pa. micro modes use ultra-compact per-sentence markers; micro_ecc adds error correction (44 chars); _c2pa variants add a full C2PA document manifest with DB-backed segment indexing. Availability depends on plan tier.",
     )
     embedding_strategy: str = Field(
         default="single_point",
@@ -108,42 +116,37 @@ class EncodeWithEmbeddingsRequest(BaseModel):
 
     @validator("segmentation_level")
     def validate_segmentation_level(cls, v):
-        allowed = ["document", "word", "sentence", "paragraph", "section"]
-        if v not in allowed:
-            raise ValueError(f"Segmentation level must be one of: {', '.join(allowed)}")
+        if v not in SEGMENTATION_LEVELS:
+            raise ValueError(f"Segmentation level must be one of: {', '.join(SEGMENTATION_LEVELS)}")
         return v
 
     @validator("segmentation_levels")
     def validate_segmentation_levels(cls, v):
         if v is None:
             return v
-        allowed = {"sentence", "paragraph", "section"}
         for level in v:
-            if level not in allowed:
-                raise ValueError(f"segmentation_levels entries must be one of: {', '.join(sorted(allowed))}")
+            if level not in MERKLE_SEGMENTATION_LEVELS:
+                raise ValueError(f"segmentation_levels entries must be one of: {', '.join(sorted(MERKLE_SEGMENTATION_LEVELS))}")
         return v
 
     @validator("manifest_mode")
     def validate_manifest_mode(cls, v):
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "vs256_embedding", "vs256_rs_embedding"]
-        if v not in allowed:
-            raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
+        if v not in MANIFEST_MODES:
+            raise ValueError(f"Manifest mode must be one of: {', '.join(MANIFEST_MODES)}")
         return v
 
     @validator("embedding_strategy")
     def validate_embedding_strategy(cls, v):
-        allowed = ["single_point", "distributed", "distributed_redundant"]
-        if v not in allowed:
-            raise ValueError(f"Embedding strategy must be one of: {', '.join(allowed)}")
+        if v not in EMBEDDING_STRATEGIES:
+            raise ValueError(f"Embedding strategy must be one of: {', '.join(EMBEDDING_STRATEGIES)}")
         return v
 
     @validator("distribution_target")
     def validate_distribution_target(cls, v):
         if v is None:
             return v
-        allowed = ["whitespace", "punctuation", "all_chars"]
-        if v not in allowed:
-            raise ValueError(f"Distribution target must be one of: {', '.join(allowed)}")
+        if v not in DISTRIBUTION_TARGETS:
+            raise ValueError(f"Distribution target must be one of: {', '.join(DISTRIBUTION_TARGETS)}")
         return v
 
 
@@ -201,12 +204,42 @@ class VerifyEmbeddingRequest(BaseModel):
     signature: str = Field(..., description="Signature (8+ hex characters)")
 
 
+class SegmentLocation(BaseModel):
+    """Location of a segment within the document hierarchy."""
+
+    paragraph_index: int = Field(..., description="0-indexed paragraph number")
+    sentence_in_paragraph: int = Field(..., description="0-indexed sentence position within the paragraph")
+    total_segments: Optional[int] = Field(None, description="Total number of segments in the document")
+
+
 class ContentInfo(BaseModel):
     """Content information from verification."""
 
     text_preview: Optional[str] = Field(None, description="Optional preview derived from submitted text")
     leaf_hash: str = Field(..., description="Cryptographic hash of full content")
     leaf_index: int = Field(..., description="Position in document")
+    segment_location: Optional[SegmentLocation] = Field(None, description="Hierarchical location of this segment (paragraph, sentence)")
+
+
+class SignerIdentity(BaseModel):
+    """Signer identity and trust chain information.
+
+    TEAM_165: When an org starts with a self-signed key managed by Encypher,
+    micro markers are already cryptographically bound to that key. If the org
+    later obtains a CA-signed certificate (via /byok/certificates), the trust
+    chain upgrades automatically — no re-signing needed.
+    """
+
+    organization_id: str = Field(..., description="Organization identifier")
+    organization_name: Optional[str] = Field(None, description="Organization display name")
+    certificate_status: str = Field(..., description="Certificate lifecycle: none, pending, active, expired, revoked")
+    ca_backed: bool = Field(False, description="True if the org certificate chains to a trusted CA (not self-signed)")
+    issuer: Optional[str] = Field(None, description="Certificate issuer (CA name) if CA-backed, or 'self-signed'")
+    certificate_expiry: Optional[datetime] = Field(None, description="Certificate expiry timestamp")
+    trust_level: str = Field(
+        "self_signed",
+        description="Trust level: 'ca_verified' (chains to C2PA-trusted CA), 'self_signed' (Encypher-managed key), 'none' (no certificate)",
+    )
 
 
 class DocumentInfo(BaseModel):
@@ -230,11 +263,12 @@ class MerkleProofInfo(BaseModel):
 class C2PAInfo(BaseModel):
     """C2PA manifest information with verification details."""
 
-    manifest_url: str = Field(..., description="C2PA manifest URL")
+    manifest_url: Optional[str] = Field(None, description="C2PA manifest URL")
     manifest_hash: Optional[str] = Field(None, description="Manifest hash")
     validated: bool = Field(..., description="Whether the manifest passed validation")
     validation_type: str = Field(..., description="Validation semantics.")
     validation_details: Optional[Dict[str, Any]] = Field(None, description="Detailed validation results (assertions, signatures, errors)")
+    manifest_data: Optional[Dict[str, Any]] = Field(None, description="Full C2PA manifest data (available for micro_c2pa mode)")
 
 
 class LicensingInfo(BaseModel):
@@ -256,6 +290,7 @@ class VerifyEmbeddingResponse(BaseModel):
     document: Optional[DocumentInfo] = Field(None, description="Document information")
     merkle_proof: Optional[MerkleProofInfo] = Field(None, description="Merkle proof information")
     c2pa: Optional[C2PAInfo] = Field(None, description="C2PA information")
+    signer_identity: Optional[SignerIdentity] = Field(None, description="Signer identity and trust chain (CA-backed or self-signed)")
     licensing: Optional[LicensingInfo] = Field(None, description="Licensing information")
     verification_url: Optional[str] = Field(None, description="Verification URL")
     error: Optional[str] = Field(None, description="Error message if invalid")

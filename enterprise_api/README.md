@@ -160,6 +160,7 @@ The Encypher Enterprise API provides cryptographic content signing and verificat
 | `/api/v1/public/c2pa/validate-manifest` | POST | ❌ | Public | Validate manifest JSON structure + assertion schema payloads (non-cryptographic). Optional API key supported for higher limits |
 | `/api/v1/public/c2pa/create-manifest` | POST | ❌ | Public | Create a manifest JSON payload from plaintext (non-cryptographic) and return a signing helper payload. Optional API key supported for higher limits |
 | `/api/v1/public/c2pa/trust-anchors/{signer_id}` | GET | ❌ | Public | Lookup trust anchor (public key) for external C2PA validators (public, IP rate-limited) |
+| `/api/v1/public/c2pa/zw/resolve/{segment_uuid}` | GET | ❌ | Public | Resolve a ZW-embedded segment UUID to its source document and provenance metadata |
 
 ### Enterprise Merkle Endpoints
 
@@ -831,7 +832,7 @@ is appended at the document end by default (set `disable_c2pa=true` to skip the 
 - Ideal for portable content tracking across web, Word, PDF, etc.
 
 **`vs256_embedding` Mode (Professional+)**
-- Uses all 256 Unicode Variation Selectors as a base-256 alphabet
+- Uses a 256-character invisible alphabet for base-256 encoding
 - **36 chars per sentence** — 3.6x more compact than ZW mode
 - Magic prefix detection (VS240–VS243) for reliable extraction
 - Works in Google Docs, PDF, browsers — **NOT Microsoft Word** (shows □ glyphs)

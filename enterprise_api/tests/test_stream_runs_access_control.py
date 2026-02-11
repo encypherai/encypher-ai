@@ -67,13 +67,14 @@ async def test_stream_runs_requires_matching_org(
     business_auth_headers: dict,
     enterprise_auth_headers: dict,
 ) -> None:
+    """TEAM_166: business key maps to org_free_legacy_biz."""
     logger.info("step=setup run_id")
     run_id = "run_test_requires_matching_org"
     logger.info("step=save_stream_state run_id=%s", run_id)
     await session_service.save_stream_state(
         run_id,
         {
-            "organization_id": "org_business",
+            "organization_id": "org_free_legacy_biz",
             "signed_text": "secret",
         },
     )

@@ -17,20 +17,22 @@ class TestTierRateLimits:
     """Tests for tier-based rate limit configuration."""
 
     def test_tier_limits_match_pricing_strategy(self):
-        """Verify tier limits match docs/pricing/PRICING_STRATEGY.md."""
-        assert TIER_RATE_LIMITS_PER_SECOND["starter"] == 10
-        assert TIER_RATE_LIMITS_PER_SECOND["professional"] == 50
-        assert TIER_RATE_LIMITS_PER_SECOND["business"] == 200
+        """TEAM_166: Verify tier limits match consolidated free/enterprise/strategic_partner."""
+        assert TIER_RATE_LIMITS_PER_SECOND["free"] == 10
+        assert TIER_RATE_LIMITS_PER_SECOND["starter"] == 10  # legacy alias
+        assert TIER_RATE_LIMITS_PER_SECOND["professional"] == 10  # legacy alias
+        assert TIER_RATE_LIMITS_PER_SECOND["business"] == 10  # legacy alias
         assert TIER_RATE_LIMITS_PER_SECOND["enterprise"] == -1  # Unlimited
         assert TIER_RATE_LIMITS_PER_SECOND["strategic_partner"] == -1  # Unlimited
 
     def test_get_tier_limit_per_minute(self):
-        """Test conversion from per-second to per-minute limits."""
+        """TEAM_166: Test conversion from per-second to per-minute limits."""
         limiter = ApiRateLimiter()
 
-        assert limiter.get_tier_limit_per_minute("starter") == 600  # 10 * 60
-        assert limiter.get_tier_limit_per_minute("professional") == 3000  # 50 * 60
-        assert limiter.get_tier_limit_per_minute("business") == 12000  # 200 * 60
+        assert limiter.get_tier_limit_per_minute("free") == 600  # 10 * 60
+        assert limiter.get_tier_limit_per_minute("starter") == 600  # legacy alias
+        assert limiter.get_tier_limit_per_minute("professional") == 600  # legacy alias
+        assert limiter.get_tier_limit_per_minute("business") == 600  # legacy alias
         assert limiter.get_tier_limit_per_minute("enterprise") == -1  # Unlimited
         assert limiter.get_tier_limit_per_minute("strategic_partner") == -1  # Unlimited
 

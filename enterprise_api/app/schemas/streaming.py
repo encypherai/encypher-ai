@@ -5,6 +5,8 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field, validator
 
+from app.schemas.signing_constants import MANIFEST_MODES
+
 
 class StreamSignRequest(BaseModel):
     """Request payload for streaming signing run."""
@@ -99,9 +101,8 @@ class StreamMerkleFinalizeRequest(BaseModel):
 
     @validator("manifest_mode")
     def validate_manifest_mode(cls, v):
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "vs256_embedding", "vs256_rs_embedding"]
-        if v not in allowed:
-            raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
+        if v not in MANIFEST_MODES:
+            raise ValueError(f"Manifest mode must be one of: {', '.join(MANIFEST_MODES)}")
         return v
 
 

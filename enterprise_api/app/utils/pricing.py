@@ -34,100 +34,36 @@ class PricingTier:
     enterprise: bool = False
 
 
-# Official pricing tiers
+# TEAM_145: Official pricing tiers — consolidated to free/enterprise/strategic_partner
 PRICING_TIERS: Dict[str, PricingTier] = {
-    "starter": PricingTier(
-        id="starter",
-        name="Starter",
-        display_name="Starter (Free)",
+    "free": PricingTier(
+        id="free",
+        name="Free",
+        display_name="Free",
         price_monthly=0,
         price_annual=0,
-        description="Perfect for individual bloggers and small publishers getting started with content authentication.",
+        description="Full signing infrastructure for publishers of any size. Prove ownership, detect copying, join the coalition.",
         features=[
-            "Unlimited C2PA signing",
+            "C2PA 2.3-compliant document signing (1K/mo)",
+            "Sentence-level Merkle tree authentication",
+            "Invisible Unicode embeddings",
             "Unlimited verifications",
-            "2 API keys",
-            "Community support (GitHub/Discord)",
-            "7-day analytics retention",
-            "WordPress plugin (with Encypher branding)",
-            "Auto-join licensing coalition",
+            "Coalition membership with content attribution",
+            "WordPress plugin — auto-sign on publish",
+            "REST API, CLI, GitHub Action",
         ],
         limits={
-            "c2pa_signatures": 10000,  # Soft cap for abuse prevention
-            "sentences_tracked": 0,
-            "merkle_encoding": 0,
+            "c2pa_signatures": 1000,
+            "sentences_tracked": 10000,
+            "merkle_encoding": 1000,
             "batch_operations": 0,
             "api_keys": 2,
             "rate_limit_per_sec": 10,
-            "analytics_retention_days": 7,
+            "analytics_retention_days": 30,
             "team_members": 1,
         },
-        coalition_rev_share={"publisher": 65, "encypher": 35},
-    ),
-    "professional": PricingTier(
-        id="professional",
-        name="Professional",
-        display_name="Professional",
-        price_monthly=99,
-        price_annual=950,  # ~20% discount
-        description="For growing publishers who need sentence-level tracking and better coalition revenue share.",
-        features=[
-            "Everything in Starter",
-            "Sentence-level tracking (50K/month)",
-            "Invisible embeddings (Unicode VS)",
-            "Streaming signing (WebSocket/SSE)",
-            "Sentence lookup API",
-            "10 API keys",
-            "Email support (48hr SLA)",
-            "90-day analytics retention",
-            "BYOK (Bring Your Own Keys)",
-            "WordPress Pro (no branding)",
-        ],
-        limits={
-            "c2pa_signatures": -1,  # Unlimited
-            "sentences_tracked": 50000,
-            "merkle_encoding": 0,
-            "batch_operations": 0,
-            "api_keys": 10,
-            "rate_limit_per_sec": 50,
-            "analytics_retention_days": 90,
-            "team_members": 1,
-        },
-        coalition_rev_share={"publisher": 70, "encypher": 30},
+        coalition_rev_share={"publisher": 60, "encypher": 40},
         popular=True,
-    ),
-    "business": PricingTier(
-        id="business",
-        name="Business",
-        display_name="Business",
-        price_monthly=499,
-        price_annual=4790,  # ~20% discount
-        description="For major publishers who need Merkle infrastructure, plagiarism detection, and team features.",
-        features=[
-            "Everything in Professional",
-            "Merkle tree encoding",
-            "Source attribution API",
-            "Plagiarism detection API",
-            "Batch operations (100 docs)",
-            "500K tracked sentences/month",
-            "50 API keys",
-            "Priority support (24hr SLA)",
-            "1-year analytics retention",
-            "Team management (10 users)",
-            "Audit logs",
-            "WordPress multi-site (5 sites)",
-        ],
-        limits={
-            "c2pa_signatures": -1,  # Unlimited
-            "sentences_tracked": 500000,
-            "merkle_encoding": 10000,
-            "batch_operations": 1000,
-            "api_keys": 50,
-            "rate_limit_per_sec": 200,
-            "analytics_retention_days": 365,
-            "team_members": 10,
-        },
-        coalition_rev_share={"publisher": 75, "encypher": 25},
     ),
     "enterprise": PricingTier(
         id="enterprise",
@@ -135,48 +71,15 @@ PRICING_TIERS: Dict[str, PricingTier] = {
         display_name="Enterprise",
         price_monthly=0,  # Custom pricing
         price_annual=0,  # Custom pricing
-        description="For global media organizations with custom requirements, SLAs, and dedicated support.",
+        description="Unlimited everything. All add-ons included. Dedicated support. Custom pricing tailored to your organization.",
         features=[
-            "Everything in Business",
-            "Unlimited everything",
-            "Custom C2PA assertion schemas",
-            "Assertion templates",
-            "Provenance chain (edit history)",
-            "Unlimited API keys",
-            "Unlimited team members",
-            "SSO/SCIM integration",
-            "Dedicated TAM + Slack channel",
-            "Custom SLAs",
-            "On-premise deployment option",
-            "WordPress unlimited sites + white-label",
-        ],
-        limits={
-            "c2pa_signatures": -1,
-            "sentences_tracked": -1,
-            "merkle_encoding": -1,
-            "batch_operations": -1,
-            "api_keys": -1,
-            "rate_limit_per_sec": -1,
-            "analytics_retention_days": -1,  # Custom
-            "team_members": -1,
-        },
-        coalition_rev_share={"publisher": 80, "encypher": 20},
-        enterprise=True,
-    ),
-    "strategic_partner": PricingTier(
-        id="strategic_partner",
-        name="Strategic Partner",
-        display_name="Strategic Partner",
-        price_monthly=0,  # Negotiated
-        price_annual=0,  # Negotiated
-        description="Invite-only tier for founding coalition members and strategic partners.",
-        features=[
-            "Everything in Enterprise",
-            "Best-in-class revenue share (85/15)",
-            "Co-marketing opportunities",
-            "Product roadmap input",
-            "Early access to new features",
-            "Dedicated engineering support",
+            "Unlimited signing — no caps on volume or API calls",
+            "Real-time AI output monitoring",
+            "Enforcement tools — formal notices and evidence packages",
+            "Custom signing identity and white-label verification",
+            "Streaming LLM signing",
+            "Dedicated SLA, SSO, and named account manager",
+            "All add-ons included",
         ],
         limits={
             "c2pa_signatures": -1,
@@ -188,7 +91,33 @@ PRICING_TIERS: Dict[str, PricingTier] = {
             "analytics_retention_days": -1,
             "team_members": -1,
         },
-        coalition_rev_share={"publisher": 85, "encypher": 15},
+        coalition_rev_share={"publisher": 60, "encypher": 40},
+        enterprise=True,
+    ),
+    "strategic_partner": PricingTier(
+        id="strategic_partner",
+        name="Strategic Partner",
+        display_name="Strategic Partner",
+        price_monthly=0,  # Negotiated
+        price_annual=0,  # Negotiated
+        description="Invite-only tier for founding coalition members and strategic partners.",
+        features=[
+            "Everything in Enterprise",
+            "Co-marketing opportunities",
+            "Product roadmap input",
+            "Advisory board participation",
+        ],
+        limits={
+            "c2pa_signatures": -1,
+            "sentences_tracked": -1,
+            "merkle_encoding": -1,
+            "batch_operations": -1,
+            "api_keys": -1,
+            "rate_limit_per_sec": -1,
+            "analytics_retention_days": -1,
+            "team_members": -1,
+        },
+        coalition_rev_share={"publisher": 60, "encypher": 40},
         enterprise=True,
     ),
 }
@@ -196,7 +125,10 @@ PRICING_TIERS: Dict[str, PricingTier] = {
 
 def get_tier(tier_id: str) -> PricingTier:
     """Get a pricing tier by ID"""
-    return PRICING_TIERS.get(tier_id, PRICING_TIERS["starter"])
+    # TEAM_145: Map legacy tier names
+    legacy_map = {"starter": "free", "professional": "free", "business": "free"}
+    tier_id = legacy_map.get(tier_id, tier_id)
+    return PRICING_TIERS.get(tier_id, PRICING_TIERS["free"])
 
 
 def get_price(tier_id: str, billing_cycle: BillingCycle) -> float:

@@ -35,12 +35,13 @@ from app.utils.sentence_parser import compute_sentence_hash, compute_text_hash, 
 
 logger = logging.getLogger(__name__)
 
-STARTER_CUSTOM_ASSERTION_LIMIT = 1
+FREE_CUSTOM_ASSERTION_LIMIT = 1
 
 
 def _get_custom_assertion_limit(tier: str) -> Optional[int]:
-    if tier == "starter":
-        return STARTER_CUSTOM_ASSERTION_LIMIT
+    # TEAM_145: Map legacy tier names
+    if tier in ("starter", "free"):
+        return FREE_CUSTOM_ASSERTION_LIMIT
     return None
 
 
@@ -114,7 +115,7 @@ async def execute_signing(
         custom_assertions: Optional[List[Dict[str, Any]]] = None
         raw_assertions: List[Dict[str, Any]] = []
 
-        tier = str(organization.get("tier", "starter")).lower()
+        tier = str(organization.get("tier", "free")).lower()
         request_custom_assertions = list(request.custom_assertions or [])
         if request_custom_assertions:
             assertion_limit = _get_custom_assertion_limit(tier)

@@ -19,6 +19,14 @@ from app.schemas.api_response import (
     is_feature_available,
     tier_at_least,
 )
+from app.schemas.signing_constants import (
+    C2PA_ACTIONS,
+    DISTRIBUTION_TARGETS,
+    EMBEDDING_STRATEGIES,
+    MANIFEST_MODES,
+    MERKLE_SEGMENTATION_LEVELS,
+    SEGMENTATION_LEVELS,
+)
 
 
 # =============================================================================
@@ -162,7 +170,7 @@ class SignOptions(BaseModel):
     )
     manifest_mode: str = Field(
         default="full",
-        description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding, vs256_embedding (Professional+)",
+        description="Manifest mode: full (free), lightweight_uuid, minimal_uuid, hybrid, zw_embedding, micro, micro_ecc, micro_c2pa, micro_ecc_c2pa (Professional+)",
     )
     embedding_strategy: str = Field(
         default="single_point",
@@ -238,9 +246,8 @@ class SignOptions(BaseModel):
     @field_validator("segmentation_level")
     @classmethod
     def validate_segmentation_level(cls, v: str) -> str:
-        allowed = ["document", "word", "sentence", "paragraph", "section"]
-        if v not in allowed:
-            raise ValueError(f"segmentation_level must be one of: {', '.join(allowed)}")
+        if v not in SEGMENTATION_LEVELS:
+            raise ValueError(f"segmentation_level must be one of: {', '.join(SEGMENTATION_LEVELS)}")
         return v
 
     @field_validator("segmentation_levels")
@@ -248,26 +255,23 @@ class SignOptions(BaseModel):
     def validate_segmentation_levels(cls, v: Optional[List[str]]) -> Optional[List[str]]:
         if v is None:
             return v
-        allowed = {"sentence", "paragraph", "section"}
         for level in v:
-            if level not in allowed:
-                raise ValueError(f"segmentation_levels entries must be one of: {', '.join(sorted(allowed))}")
+            if level not in MERKLE_SEGMENTATION_LEVELS:
+                raise ValueError(f"segmentation_levels entries must be one of: {', '.join(sorted(MERKLE_SEGMENTATION_LEVELS))}")
         return v
 
     @field_validator("manifest_mode")
     @classmethod
     def validate_manifest_mode(cls, v: str) -> str:
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "vs256_embedding", "vs256_rs_embedding"]
-        if v not in allowed:
-            raise ValueError(f"manifest_mode must be one of: {', '.join(allowed)}")
+        if v not in MANIFEST_MODES:
+            raise ValueError(f"manifest_mode must be one of: {', '.join(MANIFEST_MODES)}")
         return v
 
     @field_validator("embedding_strategy")
     @classmethod
     def validate_embedding_strategy(cls, v: str) -> str:
-        allowed = ["single_point", "distributed", "distributed_redundant"]
-        if v not in allowed:
-            raise ValueError(f"embedding_strategy must be one of: {', '.join(allowed)}")
+        if v not in EMBEDDING_STRATEGIES:
+            raise ValueError(f"embedding_strategy must be one of: {', '.join(EMBEDDING_STRATEGIES)}")
         return v
 
     @field_validator("distribution_target")
@@ -275,17 +279,15 @@ class SignOptions(BaseModel):
     def validate_distribution_target(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        allowed = ["whitespace", "punctuation", "all_chars"]
-        if v not in allowed:
-            raise ValueError(f"distribution_target must be one of: {', '.join(allowed)}")
+        if v not in DISTRIBUTION_TARGETS:
+            raise ValueError(f"distribution_target must be one of: {', '.join(DISTRIBUTION_TARGETS)}")
         return v
 
     @field_validator("action")
     @classmethod
     def validate_action(cls, v: str) -> str:
-        allowed = ["c2pa.created", "c2pa.edited"]
-        if v not in allowed:
-            raise ValueError(f"action must be one of: {', '.join(allowed)}")
+        if v not in C2PA_ACTIONS:
+            raise ValueError(f"action must be one of: {', '.join(C2PA_ACTIONS)}")
         return v
 
 
@@ -494,10 +496,8 @@ def validate_sign_options_for_tier(
     # Normalize tier
     tier_normalized = tier.lower().replace("-", "_")
     
-    # Special case: NMA members on starter get Professional-level segmentation
-    effective_tier_for_segmentation = tier_normalized
-    if is_nma_member and tier_normalized == TierName.STARTER:
-        effective_tier_for_segmentation = TierName.PROFESSIONAL
+    # TEAM_166: Free tier has access to all segmentation levels except word.
+    # NMA special-casing removed — free tier already has these features.
     
     # Check segmentation level
     if options.segmentation_level != "document":
@@ -513,11 +513,11 @@ def validate_sign_options_for_tier(
                 features_used.append("word_segmentation")
         else:
             feature_name = f"{options.segmentation_level}_segmentation"
-            if not is_feature_available(feature_name, effective_tier_for_segmentation):
+            if not is_feature_available(feature_name, tier_normalized):
                 features_denied.append({
                     "feature": feature_name,
                     "display_name": f"{options.segmentation_level.title()}-Level Segmentation",
-                    "required_tier": TierName.PROFESSIONAL,
+                    "required_tier": TierName.FREE,
                     "requested_value": options.segmentation_level,
                 })
             else:
@@ -529,7 +529,7 @@ def validate_sign_options_for_tier(
             features_denied.append({
                 "feature": "manifest_modes",
                 "display_name": "Advanced Manifest Modes",
-                "required_tier": TierName.PROFESSIONAL,
+                "required_tier": TierName.FREE,
                 "requested_value": options.manifest_mode,
             })
         else:
@@ -541,7 +541,7 @@ def validate_sign_options_for_tier(
             features_denied.append({
                 "feature": "embedding_strategies",
                 "display_name": "Advanced Embedding Strategies",
-                "required_tier": TierName.PROFESSIONAL,
+                "required_tier": TierName.FREE,
                 "requested_value": options.embedding_strategy,
             })
         else:
@@ -553,7 +553,7 @@ def validate_sign_options_for_tier(
             features_denied.append({
                 "feature": "attribution_indexing",
                 "display_name": "Attribution Indexing",
-                "required_tier": TierName.PROFESSIONAL,
+                "required_tier": TierName.FREE,
                 "requested_value": "true",
             })
         else:
@@ -565,7 +565,7 @@ def validate_sign_options_for_tier(
             features_denied.append({
                 "feature": "custom_assertions",
                 "display_name": "Custom C2PA Assertions",
-                "required_tier": TierName.BUSINESS,
+                "required_tier": TierName.FREE,
                 "requested_value": f"{len(options.custom_assertions)} assertions",
             })
         else:
@@ -577,7 +577,7 @@ def validate_sign_options_for_tier(
             features_denied.append({
                 "feature": "assertion_templates",
                 "display_name": "Assertion Templates",
-                "required_tier": TierName.BUSINESS,
+                "required_tier": TierName.FREE,
                 "requested_value": options.template_id,
             })
         else:
@@ -589,7 +589,7 @@ def validate_sign_options_for_tier(
             features_denied.append({
                 "feature": "rights_metadata",
                 "display_name": "Rights Metadata",
-                "required_tier": TierName.BUSINESS,
+                "required_tier": TierName.FREE,
                 "requested_value": "provided",
             })
         else:
@@ -625,9 +625,7 @@ def validate_sign_options_for_tier(
         features_denied.append({
             "feature": "batch_signing",
             "display_name": "Batch Signing",
-            "required_tier": TierName.PROFESSIONAL if batch_size <= 10 else (
-                TierName.BUSINESS if batch_size <= 50 else TierName.ENTERPRISE
-            ),
+            "required_tier": TierName.ENTERPRISE,
             "requested_value": f"{batch_size} documents (limit: {batch_limit})",
         })
     elif batch_size > 1:

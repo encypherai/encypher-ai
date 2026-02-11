@@ -32,11 +32,14 @@ async def _fake_batch_response(*, correlation_id: str, **_kwargs) -> dict:
     }
 
 
+# TEAM_166: Batch operations require Enterprise tier (free tier gets 403)
+
 @pytest.mark.asyncio
-async def test_batch_sign_requires_business_tier_starter(
+async def test_batch_sign_rejected_for_free_tier(
     async_client: AsyncClient,
     starter_auth_headers: dict,
 ) -> None:
+    """Free tier (starter key) should be rejected for batch sign."""
     with patch("app.routers.batch.batch_service.sign_batch", new=AsyncMock(side_effect=_fake_batch_response)):
         response = await async_client.post(
             "/api/v1/batch/sign",
@@ -48,75 +51,64 @@ async def test_batch_sign_requires_business_tier_starter(
 
 
 @pytest.mark.asyncio
-async def test_batch_sign_requires_business_tier_professional(
+async def test_batch_sign_rejects_single_item_for_enterprise(
     async_client: AsyncClient,
-    professional_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
-    with patch("app.routers.batch.batch_service.sign_batch", new=AsyncMock(side_effect=_fake_batch_response)):
-        response = await async_client.post(
-            "/api/v1/batch/sign",
-            json=_batch_request(items=2),
-            headers=professional_auth_headers,
-        )
-
-    assert response.status_code == 403
-
-
-@pytest.mark.asyncio
-async def test_batch_sign_rejects_single_item_even_for_business(
-    async_client: AsyncClient,
-    business_auth_headers: dict,
-) -> None:
+    """Enterprise tier should still reject single-item batch."""
     with patch("app.routers.batch.batch_service.sign_batch", new=AsyncMock(side_effect=_fake_batch_response)):
         response = await async_client.post(
             "/api/v1/batch/sign",
             json=_batch_request(items=1),
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
     assert response.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_batch_verify_requires_business_tier_professional(
+async def test_batch_verify_rejected_for_free_tier(
     async_client: AsyncClient,
-    professional_auth_headers: dict,
+    starter_auth_headers: dict,
 ) -> None:
+    """Free tier should be rejected for batch verify."""
     with patch("app.routers.batch.batch_service.verify_batch", new=AsyncMock(side_effect=_fake_batch_response)):
         response = await async_client.post(
             "/api/v1/batch/verify",
             json=_batch_request(items=2),
-            headers=professional_auth_headers,
+            headers=starter_auth_headers,
         )
 
     assert response.status_code == 403
 
 
 @pytest.mark.asyncio
-async def test_batch_verify_rejects_single_item_even_for_business(
+async def test_batch_verify_rejects_single_item_for_enterprise(
     async_client: AsyncClient,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
+    """Enterprise tier should still reject single-item batch."""
     with patch("app.routers.batch.batch_service.verify_batch", new=AsyncMock(side_effect=_fake_batch_response)):
         response = await async_client.post(
             "/api/v1/batch/verify",
             json=_batch_request(items=1),
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
     assert response.status_code == 400
 
 
 @pytest.mark.asyncio
-async def test_batch_verify_allows_business_multi_document(
+async def test_batch_verify_allows_enterprise_multi_document(
     async_client: AsyncClient,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
+    """Enterprise tier should allow multi-document batch verify."""
     with patch("app.routers.batch.batch_service.verify_batch", new=AsyncMock(side_effect=_fake_batch_response)):
         response = await async_client.post(
             "/api/v1/batch/verify",
             json=_batch_request(items=2),
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
     assert response.status_code == 200

@@ -136,13 +136,15 @@ class ProvisioningService:
                 domain = email.split("@")[1]
                 organization_name = domain.split(".")[0].title()
 
-            # Map tier string to enum
+            # TEAM_145: Map tier string to enum (only free/enterprise/strategic_partner)
+            legacy_map = {"starter": "free", "professional": "free", "business": "free"}
+            mapped_tier = legacy_map.get(tier.lower(), tier.lower())
             tier_map = {
                 "free": OrganizationTier.FREE,
-                "professional": OrganizationTier.PROFESSIONAL,
                 "enterprise": OrganizationTier.ENTERPRISE,
+                "strategic_partner": OrganizationTier.STRATEGIC_PARTNER,
             }
-            tier_enum = tier_map.get(tier.lower(), OrganizationTier.FREE)
+            tier_enum = tier_map.get(mapped_tier, OrganizationTier.FREE)
 
             # Create organization
             org = Organization(
@@ -150,9 +152,9 @@ class ProvisioningService:
                 name=organization_name,
                 email=email,
                 tier=tier_enum,
-                merkle_enabled=(tier_enum == OrganizationTier.ENTERPRISE),
-                advanced_analytics_enabled=(tier_enum in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE]),
-                bulk_operations_enabled=(tier_enum in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE]),
+                merkle_enabled=(tier_enum in [OrganizationTier.ENTERPRISE, OrganizationTier.STRATEGIC_PARTNER]),
+                advanced_analytics_enabled=(tier_enum in [OrganizationTier.ENTERPRISE, OrganizationTier.STRATEGIC_PARTNER]),
+                bulk_operations_enabled=(tier_enum in [OrganizationTier.ENTERPRISE, OrganizationTier.STRATEGIC_PARTNER]),
                 api_calls_this_month=0,
                 merkle_encoding_calls_this_month=0,
                 merkle_attribution_calls_this_month=0,
@@ -226,16 +228,18 @@ class ProvisioningService:
         """
         TIER_FEATURES.get(tier, set())
 
+        # TEAM_145: Only free/enterprise/strategic_partner
+        is_enterprise = tier in [OrganizationTier.ENTERPRISE, OrganizationTier.STRATEGIC_PARTNER]
         return {
-            "merkle_trees": tier == OrganizationTier.ENTERPRISE,
-            "bulk_operations": tier in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE],
-            "advanced_analytics": tier in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE],
-            "custom_segmentation": tier in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE],
-            "api_webhooks": tier in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE],
-            "priority_processing": tier == OrganizationTier.ENTERPRISE,
-            "dedicated_resources": tier == OrganizationTier.ENTERPRISE,
-            "premium_support": tier in [OrganizationTier.PROFESSIONAL, OrganizationTier.ENTERPRISE],
-            "sla_guarantee": tier == OrganizationTier.ENTERPRISE,
+            "merkle_trees": is_enterprise,
+            "bulk_operations": is_enterprise,
+            "advanced_analytics": is_enterprise,
+            "custom_segmentation": is_enterprise,
+            "api_webhooks": is_enterprise,
+            "priority_processing": is_enterprise,
+            "dedicated_resources": is_enterprise,
+            "premium_support": is_enterprise,
+            "sla_guarantee": is_enterprise,
         }
 
     @staticmethod

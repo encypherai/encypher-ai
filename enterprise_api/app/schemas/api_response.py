@@ -22,27 +22,19 @@ T = TypeVar("T")
 # =============================================================================
 
 class TierName:
-    """Tier name constants."""
-    
+    """Tier name constants.
+
+    TEAM_145: Consolidated to free/enterprise/strategic_partner.
+    Legacy aliases kept for backward compatibility in tier_at_least().
+    """
+
     FREE = "free"
-    STARTER = "starter"
-    PROFESSIONAL = "professional"
-    BUSINESS = "business"
     ENTERPRISE = "enterprise"
     STRATEGIC_PARTNER = "strategic_partner"
     DEMO = "demo"
 
 
-# Tier hierarchy for comparison (higher = more features)
-TIER_HIERARCHY: Dict[str, int] = {
-    TierName.FREE: 0,
-    TierName.STARTER: 1,
-    TierName.PROFESSIONAL: 2,
-    TierName.BUSINESS: 3,
-    TierName.ENTERPRISE: 4,
-    TierName.STRATEGIC_PARTNER: 5,
-    TierName.DEMO: 5,  # Demo has full access
-}
+from app.core.tier_config import TIER_HIERARCHY, BATCH_LIMITS  # SSOT
 
 
 def tier_at_least(current_tier: str, required_tier: str) -> bool:
@@ -80,21 +72,21 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         name="sentence_segmentation",
         display_name="Sentence-Level Segmentation",
         description="Sign content with sentence-level granularity",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "paragraph_segmentation": FeatureDefinition(
         name="paragraph_segmentation",
         display_name="Paragraph-Level Segmentation",
         description="Sign content with paragraph-level granularity",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "section_segmentation": FeatureDefinition(
         name="section_segmentation",
         display_name="Section-Level Segmentation",
         description="Sign content with section-level granularity",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "word_segmentation": FeatureDefinition(
@@ -108,42 +100,42 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         name="manifest_modes",
         display_name="Advanced Manifest Modes",
         description="Use lightweight_uuid, minimal_uuid, hybrid, or zw_embedding modes",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "embedding_strategies": FeatureDefinition(
         name="embedding_strategies",
         display_name="Advanced Embedding Strategies",
         description="Use distributed or distributed_redundant embedding strategies",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "attribution_indexing": FeatureDefinition(
         name="attribution_indexing",
         display_name="Attribution Indexing",
         description="Index content for attribution and plagiarism detection",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "custom_assertions": FeatureDefinition(
         name="custom_assertions",
         display_name="Custom C2PA Assertions",
         description="Add custom assertions to C2PA manifest",
-        required_tier=TierName.BUSINESS,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "assertion_templates": FeatureDefinition(
         name="assertion_templates",
         display_name="Assertion Templates",
         description="Use pre-defined assertion templates",
-        required_tier=TierName.BUSINESS,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "rights_metadata": FeatureDefinition(
         name="rights_metadata",
         display_name="Rights Metadata",
         description="Embed licensing and rights metadata",
-        required_tier=TierName.BUSINESS,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     "dual_binding": FeatureDefinition(
@@ -164,7 +156,7 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         name="batch_signing",
         display_name="Batch Signing",
         description="Sign multiple documents in a single request",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="signing",
     ),
     
@@ -201,21 +193,21 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         name="merkle_proof",
         display_name="Merkle Proof",
         description="Merkle tree proof in verification response",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="verification",
     ),
     "attribution_lookup": FeatureDefinition(
         name="attribution_lookup",
         display_name="Attribution Lookup",
         description="Find original sources of content",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.FREE,
         category="verification",
     ),
     "plagiarism_detection": FeatureDefinition(
         name="plagiarism_detection",
         display_name="Plagiarism Detection",
         description="Detect unauthorized content reuse",
-        required_tier=TierName.BUSINESS,
+        required_tier=TierName.FREE,
         category="verification",
     ),
     "fuzzy_matching": FeatureDefinition(
@@ -231,14 +223,14 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         name="team_management",
         display_name="Team Management",
         description="Manage team members and permissions",
-        required_tier=TierName.BUSINESS,
+        required_tier=TierName.ENTERPRISE,
         category="account",
     ),
     "audit_logs": FeatureDefinition(
         name="audit_logs",
         display_name="Audit Logs",
         description="Complete activity tracking and audit logs",
-        required_tier=TierName.BUSINESS,
+        required_tier=TierName.ENTERPRISE,
         category="account",
     ),
     "sso": FeatureDefinition(
@@ -252,14 +244,14 @@ FEATURE_REGISTRY: Dict[str, FeatureDefinition] = {
         name="byok",
         display_name="Bring Your Own Key",
         description="Use your own signing keys",
-        required_tier=TierName.PROFESSIONAL,
+        required_tier=TierName.ENTERPRISE,
         category="account",
     ),
     "webhooks": FeatureDefinition(
         name="webhooks",
         display_name="Webhooks",
         description="Event notifications via webhooks",
-        required_tier=TierName.BUSINESS,
+        required_tier=TierName.ENTERPRISE,
         category="account",
     ),
 }
@@ -310,20 +302,7 @@ def get_gated_features(current_tier: str, category: Optional[str] = None) -> Lis
 # Batch Limits by Tier
 # =============================================================================
 
-BATCH_LIMITS: Dict[str, int] = {
-    TierName.FREE: 1,
-    TierName.STARTER: 1,
-    TierName.PROFESSIONAL: 10,
-    TierName.BUSINESS: 50,
-    TierName.ENTERPRISE: 100,
-    TierName.STRATEGIC_PARTNER: 100,
-    TierName.DEMO: 100,
-}
-
-
-def get_batch_limit(tier: str) -> int:
-    """Get the batch limit for a tier."""
-    return BATCH_LIMITS.get(tier.lower().replace("-", "_"), 1)
+from app.core.tier_config import get_batch_limit  # SSOT
 
 
 # =============================================================================
@@ -441,12 +420,12 @@ class ApiResponse(BaseModel, Generic[T]):
         "data": null,
         "error": {
             "code": "E_TIER_REQUIRED",
-            "message": "This feature requires Professional tier or higher",
+            "message": "This feature requires Enterprise tier or higher",
             "hint": "Upgrade at https://encypherai.com/pricing"
         },
         "correlation_id": "req-abc123",
         "meta": {
-            "tier": "starter",
+            "tier": "free",
             "features_gated": [...]
         }
     }
@@ -468,7 +447,7 @@ class ApiResponse(BaseModel, Generic[T]):
                     "error": None,
                     "correlation_id": "req-abc123",
                     "meta": {
-                        "tier": "professional",
+                        "tier": "free",
                         "features_used": ["basic_signing"],
                         "api_version": "v1",
                     },

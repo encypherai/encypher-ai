@@ -34,7 +34,7 @@ async def batch_sign(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Batch operations require Business tier or higher",
+                "message": "Batch operations require Enterprise tier",
                 "upgrade_url": "/billing/upgrade",
             },
         )
@@ -49,7 +49,7 @@ async def batch_sign(
         )
 
     correlation_id = _correlation_id(request)
-    tier = organization.get("tier", "starter")
+    tier = organization.get("tier", "free")
 
     result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],
@@ -120,7 +120,7 @@ async def batch_verify(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Batch operations require Business tier or higher",
+                "message": "Batch operations require Enterprise tier",
                 "upgrade_url": "/billing/upgrade",
             },
         )
@@ -135,7 +135,7 @@ async def batch_verify(
         )
 
     correlation_id = _correlation_id(request)
-    tier = organization.get("tier", "starter")
+    tier = organization.get("tier", "free")
 
     result = api_rate_limiter.check_with_reset(
         organization_id=organization["organization_id"],

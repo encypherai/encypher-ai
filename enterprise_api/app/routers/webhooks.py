@@ -165,14 +165,14 @@ def validate_events(events: List[str]) -> List[str]:
 def require_webhooks_business_tier(
     organization: dict = Depends(get_current_organization),
 ) -> dict:
-    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
-    allowed_tiers = {"business", "enterprise", "strategic_partner", "demo"}
+    tier = (organization.get("tier") or "free").lower().replace("-", "_")
+    allowed_tiers = {"enterprise", "strategic_partner", "demo"}
     if tier not in allowed_tiers:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Webhooks require Business tier or higher",
+                "message": "Webhooks require Enterprise tier",
                 "upgrade_url": "/billing/upgrade",
             },
         )

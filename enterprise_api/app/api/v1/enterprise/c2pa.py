@@ -37,7 +37,7 @@ router = APIRouter()
 def require_enterprise_custom_assertion_authoring(
     organization: dict = Depends(get_current_organization),
 ) -> dict:
-    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    tier = (organization.get("tier") or "free").lower().replace("-", "_")
     allowed_tiers = {"enterprise", "strategic_partner", "demo"}
     if tier not in allowed_tiers:
         raise HTTPException(

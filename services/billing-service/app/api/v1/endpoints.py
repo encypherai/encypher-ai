@@ -231,10 +231,10 @@ async def create_checkout_session(
 
     Returns a URL to redirect the user to Stripe's hosted checkout page.
     """
-    # Validate tier
-    if request.tier in [TierName.STARTER, TierName.ENTERPRISE, TierName.STRATEGIC_PARTNER]:
+    # TEAM_145: No self-service checkout. Free tier is free, Enterprise is contact-sales.
+    if request.tier in [TierName.FREE, TierName.ENTERPRISE, TierName.STRATEGIC_PARTNER]:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Cannot checkout for {request.tier.value} tier. Use contact sales for Enterprise."
+            status_code=status.HTTP_400_BAD_REQUEST, detail=f"Cannot checkout for {request.tier.value} tier. Free tier requires no payment; Enterprise requires contacting sales."
         )
 
     # Get Stripe price ID
@@ -426,7 +426,7 @@ async def upgrade_subscription(
                 success=True,
                 checkout_url=portal_session.url,
                 message="Redirecting to Stripe to confirm your downgrade.",
-                new_tier="starter",
+                new_tier="free",
             )
         except Exception as e:
             return UpgradeResponse(
@@ -469,8 +469,8 @@ async def get_usage_stats(
 
     # Get subscription to determine tier
     subscription = BillingService.get_user_subscription(db, user_id)
-    tier = subscription.plan_id if subscription else "starter"
-    tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["starter"])
+    tier = subscription.plan_id if subscription else "free"
+    tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["free"])
     limits = tier_info["limits"]
 
     # Calculate period dates (monthly billing cycle)
@@ -550,8 +550,8 @@ async def get_coalition_earnings(
 
     # Get subscription to determine tier and rev share
     subscription = BillingService.get_user_subscription(db, user_id)
-    tier = subscription.plan_id if subscription else "starter"
-    tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["starter"])
+    tier = subscription.plan_id if subscription else "free"
+    tier_info = PRICING_TIERS.get(tier, PRICING_TIERS["free"])
     rev_share = tier_info["coalition_rev_share"]
 
     # TODO: Get actual coalition data from coalition-service
@@ -595,14 +595,14 @@ async def get_available_plans():
             PlanInfo(
                 id=tier_id,
                 name=tier["name"],
-                tier=TierName(tier_id) if tier_id in TierName.__members__.values() else TierName.STARTER,
+                tier=TierName(tier_id) if tier_id in TierName.__members__.values() else TierName.FREE,
                 price_monthly=tier["price_monthly"],
                 price_annual=tier["price_annual"],
                 features=tier["features"],
                 limits=tier["limits"],
                 coalition_rev_share=tier["coalition_rev_share"],
                 enterprise=tier_id == "enterprise",  # Mark enterprise for custom pricing
-                popular=tier_id == "professional",  # Professional is the recommended tier
+                popular=tier_id == "free",  # Free tier is the recommended starting point
             )
         )
 

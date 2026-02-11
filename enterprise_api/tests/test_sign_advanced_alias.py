@@ -10,33 +10,32 @@ from unittest.mock import AsyncMock, patch
 
 
 @pytest.mark.asyncio
-async def test_sign_with_advanced_options_requires_professional_tier(
+async def test_sign_with_advanced_options_allowed_for_free_tier(
     async_client: AsyncClient,
     starter_auth_headers: dict,
 ) -> None:
-    """Test that advanced options (like manifest_mode) require professional tier."""
-    with patch("app.dependencies.key_service_client.validate_key", new=AsyncMock(return_value=None)):
-        response = await async_client.post(
-            "/api/v1/sign",
-            json={
-                "text": "Hello world. Advanced signing.",
-                "options": {
-                    "manifest_mode": "minimal_uuid",
-                },
+    """TEAM_166: Free tier can use advanced options like manifest_mode."""
+    response = await async_client.post(
+        "/api/v1/sign",
+        json={
+            "text": "Hello world. Advanced signing.",
+            "options": {
+                "manifest_mode": "minimal_uuid",
             },
-            headers=starter_auth_headers,
-        )
+        },
+        headers=starter_auth_headers,
+    )
 
-    # Should be forbidden for starter tier when using advanced options
-    assert response.status_code == 403
+    # TEAM_166: Free tier now has access to manifest_mode
+    assert response.status_code == 201
 
 
 @pytest.mark.asyncio
-async def test_sign_with_advanced_options_success_professional(
+async def test_sign_with_advanced_options_success_free_tier(
     async_client: AsyncClient,
     professional_auth_headers: dict,
 ) -> None:
-    """Test that professional tier can use advanced options."""
+    """TEAM_166: Free tier (legacy professional key) can use advanced options."""
     response = await async_client.post(
         "/api/v1/sign",
         json={

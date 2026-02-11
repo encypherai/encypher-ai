@@ -59,7 +59,7 @@ async def execute_unified_signing(
     """
     start_time = time.time()
     
-    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
+    tier = (organization.get("tier") or "free").lower().replace("-", "_")
     org_id = organization["organization_id"]
     is_nma_member = organization.get("nma_member", False)
     

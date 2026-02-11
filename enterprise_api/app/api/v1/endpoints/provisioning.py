@@ -144,7 +144,7 @@ async def auto_provision(
         )
 
         # Get tier enum
-        tier_map = {"free": OrganizationTier.FREE, "professional": OrganizationTier.PROFESSIONAL, "enterprise": OrganizationTier.ENTERPRISE}
+        tier_map = {"free": OrganizationTier.FREE, "enterprise": OrganizationTier.ENTERPRISE, "strategic_partner": OrganizationTier.STRATEGIC_PARTNER}
         tier_enum = tier_map.get(request.tier or "free", OrganizationTier.FREE)
 
         # Build response

@@ -5,20 +5,21 @@ from httpx import AsyncClient
 
 
 @pytest.mark.asyncio
-async def test_builtin_c2pa_templates_list_requires_business(async_client: AsyncClient, starter_auth_headers: dict) -> None:
+async def test_builtin_c2pa_templates_available_to_free_tier(async_client: AsyncClient, starter_auth_headers: dict) -> None:
+    """TEAM_166: Templates are available to all tiers."""
     resp = await async_client.get(
         "/api/v1/enterprise/c2pa/templates",
         headers=starter_auth_headers,
     )
 
-    assert resp.status_code == 403
+    assert resp.status_code == 200
 
 
 @pytest.mark.asyncio
-async def test_builtin_c2pa_templates_are_listed(async_client: AsyncClient, business_auth_headers: dict) -> None:
+async def test_builtin_c2pa_templates_are_listed(async_client: AsyncClient, enterprise_auth_headers: dict) -> None:
     resp = await async_client.get(
         "/api/v1/enterprise/c2pa/templates",
-        headers=business_auth_headers,
+        headers=enterprise_auth_headers,
     )
 
     assert resp.status_code == 200

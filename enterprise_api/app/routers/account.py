@@ -89,101 +89,13 @@ class QuotaResponse(BaseModel):
 # Tier Feature Mapping
 # =============================================================================
 
-TIER_FEATURES: Dict[str, Dict[str, Any]] = {
-    "starter": {
-        "merkle_enabled": False,
-        "byok_enabled": False,
-        "sentence_tracking": False,
-        "bulk_operations": False,
-        "custom_assertions": False,
-        "streaming": True,
-        "team_management": False,
-        "audit_logs": False,
-        "sso": False,
-        "max_team_members": 1,
-    },
-    "professional": {
-        "merkle_enabled": False,
-        "byok_enabled": False,
-        "sentence_tracking": True,
-        "bulk_operations": False,
-        "custom_assertions": False,
-        "streaming": True,
-        "team_management": True,
-        "audit_logs": True,
-        "sso": False,
-        "max_team_members": 5,
-    },
-    "business": {
-        "merkle_enabled": True,
-        "byok_enabled": False,
-        "sentence_tracking": True,
-        "bulk_operations": True,
-        "custom_assertions": False,
-        "streaming": True,
-        "team_management": True,
-        "audit_logs": True,
-        "sso": False,
-        "max_team_members": 25,
-    },
-    "enterprise": {
-        "merkle_enabled": True,
-        "byok_enabled": True,
-        "sentence_tracking": True,
-        "bulk_operations": True,
-        "custom_assertions": True,
-        "streaming": True,
-        "team_management": True,
-        "audit_logs": True,
-        "sso": True,
-        "max_team_members": -1,  # Unlimited
-    },
-    "strategic_partner": {
-        "merkle_enabled": True,
-        "byok_enabled": True,
-        "sentence_tracking": True,
-        "bulk_operations": True,
-        "custom_assertions": True,
-        "streaming": True,
-        "team_management": True,
-        "audit_logs": True,
-        "sso": True,
-        "max_team_members": -1,
-    },
-}
-
-TIER_LIMITS: Dict[str, Dict[str, int]] = {
-    "starter": {
-        "c2pa_signatures": 10000,
-        "sentences_tracked": 0,
-        "batch_operations": 0,
-        "api_keys": 2,
-    },
-    "professional": {
-        "c2pa_signatures": -1,
-        "sentences_tracked": 50000,
-        "batch_operations": 0,
-        "api_keys": 10,
-    },
-    "business": {
-        "c2pa_signatures": -1,
-        "sentences_tracked": 500000,
-        "batch_operations": 100,
-        "api_keys": 50,
-    },
-    "enterprise": {
-        "c2pa_signatures": -1,
-        "sentences_tracked": -1,
-        "batch_operations": -1,
-        "api_keys": -1,
-    },
-    "strategic_partner": {
-        "c2pa_signatures": -1,
-        "sentences_tracked": -1,
-        "batch_operations": -1,
-        "api_keys": -1,
-    },
-}
+from app.core.tier_config import (
+    TIER_FEATURES as _RAW_TIER_FEATURES,
+    TIER_LIMITS,
+    coerce_tier_name as _coerce_tier_name,
+    get_tier_features as _get_tier_features,
+    get_tier_limits as _get_tier_limits,
+)
 
 
 # =============================================================================
@@ -209,8 +121,8 @@ async def get_account_info(
 
     # Handle user-level keys (synthetic org IDs)
     if org_id and org_id.startswith("user_"):
-        tier = "starter"
-        features_dict = TIER_FEATURES.get(tier, TIER_FEATURES["starter"])
+        tier = "free"
+        features_dict = _get_tier_features(tier)
         return AccountResponse(
             data=AccountInfo(
                 organization_id=org_id,
@@ -243,11 +155,11 @@ async def get_account_info(
             detail="Organization not found",
         )
 
-    tier = row.tier or "starter"
+    tier = _coerce_tier_name(row.tier or "free")
 
     # Merge database features with tier defaults
     db_features = row.features if isinstance(row.features, dict) else {}
-    tier_features = TIER_FEATURES.get(tier, TIER_FEATURES["starter"])
+    tier_features = _get_tier_features(tier)
     merged_features = {**tier_features, **db_features}
 
     return AccountResponse(
@@ -290,8 +202,8 @@ async def get_account_quota(
 
     # Handle user-level keys
     if org_id and org_id.startswith("user_"):
-        tier = "starter"
-        limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
+        tier = "free"
+        limits = _get_tier_limits(tier)
         return QuotaResponse(
             data=QuotaInfo(
                 organization_id=org_id,
@@ -331,8 +243,8 @@ async def get_account_quota(
             detail="Organization not found",
         )
 
-    tier = row.tier or "starter"
-    limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
+    tier = _coerce_tier_name(row.tier or "free")
+    limits = _get_tier_limits(tier)
 
     # Get document count
     doc_result = await content_db.execute(

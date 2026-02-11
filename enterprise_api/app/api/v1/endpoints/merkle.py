@@ -38,21 +38,10 @@ logger = logging.getLogger(__name__)
 
 def require_merkle_feature(organization: dict = Depends(get_current_organization)) -> dict:
     """
-    Dependency that requires Professional+ tier.
+    Dependency that checks Merkle feature access.
 
-    Raises HTTPException 403 if the organization doesn't have Professional+ tier.
+    TEAM_145: Merkle features are now available to all tiers (free/enterprise/strategic_partner).
     """
-    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
-    allowed_tiers = {"professional", "business", "enterprise", "strategic_partner", "demo"}
-    if tier not in allowed_tiers:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Merkle tree features require Professional tier or higher",
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
     return organization
 
 

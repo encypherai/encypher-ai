@@ -96,14 +96,7 @@ class UpdateRoleRequest(BaseModel):
     role: TeamRole
 
 
-# Tier limits for team members
-TIER_MEMBER_LIMITS = {
-    "starter": 1,  # Owner only
-    "professional": 5,  # Small team
-    "business": 10,  # Medium team
-    "enterprise": -1,  # Unlimited
-    "strategic_partner": -1,
-}
+from app.core.tier_config import get_team_member_limit
 
 
 async def check_team_management_enabled(
@@ -115,7 +108,7 @@ async def check_team_management_enabled(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
                 "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Team management is only available on Business and Enterprise tiers",
+                "message": "Team management requires Enterprise tier",
                 "upgrade_url": "/billing/upgrade",
             },
         )
@@ -151,8 +144,8 @@ async def require_admin_role(
     # If no role found in DB but this is a demo/test key with owner tier features,
     # assume owner role for testing purposes
     if role is None:
-        tier = organization.get("tier", "starter")
-        if tier in ["business", "enterprise", "strategic_partner"]:
+        tier = organization.get("tier", "free")
+        if tier in ["enterprise", "strategic_partner"]:
             # For demo keys with team_management enabled, assume owner role
             role = TeamRole.OWNER
         else:
@@ -174,8 +167,8 @@ async def list_team_members(
     List all team members in the organization.
     """
     org_id = organization["organization_id"]
-    tier = organization.get("tier", "starter")
-    max_members = TIER_MEMBER_LIMITS.get(tier, 1)
+    tier = organization.get("tier", "free")
+    max_members = get_team_member_limit(tier)
 
     result = await db.execute(
         text("""
@@ -232,8 +225,8 @@ async def invite_member(
     Sends an email invitation that expires in 7 days.
     """
     org_id = organization["organization_id"]
-    tier = organization.get("tier", "starter")
-    max_members = TIER_MEMBER_LIMITS.get(tier, 1)
+    tier = organization.get("tier", "free")
+    max_members = get_team_member_limit(tier)
     inviter_id = organization.get("user_id") or organization.get("api_key_owner_id")
     if not inviter_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inviter ID missing")

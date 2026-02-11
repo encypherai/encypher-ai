@@ -28,11 +28,14 @@ def _coerce_tier(value: Any) -> OrganizationTier:
     if isinstance(value, OrganizationTier):
         return value
     if isinstance(value, str):
+        # TEAM_145: Map legacy tier names to FREE
+        legacy_map = {"starter": "free", "professional": "free", "business": "free"}
+        mapped = legacy_map.get(value, value)
         try:
-            return OrganizationTier(value)
+            return OrganizationTier(mapped)
         except ValueError:
-            return OrganizationTier.STARTER
-    return OrganizationTier.STARTER
+            return OrganizationTier.FREE
+    return OrganizationTier.FREE
 
 
 class TierService:
@@ -54,7 +57,7 @@ class TierService:
         Returns:
             Dictionary of feature name -> enabled status
         """
-        return TIER_FEATURES.get(_coerce_tier(tier), TIER_FEATURES[OrganizationTier.STARTER])
+        return TIER_FEATURES.get(_coerce_tier(tier), TIER_FEATURES[OrganizationTier.FREE])
 
     @staticmethod
     def is_feature_available(tier: OrganizationTier, feature: str) -> bool:
@@ -95,7 +98,7 @@ class TierService:
         Returns:
             Tuple of (publisher_share, encypher_share) as percentages
         """
-        return TIER_REV_SHARE.get(_coerce_tier(tier), (65, 35))
+        return TIER_REV_SHARE.get(_coerce_tier(tier), (60, 40))
 
     @staticmethod
     def get_quota_limit(tier: OrganizationTier, quota_type: QuotaType) -> int:
@@ -131,8 +134,8 @@ class TierService:
         """
         # Handle user-level keys (synthetic org IDs like "user_{user_id}")
         if organization_id.startswith("user_"):
-            # Use starter tier for user-level keys
-            tier = OrganizationTier.STARTER
+            # Use free tier for user-level keys
+            tier = OrganizationTier.FREE
             is_available = TierService.is_feature_available(tier, feature)
 
             if not is_available and raise_on_denied:
@@ -141,8 +144,8 @@ class TierService:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail={
                         "error": "FeatureNotAvailable",
-                        "message": f"The '{feature}' feature is not available on starter tier",
-                        "current_tier": "starter",
+                        "message": f"The '{feature}' feature is not available on free tier",
+                        "current_tier": "free",
                         "required_tier": upgrade_tier,
                         "upgrade_url": "https://dashboard.encypherai.com/billing",
                         "features_available": TierService.get_tier_features(tier),
@@ -193,10 +196,9 @@ class TierService:
             Tier name that provides the feature
         """
         tier_order = [
-            OrganizationTier.STARTER,
-            OrganizationTier.PROFESSIONAL,
-            OrganizationTier.BUSINESS,
+            OrganizationTier.FREE,
             OrganizationTier.ENTERPRISE,
+            OrganizationTier.STRATEGIC_PARTNER,
         ]
 
         for tier in tier_order:
@@ -219,7 +221,7 @@ class TierService:
         """
         # Handle user-level keys (synthetic org IDs)
         if organization_id.startswith("user_"):
-            tier = OrganizationTier.STARTER
+            tier = OrganizationTier.FREE
             features = TierService.get_tier_features(tier)
             rate_limit = TierService.get_rate_limit(tier)
 
@@ -236,16 +238,16 @@ class TierService:
             return {
                 "organization_id": organization_id,
                 "organization_name": "Personal Account",
-                "tier": "starter",
-                "tier_display_name": "Starter (Free)",
+                "tier": "free",
+                "tier_display_name": "Free",
                 "features": features,
                 "rate_limit": rate_limit if rate_limit >= 0 else "unlimited",
                 "quotas": quotas,
                 "coalition": {
                     "member": True,
                     "opted_out": False,
-                    "publisher_share": 65,
-                    "encypher_share": 35,
+                    "publisher_share": 60,
+                    "encypher_share": 40,
                 },
                 "reset_date": TierService._get_reset_date().isoformat(),
             }
@@ -298,9 +300,7 @@ class TierService:
         """Get human-readable tier name."""
         tier = _coerce_tier(tier)
         display_names = {
-            OrganizationTier.STARTER: "Starter (Free)",
-            OrganizationTier.PROFESSIONAL: "Professional",
-            OrganizationTier.BUSINESS: "Business",
+            OrganizationTier.FREE: "Free",
             OrganizationTier.ENTERPRISE: "Enterprise",
             OrganizationTier.STRATEGIC_PARTNER: "Strategic Partner",
         }

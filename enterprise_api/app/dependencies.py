@@ -37,6 +37,14 @@ async def get_current_organization_dep(
     return await maybe_org if inspect.isawaitable(maybe_org) else maybe_org
 
 
+# TEAM_166: Demo key features derived from tier_config SSOT
+from app.core.tier_config import get_tier_features, get_tier_limits, get_tier_rev_share
+
+_free_features = get_tier_features("free")
+_enterprise_features = get_tier_features("enterprise")
+_free_limits = get_tier_limits("free")
+_enterprise_limits = get_tier_limits("enterprise")
+
 # Demo key configurations for local testing (when Key Service unavailable)
 # These match the seeded test organizations
 DEMO_KEYS = {
@@ -45,19 +53,7 @@ DEMO_KEYS = {
         "organization_name": "Demo Organization",
         "tier": "enterprise",  # Demo has all features
         "is_demo": True,
-        "features": {
-            "team_management": True,
-            "audit_logs": True,
-            "merkle_enabled": True,
-            "fuzzy_fingerprint": True,
-            "bulk_operations": True,
-            "sentence_tracking": True,
-            "streaming": True,
-            "byok": True,
-            "sso": True,
-            "custom_assertions": True,
-            "max_team_members": -1,
-        },
+        "features": {**_enterprise_features},
         "permissions": ["sign", "verify", "lookup"],
         "monthly_api_limit": 100000,
         "monthly_api_usage": 0,
@@ -65,105 +61,58 @@ DEMO_KEYS = {
         "coalition_rev_share": 65,
     },
     "starter-api-key-for-testing": {
-        "organization_id": "org_starter",
-        "organization_name": "Starter Test Organization",
-        "tier": "starter",
+        "organization_id": "org_free",
+        "organization_name": "Free Test Organization",
+        "tier": "free",
         "is_demo": True,
-        "features": {
-            "team_management": False,
-            "audit_logs": False,
-            "merkle_enabled": False,
-            "fuzzy_fingerprint": False,
-            "bulk_operations": False,
-            "sentence_tracking": False,
-            "streaming": False,
-            "byok": False,
-            "sso": False,
-            "custom_assertions": False,
-            "max_team_members": 1,
-        },
+        "features": {**_free_features},
         "permissions": ["sign", "verify"],
-        "monthly_api_limit": 10000,
+        "monthly_api_limit": _free_limits["api_calls"],
         "monthly_api_usage": 0,
         "coalition_member": True,
-        "coalition_rev_share": 65,
+        "coalition_rev_share": get_tier_rev_share("free")["publisher"],
         "nma_member": False,
     },
-    # NMA (News Media Alliance) member - starter tier with sentence-level embeddings
+    # NMA (News Media Alliance) member - free tier with NMA flag
     "nma-starter-api-key-for-testing": {
-        "organization_id": "org_nma_starter",
+        "organization_id": "org_nma_free",
         "organization_name": "NMA Member Test Organization",
-        "tier": "starter",
+        "tier": "free",
         "is_demo": True,
-        "features": {
-            "team_management": False,
-            "audit_logs": False,
-            "merkle_enabled": True,  # NMA members get Merkle trees
-            "fuzzy_fingerprint": False,
-            "bulk_operations": False,
-            "sentence_tracking": True,  # NMA members get sentence-level tracking
-            "streaming": False,
-            "byok": False,
-            "sso": False,
-            "custom_assertions": False,
-            "max_team_members": 1,
-        },
+        "features": {**_free_features},
         "permissions": ["sign", "verify"],
-        "monthly_api_limit": 10000,
+        "monthly_api_limit": _free_limits["api_calls"],
         "monthly_api_usage": 0,
         "coalition_member": True,
-        "coalition_rev_share": 65,
+        "coalition_rev_share": get_tier_rev_share("free")["publisher"],
         "nma_member": True,  # NMA membership flag
     },
+    # Legacy key names kept for backward compat; all map to free tier
     "professional-api-key-for-testing": {
-        "organization_id": "org_professional",
-        "organization_name": "Professional Test Organization",
-        "tier": "professional",
+        "organization_id": "org_free_legacy_pro",
+        "organization_name": "Free Test Organization (legacy pro)",
+        "tier": "free",
         "is_demo": True,
-        "features": {
-            "team_management": False,
-            "audit_logs": False,
-            "merkle_enabled": False,
-            "fuzzy_fingerprint": False,
-            "bulk_operations": False,
-            "sentence_tracking": True,
-            "streaming": True,
-            "byok": False,
-            "sso": False,
-            "custom_assertions": False,
-            "max_team_members": 5,
-        },
+        "features": {**_free_features},
         "permissions": ["sign", "verify", "lookup"],
-        "monthly_api_limit": 100000,
+        "monthly_api_limit": _free_limits["api_calls"],
         "monthly_api_usage": 0,
         "coalition_member": True,
-        "coalition_rev_share": 70,
+        "coalition_rev_share": get_tier_rev_share("free")["publisher"],
     },
     "business-api-key-for-testing": {
-        "organization_id": "org_business",
-        "organization_name": "Business Test Organization",
-        "tier": "business",
+        "organization_id": "org_free_legacy_biz",
+        "organization_name": "Free Test Organization (legacy biz)",
+        "tier": "free",
         "is_demo": True,
-        "user_id": "usr_business_owner",
-        "api_key_owner_id": "usr_business_owner",
-        "features": {
-            "team_management": True,
-            "audit_logs": True,
-            "merkle_enabled": True,
-            "fuzzy_fingerprint": False,
-            "bulk_operations": True,
-            "sentence_tracking": True,
-            "streaming": True,
-            "byok": True,
-            "sso": False,
-            "custom_assertions": True,
-            "max_team_members": 10,
-        },
+        "user_id": "usr_free_legacy_biz_owner",
+        "api_key_owner_id": "usr_free_legacy_biz_owner",
+        "features": {**_free_features},
         "permissions": ["sign", "verify", "lookup"],
-        "monthly_api_limit": 500000,
+        "monthly_api_limit": _free_limits["api_calls"],
         "monthly_api_usage": 0,
         "coalition_member": True,
-        "coalition_rev_share": 80,
+        "coalition_rev_share": get_tier_rev_share("free")["publisher"],
     },
     "enterprise-api-key-for-testing": {
         "organization_id": "org_enterprise",
@@ -172,46 +121,22 @@ DEMO_KEYS = {
         "is_demo": True,
         "user_id": "usr_enterprise_owner",
         "api_key_owner_id": "usr_enterprise_owner",
-        "features": {
-            "team_management": True,
-            "audit_logs": True,
-            "merkle_enabled": True,
-            "fuzzy_fingerprint": True,
-            "bulk_operations": True,
-            "sentence_tracking": True,
-            "streaming": True,
-            "byok": True,
-            "sso": True,
-            "custom_assertions": True,
-            "max_team_members": -1,
-        },
+        "features": {**_enterprise_features},
         "permissions": ["sign", "verify", "lookup"],
         "monthly_api_limit": -1,  # Unlimited
         "monthly_api_usage": 0,
         "coalition_member": True,
-        "coalition_rev_share": 85,
+        "coalition_rev_share": get_tier_rev_share("enterprise")["publisher"],
     },
-    # Marketing site production key - starter tier for public tools
+    # Marketing site production key - free tier for public tools
     "ency_marketing_site_prod_2026": {
         "organization_id": "org_encypher_marketing",
         "organization_name": "Encypher Corporation - Marketing Site",
-        "tier": "starter",
-        "is_demo": True,  # Uses shared demo key (no database record needed)
+        "tier": "free",
+        "is_demo": True,
         "user_id": "usr_encypher_marketing",
         "api_key_owner_id": "usr_encypher_marketing",
-        "features": {
-            "team_management": False,
-            "audit_logs": False,
-            "merkle_enabled": False,
-            "fuzzy_fingerprint": False,
-            "bulk_operations": False,
-            "sentence_tracking": False,
-            "streaming": False,
-            "byok": False,
-            "sso": False,
-            "custom_assertions": False,
-            "max_team_members": 1,
-        },
+        "features": {**_free_features},
         "permissions": ["sign", "verify"],  # Basic permissions only
         "monthly_api_limit": 50000,  # Reasonable limit for public tools
         "monthly_api_usage": 0,
@@ -261,13 +186,13 @@ async def get_current_organization(
                     "api_key_id": key_context.get("key_id"),
                     "organization_id": key_context.get("organization_id"),
                     "organization_name": org_data.get("name"),
-                    "tier": org_data.get("tier"),
+                    "tier": key_context.get("tier", "free"),
                     "features": org_data.get("features", {}),
                     "permissions": key_context.get("permissions", []),
                     "monthly_api_limit": org_data.get("monthly_api_limit"),
                     "monthly_api_usage": org_data.get("monthly_api_usage"),
                     "coalition_member": org_data.get("coalition_member", True),
-                    "coalition_rev_share": org_data.get("coalition_rev_share", 65),
+                    "coalition_rev_share": org_data.get("coalition_rev_share", 60),
                     "certificate_pem": org_data.get("certificate_pem"),
                     "user_id": key_context.get("user_id"),
                 }
@@ -383,12 +308,8 @@ async def require_embedding_permission(
     features = organization.get("features", {})
     is_super_admin = isinstance(features, dict) and features.get("is_super_admin", False)
 
-    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
-    if not is_super_admin and tier not in {"professional", "business", "enterprise", "demo"}:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Embeddings require Professional or Enterprise tier. Please upgrade your plan.",
-        )
+    # TEAM_145: All tiers (free/enterprise/strategic_partner) have embedding access
+    tier = (organization.get("tier") or "free").lower().replace("-", "_")
 
     if not organization.get("can_sign"):
         raise HTTPException(

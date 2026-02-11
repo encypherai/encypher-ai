@@ -9,89 +9,41 @@ from ..db.models import Subscription, Invoice
 from ..models.schemas import SubscriptionCreate
 
 
-# Pricing tier definitions (aligned with pricing strategy)
+# TEAM_145: Pricing tier definitions — consolidated to free/enterprise/strategic_partner
 PRICING_TIERS = {
-    "starter": {
-        "name": "Starter",
+    "free": {
+        "name": "Free",
         "price_monthly": 0,
         "price_annual": 0,
         "features": [
-            "C2PA signing (1K/mo)",
+            "C2PA 2.3-compliant document signing (1K/mo)",
+            "Sentence-level Merkle tree authentication",
+            "Invisible Unicode embeddings",
             "Unlimited verifications",
-            "2 API keys",
-            "Community support",
-            "7-day analytics",
-            "Licensing coalition (65/35 rev share)",
+            "Coalition membership with content attribution",
+            "WordPress plugin — auto-sign on publish",
+            "REST API, CLI, GitHub Action",
         ],
         "limits": {
             "c2pa_signatures": 1000,
-            "sentences_tracked": 0,
+            "sentences_tracked": 10000,
             "api_keys": 2,
             "rate_limit": 10,
         },
-        "coalition_rev_share": {"publisher": 65, "encypher": 35},
-    },
-    "professional": {
-        "name": "Professional",
-        "price_monthly": 99,
-        "price_annual": 950,
-        "features": [
-            "Everything in Starter",
-            "Sentence-level tracking (50K/mo)",
-            "Invisible embeddings",
-            "10 API keys",
-            "Email support (48hr SLA)",
-            "90-day analytics",
-            "BYOK encryption",
-            "WordPress Pro (no branding)",
-            "Licensing coalition (70/30 rev share)",
-        ],
-        "limits": {
-            "c2pa_signatures": -1,
-            "sentences_tracked": 50000,
-            "api_keys": 10,
-            "rate_limit": 50,
-        },
-        "coalition_rev_share": {"publisher": 70, "encypher": 30},
-    },
-    "business": {
-        "name": "Business",
-        "price_monthly": 499,
-        "price_annual": 4790,
-        "features": [
-            "Everything in Professional",
-            "Merkle tree encoding",
-            "Plagiarism detection",
-            "Source attribution API",
-            "Batch operations (100 docs)",
-            "50 API keys",
-            "Priority support (24hr SLA)",
-            "1-year analytics",
-            "Team management (10 users)",
-            "Audit logs",
-            "Licensing coalition (75/25 rev share)",
-        ],
-        "limits": {
-            "c2pa_signatures": -1,
-            "sentences_tracked": 500000,
-            "api_keys": 50,
-            "rate_limit": 200,
-        },
-        "coalition_rev_share": {"publisher": 75, "encypher": 25},
+        "coalition_rev_share": {"publisher": 60, "encypher": 40},
     },
     "enterprise": {
         "name": "Enterprise",
-        "price_monthly": 0,  # Custom
-        "price_annual": 0,  # Custom
+        "price_monthly": 0,  # Custom pricing
+        "price_annual": 0,  # Custom pricing
         "features": [
-            "Everything in Business",
-            "Unlimited everything",
-            "Custom C2PA assertions",
-            "SSO/SCIM",
-            "Dedicated TAM + Slack",
-            "Custom SLAs",
-            "On-premise option",
-            "Licensing coalition (80/20 rev share)",
+            "Unlimited signing — no caps on volume or API calls",
+            "Real-time AI output monitoring",
+            "Enforcement tools — formal notices and evidence packages",
+            "Custom signing identity and white-label verification",
+            "Streaming LLM signing",
+            "Dedicated SLA, SSO, and named account manager",
+            "All add-ons included",
         ],
         "limits": {
             "c2pa_signatures": -1,
@@ -99,7 +51,7 @@ PRICING_TIERS = {
             "api_keys": -1,
             "rate_limit": -1,
         },
-        "coalition_rev_share": {"publisher": 80, "encypher": 20},
+        "coalition_rev_share": {"publisher": 60, "encypher": 40},
     },
     "strategic_partner": {
         "name": "Strategic Partner",
@@ -107,9 +59,9 @@ PRICING_TIERS = {
         "price_annual": 0,  # Negotiated
         "features": [
             "Everything in Enterprise",
-            "Best revenue share (85/15)",
             "Co-marketing",
             "Product roadmap input",
+            "Advisory board participation",
         ],
         "limits": {
             "c2pa_signatures": -1,
@@ -117,17 +69,17 @@ PRICING_TIERS = {
             "api_keys": -1,
             "rate_limit": -1,
         },
-        "coalition_rev_share": {"publisher": 85, "encypher": 15},
+        "coalition_rev_share": {"publisher": 60, "encypher": 40},
     },
 }
 
 # Legacy plan mapping for backward compatibility
 PLANS = {
-    "free": {"name": "Starter", "monthly": 0, "yearly": 0},
-    "starter": {"name": "Starter", "monthly": 0, "yearly": 0},
-    "pro": {"name": "Professional", "monthly": 99, "yearly": 950},
-    "professional": {"name": "Professional", "monthly": 99, "yearly": 950},
-    "business": {"name": "Business", "monthly": 499, "yearly": 4790},
+    "free": {"name": "Free", "monthly": 0, "yearly": 0},
+    "starter": {"name": "Free", "monthly": 0, "yearly": 0},
+    "pro": {"name": "Free", "monthly": 0, "yearly": 0},
+    "professional": {"name": "Free", "monthly": 0, "yearly": 0},
+    "business": {"name": "Free", "monthly": 0, "yearly": 0},
     "enterprise": {"name": "Enterprise", "monthly": 0, "yearly": 0},
 }
 

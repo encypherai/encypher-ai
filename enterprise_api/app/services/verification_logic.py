@@ -347,10 +347,10 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
         manifest = {}
         exception_message = str(exc)
 
-    # TEAM_158: Fallback to VS256-RS / VS256 / ZW embedding verification
+    # TEAM_158: Fallback to micro_ecc / micro / ZW embedding verification
     # when C2PA finds no signer.  These modes embed a signed UUID per
     # sentence (not a full C2PA manifest), so UnicodeMetadata won't detect
-    # them.  Try VS256-RS first (error-correcting), then plain VS256, then ZW.
+    # them.  Try ECC first (error-correcting), then plain micro, then ZW.
     if not is_valid and not signer_id:
         try:
             from app.utils.vs256_crypto import (
@@ -376,12 +376,12 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
                         is_valid = True
                         signer_id = settings.demo_organization_id
                         manifest = {
-                            "manifest_mode": "vs256_rs_embedding",
+                            "manifest_mode": "micro_ecc",
                             "segment_uuid": str(sig_uuid),
-                            "vs256_signatures_found": len(vs256_sigs),
+                            "micro_signatures_found": len(vs256_sigs),
                         }
                         logger.info(
-                            "VS256-RS fallback verification succeeded: uuid=%s, sigs=%d",
+                            "micro_ecc fallback verification succeeded: uuid=%s, sigs=%d",
                             sig_uuid, len(vs256_sigs),
                         )
                 except Exception:
@@ -400,12 +400,12 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
                         is_valid = True
                         signer_id = settings.demo_organization_id
                         manifest = {
-                            "manifest_mode": "vs256_embedding",
+                            "manifest_mode": "micro",
                             "segment_uuid": str(sig_uuid),
-                            "vs256_signatures_found": len(vs256_sigs),
+                            "micro_signatures_found": len(vs256_sigs),
                         }
                         logger.info(
-                            "VS256 fallback verification succeeded: uuid=%s, sigs=%d",
+                            "micro fallback verification succeeded: uuid=%s, sigs=%d",
                             sig_uuid, len(vs256_sigs),
                         )
 

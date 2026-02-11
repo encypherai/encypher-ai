@@ -100,8 +100,8 @@ class TierCheckMiddleware:
 
         required_tier = self._get_required_tier(path)
 
-        # Tier hierarchy: STARTER < PROFESSIONAL < ENTERPRISE
-        tier_levels = {"starter": 0, "professional": 1, "enterprise": 2}
+        # TEAM_145: Tier hierarchy consolidated to free/enterprise/strategic_partner
+        tier_levels = {"free": 0, "starter": 0, "professional": 0, "business": 0, "enterprise": 1, "strategic_partner": 2}
 
         current_level = tier_levels.get(tier.value, -1)
         required_level = tier_levels.get(required_tier, 999)
@@ -114,11 +114,11 @@ class TierCheckMiddleware:
         if "/enterprise/merkle" in path:
             return "enterprise"
 
-        # Default to professional for other enterprise endpoints
+        # Default to free for other enterprise endpoints
         if "/enterprise/" in path:
-            return "professional"
+            return "free"
 
-        return "starter"
+        return "free"
 
 
 def check_tier_access(required_tier: OrganizationTier, feature_name: str) -> Callable:
@@ -146,7 +146,7 @@ def check_tier_access(required_tier: OrganizationTier, feature_name: str) -> Cal
 
         current_tier = tier_value if isinstance(tier_value, OrganizationTier) else OrganizationTier(str(tier_value))
 
-        tier_levels = {OrganizationTier.FREE: 0, OrganizationTier.PROFESSIONAL: 1, OrganizationTier.ENTERPRISE: 2}
+        tier_levels = {OrganizationTier.FREE: 0, OrganizationTier.ENTERPRISE: 1, OrganizationTier.STRATEGIC_PARTNER: 2}
 
         if tier_levels.get(current_tier, -1) < tier_levels.get(required_tier, 999):
             raise HTTPException(

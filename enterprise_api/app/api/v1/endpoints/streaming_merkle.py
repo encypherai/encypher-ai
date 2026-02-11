@@ -49,20 +49,7 @@ async def start_streaming_merkle_session(
     """
     organization_id = organization["organization_id"]
 
-    # Tier gating - Professional+
-    tier = organization.get("tier", "starter").lower()
-    tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
-    if tier_levels.get(tier, 0) < 1:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "code": "FEATURE_NOT_AVAILABLE",
-                "message": "Streaming Merkle tree requires Professional tier or higher",
-                "required_tier": "professional",
-                "current_tier": tier,
-                "upgrade_url": "/billing/upgrade",
-            },
-        )
+    # TEAM_145: Streaming Merkle tree available to all tiers (free/enterprise/strategic_partner)
 
     try:
         session = await streaming_merkle_service.start_session(

@@ -130,8 +130,9 @@ async def verify_advanced(
     db: AsyncSession = Depends(get_db),
     content_db: AsyncSession = Depends(get_content_db),
 ):
-    tier = (organization.get("tier") or "starter").lower().replace("-", "_")
-    tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3, "strategic_partner": 3, "demo": 3}
+    # TEAM_145: Consolidated to free/enterprise/strategic_partner
+    tier = (organization.get("tier") or "free").lower().replace("-", "_")
+    tier_levels = {"free": 0, "starter": 0, "professional": 0, "business": 0, "enterprise": 1, "strategic_partner": 2, "demo": 2}
     org_tier_level = tier_levels.get(tier, 0)
     if not organization.get("can_verify", False):
         raise HTTPException(
@@ -251,15 +252,7 @@ async def verify_advanced(
         response_payload["tamper_localization"] = tamper_localization
 
     if request.include_attribution:
-        if org_tier_level < 1:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "Attribution lookup requires Professional tier or higher",
-                    "required_tier": "professional",
-                },
-            )
+        # TEAM_145: Attribution is available to all tiers (free/enterprise/strategic_partner)
         await QuotaManager.check_quota(
             db=db,
             organization_id=organization["organization_id"],
@@ -303,15 +296,7 @@ async def verify_advanced(
         }
 
     if request.detect_plagiarism:
-        if org_tier_level < 2:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail={
-                    "code": "FEATURE_NOT_AVAILABLE",
-                    "message": "Plagiarism detection requires Business tier or higher",
-                    "required_tier": "business",
-                },
-            )
+        # TEAM_145: Plagiarism detection is available to all tiers
         await QuotaManager.check_quota(
             db=db,
             organization_id=organization["organization_id"],

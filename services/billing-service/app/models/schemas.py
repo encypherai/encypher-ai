@@ -7,11 +7,12 @@ from enum import Enum
 
 
 class TierName(str, Enum):
-    """Available subscription tiers"""
+    """Available subscription tiers.
 
-    STARTER = "starter"
-    PROFESSIONAL = "professional"
-    BUSINESS = "business"
+    TEAM_145: Consolidated to free/enterprise/strategic_partner.
+    """
+
+    FREE = "free"
     ENTERPRISE = "enterprise"
     STRATEGIC_PARTNER = "strategic_partner"
 

@@ -184,9 +184,9 @@ class MultiSourceService:
             if row:
                 tier, is_verified, doc_count = row
 
-                # Tier bonus
-                tier_scores = {"starter": 0, "professional": 0.1, "business": 0.2, "enterprise": 0.3}
-                base_score += tier_scores.get(tier.lower() if tier else "starter", 0)
+                # TEAM_145: Tier bonus (consolidated to free/enterprise/strategic_partner)
+                tier_scores = {"free": 0, "starter": 0, "professional": 0, "business": 0, "enterprise": 0.3, "strategic_partner": 0.3}
+                base_score += tier_scores.get(tier.lower() if tier else "free", 0)
 
                 # Verification bonus
                 if is_verified:

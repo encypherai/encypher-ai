@@ -44,10 +44,9 @@ async def encode_fingerprint(
     start_time = time.time()
     organization_id = organization["organization_id"]
 
-    # Tier gating - Enterprise only
-    tier = organization.get("tier", "starter").lower()
-    tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
-    if tier_levels.get(tier, 0) < 3:
+    # TEAM_145: Fingerprinting requires Enterprise tier
+    tier = organization.get("tier", "free").lower()
+    if tier not in {"enterprise", "strategic_partner", "demo"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={
@@ -110,10 +109,9 @@ async def detect_fingerprint(
     start_time = time.time()
     organization_id = organization["organization_id"]
 
-    # Tier gating - Enterprise only
-    tier = organization.get("tier", "starter").lower()
-    tier_levels = {"starter": 0, "professional": 1, "business": 2, "enterprise": 3}
-    if tier_levels.get(tier, 0) < 3:
+    # TEAM_145: Fingerprint detection requires Enterprise tier
+    tier = organization.get("tier", "free").lower()
+    if tier not in {"enterprise", "strategic_partner", "demo"}:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={

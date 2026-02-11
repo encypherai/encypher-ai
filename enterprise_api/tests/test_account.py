@@ -36,7 +36,7 @@ class TestGetAccountInfo:
         # May return 200 or 401 depending on whether starter key is seeded
         if response.status_code == 200:
             data = response.json()
-            assert data["data"]["tier"] == "starter"
+            assert data["data"]["tier"] == "free"  # TEAM_166: starter coerced to free
 
     async def test_get_account_enterprise_tier(self, client: AsyncClient, enterprise_auth_headers: dict):
         """Test account info for enterprise tier."""

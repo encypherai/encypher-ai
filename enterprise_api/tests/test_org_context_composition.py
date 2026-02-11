@@ -63,7 +63,7 @@ async def test_get_current_organization_composes_org_context_via_auth_service(mo
 
     assert result["organization_id"] == "org_123"
     assert result["organization_name"] == "Acme"
-    assert result["tier"] == "professional"
+    assert result["tier"] == "free"  # TEAM_166: 'professional' coerced to 'free'
     assert result["byok_enabled"] is True
     assert result["can_sign"] is True
     assert result["can_verify"] is True

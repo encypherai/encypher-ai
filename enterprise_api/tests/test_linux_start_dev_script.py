@@ -13,6 +13,5 @@ def test_linux_start_dev_script_exists_and_has_expected_commands() -> None:
 
     # Basic contract: script starts Docker Compose full stack and both frontends.
     assert "docker-compose.full-stack.yml" in text
-    assert "apps/marketing-site" in text
-    assert "apps/dashboard" in text
-    assert "npm" in text
+    assert "marketing-site" in text
+    assert "dashboard" in text

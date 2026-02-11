@@ -46,14 +46,12 @@ class AdminService:
 
             total_users = sum(tier_counts.values())
 
-            # Paying customers = non-starter tiers
+            # TEAM_145: Paying customers = enterprise or strategic_partner tiers
             paying_customers = sum(count for tier, count in tier_counts.items() if tier not in ("starter", "free"))
 
             # Calculate MRR (Monthly Recurring Revenue) - rough estimate
-            # Prices: professional=$99, business=$499, enterprise=$999 (estimate)
+            # Enterprise is custom pricing; tracked separately
             tier_prices = {
-                "professional": 99,
-                "business": 499,
                 "enterprise": 999,
                 "strategic_partner": 0,  # Custom pricing
             }
@@ -227,71 +225,25 @@ class AdminService:
 
             previous_tier = org.tier
 
-            # Update tier and related features based on new tier
-            tier_features = {
-                "starter": {
-                    "merkle_enabled": False,
-                    "bulk_operations_enabled": False,
-                    "sentence_tracking_enabled": False,
-                    "streaming_enabled": False,
-                    "byok_enabled": False,
-                    "team_management_enabled": False,
-                    "audit_logs_enabled": False,
-                    "sso_enabled": False,
-                    "custom_assertions_enabled": False,
-                    "monthly_quota": 10000,
-                },
-                "professional": {
-                    "merkle_enabled": False,
-                    "bulk_operations_enabled": False,
-                    "sentence_tracking_enabled": True,
-                    "streaming_enabled": True,
-                    "byok_enabled": False,
-                    "team_management_enabled": False,
-                    "audit_logs_enabled": False,
-                    "sso_enabled": False,
-                    "custom_assertions_enabled": False,
-                    "monthly_quota": 100000,
-                },
-                "business": {
-                    "merkle_enabled": True,
-                    "bulk_operations_enabled": True,
-                    "sentence_tracking_enabled": True,
-                    "streaming_enabled": True,
-                    "byok_enabled": True,
-                    "team_management_enabled": True,
-                    "audit_logs_enabled": True,
-                    "sso_enabled": False,
-                    "custom_assertions_enabled": True,
-                    "monthly_quota": 500000,
-                },
-                "enterprise": {
-                    "merkle_enabled": True,
-                    "bulk_operations_enabled": True,
-                    "sentence_tracking_enabled": True,
-                    "streaming_enabled": True,
-                    "byok_enabled": True,
-                    "team_management_enabled": True,
-                    "audit_logs_enabled": True,
-                    "sso_enabled": True,
-                    "custom_assertions_enabled": True,
-                    "monthly_quota": -1,  # Unlimited
-                },
-                "strategic_partner": {
-                    "merkle_enabled": True,
-                    "bulk_operations_enabled": True,
-                    "sentence_tracking_enabled": True,
-                    "streaming_enabled": True,
-                    "byok_enabled": True,
-                    "team_management_enabled": True,
-                    "audit_logs_enabled": True,
-                    "sso_enabled": True,
-                    "custom_assertions_enabled": True,
-                    "monthly_quota": -1,  # Unlimited
-                },
-            }
+            # TEAM_166: Use SSOT tier config
+            from app.core.tier_config import coerce_tier_name, get_tier_features, get_tier_limits
+            new_tier = coerce_tier_name(new_tier)
 
-            features = tier_features.get(new_tier, tier_features["starter"])
+            raw_features = get_tier_features(new_tier)
+            raw_limits = get_tier_limits(new_tier)
+            # Build the _enabled suffix dict that the ORM columns expect
+            features = {
+                "merkle_enabled": raw_features.get("merkle_enabled", False),
+                "bulk_operations_enabled": raw_features.get("bulk_operations", False),
+                "sentence_tracking_enabled": raw_features.get("sentence_tracking", False),
+                "streaming_enabled": raw_features.get("streaming", False),
+                "byok_enabled": raw_features.get("byok", False),
+                "team_management_enabled": raw_features.get("team_management", False),
+                "audit_logs_enabled": raw_features.get("audit_logs", False),
+                "sso_enabled": raw_features.get("sso", False),
+                "custom_assertions_enabled": raw_features.get("custom_assertions", False),
+                "monthly_quota": raw_limits.get("api_calls", 10000),
+            }
 
             # Update organization
             org_any = cast(Any, org)

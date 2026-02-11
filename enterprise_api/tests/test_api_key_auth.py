@@ -279,20 +279,17 @@ class TestRequireEmbeddingPermission:
     """Test embedding permission check."""
 
     @pytest.mark.asyncio
-    async def test_insufficient_tier(self):
-        """Test embedding permission fails with basic tier."""
-        organization = {"tier": "basic", "can_sign": True}
+    async def test_any_tier_allowed(self):
+        """TEAM_166: All tiers now have embedding access (free/enterprise/strategic_partner)."""
+        organization = {"tier": "free", "can_sign": True, "organization_id": "org_test"}
 
-        with pytest.raises(HTTPException) as exc_info:
-            await require_embedding_permission(organization)
-
-        assert exc_info.value.status_code == 403
-        assert "Professional or Enterprise" in exc_info.value.detail
+        result = await require_embedding_permission(organization)
+        assert result == organization
 
     @pytest.mark.asyncio
     async def test_no_sign_permission(self):
         """Test embedding permission fails without sign permission."""
-        organization = {"tier": "professional", "can_sign": False}
+        organization = {"tier": "free", "can_sign": False}
 
         with pytest.raises(HTTPException) as exc_info:
             await require_embedding_permission(organization)
@@ -303,7 +300,7 @@ class TestRequireEmbeddingPermission:
     @pytest.mark.asyncio
     async def test_valid_permission(self):
         """Test embedding permission succeeds with valid org."""
-        organization = {"tier": "professional", "can_sign": True, "organization_id": "org_123"}
+        organization = {"tier": "free", "can_sign": True, "organization_id": "org_123"}
 
         result = await require_embedding_permission(organization)
 

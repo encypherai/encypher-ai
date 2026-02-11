@@ -12,9 +12,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def test_webhook_create_limit_enforced(
     async_client: AsyncClient,
     db: AsyncSession,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
-    org_id = "org_business"
+    org_id = "org_enterprise"
 
     # Ensure clean state for this org
     await db.execute(text("DELETE FROM webhooks WHERE organization_id = :org"), {"org": org_id})
@@ -49,7 +49,7 @@ async def test_webhook_create_limit_enforced(
         resp = await async_client.post(
             "/api/v1/webhooks",
             json={"url": "https://example.com/overflow", "events": ["document.signed"]},
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
         assert resp.status_code == 403

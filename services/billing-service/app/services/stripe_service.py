@@ -29,12 +29,18 @@ logger = logging.getLogger(__name__)
 
 
 def _resolve_tier_from_price_id(price_id: Optional[str]) -> Optional[str]:
+    """Resolve tier from Stripe price ID.
+
+    TEAM_145: professional/business tiers no longer exist.
+    Legacy price IDs map to 'free' for backward compatibility.
+    """
     if not price_id:
         return None
+    # Legacy price IDs from old professional/business tiers -> free
     if price_id in {settings.STRIPE_PRICE_PROFESSIONAL_MONTHLY, settings.STRIPE_PRICE_PROFESSIONAL_ANNUAL}:
-        return "professional"
+        return "free"
     if price_id in {settings.STRIPE_PRICE_BUSINESS_MONTHLY, settings.STRIPE_PRICE_BUSINESS_ANNUAL}:
-        return "business"
+        return "free"
     return None
 
 
@@ -143,21 +149,12 @@ stripe.api_key = settings.STRIPE_API_KEY
 
 # Stripe Product IDs (to be created in Stripe Dashboard)
 # These will be populated after running setup_stripe_products()
+# TEAM_145: Only free and enterprise tiers. No self-service Stripe checkout.
 STRIPE_PRODUCTS = {
-    "starter": {
+    "free": {
         "product_id": None,  # Free tier - no Stripe product needed
         "price_monthly": None,
         "price_annual": None,
-    },
-    "professional": {
-        "product_id": None,  # Set after creating in Stripe
-        "price_monthly": None,  # $99/month
-        "price_annual": None,  # $950/year
-    },
-    "business": {
-        "product_id": None,  # Set after creating in Stripe
-        "price_monthly": None,  # $499/month
-        "price_annual": None,  # $4790/year
     },
     "enterprise": {
         "product_id": None,  # Custom pricing - handled manually
@@ -670,7 +667,7 @@ class StripeService:
 
         await _sync_org_tier(
             organization_id=organization_id,
-            tier="starter",
+            tier="free",
             stripe_customer_id=customer_id,
             stripe_subscription_id=subscription.get("id"),
             subscription_status=subscription.get("status"),
@@ -680,13 +677,13 @@ class StripeService:
         _upsert_subscription_record(
             user_id=user_id,
             organization_id=organization_id,
-            tier="starter",
+            tier="free",
             subscription=subscription,
             customer_id=customer_id,
             price_id=price_id,
         )
 
-        return {"status": "success", "action": "subscription_canceled", "tier": "starter"}
+        return {"status": "success", "action": "subscription_canceled", "tier": "free"}
 
     @staticmethod
     async def _handle_invoice_paid(invoice: Dict) -> Dict[str, Any]:

@@ -25,13 +25,13 @@ async def test_byok_public_keys_requires_business_tier(
 @pytest.mark.asyncio
 async def test_byok_public_keys_list_business_success(
     async_client: AsyncClient,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
     with patch(
         "app.services.admin_service.PublicKeyService.list_public_keys",
         new=AsyncMock(return_value={"success": True, "data": {"keys": [], "total": 0}}),
     ):
-        response = await async_client.get("/api/v1/byok/public-keys", headers=business_auth_headers)
+        response = await async_client.get("/api/v1/byok/public-keys", headers=enterprise_auth_headers)
 
     assert response.status_code == 200
     payload = response.json()
@@ -42,7 +42,7 @@ async def test_byok_public_keys_list_business_success(
 @pytest.mark.asyncio
 async def test_byok_public_keys_register_business_success(
     async_client: AsyncClient,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
     mock_result = {
         "success": True,
@@ -65,7 +65,7 @@ async def test_byok_public_keys_register_business_success(
         response = await async_client.post(
             "/api/v1/byok/public-keys",
             json={"public_key_pem": SAMPLE_ED25519_PUBLIC_KEY, "key_name": "Test Key"},
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
     assert response.status_code == 201
@@ -77,7 +77,7 @@ async def test_byok_public_keys_register_business_success(
 @pytest.mark.asyncio
 async def test_byok_public_keys_revoke_business_success(
     async_client: AsyncClient,
-    business_auth_headers: dict,
+    enterprise_auth_headers: dict,
 ) -> None:
     with patch(
         "app.services.admin_service.PublicKeyService.revoke_public_key",
@@ -85,7 +85,7 @@ async def test_byok_public_keys_revoke_business_success(
     ):
         response = await async_client.delete(
             "/api/v1/byok/public-keys/pk_123?reason=Key%20compromised",
-            headers=business_auth_headers,
+            headers=enterprise_auth_headers,
         )
 
     assert response.status_code == 200

@@ -12,10 +12,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.mark.asyncio
-async def test_sign_advanced_template_requires_custom_assertions_feature(
+async def test_sign_advanced_template_nonexistent_returns_404(
     async_client: AsyncClient,
     professional_auth_headers: dict,
 ) -> None:
+    """TEAM_166: Free tier has custom_assertions enabled; non-existent template returns 404."""
     response = await async_client.post(
         "/api/v1/sign",
         json={
@@ -27,7 +28,7 @@ async def test_sign_advanced_template_requires_custom_assertions_feature(
         headers=professional_auth_headers,
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio

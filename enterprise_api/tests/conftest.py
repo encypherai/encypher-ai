@@ -295,6 +295,18 @@ def enterprise_auth_headers() -> dict:
 
 
 @pytest.fixture
+def enterprise_admin_headers() -> dict:
+    """Return auth headers for an Enterprise tier admin user."""
+    return {"Authorization": f"Bearer {os.getenv('ENTERPRISE_ADMIN_API_KEY', 'enterprise-api-key-for-testing')}", "Content-Type": "application/json"}
+
+
+@pytest.fixture
+def enterprise_owner_headers() -> dict:
+    """Return auth headers for an Enterprise tier owner user."""
+    return {"Authorization": f"Bearer {os.getenv('ENTERPRISE_OWNER_API_KEY', 'enterprise-api-key-for-testing')}", "Content-Type": "application/json"}
+
+
+@pytest.fixture
 def test_member_id() -> str:
     """Return a test member ID for team management tests."""
     return os.getenv("TEST_MEMBER_ID", "mem_test123")

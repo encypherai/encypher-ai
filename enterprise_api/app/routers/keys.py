@@ -246,15 +246,9 @@ async def create_key(
     )
 
     # Check key limit based on tier
-    tier = organization.get("tier", "starter")
-    tier_limits = {
-        "starter": 2,
-        "professional": 10,
-        "business": 50,
-        "enterprise": -1,
-        "strategic_partner": -1,
-    }
-    limit = tier_limits.get(tier, 2)
+    from app.core.tier_config import TIER_KEY_LIMITS
+    tier = organization.get("tier", "free")
+    limit = TIER_KEY_LIMITS.get(tier, 2)
 
     if limit != -1:
         count_result = await db.execute(

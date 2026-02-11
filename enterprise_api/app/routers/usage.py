@@ -44,39 +44,7 @@ class UsageResetResponse(BaseModel):
     reset_at: str
 
 
-# Tier limits configuration
-TIER_LIMITS = {
-    "starter": {
-        "c2pa_signatures": 10000,
-        "sentences_tracked": 0,  # Not available
-        "batch_operations": 0,  # Not available
-        "api_keys": 2,
-    },
-    "professional": {
-        "c2pa_signatures": -1,  # Unlimited
-        "sentences_tracked": 50000,
-        "batch_operations": 0,  # Not available
-        "api_keys": 10,
-    },
-    "business": {
-        "c2pa_signatures": -1,  # Unlimited
-        "sentences_tracked": 500000,
-        "batch_operations": 100,
-        "api_keys": 50,
-    },
-    "enterprise": {
-        "c2pa_signatures": -1,  # Unlimited
-        "sentences_tracked": -1,  # Unlimited
-        "batch_operations": -1,  # Unlimited
-        "api_keys": -1,  # Unlimited
-    },
-    "strategic_partner": {
-        "c2pa_signatures": -1,
-        "sentences_tracked": -1,
-        "batch_operations": -1,
-        "api_keys": -1,
-    },
-}
+from app.core.tier_config import get_tier_limits as _get_tier_limits, coerce_tier_name as _coerce_tier
 
 
 def _calculate_metric(used: int, limit: int, name: str) -> UsageMetric:
@@ -171,7 +139,7 @@ async def _fetch_usage_counts(db: AsyncSession, content_db: AsyncSession, org_id
     batch_operations = batch_result.scalar() or 0
 
     return (
-        row.tier or "starter",
+        row.tier or "free",
         row.monthly_api_usage or 0,
         row.monthly_api_limit or 0,
         documents_signed,
@@ -199,12 +167,13 @@ async def get_usage_stats(
 
     # Handle user-level keys (synthetic org IDs like "user_{user_id}")
     if org_id.startswith("user_"):
-        tier = "starter"
-        limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
+        tier = "free"
+        limits = _get_tier_limits(tier)
         return _build_user_level_response(org_id, tier, limits)
 
     tier, api_calls, api_limit, documents_signed, sentences_tracked, batch_operations = await _fetch_usage_counts(db, content_db, org_id)
-    limits = TIER_LIMITS.get(tier, TIER_LIMITS["starter"])
+    tier = _coerce_tier(tier)
+    limits = _get_tier_limits(tier)
 
     # Calculate period dates (monthly billing cycle)
     now = datetime.now(timezone.utc)

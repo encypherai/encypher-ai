@@ -22,11 +22,14 @@ def _coerce_tier(value: Any) -> OrganizationTier:
     if isinstance(value, OrganizationTier):
         return value
     if isinstance(value, str):
+        # TEAM_145: Map legacy tier names to FREE
+        legacy_map = {"starter": "free", "professional": "free", "business": "free"}
+        mapped = legacy_map.get(value, value)
         try:
-            return OrganizationTier(value)
+            return OrganizationTier(mapped)
         except ValueError:
-            return OrganizationTier.STARTER
-    return OrganizationTier.STARTER
+            return OrganizationTier.FREE
+    return OrganizationTier.FREE
 
 
 class QuotaType(str, Enum):
@@ -43,146 +46,49 @@ class QuotaType(str, Enum):
     C2PA_SIGNATURES = "c2pa_signatures"  # Soft limit for abuse prevention
 
 
-# Rate limits by tier (requests per second)
+# TEAM_166: Derive enum-keyed dicts from the SSOT (app.core.tier_config)
+from app.core import tier_config as _tc
+
+_TIER_ENUM_MAP = {
+    "free": OrganizationTier.FREE,
+    "enterprise": OrganizationTier.ENTERPRISE,
+    "strategic_partner": OrganizationTier.STRATEGIC_PARTNER,
+}
+
 TIER_RATE_LIMITS: Dict[OrganizationTier, int] = {
-    OrganizationTier.STARTER: 10,
-    OrganizationTier.PROFESSIONAL: 50,
-    OrganizationTier.BUSINESS: 200,
-    OrganizationTier.ENTERPRISE: -1,  # Unlimited
-    OrganizationTier.STRATEGIC_PARTNER: -1,  # Unlimited
+    _TIER_ENUM_MAP[t]: _tc.TIER_RATE_LIMITS_PER_SECOND[t]
+    for t in _TIER_ENUM_MAP
 }
 
-
-# Coalition revenue share by tier (publisher_share, encypher_share)
 TIER_REV_SHARE: Dict[OrganizationTier, tuple] = {
-    OrganizationTier.STARTER: (65, 35),
-    OrganizationTier.PROFESSIONAL: (70, 30),
-    OrganizationTier.BUSINESS: (75, 25),
-    OrganizationTier.ENTERPRISE: (80, 20),
-    OrganizationTier.STRATEGIC_PARTNER: (85, 15),
+    _TIER_ENUM_MAP[t]: (rs["publisher"], rs["encypher"])
+    for t, rs in ((t, _tc.get_tier_rev_share(t)) for t in _TIER_ENUM_MAP)
 }
 
-
-# Feature availability by tier
 TIER_FEATURES: Dict[OrganizationTier, Dict[str, bool]] = {
-    OrganizationTier.STARTER: {
-        "c2pa_signing": True,
-        "verification": True,
-        "sentence_tracking": False,
-        "merkle": False,
-        "fuzzy_fingerprint": False,
-        "streaming": False,
-        "batch_operations": False,
-        "byok": False,
-        "team_management": False,
-        "audit_logs": False,
-        "sso": False,
-        "custom_assertions": False,
-        "advanced_analytics": False,
-    },
-    OrganizationTier.PROFESSIONAL: {
-        "c2pa_signing": True,
-        "verification": True,
-        "sentence_tracking": True,
-        "merkle": True,  # Sentence-level Merkle roots available for all paid tiers
-        "fuzzy_fingerprint": False,
-        "streaming": True,
-        "batch_operations": False,
-        "byok": True,
-        "team_management": False,
-        "audit_logs": False,
-        "sso": False,
-        "custom_assertions": False,
-        "advanced_analytics": True,
-    },
-    OrganizationTier.BUSINESS: {
-        "c2pa_signing": True,
-        "verification": True,
-        "sentence_tracking": True,
-        "merkle": True,
-        "fuzzy_fingerprint": False,
-        "streaming": True,
-        "batch_operations": True,
-        "byok": True,
-        "team_management": True,
-        "audit_logs": True,
-        "sso": False,
-        "custom_assertions": False,
-        "advanced_analytics": True,
-    },
-    OrganizationTier.ENTERPRISE: {
-        "c2pa_signing": True,
-        "verification": True,
-        "sentence_tracking": True,
-        "merkle": True,
-        "fuzzy_fingerprint": True,
-        "streaming": True,
-        "batch_operations": True,
-        "byok": True,
-        "team_management": True,
-        "audit_logs": True,
-        "sso": True,
-        "custom_assertions": True,
-        "advanced_analytics": True,
-    },
-    OrganizationTier.STRATEGIC_PARTNER: {
-        "c2pa_signing": True,
-        "verification": True,
-        "sentence_tracking": True,
-        "merkle": True,
-        "fuzzy_fingerprint": True,
-        "streaming": True,
-        "batch_operations": True,
-        "byok": True,
-        "team_management": True,
-        "audit_logs": True,
-        "sso": True,
-        "custom_assertions": True,
-        "advanced_analytics": True,
-    },
+    _TIER_ENUM_MAP[t]: {k: v for k, v in _tc.get_tier_features(t).items() if isinstance(v, bool)}
+    for t in _TIER_ENUM_MAP
 }
 
 
 # Quota limits by tier (per month)
 # -1 means unlimited
 TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
-    OrganizationTier.STARTER: {
-        QuotaType.C2PA_SIGNATURES: 1000,  # Soft cap for abuse prevention
-        QuotaType.SENTENCES_TRACKED: 0,  # Not available
-        QuotaType.MERKLE_ENCODING: 0,  # Not available
-        QuotaType.MERKLE_ATTRIBUTION: 0,
-        QuotaType.MERKLE_PLAGIARISM: 0,
-        QuotaType.FUZZY_INDEX: 0,
-        QuotaType.FUZZY_SEARCH: 0,
-        QuotaType.BATCH_OPERATIONS: 0,
+    OrganizationTier.FREE: {
+        QuotaType.C2PA_SIGNATURES: 1000,  # 1K docs/month as per pricing page
+        QuotaType.SENTENCES_TRACKED: 10000,
+        QuotaType.MERKLE_ENCODING: 1000,
+        QuotaType.MERKLE_ATTRIBUTION: 1000,
+        QuotaType.MERKLE_PLAGIARISM: 0,  # Enterprise only
+        QuotaType.FUZZY_INDEX: 0,  # Enterprise only
+        QuotaType.FUZZY_SEARCH: 0,  # Enterprise only
+        QuotaType.BATCH_OPERATIONS: 0,  # Enterprise only
         QuotaType.API_CALLS: 10000,
-    },
-    OrganizationTier.PROFESSIONAL: {
-        QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
-        QuotaType.SENTENCES_TRACKED: 50000,
-        QuotaType.MERKLE_ENCODING: 5000,  # Sentence-level Merkle available for paid tiers
-        QuotaType.MERKLE_ATTRIBUTION: 10000,
-        QuotaType.MERKLE_PLAGIARISM: 0,  # Business+ only
-        QuotaType.FUZZY_INDEX: 0,
-        QuotaType.FUZZY_SEARCH: 0,
-        QuotaType.BATCH_OPERATIONS: 0,
-        QuotaType.API_CALLS: 50000,
-    },
-    OrganizationTier.BUSINESS: {
-        QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
-        QuotaType.SENTENCES_TRACKED: 500000,
-        QuotaType.MERKLE_ENCODING: 10000,
-        QuotaType.MERKLE_ATTRIBUTION: 50000,
-        QuotaType.MERKLE_PLAGIARISM: 5000,
-        QuotaType.FUZZY_INDEX: 0,
-        QuotaType.FUZZY_SEARCH: 0,
-        QuotaType.BATCH_OPERATIONS: 1000,
-        QuotaType.API_CALLS: 500000,
     },
     OrganizationTier.ENTERPRISE: {
         QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
-        QuotaType.SENTENCES_TRACKED: -1,  # Unlimited
-        QuotaType.MERKLE_ENCODING: -1,  # Unlimited
+        QuotaType.SENTENCES_TRACKED: -1,
+        QuotaType.MERKLE_ENCODING: -1,
         QuotaType.MERKLE_ATTRIBUTION: -1,
         QuotaType.MERKLE_PLAGIARISM: -1,
         QuotaType.FUZZY_INDEX: -1,
@@ -192,8 +98,8 @@ TIER_QUOTAS: Dict[OrganizationTier, Dict[QuotaType, int]] = {
     },
     OrganizationTier.STRATEGIC_PARTNER: {
         QuotaType.C2PA_SIGNATURES: -1,  # Unlimited
-        QuotaType.SENTENCES_TRACKED: -1,  # Unlimited
-        QuotaType.MERKLE_ENCODING: -1,  # Unlimited
+        QuotaType.SENTENCES_TRACKED: -1,
+        QuotaType.MERKLE_ENCODING: -1,
         QuotaType.MERKLE_ATTRIBUTION: -1,
         QuotaType.MERKLE_PLAGIARISM: -1,
         QuotaType.FUZZY_INDEX: -1,
@@ -245,8 +151,8 @@ class QuotaManager:
                 logger.debug(f"Super admin key {organization_id}: allowing unlimited {quota_type.value}")
                 return True
 
-            # Use starter tier limits for user-level keys
-            tier = OrganizationTier.STARTER
+            # Use free tier limits for user-level keys
+            tier = OrganizationTier.FREE
             quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
 
             # For user-level keys, we don't track usage in DB - just check if feature is available
@@ -255,8 +161,8 @@ class QuotaManager:
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail={
                         "error": "FeatureNotAvailable",
-                        "message": f"'{quota_type.value}' is not available on starter tier",
-                        "current_tier": "starter",
+                        "message": f"'{quota_type.value}' is not available on free tier",
+                        "current_tier": "free",
                         "upgrade_url": "https://dashboard.encypherai.com/billing",
                     },
                 )
@@ -279,7 +185,7 @@ class QuotaManager:
 
         if is_demo_key:
             # Demo keys use in-memory quota tracking from DEMO_KEYS config
-            tier = _coerce_tier(tier_override or "starter")
+            tier = _coerce_tier(tier_override or "free")
             quota_limit = QuotaManager.get_quota_limit(tier, quota_type)
 
             # NMA (News Media Alliance) members on starter tier get access to merkle features
@@ -287,7 +193,7 @@ class QuotaManager:
             is_nma_member = features and (features.get("nma_member", False) or features.get("sentence_tracking", False))
             if is_nma_member and quota_type in (QuotaType.MERKLE_ENCODING, QuotaType.MERKLE_ATTRIBUTION):
                 # NMA members get limited merkle access (same as professional tier limits)
-                nma_limit = QuotaManager.get_quota_limit(OrganizationTier.PROFESSIONAL, quota_type)
+                nma_limit = QuotaManager.get_quota_limit(OrganizationTier.FREE, quota_type)
                 logger.debug(f"NMA member {organization_id}: allowing {quota_type.value} (NMA limit: {nma_limit})")
                 return True
 
@@ -453,7 +359,7 @@ class QuotaManager:
         """
         # Handle user-level keys (synthetic org IDs)
         if organization_id.startswith("user_"):
-            limit = QuotaManager.get_quota_limit(OrganizationTier.STARTER, quota_type)
+            limit = QuotaManager.get_quota_limit(OrganizationTier.FREE, quota_type)
             if limit == -1:
                 return {
                     "X-Quota-Limit": "unlimited",
@@ -534,11 +440,11 @@ class QuotaManager:
         """
         # Handle user-level keys (synthetic org IDs)
         if organization_id.startswith("user_"):
-            tier = OrganizationTier.STARTER
+            tier = OrganizationTier.FREE
             quotas: Dict[str, Dict[str, Any]] = {}
             status_dict: Dict[str, Any] = {
                 "organization_id": organization_id,
-                "tier": "starter",
+                "tier": "free",
                 "reset_date": QuotaManager._get_reset_date().isoformat(),
                 "quotas": quotas,
             }

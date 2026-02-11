@@ -22,15 +22,7 @@ from typing import Deque, Dict, Optional, Tuple
 
 from app.config import settings
 
-# Rate limits by tier (requests per second)
-# These align with docs/pricing/PRICING_STRATEGY.md
-TIER_RATE_LIMITS_PER_SECOND: Dict[str, int] = {
-    "starter": 10,
-    "professional": 50,
-    "business": 200,
-    "enterprise": -1,  # Unlimited
-    "strategic_partner": -1,  # Unlimited
-}
+from app.core.tier_config import TIER_RATE_LIMITS_PER_SECOND  # SSOT
 
 
 @dataclass

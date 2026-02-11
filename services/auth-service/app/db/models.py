@@ -161,7 +161,7 @@ class Organization(Base):
     email = Column(String(255), unique=True, nullable=False)
 
     # Subscription & Tier
-    tier = Column(String(32), nullable=False, default="starter")
+    tier = Column(String(32), nullable=False, default="free")
 
     # Trial metadata
     trial_tier = Column(String(32), nullable=True)
@@ -177,6 +177,10 @@ class Organization(Base):
     # Feature Flags
     features = Column(JSON, nullable=False, default=dict)
 
+    # Purchased add-ons (JSON dict of add-on ID -> config/status)
+    # TEAM_145: Add-ons are independent of tier
+    add_ons = Column(JSON, nullable=False, default=dict)
+
     # Usage Limits
     monthly_api_limit = Column(Integer, default=10000)
     monthly_api_usage = Column(Integer, default=0)
@@ -187,7 +191,7 @@ class Organization(Base):
 
     # Coalition Revenue Sharing
     coalition_member = Column(Boolean, default=True)
-    coalition_rev_share = Column(Integer, default=65)
+    coalition_rev_share = Column(Integer, default=60)
     coalition_opted_out = Column(Boolean, default=False)
 
     # BYOK (Bring Your Own Key) Certificate Support
