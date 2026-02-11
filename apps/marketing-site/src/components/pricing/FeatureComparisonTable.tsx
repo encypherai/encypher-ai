@@ -27,7 +27,7 @@ interface FeatureCategory {
 // Free tier = full signing infra; Enterprise = unlimited everything + exclusive capabilities
 const FEATURE_CATEGORIES: FeatureCategory[] = [
   {
-    name: 'Signing & Provenance (Free)',
+    name: 'Core Platform (Free)',
     features: [
       { name: 'C2PA 2.3 Document Signing', description: 'Sign content with C2PA manifest', free: '1K/mo', enterprise: 'Unlimited' },
       { name: 'Merkle Tree Authentication', description: 'Sentence-level cryptographic proofs', free: true, enterprise: 'Unlimited' },
@@ -35,16 +35,9 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
       { name: 'Content Verification', description: 'Public verification pages + API', free: 'Unlimited', enterprise: 'Unlimited' },
       { name: 'Tamper Detection', description: 'Detect modifications to signed content', free: true, enterprise: true },
       { name: 'Custom Metadata', description: 'Author, publisher, license, tags', free: true, enterprise: true },
-    ],
-  },
-  {
-    name: 'Distribution & Tools (Free)',
-    features: [
       { name: 'WordPress Plugin', description: 'Auto-sign on publish', free: true, enterprise: 'White-label' },
-      { name: 'REST API + Python SDK', description: 'Full API access', free: true, enterprise: true },
-      { name: 'CLI Tool', description: 'Local signing from command line', free: true, enterprise: true },
-      { name: 'GitHub Action', description: 'CI/CD integration', free: true, enterprise: true },
-      { name: 'Browser Extension', description: 'Verification in browser', free: true, enterprise: true },
+      { name: 'REST API + SDKs', description: 'Python, TypeScript, Go, Rust', free: true, enterprise: true },
+      { name: 'CLI & CI/CD', description: 'CLI tool, GitHub Action, browser extension', free: true, enterprise: true },
     ],
   },
   {
@@ -53,25 +46,6 @@ const FEATURE_CATEGORIES: FeatureCategory[] = [
       { name: 'Coalition Membership', description: 'Auto-enrolled in Encypher Coalition', free: true, enterprise: true },
       { name: 'Content Indexing', description: 'Content indexed for coalition licensing', free: true, enterprise: true },
       { name: 'Basic Attribution View', description: 'See where your content appears', free: true, enterprise: true },
-      { name: 'Revenue Share — Coalition', description: 'Encypher negotiates deals', free: '60/40', enterprise: '60/40' },
-      { name: 'Revenue Share — Self-Service', description: 'You negotiate deals', free: '80/20', enterprise: '80/20' },
-    ],
-  },
-  {
-    name: 'Enforcement Tools (Add-Ons)',
-    features: [
-      { name: 'Attribution Analytics', description: 'Full dashboard: where your content appears in AI outputs', free: false, enterprise: true, addOn: 'Coming Soon' },
-      { name: 'Formal Notice Package', description: 'Cryptographically-backed notice to AI companies', free: false, enterprise: 'Unlimited', addOn: 'Coming Soon' },
-      { name: 'Evidence Package', description: 'Court-ready evidence bundle', free: false, enterprise: 'Unlimited', addOn: 'Coming Soon' },
-    ],
-  },
-  {
-    name: 'Infrastructure (Add-Ons)',
-    features: [
-      { name: 'Custom Signing Identity', description: 'Sign as your brand', free: false, enterprise: true, addOn: '$499/mo' },
-      { name: 'White-Label Verification', description: 'Your branding on verification pages', free: false, enterprise: true, addOn: '$299/mo' },
-      { name: 'Custom Verification Domain', description: 'Custom domain for verification', free: false, enterprise: true, addOn: '$29/mo' },
-      { name: 'BYOK', description: 'Bring your own signing keys', free: false, enterprise: true, addOn: '$499/mo' },
     ],
   },
   {

@@ -102,18 +102,8 @@ export default function RoiCalculator() {
             <p className="text-4xl md:text-5xl font-bold text-primary my-2">
               {formatCurrency(potentialRevenue)}
             </p>
-            <div className="mt-3 w-full space-y-2 text-sm">
-              <div className="flex justify-between items-center px-2">
-                <span className="text-muted-foreground">Coalition track (60/40)</span>
-                <span className="font-semibold">{formatCurrency(potentialRevenue * 0.6)}</span>
-              </div>
-              <div className="flex justify-between items-center px-2">
-                <span className="text-muted-foreground">Self-service track (80/20)</span>
-                <span className="font-semibold">{formatCurrency(potentialRevenue * 0.8)}</span>
-              </div>
-            </div>
             <p className="text-xs text-muted-foreground max-w-xs mt-3">
-              Your share of licensing revenue. Same splits whether you&apos;re on Free or Enterprise.
+              Any resulting licensing revenue is shared between the coalition and the publisher, with the majority going to the content creator.
             </p>
           </div>
         </div>

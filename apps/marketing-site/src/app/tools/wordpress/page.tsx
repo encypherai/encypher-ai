@@ -116,7 +116,7 @@ const tiers = [
       "Custom branding (white-label)",
       "SSO integration",
       "Dedicated account manager",
-      "Coalition membership (80/20 split)",
+      "Coalition membership included",
       "SLA guarantee",
       "On-premise deployment option",
     ],

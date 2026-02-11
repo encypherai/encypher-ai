@@ -102,7 +102,7 @@ export default function PublishersPage() {
             <p className="text-lg text-muted-foreground mb-8 text-center">
               Full signing infrastructure at $0. Add enforcement tools when you&apos;re ready to license. Same revenue splits for everyone.
             </p>
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
+            <div className="grid md:grid-cols-2 gap-6 mb-8">
               {/* Free */}
               <div className="bg-card p-6 rounded-lg shadow-md border-2 border-primary relative">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full">Start Here</div>
@@ -120,27 +120,7 @@ export default function PublishersPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>60/40 coalition · 80/20 self-service</span>
-                  </li>
-                </ul>
-              </div>
-              {/* Add-Ons */}
-              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
-                <h3 className="text-xl font-semibold mb-2">Add-Ons</h3>
-                <p className="text-3xl font-bold mb-1">From $29<span className="text-lg font-normal">/mo</span></p>
-                <p className="text-sm text-muted-foreground mb-4">Self-service · No sales call</p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Attribution Analytics — Coming Soon</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Enforcement Bundle — Coming Soon</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Bundles save up to 57%</span>
+                    <span>Licensing revenue shared — majority to publisher</span>
                   </li>
                 </ul>
               </div>
@@ -160,7 +140,7 @@ export default function PublishersPage() {
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Same 60/40 · 80/20 splits</span>
+                    <span>Same licensing splits as all tiers</span>
                   </li>
                 </ul>
               </div>

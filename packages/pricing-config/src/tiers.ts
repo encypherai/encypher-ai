@@ -272,7 +272,7 @@ export const ENTERPRISE_TIER: EnterpriseConfig = {
   ],
   foundingCoalition: [
     'Implementation fee waived',
-    'Same 60/40 and 80/20 licensing splits',
+    'Same licensing revenue splits as all tiers',
     'Syracuse Symposium seat — define market licensing frameworks',
     'Advisory board participation',
     'Priority coalition positioning in all licensing negotiations',

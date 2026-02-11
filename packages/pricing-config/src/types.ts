@@ -2,7 +2,7 @@
  * Encypher Publisher Pricing Types — Freemium Model (Feb 2026)
  *
  * Model: Free infrastructure → Paid enforcement add-ons → Licensing revenue share
- * Rev share: Coalition 60/40, Self-Service 80/20 (flat across all tiers)
+ * Rev share: Majority to publisher (flat across all tiers)
  *
  * @see docs/new_publisher_pricing_model_feb_2026.md
  */

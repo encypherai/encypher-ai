@@ -5,8 +5,8 @@ import { LICENSING_REV_SHARE } from './tiers';
  * Coalition & Licensing Revenue Configuration — Freemium Model (Feb 2026)
  *
  * Two-track licensing model (flat across ALL tiers):
- * - Coalition deals (60/40): Encypher negotiates on behalf of the coalition
- * - Self-service deals (80/20): Publisher negotiates directly
+ * - Coalition deals: Encypher negotiates on behalf of the coalition
+ * - Self-service deals: Publisher negotiates directly
  *
  * @see docs/new_publisher_pricing_model_feb_2026.md
  */
@@ -47,16 +47,12 @@ export const COALITION_VALUE_PROP = {
 export const LICENSING_TRACKS = {
   coalition: {
     name: 'Coalition Deals',
-    split: '60/40',
-    publisherPercent: 60,
-    encypherPercent: 40,
-    description: 'Encypher negotiates licensing deals on behalf of the coalition. We do the work — formal notice, evidence, negotiation. Publishers get 60%, Encypher takes 40%.',
+    split: 'Majority to Publisher',
+    description: 'Encypher negotiates licensing deals on behalf of the coalition. We do the work — formal notice, evidence, negotiation. Any resulting licensing revenue is shared between the coalition and the publisher, with the majority going to the content creator.',
   },
   selfService: {
     name: 'Self-Service Deals',
-    split: '80/20',
-    publisherPercent: 80,
-    encypherPercent: 20,
+    split: 'You Keep More',
     description: 'Publishers use our signing tech, formal notice tools, and evidence packages to negotiate their own deals directly with AI companies. They do the work — they keep more.',
   },
 } as const;

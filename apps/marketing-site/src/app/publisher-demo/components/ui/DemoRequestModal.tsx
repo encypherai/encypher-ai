@@ -171,7 +171,7 @@ export default function DemoRequestModal({ onClose }: DemoRequestModalProps) {
                   value={formData.organization}
                   onChange={handleChange}
                   className="w-full px-4 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-ncs focus:border-blue-ncs"
-                  placeholder="The New York Times"
+                  placeholder="The Encypher Times"
                 />
               </div>
 
