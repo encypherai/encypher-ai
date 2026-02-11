@@ -42,6 +42,20 @@ class C2PAInfo(BaseModel):
     certificate_chain: Optional[List[str]] = None
 
 
+class SegmentLocationInfo(BaseModel):
+    """Location of a segment within the original document."""
+    paragraph_index: int = Field(..., description="0-indexed paragraph number")
+    sentence_in_paragraph: int = Field(..., description="0-indexed sentence within the paragraph")
+
+
+class EmbeddingDetail(BaseModel):
+    """Details for a single detected embedding/signature."""
+    segment_uuid: str
+    leaf_index: Optional[int] = None
+    segment_location: Optional[SegmentLocationInfo] = None
+    manifest_mode: Optional[str] = None
+
+
 class MerkleProofInfo(BaseModel):
     """Merkle tree proof information (paid feature)."""
     root_hash: Optional[str] = None
@@ -73,6 +87,10 @@ class VerifyVerdict(BaseModel):
     document: Optional[DocumentInfo] = None
     c2pa: Optional[C2PAInfo] = None
     licensing: Optional[LicensingInfo] = None
+    # Embedding details (segment locations for all detected signatures)
+    embeddings: Optional[List[EmbeddingDetail]] = None
+    total_embeddings: Optional[int] = None
+    total_segments_in_document: Optional[int] = None
     # Paid features
     merkle_proof: Optional[MerkleProofInfo] = None
     # Legacy details field for backward compat

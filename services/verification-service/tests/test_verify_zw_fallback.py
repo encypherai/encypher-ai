@@ -64,8 +64,19 @@ class _RoutingAsyncClient:
                 return resp
         return self._default
 
-    async def post(self, *args, **kwargs):
-        raise AssertionError("unexpected POST")
+    async def post(self, url: str, *args, **kwargs):
+        # Support bulk resolve POST — build response from route_map
+        if "/zw/resolve" in url:
+            body = kwargs.get("json", {})
+            uuids = body.get("segment_uuids", [])
+            results = []
+            for uid in uuids:
+                for pattern, resp in self._route_map.items():
+                    if pattern in f"/zw/resolve/{uid}":
+                        results.append(resp.json())
+                        break
+            return _DummyResponse(200, {"results": results, "not_found": []})
+        return self._default
 
 
 # ---------------------------------------------------------------------------

@@ -387,11 +387,70 @@ async def get_trust_anchor(
 # ---------------------------------------------------------------------------
 
 
+class SegmentLocationResponse(BaseModel):
+    """Location of a segment within the original document."""
+    paragraph_index: int = Field(..., description="0-indexed paragraph number")
+    sentence_in_paragraph: int = Field(..., description="0-indexed sentence within the paragraph")
+
+
 class ZWResolveResponse(BaseModel):
     """Response for ZW segment UUID resolution."""
     segment_uuid: str
     organization_id: str
     document_id: Optional[str] = None
+    manifest_mode: Optional[str] = None
+    segment_location: Optional[SegmentLocationResponse] = None
+    total_segments: Optional[int] = None
+    leaf_index: Optional[int] = None
+    manifest_data: Optional[Dict[str, Any]] = None
+
+
+_RESOLVE_SQL = """
+    SELECT organization_id, document_id, leaf_index,
+           embedding_metadata->>'manifest_mode' AS manifest_mode,
+           embedding_metadata->'segment_location' AS segment_location,
+           (embedding_metadata->>'total_segments')::int AS total_segments,
+           manifest_data
+    FROM content_references
+    WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
+    LIMIT 1
+"""
+
+
+def _row_to_resolve_response(segment_uuid: str, row) -> ZWResolveResponse:
+    """Convert a DB row to a ZWResolveResponse."""
+    seg_loc = None
+    raw_loc = row.segment_location
+    if isinstance(raw_loc, dict):
+        seg_loc = SegmentLocationResponse(
+            paragraph_index=raw_loc.get("paragraph_index", 0),
+            sentence_in_paragraph=raw_loc.get("sentence_in_paragraph", 0),
+        )
+    elif isinstance(raw_loc, str):
+        import json as _json
+        try:
+            parsed = _json.loads(raw_loc)
+            seg_loc = SegmentLocationResponse(
+                paragraph_index=parsed.get("paragraph_index", 0),
+                sentence_in_paragraph=parsed.get("sentence_in_paragraph", 0),
+            )
+        except (ValueError, TypeError):
+            pass
+
+    manifest = None
+    if hasattr(row, "manifest_data") and row.manifest_data:
+        manifest = row.manifest_data if isinstance(row.manifest_data, dict) else None
+
+    return ZWResolveResponse(
+        segment_uuid=segment_uuid,
+        organization_id=row.organization_id,
+        document_id=row.document_id,
+        manifest_mode=row.manifest_mode,
+        segment_location=seg_loc,
+        total_segments=row.total_segments if hasattr(row, "total_segments") else None,
+        leaf_index=row.leaf_index if hasattr(row, "leaf_index") else None,
+        manifest_data=manifest,
+    )
 
 
 @router.get(
@@ -415,17 +474,7 @@ async def resolve_zw_segment_uuid(
     """
     await public_rate_limiter(request, endpoint_type="trust_anchor_lookup")
 
-    result = await content_db.execute(
-        text(
-            """
-            SELECT organization_id, document_id
-            FROM content_references
-            WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
-            LIMIT 1
-            """
-        ),
-        {"seg_uuid": segment_uuid},
-    )
+    result = await content_db.execute(text(_RESOLVE_SQL), {"seg_uuid": segment_uuid})
     row = result.fetchone()
 
     if not row:
@@ -437,8 +486,71 @@ async def resolve_zw_segment_uuid(
             },
         )
 
-    return ZWResolveResponse(
-        segment_uuid=segment_uuid,
-        organization_id=row.organization_id,
-        document_id=row.document_id,
+    return _row_to_resolve_response(segment_uuid, row)
+
+
+class BulkResolveRequest(BaseModel):
+    """Request body for bulk UUID resolution."""
+    segment_uuids: List[str] = Field(..., description="List of segment UUIDs to resolve", max_length=200)
+
+
+class BulkResolveResponse(BaseModel):
+    """Response for bulk UUID resolution."""
+    results: List[ZWResolveResponse] = Field(default_factory=list)
+    not_found: List[str] = Field(default_factory=list)
+
+
+@router.post(
+    "/zw/resolve",
+    response_model=BulkResolveResponse,
+    summary="Bulk resolve segment UUIDs (Public, internal)",
+)
+async def bulk_resolve_segment_uuids(
+    request: Request,
+    body: BulkResolveRequest,
+    content_db: AsyncSession = Depends(get_content_db),
+) -> BulkResolveResponse:
+    """
+    Resolve multiple segment UUIDs in a single call.
+
+    Used internally by the verification-service when verifying text that
+    contains multiple embedded signatures (e.g. a copied paragraph).
+    """
+    await public_rate_limiter(request, endpoint_type="trust_anchor_lookup")
+
+    if not body.segment_uuids:
+        return BulkResolveResponse(results=[], not_found=[])
+
+    result = await content_db.execute(
+        text(
+            """
+            SELECT organization_id, document_id, leaf_index,
+                   embedding_metadata->>'manifest_mode' AS manifest_mode,
+                   embedding_metadata->'segment_location' AS segment_location,
+                   (embedding_metadata->>'total_segments')::int AS total_segments,
+                   embedding_metadata->>'segment_uuid' AS segment_uuid,
+                   manifest_data
+            FROM content_references
+            WHERE embedding_metadata->>'segment_uuid' = ANY(:seg_uuids)
+            """
+        ),
+        {"seg_uuids": body.segment_uuids},
     )
+    rows = result.fetchall()
+
+    found_uuids: Dict[str, Any] = {}
+    for row in rows:
+        uuid_val = row.segment_uuid
+        if uuid_val and uuid_val not in found_uuids:
+            found_uuids[uuid_val] = row
+
+    results = []
+    not_found = []
+    for uuid_str in body.segment_uuids:
+        row = found_uuids.get(uuid_str)
+        if row:
+            results.append(_row_to_resolve_response(uuid_str, row))
+        else:
+            not_found.append(uuid_str)
+
+    return BulkResolveResponse(results=results, not_found=not_found)

@@ -53,8 +53,10 @@ from ...models.enterprise_schemas import (
     VerifyVerdict,
     DocumentInfo,
     C2PAInfo,
+    EmbeddingDetail,
     LicensingInfo,
     MerkleProofInfo,
+    SegmentLocationInfo,
 )
 from ...models.schemas import (
     SignatureVerify,
@@ -99,6 +101,44 @@ async def _resolve_zw_segment_uuid(segment_uuid: str) -> dict | None:
         return None
 
     return payload
+
+
+async def _bulk_resolve_segment_uuids(segment_uuids: list[str]) -> dict[str, dict]:
+    """Resolve multiple segment UUIDs via the enterprise API's bulk endpoint.
+
+    Returns a dict mapping ``segment_uuid -> resolve_payload``.
+    Falls back to sequential single-resolve calls if the bulk endpoint fails.
+    """
+    if not segment_uuids:
+        return {}
+
+    # Try bulk endpoint first
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.ENTERPRISE_API_URL}/api/v1/public/c2pa/zw/resolve",
+                json={"segment_uuids": segment_uuids},
+                timeout=10.0,
+            )
+    except httpx.RequestError:
+        response = None
+
+    if response and response.status_code == 200:
+        payload = response.json()
+        if isinstance(payload, dict) and "results" in payload:
+            return {
+                r["segment_uuid"]: r
+                for r in payload["results"]
+                if isinstance(r, dict) and "segment_uuid" in r
+            }
+
+    # Fallback: resolve one-by-one
+    results: dict[str, dict] = {}
+    for uuid_str in segment_uuids:
+        resolved = await _resolve_zw_segment_uuid(uuid_str)
+        if resolved:
+            results[uuid_str] = resolved
+    return results
 
 
 async def _fetch_trust_anchor(*, signer_id: str) -> tuple[str | None, str | None]:
@@ -652,30 +692,67 @@ async def verify_text(
             manifest_type=type(manifest).__name__ if manifest is not None else None,
         )
 
-    # TEAM_156: ZW embedding fallback — when verify_metadata returns no
-    # signer_id, check for ZW (zero-width) embeddings and resolve via
-    # enterprise API (content_references lives in encypher_content DB).
+    # TEAM_156 / TEAM_170: ZW embedding fallback — resolve ALL ZW signatures
+    # so we can report segment locations for every detected embedding.
     zw_org_id = None
     zw_document_id = None
     zw_uuid_str = None
+    resolved_embeddings: list[EmbeddingDetail] = []
+    resolved_c2pa_manifest: dict | None = None
+    resolved_total_segments: int | None = None
     if not signer_id:
         try:
             from ...utils.zw_detect import find_zw_signatures, extract_uuid_from_signature
 
             zw_sigs = find_zw_signatures(verify_request.text)
             if zw_sigs:
-                first_uuid = extract_uuid_from_signature(zw_sigs[0][2])
-                if first_uuid:
-                    zw_uuid_str = str(first_uuid)
-                    zw_result = await _resolve_zw_segment_uuid(zw_uuid_str)
-                    if zw_result:
-                        zw_org_id = zw_result.get("organization_id")
-                        zw_document_id = zw_result.get("document_id")
+                # Extract UUIDs from all detected signatures
+                zw_uuids: list[str] = []
+                for _start, _end, sig_str in zw_sigs:
+                    sig_uuid = extract_uuid_from_signature(sig_str)
+                    if sig_uuid:
+                        zw_uuids.append(str(sig_uuid))
+
+                if zw_uuids:
+                    zw_uuid_str = zw_uuids[0]
+                    resolved_map = await _bulk_resolve_segment_uuids(zw_uuids)
+
+                    if resolved_map:
+                        # Use first resolved result for top-level fields
+                        first_result = resolved_map.get(zw_uuid_str) or next(iter(resolved_map.values()))
+                        zw_org_id = first_result.get("organization_id")
+                        zw_document_id = first_result.get("document_id")
+
                         if zw_org_id:
                             signer_id = zw_org_id
                             is_valid = True
+                            resolved_mode = first_result.get("manifest_mode") or "zw_embedding"
+
+                            # Extract C2PA manifest from first result (shared across segments)
+                            if first_result.get("manifest_data"):
+                                resolved_c2pa_manifest = first_result["manifest_data"]
+                            resolved_total_segments = first_result.get("total_segments")
+
+                            # Build embedding details for ALL resolved signatures
+                            for uuid_str in zw_uuids:
+                                r = resolved_map.get(uuid_str)
+                                if r:
+                                    seg_loc = None
+                                    loc_data = r.get("segment_location")
+                                    if isinstance(loc_data, dict):
+                                        seg_loc = SegmentLocationInfo(
+                                            paragraph_index=loc_data.get("paragraph_index", 0),
+                                            sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
+                                        )
+                                    resolved_embeddings.append(EmbeddingDetail(
+                                        segment_uuid=uuid_str,
+                                        leaf_index=r.get("leaf_index"),
+                                        segment_location=seg_loc,
+                                        manifest_mode=r.get("manifest_mode"),
+                                    ))
+
                             manifest = {
-                                "format": "zw_embedding",
+                                "format": resolved_mode,
                                 "segment_uuid": zw_uuid_str,
                                 "total_zw_signatures": len(zw_sigs),
                             }
@@ -685,14 +762,15 @@ async def verify_text(
                                 organization_id=zw_org_id,
                                 document_id=zw_document_id,
                                 total_signatures=len(zw_sigs),
+                                resolved_count=len(resolved_embeddings),
                             )
         except Exception as zw_exc:
             logger.debug("verify_zw_detection_error", error=str(zw_exc))
 
-    # TEAM_158: VS256 embedding fallback — when both C2PA and ZW detection
-    # fail, check for VS256 (base-256 variation selector) signatures and
-    # resolve via enterprise API.  Tries contiguous detection first, then
-    # reassembly from distributed (redistributed) VS chars.
+    # TEAM_158 / TEAM_170: VS256 embedding fallback — resolve ALL VS256
+    # signatures so we can report segment locations for every detected
+    # embedding.  Tries contiguous detection first, then reassembly from
+    # distributed (redistributed) VS chars.
     vs256_org_id = None
     vs256_document_id = None
     vs256_uuid_str = None
@@ -720,18 +798,53 @@ async def verify_text(
                     )
 
             if vs256_sigs:
-                first_uuid = extract_uuid_from_vs256_signature(vs256_sigs[0][2])
-                if first_uuid:
-                    vs256_uuid_str = str(first_uuid)
-                    vs256_result = await _resolve_zw_segment_uuid(vs256_uuid_str)
-                    if vs256_result:
-                        vs256_org_id = vs256_result.get("organization_id")
-                        vs256_document_id = vs256_result.get("document_id")
+                # Extract UUIDs from ALL detected signatures
+                vs256_uuids: list[str] = []
+                for _start, _end, sig_str in vs256_sigs:
+                    sig_uuid = extract_uuid_from_vs256_signature(sig_str)
+                    if sig_uuid:
+                        vs256_uuids.append(str(sig_uuid))
+
+                if vs256_uuids:
+                    vs256_uuid_str = vs256_uuids[0]
+                    resolved_map = await _bulk_resolve_segment_uuids(vs256_uuids)
+
+                    if resolved_map:
+                        first_result = resolved_map.get(vs256_uuid_str) or next(iter(resolved_map.values()))
+                        vs256_org_id = first_result.get("organization_id")
+                        vs256_document_id = first_result.get("document_id")
+
                         if vs256_org_id:
                             signer_id = vs256_org_id
                             is_valid = True
+                            resolved_mode = first_result.get("manifest_mode") or "micro"
+
+                            # Extract C2PA manifest from first result (shared across segments)
+                            if first_result.get("manifest_data") and not resolved_c2pa_manifest:
+                                resolved_c2pa_manifest = first_result["manifest_data"]
+                            if first_result.get("total_segments") and not resolved_total_segments:
+                                resolved_total_segments = first_result.get("total_segments")
+
+                            # Build embedding details for ALL resolved signatures
+                            for uuid_str in vs256_uuids:
+                                r = resolved_map.get(uuid_str)
+                                if r:
+                                    seg_loc = None
+                                    loc_data = r.get("segment_location")
+                                    if isinstance(loc_data, dict):
+                                        seg_loc = SegmentLocationInfo(
+                                            paragraph_index=loc_data.get("paragraph_index", 0),
+                                            sentence_in_paragraph=loc_data.get("sentence_in_paragraph", 0),
+                                        )
+                                    resolved_embeddings.append(EmbeddingDetail(
+                                        segment_uuid=uuid_str,
+                                        leaf_index=r.get("leaf_index"),
+                                        segment_location=seg_loc,
+                                        manifest_mode=r.get("manifest_mode"),
+                                    ))
+
                             manifest = {
-                                "format": "vs256_embedding",
+                                "format": resolved_mode,
                                 "segment_uuid": vs256_uuid_str,
                                 "total_vs256_signatures": len(vs256_sigs),
                             }
@@ -741,6 +854,7 @@ async def verify_text(
                                 organization_id=vs256_org_id,
                                 document_id=vs256_document_id,
                                 total_signatures=len(vs256_sigs),
+                                resolved_count=len(resolved_embeddings),
                             )
         except Exception as vs256_exc:
             logger.debug("verify_vs256_detection_error", error=str(vs256_exc))
@@ -798,8 +912,17 @@ async def verify_text(
                     attribution_required=custom_metadata.get("attribution_required", False),
                 )
 
-    # Build C2PA info if we have a C2PA wrapper
-    if has_c2pa_wrapper and isinstance(manifest, dict):
+    # Build C2PA info — prefer DB-backed manifest from micro_c2pa / micro_ecc_c2pa
+    # modes (resolved via segment UUID), then fall back to inline C2PA wrapper.
+    if resolved_c2pa_manifest and isinstance(resolved_c2pa_manifest, dict):
+        c2pa_info = C2PAInfo(
+            validated=is_valid,
+            validation_type="db_backed_manifest",
+            manifest_hash=resolved_c2pa_manifest.get("manifest_hash"),
+        )
+        if resolved_c2pa_manifest.get("assertions"):
+            c2pa_info.assertions = resolved_c2pa_manifest["assertions"]
+    elif has_c2pa_wrapper and isinstance(manifest, dict):
         c2pa_info = C2PAInfo(
             validated=is_valid,
             validation_type="cryptographic" if is_valid else None,
@@ -842,6 +965,9 @@ async def verify_text(
         document=document_info,
         c2pa=c2pa_info,
         licensing=licensing_info,
+        embeddings=resolved_embeddings if resolved_embeddings else None,
+        total_embeddings=len(resolved_embeddings) if resolved_embeddings else None,
+        total_segments_in_document=resolved_total_segments,
         merkle_proof=merkle_proof_info,
         details={
             "manifest": manifest or {},
