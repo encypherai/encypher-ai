@@ -421,7 +421,7 @@ async def create_organization(
 
         return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.post("/invitations/trial")
@@ -468,9 +468,9 @@ async def create_trial_invitation_for_new_org(
 
         return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.get("/internal/{org_id}/context", response_model=InternalOrgContextResponse, include_in_schema=False)
@@ -530,7 +530,7 @@ async def update_organization_tier_internal(
         )
         return InternalTierUpdateResponse(success=True, data=OrganizationResponse.model_validate(org).model_dump())
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 class CertificateUpdateRequest(BaseModel):
@@ -587,7 +587,7 @@ async def list_domain_claims(
             "error": None,
         }
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
 
 
 @router.post("/{org_id}/domain-claims", status_code=status.HTTP_201_CREATED)
@@ -627,9 +627,9 @@ async def create_domain_claim(
             "error": None,
         }
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.post("/{org_id}/domain-claims/{claim_id}/verify-dns")
@@ -657,9 +657,9 @@ async def verify_domain_dns(
             "error": None,
         }
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except (ValueError, dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers) as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.patch("/{org_id}/domain-claims/{claim_id}/auto-join")
@@ -682,9 +682,9 @@ async def update_domain_auto_join(
             "error": None,
         }
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.get("/domain-claims/verify-email")
@@ -699,7 +699,7 @@ async def verify_domain_email(token: str, db: Session = Depends(get_db)):
             "error": None,
         }
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.get("")
@@ -757,9 +757,9 @@ async def update_organization(
 
         return {"success": True, "data": OrganizationResponse.model_validate(org).model_dump(), "error": None}
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 # ==========================================
@@ -829,9 +829,9 @@ async def update_member_role(
             "error": None,
         }
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.delete("/{org_id}/members/{target_user_id}")
@@ -850,9 +850,9 @@ async def remove_member(
 
         return {"success": True, "data": {"removed": True}, "error": None}
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.get("/{org_id}/seats")
@@ -933,9 +933,9 @@ async def create_invitation(
 
         return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.get("/{org_id}/invitations")
@@ -974,9 +974,9 @@ async def cancel_invitation(
 
         return {"success": True, "data": {"cancelled": True}, "error": None}
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.post("/{org_id}/invitations/{invitation_id}/resend")
@@ -1018,9 +1018,9 @@ async def resend_invitation(
 
         return {"success": True, "data": InvitationResponse.model_validate(invitation).model_dump(), "error": None}
     except PermissionError as e:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Request validation failed")
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 # ==========================================
@@ -1069,7 +1069,7 @@ async def accept_invitation(
             "error": None,
         }
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 @router.post("/invitations/{token}/accept-new")
@@ -1113,7 +1113,7 @@ async def accept_invitation_new_user(
             "error": None,
         }
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
 
 # ==========================================

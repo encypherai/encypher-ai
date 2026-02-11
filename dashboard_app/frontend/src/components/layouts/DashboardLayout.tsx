@@ -16,6 +16,7 @@ import {
   DocumentTextIcon, 
   CogIcon, 
   UserIcon,
+  BeakerIcon,
   ArrowLeftOnRectangleIcon as LogoutIcon,
   Bars3Icon as MenuIcon,
   XMarkIcon as XIcon
@@ -69,6 +70,10 @@ export default function DashboardLayout({ children, currentPath }: DashboardLayo
     { name: 'Audit Logs', href: '/dashboard/audit-logs', icon: <DocumentTextIcon className="h-5 w-5" /> },
     { name: 'Settings', href: '/dashboard/settings', icon: <CogIcon className="h-5 w-5" /> },
     { name: 'Profile', href: '/dashboard/profile', icon: <UserIcon className="h-5 w-5" /> },
+    // TEAM_166: Admin tools — superuser only, rendered conditionally below
+    ...(user?.is_superuser
+      ? [{ name: 'Admin Tools', href: '/dashboard/admin/tools', icon: <BeakerIcon className="h-5 w-5" /> }]
+      : []),
   ];
 
   return (

@@ -122,7 +122,8 @@ async def revoke_document(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"Revocation validation error for document {document_id}: {e}")
+        raise HTTPException(status_code=404, detail="Document not found or already revoked")
     except Exception as e:
         logger.error(f"Failed to revoke document {document_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to revoke document")
@@ -162,7 +163,8 @@ async def reinstate_document(
         )
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        logger.warning(f"Reinstatement validation error for document {document_id}: {e}")
+        raise HTTPException(status_code=404, detail="Document not found or not revoked")
     except Exception as e:
         logger.error(f"Failed to reinstate document {document_id}: {e}")
         raise HTTPException(status_code=500, detail="Failed to reinstate document")

@@ -5,16 +5,12 @@ from __future__ import annotations
 
 from uuid import UUID
 
-import pytest
 from reedsolo import RSCodec
 
 from app.utils.vs256_detect import (
     MAGIC_PREFIX,
-    MAGIC_PREFIX_LEN,
     SIGNATURE_CHARS,
     _BYTE_TO_VS,
-    _VS_CHAR_SET,
-    _VS_TO_BYTE,
     collect_distributed_vs_chars,
     extract_uuid_from_vs256_signature,
     find_vs256_signatures,

@@ -117,7 +117,7 @@ async def join_coalition(
         logger.error("join_coalition_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to join coalition: {str(e)}",
+            detail="Failed to join coalition",
         )
 
 
@@ -150,7 +150,7 @@ async def leave_coalition(
         logger.error("leave_coalition_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to leave coalition: {str(e)}",
+            detail="Failed to leave coalition",
         )
 
 
@@ -191,7 +191,7 @@ async def get_coalition_status(
         logger.error("get_coalition_status_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get coalition status: {str(e)}",
+            detail="Failed to get coalition status",
         )
 
 
@@ -224,7 +224,7 @@ async def get_coalition_stats(
         logger.error("get_coalition_stats_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get coalition stats: {str(e)}",
+            detail="Failed to get coalition stats",
         )
 
 
@@ -257,7 +257,7 @@ async def get_member_revenue(
         logger.error("get_member_revenue_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get member revenue: {str(e)}",
+            detail="Failed to get member revenue",
         )
 
 
@@ -305,7 +305,7 @@ async def create_licensing_agreement(agreement: LicensingAgreementCreate, db: Se
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create licensing agreement: {str(e)}",
+            detail="Failed to create licensing agreement",
         )
 
 
@@ -339,7 +339,7 @@ async def list_licensing_agreements(db: Session = Depends(get_db)):
         logger.error("list_licensing_agreements_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list licensing agreements: {str(e)}",
+            detail="Failed to list licensing agreements",
         )
 
 
@@ -387,7 +387,7 @@ async def track_content_access(access: ContentAccessTrack, db: Session = Depends
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to track content access: {str(e)}",
+            detail="Failed to track content access",
         )
 
 
@@ -417,7 +417,7 @@ async def index_content(content: CoalitionContentCreate, db: Session = Depends(g
         logger.error("index_content_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to index content: {str(e)}",
+            detail="Failed to index content",
         )
 
 
@@ -493,7 +493,7 @@ async def get_content_pool(
         logger.error("get_content_pool_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get content pool: {str(e)}",
+            detail="Failed to get content pool",
         )
 
 
@@ -553,7 +553,7 @@ async def get_content_pool_stats(db: Session = Depends(get_db)):
         logger.error("get_content_pool_stats_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get content pool stats: {str(e)}",
+            detail="Failed to get content pool stats",
         )
 
 
@@ -598,15 +598,16 @@ async def calculate_distribution(
             },
         )
     except ValueError as e:
+        logger.warning("calculate_distribution_validation_error", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Invalid distribution parameters",
         )
     except Exception as e:
         logger.error("calculate_distribution_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to calculate distribution: {str(e)}",
+            detail="Failed to calculate distribution",
         )
 
 
@@ -660,7 +661,7 @@ async def list_distributions(
         logger.error("list_distributions_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list distributions: {str(e)}",
+            detail="Failed to list distributions",
         )
 
 
@@ -694,7 +695,7 @@ async def mark_distribution_paid(distribution_id: UUID, payment_method: str = "s
         logger.error("mark_distribution_paid_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to mark distribution as paid: {str(e)}",
+            detail="Failed to mark distribution as paid",
         )
 
 
@@ -741,7 +742,7 @@ async def get_distribution_payouts(distribution_id: UUID, db: Session = Depends(
         logger.error("get_distribution_payouts_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get distribution payouts: {str(e)}",
+            detail="Failed to get distribution payouts",
         )
 
 
@@ -779,7 +780,7 @@ async def get_pending_payouts(min_amount: Optional[float] = None, db: Session = 
         logger.error("get_pending_payouts_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get pending payouts: {str(e)}",
+            detail="Failed to get pending payouts",
         )
 
 
@@ -828,7 +829,7 @@ async def update_licensing_agreement(agreement_id: UUID, update: LicensingAgreem
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update agreement: {str(e)}",
+            detail="Failed to update agreement",
         )
 
 
@@ -894,7 +895,7 @@ async def activate_licensing_agreement(agreement_id: UUID, db: Session = Depends
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to activate agreement: {str(e)}",
+            detail="Failed to activate agreement",
         )
 
 
@@ -957,5 +958,5 @@ async def get_eligible_content(agreement_id: UUID, limit: int = 100, offset: int
         logger.error("get_eligible_content_failed", error=str(e))
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get eligible content: {str(e)}",
+            detail="Failed to get eligible content",
         )

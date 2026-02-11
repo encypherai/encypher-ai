@@ -125,7 +125,8 @@ async def list_documents(
 
     if search:
         where_clauses.append("title ILIKE :search")
-        params["search"] = f"%{search}%"
+        escaped = search.replace("%", r"\%").replace("_", r"\_")
+        params["search"] = f"%{escaped}%"
 
     _ = status_filter
 

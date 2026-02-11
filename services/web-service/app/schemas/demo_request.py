@@ -1,11 +1,11 @@
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
 
-class DemoRequestStatus(str, Enum):
+class DemoRequestStatus(StrEnum):
     NEW = "new"
     CONTACTED = "contacted"
     SCHEDULED = "scheduled"

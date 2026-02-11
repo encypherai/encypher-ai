@@ -84,7 +84,7 @@ def extract_uuid_from_vs256_signature(sig: str) -> Optional[UUID]:
 
     # Try RS decode first (works for vs256_rs_embedding, harmless for plain)
     try:
-        from reedsolo import RSCodec, ReedSolomonError
+        from reedsolo import RSCodec
 
         rs = RSCodec(_RS_NSYM)
         decoded = bytes(rs.decode(payload_bytes)[0])

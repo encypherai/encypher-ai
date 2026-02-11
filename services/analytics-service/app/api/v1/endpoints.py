@@ -19,7 +19,6 @@ from ...models.schemas import (
     AnalyticsReport,
     PageviewEvent,
     ActivityItem,
-    DiscoveryEvent,
     DiscoveryBatchRequest,
     DiscoveryResponse,
     DiscoveryStats,
@@ -88,7 +87,7 @@ async def record_metric(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to record metric: {str(e)}",
+            detail="Failed to record metric",
         )
 
 
@@ -318,7 +317,7 @@ async def record_pageview(event: PageviewEvent, request: Request, db: Session = 
         )
         return {"success": True, "data": {"message": "accepted"}, "error": None}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to record pageview: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to record pageview")
 
 
 @router.get("/health")
@@ -439,7 +438,7 @@ async def record_discovery_events(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to record discovery events: {str(e)}"
+            detail="Failed to record discovery events"
         )
 
 

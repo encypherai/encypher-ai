@@ -2,12 +2,15 @@
 Authentication endpoints for the Encypher Dashboard API.
 """
 
+import logging
 import secrets
 import string
 from datetime import datetime, timedelta
 from typing import Any, Dict
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -239,8 +242,9 @@ async def refresh_access_token(token_data: TokenRefresh, db: AsyncSession = Depe
         return {"access_token": create_access_token(user.id, expires_delta=access_token_expires), "token_type": "bearer"}
 
     except Exception as e:
+        logger.exception("Token refresh failed")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Could not validate credentials: {str(e)}",
+            detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )

@@ -1,6 +1,9 @@
+import logging
 from typing import Any, List
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_active_user
@@ -85,7 +88,8 @@ async def import_audit_logs_from_csv_file(
         return {"message": f"Successfully imported {imported_count} audit logs."}
     except Exception as e:
         # Basic error handling, consider more specific exceptions
-        raise HTTPException(status_code=500, detail=f"Failed to import CSV: {str(e)}")
+        logger.exception("Failed to import CSV")
+        raise HTTPException(status_code=500, detail="Failed to import CSV")
     finally:
         # Clean up the temporary file
         import os

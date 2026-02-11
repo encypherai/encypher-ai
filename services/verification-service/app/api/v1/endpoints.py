@@ -1015,7 +1015,7 @@ async def verify_signature(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Verification failed: {str(e)}",
+            detail="Verification failed",
         )
 
 
@@ -1057,7 +1057,7 @@ async def verify_document(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Verification failed: {str(e)}",
+            detail="Verification failed",
         )
 
 

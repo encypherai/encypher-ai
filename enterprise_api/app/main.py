@@ -38,6 +38,7 @@ from app.routers import (
     licensing,
     lookup,
     onboarding,
+    organizations_proxy,
     signing,
     status as status_router,
     streaming,
@@ -697,6 +698,7 @@ app.include_router(coalition.router, prefix="/api/v1", tags=["Coalition"])
 app.include_router(status_router.router, prefix="/api/v1", tags=["Status & Revocation"])
 app.include_router(batch.router)
 app.include_router(tools.router, prefix="/api/v1", tags=["Public Tools"])
+app.include_router(organizations_proxy.router, prefix="/api/v1", tags=["Organizations Proxy"])
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")

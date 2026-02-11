@@ -130,10 +130,9 @@ async def verify_advanced(
     db: AsyncSession = Depends(get_db),
     content_db: AsyncSession = Depends(get_content_db),
 ):
-    # TEAM_145: Consolidated to free/enterprise/strategic_partner
+    # TEAM_166: All verification features available to free tier.
+    # Only cross-org search (scope="all") and fuzzy fingerprint require enterprise.
     tier = (organization.get("tier") or "free").lower().replace("-", "_")
-    tier_levels = {"free": 0, "starter": 0, "professional": 0, "business": 0, "enterprise": 1, "strategic_partner": 2, "demo": 2}
-    org_tier_level = tier_levels.get(tier, 0)
     if not organization.get("can_verify", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

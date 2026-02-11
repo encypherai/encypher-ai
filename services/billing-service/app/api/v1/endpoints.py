@@ -1,5 +1,9 @@
 """API endpoints for Billing Service v1"""
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -127,7 +131,7 @@ async def create_subscription(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Request validation failed",
         )
 
 
@@ -205,7 +209,7 @@ async def create_trial_subscription_internal(
             trial_months=payload.trial_months,
         )
     except ValueError as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request validation failed")
 
     return InternalTrialResponse(success=True, data=_build_subscription_response(subscription))
 
@@ -274,7 +278,7 @@ async def create_checkout_session(
         )
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create checkout session: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create checkout session")
 
 
 @router.get("/portal", response_model=PortalResponse)
@@ -312,7 +316,7 @@ async def get_billing_portal(
         return PortalResponse(portal_url=session.url)
 
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to create billing portal session: {str(e)}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create billing portal session")
 
 
 @router.post("/upgrade", response_model=UpgradeResponse)

@@ -4,10 +4,13 @@ Licensing Agreement Management API Router.
 Endpoints for managing licensing agreements, content access, and revenue distribution.
 """
 
+import logging
 from typing import List, Optional, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_content_db, get_db
@@ -65,7 +68,8 @@ async def create_agreement(agreement_data: LicensingAgreementCreate, db: AsyncSe
             created_at=agreement.created_at,
         )
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.exception("Failed to create licensing agreement")
+        raise HTTPException(status_code=400, detail="Failed to create licensing agreement")
 
 
 @router.get("/agreements", response_model=List[LicensingAgreementResponse])
@@ -264,9 +268,11 @@ async def create_revenue_distribution(distribution_data: RevenueDistributionCrea
             ],
         )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.exception("Invalid revenue distribution request")
+        raise HTTPException(status_code=400, detail="Invalid distribution parameters")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to create revenue distribution")
+        raise HTTPException(status_code=500, detail="Failed to create revenue distribution")
 
 
 @router.get("/distributions", response_model=List[RevenueDistributionResponse])
@@ -342,6 +348,8 @@ async def process_payouts(payout_data: PayoutCreate, db: AsyncSession = Depends(
 
         return PayoutResponse(**result)
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.exception("Invalid payout request")
+        raise HTTPException(status_code=400, detail="Invalid payout parameters")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception("Failed to process payouts")
+        raise HTTPException(status_code=500, detail="Failed to process payouts")

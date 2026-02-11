@@ -285,7 +285,7 @@ async def verify_embedding(
             from sqlalchemy import text as sql_text
 
             org_id = reference.organization_id
-            cert_result = await db.execute(
+            cert_result = await core_db.execute(
                 sql_text(
                     """
                     SELECT name, certificate_pem, certificate_chain,

@@ -204,7 +204,7 @@ async def generate_key(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to generate key: {str(e)}",
+            detail="Failed to generate key",
         )
 
 

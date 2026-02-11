@@ -2,10 +2,13 @@
 API endpoints for audit logs.
 """
 
+import logging
 from datetime import datetime
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
+
+logger = logging.getLogger(__name__)
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -137,7 +140,8 @@ async def import_audit_logs_from_csv_file(
         imported_count = await import_audit_log_from_csv(db=db, csv_file_path=temp_file_path)
         return {"message": f"Successfully imported {imported_count} audit logs."}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to import CSV: {str(e)}")
+        logger.exception("Failed to import CSV")
+        raise HTTPException(status_code=500, detail="Failed to import CSV")
     finally:
         import os
 

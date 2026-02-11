@@ -34,22 +34,33 @@ async def lifespan(app: FastAPI):
     if admin_email and admin_password:
         async with AsyncSessionLocal() as db:
             try:
-                # Check if user exists by email or username
                 user_by_email = await get_user_by_email(db=db, email=admin_email)
-                user_by_username = await get_user_by_username(db=db, username="admin")
 
-                if not user_by_email and not user_by_username:
+                if user_by_email:
+                    # User exists — ensure superuser flag is set
+                    if not user_by_email.is_superuser:
+                        user_by_email.is_superuser = True
+                        await db.commit()
+                        await db.refresh(user_by_email)
+                        print(f"Promoted existing user to superuser: {user_by_email.email}")
+                    else:
+                        print(f"Admin user already exists with superuser: {user_by_email.email}")
+                else:
+                    # User doesn't exist — create with username derived from email
+                    admin_username = admin_email.split("@")[0].replace(".", "_")
+                    # Avoid collision with existing username
+                    existing = await get_user_by_username(db=db, username=admin_username)
+                    if existing:
+                        admin_username = f"{admin_username}_admin"
                     await create_user(
                         db=db,
-                        username="admin",
+                        username=admin_username,
                         email=admin_email,
                         password=admin_password,
                         full_name="System Administrator",
                         is_superuser=True,
                     )
-                    print(f"Created initial admin user: {admin_email}")
-                else:
-                    print("Initial admin user already exists, skipping creation")
+                    print(f"Created initial admin user: {admin_email} (username: {admin_username})")
             except Exception as e:
                 print(f"Error during initial admin user creation: {e}")
     yield

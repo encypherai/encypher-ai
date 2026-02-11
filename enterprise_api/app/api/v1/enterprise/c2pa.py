@@ -123,7 +123,8 @@ async def create_schema(
     except HTTPException:
         raise
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        logger.warning(f"Schema validation error: {e}")
+        raise HTTPException(status_code=400, detail="Invalid schema definition")
     except Exception as e:
         logger.error(f"Error creating schema: {e}")
         raise HTTPException(status_code=500, detail="Failed to create schema")
@@ -202,7 +203,8 @@ async def update_schema(
             validator.register_schema(cast(str, schema.label), schema_update.json_schema)
             schema_any.json_schema = schema_update.json_schema
         except ValueError as e:
-            raise HTTPException(status_code=400, detail=str(e))
+            logger.warning(f"Schema update validation error: {e}")
+            raise HTTPException(status_code=400, detail="Invalid schema definition")
 
     if schema_update.description is not None:
         schema_any.description = schema_update.description

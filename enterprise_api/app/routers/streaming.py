@@ -183,7 +183,7 @@ async def create_streaming_session(
         return result
     except Exception as e:
         logger.error(f"Failed to create streaming session: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to create streaming session")
 
 
 @router.post("/sign/stream/sessions/{session_id}/close")
@@ -219,7 +219,7 @@ async def close_streaming_session(
         raise
     except Exception as e:
         logger.error(f"Failed to close streaming session: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to close streaming session")
 
 
 @router.websocket("/sign/stream")

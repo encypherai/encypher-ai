@@ -121,7 +121,7 @@ async def sign_document(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to sign document: {str(e)}",
+            detail="Failed to sign document",
         )
 
 
@@ -164,7 +164,7 @@ async def embed_metadata(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to embed metadata: {str(e)}",
+            detail="Failed to embed metadata",
         )
 
 

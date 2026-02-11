@@ -3,9 +3,21 @@ Configuration settings for the Encypher Dashboard Backend.
 """
 
 import os
+import secrets
 from typing import Optional
 
 from pydantic import BaseModel
+
+
+def _get_secret_key() -> str:
+    """Return SECRET_KEY from env or generate a random ephemeral key for dev."""
+    key = os.getenv("SECRET_KEY", "")
+    if key:
+        return key
+    env = os.getenv("ENVIRONMENT", "development")
+    if env == "production":
+        raise RuntimeError("SECRET_KEY environment variable must be set in production")
+    return secrets.token_urlsafe(48)
 
 
 class Settings(BaseModel):
@@ -19,7 +31,7 @@ class Settings(BaseModel):
     FRONTEND_URL: str = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     # Security
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "supersecretkey")
+    SECRET_KEY: str = _get_secret_key()
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 

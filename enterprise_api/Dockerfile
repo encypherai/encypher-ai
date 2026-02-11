@@ -9,6 +9,7 @@ WORKDIR /app
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential libpq-dev && \
     rm -rf /var/lib/apt/lists/*
+RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 -m appuser
 
 # Copy project metadata
 COPY enterprise_api/pyproject.toml enterprise_api/pyproject.toml
@@ -39,6 +40,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends curl dos2unix &
     dos2unix scripts/docker-entrypoint.sh && \
     chmod +x scripts/docker-entrypoint.sh
 
+USER appuser
 EXPOSE 8000
 
 # Use entrypoint script for database initialization

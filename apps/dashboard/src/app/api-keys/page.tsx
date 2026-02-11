@@ -438,7 +438,7 @@ export default function ApiKeysPage() {
               </CardHeader>
               <CardContent className="flex flex-col gap-4">
                 <div className="flex items-center gap-3">
-                  <code className="flex-1 bg-white px-4 py-3 rounded-lg border-2 border-border font-mono text-sm select-all">
+                  <code className="flex-1 bg-white dark:bg-slate-800 px-4 py-3 rounded-lg border-2 border-border font-mono text-sm text-gray-900 dark:text-gray-100 select-all">
                     {generatedKey}
                   </code>
                   <Button variant="primary" size="sm" onClick={() => handleCopyKey(generatedKey)}>

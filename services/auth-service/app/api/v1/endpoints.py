@@ -125,7 +125,7 @@ async def signup(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Request validation failed",
         )
 
 
@@ -640,7 +640,7 @@ async def request_api_access(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Request validation failed",
         )
 
 
@@ -692,7 +692,7 @@ async def get_api_access_status(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail="Request validation failed",
         )
 
 
@@ -1090,7 +1090,7 @@ async def approve_api_access(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Request validation failed",
         )
 
 
@@ -1144,7 +1144,7 @@ async def deny_api_access(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Request validation failed",
         )
 
 
@@ -1255,7 +1255,7 @@ async def set_api_access_status(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Request validation failed",
         )
 
 

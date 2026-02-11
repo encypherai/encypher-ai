@@ -21,9 +21,12 @@ COPY alembic.ini ./
 COPY alembic ./alembic
 COPY app ./app
 
+RUN groupadd --gid 1000 appuser && useradd --uid 1000 --gid 1000 -m appuser
+
 # Install dependencies using UV
 RUN uv pip install --system .
 
+USER appuser
 # Expose port (Railway provides PORT env var)
 EXPOSE ${PORT:-8000}
 
