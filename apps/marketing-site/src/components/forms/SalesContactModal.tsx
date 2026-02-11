@@ -47,7 +47,7 @@ const contextConfig = {
     title: 'Request a Private Demo',
     subtitle: 'Discover how Encypher can help you protect and monetize your content.',
     emailPlaceholder: 'jane.smith@publisher.com',
-    orgPlaceholder: 'The New York Times',
+    orgPlaceholder: 'The Encypher Times',
     messagePlaceholder: 'Tell us about your content protection challenges...',
     roles: [
       { value: 'c-suite', label: 'C-Suite Executive' },

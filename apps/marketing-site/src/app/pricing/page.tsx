@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 // Tabs import removed - using custom styled buttons for better active state visibility
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, Check, Newspaper, BarChart3, Shield, FileText, Award } from 'lucide-react';
+import { ArrowRight, Check, Newspaper, BarChart3, Shield, Award } from 'lucide-react';
 import Link from 'next/link';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import AISummary from '@/components/seo/AISummary';
@@ -13,16 +13,10 @@ import StandardsCompliance from '@/components/solutions/standards-compliance';
 import Image from 'next/image';
 import {
   FREE_TIER,
-  ADD_ONS,
-  BUNDLES,
   ENTERPRISE_TIER,
-  formatAddOnPrice,
-  formatBundlePrice,
-  type AddOnConfig,
 } from '@/lib/pricing-config';
 import {
   COALITION_VALUE_PROP,
-  LICENSING_TRACKS,
 } from '@/lib/pricing-config/coalition';
 
 // Dashboard URL for sign-up flows
@@ -55,10 +49,6 @@ export default function PricingPage() {
   const [showPublisherModal, setShowPublisherModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
-  // Categorize add-ons for display
-  const enforcementAddOns = ADD_ONS.filter(a => a.category === 'enforcement');
-  const infrastructureAddOns = ADD_ONS.filter(a => a.category === 'infrastructure');
-  const operationsAddOns = ADD_ONS.filter(a => a.category === 'operations');
 
   return (
     <div className="bg-background text-foreground">
@@ -207,48 +197,72 @@ export default function PricingPage() {
           <div className="max-w-4xl mx-auto mb-16">
             <div className="bg-card border-2 border-primary/30 rounded-xl p-8 shadow-lg">
               <div className="text-center mb-6">
-                <Badge className="mb-3 bg-primary">Free Forever</Badge>
+                <Badge className="mb-3 bg-primary">Free Tier</Badge>
                 <h2 className="text-3xl font-bold mb-2">Full Signing Infrastructure — $0</h2>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
                   {COALITION_VALUE_PROP.subheadline}
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-6 mb-8">
-                <div>
-                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Signing & Provenance</h4>
-                  <ul className="space-y-2">
-                    {FREE_TIER.signingFeatures.map((f: string) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
+              {/* Business-value bullets — what it does for you, not what it is */}
+              <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 max-w-2xl mx-auto mb-6">
+                {[
+                  'Prove ownership of every piece of content you publish',
+                  'Detect when your content is copied, scraped, or modified',
+                  'Invisible signatures that survive copy-paste and redistribution',
+                  'Anyone can verify your content is authentic — no login required',
+                  'Join a coalition that licenses your content to AI companies — bringing you revenue',
+                  'WordPress integration — protect content the moment you hit publish',
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Collapsible full feature list for those who want details */}
+              <details className="group mb-6">
+                <summary className="flex items-center justify-center gap-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors select-none">
+                  <span>See all free features</span>
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+                </summary>
+                <div className="grid md:grid-cols-3 gap-6 mt-6 pt-6 border-t border-border">
+                  <div>
+                    <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Signing & Provenance</h4>
+                    <ul className="space-y-2">
+                      {FREE_TIER.signingFeatures.map((f: string) => (
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Distribution & Tools</h4>
+                    <ul className="space-y-2">
+                      {FREE_TIER.distributionFeatures.map((f: string) => (
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Coalition Membership</h4>
+                    <ul className="space-y-2">
+                      {FREE_TIER.coalitionFeatures.map((f: string) => (
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Distribution & Tools</h4>
-                  <ul className="space-y-2">
-                    {FREE_TIER.distributionFeatures.map((f: string) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Coalition Membership</h4>
-                  <ul className="space-y-2">
-                    {FREE_TIER.coalitionFeatures.map((f: string) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              </details>
 
               <div className="bg-muted/50 rounded-lg p-4 mb-6 text-center">
                 <p className="text-sm">
@@ -272,173 +286,6 @@ export default function PricingPage() {
             </div>
           </div>
 
-          {/* ===== TWO-TRACK LICENSING MODEL ===== */}
-          <div className="max-w-5xl mx-auto mb-16">
-            <h3 className="text-2xl font-bold text-center mb-2">Two-Track Licensing Revenue</h3>
-            <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Same splits whether you&apos;re on Free or Enterprise. We only win when you win.
-            </p>
-            <div className="grid md:grid-cols-2 gap-6">
-              {Object.entries(LICENSING_TRACKS).map(([key, track]) => (
-                <div key={key} className="bg-card border border-border rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="text-2xl font-bold text-primary">{track.split}</div>
-                    <div>
-                      <h4 className="font-bold">{track.name}</h4>
-                      <p className="text-xs text-muted-foreground">Publisher / Encypher</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{track.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ===== ENFORCEMENT ADD-ONS ===== */}
-          <div className="max-w-6xl mx-auto mb-16">
-            <h3 className="text-2xl font-bold text-center mb-2">Enforcement Tools</h3>
-            <p className="text-center text-muted-foreground mb-8">
-              Self-service. No sales call required. Add when you&apos;re ready to license.
-            </p>
-
-            {/* Enforcement Pipeline Visualization */}
-            <div className="flex flex-wrap justify-center items-center gap-2 mb-8 text-sm">
-              {['Sign', 'Detect', 'Notify', 'Prove', 'License'].map((step, i) => (
-                <div key={step} className="flex items-center gap-2">
-                  <span className={`px-3 py-1.5 rounded-full font-medium ${i === 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
-                    {step}
-                  </span>
-                  {i < 4 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid md:grid-cols-3 gap-6 mb-8">
-              {enforcementAddOns.map((addOn: AddOnConfig) => (
-                <div key={addOn.id} className={`bg-card border border-border rounded-lg p-6 ${addOn.comingSoon ? 'opacity-80' : ''}`}>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-bold text-lg">{addOn.name}</h4>
-                    {addOn.comingSoon && <Badge variant="outline" className="text-xs">Coming Soon</Badge>}
-                  </div>
-                  {!addOn.comingSoon && (
-                    <div className="text-2xl font-bold text-primary mb-2">{formatAddOnPrice(addOn)}</div>
-                  )}
-                  <p className="text-sm text-muted-foreground mb-4">{addOn.description}</p>
-                  {addOn.includes && (
-                    <ul className="space-y-1.5 mb-4">
-                      {addOn.includes.slice(0, 4).map((item: string) => (
-                        <li key={item} className="flex items-start gap-2">
-                          <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="text-xs">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {addOn.replaces && (
-                    <p className="text-xs text-muted-foreground italic border-t border-border pt-2">
-                      Replaces: {addOn.replaces}
-                    </p>
-                  )}
-                  {!addOn.comingSoon && addOn.volumePricing && addOn.volumePricing.length > 1 && (
-                    <div className="mt-3 pt-3 border-t border-border">
-                      <p className="text-xs font-medium mb-1">Volume pricing:</p>
-                      {addOn.volumePricing.slice(1).map((vp) => (
-                        <p key={String(vp.quantity)} className="text-xs text-muted-foreground">
-                          {vp.quantity}: ${vp.priceEach}{addOn.unitLabel} {vp.savings && <span className="text-primary font-medium">({vp.savings})</span>}
-                        </p>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ===== BUNDLES ===== */}
-          <div className="max-w-5xl mx-auto mb-16">
-            <h3 className="text-2xl font-bold text-center mb-2">Bundles — Save Up to 57%</h3>
-            <p className="text-center text-muted-foreground mb-8">
-              Pre-packaged combinations for common workflows.
-            </p>
-            <div className="grid md:grid-cols-3 gap-6">
-              {BUNDLES.map((bundle) => (
-                <div key={bundle.id} className={`bg-card rounded-lg p-6 ${bundle.comingSoon ? 'opacity-80 border border-border' : bundle.id === 'enforcement-bundle' ? 'border-2 border-primary/50 shadow-lg relative' : 'border border-border'}`}>
-                  {!bundle.comingSoon && bundle.id === 'enforcement-bundle' && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-primary">Most Popular</Badge>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-bold text-lg">{bundle.name}</h4>
-                    {bundle.comingSoon && <Badge variant="outline" className="text-xs">Coming Soon</Badge>}
-                  </div>
-                  {!bundle.comingSoon ? (
-                    <div className="flex items-baseline gap-2 mb-2">
-                      <span className="text-2xl font-bold text-primary">{formatBundlePrice(bundle)}</span>
-                      <Badge variant="outline" className="text-xs">Save {bundle.savings}</Badge>
-                    </div>
-                  ) : (
-                    <div className="mb-2" />
-                  )}
-                  <p className="text-sm text-muted-foreground mb-4">{bundle.description}</p>
-                  <ul className="space-y-2">
-                    {bundle.includes.map((item: string) => (
-                      <li key={item} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* ===== INFRASTRUCTURE & OPERATIONS ADD-ONS ===== */}
-          <div className="max-w-5xl mx-auto mb-16">
-            <h3 className="text-2xl font-bold text-center mb-8">Infrastructure & Operations</h3>
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h4 className="font-bold text-sm uppercase text-muted-foreground mb-4">Infrastructure</h4>
-                <div className="space-y-3">
-                  {infrastructureAddOns.map((addOn: AddOnConfig) => (
-                    <div key={addOn.id} className={`bg-card border border-border rounded-lg p-4 flex justify-between items-start ${addOn.comingSoon ? 'opacity-80' : ''}`}>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h5 className="font-medium text-sm">{addOn.name}</h5>
-                          {addOn.comingSoon && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Coming Soon</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{addOn.description}</p>
-                      </div>
-                      {!addOn.comingSoon && (
-                        <span className="text-sm font-bold text-primary ml-4 whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h4 className="font-bold text-sm uppercase text-muted-foreground mb-4">Operations</h4>
-                <div className="space-y-3">
-                  {operationsAddOns.map((addOn: AddOnConfig) => (
-                    <div key={addOn.id} className={`bg-card border border-border rounded-lg p-4 flex justify-between items-start ${addOn.comingSoon ? 'opacity-80' : ''}`}>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <h5 className="font-medium text-sm">{addOn.name}</h5>
-                          {addOn.comingSoon && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Coming Soon</Badge>}
-                        </div>
-                        <p className="text-xs text-muted-foreground">{addOn.description}</p>
-                      </div>
-                      {!addOn.comingSoon && (
-                        <span className="text-sm font-bold text-primary ml-4 whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
           {/* ===== ENTERPRISE TIER ===== */}
           <div className="max-w-4xl mx-auto mb-16">
             <div className="bg-muted/30 border-2 border-border rounded-xl p-8">
@@ -450,34 +297,58 @@ export default function PricingPage() {
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-6 mb-8">
-                <div>
-                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Everything Unlimited</h4>
-                  <ul className="space-y-2">
-                    {ENTERPRISE_TIER.features.slice(0, 7).map((feature: string) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
+              {/* Business-value bullets — why enterprise matters to a decision-maker */}
+              <ul className="grid sm:grid-cols-2 gap-x-8 gap-y-3 max-w-2xl mx-auto mb-6">
+                {[
+                  'Unlimited signing — no caps on content volume or API calls',
+                  'Real-time AI output monitoring — see exactly where your content appears',
+                  'Enforcement tools — formal notices and court-ready evidence packages',
+                  'Sign as your brand — custom identity and white-label verification',
+                  'Streaming LLM signing — protect AI-generated content in real time',
+                  'Dedicated SLA, SSO, and a named account manager',
+                ].map((f) => (
+                  <li key={f} className="flex items-start gap-2">
+                    <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <span className="text-sm">{f}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {/* Collapsible full feature list for those who want details */}
+              <details className="group mb-8">
+                <summary className="flex items-center justify-center gap-2 cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground transition-colors select-none">
+                  <span>See all enterprise features</span>
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-open:rotate-90" />
+                </summary>
+                <div className="grid md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-border">
+                  <div>
+                    <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Everything Unlimited</h4>
+                    <ul className="space-y-2">
+                      {ENTERPRISE_TIER.features.map((feature: string) => (
+                        <li key={feature} className="flex items-start gap-2">
+                          <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Exclusive Capabilities</h4>
+                    <ul className="space-y-2">
+                      {ENTERPRISE_TIER.exclusiveCapabilities.map((cap: string) => (
+                        <li key={cap} className="flex items-start gap-2">
+                          <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{cap}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Exclusive Capabilities</h4>
-                  <ul className="space-y-2">
-                    {ENTERPRISE_TIER.exclusiveCapabilities.slice(0, 7).map((cap: string) => (
-                      <li key={cap} className="flex items-start gap-2">
-                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{cap}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
+              </details>
 
               <div className="bg-primary/5 rounded-lg p-4 mb-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Same <strong>60/40</strong> coalition and <strong>80/20</strong> self-service licensing splits. We only win when you win.
+                  Any resulting licensing revenue is shared between the coalition and the publisher, with the majority going to the content creator. We only win when you win.
                 </p>
               </div>
 

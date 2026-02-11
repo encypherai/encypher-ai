@@ -98,7 +98,7 @@ export default function Section6Coalition({ isActive, onComplete, onAnimationSta
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span>Same 60/40 and 80/20 licensing splits as all publishers</span>
+                <span>Same licensing revenue splits as all publishers — majority to content creator</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>

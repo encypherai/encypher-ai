@@ -77,16 +77,6 @@ CREATE INDEX IF NOT EXISTS idx_webhook_deliveries_next_retry ON webhook_deliveri
     WHERE status = 'pending' AND next_retry_at IS NOT NULL;
 
 -- ============================================================================
--- Add columns to documents table for soft delete
--- ============================================================================
-
-ALTER TABLE documents ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT FALSE;
-ALTER TABLE documents ADD COLUMN IF NOT EXISTS deleted_at TIMESTAMP WITH TIME ZONE;
-
--- Index for filtering out deleted documents
-CREATE INDEX IF NOT EXISTS idx_documents_deleted ON documents(deleted) WHERE deleted = FALSE;
-
--- ============================================================================
 -- Add columns to api_keys table for key management
 -- ============================================================================
 

@@ -251,8 +251,19 @@ class EmbeddingService:
         # Step 2: Create minimal embeddings for each segment FIRST
         # Then add ONE C2PA wrapper at the end
         # NOTE: Skip this for zw_embedding/vs256_embedding modes (they handle embeddings in their own branches)
+        # TEAM_088: Skip per-segment basic embeddings for document-level signing
+        # (single segment = entire document). The C2PA wrapper already covers the
+        # whole document, and the basic embedding's default WHITESPACE target
+        # inserts invisible characters mid-text instead of at the end.
+        is_document_level = len(segments) == 1
         embedded_segments = []
-        if manifest_mode not in ("zw_embedding", "vs256_embedding"):
+        if manifest_mode in ("zw_embedding", "vs256_embedding"):
+            # For zw_embedding, use original segments (embeddings added in their own branches)
+            embedded_segments = segments
+        elif is_document_level:
+            # Document-level: skip per-segment basic embedding; C2PA wrapper suffices
+            embedded_segments = list(segments)
+        else:
             for idx, (segment, minimal_metadata) in enumerate(segment_embeddings):
                 try:
                     # Add minimal invisible embedding to this segment
@@ -269,12 +280,14 @@ class EmbeddingService:
                 except Exception as e:
                     logger.warning(f"Failed to add minimal embedding to segment {idx}: {e}, using plain text")
                     embedded_segments.append(segment)
-        else:
-            # For zw_embedding, use original segments (embeddings added in zw_embedding branch)
-            embedded_segments = segments
 
-        # Join embedded segments with space separator
-        full_document = " ".join(embedded_segments)
+        # TEAM_088: For document-level signing, preserve original text structure
+        # (newlines, paragraph breaks) instead of joining with spaces.
+        if is_document_level:
+            full_document = embedded_segments[0]
+        else:
+            # Join embedded segments with space separator
+            full_document = " ".join(embedded_segments)
 
         # Create document-level metadata
         document_metadata: Dict[str, Any] = {

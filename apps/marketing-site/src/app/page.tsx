@@ -133,8 +133,8 @@ export default function HomePage() {
               <p className="text-sm text-muted-foreground mt-1">SDKs (Python, TS, Go, Rust)</p>
             </div>
             <div>
-              <p className="text-3xl md:text-4xl font-bold text-primary">60/40</p>
-              <p className="text-sm text-muted-foreground mt-1">Coalition Revenue Share</p>
+              <p className="text-3xl md:text-4xl font-bold text-primary">&infin;</p>
+              <p className="text-sm text-muted-foreground mt-1">Free Verifications</p>
             </div>
           </div>
         </div>
