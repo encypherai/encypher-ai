@@ -44,9 +44,18 @@ jobs:
           severity: 'CRITICAL,HIGH'
           ignore-unfixed: true
       
+      - name: Display Trivy scan results
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'encypherai-commercial-auth-service'
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          ignore-unfixed: true
+
       - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
+        continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
 
