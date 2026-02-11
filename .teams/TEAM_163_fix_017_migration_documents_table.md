@@ -1,15 +1,19 @@
-# TEAM_163 — Fix 017 Migration: documents table does not exist
+# TEAM_163 — Fix enterprise-api migrations: cross-DB references
 
 ## Summary
-Fixed startup crash in enterprise-api when running against a fresh DB. Migration `017_add_webhooks.sql` contained `ALTER TABLE documents` statements, but the `documents` table lives in the **content DB**, not the core DB that this migration runs against.
+Fixed startup crashes in enterprise-api when running against a fresh/copied DB. Multiple migrations referenced content-DB tables from core-DB migrations.
 
-## Root Cause
-Lines 79-87 of `enterprise_api/migrations/017_add_webhooks.sql` attempted to add `deleted` and `deleted_at` columns plus an index to the `documents` table. This table is defined in `services/migrations/content_db/001_content_schema.sql`, not in the core DB.
+## Fixes Applied
 
-## Fix
-Removed the three offending statements (2 ALTER TABLE + 1 CREATE INDEX) from the migration. Verified:
-- The `deleted`/`deleted_at` columns are not referenced anywhere in the Python codebase
-- No other enterprise_api migrations have the same issue
-- The remaining migration statements (webhooks tables, api_keys columns) are valid
+### 1. `017_add_webhooks.sql` — `documents` table does not exist
+- **Root cause:** Lines 79-87 had `ALTER TABLE documents` + `CREATE INDEX ON documents`. The `documents` table lives in the content DB.
+- **Fix:** Removed the 3 statements. `deleted`/`deleted_at` columns are unused in Python code.
+
+### 2. `021_add_fuzzy_fingerprints.sql` — `merkle_roots` table does not exist
+- **Root cause:** Line 26 had `merkle_root_id UUID REFERENCES merkle_roots(id) ON DELETE SET NULL`. The `merkle_roots` table lives in the content DB.
+- **Fix:** Changed to `merkle_root_id UUID` (plain column, no FK). The column is used in code but the FK constraint is invalid cross-DB.
+
+### Audit
+Verified no other enterprise_api migrations have cross-DB FK references.
 
 ## Status: COMPLETE

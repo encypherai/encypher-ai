@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS fuzzy_fingerprints (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     organization_id VARCHAR(64) NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
     document_id VARCHAR(64) NOT NULL,
-    merkle_root_id UUID REFERENCES merkle_roots(id) ON DELETE SET NULL,
+    merkle_root_id UUID,
     segmentation_level VARCHAR(20) NOT NULL,
     segment_index INTEGER,
     leaf_hash VARCHAR(64),
