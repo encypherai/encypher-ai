@@ -1,0 +1,41 @@
+Proprietary Software License
+
+Copyright (c) 2025-2026 Encypher Corporation All rights reserved.
+
+This software and associated documentation files (the "Software") are the
+proprietary and confidential property of Encypher Corporation The Software is
+licensed, not sold, to you under the terms of a separate agreement between
+you and Encypher Corporation
+
+PERMITTED USE:
+You may use the Software solely in connection with your authorized use of
+the Encypher API and in accordance with the terms of your API license
+agreement with Encypher Corporation
+
+RESTRICTIONS:
+You may NOT, without the prior written consent of Encypher Corporation:
+  - Copy, modify, or create derivative works of the Software
+  - Distribute, sublicense, lease, rent, or lend the Software to any
+    third party
+  - Reverse engineer, decompile, or disassemble the Software
+  - Remove or alter any proprietary notices, labels, or marks on the
+    Software
+  - Use the Software for any purpose other than as expressly permitted
+    by your API license agreement
+
+DISCLAIMER:
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ENCYPHER Corporation BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF
+OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR PERFORMANCE OF THE
+SOFTWARE.
+
+TERMINATION:
+This license is effective until terminated. It will terminate automatically
+if you fail to comply with any term of this license or your API license
+agreement. Upon termination, you must destroy all copies of the Software
+in your possession.
+
+For licensing inquiries: legal@encypherai.com
