@@ -69,6 +69,75 @@ class ApiAccessService:
     def __init__(self, db: Session):
         self.db = db
 
+    async def set_api_access_status(
+        self, user_id: str, new_status: str, admin_user_id: str, reason: Optional[str] = None
+    ) -> ApiAccessStatusResponse:
+        """
+        TEAM_164: Admin directly sets a user's API access status.
+
+        Allows admins to set any status: not_requested, pending, approved, denied, suspended.
+        This bypasses the normal request/approve flow for admin overrides.
+
+        Args:
+            user_id: The user to update
+            new_status: The new API access status value
+            admin_user_id: The admin making the change
+            reason: Optional reason for the change
+
+        Returns:
+            ApiAccessStatusResponse with the new status
+
+        Raises:
+            ValueError: If user not found or invalid status
+        """
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise ValueError("User not found")
+
+        # Validate the status value
+        try:
+            status_enum = ApiAccessStatus(new_status)
+        except ValueError:
+            valid = [s.value for s in ApiAccessStatus]
+            raise ValueError(f"Invalid API access status: {new_status}. Must be one of: {valid}")
+
+        previous_status = user.api_access_status
+        user.api_access_status = status_enum.value
+        user.api_access_decided_at = datetime.now(timezone.utc)
+        user.api_access_decided_by = admin_user_id
+
+        if new_status == ApiAccessStatus.SUSPENDED.value:
+            user.api_access_denial_reason = reason or "API access suspended by administrator"
+        elif new_status == ApiAccessStatus.DENIED.value:
+            user.api_access_denial_reason = reason
+        elif new_status in (ApiAccessStatus.APPROVED.value, ApiAccessStatus.NOT_REQUESTED.value):
+            user.api_access_denial_reason = None
+
+        self.db.commit()
+
+        logger.info(
+            f"TEAM_164: Admin {admin_user_id} set API access status for user {user_id}: "
+            f"{previous_status} -> {new_status} (reason: {reason})"
+        )
+
+        # Build message based on new status
+        messages = {
+            ApiAccessStatusEnum.NOT_REQUESTED: "API access status reset.",
+            ApiAccessStatusEnum.PENDING: "API access status set to pending.",
+            ApiAccessStatusEnum.APPROVED: "API access has been approved.",
+            ApiAccessStatusEnum.DENIED: "API access has been denied.",
+            ApiAccessStatusEnum.SUSPENDED: "API access has been suspended.",
+        }
+
+        return ApiAccessStatusResponse(
+            status=ApiAccessStatusEnum(new_status),
+            requested_at=user.api_access_requested_at,
+            decided_at=user.api_access_decided_at,
+            use_case=user.api_access_use_case,
+            denial_reason=user.api_access_denial_reason,
+            message=messages.get(ApiAccessStatusEnum(new_status), "API access status updated."),
+        )
+
     async def request_api_access(self, user_id: str, use_case: str) -> ApiAccessStatusResponse:
         """
         User requests API access with a use case description.
@@ -89,6 +158,13 @@ class ApiAccessService:
             raise ValueError("User not found")
 
         current_status = user.api_access_status
+
+        # TEAM_164: Suspended users cannot request API access
+        if current_status == ApiAccessStatus.SUSPENDED.value:
+            raise ValueError(
+                "Your API access has been suspended. If you believe this is an error, "
+                "please contact support at support@encypherai.com."
+            )
 
         # Check if already pending
         if current_status == ApiAccessStatus.PENDING.value:
@@ -190,6 +266,11 @@ class ApiAccessService:
             ApiAccessStatusEnum.PENDING: "Your API access request is pending review.",
             ApiAccessStatusEnum.APPROVED: "Your API access has been approved. You can now generate API keys.",
             ApiAccessStatusEnum.DENIED: "Your API access request was denied. You may submit a new request with more details.",
+            # TEAM_164: Suspended users see a contact-support message
+            ApiAccessStatusEnum.SUSPENDED: (
+                "Your API access has been suspended. If you believe this is an error, "
+                "please contact support at support@encypherai.com."
+            ),
         }
 
         return ApiAccessStatusResponse(

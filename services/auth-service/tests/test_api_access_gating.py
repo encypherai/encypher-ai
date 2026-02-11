@@ -35,6 +35,7 @@ class TestApiAccessStatus:
         assert ApiAccessStatus.PENDING.value == "pending"
         assert ApiAccessStatus.APPROVED.value == "approved"
         assert ApiAccessStatus.DENIED.value == "denied"
+        assert ApiAccessStatus.SUSPENDED.value == "suspended"  # TEAM_164
 
     def test_user_default_api_access_status(self, mock_db):
         """New users should have NOT_REQUESTED status by default when persisted"""
@@ -298,3 +299,186 @@ class TestApiAccessGatingIntegration:
 
         assert result.status == ApiAccessStatus.PENDING
         assert user.api_access_use_case == "New and improved use case with more detail"
+
+
+# ============================================
+# TEAM_164: Admin API Access Status Management Tests
+# ============================================
+
+
+class TestSetApiAccessStatus:
+    """Tests for admin directly setting API access status (TEAM_164)"""
+
+    @pytest.fixture
+    def service(self, mock_db):
+        return ApiAccessService(mock_db)
+
+    @pytest.fixture
+    def test_user(self):
+        user = MagicMock()
+        user.id = "user_164_test"
+        user.email = "test164@example.com"
+        user.name = "Test User 164"
+        user.api_access_status = ApiAccessStatus.NOT_REQUESTED.value
+        user.api_access_requested_at = None
+        user.api_access_decided_at = None
+        user.api_access_decided_by = None
+        user.api_access_use_case = None
+        user.api_access_denial_reason = None
+        return user
+
+    @pytest.mark.asyncio
+    async def test_set_status_to_approved(self, service, test_user, mock_db):
+        """Admin can directly set status to approved"""
+        mock_db.query.return_value.filter.return_value.first.return_value = test_user
+
+        result = await service.set_api_access_status(
+            user_id=test_user.id,
+            new_status="approved",
+            admin_user_id="admin_123",
+        )
+
+        assert result.status.value == "approved"
+        assert test_user.api_access_status == "approved"
+        assert test_user.api_access_decided_by == "admin_123"
+        assert test_user.api_access_decided_at is not None
+        assert test_user.api_access_denial_reason is None
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_set_status_to_suspended(self, service, test_user, mock_db):
+        """Admin can suspend a user's API access"""
+        test_user.api_access_status = ApiAccessStatus.APPROVED.value
+        mock_db.query.return_value.filter.return_value.first.return_value = test_user
+
+        result = await service.set_api_access_status(
+            user_id=test_user.id,
+            new_status="suspended",
+            admin_user_id="admin_123",
+            reason="Abuse detected",
+        )
+
+        assert result.status.value == "suspended"
+        assert test_user.api_access_status == "suspended"
+        assert test_user.api_access_denial_reason == "Abuse detected"
+        mock_db.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_set_status_to_suspended_default_reason(self, service, test_user, mock_db):
+        """Suspended without reason gets a default reason"""
+        mock_db.query.return_value.filter.return_value.first.return_value = test_user
+
+        await service.set_api_access_status(
+            user_id=test_user.id,
+            new_status="suspended",
+            admin_user_id="admin_123",
+        )
+
+        assert test_user.api_access_denial_reason == "API access suspended by administrator"
+
+    @pytest.mark.asyncio
+    async def test_set_status_to_denied_with_reason(self, service, test_user, mock_db):
+        """Admin can deny with a reason"""
+        test_user.api_access_status = ApiAccessStatus.PENDING.value
+        mock_db.query.return_value.filter.return_value.first.return_value = test_user
+
+        result = await service.set_api_access_status(
+            user_id=test_user.id,
+            new_status="denied",
+            admin_user_id="admin_123",
+            reason="Incomplete use case",
+        )
+
+        assert result.status.value == "denied"
+        assert test_user.api_access_denial_reason == "Incomplete use case"
+
+    @pytest.mark.asyncio
+    async def test_set_status_to_not_requested_clears_denial(self, service, test_user, mock_db):
+        """Resetting to not_requested clears denial reason"""
+        test_user.api_access_status = ApiAccessStatus.SUSPENDED.value
+        test_user.api_access_denial_reason = "Was suspended"
+        mock_db.query.return_value.filter.return_value.first.return_value = test_user
+
+        await service.set_api_access_status(
+            user_id=test_user.id,
+            new_status="not_requested",
+            admin_user_id="admin_123",
+        )
+
+        assert test_user.api_access_status == "not_requested"
+        assert test_user.api_access_denial_reason is None
+
+    @pytest.mark.asyncio
+    async def test_set_status_invalid_value(self, service, test_user, mock_db):
+        """Invalid status value raises ValueError"""
+        mock_db.query.return_value.filter.return_value.first.return_value = test_user
+
+        with pytest.raises(ValueError, match="Invalid API access status"):
+            await service.set_api_access_status(
+                user_id=test_user.id,
+                new_status="bogus_status",
+                admin_user_id="admin_123",
+            )
+
+    @pytest.mark.asyncio
+    async def test_set_status_user_not_found(self, service, mock_db):
+        """Setting status for nonexistent user raises ValueError"""
+        mock_db.query.return_value.filter.return_value.first.return_value = None
+
+        with pytest.raises(ValueError, match="User not found"):
+            await service.set_api_access_status(
+                user_id="nonexistent",
+                new_status="approved",
+                admin_user_id="admin_123",
+            )
+
+
+class TestSuspendedUserBlocking:
+    """Tests that suspended users are properly blocked (TEAM_164)"""
+
+    @pytest.fixture
+    def service(self, mock_db):
+        return ApiAccessService(mock_db)
+
+    @pytest.fixture
+    def suspended_user(self):
+        user = MagicMock()
+        user.id = "user_suspended"
+        user.email = "suspended@example.com"
+        user.name = "Suspended User"
+        user.api_access_status = ApiAccessStatus.SUSPENDED.value
+        user.api_access_requested_at = None
+        user.api_access_decided_at = None
+        user.api_access_decided_by = None
+        user.api_access_use_case = None
+        user.api_access_denial_reason = "API access suspended by administrator"
+        return user
+
+    @pytest.mark.asyncio
+    async def test_suspended_user_cannot_request_access(self, service, suspended_user, mock_db):
+        """Suspended users cannot submit new API access requests"""
+        mock_db.query.return_value.filter.return_value.first.return_value = suspended_user
+
+        with pytest.raises(ValueError, match="suspended"):
+            await service.request_api_access(
+                user_id=suspended_user.id,
+                use_case="I want to use the API for content verification"
+            )
+
+    @pytest.mark.asyncio
+    async def test_suspended_user_not_approved(self, service, suspended_user, mock_db):
+        """Suspended users are not considered approved for API access"""
+        mock_db.query.return_value.filter.return_value.first.return_value = suspended_user
+
+        result = await service.is_api_access_approved(user_id=suspended_user.id)
+        assert result is False
+
+    @pytest.mark.asyncio
+    async def test_suspended_status_message(self, service, suspended_user, mock_db):
+        """Suspended users see a contact-support message"""
+        mock_db.query.return_value.filter.return_value.first.return_value = suspended_user
+
+        result = await service.get_api_access_status(user_id=suspended_user.id)
+        assert result.status.value == "suspended"
+        assert "suspended" in result.message.lower()
+        assert "support" in result.message.lower()

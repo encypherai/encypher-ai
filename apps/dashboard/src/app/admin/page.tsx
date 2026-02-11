@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { useEffect, useState, type ChangeEvent } from 'react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import apiClient, { PendingAccessRequest } from '../../lib/api';
+import apiClient, { PendingAccessRequest, ApiAccessStatusType } from '../../lib/api';
 import UserActivityModal from '../../components/UserActivityModal';
 
 // Stat card component matching dashboard design
@@ -56,6 +56,7 @@ type AdminUser = {
   role: string;
   tier: string;
   status: 'active' | 'suspended';
+  apiAccessStatus: ApiAccessStatusType;
   usageThisMonth: number;
   apiKeys: number;
   lastActive?: string;
@@ -82,6 +83,7 @@ const normalizeAdminUsers = (payload: any): { users: AdminUser[]; total: number;
     status: row.status ?? row.state ?? (row.disabled ? 'suspended' : 'active'),
     usageThisMonth: row.usage_this_month ?? row.usage ?? 0,
     apiKeys: row.api_keys ?? row.key_count ?? 0,
+    apiAccessStatus: row.api_access_status ?? 'not_requested',
     lastActive: row.last_active_at ?? row.last_login ?? '',
     createdAt: row.created_at ?? row.joined_at ?? '',
   }));
@@ -319,6 +321,20 @@ export default function AdminPage() {
       queryClient.invalidateQueries({ queryKey: ['admin-users'] });
     },
     onError: (err: any) => toast.error(err?.message || 'Failed to update user status.'),
+  });
+
+  // TEAM_164: Mutation to set a user's API access status
+  const setApiAccessStatusMutation = useMutation({
+    mutationFn: async ({ userId, newStatus, reason }: { userId: string; newStatus: ApiAccessStatusType; reason?: string }) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      await apiClient.setApiAccessStatus(accessToken, userId, newStatus, reason);
+    },
+    onSuccess: () => {
+      toast.success('API access status updated.');
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-access-requests'] });
+    },
+    onError: (err: any) => toast.error(err?.message || 'Failed to update API access status.'),
   });
 
   useEffect(() => {
@@ -896,20 +912,21 @@ export default function AdminPage() {
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Role</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Usage (30d)</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">API Access</th>
                   <th className="px-6 py-3 text-right text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
                 {usersQuery.isLoading && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
+                    <td colSpan={7} className="px-6 py-12 text-center">
                       <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-ncs mx-auto"></div>
                     </td>
                   </tr>
                 )}
                 {!usersQuery.isLoading && users.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                       No users match your filters.
                     </td>
                   </tr>
@@ -958,6 +975,38 @@ export default function AdminPage() {
                       <Badge variant={user.status === 'active' ? 'success' : 'error'}>
                         {user.status}
                       </Badge>
+                    </td>
+                    <td className="px-6 py-4">
+                      <select
+                        value={user.apiAccessStatus}
+                        onChange={(e) => {
+                          const newStatus = e.target.value as ApiAccessStatusType;
+                          if (newStatus === 'suspended') {
+                            const reason = window.prompt('Reason for suspending API access (optional):');
+                            setApiAccessStatusMutation.mutate({ userId: user.id, newStatus, reason: reason || undefined });
+                          } else {
+                            setApiAccessStatusMutation.mutate({ userId: user.id, newStatus });
+                          }
+                        }}
+                        data-testid={`api-access-status-${user.id}`}
+                        className={`text-sm border rounded-md px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-ncs ${
+                          user.apiAccessStatus === 'approved'
+                            ? 'border-emerald-300 dark:border-emerald-700 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-400'
+                            : user.apiAccessStatus === 'suspended'
+                            ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400'
+                            : user.apiAccessStatus === 'denied'
+                            ? 'border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-400'
+                            : user.apiAccessStatus === 'pending'
+                            ? 'border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                            : 'border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        <option value="not_requested">Not Requested</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                        <option value="denied">Denied</option>
+                        <option value="suspended">Suspended</option>
+                      </select>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">

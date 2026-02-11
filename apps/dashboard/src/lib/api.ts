@@ -265,7 +265,7 @@ interface C2PATemplateListResponse {
 }
 
 // TEAM_006: API Access Gating types
-type ApiAccessStatusType = 'not_requested' | 'pending' | 'approved' | 'denied';
+type ApiAccessStatusType = 'not_requested' | 'pending' | 'approved' | 'denied' | 'suspended';
 
 interface ApiAccessStatusResponse {
   status: ApiAccessStatusType;
@@ -669,6 +669,26 @@ const apiClient = {
       {
         method: 'POST',
         body: JSON.stringify({ user_id: userId, reason }),
+      }
+    );
+  },
+
+  /**
+   * TEAM_164: Directly set a user's API access status (admin only)
+   * Supports: not_requested, pending, approved, denied, suspended
+   */
+  async setApiAccessStatus(
+    accessToken: string,
+    userId: string,
+    status: ApiAccessStatusType,
+    reason?: string
+  ): Promise<void> {
+    await fetchWithAuth(
+      `${AUTH_SERVICE_URL}/auth/admin/set-api-access-status`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ user_id: userId, status, reason }),
       }
     );
   },

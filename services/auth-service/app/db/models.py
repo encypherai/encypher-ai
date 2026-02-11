@@ -20,6 +20,7 @@ class ApiAccessStatus(str, Enum):
     PENDING = "pending"  # User requested, awaiting admin review
     APPROVED = "approved"  # Admin approved - user can generate API keys
     DENIED = "denied"  # Admin denied - user cannot generate API keys
+    SUSPENDED = "suspended"  # TEAM_164: Admin suspended - user cannot request or use API access
 
 
 Base = declarative_base()

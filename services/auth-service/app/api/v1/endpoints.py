@@ -30,6 +30,9 @@ from ...models.schemas import (
     UserStatusUpdateResponse,
     RoleUpdateRequest,
     RoleUpdateResponse,
+    # TEAM_164: Admin API Access Status Management
+    ApiAccessStatusSetRequest,
+    ApiAccessStatusSetResponse,
 )
 from ...services.auth_service import AuthService
 from ...services.api_access_service import ApiAccessService
@@ -1192,6 +1195,68 @@ async def check_user_api_access(
         },
         "error": None,
     }
+
+
+# TEAM_164: Admin endpoint to directly set a user's API access status
+@router.post("/admin/set-api-access-status", response_model=ApiAccessStatusSetResponse)
+async def set_api_access_status(
+    request: ApiAccessStatusSetRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Directly set a user's API access status.
+
+    **Super Admin only** - Allows setting any status: not_requested, pending, approved, denied, suspended.
+    Suspended users are blocked from requesting API access and see a contact-support message.
+
+    - **user_id**: ID of the user to update
+    - **status**: New API access status (not_requested, pending, approved, denied, suspended)
+    - **reason**: Optional reason for the change
+    """
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    admin_user_id = payload["sub"]
+    require_super_admin(db, admin_user_id)
+
+    try:
+        service = ApiAccessService(db)
+        result = await service.set_api_access_status(
+            user_id=request.user_id,
+            new_status=request.status.value,
+            admin_user_id=admin_user_id,
+            reason=request.reason,
+        )
+        return ApiAccessStatusSetResponse(
+            success=True,
+            data={
+                "user_id": request.user_id,
+                "new_status": request.status.value,
+                "message": result.message,
+            },
+        )
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
 
 
 # ============================================

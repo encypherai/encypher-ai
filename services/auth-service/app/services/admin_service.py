@@ -100,6 +100,7 @@ class AdminService:
                     "status": "active" if user.is_active else "suspended",
                     "organization_id": org.id if org else None,
                     "organization_name": org.name if org else None,
+                    "api_access_status": user.api_access_status or "not_requested",  # TEAM_164
                     "api_calls_this_month": org.monthly_api_usage if org else 0,
                     "monthly_quota": org.monthly_api_limit if org else 10000,
                     "created_at": user.created_at.isoformat() if user.created_at else None,

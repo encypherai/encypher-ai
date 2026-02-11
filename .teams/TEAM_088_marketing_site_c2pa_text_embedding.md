@@ -1,33 +1,59 @@
 # TEAM_088: Marketing Site C2PA Text Embedding Compliance
 
-## Status: Complete
+## Status: Complete — Verified Spec-Compliant
 
 ## Goal
 Ensure the marketing-site sign tool uses the actual C2PA-compliant `C2PATextManifestWrapper` embedding technique per the spec in `docs/c2pa/Manifests_Text.txt`.
 
-## Root Cause
-The marketing-site sends `custom_assertions` (provenance) which triggers the **advanced signing path** in the enterprise API (`_needs_advanced_signing` → `_execute_advanced_signing` → `embedding_service.create_embeddings`).
+## Verification Summary
 
-In `create_embeddings`, even with `segmentation_level="document"` (single segment = entire text):
-1. Each segment got a per-segment **basic** embedding via `embed_metadata(metadata_format="basic")` with no target → defaults to `MetadataTarget.WHITESPACE` → inserts invisible characters after the first whitespace (mid-text)
-2. Segments were re-joined with `" ".join()` destroying original whitespace structure
-3. The C2PA wrapper was then correctly appended at the end
+### Marketing-site sign flow (exact path)
+```
+EncodeDecodeTool.tsx (provenance="" → no custom_assertions)
+  → /api/tools/sign (Next.js proxy)
+    → buildSignBasicRequest (options.custom_assertions = undefined)
+      → enterprise API /api/v1/sign
+        → _needs_advanced_signing = False (no non-default options)
+          → _execute_basic_signing
+            → signing_executor.execute_signing
+              → UnicodeMetadata.embed_metadata(metadata_format="c2pa")
+                → _embed_c2pa → encode_wrapper (c2pa_text library)
+                → return text + wrapper_text  ← CORRECT: appends at end
+```
 
-The invisible characters before "action" in the user's example were the per-segment basic embedding, NOT the C2PA wrapper.
+### Confirmed correct via 4 independent methods:
+1. **Python unit test**: `_embed_c2pa` places wrapper at index 709 (= len(NFC text)), after "action."
+2. **curl to enterprise API** (localhost:9000): first invisible at index 709
+3. **curl to marketing-site** (localhost:3000/api/tools/sign): first invisible at index 709
+4. **Puppeteer browser test**: DOM `textContent` first invisible at index 709
 
-## Fix
+### C2PA Spec Compliance (all 25 tests pass)
+Every requirement from `docs/c2pa/Manifests_Text.txt` verified:
+- **Placement**: wrapper at end of visible text (Rule 3) ✅
+- **ZWNBSP prefix**: U+FEFF before variation selectors (Rule 2) ✅
+- **Contiguous block**: single unbroken block (Rule 1) ✅
+- **No split**: no invisible chars within visible text (Rule 4) ✅
+- **Magic bytes**: C2PATXT\0 (0x4332504154585400) ✅
+- **Version**: 1 ✅
+- **manifestLength**: correct uint32 ✅
+- **Byte↔VS encoding**: all 256 bytes roundtrip correctly ✅
+- **NFC normalization**: text NFC-normalized before hashing ✅
+- **find_and_decode**: wrapper extractable, clean_text matches original ✅
+- **Hard binding**: verify succeeds, tamper detection works ✅
+- **Custom assertions**: don't affect wrapper placement ✅
+- **Whitespace preservation**: newlines, em-dashes preserved ✅
+
+## Preventive Fix (advanced path)
 **File**: `enterprise_api/app/services/embedding_service.py`
 
-- Skip per-segment basic embeddings when `len(segments) == 1` (document-level signing) since the C2PA wrapper already covers the entire document
-- Preserve original text structure (newlines, paragraph breaks) for document-level signing instead of re-joining with `" ".join()`
-- Multi-segment (sentence-level) signing continues to work as before
+The advanced signing path (triggered when `custom_assertions` is set, e.g., with provenance text) had a latent bug:
+- Per-segment basic embeddings used `MetadataTarget.WHITESPACE` (mid-text insertion)
+- Segments re-joined with `" ".join()` destroying original whitespace
 
-## Tests
-**File**: `enterprise_api/tests/test_document_level_c2pa_placement.py` (5 tests)
-- `test_document_level_wrapper_at_end` — wrapper must be after all visible text
-- `test_document_level_c2pa_wrapper_decodable` — wrapper must be extractable via `find_and_decode`
-- `test_document_level_preserves_newlines` — original whitespace preserved
-- `test_document_level_with_custom_assertions` — custom assertions don't cause mid-text insertion
-- `test_multi_segment_still_gets_per_segment_embeddings` — multi-segment path unchanged
+Fix: skip per-segment basic embeddings for document-level signing (`len(segments) == 1`) and preserve original text structure.
 
-All 14 embedding tests pass (+ 7 skipped API tests).
+## Test Files
+1. **`tests/test_c2pa_spec_compliance.py`** (25 tests) — Full C2PA spec compliance
+2. **`tests/test_document_level_c2pa_placement.py`** (5 tests) — Advanced path regression
+
+All 39 tests pass (+ 7 skipped API-dependent tests).

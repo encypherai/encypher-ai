@@ -232,6 +232,49 @@ export function ApiAccessGate({ children }: ApiAccessGateProps) {
     );
   }
 
+  // TEAM_164: Suspended - show contact support message, no reapply option
+  if (status === 'suspended') {
+    return (
+      <div className="max-w-2xl mx-auto py-8">
+        <Card className="border-2 border-red-500/30 bg-red-50/50 dark:bg-red-950/20">
+          <CardHeader className="text-center pb-2">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+              </svg>
+            </div>
+            <CardTitle className="text-2xl text-red-800 dark:text-red-200">
+              API Access Suspended
+            </CardTitle>
+            <CardDescription className="text-base mt-2 text-red-700 dark:text-red-300">
+              Your API access has been suspended by an administrator.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            {statusQuery.data?.denial_reason && (
+              <div className="bg-white dark:bg-slate-800 rounded-lg p-4 text-left">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Reason:</p>
+                <p className="text-sm text-foreground">{statusQuery.data.denial_reason}</p>
+              </div>
+            )}
+            <p className="text-sm text-red-600 dark:text-red-400">
+              If you believe this is an error, please contact our support team.
+            </p>
+            <a
+              href="mailto:support@encypherai.com"
+              className="inline-flex items-center gap-2 px-6 py-2.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+              Contact Support
+            </a>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Fallback
   return <>{children}</>;
 }

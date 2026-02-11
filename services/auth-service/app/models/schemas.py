@@ -47,6 +47,7 @@ class ApiAccessStatus(str, Enum):
     PENDING = "pending"
     APPROVED = "approved"
     DENIED = "denied"
+    SUSPENDED = "suspended"  # TEAM_164: Admin suspended - blocks all API access
 
 
 class UserTier(str, Enum):
@@ -300,6 +301,22 @@ class UserStatusUpdateRequest(BaseModel):
 
 class UserStatusUpdateResponse(BaseModel):
     """Response for status update."""
+
+    success: bool = True
+    data: dict = Field(default_factory=dict)
+
+
+# TEAM_164: Admin API Access Status Management
+class ApiAccessStatusSetRequest(BaseModel):
+    """Admin request to directly set a user's API access status."""
+
+    user_id: str = Field(..., description="ID of the user to update")
+    status: ApiAccessStatus = Field(..., description="New API access status")
+    reason: Optional[str] = Field(None, max_length=500, description="Reason for status change")
+
+
+class ApiAccessStatusSetResponse(BaseModel):
+    """Response for API access status set."""
 
     success: bool = True
     data: dict = Field(default_factory=dict)
