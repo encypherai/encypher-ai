@@ -164,7 +164,7 @@ uv run mypy encypher_commercial_shared/
 - Future commercial tools
 
 ### Dependencies (Upstream)
-- **encypher-ai** - Core library (v2.2.0+)
+- **encypher-ai** - Core library (v3.0.4+)
 - Standard library only (no other external deps)
 
 ### Design Philosophy
