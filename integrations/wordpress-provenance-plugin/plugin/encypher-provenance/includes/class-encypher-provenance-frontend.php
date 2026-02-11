@@ -157,11 +157,11 @@ class Frontend
     private function get_badge_html(int $post_id, string $size = 'large'): string
     {
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         $show_branding = isset($settings['show_branding']) ? (bool) $settings['show_branding'] : true;
         
         // Force branding on Free tier (double check)
-        if ('starter' === $tier) {
+        if ('free' === $tier) {
             $show_branding = true;
         }
 

@@ -23,7 +23,7 @@
         const [merkleSummary, setMerkleSummary] = useState(null);
         const [showAllSentences, setShowAllSentences] = useState(false);
         const [copyingRoot, setCopyingRoot] = useState(false);
-        const tier = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.tier) ? EncypherAssuranceConfig.tier : 'starter';
+        const tier = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.tier) ? EncypherAssuranceConfig.tier : 'free';
         const upgradeUrl = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.upgradeUrl) ? EncypherAssuranceConfig.upgradeUrl : 'https://dashboard.encypherai.com/billing';
 
         const renderUpgradeCallout = (message) => {
@@ -35,7 +35,7 @@
                     ? wp.element.createElement(
                           'a',
                           { href: upgradeUrl, className: 'button button-primary', target: '_blank', rel: 'noopener noreferrer' },
-                          'Upgrade to Encypher Pro'
+                          'Upgrade to Enterprise'
                       )
                     : null
             );
@@ -78,7 +78,7 @@
             if (!postId || !isSigned) {
                 return;
             }
-            if (tier === 'starter') {
+            if (tier === 'free') {
                 if (upgradeUrl) {
                     window.open(upgradeUrl, '_blank', 'noopener,noreferrer');
                 }
@@ -145,7 +145,7 @@
             }
 
             const items = [];
-            const canViewManifest = tier !== 'starter';
+            const canViewManifest = tier !== 'free';
             const pushUpgradeItem = (message, key) => {
                 items.push(
                     wp.element.createElement(
@@ -178,8 +178,8 @@
                         totalSentences
                     )
                 );
-            } else if (tier === 'starter') {
-                pushUpgradeItem('Unlock sentence-level analytics with Encypher Pro.', 'upgrade-sentences');
+            } else if (tier === 'free') {
+                pushUpgradeItem('Unlock sentence-level analytics with Encypher Enterprise.', 'upgrade-sentences');
             }
 
             if (documentId) {
@@ -231,7 +231,7 @@
         };
 
         const renderManifestViewer = () => {
-            if (!showManifest || !manifestData || tier === 'starter') {
+            if (!showManifest || !manifestData || tier === 'free') {
                 return null;
             }
 
@@ -290,8 +290,8 @@
                 return null;
             }
 
-            if (tier === 'starter') {
-                return renderUpgradeCallout('Unlock sentence-level verification with Encypher Pro.');
+            if (tier === 'free') {
+                return renderUpgradeCallout('Unlock sentence-level verification with Encypher Enterprise.');
             }
 
             if (!sentenceSegments.length) {
@@ -358,7 +358,7 @@
             }
 
             if (!merkleSummary || !merkleSummary.root_hash) {
-                if (tier === 'starter') {
+                if (tier === 'free') {
                     return null;
                 }
                 return wp.element.createElement(

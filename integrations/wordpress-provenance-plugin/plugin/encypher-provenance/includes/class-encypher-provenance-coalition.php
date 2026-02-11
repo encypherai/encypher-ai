@@ -73,7 +73,7 @@ class Coalition
     {
         $stats = $this->get_coalition_stats();
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = $settings['tier'] ?? 'starter';
+        $tier = $settings['tier'] ?? 'free';
 
         include ENCYPHER_ASSURANCE_PLUGIN_DIR . 'admin/partials/coalition-widget.php';
     }
@@ -85,7 +85,7 @@ class Coalition
     {
         $stats = $this->get_coalition_stats();
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = $settings['tier'] ?? 'starter';
+        $tier = $settings['tier'] ?? 'free';
 
         include ENCYPHER_ASSURANCE_PLUGIN_DIR . 'admin/partials/coalition-page.php';
     }
@@ -160,29 +160,24 @@ class Coalition
     public function get_revenue_split(string $tier): array
     {
         $splits = [
-            'starter' => [
-                'member_percent' => 65,
-                'encypher_percent' => 35,
+            'free' => [
+                'member_percent' => 60,
+                'encypher_percent' => 40,
                 'payout_threshold' => 50,
             ],
-            'professional' => [
-                'member_percent' => 70,
-                'encypher_percent' => 30,
-                'payout_threshold' => 10,
-            ],
-            'business' => [
-                'member_percent' => 75,
-                'encypher_percent' => 25,
-                'payout_threshold' => 0,
-            ],
             'enterprise' => [
-                'member_percent' => 80,
-                'encypher_percent' => 20,
+                'member_percent' => 85,
+                'encypher_percent' => 15,
                 'payout_threshold' => 0, // No minimum
+            ],
+            'strategic_partner' => [
+                'member_percent' => 85,
+                'encypher_percent' => 15,
+                'payout_threshold' => 0,
             ],
         ];
 
-        return $splits[$tier] ?? $splits['starter'];
+        return $splits[$tier] ?? $splits['free'];
     }
 
     /**
@@ -192,34 +187,31 @@ class Coalition
      * @param string $current_tier Current tier
      * @return array ROI calculation
      */
-    public function calculate_pro_upgrade_roi(float $current_earnings, string $current_tier = 'starter'): array
+    public function calculate_pro_upgrade_roi(float $current_earnings, string $current_tier = 'free'): array
     {
-        if ($current_tier !== 'starter') {
+        if ($current_tier !== 'free') {
             return [
                 'show_upgrade' => false,
                 'message' => '',
             ];
         }
 
-        $free_split = $this->get_revenue_split('starter');
-        $pro_split = $this->get_revenue_split('professional');
+        $free_split = $this->get_revenue_split('free');
+        $enterprise_split = $this->get_revenue_split('enterprise');
 
         $free_payout = $current_earnings * ($free_split['member_percent'] / 100);
-        $pro_payout = $current_earnings * ($pro_split['member_percent'] / 100);
-        $monthly_gain = $pro_payout - $free_payout;
-        $pro_cost = 99; // $99/month
-
-        $break_even_earnings = $pro_cost / (($pro_split['member_percent'] - $free_split['member_percent']) / 100);
+        $enterprise_payout = $current_earnings * ($enterprise_split['member_percent'] / 100);
+        $monthly_gain = $enterprise_payout - $free_payout;
 
         return [
             'show_upgrade' => true,
             'current_payout' => $free_payout,
-            'pro_payout' => $pro_payout,
+            'pro_payout' => $enterprise_payout,
             'monthly_gain' => $monthly_gain,
-            'pro_cost' => $pro_cost,
-            'net_benefit' => $monthly_gain - $pro_cost,
-            'break_even_earnings' => $break_even_earnings,
-            'is_profitable' => $monthly_gain > $pro_cost,
+            'pro_cost' => 0,
+            'net_benefit' => $monthly_gain,
+            'break_even_earnings' => 0,
+            'is_profitable' => true,
         ];
     }
 }

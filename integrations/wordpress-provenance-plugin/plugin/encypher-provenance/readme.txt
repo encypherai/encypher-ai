@@ -43,25 +43,23 @@ Built on the same standards used by Google, BBC, OpenAI, Adobe, and Microsoft:
 
 = Tier Features =
 
-**Free (Starter)**
+**Free**
 * Auto-sign on publish/update
-* Document-level C2PA manifests
-* Public verification badge
-* Coalition membership (65/35 revenue share)
-
-**Professional ($99/month)**
-* Sentence-level attribution
-* Merkle tree encoding
-* Advanced verification options
-* BYOK (Bring Your Own Key)
-* Coalition membership (70/30 revenue share)
+* Sentence-level C2PA signing (micro_ecc_c2pa)
+* Attribution indexing
+* Batch signing (up to 10 docs)
+* Encypher-managed certificates
+* Coalition membership (60/40 revenue share)
 
 **Enterprise (Custom)**
-* All Professional features
-* Custom branding options
-* SSO integration
-* Dedicated support
-* Coalition membership (80/20 revenue share)
+* All Free features
+* Bring Your Own Key (BYOK)
+* Word-level segmentation
+* Dual binding & fingerprinting
+* Batch signing (up to 100 docs)
+* SSO/SCIM integration
+* Dedicated support & SLA
+* Coalition membership (85/15 revenue share)
 
 == Installation ==
 

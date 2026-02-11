@@ -234,20 +234,24 @@ class Rest
         }
         
         // Get tier from settings (default to free)
-        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        // Coerce legacy tier names to canonical 'free'
+        if (in_array($tier, ['starter', 'professional', 'business'], true)) {
+            $tier = 'free';
+        }
         
+        $is_free = ($tier === 'free');
+        $is_nma_member = isset($settings['nma_member']) ? (bool) $settings['nma_member'] : false;
+
         $organization_name = ! empty($settings['organization_name']) ? sanitize_text_field((string) $settings['organization_name']) : '';
         $signing_mode = isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed';
-        if ($tier === 'starter') {
+        if ($is_free) {
             $signing_mode = 'managed';
         }
         $signing_profile_id = '';
         if ('byok' === $signing_mode && ! empty($settings['signing_profile_id'])) {
             $signing_profile_id = sanitize_text_field((string) $settings['signing_profile_id']);
         }
-        
-        $is_starter = ($tier === 'starter');
-        $is_nma_member = isset($settings['nma_member']) ? (bool) $settings['nma_member'] : false;
 
         // Generate unique document_id per signing instance to avoid collisions on re-signing
         // Format: wp_post_{post_id}_v{timestamp}_{random}
@@ -278,6 +282,9 @@ class Rest
                 'document_type' => 'article',
                 'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_ASSURANCE_VERSION,
                 'action' => $action_type,
+                'manifest_mode' => 'micro_ecc_c2pa',
+                'segmentation_level' => 'sentence',
+                'index_for_attribution' => true,
             ],
         ];
         
@@ -286,18 +293,8 @@ class Rest
             $payload['options']['previous_instance_id'] = $previous_instance_id;
         }
         
-        // Add segmentation for paid tiers or NMA members
-        if (!$is_starter || $is_nma_member) {
-            $payload['options']['segmentation_level'] = 'sentence';
-            $payload['options']['index_for_attribution'] = true;
-            
-            if ($is_nma_member && $is_starter) {
-                error_log(sprintf(
-                    'Encypher: NMA member signing post %d with sentence-level embeddings',
-                    $post_id
-                ));
-            }
-        }
+        // All tiers get sentence-level segmentation and attribution indexing
+        // (TEAM_166 freemium model — no feature gating needed)
         
         // Add license info if provided
         if (isset($metadata['license_type'])) {
@@ -470,7 +467,7 @@ class Rest
             'sentences' => $sentences['items'],
             'sentences_total' => $sentences['total'],
             'merkle' => $merkle_snapshot,
-            'tier' => isset($settings['tier']) ? $settings['tier'] : 'starter',
+            'tier' => isset($settings['tier']) ? $settings['tier'] : 'free',
             'signing_mode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
         ]);
     }
@@ -491,10 +488,10 @@ class Rest
         $raw_content = get_post_field('post_content', $post_id, 'raw');
 
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = isset($settings['tier']) ? $settings['tier'] : 'starter';
-        $use_advanced = in_array($tier, ['professional', 'business', 'enterprise'], true);
-        $endpoint = $use_advanced ? '/verify/advanced' : '/verify';
-        $require_auth = $use_advanced;
+        $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
+        // /verify is deprecated (410 Gone) — always use /verify/advanced
+        $endpoint = '/verify/advanced';
+        $require_auth = true;
 
         // Check for cached verification (disabled in development, 5 minute cache in production)
         // Set WP_DEBUG to true in wp-config.php for development mode
@@ -516,32 +513,16 @@ class Rest
             'text' => $raw_content,
         ];
 
-        if ($use_advanced) {
-            $payload['segmentation_level'] = 'sentence';
-            $payload['search_scope'] = 'organization';
-            $payload['include_attribution'] = false;
-            $payload['detect_plagiarism'] = false;
-            $payload['include_heat_map'] = false;
-            $payload['min_match_percentage'] = 0.0;
-        }
+        $payload['segmentation_level'] = 'sentence';
+        $payload['search_scope'] = 'organization';
+        $payload['include_attribution'] = false;
+        $payload['detect_plagiarism'] = false;
+        $payload['include_heat_map'] = false;
+        $payload['min_match_percentage'] = 0.0;
 
-        $verification_mode = $use_advanced ? 'advanced' : 'standard';
+        $verification_mode = 'advanced';
         error_log(sprintf('Encypher: Calling %s for post %d (content length: %d)', $endpoint, $post_id, strlen($raw_content)));
         $response = $this->call_backend($endpoint, $payload, $require_auth);
-        if (is_wp_error($response) && $use_advanced) {
-            $error_data = $response->get_error_data();
-            $status_code = is_array($error_data) && isset($error_data['status']) ? (int) $error_data['status'] : null;
-            $fallback = $response->get_error_code() === 'missing_api_key' || in_array($status_code, [401, 403], true);
-            if ($fallback) {
-                error_log(sprintf(
-                    'Encypher: Advanced verification unavailable for post %d (%s). Falling back to /verify.',
-                    $post_id,
-                    $response->get_error_message()
-                ));
-                $response = $this->call_backend('/verify', ['text' => $raw_content], false);
-                $verification_mode = 'standard';
-            }
-        }
         if (is_wp_error($response)) {
             error_log(sprintf('Encypher: Verification API error for post %d: %s', $post_id, $response->get_error_message()));
             return $response;
@@ -1249,7 +1230,7 @@ class Rest
         $result['organization'] = [
             'organization_id' => 'org_demo',
             'name' => 'Demo Organization',
-            'tier' => 'starter'
+            'tier' => 'free'
         ];
 
         // Check if API key is configured
@@ -1261,7 +1242,7 @@ class Rest
                 $result['organization'] = [
                     'organization_id' => 'org_demo',
                     'name' => 'Demo Organization',
-                    'tier' => 'starter'
+                    'tier' => 'free'
                 ];
             } else {
                 $account = $this->fetch_remote_account($api_base_url, $api_key);
@@ -1318,9 +1299,13 @@ class Rest
         }
 
         $data = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
-        $tier = $data['tier'] ?? 'starter';
-        if (! in_array($tier, ['starter', 'professional', 'business', 'enterprise'], true)) {
-            $tier = 'starter';
+        $tier = $data['tier'] ?? 'free';
+        // Coerce legacy tier names to canonical 'free'
+        if (in_array($tier, ['starter', 'professional', 'business'], true)) {
+            $tier = 'free';
+        }
+        if (! in_array($tier, ['free', 'enterprise', 'strategic_partner'], true)) {
+            $tier = 'free';
         }
 
         $account = [

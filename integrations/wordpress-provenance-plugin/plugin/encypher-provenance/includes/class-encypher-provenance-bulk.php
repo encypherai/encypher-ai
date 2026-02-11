@@ -87,7 +87,7 @@ class Bulk
         }
 
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = $settings['tier'] ?? 'starter';
+        $tier = $settings['tier'] ?? 'free';
         $post_types = get_post_types(['public' => true], 'objects');
         
         ?>
@@ -98,12 +98,12 @@ class Bulk
                 <p><?php esc_html_e('Programmatically mark existing WordPress content with C2PA-compliant invisible embeddings.', 'encypher-provenance'); ?></p>
             </div>
 
-            <?php if ('starter' === $tier): ?>
+            <?php if ('free' === $tier): ?>
             <div class="notice notice-info">
                 <p>
                     <strong><?php esc_html_e('Free Tier Limit:', 'encypher-provenance'); ?></strong>
                     <?php esc_html_e('You can mark up to 100 posts per bulk operation.', 'encypher-provenance'); ?>
-                    <a href="https://encypherai.com/pricing" target="_blank"><?php esc_html_e('Upgrade to Pro for unlimited marking', 'encypher-provenance'); ?></a>
+                    <a href="https://encypherai.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise for unlimited marking', 'encypher-provenance'); ?></a>
                 </p>
             </div>
             <?php endif; ?>
@@ -189,7 +189,7 @@ class Bulk
                         <strong><?php esc_html_e('Total posts to mark:', 'encypher-provenance'); ?></strong>
                         <span id="encypher-total-count">0</span>
                     </p>
-                    <?php if ('starter' === $tier): ?>
+                    <?php if ('free' === $tier): ?>
                     <p class="encypher-tier-limit">
                         <strong><?php esc_html_e('Free tier limit:', 'encypher-provenance'); ?></strong>
                         <?php esc_html_e('100 posts', 'encypher-provenance'); ?>
@@ -302,11 +302,11 @@ class Bulk
 
         // Check tier limits
         $settings = get_option('encypher_assurance_settings', []);
-        $tier = $settings['tier'] ?? 'starter';
+        $tier = $settings['tier'] ?? 'free';
         
-        if ('starter' === $tier && count($post_ids) > 100) {
+        if ('free' === $tier && count($post_ids) > 100) {
             wp_send_json_error([
-                'message' => __('Free tier limit: 100 posts per bulk operation. Upgrade to Pro for unlimited marking.', 'encypher-provenance')
+                'message' => __('Free tier limit: 100 posts per bulk operation. Upgrade to Enterprise for unlimited marking.', 'encypher-provenance')
             ]);
         }
 

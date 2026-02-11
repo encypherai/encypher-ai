@@ -122,7 +122,7 @@ $revenue_split = $this->get_revenue_split($tier);
         </div>
 
         <!-- Pro Upgrade Section (if free tier) -->
-        <?php if ($tier === 'starter'): ?>
+        <?php if ($tier === 'free'): ?>
             <?php
             $pending = $stats['revenue_stats']['pending'] ?? 0;
             $roi = $this->calculate_pro_upgrade_roi($pending, $tier);
