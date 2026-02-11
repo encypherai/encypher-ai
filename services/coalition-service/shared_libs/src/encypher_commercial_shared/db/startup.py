@@ -40,7 +40,7 @@ class DatabaseStartupError(Exception):
     pass
 
 
-def check_database_connection(database_url: str, max_retries: int = 5, retry_delay: float = 2.0, service_name: str = "service") -> bool:
+def check_database_connection(database_url: str, max_retries: int = 15, retry_delay: float = 3.0, service_name: str = "service") -> bool:
     """
     Check if the database is reachable and accepting connections.
 
@@ -192,8 +192,8 @@ def ensure_database_ready(
     database_url: Optional[str] = None,
     service_name: str = "service",
     alembic_config_path: str = "alembic.ini",
-    max_retries: int = 5,
-    retry_delay: float = 2.0,
+    max_retries: int = 15,
+    retry_delay: float = 3.0,
     run_migrations: bool = True,
     exit_on_failure: bool = True,
 ) -> bool:
