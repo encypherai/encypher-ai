@@ -59,10 +59,10 @@ export default function HomePage() {
             </p>
             
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4 justify-center items-center px-2">
-              <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
-                <Link href="/solutions/ai-companies">
+              <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base bg-white text-delft-blue hover:bg-columbia-blue transition-colors">
+                <Link href="/auth/register">
                   <span className="flex items-center justify-center">
-                    For AI Companies <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                    Get Started Free <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </span>
                 </Link>
               </Button>
@@ -70,6 +70,13 @@ export default function HomePage() {
                 <Link href="/solutions/publishers">
                   <span className="flex items-center justify-center">
                     For Publishers <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  </span>
+                </Link>
+              </Button>
+              <Button asChild size="lg" className="w-full sm:w-auto font-semibold py-2.5 sm:py-3 px-4 sm:px-6 rounded-lg shadow-lg text-sm sm:text-base btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                <Link href="/solutions/ai-companies">
+                  <span className="flex items-center justify-center">
+                    For AI Labs <ArrowRight className="ml-1.5 sm:ml-2 h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </span>
                 </Link>
               </Button>
@@ -104,6 +111,30 @@ export default function HomePage() {
                   />
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Social Proof Numbers */}
+      <section className="py-12 w-full bg-background border-b border-border">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 max-w-4xl mx-auto text-center">
+            <div>
+              <p className="text-3xl md:text-4xl font-bold text-primary">C2PA 2.3</p>
+              <p className="text-sm text-muted-foreground mt-1">Standard Compliant</p>
+            </div>
+            <div>
+              <p className="text-3xl md:text-4xl font-bold text-primary">1,000</p>
+              <p className="text-sm text-muted-foreground mt-1">Free Docs/Month</p>
+            </div>
+            <div>
+              <p className="text-3xl md:text-4xl font-bold text-primary">4</p>
+              <p className="text-sm text-muted-foreground mt-1">SDKs (Python, TS, Go, Rust)</p>
+            </div>
+            <div>
+              <p className="text-3xl md:text-4xl font-bold text-primary">60/40</p>
+              <p className="text-sm text-muted-foreground mt-1">Coalition Revenue Share</p>
             </div>
           </div>
         </div>
@@ -242,6 +273,11 @@ export default function HomePage() {
             See how sentence-level tracking transforms your position in the AI content economy.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center">
+            <Button asChild size="lg" className="w-full sm:w-auto shadow-lg font-semibold" style={{ backgroundColor: '#1a365d', color: '#ffffff' }}>
+              <Link href="/auth/register">
+                Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </Button>
             <Button asChild size="lg" className="w-full sm:w-auto shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
               <Link href="/solutions/publishers">
                 For Publishers <ArrowRight className="ml-2 h-4 w-4" />

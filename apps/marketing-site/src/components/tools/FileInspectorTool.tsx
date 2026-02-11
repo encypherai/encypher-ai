@@ -88,6 +88,8 @@ export default function FileInspectorTool() {
   const [error, setError] = useState<string | null>(null);
   const [verifyResponse, setVerifyResponse] = useState<DecodeToolResponse | null>(null);
   const [expandedEmbeddings, setExpandedEmbeddings] = useState<Set<number>>(new Set([0]));
+  // TEAM_160: PDF first-page thumbnail
+  const [pdfThumbnailUrl, setPdfThumbnailUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -97,6 +99,7 @@ export default function FileInspectorTool() {
     setVerifyResponse(null);
     setError(null);
     setExpandedEmbeddings(new Set([0]));
+    setPdfThumbnailUrl(null);
   }, []);
 
   const readAndVerifyFile = useCallback(async (file: File) => {
@@ -137,8 +140,10 @@ export default function FileInspectorTool() {
         for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
         pdfB64 = btoa(binary);
         // Client-side extraction as fallback display text
-        const { extractTextFromPdf } = await import("@/lib/pdfTextExtractor");
+        const { extractTextFromPdf, renderPdfThumbnail } = await import("@/lib/pdfTextExtractor");
         text = await extractTextFromPdf(buffer);
+        // TEAM_160: Generate first-page thumbnail (non-blocking)
+        renderPdfThumbnail(buffer).then(setPdfThumbnailUrl).catch(() => {});
       } else {
         text = await file.text();
       }
@@ -440,9 +445,18 @@ export default function FileInspectorTool() {
               {/* File info bar */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-card border">
                 <div className="flex items-center gap-3 min-w-0">
-                  <div className="shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg">
-                    {isPdfFile(selectedFile.name, selectedFile.type) ? '📕' : '📄'}
-                  </div>
+                  {/* TEAM_160: PDF thumbnail or file icon */}
+                  {pdfThumbnailUrl ? (
+                    <img
+                      src={pdfThumbnailUrl}
+                      alt="PDF page 1"
+                      className="shrink-0 w-16 h-auto rounded border border-muted shadow-sm"
+                    />
+                  ) : (
+                    <div className="shrink-0 w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg">
+                      {isPdfFile(selectedFile.name, selectedFile.type) ? '📕' : '📄'}
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="font-medium truncate">{selectedFile.name}</p>
                     <p className="text-xs text-muted-foreground">
@@ -575,22 +589,30 @@ export default function FileInspectorTool() {
 
                                   {isExpanded && (
                                     <div className="p-3 pt-0 border-t border-slate-700/50">
-                                      {embedding.verdict?.signer_name && (
-                                        <div className="text-white mt-2">
-                                          <strong>Signer:</strong> {embedding.verdict.signer_name}
-                                          {embedding.verdict?.signer_id && (
-                                            <span className="text-slate-300 ml-1">({embedding.verdict.signer_id})</span>
+                                      {/* TEAM_160: Signer & Reason Code summary shown before manifest */}
+                                      {(embedding.verdict?.signer_name || embedding.verdict?.reason_code) && (
+                                        <div className="mt-2 p-2.5 bg-slate-800 rounded border border-slate-600 space-y-1">
+                                          {embedding.verdict?.signer_name && (
+                                            <div className="text-white">
+                                              <strong>Signer:</strong> {embedding.verdict.signer_name}
+                                              {embedding.verdict?.signer_id && (
+                                                <span className="text-slate-300 ml-1">({embedding.verdict.signer_id})</span>
+                                              )}
+                                            </div>
                                           )}
-                                        </div>
-                                      )}
-                                      {embedding.verdict?.timestamp && (
-                                        <div className="text-white">
-                                          <strong>Signed:</strong> {new Date(embedding.verdict.timestamp).toLocaleString()}
-                                        </div>
-                                      )}
-                                      {embedding.verdict?.reason_code && (
-                                        <div className="text-white">
-                                          <strong>Reason Code:</strong> {embedding.verdict.reason_code}
+                                          {embedding.verdict?.reason_code && (
+                                            <div className="text-white">
+                                              <strong>Reason Code:</strong>{' '}
+                                              <span className={embedding.verdict.valid ? 'text-green-400' : 'text-yellow-400'}>
+                                                {embedding.verdict.reason_code}
+                                              </span>
+                                            </div>
+                                          )}
+                                          {embedding.verdict?.timestamp && (
+                                            <div className="text-white">
+                                              <strong>Signed:</strong> {new Date(embedding.verdict.timestamp).toLocaleString()}
+                                            </div>
+                                          )}
                                         </div>
                                       )}
                                       {embedding.clean_text && (
@@ -603,7 +625,7 @@ export default function FileInspectorTool() {
                                       )}
                                       {embedding.metadata && (
                                         <div className="mt-2">
-                                          <strong className="text-white">Manifest Data:</strong>
+                                          <strong className="text-white">Full Manifest Data:</strong>
                                           <pre className="mt-1 p-2 bg-slate-900 rounded text-slate-200 whitespace-pre-wrap break-all overflow-x-auto text-xs">
                                             {JSON.stringify(embedding.metadata, null, 2)}
                                           </pre>
@@ -623,39 +645,90 @@ export default function FileInspectorTool() {
                         </div>
                       )}
 
-                      {/* Fallback: show signer info when no all_embeddings array */}
-                      {!verifyResponse.all_embeddings && verifyResponse.metadata && (
-                        <div className="mt-4 p-3 bg-slate-900 text-slate-50 rounded text-xs border border-slate-800 max-w-full">
-                          <strong className="block mb-2 text-slate-400">C2PA Manifest Data:</strong>
-                          <pre className="whitespace-pre-wrap break-all overflow-x-auto text-slate-50 max-w-full mb-2">
-                            {JSON.stringify(verifyResponse.metadata, null, 2)}
-                          </pre>
+                      {/* TEAM_160: Fallback — show signer info when no all_embeddings array */}
+                      {!verifyResponse.all_embeddings && verifyResponse.metadata && (() => {
+                        const verdict = verifyResponse.raw_hidden_data;
+                        const manifest = (verifyResponse.metadata as Record<string, unknown>)?.manifest;
+                        const hasManifest = manifest && typeof manifest === 'object' && Object.keys(manifest as object).length > 0;
+                        const statusClass = verdict?.valid
+                          ? 'border-green-700 bg-green-900/30'
+                          : (verdict?.tampered && hasManifest)
+                            ? 'border-yellow-700 bg-yellow-900/30'
+                            : 'border-red-700 bg-red-900/30';
+                        const statusIcon = verdict?.valid ? '✅' : (verdict?.tampered && hasManifest) ? '⚠️' : '❌';
+                        const statusLabel = verdict?.valid ? 'Verified' : (verdict?.tampered && hasManifest) ? 'Tampered' : 'Failed';
+                        const statusBadge = verdict?.valid
+                          ? 'bg-green-700 text-green-100'
+                          : (verdict?.tampered && hasManifest)
+                            ? 'bg-yellow-700 text-yellow-100'
+                            : 'bg-red-700 text-red-100';
+                        const isExpanded = expandedEmbeddings.has(0);
 
-                          {(verifyResponse.raw_hidden_data || (verifyResponse.metadata as Record<string, unknown>)?.manifest) && (
-                            <div className="mt-2 pt-2 border-t border-slate-700">
-                              <div>
-                                <strong className="text-slate-400">Signer:</strong>
-                                <span className="text-slate-50 ml-1">
-                                  {verifyResponse.raw_hidden_data?.signer_name ||
-                                   verifyResponse.raw_hidden_data?.signer_id ||
-                                   (verifyResponse.metadata as Record<string, unknown>)?.manifest &&
-                                   typeof (verifyResponse.metadata as Record<string, unknown>).manifest === 'object' &&
-                                   ((verifyResponse.metadata as Record<string, unknown>).manifest as Record<string, unknown>)?.claim_generator ||
-                                   "Unknown"}
+                        return (
+                          <div className="space-y-2 mb-4">
+                            <strong className="block text-slate-300 text-sm">Manifest Details:</strong>
+                            <div className={`rounded border text-xs ${statusClass}`}>
+                              <button
+                                onClick={() => toggleEmbedding(0)}
+                                className="w-full p-2 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-slate-400 transition-transform" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                                    ▶
+                                  </span>
+                                  <span className="font-medium">
+                                    {statusIcon} C2PA Document Manifest
+                                  </span>
+                                  <span className="px-1.5 py-0.5 bg-blue-700 text-blue-100 rounded text-xs">
+                                    Primary
+                                  </span>
+                                </div>
+                                <span className={`px-2 py-0.5 rounded text-xs ${statusBadge}`}>
+                                  {statusLabel}
                                 </span>
-                                <span className="text-green-400 ml-2">(Verified via Trust Anchor)</span>
-                              </div>
-                              <div>
-                                <strong className="text-slate-400">Reason Code:</strong>
-                                <span className="text-slate-50 ml-1">
-                                  {verifyResponse.raw_hidden_data?.reason_code ||
-                                   (verifyResponse.raw_hidden_data?.valid ? "VERIFIED" : "Unknown")}
-                                </span>
-                              </div>
+                              </button>
+
+                              {isExpanded && (
+                                <div className="p-3 pt-0 border-t border-slate-700/50">
+                                  {/* Signer & Reason Code summary */}
+                                  {!!(verdict || hasManifest) && (
+                                    <div className="mt-2 p-2.5 bg-slate-800 rounded border border-slate-600 space-y-1">
+                                      <div className="text-white">
+                                        <strong>Signer:</strong>{' '}
+                                        {String(
+                                          verdict?.signer_name ||
+                                          verdict?.signer_id ||
+                                          (typeof manifest === 'object' &&
+                                           (manifest as Record<string, unknown>)?.claim_generator) ||
+                                          "Unknown"
+                                        )}
+                                      </div>
+                                      <div className="text-white">
+                                        <strong>Reason Code:</strong>{' '}
+                                        <span className={verdict?.valid ? 'text-green-400' : 'text-yellow-400'}>
+                                          {verdict?.reason_code ||
+                                           (verdict?.valid ? "VERIFIED" : "Unknown")}
+                                        </span>
+                                      </div>
+                                      {verdict?.timestamp && (
+                                        <div className="text-white">
+                                          <strong>Signed:</strong> {new Date(verdict.timestamp).toLocaleString()}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                  <div className="mt-2">
+                                    <strong className="text-white">Full Manifest Data:</strong>
+                                    <pre className="mt-1 p-2 bg-slate-900 rounded text-slate-200 whitespace-pre-wrap break-all overflow-x-auto text-xs">
+                                      {JSON.stringify(verifyResponse.metadata, null, 2)}
+                                    </pre>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      )}
+                          </div>
+                        );
+                      })()}
                     </>
                   )}
                 </AlertDescription>

@@ -818,15 +818,31 @@ is appended at the document end by default (set `disable_c2pa=true` to skip the 
 }
 ```
 
-**Manifest Modes:** `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`
+**Manifest Modes:** `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `vs256_embedding`, `vs256_rs_embedding`
 
-**New: `zw_embedding` Mode (Professional+)**
+> For a comprehensive comparison of all modes with platform compatibility, PDF behavior, and security details, see [docs/architecture/EMBEDDING_MODES.md](../docs/architecture/EMBEDDING_MODES.md).
+
+**`zw_embedding` Mode (Professional+)**
 - Uses zero-width Unicode characters (ZWNJ, ZWJ, CGJ, MVS) for invisible signatures
 - 128 chars per sentence (no magic number, contiguous sequence detection)
 - **Word-compatible**: Survives Microsoft Word copy-paste perfectly
 - Detected by scanning for 128 contiguous base-4 characters
 - No visible spaces or gaps in any text editor
 - Ideal for portable content tracking across web, Word, PDF, etc.
+
+**`vs256_embedding` Mode (Professional+)**
+- Uses all 256 Unicode Variation Selectors as a base-256 alphabet
+- **36 chars per sentence** — 3.6x more compact than ZW mode
+- Magic prefix detection (VS240–VS243) for reliable extraction
+- Works in Google Docs, PDF, browsers — **NOT Microsoft Word** (shows □ glyphs)
+- Best for maximum density when Word compatibility is not needed
+
+**`vs256_rs_embedding` Mode (Professional+)**
+- Extends VS256 with **Reed-Solomon error correction** (8 parity symbols)
+- Same 36-char footprint as VS256 — trades HMAC length for parity bytes
+- Corrects up to 4 unknown errors or 8 known erasures per signature
+- **Recommended for PDF signing** — recovers from chars dropped by PDF text extractors
+- Same detection as VS256 (magic prefix); verification auto-distinguishes RS vs non-RS
 
 **Response:**
 

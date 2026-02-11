@@ -107,9 +107,21 @@ export function Navbar() {
           <Link href="/pricing" className="text-sm font-medium hover:text-primary">
             Pricing
           </Link>
-          <Link href="/company" className="text-sm font-medium hover:text-primary">
-            Company
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="text-sm font-medium hover:text-primary px-2">
+                Company
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-popover text-popover-foreground shadow-lg border border-border">
+              <DropdownMenuItem asChild>
+                <Link href="/company">About</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/contact">Contact</Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           {/* Platform link disabled for publisher demo branch */}
           {/* <Link href="/platform" className="text-sm font-medium hover:text-primary">
             Platform
@@ -263,6 +275,13 @@ export function Navbar() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Company
+            </Link>
+            <Link 
+              href="/contact" 
+              className="text-sm font-medium hover:text-primary"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Contact
             </Link>
             
             {/* Auth Buttons for Mobile */}

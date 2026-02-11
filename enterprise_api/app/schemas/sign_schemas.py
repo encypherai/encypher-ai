@@ -257,7 +257,7 @@ class SignOptions(BaseModel):
     @field_validator("manifest_mode")
     @classmethod
     def validate_manifest_mode(cls, v: str) -> str:
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "vs256_embedding"]
+        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "vs256_embedding", "vs256_rs_embedding"]
         if v not in allowed:
             raise ValueError(f"manifest_mode must be one of: {', '.join(allowed)}")
         return v

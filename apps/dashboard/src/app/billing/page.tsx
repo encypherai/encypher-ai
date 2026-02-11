@@ -10,54 +10,30 @@ import {
 } from '@encypher/design-system';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import { useMemo, useState, useEffect, useRef, Suspense } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
-import apiClient, { PlanInfo, Invoice, BillingUsageStats, CoalitionSummary } from '../../lib/api';
+import apiClient, { Invoice } from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
 import { useOrganization } from '../../contexts/OrganizationContext';
-import { getTier, getSelfServeTiers, type TierConfig } from '@/lib/pricing-config';
+import {
+  FREE_TIER,
+  ENTERPRISE_TIER,
+  ADD_ONS,
+  BUNDLES,
+  formatAddOnPrice,
+  formatBundlePrice,
+  type AddOnConfig,
+} from '@/lib/pricing-config';
+import { LICENSING_TRACKS } from '@/lib/pricing-config/coalition';
 
-/**
- * Convert shared pricing config to API-compatible PlanInfo format.
- * Used as fallback when billing service is unavailable.
- */
-function tierConfigToPlanInfo(tier: TierConfig): PlanInfo {
-  return {
-    id: tier.id,
-    name: tier.name,
-    tier: tier.id,
-    price_monthly: tier.price.monthly,
-    price_annual: tier.price.annual,
-    features: tier.features,
-    limits: {
-      c2pa_signatures: tier.limits.c2paSignatures,
-      sentences_tracked: tier.limits.sentencesTracked,
-      api_keys: tier.limits.apiKeys,
-      rate_limit: tier.limits.rateLimit,
-    },
-    popular: tier.popular,
-    enterprise: tier.enterprise,
-  };
-}
-
-// Fallback plans from shared config (excludes enterprise)
-const FALLBACK_PLANS: PlanInfo[] = getSelfServeTiers().map(tierConfigToPlanInfo);
 
 function BillingPageContent() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const { activeOrganization, refetch: refetchOrganization } = useOrganization();
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('monthly');
   const searchParams = useSearchParams();
   const hasRefetchedAfterCheckout = useRef(false);
-
-  // Fetch plans from API
-  const plansQuery = useQuery({
-    queryKey: ['plans'],
-    queryFn: () => apiClient.getPlans(),
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-  });
 
   // Fetch subscription, invoices, usage, and coalition data
   const billingQuery = useQuery({
@@ -90,29 +66,6 @@ function BillingPageContent() {
     }
   }, [accessToken, billingQuery, refetchOrganization, searchParams]);
 
-  // Upgrade mutation - redirects to Stripe Checkout
-  const upgradeMutation = useMutation({
-    mutationFn: async ({ tier, cycle }: { tier: string; cycle: 'monthly' | 'annual' }) => {
-      if (!accessToken) throw new Error('You must be signed in to upgrade.');
-      const response = await apiClient.upgradeSubscription(accessToken, tier, cycle);
-      return response;
-    },
-    onSuccess: (response) => {
-      if (response.checkout_url) {
-        // Redirect to Stripe Checkout
-        window.location.href = response.checkout_url;
-      } else if (response.success) {
-        toast.success(response.message);
-        billingQuery.refetch();
-      } else {
-        toast.info(response.message);
-      }
-    },
-    onError: (err: Error) => {
-      toast.error(err.message || 'Failed to upgrade plan.');
-    },
-  });
-
   // Manage billing portal
   const portalMutation = useMutation({
     mutationFn: async () => {
@@ -127,47 +80,27 @@ function BillingPageContent() {
     },
   });
 
-  // Filter plans based on billing cycle, use fallback if API fails
-  const plans = useMemo(() => {
-    const allPlans = plansQuery.data && plansQuery.data.length > 0 
-      ? plansQuery.data 
-      : FALLBACK_PLANS;
-    return allPlans.filter(p => !p.enterprise); // Exclude enterprise (custom pricing)
-  }, [plansQuery.data]);
-
   const subscription = billingQuery.data?.subscription;
   const invoices = billingQuery.data?.invoices || [];
   const usage = billingQuery.data?.usage;
   const coalition = billingQuery.data?.coalition;
   const organizationTier = activeOrganization?.tier;
   const subscriptionTier = subscription?.tier && subscription.tier !== 'unknown' ? subscription.tier : undefined;
-  const currentTier = subscriptionTier || organizationTier || 'starter';
-  // Derive label from currentTier (which is already validated), not from subscription.plan_name which may be stale
-  const currentTierConfig = getTier(currentTier as TierConfig['id']) ?? getTier('starter');
-  const currentTierLabel = currentTierConfig?.name 
-    || plans.find(plan => plan.tier === currentTier)?.name
-    || (currentTier === 'enterprise' ? 'Enterprise' : 'Starter');
-  // Get subscription price info - use subscription amount if valid, otherwise derive from tier config
+  // TEAM_160: Map old tier names to new model
+  const rawTier = subscriptionTier || organizationTier || 'free';
+  const currentTier = ['starter', 'free', 'basic'].includes(rawTier) ? 'free' : rawTier;
+  const currentTierLabel = currentTier === 'enterprise' ? 'Enterprise' : 'Free';
+  // Get subscription price info
   const currentPrice = subscription?.amount && subscription.amount > 0 
     ? subscription.amount 
-    : (currentTierConfig?.price?.monthly ?? 0);
+    : 0;
   const currentBillingCycle = subscription?.billing_cycle || 'monthly';
   const isDowngradeScheduled = Boolean(subscription?.cancel_at_period_end);
   const downgradeEffectiveDate = subscription?.current_period_end;
-  const downgradeTargetLabel = getTier('starter')?.name ?? 'Starter';
+  const downgradeTargetLabel = 'Free';
   // TEAM_061: Enterprise pricing terms (rev share) should not be displayed in the dashboard UI.
   const isEnterpriseTier = currentTier === 'enterprise';
-  const tierOrder: TierConfig['id'][] = ['starter', 'professional', 'business', 'enterprise'];
-  const currentTierIndex = currentTierConfig ? tierOrder.indexOf(currentTierConfig.id) : tierOrder.indexOf('starter');
-  const shouldHidePopularBadge = currentTierIndex > tierOrder.indexOf('professional');
-  const isLoading = status === 'loading' || billingQuery.isLoading || plansQuery.isLoading;
-
-  // Get price based on billing cycle
-  const getPrice = (plan: PlanInfo) => {
-    return billingCycle === 'annual' ? plan.price_annual : plan.price_monthly;
-  };
-
-  const getPeriod = () => billingCycle === 'annual' ? 'year' : 'month';
+  const isLoading = status === 'loading' || billingQuery.isLoading;
 
   // Format date
   const formatDate = (dateStr: string) => {
@@ -188,6 +121,29 @@ function BillingPageContent() {
             Manage your plan, payment methods, and download invoices for your records.
           </p>
         </div>
+
+        {/* Free Tier Welcome Banner */}
+        {!isLoading && currentTier === 'free' && !isEnterpriseTier && (
+          <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-columbia-blue/20 via-blue-ncs/10 to-columbia-blue/20 border border-columbia-blue/30 p-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs font-semibold rounded-full bg-blue-ncs text-white">
+                    Free Plan
+                  </span>
+                  <span className="text-xs text-muted-foreground">1,000 docs/month included</span>
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Full C2PA signing, Merkle tree auth, unlimited verification, and coalition membership — all at $0. Add enforcement tools when you&apos;re ready.
+                </p>
+              </div>
+              <a href="#addons-bundles" className="inline-flex items-center gap-2 px-4 py-2 bg-blue-ncs text-white text-sm font-medium rounded-lg hover:bg-blue-ncs/90 transition-colors whitespace-nowrap flex-shrink-0">
+                Explore Add-Ons
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+              </a>
+            </div>
+          </div>
+        )}
 
         {/* Current Plan Card */}
         <Card className="border-columbia-blue">
@@ -397,93 +353,123 @@ function BillingPageContent() {
           </Card>
         </div>
 
-        {/* Change Plan Section */}
-        <section className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-2xl font-semibold text-delft-blue dark:text-white">Change plan</h3>
-              <p className="text-muted-foreground">Scale with usage. Upgrade or downgrade any time.</p>
+        {/* Licensing Revenue Tracks */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Licensing Revenue</CardTitle>
+            <CardDescription>Same splits for all publishers — Free or Enterprise</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              {Object.entries(LICENSING_TRACKS).map(([key, track]) => (
+                <div key={key} className="bg-muted/30 rounded-lg p-4">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-2xl font-bold text-blue-ncs">{track.split}</span>
+                    <div>
+                      <p className="font-semibold text-sm">{track.name}</p>
+                      <p className="text-xs text-muted-foreground">Publisher / Encypher</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{track.description}</p>
+                </div>
+              ))}
             </div>
-            <div className="flex bg-muted rounded-full p-1">
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  billingCycle === 'monthly' ? 'bg-white dark:bg-slate-700 shadow text-foreground' : 'text-muted-foreground'
-                }`}
-                onClick={() => setBillingCycle('monthly')}
-              >
-                Monthly
-              </button>
-              <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-                  billingCycle === 'annual' ? 'bg-white dark:bg-slate-700 shadow text-foreground' : 'text-muted-foreground'
-                }`}
-                onClick={() => setBillingCycle('annual')}
-              >
-                Annual <span className="text-xs">(save 20%)</span>
-              </button>
-            </div>
+          </CardContent>
+        </Card>
+
+        {/* Add-Ons & Bundles Section */}
+        <section id="addons-bundles" className="space-y-4 scroll-mt-8">
+          <div>
+            <h3 className="text-2xl font-semibold text-delft-blue dark:text-white">Add-Ons & Bundles</h3>
+            <p className="text-muted-foreground">Self-service enforcement tools. Add when you&apos;re ready to license.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {plans.map((plan) => {
-              const isCurrent = currentTier === plan.id || (currentTier === 'starter' && plan.id === 'starter');
-              const planIndex = tierOrder.indexOf(plan.id as TierConfig['id']);
-              const isDowngrade = planIndex !== -1 && planIndex < currentTierIndex;
-              const price = getPrice(plan);
-              const displayFeatures = plan.features.filter((feature) => !/(\b\d+\s*%\b.*\b(revenue\s*share|rev\s*share)\b|\brevenue\s*share\b|\brev\s*share\b)/i.test(feature));
-              
-              return (
-                <div 
-                  key={plan.id} 
-                  className={`bg-card rounded-xl p-6 relative flex flex-col transition-all ${
-                    isCurrent 
-                      ? 'border-2 border-green-500 shadow-lg ring-2 ring-green-500/20' 
-                      : plan.popular 
-                        ? 'border-2 border-blue-ncs/50 shadow-lg' 
-                        : 'border border-border hover:border-blue-ncs/30 hover:shadow-md'
-                  }`}
-                >
-                  {/* Current Plan Badge */}
-                  {isCurrent && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <span className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-full shadow-md bg-green-500 text-white">
-                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          {/* Bundles */}
+          <div className="grid md:grid-cols-3 gap-4">
+            {BUNDLES.map((bundle) => (
+              <Card key={bundle.id} className={`${bundle.comingSoon ? 'opacity-80' : bundle.id === 'enforcement-bundle' ? 'border-blue-ncs' : ''}`}>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="text-lg">{bundle.name}</CardTitle>
+                    {bundle.comingSoon && <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 text-muted-foreground">Coming Soon</span>}
+                  </div>
+                  <CardDescription>{bundle.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {!bundle.comingSoon ? (
+                    <div className="flex items-baseline gap-2 mb-3">
+                      <span className="text-2xl font-bold text-blue-ncs">{formatBundlePrice(bundle)}</span>
+                      <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded">Save {bundle.savings}</span>
+                    </div>
+                  ) : (
+                    <div className="mb-3" />
+                  )}
+                  <ul className="space-y-1.5 text-sm">
+                    {bundle.includes.map((item: string) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        Current plan
-                      </span>
-                    </div>
-                  )}
-                  {/* Popular Badge (only show if not current) */}
-                  {plan.popular && !isCurrent && !shouldHidePopularBadge && (
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                      <span className="inline-block px-4 py-1.5 text-xs font-semibold rounded-full shadow-md bg-blue-ncs text-white">
-                        Most Popular
-                      </span>
-                    </div>
-                  )}
-                  
-                  {/* Tier Name */}
-                  <div className="pt-2 mb-4">
-                    <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                  </div>
+                        <span className="text-muted-foreground">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
 
-                  {/* Price Section */}
-                  <div className="mb-4 text-center">
-                    <div className="text-4xl font-bold text-foreground">
-                      {price === 0 ? 'Free' : `$${price}`}
+          {/* Individual Add-Ons */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Individual Add-Ons</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-3">
+                {ADD_ONS.map((addOn: AddOnConfig) => (
+                  <div key={addOn.id} className={`flex justify-between items-start p-3 bg-muted/30 rounded-lg ${addOn.comingSoon ? 'opacity-80' : ''}`}>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-sm">{addOn.name}</p>
+                        {addOn.comingSoon && <span className="text-[10px] font-medium border rounded px-1.5 py-0.5 text-muted-foreground">Coming Soon</span>}
+                      </div>
+                      <p className="text-xs text-muted-foreground">{addOn.description}</p>
                     </div>
-                    {price > 0 && (
-                      <p className="text-sm text-muted-foreground">/{getPeriod()}</p>
-                    )}
-                    {price === 0 && (
-                      <p className="text-sm text-muted-foreground">Forever free</p>
+                    {!addOn.comingSoon && (
+                      <span className="text-sm font-bold text-blue-ncs ml-3 whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
                     )}
                   </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
 
-                  {/* Features List */}
-                  <ul className="space-y-2.5 text-sm mb-6 flex-1">
-                    {displayFeatures.map((feature) => (
+        {/* Enterprise Section */}
+        <section className="space-y-4">
+          <Card className={isEnterpriseTier ? 'border-2 border-green-500 ring-2 ring-green-500/20' : 'border-blue-ncs/30'}>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Enterprise</CardTitle>
+                  <CardDescription>Unlimited everything. All add-ons included. Exclusive capabilities.</CardDescription>
+                </div>
+                {isEnterpriseTier && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full bg-green-500 text-white">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    Current plan
+                  </span>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">All add-ons included:</p>
+                  <ul className="space-y-1.5 text-sm">
+                    {ENTERPRISE_TIER.features.slice(0, 6).map((feature: string) => (
                       <li key={feature} className="flex items-start gap-2">
                         <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -492,111 +478,33 @@ function BillingPageContent() {
                       </li>
                     ))}
                   </ul>
-                  
-                  {/* CTA Button */}
-                  <div className="mt-auto">
-                    <Button
-                      variant={isCurrent ? 'outline' : 'primary'}
-                      fullWidth
-                      disabled={isCurrent || upgradeMutation.isPending}
-                      className={isCurrent ? 'border-green-500 text-green-600 cursor-default hover:bg-green-50' : ''}
-                      onClick={() => {
-                        if (isCurrent) return;
-                        // All tier changes go through the upgrade endpoint (including downgrades)
-                        upgradeMutation.mutate({ tier: plan.id, cycle: billingCycle });
-                      }}
-                    >
-                      {isCurrent ? '✓ Your Plan' : isDowngrade ? 'Downgrade' : 'Upgrade'}
-                    </Button>
-                  </div>
                 </div>
-              );
-            })}
-            
-            {/* Enterprise Card */}
-            <div className={`bg-card rounded-xl p-6 relative flex flex-col transition-all ${
-              isEnterpriseTier
-                ? 'border-2 border-green-500 shadow-lg ring-2 ring-green-500/20'
-                : 'border border-border hover:border-blue-ncs/30 hover:shadow-md'
-            }`}>
-              {isEnterpriseTier && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                  <span className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold rounded-full shadow-md bg-green-500 text-white">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Current plan
-                  </span>
+                <div>
+                  <p className="text-sm font-medium mb-2">Exclusive capabilities:</p>
+                  <ul className="space-y-1.5 text-sm">
+                    {ENTERPRISE_TIER.exclusiveCapabilities.slice(0, 6).map((cap: string) => (
+                      <li key={cap} className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-muted-foreground">{cap}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-              )}
-              {/* Tier Name */}
-              <div className="pt-2 mb-4">
-                <h3 className="text-xl font-bold text-foreground">Enterprise</h3>
               </div>
-
-              {/* Price Section */}
-              <div className="mb-4 text-center">
-                <div className="text-4xl font-bold text-foreground">Custom</div>
-                <p className="text-sm text-muted-foreground">Contact for pricing</p>
-              </div>
-              
-              {/* Features List */}
-              <ul className="space-y-2.5 text-sm mb-6 flex-1">
-                <li className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-muted-foreground">Everything in Business</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-muted-foreground">Unlimited API calls</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-muted-foreground">Unlimited team seats</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-muted-foreground">SSO/SCIM integration</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-muted-foreground">Dedicated account manager</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <svg className="w-4 h-4 text-blue-ncs mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span className="text-muted-foreground">Custom SLA & contracts</span>
-                </li>
-              </ul>
-              
-              {/* CTA Button */}
-              <div className="mt-auto">
+              {!isEnterpriseTier && (
                 <Button
-                  variant={isEnterpriseTier ? 'outline' : 'outline'}
-                  fullWidth
-                  disabled={isEnterpriseTier}
-                  className={isEnterpriseTier ? 'border-green-500 text-green-600 cursor-default hover:bg-green-50' : ''}
+                  variant="outline"
                   onClick={() => {
-                    if (isEnterpriseTier) return;
                     window.location.href = 'mailto:sales@encypherai.com?subject=Enterprise%20Inquiry';
                   }}
                 >
-                  {isEnterpriseTier ? '✓ Your Plan' : 'Contact Sales'}
+                  Contact Sales
                 </Button>
-              </div>
-            </div>
-          </div>
+              )}
+            </CardContent>
+          </Card>
         </section>
 
         {/* Invoices Section */}

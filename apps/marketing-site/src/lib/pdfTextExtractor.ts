@@ -166,6 +166,29 @@ export async function extractEncypherSignedText(data: ArrayBuffer): Promise<stri
   }
 }
 
+// TEAM_160: Render the first page of a PDF as a thumbnail data URL.
+export async function renderPdfThumbnail(
+  data: ArrayBuffer,
+  maxWidth = 300,
+): Promise<string> {
+  if (typeof window === 'undefined') {
+    throw new Error('renderPdfThumbnail can only be called in the browser');
+  }
+  const pdfjsLib = await loadPdfjs();
+  const pdf = await pdfjsLib.getDocument({ data }).promise;
+  const page = await pdf.getPage(1);
+  const unscaledViewport = page.getViewport({ scale: 1 });
+  const scale = maxWidth / unscaledViewport.width;
+  const viewport = page.getViewport({ scale });
+
+  const canvas = document.createElement('canvas');
+  canvas.width = viewport.width;
+  canvas.height = viewport.height;
+  const ctx = canvas.getContext('2d')!;
+  await page.render({ canvasContext: ctx, viewport }).promise;
+  return canvas.toDataURL('image/png');
+}
+
 /** Decompress zlib (FlateDecode) data using the browser's DecompressionStream. */
 async function inflateZlib(data: Uint8Array): Promise<Uint8Array> {
   const ds = new DecompressionStream('deflate');

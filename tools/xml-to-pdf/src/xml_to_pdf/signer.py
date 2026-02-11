@@ -40,6 +40,16 @@ EMBEDDING_MODES = {
         "manifest_mode": "zw_embedding",
         "segmentation_level": "document",
     },
+    "vs256_sentence": {
+        "label": "VS256 embedding (sentence-level, PDF-optimized)",
+        "manifest_mode": "vs256_embedding",
+        "segmentation_level": "sentence",
+    },
+    "vs256_rs_sentence": {
+        "label": "VS256+RS embedding (sentence-level, error-correcting)",
+        "manifest_mode": "vs256_rs_embedding",
+        "segmentation_level": "sentence",
+    },
 }
 
 

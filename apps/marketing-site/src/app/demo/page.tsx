@@ -2,10 +2,11 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { CheckCircle, Loader2, Shield, FileText, Zap, Clock } from 'lucide-react';
 
 export default function DemoPage() {
   const [formData, setFormData] = useState({
@@ -26,10 +27,6 @@ export default function DemoPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleCheckboxChange = (checked: boolean) => {
-    setFormData(prev => ({ ...prev, consent: checked }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('submitting');
@@ -38,17 +35,10 @@ export default function DemoPage() {
     try {
       const response = await fetch('/api/demo-request', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          context: 'general',
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...formData, context: 'general' }),
       });
-      if (!response.ok) {
-        throw new Error('Failed to submit demo request');
-      }
+      if (!response.ok) throw new Error('Failed to submit demo request');
       setStatus('success');
     } catch (error) {
       console.error('Demo request failed:', error);
@@ -58,130 +48,147 @@ export default function DemoPage() {
   };
 
   return (
-    <section className="py-20 px-4 bg-background">
-      <div className="container mx-auto max-w-2xl">
+    <section className="py-16 md:py-20 px-4 bg-background">
+      <div className="container mx-auto max-w-5xl">
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            Schedule a Demo
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
+            Schedule a Private Demo
           </h1>
-          <p className="text-xl text-muted-foreground">
-            See how Encypher can protect your content and build trust with your audience.
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            See how sentence-level cryptographic proof transforms content protection and licensing. Tailored to your use case.
           </p>
         </div>
 
-        <Card className="bg-card">
-            <CardContent className="pt-6">
-              {status === 'success' ? (
-                <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
+        <div className="grid lg:grid-cols-5 gap-8">
+          {/* Form — 3 columns */}
+          <div className="lg:col-span-3">
+            <Card>
+              <CardContent className="pt-6">
+                {status === 'success' ? (
+                  <div className="text-center py-12">
+                    <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
+                    <h2 className="text-2xl font-bold text-foreground mb-2">Demo Request Received!</h2>
+                    <p className="text-muted-foreground mb-2">
+                      Thank you for your interest. We&apos;ve sent a confirmation to {formData.email}.
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-8">
+                      A member of our team will reach out within 24 hours to schedule your personalized demo.
+                    </p>
+                    <Button onClick={() => setStatus('idle')}>Submit Another Request</Button>
                   </div>
-                  <h2 className="text-2xl font-bold text-foreground mb-2">Request Received!</h2>
-                  <p className="text-muted-foreground mb-8">
-                    Thank you for your interest. We've sent a confirmation email to {formData.email}.
-                    Our team will be in touch shortly.
-                  </p>
-                  <Button onClick={() => setStatus('idle')}>
-                    Submit Another Request
-                  </Button>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="name">Full Name *</Label>
-                      <Input
-                        type="text"
-                        id="name"
-                        name="name"
-                        required
-                        value={formData.name}
-                        onChange={handleChange}
-                      />
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name">Full Name *</Label>
+                        <Input id="name" name="name" required value={formData.name} onChange={handleChange} placeholder="Jane Smith" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Work Email *</Label>
+                        <Input type="email" id="email" name="email" required value={formData.email} onChange={handleChange} placeholder="jane@company.com" />
+                      </div>
                     </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Work Email *</Label>
-                      <Input
-                        type="email"
-                        id="email"
-                        name="email"
-                        required
-                        value={formData.email}
-                        onChange={handleChange}
-                      />
-                    </div>
-                  </div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label htmlFor="organization">Company / Organization</Label>
-                      <Input
-                        type="text"
-                        id="organization"
-                        name="organization"
-                        value={formData.organization}
-                        onChange={handleChange}
-                      />
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="organization">Company / Organization *</Label>
+                        <Input id="organization" name="organization" required value={formData.organization} onChange={handleChange} placeholder="Your company" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="role">Job Title</Label>
+                        <Input id="role" name="role" value={formData.role} onChange={handleChange} placeholder="VP of Engineering" />
+                      </div>
                     </div>
-                    
+
                     <div className="space-y-2">
-                      <Label htmlFor="role">Job Title</Label>
-                      <Input
-                        type="text"
-                        id="role"
-                        name="role"
-                        value={formData.role}
-                        onChange={handleChange}
-                      />
+                      <Label htmlFor="message">What are you most interested in?</Label>
+                      <Textarea id="message" name="message" rows={4} value={formData.message || ''} onChange={handleChange} placeholder="Tell us about your content protection challenges or what you'd like to see in the demo..." />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="message">How can we help?</Label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      rows={4}
-                      value={formData.message || ''}
-                      onChange={handleChange}
-                    />
-                  </div>
-
-                  <div className="flex items-start gap-2">
-                    <div className="flex items-center space-x-2">
+                    <div className="flex items-start gap-2">
                       <input
                         type="checkbox"
                         id="consent"
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                        className="h-4 w-4 mt-0.5 rounded border-gray-300 text-primary focus:ring-primary"
                         checked={formData.consent}
-                        onChange={(e) => handleCheckboxChange(e.target.checked)}
+                        onChange={(e) => setFormData(prev => ({ ...prev, consent: e.target.checked }))}
+                        required
                       />
                       <Label htmlFor="consent" className="text-sm font-normal text-muted-foreground">
                         I agree to receive communications from Encypher. I can unsubscribe at any time.
                       </Label>
                     </div>
-                  </div>
 
-                  {status === 'error' && (
-                    <div className="p-4 bg-red-50 text-red-700 rounded-md text-sm">
-                      {errorMessage}
+                    {status === 'error' && (
+                      <div className="p-4 bg-red-50 text-red-700 rounded-md text-sm">{errorMessage}</div>
+                    )}
+
+                    <Button type="submit" className="w-full py-3" disabled={status === 'submitting'}>
+                      {status === 'submitting' ? (
+                        <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</span>
+                      ) : (
+                        'Request Private Demo'
+                      )}
+                    </Button>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar — what to expect */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="pt-6">
+                <h3 className="font-bold text-lg mb-4">What You&apos;ll See</h3>
+                <ul className="space-y-4">
+                  <li className="flex items-start gap-3">
+                    <Shield className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Live C2PA Signing</p>
+                      <p className="text-xs text-muted-foreground">Watch content get cryptographically signed in real-time</p>
                     </div>
-                  )}
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <FileText className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Tamper Detection</p>
+                      <p className="text-xs text-muted-foreground">See how modifications are detected at the sentence level</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Zap className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">Enforcement Pipeline</p>
+                      <p className="text-xs text-muted-foreground">From signing to formal notice to evidence package</p>
+                    </div>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Clock className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">30-Minute Session</p>
+                      <p className="text-xs text-muted-foreground">Tailored to your specific use case and questions</p>
+                    </div>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full py-3"
-                    disabled={status === 'submitting'}
-                  >
-                    {status === 'submitting' ? 'Submitting...' : 'Request Demo'}
+            <Card>
+              <CardContent className="pt-6 text-center">
+                <p className="text-sm text-muted-foreground mb-3">Want to try it yourself first?</p>
+                <div className="space-y-2">
+                  <Button asChild variant="outline" className="w-full" size="sm">
+                    <a href="/publisher-demo">Try Publisher Demo</a>
                   </Button>
-                </form>
-              )}
-            </CardContent>
-          </Card>
+                  <Button asChild variant="outline" className="w-full" size="sm">
+                    <a href="/tools/sign-verify">Try Sign & Verify Tool</a>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </section>
   );

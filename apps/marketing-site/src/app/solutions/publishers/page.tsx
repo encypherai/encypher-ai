@@ -97,42 +97,50 @@ export default function PublishersPage() {
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
             <h2 className="text-2xl md:text-3xl font-bold tracking-tight mb-4 text-center">
-              Transparent, Success-Based Pricing
+              Free to Sign. Paid to Enforce.
             </h2>
             <p className="text-lg text-muted-foreground mb-8 text-center">
-              We only win when you win. Revenue share model aligned with your success.
+              Full signing infrastructure at $0. Add enforcement tools when you&apos;re ready to license. Same revenue splits for everyone.
             </p>
             <div className="grid md:grid-cols-3 gap-6 mb-8">
-              {/* Starter */}
-              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
-                <h3 className="text-xl font-semibold mb-2">Starter</h3>
-                <p className="text-3xl font-bold mb-1">Free</p>
-                <p className="text-sm text-muted-foreground mb-4">Standard revenue share</p>
+              {/* Free */}
+              <div className="bg-card p-6 rounded-lg shadow-md border-2 border-primary relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full">Start Here</div>
+                <h3 className="text-xl font-semibold mb-2">Free</h3>
+                <p className="text-3xl font-bold mb-1">$0</p>
+                <p className="text-sm text-muted-foreground mb-4">1,000 docs/month · Unlimited verification</p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>C2PA signing (1K/mo)</span>
+                    <span>C2PA signing + Merkle auth</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>2 API keys</span>
+                    <span>Coalition membership included</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>60/40 coalition · 80/20 self-service</span>
                   </li>
                 </ul>
               </div>
-              {/* Professional */}
-              <div className="bg-card p-6 rounded-lg shadow-md border-2 border-primary relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-full">Most Popular</div>
-                <h3 className="text-xl font-semibold mb-2">Professional</h3>
-                <p className="text-3xl font-bold mb-1">$99<span className="text-lg font-normal">/mo</span></p>
-                <p className="text-sm text-muted-foreground mb-4">Enhanced revenue share</p>
+              {/* Add-Ons */}
+              <div className="bg-card p-6 rounded-lg shadow-md border border-border">
+                <h3 className="text-xl font-semibold mb-2">Add-Ons</h3>
+                <p className="text-3xl font-bold mb-1">From $29<span className="text-lg font-normal">/mo</span></p>
+                <p className="text-sm text-muted-foreground mb-4">Self-service · No sales call</p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Sentence-level tracking</span>
+                    <span>Attribution Analytics — Coming Soon</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>10 API keys</span>
+                    <span>Enforcement Bundle — Coming Soon</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>Bundles save up to 57%</span>
                   </li>
                 </ul>
               </div>
@@ -140,15 +148,19 @@ export default function PublishersPage() {
               <div className="bg-card p-6 rounded-lg shadow-md border border-border">
                 <h3 className="text-xl font-semibold mb-2">Enterprise</h3>
                 <p className="text-3xl font-bold mb-1">Custom</p>
-                <p className="text-sm text-muted-foreground mb-4">Best terms available</p>
+                <p className="text-sm text-muted-foreground mb-4">Unlimited everything · All add-ons</p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>White-glove implementation</span>
+                    <span>Exclusive capabilities included</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>Shape industry licensing standards</span>
+                    <span>Founding coalition: fee waived</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-primary" />
+                    <span>Same 60/40 · 80/20 splits</span>
                   </li>
                 </ul>
               </div>

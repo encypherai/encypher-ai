@@ -19,11 +19,23 @@ from pathlib import Path
 import fitz
 import httpx
 import uvicorn
+
+# TEAM_158: Auto-load .env.local for local dev (ENCYPHER_API_KEY, etc.)
+_ENV_LOCAL = Path(__file__).resolve().parent.parent / ".env.local"
+if _ENV_LOCAL.exists():
+    for line in _ENV_LOCAL.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#"):
+            continue
+        key, _, value = line.partition("=")
+        if key and value and key not in os.environ:
+            os.environ[key] = value
 from fastapi import FastAPI, File, Form, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse
-
+from encypher_pdf.fonttools_subset import INVISIBLE_CODEPOINTS
 from xml_to_pdf.sign_existing import (
     SignExistingError,
+    extract_signed_text_from_streams,
     extract_text_from_pdf,
     sign_existing_pdf,
 )
@@ -79,11 +91,12 @@ async def sign_pdf_endpoint(
         signed_bytes = Path(tmp_out_path).read_bytes()
         signed_b64 = base64.b64encode(signed_bytes).decode("ascii")
 
-        # Count invisible chars
-        visible = sum(
-            1 for c in result.signed_text if c.isprintable() or c in "\n\r\t"
+        # TEAM_158: Count invisible chars using the canonical set —
+        # Python's isprintable() misclassifies VS chars (U+E0100+) as printable.
+        invisible = sum(
+            1 for c in result.signed_text if ord(c) in INVISIBLE_CODEPOINTS
         )
-        invisible = len(result.signed_text) - visible
+        visible = len(result.signed_text) - invisible
 
         return JSONResponse(
             {
@@ -154,9 +167,13 @@ async def verify_pdf_endpoint(file: UploadFile = File(...)):
         tmp_path = tmp.name
 
     try:
-        # TEAM_158: Prefer the EncypherSignedText metadata stream (lossless
-        # copy of signed text with invisible chars) over raw page text.
+        # TEAM_158: Prefer EncypherSignedText metadata stream — it stores
+        # the original signed text with VS chars in their original positions
+        # (contiguous for VS256/ZW signature detection).  The content stream
+        # may have redistributed VS chars for poppler compatibility.
         text = _extract_encypher_signed_text(tmp_path)
+        if not text:
+            text = extract_signed_text_from_streams(tmp_path)
         if not text:
             text = extract_text_from_pdf(tmp_path)
     except SignExistingError as e:
@@ -292,11 +309,19 @@ def _build_html() -> str:
       <div class="flex-1">
         <label class="block text-sm font-medium text-gray-300 mb-1">Signing Mode</label>
         <select id="modeSelect" class="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none">
-          <option value="minimal">Minimal UUID per-sentence</option>
-          <option value="zw_sentence">ZW embedding (sentence-level)</option>
-          <option value="zw_document">ZW embedding (document-level)</option>
-          <option value="c2pa_full">Default C2PA (full manifest)</option>
-          <option value="lightweight">Lightweight UUID manifest</option>
+          <optgroup label="PDF-optimized (copy-paste safe)">
+            <option value="vs256_rs_sentence">VS256+RS (sentence, error-correcting) ★</option>
+            <option value="vs256_sentence">VS256 (sentence, PDF-optimized)</option>
+          </optgroup>
+          <optgroup label="Zero-width embedding">
+            <option value="zw_sentence">ZW embedding (sentence-level)</option>
+            <option value="zw_document">ZW embedding (document-level)</option>
+          </optgroup>
+          <optgroup label="C2PA manifest">
+            <option value="minimal" selected>Minimal UUID per-sentence</option>
+            <option value="lightweight">Lightweight UUID manifest</option>
+            <option value="c2pa_full">Default C2PA (full manifest)</option>
+          </optgroup>
         </select>
       </div>
       <button id="signBtn" onclick="signPdf()" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium rounded-lg transition-colors">

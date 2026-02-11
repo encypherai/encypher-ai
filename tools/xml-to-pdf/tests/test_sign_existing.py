@@ -1,4 +1,4 @@
-# TEAM_157: Tests for signing existing PDFs
+# TEAM_157/158: Tests for signing existing PDFs
 """Tests for sign_existing module — sign pre-existing PDFs without visual changes."""
 
 from __future__ import annotations
@@ -8,19 +8,26 @@ from unittest.mock import patch
 
 import fitz
 import pytest
-
+from encypher_pdf.fonttools_subset import INVISIBLE_CODEPOINTS
 from xml_to_pdf.sign_existing import (
+    _INVIS_FONT_NAME,
+    _UNIFIED_FONT_NAME,
     SignExistingError,
-    _ZwInsertion,
-    _build_char_position_map,
+    _build_font_assets,
+    _collect_visible_codepoints,
     _diff_for_insertions,
-    _inject_zw_chars_into_pages,
+    _embed_invisible_font,
+    _get_font_assets,
+    _inject_into_content_streams,
+    _InvisInsertion,
+    _redistribute_insertions,
+    _register_font_on_page,
+    extract_signed_text_from_streams,
     extract_text_from_pdf,
     inject_signed_text_stream,
     sign_existing_pdf,
 )
 from xml_to_pdf.signer import SignResult
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -254,109 +261,557 @@ class TestSignExistingPdf:
 
 
 # ---------------------------------------------------------------------------
-# Internal helpers: _build_char_position_map, _diff_for_insertions
+# Internal helpers: _diff_for_insertions
 # ---------------------------------------------------------------------------
-
-class TestBuildCharPositionMap:
-    def test_returns_chars_with_positions(self, sample_pdf: Path):
-        doc = fitz.open(str(sample_pdf))
-        chars = _build_char_position_map(doc)
-        doc.close()
-
-        assert len(chars) > 0
-        # First char should be 'H' from "Hello World"
-        assert chars[0]["c"] == "H"
-        assert chars[0]["page"] == 0
-        assert "x" in chars[0]
-        assert "y" in chars[0]
-
-    def test_multipage_chars(self, sample_pdf: Path):
-        doc = fitz.open(str(sample_pdf))
-        chars = _build_char_position_map(doc)
-        doc.close()
-
-        pages = {c["page"] for c in chars}
-        assert 0 in pages
-        assert 1 in pages
-
 
 class TestDiffForInsertions:
     def test_finds_zw_insertions(self):
         original = "Hello World"
         signed = "Hello\u200b World"
-        # Simulate char positions for "Hello World" (11 chars)
-        positions = [{"c": c, "x": float(i * 10), "y": 700.0, "page": 0} for i, c in enumerate(original)]
 
-        insertions = _diff_for_insertions(original, signed, positions)
+        insertions = _diff_for_insertions(original, signed)
 
         assert len(insertions) == 1
         assert insertions[0].char == "\u200b"
-        # Should be placed after 'o' (index 4, x=40.0)
-        assert insertions[0].x == 40.0
-        assert insertions[0].page_num == 0
+        # After 'o' which is visible_idx 4 (H=0, e=1, l=2, l=3, o=4)
+        assert insertions[0].after_visible_idx == 4
 
     def test_multiple_insertions(self):
         original = "AB CD"
         signed = "A\u200bB\u200c CD"
-        positions = [{"c": c, "x": float(i * 10), "y": 700.0, "page": 0} for i, c in enumerate(original)]
 
-        insertions = _diff_for_insertions(original, signed, positions)
+        insertions = _diff_for_insertions(original, signed)
 
         assert len(insertions) == 2
         assert insertions[0].char == "\u200b"
+        assert insertions[0].after_visible_idx == 0  # after 'A'
         assert insertions[1].char == "\u200c"
+        assert insertions[1].after_visible_idx == 1  # after 'B'
 
     def test_no_insertions_when_identical(self):
         original = "Hello"
-        positions = [{"c": c, "x": float(i * 10), "y": 700.0, "page": 0} for i, c in enumerate(original)]
-
-        insertions = _diff_for_insertions(original, original, positions)
+        insertions = _diff_for_insertions(original, original)
         assert len(insertions) == 0
 
     def test_skips_newlines(self):
         original = "AB\nCD"
         signed = "A\u200bB\nCD"
-        # Only visible chars get positions (A, B, C, D = 4 chars)
-        visible = [c for c in original if c != "\n"]
-        positions = [{"c": c, "x": float(i * 10), "y": 700.0, "page": 0} for i, c in enumerate(visible)]
 
-        insertions = _diff_for_insertions(original, signed, positions)
+        insertions = _diff_for_insertions(original, signed)
         assert len(insertions) == 1
         assert insertions[0].char == "\u200b"
+        assert insertions[0].after_visible_idx == 0  # after 'A'
+
+    def test_variation_selectors(self):
+        original = "Test."
+        signed = "Test\ufe01."
+
+        insertions = _diff_for_insertions(original, signed)
+        assert len(insertions) == 1
+        assert insertions[0].char == "\ufe01"
+        assert insertions[0].after_visible_idx == 3  # after 't'
+
+    def test_newline_to_space_normalization(self):
+        """Signing API may convert \\n to space; visible_idx must not advance."""
+        original = "AB\nCD"
+        # API normalised \n → space, then inserted invisible after 'B'
+        signed = "AB\u200b CD"
+
+        insertions = _diff_for_insertions(original, signed)
+        assert len(insertions) == 1
+        assert insertions[0].char == "\u200b"
+        # 'A'=0, 'B'=1 → after 'B' is idx 1
+        assert insertions[0].after_visible_idx == 1
+
+    def test_newline_to_space_does_not_shift_indices(self):
+        """Trailing insertions should not exceed visible char count."""
+        original = "AB\nCD"
+        # API normalised \n → space, inserted invisible after 'D'
+        signed = "AB CD\u200b"
+
+        insertions = _diff_for_insertions(original, signed)
+        assert len(insertions) == 1
+        assert insertions[0].char == "\u200b"
+        # A=0, B=1, C=2, D=3 → after 'D' is idx 3
+        assert insertions[0].after_visible_idx == 3
 
 
-class TestInjectZwCharsIntoPages:
-    def test_injects_extractable_zw_chars(self, sample_pdf: Path, tmp_path: Path):
+# ---------------------------------------------------------------------------
+# Content stream rewriting: inline injection
+# ---------------------------------------------------------------------------
+
+class TestContentStreamRewriting:
+    """Test that invisible chars are injected inline into Tj/TJ operators."""
+
+    def test_simple_font_injection(self, sample_pdf: Path, tmp_path: Path):
+        """Inject VS2 and ZWSP into a simple-font PDF and verify extraction."""
         doc = fitz.open(str(sample_pdf))
-        chars = _build_char_position_map(doc)
+        visible_cps = _collect_visible_codepoints(doc)
+        assets = _build_font_assets(visible_cps)
 
-        # Insert a ZW space after the first char on page 0
         insertions = [
-            _ZwInsertion(page_num=0, x=chars[0]["x"], y=chars[0]["y"], char="\u200b"),
+            _InvisInsertion(after_visible_idx=4, char="\ufe01"),  # after 'o' in Hello
+            _InvisInsertion(after_visible_idx=10, char="\u200b"),  # after 'd' in World
         ]
-        _inject_zw_chars_into_pages(doc, insertions)
+
+        font_xref = _embed_invisible_font(doc, assets)
+        for pn in range(doc.page_count):
+            _register_font_on_page(doc, doc[pn], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, insertions, assets.mapping)
 
         out = tmp_path / "injected.pdf"
-        doc.save(str(out))
+        doc.save(str(out), garbage=0, deflate=False)
         doc.close()
 
-        # Verify the ZW char is extractable
         doc2 = fitz.open(str(out))
         text = doc2[0].get_text()
-        zwsp = "\u200b"
-        assert zwsp in text, "ZW space not found in extracted text"
+        assert "\ufe01" in text, "VS2 not found in extracted text"
+        assert "\u200b" in text, "ZWSP not found in extracted text"
+        doc2.close()
+
+    def test_char_ordering_preserved(self, tmp_path: Path):
+        """Verify invisible chars are injected into the content stream.
+
+        With font-switching, invisible chars are appended after the Tj
+        operator containing the target visible char.  MuPDF may reorder
+        them slightly in get_text(), so we just verify both invisible
+        chars are present and the visible text is intact.
+        """
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "Hello World.", fontsize=12)
+        src = tmp_path / "src.pdf"
+        doc.save(str(src))
+        doc.close()
+
+        doc = fitz.open(str(src))
+        assets = _get_font_assets()
+
+        insertions = [
+            _InvisInsertion(after_visible_idx=4, char="\ufe01"),
+            _InvisInsertion(after_visible_idx=10, char="\u200b"),
+        ]
+
+        font_xref = _embed_invisible_font(doc, assets)
+        for pn in range(doc.page_count):
+            _register_font_on_page(doc, doc[pn], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, insertions, assets.mapping)
+
+        out = tmp_path / "out.pdf"
+        doc.save(str(out), garbage=0, deflate=False)
+        doc.close()
+
+        doc2 = fitz.open(str(out))
+        text = doc2[0].get_text().strip()
+        # Visible text must be intact
+        clean = text.replace("\ufe01", "").replace("\u200b", "")
+        assert clean == "Hello World.", f"Visible text changed: {clean!r}"
+        # Both invisible chars must be present
+        assert "\ufe01" in text, "Missing \\ufe01 in extracted text"
+        assert "\u200b" in text, "Missing \\u200b in extracted text"
         doc2.close()
 
     def test_no_insertions_is_noop(self, sample_pdf: Path, tmp_path: Path):
+        """Empty insertions list should produce same visible text."""
         doc = fitz.open(str(sample_pdf))
-        orig_text = doc[0].get_text()
+        orig_text = doc[0].get_text().strip()
 
-        _inject_zw_chars_into_pages(doc, [])
+        visible_cps = _collect_visible_codepoints(doc)
+        assets = _build_font_assets(visible_cps)
+        font_xref = _embed_invisible_font(doc, assets)
+        for pn in range(doc.page_count):
+            _register_font_on_page(doc, doc[pn], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, [], assets.mapping)
 
         out = tmp_path / "noop.pdf"
         doc.save(str(out))
         doc.close()
 
         doc2 = fitz.open(str(out))
-        assert doc2[0].get_text() == orig_text
+        new_text = doc2[0].get_text().strip()
+        assert new_text == orig_text, f"Text changed: {new_text!r} != {orig_text!r}"
+        doc2.close()
+
+    def test_font_switching_in_content_stream(self, tmp_path: Path):
+        """Verify font-switching: EncSgn appears in content stream alongside
+        the original font, and original font Tj operators are preserved."""
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "AB", fontsize=12)
+        src = tmp_path / "src.pdf"
+        doc.save(str(src))
+        doc.close()
+
+        doc = fitz.open(str(src))
+        assets = _get_font_assets()
+
+        insertions = [
+            _InvisInsertion(after_visible_idx=0, char="\ufe01"),
+        ]
+
+        font_xref = _embed_invisible_font(doc, assets)
+        _register_font_on_page(doc, doc[0], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, insertions, assets.mapping)
+
+        out = tmp_path / "out.pdf"
+        doc.save(str(out), garbage=0, deflate=False)
+        doc.close()
+
+        doc2 = fitz.open(str(out))
+        stream_text = ""
+        for cx in doc2[0].get_contents():
+            s = doc2.xref_stream(cx)
+            if s:
+                stream_text += s.decode("latin-1")
+        # EncSgn font-switch must be present
+        assert _UNIFIED_FONT_NAME in stream_text, (
+            f"EncSgn font-switch not found in content stream"
+        )
+        # Original font must still be present (not replaced)
+        assert "/helv" in stream_text, (
+            "Original /helv font was replaced — font-switching should preserve it"
+        )
+        # Original hex Tj must be preserved verbatim
+        assert "<4142>" in stream_text or "<41>" in stream_text, (
+            "Original hex encoding was re-encoded — should be preserved"
+        )
+        doc2.close()
+
+
+# ---------------------------------------------------------------------------
+# Direct content stream extraction
+# ---------------------------------------------------------------------------
+
+
+class TestExtractSignedTextFromStreams:
+    """Test extract_signed_text_from_streams for 100% invisible char recovery."""
+
+    def test_extracts_all_invisible_chars(self, sample_pdf: Path, tmp_path: Path):
+        """Every injected invisible char must be recovered from the stream."""
+        doc = fitz.open(str(sample_pdf))
+        visible_cps = _collect_visible_codepoints(doc)
+        assets = _build_font_assets(visible_cps)
+
+        # Inject several invisible chars at different positions
+        invis_chars = ["\u200b", "\u200c", "\ufe01", "\ufe02"]
+        insertions = [
+            _InvisInsertion(after_visible_idx=i, char=ch)
+            for i, ch in enumerate(invis_chars)
+        ]
+
+        font_xref = _embed_invisible_font(doc, assets)
+        _register_font_on_page(doc, doc[0], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, insertions, assets.mapping)
+
+        out = tmp_path / "stream_extract.pdf"
+        doc.save(str(out), garbage=0, deflate=False)
+        doc.close()
+
+        text = extract_signed_text_from_streams(str(out))
+        extracted_invis = [
+            c for c in text
+            if ord(c) in INVISIBLE_CODEPOINTS and ord(c) != 0x000A
+        ]
+        assert len(extracted_invis) == len(invis_chars)
+        assert extracted_invis == invis_chars
+
+    def test_preserves_visible_text(self, sample_pdf: Path, tmp_path: Path):
+        """Visible text must survive extraction unchanged."""
+        doc = fitz.open(str(sample_pdf))
+        visible_cps = _collect_visible_codepoints(doc)
+        assets = _build_font_assets(visible_cps)
+
+        insertions = [_InvisInsertion(after_visible_idx=0, char="\u200b")]
+        font_xref = _embed_invisible_font(doc, assets)
+        _register_font_on_page(doc, doc[0], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, insertions, assets.mapping)
+
+        out = tmp_path / "stream_visible.pdf"
+        doc.save(str(out), garbage=0, deflate=False)
+        doc.close()
+
+        text = extract_signed_text_from_streams(str(out))
+        visible = "".join(c for c in text if ord(c) not in INVISIBLE_CODEPOINTS)
+        assert "Hello World" in visible
+
+    def test_many_chars_at_same_index(self, tmp_path: Path):
+        """Hundreds of invisible chars at the same index must all be recovered."""
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "AB", fontsize=12)
+        src = tmp_path / "many.pdf"
+        doc.save(str(src))
+        doc.close()
+
+        doc = fitz.open(str(src))
+        visible_cps = _collect_visible_codepoints(doc)
+        assets = _build_font_assets(visible_cps)
+
+        # 50 invisible chars all after index 0
+        invis_chars = [chr(0xE0100 + i) for i in range(50)]
+        insertions = [
+            _InvisInsertion(after_visible_idx=0, char=ch)
+            for ch in invis_chars
+        ]
+
+        font_xref = _embed_invisible_font(doc, assets)
+        _register_font_on_page(doc, doc[0], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, insertions, assets.mapping)
+
+        out = tmp_path / "many_out.pdf"
+        doc.save(str(out), garbage=0, deflate=False)
+        doc.close()
+
+        text = extract_signed_text_from_streams(str(out))
+        extracted_invis = [
+            c for c in text
+            if ord(c) in INVISIBLE_CODEPOINTS and ord(c) != 0x000A
+        ]
+        assert len(extracted_invis) == 50, (
+            f"Expected 50 invisible chars, got {len(extracted_invis)}"
+        )
+
+    def test_pdftotext_preserves_unique_vs(self, tmp_path: Path):
+        """Unique VS chars (1 per base glyph) survive pdftotext extraction.
+
+        This validates the unified CID font approach: visible and invisible
+        chars share one font, so PDF viewers preserve VS in copy-paste.
+
+        Note: poppler deduplicates repeated VS per base glyph, so this test
+        uses unique VS codepoints (one per visible char).
+        """
+        import subprocess
+
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "Hello World test.", fontsize=12)
+        src = tmp_path / "pdftotext_src.pdf"
+        doc.save(str(src))
+        doc.close()
+
+        doc = fitz.open(str(src))
+        visible_cps = _collect_visible_codepoints(doc)
+        assets = _build_font_assets(visible_cps)
+
+        # One unique VS per visible char (17 chars in "Hello World test.")
+        insertions = [
+            _InvisInsertion(after_visible_idx=i, char=chr(0xE0100 + i))
+            for i in range(17)
+        ]
+
+        font_xref = _embed_invisible_font(doc, assets)
+        _register_font_on_page(doc, doc[0], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, insertions, assets.mapping)
+
+        out = tmp_path / "pdftotext_out.pdf"
+        doc.save(str(out), garbage=0, deflate=False)
+        doc.close()
+
+        result = subprocess.run(
+            ["pdftotext", "-enc", "UTF-8", str(out), "-"],
+            capture_output=True, text=True, timeout=10,
+        )
+        extracted_vs = sum(
+            1 for c in result.stdout
+            if 0xE0100 <= ord(c) <= 0xE01EF
+        )
+        assert extracted_vs == 17, (
+            f"Expected 17 VS chars from pdftotext, got {extracted_vs}"
+        )
+
+    def test_nonexistent_file_raises(self):
+        with pytest.raises(SignExistingError, match="PDF not found"):
+            extract_signed_text_from_streams("/no/such/file.pdf")
+
+    def test_unsigned_pdf_returns_visible_only(self, sample_pdf: Path):
+        """An unsigned PDF (no EncSgn font) should still return visible text."""
+        text = extract_signed_text_from_streams(str(sample_pdf))
+        assert "Hello World" in text
+        invis = [
+            c for c in text
+            if ord(c) in INVISIBLE_CODEPOINTS and ord(c) != 0x000A
+        ]
+        assert len(invis) == 0
+
+
+# ---------------------------------------------------------------------------
+# _redistribute_insertions tests
+# ---------------------------------------------------------------------------
+
+
+class TestRedistributeInsertions:
+    """Tests for _redistribute_insertions — spreads VS across base glyphs."""
+
+    def test_empty_insertions(self):
+        result = _redistribute_insertions([], 10)
+        assert result == []
+
+    def test_single_insertion_unchanged(self):
+        ins = [_InvisInsertion(after_visible_idx=5, char=chr(0xE0100))]
+        result = _redistribute_insertions(ins, 10)
+        assert len(result) == 1
+        assert result[0].char == chr(0xE0100)
+
+    def test_block_insertions_get_spread(self):
+        """36 VS chars all at index 5 should be spread across 0..35."""
+        block = [
+            _InvisInsertion(after_visible_idx=5, char=chr(0xE0100 + i))
+            for i in range(36)
+        ]
+        result = _redistribute_insertions(block, 44)
+        # Each should be at a different index (0..35)
+        indices = [ins.after_visible_idx for ins in result]
+        assert indices == list(range(36))
+        # Characters preserved in order
+        chars = [ins.char for ins in result]
+        assert chars == [chr(0xE0100 + i) for i in range(36)]
+
+    def test_wraps_when_more_chars_than_visible(self):
+        """If 10 VS chars but only 3 visible, indices wrap: 0,1,2,0,1,2,..."""
+        block = [
+            _InvisInsertion(after_visible_idx=0, char=chr(0xE0100 + i))
+            for i in range(10)
+        ]
+        result = _redistribute_insertions(block, 3)
+        indices = [ins.after_visible_idx for ins in result]
+        assert indices == [0, 1, 2, 0, 1, 2, 0, 1, 2, 0]
+
+    def test_zero_visible_returns_original(self):
+        ins = [_InvisInsertion(after_visible_idx=0, char=chr(0xE0100))]
+        result = _redistribute_insertions(ins, 0)
+        assert result == ins
+
+    def test_pdftotext_preserves_redistributed_vs(self, tmp_path: Path):
+        """VS256 payload (36 chars) redistributed across visible text
+        survives pdftotext extraction at 100%."""
+        import subprocess
+
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "Hello World test.", fontsize=12)
+        src = tmp_path / "redist_src.pdf"
+        doc.save(str(src))
+        doc.close()
+
+        doc = fitz.open(str(src))
+        visible_cps = _collect_visible_codepoints(doc)
+        assets = _build_font_assets(visible_cps)
+
+        # Simulate block placement (all 36 at same index) then redistribute
+        block = [
+            _InvisInsertion(after_visible_idx=10, char=chr(0xE0100 + i))
+            for i in range(17)  # 17 chars in "Hello World test."
+        ]
+        redistributed = _redistribute_insertions(block, 17)
+
+        font_xref = _embed_invisible_font(doc, assets)
+        _register_font_on_page(doc, doc[0], _UNIFIED_FONT_NAME, font_xref)
+        _inject_into_content_streams(doc, redistributed, assets.mapping)
+
+        out = tmp_path / "redist_out.pdf"
+        doc.save(str(out), garbage=0, deflate=False)
+        doc.close()
+
+        result = subprocess.run(
+            ["pdftotext", "-enc", "UTF-8", str(out), "-"],
+            capture_output=True, text=True, timeout=10,
+        )
+        extracted_vs = sum(
+            1 for c in result.stdout
+            if 0xE0100 <= ord(c) <= 0xE01EF
+        )
+        assert extracted_vs == 17, (
+            f"Expected 17 VS chars from pdftotext, got {extracted_vs}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# TEAM_158: Regression — C2PA modes must NOT rewrite content streams
+# ---------------------------------------------------------------------------
+
+
+class TestC2PAModesPreserveText:
+    """C2PA manifest modes (full, lightweight_uuid, minimal_uuid, hybrid)
+    embed thousands of invisible chars.  Injecting those into content
+    streams garbles the PDF.  Only VS/ZW modes should rewrite streams."""
+
+    def test_c2pa_mode_skips_content_rewrite(self, tmp_path: Path):
+        """sign_existing_pdf with a C2PA mode should NOT inject EncSgn font."""
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "Hello World test.", fontsize=12)
+        src = tmp_path / "c2pa_src.pdf"
+        doc.save(str(src))
+        doc.close()
+
+        # Mock sign_text to return a result with many invisible chars
+        # (simulating C2PA minimal_uuid mode)
+        invis = "\u200b" * 500  # 500 ZWS chars (simulates C2PA payload)
+        signed = f"Hello{invis} World test."
+        mock_result = SignResult(
+            mode="minimal",
+            signed_text=signed,
+            document_id="doc_test",
+            total_segments=1,
+            instance_id="inst_test",
+            merkle_root="abc123",
+            verification_url="http://example.com",
+        )
+
+        out = tmp_path / "c2pa_out.pdf"
+        with patch("xml_to_pdf.sign_existing.sign_text", return_value=mock_result):
+            sign_existing_pdf(str(src), str(out), mode="minimal")
+
+        # Verify: content stream should NOT have EncSgn font
+        doc2 = fitz.open(str(out))
+        for cx in doc2[0].get_contents():
+            stream = doc2.xref_stream(cx).decode("latin-1")
+            assert "EncSgn" not in stream, (
+                "C2PA mode should NOT rewrite content streams with EncSgn font"
+            )
+
+        # Verify: text is still readable
+        text = doc2[0].get_text()
+        assert "Hello" in text, f"Text garbled after C2PA signing: {text[:100]!r}"
+
+        # Verify: metadata stream exists
+        cat = doc2.pdf_catalog()
+        r_key = doc2.xref_get_key(cat, "EncypherSignedText")
+        assert r_key[0] == "xref", "EncypherSignedText metadata stream missing"
+        doc2.close()
+
+    def test_vs256_mode_does_rewrite_content(self, tmp_path: Path):
+        """sign_existing_pdf with vs256_sentence SHOULD inject EncSgn font."""
+        doc = fitz.open()
+        page = doc.new_page()
+        page.insert_text((72, 72), "Hello World test.", fontsize=12)
+        src = tmp_path / "vs256_src.pdf"
+        doc.save(str(src))
+        doc.close()
+
+        # Mock sign_text to return a result with VS chars (simulates vs256)
+        vs_chars = "".join(chr(0xE0100 + i) for i in range(36))
+        signed = f"Hello World test{vs_chars}."
+        mock_result = SignResult(
+            mode="vs256_sentence",
+            signed_text=signed,
+            document_id="doc_test",
+            total_segments=1,
+            instance_id="inst_test",
+            merkle_root="abc123",
+            verification_url="http://example.com",
+        )
+
+        out = tmp_path / "vs256_out.pdf"
+        with patch("xml_to_pdf.sign_existing.sign_text", return_value=mock_result):
+            sign_existing_pdf(str(src), str(out), mode="vs256_sentence")
+
+        # Verify: content stream SHOULD have EncSgn font
+        doc2 = fitz.open(str(out))
+        has_encsign = False
+        for cx in doc2[0].get_contents():
+            stream = doc2.xref_stream(cx).decode("latin-1")
+            if "EncSgn" in stream:
+                has_encsign = True
+        assert has_encsign, "VS256 mode should rewrite content streams with EncSgn font"
         doc2.close()

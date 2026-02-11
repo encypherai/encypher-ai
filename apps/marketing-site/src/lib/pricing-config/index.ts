@@ -8,47 +8,64 @@
  */
 
 /**
- * @encypher/pricing-config
- * 
+ * @encypher/pricing-config — Freemium Model (Feb 2026)
+ *
  * Shared pricing configuration for all Encypher properties.
- * This is the single source of truth for:
- * - Tier definitions (prices, features, limits)
- * - Coalition revenue share percentages
- * - Helper functions for formatting and calculations
- * 
+ * Single source of truth for:
+ * - Free tier (full signing infrastructure)
+ * - Freemium add-ons (enforcement, infrastructure, operations)
+ * - Bundles (Enforcement, Publisher Identity, Full Stack)
+ * - Enterprise tier (custom implementation)
+ * - Licensing revenue share (60/40 coalition, 80/20 self-service)
+ *
  * Used by:
  * - apps/marketing-site (pricing page)
  * - apps/dashboard (billing page)
- * - services/billing-service (reference, API returns same data)
- * 
- * @see docs/pricing/PRICING_STRATEGY.md for full strategy documentation
+ * - services/billing-service (reference)
+ *
+ * @see docs/new_publisher_pricing_model_feb_2026.md
  */
 
 // Types
 export type {
   TierId,
-  TierConfig,
-  TiersConfig,
-  TierPricing,
-  TierLimits,
-  CoalitionRevShare,
+  LicensingRevShare,
+  FreeTierLimits,
+  AddOnCategory,
+  VolumePrice,
+  AddOnConfig,
+  BundleConfig,
+  EnterpriseTierPricing,
+  EnterpriseConfig,
+  FreeTierConfig,
+  PricingConfig,
 } from './types';
 
-// Tier configuration and helpers
+// Pricing data and helpers
 export {
-  PRICING_TIERS,
-  getTier,
-  getAllTiers,
-  getSelfServeTiers,
-  getPopularTier,
-  formatPrice,
+  LICENSING_REV_SHARE,
+  FREE_TIER,
+  ADD_ONS,
+  BUNDLES,
+  ENTERPRISE_TIER,
+  PRICING_CONFIG,
+  getFreeTier,
+  getEnterpriseTier,
+  getAllAddOns,
+  getAddOnsByCategory,
+  getAddOn,
+  getAllBundles,
+  getBundle,
+  formatAddOnPrice,
+  formatBundlePrice,
   formatRevShare,
 } from './tiers';
 
-// Coalition configuration and helpers
+// Coalition & licensing helpers
 export {
   getRevShare,
   calculatePublisherEarnings,
-  COALITION_VALUE_PROPS,
-  EARNINGS_EXAMPLES,
+  COALITION_VALUE_PROP,
+  LICENSING_TRACKS,
+  WORKED_EXAMPLES,
 } from './coalition';

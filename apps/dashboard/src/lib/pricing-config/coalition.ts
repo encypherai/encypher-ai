@@ -7,97 +7,109 @@
  * To update: edit the source file, then run npm run build.
  */
 
-import type { CoalitionRevShare, TierId } from './types';
-import { PRICING_TIERS } from './tiers';
+import type { LicensingRevShare } from './types';
+import { LICENSING_REV_SHARE } from './tiers';
 
 /**
- * Coalition Revenue Share Configuration
- * 
- * The licensing coalition enables publishers to earn revenue when AI companies
- * use their content for training. Revenue share improves with higher tiers.
- * 
- * @see docs/pricing/PRICING_STRATEGY.md for full coalition economics
+ * Coalition & Licensing Revenue Configuration — Freemium Model (Feb 2026)
+ *
+ * Two-track licensing model (flat across ALL tiers):
+ * - Coalition deals (60/40): Encypher negotiates on behalf of the coalition
+ * - Self-service deals (80/20): Publisher negotiates directly
+ *
+ * @see docs/new_publisher_pricing_model_feb_2026.md
  */
 
-/**
- * Get the revenue share for a specific tier
- */
-export function getRevShare(tierId: TierId): CoalitionRevShare {
-  return PRICING_TIERS[tierId].revShare;
+export function getRevShare(): LicensingRevShare {
+  return LICENSING_REV_SHARE;
 }
 
-/**
- * Calculate publisher earnings from a gross licensing amount
- */
 export function calculatePublisherEarnings(
   grossAmount: number,
-  tierId: TierId
+  track: 'coalition' | 'selfService'
 ): { publisher: number; encypher: number } {
-  const revShare = getRevShare(tierId);
+  const share = LICENSING_REV_SHARE[track];
   return {
-    publisher: (grossAmount * revShare.publisher) / 100,
-    encypher: (grossAmount * revShare.encypher) / 100,
+    publisher: (grossAmount * share.publisher) / 100,
+    encypher: (grossAmount * share.encypher) / 100,
   };
 }
 
-/**
- * Coalition value propositions by tier
- */
-export const COALITION_VALUE_PROPS = {
-  starter: {
-    headline: 'Get paid when AI uses your content',
-    subheadline: 'Zero risk, pure upside. Sign up to 1K articles/month for free.',
+export const COALITION_VALUE_PROP = {
+  headline: 'Free to sign. Paid to enforce. Aligned on outcomes.',
+  subheadline: 'Every signed document strengthens the coalition. We only charge for enforcement tools — and we only win when you win.',
+  philosophy: 'Every signed document strengthens the coalition. Every publisher in the network increases leverage for all members. We don\'t charge for signing because signing is the supply that makes the marketplace valuable. We charge for the tools that extract value from the network — enforcement, evidence, analytics, and identity.',
+} as const;
+
+export const LICENSING_TRACKS = {
+  coalition: {
+    name: 'Coalition Deals',
+    split: '60/40',
+    publisherPercent: 60,
+    encypherPercent: 40,
+    description: 'Encypher negotiates licensing deals on behalf of the coalition. We do the work — formal notice, evidence, negotiation. Publishers get 60%, Encypher takes 40%.',
   },
-  professional: {
-    headline: 'Track every sentence, earn more',
-    subheadline: 'Know exactly which content drives AI value. Better rev share.',
-  },
-  business: {
-    headline: 'Enterprise-grade tracking, best self-serve terms',
-    subheadline: 'Merkle proofs, similarity detection, 75% revenue share.',
-  },
-  enterprise: {
-    headline: 'Maximum revenue, custom terms',
-    subheadline: 'Dedicated support, custom SLAs, 80%+ revenue share.',
+  selfService: {
+    name: 'Self-Service Deals',
+    split: '80/20',
+    publisherPercent: 80,
+    encypherPercent: 20,
+    description: 'Publishers use our signing tech, formal notice tools, and evidence packages to negotiate their own deals directly with AI companies. They do the work — they keep more.',
   },
 } as const;
 
-/**
- * Example earnings projections (for marketing/sales)
- * Based on hypothetical AI licensing deals
- */
-export const EARNINGS_EXAMPLES = {
-  smallBlog: {
-    description: 'Small blog (10K monthly visitors)',
-    monthlyArticles: 20,
-    estimatedAnnualLicensing: 500,
-    byTier: {
-      starter: 325,      // 65%
-      professional: 350, // 70%
-      business: 375,     // 75%
-      enterprise: 400,   // 80%
+export const WORKED_EXAMPLES = {
+  midSizePublisher: {
+    title: 'Mid-Size Publisher (~$10M/year) — Self-Service Track',
+    steps: [
+      'Signs content on Free tier (no cost)',
+      'Adds Attribution Analytics to identify AI companies',
+      'Sends Formal Notices to AI companies',
+      'Builds Evidence Package for licensing negotiation',
+      'Negotiates a $2M licensing deal directly',
+    ],
+    result: {
+      publisherKeeps: 1_600_000,
+      encypherReceives: 400_000,
+      enforcementSpend: 0,
+      monthlyOngoing: 0,
+      netNewRevenue: 1_600_000,
     },
+    track: 'selfService' as const,
+  },
+  majorWireService: {
+    title: 'Major Wire Service — Coalition Track',
+    steps: [
+      'Enterprise tier — unlimited signing, all tools included',
+      'Encypher identifies widespread content usage across 8 AI companies',
+      'Encypher serves formal notices, builds evidence packages, leads negotiation',
+      'Coalition negotiates $15M deal; wire service attributed share: $5M',
+    ],
+    result: {
+      publisherKeeps: 3_000_000,
+      encypherReceives: 2_000_000,
+      enforcementSpend: 0,
+      monthlyOngoing: 0,
+      netNewRevenue: 3_000_000,
+    },
+    track: 'coalition' as const,
   },
   regionalNews: {
-    description: 'Regional news site (500K monthly visitors)',
-    monthlyArticles: 200,
-    estimatedAnnualLicensing: 25000,
-    byTier: {
-      starter: 16250,      // 65%
-      professional: 17500, // 70%
-      business: 18750,     // 75%
-      enterprise: 20000,   // 80%
+    title: 'Regional News Publisher (~$2M/year) — Enforcement Bundle',
+    steps: [
+      'Signs content on Free tier (no cost)',
+      'Subscribes to Enforcement Bundle',
+      'Attribution Analytics reveals content in 3 AI company outputs',
+      'Sends formal notices with monthly allocation',
+      'Uses evidence package to support $300K licensing deal (self-service)',
+    ],
+    result: {
+      publisherKeeps: 240_000,
+      encypherReceives: 60_000,
+      enforcementSpend: 0,
+      monthlyOngoing: 0,
+      netNewRevenue: 240_000,
     },
-  },
-  majorPublisher: {
-    description: 'Major digital publisher (5M monthly visitors)',
-    monthlyArticles: 1000,
-    estimatedAnnualLicensing: 250000,
-    byTier: {
-      starter: 162500,      // 65%
-      professional: 175000, // 70%
-      business: 187500,     // 75%
-      enterprise: 200000,   // 80%
-    },
+    track: 'selfService' as const,
   },
 } as const;

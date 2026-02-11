@@ -689,6 +689,62 @@ async def verify_text(
         except Exception as zw_exc:
             logger.debug("verify_zw_detection_error", error=str(zw_exc))
 
+    # TEAM_158: VS256 embedding fallback — when both C2PA and ZW detection
+    # fail, check for VS256 (base-256 variation selector) signatures and
+    # resolve via enterprise API.  Tries contiguous detection first, then
+    # reassembly from distributed (redistributed) VS chars.
+    vs256_org_id = None
+    vs256_document_id = None
+    vs256_uuid_str = None
+    if not signer_id:
+        try:
+            from ...utils.vs256_detect import (
+                find_vs256_signatures,
+                extract_uuid_from_vs256_signature,
+                collect_distributed_vs_chars,
+                reassemble_signature_from_distributed,
+            )
+
+            vs256_sigs = find_vs256_signatures(verify_request.text)
+
+            # If no contiguous signatures found, try reassembling from
+            # distributed VS chars (copy-paste from redistributed PDF)
+            if not vs256_sigs:
+                vs_chars = collect_distributed_vs_chars(verify_request.text)
+                reassembled = reassemble_signature_from_distributed(vs_chars)
+                if reassembled:
+                    vs256_sigs = [(0, len(reassembled), reassembled)]
+                    logger.info(
+                        "verify_vs256_reassembled_from_distributed",
+                        total_vs_chars=len(vs_chars),
+                    )
+
+            if vs256_sigs:
+                first_uuid = extract_uuid_from_vs256_signature(vs256_sigs[0][2])
+                if first_uuid:
+                    vs256_uuid_str = str(first_uuid)
+                    vs256_result = await _resolve_zw_segment_uuid(vs256_uuid_str)
+                    if vs256_result:
+                        vs256_org_id = vs256_result.get("organization_id")
+                        vs256_document_id = vs256_result.get("document_id")
+                        if vs256_org_id:
+                            signer_id = vs256_org_id
+                            is_valid = True
+                            manifest = {
+                                "format": "vs256_embedding",
+                                "segment_uuid": vs256_uuid_str,
+                                "total_vs256_signatures": len(vs256_sigs),
+                            }
+                            logger.info(
+                                "verify_vs256_resolved",
+                                segment_uuid=vs256_uuid_str,
+                                organization_id=vs256_org_id,
+                                document_id=vs256_document_id,
+                                total_signatures=len(vs256_sigs),
+                            )
+        except Exception as vs256_exc:
+            logger.debug("verify_vs256_detection_error", error=str(vs256_exc))
+
     duration_ms = int((time.perf_counter() - start) * 1000)
 
     reason_code = "OK" if is_valid else "SIGNATURE_INVALID"
@@ -696,6 +752,9 @@ async def verify_text(
         reason_code = "SIGNER_UNKNOWN"
     elif zw_org_id and signer_id == zw_org_id:
         # TEAM_156: ZW DB-resolved — skip public_key_resolver check
+        reason_code = "OK"
+    elif vs256_org_id and signer_id == vs256_org_id:
+        # TEAM_158: VS256 DB-resolved — skip public_key_resolver check
         reason_code = "OK"
     elif public_key_resolver(signer_id) is None:
         reason_code = "CERT_NOT_FOUND"

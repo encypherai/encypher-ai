@@ -125,7 +125,7 @@ class EncodeWithEmbeddingsRequest(BaseModel):
 
     @validator("manifest_mode")
     def validate_manifest_mode(cls, v):
-        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding"]
+        allowed = ["full", "lightweight_uuid", "minimal_uuid", "hybrid", "zw_embedding", "vs256_embedding", "vs256_rs_embedding"]
         if v not in allowed:
             raise ValueError(f"Manifest mode must be one of: {', '.join(allowed)}")
         return v

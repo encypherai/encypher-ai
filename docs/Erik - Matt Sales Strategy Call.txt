@@ -1,0 +1,683 @@
+1
+00:00:00,751 --> 00:00:22,096
+Matt (BD): Hello? You're looking for VCs?
+
+2
+00:00:00,751 --> 00:00:29,568
+Erik (ceo): Hello. Because she has laryngitis, apparently. So, hope that she gets better soon. But I was supposed to meet with her right after this meeting, but it'll probably be sometime next week, not the week after. So, it's unfortunate. There's one that Mike introduced me to that's usually like first check in and is actually like...
+
+3
+00:00:29,568 --> 00:00:57,296
+Erik (ceo): Or actually it was Dan, the lawyer. That's Mike's friend. I don't know if you know who Dan is. But anyway, they both know this. Not a huge VC. They're usually first check in and they do like the intersection of deep tech and that could like be commercialized that have non-standard business models.
+
+4
+00:00:34,608 --> 00:00:58,479
+Matt (BD): Not yet, no
+
+5
+00:00:57,296 --> 00:01:25,888
+Erik (ceo): is like what they invest in primarily, which describes this business to a T, I would say. It's essentially, it's not quite deep tech enough, although it could get a deep tech investor interested. It's just the traditional deep tech investing is like high capital expenditure, you're buying a whole bunch of equipment or whatnot, and you have like...
+
+6
+00:01:25,888 --> 00:01:50,543
+Erik (ceo): several years until you're profitable and that sort of thing um and while i do a lot of research i don't have a lot of capital expenditure you know other than like i could buy a better computer to help me research faster basically right yeah i mean
+
+7
+00:01:40,816 --> 00:01:50,671
+Matt (BD): I mean, I know a decent amount of VCs if you are interested that you need, you know, that kind of stuff. I can always reach out.
+
+8
+00:01:51,311 --> 00:02:19,503
+Erik (ceo): If they would be a good fit, ideally they either have the strategic capabilities of being able to connect us with people that we don't already have connections with. So other publishers or AI companies, for example, if they have ties to those. Anybody that invests in the intersection of media and technology that is actual. At this point...
+
+9
+00:02:19,535 --> 00:02:47,360
+Erik (ceo): We're pretty close to closing a smaller round. Ideally, I want to get to 250K total, but I want to wait to raise the larger amount like we were discussing with Mike until we get more commercial traction because that will help the valuation of the company go up. Everybody will be less diluted, and it just makes a lot more sense if we're able to close a couple deals.
+
+10
+00:02:27,824 --> 00:02:35,983
+Matt (BD): Mm-hmm.
+
+11
+00:02:47,360 --> 00:03:16,751
+Erik (ceo): ideally first before raising a million plus. It's just going to be much better terms for us. And we could raise potentially a lot more money. So I have a couple people that are interested and said that they would, you know, given enough commercial traction, would be interested in dropping anywhere from three to $15 million on this business. But my biggest problem, and which is why I'm happy that you're on board,
+
+12
+00:02:58,063 --> 00:03:21,647
+Matt (BD): Mm-hmm. Mm-hmm.
+
+13
+00:03:16,751 --> 00:03:44,639
+Erik (ceo): is getting helping get the commercial traction in place um as fast as possible so i can show hey you know this isn't just a research project right you know we actually can get some commercial traction here um to then build out the rest of the infrastructure that i envisioned for the company so which is like the whole internet scraping tool for attribution and content licensing licensing infrastructure
+
+14
+00:03:30,960 --> 00:03:31,888
+Matt (BD): Mm-hmm.
+
+15
+00:03:44,639 --> 00:04:12,255
+Erik (ceo): I essentially see a world, and this is definitely helpful for you, where once creators start marking their content and have the rights embedded for different tiers of licensing that they're comfortable with, whether that's real-time scraping or retrieval augmented generation, which is like the silver tier of licensing, where it's not in an AI system, but it is...
+
+16
+00:04:12,255 --> 00:04:41,455
+Erik (ceo): Well, it's not part of the AI model itself, but it's part of their system where they just have immediate access to and they don't need to rely on third party to pull it from your website. And then there's more of the gold tier of licensing for these publishing organizations, which is training or fine tuning their models based off of your content, which is where the most money is for these publishing organizations or content creators. So if you have like which different levels you're comfortable with of licensing your content,
+
+17
+00:04:41,455 --> 00:05:11,055
+Erik (ceo): embed into the actual content itself as it travels across the internet and whatnot, and some third party comes across and is like, hey, this is great data. I want to use it to train my model or to use it in real time or whatever. They could actually check against the embedded rights in that content and automatically license it using our infrastructure. So instead of needing lawyers and a contract process and back and forth and whatnot,
+
+18
+00:05:11,055 --> 00:05:40,063
+Erik (ceo): we could essentially set up almost a marketplace system that could be an actual marketplace, but also the content itself is almost the marketplace. As it's found, it would tell the computer system that's looking for this content, here are the rights, here's what it costs, if you agree to this, let's just make the deal right now, which is kind of crazy.
+
+19
+00:05:16,783 --> 00:05:46,015
+Matt (BD): It's kind of like, not really what I'm doing.
+
+20
+00:05:40,063 --> 00:06:08,623
+Erik (ceo): but could be where this is going. Okay.
+
+21
+00:05:46,015 --> 00:06:12,959
+Matt (BD): I'm working with a couple different people, one of which I think I definitely think you should get on a call with. Like I told you about before, he's one of the smartest people I've known in the industry. We're having someone create a CMS from scratch. We perceive it to be better than WordPress, but it's going to be mainly for databases and APIs. We're going to just use it for ourselves in the beginning.
+
+22
+00:06:12,959 --> 00:06:41,824
+Matt (BD): if we think it does really just build out websites and just churn out like databases and if it does well then we're gonna at some point um you know maybe white label it and and i think you should you should speak with this guy again i actually spoke to him a little bit this morning he's like yeah he's definitely interested in talking to you um but i think a lot of the stuff you said brings me back to my initial i won't say concern but the initial reason why i wanted to have this conversation is because i think your tier models are pricing uh
+
+23
+00:06:41,824 --> 00:07:00,752
+Matt (BD): The pricing models are great. Like the prices aren't bad at all. My only concern is I think it's too early to start charging people. And the reason why I say that is because there's no proof of concept yet, right? So that I'm aware of, right? I'm coming in now, so I really don't know.
+
+24
+00:06:50,992 --> 00:07:19,679
+Erik (ceo): Okay. Yeah, so what I will say is proof of concepts on my website for free if they want to test it. I am actually going to Mike's office tomorrow to work on a live proof of concept with a couple of his websites, which will be good.
+
+25
+00:07:19,679 --> 00:07:31,055
+Erik (ceo): And I'm working on... Oh, for pricing. Okay. Yes. That I'm still figuring out.
+
+26
+00:07:20,015 --> 00:07:49,567
+Matt (BD): Sorry, I don't mean proof of concept of what your product does. I mean in terms of the licensing part. Because we – yeah, exactly. And for me, because I've been on the publisher side and I know a bunch of publishers, it's very hard for publishers that don't make as much right now or that are very, very strapped for cash for them to be like, hey, listen, let me give you $100, $200, $500 a month.
+
+27
+00:07:49,567 --> 00:08:18,575
+Matt (BD): for something that I don't know is going to happen or not, right? So for me, if you're trying to show, if you're trying to collect all the data and if you're trying to go to these companies and license it out and raise money, I think it's better right now to focus on building the coalition. However, I do think there's two different ways you can go about doing it. So there could be a rev split model and there can be a SaaS model, right? For the more enterprise level, high-end people.
+
+28
+00:08:18,704 --> 00:08:42,192
+Matt (BD): Again, these don't have to be final. I'm just kind of spitballing my ideas. Yeah. So what my thinking is, right, is you give – I guess let me take a step back. How much does this stuff cost you right now or the company right now? Yes. Okay.
+
+29
+00:08:22,096 --> 00:08:49,744
+Erik (ceo): Yeah, no, this is exactly what I want to know. So, please. To, like, run operationally? Minimal. Like, so, all I've done, a majority of the costs and ongoing costs are my time developing new products and features.
+
+30
+00:08:49,744 --> 00:09:11,216
+Erik (ceo): the actual operational running costs are minimal unless somebody wants their own digital signature and those can range from anywhere between one and three thousand dollars a year for the organization if they want their own digital signature and that's not a me cost that's a that's a they're getting a digital signature cost so
+
+31
+00:08:57,104 --> 00:09:22,575
+Matt (BD): Of course. So let's just assume there's a publisher that puts out, I don't know, let's say a thousand pieces of content a month, right? To get...
+
+32
+00:09:23,536 --> 00:09:45,520
+Matt (BD): to get to where it covers all their information, it gives them the basic, right? It covers all the stuff that you can go out and license it. How much would it cost the company to do that? But I'm saying how much would it cost like operationally?
+
+33
+00:09:35,151 --> 00:10:03,599
+Erik (ceo): That would be the most basic tier they could do that on. So I think that's the $100 a month tier. Oh, operationally? I mean, $100 or less, unless I'm charging for my time to help them integrate. But operationally, $100 or less. Oh, a year? Good question. I'd have to look at it for a year.
+
+34
+00:09:54,703 --> 00:10:22,992
+Matt (BD): Is that the year? Is that the year? Because what I'm trying to say is, I know right now for us, some of the stuff that we're doing with AI, we've done a lot on our end, and it maybe costs us $200 for everything. Not our time, just the tokens and all that stuff. That's how much it costs.
+
+35
+00:10:04,559 --> 00:10:33,088
+Erik (ceo): Yeah. Yeah. I don't foresee it costing for just the embedding and the ability for people to verify it.
+
+36
+00:10:22,992 --> 00:10:47,888
+Matt (BD): How much would it cost? Go ahead. Sorry, go ahead.
+
+37
+00:10:33,088 --> 00:11:01,520
+Erik (ceo): like basically being able to embed rights and then tell people saying, hey, rights are embedded, which they would have to do manually at this point, and for those third parties to be able to verify, it probably wouldn't cost me more than $100 a year if that. I'd be kind of surprised. Per user. Because I'd have to actually...
+
+38
+00:10:53,711 --> 00:11:23,392
+Matt (BD): Per user. Okay. So here's my, go ahead. Okay. So here's my thinking, right? If we get, you know, a few hundred or a thousand or so publishers on board, figuring out how much it would cost the company for the year, if we give them everything we need to give them,
+
+39
+00:11:01,552 --> 00:11:07,791
+Erik (ceo): do more stress testing but it probably honestly it would probably be less than that um
+
+40
+00:11:23,392 --> 00:11:52,575
+Matt (BD): to, for you to be able to go out and to license the stuff out there. Right. So the base, not the basic base, but like what would give them what they would need, figure out what that cost would be. So then we could say, Hey, listen, we'll give it to you for free. We're maybe eating, you know, $500 a year. But when we sell that information, we'll make that up. And it shows we have a coalition and we're going to be able to go out to the VCs and say, listen, we have people that want this. They need this. We need money to.
+
+41
+00:11:30,671 --> 00:11:55,375
+Erik (ceo): Yeah. Right.
+
+42
+00:11:52,575 --> 00:12:20,591
+Matt (BD): do whatever right x y and z so that's what i'm thinking and then there could be the the sas tier or you know the sas model that's let's say you charge the enterprise person who doesn't mind paying right like an ap or you know any of those kind of companies you charge them um a monthly fee or whatever it is that you give them the technology but then they go out there and maybe they have a team that's going out there to sell it already right
+
+43
+00:12:20,687 --> 00:12:49,872
+Matt (BD): Because if we're selling the information, it's almost like we're double dipping. If we're charging people a monthly fee and then charging them a rev split, that's a double dip. I think it's better if we just charge them a rev split, a higher rev split. So let's say everyone comes on for free and it's a 60-40 rev split. 60 for them, 40 for us. And then let's say a publisher is one of the ones that's making a lot of money. So then after a certain amount of money you make, maybe your rev split lowers a little bit more.
+
+44
+00:12:20,719 --> 00:12:21,744
+Erik (ceo): Yeah.
+
+45
+00:12:49,968 --> 00:13:19,807
+Matt (BD): So there's different ways to look at it and how you want to model that. But I still think you're going to get more publishers to join if it's free to prove concept. And once you prove the concept, once you prove that like, hey, listen, X publisher joined on free and we made them $5,000 of a new revenue stream. Now we can say, okay, now we have the case studies. Now we can start charging a little bit more because we need to build the team out more.
+
+46
+00:13:00,015 --> 00:13:26,736
+Erik (ceo): That's true. Yeah, that's true. I see what you're saying.
+
+47
+00:13:19,807 --> 00:13:39,312
+Matt (BD): Now, all of a sudden, when you get for free, maybe it's now $100, right? But you're going to offset $5,000 a year. But then also it can be, hey, listen, these are the basic things that we're going to give you free. But if you want these additional things, that will cost you like a package, maybe extra per year.
+
+48
+00:13:37,583 --> 00:14:03,856
+Erik (ceo): That's basically what you're saying right now is basically give away the pro version for free at the very least, where it has the more advanced features that does every sentence and this sort of thing that carries the rights and whatnot. And then later on the line, basically say switch for people that come on later or when the contract expires or something saying, hey, this is now a hundred bucks a month or whatever.
+
+49
+00:14:04,271 --> 00:14:34,031
+Matt (BD): Yeah, I mean, it could be first year free, right? It could be six months free, whatever it is. I still think you need to build the coalition out. I personally don't see, like, again, if I was a publisher and I joined and knowing that it's free, and again, in the terms of service, it can say, you know, in 30 days or we'll give you a 60-day notice if, like, the fee changes, right? So that way you can say, hey, listen, you've made $5,000 for the year.
+
+50
+00:14:34,064 --> 00:15:00,911
+Matt (BD): If you want to keep making $5,000 or more, sorry, but we're going to have to charge because the company's growing. It's now $100. So instead of you making $5,000, you'll make $3,800 because you have to pay. But you're still making $3,800. Do you have a team that's going out there to do that? No, you don't. So that's what my thinking is, is to give it away for free. I do know companies that have tried to charge.
+
+51
+00:14:45,424 --> 00:14:49,392
+Erik (ceo): Sure Right
+
+52
+00:15:00,911 --> 00:15:30,447
+Matt (BD): you know, new companies that are trying to charge in the past. And it's very hard for adoption, very hard for people to go in there. Because again, if you came to me and I was working at my previous company, which was making $10 million a year, I would be very, I don't think I'd pay a hundred dollars, even though that's like, you know, a thousand dollars for the year. I don't know if I pay, because how do I know that your team's going to actually be able to sell that, right? I could just be giving you, I could just be giving you a thousand dollars for the year.
+
+53
+00:15:19,567 --> 00:15:44,176
+Erik (ceo): Sure. Yeah. I think there's other benefits other than the coalition type stuff per se as well. Just because there's the...
+
+54
+00:15:31,536 --> 00:15:33,711
+Matt (BD): for nothing, right?
+
+55
+00:15:44,624 --> 00:16:13,424
+Erik (ceo): essentially being able to prove that your content is authentic to any third party and that was quoted appropriately and all this type of stuff which is more of a brand protection type thing less so of a new line of revenue type of thing but I'm definitely open to having a more fleshed out feature set free initially to people just to get people on board because I really do think that if we could build
+
+56
+00:16:13,424 --> 00:16:41,375
+Erik (ceo): a large coalition of of content then that's really where all the money is anyway i'm not going to build a business off of a hundred dollars a month to all these small publishers that's not going to happen it was more so charging that and this is what i want to do um is essentially give the technology at low to no cost and i thought 100 a month for somebody at 10 million would be fine you know at the very least but if if it's
+
+57
+00:16:22,512 --> 00:16:24,911
+Matt (BD): Yeah.
+
+58
+00:16:41,375 --> 00:17:11,248
+Erik (ceo): if it's a problem i'm fine waiving that um especially if we can get a lot of people on board i think that that's kind of the key thing or just say it's free it's usually 100 bucks a month or we'll give it to to you for free for two years or whatever and just and because then you're like
+
+59
+00:16:51,823 --> 00:17:09,712
+Matt (BD): Yeah, I think in the initial to show proof of concept, I think giving away some stuff for free. Whatever.
+
+60
+00:17:11,248 --> 00:17:22,095
+Erik (ceo): hey, well, this is typically a paid service, but, you know, if you join our coalition early, we'll give it for free for two years. And then they feel like they're getting $2,000 of value.
+
+61
+00:17:23,151 --> 00:17:52,751
+Matt (BD): And what I would suggest is, again, I can get you on a call with my buddy. I would talk to Mike and see what he thinks too because he's a publisher. I don't know. Would you want to get on a call with the sales houses, the head of sales houses and those people right now before we flush this out? Or would you rather wait until that's flushed out and solidified and then get those calls going? Because I don't want – I just want to know what you think.
+
+62
+00:17:52,751 --> 00:18:13,488
+Matt (BD): on your end if you're comfortable with starting those conversations now because i was going to post on linkedin that i joined but once i do i mean i'm going to get dms and get people that are interested because i think what you have is is a fantastic piece you know i think it's awesome but they're going to ask oh how much does it cost was it and you know i don't know how to answer that yet
+
+63
+00:18:02,703 --> 00:18:29,807
+Erik (ceo): Sure. I'm totally okay with saying, especially if it's in private DMs and people are interested in contacting you, giving away, at the very least, the pro version for a year to two years.
+
+64
+00:18:29,807 --> 00:18:58,384
+Erik (ceo): maybe if they want to do the more fancy business version we give them a massive discount um and just just to get people on board i'm totally okay with that i just have to set that up on my end the technical end which isn't like the end of the world where you can get basically give somebody like a single use discount code and they can just sign up for free um or we could create the account for them on my end um i think that's okay with me because
+
+65
+00:18:58,447 --> 00:19:24,735
+Erik (ceo): my my number one goal is is kind of what you said is get as many people using the technology as possible um because if we have that everything else becomes very easy uh in my opinion uh so i i think i'm as long as our initial value proposition you think is solid enough for those sales houses
+
+66
+00:19:12,368 --> 00:19:13,199
+Matt (BD): Mhm.
+
+67
+00:19:24,735 --> 00:19:53,472
+Erik (ceo): Like if we give it to them at a discount or for free, basically. Discount if that's all the super advanced stuff, because that does cost more money to run. But at least some more advanced. And we can talk about features that I have as well and which you think should be included at the limited time free tier, even if that limited time is like a year or two. I'm okay with that.
+
+68
+00:19:53,472 --> 00:20:23,024
+Erik (ceo): the overhead isn't staggering you know um and it it'll be pretty low burn rate even if we get a thousand people on board i mean it's not going to cost us at that volume it's not going to cost us more than like five thousand dollars a year like i would say every person that comes on board that does a thousand requests a month will cost us 500 bucks or less
+
+69
+00:20:23,024 --> 00:20:43,760
+Erik (ceo): total for the year. That's true. Yeah, yeah, I could do it that way.
+
+70
+00:20:25,423 --> 00:20:53,791
+Matt (BD): Well, you can also – again, you can also cap that, right? I don't know however you want to – you can cap it and say, listen, you can only get 500 requests, right? Whatever it is, again. And then if you want to get more, then you just have to pay for those, right? So that's why you – again, I just want to make sure that when I post this and when I reach out to the sales houses that we have our shit in order.
+
+71
+00:20:53,791 --> 00:21:19,823
+Matt (BD): like how how we're going to present it like i want to make sure because the the last thing i want is that um we put it out there and then we're wishy-washy on like what the pricing should be what the future should be so again i could post it today i still think we should kind of figure everything out first um yeah
+
+72
+00:21:15,952 --> 00:21:44,800
+Erik (ceo): Yeah, I'd like to ruminate a little bit on it as well and maybe post later this week. But I think I could. Yeah, yeah, I think. I'm not opposed to doing a more freemium model, essentially. That's essentially that's kind of what I set up in the first place is the free tier gives everything they need to embed and protect their content with just the basic.
+
+73
+00:21:23,024 --> 00:21:26,000
+Matt (BD): or it's not that big deal you know
+
+74
+00:21:44,800 --> 00:22:14,784
+Erik (ceo): standards organization, C2PA stuff. And that's more like the brand protection, one embedding per whole blog or article, but isn't necessarily helpful when it comes to licensing negotiations for trying to monetize their content in any way. That was what the paid tier was supposed to be. But I'm okay thinking about it a little bit more today, and I'll get
+
+75
+00:22:14,784 --> 00:22:38,640
+Erik (ceo): back to you on what i think the structure could look like on that and just take a look at what it would cost because it's not going to cost us a ton um anything that i would be uncomfortable with if that makes sense to offer more features for free yeah 100 percent yeah
+
+76
+00:22:26,767 --> 00:22:50,864
+Matt (BD): At the end of the day, I think that will get offset by the amount of publishers we bring on. The VCs are going to be like, oh, wow, we've got a lot of people. We'll get some money to them. To me, I think it will be offset by the – do you have experience or how do you plan on licensing out this information?
+
+77
+00:22:52,015 --> 00:23:21,072
+Erik (ceo): great question uh basically building the whole coalition of publishers uh i have one of my advisors he um works for a vc and he has connections to open ai anthropic and i also have a couple connections to them as well through the standards organization um and also with like meta and google um basically approaching them saying hey we have this big piece of content and like essentially
+
+78
+00:23:21,072 --> 00:23:50,416
+Erik (ceo): Would you like to like, let's figure out the licensing framework for this. That's what I'm doing at Syracuse is trying to build a licensing framework with the industry to license this content. And there's power in numbers, essentially. And if you are getting rid of essentially the number one argument that AI companies have in court right now, which is this willful infringement or innocent infringement.
+
+79
+00:23:50,416 --> 00:24:19,615
+Erik (ceo): argument into something that could be willful infringement, all of a sudden, the AI companies have to play ballgame. Because, you know, we're giving them formal notice, and if you want to train on this content, blah blah blah. We're basically giving a carrot and a stick, because they have regulatory pressures to be able to prove where their content is coming from. They want to be seen as good guys right now. Like, there's all these... Like, the Super Bowl ads are a great example of...
+
+80
+00:24:19,615 --> 00:24:46,336
+Erik (ceo): These big AI companies are attacking each other over what their ethical visibility looks like over running ads and all this other stuff. You know, it could be a competitive advantage as well of, especially like Anthropic, which is more amenable to this type of stuff, is saying, hey, well, this is also a way for you to look like the good guys, and you're actually paying for content to train your model. You could go run an ad saying,
+
+81
+00:24:46,336 --> 00:25:13,744
+Erik (ceo): hey we're the first ones to join this new licensing schema uh to basically say open ai is stealing content blah blah blah and here we are paying for it you know we're working with all these publishers and blah blah blah um so there's that angle as well um essentially the enterprise sales cycle and contract negotiations and this type of stuff is new to me uh nate
+
+82
+00:24:58,800 --> 00:25:03,024
+Matt (BD): Yeah.
+
+83
+00:25:13,744 --> 00:25:41,968
+Erik (ceo): who you will probably meet soon he has experience doing like selling ip patent portfolios to large enterprises and watermarking technologies to large enterprises um and through like digimark and dolby licensing and this type of stuff so um ideally we get the coalition of people then we start negotiation
+
+84
+00:25:41,968 --> 00:26:11,887
+Erik (ceo): negotiations with the AI companies. Because I don't think I talked to you about this at all or very much, but the biggest value prop that we have for the AI companies isn't necessarily even the content of information through the coalition. It's actually using the same technology in their outputs to trace their outputs across the internet and being able to tie that back to the exact moment of generation. So let's say
+
+85
+00:26:11,887 --> 00:26:38,576
+Erik (ceo): a user and they have billions of chats daily right and a lot of that ends up on the internet so let's say a user uses chat gpt to write a social media post or an article let's say it's a social media post on linkedin right and though that embedding is found on linkedin it has 100 comments and 300 likes and shares and whatever you can take all of that information
+
+86
+00:26:25,328 --> 00:26:26,287
+Matt (BD): Hmm.
+
+87
+00:26:38,576 --> 00:27:06,671
+Erik (ceo): and who those users are and metadata on those users, like typical analytics would do for the demographics and whatnot, and the sentiment of the comments and whatnot of that post on the internet, and tie it back to, crucially, the exact model ID in the background, like if you're A-B testing models, all the different settings that you have, all the different contexts that you have available to you, and information on the user.
+
+88
+00:27:06,671 --> 00:27:22,160
+Erik (ceo): that made that generation in the first place to essentially have really good structured data and analytics of how your models are performing on the internet, which is currently not possible right now.
+
+89
+00:27:20,848 --> 00:27:45,583
+Matt (BD): So are you able to find this through the internet? Like you're able to – how? So, again, let's say, for instance, a web publisher, right? They have this article that they created and they're like, man, I feel like my stuff is being taken. How can they find where their stuff is across the internet? Is this something you have currently or something you're developing?
+
+90
+00:27:45,328 --> 00:28:15,215
+Erik (ceo): This is something I'm developing, and this type of system is extremely expensive and difficult to build, honestly. And it's one of the reasons why I am raising money is because it's very difficult and expensive to build. But it's a massive market opportunity, which is the only reason why I'm interested in raising VC funds. So essentially, it's currently manual.
+
+91
+00:28:15,248 --> 00:28:43,215
+Erik (ceo): content or that looks like their content on a competitor's web page, they could basically copy and paste from that web page into the verification tool to see if there's any embeddings on it. I also have a Chrome plugin that I haven't released quite yet that will automatically do that for them. So all they have to do is visit the website, it will scan the website for any embeddings and tell you what embeddings are found, who they're from,
+
+92
+00:28:34,095 --> 00:28:35,024
+Matt (BD): That's...
+
+93
+00:28:43,215 --> 00:29:11,615
+Erik (ceo): and they can basically read the manifest information right there for free. So I'm almost ready to release that. I'm intending actually to release that probably this week in beta, if not next week, because it's almost completely done. But all they would have to do is go visit their competitor's website. The plugin would scan the website, which not only would tell them, but it would tell us.
+
+94
+00:29:11,615 --> 00:29:40,079
+Erik (ceo): So, essentially, if embeddings are found, and it's not on the original website that owns it, we can check that against our database, and in the future, automatically send almost a cease and desist. Completely automatically, just based off of users browsing the internet, because they want to either A, use the Chrome plugin to sign content that they're posting, or B, check for the provenance information of websites that they visit.
+
+95
+00:29:40,079 --> 00:30:09,439
+Erik (ceo): So that is actually going to be a free tool for users that will enable them to sign content. Let's say they're making a LinkedIn post and they want to sign that LinkedIn post. They could do that on LinkedIn using the Chrome plugin. Or they're browsing LinkedIn or Medium or just the web and it would tell them what embeddings are found. Which would then essentially help inform our system of
+
+96
+00:29:45,776 --> 00:29:46,735
+Matt (BD): Yeah.
+
+97
+00:30:09,439 --> 00:30:39,040
+Erik (ceo): hey while while browsing the internet through our system your content was found because a user with our chrome plugin or what you know we wouldn't tell them that specifically necessarily but your content was found on another website like they could essentially check options and say would you like to default to sending this to their contact or department basically saying hey we found our content on your website take this down or pay us right
+
+98
+00:30:22,031 --> 00:30:42,192
+Matt (BD): Mm-hmm Oh
+
+99
+00:30:39,040 --> 00:31:06,192
+Erik (ceo): type of stuff. The Chrome plugin that helps enable that in its early stages is almost ready to go completely. I still need to make a couple tweaks to it. But eventually what we're going to do is probably either ourselves partner in some way and also
+
+100
+00:31:06,192 --> 00:31:32,848
+Erik (ceo): potentially have the AI companies partner with the major social media sites like LinkedIn, Facebook, and whatnot to be able to scrape and get real-time information embedded in their system, our verification tools, for them to basically have a white-labeled version of our technology to prove provenance of the text content on their webpages that would feed analytics to us as well, saying, hey, you're...
+
+101
+00:31:32,848 --> 00:32:02,656
+Erik (ceo): Because you might not care if your article was found quoted in a Facebook post, right? But maybe your article is found pasted in, like a quote from your article is found in a Facebook post, but the hash doesn't match. So that means that the content was changed. So somebody might be misattributing or misquoting you on a social media site. And if that gets out of hand, that's a problem, right? That's a brand visibility problem.
+
+102
+00:31:39,472 --> 00:31:40,592
+Matt (BD): Mm-hmm.
+
+103
+00:32:02,656 --> 00:32:29,776
+Erik (ceo): So essentially, it helps cover that as well in the future. But you need to start marking content today to see where that ends up on the internet to then, when we build the system to go scan the internet and partner with these big sites to derive that information, we're able to say, hey, you know, this is how your content was used, how it was interacted with. You know, like, because imagine you're a major...
+
+104
+00:32:29,776 --> 00:32:44,560
+Erik (ceo): publisher or even a mid-sized publisher and people are sharing your content across the internet, you have no way of tracing that either. That's of less value to publishers than it is to AI companies, but it's still of some value, right?
+
+105
+00:32:37,423 --> 00:33:05,744
+Matt (BD): Yeah. I know publishers that have tried multiple times that have said that people are copying their content. And what we then have to do, again, where I used to work at a sales house, if a publisher reached out to me and said, hey, listen, someone that's on your network is copying our content,
+
+106
+00:33:05,936 --> 00:33:34,959
+Matt (BD): Can you send a cease and desist or DMCA, whatever it is? The legal team at the sales house has to send that information, right? Saying, take it down or we're going to stop monetizing you. But there's no real full way to know for a fact. This way, if you have that thing as a publisher, you're like, man, I see they're using it. Here's the proof. Like I'm showing you proof. Like there's no, there's no issues. Like it's just like.
+
+107
+00:33:10,095 --> 00:33:33,647
+Erik (ceo): Yeah, yeah. Yep. Yep. Yes.
+
+108
+00:33:35,696 --> 00:34:02,255
+Matt (BD): So do you want me to reach out to the head of Mediavine who is a sales host that I used to work at? I'm good friends with the founder. Before I announce, do you want me to set something up so you can try to set something up this week or next week just so you can kind of give him your pitch and say, hey, listen, this is what we're doing. I'd love to pick your brain on how you think it would go over with your audience if you think it's something we could partner on. Do you want me to set that up?
+
+109
+00:34:02,800 --> 00:34:30,736
+Erik (ceo): Yeah, if... Sure, I think that would be helpful. I will say as well, in two days, I'm presenting to the AI licensing group at the News Media Alliance. So there's going to be first there, there's going to be like...
+
+110
+00:34:03,119 --> 00:34:13,968
+Matt (BD): Because I think he'll be more open and honest because, again, I'm a friend of his versus me reaching out to some of the other ones that I haven't worked out that I know, and I know they'll be honest, but I think he'll be more straightforward.
+
+111
+00:34:30,736 --> 00:35:00,511
+Erik (ceo): somebody from the Condé Nast group, there's going to be Washington Post, Guardian, a whole bunch of others. We're essentially presenting the standards work that I've done, how they could help use that, and our technology as well. So, basically, I'd like to get a good offer for them, at the very least, if they want to get started, because from that, I could get six initial pilots like this.
+
+112
+00:35:00,511 --> 00:35:30,239
+Erik (ceo): from some of the biggest publishers um so i want to make sure that the framing is as low friction as possible for them to say yes um because that would be great right um and i know for a fact that they currently the news media alliance as an organization is partnered with one of the big ai scraping tools that is like oh we pay publishers a cent per time you're
+
+113
+00:35:30,239 --> 00:35:58,320
+Erik (ceo): content and scrape through our API, they do a 50-50 revenue share split. So coming in with something slightly less than that and coming in for completely free and enabling them a much more significant opportunity for revenue than just like a couple dollars a month type thing, you know, I think could be really powerful for these guys. So I just want to make sure that the pricing framing is good.
+
+114
+00:35:58,320 --> 00:36:19,216
+Erik (ceo): you know maybe touching a little bit on brand protection um and the whole like here's what we're like here's what we're gonna build uh but we need people to start marking their content first and you know chicken and egg blah blah blah um so that's okay
+
+115
+00:36:13,231 --> 00:36:29,199
+Matt (BD): I'll reach out to him now. I mean, he's very busy, so I don't know if I'll get him, you know, in the two days. I'll try. But I'll try my hardest. And I'll give him a very, like, high-level overview of what the company is and try to get him on a call soon. Okay?
+
+116
+00:36:28,208 --> 00:36:56,832
+Erik (ceo): Yeah. Not necessarily with him in the next two days, but I just want us to figure out, if possible, what the best pitch is, which I'll think about what we've talked about here about that. Because I really think, yeah, I think you're right. The lowest barrier to entry possible. That's why I was pitching to the AP, for example, who I've talked to.
+
+117
+00:36:56,832 --> 00:37:26,239
+Erik (ceo): They've basically said, our tech team is busy, but we like the technology. We like what you're doing. Let's stay in contact. I basically said 30K one-time implementation fee and then revenue share. And he said that was a good model for at least them. But not everybody has the money that AP does, who's like the biggest wire service in the world. So yeah, that's a good point that I guess... I thought that the...
+
+118
+00:37:18,320 --> 00:37:47,199
+Matt (BD): No. It's not the $100, right? I think if you have a proof of concept, any day I would give you $100. If you could say to me that taking your content has shown
+
+119
+00:37:26,239 --> 00:37:36,271
+Erik (ceo): And that's really good feedback, is that the middle market, even on the larger end, have a hard time stomaching $100. So that's good for me to know.
+
+120
+00:37:47,199 --> 00:38:14,800
+Matt (BD): proven that i can that we've made x amount of money from a publisher that's similar to you i would take take a thousand dollars i don't care take a thousand dollars to bring me back five thousand that's a no-brainer but to ask for something when i don't know what i'm getting from it like i'm not making anything from it it's not protecting me in any way it's not like like i get it like publishers don't like the ai scraping that's a big one right for sure but
+
+121
+00:38:15,823 --> 00:38:36,112
+Matt (BD): There's no way right now that's going to stop. It's not going to stop them. Right. So it's like. Yeah.
+
+122
+00:38:20,783 --> 00:38:50,560
+Erik (ceo): 100%. I would say the benefit is if their content is marked, scraping is going to happen. That's not going to stop. But if their content is marked in a way that survives scraping, which this does, and they have the ability to notify the AI companies that A, our content carries rights with it, then that helps.
+
+123
+00:38:50,560 --> 00:39:19,679
+Erik (ceo): That's a massive tool to bring AI companies to the negotiation table. However, the biggest problem that these more middle market guys have is they don't necessarily have a legal team or infrastructure to go, and it's not worth the AI company's time, perhaps, to go negotiate all these one-off deals with these guys for that monetization of content. The AI company might just say, okay, sue me. Even though now you can prove willful infringement, it's going to...
+
+124
+00:38:54,607 --> 00:39:24,320
+Matt (BD): Yeah. Yeah, it's why I'm saying, like,
+
+125
+00:39:19,679 --> 00:39:43,407
+Erik (ceo): take you x years to get to see anything right so yeah it's a good point right okay good feedback
+
+126
+00:39:24,320 --> 00:39:53,424
+Matt (BD): To me, it's like, to my point, it's like, listen, there's no, I get there's benefit. Like in theory, there's a lot of benefit, but publishers look at bottom line. What's the return on investment? Like if I'm paying $100, I want the 100 plus back, right? That's, you know, yeah, just proof of thought. Yeah, get back to me, whatever you think, you know, whenever you want to. I'm going to try, I'm going to reach out to my buddy now, try to get his feedback. See if we can get a call with him, right? And go from there, okay?
+
+127
+00:39:53,263 --> 00:40:20,496
+Erik (ceo): That'd be great. And what do you think about the AI Impact Summit thing? I'm 50-50 on whether I want to go or not because a lot of really good contacts are going to be there that would be hard to get in front of normally, and they're going to want to be talking to us because the C2PA has a keynote.
+
+128
+00:39:54,672 --> 00:39:55,791
+Matt (BD): Yeah.
+
+129
+00:40:20,528 --> 00:40:44,847
+Erik (ceo): like panel conversation which i don't think i could join at this late notice because i got notified like a couple days ago uh an invite but basically all the biggest ai companies are going to be there a lot of the big publishers are going to be there um and they're going to actually actively want to talk to us um so
+
+130
+00:40:44,239 --> 00:41:11,600
+Matt (BD): so here's my thoughts on that right uh what i said to you yesterday then also i spoke to my buddy today and and we both came up with you know what i'm going to share with you now right so um i think the the problem that you're going to run into is that because you don't have publishers right now you don't have the sales aspect right now you have an idea right and
+
+131
+00:41:09,968 --> 00:41:27,535
+Erik (ceo): I don't have leverage, I have an idea. Yeah, true.
+
+132
+00:41:12,624 --> 00:41:42,607
+Matt (BD): Correct. You have an idea. And if someone that hears that idea that's there, again, these are AI companies are very smart, whip things up. What's to stop them in two months for doing the exact same thing that you're doing right now and doing it better because they have the connections. So my worry is that you get too ahead of yourself because it's exciting. And I completely agree with you. And I'm right there with you. That you have one chance to talk to these people or to make a good first impression.
+
+133
+00:41:42,607 --> 00:41:58,895
+Matt (BD): there's no there's nothing like you don't have everything yet and my worry is like do you think in your opinion right someone that's smart i mean you're very smart clearly do you think someone that's smart like you can whip this up in a couple months
+
+134
+00:41:59,983 --> 00:42:29,696
+Erik (ceo): Potentially, but the thing, if they have a lot of resources, yes. But if they're from one of the major AI companies, I don't think, I think I will beat them. And the reason why, even if they're able to whip it up in a couple months, and the biggest reason why is if you're a publisher and you're currently getting your content taken from you by these AI companies and you have been and they've been refusing to pay,
+
+135
+00:42:29,696 --> 00:42:57,840
+Erik (ceo): Would you trust a third-party provider, or would you trust the AI company that's saying that they're doing the same thing? Who would you rather go with, right? Plus, I have patents around the sentence level that is still patent pending, technically, but around the more granular level attribution and tracking. So they wouldn't have access to the same technology that I do to...
+
+136
+00:42:57,840 --> 00:43:26,687
+Erik (ceo): to basically do the same thing that I do. So I have a bit of a technological moat and head start on these guys. And I have, you know, I'm the co-chair for the task force and all these type of things. So even if they have a similar system, their technology isn't going to be to the level of mine. And I'm also basically like trying to be the Switzerland between the publishing industry and the AI industry.
+
+137
+00:43:23,471 --> 00:43:35,023
+Matt (BD): Mm-hmm. Mm.
+
+138
+00:43:26,687 --> 00:43:56,352
+Erik (ceo): So I'm someone that is helping enable publishers, you know, monetize their content if they want to, to AI companies, whereas AI companies are saying, maybe coming in saying, hey, my bad. Sorry, I've been taking your content, but maybe I'll lowball you, you know, because you're literally signing the deal with the devil if you are a publisher and you're ascribing to OpenAI's system of doing this, right? If they have control of that marketplace,
+
+139
+00:43:56,352 --> 00:44:21,327
+Erik (ceo): They're going to run you down, you know, grind you out, basically. But if there's a third-party marketplace that, you know, wants to make the most money, you know, capitalistically, selfishly, that means publishers make the most money and actually have representation on their behalf. Whereas a marketplace, you know, I already said this, but a marketplace run by AI isn't going to have that, essentially.
+
+140
+00:43:58,864 --> 00:44:27,568
+Matt (BD): Then you have, you know, publishers that aren't smart or savvy and just say, I want to make whatever I can make. Right. So again,
+
+141
+00:44:26,288 --> 00:44:54,191
+Erik (ceo): That's true. All right. I'll skip it. I have a couple of really good opportunities later this year, as well as potentially being a speaker as well, at a couple pretty big events that are more so even focused on.
+
+142
+00:44:27,568 --> 00:44:42,159
+Matt (BD): My, my, my, my contract, of course, do whatever you want. It's your time, your energy, you know, your, your money. I personally would maybe wait, but again, it's totally it for you.
+
+143
+00:44:54,191 --> 00:45:11,120
+Erik (ceo): either AI or media and technology, which will be in a better place in a couple months to have those conversations anyway. So I think I'll skip for now.
+
+144
+00:45:07,535 --> 00:45:33,520
+Matt (BD): Yeah. I mean, who's to say this time next year, maybe you're not a keynote speaker at the one in India because of the things that were built, right? So again, devil's advocate, I'm playing both sides, just trying to, you know.
+
+145
+00:45:22,959 --> 00:45:52,879
+Erik (ceo): that i appreciate matt uh very i'd rather you be devil's advocate and tell me what you think than try to yes man me because i am totally yes which i picked up on which is fantastic uh because i want to hear feedback on how i think things think jesus how i think things should run but i'm open especially now which is the nascent form of commercialization of
+
+146
+00:45:52,879 --> 00:46:18,864
+Erik (ceo): How can we just get commercial adoption quickest way from zero to one? And then once we get that, we have a whole host of other problems to deal with. But we have better problems. So I'm totally willing to make changes and be agile and whatnot. So I very much appreciate your feedback. That's what I'm trying to say.
+
+147
+00:46:07,055 --> 00:46:25,199
+Matt (BD): Yeah. In terms of team, I'm just more curious, who do you have on the team? Is it mainly advisors? Do you have like full time or anything like that?
+
+148
+00:46:25,199 --> 00:46:51,711
+Erik (ceo): Yeah, so I have one other guy who I need to have a conversation with this next week. I hired initially on the BD side, again, equity commission only for him, to help close and navigate enterprise sales cycle deals. He has not been putting in as much legwork as I would like for...
+
+149
+00:46:51,711 --> 00:47:18,704
+Erik (ceo): what i've promised him essentially so i'm going to be talking with him next week about that um and i have a couple advisors that do a little bit of work here and there um i'm the only person doing any of the technology any of the marketing for the most part uh all the standards work um and i'm doing most of the bd and relationships at the moment um so
+
+150
+00:47:19,055 --> 00:47:26,479
+Erik (ceo): I do like 95% of the work at the moment, which is typical.
+
+151
+00:47:27,503 --> 00:47:53,791
+Matt (BD): Okay. Yeah, well, hopefully we get this thing off the ground and running and doing really well. I think once we have – once you get back to me how comfortable you are with certain things like pricing, models, and all that kind of stuff, I'll put that post out and I'll reach out to a lot of people. But I'll only reach out to my one guy right now just to kind of pick his brain and see how he thinks. Hopefully –
+
+152
+00:47:53,791 --> 00:48:07,184
+Matt (BD): He gets back to us soon. I'll email him also, but I'm just going to ping him on LinkedIn. Cool. If you need anything, let me know. I'll just be doing that for now. And then once you figure things out, let me know and then kind of go from there, okay?
+
+153
+00:48:06,800 --> 00:48:30,895
+Erik (ceo): Yeah, I have one or two things to do, but after I do that, I'm going to dive deep into the pricing model and how much technology I think is appropriate to give away for free and maybe have it gated. So people that are abusing the free system would have to pay for additional access. I'll dive into that today and get back to you.
+
+154
+00:48:31,312 --> 00:48:54,320
+Matt (BD): Yeah, I think a freemium model is better. You know, you're giving something to people that, you know, they wouldn't have otherwise, right? And you're giving them a lot of something. And then if they want even more of that something, they just need to pay a little bit for it, right? And I think personally, a 60-40 reps plate is a good way to start. I mean, you can...
+
+155
+00:48:51,184 --> 00:49:21,120
+Erik (ceo): okay what would you say what would you say would you say 60 40 as the baseline and if their content is perform like outperforming everybody else's they get a better share or is it based off of amount of what do you think amount of content or the you know the cap of the company because hypothetically like let's say we go to an ai company and we have this whole group like thousands of
+
+156
+00:49:21,120 --> 00:49:41,424
+Erik (ceo): publishers that specialize in different types of content, and AI companies say, oh, we're only interested in XYZ type of content, right? Then, obviously, we're not going to give revenue share to those publishers. I would assume that content isn't part of that deal, right? So, right.
+
+157
+00:49:36,431 --> 00:50:05,087
+Matt (BD): Yeah, they only get paid for the content that's being used. If you sell $5 million on a deal and none of their content was used, they don't get it. I don't think someone should be rewarded for something that they don't have any input on. Of course, is there going to be a way to figure out how much of the content
+
+158
+00:49:52,399 --> 00:50:13,327
+Erik (ceo): That would make sense. Yeah, exactly. Yes. Yeah, I could do a whole waterfall type thing.
+
+159
+00:50:05,087 --> 00:50:33,632
+Matt (BD): of each individual user is okay like there's if there's five publishers and one publisher is exponentially more information that this company you know that that sold they will get the higher amount right that's okay so it should be 60 of the content like if you say it's two million dollars the two million dollars can be split up between the five publishers in the sense of like
+
+160
+00:50:21,711 --> 00:50:40,783
+Erik (ceo): Yes. Yeah, that's how I foresee it. Yeah, I think...
+
+161
+00:50:33,632 --> 00:50:41,040
+Matt (BD): hey this person only had like five thousand dollars worth of content this person had ten million dollars you know whatever that is and then 60 40 that
+
+162
+00:50:40,783 --> 00:51:09,520
+Erik (ceo): I was just thinking of the structure itself of the revenue split. So it's basically for the whole contract, 60-40, where 60% goes to that group of publishers, but that 60% is then divided on the quantity and or quality, some sort of calculation. So that's where the revenue split is. It's not, yeah, that makes sense. I just have to, yeah, okay, I got it. Thank you.
+
+163
+00:51:08,976 --> 00:51:33,664
+Matt (BD): Yeah, then we're getting rewarded for the technology. They're making money that they wouldn't have made before. You know, because there's this company called Simple Feed that they help you, they help put your content in like Yahoo, MSN, Newsbreak, that kind of stuff. Like they do that. They have that technology. They built it. Yeah.
+
+164
+00:51:30,991 --> 00:51:50,927
+Erik (ceo): Yeah, so they're Newswire type thing. 100%. And the legal infrastructure and all that type of stuff.
+
+165
+00:51:33,664 --> 00:52:03,087
+Matt (BD): they do that for you they they put out your content out there and they take care of all the technology and i think it's like a 60 40 rev split right but that's money you wouldn't have gotten before and to get those relationships it's almost impossible a year plus to get those relationships however however if you have those relationships like if you like oh i already work with with yahoo and i just need you to manage it then the rev split i think is like 75 25 or something like that right so the rev split goes
+
+166
+00:52:03,087 --> 00:52:28,528
+Matt (BD): differently so if you have previous relationships they still manage it but it's just a different rev split which could be the same thing like hey listen if you want to go out there and sell the yourself it's a different rep split right that might be in 80 20 or 90 10. like we still need to get paid for the technology even though it's free to you we still need to get paid to allow you to be able to do something like this so that could be part of free structure as well
+
+167
+00:52:03,823 --> 00:52:32,431
+Erik (ceo): Okay. Sure. Yeah. Okay. I think that's where I was also thinking of...
+
+168
+00:52:32,431 --> 00:53:01,615
+Erik (ceo): Yeah, because there's definitely going to be some companies that are going to want to try and negotiate themselves or have existing contract negotiations with AI companies. But this could be a value add to them as well. This is where it gets really complicated. Because... Right.
+
+169
+00:52:44,783 --> 00:53:12,080
+Matt (BD): This is the technology. You're providing that technology and a service, which are two separate things. You're providing the service of the sales and the technology, which is the scraping the shit. If you want to provide the technology and they have the service of the relationships, it's a different rep split. Otherwise, if you're providing everything, it should be the higher rep split because we're double dipping on that. We're providing the technology and the manpower of the sales. Got it?
+
+170
+00:53:09,008 --> 00:53:36,239
+Erik (ceo): Yep, makes total sense. Okay, I'll think a bit on structure. This is extremely helpful. So, yeah, I'll definitely get back to you today on what I think a good structure would look like from a company perspective. And if that looks terrible, let me know. If it looks good, we'll run with it. How about that? All right, thank you. Thank you so much, Matt.
+
+171
+00:53:14,127 --> 00:53:37,295
+Matt (BD): Speak soon. If you need me, let me know. Bye.
