@@ -232,6 +232,7 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose |
 |----------|---------|
 | [docs/architecture/BACKEND_ARCHITECTURE.md](./docs/architecture/BACKEND_ARCHITECTURE.md) | Backend system design |
+| [docs/architecture/EMBEDDING_MODES.md](./docs/architecture/EMBEDDING_MODES.md) | **Comprehensive reference for all embedding modes** — VS256, VS256+RS, ZW, C2PA — with platform compatibility, PDF behavior, security, and API usage |
 | [docs/architecture/MINIMAL_UUID_EMBEDDING_FLOW.html](./docs/architecture/MINIMAL_UUID_EMBEDDING_FLOW.html) | HTML diagram of minimal_uuid signing + verification flow |
 | [docs/architecture/EMBEDDING_ICON_DEMO.html](./docs/architecture/EMBEDDING_ICON_DEMO.html) | Interactive article demo with embedding icons + payload details |
 | [docs/architecture/SUBDOMAIN_STRATEGY.md](./docs/architecture/SUBDOMAIN_STRATEGY.md) | Domain strategy |

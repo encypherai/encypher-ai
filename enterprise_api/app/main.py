@@ -237,7 +237,9 @@ def build_trusted_hosts() -> list[str]:
                     host_values.append(subdomain_host)
 
     if not settings.is_production:
-        for host in ("localhost", "127.0.0.1", "test", "testserver"):
+        # TEAM_156: Include Docker service name for inter-container calls
+        # TEAM_159: Add "traefik" — marketing-site container calls http://traefik:8000
+        for host in ("localhost", "127.0.0.1", "test", "testserver", "enterprise-api", "traefik"):
             if host not in host_values:
                 host_values.append(host)
 

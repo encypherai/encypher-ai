@@ -98,12 +98,22 @@ export default function RoiCalculator() {
           </div>
 
           <div className="bg-muted/50 rounded-lg p-6 flex flex-col items-center justify-center text-center border border-dashed border-border">
-            <h3 className="text-lg font-semibold text-muted-foreground">Annual Revenue Opportunity</h3>
+            <h3 className="text-lg font-semibold text-muted-foreground">Gross Licensing Opportunity</h3>
             <p className="text-4xl md:text-5xl font-bold text-primary my-2">
               {formatCurrency(potentialRevenue)}
             </p>
-            <p className="text-xs text-muted-foreground max-w-xs">
-              This is an estimate of potential annual revenue from licensing your content, based on the values provided.
+            <div className="mt-3 w-full space-y-2 text-sm">
+              <div className="flex justify-between items-center px-2">
+                <span className="text-muted-foreground">Coalition track (60/40)</span>
+                <span className="font-semibold">{formatCurrency(potentialRevenue * 0.6)}</span>
+              </div>
+              <div className="flex justify-between items-center px-2">
+                <span className="text-muted-foreground">Self-service track (80/20)</span>
+                <span className="font-semibold">{formatCurrency(potentialRevenue * 0.8)}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground max-w-xs mt-3">
+              Your share of licensing revenue. Same splits whether you&apos;re on Free or Enterprise.
             </p>
           </div>
         </div>

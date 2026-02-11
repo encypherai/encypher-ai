@@ -17,7 +17,7 @@ Options:
   --skip-docker       Skip starting Docker services (use if already running)
   --skip-frontend     Skip starting frontend applications
   --clean-start       Clean rebuild (docker volumes, next caches, node cache)
-  --rebuild           Rebuild application services (non-database)
+  --rebuild           Rebuild application services (non-database) + clear .next caches
   --skip-docker-logs  Skip streaming Docker logs
   --skip-stripe-listen  Skip starting Stripe CLI webhook listener
   -h, --help          Show this help message
@@ -86,20 +86,6 @@ require_cmd() {
   fi
 }
 
-install_node_deps_if_needed() {
-  local app_dir="$1"
-
-  if [[ -d "${app_dir}/node_modules" ]]; then
-    return 0
-  fi
-
-  if [[ -f "${app_dir}/package-lock.json" ]]; then
-    npm ci
-  else
-    npm install
-  fi
-}
-
 wait_for_http() {
   local name="$1"
   local url="$2"
@@ -154,24 +140,12 @@ fi
 
 step "2/6" "Cleaning caches (optional)..."
 if [[ "$CLEAN_START" -eq 1 ]]; then
-  if [[ -d "apps/marketing-site/.next" ]]; then
-    rm -rf "apps/marketing-site/.next"
-  fi
-  if [[ -d "apps/dashboard/.next" ]]; then
-    rm -rf "apps/dashboard/.next"
-  fi
-  if [[ -d "apps/marketing-site/node_modules/.cache" ]]; then
-    rm -rf "apps/marketing-site/node_modules/.cache"
-  fi
-  if [[ -d "apps/dashboard/node_modules/.cache" ]]; then
-    rm -rf "apps/dashboard/node_modules/.cache"
-  fi
-
   if [[ "$SKIP_DOCKER" -eq 0 ]]; then
+    # Removes all containers AND named volumes (node_modules, .next caches, DB data)
     ${COMPOSE} -f docker-compose.full-stack.yml down -v >/dev/null 2>&1 || true
   fi
 
-  ok "Clean start applied"
+  ok "Clean start applied (Docker volumes removed)"
 else
   ok "Skipping cache clean (use --clean-start to clean)"
 fi
@@ -183,15 +157,32 @@ if [[ "$SKIP_DOCKER" -eq 0 ]]; then
   fi
 
   if [[ "$REBUILD_SERVICES" -eq 1 ]]; then
+    step "  " "Clearing stale .next caches for frontends..."
+    # TEAM_155: Remove named .next cache volumes so Webpack chunks are rebuilt
+    # from scratch. Stale chunks cause "Cannot read properties of undefined
+    # (reading 'call')" errors with next/dynamic after code changes.
+    for vol in marketing_next_cache dashboard_next_cache; do
+      full_vol=$(docker volume ls -q --filter "name=${vol}" 2>/dev/null | head -1)
+      if [[ -n "$full_vol" ]]; then
+        docker volume rm "$full_vol" >/dev/null 2>&1 && ok "Removed volume ${full_vol}" || warn "Could not remove ${full_vol} (may be in use)"
+      fi
+    done
+
     step "  " "Rebuilding application services..."
-    SERVICES_TO_BUILD="auth-service user-service key-service encoding-service verification-service coalition-service analytics-service billing-service notification-service enterprise-api"
+    SERVICES_TO_BUILD="auth-service user-service key-service encoding-service verification-service coalition-service analytics-service billing-service notification-service enterprise-api marketing-site dashboard"
     ${COMPOSE} -f docker-compose.full-stack.yml build $SERVICES_TO_BUILD
   fi
 
+  # Build the list of services to exclude
+  COMPOSE_UP_ARGS=""
+  if [[ "$SKIP_FRONTEND" -eq 1 ]]; then
+    COMPOSE_UP_ARGS="--scale marketing-site=0 --scale dashboard=0"
+  fi
+
   if [[ "$CLEAN_START" -eq 1 ]]; then
-    ${COMPOSE} -f docker-compose.full-stack.yml up -d --build --force-recreate
+    ${COMPOSE} -f docker-compose.full-stack.yml up -d --build --force-recreate $COMPOSE_UP_ARGS
   else
-    ${COMPOSE} -f docker-compose.full-stack.yml up -d
+    ${COMPOSE} -f docker-compose.full-stack.yml up -d $COMPOSE_UP_ARGS
   fi
 
   ok "Docker services starting"
@@ -219,26 +210,21 @@ if [[ "$SKIP_DOCKER" -eq 0 ]]; then
   wait_for_http "Auth Service" "http://localhost:8001/health" 30 || true
   wait_for_http "Key Service" "http://localhost:8003/health" 30 || true
   wait_for_http "Enterprise API" "http://localhost:9000/health" 30 || true
+
+  if [[ "$SKIP_FRONTEND" -eq 0 ]]; then
+    wait_for_http "Marketing Site" "http://localhost:3000" 60 || true
+    wait_for_http "Dashboard" "http://localhost:3001" 60 || true
+  fi
 else
   ok "Skipping service waits (Docker skipped)"
 fi
 
-MARKETING_PID=""
-DASHBOARD_PID=""
-MARKETING_TAIL_PID=""
-DASHBOARD_TAIL_PID=""
 DOCKER_LOG_PID=""
 STRIPE_LISTEN_PID=""
 
 cleanup() {
   step "" "Shutting down..."
 
-  if [[ -n "${MARKETING_TAIL_PID}" ]]; then
-    kill "${MARKETING_TAIL_PID}" >/dev/null 2>&1 || true
-  fi
-  if [[ -n "${DASHBOARD_TAIL_PID}" ]]; then
-    kill "${DASHBOARD_TAIL_PID}" >/dev/null 2>&1 || true
-  fi
   if [[ -n "${DOCKER_LOG_PID}" ]]; then
     kill "${DOCKER_LOG_PID}" >/dev/null 2>&1 || true
   fi
@@ -246,55 +232,16 @@ cleanup() {
     kill "${STRIPE_LISTEN_PID}" >/dev/null 2>&1 || true
   fi
 
-  if [[ -n "${MARKETING_PID}" ]]; then
-    kill "${MARKETING_PID}" >/dev/null 2>&1 || true
-  fi
-  if [[ -n "${DASHBOARD_PID}" ]]; then
-    kill "${DASHBOARD_PID}" >/dev/null 2>&1 || true
-  fi
-
-  ok "Frontend processes stopped"
+  ok "Background processes stopped"
 }
 
 trap cleanup EXIT INT TERM
 
-step "5/6" "Starting frontends (optional)..."
+step "5/6" "Frontends (via Docker)..."
 if [[ "$SKIP_FRONTEND" -eq 0 ]]; then
-  LOG_DIR="${REPO_ROOT}/.tmp/dev-logs"
-  mkdir -p "$LOG_DIR"
-
-  MARKETING_LOG="${LOG_DIR}/marketing-site.log"
-  DASHBOARD_LOG="${LOG_DIR}/dashboard.log"
-
-  : >"$MARKETING_LOG"
-  : >"$DASHBOARD_LOG"
-
-  (
-    cd "${REPO_ROOT}/apps/marketing-site"
-    install_node_deps_if_needed "${REPO_ROOT}/apps/marketing-site"
-    npm run dev
-  ) >"$MARKETING_LOG" 2>&1 &
-  MARKETING_PID="$!"
-
-  (
-    cd "${REPO_ROOT}/apps/dashboard"
-    install_node_deps_if_needed "${REPO_ROOT}/apps/dashboard"
-    npm run dev
-  ) >"$DASHBOARD_LOG" 2>&1 &
-  DASHBOARD_PID="$!"
-
-  ok "Marketing Site starting on http://localhost:3000"
-  ok "Dashboard starting on http://localhost:3001"
-
-  require_cmd tail
-  require_cmd sed
-  require_cmd stdbuf
-
-  stdbuf -oL -eL tail -n +1 -F "$MARKETING_LOG" | sed -u 's/^/[marketing] /' &
-  MARKETING_TAIL_PID="$!"
-
-  stdbuf -oL -eL tail -n +1 -F "$DASHBOARD_LOG" | sed -u 's/^/[dashboard] /' &
-  DASHBOARD_TAIL_PID="$!"
+  ok "Marketing Site & Dashboard managed by Docker Compose"
+  ok "Marketing Site: http://localhost:3000"
+  ok "Dashboard:      http://localhost:3001"
 else
   ok "Skipping frontends (--skip-frontend)"
 fi
@@ -334,6 +281,8 @@ if [[ "$SKIP_DOCKER" -eq 0 && "$SKIP_DOCKER_LOGS" -eq 0 ]]; then
         color["user-service"]="\033[38;5;110m"
         color["encoding-service"]="\033[38;5;76m"
         color["coalition-service"]="\033[38;5;212m"
+        color["marketing-site"]="\033[38;5;51m"
+        color["dashboard"]="\033[38;5;207m"
         color["grafana"]="\033[38;5;208m"
         color["prometheus"]="\033[38;5;244m"
         color["jaeger"]="\033[38;5;216m"
@@ -363,6 +312,6 @@ echo
 
 echo "Press Ctrl+C to stop streaming logs." 
 
-if [[ -n "${MARKETING_PID}" || -n "${DASHBOARD_PID}" ]]; then
+if [[ -n "${DOCKER_LOG_PID}" || -n "${STRIPE_LISTEN_PID}" ]]; then
   wait
 fi

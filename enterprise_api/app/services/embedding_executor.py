@@ -155,6 +155,19 @@ async def encode_document_with_embeddings(
                 },
             )
 
+        # VS256 Embedding requires Professional+ (max density, 36 chars/sentence, NOT Word-compatible)
+        if request.manifest_mode == "vs256_embedding" and org_tier_level < 1:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail={
+                    "code": "FEATURE_NOT_AVAILABLE",
+                    "message": "VS256 embedding mode requires Professional tier or higher",
+                    "required_tier": "professional",
+                    "current_tier": tier,
+                    "upgrade_url": "/billing/upgrade",
+                },
+            )
+
         # Hybrid manifest mode requires Enterprise
         if request.manifest_mode == "hybrid" and org_tier_level < 3:
             raise HTTPException(

@@ -16,6 +16,7 @@
       <div class="popup__tabs">
         <button class="popup__tab popup__tab--active" data-tab="verify">Verify</button>
         <button class="popup__tab" data-tab="sign">Sign</button>
+        <button class="popup__tab popup__tab--debug" data-tab="debug" hidden>🐛 Debug</button>
       </div>
     </header>
 
@@ -150,6 +151,33 @@
           <button id="sign-retry" class="popup__btn popup__btn--secondary" style="margin-top: 12px;">
             Try Again
           </button>
+        </div>
+      </div>
+
+      <!-- Debug tab content (only visible in dev mode) -->
+      <div id="debug-tab" class="popup__tab-content" hidden>
+        <div class="debug-panel">
+          <div class="debug-panel__header">
+            <div class="debug-panel__status">
+              <span class="debug-panel__dot"></span>
+              <span id="debug-api-url">localhost:9000</span>
+            </div>
+            <div class="debug-panel__actions">
+              <button id="debug-refresh" class="debug-panel__btn" title="Refresh logs">↻</button>
+              <button id="debug-clear" class="debug-panel__btn" title="Clear logs">🗑</button>
+            </div>
+          </div>
+          <div class="debug-panel__filters">
+            <button class="debug-panel__filter debug-panel__filter--active" data-level="all">All</button>
+            <button class="debug-panel__filter" data-level="API">API</button>
+            <button class="debug-panel__filter" data-level="MSG">MSG</button>
+            <button class="debug-panel__filter" data-level="ERROR">ERR</button>
+            <button class="debug-panel__filter" data-level="INFO">Info</button>
+          </div>
+          <div class="debug-panel__logs" id="debug-logs">
+            <div class="debug-panel__empty">No logs yet. Interact with the extension to generate logs.</div>
+          </div>
+          <div class="debug-panel__count" id="debug-count">0 entries</div>
         </div>
       </div>
     </main>

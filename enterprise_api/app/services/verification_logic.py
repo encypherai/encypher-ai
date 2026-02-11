@@ -273,6 +273,13 @@ def detect_zw_embeddings(text: str) -> bool:
     return len(find_all_minimal_signed_uuids(text)) > 0
 
 
+def detect_vs256_embeddings(text: str) -> bool:
+    """Check if text contains VS256 embeddings using magic prefix detection."""
+    from app.utils.vs256_crypto import find_all_minimal_signed_uuids as vs256_find_all
+
+    return len(vs256_find_all(text)) > 0
+
+
 async def execute_verification(*, payload_text: str, db: AsyncSession) -> VerificationExecution:
     """Run UnicodeMetadata verification with cached certificate resolution.
 
@@ -282,6 +289,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     3. Registered organization certificates/BYOK keys
     4. C2PA trust list (for third-party signed content with embedded x5chain)
     5. ZW embeddings (Word-compatible, requires signing key from DB)
+    6. VS256 embeddings (max density, requires signing key from DB)
     """
 
     await certificate_resolver.refresh_cache(db)
@@ -338,6 +346,97 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
         signer_id = None
         manifest = {}
         exception_message = str(exc)
+
+    # TEAM_158: Fallback to VS256-RS / VS256 / ZW embedding verification
+    # when C2PA finds no signer.  These modes embed a signed UUID per
+    # sentence (not a full C2PA manifest), so UnicodeMetadata won't detect
+    # them.  Try VS256-RS first (error-correcting), then plain VS256, then ZW.
+    if not is_valid and not signer_id:
+        try:
+            from app.utils.vs256_crypto import (
+                find_all_minimal_signed_uuids as vs256_find_all,
+            )
+            from app.utils.crypto_utils import get_demo_private_key
+
+            vs256_sigs = vs256_find_all(payload_text)
+            if vs256_sigs:
+                demo_key = get_demo_private_key()
+                _start, _end, sig_str = vs256_sigs[0]
+
+                # Try VS256-RS first (error-correcting variant)
+                try:
+                    from app.utils.vs256_rs_crypto import (
+                        verify_minimal_signed_uuid as vs256rs_verify,
+                        derive_signing_key_from_private_key as vs256rs_derive_key,
+                    )
+                    rs_signing_key = vs256rs_derive_key(demo_key)
+                    sig_valid, sig_uuid = vs256rs_verify(sig_str, rs_signing_key)
+                    if sig_valid and sig_uuid:
+                        from app.config import settings
+                        is_valid = True
+                        signer_id = settings.demo_organization_id
+                        manifest = {
+                            "manifest_mode": "vs256_rs_embedding",
+                            "segment_uuid": str(sig_uuid),
+                            "vs256_signatures_found": len(vs256_sigs),
+                        }
+                        logger.info(
+                            "VS256-RS fallback verification succeeded: uuid=%s, sigs=%d",
+                            sig_uuid, len(vs256_sigs),
+                        )
+                except Exception:
+                    pass
+
+                # Fall back to plain VS256 if RS didn't match
+                if not is_valid:
+                    from app.utils.vs256_crypto import (
+                        verify_minimal_signed_uuid as vs256_verify,
+                        derive_signing_key_from_private_key as vs256_derive_key,
+                    )
+                    signing_key = vs256_derive_key(demo_key)
+                    sig_valid, sig_uuid = vs256_verify(sig_str, signing_key)
+                    if sig_valid and sig_uuid:
+                        from app.config import settings
+                        is_valid = True
+                        signer_id = settings.demo_organization_id
+                        manifest = {
+                            "manifest_mode": "vs256_embedding",
+                            "segment_uuid": str(sig_uuid),
+                            "vs256_signatures_found": len(vs256_sigs),
+                        }
+                        logger.info(
+                            "VS256 fallback verification succeeded: uuid=%s, sigs=%d",
+                            sig_uuid, len(vs256_sigs),
+                        )
+
+            # Try ZW embedding fallback if no VS256 signatures found
+            if not is_valid and not vs256_sigs:
+                zw_sigs = find_all_minimal_signed_uuids(payload_text)
+                if zw_sigs:
+                    from app.utils.zw_crypto import (
+                        verify_minimal_signed_uuid as zw_verify,
+                        derive_signing_key_from_private_key as zw_derive_key,
+                    )
+                    from app.utils.crypto_utils import get_demo_private_key as get_demo_pk
+                    demo_key = get_demo_pk()
+                    signing_key = zw_derive_key(demo_key)
+                    _start, _end, sig_str = zw_sigs[0]
+                    sig_valid, sig_uuid = zw_verify(sig_str, signing_key)
+                    if sig_valid and sig_uuid:
+                        from app.config import settings
+                        is_valid = True
+                        signer_id = settings.demo_organization_id
+                        manifest = {
+                            "manifest_mode": "zw_embedding",
+                            "segment_uuid": str(sig_uuid),
+                            "zw_signatures_found": len(zw_sigs),
+                        }
+                        logger.info(
+                            "ZW fallback verification succeeded: uuid=%s, sigs=%d",
+                            sig_uuid, len(zw_sigs),
+                        )
+        except Exception as e:
+            logger.debug("VS256/ZW fallback verification failed: %s", e)
 
     duration_ms = int((time.perf_counter() - start) * 1000)
     manifest_dict = _coerce_manifest(manifest)

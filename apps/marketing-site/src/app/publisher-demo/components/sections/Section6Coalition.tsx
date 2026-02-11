@@ -90,31 +90,31 @@ export default function Section6Coalition({ isActive, onComplete, onAnimationSta
             animate={isActive ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5, delay: 0.6 }}
           >
-            <h3 className="text-2xl font-bold text-slate-900 mb-6">Early Coalition Members Receive:</h3>
+            <h3 className="text-2xl font-bold text-slate-900 mb-6">Founding Coalition Members (First 20) Receive:</h3>
             <div className="grid md:grid-cols-2 gap-4 text-slate-700">
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span>Preferential pricing on infrastructure</span>
+                <span>Implementation fee waived for founding members</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span>Input on technical standards development</span>
+                <span>Same 60/40 and 80/20 licensing splits as all publishers</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span>Coordinated legal strategy and resources</span>
+                <span>Syracuse Symposium seat — define market licensing frameworks</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span>Shared intelligence on AI company behavior</span>
+                <span>Advisory board participation</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span>Priority access to licensing marketplace</span>
+                <span>Priority coalition positioning in all licensing negotiations</span>
               </div>
               <div className="flex items-start gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span>Co-marketing and thought leadership opportunities</span>
+                <span>Free signing infrastructure — unlimited everything</span>
               </div>
             </div>
           </motion.div>
@@ -127,29 +127,32 @@ export default function Section6Coalition({ isActive, onComplete, onAnimationSta
           >
             <CTAButton onClick={handleCTAClick} />
 
-            {/* <div className="flex flex-wrap justify-center gap-6 text-sm">
-              <button
-                onClick={() => handleSecondaryClick('whitepaper')}
+            <div className="flex flex-wrap justify-center gap-6 text-sm">
+              <a
+                href="/pricing"
+                onClick={() => handleSecondaryClick('pricing')}
                 className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
               >
                 <FileText className="w-4 h-4" />
-                Download Technical Whitepaper
-              </button>
-              <button
-                onClick={() => handleSecondaryClick('coalition')}
+                View Pricing & Add-Ons
+              </a>
+              <a
+                href="/solutions/publishers"
+                onClick={() => handleSecondaryClick('publisher_solutions')}
                 className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
               >
                 <Users className="w-4 h-4" />
-                View Coalition Members
-              </button>
-              <button
+                Publisher Solutions
+              </a>
+              <a
+                href="/contact"
                 onClick={() => handleSecondaryClick('contact')}
                 className="flex items-center gap-2 text-slate-600 hover:text-slate-900 transition-colors"
               >
                 <Mail className="w-4 h-4" />
                 Contact Sales Team
-              </button>
-            </div> */}
+              </a>
+            </div>
           </motion.div>
         </motion.div>
       </div>

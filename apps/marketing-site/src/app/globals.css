@@ -11,35 +11,41 @@
  */
 @custom-variant hover (&:hover);
 
-/* Tailwind v4 Theme Configuration */
+/* Enable class-based dark mode for next-themes */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Tailwind v4 Theme Configuration
+ * Semantic colors use var() to reference CSS custom properties
+ * so they respond dynamically to .dark class changes.
+ */
 @theme {
-  /* Brand Colors */
+  /* Brand Colors (static) */
   --color-delft-blue: #1b2f50;
   --color-blue-ncs: #2a87c4;
   --color-columbia-blue: #b7d5ed;
   --color-cyber-teal: #00ced1;
   --color-neutral-gray: #a7afbc;
   
-  /* Semantic Colors */
-  --color-background: #ffffff;
-  --color-foreground: #1b2f50;
-  --color-primary: #2a87c4;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #f1f5f9;
-  --color-secondary-foreground: #1b2f50;
-  --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
-  --color-accent: #b7d5ed;
-  --color-accent-foreground: #1b2f50;
-  --color-destructive: #ef4444;
-  --color-destructive-foreground: #ffffff;
-  --color-border: #e2e8f0;
-  --color-input: #e2e8f0;
-  --color-ring: #2a87c4;
-  --color-card: #ffffff;
-  --color-card-foreground: #1b2f50;
-  --color-popover: #ffffff;
-  --color-popover-foreground: #1b2f50;
+  /* Semantic Colors (dynamic via CSS vars) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
   
   /* Border Radius */
   --radius-lg: 0.625rem;
@@ -273,8 +279,16 @@ a:not([data-slot="button"]) {
   transition: color 0.15s ease;
 }
 
+.dark a:not([data-slot="button"]) {
+  color: var(--columbia-blue);
+}
+
 a:not([data-slot="button"]):hover {
   color: rgba(42, 135, 196, 0.8);
+}
+
+.dark a:not([data-slot="button"]):hover {
+  color: #ffffff;
 }
 
 /* Button hover states - explicit CSS to ensure they work */
@@ -299,6 +313,10 @@ a:not([data-slot="button"]):hover {
   scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
+.dark .scrollbar-thin {
+  scrollbar-color: #475569 #1e293b;
+}
+
 .scrollbar-thin::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -309,13 +327,25 @@ a:not([data-slot="button"]):hover {
   border-radius: 3px;
 }
 
+.dark .scrollbar-thin::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
 .scrollbar-thin::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 3px;
 }
 
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }
 
 /* Embedded demo container styling */
@@ -346,12 +376,25 @@ a:not([data-slot="button"]):hover {
   border-radius: 6px;
 }
 
+.dark .overflow-y-auto::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
 .overflow-y-auto::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 6px;
   border: 2px solid #f1f5f9;
 }
 
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-color: #1e293b;
+}
+
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
 }

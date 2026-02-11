@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { resolvePublicEnterpriseApiUrl } from "@/lib/enterpriseApiUrl";
+import { resolveEnterpriseApiUrl } from "@/lib/enterpriseApiUrl";
 import { mapVerifyResponseToDecodeToolResponse } from "@/lib/enterpriseApiTools";
 import { buildUpstreamTraceHeaders } from "@/lib/upstreamTraceHeaders";
+import { parseJsonWithSizeLimit } from "@/lib/apiPayloadGuard";
+import { extractEncypherSignedTextFromPdf } from "@/lib/pdfTextExtractorServer";
 
 export const runtime = "nodejs";
 
@@ -10,12 +12,42 @@ export async function POST(request: NextRequest) {
   const requestId = crypto.randomUUID();
   const logPrefix = "[tools-verify]";
   try {
-    const body = await request.json();
+    // TEAM_152: Enforce payload size limit before parsing
+    // TEAM_156: Increased limit to 10 MB to accommodate base64-encoded PDF bytes
+    const parsed = await parseJsonWithSizeLimit(request, { requestId, logPrefix, maxBytes: 10 * 1024 * 1024 });
+    if ("error" in parsed) return parsed.error;
+    const body = parsed.body;
 
     // Use ENTERPRISE_API_URL (api.encypherai.com) - Traefik routes /api/v1/verify to verification-service
-    const apiUrl = resolvePublicEnterpriseApiUrl();
+    const apiUrl = resolveEnterpriseApiUrl();
 
-    const encodedText = typeof body?.encoded_text === "string" ? body.encoded_text : "";
+    // TEAM_156: For PDF files, the browser sends raw PDF bytes as base64.
+    // We extract the EncypherSignedText metadata stream server-side (Node.js)
+    // to guarantee lossless extraction without browser caching issues.
+    // Falls back to the browser-extracted text (encoded_text) if no PDF or
+    // no EncypherSignedText stream found.
+    let encodedText = typeof body?.encoded_text === "string" ? body.encoded_text : "";
+    const pdfBase64 = typeof body?.pdf_base64 === "string" ? body.pdf_base64 : "";
+    let extractionSource = "client";
+
+    if (pdfBase64) {
+      try {
+        const pdfBuffer = Buffer.from(pdfBase64, "base64");
+        const serverText = extractEncypherSignedTextFromPdf(pdfBuffer);
+        if (serverText) {
+          encodedText = serverText;
+          extractionSource = "server_EncypherSignedText";
+        } else {
+          console.info(`${logPrefix} no EncypherSignedText in PDF, using client-extracted text`, { requestId });
+        }
+      } catch (e) {
+        console.warn(`${logPrefix} server-side PDF extraction failed, using client text`, {
+          requestId,
+          error: e instanceof Error ? e.message : String(e),
+        });
+      }
+    }
+
     if (!encodedText.trim()) {
       console.warn(`${logPrefix} invalid payload`, {
         requestId,
@@ -30,6 +62,8 @@ export async function POST(request: NextRequest) {
       requestId,
       upstreamHost: apiUrl,
       textLength: encodedText.length,
+      extractionSource,
+      utf8Bytes: Buffer.from(encodedText, "utf-8").length,
     });
     const upstream = await fetch(`${apiUrl}/api/v1/verify`, {
       method: "POST",

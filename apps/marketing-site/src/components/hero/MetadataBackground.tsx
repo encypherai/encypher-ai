@@ -21,7 +21,7 @@ function generatePoints(count: number, radius: number) {
   return points;
 }
 
-function Particles({ count = 2000, color = '#2a87c4' }: { count?: number; color?: string }) {
+function Particles({ count = 2000, color }: { count?: number; color: string }) {
   const pointsRef = useRef<THREE.Points>(null!);
   const [positions] = useState(() => generatePoints(count, 3));
 
@@ -114,7 +114,7 @@ function UnicodeVariationSelectors({ refs }: { refs: React.RefObject<THREE.Group
             <mesh>
               <octahedronGeometry args={[0.15, 0]} />
               <meshBasicMaterial
-                color="#1b2f50"
+                color={isDark ? '#b7d5ed' : '#1b2f50'}
                 wireframe
                 transparent
                 opacity={0.3}
@@ -123,7 +123,7 @@ function UnicodeVariationSelectors({ refs }: { refs: React.RefObject<THREE.Group
           </Float>
           <Billboard follow={true}>
             <Text
-              color="#1b2f50"
+              color={isDark ? '#b7d5ed' : '#1b2f50'}
               fontSize={0.2}
               anchorX="center"
               anchorY="middle"
@@ -169,7 +169,7 @@ function MetadataObjects({ refs }: { refs: React.RefObject<THREE.Group | null>[]
           </Float>
           <Billboard follow={true}>
             <Text
-              color="#1b2f50"
+              color={isDark ? '#b7d5ed' : '#1b2f50'}
               fontSize={0.15}
               maxWidth={2}
               anchorX="center"
@@ -201,7 +201,7 @@ const EncypherHub = React.forwardRef<THREE.Mesh>((props, ref) => {
     <mesh ref={ref as React.Ref<THREE.Mesh>} position={[0, 0, 0]}>
       <dodecahedronGeometry args={[0.3, 0]} />
       <meshBasicMaterial
-        color="#1b2f50"
+        color={isDark ? '#b7d5ed' : '#1b2f50'}
         wireframe
         transparent
         opacity={0.7}
@@ -241,7 +241,7 @@ function ConnectionLines({
 function Scene() {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme === 'dark';
-  const lineColor = '#1b2f50';
+  const lineColor = isDark ? '#b7d5ed' : '#1b2f50';
 
   // Create refs for Unicode symbols (6 items)
   const unicodeRefs = useMemo(
@@ -271,7 +271,7 @@ function Scene() {
 
   return (
     <>
-      <Particles color="#1b2f50" />
+      <Particles color={isDark ? '#b7d5ed' : '#1b2f50'} />
       <group ref={symbolsGroupRef}>
         <UnicodeVariationSelectors refs={unicodeRefs} />
       </group>

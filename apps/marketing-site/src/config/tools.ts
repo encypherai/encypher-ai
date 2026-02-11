@@ -25,6 +25,11 @@ export const toolLinks: ToolLink[] = [
     href: "/tools/verify",
   },
   {
+    name: "Inspect File",
+    description: "Drag and drop text files to inspect embedded C2PA provenance credentials and verify authenticity.",
+    href: "/tools/inspect",
+  },
+  {
     name: "WordPress Plugin",
     description: "C2PA content authentication for WordPress. Protect your posts with cryptographic proof of authorship.",
     href: "/tools/wordpress",

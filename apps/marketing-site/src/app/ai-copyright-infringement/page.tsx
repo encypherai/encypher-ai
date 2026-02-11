@@ -189,7 +189,7 @@ export default function AICopyrightInfringementPage() {
                 <div className="bg-card p-4 rounded-lg mt-4">
                   <p className="text-sm font-semibold mb-2">Our Model:</p>
                   <p className="text-sm text-muted-foreground">
-                    We only succeed when you succeed. Implementation fee + 25-30% of licensing revenue enabled. No revenue = no payment beyond setup.
+                    We only succeed when you succeed. Success-aligned pricing means no licensing revenue = no payment. <a href="/contact" className="text-primary underline">Contact us for details</a>.
                   </p>
                 </div>
               </div>

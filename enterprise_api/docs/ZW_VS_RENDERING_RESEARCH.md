@@ -333,13 +333,96 @@ def encode_byte_zw_only(value: int) -> str:
    - Auto-detect platform capabilities
    - Graceful degradation for unsupported platforms
 
+## Unicode Tag Characters (U+E0000 - U+E007F) — Under Investigation
+
+### Background
+
+Unicode Tag Characters occupy the "Tags" block in Plane 14 (Supplementary Special-purpose Plane). Originally designed for language tagging in plain text (deprecated for that purpose), they are now used in emoji tag sequences (e.g., flag subdivision emoji like 🏴󠁧󠁢󠁷󠁬󠁳󠁿).
+
+**Key properties:**
+- Range: U+E0000 to U+E007F (128 code points)
+- General_Category: **Cf (Format)** — same category as ZWNJ/ZWJ
+- Default_Ignorable_Code_Point: **Yes** — renderers SHOULD make them invisible
+- Usable subset: U+E0020 to U+E007E (95 chars, tag versions of printable ASCII)
+- UTF-8 size: **4 bytes** per character (vs 2-3 bytes for current base-4 chars)
+- UTF-16 size: **4 bytes** (surrogate pair) — relevant since Word uses UTF-16
+
+### Encoding Potential
+
+If tag characters survive Word copy/paste, they offer significant density gains:
+
+| Encoding | Base | Chars/Byte | 32B Payload (chars) | 32B Payload (UTF-8 bytes) | Notes |
+|----------|------|------------|---------------------|---------------------------|-------|
+| **Current base-4** | 4 | 4 | 128 | ~352 | ZWNJ/ZWJ/CGJ/MVS |
+| Tag base-4 | 4 | 4 | 128 | 512 | Worse (larger UTF-8 bytes) |
+| **Tag base-16** | 16 | 2 | **64** | **256** | 50% fewer chars, 27% fewer bytes |
+| **Tag base-95** | 95 | 2 | **64** | **256** | Maximum density, 50% fewer chars |
+| Hybrid (4 current + 12 tags) | 16 | 2 | 64 | ~240 | Best of both worlds |
+
+**Key finding:** Tag base-95 encoding produces signatures that are both **50% fewer characters** AND **~27% fewer UTF-8 bytes** than the current base-4 approach.
+
+### Automated Test Results (Feb 8, 2026)
+
+```bash
+cd enterprise_api
+uv run pytest tests/test_tag_chars_encoding.py -v
+```
+
+**28/28 tests passed:**
+- ✅ All 95 printable tag chars are General_Category: Cf
+- ✅ All tag chars are 4 UTF-8 bytes / surrogate pairs in UTF-16
+- ✅ Base-4, base-16, and base-95 encoding roundtrips work for all 256 byte values
+- ✅ No overlap between tag chars and current base-4 charset
+- ✅ Contiguous sequence detection works for tag char signatures
+- ✅ Tag chars are distinguishable from current base-4 chars in mixed text
+
+### Word Compatibility — NEEDS MANUAL TESTING
+
+**Status: UNKNOWN — requires manual Word copy/paste testing**
+
+Run the interactive visibility test:
+```bash
+cd enterprise_api
+uv run python tests/test_tag_chars_visibility.py
+```
+
+This test:
+1. Embeds 10 copies of each representative tag character into test sentences
+2. Includes current base-4 chars (ZWNJ/ZWJ/CGJ/MVS) and ZWSP as controls
+3. Guides you through copy/paste into Word and back
+4. Analyzes which characters survived the round-trip
+
+**Risks for Word compatibility:**
+- Tag chars require **surrogate pairs** in UTF-16 — Word's internal encoding
+- Surrogate pair handling has historically been inconsistent in some Word versions
+- Tag chars are less commonly used than ZWNJ/ZWJ, so less tested by Word developers
+- Some text processing pipelines strip Plane 14 characters
+
+**If tag chars ARE Word-compatible:**
+→ Switch to tag base-95 for 50% char reduction and 27% byte reduction
+→ Or use hybrid base-16 (4 current + 12 tag chars) for redundancy
+
+**If tag chars are NOT Word-compatible:**
+→ Current base-4 (ZWNJ/ZWJ/CGJ/MVS) remains the best option
+→ Tag chars could still be used for web-only or Google Docs workflows
+
+### Test Files
+
+- `tests/test_tag_chars_encoding.py` — Automated pytest suite (28 tests)
+- `tests/test_tag_chars_visibility.py` — Interactive Word copy/paste visibility test
+
+---
+
 ## References
 
 - **Unicode Standard**: https://unicode.org/charts/PDF/UFE00.pdf (Variation Selectors)
 - **Zero-Width Chars**: https://unicode.org/charts/PDF/U2000.pdf (General Punctuation)
+- **Unicode Tags Block**: https://unicode.org/charts/PDF/UE0000.pdf (Tags)
 - **C2PA Text Spec**: https://c2pa.org/specifications/specifications/2.1/specs/C2PA_Specification.html#_manifests_text_adoc
 - **Test Files**:
-  - `tests/test_zw_vs_rendering.py` - Automated tests
+  - `tests/test_zw_vs_rendering.py` - Automated VS rendering tests
+  - `tests/test_tag_chars_encoding.py` - Automated tag char encoding tests
+  - `tests/test_tag_chars_visibility.py` - Interactive tag char Word visibility test
   - `tests/rendering_test.html` - Manual browser/PDF tests
 
 ## Conclusion

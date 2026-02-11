@@ -631,3 +631,207 @@ body {
   color: #6B7280;
   white-space: nowrap;
 }
+
+/* Debug Tab (TEAM_151) */
+.popup__tab--debug {
+  color: #D97706;
+  font-size: 11px;
+}
+
+.popup__tab--debug.popup__tab--active {
+  background: #D97706;
+  color: white;
+}
+
+.debug-panel {
+  width: 100%;
+  text-align: left;
+}
+
+.debug-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.debug-panel__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #059669;
+}
+
+.debug-panel__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #10B981;
+  animation: encypher-debug-pulse 2s ease-in-out infinite;
+}
+
+@keyframes encypher-debug-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.debug-panel__actions {
+  display: flex;
+  gap: 4px;
+}
+
+.debug-panel__btn {
+  padding: 4px 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.debug-panel__btn:hover {
+  background: #F3F4F6;
+}
+
+.debug-panel__filters {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.debug-panel__filter {
+  padding: 3px 8px;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  background: white;
+  font-size: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  color: #6B7280;
+  transition: all 0.15s;
+}
+
+.debug-panel__filter:hover {
+  background: #F3F4F6;
+}
+
+.debug-panel__filter--active {
+  background: #1F2937;
+  color: white;
+  border-color: #1F2937;
+}
+
+.debug-panel__logs {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #E5E7EB;
+  border-radius: 6px;
+  background: #0F172A;
+  padding: 6px;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.debug-panel__logs::-webkit-scrollbar {
+  width: 6px;
+}
+
+.debug-panel__logs::-webkit-scrollbar-track {
+  background: #1E293B;
+}
+
+.debug-panel__logs::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 3px;
+}
+
+.debug-panel__empty {
+  color: #64748B;
+  text-align: center;
+  padding: 24px 8px;
+  font-family: inherit;
+  font-size: 11px;
+}
+
+.debug-log {
+  padding: 3px 6px;
+  border-radius: 3px;
+  margin-bottom: 2px;
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  word-break: break-all;
+}
+
+.debug-log:hover {
+  background: #1E293B;
+}
+
+.debug-log__time {
+  color: #64748B;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.debug-log__level {
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding: 0 3px;
+  border-radius: 2px;
+  font-size: 9px;
+}
+
+.debug-log__level--API { background: #1E3A5F; color: #60A5FA; }
+.debug-log__level--MSG { background: #3B2F63; color: #A78BFA; }
+.debug-log__level--ERROR { background: #5C1D1D; color: #FCA5A5; }
+.debug-log__level--WARN { background: #5C4813; color: #FCD34D; }
+.debug-log__level--INFO { background: #1A3A2A; color: #6EE7B7; }
+.debug-log__level--DEBUG { background: #1E293B; color: #94A3B8; }
+
+.debug-log__cat {
+  color: #94A3B8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.debug-log__msg {
+  color: #E2E8F0;
+  flex: 1;
+  min-width: 0;
+}
+
+.debug-log__data {
+  color: #64748B;
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+}
+
+.debug-log__data:hover {
+  color: #94A3B8;
+}
+
+.debug-log__data-expanded {
+  display: block;
+  color: #94A3B8;
+  background: #1E293B;
+  padding: 4px 6px;
+  border-radius: 3px;
+  margin-top: 2px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.debug-panel__count {
+  margin-top: 6px;
+  font-size: 10px;
+  color: #9CA3AF;
+  text-align: right;
+}

@@ -1,0 +1,21 @@
+# TEAM_149: Dev container for marketing-site with hot reload
+FROM node:20-alpine
+
+# Native build deps for canvas (node-gyp) and other compiled modules
+RUN apk add --no-cache python3 make g++ pkgconfig \
+    cairo-dev pango-dev libjpeg-turbo-dev giflib-dev pixman-dev
+
+WORKDIR /app
+
+# Install dependencies first (cached layer)
+COPY package.json package-lock.json* .npmrc* ./
+COPY design-system ./design-system/
+
+RUN npm install
+
+# Source code is bind-mounted at runtime for hot reload
+# COPY . . is NOT used — docker-compose mounts the source
+
+EXPOSE 3000
+
+CMD ["npm", "run", "dev"]

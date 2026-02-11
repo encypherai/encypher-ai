@@ -39,6 +39,7 @@ dependencies = [
     "filelock>=3.20.1",
     "pdfminer-six>=20251230",
     "pypdf==6.6.2",
+    "reedsolo>=1.7.0",
 ]
 
 [project.optional-dependencies]

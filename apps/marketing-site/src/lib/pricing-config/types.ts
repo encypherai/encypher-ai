@@ -8,75 +8,141 @@
  */
 
 /**
- * Pricing tier identifiers
+ * Encypher Publisher Pricing Types — Freemium Model (Feb 2026)
+ *
+ * Model: Free infrastructure → Paid enforcement add-ons → Licensing revenue share
+ * Rev share: Coalition 60/40, Self-Service 80/20 (flat across all tiers)
+ *
+ * @see docs/new_publisher_pricing_model_feb_2026.md
  */
-export type TierId = 'starter' | 'professional' | 'business' | 'enterprise';
 
-/**
- * Coalition revenue share configuration
- */
-export interface CoalitionRevShare {
-  /** Percentage the publisher receives (e.g., 65 = 65%) */
-  publisher: number;
-  /** Percentage Encypher receives (e.g., 35 = 35%) */
-  encypher: number;
+// ---------------------------------------------------------------------------
+// Tier identifiers
+// ---------------------------------------------------------------------------
+
+/** Core tier identifiers: free signing infra or enterprise */
+export type TierId = 'free' | 'enterprise';
+
+// ---------------------------------------------------------------------------
+// Licensing revenue share (flat — same for all tiers)
+// ---------------------------------------------------------------------------
+
+export interface LicensingRevShare {
+  /** Coalition deals: Encypher negotiates — publisher gets 60%, Encypher 40% */
+  coalition: { publisher: 60; encypher: 40 };
+  /** Self-service deals: Publisher negotiates — publisher gets 80%, Encypher 20% */
+  selfService: { publisher: 80; encypher: 20 };
 }
 
-/**
- * Tier usage limits
- */
-export interface TierLimits {
-  /** Number of API keys allowed (-1 = unlimited) */
-  apiKeys: number;
-  /** Rate limit in requests per second (-1 = unlimited) */
-  rateLimit: number;
-  /** C2PA signatures per month (-1 = unlimited) */
-  c2paSignatures: number;
-  /** Sentences tracked per month (-1 = unlimited, 0 = not available) */
-  sentencesTracked: number;
-  /** Merkle encodings per month (-1 = unlimited, 0 = not available) */
-  merkleEncodings?: number;
-  /** Attribution lookups per month (-1 = unlimited, 0 = not available) */
-  attributionLookups?: number;
-  /** Plagiarism checks per month (-1 = unlimited, 0 = not available) */
-  plagiarismChecks?: number;
+// ---------------------------------------------------------------------------
+// Free tier usage limits
+// ---------------------------------------------------------------------------
+
+export interface FreeTierLimits {
+  /** New documents signed per month */
+  documentsPerMonth: number;
+  /** Overage cost per document (USD) */
+  overagePerDoc: number;
+  /** Verification requests (-1 = unlimited) */
+  verificationRequests: number;
+  /** Public API lookups (-1 = unlimited) */
+  publicApiLookups: number;
 }
 
-/**
- * Pricing information for a tier
- */
-export interface TierPricing {
-  /** Monthly price in USD (0 = free) */
-  monthly: number;
-  /** Annual price in USD (0 = free, typically ~20% discount) */
-  annual: number;
+// ---------------------------------------------------------------------------
+// Add-on definitions
+// ---------------------------------------------------------------------------
+
+export type AddOnCategory = 'enforcement' | 'infrastructure' | 'operations';
+
+export interface VolumePrice {
+  quantity: number | string;
+  priceEach: number;
+  savings?: string;
 }
 
-/**
- * Complete tier configuration
- */
-export interface TierConfig {
-  /** Unique tier identifier */
-  id: TierId;
-  /** Display name */
+export interface AddOnConfig {
+  id: string;
   name: string;
-  /** Pricing information */
-  price: TierPricing;
-  /** Coalition revenue share split */
-  revShare: CoalitionRevShare;
-  /** Feature list for display */
+  category: AddOnCategory;
+  /** Monthly price in USD (0 = one-time or per-unit) */
+  priceMonthly: number;
+  /** Per-unit price (for one-time purchases like notices, evidence, backfill) */
+  pricePerUnit?: number;
+  /** Unit label (e.g., '/notice', '/package', '/document', '/export') */
+  unitLabel?: string;
+  description: string;
+  includes?: string[];
+  volumePricing?: VolumePrice[];
+  /** What this replaces (cost comparison) */
+  replaces?: string;
+  /** Requires another add-on */
+  requires?: string;
+  /** Feature not yet available — show 'Coming Soon' instead of price */
+  comingSoon?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Bundle definitions
+// ---------------------------------------------------------------------------
+
+export interface BundleConfig {
+  id: string;
+  name: string;
+  priceMonthly: number;
+  includes: string[];
+  savings: string;
+  description: string;
+  /** Feature not yet available — show 'Coming Soon' instead of price */
+  comingSoon?: boolean;
+}
+
+// ---------------------------------------------------------------------------
+// Enterprise tier
+// ---------------------------------------------------------------------------
+
+export interface EnterpriseTierPricing {
+  label: string;
+  licensingPotential: string;
+  implementationFee: string;
+}
+
+export interface EnterpriseConfig {
+  id: 'enterprise';
+  name: string;
+  tiers: EnterpriseTierPricing[];
   features: string[];
+  exclusiveCapabilities: string[];
+  foundingCoalition: string[];
+}
+
+// ---------------------------------------------------------------------------
+// Core tier configuration (Free tier)
+// ---------------------------------------------------------------------------
+
+export interface FreeTierConfig {
+  id: 'free';
+  name: string;
+  /** Feature list for display — signing & provenance */
+  signingFeatures: string[];
+  /** Distribution & tools */
+  distributionFeatures: string[];
+  /** Coalition membership features */
+  coalitionFeatures: string[];
   /** Usage limits */
-  limits: TierLimits;
+  limits: FreeTierLimits;
   /** Target customer description */
   target: string;
-  /** Whether this is the recommended/popular tier */
-  popular?: boolean;
-  /** Whether this requires custom/enterprise sales */
-  enterprise?: boolean;
 }
 
-/**
- * All tiers configuration object
- */
-export type TiersConfig = Record<TierId, TierConfig>;
+// ---------------------------------------------------------------------------
+// Complete pricing configuration
+// ---------------------------------------------------------------------------
+
+export interface PricingConfig {
+  freeTier: FreeTierConfig;
+  enterprise: EnterpriseConfig;
+  addOns: AddOnConfig[];
+  bundles: BundleConfig[];
+  revShare: LicensingRevShare;
+}

@@ -250,9 +250,9 @@ class EmbeddingService:
 
         # Step 2: Create minimal embeddings for each segment FIRST
         # Then add ONE C2PA wrapper at the end
-        # NOTE: Skip this for zw_embedding mode (it handles embeddings in its own branch)
+        # NOTE: Skip this for zw_embedding/vs256_embedding modes (they handle embeddings in their own branches)
         embedded_segments = []
-        if manifest_mode != "zw_embedding":
+        if manifest_mode not in ("zw_embedding", "vs256_embedding"):
             for idx, (segment, minimal_metadata) in enumerate(segment_embeddings):
                 try:
                     # Add minimal invisible embedding to this segment
@@ -544,6 +544,104 @@ class EmbeddingService:
             except Exception as e:
                 logger.error(f"Failed to embed ZW signatures: {e}")
                 raise ValueError(f"ZW embedding failed: {e}")
+
+        # Handle vs256_embedding manifest mode (max density, 36 chars/sentence, NOT Word-compatible)
+        elif manifest_mode == "vs256_embedding":
+            logger.info(
+                "Using vs256_embedding manifest mode for document %s with maximum-density VS256 signatures",
+                document_id,
+            )
+
+            try:
+                from app.utils.vs256_crypto import (
+                    create_minimal_signed_uuid as vs256_create_minimal_signed_uuid,
+                    derive_signing_key_from_private_key as vs256_derive_signing_key,
+                    embed_signature_safely as vs256_embed_signature_safely,
+                )
+
+                # Derive HMAC signing key from org's private key
+                signing_key = vs256_derive_signing_key(self.private_key)
+
+                # Build document with VS256 signatures per segment
+                vs256_embedded_segments = []
+                for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
+                    # Generate UUID for this segment
+                    segment_uuid = uuid.uuid4()
+
+                    # Create minimal signed UUID (36 chars, max density)
+                    vs256_signature = vs256_create_minimal_signed_uuid(segment_uuid, signing_key)
+
+                    # Embed signature safely (before terminal punctuation)
+                    embedded_segment = vs256_embed_signature_safely(segment, vs256_signature)
+                    vs256_embedded_segments.append(embedded_segment)
+
+                    # Update the reference with VS256-specific metadata
+                    if idx < len(references_to_insert):
+                        ref_any = cast(Any, references_to_insert[idx])
+                        if hasattr(ref_any, "embedding_metadata"):
+                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
+                            ref_any.embedding_metadata["manifest_mode"] = "vs256_embedding"
+                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
+                            ref_any.embedding_metadata["vs256_signature_length"] = len(vs256_signature)
+
+                # Join segments to form embedded document (no C2PA wrapper)
+                embedded_document = " ".join(vs256_embedded_segments)
+                document_metadata["manifest_mode"] = "vs256_embedding"
+                document_metadata["vs256_encoding"] = "base256_variation_selectors"
+                document_metadata["signature_chars_per_segment"] = 36
+
+                logger.info(
+                    f"Successfully embedded VS256 signatures for document {document_id}: "
+                    f"{len(segments)} segments, 36 chars each"
+                )
+            except Exception as e:
+                logger.error(f"Failed to embed VS256 signatures: {e}")
+                raise ValueError(f"VS256 embedding failed: {e}")
+
+        # Handle vs256_rs_embedding manifest mode (RS error-correcting, 36 chars/sentence)
+        elif manifest_mode == "vs256_rs_embedding":
+            logger.info(
+                "Using vs256_rs_embedding manifest mode for document %s with RS-protected VS256 signatures",
+                document_id,
+            )
+
+            try:
+                from app.utils.vs256_rs_crypto import (
+                    create_minimal_signed_uuid as vs256rs_create,
+                    derive_signing_key_from_private_key as vs256rs_derive_key,
+                    embed_signature_safely as vs256rs_embed_safely,
+                )
+
+                signing_key = vs256rs_derive_key(self.private_key)
+
+                vs256rs_embedded_segments = []
+                for idx, (segment, leaf_hash) in enumerate(zip(segments, leaf_hashes)):
+                    segment_uuid = uuid.uuid4()
+                    vs256rs_signature = vs256rs_create(segment_uuid, signing_key)
+                    embedded_segment = vs256rs_embed_safely(segment, vs256rs_signature)
+                    vs256rs_embedded_segments.append(embedded_segment)
+
+                    if idx < len(references_to_insert):
+                        ref_any = cast(Any, references_to_insert[idx])
+                        if hasattr(ref_any, "embedding_metadata"):
+                            ref_any.embedding_metadata = ref_any.embedding_metadata or {}
+                            ref_any.embedding_metadata["manifest_mode"] = "vs256_rs_embedding"
+                            ref_any.embedding_metadata["segment_uuid"] = str(segment_uuid)
+                            ref_any.embedding_metadata["vs256_signature_length"] = len(vs256rs_signature)
+
+                embedded_document = " ".join(vs256rs_embedded_segments)
+                document_metadata["manifest_mode"] = "vs256_rs_embedding"
+                document_metadata["vs256_encoding"] = "base256_variation_selectors_rs"
+                document_metadata["signature_chars_per_segment"] = 36
+                document_metadata["rs_parity_symbols"] = 8
+
+                logger.info(
+                    f"Successfully embedded VS256-RS signatures for document {document_id}: "
+                    f"{len(segments)} segments, 36 chars each (8 RS parity)"
+                )
+            except Exception as e:
+                logger.error(f"Failed to embed VS256-RS signatures: {e}")
+                raise ValueError(f"VS256-RS embedding failed: {e}")
 
         # Default: full C2PA manifest mode
         else:

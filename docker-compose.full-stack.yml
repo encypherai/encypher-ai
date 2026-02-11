@@ -295,6 +295,9 @@ services:
       AUTH_SERVICE_URL: http://auth-service:8001
       KEY_SERVICE_URL: http://key-service:8003
       ENCODING_SERVICE_URL: http://encoding-service:8004
+      # TEAM_156: Enterprise API URL for trust anchor + ZW segment UUID resolution
+      # enterprise-api listens on port 8000 inside Docker (9000 is host-mapped)
+      ENTERPRISE_API_URL: http://enterprise-api:8000
       # Demo key (must match enterprise-api's SECRET_KEY for demo org verification)
       DEMO_PRIVATE_KEY_HEX: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
       SERVICE_NAME: verification-service
@@ -504,10 +507,85 @@ services:
       - ./encypher-ai:/app/encypher-ai
       - ./c2pa-text/python:/app/c2pa-text/python
 
+  # ============================================
+  # FRONTEND APPLICATIONS
+  # ============================================
+  marketing-site:
+    build:
+      context: ./apps/marketing-site
+      dockerfile: Dockerfile.dev
+    container_name: encypher-marketing-site
+    ports:
+      - "3000:3000"
+    volumes:
+      # Bind-mount source for hot reload
+      - ./apps/marketing-site:/app
+      # Preserve container's node_modules (don't overwrite with host mount)
+      - marketing_node_modules:/app/node_modules
+      - marketing_ds_node_modules:/app/design-system/node_modules
+      # Persist Next.js cache across restarts
+      - marketing_next_cache:/app/.next
+    env_file:
+      - ./apps/marketing-site/.env
+    environment:
+      NODE_ENV: development
+      WATCHPACK_POLLING: "true"
+      HOSTNAME: 0.0.0.0
+      # TEAM_155: Server-side override — inside the container, localhost is the
+      # container itself. API routes use ENTERPRISE_API_URL (server-only, not
+      # NEXT_PUBLIC_*) so it won't leak into client-side JS bundles.
+      ENTERPRISE_API_URL: http://traefik:8000
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  dashboard:
+    build:
+      context: ./apps/dashboard
+      dockerfile: Dockerfile.dev
+    container_name: encypher-dashboard
+    ports:
+      - "3001:3001"
+    volumes:
+      # Bind-mount source for hot reload
+      - ./apps/dashboard:/app
+      # Preserve container's node_modules
+      - dashboard_node_modules:/app/node_modules
+      - dashboard_ds_node_modules:/app/design-system/node_modules
+      # Persist Next.js cache across restarts
+      - dashboard_next_cache:/app/.next
+    env_file:
+      - ./apps/dashboard/.env.local
+    environment:
+      NODE_ENV: development
+      WATCHPACK_POLLING: "true"
+      HOSTNAME: 0.0.0.0
+    depends_on:
+      auth-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3001/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
 volumes:
   postgres_data:
   prometheus_data:
   grafana_data:
+  marketing_node_modules:
+  marketing_ds_node_modules:
+  marketing_next_cache:
+  dashboard_node_modules:
+  dashboard_ds_node_modules:
+  dashboard_next_cache:
 
 networks:
   default:

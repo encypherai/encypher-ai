@@ -7,17 +7,15 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
-// Feature value type
-type FeatureValue = string | boolean;
+// Feature availability: free, add-on (with price), enterprise-only, or specific value
+type FeatureValue = 'free' | 'enterprise' | 'add-on' | string | boolean;
 
 interface Feature {
   name: string;
   description: string;
-  starter: FeatureValue;
-  professional: FeatureValue;
-  business: FeatureValue;
+  free: FeatureValue;
   enterprise: FeatureValue;
-  highlight?: boolean;
+  addOn?: string;
 }
 
 interface FeatureCategory {
@@ -25,380 +23,128 @@ interface FeatureCategory {
   features: Feature[];
 }
 
-// Feature definitions aligned with enterprise_api README.md
-// Each feature maps to actual API functionality
+// Feature definitions aligned with the new freemium model
+// Free tier = full signing infra; Enterprise = unlimited everything + exclusive capabilities
 const FEATURE_CATEGORIES: FeatureCategory[] = [
   {
-    name: 'Core API',
+    name: 'Signing & Provenance (Free)',
     features: [
-      {
-        name: 'C2PA Document Signing',
-        description: 'POST /api/v1/sign - Sign content with C2PA manifest (features gated by tier via options)',
-        starter: '1K/mo',
-        professional: 'Unlimited',
-        business: 'Unlimited',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Advanced Signing Options',
-        description: 'Sentence segmentation, attribution indexing, custom assertions via /sign options',
-        starter: false,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
-      {
-        name: 'Content Verification',
-        description: 'POST /api/v1/verify - Verify signed content (+ portal: GET /api/v1/verify/{document_id})',
-        starter: 'Unlimited',
-        professional: 'Unlimited',
-        business: 'Unlimited',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Sentence Lookup',
-        description: 'POST /api/v1/lookup - Lookup sentence provenance',
-        starter: false,
-        professional: '50K/mo',
-        business: '500K/mo',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Usage Statistics',
-        description: 'GET /api/v1/usage - API usage analytics',
-        starter: '7 days',
-        professional: '90 days',
-        business: '1 year',
-        enterprise: 'Unlimited',
-      },
+      { name: 'C2PA 2.3 Document Signing', description: 'Sign content with C2PA manifest', free: '1K/mo', enterprise: 'Unlimited' },
+      { name: 'Merkle Tree Authentication', description: 'Sentence-level cryptographic proofs', free: true, enterprise: 'Unlimited' },
+      { name: 'Invisible Unicode Embeddings', description: 'Survive copy-paste and scraping', free: true, enterprise: true },
+      { name: 'Content Verification', description: 'Public verification pages + API', free: 'Unlimited', enterprise: 'Unlimited' },
+      { name: 'Tamper Detection', description: 'Detect modifications to signed content', free: true, enterprise: true },
+      { name: 'Custom Metadata', description: 'Author, publisher, license, tags', free: true, enterprise: true },
     ],
   },
   {
-    name: 'Invisible Embeddings',
+    name: 'Distribution & Tools (Free)',
     features: [
-      {
-        name: 'Unicode Variation Selector Embeddings',
-        description: 'Invisible cryptographic signatures in text',
-        starter: true,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
-      {
-        name: 'Public Verification API',
-        description: 'POST /api/v1/verify (no auth for basic, API key for Merkle proof)',
-        starter: true,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
-      {
-        name: 'Batch Embedding Verification',
-        description: 'POST /api/v1/public/verify/batch',
-        starter: true,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
+      { name: 'WordPress Plugin', description: 'Auto-sign on publish', free: true, enterprise: 'White-label' },
+      { name: 'REST API + Python SDK', description: 'Full API access', free: true, enterprise: true },
+      { name: 'CLI Tool', description: 'Local signing from command line', free: true, enterprise: true },
+      { name: 'GitHub Action', description: 'CI/CD integration', free: true, enterprise: true },
+      { name: 'Browser Extension', description: 'Verification in browser', free: true, enterprise: true },
     ],
   },
   {
-    name: 'Enterprise Features',
+    name: 'Coalition & Licensing (Free)',
     features: [
-      {
-        name: 'Merkle Tree Encoding',
-        description: 'POST /api/v1/enterprise/merkle/encode',
-        starter: false,
-        professional: '5K/mo',
-        business: '10K/mo',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Source Attribution',
-        description: 'POST /api/v1/verify/advanced (include_attribution=true)',
-        starter: false,
-        professional: '10K/mo',
-        business: '50K/mo',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Similarity Detection',
-        description: 'POST /api/v1/verify/advanced (detect_plagiarism=true)',
-        starter: false,
-        professional: false,
-        business: '5K/mo',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Batch Operations',
-        description: 'POST /api/v1/batch/sign & /api/v1/batch/verify (max 100 docs/request)',
-        starter: false,
-        professional: false,
-        business: '1000/mo',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Custom C2PA Assertions',
-        description: 'Define and validate custom assertion types',
-        starter: false,
-        professional: false,
-        business: false,
-        enterprise: true,
-      },
-      {
-        name: 'C2PA Schema Registry',
-        description: 'Register custom assertion schemas',
-        starter: false,
-        professional: false,
-        business: false,
-        enterprise: true,
-      },
-      {
-        name: 'Assertion Templates',
-        description: 'Pre-built templates for news, legal, academic',
-        starter: false,
-        professional: false,
-        business: false,
-        enterprise: true,
-      },
+      { name: 'Coalition Membership', description: 'Auto-enrolled in Encypher Coalition', free: true, enterprise: true },
+      { name: 'Content Indexing', description: 'Content indexed for coalition licensing', free: true, enterprise: true },
+      { name: 'Basic Attribution View', description: 'See where your content appears', free: true, enterprise: true },
+      { name: 'Revenue Share — Coalition', description: 'Encypher negotiates deals', free: '60/40', enterprise: '60/40' },
+      { name: 'Revenue Share — Self-Service', description: 'You negotiate deals', free: '80/20', enterprise: '80/20' },
     ],
   },
   {
-    name: 'Streaming API',
+    name: 'Enforcement Tools (Add-Ons)',
     features: [
-      {
-        name: 'Streaming Signing',
-        description: 'POST /api/v1/sign/stream - Stream signing progress (SSE)',
-        starter: false,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
-      {
-        name: 'Chat Application Wrapper',
-        description: 'POST /api/v1/chat/completions - OpenAI-compatible chat streaming',
-        starter: false,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
-      {
-        name: 'Server-Sent Events',
-        description: 'GET /api/v1/sign/stream/sessions/{session_id}/events - SSE endpoint',
-        starter: false,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
+      { name: 'Attribution Analytics', description: 'Full dashboard: where your content appears in AI outputs', free: false, enterprise: true, addOn: 'Coming Soon' },
+      { name: 'Formal Notice Package', description: 'Cryptographically-backed notice to AI companies', free: false, enterprise: 'Unlimited', addOn: 'Coming Soon' },
+      { name: 'Evidence Package', description: 'Court-ready evidence bundle', free: false, enterprise: 'Unlimited', addOn: 'Coming Soon' },
     ],
   },
   {
-    name: 'Platform & Limits',
+    name: 'Infrastructure (Add-Ons)',
     features: [
-      {
-        name: 'API Keys',
-        description: 'Number of API keys per organization',
-        starter: '2',
-        professional: '10',
-        business: '50',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Rate Limit',
-        description: 'Requests per second',
-        starter: '10/s',
-        professional: '50/s',
-        business: '200/s',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'WordPress Plugin',
-        description: 'Self-service WordPress integration',
-        starter: 'Basic',
-        professional: 'Pro (no branding)',
-        business: 'Pro (no branding)',
-        enterprise: 'White-label',
-      },
-      {
-        name: 'Team Management',
-        description: 'Multi-user organization access',
-        starter: false,
-        professional: false,
-        business: '10 users',
-        enterprise: 'Unlimited',
-      },
-      {
-        name: 'Audit Logs',
-        description: 'Complete audit trail for all operations',
-        starter: false,
-        professional: false,
-        business: true,
-        enterprise: true,
-      },
-      {
-        name: 'Bring Your Own Keys (BYOK)',
-        description: 'Use your own signing keys',
-        starter: false,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
+      { name: 'Custom Signing Identity', description: 'Sign as your brand', free: false, enterprise: true, addOn: '$499/mo' },
+      { name: 'White-Label Verification', description: 'Your branding on verification pages', free: false, enterprise: true, addOn: '$299/mo' },
+      { name: 'Custom Verification Domain', description: 'Custom domain for verification', free: false, enterprise: true, addOn: '$29/mo' },
+      { name: 'BYOK', description: 'Bring your own signing keys', free: false, enterprise: true, addOn: '$499/mo' },
     ],
   },
   {
-    name: 'Coalition & Revenue',
+    name: 'Enterprise-Only Capabilities',
     features: [
-      {
-        name: 'Coalition Membership',
-        description: 'Auto-join AI licensing coalition',
-        starter: true,
-        professional: true,
-        business: true,
-        enterprise: true,
-      },
-      {
-        name: 'Your Revenue Share',
-        description: 'Percentage of licensing revenue you keep',
-        starter: 'Standard',
-        professional: 'Enhanced',
-        business: 'Premium',
-        enterprise: 'Enterprise',
-        highlight: true,
-      },
-    ],
-  },
-  {
-    name: 'Support & SLA',
-    features: [
-      {
-        name: 'Support Level',
-        description: 'Response time and channel',
-        starter: 'Community',
-        professional: 'Email (48hr)',
-        business: 'Priority (24hr)',
-        enterprise: 'Dedicated TAM',
-      },
-      {
-        name: 'SLA Guarantee',
-        description: 'Uptime guarantee',
-        starter: false,
-        professional: false,
-        business: '99.5%',
-        enterprise: '99.9%',
-      },
-      {
-        name: 'SSO/SCIM Integration',
-        description: 'Enterprise identity management',
-        starter: false,
-        professional: false,
-        business: false,
-        enterprise: true,
-      },
-      {
-        name: 'On-Premise Option',
-        description: 'Self-hosted deployment',
-        starter: false,
-        professional: false,
-        business: false,
-        enterprise: true,
-      },
+      { name: 'Streaming LLM Signing', description: 'WebSocket/SSE real-time signing', free: false, enterprise: true },
+      { name: 'OpenAI-Compatible Endpoint', description: '/chat/completions with auto-signing', free: false, enterprise: true },
+      { name: 'Custom C2PA Assertions', description: 'Define custom assertion types + schema registry', free: false, enterprise: true },
+      { name: 'Batch Operations', description: '100+ documents per request', free: false, enterprise: true },
+      { name: 'Document Revocation', description: 'StatusList2021 revocation', free: false, enterprise: true },
+      { name: 'Robust Fingerprinting', description: 'Survives paraphrasing, rewriting, translation', free: false, enterprise: true },
+      { name: 'Plagiarism Detection', description: 'With Merkle proof linkage', free: false, enterprise: true },
+      { name: 'SSO Integration', description: 'SAML, OAuth', free: false, enterprise: true },
+      { name: 'Team Management', description: 'Role-based access controls', free: false, enterprise: true },
+      { name: 'Dedicated SLA', description: '99.9% uptime, 15-min incident response', free: false, enterprise: true },
+      { name: '24/7 Priority Support', description: 'Named account manager', free: false, enterprise: true },
     ],
   },
 ];
 
-type TierId = 'starter' | 'professional' | 'business' | 'enterprise';
+type ColumnId = 'free' | 'enterprise';
 
 interface FeatureComparisonTableProps {
-  currentPlan?: TierId | null;
-  onUpgrade?: (tier: TierId) => void;
-  showUpsell?: boolean;
+  currentPlan?: ColumnId | null;
 }
 
-function renderValue(value: string | boolean, isCurrentPlan: boolean, highlight?: boolean) {
+function renderValue(value: FeatureValue, addOn?: string) {
   if (value === false) {
+    if (addOn) {
+      return <span className="text-xs font-medium text-primary">{addOn}</span>;
+    }
     return <X className="h-4 w-4 text-muted-foreground/50 mx-auto" />;
   }
   if (value === true) {
     return <Check className="h-4 w-4 text-primary mx-auto" />;
   }
-  return (
-    <span className={cn(
-      'text-sm',
-      highlight && 'font-bold text-primary',
-      isCurrentPlan && 'font-semibold'
-    )}>
-      {value}
-    </span>
-  );
+  return <span className="text-sm font-medium">{value}</span>;
 }
 
 export default function FeatureComparisonTable({ 
-  currentPlan, 
-  onUpgrade,
-  showUpsell = true 
+  currentPlan,
 }: FeatureComparisonTableProps) {
-  const tiers: { id: TierId; name: string; price: string }[] = [
-    { id: 'starter', name: 'Starter', price: 'Free' },
-    { id: 'professional', name: 'Professional', price: '$99/mo' },
-    { id: 'business', name: 'Business', price: '$499/mo' },
+  const columns: { id: ColumnId; name: string; price: string }[] = [
+    { id: 'free', name: 'Free', price: '$0/mo' },
     { id: 'enterprise', name: 'Enterprise', price: 'Custom' },
   ];
 
-  const tierOrder: TierId[] = ['starter', 'professional', 'business', 'enterprise'];
-  const currentPlanIndex = currentPlan ? tierOrder.indexOf(currentPlan) : -1;
-
-  const getUpsellText = (tierId: TierId): string | null => {
-    if (!currentPlan || !showUpsell) return null;
-    const tierIndex = tierOrder.indexOf(tierId);
-    if (tierIndex <= currentPlanIndex) return null;
-    if (tierIndex === currentPlanIndex + 1) return 'Upgrade';
-    return null;
-  };
-
   return (
     <div className="overflow-x-auto">
-      <table className="w-full border-collapse min-w-[800px]">
+      <table className="w-full border-collapse min-w-[600px]">
         <thead>
           <tr className="border-b-2 border-border">
-            <th className="text-left py-4 px-4 font-semibold w-[280px]">Feature</th>
-            {tiers.map((tier) => {
-              const isCurrentPlan = currentPlan === tier.id;
-              const upsellText = getUpsellText(tier.id);
-              const isPopular = tier.id === 'professional';
-              
+            <th className="text-left py-4 px-4 font-semibold w-[320px]">Feature</th>
+            {columns.map((col) => {
+              const isCurrent = currentPlan === col.id;
               return (
                 <th 
-                  key={tier.id}
+                  key={col.id}
                   className={cn(
-                    'text-center py-4 px-4 font-semibold relative border-l border-border',
-                    isCurrentPlan && 'bg-primary/10 border-x-2 border-t-2 border-primary',
-                    isPopular && !isCurrentPlan && 'bg-primary/5'
+                    'text-center py-4 px-6 font-semibold relative border-l border-border',
+                    isCurrent && 'bg-primary/10 border-x-2 border-t-2 border-primary'
                   )}
                 >
-                  {isCurrentPlan && (
+                  {isCurrent && (
                     <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-xs">
                       Current Plan
                     </Badge>
                   )}
-                  {isPopular && !isCurrentPlan && (
-                    <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary/80 text-xs">
-                      Recommended
-                    </Badge>
-                  )}
                   <div className="pt-2">
-                    {tier.name}
+                    {col.name}
                     <br />
-                    <span className="text-xs font-normal text-muted-foreground">{tier.price}</span>
+                    <span className="text-xs font-normal text-muted-foreground">{col.price}</span>
                   </div>
-                  {upsellText && (
-                    <Button 
-                      size="sm" 
-                      className="mt-2 text-xs h-7"
-                      onClick={() => onUpgrade?.(tier.id)}
-                    >
-                      {upsellText}
-                    </Button>
-                  )}
                 </th>
               );
             })}
@@ -408,7 +154,7 @@ export default function FeatureComparisonTable({
           {FEATURE_CATEGORIES.map((category) => (
             <React.Fragment key={category.name}>
               <tr className="bg-muted/50">
-                <td className="py-3 px-4 font-bold text-foreground" colSpan={5}>
+                <td className="py-3 px-4 font-bold text-foreground" colSpan={3}>
                   {category.name}
                 </td>
               </tr>
@@ -418,21 +164,18 @@ export default function FeatureComparisonTable({
                     <div className="font-medium">{feature.name}</div>
                     <div className="text-xs text-muted-foreground">{feature.description}</div>
                   </td>
-                  {tiers.map((tier) => {
-                    const isCurrentPlan = currentPlan === tier.id;
-                    const isPopular = tier.id === 'professional';
-                    const value = feature[tier.id];
-                    
+                  {columns.map((col) => {
+                    const isCurrent = currentPlan === col.id;
+                    const value = feature[col.id];
                     return (
                       <td 
-                        key={tier.id}
+                        key={col.id}
                         className={cn(
-                          'text-center py-3 px-4 border-l border-border',
-                          isCurrentPlan && 'bg-primary/10 border-x-2 border-primary',
-                          isPopular && !isCurrentPlan && 'bg-primary/5'
+                          'text-center py-3 px-6 border-l border-border',
+                          isCurrent && 'bg-primary/10 border-x-2 border-primary'
                         )}
                       >
-                        {renderValue(value, isCurrentPlan, feature.highlight)}
+                        {renderValue(value, col.id === 'free' ? feature.addOn : undefined)}
                       </td>
                     );
                   })}
@@ -444,43 +187,18 @@ export default function FeatureComparisonTable({
         <tfoot>
           <tr className="border-t-2 border-border">
             <td className="py-4 px-4"></td>
-            {tiers.map((tier) => {
-              const isCurrentPlan = currentPlan === tier.id;
-              const isPopular = tier.id === 'professional';
-              const tierIndex = tierOrder.indexOf(tier.id);
-              const isUpgrade = currentPlan && tierIndex > currentPlanIndex;
-              
-              return (
-                <td 
-                  key={tier.id}
-                  className={cn(
-                    'text-center py-4 px-4 border-l border-border',
-                    isCurrentPlan && 'bg-primary/10 border-x-2 border-b-2 border-primary rounded-b-lg',
-                    isPopular && !isCurrentPlan && 'bg-primary/5'
-                  )}
-                >
-                  {isCurrentPlan ? (
-                    <Button variant="outline" disabled className="w-full">
-                      Current Plan
-                    </Button>
-                  ) : tier.id === 'enterprise' ? (
-                    <Button variant="outline" className="w-full" asChild>
-                      <Link href="/company#contact">Contact Sales</Link>
-                    </Button>
-                  ) : (
-                    <Button 
-                      variant={isUpgrade ? 'default' : 'outline'} 
-                      className="w-full"
-                      asChild
-                    >
-                      <Link href={`/signup?plan=${tier.id}`}>
-                        {isUpgrade ? 'Upgrade' : 'Get Started'}
-                      </Link>
-                    </Button>
-                  )}
-                </td>
-              );
-            })}
+            <td className="text-center py-4 px-6 border-l border-border">
+              <Button className="w-full" asChild>
+                <Link href="/auth/signin?mode=signup&source=pricing-free">
+                  Get Started Free
+                </Link>
+              </Button>
+            </td>
+            <td className="text-center py-4 px-6 border-l border-border">
+              <Button variant="outline" className="w-full" asChild>
+                <Link href="/company#contact">Contact Sales</Link>
+              </Button>
+            </td>
           </tr>
         </tfoot>
       </table>

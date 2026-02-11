@@ -1,21 +1,29 @@
 'use client';
 
 import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 // Tabs import removed - using custom styled buttons for better active state visibility
 import { AnimatePresence } from 'framer-motion';
-import { ArrowRight, Check, Newspaper, BarChart3, Shield, FileText, Award, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowRight, Check, Newspaper, BarChart3, Shield, FileText, Award } from 'lucide-react';
 import Link from 'next/link';
 import SalesContactModal from '@/components/forms/SalesContactModal';
 import AISummary from '@/components/seo/AISummary';
-import FeatureComparisonTable from '@/components/pricing/FeatureComparisonTable';
 import StandardsCompliance from '@/components/solutions/standards-compliance';
 import Image from 'next/image';
-import { useLicense } from '@/lib/hooks/useLicense';
-import { getAllTiers, formatPrice, formatRevShare, type TierConfig } from '@/lib/pricing-config';
+import {
+  FREE_TIER,
+  ADD_ONS,
+  BUNDLES,
+  ENTERPRISE_TIER,
+  formatAddOnPrice,
+  formatBundlePrice,
+  type AddOnConfig,
+} from '@/lib/pricing-config';
+import {
+  COALITION_VALUE_PROP,
+  LICENSING_TRACKS,
+} from '@/lib/pricing-config/coalition';
 
 // Dashboard URL for sign-up flows
 const DASHBOARD_URL = process.env.NEXT_PUBLIC_DASHBOARD_URL || 'https://dashboard.encypherai.com';
@@ -25,8 +33,8 @@ type ICP = 'publishers' | 'ai-labs' | 'enterprises';
 // ICP-specific value propositions aligned with demos
 const ICP_VALUE_PROPS: Record<ICP, { headline: string; subheadline: string; icon: typeof Newspaper }> = {
   publishers: {
-    headline: 'Turn Your Archive Into Revenue',
-    subheadline: 'Cryptographic watermarking that survives copy-paste. Formal notice capability for AI licensing.',
+    headline: 'Free to Sign. Paid to Enforce.',
+    subheadline: 'Full signing infrastructure at no cost. Pay only for enforcement tools when you\'re ready to license.',
     icon: Newspaper,
   },
   'ai-labs': {
@@ -41,76 +49,16 @@ const ICP_VALUE_PROPS: Record<ICP, { headline: string; subheadline: string; icon
   },
 };
 
-// Marketing-specific tier descriptions for publishers
-const TIER_MARKETING: Record<string, { description: string; bestFor: string; cta: { text: string; variant: 'default' | 'outline' }; showPrice: boolean; highlight?: string }> = {
-  starter: {
-    description: 'Get paid when AI uses your content',
-    bestFor: 'Independent bloggers, local news, small sites, WordPress users',
-    cta: { text: 'Get Started Free', variant: 'default' },
-    showPrice: true,
-    highlight: 'WordPress plugin installs in 5 minutes',
-  },
-  professional: {
-    description: 'For regional publishers and growing media companies',
-    bestFor: 'Regional newspapers, digital magazines, trade publications',
-    cta: { text: 'Start Free Trial', variant: 'default' },
-    showPrice: true,
-    highlight: 'Invisible embeddings + enhanced revenue share',
-  },
-  business: {
-    description: 'For major digital publishers needing enterprise features',
-    bestFor: 'Major digital publishers, news networks',
-    cta: { text: 'Start Free Trial', variant: 'default' },
-    showPrice: true,
-    highlight: 'Similarity detection + source attribution',
-  },
-  enterprise: {
-    description: 'White-glove implementation',
-    bestFor: 'NYT, Guardian, News Corp, major media conglomerates',
-    cta: { text: 'Contact Sales', variant: 'default' },
-    showPrice: false,
-    highlight: 'Shape industry licensing standards',
-  },
-};
-
-// Map license tier to TierId for feature comparison
-type TierId = 'starter' | 'professional' | 'business' | 'enterprise';
-
-function normalizeTier(tier: string | undefined): TierId | null {
-  if (!tier) return null;
-  const normalized = tier.toLowerCase();
-  if (['starter', 'free', 'basic'].includes(normalized)) return 'starter';
-  if (['professional', 'pro'].includes(normalized)) return 'professional';
-  if (['business', 'team'].includes(normalized)) return 'business';
-  if (['enterprise', 'custom'].includes(normalized)) return 'enterprise';
-  return null;
-}
 
 export default function PricingPage() {
   const [activeICP, setActiveICP] = useState<ICP>('publishers');
   const [showPublisherModal, setShowPublisherModal] = useState(false);
   const [showAIModal, setShowAIModal] = useState(false);
   const [showEnterpriseModal, setShowEnterpriseModal] = useState(false);
-  const [showFullFeatureTable, setShowFullFeatureTable] = useState(false);
-  
-  const router = useRouter();
-  const { data: session } = useSession();
-  const { license } = useLicense();
-  
-  // Get user's current plan for feature table highlighting
-  const currentPlan = normalizeTier(license?.tier);
-  const isLoggedIn = !!session;
-  
-  // Handle upgrade from feature table
-  const handleUpgrade = (tier: TierId) => {
-    if (tier === 'enterprise') {
-      setShowPublisherModal(true);
-    } else {
-      router.push(`${DASHBOARD_URL}/billing?upgrade=${tier}`);
-    }
-  };
-  
-  const tiers = getAllTiers();
+  // Categorize add-ons for display
+  const enforcementAddOns = ADD_ONS.filter(a => a.category === 'enforcement');
+  const infrastructureAddOns = ADD_ONS.filter(a => a.category === 'infrastructure');
+  const operationsAddOns = ADD_ONS.filter(a => a.category === 'operations');
 
   return (
     <div className="bg-background text-foreground">
@@ -142,15 +90,11 @@ export default function PricingPage() {
                   <button
                     key={icp}
                     onClick={() => setActiveICP(icp)}
-                    className="flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all text-sm"
-                    style={isActive ? {
-                      backgroundColor: '#2a87c4',
-                      color: '#ffffff',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    } : {
-                      backgroundColor: '#e2e8f0',
-                      color: '#64748b'
-                    }}
+                    className={`flex items-center justify-center gap-2 py-3 px-4 rounded-lg font-medium transition-all text-sm ${
+                      isActive
+                        ? 'bg-blue-ncs text-white shadow-md'
+                        : 'bg-secondary text-muted-foreground'
+                    }`}
                   >
                     <IconComponent className="h-4 w-4" />
                     <span>{config.label}</span>
@@ -159,7 +103,7 @@ export default function PricingPage() {
               })}
             </div>
             {/* Desktop: Horizontal tabs */}
-            <div className="hidden sm:inline-flex rounded-lg p-1.5 gap-1" style={{ backgroundColor: '#e2e8f0' }}>
+            <div className="hidden sm:inline-flex rounded-lg p-1.5 gap-1 bg-secondary">
               {(['publishers', 'ai-labs', 'enterprises'] as const).map((icp) => {
                 const isActive = activeICP === icp;
                 const config = {
@@ -172,14 +116,11 @@ export default function PricingPage() {
                   <button
                     key={icp}
                     onClick={() => setActiveICP(icp)}
-                    className="flex items-center justify-center gap-2 py-3 px-6 rounded-md font-medium transition-all text-sm"
-                    style={isActive ? {
-                      backgroundColor: '#2a87c4',
-                      color: '#ffffff',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                    } : {
-                      color: '#64748b'
-                    }}
+                    className={`flex items-center justify-center gap-2 py-3 px-6 rounded-md font-medium transition-all text-sm ${
+                      isActive
+                        ? 'bg-blue-ncs text-white shadow-md'
+                        : 'text-muted-foreground'
+                    }`}
                   >
                     <IconComponent className="h-4 w-4" />
                     <span>{config.label}</span>
@@ -231,6 +172,7 @@ export default function PricingPage() {
                 alt="C2PA Logo"
                 fill
                 style={{objectFit: 'contain'}}
+                className="dark:invert"
               />
             </div>
             <div className="relative h-8 w-24 md:h-10 md:w-32">
@@ -239,6 +181,7 @@ export default function PricingPage() {
                 alt="Content Authenticity Initiative Logo"
                 fill
                 style={{objectFit: 'contain'}}
+                className="dark:invert"
               />
             </div>
           </div>
@@ -260,312 +203,298 @@ export default function PricingPage() {
       >
         <div className="container mx-auto px-4">
 
-          {/* Publisher Pricing Cards */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto mb-16">
-            {tiers.map((tier: TierConfig) => {
-              const marketing = TIER_MARKETING[tier.id];
-              const isPopular = tier.popular;
-              
-              return (
-                <div 
-                  key={tier.id}
-                  className={`bg-card rounded-lg p-6 relative flex flex-col ${
-                    isPopular 
-                      ? 'border-2 border-primary/50 shadow-lg' 
-                      : 'border border-border'
-                  }`}
-                >
-                  {isPopular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <span 
-                        className="inline-block px-4 py-1.5 text-sm font-semibold rounded-full shadow-md"
-                        style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}
-                      >
-                        Recommended
-                      </span>
+          {/* ===== FREE TIER HERO CARD ===== */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="bg-card border-2 border-primary/30 rounded-xl p-8 shadow-lg">
+              <div className="text-center mb-6">
+                <Badge className="mb-3 bg-primary">Free Forever</Badge>
+                <h2 className="text-3xl font-bold mb-2">Full Signing Infrastructure — $0</h2>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  {COALITION_VALUE_PROP.subheadline}
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6 mb-8">
+                <div>
+                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Signing & Provenance</h4>
+                  <ul className="space-y-2">
+                    {FREE_TIER.signingFeatures.map((f: string) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Distribution & Tools</h4>
+                  <ul className="space-y-2">
+                    {FREE_TIER.distributionFeatures.map((f: string) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Coalition Membership</h4>
+                  <ul className="space-y-2">
+                    {FREE_TIER.coalitionFeatures.map((f: string) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <div className="bg-muted/50 rounded-lg p-4 mb-6 text-center">
+                <p className="text-sm">
+                  <strong>{FREE_TIER.limits.documentsPerMonth.toLocaleString()} documents/month</strong> included.
+                  Overage: ${FREE_TIER.limits.overagePerDoc}/doc. Unlimited verification & API lookups.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button asChild size="lg" className="font-semibold shadow-lg btn-blue-hover" style={{ backgroundColor: '#2a87c4', color: '#ffffff' }}>
+                  <Link href={`/auth/signin?mode=signup&source=pricing-free`}>
+                    Get Started Free <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+                <Button asChild size="lg" variant="outline">
+                  <Link href="/publisher-demo">
+                    See Publisher Demo <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* ===== TWO-TRACK LICENSING MODEL ===== */}
+          <div className="max-w-5xl mx-auto mb-16">
+            <h3 className="text-2xl font-bold text-center mb-2">Two-Track Licensing Revenue</h3>
+            <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Same splits whether you&apos;re on Free or Enterprise. We only win when you win.
+            </p>
+            <div className="grid md:grid-cols-2 gap-6">
+              {Object.entries(LICENSING_TRACKS).map(([key, track]) => (
+                <div key={key} className="bg-card border border-border rounded-lg p-6">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="text-2xl font-bold text-primary">{track.split}</div>
+                    <div>
+                      <h4 className="font-bold">{track.name}</h4>
+                      <p className="text-xs text-muted-foreground">Publisher / Encypher</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{track.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ===== ENFORCEMENT ADD-ONS ===== */}
+          <div className="max-w-6xl mx-auto mb-16">
+            <h3 className="text-2xl font-bold text-center mb-2">Enforcement Tools</h3>
+            <p className="text-center text-muted-foreground mb-8">
+              Self-service. No sales call required. Add when you&apos;re ready to license.
+            </p>
+
+            {/* Enforcement Pipeline Visualization */}
+            <div className="flex flex-wrap justify-center items-center gap-2 mb-8 text-sm">
+              {['Sign', 'Detect', 'Notify', 'Prove', 'License'].map((step, i) => (
+                <div key={step} className="flex items-center gap-2">
+                  <span className={`px-3 py-1.5 rounded-full font-medium ${i === 0 ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                    {step}
+                  </span>
+                  {i < 4 && <ArrowRight className="h-4 w-4 text-muted-foreground" />}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {enforcementAddOns.map((addOn: AddOnConfig) => (
+                <div key={addOn.id} className={`bg-card border border-border rounded-lg p-6 ${addOn.comingSoon ? 'opacity-80' : ''}`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-bold text-lg">{addOn.name}</h4>
+                    {addOn.comingSoon && <Badge variant="outline" className="text-xs">Coming Soon</Badge>}
+                  </div>
+                  {!addOn.comingSoon && (
+                    <div className="text-2xl font-bold text-primary mb-2">{formatAddOnPrice(addOn)}</div>
+                  )}
+                  <p className="text-sm text-muted-foreground mb-4">{addOn.description}</p>
+                  {addOn.includes && (
+                    <ul className="space-y-1.5 mb-4">
+                      {addOn.includes.slice(0, 4).map((item: string) => (
+                        <li key={item} className="flex items-start gap-2">
+                          <Check className="h-3.5 w-3.5 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-xs">{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {addOn.replaces && (
+                    <p className="text-xs text-muted-foreground italic border-t border-border pt-2">
+                      Replaces: {addOn.replaces}
+                    </p>
+                  )}
+                  {!addOn.comingSoon && addOn.volumePricing && addOn.volumePricing.length > 1 && (
+                    <div className="mt-3 pt-3 border-t border-border">
+                      <p className="text-xs font-medium mb-1">Volume pricing:</p>
+                      {addOn.volumePricing.slice(1).map((vp) => (
+                        <p key={String(vp.quantity)} className="text-xs text-muted-foreground">
+                          {vp.quantity}: ${vp.priceEach}{addOn.unitLabel} {vp.savings && <span className="text-primary font-medium">({vp.savings})</span>}
+                        </p>
+                      ))}
                     </div>
                   )}
-                  
-                  {/* Tier Name & Description - Fixed height */}
-                  <div className="h-[72px] mb-4">
-                    <h3 className="text-xl font-bold mb-2">{tier.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {marketing.description}
-                    </p>
-                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
-                  {/* Price Section - Fixed height with centered content */}
-                  <div className="h-[72px] mb-4 flex flex-col justify-center items-center text-center">
-                    <div className="text-3xl font-bold">
-                      {marketing.showPrice ? formatPrice(tier) : 'Custom'}
+          {/* ===== BUNDLES ===== */}
+          <div className="max-w-5xl mx-auto mb-16">
+            <h3 className="text-2xl font-bold text-center mb-2">Bundles — Save Up to 57%</h3>
+            <p className="text-center text-muted-foreground mb-8">
+              Pre-packaged combinations for common workflows.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6">
+              {BUNDLES.map((bundle) => (
+                <div key={bundle.id} className={`bg-card rounded-lg p-6 ${bundle.comingSoon ? 'opacity-80 border border-border' : bundle.id === 'enforcement-bundle' ? 'border-2 border-primary/50 shadow-lg relative' : 'border border-border'}`}>
+                  {!bundle.comingSoon && bundle.id === 'enforcement-bundle' && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-primary">Most Popular</Badge>
                     </div>
-                    {marketing.showPrice && tier.price.monthly > 0 && (
-                      <p className="text-sm text-muted-foreground">/month</p>
-                    )}
-                    {marketing.showPrice && tier.price.monthly === 0 && (
-                      <p className="text-sm text-muted-foreground">Forever free</p>
-                    )}
-                    {!marketing.showPrice && (
-                      <p className="text-sm text-muted-foreground">White-glove implementation</p>
-                    )}
+                  )}
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-bold text-lg">{bundle.name}</h4>
+                    {bundle.comingSoon && <Badge variant="outline" className="text-xs">Coming Soon</Badge>}
                   </div>
+                  {!bundle.comingSoon ? (
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <span className="text-2xl font-bold text-primary">{formatBundlePrice(bundle)}</span>
+                      <Badge variant="outline" className="text-xs">Save {bundle.savings}</Badge>
+                    </div>
+                  ) : (
+                    <div className="mb-2" />
+                  )}
+                  <p className="text-sm text-muted-foreground mb-4">{bundle.description}</p>
+                  <ul className="space-y-2">
+                    {bundle.includes.map((item: string) => (
+                      <li key={item} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
 
-                  {/* Coalition Rev Share Badge - Fixed height */}
-                  <div className="h-[60px] bg-primary/10 rounded-lg p-3 mb-4 flex flex-col justify-center items-center text-center">
-                    <p className="text-xs text-muted-foreground">Coalition Revenue</p>
-                    <p className="text-sm font-semibold text-primary">
-                      {tier.enterprise ? 'Best terms available' : 
-                       tier.id === 'business' ? 'Premium revenue share' :
-                       tier.id === 'professional' ? 'Enhanced revenue share' :
-                       'Standard revenue share'}
-                    </p>
-                  </div>
+          {/* ===== INFRASTRUCTURE & OPERATIONS ADD-ONS ===== */}
+          <div className="max-w-5xl mx-auto mb-16">
+            <h3 className="text-2xl font-bold text-center mb-8">Infrastructure & Operations</h3>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-bold text-sm uppercase text-muted-foreground mb-4">Infrastructure</h4>
+                <div className="space-y-3">
+                  {infrastructureAddOns.map((addOn: AddOnConfig) => (
+                    <div key={addOn.id} className={`bg-card border border-border rounded-lg p-4 flex justify-between items-start ${addOn.comingSoon ? 'opacity-80' : ''}`}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h5 className="font-medium text-sm">{addOn.name}</h5>
+                          {addOn.comingSoon && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Coming Soon</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{addOn.description}</p>
+                      </div>
+                      {!addOn.comingSoon && (
+                        <span className="text-sm font-bold text-primary ml-4 whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h4 className="font-bold text-sm uppercase text-muted-foreground mb-4">Operations</h4>
+                <div className="space-y-3">
+                  {operationsAddOns.map((addOn: AddOnConfig) => (
+                    <div key={addOn.id} className={`bg-card border border-border rounded-lg p-4 flex justify-between items-start ${addOn.comingSoon ? 'opacity-80' : ''}`}>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h5 className="font-medium text-sm">{addOn.name}</h5>
+                          {addOn.comingSoon && <Badge variant="outline" className="text-[10px] px-1.5 py-0">Coming Soon</Badge>}
+                        </div>
+                        <p className="text-xs text-muted-foreground">{addOn.description}</p>
+                      </div>
+                      {!addOn.comingSoon && (
+                        <span className="text-sm font-bold text-primary ml-4 whitespace-nowrap">{formatAddOnPrice(addOn)}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
 
-                  {/* Features List - Fixed height */}
-                  <ul className="h-[180px] space-y-2 mb-4">
-                    {tier.features.slice(0, 6).map((feature) => (
+          {/* ===== ENTERPRISE TIER ===== */}
+          <div className="max-w-4xl mx-auto mb-16">
+            <div className="bg-muted/30 border-2 border-border rounded-xl p-8">
+              <div className="text-center mb-6">
+                <Badge variant="outline" className="mb-3">Enterprise</Badge>
+                <h3 className="text-2xl font-bold mb-2">Enterprise — Unlimited Everything</h3>
+                <p className="text-muted-foreground">
+                  All add-ons included. Exclusive capabilities. Dedicated support. Custom pricing tailored to your organization.
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div>
+                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Everything Unlimited</h4>
+                  <ul className="space-y-2">
+                    {ENTERPRISE_TIER.features.slice(0, 7).map((feature: string) => (
                       <li key={feature} className="flex items-start gap-2">
                         <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
                       </li>
                     ))}
                   </ul>
-
-                  {/* Highlight callout - Fixed height */}
-                  <div className="h-[48px] mb-4 flex items-center justify-center">
-                    {marketing.highlight && (
-                      <div className="py-2 px-3 bg-muted/50 rounded text-xs text-center font-medium w-full">
-                        {marketing.highlight}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Best for section - Fixed height */}
-                  <div className="h-[56px] mb-4 pt-4 border-t border-border">
-                    <p className="text-xs text-muted-foreground line-clamp-2">
-                      <strong>Best for:</strong> {marketing.bestFor}
-                    </p>
-                  </div>
-
-                  {/* CTA Button - Auto pushed to bottom */}
-                  <div className="mt-auto">
-                    {tier.enterprise ? (
-                      <Button 
-                        onClick={() => setShowPublisherModal(true)}
-                        className="w-full" 
-                        variant={marketing.cta.variant}
-                      >
-                        {marketing.cta.text} <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    ) : (
-                      <Button asChild className="w-full" variant={marketing.cta.variant}>
-                        <Link href={`/auth/signin?mode=signup&source=pricing-${tier.id}`}>
-                          {marketing.cta.text} <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    )}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-
-          {/* Key Differentiators - Quick Overview */}
-          <div className="max-w-5xl mx-auto mb-12">
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="bg-card border border-border rounded-lg p-6 text-center">
-                <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-4">
-                  <Shield className="h-6 w-6 text-primary" />
+                <div>
+                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Exclusive Capabilities</h4>
+                  <ul className="space-y-2">
+                    {ENTERPRISE_TIER.exclusiveCapabilities.slice(0, 7).map((cap: string) => (
+                      <li key={cap} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{cap}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <h4 className="font-bold mb-2">Survives Copy-Paste</h4>
+              </div>
+
+              <div className="bg-primary/5 rounded-lg p-4 mb-6 text-center">
                 <p className="text-sm text-muted-foreground">
-                  Cryptographic watermarking embedded in text travels with your content across the web.
+                  Same <strong>60/40</strong> coalition and <strong>80/20</strong> self-service licensing splits. We only win when you win.
                 </p>
               </div>
-              <div className="bg-card border border-border rounded-lg p-6 text-center">
-                <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-4">
-                  <FileText className="h-6 w-6 text-primary" />
-                </div>
-                <h4 className="font-bold mb-2">Formal Notice Capability</h4>
-                <p className="text-sm text-muted-foreground">
-                  Sentence-level tracking enables legal notice to AI companies with mathematical proof.
-                </p>
-              </div>
-              <div className="bg-card border border-border rounded-lg p-6 text-center">
-                <div className="p-3 bg-primary/10 rounded-full w-fit mx-auto mb-4">
-                  <Clock className="h-6 w-6 text-primary" />
-                </div>
-                <h4 className="font-bold mb-2">30-Day Implementation</h4>
-                <p className="text-sm text-muted-foreground">
-                  Enterprise: $30k implementation in 30 days. WordPress plugin: install in 5 minutes.
-                </p>
+
+              <div className="text-center">
+                <Button onClick={() => setShowPublisherModal(true)} size="lg">
+                  Contact for Pricing <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
             </div>
           </div>
 
-          {/* Publisher Value Prop */}
-          <div className="max-w-4xl mx-auto bg-primary/5 border-2 border-primary/20 rounded-lg p-8 mb-12">
-            <h3 className="text-2xl font-bold mb-4 text-center">The Publisher Opportunity</h3>
-            <div className="grid md:grid-cols-2 gap-8">
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">Without Content Provenance:</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">AI training attribution</span>
-                    <span className="font-semibold text-destructive">None</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Licensing revenue</span>
-                    <span className="font-semibold">$0</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Formal notice capability</span>
-                    <span className="font-semibold text-destructive">Impossible</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Content after copy-paste</span>
-                    <span className="font-semibold text-destructive">Untraceable</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-border">
-                    <span className="font-bold">Net result</span>
-                    <span className="font-bold text-destructive">Lost opportunity</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground mb-2">With Encypher:</p>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm">AI training attribution</span>
-                    <span className="font-semibold text-primary">C2PA verified</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Licensing revenue</span>
-                    <span className="font-semibold text-primary">$1M+</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Formal notice capability</span>
-                    <span className="font-semibold text-primary">Enabled</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm">Content after copy-paste</span>
-                    <span className="font-semibold text-primary">Still provable</span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-border">
-                    <span className="font-bold">Net result</span>
-                    <span className="font-bold text-primary">New revenue stream</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <p className="text-sm text-center text-muted-foreground mt-6">
-              Success-based model means you keep the majority of licensing revenue. We only win when you win.
-            </p>
-          </div>
-
-          {/* Enterprise Engagement - Shape Industry Standards */}
-          <div className="max-w-3xl mx-auto bg-muted/50 border border-border rounded-lg p-6 mb-12 text-center">
-            <Badge variant="outline" className="mb-3">Enterprise</Badge>
-            <h4 className="font-bold text-lg mb-2">Shape Industry Licensing Standards</h4>
-            <p className="text-sm text-muted-foreground mb-4">
-              Enterprise partners work with Encypher to establish industry-standard licensing frameworks for AI content usage. The organizations engaged today are setting the standards others will follow.
-            </p>
-            <Button onClick={() => setShowPublisherModal(true)} variant="outline" size="sm">
-              Discuss Enterprise Engagement <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Quick Comparison Table */}
-          <div className="max-w-5xl mx-auto mb-12">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="border-b-2 border-border">
-                    <th className="text-left py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Feature</th>
-                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Starter<br/><span className="text-xs font-normal text-muted-foreground">Free</span></th>
-                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap bg-primary/5">Pro<br/><span className="text-xs font-normal text-muted-foreground">$99/mo</span></th>
-                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Business<br/><span className="text-xs font-normal text-muted-foreground">$499/mo</span></th>
-                    <th className="text-center py-3 px-2 md:px-4 font-semibold whitespace-nowrap">Enterprise<br/><span className="text-xs font-normal text-muted-foreground">Custom</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-border/50">
-                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">C2PA Signing</td>
-                    <td className="text-center py-3 px-2 md:px-4">1K/mo</td>
-                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5">Unlimited</td>
-                    <td className="text-center py-3 px-2 md:px-4">Unlimited</td>
-                    <td className="text-center py-3 px-2 md:px-4">Unlimited</td>
-                  </tr>
-                  <tr className="border-b border-border/50">
-                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">Embeddings</td>
-                    <td className="text-center py-3 px-2 md:px-4 text-muted-foreground">—</td>
-                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                    <td className="text-center py-3 px-2 md:px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                    <td className="text-center py-3 px-2 md:px-4"><Check className="h-4 w-4 text-primary mx-auto" /></td>
-                  </tr>
-                  <tr className="border-b border-border/50">
-                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">Tracking</td>
-                    <td className="text-center py-3 px-2 md:px-4 text-muted-foreground">—</td>
-                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5">50K/mo</td>
-                    <td className="text-center py-3 px-2 md:px-4">500K/mo</td>
-                    <td className="text-center py-3 px-2 md:px-4">Unlimited</td>
-                  </tr>
-                  <tr className="border-b border-border/50">
-                    <td className="py-3 px-2 md:px-4 font-medium whitespace-nowrap">WordPress</td>
-                    <td className="text-center py-3 px-2 md:px-4">Basic</td>
-                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5">Pro</td>
-                    <td className="text-center py-3 px-2 md:px-4">Pro</td>
-                    <td className="text-center py-3 px-2 md:px-4">White-label</td>
-                  </tr>
-                  <tr className="border-b border-border/50 bg-muted/30">
-                    <td className="py-3 px-2 md:px-4 font-bold whitespace-nowrap">Revenue Share</td>
-                    <td className="text-center py-3 px-2 md:px-4 font-medium text-sm">Standard</td>
-                    <td className="text-center py-3 px-2 md:px-4 bg-primary/5 font-medium text-primary text-sm">Enhanced</td>
-                    <td className="text-center py-3 px-2 md:px-4 font-medium text-sm">Premium</td>
-                    <td className="text-center py-3 px-2 md:px-4 font-medium text-sm">Best</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <p className="text-xs text-muted-foreground mt-3 text-center max-w-3xl mx-auto">
-              Coalition revenue is paid when AI companies license the corpus. Your share increases with higher tiers. Specific terms discussed during consultation.
-            </p>
-          </div>
-
-          {/* Collapsible Full Feature Table */}
-          <div className="max-w-6xl mx-auto">
-            <button
-              onClick={() => setShowFullFeatureTable(!showFullFeatureTable)}
-              className="w-full flex items-center justify-center gap-2 py-3 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {showFullFeatureTable ? (
-                <>Hide full feature comparison <ChevronUp className="h-4 w-4" /></>
-              ) : (
-                <>Show all 28 features <ChevronDown className="h-4 w-4" /></>
-              )}
-            </button>
-            
-            {showFullFeatureTable && (
-              <div className="mt-4">
-                <p className="text-center text-muted-foreground mb-6 text-sm">
-                  Every feature maps directly to our Enterprise API. See{' '}
-                  <Link href="https://api.encypherai.com/docs" className="text-primary hover:underline">API documentation</Link> for details.
-                </p>
-                <FeatureComparisonTable 
-                  currentPlan={currentPlan}
-                  showUpsell={isLoggedIn}
-                  onUpgrade={handleUpgrade}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* What is Content Provenance - Beginner Explainer */}
-          <div className="max-w-3xl mx-auto mt-16 p-6 bg-muted/30 rounded-lg">
+          {/* ===== CONTENT PROVENANCE EXPLAINER ===== */}
+          <div className="max-w-3xl mx-auto p-6 bg-muted/30 rounded-lg">
             <h4 className="font-bold text-lg mb-3">New to content provenance?</h4>
             <p className="text-sm text-muted-foreground mb-4">
               <strong>Content provenance</strong> is cryptographic proof that you created your content. 
-              When AI companies scrape the web for training data, they currently can't tell who owns what. 
+              When AI companies scrape the web for training data, they currently can&apos;t tell who owns what. 
               Our technology embeds invisible, tamper-proof signatures directly into your text that:
             </p>
             <ul className="text-sm text-muted-foreground space-y-2 mb-4">
@@ -728,125 +657,69 @@ export default function PricingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
-            {/* Pilot */}
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="text-xl font-bold mb-2">Pilot</h3>
-              <p className="text-sm text-muted-foreground mb-4">Validate value with limited deployment</p>
-              
-              <div className="mb-6">
-                <div className="text-2xl font-bold mb-1">Contact Us</div>
-                <p className="text-xs text-muted-foreground">30-60 day evaluation period</p>
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="bg-card border-2 border-primary/30 rounded-xl p-8">
+              <div className="text-center mb-6">
+                <Badge variant="outline" className="mb-3">Enterprise</Badge>
+                <h3 className="text-2xl font-bold mb-2">Custom Implementation for Your Organization</h3>
+                <p className="text-muted-foreground max-w-2xl mx-auto">
+                  Full C2PA infrastructure tailored to your compliance requirements and scale. Custom pricing based on your needs.
+                </p>
               </div>
 
-              <ul className="space-y-2 text-sm mb-6">
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Basic C2PA implementation</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Compliance reporting</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Standard support</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Success metrics defined</span>
-                </li>
-              </ul>
-
-              <Button 
-                onClick={() => setShowEnterpriseModal(true)}
-                className="w-full"
-              >
-                Start Pilot
-              </Button>
-            </div>
-
-            {/* Production */}
-            <div className="bg-card rounded-lg border-2 border-primary/50 p-6">
-              <Badge className="mb-4 bg-primary">Recommended</Badge>
-              <h3 className="text-xl font-bold mb-2">Production</h3>
-              <p className="text-sm text-muted-foreground mb-4">Full-scale deployment with enhanced features</p>
-              
-              <div className="mb-6">
-                <div className="text-2xl font-bold mb-1">Custom Pricing</div>
-                <p className="text-xs text-muted-foreground">Based on volume and requirements</p>
+              <div className="grid md:grid-cols-2 gap-6 mb-8">
+                <div>
+                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Infrastructure</h4>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>C2PA-compliant content provenance</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>Sentence-level tracking & intelligence dashboards</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>Audit trails for AI-generated content</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>On-premise deployment available</span>
+                    </li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm uppercase text-muted-foreground mb-3">Support & Services</h4>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>Dedicated account team</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>Priority support with SLA</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>Custom feature development</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span>SSO integration (SAML, OAuth)</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
 
-              <ul className="space-y-2 text-sm mb-6">
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Everything in Pilot</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Sentence-level tracking</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Intelligence dashboards</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Priority support (24hr SLA)</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Quarterly business reviews</span>
-                </li>
-              </ul>
-
-              <Button 
-                onClick={() => setShowEnterpriseModal(true)}
-                className="w-full"
-              >
-                Contact Sales <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Strategic */}
-            <div className="bg-card rounded-lg border border-border p-6">
-              <h3 className="text-xl font-bold mb-2">Strategic</h3>
-              <p className="text-sm text-muted-foreground mb-4">Partnership-level engagement</p>
-              
-              <div className="mb-6">
-                <div className="text-2xl font-bold mb-1">Custom</div>
-                <p className="text-xs text-muted-foreground">Multi-year strategic partnership</p>
+              <div className="text-center">
+                <Button 
+                  onClick={() => setShowEnterpriseModal(true)}
+                  size="lg"
+                >
+                  Contact for Pricing <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-
-              <ul className="space-y-2 text-sm mb-6">
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Everything in Production</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Dedicated account team</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Custom feature development</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>On-premise deployment option</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <Check className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                  <span>Advisory board participation</span>
-                </li>
-              </ul>
-
-              <Button 
-                onClick={() => setShowEnterpriseModal(true)}
-                className="w-full"
-              >
-                Discuss Partnership
-              </Button>
             </div>
           </div>
 

@@ -1,14 +1,11 @@
 # Dockerfile for policy_validator_cli
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 WORKDIR /app
 
 # Create a non-root user
 RUN groupadd --gid 1000 appuser && \
     useradd --uid 1000 --gid 1000 -m appuser
-
-# Install uv
-RUN pip install uv
 
 COPY pyproject.toml uv.lock* /app/
 

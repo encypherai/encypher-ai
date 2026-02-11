@@ -18,12 +18,22 @@ dependencies = [
     "pywin32>=310 ; sys_platform == 'win32'",
     "comtypes>=1.4.11 ; sys_platform == 'win32'",
     "pypdf>=6.6.0",
+    "reedsolo>=1.7.0",
 ]
 
 [tool.uv]
 
 [tool.uv.workspace]
-members = ["audit_log_cli", "policy_validator_cli", "dashboard_app/backend", "shared_commercial_libs", "enterprise_api"]
+members = [
+    "audit_log_cli",
+    "policy_validator_cli",
+    "dashboard_app/backend",
+    "shared_commercial_libs",
+    "enterprise_api",
+    "tools/xml-to-pdf",
+    "tools/encypher-pdf",
+    "tools/sign-verify-app",
+]
 
 [tool.uv.sources]
 encypher-ai = { path = "./encypher-ai", editable = true }

@@ -77,11 +77,15 @@ router = APIRouter()
 MAX_VERIFY_BYTES = 2 * 1024 * 1024
 
 
-async def _fetch_trust_anchor_public_key_pem(*, signer_id: str) -> str | None:
+async def _resolve_zw_segment_uuid(segment_uuid: str) -> dict | None:
+    """Resolve a ZW segment UUID via the enterprise API's content DB.
+
+    Returns ``{"organization_id": ..., "document_id": ...}`` or ``None``.
+    """
     try:
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{settings.ENTERPRISE_API_URL}/api/v1/public/c2pa/trust-anchors/{signer_id}",
+                f"{settings.ENTERPRISE_API_URL}/api/v1/public/c2pa/zw/resolve/{segment_uuid}",
                 timeout=5.0,
             )
     except httpx.RequestError:
@@ -91,14 +95,44 @@ async def _fetch_trust_anchor_public_key_pem(*, signer_id: str) -> str | None:
         return None
 
     payload = response.json()
-    if not isinstance(payload, dict):
+    if not isinstance(payload, dict) or "organization_id" not in payload:
         return None
+
+    return payload
+
+
+async def _fetch_trust_anchor(*, signer_id: str) -> tuple[str | None, str | None]:
+    """Fetch trust anchor from enterprise API.
+
+    Returns ``(public_key_pem, signer_name)``.
+    *signer_name* is the human-readable org name when available.
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{settings.ENTERPRISE_API_URL}/api/v1/public/c2pa/trust-anchors/{signer_id}",
+                timeout=5.0,
+            )
+    except httpx.RequestError:
+        return None, None
+
+    if response.status_code != 200:
+        return None, None
+
+    payload = response.json()
+    if not isinstance(payload, dict):
+        return None, None
 
     public_key_pem = payload.get("public_key")
     if not isinstance(public_key_pem, str) or not public_key_pem.strip():
-        return None
+        return None, None
 
-    return public_key_pem
+    # TEAM_156: Extract org name for display (fallback to signer_id handled by caller)
+    signer_name = payload.get("signer_name")
+    if not isinstance(signer_name, str) or not signer_name.strip():
+        signer_name = None
+
+    return public_key_pem, signer_name
 
 
 def _count_variation_selectors(text: str) -> int:
@@ -403,61 +437,66 @@ async def verify_text(
         if isinstance(custom_metadata, dict):
             extracted_manifest_uuid = custom_metadata.get("manifest_uuid")
 
+    # TEAM_156: For C2PA format, extract_metadata returns the decoded CBOR
+    # payload which doesn't include signer_id (it's in the outer/JUMBF layer).
+    # Fall back to extracting signer_id from the JUMBF manifest store.
+    if not extracted_signer_id and has_c2pa_wrapper and wrapper_info:
+        try:
+            manifest_bytes = wrapper_info[0]
+            manifest_store = deserialize_jumbf_payload(manifest_bytes)
+            if isinstance(manifest_store, dict):
+                jumbf_signer_id = manifest_store.get("signer_id")
+                if isinstance(jumbf_signer_id, str):
+                    extracted_signer_id = jumbf_signer_id
+        except Exception:
+            pass
+
+    # TEAM_156: Trust anchor resolution for unauthenticated requests.
+    # If a manifest_uuid is present, attempt a soft lookup in content_references
+    # to confirm the content was registered (advanced signing). If the table
+    # doesn't exist or the row isn't found, log a warning and fall through —
+    # lightweight UUID mode also includes manifest_uuid but doesn't write to
+    # content_references, so this must not be a hard gate.
     trust_anchor_public_key = None
+    trust_anchor_name = None  # TEAM_156: org name from trust anchor API
     if (
         not organization_id
         and not certificate_pem
         and isinstance(extracted_signer_id, str)
         and extracted_signer_id.startswith("org_")
-        and isinstance(extracted_manifest_uuid, str)
-        and extracted_manifest_uuid.strip()
     ):
-        try:
-            exists_row = db.execute(
-                text(
-                    """
-                    SELECT 1
-                    FROM content_references
-                    WHERE embedding_metadata->>'manifest_uuid' = :manifest_uuid
-                    LIMIT 1
-                    """
-                ),
-                {"manifest_uuid": extracted_manifest_uuid},
-            ).fetchone()
-        except (ProgrammingError, OperationalError) as exc:
-            verdict = VerifyVerdict(
-                valid=False,
-                tampered=False,
-                reason_code="CONTENT_DB_NOT_READY",
-                signer_id=extracted_signer_id,
-                signer_name=extracted_signer_id,
-                timestamp=None,
-                details={
-                    "manifest": extracted_metadata or {},
-                    "manifest_uuid": extracted_manifest_uuid,
-                    "payload_bytes": payload_bytes,
-                    "exception": str(exc),
-                },
-            )
-            return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+        if isinstance(extracted_manifest_uuid, str) and extracted_manifest_uuid.strip():
+            # Soft check: try to confirm manifest_uuid in content_references
+            try:
+                exists_row = db.execute(
+                    text(
+                        """
+                        SELECT 1
+                        FROM content_references
+                        WHERE embedding_metadata->>'manifest_uuid' = :manifest_uuid
+                        LIMIT 1
+                        """
+                    ),
+                    {"manifest_uuid": extracted_manifest_uuid},
+                ).fetchone()
+                if not exists_row:
+                    logger.warning(
+                        "manifest_uuid_not_in_content_references",
+                        manifest_uuid=extracted_manifest_uuid,
+                        signer_id=extracted_signer_id,
+                    )
+            except (ProgrammingError, OperationalError) as exc:
+                # TEAM_156: Table may not exist (lightweight UUID mode, dev env).
+                # Log and fall through to trust anchor verification.
+                logger.warning(
+                    "content_references_lookup_failed",
+                    manifest_uuid=extracted_manifest_uuid,
+                    error=str(exc),
+                )
+                db.rollback()  # Reset the failed transaction
 
-        if not exists_row:
-            verdict = VerifyVerdict(
-                valid=False,
-                tampered=False,
-                reason_code="REFERENCE_NOT_FOUND",
-                signer_id=extracted_signer_id,
-                signer_name=extracted_signer_id,
-                timestamp=None,
-                details={
-                    "manifest": extracted_metadata or {},
-                    "manifest_uuid": extracted_manifest_uuid,
-                    "payload_bytes": payload_bytes,
-                },
-            )
-            return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
-
-        trust_anchor_pem = await _fetch_trust_anchor_public_key_pem(signer_id=extracted_signer_id)
+        # Fetch trust anchor public key and org name from enterprise API
+        trust_anchor_pem, trust_anchor_name = await _fetch_trust_anchor(signer_id=extracted_signer_id)
         if trust_anchor_pem:
             try:
                 trust_anchor_public_key = load_public_key_from_data(trust_anchor_pem)
@@ -613,11 +652,110 @@ async def verify_text(
             manifest_type=type(manifest).__name__ if manifest is not None else None,
         )
 
+    # TEAM_156: ZW embedding fallback — when verify_metadata returns no
+    # signer_id, check for ZW (zero-width) embeddings and resolve via
+    # enterprise API (content_references lives in encypher_content DB).
+    zw_org_id = None
+    zw_document_id = None
+    zw_uuid_str = None
+    if not signer_id:
+        try:
+            from ...utils.zw_detect import find_zw_signatures, extract_uuid_from_signature
+
+            zw_sigs = find_zw_signatures(verify_request.text)
+            if zw_sigs:
+                first_uuid = extract_uuid_from_signature(zw_sigs[0][2])
+                if first_uuid:
+                    zw_uuid_str = str(first_uuid)
+                    zw_result = await _resolve_zw_segment_uuid(zw_uuid_str)
+                    if zw_result:
+                        zw_org_id = zw_result.get("organization_id")
+                        zw_document_id = zw_result.get("document_id")
+                        if zw_org_id:
+                            signer_id = zw_org_id
+                            is_valid = True
+                            manifest = {
+                                "format": "zw_embedding",
+                                "segment_uuid": zw_uuid_str,
+                                "total_zw_signatures": len(zw_sigs),
+                            }
+                            logger.info(
+                                "verify_zw_resolved",
+                                segment_uuid=zw_uuid_str,
+                                organization_id=zw_org_id,
+                                document_id=zw_document_id,
+                                total_signatures=len(zw_sigs),
+                            )
+        except Exception as zw_exc:
+            logger.debug("verify_zw_detection_error", error=str(zw_exc))
+
+    # TEAM_158: VS256 embedding fallback — when both C2PA and ZW detection
+    # fail, check for VS256 (base-256 variation selector) signatures and
+    # resolve via enterprise API.  Tries contiguous detection first, then
+    # reassembly from distributed (redistributed) VS chars.
+    vs256_org_id = None
+    vs256_document_id = None
+    vs256_uuid_str = None
+    if not signer_id:
+        try:
+            from ...utils.vs256_detect import (
+                find_vs256_signatures,
+                extract_uuid_from_vs256_signature,
+                collect_distributed_vs_chars,
+                reassemble_signature_from_distributed,
+            )
+
+            vs256_sigs = find_vs256_signatures(verify_request.text)
+
+            # If no contiguous signatures found, try reassembling from
+            # distributed VS chars (copy-paste from redistributed PDF)
+            if not vs256_sigs:
+                vs_chars = collect_distributed_vs_chars(verify_request.text)
+                reassembled = reassemble_signature_from_distributed(vs_chars)
+                if reassembled:
+                    vs256_sigs = [(0, len(reassembled), reassembled)]
+                    logger.info(
+                        "verify_vs256_reassembled_from_distributed",
+                        total_vs_chars=len(vs_chars),
+                    )
+
+            if vs256_sigs:
+                first_uuid = extract_uuid_from_vs256_signature(vs256_sigs[0][2])
+                if first_uuid:
+                    vs256_uuid_str = str(first_uuid)
+                    vs256_result = await _resolve_zw_segment_uuid(vs256_uuid_str)
+                    if vs256_result:
+                        vs256_org_id = vs256_result.get("organization_id")
+                        vs256_document_id = vs256_result.get("document_id")
+                        if vs256_org_id:
+                            signer_id = vs256_org_id
+                            is_valid = True
+                            manifest = {
+                                "format": "vs256_embedding",
+                                "segment_uuid": vs256_uuid_str,
+                                "total_vs256_signatures": len(vs256_sigs),
+                            }
+                            logger.info(
+                                "verify_vs256_resolved",
+                                segment_uuid=vs256_uuid_str,
+                                organization_id=vs256_org_id,
+                                document_id=vs256_document_id,
+                                total_signatures=len(vs256_sigs),
+                            )
+        except Exception as vs256_exc:
+            logger.debug("verify_vs256_detection_error", error=str(vs256_exc))
+
     duration_ms = int((time.perf_counter() - start) * 1000)
 
     reason_code = "OK" if is_valid else "SIGNATURE_INVALID"
     if not signer_id:
         reason_code = "SIGNER_UNKNOWN"
+    elif zw_org_id and signer_id == zw_org_id:
+        # TEAM_156: ZW DB-resolved — skip public_key_resolver check
+        reason_code = "OK"
+    elif vs256_org_id and signer_id == vs256_org_id:
+        # TEAM_158: VS256 DB-resolved — skip public_key_resolver check
+        reason_code = "OK"
     elif public_key_resolver(signer_id) is None:
         reason_code = "CERT_NOT_FOUND"
     elif is_valid and embedded_public_key is not None and not embedded_trusted and not (organization_id and signer_id == organization_id):
@@ -692,9 +830,14 @@ async def verify_text(
         tampered=(not is_valid and reason_code == "SIGNATURE_INVALID"),
         reason_code=reason_code,
         signer_id=signer_id,
-        signer_name=(organization_name if (signer_id and signer_id == organization_id) else signer_id),
+        # TEAM_156: Prefer org name from authenticated context, then trust anchor, then signer_id
+        signer_name=(
+            organization_name if (signer_id and signer_id == organization_id and organization_name)
+            else trust_anchor_name if trust_anchor_name
+            else signer_id
+        ),
         organization_id=organization_id if signer_id == organization_id else (extracted_signer_id if extracted_signer_id else None),
-        organization_name=organization_name,
+        organization_name=organization_name or trust_anchor_name,
         timestamp=None,
         document=document_info,
         c2pa=c2pa_info,

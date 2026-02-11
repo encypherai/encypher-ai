@@ -21,6 +21,7 @@ dependencies = [
     "structlog>=25.5.0",
     "python-json-logger>=4.0.0",
     "encypher-ai>=3.0.4,<4.0.0",
+    "reedsolo>=1.7.0",
 ]
 
 [project.optional-dependencies]
