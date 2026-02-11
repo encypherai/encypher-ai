@@ -71,4 +71,110 @@ describe("enterpriseApiTools", () => {
     expect(decoded.raw_hidden_data?.valid).toBe(true);
     expect(decoded.metadata).toEqual({ manifest: { instance_id: "abc" } });
   });
+
+  it("mapVerifyResponseToDecodeToolResponse passes through segment_embeddings and total_segments_in_document", () => {
+    const decoded = mapVerifyResponseToDecodeToolResponse({
+      success: true,
+      correlation_id: "req-2",
+      error: null,
+      data: {
+        valid: true,
+        tampered: false,
+        reason_code: "OK",
+        signer_id: "org_test",
+        details: { manifest: { format: "micro_ecc_c2pa" } },
+        embeddings_found: 2,
+        all_embeddings: null,
+        embeddings: [
+          {
+            segment_uuid: "uuid-1",
+            leaf_index: 3,
+            segment_location: { paragraph_index: 0, sentence_in_paragraph: 0 },
+            manifest_mode: "micro_ecc_c2pa",
+          },
+          {
+            segment_uuid: "uuid-2",
+            leaf_index: 4,
+            segment_location: { paragraph_index: 0, sentence_in_paragraph: 1 },
+            manifest_mode: "micro_ecc_c2pa",
+          },
+        ],
+        total_embeddings: 2,
+        total_segments_in_document: 10,
+        c2pa: null,
+      },
+    });
+
+    expect(decoded.segment_embeddings).toHaveLength(2);
+    expect(decoded.segment_embeddings![0].segment_uuid).toBe("uuid-1");
+    expect(decoded.segment_embeddings![0].segment_location).toEqual({
+      paragraph_index: 0,
+      sentence_in_paragraph: 0,
+    });
+    expect(decoded.segment_embeddings![0].leaf_index).toBe(3);
+    expect(decoded.segment_embeddings![0].manifest_mode).toBe("micro_ecc_c2pa");
+    expect(decoded.segment_embeddings![1].segment_uuid).toBe("uuid-2");
+    expect(decoded.segment_embeddings![1].segment_location).toEqual({
+      paragraph_index: 0,
+      sentence_in_paragraph: 1,
+    });
+    expect(decoded.total_segments_in_document).toBe(10);
+  });
+
+  it("mapVerifyResponseToDecodeToolResponse passes through c2pa manifest info", () => {
+    const decoded = mapVerifyResponseToDecodeToolResponse({
+      success: true,
+      correlation_id: "req-3",
+      error: null,
+      data: {
+        valid: true,
+        tampered: false,
+        reason_code: "OK",
+        signer_id: "org_c2pa",
+        details: { manifest: { format: "micro_ecc_c2pa" } },
+        embeddings_found: 1,
+        all_embeddings: null,
+        embeddings: [
+          {
+            segment_uuid: "uuid-c2pa",
+            manifest_mode: "micro_ecc_c2pa",
+          },
+        ],
+        total_embeddings: 1,
+        total_segments_in_document: 5,
+        c2pa: {
+          validated: true,
+          validation_type: "db_backed_manifest",
+          manifest_hash: "hash123",
+          assertions: [{ label: "c2pa.actions" }],
+        },
+      },
+    });
+
+    expect(decoded.c2pa).toBeDefined();
+    expect(decoded.c2pa!.validated).toBe(true);
+    expect(decoded.c2pa!.validation_type).toBe("db_backed_manifest");
+    expect(decoded.c2pa!.manifest_hash).toBe("hash123");
+    expect(decoded.c2pa!.assertions).toHaveLength(1);
+  });
+
+  it("mapVerifyResponseToDecodeToolResponse returns null for missing segment fields", () => {
+    const decoded = mapVerifyResponseToDecodeToolResponse({
+      success: true,
+      correlation_id: "req-4",
+      error: null,
+      data: {
+        valid: true,
+        tampered: false,
+        reason_code: "OK",
+        details: { manifest: { format: "zw_embedding" } },
+        embeddings_found: 1,
+        all_embeddings: null,
+      },
+    });
+
+    expect(decoded.segment_embeddings).toBeNull();
+    expect(decoded.total_segments_in_document).toBeNull();
+    expect(decoded.c2pa).toBeNull();
+  });
 });

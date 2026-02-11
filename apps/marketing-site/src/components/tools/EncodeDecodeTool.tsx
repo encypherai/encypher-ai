@@ -30,6 +30,25 @@ interface MetadataWithOriginalText {
   [key: string]: unknown;
 }
 
+interface SegmentLocation {
+  paragraph_index: number;
+  sentence_in_paragraph: number;
+}
+
+interface SegmentEmbeddingDetail {
+  segment_uuid: string;
+  leaf_index?: number | null;
+  segment_location?: SegmentLocation | null;
+  manifest_mode?: string | null;
+}
+
+interface C2PAInfo {
+  validated: boolean;
+  validation_type?: string | null;
+  manifest_hash?: string | null;
+  assertions?: Array<Record<string, unknown>> | null;
+}
+
 interface EmbeddingResult {
   index: number;
   metadata?: MetadataWithOriginalText | null;
@@ -47,6 +66,9 @@ interface DecodeToolResponse {
   raw_hidden_data?: VerifyVerdict | null;
   embeddings_found?: number;
   all_embeddings?: EmbeddingResult[] | null;
+  segment_embeddings?: SegmentEmbeddingDetail[] | null;
+  total_segments_in_document?: number | null;
+  c2pa?: C2PAInfo | null;
 }
 
 function hasOriginalText(metadata: unknown): metadata is MetadataWithOriginalText {
@@ -567,6 +589,22 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                           </div>
                         )}
 
+                        {/* Document coverage summary — Tier 2 */}
+                        {lastDecodeResponse.total_segments_in_document && (lastDecodeResponse.embeddings_found || 0) >= 1 && (
+                          <div className="mb-4 p-3 bg-slate-800/60 rounded border border-slate-600 flex items-center gap-3">
+                            <span className="text-base">📄</span>
+                            <div className="text-sm text-slate-200">
+                              <strong>{lastDecodeResponse.embeddings_found}</strong> of{' '}
+                              <strong>{lastDecodeResponse.total_segments_in_document}</strong> segments verified from this document
+                              {lastDecodeResponse.segment_embeddings?.[0]?.manifest_mode && (
+                                <span className="ml-2 px-1.5 py-0.5 bg-slate-700 text-slate-300 rounded text-xs font-mono">
+                                  {lastDecodeResponse.segment_embeddings[0].manifest_mode}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Individual embeddings list with collapsible details */}
                         {(lastDecodeResponse.embeddings_found || 0) >= 1 && lastDecodeResponse.all_embeddings && (
                           <div className="space-y-2 mb-4">
@@ -603,6 +641,9 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                 const isBasicFormat = embedding.metadata?.format === 'basic';
                                 const isC2PAManifest = hasC2PAStructure && !isBasicFormat;
                                 const manifestType = isC2PAManifest ? 'C2PA Document Manifest' : `Sentence Embedding #${embedding.index}`;
+                                // TEAM_171: Look up segment location from the segment_embeddings array
+                                const segDetail = lastDecodeResponse.segment_embeddings?.[idx];
+                                const segLoc = segDetail?.segment_location;
                                 
                                 return (
                                   <div 
@@ -614,7 +655,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                       onClick={() => toggleEmbedding(idx)}
                                       className="w-full p-2 flex items-center justify-between hover:bg-slate-700/30 transition-colors"
                                     >
-                                      <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-slate-400 transition-transform" style={{ transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)' }}>
                                           ▶
                                         </span>
@@ -624,6 +665,11 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                                         {isC2PAManifest && (
                                           <span className="px-1.5 py-0.5 bg-blue-700 text-blue-100 rounded text-xs">
                                             Primary
+                                          </span>
+                                        )}
+                                        {segLoc && !isC2PAManifest && (
+                                          <span className="px-1.5 py-0.5 bg-slate-600 text-slate-200 rounded text-xs">
+                                            Paragraph {segLoc.paragraph_index + 1}, Sentence {segLoc.sentence_in_paragraph + 1}
                                           </span>
                                         )}
                                       </div>

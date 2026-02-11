@@ -35,6 +35,25 @@ export type UnifiedSignRequest = {
 export type SignAdvancedRequest = UnifiedSignRequest;
 export type SignBasicRequest = UnifiedSignRequest;
 
+export type SegmentLocationLike = {
+  paragraph_index: number;
+  sentence_in_paragraph: number;
+};
+
+export type EmbeddingDetailLike = {
+  segment_uuid: string;
+  leaf_index?: number | null;
+  segment_location?: SegmentLocationLike | null;
+  manifest_mode?: string | null;
+};
+
+export type C2PAInfoLike = {
+  validated: boolean;
+  validation_type?: string | null;
+  manifest_hash?: string | null;
+  assertions?: Array<Record<string, unknown>> | null;
+};
+
 export type VerifyResponseLike = {
   success: boolean;
   correlation_id: string;
@@ -50,6 +69,10 @@ export type VerifyResponseLike = {
         timestamp?: string | null;
         details?: { manifest?: Record<string, unknown> } & Record<string, unknown>;
         embeddings_found?: number;
+        embeddings?: EmbeddingDetailLike[] | null;
+        total_embeddings?: number | null;
+        total_segments_in_document?: number | null;
+        c2pa?: C2PAInfoLike | null;
         all_embeddings?:
           | null
           | Array<{
@@ -74,6 +97,9 @@ export type DecodeToolResponseLike = {
   raw_hidden_data?: Record<string, unknown> | null;
   embeddings_found?: number;
   all_embeddings?: Array<Record<string, unknown>> | null;
+  segment_embeddings?: EmbeddingDetailLike[] | null;
+  total_segments_in_document?: number | null;
+  c2pa?: C2PAInfoLike | null;
 };
 
 function randomDocId(): string {
@@ -215,5 +241,8 @@ export function mapVerifyResponseToDecodeToolResponse(
     },
     embeddings_found: embeddingsFound,
     all_embeddings: allEmbeddings,
+    segment_embeddings: data?.embeddings || null,
+    total_segments_in_document: data?.total_segments_in_document || null,
+    c2pa: data?.c2pa || null,
   };
 }
