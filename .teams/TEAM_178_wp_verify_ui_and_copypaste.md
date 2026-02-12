@@ -24,10 +24,12 @@
   - JSON viewer collapsed by default with max-height
 
 ## Testing
-- Puppeteer: Live API verification on post 84 — all fields render correctly
+- Puppeteer: Live API verification on post 84 (micro_ecc_c2pa) — all fields render correctly
+- Puppeteer: Live API verification on post 61 (full C2PA with ingredients) — provenance chain shows "Edited — 2/12/2026, 3:31:21 PM" and "Created — 2/12/2026, 3:31:21 PM"
 - PHP CLI: Verified metadata normalization resolves all 5 assertions, instance_id, claim_generator, document_id, total_signatures
 
-## Git Commit
+## Git Commits
 ```
 fix(wp-plugin): improve verification modal UI — remove empty manifest dropdown, normalize metadata
+fix(wp-plugin): fix provenance chain timestamps and c2pa.edited fallback
 ```
