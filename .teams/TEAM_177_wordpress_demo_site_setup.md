@@ -43,6 +43,7 @@ signed segment starts. It extracts just that segment and retries the hash.
 **Files changed:**
 - `encypher-ai/encypher/core/unicode_metadata.py` — segment extraction fallback in `_verify_c2pa`
 - `encypher-ai/tests/integration/test_c2pa_text_embedding.py` — 2 new tests
+- `docker-compose.full-stack.yml` — volume-mount `encypher-ai` into verification service + `pip install` at startup so local changes survive container restarts
 
 ### Test Results
 - ✅ 67 passed, 16 xfailed in encypher-ai tests
@@ -50,6 +51,7 @@ signed segment starts. It extracts just that segment and retries the hash.
 - ✅ e2e: exact signed text → `valid=True`
 - ✅ e2e: signed text + page chrome → `valid=True` (segment extraction)
 - ✅ e2e: tampered text + page chrome → `valid=False`
+- ✅ e2e: full-page paste through marketing site → `verification_status: Success` (byte range 265-19716)
 
 ## Git Commit Message Suggestion
 ```
@@ -64,6 +66,10 @@ Added a fallback in _verify_c2pa: when the hard binding hash fails,
 use find_wrapper_info_bytes to locate the C2PA wrapper's byte offset
 in the current text, then use the manifest's exclusion range to
 extract just the originally-signed segment and retry the hash.
+
+Volume-mount encypher-ai into verification-service in
+docker-compose.full-stack.yml so the fix survives container restarts
+(start-dev.sh). pip install --no-deps at container startup.
 
 Also set up WordPress demo site "The Encypher Times" with 4 articles
 (2 signed, 2 unsigned) for demonstration purposes.

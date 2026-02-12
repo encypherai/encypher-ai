@@ -287,7 +287,8 @@ services:
       - "8005:8005"
     volumes:
       - ./services/verification-service:/app
-    command: ["sh", "-c", "echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload"]
+      - ./encypher-ai:/encypher-ai-src
+    command: ["sh", "-c", "pip install --no-deps /encypher-ai-src && echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_verification
@@ -566,6 +567,9 @@ services:
       NODE_ENV: development
       WATCHPACK_POLLING: "true"
       HOSTNAME: 0.0.0.0
+      # Server-side API URL: inside Docker, localhost is the container itself.
+      # NextAuth server-side fetches must use the Docker network hostname.
+      API_BASE_INTERNAL: http://traefik:8000/api/v1
     depends_on:
       auth-service:
         condition: service_healthy
