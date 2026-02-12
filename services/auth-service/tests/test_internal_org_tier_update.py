@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.api.v1.organizations import router as org_router
 from app.core.config import settings
 from app.db.session import get_db
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
 
 
 def _org_fixture():
@@ -21,7 +22,7 @@ def _org_fixture():
         tier="professional",
         max_seats=1,
         subscription_status="active",
-        coalition_rev_share=70,
+        coalition_rev_share=DEFAULT_COALITION_PUBLISHER_PERCENT,
         created_at=datetime.utcnow(),
     )
 

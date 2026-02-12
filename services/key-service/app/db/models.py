@@ -10,6 +10,8 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 import uuid
 
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 Base = declarative_base()
 
 
@@ -43,7 +45,7 @@ class Organization(Base):
 
     # Coalition
     coalition_member = Column(Boolean, default=True)
-    coalition_rev_share = Column(Integer, default=65)
+    coalition_rev_share = Column(Integer, default=DEFAULT_COALITION_PUBLISHER_PERCENT)
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple
 from sqlalchemy.orm import Session
 
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 from ..db.models import User, RefreshToken, EmailVerificationToken, PasswordResetToken, Organization, OrganizationMember
 from .organization_service import OrganizationService
 from sqlalchemy.exc import IntegrityError
@@ -127,23 +129,23 @@ class AuthService:
             name="",  # User fills in later
             slug=None,  # Will be set when user provides company name
             email=user.email,
-            tier="starter",  # Default free tier - uses Encypher signing keys
+            tier="free",  # TEAM_173: Default free tier
             max_seats=1,
-            monthly_api_limit=10000,  # Starter tier limit
+            monthly_api_limit=10000,
             monthly_api_usage=0,
             features={
                 "team_management": False,
                 "audit_logs": False,
-                "merkle_enabled": False,
+                "merkle_enabled": True,   # TEAM_173: Free tier includes Merkle
                 "bulk_operations": False,
-                "sentence_tracking": False,
+                "sentence_tracking": True,  # TEAM_173: Free tier includes sentence tracking
                 "streaming": True,
                 "byok": False,  # Free tier uses Encypher's keys
                 "sso": False,
                 "custom_assertions": False,
             },
             coalition_member=True,
-            coalition_rev_share=65,
+            coalition_rev_share=DEFAULT_COALITION_PUBLISHER_PERCENT,  # TEAM_173: from SSOT
             # certificate_pem is NULL - free tier uses Encypher's signing keys
         )
         db.add(org)

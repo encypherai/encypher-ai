@@ -1,5 +1,5 @@
 <?php
-namespace EncypherAssurance;
+namespace EncypherProvenance;
 
 use WP_Query;
 
@@ -52,9 +52,9 @@ class Bulk
 
         wp_enqueue_script(
             'encypher-bulk-mark',
-            ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/js/bulk-mark.js',
+            ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/js/bulk-mark.js',
             ['jquery'],
-            ENCYPHER_ASSURANCE_VERSION,
+            ENCYPHER_PROVENANCE_VERSION,
             true
         );
 
@@ -71,9 +71,9 @@ class Bulk
 
         wp_enqueue_style(
             'encypher-bulk-mark-css',
-            ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/css/bulk-mark.css',
+            ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/css/bulk-mark.css',
             [],
-            ENCYPHER_ASSURANCE_VERSION
+            ENCYPHER_PROVENANCE_VERSION
         );
     }
 
@@ -86,7 +86,7 @@ class Bulk
             return;
         }
 
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $tier = $settings['tier'] ?? 'free';
         $post_types = get_post_types(['public' => true], 'objects');
         
@@ -102,8 +102,8 @@ class Bulk
             <div class="notice notice-info">
                 <p>
                     <strong><?php esc_html_e('Free Tier Limit:', 'encypher-provenance'); ?></strong>
-                    <?php esc_html_e('You can mark up to 100 posts per bulk operation.', 'encypher-provenance'); ?>
-                    <a href="https://encypherai.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise for unlimited marking', 'encypher-provenance'); ?></a>
+                    <?php esc_html_e('You can mark up to 10 documents per bulk operation.', 'encypher-provenance'); ?>
+                    <a href="https://encypherai.com/enterprise" target="_blank"><?php esc_html_e('Upgrade to Enterprise for higher limits', 'encypher-provenance'); ?></a>
                 </p>
             </div>
             <?php endif; ?>
@@ -192,7 +192,7 @@ class Bulk
                     <?php if ('free' === $tier): ?>
                     <p class="encypher-tier-limit">
                         <strong><?php esc_html_e('Free tier limit:', 'encypher-provenance'); ?></strong>
-                        <?php esc_html_e('100 posts', 'encypher-provenance'); ?>
+                        <?php esc_html_e('10 documents', 'encypher-provenance'); ?>
                     </p>
                     <?php endif; ?>
                 </div>
@@ -301,12 +301,12 @@ class Bulk
         }
 
         // Check tier limits
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $tier = $settings['tier'] ?? 'free';
         
-        if ('free' === $tier && count($post_ids) > 100) {
+        if ('free' === $tier && count($post_ids) > 10) {
             wp_send_json_error([
-                'message' => __('Free tier limit: 100 posts per bulk operation. Upgrade to Enterprise for unlimited marking.', 'encypher-provenance')
+                'message' => __('Free tier limit: 10 documents per bulk operation. Upgrade to Enterprise for higher limits.', 'encypher-provenance')
             ]);
         }
 

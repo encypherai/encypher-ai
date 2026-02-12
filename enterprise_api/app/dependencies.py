@@ -38,6 +38,7 @@ async def get_current_organization_dep(
 
 
 # TEAM_166: Demo key features derived from tier_config SSOT
+from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
 from app.core.tier_config import get_tier_features, get_tier_limits, get_tier_rev_share
 
 _free_features = get_tier_features("free")
@@ -58,7 +59,7 @@ DEMO_KEYS = {
         "monthly_api_limit": 100000,
         "monthly_api_usage": 0,
         "coalition_member": True,
-        "coalition_rev_share": 65,
+        "coalition_rev_share": get_tier_rev_share("enterprise")["publisher"],
     },
     "starter-api-key-for-testing": {
         "organization_id": "org_free",
@@ -192,7 +193,7 @@ async def get_current_organization(
                     "monthly_api_limit": org_data.get("monthly_api_limit"),
                     "monthly_api_usage": org_data.get("monthly_api_usage"),
                     "coalition_member": org_data.get("coalition_member", True),
-                    "coalition_rev_share": org_data.get("coalition_rev_share", 60),
+                    "coalition_rev_share": org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
                     "certificate_pem": org_data.get("certificate_pem"),
                     "user_id": key_context.get("user_id"),
                 }

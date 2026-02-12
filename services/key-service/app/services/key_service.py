@@ -9,6 +9,8 @@ from sqlalchemy import func
 import httpx
 import logging
 
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 from ..db.models import ApiKey, KeyUsage, KeyRotation, Organization
 from ..models.schemas import ApiKeyCreate, ApiKeyUpdate
 from ..core.security import (
@@ -169,7 +171,7 @@ class KeyService:
                     monthly_api_limit=org_data.get("monthly_api_limit", 10000),
                     monthly_api_usage=org_data.get("monthly_api_usage", 0),
                     coalition_member=org_data.get("coalition_member", True),
-                    coalition_rev_share=org_data.get("coalition_rev_share", 65),
+                    coalition_rev_share=org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
                 )
 
                 db.add(local_org)
@@ -533,7 +535,7 @@ class KeyService:
                 "monthly_api_limit": -1 if is_super_admin else 10000,  # Unlimited for super admin
                 "monthly_api_usage": 0,
                 "coalition_member": True,
-                "coalition_rev_share": 65,
+                "coalition_rev_share": DEFAULT_COALITION_PUBLISHER_PERCENT,
             }
 
         # Return organization context for org-level keys

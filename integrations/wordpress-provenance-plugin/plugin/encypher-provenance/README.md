@@ -19,7 +19,7 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 - **Gutenberg Integration:** Sidebar panel in block editor
 - **Classic Editor Support:** Meta box for classic editor users
 - **Public Verification:** Verification links for readers to check authenticity
-- **Sentence & Merkle Insights:** Pro/Enterprise tiers expose per-sentence verifier chips, upgrade prompts, and Merkle snapshot cards directly in Gutenberg.
+- **Sentence-Level Verification:** Per-sentence verifier chips in Gutenberg sidebar for all tiers.
 - **Analytics Dashboard:** Built-in dashboard widget and **Encypher > Analytics** summarize coverage, sentence-level adoption, and recent signing activity.
 
 ### C2PA Compliance
@@ -30,38 +30,39 @@ C2PA-compliant text authentication for WordPress. Embed cryptographic proof of o
 - **Proper Actions:** c2pa.created for new posts, c2pa.edited for updates
 - **Provenance Chain:** Ingredient references for updated content
 
-### Multi-Tier Support
-- **Free Tier:** Encypher-provided shared signature
-- **Pro Tier:** Bring your own key or purchase through Encypher
-- **Enterprise Tier:** Advanced key management, multi-site support
+### Tier Support
+- **Free Tier:** Managed signing, sentence-level embeddings, C2PA manifests, verification badges
+- **Enterprise Tier:** BYOK signing, advanced key management, multi-site support, custom branding, dedicated support
 
 ### Plans & Capabilities
 
-| Feature | Free (auto embeddings only) | Pro – $99/mo | Enterprise – Contract |
-|---------|-----------------------------|--------------|------------------------|
-| Auto-sign on publish/update | ✅ | ✅ | ✅ |
-| Manual marking | ✅ | ✅ | ✅ |
-| Bulk signing | 100 posts/batch | Unlimited | Unlimited + automation APIs |
-| Invisible enhanced embeddings | ✅ (shared signer) | ✅ (BYOK or managed key) | ✅ (multi-key/HSM) |
-| Bring Your Own Signature | ❌ | ✅ | ✅ (advanced rotation) |
-| Verification badge | ✅ | ✅ | ✅ (custom styles) |
-| Merkle + sentence visualization | Badge only | Sidebar sentence verifier + Merkle snapshot | Full visualization suite + downstream proofs |
-| Dashboard access | API key & usage | Billing, BYOK wizard, analytics | Org admin, SSO, SLA dashboards |
-| Support | Community forum | Email (24–48h) | Dedicated TAM + SLA |
+| Feature | Free | Enterprise |
+|---------|------|------------|
+| Auto-sign on publish/update | ✅ | ✅ |
+| Manual marking | ✅ | ✅ |
+| Sentence-level embeddings | ✅ | ✅ |
+| C2PA manifests | ✅ | ✅ |
+| Bulk signing | 10 posts/batch | Unlimited |
+| Verification badge | ✅ | ✅ (custom styles) |
+| Bring Your Own Key (BYOK) | ❌ | ✅ |
+| Custom branding | ❌ | ✅ |
+| C2PA manifest viewer | ❌ | ✅ |
+| Dashboard access | API key & usage | Org admin, billing, analytics |
+| Support | Community | Dedicated + SLA |
 
 ### Dashboard & Account Management
 
 All users authenticate via [dashboard.encypherai.com](https://dashboard.encypherai.com) to:
 - Create a workspace and retrieve API keys (Free tier)
-- Upgrade to Pro ($99/mo) for BYOK, partial Enterprise features, and billing management
-- Provision enterprise licenses, seats, and SLA contacts
+- Upgrade to Enterprise for BYOK, custom branding, and advanced features
+- Manage billing and organization settings
 
 The plugin settings page surfaces direct links:
 - **Get API Key / Manage Account** – opens the dashboard to copy keys or update billing
-- **Bring Your Own Key** – launches the dashboard wizard to upload a public key and obtain a signing profile ID
+- **Bring Your Own Key** – launches the dashboard wizard to upload a public key and obtain a signing profile ID (Enterprise only)
 - **Enterprise Support** – pre-filled contact form to reach your CSM
 
-Tokens issued by the dashboard contain a `tier` claim that the plugin reads to automatically enable or limit functionality (e.g., bulk batch size, visualization controls). If billing lapses, the plugin gracefully reverts to Free limits but preserves previously signed manifests.
+The API key contains a `tier` claim that the plugin reads to automatically enable or limit functionality (e.g., bulk batch size, BYOK controls). If billing lapses, the plugin gracefully reverts to Free limits but preserves previously signed manifests.
 
 ---
 
@@ -104,13 +105,13 @@ The plugin automatically embeds C2PA manifests when you publish or update posts:
 - New posts get `c2pa.created` actions
 - Updated posts get `c2pa.edited` actions with the previous instance captured as an ingredient
 - Invisible Unicode embeddings are added to the content body
-- Merkle trees and sentence metadata are stored for later inspection
+- Sentence metadata is stored for later inspection
 
 ### Verification Sidebar (Gutenberg)
 
 - The **Encypher Provenance** panel summarizes signing status, document ID, and verification URLs.
-- **Pro/Enterprise** tiers unlock sentence-level verifier chips (linking to `POST /api/v1/verify` results) plus a Merkle snapshot card with one-click copy buttons.
-- Free tier users see inline upgrade prompts instead of the advanced UI.
+- Sentence-level verifier chips are available for all tiers.
+- Enterprise users can view the full C2PA manifest JSON directly in the sidebar.
 - The manifest viewer streams the exact JSON wrapper so editors can inspect every assertion without leaving WordPress.
 
 ### Public Extract & Verify Endpoint
@@ -168,8 +169,8 @@ Mark existing WordPress archives programmatically:
 - Real-time progress tracking
 - Error handling with detailed logs
 - Pause/resume capability
-- Free tier: 100 posts per operation
-- Pro tier: Unlimited marking
+- Free tier: 10 posts per batch
+- Enterprise tier: Unlimited
 
 ### Frontend Badge
 
@@ -253,41 +254,33 @@ You can override auto-marking for specific posts:
 ### Free Tier
 **Perfect for:** Individual bloggers, small publishers  
 **Features:**
-- ✅ Auto-mark on publish
-- ✅ Manual mark button
+- ✅ Auto-sign on publish/update
+- ✅ Sentence-level embeddings
 - ✅ C2PA-compliant manifests
 - ✅ Public verification links
 - ✅ Gutenberg & Classic Editor support
+- ✅ Verification badge
+- ✅ Bulk signing (10 posts/batch)
 
 **Limitations:**
-- Shared Encypher signature
+- Managed Encypher signature
 - Community support
 
 **Price:** Free forever
 
-### Pro Tier
-**Perfect for:** Professional publishers, media organizations  
+### Enterprise Tier
+**Perfect for:** Professional publishers, media organizations, enterprises  
 **Features:**
 - ✅ All Free features
-- ✅ Custom signature (your organization)
-- ✅ Bring your own key (BYOK)
-- ✅ Or purchase signature through Encypher
-- ✅ Advanced analytics
-- ✅ Priority support
-
-**Price:** $99/month or $999/year
-
-### Enterprise Tier
-**Perfect for:** Large publishers, enterprise organizations  
-**Features:**
-- ✅ All Pro features
+- ✅ Bring Your Own Key (BYOK)
+- ✅ Custom branding (removable Encypher badge)
+- ✅ C2PA manifest viewer in editor
+- ✅ Unlimited bulk signing
 - ✅ Multi-site support
 - ✅ Advanced key management
-- ✅ HSM integration
-- ✅ Custom integrations
-- ✅ SLA and dedicated support
+- ✅ Dedicated support + SLA
 
-**Price:** Custom (contact sales)
+**Price:** Contact sales
 
 ---
 
@@ -349,7 +342,6 @@ The plugin communicates with the Encypher Enterprise API:
   "success": true,
   "document_id": "wp_post_123",
   "embedded_content": "Blog post text with invisible C2PA manifest...",
-  "merkle_tree": { "root_hash": "..." }
 }
 ```
 
@@ -412,10 +404,6 @@ _encypher_action_type      // string: c2pa.created or c2pa.edited
 - Documentation: [encypherai.com/docs](https://encypherai.com/docs)
 - Community Forum: [community.encypherai.com](https://community.encypherai.com)
 
-### Pro Tier
-- Email Support: support@encypherai.com
-- Response Time: 24-48 hours
-
 ### Enterprise Tier
 - Dedicated Support: enterprise@encypherai.com
 - SLA: Custom
@@ -450,7 +438,7 @@ The plugin sends the following data to the Encypher API:
 - C2PA-compliant text authentication
 - Auto-mark on publish/update
 - Manual marking in Gutenberg and Classic Editor
-- Multi-tier support (Free, Pro, Enterprise)
+- Two-tier support (Free, Enterprise)
 - Public verification links
 
 ---

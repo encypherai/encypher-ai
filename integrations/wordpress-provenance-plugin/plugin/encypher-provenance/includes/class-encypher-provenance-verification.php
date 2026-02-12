@@ -1,5 +1,5 @@
 <?php
-namespace EncypherAssurance;
+namespace EncypherProvenance;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -28,9 +28,9 @@ class Verification
     {
         wp_enqueue_style(
             'encypher-provenance-frontend',
-            ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/css/editor.css',
+            ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/css/editor.css',
             [],
-            ENCYPHER_ASSURANCE_VERSION
+            ENCYPHER_PROVENANCE_VERSION
         );
     }
 
@@ -45,14 +45,14 @@ class Verification
             return $content;
         }
 
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $auto_verify = ! empty($settings['auto_verify']);
-        $verification = get_post_meta($post_id, '_encypher_assurance_verification', true);
-        $document_id = get_post_meta($post_id, '_encypher_assurance_document_id', true);
-        $verification_url = get_post_meta($post_id, '_encypher_assurance_verification_url', true);
-        $total_sentences = (int) get_post_meta($post_id, '_encypher_assurance_total_sentences', true);
-        $last_signed = get_post_meta($post_id, '_encypher_assurance_last_signed', true);
-        $status = get_post_meta($post_id, '_encypher_assurance_status', true);
+        $verification = get_post_meta($post_id, '_encypher_provenance_verification', true);
+        $document_id = get_post_meta($post_id, '_encypher_provenance_document_id', true);
+        $verification_url = get_post_meta($post_id, '_encypher_provenance_verification_url', true);
+        $total_sentences = (int) get_post_meta($post_id, '_encypher_provenance_total_sentences', true);
+        $last_signed = get_post_meta($post_id, '_encypher_provenance_last_signed', true);
+        $status = get_post_meta($post_id, '_encypher_provenance_status', true);
 
         if ($auto_verify && (! is_array($verification) || ! array_key_exists('is_valid', $verification))) {
             $request = new \WP_REST_Request('POST', '/encypher-provenance/v1/verify');

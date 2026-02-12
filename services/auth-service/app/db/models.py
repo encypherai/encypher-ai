@@ -11,6 +11,8 @@ from sqlalchemy.dialects.postgresql import INET
 import uuid
 import secrets
 
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 
 # TEAM_006: API Access Gating - Status enum for user API access
 class ApiAccessStatus(str, Enum):
@@ -191,7 +193,7 @@ class Organization(Base):
 
     # Coalition Revenue Sharing
     coalition_member = Column(Boolean, default=True)
-    coalition_rev_share = Column(Integer, default=60)
+    coalition_rev_share = Column(Integer, default=DEFAULT_COALITION_PUBLISHER_PERCENT)
     coalition_opted_out = Column(Boolean, default=False)
 
     # BYOK (Bring Your Own Key) Certificate Support

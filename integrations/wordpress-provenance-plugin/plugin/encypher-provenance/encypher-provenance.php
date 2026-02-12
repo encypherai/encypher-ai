@@ -18,14 +18,14 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-if (! defined('ENCYPHER_ASSURANCE_VERSION')) {
-    define('ENCYPHER_ASSURANCE_VERSION', '1.1.0');
+if (! defined('ENCYPHER_PROVENANCE_VERSION')) {
+    define('ENCYPHER_PROVENANCE_VERSION', '1.1.0');
 }
 
-define('ENCYPHER_ASSURANCE_PLUGIN_FILE', __FILE__);
-define('ENCYPHER_ASSURANCE_PLUGIN_DIR', plugin_dir_path(__FILE__));
-define('ENCYPHER_ASSURANCE_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('ENCYPHER_PROVENANCE_PLUGIN_FILE', __FILE__);
+define('ENCYPHER_PROVENANCE_PLUGIN_DIR', plugin_dir_path(__FILE__));
+define('ENCYPHER_PROVENANCE_PLUGIN_URL', plugin_dir_url(__FILE__));
 
-require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance.php';
 
-\EncypherAssurance\Plugin::get_instance();
+\EncypherProvenance\Plugin::get_instance();

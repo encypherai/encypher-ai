@@ -10,6 +10,8 @@ import httpx
 from sqlalchemy.orm import Session
 from sqlalchemy import and_
 
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 from ..db.models import (
     Organization,
     OrganizationMember,
@@ -139,7 +141,7 @@ class OrganizationService:
             "free": {
                 "max_seats": 1,
                 "monthly_api_limit": 10000,
-                "coalition_rev_share": 60,
+                "coalition_rev_share": DEFAULT_COALITION_PUBLISHER_PERCENT,
                 "features": {
                     "team_management": False,
                     "audit_logs": False,
@@ -155,7 +157,7 @@ class OrganizationService:
             "enterprise": {
                 "max_seats": -1,
                 "monthly_api_limit": -1,
-                "coalition_rev_share": 60,
+                "coalition_rev_share": DEFAULT_COALITION_PUBLISHER_PERCENT,
                 "features": {
                     "team_management": True,
                     "audit_logs": True,
@@ -172,7 +174,7 @@ class OrganizationService:
             "strategic_partner": {
                 "max_seats": -1,
                 "monthly_api_limit": -1,
-                "coalition_rev_share": 60,
+                "coalition_rev_share": DEFAULT_COALITION_PUBLISHER_PERCENT,
                 "features": {
                     "team_management": True,
                     "audit_logs": True,

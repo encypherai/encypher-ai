@@ -9,6 +9,8 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Dict, List
 
+from app.core.pricing_constants import DEFAULT_COALITION_REV_SHARE
+
 
 class BillingCycle(str, Enum):
     """Billing cycle options"""
@@ -62,7 +64,7 @@ PRICING_TIERS: Dict[str, PricingTier] = {
             "analytics_retention_days": 30,
             "team_members": 1,
         },
-        coalition_rev_share={"publisher": 60, "encypher": 40},
+        coalition_rev_share=DEFAULT_COALITION_REV_SHARE,
         popular=True,
     ),
     "enterprise": PricingTier(
@@ -91,7 +93,7 @@ PRICING_TIERS: Dict[str, PricingTier] = {
             "analytics_retention_days": -1,
             "team_members": -1,
         },
-        coalition_rev_share={"publisher": 60, "encypher": 40},
+        coalition_rev_share=DEFAULT_COALITION_REV_SHARE,
         enterprise=True,
     ),
     "strategic_partner": PricingTier(
@@ -117,7 +119,7 @@ PRICING_TIERS: Dict[str, PricingTier] = {
             "analytics_retention_days": -1,
             "team_members": -1,
         },
-        coalition_rev_share={"publisher": 60, "encypher": 40},
+        coalition_rev_share=DEFAULT_COALITION_REV_SHARE,
         enterprise=True,
     ),
 }

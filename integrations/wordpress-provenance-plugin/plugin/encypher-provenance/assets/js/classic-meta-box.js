@@ -74,10 +74,10 @@
         updateStatus($container, 'loading', 'Signing content...', {});
 
         $.ajax({
-            url: EncypherAssuranceClassic.restUrl + 'sign',
+            url: EncypherProvenanceClassic.restUrl + 'sign',
             method: 'POST',
             beforeSend: function (xhr) {
-                xhr.setRequestHeader('X-WP-Nonce', EncypherAssuranceClassic.nonce);
+                xhr.setRequestHeader('X-WP-Nonce', EncypherProvenanceClassic.nonce);
             },
             data: {
                 post_id: postId,

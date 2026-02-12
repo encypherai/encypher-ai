@@ -88,26 +88,21 @@
 }
 
 .tier-badge.tier-free {
-    background: #f0f0f1;
-    color: #646970;
-}
-
-.tier-badge.tier-professional {
     background: #2271b1;
     color: #fff;
 }
 
-.tier-badge.tier-business {
-    background: #135e96;
-    color: #fff;
-}
-
 .tier-badge.tier-enterprise {
-    background: #d63638;
+    background: #dba617;
     color: #fff;
 }
 
-/* Pro Upgrade CTA */
+.tier-badge.tier-strategic_partner {
+    background: #dba617;
+    color: #fff;
+}
+
+/* Enterprise Upgrade CTA */
 .coalition-upgrade-cta {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: #fff;

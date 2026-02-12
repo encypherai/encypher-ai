@@ -3,6 +3,8 @@
 import pytest
 from httpx import AsyncClient
 
+from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 
 class TestCoalitionEndpoints:
     """Test suite for /api/v1/coalition endpoints."""
@@ -161,13 +163,14 @@ class TestCoalitionEndpoints:
         tier = data["tier"]
         share = data["publisher_share_percent"]
 
-        # Verify tier-appropriate rev share
+        # TEAM_173: Flat coalition rev share across all tiers (from SSOT)
         expected_shares = {
-            "starter": 65,
-            "professional": 70,
-            "business": 80,
-            "enterprise": 85,
-            "strategic_partner": 85,
+            "free": DEFAULT_COALITION_PUBLISHER_PERCENT,
+            "starter": DEFAULT_COALITION_PUBLISHER_PERCENT,       # legacy alias → free
+            "professional": DEFAULT_COALITION_PUBLISHER_PERCENT,  # legacy alias → free
+            "business": DEFAULT_COALITION_PUBLISHER_PERCENT,      # legacy alias → free
+            "enterprise": DEFAULT_COALITION_PUBLISHER_PERCENT,
+            "strategic_partner": DEFAULT_COALITION_PUBLISHER_PERCENT,
         }
 
         if tier in expected_shares:
@@ -189,11 +192,15 @@ class TestCoalitionEndpoints:
 
 
 class TestCoalitionRevShareCalculation:
-    """Test revenue share calculation logic."""
+    """Test revenue share calculation logic.
+
+    TEAM_173: All tiers now get flat 60% publisher coalition rev share.
+    Legacy tiers (starter, professional, business) coerce to free.
+    """
 
     @pytest.mark.asyncio
     async def test_starter_tier_rev_share(self, async_client: AsyncClient, starter_auth_headers: dict):
-        """Test Starter tier gets 65% rev share."""
+        """Test Starter (legacy → free) tier gets 60% rev share."""
         response = await async_client.get(
             "/api/v1/coalition/dashboard",
             headers=starter_auth_headers,
@@ -201,12 +208,12 @@ class TestCoalitionRevShareCalculation:
 
         if response.status_code == 200:
             data = response.json()
-            if data["tier"] == "starter":
-                assert data["publisher_share_percent"] == 65
+            # Starter coerces to free
+            assert data["publisher_share_percent"] == DEFAULT_COALITION_PUBLISHER_PERCENT
 
     @pytest.mark.asyncio
     async def test_professional_tier_rev_share(self, async_client: AsyncClient, professional_auth_headers: dict):
-        """Test Professional tier gets 70% rev share."""
+        """Test Professional (legacy → free) tier gets 60% rev share."""
         response = await async_client.get(
             "/api/v1/coalition/dashboard",
             headers=professional_auth_headers,
@@ -214,12 +221,12 @@ class TestCoalitionRevShareCalculation:
 
         if response.status_code == 200:
             data = response.json()
-            if data["tier"] == "professional":
-                assert data["publisher_share_percent"] == 70
+            # Professional coerces to free
+            assert data["publisher_share_percent"] == DEFAULT_COALITION_PUBLISHER_PERCENT
 
     @pytest.mark.asyncio
     async def test_business_tier_rev_share(self, async_client: AsyncClient, business_auth_headers: dict):
-        """Test Business tier gets 80% rev share."""
+        """Test Business (legacy → free) tier gets 60% rev share."""
         response = await async_client.get(
             "/api/v1/coalition/dashboard",
             headers=business_auth_headers,
@@ -227,12 +234,12 @@ class TestCoalitionRevShareCalculation:
 
         if response.status_code == 200:
             data = response.json()
-            if data["tier"] == "business":
-                assert data["publisher_share_percent"] == 80
+            # Business coerces to free
+            assert data["publisher_share_percent"] == DEFAULT_COALITION_PUBLISHER_PERCENT
 
     @pytest.mark.asyncio
     async def test_enterprise_tier_rev_share(self, async_client: AsyncClient, enterprise_auth_headers: dict):
-        """Test Enterprise tier gets 85% rev share."""
+        """Test Enterprise tier gets 60% rev share."""
         response = await async_client.get(
             "/api/v1/coalition/dashboard",
             headers=enterprise_auth_headers,
@@ -241,4 +248,4 @@ class TestCoalitionRevShareCalculation:
         if response.status_code == 200:
             data = response.json()
             if data["tier"] == "enterprise":
-                assert data["publisher_share_percent"] == 85
+                assert data["publisher_share_percent"] == DEFAULT_COALITION_PUBLISHER_PERCENT

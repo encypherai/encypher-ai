@@ -1,5 +1,5 @@
 <?php
-namespace EncypherAssurance;
+namespace EncypherProvenance;
 
 use WP_Error;
 use WP_REST_Request;
@@ -183,7 +183,7 @@ class Rest
         }
 
         // Get settings for C2PA configuration
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $metadata_format = $settings['metadata_format'] ?? 'c2pa';
         $add_hard_binding = $settings['add_hard_binding'] ?? true;
         
@@ -223,7 +223,7 @@ class Rest
         // Get previous instance_id for edit provenance chain
         $previous_instance_id = null;
         if ($action_type === 'c2pa.edited') {
-            $previous_instance_id = get_post_meta($post_id, '_encypher_assurance_instance_id', true);
+            $previous_instance_id = get_post_meta($post_id, '_encypher_provenance_instance_id', true);
             if ($previous_instance_id) {
                 error_log(sprintf(
                     'Encypher: Post %d is being edited. Previous instance_id: %s',
@@ -235,14 +235,8 @@ class Rest
         
         // Get tier from settings (default to free)
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
-        // Coerce legacy tier names to canonical 'free'
-        if (in_array($tier, ['starter', 'professional', 'business'], true)) {
-            $tier = 'free';
-        }
         
         $is_free = ($tier === 'free');
-        $is_nma_member = isset($settings['nma_member']) ? (bool) $settings['nma_member'] : false;
-
         $organization_name = ! empty($settings['organization_name']) ? sanitize_text_field((string) $settings['organization_name']) : '';
         $signing_mode = isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed';
         if ($is_free) {
@@ -274,13 +268,12 @@ class Rest
                 'published_at' => $post->post_date,
                 'wordpress_post_id' => $post_id,
                 'tier' => $tier,
-                'nma_member' => $is_nma_member,
                 'organization_name' => $organization_name,
                 'signing_mode' => $signing_mode,
             ],
             'options' => [
                 'document_type' => 'article',
-                'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_ASSURANCE_VERSION,
+                'claim_generator' => 'WordPress/Encypher Plugin v' . ENCYPHER_PROVENANCE_VERSION,
                 'action' => $action_type,
                 'manifest_mode' => 'micro_ecc_c2pa',
                 'segmentation_level' => 'sentence',
@@ -348,7 +341,6 @@ class Rest
         ));
 
         $document_id = isset($result['document_id']) ? sanitize_text_field((string) $result['document_id']) : '';
-        $merkle_root = $result['merkle_root'] ?? null;
         $total_sentences = 0;
         if (isset($result['total_segments'])) {
             $total_sentences = (int) $result['total_segments'];
@@ -381,24 +373,24 @@ class Rest
         
         // Store metadata about the C2PA marking
         update_post_meta($post_id, '_encypher_marked', true);
-        update_post_meta($post_id, '_encypher_assurance_cached_content_hash', md5((string) $embedded_content));
-        update_post_meta($post_id, '_encypher_assurance_status', 'c2pa_protected');
-        update_post_meta($post_id, '_encypher_assurance_document_id', $document_id);
-        update_post_meta($post_id, '_encypher_assurance_verification_url', $verification_url);
-        update_post_meta($post_id, '_encypher_assurance_total_sentences', $total_sentences);
-        update_post_meta($post_id, '_encypher_assurance_last_signed', current_time('mysql'));
+        update_post_meta($post_id, '_encypher_provenance_cached_content_hash', md5((string) $embedded_content));
+        update_post_meta($post_id, '_encypher_provenance_status', 'c2pa_protected');
+        update_post_meta($post_id, '_encypher_provenance_document_id', $document_id);
+        update_post_meta($post_id, '_encypher_provenance_verification_url', $verification_url);
+        update_post_meta($post_id, '_encypher_provenance_total_sentences', $total_sentences);
+        update_post_meta($post_id, '_encypher_provenance_last_signed', current_time('mysql'));
         update_post_meta($post_id, '_encypher_manifest_id', $document_id);
         update_post_meta($post_id, '_encypher_marked_date', current_time('mysql'));
-        update_post_meta($post_id, '_encypher_assurance_signing_mode', $signing_mode);
+        update_post_meta($post_id, '_encypher_provenance_signing_mode', $signing_mode);
         if ($signing_profile_id) {
-            update_post_meta($post_id, '_encypher_assurance_signing_profile_id', $signing_profile_id);
+            update_post_meta($post_id, '_encypher_provenance_signing_profile_id', $signing_profile_id);
         } else {
-            delete_post_meta($post_id, '_encypher_assurance_signing_profile_id');
+            delete_post_meta($post_id, '_encypher_provenance_signing_profile_id');
         }
         
         // Store new instance_id for next edit's provenance chain
         if ($new_instance_id) {
-            update_post_meta($post_id, '_encypher_assurance_instance_id', $new_instance_id);
+            update_post_meta($post_id, '_encypher_provenance_instance_id', $new_instance_id);
             error_log(sprintf(
                 'Encypher: Stored new instance_id for post %d: %s',
                 $post_id,
@@ -409,11 +401,6 @@ class Rest
         // Clear action type meta so it doesn't get reused
         delete_post_meta($post_id, '_encypher_action_type');
         
-        // Store Merkle tree info
-        if (!empty($merkle_root)) {
-            update_post_meta($post_id, '_encypher_merkle_root_hash', $merkle_root);
-        }
-        $this->persist_merkle_snapshot($post_id, $merkle_root ? ['root_hash' => $merkle_root] : []);
         $this->persist_sentence_segments(
             $post_id,
             isset($result['embeddings']) && is_array($result['embeddings']) ? $result['embeddings'] : []
@@ -422,7 +409,7 @@ class Rest
         // Clear any pending marking flags
         delete_post_meta($post_id, '_encypher_needs_marking');
         delete_post_meta($post_id, '_encypher_action_type');
-        delete_post_meta($post_id, '_encypher_assurance_verification');
+        delete_post_meta($post_id, '_encypher_provenance_verification');
 
         return new WP_REST_Response([
             'status' => 'c2pa_protected',
@@ -430,25 +417,21 @@ class Rest
             'verification_url' => $verification_url,
             'embedded_content' => $embedded_content,
             'total_sentences' => $total_sentences,
-            'merkle_tree' => $merkle_tree,
-            'statistics' => $statistics,
         ]);
     }
 
     public function handle_status_request(WP_REST_Request $request)
     {
         $post_id = (int) $request->get_param('post_id');
-        $status = get_post_meta($post_id, '_encypher_assurance_status', true);
-        $signature = get_post_meta($post_id, '_encypher_assurance_signature', true);
-        $document_id = get_post_meta($post_id, '_encypher_assurance_document_id', true);
-        $instance_id = get_post_meta($post_id, '_encypher_assurance_instance_id', true);
-        $total_sentences = (int) get_post_meta($post_id, '_encypher_assurance_total_sentences', true);
-        $last_signed = get_post_meta($post_id, '_encypher_assurance_last_signed', true);
-        $merkle_root_hash = get_post_meta($post_id, '_encypher_merkle_root_hash', true);
-        $verification = get_post_meta($post_id, '_encypher_assurance_verification', true);
+        $status = get_post_meta($post_id, '_encypher_provenance_status', true);
+        $signature = get_post_meta($post_id, '_encypher_provenance_signature', true);
+        $document_id = get_post_meta($post_id, '_encypher_provenance_document_id', true);
+        $instance_id = get_post_meta($post_id, '_encypher_provenance_instance_id', true);
+        $total_sentences = (int) get_post_meta($post_id, '_encypher_provenance_total_sentences', true);
+        $last_signed = get_post_meta($post_id, '_encypher_provenance_last_signed', true);
+        $verification = get_post_meta($post_id, '_encypher_provenance_verification', true);
         $sentences = $this->get_sentence_segments_payload($post_id);
-        $merkle_snapshot = $this->get_merkle_snapshot($post_id);
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
 
         // Generate verification URL using instance_id if available, otherwise document_id
         $verification_id = $instance_id ?: $document_id;
@@ -462,11 +445,9 @@ class Rest
             'verification_url' => $verification_url,
             'total_sentences' => $total_sentences,
             'last_signed' => $last_signed,
-            'merkle_root_hash' => $merkle_root_hash,
             'verification' => $verification,
             'sentences' => $sentences['items'],
             'sentences_total' => $sentences['total'],
-            'merkle' => $merkle_snapshot,
             'tier' => isset($settings['tier']) ? $settings['tier'] : 'free',
             'signing_mode' => isset($settings['signing_mode']) ? $settings['signing_mode'] : 'managed',
         ]);
@@ -487,7 +468,7 @@ class Rest
         // Get raw post content to preserve invisible Unicode characters
         $raw_content = get_post_field('post_content', $post_id, 'raw');
 
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         // /verify is deprecated (410 Gone) — always use /verify/advanced
         $endpoint = '/verify/advanced';
@@ -585,12 +566,12 @@ class Rest
         }
 
         // Store verification result in post meta
-        update_post_meta($post_id, '_encypher_assurance_verification', $normalized);
-        update_post_meta($post_id, '_encypher_assurance_last_verified', current_time('mysql'));
+        update_post_meta($post_id, '_encypher_provenance_verification', $normalized);
+        update_post_meta($post_id, '_encypher_provenance_last_verified', current_time('mysql'));
         
         // Store instance_id for public provenance lookup
         if (!empty($normalized['metadata']['instance_id'])) {
-            update_post_meta($post_id, '_encypher_assurance_instance_id', $normalized['metadata']['instance_id']);
+            update_post_meta($post_id, '_encypher_provenance_instance_id', $normalized['metadata']['instance_id']);
         }
         
         // Update status based on verification
@@ -600,7 +581,7 @@ class Rest
         } elseif (!empty($normalized['error'])) {
             $status = 'verification_failed';
         }
-        update_post_meta($post_id, '_encypher_assurance_status', $status);
+        update_post_meta($post_id, '_encypher_provenance_status', $status);
 
         $normalized['cached'] = false;
         return new WP_REST_Response($normalized);
@@ -620,7 +601,7 @@ class Rest
                 'posts_per_page' => 1,
                 'meta_query' => [
                     [
-                        'key' => '_encypher_assurance_instance_id',
+                        'key' => '_encypher_provenance_instance_id',
                         'value' => $instance_id,
                         'compare' => '='
                     ]
@@ -641,16 +622,13 @@ class Rest
         }
 
         // Get all stored metadata
-        $document_id = get_post_meta($post_id, '_encypher_assurance_document_id', true);
-        $status = get_post_meta($post_id, '_encypher_assurance_status', true);
-        $total_sentences = (int) get_post_meta($post_id, '_encypher_assurance_total_sentences', true);
-        $last_signed = get_post_meta($post_id, '_encypher_assurance_last_signed', true);
-        $last_verified = get_post_meta($post_id, '_encypher_assurance_last_verified', true);
-        $merkle_root = get_post_meta($post_id, '_encypher_merkle_root_hash', true);
-        $merkle_leaves = get_post_meta($post_id, '_encypher_merkle_total_leaves', true);
-        $verification = get_post_meta($post_id, '_encypher_assurance_verification', true);
+        $document_id = get_post_meta($post_id, '_encypher_provenance_document_id', true);
+        $status = get_post_meta($post_id, '_encypher_provenance_status', true);
+        $total_sentences = (int) get_post_meta($post_id, '_encypher_provenance_total_sentences', true);
+        $last_signed = get_post_meta($post_id, '_encypher_provenance_last_signed', true);
+        $last_verified = get_post_meta($post_id, '_encypher_provenance_last_verified', true);
+        $verification = get_post_meta($post_id, '_encypher_provenance_verification', true);
         $sentences = $this->get_sentence_segments_payload($post_id);
-        $merkle_snapshot = $this->get_merkle_snapshot($post_id);
 
         // Build provenance report
         $report = [
@@ -669,11 +647,6 @@ class Rest
                 'last_verified' => $last_verified,
                 'total_sentences' => $total_sentences,
             ],
-            'merkle_tree' => [
-                'root_hash' => $merkle_root,
-                'total_leaves' => $merkle_leaves,
-                'tree_depth' => $merkle_snapshot['tree_depth'],
-            ],
             'verification' => $verification ?: null,
             'sentences' => $sentences,
         ];
@@ -688,19 +661,19 @@ class Rest
         }
 
         if ($this->is_signing) {
-            update_post_meta($post_id, '_encypher_assurance_cached_content_hash', md5((string) $post->post_content));
+            update_post_meta($post_id, '_encypher_provenance_cached_content_hash', md5((string) $post->post_content));
             return;
         }
 
         if ($update) {
             // If content changes manually, mark status stale.
-            $previous_content = get_post_meta($post_id, '_encypher_assurance_cached_content_hash', true);
+            $previous_content = get_post_meta($post_id, '_encypher_provenance_cached_content_hash', true);
             $current_hash = md5((string) $post->post_content);
             if ($previous_content && $previous_content !== $current_hash) {
-                update_post_meta($post_id, '_encypher_assurance_status', 'modified');
-                delete_post_meta($post_id, '_encypher_assurance_verification');
+                update_post_meta($post_id, '_encypher_provenance_status', 'modified');
+                delete_post_meta($post_id, '_encypher_provenance_verification');
             }
-            update_post_meta($post_id, '_encypher_assurance_cached_content_hash', $current_hash);
+            update_post_meta($post_id, '_encypher_provenance_cached_content_hash', $current_hash);
         }
     }
 
@@ -726,7 +699,7 @@ class Rest
         }
 
         // Check if auto-signing is enabled
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $auto_sign = isset($settings['auto_mark_on_publish']) ? (bool) $settings['auto_mark_on_publish'] : true;
         
         if (!$auto_sign) {
@@ -778,7 +751,7 @@ class Rest
         }
 
         // Check if auto-signing on update is enabled
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $auto_sign_on_update = isset($settings['auto_mark_on_update']) ? (bool) $settings['auto_mark_on_update'] : true;
         
         if (!$auto_sign_on_update) {
@@ -810,7 +783,7 @@ class Rest
         // Post is already signed - check if content changed
         // Compare against the CACHED content hash (which was set after the last signing)
         // This prevents re-signing when the only change is the C2PA wrapper itself
-        $cached_hash = get_post_meta($post_id, '_encypher_assurance_cached_content_hash', true);
+        $cached_hash = get_post_meta($post_id, '_encypher_provenance_cached_content_hash', true);
         $current_hash = md5($post->post_content);
         
         error_log(sprintf(
@@ -976,7 +949,7 @@ class Rest
     private function persist_sentence_segments(int $post_id, array $embeddings): void
     {
         if (empty($embeddings) || !is_array($embeddings)) {
-            delete_post_meta($post_id, '_encypher_assurance_sentence_segments');
+            delete_post_meta($post_id, '_encypher_provenance_sentence_segments');
             return;
         }
 
@@ -1003,15 +976,15 @@ class Rest
         }
 
         if (!empty($normalized)) {
-            update_post_meta($post_id, '_encypher_assurance_sentence_segments', $normalized);
+            update_post_meta($post_id, '_encypher_provenance_sentence_segments', $normalized);
         } else {
-            delete_post_meta($post_id, '_encypher_assurance_sentence_segments');
+            delete_post_meta($post_id, '_encypher_provenance_sentence_segments');
         }
     }
 
     private function get_sentence_segments_payload(int $post_id): array
     {
-        $segments = get_post_meta($post_id, '_encypher_assurance_sentence_segments', true);
+        $segments = get_post_meta($post_id, '_encypher_provenance_sentence_segments', true);
         if (!is_array($segments)) {
             return [
                 'items' => [],
@@ -1041,46 +1014,12 @@ class Rest
         ];
     }
 
-    private function persist_merkle_snapshot(int $post_id, array $merkle_tree): void
-    {
-        if (empty($merkle_tree)) {
-            delete_post_meta($post_id, '_encypher_merkle_snapshot');
-            return;
-        }
-
-        $snapshot = [
-            'root_hash' => isset($merkle_tree['root_hash']) ? sanitize_text_field((string) $merkle_tree['root_hash']) : '',
-            'total_leaves' => isset($merkle_tree['total_leaves']) ? (int) $merkle_tree['total_leaves'] : 0,
-            'tree_depth' => isset($merkle_tree['tree_depth']) ? (int) $merkle_tree['tree_depth'] : null,
-        ];
-
-        update_post_meta($post_id, '_encypher_merkle_snapshot', $snapshot);
-    }
-
-    private function get_merkle_snapshot(int $post_id): array
-    {
-        $snapshot = get_post_meta($post_id, '_encypher_merkle_snapshot', true);
-        if (!is_array($snapshot)) {
-            return [
-                'root_hash' => '',
-                'total_leaves' => 0,
-                'tree_depth' => null,
-            ];
-        }
-
-        return [
-            'root_hash' => isset($snapshot['root_hash']) ? $snapshot['root_hash'] : '',
-            'total_leaves' => isset($snapshot['total_leaves']) ? (int) $snapshot['total_leaves'] : 0,
-            'tree_depth' => $snapshot['tree_depth'] ?? null,
-        ];
-    }
-
     /**
      * Perform HTTP request to backend and decode JSON response.
      */
     private function call_backend(string $path, array $body, bool $require_auth)
     {
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $base_url = isset($settings['api_base_url']) ? rtrim($settings['api_base_url'], '/') : '';
         if (! $base_url) {
             return new WP_Error('missing_configuration', __('Please configure the Encypher API base URL.', 'encypher-provenance'), ['status' => 400]);
@@ -1169,7 +1108,7 @@ class Rest
         
         // If not provided in request, use saved settings
         if (empty($api_base_url)) {
-            $settings = get_option('encypher_assurance_settings', []);
+            $settings = get_option('encypher_provenance_settings', []);
             $api_base_url = isset($settings['api_base_url']) ? $settings['api_base_url'] : '';
             $api_key = isset($settings['api_key']) ? $settings['api_key'] : '';
         }
@@ -1300,10 +1239,6 @@ class Rest
 
         $data = isset($body['data']) && is_array($body['data']) ? $body['data'] : [];
         $tier = $data['tier'] ?? 'free';
-        // Coerce legacy tier names to canonical 'free'
-        if (in_array($tier, ['starter', 'professional', 'business'], true)) {
-            $tier = 'free';
-        }
         if (! in_array($tier, ['free', 'enterprise', 'strategic_partner'], true)) {
             $tier = 'free';
         }

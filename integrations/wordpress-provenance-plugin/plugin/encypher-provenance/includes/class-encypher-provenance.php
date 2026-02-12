@@ -1,16 +1,16 @@
 <?php
-namespace EncypherAssurance;
+namespace EncypherProvenance;
 
 if (! defined('ABSPATH')) {
     exit;
 }
 
-require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-admin.php';
-require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-rest.php';
-require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-verification.php';
-require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-bulk.php';
-require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-frontend.php';
-require_once ENCYPHER_ASSURANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-coalition.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-admin.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-rest.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-verification.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-bulk.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-frontend.php';
+require_once ENCYPHER_PROVENANCE_PLUGIN_DIR . 'includes/class-encypher-provenance-coalition.php';
 
 /**
  * Main plugin bootstrap class.
@@ -35,8 +35,8 @@ class Plugin
         $this->frontend = new Frontend();
         $this->coalition = new Coalition();
 
-        register_activation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'activate']);
-        register_deactivation_hook(ENCYPHER_ASSURANCE_PLUGIN_FILE, [self::class, 'deactivate']);
+        register_activation_hook(ENCYPHER_PROVENANCE_PLUGIN_FILE, [self::class, 'activate']);
+        register_deactivation_hook(ENCYPHER_PROVENANCE_PLUGIN_FILE, [self::class, 'deactivate']);
 
         add_action('init', [$this, 'load_textdomain']);
         add_action('init', [$this, 'add_rewrite_rules']);
@@ -63,8 +63,8 @@ class Plugin
             'tier' => 'free',
         ];
 
-        $options = get_option('encypher_assurance_settings', []);
-        update_option('encypher_assurance_settings', wp_parse_args($options, $defaults));
+        $options = get_option('encypher_provenance_settings', []);
+        update_option('encypher_provenance_settings', wp_parse_args($options, $defaults));
         
         // Add rewrite rules before flushing
         add_rewrite_rule(
@@ -84,7 +84,7 @@ class Plugin
 
     public function load_textdomain(): void
     {
-        load_plugin_textdomain('encypher-provenance', false, dirname(plugin_basename(ENCYPHER_ASSURANCE_PLUGIN_FILE)) . '/languages/');
+        load_plugin_textdomain('encypher-provenance', false, dirname(plugin_basename(ENCYPHER_PROVENANCE_PLUGIN_FILE)) . '/languages/');
     }
 
     public function boot(): void
@@ -130,7 +130,7 @@ class Plugin
             $data = $this->rest->handle_provenance_request($request);
             
             // Load template
-            include ENCYPHER_ASSURANCE_PLUGIN_DIR . 'templates/provenance-report.php';
+            include ENCYPHER_PROVENANCE_PLUGIN_DIR . 'templates/provenance-report.php';
             exit;
         }
         
@@ -147,7 +147,7 @@ class Plugin
             $data = $this->rest->handle_provenance_request($request);
             
             // Load template
-            include ENCYPHER_ASSURANCE_PLUGIN_DIR . 'templates/provenance-report.php';
+            include ENCYPHER_PROVENANCE_PLUGIN_DIR . 'templates/provenance-report.php';
             exit;
         }
     }

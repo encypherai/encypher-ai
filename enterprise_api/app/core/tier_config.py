@@ -12,6 +12,15 @@ from __future__ import annotations
 
 from typing import Any, Dict, Set
 
+from app.core.pricing_constants import (
+    COALITION_ENCYPHER_SHARE,
+    COALITION_PUBLISHER_SHARE,
+    DEFAULT_COALITION_REV_SHARE,
+    LICENSING_REV_SHARE as _LICENSING_REV_SHARE,
+    SELF_SERVICE_ENCYPHER_SHARE,
+    SELF_SERVICE_PUBLISHER_SHARE,
+)
+
 # ---------------------------------------------------------------------------
 # Tier names
 # ---------------------------------------------------------------------------
@@ -160,18 +169,29 @@ TIER_RATE_LIMITS_PER_SECOND: Dict[str, int] = {
 
 # ---------------------------------------------------------------------------
 # Coalition revenue share  (publisher %, encypher %)
+# TEAM_173: All numbers derived from app.core.pricing_constants (SSOT).
+# Flat coalition split across ALL tiers per Feb 2026 pricing.
+# Two-track model: coalition deals 60/40, self-service deals 80/20.
 # ---------------------------------------------------------------------------
 
 TIER_REV_SHARE: Dict[str, Dict[str, int]] = {
-    "free": {"publisher": 60, "encypher": 40},
-    "enterprise": {"publisher": 85, "encypher": 15},
-    "strategic_partner": {"publisher": 85, "encypher": 15},
+    "free": DEFAULT_COALITION_REV_SHARE,
+    "enterprise": DEFAULT_COALITION_REV_SHARE,
+    "strategic_partner": DEFAULT_COALITION_REV_SHARE,
 }
+
+# Re-export two-track licensing model from pricing_constants
+LICENSING_REV_SHARE = _LICENSING_REV_SHARE
 
 
 def get_tier_rev_share(tier: str) -> Dict[str, int]:
-    """Get rev share for a tier, coercing legacy names."""
-    return TIER_REV_SHARE.get(coerce_tier_name(tier), TIER_REV_SHARE["free"])
+    """Get coalition rev share for a tier, coercing legacy names."""
+    return TIER_REV_SHARE.get(coerce_tier_name(tier), DEFAULT_COALITION_REV_SHARE)
+
+
+def get_licensing_rev_share(track: str) -> Dict[str, int]:
+    """Get rev share for a licensing track ('coalition' or 'self_service')."""
+    return LICENSING_REV_SHARE.get(track, LICENSING_REV_SHARE["coalition"])
 
 
 # ---------------------------------------------------------------------------

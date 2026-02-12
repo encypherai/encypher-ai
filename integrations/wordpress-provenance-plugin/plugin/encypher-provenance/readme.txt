@@ -21,7 +21,7 @@ In an era of AI-generated content and misinformation, proving the authenticity o
 * **Prove Original Authorship** - Cryptographic signatures tied to your organization
 * **Detect Tampering** - Know if content has been modified after signing
 * **Build Trust** - Show readers your content is verified and authentic
-* **Protect Against Misquotes** - Track sentence-level provenance (Pro+)
+* **Protect Against Misquotes** - Track sentence-level provenance
 
 = Key Features =
 
@@ -49,7 +49,7 @@ Built on the same standards used by Google, BBC, OpenAI, Adobe, and Microsoft:
 * Attribution indexing
 * Batch signing (up to 10 docs)
 * Encypher-managed certificates
-* Coalition membership (60/40 revenue share)
+* Coalition membership
 
 **Enterprise (Custom)**
 * All Free features
@@ -59,7 +59,7 @@ Built on the same standards used by Google, BBC, OpenAI, Adobe, and Microsoft:
 * Batch signing (up to 100 docs)
 * SSO/SCIM integration
 * Dedicated support & SLA
-* Coalition membership (85/15 revenue share)
+* Coalition membership (priority placement)
 
 == Installation ==
 

@@ -13,6 +13,8 @@ import sys
 from pathlib import Path
 from typing import AsyncGenerator
 
+from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 import pytest
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -135,7 +137,7 @@ async def _ensure_seeded() -> None:
                         )
                         VALUES (
                             :id, :name, :email, :tier, :monthly_api_limit, 0,
-                            TRUE, 65, NOW(), NOW()
+                            TRUE, :coalition_rev_share, NOW(), NOW()
                         )
                         ON CONFLICT (id) DO UPDATE SET
                             name = EXCLUDED.name,
@@ -151,6 +153,7 @@ async def _ensure_seeded() -> None:
                         "email": email,
                         "tier": tier,
                         "monthly_api_limit": 10000 if tier in {"starter", "demo"} else 100000,
+                        "coalition_rev_share": DEFAULT_COALITION_PUBLISHER_PERCENT,
                     },
                 )
 

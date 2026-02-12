@@ -1,16 +1,16 @@
 # Encypher Corporation: Ideal Customer Profile Framework 3.0
 ## Standards-Driven Infrastructure Strategy
 
-**Last Updated:** January 8, 2026  
-**Status:** Post-Standard Publication (C2PA 2.3 Released)  
-**Version:** 3.1  
+**Last Updated:** January 8, 2026
+**Status:** Post-Standard Publication (C2PA 2.3 Released)
+**Version:** 3.1
 **Distribution:** Sales & Marketing Leadership
 
 ---
 
 ## Executive Summary
 
-As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, Encypher has evolved from technology vendor to **infrastructure standard**. The C2PA text specification **published January 8, 2026** — [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). Our ICP strategy reflects this reality: we're not selling a product competing with alternatives—we're implementing the standard we're building collaboratively, with exclusive capabilities that extend the baseline.
+As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, OpenAI, Adobe, and Microsoft, Encypher has evolved from technology vendor to **infrastructure standard**. The C2PA text specification **published January 8, 2026** -- [Section A.7](https://spec.c2pa.org/specifications/specifications/2.3/specs/C2PA_Specification.html#embedding_manifests_into_unstructured_text). Our ICP strategy reflects this reality: we're not selling a product competing with alternatives--we're implementing the standard we're building collaboratively, with exclusive capabilities that extend the baseline.
 
 **Strategic Evolution:**
 - **From:** Dual-value proposition (performance + legal)
@@ -31,7 +31,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 ## Primary ICPs: The Market Makers
 
-### ICP 1A: "The Publisher Strategist" — Paul (PRIMARY - VALIDATED)
+### ICP 1A: "The Publisher Strategist" -- Paul (PRIMARY - VALIDATED)
 
 **Real-World Validation:** Paul Sarkis, VP & Associate General Counsel at Associated Press, architect of the AP-OpenAI licensing deal. Our engagement with Paul validated this ICP profile and refined our messaging.
 
@@ -44,43 +44,43 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 **Critical Pain Points (Validated by AP Engagement):**
 
 1. **The "We Didn't Know" Defense Problem:**
-   - AI companies claim: "We scraped the open web, we didn't know it was yours"
-   - This creates an "innocent infringement" defense that's legally viable
-   - Expensive discovery, uncertain litigation outcomes
-   - No technical way to establish they were notified
+ - AI companies claim: "We scraped the open web, we didn't know it was yours"
+ - This creates an "innocent infringement" defense that's legally viable
+ - Expensive discovery, uncertain litigation outcomes
+ - No technical way to establish they were notified
 
 2. **The Downstream Distribution Problem:**
-   - "You can get all of AP's content without having to go to apnews.com" (Paul Sarkis)
-   - Content flows through B2B licensees, wire services, aggregators
-   - Ownership connection disappears through distribution
-   - No way to assert provenance wherever content appears
+ - "You can get all of AP's content without having to go to apnews.com" (Paul Sarkis)
+ - Content flows through B2B licensees, wire services, aggregators
+ - Ownership connection disappears through distribution
+ - No way to assert provenance wherever content appears
 
 3. **The Quote Integrity Problem:**
-   - AI outputs "According to AP..." but the quote is modified or hallucinated
-   - Publisher brand gets associated with inaccurate information
-   - No way to verify AI attribution accuracy
-   - Brand damage from AI hallucinations
+ - AI outputs "According to AP..." but the quote is modified or hallucinated
+ - Publisher brand gets associated with inaccurate information
+ - No way to verify AI attribution accuracy
+ - Brand damage from AI hallucinations
 
 4. **The Market Standards Problem:**
-   - "I would really like to see [us] develop market standards... in typical licensing, you have exclusive or non-exclusive, perpetual or term limited—these things are understood. That's not the case right now in this market." (Paul Sarkis)
-   - No industry-standard licensing terminology for AI content usage
-   - Each deal negotiated from scratch
-   - First movers will define the framework
+ - "I would really like to see [us] develop market standards... in typical licensing, you have exclusive or non-exclusive, perpetual or term limited--these things are understood. That's not the case right now in this market." (Paul Sarkis)
+ - No industry-standard licensing terminology for AI content usage
+ - Each deal negotiated from scratch
+ - First movers will define the framework
 
 5. **The Licensing Infrastructure Problem:**
-   - Legal strategies insufficient without technical infrastructure
-   - No way to serve cryptographically-backed formal notice
-   - Can't prove specific usage (which sentences, which context)
-   - Premium content exists as unmarked, unmonetizable assets
+ - Legal strategies insufficient without technical infrastructure
+ - No way to serve cryptographically-backed formal notice
+ - Can't prove specific usage (which sentences, which context)
+ - Premium content exists as unmarked, unmonetizable assets
 
 **Why Encypher Wins:**
-- **Standards Authority:** Erik Svilich authored C2PA text spec and co-chairs task force (Google, BBC, OpenAI, Adobe, Microsoft)—standard published January 8, 2026
+- **Standards Authority:** Erik Svilich authored C2PA text spec and co-chairs task force (Google, BBC, OpenAI, Adobe, Microsoft)--standard published January 8, 2026
 - **Not Vendor Lock-in:** We wrote the open standard, built the reference implementation
 - **Willful Infringement Enablement:** Formal notice + cryptographic proof transforms "we didn't know" into "you ignored our notice" = 3x damages territory
 - **Quote Integrity Verification:** Prove whether AI attributions are accurate or hallucinated
 - **Downstream Survival:** Cryptographic watermarking survives B2B distribution, wire services, aggregators, scrapers
 - **Market Standards Leadership:** Syracuse Symposium February 25, 2026 convenes GCs to define licensing frameworks
-- **Success-Based Model:** 25-30% of licensing revenue we enable (pure alignment)
+- **Two-Track Licensing Model:** Coalition deals (60/40) or self-service deals (80/20). Free signing infrastructure builds coalition supply. Enforcement tools are self-service add-ons. No revenue = no payment.
 - **Nate Alvord Factor:** 25+ years IP licensing expertise from Digimarc/Via Licensing
 
 **Decision Criteria:**
@@ -94,59 +94,59 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 **Key Messaging (Validated by AP):**
 - "Eliminate the 'we didn't know it was yours' defense"
-- "Transform innocent infringement into willful infringement—3x damages territory"
+- "Transform innocent infringement into willful infringement--3x damages territory"
 - "Cryptographic watermarking that survives B2B distribution, wire services, and scrapers"
 - "Prove whether 'According to [Your Publication]...' is accurate or hallucinated"
-- "Shape market licensing standards at the February 25th Syracuse Symposium"
-- "Co-Chair of C2PA Text Provenance Task Force—standard published January 8, 2026"
+- "Participate in invite-only industry roundtable defining market licensing frameworks (February 25)"
+- "Co-Chair of C2PA Text Provenance Task Force--standard published January 8, 2026"
 
 **Sales Approach (Led by Nate):**
 1. Open with standards authority (C2PA co-chair, January 8 publication)
-2. Demonstrate unmarked → marked transformation
+2. Demonstrate unmarked ' marked transformation
 3. Show cryptographic watermarking surviving copy-paste and distribution
 4. Explain willful infringement enablement (formal notice eliminates "we didn't know")
 5. Demo quote integrity verification
 6. Present market standards opportunity (Syracuse Symposium)
 7. Model licensing revenue potential (success-based)
-8. Close with founding coalition benefits (locked 25% rate, shape market standards)
+8. Close with founding coalition benefits (implementation fee waived, Invite to closed-door industry roundtable (February 25), priority coalition positioning)
 
 **Demo:** **encypherai.com/publisher-demo**
 
 ---
 
-### ICP 1B: "The AI Platform Architect" — Kenji (CO-PRIMARY)
+### ICP 1B: "The AI Platform Architect" -- Kenji (CO-PRIMARY)
 
 **Role:** VP of AI Safety, Head of Trust & Safety, Chief Technology Officer, Director of Model Development, Head of Platform Policy
 
 **Company Type:** Major AI research labs and LLM providers (OpenAI, Anthropic, Google DeepMind, Meta AI, Cohere)
 
-**About Kenji (COLLABORATIVE FRAMING):** Kenji oversees training pipelines processing billions of tokens daily. The publisher ecosystem is implementing cryptographic watermarking at scale—he needs compatible infrastructure to handle marked content properly. More importantly, text provenance data could provide unprecedented attribution intelligence, and quote integrity verification protects his company's reputation from hallucination claims.
+**About Kenji (COLLABORATIVE FRAMING):** Kenji oversees training pipelines processing billions of tokens daily. The publisher ecosystem is implementing cryptographic watermarking at scale--he needs compatible infrastructure to handle marked content properly. More importantly, text provenance data could provide unprecedented attribution intelligence, and quote integrity verification protects his company's reputation from hallucination claims.
 
 **Critical Pain Points (Collaborative Framing):**
 
 1. **Ecosystem Compatibility:**
-   - Publishers implementing cryptographic watermarking—needs compatible infrastructure
-   - Training pipeline encountering marked content with embedded origin proof
-   - Basic C2PA won't integrate with publisher-specific sentence-level enhancements
+ - Publishers implementing cryptographic watermarking--needs compatible infrastructure
+ - Training pipeline encountering marked content with embedded origin proof
+ - Basic C2PA won't integrate with publisher-specific sentence-level enhancements
 
 2. **Attribution Opportunity:**
-   - Sentence-level provenance could reveal which content drives results
-   - Performance intelligence from attribution data
-   - Optimization insights currently unavailable
+ - Sentence-level provenance could reveal which content drives results
+ - Performance intelligence from attribution data
+ - Optimization insights currently unavailable
 
 3. **Quote Integrity Liability:**
-   - Models output "According to AP..." but may hallucinate
-   - Publisher brand damage creates reputational and legal risk
-   - Need verification tool to prove attribution accuracy
+ - Models output "According to AP..." but may hallucinate
+ - Publisher brand damage creates reputational and legal risk
+ - Need verification tool to prove attribution accuracy
 
 4. **Standards Alignment:**
-   - Need to work WITH C2PA standards (OpenAI is member)
-   - Standard published January 8, 2026
-   - Opportunity to shape infrastructure vs. react to it
+ - Need to work WITH C2PA standards (OpenAI is member)
+ - Standard published January 8, 2026
+ - Opportunity to shape infrastructure vs. react to it
 
 **Why Encypher Wins (Collaborative Framing):**
-- **Standards Collaboration:** Erik Svilich co-chairs C2PA (OpenAI is member)—he authored the spec
-- **Reference Implementation:** Not a vendor interpretation—this is the author's implementation
+- **Standards Collaboration:** Erik Svilich co-chairs C2PA (OpenAI is member)--he authored the spec
+- **Reference Implementation:** Not a vendor interpretation--this is the author's implementation
 - **Publisher Compatibility:** One integration for marked content from growing ecosystem (AP, BBC, Springer Nature, Taylor & Francis)
 - **Quote Integrity Verification:** Prove AI attributions are accurate, protect brand from hallucination claims
 - **Performance Intelligence:** Patent-pending sentence-level tracking reveals which content drives success
@@ -161,16 +161,14 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 - Total value (not just cost)
 
 **Key Messaging (Collaborative):**
-- "We're building text provenance standards WITH you through C2PA—OpenAI is a member, standard published January 8, 2026"
-- "Publisher ecosystem implementing marked content—you need compatible infrastructure"
-- "Quote integrity verification—prove when 'According to AP...' is accurate vs. hallucinated"
-- "Performance intelligence from sentence-level attribution—see which content drives viral success"
-- "This isn't restriction—it's infrastructure for attribution and partnerships"
+- "We're building text provenance standards WITH you through C2PA--OpenAI is a member, standard published January 8, 2026"
+- "Publisher ecosystem implementing marked content--you need compatible infrastructure"
+- "Quote integrity verification--prove when 'According to AP...' is accurate vs. hallucinated"
+- "Performance intelligence from sentence-level attribution--see which content drives viral success"
+- "This isn't restriction--it's infrastructure for attribution and partnerships"
 
 **Pricing Justification:**
-- **Tier 1** (OpenAI/Anthropic): $50M/year (performance intelligence + publisher compatibility premium)
-- **Tier 2** (Meta/Google): $35M/year (infrastructure + attribution)
-- **Tier 3** (Cohere/Others): $17M/year (compatibility + insights)
+AI company infrastructure pricing to be determined based on coalition leverage. Focus on publisher coalition formation first.
 
 **Value Framing:** Not "litigation avoidance" but "performance intelligence + quote verification + infrastructure for partnerships"
 
@@ -180,7 +178,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 ## Secondary ICPs: The Ecosystem Builders
 
-### ICP 2: "The Standards Champion" — Marcus
+### ICP 2: "The Standards Champion" -- Marcus
 
 **Role:** Director of Standards, Head of Content Authenticity, VP of Trust Infrastructure
 
@@ -191,13 +189,13 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 **Strategic Importance:** Validates Encypher as reference implementation through platform adoption
 
 **Key Messaging:**
-- "Co-Chair of C2PA Text Provenance Task Force—standard published January 8, 2026"
+- "Co-Chair of C2PA Text Provenance Task Force--standard published January 8, 2026"
 - "Production-ready, standards-compliant infrastructure"
 - "Enterprise features that extend baseline C2PA"
 
 ---
 
-### ICP 3: "The Enterprise Risk Officer" — David
+### ICP 3: "The Enterprise Risk Officer" -- David
 
 **Role:** Chief Risk Officer, Chief Compliance Officer, Head of AI Governance
 
@@ -216,22 +214,22 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 ## Market Segmentation by Implementation Timeline
 
-### Pre-Standard Publication (Now → January 7, 2026): Founding Coalition Formation
+### Pre-Standard Publication (Now ' January 7, 2026): Founding Coalition Formation
 **Target:** 10 Tier 1 publishers (AP, BBC, Springer Nature, Taylor & Francis leading)
 **Approach:** Nate-led with willful infringement frame + market standards opportunity
-**Pricing:** $30k + 25% (founding members)
+**Pricing:** Free tier for all + enterprise implementations ($10-30K, waived for founding members). Coalition 60/40, self-service 80/20.
 **Goal:** Critical mass for ecosystem momentum before standard publishes
 
-### Post-Publication Q1 2026 (January 8 → March 2026): Standards Momentum
+### Post-Publication Q1 2026 (January 8 ' March 2026): Standards Momentum
 **Target:** 10 more publishers + 3 AI company partnerships
-**Approach:** Standards now public, Syracuse Symposium (Feb 25) creates urgency
-**Pricing:** $25k + 30% (publishers), $35-50M (AI companies)
+**Approach:** Standards now public, closed-door roundtable (Feb 25) creates urgency for invitees
+**Pricing:** Free tier + enterprise implementations ($10-30K) + enforcement add-ons. AI company pricing deferred.
 **Goal:** Establish market licensing frameworks
 
 ### Q2 2026: Enterprise Expansion
 **Target:** 20 Fortune 500 companies
 **Approach:** Standards compliance + governance + performance intelligence
-**Pricing:** $500k-5M based on scale
+**Pricing:** Enterprise implementations ($10-30K) + enforcement subscriptions
 **Goal:** Horizontal market penetration
 
 ---
@@ -240,41 +238,41 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 ### For Paul/Eleanor (Publishers):
 
-**vs. Unmarked Content Status Quo:** 
+**vs. Unmarked Content Status Quo:**
 "Text without cryptographic proof enables the 'we didn't know it was yours' defense. Our watermarking survives B2B distribution and enables formal notice. Continued unauthorized use after notification = willful infringement, not innocent."
 
-**vs. Build Internal:** 
-"$30k in 30 days vs. $5M in 18 months. Erik Svilich authored the C2PA text specification—you'd be implementing what he wrote. Standard published January 8, 2026. Founding members shape market standards at the February 25th symposium."
+**vs. Build Internal:**
+"$30k in 30 days vs. $5M in 18 months. Erik Svilich authored the C2PA text specification--you'd be implementing what he wrote. Standard published January 8, 2026. Founding members shape market standards at the February 25th symposium."
 
-**vs. Wait and See:** 
+**vs. Wait and See:**
 "First movers define how market licensing frameworks work. The Syracuse Symposium February 25, 2026 will establish the terms. Later adopters accept standards others defined."
 
 ### For Kenji (AI Companies):
 
-**vs. Basic C2PA:** 
+**vs. Basic C2PA:**
 "Standard provides document-level authentication. Our patent-pending sentence-level tracking enables quote integrity verification and performance intelligence showing which content drives viral success."
 
-**vs. Build Yourself:** 
+**vs. Build Yourself:**
 "Erik Svilich co-chairs the C2PA task force with OpenAI as member and authored the specification. You'd be implementing what he wrote. Leverage the reference implementation from the specification author while gaining exclusive capabilities."
 
-**vs. Ignore Provenance:** 
-"Publisher ecosystem implementing marked content at scale. Your training pipeline needs compatible infrastructure. Quote integrity verification protects your reputation. This isn't adversarial—it's opportunity for attribution intelligence."
+**vs. Ignore Provenance:**
+"Publisher ecosystem implementing marked content at scale. Your training pipeline needs compatible infrastructure. Quote integrity verification protects your reputation. This isn't adversarial--it's opportunity for attribution intelligence."
 
 ---
 
 ## Value Messaging Framework (Updated)
 
 ### The Standards Authority Story
-"Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. We didn't just write the specification—Erik wrote it, and we built the reference implementation. This is collaborative infrastructure, not vendor lock-in."
+"Erik Svilich, our Founder & CEO, authored the C2PA text provenance specification and co-chairs the task force with Google, BBC, OpenAI, Adobe, and Microsoft. The standard published January 8, 2026. We didn't just write the specification--Erik wrote it, and we built the reference implementation. This is collaborative infrastructure, not vendor lock-in."
 
 ### The Willful Infringement Story (NEW - Validated by AP)
-"AI companies have claimed 'we didn't know it was yours' as an innocent infringement defense. Our infrastructure changes that equation. Cryptographic signatures embedded at sentence-level. Formal notification that content is marked. Public API for verification. Once notified, continued unauthorized use is provable willful infringement—not 'we didn't know.' That's the difference between uncertain litigation and 3x damages territory."
+"AI companies have claimed 'we didn't know it was yours' as an innocent infringement defense. Our infrastructure changes that equation. Cryptographic signatures embedded at sentence-level. Formal notification that content is marked. Public API for verification. Once notified, continued unauthorized use is provable willful infringement--not 'we didn't know.' That's the difference between uncertain litigation and 3x damages territory."
 
 ### The Quote Integrity Story (NEW - Validated by AP)
-"When an AI outputs 'According to AP...' but the quote is modified or hallucinated, your brand takes the hit. Our quote integrity verification proves whether attributions are accurate. Accurate quote: verified ✓. Modified or hallucinated: flagged ✗. Protect your brand from AI hallucination liability."
+"When an AI outputs 'According to AP...' but the quote is modified or hallucinated, your brand takes the hit. Our quote integrity verification proves whether attributions are accurate. Accurate quote: verified ". Modified or hallucinated: flagged --. Protect your brand from AI hallucination liability."
 
 ### The Market Standards Story (NEW - Validated by AP)
-"The technical standard published January 8, 2026. But the industry still lacks standard licensing terminology—exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company commercial leads to define these frameworks. Founding coalition members shape the terms. Later adopters accept them."
+"The technical standard published January 8, 2026. But the industry still lacks standard licensing terminology--exclusive vs. non-exclusive, perpetual vs. term-limited, training vs. grounding. The Syracuse Symposium on February 25, 2026 convenes 20-30 publisher GCs and AI company commercial leads to define these frameworks. Founding coalition members shape the terms. Later adopters accept them."
 
 ### The Collaboration Story
 "This isn't publishers vs. AI companies. OpenAI is in C2PA. Google is implementing text provenance. We're building standards collaboratively because text authentication benefits everyone: publishers gain willful infringement proof for licensing, AI companies gain attribution intelligence and quote verification, enterprises gain governance capabilities."
@@ -287,7 +285,7 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 **Week 1: Standards Authority + Problem Framing**
 - Lead with C2PA co-chair role (January 8, 2026 publication)
-- Demonstrate unmarked → marked transformation
+- Demonstrate unmarked ' marked transformation
 - Show cryptographic watermarking surviving copy-paste and B2B distribution
 - Frame the "we didn't know" problem
 
@@ -298,13 +296,13 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 **Week 3: Market Standards + Coalition Value**
 - Present Syracuse Symposium (February 25, 2026) as market standards opportunity
-- Emphasize founding member benefits (locked 25% rate, shape frameworks)
+- Emphasize founding member benefits (implementation fee waived, Syracuse seat, priority positioning)
 - Model licensing revenue opportunity
 - Create urgency with January 8 standard publication
 
 **Week 4: Contract Execution**
 - $30k implementation agreement
-- 25% revenue share terms (founding) / 30% (later)
+- Coalition licensing terms: 60/40 (Encypher negotiates) or 80/20 (publisher negotiates)
 - 30-day implementation timeline
 - Syracuse Symposium invitation
 
@@ -339,9 +337,9 @@ As Co-Chair of the C2PA Text Provenance Task Force, working with Google, BBC, Op
 
 ## Success Metrics by Quarter
 
-### Q4 2025 (Current → Year End):
+### Q4 2025 (Current ' Year End):
 - 5 publisher agreements signed (founding coalition foundation)
-- $150k in implementation fees
+- Enforcement tool subscriptions growing + first enterprise implementations closed
 - 3 AI company infrastructure conversations (collaborative framing)
 - Active pilot discussions: AP, BBC Studios US, Springer Nature, Taylor & Francis
 - NMA preferred vendor discussions advancing
@@ -387,7 +385,7 @@ Paul Sarkis at Associated Press represents our perfect ICP. His engagement valid
 
 ### What Resonated with Paul:
 
-1. **Standards Authority:** "I am the co-chair for the task force" → "Oh sweet"
+1. **Standards Authority:** "I am the co-chair for the task force" ' "Oh sweet"
 2. **Downstream Survival:** Addressing "you can get all of AP's content without going to apnews.com"
 3. **Quote Integrity:** Protecting AP brand from AI hallucinations ("According to AP...")
 4. **Market Standards Development:** His explicit ask for industry licensing frameworks
@@ -410,21 +408,21 @@ Paul Sarkis at Associated Press represents our perfect ICP. His engagement valid
 
 ## Conclusion
 
-With C2PA co-chair authority, patent-pending sentence-level capabilities, and validated ICP messaging from the AP engagement, Encypher transcends vendor status to become essential infrastructure. Our ICPs aren't buying a product competing with alternatives—they're implementing the standard we're building collaboratively with industry leaders, enhanced with capabilities that enable legal transformation and business value.
+With C2PA co-chair authority, patent-pending sentence-level capabilities, and validated ICP messaging from the AP engagement, Encypher transcends vendor status to become essential infrastructure. Our ICPs aren't buying a product competing with alternatives--they're implementing the standard we're building collaboratively with industry leaders, enhanced with capabilities that enable legal transformation and business value.
 
 **The publisher coalition forms around willful infringement enablement.** Publishers implementing cryptographic watermarking and serving formal notice transform their legal position from "prove they used your content" to "prove they ignored your notice."
 
-**AI companies need compatible infrastructure.** As marked content proliferates, training pipelines need provenance infrastructure—and quote integrity verification protects their reputation from hallucination claims.
+**AI companies need compatible infrastructure.** As marked content proliferates, training pipelines need provenance infrastructure--and quote integrity verification protects their reputation from hallucination claims.
 
-**We own the protocol layer.** Taking 25-30% of licensing we enable + infrastructure fees from AI companies + governance revenue from enterprises.
+**We own the protocol layer.** 40% of coalition licensing + 20% of self-service licensing + enforcement tool revenue + enterprise implementation fees.
 
 **Critical Positioning Validated by AP:**
 - "Eliminate the 'we didn't know' defense" (willful infringement frame)
 - "Quote integrity verification" (hallucination protection)
-- "Shape market licensing standards" (Syracuse Symposium)
+- "Define market licensing frameworks" (invite-only industry roundtable)
 - "Building infrastructure together" (collaborative, not adversarial)
 
-This isn't a sales process competing with alternatives. It's infrastructure adoption with inevitable convergence through standards—published January 8, 2026.
+This isn't a sales process competing with alternatives. It's infrastructure adoption with inevitable convergence through standards--published January 8, 2026.
 
 **Website:** **encypherai.com**
 **Demos:** **encypherai.com/publisher-demo** and **encypherai.com/ai-demo**
@@ -435,20 +433,20 @@ This isn't a sales process competing with alternatives. It's infrastructure adop
 
 ## Document Control
 
-**Last Updated:** December 21, 2025  
-**Status:** Pre-Standard Publication Update  
-**Distribution:** Sales & Marketing Leadership  
-**Next Review:** Post January 8, 2026 Publication  
+**Last Updated:** December 21, 2025
+**Status:** Pre-Standard Publication Update
+**Distribution:** Sales & Marketing Leadership
+**Next Review:** Post January 8, 2026 Publication
 **Document Owner:** Chief Revenue Officer
 
 **Key Changes from October 2025:**
-1. ✅ Added January 8, 2026 C2PA publication date (hard date)
-2. ✅ Added February 25, 2026 Syracuse Symposium details
-3. ✅ Added "willful infringement" legal frame (eliminates "we didn't know" defense)
-4. ✅ Added quote integrity verification use case (AI hallucination protection)
-5. ✅ Added market standards development emphasis (validated by Paul Sarkis)
-6. ✅ Added "Paul Sarkis Playbook" section with validated messaging
-7. ✅ Updated Eleanor persona to Paul persona based on AP engagement
-8. ✅ Added downstream survival specificity (B2B, wire services, aggregators)
-9. ✅ Added active pipeline references (AP, BBC, Springer Nature, Taylor & Francis, NMA)
-10. ✅ Updated timeline for pre/post-publication phases
+1. ... Added January 8, 2026 C2PA publication date (hard date)
+2. ... Added February 25, 2026 Syracuse Symposium details
+3. ... Added "willful infringement" legal frame (eliminates "we didn't know" defense)
+4. ... Added quote integrity verification use case (AI hallucination protection)
+5. ... Added market standards development emphasis (validated by Paul Sarkis)
+6. ... Added "Paul Sarkis Playbook" section with validated messaging
+7. ... Updated Eleanor persona to Paul persona based on AP engagement
+8. ... Added downstream survival specificity (B2B, wire services, aggregators)
+9. ... Added active pipeline references (AP, BBC, Springer Nature, Taylor & Francis, NMA)
+10. ... Updated timeline for pre/post-publication phases

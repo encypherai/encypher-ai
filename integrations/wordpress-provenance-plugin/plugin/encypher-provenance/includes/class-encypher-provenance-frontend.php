@@ -1,5 +1,5 @@
 <?php
-namespace EncypherAssurance;
+namespace EncypherProvenance;
 
 if (! defined('ABSPATH')) {
     exit;
@@ -34,9 +34,9 @@ class Frontend
 
         wp_enqueue_style(
             'encypher-frontend',
-            ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/css/frontend.css',
+            ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/css/frontend.css',
             [],
-            ENCYPHER_ASSURANCE_VERSION
+            ENCYPHER_PROVENANCE_VERSION
         );
     }
 
@@ -64,7 +64,7 @@ class Frontend
         }
 
         // Get settings
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $show_badge = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : true; // Default ON
         
         if (! $show_badge) {
@@ -117,7 +117,7 @@ class Frontend
         }
 
         // Get settings
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $show_badge = isset($settings['show_badge']) ? (bool) $settings['show_badge'] : true;
         
         if (! $show_badge) {
@@ -156,7 +156,7 @@ class Frontend
 
     private function get_badge_html(int $post_id, string $size = 'large'): string
     {
-        $settings = get_option('encypher_assurance_settings', []);
+        $settings = get_option('encypher_provenance_settings', []);
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         $show_branding = isset($settings['show_branding']) ? (bool) $settings['show_branding'] : true;
         
@@ -165,10 +165,10 @@ class Frontend
             $show_branding = true;
         }
 
-        $icon_url = ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/images/encypher-icon.png';
-        $status = get_post_meta($post_id, '_encypher_assurance_status', true);
-        $document_id = get_post_meta($post_id, '_encypher_assurance_document_id', true);
-        $last_verified = get_post_meta($post_id, '_encypher_assurance_last_verified', true);
+        $icon_url = ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/images/encypher-icon.png';
+        $status = get_post_meta($post_id, '_encypher_provenance_status', true);
+        $document_id = get_post_meta($post_id, '_encypher_provenance_document_id', true);
+        $last_verified = get_post_meta($post_id, '_encypher_provenance_last_verified', true);
         $is_verified = ! empty($last_verified);
 
         $status_class = 'protected';
@@ -200,7 +200,7 @@ class Frontend
         }
 
         $tier_pill = '';
-        if (in_array($tier, ['professional', 'business', 'enterprise'], true) && $is_verified) {
+        if ('enterprise' === $tier && $is_verified) {
             $tier_pill = '<span class="badge-tier">' . esc_html(ucfirst($tier)) . '</span>';
         }
 
@@ -247,7 +247,7 @@ class Frontend
      */
     private function get_modal_html(int $post_id): string
     {
-        $logo_url = ENCYPHER_ASSURANCE_PLUGIN_URL . 'assets/images/encypher-logo.png';
+        $logo_url = ENCYPHER_PROVENANCE_PLUGIN_URL . 'assets/images/encypher-logo.png';
         
         ob_start();
         ?>
@@ -390,21 +390,6 @@ class Frontend
                 }
                 
                 html += '</div>';
-
-        if (data.content) {
-            html += '<div class="merkle-proof-row" style="margin: 10px 0; font-size: 13px;">';
-            html += '<strong><?php esc_html_e('Sentence leaf:', 'encypher-provenance'); ?></strong> #' + data.content.leaf_index + ' &middot; ' + (data.content.text_preview ? escapeHtml(data.content.text_preview) : 'N/A');
-            html += '</div>';
-        }
-
-        if (data.merkle_proof) {
-            html += '<div class="merkle-proof-row" style="margin: 10px 0; font-size: 13px;">';
-            html += '<strong><?php esc_html_e('Merkle root:', 'encypher-provenance'); ?></strong> ' + escapeHtml(data.merkle_proof.root_hash || 'N/A');
-            if (data.merkle_proof.verified) {
-                html += ' &middot; <?php esc_html_e('Proof verified', 'encypher-provenance'); ?>';
-            }
-            html += '</div>';
-        }
 
         // Expandable details section (open by default)
                 html += '<details open style="margin: 15px 0;">';

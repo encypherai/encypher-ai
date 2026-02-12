@@ -5,6 +5,8 @@ from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_REV_SHARE
+
 from ..db.models import Subscription, Invoice
 from ..models.schemas import SubscriptionCreate
 
@@ -30,7 +32,7 @@ PRICING_TIERS = {
             "api_keys": 2,
             "rate_limit": 10,
         },
-        "coalition_rev_share": {"publisher": 60, "encypher": 40},
+        "coalition_rev_share": DEFAULT_COALITION_REV_SHARE,
     },
     "enterprise": {
         "name": "Enterprise",
@@ -51,7 +53,7 @@ PRICING_TIERS = {
             "api_keys": -1,
             "rate_limit": -1,
         },
-        "coalition_rev_share": {"publisher": 60, "encypher": 40},
+        "coalition_rev_share": DEFAULT_COALITION_REV_SHARE,
     },
     "strategic_partner": {
         "name": "Strategic Partner",
@@ -69,7 +71,7 @@ PRICING_TIERS = {
             "api_keys": -1,
             "rate_limit": -1,
         },
-        "coalition_rev_share": {"publisher": 60, "encypher": 40},
+        "coalition_rev_share": DEFAULT_COALITION_REV_SHARE,
     },
 }
 

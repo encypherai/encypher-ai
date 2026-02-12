@@ -9,6 +9,8 @@ import httpx
 import pytest
 from fastapi import HTTPException
 
+from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
+
 from app.middleware.api_key_auth import (
     _normalize_service_base_url,
     authenticate_api_key,
@@ -192,7 +194,7 @@ class TestAuthenticateAPIKey:
         mock_row.private_key_encrypted = b"encrypted_key"
         mock_row.features = {}
         mock_row.coalition_member = True
-        mock_row.coalition_rev_share = 65
+        mock_row.coalition_rev_share = DEFAULT_COALITION_PUBLISHER_PERCENT
 
         mock_result = Mock()
         mock_result.fetchone = Mock(return_value=mock_row)
@@ -226,7 +228,7 @@ class TestAuthenticateAPIKey:
                     "monthly_api_usage": 0,
                     "features": {},
                     "coalition_member": True,
-                    "coalition_rev_share": 65,
+                    "coalition_rev_share": DEFAULT_COALITION_PUBLISHER_PERCENT,
                 },
             }
         )

@@ -805,64 +805,97 @@ class StripeService:
     @staticmethod
     async def setup_stripe_products() -> Dict[str, Any]:
         """
-        Create Stripe products and prices for all tiers.
+        Create Stripe products and prices for freemium add-ons.
+
+        TEAM_173: Replaced old professional/business SaaS tiers with
+        freemium add-on products per Feb 2026 pricing model.
+        Free tier has no Stripe product (no charge).
+        Enterprise tier uses custom invoicing (no self-service Stripe product).
 
         Run this once to set up your Stripe catalog.
         Returns the product/price IDs to configure in your app.
         """
         products_created = {}
 
-        tiers = [
+        add_ons = [
             {
-                "id": "professional",
-                "name": "Encypher Professional",
-                "description": "Sentence-level tracking, streaming, BYOK, and better coalition revenue share.",
-                "price_monthly": 9900,  # $99 in cents
-                "price_annual": 95000,  # $950 in cents
+                "id": "attribution_analytics",
+                "name": "Encypher Attribution Analytics",
+                "description": "Full dashboard showing where your signed content appears in AI outputs.",
+                "price_monthly": 29900,  # $299 in cents
             },
             {
-                "id": "business",
-                "name": "Encypher Business",
-                "description": "Merkle infrastructure, plagiarism detection, team management, and audit logs.",
+                "id": "custom_signing_identity",
+                "name": "Encypher Custom Signing Identity",
+                "description": "Sign content as your brand instead of Encypher Coalition Member.",
                 "price_monthly": 49900,  # $499 in cents
-                "price_annual": 479000,  # $4790 in cents
+            },
+            {
+                "id": "white_label_verification",
+                "name": "Encypher White-Label Verification",
+                "description": "Verification pages hosted on your domain with your branding.",
+                "price_monthly": 29900,  # $299 in cents
+            },
+            {
+                "id": "custom_verification_domain",
+                "name": "Encypher Custom Verification Domain",
+                "description": "Point a custom domain to your verification pages.",
+                "price_monthly": 2900,  # $29 in cents
+            },
+            {
+                "id": "byok",
+                "name": "Encypher BYOK (Bring Your Own Keys)",
+                "description": "Use your organization's existing PKI infrastructure and signing certificates.",
+                "price_monthly": 49900,  # $499 in cents
+            },
+            {
+                "id": "priority_support",
+                "name": "Encypher Priority Support",
+                "description": "Email support with 4-hour response SLA during business hours.",
+                "price_monthly": 19900,  # $199 in cents
+            },
+            {
+                "id": "enforcement_bundle",
+                "name": "Encypher Enforcement Bundle",
+                "description": "Attribution Analytics + 2 Formal Notices/mo + 1 Evidence Package/mo.",
+                "price_monthly": 99900,  # $999 in cents
+            },
+            {
+                "id": "publisher_identity_bundle",
+                "name": "Encypher Publisher Identity Bundle",
+                "description": "Custom Signing Identity + White-Label Verification + Custom Domain.",
+                "price_monthly": 74900,  # $749 in cents
+            },
+            {
+                "id": "full_stack_bundle",
+                "name": "Encypher Full Stack Bundle",
+                "description": "Enforcement Bundle + Publisher Identity Bundle.",
+                "price_monthly": 169900,  # $1,699 in cents
             },
         ]
 
         try:
-            for tier in tiers:
-                # Create product
+            for add_on in add_ons:
                 product = stripe.Product.create(
-                    name=tier["name"],
-                    description=tier["description"],
-                    metadata={"tier_id": tier["id"]},
+                    name=add_on["name"],
+                    description=add_on["description"],
+                    metadata={"add_on_id": add_on["id"]},
                 )
 
-                # Create monthly price
                 price_monthly = stripe.Price.create(
                     product=product.id,
-                    unit_amount=tier["price_monthly"],
+                    unit_amount=add_on["price_monthly"],
                     currency="usd",
                     recurring={"interval": "month"},
-                    metadata={"tier_id": tier["id"], "billing_cycle": "monthly"},
+                    metadata={"add_on_id": add_on["id"], "billing_cycle": "monthly"},
                 )
 
-                # Create annual price
-                price_annual = stripe.Price.create(
-                    product=product.id,
-                    unit_amount=tier["price_annual"],
-                    currency="usd",
-                    recurring={"interval": "year"},
-                    metadata={"tier_id": tier["id"], "billing_cycle": "annual"},
-                )
-
-                products_created[tier["id"]] = {
+                products_created[add_on["id"]] = {
                     "product_id": product.id,
                     "price_monthly": price_monthly.id,
-                    "price_annual": price_annual.id,
                 }
 
-                logger.info(f"Created Stripe product for {tier['id']}: {product.id}")
+                logger.info(f"Created Stripe product for {add_on['id']}: {product.id}")
 
             return products_created
 

@@ -10,6 +10,7 @@ from fastapi.testclient import TestClient
 from app.api.v1.organizations import router as org_router
 from app.core.config import settings
 from app.db.session import get_db
+from encypher_commercial_shared.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
 
 
 def _org_fixture():
@@ -23,7 +24,7 @@ def _org_fixture():
         monthly_api_limit=100000,
         monthly_api_usage=12,
         coalition_member=True,
-        coalition_rev_share=70,
+        coalition_rev_share=DEFAULT_COALITION_PUBLISHER_PERCENT,
         certificate_pem="-----BEGIN PUBLIC KEY-----\nZm9v\n-----END PUBLIC KEY-----\n",
         created_at=datetime.utcnow(),
     )

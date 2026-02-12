@@ -1,6 +1,9 @@
 """
 Price cache service for Stripe products.
 
+TEAM_173: Updated from old professional/business SaaS tiers to
+freemium add-on products per Feb 2026 pricing model.
+
 Provides a hybrid approach:
 - Uses .env price IDs as primary source (fast, reliable)
 - Optionally validates against Stripe API on startup
@@ -30,36 +33,48 @@ class PriceCache:
         self._prices: Dict[str, Dict] = {}
         self._last_refresh: Optional[datetime] = None
         self._refresh_interval = timedelta(hours=24)
-        
+
+    def get_add_on_price_id(self, add_on: str) -> Optional[str]:
+        """
+        Get Stripe price ID for a freemium add-on from .env configuration.
+
+        Args:
+            add_on: Add-on identifier, e.g. "attribution_analytics",
+                    "enforcement_bundle", "custom_signing_identity", etc.
+
+        Returns:
+            Stripe price ID or None
+        """
+        add_on_price_map: Dict[str, Optional[str]] = {
+            "attribution_analytics": getattr(settings, "STRIPE_PRICE_ATTRIBUTION_ANALYTICS", None),
+            "custom_signing_identity": getattr(settings, "STRIPE_PRICE_CUSTOM_SIGNING_IDENTITY", None),
+            "white_label_verification": getattr(settings, "STRIPE_PRICE_WHITE_LABEL_VERIFICATION", None),
+            "custom_verification_domain": getattr(settings, "STRIPE_PRICE_CUSTOM_VERIFICATION_DOMAIN", None),
+            "byok": getattr(settings, "STRIPE_PRICE_BYOK", None),
+            "priority_support": getattr(settings, "STRIPE_PRICE_PRIORITY_SUPPORT", None),
+            "enforcement_bundle": getattr(settings, "STRIPE_PRICE_ENFORCEMENT_BUNDLE", None),
+            "publisher_identity_bundle": getattr(settings, "STRIPE_PRICE_PUBLISHER_IDENTITY_BUNDLE", None),
+            "full_stack_bundle": getattr(settings, "STRIPE_PRICE_FULL_STACK_BUNDLE", None),
+        }
+        return add_on_price_map.get(add_on)
+
     def get_price_id(self, tier: str, billing_cycle: str) -> Optional[str]:
         """
         Get price ID from .env configuration.
         
-        This is the primary method - uses .env for fast, reliable lookups.
+        TEAM_173: Legacy method kept for backward compatibility.
+        The new pricing model uses add-ons (see get_add_on_price_id).
+        Free tier has no Stripe price. Enterprise uses custom invoicing.
         
         Args:
-            tier: "professional" or "business"
+            tier: tier name (legacy: "professional" or "business")
             billing_cycle: "monthly" or "annual"
             
         Returns:
             Stripe price ID or None
         """
-        price_map = {
-            "professional": {
-                "monthly": settings.STRIPE_PRICE_PROFESSIONAL_MONTHLY,
-                "annual": settings.STRIPE_PRICE_PROFESSIONAL_ANNUAL,
-            },
-            "business": {
-                "monthly": settings.STRIPE_PRICE_BUSINESS_MONTHLY,
-                "annual": settings.STRIPE_PRICE_BUSINESS_ANNUAL,
-            },
-        }
-        
-        tier_prices = price_map.get(tier)
-        if not tier_prices:
-            return None
-            
-        return tier_prices.get(billing_cycle)
+        # Old SaaS tiers no longer exist — return None gracefully
+        return None
     
     async def validate_prices_on_startup(self) -> Dict[str, bool]:
         """
@@ -74,10 +89,15 @@ class PriceCache:
         validation_results = {}
         
         price_ids = [
-            ("professional_monthly", settings.STRIPE_PRICE_PROFESSIONAL_MONTHLY),
-            ("professional_annual", settings.STRIPE_PRICE_PROFESSIONAL_ANNUAL),
-            ("business_monthly", settings.STRIPE_PRICE_BUSINESS_MONTHLY),
-            ("business_annual", settings.STRIPE_PRICE_BUSINESS_ANNUAL),
+            ("attribution_analytics", getattr(settings, "STRIPE_PRICE_ATTRIBUTION_ANALYTICS", None)),
+            ("enforcement_bundle", getattr(settings, "STRIPE_PRICE_ENFORCEMENT_BUNDLE", None)),
+            ("custom_signing_identity", getattr(settings, "STRIPE_PRICE_CUSTOM_SIGNING_IDENTITY", None)),
+            ("white_label_verification", getattr(settings, "STRIPE_PRICE_WHITE_LABEL_VERIFICATION", None)),
+            ("custom_verification_domain", getattr(settings, "STRIPE_PRICE_CUSTOM_VERIFICATION_DOMAIN", None)),
+            ("byok", getattr(settings, "STRIPE_PRICE_BYOK", None)),
+            ("priority_support", getattr(settings, "STRIPE_PRICE_PRIORITY_SUPPORT", None)),
+            ("publisher_identity_bundle", getattr(settings, "STRIPE_PRICE_PUBLISHER_IDENTITY_BUNDLE", None)),
+            ("full_stack_bundle", getattr(settings, "STRIPE_PRICE_FULL_STACK_BUNDLE", None)),
         ]
         
         for name, price_id in price_ids:
@@ -100,10 +120,10 @@ class PriceCache:
                     "active": price.active,
                 }
                 
-                logger.info(f"✅ Validated price {name}: {price_id} (${price.unit_amount/100:.2f}/{price.recurring.get('interval')})")
+                logger.info(f"Validated price {name}: {price_id} (${price.unit_amount/100:.2f}/{price.recurring.get('interval')})")
                 
             except StripeError as e:
-                logger.error(f"❌ Failed to validate price {name} ({price_id}): {e}")
+                logger.error(f"Failed to validate price {name} ({price_id}): {e}")
                 validation_results[name] = False
         
         self._last_refresh = datetime.utcnow()
@@ -142,19 +162,26 @@ class PriceCache:
 price_cache = PriceCache()
 
 
-# Convenience function for backward compatibility
-def get_stripe_price_id(tier: str, billing_cycle: str) -> Optional[str]:
+def get_add_on_stripe_price_id(add_on: str) -> Optional[str]:
     """
-    Get Stripe price ID for a tier and billing cycle.
-    
+    Get Stripe price ID for a freemium add-on.
+
     This is the primary function to use throughout the codebase.
     Uses .env configuration for fast, reliable lookups.
-    
+
     Args:
-        tier: "professional" or "business"
-        billing_cycle: "monthly" or "annual"
-        
+        add_on: Add-on identifier, e.g. "attribution_analytics"
+
     Returns:
         Stripe price ID or None
+    """
+    return price_cache.get_add_on_price_id(add_on)
+
+
+# Legacy function kept for backward compatibility
+def get_stripe_price_id(tier: str, billing_cycle: str) -> Optional[str]:
+    """
+    TEAM_173: Legacy — old SaaS tiers removed. Returns None.
+    Use get_add_on_stripe_price_id() for add-on pricing.
     """
     return price_cache.get_price_id(tier, billing_cycle)

@@ -3,78 +3,91 @@
 ## Status: COMPLETE
 
 ## Summary
-Aligned the WordPress provenance plugin with the current enterprise API freemium model (TEAM_166). The API consolidated tiers to free/enterprise/strategic_partner, but the plugin referenced old starter/professional/business tier names and didn't use `micro_ecc_c2pa` manifest mode.
+Full alignment of the WordPress Provenance Plugin with the enterprise API freemium model. Three sessions:
+- **Session 1**: Tier coercion (starter→free), manifest_mode defaults, verify endpoint, upsell/UI updates
+- **Session 2**: Rename Encypher Assurance → Encypher Provenance, remove all merkle storage (DB handles it), remove all NMA references, fix editor sidebar panel rendering
+- **Session 3**: Remove legacy backward compat (unreleased plugin), remove all coalition revenue split logic (managed externally)
 
 ## Key Changes
 
-### 1. Sign Request — `micro_ecc_c2pa` default (class-encypher-provenance-rest.php)
-- Added `manifest_mode: micro_ecc_c2pa` to all sign request payloads
-- Added `segmentation_level: sentence` and `index_for_attribution: true` as defaults for ALL tiers
-- Removed old `!$is_starter || $is_nma_member` gating for segmentation (free tier now has it)
-- Changed `$is_starter` → `$is_free` variable naming
+### Session 1 — API Alignment
+1. **Tier naming**: `starter` → `free` throughout plugin
+2. **Default manifest_mode**: `micro_ecc_c2pa` in all sign requests
+3. **Segmentation**: `sentence` level + `index_for_attribution: true` for all tiers
+4. **Verify endpoint**: Always `/verify/advanced`
+5. **Upsell module**: 2-tier model (free → enterprise)
+6. **Bulk signing**: Free tier limit 10 docs
+7. **Trusted hosts**: Added `encypher-enterprise-api` for Docker inter-container calls
 
-### 2. Verify Endpoint — `/verify` via verification-service (class-encypher-provenance-rest.php)
-- Enterprise API's `/verify` and `/verify/advanced` both exist but `/verify` routes to the verification-service
-- Plugin now uses `/verify` with simple `{text}` payload (verification-service schema)
-- Removed old `/verify/advanced` fields (segmentation_level, search_scope, include_attribution, etc.)
-- Auth sent when available for org context (verification-service accepts optional auth)
+### Session 2 — Rename, Cleanup, Sidebar Fix
+9. **Rename**: `EncypherAssurance` → `EncypherProvenance` namespace, `ENCYPHER_ASSURANCE_*` → `ENCYPHER_PROVENANCE_*` constants, `encypher_assurance_settings` → `encypher_provenance_settings` option
+10. **Merkle removal**: Removed `persist_merkle_snapshot()`, `get_merkle_snapshot()`, all `_encypher_merkle_*` meta storage, merkle state/rendering from JS, merkle CSS from editor.css
+11. **NMA removal**: Removed `render_nma_member_field()`, NMA sanitization, NMA settings field registration, `nma_member` from sign payload metadata
+12. **Sidebar fix**: `wp.editPost` → `wp.editor || wp.editPost` compat for `PluginDocumentSettingPanel`, added `wp-editor` script dependency, fixed structural JS syntax errors, removed duplicate code blocks
+13. **Frontend cleanup**: Removed merkle proof display from verification modal, removed legacy professional/business CSS classes, updated tier_pill to enterprise-only
+14. **Docs**: README.md and readme.txt updated to free/enterprise model, no merkle/NMA/Pro references
 
-### 3. Tier Naming — `starter` → `free` (15 files, ~60 occurrences)
-- All defaults changed from `'starter'` to `'free'`
-- All comparisons changed from `=== 'starter'` to `=== 'free'`
-- Added legacy tier coercion: `['starter', 'professional', 'business']` → `'free'`
-- Valid tiers now: `['free', 'enterprise', 'strategic_partner']`
+### Session 3 — Remove Backward Compat & Revenue Splits
+15. **Legacy coercion removed**: Deleted all `in_array($tier, ['starter', 'professional', 'business'])` coercion arrays from rest.php (2) and admin.php (2) — plugin is unreleased, no backward compat needed
+16. **Revenue split removed**: Deleted `get_revenue_split()` and `calculate_enterprise_upgrade_roi()` from coalition.php — managed by website/internal only
+17. **Coalition UI cleaned**: Removed revenue split display, payout thresholds, and ROI upgrade CTAs from coalition-widget.php, coalition-page.php, and render_coalition_enabled_field in admin.php
+18. **Upsell cleaned**: Removed "85/15 revenue share" from enterprise upsell features list
+19. **Docs cleaned**: Removed revenue share percentages from readme.txt tier features
 
-### 4. Upsell/UI — 2-tier model (class-encypher-provenance-admin.php)
-- Upsell module: collapsed 4-tier upgrade path to single free→enterprise
-- Account page: updated tier_info map to free/enterprise/strategic_partner
-- Tier field: updated feature lists to reflect freemium model
-- CSS: renamed `.tier-starter` → `.tier-free`, removed professional/business styles
-- All "Upgrade to Pro" text → "Upgrade to Enterprise"
+## Files Modified (15 code + 2 docs)
+- `encypher-provenance.php` — constants renamed
+- `includes/class-encypher-provenance.php` — namespace, option name, constants
+- `includes/class-encypher-provenance-rest.php` — sign payload, merkle removal, NMA removal, verify endpoint
+- `includes/class-encypher-provenance-admin.php` — NMA field removal, coalition revenue split, all render methods
+- `includes/class-encypher-provenance-bulk.php` — tier defaults, batch limits
+- `includes/class-encypher-provenance-coalition.php` — revenue splits, upgrade ROI
+- `includes/class-encypher-provenance-frontend.php` — merkle proof removal, tier_pill fix
+- `includes/class-encypher-provenance-verification.php` — namespace/constants (via sed)
+- `admin/partials/coalition-page.php` — enterprise upgrade CTA
+- `admin/partials/coalition-widget.php` — enterprise upgrade CTA
+- `assets/js/editor-sidebar.js` — full rewrite: sidebar fix, merkle removal, syntax fixes
+- `assets/js/bulk-mark.js` — free tier limit 10
+- `assets/css/editor.css` — merkle CSS removed
+- `assets/css/frontend.css` — legacy tier CSS removed
+- `assets/css/coalition-widget.css` — tier badge colors
+- `assets/css/settings-page.css` — tier badge colors
+- `README.md` — free/enterprise model, no merkle/NMA
+- `readme.txt` — Pro+ reference removed
+- `enterprise_api/app/main.py` — trusted hosts
 
-### 5. Coalition — Updated revenue splits (class-encypher-provenance-coalition.php)
-- Revenue splits: free=60/40, enterprise=85/15, strategic_partner=85/15
-- ROI calculation updated for free→enterprise upgrade path
+## E2E Test Results
+- **Sidebar panel**: ✅ Renders in WP editor (Puppeteer verified)
+- **Pre-publish panel**: ✅ Shows C2PA signing info before publish
+- **Auto-sign hook**: ✅ Fires on publish (API key expired in test env but hook confirmed)
+- **Settings page**: ✅ Free tier, Enterprise CTAs
+- **No Assurance refs**: ✅ grep confirmed zero matches in code files
+- **No merkle refs**: ✅ grep confirmed zero matches in code files
+- **No NMA refs**: ✅ grep confirmed zero matches in code files (only `minmax`/`unmarked` false positives)
 
-### 6. JS/CSS Assets
-- `editor-sidebar.js`: all `'starter'` → `'free'`, upgrade text → Enterprise
-- `settings-page.js`: tier constraint check updated
-- `bulk-mark.js`: tier default and limit check updated
-- `coalition-widget.css`, `settings-page.css`: `.tier-starter` → `.tier-free`
-
-## Files Modified (15 total)
-- `includes/class-encypher-provenance-rest.php` — sign payload, verify endpoint, tier coercion
-- `includes/class-encypher-provenance-admin.php` — all render methods, settings, upsell, CSS
-- `includes/class-encypher-provenance-bulk.php` — tier defaults and limits
-- `includes/class-encypher-provenance-coalition.php` — revenue splits, ROI calc
-- `includes/class-encypher-provenance-frontend.php` — badge branding check
-- `includes/class-encypher-provenance.php` — activation defaults
-- `admin/partials/coalition-page.php` — tier check
-- `admin/partials/coalition-widget.php` — tier check
-- `assets/js/editor-sidebar.js` — tier defaults and upgrade text
-- `assets/js/settings-page.js` — tier constraints
-- `assets/js/bulk-mark.js` — tier defaults and limits
-- `assets/css/coalition-widget.css` — tier CSS class
-- `assets/css/settings-page.css` — tier CSS class
-- `README.md` — API endpoints documentation
-- `readme.txt` — tier features documentation
-
-## Pre-existing Issues (not introduced by this PR)
-- `editor-sidebar.js` has structural lint errors at lines 282-500 (pre-existing, confirmed via git diff)
-
-## Suggested Git Commit Message
+## Git Commit Suggestion
 ```
-feat(wordpress-plugin): align with freemium API model (TEAM_172)
+feat(wordpress-plugin): rename to Provenance, full cleanup (TEAM_172)
 
-- Default manifest_mode to micro_ecc_c2pa for all sign requests
-- Enable sentence segmentation and attribution indexing for all tiers
-- Use /verify/advanced exclusively (old /verify returns 410 Gone)
-- Rename tier references: starter → free (canonical API tier name)
-- Add legacy tier coercion for backward compatibility
-- Collapse 4-tier upsell to 2-tier (free/enterprise) model
-- Update revenue splits: free=60/40, enterprise=85/15
-- Update all UI text, CSS classes, and JS tier checks
+Breaking changes:
+- Namespace: EncypherAssurance → EncypherProvenance
+- Constants: ENCYPHER_ASSURANCE_* → ENCYPHER_PROVENANCE_*
+- WP option: encypher_assurance_settings → encypher_provenance_settings
+- Post meta prefix: _encypher_assurance_* → _encypher_provenance_*
 
-Aligns with TEAM_166 enterprise API freemium consolidation.
-Files changed: 15 across PHP, JS, CSS, and docs.
+Removals:
+- All merkle hash storage — DB handles this server-side
+- All NMA references (render_nma_member_field, nma_member setting/payload)
+- All legacy tier coercion arrays (starter/professional/business) — unreleased plugin
+- All coalition revenue split logic (get_revenue_split, calculate_enterprise_upgrade_roi,
+  revenue split UI in settings/widget/page) — managed by website/internal only
+
+Fixes:
+- Editor sidebar: wp.editor/wp.editPost compat for PluginDocumentSettingPanel
+- Added wp-editor script dependency for WP 6.5+ compatibility
+- Fixed structural JS syntax errors in editor-sidebar.js
+- Sentence count now shown for all tiers (was gated to enterprise)
+
+Docs:
+- README.md and readme.txt updated to free/enterprise model
+- No merkle, NMA, Pro tier, or revenue split references remain
 ```

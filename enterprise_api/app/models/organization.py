@@ -7,6 +7,8 @@ Keeps track of usage quotas, feature flags, and signing certificate state.
 from datetime import datetime
 from enum import Enum
 
+from app.core.pricing_constants import COALITION_ENCYPHER_SHARE, COALITION_PUBLISHER_SHARE
+
 from sqlalchemy import (
     TIMESTAMP,
     Boolean,
@@ -118,8 +120,8 @@ class Organization(Base):
 
     # Coalition settings
     coalition_member = Column(Boolean, default=True)  # Auto-join on free tier
-    coalition_rev_share_publisher = Column(Integer, default=60)  # Publisher's share
-    coalition_rev_share_encypher = Column(Integer, default=40)  # Encypher's share
+    coalition_rev_share_publisher = Column(Integer, default=COALITION_PUBLISHER_SHARE)
+    coalition_rev_share_encypher = Column(Integer, default=COALITION_ENCYPHER_SHARE)
     coalition_opted_out = Column(Boolean, default=False)
     coalition_opted_out_at = Column(TIMESTAMP(timezone=True), nullable=True)
 

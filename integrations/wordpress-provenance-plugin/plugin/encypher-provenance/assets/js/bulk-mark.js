@@ -105,11 +105,11 @@
 
         // Check tier limits
         const tier = $('body').data('tier') || 'free';
-        if (tier === 'free' && bulkMarkState.postIds.length > 100) {
-            if (!confirm('Free tier limit: 100 posts. Only the first 100 posts will be marked. Upgrade to Enterprise for unlimited marking. Continue?')) {
+        if (tier === 'free' && bulkMarkState.postIds.length > 10) {
+            if (!confirm('Free tier limit: 10 documents. Only the first 10 will be marked. Upgrade to Enterprise for higher limits. Continue?')) {
                 return;
             }
-            bulkMarkState.postIds = bulkMarkState.postIds.slice(0, 100);
+            bulkMarkState.postIds = bulkMarkState.postIds.slice(0, 10);
         }
 
         // Reset state

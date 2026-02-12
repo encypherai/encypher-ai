@@ -1,6 +1,9 @@
 (function () {
     const { registerPlugin } = wp.plugins;
-    const { PluginDocumentSettingPanel, PluginPrePublishPanel } = wp.editPost;
+    const editorSlotFills = wp.editPost || {};
+    const wpEditorSlotFills = wp.editor || {};
+    const PluginDocumentSettingPanel = wpEditorSlotFills.PluginDocumentSettingPanel || editorSlotFills.PluginDocumentSettingPanel;
+    const PluginPrePublishPanel = wpEditorSlotFills.PluginPrePublishPanel || editorSlotFills.PluginPrePublishPanel;
     const { Button, Notice, Spinner } = wp.components;
     const { useState, useEffect } = wp.element;
     const { useSelect } = wp.data;
@@ -14,17 +17,14 @@
         const [verificationUrl, setVerificationUrl] = useState('');
         const [totalSentences, setTotalSentences] = useState(null);
         const [lastSigned, setLastSigned] = useState('');
-        const [merkleRoot, setMerkleRoot] = useState('');
         const [showManifest, setShowManifest] = useState(false);
         const [manifestData, setManifestData] = useState(null);
         const [verifying, setVerifying] = useState(false);
         const [sentenceSegments, setSentenceSegments] = useState([]);
         const [sentencesTotal, setSentencesTotal] = useState(0);
-        const [merkleSummary, setMerkleSummary] = useState(null);
         const [showAllSentences, setShowAllSentences] = useState(false);
-        const [copyingRoot, setCopyingRoot] = useState(false);
-        const tier = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.tier) ? EncypherAssuranceConfig.tier : 'free';
-        const upgradeUrl = (typeof EncypherAssuranceConfig !== 'undefined' && EncypherAssuranceConfig.upgradeUrl) ? EncypherAssuranceConfig.upgradeUrl : 'https://dashboard.encypherai.com/billing';
+        const tier = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.tier) ? EncypherProvenanceConfig.tier : 'free';
+        const upgradeUrl = (typeof EncypherProvenanceConfig !== 'undefined' && EncypherProvenanceConfig.upgradeUrl) ? EncypherProvenanceConfig.upgradeUrl : 'https://dashboard.encypherai.com/billing';
 
         const renderUpgradeCallout = (message) => {
             return wp.element.createElement(
@@ -50,7 +50,7 @@
                 path: `encypher-provenance/v1/status?post_id=${postId}`,
                 method: 'GET',
                 headers: {
-                    'X-WP-Nonce': EncypherAssuranceConfig.nonce,
+                    'X-WP-Nonce': EncypherProvenanceConfig.nonce,
                 },
             })
                 .then((response) => {
@@ -59,13 +59,11 @@
                     setVerificationUrl(response.verification_url || '');
                     setTotalSentences(typeof response.total_sentences === 'number' ? response.total_sentences : null);
                     setLastSigned(response.last_signed || '');
-                    setMerkleRoot(response.merkle_root_hash || '');
                     setSentenceSegments(Array.isArray(response.sentences) ? response.sentences : []);
                     setSentencesTotal(typeof response.sentences_total === 'number' ? response.sentences_total : 0);
-                    setMerkleSummary(response.merkle || null);
                     setShowAllSentences(false);
                 })
-                .catch((error) => {
+                .catch(() => {
                     setStatus('error');
                 });
         };
@@ -90,7 +88,7 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-WP-Nonce': EncypherAssuranceConfig.nonce,
+                    'X-WP-Nonce': EncypherProvenanceConfig.nonce,
                 },
                 data: { post_id: postId }
             })
@@ -113,7 +111,7 @@
             if (isDraft && !isSigned) {
                 return 'Draft - Will be auto-signed when published';
             }
-            
+
             switch (status) {
                 case 'c2pa_protected':
                 case 'signed':
@@ -146,15 +144,6 @@
 
             const items = [];
             const canViewManifest = tier !== 'free';
-            const pushUpgradeItem = (message, key) => {
-                items.push(
-                    wp.element.createElement(
-                        'li',
-                        { key, style: { marginTop: '12px' } },
-                        renderUpgradeCallout(message)
-                    )
-                );
-            };
 
             if (lastSigned) {
                 items.push(
@@ -168,7 +157,7 @@
                 );
             }
 
-            if (typeof totalSentences === 'number' && canViewManifest) {
+            if (typeof totalSentences === 'number') {
                 items.push(
                     wp.element.createElement(
                         'li',
@@ -178,8 +167,6 @@
                         totalSentences
                     )
                 );
-            } else if (tier === 'free') {
-                pushUpgradeItem('Unlock sentence-level analytics with Encypher Enterprise.', 'upgrade-sentences');
             }
 
             if (documentId) {
@@ -190,18 +177,6 @@
                         wp.element.createElement('strong', null, 'Document ID:'),
                         ' ',
                         documentId
-                    )
-                );
-            }
-
-            if (merkleRoot && canViewManifest) {
-                items.push(
-                    wp.element.createElement(
-                        'li',
-                        { key: 'merkle-root', style: { fontSize: '11px', color: '#999', fontFamily: 'monospace' } },
-                        wp.element.createElement('strong', null, 'Merkle Root:'),
-                        ' ',
-                        merkleRoot.substring(0, 16) + '...'
                     )
                 );
             }
@@ -224,7 +199,13 @@
                     )
                 );
             } else if (isSigned && !canViewManifest) {
-                pushUpgradeItem('Upgrade to view the underlying C2PA manifest.', 'upgrade-manifest');
+                items.push(
+                    wp.element.createElement(
+                        'li',
+                        { key: 'upgrade-manifest', style: { marginTop: '12px' } },
+                        renderUpgradeCallout('Upgrade to view the underlying C2PA manifest.')
+                    )
+                );
             }
 
             return wp.element.createElement('ul', { className: 'verification-meta', style: { listStyle: 'none', padding: 0, marginTop: '12px' } }, items);
@@ -267,31 +248,13 @@
                         }
                     },
                     JSON.stringify(manifestData, null, 2)
-                ),
-                wp.element.createElement(
-                    Button,
-                    {
-                        variant: 'secondary',
-                        onClick: fetchManifest,
-                        disabled: verifying,
-                        style: { width: '100%' }
-                    },
-                    verifying ? 'Loading...' : 'View C2PA Manifest'
                 )
-            )
-        );
-    } else if (isSigned && !canViewManifest) {
-        pushUpgradeItem('Upgrade to view the underlying C2PA manifest.', 'upgrade-manifest');
-    }
+            );
+        };
 
-    return wp.element.createElement('ul', { className: 'verification-meta', style: { listStyle: 'none', padding: 0, marginTop: '12px' } }, items);
-};
+        const renderSentenceVerification = () => {
             if (!isSigned) {
                 return null;
-            }
-
-            if (tier === 'free') {
-                return renderUpgradeCallout('Unlock sentence-level verification with Encypher Enterprise.');
             }
 
             if (!sentenceSegments.length) {
@@ -318,7 +281,7 @@
                             wp.element.createElement(
                                 'span',
                                 { className: 'sentence-index' },
-                                `#${typeof segment.leaf_index === 'number' ? segment.leaf_index : index + 1}`
+                                '#' + (typeof segment.leaf_index === 'number' ? segment.leaf_index : index + 1)
                             ),
                             wp.element.createElement(
                                 'span',
@@ -346,77 +309,9 @@
                               variant: 'link',
                               onClick: () => setShowAllSentences(!showAllSentences),
                           },
-                          showAllSentences ? 'Show fewer sentences' : `Show ${sentencesTotal - visibleSegments.length} more`
+                          showAllSentences ? 'Show fewer sentences' : 'Show ' + (sentencesTotal - visibleSegments.length) + ' more'
                       )
                     : null
-            );
-        };
-
-        const renderMerkleSummary = () => {
-            if (!isSigned) {
-                return null;
-            }
-
-            if (!merkleSummary || !merkleSummary.root_hash) {
-                if (tier === 'free') {
-                    return null;
-                }
-                return wp.element.createElement(
-                    Notice,
-                    { status: 'info', isDismissible: false, style: { marginTop: '12px' } },
-                    'Merkle proofs will be generated the next time this post is signed.'
-                );
-            }
-
-            const rows = [
-                { label: 'Root hash', value: merkleSummary.root_hash ? `${merkleSummary.root_hash.substring(0, 24)}…` : '—' },
-                { label: 'Leaves', value: typeof merkleSummary.total_leaves === 'number' ? merkleSummary.total_leaves : 0 },
-                {
-                    label: 'Tree depth',
-                    value: typeof merkleSummary.tree_depth === 'number' ? merkleSummary.tree_depth : '—',
-                },
-            ];
-
-            const handleCopy = () => {
-                if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
-                    navigator.clipboard
-                        .writeText(merkleSummary.root_hash)
-                        .then(() => {
-                            setCopyingRoot(true);
-                            setTimeout(() => setCopyingRoot(false), 1500);
-                        })
-                        .catch(() => setCopyingRoot(false));
-                } else {
-                    window.prompt('Copy Merkle root', merkleSummary.root_hash);
-                }
-            };
-
-            return wp.element.createElement(
-                'div',
-                { className: 'encypher-merkle-card' },
-                wp.element.createElement('h4', { className: 'encypher-section-title' }, 'Merkle snapshot'),
-                wp.element.createElement(
-                    'ul',
-                    { className: 'encypher-merkle-list' },
-                    rows.map((row) =>
-                        wp.element.createElement(
-                            'li',
-                            { key: row.label },
-                            wp.element.createElement('span', { className: 'label' }, row.label),
-                            wp.element.createElement('span', { className: 'value' }, row.value)
-                        )
-                    )
-                ),
-                wp.element.createElement(
-                    Button,
-                    {
-                        isSecondary: true,
-                        isSmall: true,
-                        disabled: copyingRoot,
-                        onClick: handleCopy,
-                    },
-                    copyingRoot ? 'Copied!' : 'Copy root hash'
-                )
             );
         };
 
@@ -439,7 +334,6 @@
                 renderMeta(),
                 renderManifestViewer(),
                 renderSentenceVerification(),
-                renderMerkleSummary(),
                 !isSigned && isDraft && wp.element.createElement(
                     'p',
                     { style: { fontSize: '12px', color: '#666', fontStyle: 'italic', marginTop: '12px' } },
@@ -452,7 +346,6 @@
     const PrePublishPanel = function () {
         const postStatus = useSelect((select) => select('core/editor').getEditedPostAttribute('status'), []);
         const isDraft = postStatus === 'draft' || postStatus === 'auto-draft';
-        const isPublished = postStatus === 'publish';
 
         return wp.element.createElement(
             PluginPrePublishPanel,
@@ -466,7 +359,7 @@
                 wp.element.createElement(
                     'p',
                     { style: { margin: '0 0 12px 0', fontSize: '13px', lineHeight: '1.5' } },
-                    isDraft 
+                    isDraft
                         ? 'This content will be automatically signed with C2PA when published.'
                         : 'This content will be re-signed with C2PA to reflect your changes.'
                 ),

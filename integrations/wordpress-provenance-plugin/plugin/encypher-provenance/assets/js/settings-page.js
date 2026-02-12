@@ -19,7 +19,7 @@
             });
 
             // Auto-test connection when API settings change
-            $('input[name="encypher_assurance_settings[api_base_url]"], input[name="encypher_assurance_settings[api_key]"]').on('change', () => {
+            $('input[name="encypher_provenance_settings[api_base_url]"], input[name="encypher_provenance_settings[api_key]"]').on('change', () => {
                 this.checkConnection();
             });
 
@@ -30,7 +30,7 @@
 
         async checkConnection() {
             const $status = $('#connection-status');
-            const apiUrl = $('input[name="encypher_assurance_settings[api_base_url]"]').val();
+            const apiUrl = $('input[name="encypher_provenance_settings[api_base_url]"]').val();
 
             if (!apiUrl) {
                 $status.html('<span class="status-indicator dashicons dashicons-minus"></span> <span>No API URL configured</span>');

@@ -8,6 +8,7 @@ import logging
 from typing import Dict
 
 from app.config import settings
+from app.core.pricing_constants import DEFAULT_COALITION_PUBLISHER_PERCENT
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -49,7 +50,7 @@ async def ensure_organization_exists(db: AsyncSession, organization: Dict) -> bo
     monthly_api_limit = organization.get("monthly_api_limit", 10000)
     monthly_api_usage = organization.get("monthly_api_usage", 0)
     coalition_member = organization.get("coalition_member", True)
-    coalition_rev_share = organization.get("coalition_rev_share", 60)
+    coalition_rev_share = organization.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT)
     email = organization.get("email") or _derive_email(org_id)
 
     await db.execute(
