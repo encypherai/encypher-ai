@@ -1063,8 +1063,11 @@ class Rest
         $last_frag_idx = null;
 
         foreach ($fragments as $frag_idx => [$offset, $length, $raw_text]) {
-            // Normalize the fragment text (collapse whitespace) for matching
-            $normalized = preg_replace('/\s+/', ' ', trim($raw_text));
+            // Normalize the fragment text for matching:
+            // 1. Decode HTML entities (&nbsp; → NBSP, &amp; → &, etc.)
+            // 2. Collapse whitespace runs to single space
+            $decoded = html_entity_decode($raw_text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+            $normalized = preg_replace('/\s+/u', ' ', trim($decoded, " \t\n\r\0\x0B\xC2\xA0"));
             if ('' === $normalized) {
                 continue;
             }
@@ -1367,7 +1370,7 @@ class Rest
         if ($this->is_vs_char($ch)) {
             return true;
         }
-        return in_array($ch, [' ', "\t", "\n", "\r"], true);
+        return in_array($ch, [' ', "\t", "\n", "\r", "\xC2\xA0"], true);
     }
 
     /**

@@ -82,6 +82,14 @@ class Plugin
         // Intentionally left empty. We keep settings and meta data for future re-activation.
     }
 
+    /**
+     * Return the URL slug used for the C2PA verification page.
+     */
+    public static function get_verify_slug(): string
+    {
+        return 'c2pa-verify';
+    }
+
     public function load_textdomain(): void
     {
         load_plugin_textdomain('encypher-provenance', false, dirname(plugin_basename(ENCYPHER_PROVENANCE_PLUGIN_FILE)) . '/languages/');
