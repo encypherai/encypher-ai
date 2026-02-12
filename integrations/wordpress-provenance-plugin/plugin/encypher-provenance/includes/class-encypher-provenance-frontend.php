@@ -411,15 +411,17 @@ class Frontend
                 }
                 
                 // Extract action info from manifest (try v2 then v1)
+                // Prefer c2pa.created, fall back to c2pa.edited
                 const actions = findActions(manifest);
                 if (actions) {
-                    const createdAction = actions.find(a => a.label === 'c2pa.created');
-                    if (createdAction && createdAction.when) {
-                        const createdDate = new Date(createdAction.when);
-                        html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed:', 'encypher-provenance'); ?></strong> ' + createdDate.toLocaleString() + '</p>';
+                    const primaryAction = actions.find(a => a.label === 'c2pa.created')
+                        || actions.find(a => a.label === 'c2pa.edited');
+                    if (primaryAction && primaryAction.when) {
+                        const actionDate = new Date(primaryAction.when);
+                        html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed:', 'encypher-provenance'); ?></strong> ' + actionDate.toLocaleString() + '</p>';
                     }
-                    if (createdAction && createdAction.softwareAgent) {
-                        html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Software:', 'encypher-provenance'); ?></strong> ' + escapeHtml(createdAction.softwareAgent) + '</p>';
+                    if (primaryAction && primaryAction.softwareAgent) {
+                        html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Software:', 'encypher-provenance'); ?></strong> ' + escapeHtml(primaryAction.softwareAgent) + '</p>';
                     }
                 }
 
@@ -464,37 +466,38 @@ class Frontend
                 html += '</div>';
 
                 // Provenance chain viewer (if ingredients exist)
-                if (data.metadata && data.metadata.ingredients && data.metadata.ingredients.length > 0) {
+                // Use normalized manifest for ingredients check (handles both full C2PA and micro_ecc_c2pa)
+                if (manifest.ingredients && manifest.ingredients.length > 0) {
                     html += '<details style="margin: 15px 0;">';
                     html += '<summary style="cursor: pointer; padding: 10px; background: #28a745; color: white; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Provenance Chain', 'encypher-provenance'); ?></summary>';
                     html += '<div style="padding: 15px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px; background: #f8f9fa;">';
                     html += '<p style="margin-bottom: 15px; color: #666;"><?php esc_html_e('This content has been edited. View the complete edit history:', 'encypher-provenance'); ?></p>';
                     
                     let chain = [];
-                    let current = data.metadata;
+                    let current = manifest;
                     let depth = 0;
                     while (current && depth < 10) {
                         const chainActions = findActions(current) || [];
                         const mainAction = chainActions.find(a => a.label === 'c2pa.created' || a.label === 'c2pa.edited');
                         chain.push({
-                            instance_id: current.instance_id,
+                            instance_id: current.instance_id || 'unknown',
                             action: mainAction?.label || 'unknown',
-                            when: mainAction?.when || 'unknown',
+                            when: mainAction?.when || null,
                             depth: depth
                         });
                         current = current.ingredients?.[0]?.c2pa_manifest;
                         depth++;
                     }
                     
-                    html += '<div style="font-family: monospace; font-size: 13px;">';
+                    html += '<div style="font-size: 13px;">';
                     for (let i = 0; i < chain.length; i++) {
                         const item = chain[i];
-                        const indent = '  '.repeat(item.depth);
                         const label = item.action === 'c2pa.created' ? 'Created' : 'Edited';
                         const color = item.action === 'c2pa.created' ? '#28a745' : '#ffc107';
+                        const whenStr = item.when ? new Date(item.when).toLocaleString() : 'unknown';
                         html += '<div style="padding: 8px; margin: 5px 0; background: white; border-left: 3px solid ' + color + '; border-radius: 4px;">';
-                        html += indent + '<strong>' + label + '</strong> at ' + item.when;
-                        html += '<br>' + indent + '   <span style="color: #999; font-size: 11px;">Instance: ' + item.instance_id.substring(0, 8) + '...</span>';
+                        html += '<strong>' + label + '</strong> — ' + whenStr;
+                        html += '<br><span style="color: #999; font-size: 11px;">Instance: ' + escapeHtml(item.instance_id.substring(0, 12)) + '...</span>';
                         html += '</div>';
                     }
                     html += '</div>';
