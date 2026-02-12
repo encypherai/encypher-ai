@@ -2,6 +2,12 @@
 
 This document provides a chronological list of notable changes for each version of Encypher.
 
+## 3.0.5 (2026-02-11)
+
+### Added
+- Added `normalize_whitespace()` utility to `encypher.interop.c2pa.text_hashing` for pre-processing text before signing. Collapses runs of whitespace (spaces, tabs, newlines, NBSP) into single spaces and strips leading/trailing whitespace. This is a **pre-processing** helper only — the NFC-only hash path (`normalize_text()`) is unchanged per C2PA spec.
+- Exported `normalize_whitespace` from `text_hashing` module `__all__`.
+
 ## 3.0.4 (2026-01-30)
 
 ### Added
