@@ -2,6 +2,15 @@
 
 This document provides a chronological list of notable changes for each version of Encypher.
 
+## 3.0.6 (2026-02-12)
+
+### Fixed
+- **Browser paste verification:** Added a two-variant fallback in `_verify_c2pa` for verifying signed text pasted from rendered web pages. When the hard binding hash fails (e.g. because the paste includes surrounding page chrome or whitespace differs from the original), the verifier now retries on (1) the original text and (2) a whitespace-collapsed variant (`\s+` → single space). This handles the common case where HTML `<p>` tags render as `\n\n` in browser copy-paste but the signed text used single spaces between paragraphs.
+- Imported `find_wrapper_info_bytes` in `unicode_metadata.py` for reliable wrapper byte-offset computation during fallback segment extraction.
+
+### Tests
+- Added 3 new integration tests: page chrome extraction, browser whitespace normalization, and tamper detection with chrome.
+
 ## 3.0.5 (2026-02-11)
 
 ### Added
