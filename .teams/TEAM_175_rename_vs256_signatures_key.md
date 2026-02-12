@@ -41,6 +41,14 @@ Multiple internal implementation details were leaking through the public API:
 - ✅ 68/68 total verification-service tests pass
 - ✅ 86/86 marketing-site tests pass
 
+## Investigation: "13 of 27 segments" Mismatch
+
+Root cause identified: WordPress plugin sends raw HTML (with `<!-- wp:paragraph -->` block comments) to `/sign`. The segmenter treats HTML fragments as sentences, inflating the count from 18 actual sentences to ~27 "segments". Only 13 of those are real sentences that get VS256 signatures.
+
+**Fix:** Extract plain text from HTML before signing (same pattern as `tools/encypher-cms-signing-kit`). PRD created: `PRDs/CURRENT/PRD_WordPress_HTML_Text_Extraction.md`.
+
+Also updated display wording: "X of Y segments verified from this content" → "X verified from the original Y signed segments".
+
 ## Git Commit Message Suggestion
 ```
 fix(enterprise-api,verification-service,marketing-site): remove internal details from public API
