@@ -43,6 +43,7 @@ class HtmlTextExtractionTest
     private $extract_method;
     private $embed_method;
     private $extract_fragments_method;
+    private $sanitize_method;
     private $instance;
     private int $passed = 0;
     private int $failed = 0;
@@ -60,6 +61,9 @@ class HtmlTextExtractionTest
 
         $this->extract_fragments_method = $this->rest->getMethod('extract_html_text_fragments');
         $this->extract_fragments_method->setAccessible(true);
+
+        $this->sanitize_method = $this->rest->getMethod('sanitize_wp_block_comments');
+        $this->sanitize_method->setAccessible(true);
     }
 
     private function assert_equals($expected, $actual, string $message): void
@@ -263,6 +267,56 @@ class HtmlTextExtractionTest
         $this->assert_not_contains('color: red', $result, 'No style content');
     }
 
+    public function test_sanitize_wp_block_comments(): void
+    {
+        echo "\n=== test_sanitize_wp_block_comments ===\n";
+
+        $cases = [
+            ['<!-- /wp :paragraph -->', '<!-- /wp:paragraph -->'],
+            ['<!-- wp :paragraph -->', '<!-- wp:paragraph -->'],
+            ['<!-- wp :heading -->', '<!-- wp:heading -->'],
+            ['<!-- /wp :heading -->', '<!-- /wp:heading -->'],
+            ['<!-- wp:paragraph -->', '<!-- wp:paragraph -->'],
+            ['<!-- /wp:paragraph -->', '<!-- /wp:paragraph -->'],
+        ];
+
+        foreach ($cases as [$input, $expected]) {
+            $result = $this->sanitize_method->invoke($this->instance, $input);
+            $this->assert_equals($expected, $result, 'Sanitize: ' . $input);
+        }
+
+        // Full content test
+        $corrupted = "<!-- wp:paragraph -->\n<p>Text.</p>\n<!-- /wp :paragraph -->";
+        $fixed = $this->sanitize_method->invoke($this->instance, $corrupted);
+        $this->assert_not_contains('/wp :paragraph', $fixed, 'Full content: no corrupted closing comment');
+        $this->assert_contains('<!-- /wp:paragraph -->', $fixed, 'Full content: correct closing comment');
+    }
+
+    public function test_embed_no_nested_p_tags(): void
+    {
+        echo "\n=== test_embed_no_nested_p_tags ===\n";
+
+        $html = '<!-- wp:paragraph -->
+<p>First sentence.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Second sentence.</p>
+<!-- /wp:paragraph -->
+
+<!-- wp:paragraph -->
+<p>Third sentence.</p>
+<!-- /wp:paragraph -->';
+
+        $signed = 'First sentence. Second sentence. Third sentence.';
+
+        $result = $this->embed_method->invoke($this->instance, $html, $signed);
+
+        $this->assert_equals(false, (bool) preg_match('/<p>\\s*<p>|<p><p>/', $result), 'No nested <p> tags');
+        $this->assert_equals(3, substr_count($result, '<!-- wp:paragraph -->'), 'Three opening block comments');
+        $this->assert_equals(3, substr_count($result, '<!-- /wp:paragraph -->'), 'Three closing block comments');
+    }
+
     public function run_all(): void
     {
         echo "Running HTML text extraction tests...\n";
@@ -274,6 +328,8 @@ class HtmlTextExtractionTest
         $this->test_extract_fragments();
         $this->test_embed_preserves_html_structure();
         $this->test_extract_skips_script_and_style();
+        $this->test_sanitize_wp_block_comments();
+        $this->test_embed_no_nested_p_tags();
 
         echo "\n=== Results ===\n";
         echo "Passed: {$this->passed}\n";

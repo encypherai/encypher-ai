@@ -202,6 +202,13 @@ class Rest
             // Strip all existing embeddings to ensure clean re-signing
             $clean_content = $this->strip_c2pa_embeddings($post->post_content);
             
+            // Repair WordPress block comments that may have been corrupted by
+            // VS char stripping.  Previous signings could embed VS chars adjacent
+            // to block comment delimiters; stripping them leaves stray spaces
+            // (e.g. "<!-- /wp :paragraph -->" instead of "<!-- /wp:paragraph -->")
+            // which breaks Gutenberg's block parser.
+            $clean_content = $this->sanitize_wp_block_comments($clean_content);
+            
             // Verify stripping was successful
             $verify_clean = $this->detect_c2pa_embeddings($clean_content);
             if ($verify_clean['count'] > 0) {
@@ -1244,6 +1251,39 @@ class Rest
         foreach ($node->childNodes as $child) {
             $this->collect_text_nodes($child, $results);
         }
+    }
+
+    /**
+     * Repair WordPress block comments that were corrupted by VS char stripping.
+     *
+     * When invisible VS characters are embedded near block comment boundaries
+     * and later stripped, they can leave stray spaces that break Gutenberg's
+     * block parser (e.g. "<!-- /wp :paragraph -->" instead of "<!-- /wp:paragraph -->").
+     *
+     * This method normalizes all WordPress block comments to their canonical form.
+     *
+     * @param string $content Post content with potentially corrupted block comments
+     * @return string Content with repaired block comments
+     */
+    private function sanitize_wp_block_comments(string $content): string
+    {
+        // Fix opening block comments: <!-- wp:blockname --> or <!-- wp:blockname {"attrs"} -->
+        // Allow stray spaces between wp and :blockname
+        $content = preg_replace(
+            '/<!--\s+(wp)\s+:\s*(\w+)((?:\s+\{[^}]*\})?)\s+-->/',
+            '<!-- $1:$2$3 -->',
+            $content
+        );
+
+        // Fix closing block comments: <!-- /wp:blockname -->
+        // Allow stray spaces between /wp and :blockname
+        $content = preg_replace(
+            '/<!--\s+(\/wp)\s+:\s*(\w+)\s+-->/',
+            '<!-- $1:$2 -->',
+            $content
+        );
+
+        return $content;
     }
 
     /**

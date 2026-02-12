@@ -64,11 +64,17 @@ Implemented the same extract→sign→embed pattern as `tools/encypher-cms-signi
 | HTML structure preserved | n/a (was plain text) | ✅ wp:paragraph, `<p>` tags |
 | Text fragments matched | n/a | 8/8 |
 
+### Bug Fix: Corrupted Block Comments → Nested `<p>` Tags
+
+The old signing process (before our changes) embedded VS chars adjacent to `<!-- /wp:paragraph -->` comments. When VS chars were stripped, a literal space was left behind: `<!-- /wp :paragraph -->`. Gutenberg couldn't parse this, merged blocks, and created nested `<p><p>...</p>...</p>` — triggering "This block contains unexpected or invalid content."
+
+**Fix:** Added `sanitize_wp_block_comments()` method that normalizes all WP block comments to canonical form after VS stripping. Called in `handle_sign_request` after `strip_c2pa_embeddings`.
+
 ### Test Results
 - ✅ PHP syntax check: passed
-- ✅ 26/26 unit tests pass (`test-html-text-extraction.php`)
-- ✅ Integration: re-signed post 36, 18 sigs = 18 DB segments
-- ✅ HTML structure preserved after signing
+- ✅ 37/37 unit tests pass (`test-html-text-extraction.php`)
+- ✅ Integration: re-signed post 36, 0 corrupted comments, 18 sigs = 18 DB segments
+- ✅ HTML structure preserved, no nested `<p>` tags
 
 Also updated display wording: "X of Y segments verified from this content" → "X verified from the original Y signed segments".
 
@@ -86,11 +92,16 @@ Fix follows the same pattern as tools/encypher-cms-signing-kit:
 - embed_signed_text_in_html: map signed text back into HTML text nodes
   using string-based replacement (avoids DOMDocument::saveHTML mangling)
 - extract_html_text_fragments: find text runs with byte offsets
+- sanitize_wp_block_comments: repair corrupted block comments after
+  VS char stripping (old signings left stray spaces in comments like
+  "<!-- /wp :paragraph -->" which broke Gutenberg's block parser,
+  causing nested <p> tags and "unexpected content" errors)
 
 Results for test post: 18 sigs = 18 DB segments (was 13/27).
 HTML structure (tags, comments, attributes) fully preserved.
+No corrupted block comments, no nested <p> tags.
 
-Added 26 unit tests for extraction and embedding.
+37 unit tests for extraction, embedding, and sanitization.
 
 TEAM_175
 ```
