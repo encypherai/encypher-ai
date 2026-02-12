@@ -70,38 +70,45 @@ The old signing process (before our changes) embedded VS chars adjacent to `<!--
 
 **Fix:** Added `sanitize_wp_block_comments()` method that normalizes all WP block comments to canonical form after VS stripping. Called in `handle_sign_request` after `strip_c2pa_embeddings`.
 
+### Bug Fix: WordPress Verify Button Returns SIGNER_UNKNOWN
+
+The WordPress verify button calls the enterprise API's `/verify/advanced` endpoint. That endpoint's `execute_verification` tried to verify VS256 signatures using only the demo key. Content signed with an org key (`org_07dd7ff77fa7e949`) failed because the demo key doesn't match.
+
+Meanwhile, the website verification tool (marketing site) routes through the **verification service**, which resolves VS256 UUIDs via DB lookup (`_bulk_resolve_segment_uuids` → enterprise API `/public/c2pa/zw/resolve`). No signing key needed.
+
+**Fix:** Added `_resolve_uuids_from_db()` as a fallback in `execute_verification` (step 7 in resolution order). Extracts UUIDs from VS256/ZW signatures without HMAC verification and resolves them via the content DB — same approach the verification service uses.
+
+**Files changed:**
+- `enterprise_api/app/services/verification_logic.py` — added `_resolve_uuids_from_db`, `_extract_uuid_from_vs256_signature`, optional `content_db` param
+- `enterprise_api/app/routers/verification.py` — pass `content_db` to `execute_verification`
+
 ### Test Results
 - ✅ PHP syntax check: passed
-- ✅ 37/37 unit tests pass (`test-html-text-extraction.php`)
-- ✅ Integration: re-signed post 36, 0 corrupted comments, 18 sigs = 18 DB segments
-- ✅ HTML structure preserved, no nested `<p>` tags
+- ✅ 37/37 PHP unit tests pass (`test-html-text-extraction.php`)
+- ✅ 6/6 `test_verify_advanced.py` pass
+- ✅ 3/3 `test_batch_service.py` pass
+- ✅ 3/3 `test_c2pa_conformance_sign_verify.py` pass
+- ✅ Integration: WordPress verify button returns `valid=true`, 18 sigs, `signer=org_07dd7ff77fa7e949`
+- ✅ HTML structure preserved, no nested `<p>` tags, no corrupted block comments
 
 Also updated display wording: "X of Y segments verified from this content" → "X verified from the original Y signed segments".
 
 ## Git Commit Message Suggestion
 ```
-fix(wordpress-plugin): extract plain text from HTML before signing
+fix(enterprise-api): add DB-based UUID resolution to /verify/advanced
 
-WordPress plugin was sending raw HTML (with block comments like
-<!-- wp:paragraph -->) to the /sign endpoint. The sentence segmenter
-treated HTML fragments as sentences, inflating segment count from 18
-actual sentences to 27. Only 13 got VS256 signatures.
+The WordPress verify button was returning SIGNER_UNKNOWN because
+execute_verification only tried demo-key HMAC verification for VS256
+signatures. Content signed with org keys failed silently.
 
-Fix follows the same pattern as tools/encypher-cms-signing-kit:
-- extract_text_from_html: strip WP block comments, walk DOM text nodes
-- embed_signed_text_in_html: map signed text back into HTML text nodes
-  using string-based replacement (avoids DOMDocument::saveHTML mangling)
-- extract_html_text_fragments: find text runs with byte offsets
-- sanitize_wp_block_comments: repair corrupted block comments after
-  VS char stripping (old signings left stray spaces in comments like
-  "<!-- /wp :paragraph -->" which broke Gutenberg's block parser,
-  causing nested <p> tags and "unexpected content" errors)
+Added _resolve_uuids_from_db() as fallback step 7 in the verification
+resolution order. Extracts UUIDs from VS256/ZW signatures without HMAC
+and resolves them via the content_references table — same approach the
+verification-service uses via _bulk_resolve_segment_uuids.
 
-Results for test post: 18 sigs = 18 DB segments (was 13/27).
-HTML structure (tags, comments, attributes) fully preserved.
-No corrupted block comments, no nested <p> tags.
-
-37 unit tests for extraction, embedding, and sanitization.
+Also includes previous commits:
+- WordPress HTML text extraction (extract→sign→embed pattern)
+- sanitize_wp_block_comments for corrupted block comment repair
 
 TEAM_175
 ```

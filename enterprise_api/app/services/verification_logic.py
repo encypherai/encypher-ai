@@ -280,7 +280,131 @@ def detect_vs256_embeddings(text: str) -> bool:
     return len(vs256_find_all(text)) > 0
 
 
-async def execute_verification(*, payload_text: str, db: AsyncSession) -> VerificationExecution:
+_RESOLVE_UUID_SQL = """
+    SELECT organization_id, document_id, leaf_index,
+           embedding_metadata->>'manifest_mode' AS manifest_mode,
+           embedding_metadata->'segment_location' AS segment_location,
+           (embedding_metadata->>'total_segments')::int AS total_segments,
+           manifest_data
+    FROM content_references
+    WHERE embedding_metadata->>'segment_uuid' = :seg_uuid
+    LIMIT 1
+"""
+
+
+def _extract_uuid_from_vs256_signature(signature: str) -> Optional[str]:
+    """Extract UUID from a VS256 signature without HMAC verification.
+
+    Decodes the payload bytes and interprets the first 16 as a UUID.
+    This allows DB-based resolution without needing the signing key.
+    """
+    from app.utils.vs256_crypto import (
+        MAGIC_PREFIX_LEN,
+        SIGNATURE_CHARS,
+        decode_bytes_vs256,
+        PAYLOAD_BYTES,
+    )
+    from uuid import UUID as _UUID
+
+    if len(signature) != SIGNATURE_CHARS:
+        return None
+    try:
+        payload = decode_bytes_vs256(signature[MAGIC_PREFIX_LEN:])
+        if len(payload) != PAYLOAD_BYTES:
+            return None
+        return str(_UUID(bytes=payload[:16]))
+    except Exception:
+        return None
+
+
+async def _resolve_uuids_from_db(
+    *,
+    payload_text: str,
+    content_db: Optional[AsyncSession],
+) -> Optional[Dict[str, Any]]:
+    """Resolve VS256/ZW segment UUIDs via the content DB.
+
+    Extracts UUIDs from embedded signatures and looks them up in
+    ``content_references``.  This mirrors what the verification-service
+    does via ``_bulk_resolve_segment_uuids`` but runs in-process.
+    """
+    from sqlalchemy import text as sql_text
+
+    # Obtain a content DB session
+    session = content_db
+    owns_session = False
+    if session is None:
+        from app.database import content_session_factory
+        session = content_session_factory()
+        owns_session = True
+
+    try:
+        # Try VS256 signatures first
+        from app.utils.vs256_crypto import (
+            find_all_minimal_signed_uuids as vs256_find_all,
+        )
+        vs256_sigs = vs256_find_all(payload_text)
+        uuids: list[str] = []
+
+        if vs256_sigs:
+            for _start, _end, sig_str in vs256_sigs:
+                uuid_str = _extract_uuid_from_vs256_signature(sig_str)
+                if uuid_str:
+                    uuids.append(uuid_str)
+
+        # Fall back to ZW signatures
+        if not uuids:
+            zw_sigs = find_all_minimal_signed_uuids(payload_text)
+            for _start, _end, sig_str in zw_sigs:
+                try:
+                    from app.utils.zw_crypto import decode_bytes_zw, ZW_MAGIC_PREFIX_LEN, ZW_SIGNATURE_CHARS
+                    from uuid import UUID as _UUID
+                    payload = decode_bytes_zw(sig_str[ZW_MAGIC_PREFIX_LEN:])
+                    uuids.append(str(_UUID(bytes=payload[:16])))
+                except Exception:
+                    pass
+
+        if not uuids:
+            return None
+
+        # Resolve the first UUID to get org/document info
+        first_uuid = uuids[0]
+        result = await session.execute(
+            sql_text(_RESOLVE_UUID_SQL), {"seg_uuid": first_uuid}
+        )
+        row = result.fetchone()
+
+        if not row or not row.organization_id:
+            return None
+
+        manifest_data = None
+        if hasattr(row, "manifest_data") and row.manifest_data:
+            manifest_data = row.manifest_data if isinstance(row.manifest_data, dict) else None
+
+        return {
+            "is_valid": True,
+            "signer_id": row.organization_id,
+            "manifest": {
+                "manifest_mode": row.manifest_mode or "micro_ecc_c2pa",
+                "segment_uuid": first_uuid,
+                "document_id": row.document_id,
+                "total_signatures": len(uuids),
+                "total_segments": row.total_segments,
+                **({"manifest_data": manifest_data} if manifest_data else {}),
+            },
+            "total_signatures": len(uuids),
+        }
+    finally:
+        if owns_session:
+            await session.close()
+
+
+async def execute_verification(
+    *,
+    payload_text: str,
+    db: AsyncSession,
+    content_db: Optional[AsyncSession] = None,
+) -> VerificationExecution:
     """Run UnicodeMetadata verification with cached certificate resolution.
 
     Resolution order:
@@ -290,6 +414,7 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
     4. C2PA trust list (for third-party signed content with embedded x5chain)
     5. ZW embeddings (Word-compatible, requires signing key from DB)
     6. VS256 embeddings (max density, requires signing key from DB)
+    7. DB-based UUID resolution (resolves segment UUIDs without signing key)
     """
 
     await certificate_resolver.refresh_cache(db)
@@ -437,6 +562,28 @@ async def execute_verification(*, payload_text: str, db: AsyncSession) -> Verifi
                         )
         except Exception as e:
             logger.debug("VS256/ZW fallback verification failed: %s", e)
+
+    # TEAM_175: DB-based UUID resolution fallback.
+    # When demo-key verification fails (e.g. content signed with an org key),
+    # extract UUIDs from VS256/ZW signatures and resolve them via the content
+    # DB — same approach the verification-service uses.
+    if not is_valid and not signer_id:
+        try:
+            resolved = await _resolve_uuids_from_db(
+                payload_text=payload_text,
+                content_db=content_db,
+            )
+            if resolved:
+                is_valid = resolved["is_valid"]
+                signer_id = resolved["signer_id"]
+                manifest = resolved["manifest"]
+                logger.info(
+                    "DB UUID resolution succeeded: signer=%s, sigs=%d",
+                    signer_id,
+                    resolved.get("total_signatures", 0),
+                )
+        except Exception as e:
+            logger.debug("DB UUID resolution fallback failed: %s", e)
 
     duration_ms = int((time.perf_counter() - start) * 1000)
     manifest_dict = _coerce_manifest(manifest)

@@ -156,7 +156,7 @@ async def verify_advanced(
         )
 
     correlation_id = f"req-{uuid4().hex}"
-    execution = await verification_logic.execute_verification(payload_text=request.text, db=db)
+    execution = await verification_logic.execute_verification(payload_text=request.text, db=db, content_db=content_db)
     reason_code = verification_logic.determine_reason_code(execution=execution)
     verdict = verification_logic.build_verdict(
         execution=execution,
