@@ -594,8 +594,8 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                           <div className="mb-4 p-3 bg-slate-800/60 rounded border border-slate-600 flex items-center gap-3">
                             <span className="text-base">📄</span>
                             <div className="text-sm text-slate-200">
-                              <strong>{lastDecodeResponse.embeddings_found}</strong> of{' '}
-                              <strong>{lastDecodeResponse.total_segments_in_document}</strong> segments verified from this content
+                              <strong>{lastDecodeResponse.embeddings_found}</strong> verified from the original{' '}
+                              <strong>{lastDecodeResponse.total_segments_in_document}</strong> signed segments
                             </div>
                           </div>
                         )}
