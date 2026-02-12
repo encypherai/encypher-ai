@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "encypher-ai"
-version = "3.0.4"
+version = "3.0.5"
 description = "Embed invisible metadata in AI-generated text using zero-width characters."
 readme = "README.md"
 authors = [{name = "Encypher Team"}]
