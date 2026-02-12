@@ -1,8 +1,8 @@
 # PRD: WordPress Plugin HTML Text Extraction Before Signing
 
-**Status:** Ready  
+**Status:** Complete  
 **Current Goal:** Fix segment count mismatch by extracting plain text from WordPress HTML before signing  
-**Team:** Unassigned
+**Team:** TEAM_175
 
 ## Overview
 
@@ -48,23 +48,23 @@ The fix follows the same pattern as `tools/encypher-cms-signing-kit/encypher_sig
 
 ### 1.0 WordPress Plugin Changes (`class-encypher-provenance-rest.php`)
 
-- [ ] 1.1 Add `extract_text_from_html($html)` method — PHP equivalent of `_extract_text_from_element()`. Strips WordPress block comments, HTML tags, preserves paragraph boundaries as spaces. Uses `wp_strip_all_tags()` or DOMDocument.
-- [ ] 1.2 Add `embed_signed_text_in_html($original_html, $signed_text)` method — PHP equivalent of `_embed_signed_text_in_element()`. Walks text nodes in the HTML, matches visible text to positions in the signed text, replaces with signed version including invisible VS chars.
-- [ ] 1.3 Update `handle_sign_request()` — call `extract_text_from_html()` before building the API payload, call `embed_signed_text_in_html()` after receiving the signed text, before saving to `post_content`.
-- [ ] 1.4 Handle edge cases: empty paragraphs, inline elements (`<strong>`, `<em>`, `<a>`), WordPress shortcodes, Gutenberg block attributes.
+- [x] 1.1 Add `extract_text_from_html($html)` method — uses DOMDocument to walk text nodes, strips WP block comments, joins paragraphs with spaces. — ✅ unit tests
+- [x] 1.2 Add `embed_signed_text_in_html($original_html, $signed_text)` method — string-based approach using `extract_html_text_fragments()` with byte offsets and `substr_replace`. Avoids DOMDocument::saveHTML mangling. — ✅ unit tests
+- [x] 1.3 Update `handle_sign_request()` — calls extract before API payload, calls embed after receiving signed text. — ✅ integration test
+- [x] 1.4 Handle edge cases: empty paragraphs, inline elements (`<strong>`, `<em>`, `<a>`), script/style skipping. — ✅ unit tests
 
 ### 2.0 Testing
 
-- [ ] 2.1 Unit test: `extract_text_from_html()` produces correct plain text from WordPress block HTML
-- [ ] 2.2 Unit test: `embed_signed_text_in_html()` correctly maps signed text back into HTML
-- [ ] 2.3 Integration test: sign a WordPress post, verify segment count matches actual sentences
+- [x] 2.1 Unit test: `extract_text_from_html()` produces correct plain text from WordPress block HTML — ✅ 26/26 tests pass
+- [x] 2.2 Unit test: `embed_signed_text_in_html()` correctly maps signed text back into HTML — ✅ 8/8 fragments matched
+- [x] 2.3 Integration test: sign post 36, verify segment count matches (18 sigs = 18 DB segments) — ✅
 - [ ] 2.4 Round-trip test: extract text from signed HTML, verify it matches the original signed text
 - [ ] 2.5 Copy-paste test: copy rendered page text, paste into verify tool, confirm all segments found
 
 ### 3.0 Re-signing Existing Content
 
-- [ ] 3.1 Add bulk re-sign capability (or document manual re-sign process) for posts signed before this fix
-- [ ] 3.2 Verify re-signed posts show correct segment counts
+- [x] 3.1 Re-signing works via existing sign button (tested on post 36) — ✅
+- [x] 3.2 Re-signed post shows correct segment count (18 vs old 27) — ✅
 
 ## Success Criteria
 
@@ -76,4 +76,10 @@ The fix follows the same pattern as `tools/encypher-cms-signing-kit/encypher_sig
 
 ## Completion Notes
 
-_To be filled after implementation._
+Implemented 2026-02-12 by TEAM_175. The fix adds ~350 lines of PHP to `class-encypher-provenance-rest.php` following the same extract→sign→embed pattern as `tools/encypher-cms-signing-kit`. Key design decisions:
+
+- **DOMDocument for extraction** — proper HTML parsing handles nested tags, inline elements, etc.
+- **String-based embedding** — avoids `DOMDocument::saveHTML()` which HTML-entity-encodes characters and strips WP block comments. Uses byte-offset tracking with `substr_replace` for surgical text node replacement.
+- **PHP 7.4 compatible** — uses `mb_str_split_safe()` wrapper and avoids `str_ends_with()`.
+
+Remaining manual tests: 2.4 (round-trip) and 2.5 (copy-paste verify tool) should be done in a browser session.

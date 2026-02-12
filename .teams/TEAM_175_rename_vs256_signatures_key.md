@@ -41,30 +41,56 @@ Multiple internal implementation details were leaking through the public API:
 - ✅ 68/68 total verification-service tests pass
 - ✅ 86/86 marketing-site tests pass
 
-## Investigation: "13 of 27 segments" Mismatch
+## Investigation & Fix: "13 of 27 segments" Mismatch
 
-Root cause identified: WordPress plugin sends raw HTML (with `<!-- wp:paragraph -->` block comments) to `/sign`. The segmenter treats HTML fragments as sentences, inflating the count from 18 actual sentences to ~27 "segments". Only 13 of those are real sentences that get VS256 signatures.
+Root cause: WordPress plugin sent raw HTML (with `<!-- wp:paragraph -->` block comments) to `/sign`. The segmenter treated HTML fragments as sentences, inflating the count from 18 actual sentences to ~27 "segments". Only 13 of those were real sentences that got VS256 signatures.
 
-**Fix:** Extract plain text from HTML before signing (same pattern as `tools/encypher-cms-signing-kit`). PRD created: `PRDs/CURRENT/PRD_WordPress_HTML_Text_Extraction.md`.
+### WordPress Plugin Changes (`class-encypher-provenance-rest.php`)
+
+Implemented the same extract→sign→embed pattern as `tools/encypher-cms-signing-kit`:
+
+1. **`extract_text_from_html($html)`** — strips WP block comments, walks DOM text nodes, joins paragraphs with spaces. Uses DOMDocument for proper HTML parsing.
+2. **`embed_signed_text_in_html($html, $signed)`** — string-based approach (avoids DOMDocument::saveHTML mangling). Extracts text fragments with byte offsets, matches against signed text, does direct substr_replace.
+3. **`extract_html_text_fragments($html)`** — finds text runs between HTML tags/comments with byte offsets.
+4. **Helper methods:** `walk_dom_for_text`, `collect_text_nodes`, `mb_str_split_safe`, `is_vs_char`, `is_vs_or_whitespace`
+5. **`handle_sign_request`** updated to call extract→sign→embed flow.
+
+### Results (post 36 "test post 1")
+
+| Metric | Before | After |
+|--------|--------|-------|
+| DB total_segments | 27 | 18 |
+| VS256 signatures in content | 13 | 18 |
+| HTML structure preserved | n/a (was plain text) | ✅ wp:paragraph, `<p>` tags |
+| Text fragments matched | n/a | 8/8 |
+
+### Test Results
+- ✅ PHP syntax check: passed
+- ✅ 26/26 unit tests pass (`test-html-text-extraction.php`)
+- ✅ Integration: re-signed post 36, 18 sigs = 18 DB segments
+- ✅ HTML structure preserved after signing
 
 Also updated display wording: "X of Y segments verified from this content" → "X verified from the original Y signed segments".
 
 ## Git Commit Message Suggestion
 ```
-fix(enterprise-api,verification-service,marketing-site): remove internal details from public API
+fix(wordpress-plugin): extract plain text from HTML before signing
 
-C2PA manifest:
-- Remove org ID from softwareAgent in c2pa.created action
-- Remove manifest_mode from c2pa.metadata assertion
-- Use org name instead of org ID in publisher.identifier
+WordPress plugin was sending raw HTML (with block comments like
+<!-- wp:paragraph -->) to the /sign endpoint. The sentence segmenter
+treated HTML fragments as sentences, inflating segment count from 18
+actual sentences to 27. Only 13 got VS256 signatures.
 
-Verify response:
-- Remove `format` field from manifest dict (leaked embedding method)
-- Rename total_vs256_signatures / total_zw_signatures → total_signatures
-- Fix embeddings_found count: use total_embeddings from upstream
-- Marketing site: display rich C2PA info, change "document" → "content"
+Fix follows the same pattern as tools/encypher-cms-signing-kit:
+- extract_text_from_html: strip WP block comments, walk DOM text nodes
+- embed_signed_text_in_html: map signed text back into HTML text nodes
+  using string-based replacement (avoids DOMDocument::saveHTML mangling)
+- extract_html_text_fragments: find text runs with byte offsets
 
-Added regression tests across all three services.
+Results for test post: 18 sigs = 18 DB segments (was 13/27).
+HTML structure (tags, comments, attributes) fully preserved.
+
+Added 26 unit tests for extraction and embedding.
 
 TEAM_175
 ```

@@ -256,10 +256,31 @@ class Rest
             substr(md5(uniqid((string) $post_id, true)), 0, 8)
         );
         
+        // Extract plain text from HTML for signing.
+        // WordPress post_content contains block comments (<!-- wp:paragraph -->)
+        // and HTML tags that confuse the sentence segmenter, inflating the
+        // segment count.  We sign the plain text and embed markers back into
+        // the HTML afterwards (same pattern as encypher-cms-signing-kit).
+        $extracted_text = $this->extract_text_from_html($clean_content);
+        if ('' === trim($extracted_text)) {
+            return new WP_Error(
+                'empty_content',
+                __('No text content found in the post to sign.', 'encypher-provenance'),
+                ['status' => 400]
+            );
+        }
+        
+        error_log(sprintf(
+            'Encypher: Post %d extracted %d chars of plain text from %d chars of HTML',
+            $post_id,
+            strlen($extracted_text),
+            strlen($clean_content)
+        ));
+
         // Build unified /sign request with tier-gated options
         // Features are automatically gated server-side based on API key tier
         $payload = [
-            'text' => $clean_content,
+            'text' => $extracted_text,
             'document_id' => $unique_document_id,
             'document_title' => $post->post_title,
             'document_url' => get_permalink($post),
@@ -312,13 +333,13 @@ class Rest
             $result = $response['data'];
         }
 
-        // Extract embedded content from Enterprise API response
-        $embedded_content = $result['signed_text'] ?? ($result['embedded_content'] ?? null);
-        if (! is_string($embedded_content) || '' === $embedded_content) {
+        // Extract signed text from Enterprise API response
+        $signed_text = $result['signed_text'] ?? ($result['embedded_content'] ?? null);
+        if (! is_string($signed_text) || '' === $signed_text) {
             return new WP_Error('invalid_response', __('Unexpected response from Enterprise API.', 'encypher-provenance'), ['status' => 502]);
         }
 
-        $final_check = $this->detect_c2pa_embeddings($embedded_content);
+        $final_check = $this->detect_c2pa_embeddings($signed_text);
         if ($final_check['count'] < 1) {
             error_log(sprintf(
                 'Encypher: C2PA compliance violation! Expected at least 1 wrapper, found %d in post %d',
@@ -335,9 +356,14 @@ class Rest
             );
         }
         
+        // Embed signed text (with invisible markers) back into the original HTML
+        $embedded_content = $this->embed_signed_text_in_html($clean_content, $signed_text);
+        
         error_log(sprintf(
-            'Encypher: Post %d successfully signed with C2PA wrapper (spec compliant)',
-            $post_id
+            'Encypher: Post %d successfully signed with C2PA wrapper (spec compliant). HTML: %d chars, signed text: %d chars',
+            $post_id,
+            strlen($embedded_content),
+            strlen($signed_text)
         ));
 
         $document_id = isset($result['document_id']) ? sanitize_text_field((string) $result['document_id']) : '';
@@ -355,7 +381,8 @@ class Rest
             $instance_id = sanitize_text_field((string) $result['metadata']['instance_id']);
         }
         $verification_id = $instance_id ?: $document_id;
-        $verification_url = $verification_id ? home_url('/c2pa-verify/') . urlencode($verification_id) : '';
+        $verify_slug = Plugin::get_verify_slug();
+        $verification_url = $verification_id ? home_url('/' . $verify_slug . '/') . urlencode($verification_id) : '';
 
         $this->is_signing = true;
         $updated = wp_update_post([
@@ -435,7 +462,8 @@ class Rest
 
         // Generate verification URL using instance_id if available, otherwise document_id
         $verification_id = $instance_id ?: $document_id;
-        $verification_url = $verification_id ? home_url('/c2pa-verify/') . urlencode($verification_id) : '';
+        $verify_slug = Plugin::get_verify_slug();
+        $verification_url = $verification_id ? home_url('/' . $verify_slug . '/') . urlencode($verification_id) : '';
 
         return new WP_REST_Response([
             'status' => $status ?: 'not_signed',
@@ -863,6 +891,403 @@ class Rest
         }
 
         return 'signed';
+    }
+
+    /**
+     * HTML block elements that introduce paragraph breaks when extracting text.
+     */
+    private const BLOCK_ELEMENTS = [
+        'address', 'article', 'aside', 'blockquote', 'dd', 'details', 'dialog',
+        'div', 'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li',
+        'main', 'nav', 'ol', 'p', 'pre', 'section', 'summary', 'table', 'ul',
+        'tr', 'td', 'th', 'thead', 'tbody', 'tfoot', 'br',
+    ];
+
+    /**
+     * HTML elements whose content should be skipped during text extraction.
+     */
+    private const SKIP_ELEMENTS = [
+        'script', 'style', 'noscript', 'svg', 'math', 'video', 'audio',
+        'canvas', 'iframe', 'object', 'embed', 'source', 'track', 'picture',
+        'template', 'img',
+    ];
+
+    /**
+     * Extract plain text from WordPress HTML post content.
+     *
+     * Strips WordPress block comments (<!-- wp:paragraph --> etc.), HTML tags,
+     * and preserves paragraph structure as spaces.  This ensures the sentence
+     * segmenter in the Enterprise API sees only real sentences, not HTML noise.
+     *
+     * Follows the same pattern as tools/encypher-cms-signing-kit.
+     *
+     * @param string $html WordPress post_content HTML
+     * @return string Plain text suitable for the /sign API
+     */
+    private function extract_text_from_html(string $html): string
+    {
+        // Strip WordPress block comments first: <!-- wp:paragraph --> etc.
+        $html = preg_replace('/<!--.*?-->/s', '', $html);
+
+        // Use DOMDocument to walk text nodes properly
+        // Suppress warnings for malformed HTML (common in WordPress)
+        $dom = new \DOMDocument('1.0', 'UTF-8');
+        // Wrap in a root element and declare UTF-8 encoding
+        $wrapped = '<?xml encoding="UTF-8"><div>' . $html . '</div>';
+        @$dom->loadHTML($wrapped, LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD | LIBXML_NOERROR);
+
+        $root = $dom->getElementsByTagName('div')->item(0);
+        if (!$root) {
+            // Fallback: strip tags and return
+            return trim(wp_strip_all_tags($html));
+        }
+
+        $chunks = [];
+        $this->walk_dom_for_text($root, $chunks);
+
+        // Join chunks, collapse whitespace within lines, then join paragraphs with spaces
+        $raw = implode('', $chunks);
+        $lines = explode("\n", $raw);
+        $cleaned = [];
+        foreach ($lines as $line) {
+            // Collapse internal whitespace
+            $normalized = trim(preg_replace('/\s+/', ' ', $line));
+            if ('' !== $normalized) {
+                $cleaned[] = $normalized;
+            }
+        }
+
+        // Join paragraphs with space (matches API's signing pipeline which joins
+        // segments with spaces — ensures hash consistency)
+        return implode(' ', $cleaned);
+    }
+
+    /**
+     * Recursively walk DOM nodes collecting text content.
+     *
+     * Block elements insert newline boundaries. Skip elements are ignored.
+     *
+     * @param \DOMNode $node Current DOM node
+     * @param array    &$chunks Collected text chunks (modified in place)
+     */
+    private function walk_dom_for_text(\DOMNode $node, array &$chunks): void
+    {
+        if ($node instanceof \DOMText) {
+            $text = $node->nodeValue;
+            if ('' !== trim($text)) {
+                $chunks[] = $text;
+            } elseif ($text && $chunks && substr(end($chunks), -1) !== "\n") {
+                $chunks[] = ' ';
+            }
+            return;
+        }
+
+        if (!($node instanceof \DOMElement)) {
+            return;
+        }
+
+        $tag = strtolower($node->tagName);
+
+        // Skip non-renderable elements
+        if (in_array($tag, self::SKIP_ELEMENTS, true)) {
+            return;
+        }
+
+        $is_block = in_array($tag, self::BLOCK_ELEMENTS, true);
+
+        // Insert newline before block element
+        if ($is_block && $chunks && end($chunks) !== "\n") {
+            $chunks[] = "\n";
+        }
+
+        foreach ($node->childNodes as $child) {
+            $this->walk_dom_for_text($child, $chunks);
+        }
+
+        // Insert newline after block element
+        if ($is_block && $chunks && end($chunks) !== "\n") {
+            $chunks[] = "\n";
+        }
+    }
+
+    /**
+     * Embed signed text (with invisible VS markers) back into HTML text nodes.
+     *
+     * Uses a string-based approach to avoid DOMDocument::saveHTML() mangling
+     * invisible Unicode characters and stripping WordPress block comments.
+     * Extracts text fragments from the HTML, matches them against the signed
+     * text, and performs direct string replacement.
+     *
+     * Follows the same pattern as tools/encypher-cms-signing-kit.
+     *
+     * @param string $html     Original WordPress post_content HTML
+     * @param string $signed   Signed plain text from the Enterprise API (contains invisible VS markers)
+     * @return string HTML with invisible markers embedded in text nodes
+     */
+    private function embed_signed_text_in_html(string $html, string $signed): string
+    {
+        // Extract text fragments from the HTML in document order.
+        // Each fragment is a run of visible text between HTML tags/comments.
+        // We'll match these against the signed text and replace them in-place.
+        $fragments = $this->extract_html_text_fragments($html);
+
+        if (empty($fragments)) {
+            // No text fragments found — return signed text directly
+            return $signed;
+        }
+
+        $signed_chars = $this->mb_str_split_safe($signed);
+        $signed_len = count($signed_chars);
+        $cursor = 0;
+
+        // Build replacement map: [byte_offset => [original_text, replacement_text]]
+        // Process in reverse order so byte offsets remain valid during replacement.
+        $replacements = [];
+        $last_frag_idx = null;
+
+        foreach ($fragments as $frag_idx => [$offset, $length, $raw_text]) {
+            // Normalize the fragment text (collapse whitespace) for matching
+            $normalized = preg_replace('/\s+/', ' ', trim($raw_text));
+            if ('' === $normalized) {
+                continue;
+            }
+
+            // Collect inter-fragment VS chars (C2PA manifest fragments between text nodes)
+            $gap_vs = '';
+            while ($cursor < $signed_len && $this->is_vs_or_whitespace($signed_chars[$cursor])) {
+                if ($this->is_vs_char($signed_chars[$cursor])) {
+                    $gap_vs .= $signed_chars[$cursor];
+                }
+                $cursor++;
+            }
+
+            // Match visible text, skipping embedded VS chars in the signed text
+            $match_start = $cursor;
+            $norm_chars = $this->mb_str_split_safe($normalized);
+            $ti = 0;
+            $si = $cursor;
+            $norm_len = count($norm_chars);
+
+            while ($si < $signed_len && $ti < $norm_len) {
+                $ch = $signed_chars[$si];
+                if ($this->is_vs_char($ch)) {
+                    $si++;
+                    continue;
+                }
+                if ($ch === $norm_chars[$ti]) {
+                    $ti++;
+                    $si++;
+                } elseif ($ch === "\xC2\xA0" && $norm_chars[$ti] === ' ') {
+                    $ti++;
+                    $si++;
+                } else {
+                    break;
+                }
+            }
+
+            if ($ti !== $norm_len) {
+                // No match — attach gap VS chars to previous fragment
+                if ('' !== $gap_vs && $last_frag_idx !== null && isset($replacements[$last_frag_idx])) {
+                    $replacements[$last_frag_idx][1] .= $gap_vs;
+                }
+                continue;
+            }
+
+            // Consume trailing VS chars after the matched text
+            while ($si < $signed_len && $this->is_vs_char($signed_chars[$si])) {
+                $si++;
+            }
+
+            // Extract the signed chunk (visible text + embedded VS markers)
+            $signed_chunk = implode('', array_slice($signed_chars, $match_start, $si - $match_start));
+            $cursor = $si;
+
+            // Preserve original leading/trailing whitespace from the raw HTML text
+            $leading_ws = '';
+            $trailing_ws = '';
+            if (preg_match('/^(\s+)/u', $raw_text, $m)) {
+                $leading_ws = $m[1];
+            }
+            if (preg_match('/(\s+)$/u', $raw_text, $m)) {
+                $trailing_ws = $m[1];
+            }
+
+            $replacement = $leading_ws . $gap_vs . $signed_chunk . $trailing_ws;
+            $replacements[$frag_idx] = [$offset, $length, $replacement];
+            $last_frag_idx = $frag_idx;
+        }
+
+        // Append any remaining VS chars (tail of C2PA manifest) to the last replacement
+        $remaining_vs = '';
+        while ($cursor < $signed_len) {
+            if ($this->is_vs_char($signed_chars[$cursor])) {
+                $remaining_vs .= $signed_chars[$cursor];
+            }
+            $cursor++;
+        }
+        if ('' !== $remaining_vs && $last_frag_idx !== null && isset($replacements[$last_frag_idx])) {
+            $replacements[$last_frag_idx][2] .= $remaining_vs;
+        }
+
+        // Apply replacements in reverse byte-offset order to preserve positions
+        $result = $html;
+        $sorted = $replacements;
+        usort($sorted, function ($a, $b) {
+            return $b[0] - $a[0]; // Reverse by offset
+        });
+
+        foreach ($sorted as [$offset, $length, $replacement]) {
+            $result = substr_replace($result, $replacement, $offset, $length);
+        }
+
+        error_log(sprintf('Encypher: Embedded signed text into %d of %d HTML text fragments', count($replacements), count($fragments)));
+
+        return $result;
+    }
+
+    /**
+     * Extract text fragments from HTML with their byte offsets.
+     *
+     * Finds runs of text between HTML tags and comments, returning each
+     * fragment's byte offset, byte length, and raw text content.
+     *
+     * @param string $html HTML content
+     * @return array List of [byte_offset, byte_length, raw_text] tuples
+     */
+    private function extract_html_text_fragments(string $html): array
+    {
+        $fragments = [];
+        $len = strlen($html);
+        $i = 0;
+
+        while ($i < $len) {
+            if ($html[$i] === '<') {
+                // Skip HTML comments (<!-- ... -->)
+                if (substr($html, $i, 4) === '<!--') {
+                    $end = strpos($html, '-->', $i + 4);
+                    if ($end !== false) {
+                        $i = $end + 3;
+                    } else {
+                        $i = $len;
+                    }
+                    continue;
+                }
+
+                // Skip HTML tags
+                $end = strpos($html, '>', $i + 1);
+                if ($end !== false) {
+                    // Check if this is a script/style tag — skip content too
+                    if (preg_match('/^<(script|style|noscript)\b/i', substr($html, $i, 20), $tag_m)) {
+                        $close_tag = '</' . strtolower($tag_m[1]) . '>';
+                        $close_pos = stripos($html, $close_tag, $end + 1);
+                        if ($close_pos !== false) {
+                            $i = $close_pos + strlen($close_tag);
+                        } else {
+                            $i = $len;
+                        }
+                    } else {
+                        $i = $end + 1;
+                    }
+                } else {
+                    $i = $len;
+                }
+                continue;
+            }
+
+            // Text content — collect until next '<'
+            $text_start = $i;
+            while ($i < $len && $html[$i] !== '<') {
+                $i++;
+            }
+            $text_len = $i - $text_start;
+            $raw_text = substr($html, $text_start, $text_len);
+
+            // Only include fragments with non-whitespace content
+            if ('' !== trim($raw_text)) {
+                $fragments[] = [$text_start, $text_len, $raw_text];
+            }
+        }
+
+        return $fragments;
+    }
+
+    /**
+     * Collect renderable text nodes from a DOM subtree in document order.
+     *
+     * @param \DOMNode $node       Current DOM node
+     * @param array    &$results   Array of [DOMText, normalized_text] pairs
+     */
+    private function collect_text_nodes(\DOMNode $node, array &$results): void
+    {
+        if ($node instanceof \DOMText) {
+            $text = trim($node->nodeValue);
+            if ('' !== $text) {
+                // Normalize: collapse whitespace
+                $normalized = preg_replace('/\s+/', ' ', $text);
+                $results[] = [$node, $normalized];
+            }
+            return;
+        }
+
+        if ($node instanceof \DOMComment) {
+            return;
+        }
+
+        if ($node instanceof \DOMElement) {
+            $tag = strtolower($node->tagName);
+            if (in_array($tag, self::SKIP_ELEMENTS, true)) {
+                return;
+            }
+        }
+
+        foreach ($node->childNodes as $child) {
+            $this->collect_text_nodes($child, $results);
+        }
+    }
+
+    /**
+     * Split a string into an array of multibyte characters.
+     *
+     * Uses mb_str_split when available (PHP 7.4+ with mbstring), falls back
+     * to preg_split for older environments.
+     *
+     * @param string $str Input string
+     * @return array Array of single characters
+     */
+    private function mb_str_split_safe(string $str): array
+    {
+        if (function_exists('mb_str_split')) {
+            return mb_str_split($str);
+        }
+        // Fallback: split on every UTF-8 character boundary
+        $result = preg_split('//u', $str, -1, PREG_SPLIT_NO_EMPTY);
+        return is_array($result) ? $result : [];
+    }
+
+    /**
+     * Check if a character is a Unicode Variation Selector or ZWNBSP.
+     */
+    private function is_vs_char(string $ch): bool
+    {
+        $cp = mb_ord($ch, 'UTF-8');
+        if ($cp === false) {
+            return false;
+        }
+        return ($cp >= 0xFE00 && $cp <= 0xFE0F)
+            || ($cp >= 0xE0100 && $cp <= 0xE01EF)
+            || $cp === 0xFEFF;
+    }
+
+    /**
+     * Check if a character is a VS char or whitespace.
+     */
+    private function is_vs_or_whitespace(string $ch): bool
+    {
+        if ($this->is_vs_char($ch)) {
+            return true;
+        }
+        return in_array($ch, [' ', "\t", "\n", "\r"], true);
     }
 
     /**
