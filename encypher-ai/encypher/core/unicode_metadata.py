@@ -1377,8 +1377,7 @@ class UnicodeMetadata:
 
                 if not segment_verified:
                     logger.warning(
-                        "C2PA verification: Hard binding (content) hash mismatch. "
-                        "Expected '%s', got '%s'. Text may have been tampered with.",
+                        "C2PA verification: Hard binding (content) hash mismatch. Expected '%s', got '%s'. Text may have been tampered with.",
                         expected_hard_hash,
                         actual_hard_hash,
                     )
