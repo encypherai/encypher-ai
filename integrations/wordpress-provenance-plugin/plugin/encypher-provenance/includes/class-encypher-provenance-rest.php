@@ -503,6 +503,15 @@ class Rest
         // Get raw post content to preserve invisible Unicode characters
         $raw_content = get_post_field('post_content', $post_id, 'raw');
 
+        // Extract plain text from HTML for verification.
+        // The signing pipeline signs plain text (extracted from HTML), so the
+        // C2PA content hash is computed on plain text.  We must send the same
+        // plain text (with VS markers intact) to /verify/advanced so the hash
+        // matches.  extract_text_from_html strips VS chars via DOMDocument, so
+        // we use extract_html_text_fragments which works at the byte level and
+        // preserves all invisible characters.
+        $verify_text = $this->extract_text_for_verify($raw_content);
+
         $settings = get_option('encypher_provenance_settings', []);
         $tier = isset($settings['tier']) ? $settings['tier'] : 'free';
         // /verify is deprecated (410 Gone) — always use /verify/advanced
@@ -512,7 +521,7 @@ class Rest
         // Check for cached verification (disabled in development, 5 minute cache in production)
         // Set WP_DEBUG to true in wp-config.php for development mode
         $cache_enabled = !defined('WP_DEBUG') || !WP_DEBUG;
-        $cache_key = 'encypher_verify_' . $post_id . '_' . md5($raw_content . '|' . $endpoint);
+        $cache_key = 'encypher_verify_' . $post_id . '_' . md5($verify_text . '|' . $endpoint);
         
         if ($cache_enabled) {
             $cached = get_transient($cache_key);
@@ -526,7 +535,7 @@ class Rest
         }
 
         $payload = [
-            'text' => $raw_content,
+            'text' => $verify_text,
         ];
 
         $payload['segmentation_level'] = 'sentence';
@@ -1110,17 +1119,18 @@ class Rest
             $signed_chunk = implode('', array_slice($signed_chars, $match_start, $si - $match_start));
             $cursor = $si;
 
-            // Preserve original leading/trailing whitespace from the raw HTML text
+            // Preserve original leading whitespace from the raw HTML text.
+            // Trailing whitespace is intentionally dropped: the signed chunk
+            // ends with VS markers whose byte positions are part of the C2PA
+            // content hash.  Appending whitespace after them would cause a
+            // hash mismatch when the user copy-pastes the rendered text into
+            // an external verification tool.
             $leading_ws = '';
-            $trailing_ws = '';
             if (preg_match('/^(\s+)/u', $raw_text, $m)) {
                 $leading_ws = $m[1];
             }
-            if (preg_match('/(\s+)$/u', $raw_text, $m)) {
-                $trailing_ws = $m[1];
-            }
 
-            $replacement = $leading_ws . $gap_vs . $signed_chunk . $trailing_ws;
+            $replacement = $leading_ws . $gap_vs . $signed_chunk;
             $replacements[$frag_idx] = [$offset, $length, $replacement];
             $last_frag_idx = $frag_idx;
         }
@@ -1217,6 +1227,36 @@ class Rest
         }
 
         return $fragments;
+    }
+
+    /**
+     * Extract plain text from HTML for verification, preserving VS markers.
+     *
+     * Unlike extract_text_from_html() (which uses DOMDocument and may mangle
+     * invisible Unicode chars), this method works at the byte level via
+     * extract_html_text_fragments().  It strips HTML tags and block comments
+     * while keeping all VS characters intact — critical for C2PA content hash
+     * matching and VS256 signature detection.
+     *
+     * @param string $html WordPress post_content HTML with embedded VS markers
+     * @return string Plain text with VS markers preserved
+     */
+    private function extract_text_for_verify(string $html): string
+    {
+        $fragments = $this->extract_html_text_fragments($html);
+        if (empty($fragments)) {
+            return $html;
+        }
+
+        $parts = [];
+        foreach ($fragments as [$offset, $length, $raw_text]) {
+            $normalized = preg_replace('/\s+/', ' ', trim($raw_text));
+            if ('' !== $normalized) {
+                $parts[] = $normalized;
+            }
+        }
+
+        return implode(' ', $parts);
     }
 
     /**

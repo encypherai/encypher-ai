@@ -82,32 +82,44 @@ Meanwhile, the website verification tool (marketing site) routes through the **v
 - `enterprise_api/app/services/verification_logic.py` — added `_resolve_uuids_from_db`, `_extract_uuid_from_vs256_signature`, optional `content_db` param
 - `enterprise_api/app/routers/verification.py` — pass `content_db` to `execute_verification`
 
+### Bug Fix: Verify Button SIGNATURE_INVALID on New Posts
+
+The signing pipeline now signs **plain text** (extracted from HTML), so the C2PA content hash is computed on plain text. But `handle_verify_request` was sending the **raw HTML** to `/verify/advanced`. The content hash didn't match → `SIGNATURE_INVALID`.
+
+**Fix:** Added `extract_text_for_verify()` method that strips HTML tags and block comments while preserving VS markers (uses `extract_html_text_fragments` at the byte level, not DOMDocument). `handle_verify_request` now sends extracted plain text instead of raw HTML.
+
+### Bug Fix: Website Verify Tool SIGNATURE_INVALID on Copy-Paste
+
+`embed_signed_text_in_html` preserved trailing whitespace from the original HTML `<p>` tag content. The signed text ends with VS markers, but the embed method appended the original trailing space **after** the markers: `text + VS_MARKERS + " "`. When the user copy-pasted from the rendered page, the extra trailing space was included, changing the C2PA content hash → `SIGNATURE_INVALID`.
+
+**Fix:** Removed trailing whitespace preservation in `embed_signed_text_in_html`. Leading whitespace is still preserved. The signed chunk (ending with VS markers) is now the last content in each text node.
+
 ### Test Results
 - ✅ PHP syntax check: passed
 - ✅ 37/37 PHP unit tests pass (`test-html-text-extraction.php`)
 - ✅ 6/6 `test_verify_advanced.py` pass
 - ✅ 3/3 `test_batch_service.py` pass
 - ✅ 3/3 `test_c2pa_conformance_sign_verify.py` pass
-- ✅ Integration: WordPress verify button returns `valid=true`, 18 sigs, `signer=org_07dd7ff77fa7e949`
+- ✅ Integration: WP verify button `valid=true` for post 36 and post 54
+- ✅ Integration: verification service `valid=true` for post 54 copy-paste text
 - ✅ HTML structure preserved, no nested `<p>` tags, no corrupted block comments
-
-Also updated display wording: "X of Y segments verified from this content" → "X verified from the original Y signed segments".
 
 ## Git Commit Message Suggestion
 ```
-fix(enterprise-api): add DB-based UUID resolution to /verify/advanced
+fix(wordpress-plugin): fix copy-paste verification hash mismatch
 
-The WordPress verify button was returning SIGNER_UNKNOWN because
-execute_verification only tried demo-key HMAC verification for VS256
-signatures. Content signed with org keys failed silently.
+embed_signed_text_in_html preserved trailing whitespace from the
+original HTML <p> tag after VS markers. When users copy-pasted from
+the rendered page, the extra space changed the C2PA content hash,
+causing SIGNATURE_INVALID in the website verification tool.
 
-Added _resolve_uuids_from_db() as fallback step 7 in the verification
-resolution order. Extracts UUIDs from VS256/ZW signatures without HMAC
-and resolves them via the content_references table — same approach the
-verification-service uses via _bulk_resolve_segment_uuids.
+Removed trailing whitespace preservation — signed chunk (ending with
+VS markers) is now the last content in each text node.
 
-Also includes previous commits:
-- WordPress HTML text extraction (extract→sign→embed pattern)
+Also in this session:
+- extract_text_for_verify: strip HTML while preserving VS markers
+- handle_verify_request: send plain text instead of raw HTML
+- DB-based UUID resolution in enterprise API execute_verification
 - sanitize_wp_block_comments for corrupted block comment repair
 
 TEAM_175
