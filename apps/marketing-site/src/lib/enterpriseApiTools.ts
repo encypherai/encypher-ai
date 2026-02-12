@@ -205,7 +205,7 @@ export function mapVerifyResponseToDecodeToolResponse(
 
   const manifest = (data && data.details && (data.details as any).manifest) || undefined;
 
-  const embeddingsFound = data?.embeddings_found ?? (manifest ? 1 : 0);
+  const embeddingsFound = data?.total_embeddings ?? data?.embeddings_found ?? (manifest ? 1 : 0);
 
   const allEmbeddings = data?.all_embeddings
     ? data.all_embeddings.map((emb) => ({

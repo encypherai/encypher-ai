@@ -124,7 +124,7 @@ def _mock_client(uuid_map: dict[str, dict]):
 
 def test_zw_verify_returns_manifest_mode_from_resolve(client, mock_db, monkeypatch) -> None:
     """When the enterprise API returns manifest_mode='zw_embedding', the verify
-    response manifest.format should be 'zw_embedding'."""
+    response should expose it on the embeddings array, NOT in the manifest dict."""
     seg_uuid = uuid4()
     sig = _make_zw_signature(seg_uuid)
     text_with_zw = f"This is a test sentence.{sig}"
@@ -145,12 +145,13 @@ def test_zw_verify_returns_manifest_mode_from_resolve(client, mock_db, monkeypat
     payload = response.json()
     assert payload["data"]["valid"] is True
     manifest = payload["data"]["details"]["manifest"]
-    assert manifest["format"] == "zw_embedding"
+    assert "format" not in manifest
+    assert payload["data"]["embeddings"][0]["manifest_mode"] == "zw_embedding"
 
 
 def test_zw_verify_defaults_to_zw_embedding_when_manifest_mode_missing(client, mock_db, monkeypatch) -> None:
     """When the enterprise API does NOT return manifest_mode, the verify
-    response should fall back to 'zw_embedding'."""
+    response manifest should not contain a format field."""
     seg_uuid = uuid4()
     sig = _make_zw_signature(seg_uuid)
     text_with_zw = f"This is a test sentence.{sig}"
@@ -170,7 +171,7 @@ def test_zw_verify_defaults_to_zw_embedding_when_manifest_mode_missing(client, m
     payload = response.json()
     assert payload["data"]["valid"] is True
     manifest = payload["data"]["details"]["manifest"]
-    assert manifest["format"] == "zw_embedding"
+    assert "format" not in manifest
 
 
 # ---------------------------------------------------------------------------
@@ -179,8 +180,8 @@ def test_zw_verify_defaults_to_zw_embedding_when_manifest_mode_missing(client, m
 
 
 def test_vs256_verify_returns_micro_ecc_c2pa_from_resolve(client, mock_db, monkeypatch) -> None:
-    """manifest_mode='micro_ecc_c2pa' should appear in the response, NOT
-    'vs256_embedding'."""
+    """manifest_mode='micro_ecc_c2pa' should appear on embeddings, NOT in
+    the manifest dict (which must not leak embedding method)."""
     seg_uuid = uuid4()
     sig = _make_vs256_signature(seg_uuid)
     text_with_vs256 = f"This is a test sentence.{sig}"
@@ -200,7 +201,8 @@ def test_vs256_verify_returns_micro_ecc_c2pa_from_resolve(client, mock_db, monke
     assert response.status_code == 200
     payload = response.json()
     assert payload["data"]["valid"] is True
-    assert payload["data"]["details"]["manifest"]["format"] == "micro_ecc_c2pa"
+    assert "format" not in payload["data"]["details"]["manifest"]
+    assert payload["data"]["embeddings"][0]["manifest_mode"] == "micro_ecc_c2pa"
 
 
 def test_vs256_verify_returns_micro_c2pa_from_resolve(client, mock_db, monkeypatch) -> None:
@@ -220,7 +222,9 @@ def test_vs256_verify_returns_micro_c2pa_from_resolve(client, mock_db, monkeypat
 
     response = client.post("/api/v1/verify", json={"text": f"Test.{sig}"})
     assert response.status_code == 200
-    assert response.json()["data"]["details"]["manifest"]["format"] == "micro_c2pa"
+    data = response.json()["data"]
+    assert "format" not in data["details"]["manifest"]
+    assert data["embeddings"][0]["manifest_mode"] == "micro_c2pa"
 
 
 def test_vs256_verify_returns_micro_from_resolve(client, mock_db, monkeypatch) -> None:
@@ -240,7 +244,9 @@ def test_vs256_verify_returns_micro_from_resolve(client, mock_db, monkeypatch) -
 
     response = client.post("/api/v1/verify", json={"text": f"Test.{sig}"})
     assert response.status_code == 200
-    assert response.json()["data"]["details"]["manifest"]["format"] == "micro"
+    data = response.json()["data"]
+    assert "format" not in data["details"]["manifest"]
+    assert data["embeddings"][0]["manifest_mode"] == "micro"
 
 
 def test_vs256_verify_defaults_to_micro_when_manifest_mode_missing(client, mock_db, monkeypatch) -> None:
@@ -259,7 +265,7 @@ def test_vs256_verify_defaults_to_micro_when_manifest_mode_missing(client, mock_
 
     response = client.post("/api/v1/verify", json={"text": f"Test.{sig}"})
     assert response.status_code == 200
-    assert response.json()["data"]["details"]["manifest"]["format"] == "micro"
+    assert "format" not in response.json()["data"]["details"]["manifest"]
 
 
 # ---------------------------------------------------------------------------
@@ -388,6 +394,33 @@ def test_vs256_c2pa_manifest_shown_in_response(client, mock_db, monkeypatch) -> 
     assert c2pa["validation_type"] == "db_backed_manifest"
     assert c2pa["manifest_hash"] == "abc123"
     assert len(c2pa["assertions"]) == 1
+
+
+def test_vs256_manifest_uses_total_signatures_key(client, mock_db, monkeypatch) -> None:
+    """TEAM_175 regression: manifest must use 'total_signatures', not
+    'total_vs256_signatures' — internal naming should not leak into the API."""
+    seg_uuid = uuid4()
+    sig = _make_vs256_signature(seg_uuid)
+    text = f"Signed content.{sig}"
+
+    uuid_map = {
+        str(seg_uuid): {
+            "segment_uuid": str(seg_uuid),
+            "organization_id": "org_key_test",
+            "document_id": "doc_key_1",
+            "manifest_mode": "micro_ecc_c2pa",
+        },
+    }
+
+    monkeypatch.setattr(verify_endpoints.httpx, "AsyncClient", _mock_client(uuid_map))
+
+    response = client.post("/api/v1/verify", json={"text": text})
+    assert response.status_code == 200
+    manifest = response.json()["data"]["details"]["manifest"]
+    assert "total_signatures" in manifest
+    assert "total_vs256_signatures" not in manifest
+    assert "format" not in manifest
+    assert manifest["total_signatures"] == 1
 
 
 def test_vs256_no_c2pa_manifest_when_not_stored(client, mock_db, monkeypatch) -> None:

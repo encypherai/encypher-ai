@@ -133,6 +133,7 @@ class EmbeddingService:
         add_dual_binding: bool = False,  # Enable dual-binding manifest
         disable_c2pa: bool = False,  # Opt-out of C2PA embedding
         processing_metadata: Optional[Dict[str, Any]] = None,
+        organization_name: Optional[str] = None,
     ) -> Tuple[List[EmbeddingReference], str]:
         """
         Create invisible signed embeddings for all segments using encypher-ai.
@@ -311,10 +312,9 @@ class EmbeddingService:
             "@type": "CreativeWork",
             "identifier": document_id,
             "name": document_id,
-            "manifest_mode": manifest_mode,
             "publisher": {
                 "@type": "Organization",
-                "identifier": organization_id,
+                "identifier": organization_name or organization_id,
             },
         }
         if license_info and license_info.get("url"):
@@ -326,7 +326,7 @@ class EmbeddingService:
         action_data = {
             "label": action,  # "c2pa.created" or "c2pa.edited"
             "when": current_timestamp,
-            "softwareAgent": f"Encypher Enterprise API/{organization_id}",
+            "softwareAgent": "Encypher Enterprise API",
         }
 
         # Add digitalSourceType if provided (C2PA 2.2 compliance)

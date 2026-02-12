@@ -595,12 +595,7 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                             <span className="text-base">📄</span>
                             <div className="text-sm text-slate-200">
                               <strong>{lastDecodeResponse.embeddings_found}</strong> of{' '}
-                              <strong>{lastDecodeResponse.total_segments_in_document}</strong> segments verified from this document
-                              {lastDecodeResponse.segment_embeddings?.[0]?.manifest_mode && (
-                                <span className="ml-2 px-1.5 py-0.5 bg-slate-700 text-slate-300 rounded text-xs font-mono">
-                                  {lastDecodeResponse.segment_embeddings[0].manifest_mode}
-                                </span>
-                              )}
+                              <strong>{lastDecodeResponse.total_segments_in_document}</strong> segments verified from this content
                             </div>
                           </div>
                         )}
@@ -733,25 +728,64 @@ export default function EncodeDecodeTool({ initialMode }: EncodeDecodeToolProps)
                           </div>
                         )}
 
-                        {/* Show signer info summary when no all_embeddings array */}
-                        {!lastDecodeResponse.all_embeddings && lastDecodeResponse.metadata && (
+                        {/* Show signer info + C2PA manifest when no all_embeddings array */}
+                        {!lastDecodeResponse.all_embeddings && (lastDecodeResponse.metadata || lastDecodeResponse.c2pa) && (
                           <div className="mt-4 p-3 bg-slate-900 text-slate-50 rounded text-xs border border-slate-800 max-w-full">
-                            <strong className="block mb-2 text-slate-400">C2PA Manifest Data:</strong>
-                            <pre className="whitespace-pre-wrap break-all overflow-x-auto text-slate-50 max-w-full mb-2">
-                              {JSON.stringify(lastDecodeResponse.metadata, null, 2)}
-                            </pre>
+                            {lastDecodeResponse.c2pa && (
+                              <div className="mb-3">
+                                <strong className="block mb-2 text-slate-400">C2PA Manifest:</strong>
+                                <div className="space-y-1">
+                                  <div>
+                                    <strong className="text-slate-400">Validated:</strong>{' '}
+                                    <span className={lastDecodeResponse.c2pa.validated ? 'text-green-400' : 'text-red-400'}>
+                                      {lastDecodeResponse.c2pa.validated ? 'Yes' : 'No'}
+                                    </span>
+                                  </div>
+                                  {lastDecodeResponse.c2pa.validation_type && (
+                                    <div>
+                                      <strong className="text-slate-400">Validation Type:</strong>{' '}
+                                      <span className="text-slate-50">{lastDecodeResponse.c2pa.validation_type}</span>
+                                    </div>
+                                  )}
+                                  {lastDecodeResponse.c2pa.manifest_hash && (
+                                    <div>
+                                      <strong className="text-slate-400">Manifest Hash:</strong>{' '}
+                                      <code className="text-slate-300 bg-slate-800 px-1 rounded">{lastDecodeResponse.c2pa.manifest_hash}</code>
+                                    </div>
+                                  )}
+                                  {lastDecodeResponse.c2pa.assertions && lastDecodeResponse.c2pa.assertions.length > 0 && (
+                                    <div>
+                                      <strong className="text-slate-400">Assertions:</strong>
+                                      <pre className="mt-1 whitespace-pre-wrap break-all overflow-x-auto text-slate-300 bg-slate-800 p-2 rounded">
+                                        {JSON.stringify(lastDecodeResponse.c2pa.assertions, null, 2)}
+                                      </pre>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
+                            {lastDecodeResponse.metadata && !lastDecodeResponse.c2pa && (
+                              <div className="mb-3">
+                                <strong className="block mb-2 text-slate-400">Manifest Data:</strong>
+                                <pre className="whitespace-pre-wrap break-all overflow-x-auto text-slate-50 max-w-full">
+                                  {JSON.stringify(lastDecodeResponse.metadata, null, 2)}
+                                </pre>
+                              </div>
+                            )}
                             
-                            {(lastDecodeResponse.raw_hidden_data || (lastDecodeResponse.metadata as any)?.manifest) && (
+                            {(lastDecodeResponse.raw_hidden_data || lastDecodeResponse.metadata) && (
                               <div className="mt-2 pt-2 border-t border-slate-700">
                                 <div>
                                     <strong className="text-slate-400">Signer:</strong> 
                                     <span className="text-slate-50 ml-1">
                                         {lastDecodeResponse.raw_hidden_data?.signer_name || 
                                          lastDecodeResponse.raw_hidden_data?.signer_id || 
-                                         (lastDecodeResponse.metadata as any)?.manifest?.claim_generator || 
                                          "Unknown"}
                                     </span>
-                                    <span className="text-green-400 ml-2">(Verified via Trust Anchor)</span>
+                                    {lastDecodeResponse.raw_hidden_data?.valid && (
+                                      <span className="text-green-400 ml-2">(Verified via Trust Anchor)</span>
+                                    )}
                                 </div>
                                 <div>
                                     <strong className="text-slate-400">Reason Code:</strong> 

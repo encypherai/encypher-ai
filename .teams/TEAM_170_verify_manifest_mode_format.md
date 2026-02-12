@@ -61,7 +61,7 @@ Three-part enhancement to the verification API:
     "total_embeddings": 1,
     "total_segments_in_document": 15,
     "details": {
-      "manifest": {"format": "micro_ecc_c2pa", "segment_uuid": "cc4977c8-...", "total_vs256_signatures": 1}
+      "manifest": {"segment_uuid": "cc4977c8-...", "total_signatures": 1}
     }
   }
 }

@@ -752,9 +752,8 @@ async def verify_text(
                                     ))
 
                             manifest = {
-                                "format": resolved_mode,
                                 "segment_uuid": zw_uuid_str,
-                                "total_zw_signatures": len(zw_sigs),
+                                "total_signatures": len(zw_sigs),
                             }
                             logger.info(
                                 "verify_zw_resolved",
@@ -844,9 +843,8 @@ async def verify_text(
                                     ))
 
                             manifest = {
-                                "format": resolved_mode,
                                 "segment_uuid": vs256_uuid_str,
-                                "total_vs256_signatures": len(vs256_sigs),
+                                "total_signatures": len(vs256_sigs),
                             }
                             logger.info(
                                 "verify_vs256_resolved",

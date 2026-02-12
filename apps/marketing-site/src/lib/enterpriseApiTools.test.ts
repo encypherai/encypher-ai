@@ -82,7 +82,7 @@ describe("enterpriseApiTools", () => {
         tampered: false,
         reason_code: "OK",
         signer_id: "org_test",
-        details: { manifest: { format: "micro_ecc_c2pa" } },
+        details: { manifest: { segment_uuid: "uuid-1", total_signatures: 2 } },
         embeddings_found: 2,
         all_embeddings: null,
         embeddings: [
@@ -131,7 +131,7 @@ describe("enterpriseApiTools", () => {
         tampered: false,
         reason_code: "OK",
         signer_id: "org_c2pa",
-        details: { manifest: { format: "micro_ecc_c2pa" } },
+        details: { manifest: { segment_uuid: "uuid-c2pa", total_signatures: 1 } },
         embeddings_found: 1,
         all_embeddings: null,
         embeddings: [
@@ -158,6 +158,32 @@ describe("enterpriseApiTools", () => {
     expect(decoded.c2pa!.assertions).toHaveLength(1);
   });
 
+  it("mapVerifyResponseToDecodeToolResponse prefers total_embeddings for embeddings_found count", () => {
+    const decoded = mapVerifyResponseToDecodeToolResponse({
+      success: true,
+      correlation_id: "req-5",
+      error: null,
+      data: {
+        valid: true,
+        tampered: false,
+        reason_code: "OK",
+        signer_id: "org_test",
+        details: { manifest: { segment_uuid: "uuid-1", total_signatures: 13 } },
+        all_embeddings: null,
+        embeddings: [
+          { segment_uuid: "uuid-1", manifest_mode: "micro_ecc_c2pa" },
+          { segment_uuid: "uuid-2", manifest_mode: "micro_ecc_c2pa" },
+          { segment_uuid: "uuid-3", manifest_mode: "micro_ecc_c2pa" },
+        ],
+        total_embeddings: 3,
+        total_segments_in_document: 27,
+      },
+    });
+
+    expect(decoded.embeddings_found).toBe(3);
+    expect(decoded.total_segments_in_document).toBe(27);
+  });
+
   it("mapVerifyResponseToDecodeToolResponse returns null for missing segment fields", () => {
     const decoded = mapVerifyResponseToDecodeToolResponse({
       success: true,
@@ -167,7 +193,7 @@ describe("enterpriseApiTools", () => {
         valid: true,
         tampered: false,
         reason_code: "OK",
-        details: { manifest: { format: "zw_embedding" } },
+        details: { manifest: { segment_uuid: "uuid-zw", total_signatures: 1 } },
         embeddings_found: 1,
         all_embeddings: null,
       },
