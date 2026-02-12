@@ -66,6 +66,7 @@ C2PAPayload = TypedDict(
     {
         "@context": str,
         "instance_id": str,
+        "claim_label": str,
         "claim_generator": str,
         "assertions": list[C2PAAssertion],
         "ingredients": list[dict[str, Any]],
