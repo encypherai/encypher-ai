@@ -1330,33 +1330,50 @@ class UnicodeMetadata:
                 # originally-signed segment and retry the hash.
                 segment_verified = False
                 if expected_exclusion is not None:
-                    try:
-                        wrapper_info = find_wrapper_info_bytes(original_text)
-                    except Exception:
-                        wrapper_info = None
+                    # Try segment extraction on two text variants:
+                    # 1. The original text (handles extra text before/after with same whitespace)
+                    # 2. Whitespace-collapsed text (handles browser paste where <p> tags
+                    #    become \n\n but the signed text used single spaces between paragraphs)
+                    _WS_COLLAPSE = re.compile(r"\s+")
+                    text_variants = [
+                        ("original", original_text),
+                        ("ws-collapsed", _WS_COLLAPSE.sub(" ", original_text).strip()),
+                    ]
+                    for variant_name, variant_text in text_variants:
+                        if segment_verified:
+                            break
+                        try:
+                            wrapper_info = find_wrapper_info_bytes(variant_text)
+                        except Exception:
+                            wrapper_info = None
 
-                    if wrapper_info is not None:
+                        if wrapper_info is None:
+                            continue
+
                         _, current_wrapper_byte_start, current_wrapper_byte_len = wrapper_info
                         signed_start_byte = current_wrapper_byte_start - expected_exclusion[0]
                         signed_end_byte = current_wrapper_byte_start + current_wrapper_byte_len
-                        normalized_bytes = normalize_text(original_text).encode("utf-8")
+                        normalized_bytes = normalize_text(variant_text).encode("utf-8")
 
-                        if signed_start_byte >= 0 and signed_end_byte <= len(normalized_bytes):
-                            signed_segment_bytes = normalized_bytes[signed_start_byte:signed_end_byte]
-                            try:
-                                signed_segment = signed_segment_bytes.decode("utf-8")
-                                retry_result = compute_normalized_hash(signed_segment, [expected_exclusion])
-                                if retry_result.hexdigest == expected_hard_hash:
-                                    logger.info(
-                                        "C2PA verification: Hard binding passed after extracting signed segment "
-                                        "from surrounding text (byte range %d-%d of %d).",
-                                        signed_start_byte,
-                                        signed_end_byte,
-                                        len(normalized_bytes),
-                                    )
-                                    segment_verified = True
-                            except (UnicodeDecodeError, ValueError):
-                                pass
+                        if signed_start_byte < 0 or signed_end_byte > len(normalized_bytes):
+                            continue
+
+                        signed_segment_bytes = normalized_bytes[signed_start_byte:signed_end_byte]
+                        try:
+                            signed_segment = signed_segment_bytes.decode("utf-8")
+                            retry_result = compute_normalized_hash(signed_segment, [expected_exclusion])
+                            if retry_result.hexdigest == expected_hard_hash:
+                                logger.info(
+                                    "C2PA verification: Hard binding passed after extracting signed segment "
+                                    "from surrounding text (%s, byte range %d-%d of %d).",
+                                    variant_name,
+                                    signed_start_byte,
+                                    signed_end_byte,
+                                    len(normalized_bytes),
+                                )
+                                segment_verified = True
+                        except (UnicodeDecodeError, ValueError):
+                            pass
 
                 if not segment_verified:
                     logger.warning(

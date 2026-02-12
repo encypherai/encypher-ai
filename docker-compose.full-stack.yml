@@ -288,7 +288,8 @@ services:
     volumes:
       - ./services/verification-service:/app
       - ./encypher-ai:/encypher-ai-src
-    command: ["sh", "-c", "pip install --no-deps /encypher-ai-src && echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload"]
+    user: "0:0"
+    command: ["sh", "-c", "pip install --no-deps --force-reinstall /encypher-ai-src && echo 'Running migrations...' && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload"]
     environment:
       # Database (service-specific - matches production)
       DATABASE_URL: postgresql://encypher:encypher_dev_password@postgres:5432/encypher_verification
