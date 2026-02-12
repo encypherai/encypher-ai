@@ -20,12 +20,11 @@ import cbor2
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric import ed25519
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey, Ed25519PublicKey
-from cryptography.hazmat.primitives.asymmetric.types import PrivateKeyTypes
 
 from encypher import __version__
 from encypher.config.settings import Settings
 from encypher.interop.c2pa.text_hashing import compute_normalized_hash, normalize_text
-from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode
+from encypher.interop.c2pa.text_wrapper import encode_wrapper, find_and_decode, find_wrapper_info_bytes
 
 from .constants import MetadataTarget
 from .logging_config import logger
@@ -738,7 +737,7 @@ class UnicodeMetadata:
             return embedded_text
 
     @staticmethod
-    def _compute_text_hash(cls, text: str, algorithm: str = "sha256") -> str:
+    def _compute_text_hash(text: str, algorithm: str = "sha256") -> str:
         """Compute hex digest of *text* using *algorithm* after NFC normalization."""
         import hashlib
         import unicodedata
@@ -755,7 +754,7 @@ class UnicodeMetadata:
     def _embed_c2pa(
         cls,
         text: str,
-        private_key: PrivateKeyTypes,
+        private_key: SigningKey,
         signer_id: str,
         claim_generator: Optional[str],
         actions: Optional[list[dict[str, Any]]],
@@ -1320,11 +1319,68 @@ class UnicodeMetadata:
             actual_hard_hash = hard_hash_result.hexdigest
 
             if expected_hard_hash != actual_hard_hash:
-                logger.warning(
-                    f"C2PA verification: Hard binding (content) hash mismatch. "
-                    f"Expected '{expected_hard_hash}', got '{actual_hard_hash}'. Text may have been tampered with."
-                )
-                return False, signer_id, c2pa_manifest
+                # --- Fallback: extract the originally-signed segment from a larger paste ---
+                # When users copy-paste from a rendered web page, the pasted text often
+                # includes surrounding page chrome (nav bars, footers, etc.) that was
+                # never part of the signed content.  The manifest's exclusion range
+                # records the wrapper's byte offset within the *original* signed text.
+                # We use find_wrapper_info_bytes to get the wrapper's *actual* byte
+                # offset in the current (possibly larger) text, then slice out the
+                # originally-signed segment and retry the hash.
+                segment_verified = False
+                if expected_exclusion is not None:
+                    # Try segment extraction on two text variants:
+                    # 1. The original text (handles extra text before/after with same whitespace)
+                    # 2. Whitespace-collapsed text (handles browser paste where <p> tags
+                    #    become \n\n but the signed text used single spaces between paragraphs)
+                    _WS_COLLAPSE = re.compile(r"\s+")
+                    text_variants = [
+                        ("original", original_text),
+                        ("ws-collapsed", _WS_COLLAPSE.sub(" ", original_text).strip()),
+                    ]
+                    for variant_name, variant_text in text_variants:
+                        if segment_verified:
+                            break
+                        try:
+                            wrapper_info = find_wrapper_info_bytes(variant_text)
+                        except Exception:
+                            wrapper_info = None
+
+                        if wrapper_info is None:
+                            continue
+
+                        _, current_wrapper_byte_start, current_wrapper_byte_len = wrapper_info
+                        signed_start_byte = current_wrapper_byte_start - expected_exclusion[0]
+                        signed_end_byte = current_wrapper_byte_start + current_wrapper_byte_len
+                        normalized_bytes = normalize_text(variant_text).encode("utf-8")
+
+                        if signed_start_byte < 0 or signed_end_byte > len(normalized_bytes):
+                            continue
+
+                        signed_segment_bytes = normalized_bytes[signed_start_byte:signed_end_byte]
+                        try:
+                            signed_segment = signed_segment_bytes.decode("utf-8")
+                            retry_result = compute_normalized_hash(signed_segment, [expected_exclusion])
+                            if retry_result.hexdigest == expected_hard_hash:
+                                logger.info(
+                                    "C2PA verification: Hard binding passed after extracting signed segment "
+                                    "from surrounding text (%s, byte range %d-%d of %d).",
+                                    variant_name,
+                                    signed_start_byte,
+                                    signed_end_byte,
+                                    len(normalized_bytes),
+                                )
+                                segment_verified = True
+                        except (UnicodeDecodeError, ValueError):
+                            pass
+
+                if not segment_verified:
+                    logger.warning(
+                        "C2PA verification: Hard binding (content) hash mismatch. Expected '%s', got '%s'. Text may have been tampered with.",
+                        expected_hard_hash,
+                        actual_hard_hash,
+                    )
+                    return False, signer_id, c2pa_manifest
 
         # All checks passed
         logger.info(f"C2PA manifest for signer '{signer_id}' verified successfully (Signature, Soft Binding, Hard Binding).")

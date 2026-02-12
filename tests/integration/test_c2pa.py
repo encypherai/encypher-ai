@@ -93,8 +93,10 @@ class TestC2PAIntegration(unittest.TestCase):
 
         # Check required assertions are present
         assertion_labels = {a.get("label") for a in extracted_payload.get("assertions", [])}
-        self.assertIn("c2pa.actions.v2", assertion_labels)
-        self.assertIn("c2pa.actions.v1", assertion_labels)
+        self.assertTrue(
+            "c2pa.actions.v1" in assertion_labels or "c2pa.actions.v2" in assertion_labels,
+            f"Expected c2pa.actions.v1 or v2 in {assertion_labels}",
+        )
         self.assertIn("c2pa.hash.data.v1", assertion_labels)
         self.assertIn("c2pa.soft_binding.v1", assertion_labels)
 

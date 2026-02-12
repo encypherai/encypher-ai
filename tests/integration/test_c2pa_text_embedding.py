@@ -566,5 +566,101 @@ class TestC2PATextEmbedding(unittest.TestCase):
                 os.environ["ENCYPHER_C2PA_ACCEPTED_CONTEXTS"] = old_accepted
 
 
+    def test_verify_signed_text_with_surrounding_page_chrome(self):
+        """Verification should succeed when signed text is surrounded by extra content (e.g. nav, footer)."""
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-page-chrome-test"
+        article_text = "This is the article body that was signed by the publisher."
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=article_text,
+            private_key=private_key,
+            signer_id=key_id,
+            metadata_format="c2pa",
+        )
+
+        def resolver(kid: str):
+            return public_key if kid == key_id else None
+
+        # Sanity: exact text verifies
+        verified, _, _ = UnicodeMetadata.verify_metadata(text=embedded_text, public_key_resolver=resolver)
+        self.assertTrue(verified, "Exact signed text should verify")
+
+        # Simulate copy-paste from a web page: add nav/footer around the signed text
+        page_chrome_before = "About\nHome\nContact\nSkip to content\nThe Encypher Times\n\n"
+        page_chrome_after = "\n\nLeave a Reply\nFooter\nDesigned with WordPress"
+        full_page_paste = page_chrome_before + embedded_text + page_chrome_after
+
+        verified, signer_id, manifest = UnicodeMetadata.verify_metadata(
+            text=full_page_paste, public_key_resolver=resolver
+        )
+        self.assertTrue(verified, "Signed text with surrounding page chrome should verify via segment extraction")
+        self.assertEqual(signer_id, key_id)
+        self.assertIsNotNone(manifest)
+
+    def test_verify_signed_text_with_browser_whitespace_differences(self):
+        """Verification should succeed when browser paste converts paragraph spaces to newlines."""
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-browser-ws-test"
+        # Simulate text signed with spaces between paragraphs (as WordPress extract_text_from_html produces)
+        article_text = "First paragraph content. Second paragraph content. Third paragraph content."
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=article_text,
+            private_key=private_key,
+            signer_id=key_id,
+            metadata_format="c2pa",
+        )
+
+        def resolver(kid: str):
+            return public_key if kid == key_id else None
+
+        # Sanity: exact text verifies
+        verified, _, _ = UnicodeMetadata.verify_metadata(text=embedded_text, public_key_resolver=resolver)
+        self.assertTrue(verified, "Exact signed text should verify")
+
+        # Simulate browser paste: replace spaces between "paragraphs" with \n\n
+        # (browser renders <p> tags as double newlines when copy-pasting)
+        browser_paste = embedded_text.replace(". Second", ".\n\nSecond").replace(". Third", ".\n\nThird")
+        self.assertNotEqual(browser_paste, embedded_text)
+
+        # Add page chrome
+        full_page = "Nav\nHeader\n\n" + browser_paste + "\n\nFooter\nSidebar"
+
+        verified, signer_id, manifest = UnicodeMetadata.verify_metadata(
+            text=full_page, public_key_resolver=resolver
+        )
+        self.assertTrue(verified, "Browser paste with whitespace differences should verify via ws-collapsed fallback")
+        self.assertEqual(signer_id, key_id)
+
+    def test_verify_tampered_text_with_surrounding_chrome_still_fails(self):
+        """Tampered content should still fail even with the segment extraction fallback."""
+        private_key, public_key = generate_ed25519_key_pair()
+        key_id = "c2pa-tamper-chrome-test"
+        article_text = "Original article content that will be tampered with."
+
+        embedded_text = UnicodeMetadata.embed_metadata(
+            text=article_text,
+            private_key=private_key,
+            signer_id=key_id,
+            metadata_format="c2pa",
+        )
+
+        def resolver(kid: str):
+            return public_key if kid == key_id else None
+
+        # Tamper with the article text (change a word)
+        tampered = embedded_text.replace("Original", "Modified")
+        self.assertNotEqual(tampered, embedded_text)
+
+        # Add page chrome around the tampered text
+        full_page = "Nav bar\n\n" + tampered + "\n\nFooter"
+
+        verified, signer_id, manifest = UnicodeMetadata.verify_metadata(
+            text=full_page, public_key_resolver=resolver
+        )
+        self.assertFalse(verified, "Tampered text should fail verification even with page chrome extraction")
+
+
 if __name__ == "__main__":
     unittest.main()
