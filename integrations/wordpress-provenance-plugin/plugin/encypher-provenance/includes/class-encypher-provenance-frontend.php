@@ -351,10 +351,46 @@ class Frontend
                 document.body.style.overflow = '';
             }
             
+            function findActions(metadata) {
+                if (!metadata || !metadata.assertions) return null;
+                // Try v2 first, then v1
+                const actions = metadata.assertions.find(a => a.label === 'c2pa.actions.v2')
+                    || metadata.assertions.find(a => a.label === 'c2pa.actions.v1');
+                return (actions && actions.data && actions.data.actions) ? actions.data.actions : null;
+            }
+
+            function findMetadataAssertion(metadata) {
+                if (!metadata || !metadata.assertions) return null;
+                const meta = metadata.assertions.find(a => a.label === 'c2pa.metadata');
+                return (meta && meta.data) ? meta.data : null;
+            }
+
             function formatVerificationData(data, postId) {
                 if (!data || !data.valid) {
-                    return '<div class="encypher-error"><?php esc_html_e('Content verification failed or no C2PA manifest found.', 'encypher-provenance'); ?></div>';
+                    let errHtml = '<div class="encypher-error" style="text-align: center; padding: 20px;">';
+                    errHtml += '<div style="font-size: 48px; margin-bottom: 12px;">⚠️</div>';
+                    errHtml += '<h3 style="margin: 0 0 8px 0; color: #856404;"><?php esc_html_e('Verification Unsuccessful', 'encypher-provenance'); ?></h3>';
+                    if (data && data.error) {
+                        errHtml += '<p style="color: #666; margin: 0;">' + escapeHtml(data.error) + '</p>';
+                    } else {
+                        errHtml += '<p style="color: #666; margin: 0;"><?php esc_html_e('No valid C2PA manifest found for this content.', 'encypher-provenance'); ?></p>';
+                    }
+                    errHtml += '</div>';
+                    return errHtml;
                 }
+
+                // Normalize metadata: for micro_ecc_c2pa mode, the C2PA manifest
+                // (with assertions, instance_id, claim_generator) is nested inside
+                // data.metadata.manifest_data.  For full C2PA mode, it's directly
+                // in data.metadata.  Resolve to a single "manifest" reference.
+                const rawMeta = data.metadata || {};
+                const manifest = (rawMeta.manifest_data && rawMeta.manifest_data.assertions)
+                    ? rawMeta.manifest_data
+                    : rawMeta;
+                // Top-level document_id may live on rawMeta (micro_ecc) or in assertion
+                const topDocumentId = rawMeta.document_id || null;
+                const totalSignatures = rawMeta.total_signatures || null;
+                const totalSegments = rawMeta.total_segments || null;
                 
                 let html = '<div class="encypher-verification-success">';
                 html += '<div class="encypher-status-badge encypher-status-verified"><?php esc_html_e('Verified', 'encypher-provenance'); ?></div>';
@@ -368,72 +404,78 @@ class Frontend
                 html += '<div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0;">';
                 html += '<h3 style="margin: 0 0 10px 0; font-size: 14px; color: #333;"><?php esc_html_e('Verification Summary', 'encypher-provenance'); ?></h3>';
                 
-                if (data.signer_id) {
-                    html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed by:', 'encypher-provenance'); ?></strong> ' + escapeHtml(data.signer_id) + '</p>';
+                // Show signer_name (preferred) or signer_id
+                const signerDisplay = data.signer_name || data.signer_id;
+                if (signerDisplay) {
+                    html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed by:', 'encypher-provenance'); ?></strong> ' + escapeHtml(signerDisplay) + '</p>';
                 }
                 
+                // Extract action info from manifest (try v2 then v1)
+                const actions = findActions(manifest);
+                if (actions) {
+                    const createdAction = actions.find(a => a.label === 'c2pa.created');
+                    if (createdAction && createdAction.when) {
+                        const createdDate = new Date(createdAction.when);
+                        html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Signed:', 'encypher-provenance'); ?></strong> ' + createdDate.toLocaleString() + '</p>';
+                    }
+                    if (createdAction && createdAction.softwareAgent) {
+                        html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Software:', 'encypher-provenance'); ?></strong> ' + escapeHtml(createdAction.softwareAgent) + '</p>';
+                    }
+                }
+
+                // Extract document_id: try top-level (micro_ecc), then c2pa.metadata assertion
+                const metaAssertion = findMetadataAssertion(manifest);
+                const documentId = topDocumentId || (metaAssertion && metaAssertion.identifier) || null;
+                if (documentId) {
+                    html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Document ID:', 'encypher-provenance'); ?></strong> <span style="font-family: monospace; font-size: 12px;">' + escapeHtml(documentId) + '</span></p>';
+                }
+
+                // Show sentence/signature count if available
+                if (totalSignatures) {
+                    html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Sentences protected:', 'encypher-provenance'); ?></strong> ' + escapeHtml(String(totalSignatures)) + '</p>';
+                }
+
                 if (data.verified_at) {
                     const verifiedDate = new Date(data.verified_at);
                     html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Verified at:', 'encypher-provenance'); ?></strong> ' + verifiedDate.toLocaleString() + '</p>';
                 }
-                
-                // Extract action info from metadata
-                if (data.metadata && data.metadata.assertions) {
-                    const actions = data.metadata.assertions.find(a => a.label === 'c2pa.actions.v1');
-                    if (actions && actions.data && actions.data.actions) {
-                        const createdAction = actions.data.actions.find(a => a.label === 'c2pa.created');
-                        if (createdAction) {
-                            const createdDate = new Date(createdAction.when);
-                            html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Created:', 'encypher-provenance'); ?></strong> ' + createdDate.toLocaleString() + '</p>';
-                        }
-                    }
+
+                // Show instance_id from manifest
+                if (manifest.instance_id) {
+                    html += '<p style="margin: 5px 0;"><strong><?php esc_html_e('Instance:', 'encypher-provenance'); ?></strong> <span style="font-family: monospace; font-size: 12px;">' + escapeHtml(manifest.instance_id) + '</span></p>';
+                }
+
+                // Assertions chip summary
+                if (manifest.assertions && manifest.assertions.length > 0) {
+                    html += '<div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px;">';
+                    manifest.assertions.forEach(function(assertion) {
+                        const label = assertion.label || '';
+                        let bgColor = '#e9ecef'; let textColor = '#333';
+                        if (label.includes('actions')) { bgColor = '#d4edda'; textColor = '#155724'; }
+                        else if (label.includes('hash')) { bgColor = '#cce5ff'; textColor = '#004085'; }
+                        else if (label.includes('binding')) { bgColor = '#fff3cd'; textColor = '#856404'; }
+                        else if (label.includes('metadata')) { bgColor = '#e2e3e5'; textColor = '#383d41'; }
+                        else if (label.includes('status')) { bgColor = '#f8d7da'; textColor = '#721c24'; }
+                        html += '<span style="display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 11px; background: ' + bgColor + '; color: ' + textColor + ';">' + escapeHtml(assertion.kind || label.split('.').pop()) + '</span>';
+                    });
+                    html += '</div>';
                 }
                 
                 html += '</div>';
 
-        // Expandable details section (open by default)
-                html += '<details open style="margin: 15px 0;">';
-                html += '<summary style="cursor: pointer; padding: 10px; background: #e9ecef; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Full C2PA Manifest', 'encypher-provenance'); ?></summary>';
-                html += '<div style="padding: 15px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px;">';
-                
-                // Full metadata table
-                html += '<table class="encypher-verification-table" style="width: 100%; border-collapse: collapse;">';
-                
-                // Metadata
-                if (data.metadata) {
-                    if (data.metadata.claim_generator) {
-                        html += '<tr><td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong><?php esc_html_e('Claim Generator', 'encypher-provenance'); ?></strong></td><td style="padding: 8px; border-bottom: 1px solid #dee2e6;">' + escapeHtml(data.metadata.claim_generator) + '</td></tr>';
-                    }
-                    if (data.metadata.instance_id) {
-                        html += '<tr><td style="padding: 8px; border-bottom: 1px solid #dee2e6;"><strong><?php esc_html_e('Instance ID', 'encypher-provenance'); ?></strong></td><td style="padding: 8px; border-bottom: 1px solid #dee2e6; font-family: monospace; font-size: 12px;">' + escapeHtml(data.metadata.instance_id) + '</td></tr>';
-                    }
-                    
-                    // Assertions
-                    if (data.metadata.assertions && data.metadata.assertions.length > 0) {
-                        html += '<tr><td colspan="2" style="padding: 12px 8px 8px 8px;"><strong><?php esc_html_e('Assertions', 'encypher-provenance'); ?></strong></td></tr>';
-                        data.metadata.assertions.forEach(assertion => {
-                            html += '<tr><td style="padding: 8px; padding-left: 20px; border-bottom: 1px solid #dee2e6;">' + escapeHtml(assertion.label) + '</td><td style="padding: 8px; border-bottom: 1px solid #dee2e6;">' + escapeHtml(assertion.kind || 'N/A') + '</td></tr>';
-                        });
-                    }
-                }
-                
-                html += '</table>';
-                html += '</div></details>';
-                
-                // Add provenance chain viewer (if ingredients exist)
+                // Provenance chain viewer (if ingredients exist)
                 if (data.metadata && data.metadata.ingredients && data.metadata.ingredients.length > 0) {
                     html += '<details style="margin: 15px 0;">';
                     html += '<summary style="cursor: pointer; padding: 10px; background: #28a745; color: white; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Provenance Chain', 'encypher-provenance'); ?></summary>';
                     html += '<div style="padding: 15px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px; background: #f8f9fa;">';
                     html += '<p style="margin-bottom: 15px; color: #666;"><?php esc_html_e('This content has been edited. View the complete edit history:', 'encypher-provenance'); ?></p>';
                     
-                    // Build provenance chain
                     let chain = [];
                     let current = data.metadata;
                     let depth = 0;
-                    while (current && depth < 10) {  // Limit depth to prevent infinite loops
-                        const actions = current.assertions?.find(a => a.label === 'c2pa.actions.v1')?.data?.actions || [];
-                        const mainAction = actions.find(a => a.label === 'c2pa.created' || a.label === 'c2pa.edited');
+                    while (current && depth < 10) {
+                        const chainActions = findActions(current) || [];
+                        const mainAction = chainActions.find(a => a.label === 'c2pa.created' || a.label === 'c2pa.edited');
                         chain.push({
                             instance_id: current.instance_id,
                             action: mainAction?.label || 'unknown',
@@ -444,7 +486,6 @@ class Frontend
                         depth++;
                     }
                     
-                    // Display chain
                     html += '<div style="font-family: monospace; font-size: 13px;">';
                     for (let i = 0; i < chain.length; i++) {
                         const item = chain[i];
@@ -460,12 +501,12 @@ class Frontend
                     html += '</div></details>';
                 }
                 
-                // Add full manifest JSON viewer
+                // Full manifest JSON viewer (collapsed by default)
                 if (data.metadata) {
                     html += '<details style="margin: 15px 0;">';
                     html += '<summary style="cursor: pointer; padding: 10px; background: #1B2F50; color: white; border-radius: 4px; font-weight: 600;"><?php esc_html_e('View Complete C2PA Manifest (JSON)', 'encypher-provenance'); ?></summary>';
                     html += '<div style="padding: 15px; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 4px 4px; background: #f8f9fa;">';
-                    html += '<pre id="c2pa-manifest-json" style="background: #2b2b2b; color: #f8f8f2; padding: 20px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.5; font-family: \'Courier New\', monospace; margin: 0;">';
+                    html += '<pre id="c2pa-manifest-json" style="background: #2b2b2b; color: #f8f8f2; padding: 20px; border-radius: 6px; overflow-x: auto; font-size: 13px; line-height: 1.5; font-family: \'Courier New\', monospace; margin: 0; max-height: 400px;">';
                     html += escapeHtml(JSON.stringify(data.metadata, null, 2));
                     html += '</pre>';
                     html += '<p style="margin-top: 15px; font-size: 12px; color: #666; text-align: center;">';
@@ -473,23 +514,18 @@ class Frontend
                     html += '</p>';
                     html += '</div></details>';
                     
-                    // Add click handler after modal is rendered
                     setTimeout(function() {
                         const copyBtn = document.getElementById('copy-manifest-btn');
                         if (copyBtn) {
                             copyBtn.onclick = function() {
                                 const json = JSON.stringify(data.metadata, null, 2);
                                 navigator.clipboard.writeText(json).then(function() {
-                                    copyBtn.textContent = 'Copied';
-                                    setTimeout(function() {
-                                        copyBtn.textContent = 'Copy to Clipboard';
-                                    }, 2000);
+                                    copyBtn.textContent = 'Copied!';
+                                    setTimeout(function() { copyBtn.textContent = 'Copy to Clipboard'; }, 2000);
                                 }).catch(function(err) {
                                     console.error('Failed to copy:', err);
                                     copyBtn.textContent = 'Copy failed';
-                                    setTimeout(function() {
-                                        copyBtn.textContent = 'Copy to Clipboard';
-                                    }, 2000);
+                                    setTimeout(function() { copyBtn.textContent = 'Copy to Clipboard'; }, 2000);
                                 });
                             };
                         }
