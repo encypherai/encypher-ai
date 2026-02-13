@@ -11,9 +11,7 @@ const apiKeyStatus = document.getElementById('apiKeyStatus');
 const autoVerifyCheckbox = document.getElementById('autoVerify');
 const showBadgesCheckbox = document.getElementById('showBadges');
 
-const apiBaseUrlSelect = document.getElementById('apiBaseUrl');
-const customUrlField = document.getElementById('customUrlField');
-const customApiUrlInput = document.getElementById('customApiUrl');
+const apiBaseUrlInput = document.getElementById('apiBaseUrl');
 const cacheTtlInput = document.getElementById('cacheTtl');
 
 const clearCacheBtn = document.getElementById('clearCache');
@@ -57,7 +55,7 @@ async function loadSettings() {
     const localResult = await chrome.storage.local.get({ apiKey: '' });
     if (localResult.apiKey) {
       apiKeyInput.value = localResult.apiKey;
-      apiKeyStatus.textContent = '✓ API key saved';
+      apiKeyStatus.textContent = 'API key saved';
       apiKeyStatus.className = 'options__hint options__hint--success';
     }
     
@@ -66,15 +64,10 @@ async function loadSettings() {
     showBadgesCheckbox.checked = result.showBadges;
     
     // Advanced settings
-    if (result.apiBaseUrl === 'custom' || 
-        (result.apiBaseUrl !== 'https://api.encypherai.com' && 
-         result.apiBaseUrl !== 'http://localhost:9000')) {
-      apiBaseUrlSelect.value = 'custom';
-      customUrlField.hidden = false;
-      customApiUrlInput.value = result.customApiUrl || result.apiBaseUrl;
-    } else {
-      apiBaseUrlSelect.value = result.apiBaseUrl;
-    }
+    const savedUrl = result.apiBaseUrl === 'custom' 
+      ? (result.customApiUrl || DEFAULT_SETTINGS.apiBaseUrl)
+      : (result.apiBaseUrl || DEFAULT_SETTINGS.apiBaseUrl);
+    apiBaseUrlInput.value = savedUrl;
     
     cacheTtlInput.value = result.cacheTtl;
     
@@ -167,10 +160,8 @@ async function testApiKey(apiKey) {
  * Get effective API URL based on settings
  */
 function getEffectiveApiUrl() {
-  if (apiBaseUrlSelect.value === 'custom') {
-    return customApiUrlInput.value || DEFAULT_SETTINGS.apiBaseUrl;
-  }
-  return apiBaseUrlSelect.value;
+  const url = apiBaseUrlInput.value.trim();
+  return url || DEFAULT_SETTINGS.apiBaseUrl;
 }
 
 // Event listeners
@@ -179,7 +170,7 @@ function getEffectiveApiUrl() {
 toggleApiKeyBtn.addEventListener('click', () => {
   const isPassword = apiKeyInput.type === 'password';
   apiKeyInput.type = isPassword ? 'text' : 'password';
-  toggleApiKeyBtn.textContent = isPassword ? '🙈' : '👁';
+  toggleApiKeyBtn.textContent = isPassword ? 'Hide' : 'Show';
 });
 
 // Save API key
@@ -205,7 +196,7 @@ saveApiKeyBtn.addEventListener('click', async () => {
   if (testResult.valid) {
     // Save to local storage (more secure than sync)
     await saveSetting('apiKey', apiKey, true);
-    apiKeyStatus.textContent = `✓ Connected as ${testResult.organization}`;
+    apiKeyStatus.textContent = `Connected as ${testResult.organization}`;
     apiKeyStatus.className = 'options__hint options__hint--success';
     
     // Notify service worker
@@ -239,32 +230,18 @@ showBadgesCheckbox.addEventListener('change', async () => {
 });
 
 // API base URL change
-apiBaseUrlSelect.addEventListener('change', async () => {
-  const value = apiBaseUrlSelect.value;
-  customUrlField.hidden = value !== 'custom';
-  
-  if (value !== 'custom') {
-    await saveSetting('apiBaseUrl', value);
-    chrome.runtime.sendMessage({ 
-      type: 'SETTINGS_UPDATED', 
-      setting: 'apiBaseUrl', 
-      value: value 
-    });
+apiBaseUrlInput.addEventListener('blur', async () => {
+  const url = apiBaseUrlInput.value.trim();
+  if (!url) {
+    apiBaseUrlInput.value = DEFAULT_SETTINGS.apiBaseUrl;
   }
-});
-
-// Custom API URL change
-customApiUrlInput.addEventListener('blur', async () => {
-  const url = customApiUrlInput.value.trim();
-  if (url) {
-    await saveSetting('apiBaseUrl', 'custom');
-    await saveSetting('customApiUrl', url);
-    chrome.runtime.sendMessage({ 
-      type: 'SETTINGS_UPDATED', 
-      setting: 'apiBaseUrl', 
-      value: url 
-    });
-  }
+  const effectiveUrl = url || DEFAULT_SETTINGS.apiBaseUrl;
+  await saveSetting('apiBaseUrl', effectiveUrl);
+  chrome.runtime.sendMessage({ 
+    type: 'SETTINGS_UPDATED', 
+    setting: 'apiBaseUrl', 
+    value: effectiveUrl 
+  });
 });
 
 // Cache TTL change
@@ -347,4 +324,8 @@ resetSettingsBtn.addEventListener('click', async () => {
 });
 
 // Initialize
-document.addEventListener('DOMContentLoaded', loadSettings);
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', loadSettings);
+} else {
+  loadSettings();
+}

@@ -33,21 +33,16 @@ function isVariationSelector(codePoint) {
 
 function extractEmbeddedBytes(text) {
   const bytes = [];
-  let highNibble = null;
   
   for (const char of text) {
     const codePoint = char.codePointAt(0);
     
     if (codePoint >= VS_RANGES.VS1_START && codePoint <= VS_RANGES.VS1_END) {
-      const nibble = codePoint - VS_RANGES.VS1_START;
-      if (highNibble === null) {
-        highNibble = nibble;
-      } else {
-        bytes.push((highNibble << 4) | nibble);
-        highNibble = null;
-      }
+      // Bytes 0-15 from VS1 range
+      bytes.push(codePoint - VS_RANGES.VS1_START);
     } else if (codePoint >= VS_RANGES.VS2_START && codePoint <= VS_RANGES.VS2_END) {
-      bytes.push(codePoint - VS_RANGES.VS2_START);
+      // Bytes 16-255 from VS2 range
+      bytes.push((codePoint - VS_RANGES.VS2_START) + 16);
     }
   }
   
@@ -87,6 +82,14 @@ function extractVisibleText(text) {
   return result;
 }
 
+// Helper to convert a byte to a variation selector (c2pa_text standard)
+function byteToVS(byte) {
+  if (byte >= 0 && byte <= 15) {
+    return String.fromCodePoint(VS_RANGES.VS1_START + byte);
+  }
+  return String.fromCodePoint(VS_RANGES.VS2_START + (byte - 16));
+}
+
 // Helper to create embedded text for testing
 function embedBytes(visibleText, bytes) {
   let result = String.fromCodePoint(ZWNBSP);
@@ -95,14 +98,9 @@ function embedBytes(visibleText, bytes) {
   for (const char of visibleText) {
     result += char;
     
-    // Embed one byte after each visible character (simplified)
+    // Embed one byte after each visible character (one VS per byte)
     if (byteIndex < bytes.length) {
-      const byte = bytes[byteIndex];
-      // Use VS1 range (4-bit nibbles)
-      const highNibble = (byte >> 4) & 0x0F;
-      const lowNibble = byte & 0x0F;
-      result += String.fromCodePoint(VS_RANGES.VS1_START + highNibble);
-      result += String.fromCodePoint(VS_RANGES.VS1_START + lowNibble);
+      result += byteToVS(bytes[byteIndex]);
       byteIndex++;
     }
   }
@@ -131,17 +129,17 @@ describe('isVariationSelector', () => {
 });
 
 describe('extractEmbeddedBytes', () => {
-  it('should extract bytes from VS1 nibbles', () => {
-    // Embed byte 0x43 ('C') using two VS1 characters
-    const text = 'A' + String.fromCodePoint(0xFE04) + String.fromCodePoint(0xFE03);
+  it('should extract bytes 0-15 from VS1 range', () => {
+    // Byte 0x04 via VS1: FE04
+    const text = 'A' + String.fromCodePoint(0xFE04);
     const bytes = extractEmbeddedBytes(text);
     assert.strictEqual(bytes.length, 1);
-    assert.strictEqual(bytes[0], 0x43);
+    assert.strictEqual(bytes[0], 0x04);
   });
 
-  it('should extract bytes from VS2 range', () => {
-    // Embed byte 0x43 using VS2 character
-    const text = 'A' + String.fromCodePoint(0xE0100 + 0x43);
+  it('should extract bytes 16-255 from VS2 range', () => {
+    // Byte 0x43 (67) via VS2: E0100 + (0x43 - 16) = E0100 + 51 = E0133
+    const text = 'A' + String.fromCodePoint(0xE0100 + (0x43 - 16));
     const bytes = extractEmbeddedBytes(text);
     assert.strictEqual(bytes.length, 1);
     assert.strictEqual(bytes[0], 0x43);
@@ -150,6 +148,15 @@ describe('extractEmbeddedBytes', () => {
   it('should return empty array for plain text', () => {
     const bytes = extractEmbeddedBytes('Hello World');
     assert.strictEqual(bytes.length, 0);
+  });
+
+  it('should handle mixed VS1 and VS2 characters', () => {
+    // Byte 0x00 (VS1) + Byte 0xFF (255, VS2: E0100 + 239)
+    const text = 'AB' + String.fromCodePoint(0xFE00) + String.fromCodePoint(0xE0100 + 239);
+    const bytes = extractEmbeddedBytes(text);
+    assert.strictEqual(bytes.length, 2);
+    assert.strictEqual(bytes[0], 0x00);
+    assert.strictEqual(bytes[1], 0xFF);
   });
 });
 
@@ -227,6 +234,131 @@ describe('extractVisibleText', () => {
     const text = 'Hello World!';
     const visible = extractVisibleText(text);
     assert.strictEqual(visible, 'Hello World!');
+  });
+});
+
+describe('findWrappers', () => {
+  // Replicate the findWrappers logic from detector.js
+  function findWrappers(text) {
+    const wrappers = [];
+    let i = 0;
+    const chars = [...text];
+    while (i < chars.length) {
+      if (chars[i].codePointAt(0) === ZWNBSP) {
+        const startIdx = i;
+        i++;
+        const vsBytes = [];
+        while (i < chars.length && isVariationSelector(chars[i].codePointAt(0))) {
+          const cp = chars[i].codePointAt(0);
+          if (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) {
+            vsBytes.push(cp - VS_RANGES.VS1_START);
+          } else if (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END) {
+            vsBytes.push((cp - VS_RANGES.VS2_START) + 16);
+          }
+          i++;
+        }
+        if (vsBytes.length >= C2PA_MAGIC.length) {
+          wrappers.push({ bytes: new Uint8Array(vsBytes), startIdx, endIdx: i });
+        }
+      } else {
+        i++;
+      }
+    }
+    return wrappers;
+  }
+
+  it('should find a C2PA wrapper in text', () => {
+    // Build a C2PA wrapper: ZWNBSP + VS-encoded header bytes
+    // Header: MAGIC(8) + VERSION(1) + LENGTH(4) = 13 bytes
+    // MAGIC = C2PATXT\0 = [0x43, 0x32, 0x50, 0x41, 0x54, 0x58, 0x54, 0x00]
+    const headerBytes = [...C2PA_MAGIC, 0x01, 0x00, 0x00, 0x00, 0x04]; // version=1, length=4
+    const manifestBytes = [0xDE, 0xAD, 0xBE, 0xEF]; // 4-byte dummy manifest
+    const allBytes = [...headerBytes, ...manifestBytes];
+    
+    let wrapper = String.fromCodePoint(ZWNBSP);
+    for (const b of allBytes) {
+      wrapper += byteToVS(b);
+    }
+    
+    const text = 'Hello world' + wrapper + ' more text';
+    const found = findWrappers(text);
+    assert.strictEqual(found.length, 1);
+    assert.strictEqual(found[0].bytes.length, allBytes.length);
+    assert.ok(hasC2PAMagic(found[0].bytes));
+    assert.strictEqual(detectMarkerType(found[0].bytes), 'c2pa');
+  });
+
+  it('should not find wrappers in plain text', () => {
+    const found = findWrappers('Hello World, no embeddings here.');
+    assert.strictEqual(found.length, 0);
+  });
+
+  it('should ignore ZWNBSP without enough VS chars', () => {
+    // ZWNBSP followed by only 3 VS chars (less than 8-byte magic)
+    const text = 'A' + String.fromCodePoint(ZWNBSP) + byteToVS(0x43) + byteToVS(0x32) + byteToVS(0x50) + 'B';
+    const found = findWrappers(text);
+    assert.strictEqual(found.length, 0);
+  });
+});
+
+describe('findMicroEmbeddings', () => {
+  // Replicate the findMicroEmbeddings logic from detector.js
+  function findMicroEmbeddings(text) {
+    const results = [];
+    const chars = [...text];
+    let i = 0;
+    while (i < chars.length) {
+      const cp = chars[i].codePointAt(0);
+      if (cp === ZWNBSP) {
+        i++;
+        while (i < chars.length && isVariationSelector(chars[i].codePointAt(0))) i++;
+        continue;
+      }
+      if (isVariationSelector(cp)) {
+        const startIdx = i;
+        let vsCount = 0;
+        while (i < chars.length) {
+          const c = chars[i].codePointAt(0);
+          if (isVariationSelector(c)) { vsCount++; i++; }
+          else if (c === ZWNBSP) { break; }
+          else {
+            if (i + 1 < chars.length && isVariationSelector(chars[i + 1].codePointAt(0))) { i++; }
+            else { break; }
+          }
+        }
+        if (vsCount >= 4) {
+          results.push({ byteCount: vsCount, startIdx, endIdx: i });
+        }
+      } else { i++; }
+    }
+    return results;
+  }
+
+  it('should detect contiguous VS chars as micro-embedding', () => {
+    // 6 VS chars interleaved with visible text (no ZWNBSP prefix)
+    const text = 'A' + byteToVS(0x10) + 'B' + byteToVS(0x20) + 'C' + byteToVS(0x30) +
+                 'D' + byteToVS(0x40) + 'E' + byteToVS(0x50) + 'F' + byteToVS(0x60);
+    const micros = findMicroEmbeddings(text);
+    assert.strictEqual(micros.length, 1);
+    assert.strictEqual(micros[0].byteCount, 6);
+  });
+
+  it('should ignore fewer than 4 VS chars', () => {
+    const text = 'A' + byteToVS(0x10) + 'B' + byteToVS(0x20) + 'C';
+    const micros = findMicroEmbeddings(text);
+    assert.strictEqual(micros.length, 0);
+  });
+
+  it('should not detect ZWNBSP-prefixed sequences as micro-embeddings', () => {
+    let text = String.fromCodePoint(ZWNBSP);
+    for (let i = 0; i < 10; i++) text += byteToVS(i);
+    const micros = findMicroEmbeddings(text);
+    assert.strictEqual(micros.length, 0);
+  });
+
+  it('should detect plain text with no VS as empty', () => {
+    const micros = findMicroEmbeddings('Hello World');
+    assert.strictEqual(micros.length, 0);
   });
 });
 

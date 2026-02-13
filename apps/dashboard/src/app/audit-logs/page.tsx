@@ -54,8 +54,8 @@ export default function AuditLogsPage() {
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
-  const userTier = (session?.user as any)?.tier || 'starter';
-  const hasAuditFeature = ['business', 'enterprise'].includes(userTier);
+  const userTier = (session?.user as any)?.tier || 'free';
+  const hasAuditFeature = userTier === 'enterprise';
   const { activeOrganization, isLoading: orgLoading } = useOrganization();
   const orgId = activeOrganization?.id;
 
@@ -129,10 +129,10 @@ export default function AuditLogsPage() {
           <h1 className="text-2xl font-bold text-foreground mb-2">Audit Logs</h1>
           <p className="text-muted-foreground max-w-md mb-6">
             Track all activity in your organization including team changes, API key operations, and more.
-            Audit logs are available on Business and Enterprise plans.
+            Audit logs are available on the Enterprise plan.
           </p>
           <Link href="/billing">
-            <Button variant="primary">Upgrade to Business</Button>
+            <Button variant="primary">Upgrade to Enterprise</Button>
           </Link>
         </div>
       </DashboardLayout>

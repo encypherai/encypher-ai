@@ -27,7 +27,7 @@ const API_BASE = (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com
 type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 // Tier definitions for feature gating
-type Tier = 'starter' | 'professional' | 'business' | 'enterprise';
+type Tier = 'free' | 'enterprise';
 
 interface ApiEndpoint {
   id: string;
@@ -58,10 +58,8 @@ type PlaygroundFormState = {
 
 // Tier hierarchy for comparison
 const tierOrder: Record<Tier, number> = {
-  starter: 0,
-  professional: 1,
-  business: 2,
-  enterprise: 3,
+  free: 0,
+  enterprise: 1,
 };
 
 const hasTierAccess = (userTier: Tier, requiredTier?: Tier): boolean => {
@@ -124,23 +122,19 @@ const methodColors: Record<HttpMethod, string> = {
 
 // Tier badge colors
 const tierColors: Record<Tier, string> = {
-  starter: 'bg-slate-100 text-slate-600',
-  professional: 'bg-blue-100 text-blue-700',
-  business: 'bg-purple-100 text-purple-700',
+  free: 'bg-slate-100 text-slate-600',
   enterprise: 'bg-amber-100 text-amber-700',
 };
 
 const tierLabels: Record<Tier, string> = {
-  starter: 'Free',
-  professional: 'Pro',
-  business: 'Business',
+  free: 'Free',
   enterprise: 'Enterprise',
 };
 
 export default function PlaygroundPage() {
   const { session, status, accessToken } = useRequireAuth();
-  // Get user tier from session (default to starter for new users)
-  const userTier = ((session?.user as Record<string, unknown>)?.tier as Tier) || 'starter';
+  // Get user tier from session (default to free for new users)
+  const userTier = ((session?.user as Record<string, unknown>)?.tier as Tier) || 'free';
 
   const [selectedEndpoint, setSelectedEndpoint] = useState<ApiEndpoint>(endpoints[0]);
   const [customPath, setCustomPath] = useState('');
@@ -638,9 +632,9 @@ export default function PlaygroundPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">API Playground</h2>
-            <p className="text-muted-foreground">
-              Test API endpoints interactively with your credentials
+            <h1 className="text-2xl font-bold text-delft-blue dark:text-white">API Playground</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Test API endpoints interactively with your credentials.
             </p>
           </div>
           <a
@@ -1100,7 +1094,7 @@ export default function PlaygroundPage() {
                 <div>
                   <label className="block text-sm font-medium mb-2">
                     Rights Template
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">(Business+ tier)</span>
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">(Enterprise tier)</span>
                   </label>
                   <TemplateSelector
                     value={selectedTemplateId}

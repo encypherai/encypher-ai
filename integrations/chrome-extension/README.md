@@ -16,8 +16,8 @@ A browser extension that automatically detects and verifies C2PA-signed content 
 - **Popup Signing**: Sign text directly from the extension popup (requires API key)
 - **WYSIWYG Editor Integration**: Floating sign buttons on detected text editors
 - **Context Menu Signing**: Right-click to sign selected text or sign & copy to clipboard
-- **Advanced Options**: Document type, invisible embeddings, Merkle tree (Pro), attribution tracking (Pro)
-- **Tier-Aware**: Shows account tier and enables features based on subscription level
+- **Advanced Options**: Document type, invisible embeddings, Merkle tree (Enterprise), attribution tracking (Enterprise)
+- **Tier-Aware**: Free tier (1,000 signings/month) and Enterprise (unlimited) with usage tracking
 
 ### Supported Editors
 The extension automatically detects and adds signing capabilities to:
@@ -92,11 +92,11 @@ chrome-extension/
 
 | State | Color | Meaning |
 |-------|-------|---------|
-| Verified | Green ✓ | Content signature is valid |
-| Pending | Yellow ⋯ | Verification in progress |
-| Invalid | Red ✗ | Signature verification failed |
-| Revoked | Purple ⊘ | Content has been revoked |
-| Error | Gray ! | Verification error occurred |
+| Verified | Azure Blue | Content signature is valid |
+| Pending | Amber | Verification in progress |
+| Invalid | Red | Signature verification failed |
+| Revoked | Gray | Content has been revoked |
+| Error | Gray | Verification error occurred |
 
 ## API Endpoints Used
 
@@ -127,28 +127,29 @@ chrome-extension/
 ### Testing
 
 ```bash
-# Run unit tests
+# Run unit tests (42 tests)
 npm test
 
 # Run E2E tests with Puppeteer
 npm run test:e2e
 ```
 
-### Building for Production
+### Building for Chrome Web Store
+
+The extension uses no build step — source files are submitted directly. Create a zip of the extension directory (excluding `node_modules/`, `tests/`, and markdown files):
 
 ```bash
-npm run build
+zip -r encypher-c2pa-verifier.zip . -x 'node_modules/*' 'tests/*' '*.md' 'package*.json'
 ```
-
-This creates a `dist/` folder ready for Chrome Web Store submission.
 
 ## Configuration
 
 The extension uses these default settings:
 
-- **API Base URL**: `https://api.encypherai.com`
-- **Cache TTL**: 5 minutes
+- **API Base URL**: `https://api.encypherai.com` (configurable text field in settings)
+- **Verification Cache TTL**: 1 hour (local browser cache)
 - **Request Timeout**: 10 seconds
+- **Free Tier Limit**: 1,000 signings per month
 
 ## License
 

@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization, OrganizationCertificateStatus
 from app.models.public_key import PublicKey
-from app.utils.crypto_utils import extract_public_key_from_certificate
+from app.utils.crypto_utils import decrypt_private_key, extract_public_key_from_certificate
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +140,67 @@ class CertificateResolver:
                     cert_chain_pem=cert_chain_pem,
                     is_byok=False,
                 )
+
+            # Also load auto-provisioned keys (orgs with public_key or
+            # private_key_encrypted but no certificate_pem).
+            from sqlalchemy import text as sa_text
+
+            auto_prov_result = await db.execute(
+                sa_text(
+                    "SELECT id, name, public_key, private_key_encrypted, "
+                    "certificate_status, certificate_rotated_at, certificate_expiry "
+                    "FROM organizations "
+                    "WHERE certificate_pem IS NULL "
+                    "AND (public_key IS NOT NULL OR private_key_encrypted IS NOT NULL)"
+                )
+            )
+            try:
+                auto_prov_rows = auto_prov_result.all()
+            except AttributeError:
+                auto_prov_rows = auto_prov_result.fetchall() if hasattr(auto_prov_result, "fetchall") else []
+
+            for row in auto_prov_rows:
+                if not row:
+                    continue
+                org_id = row[0]
+                org_name = row[1]
+                raw_pub = row[2]
+                raw_priv = row[3]
+                cert_status = row[4]
+                cert_rotated = row[5]
+                cert_expiry = row[6]
+
+                if org_id in refreshed:
+                    continue
+
+                resolved_key = None
+                if raw_pub:
+                    try:
+                        resolved_key = Ed25519PublicKey.from_public_bytes(bytes(raw_pub))
+                    except Exception as e:
+                        logger.debug("Failed to load public_key bytes for org %s: %s", org_id, e)
+
+                if resolved_key is None and raw_priv:
+                    try:
+                        priv = decrypt_private_key(bytes(raw_priv))
+                        resolved_key = priv.public_key()
+                    except Exception as e:
+                        logger.debug("Failed to derive public key from private_key_encrypted for org %s: %s", org_id, e)
+
+                if resolved_key is not None:
+                    status = cert_status or OrganizationCertificateStatus.ACTIVE
+                    refreshed[org_id] = ResolvedCertificate(
+                        signer_id=org_id,
+                        organization_name=org_name or org_id,
+                        certificate_pem="",  # No certificate PEM for auto-provisioned keys
+                        public_key=resolved_key,
+                        status=status,
+                        certificate_rotated_at=cert_rotated,
+                        certificate_expiry=cert_expiry,
+                        cert_chain_pem=None,
+                        is_byok=False,
+                    )
+                    logger.debug("Loaded auto-provisioned key for org %s", org_id)
 
             # Also load BYOK public keys from public_keys table
             byok_stmt = select(

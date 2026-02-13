@@ -284,8 +284,8 @@ export default function SettingsPage() {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Settings</h2>
-        <p className="text-muted-foreground">Manage your account settings and preferences</p>
+        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Settings</h1>
+        <p className="text-sm text-muted-foreground mt-1">Manage your account settings and preferences.</p>
       </div>
 
       <div className="grid md:grid-cols-4 gap-6">

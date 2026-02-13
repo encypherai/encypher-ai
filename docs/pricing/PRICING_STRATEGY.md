@@ -1,9 +1,11 @@
 # Encypher Pricing & Monetization Strategy
 
-**Version:** 2.0  
-**Date:** November 25, 2025  
+**Version:** 3.0  
+**Date:** February 13, 2026  
 **Status:** Approved  
 **Owner:** Product & Revenue Team
+
+> **SSOT:** The canonical pricing configuration is defined in code at [`packages/pricing-config/src/`](../../packages/pricing-config/src/). The feature-by-feature breakdown is in [`FEATURE_MATRIX.md`](../../FEATURE_MATRIX.md). This document covers **strategy, economics, and GTM** — not feature lists.
 
 ---
 
@@ -27,164 +29,95 @@ This document defines the unified pricing strategy across all Encypher propertie
 
 ## Platform Tiers
 
+Encypher has two core tiers plus optional add-ons and bundles. See [`FEATURE_MATRIX.md`](../../FEATURE_MATRIX.md) for the complete feature-by-feature breakdown.
+
 ### Tier Overview
 
 | Tier | Price | Target Customer | Primary Value |
 |------|-------|-----------------|---------------|
-| **Starter** | Free | Bloggers, small publishers | C2PA signing + coalition revenue |
-| **Professional** | $99/mo | Regional news, niche pubs | Sentence tracking + better rev share |
-| **Business** | $499/mo | Major digital publishers | Merkle + plagiarism detection |
-| **Enterprise** | Custom | Global media giants | Full platform + custom terms |
+| **Free** | $0/month (1,000 docs/mo, $0.02/doc overage) | Bloggers, small-to-mid publishers, indie media, researchers | Full C2PA signing, verification, coalition enrollment |
+| **Enterprise** | Custom (tiered by licensing potential) | Large publishers, media companies, enterprise content teams | Unlimited everything, all add-ons included, SLA, SSO, RBAC |
+
+### Enterprise Sub-Tiers (Implementation Fee)
+
+| Label | Licensing Potential | Implementation Fee |
+|-------|--------------------|--------------------|
+| Tier 1 Publisher | >$20M | $30K |
+| Tier 2 Publisher | $3-20M | $20K |
+| Tier 3 Publisher | <$3M | $10K |
+
+Founding Coalition members have the implementation fee waived.
 
 ---
 
-### Starter (Free)
+### Free Tier ($0/month)
 
-**Target:** Individual bloggers, small news sites, indie publishers (<100K monthly visitors)
+**Target:** Individual bloggers, small news sites, indie publishers, WordPress owners
 
-#### Features
+#### Key Features
 
 | Category | Feature | Included |
 |----------|---------|----------|
-| **Signing** | C2PA manifest signing | ✅ 1,000/month |
-| **Signing** | Sentence-level tracking | ❌ |
-| **Signing** | Merkle tree encoding | ❌ |
-| **Verification** | Public verification pages | ✅ Unlimited |
-| **Verification** | Verification API | ✅ Unlimited |
-| **API** | API keys | 2 |
-| **API** | Rate limit | 10 req/sec |
-| **Analytics** | Usage dashboard | ✅ 7-day retention |
-| **Support** | Community (GitHub/Discord) | ✅ |
-| **Support** | Email support | ❌ |
-| **WordPress** | Plugin access | ✅ |
-| **WordPress** | Encypher branding | Required |
+| **Signing** | C2PA 2.3-compliant document signing | ✅ 1,000/month ($0.02/doc overage) |
+| **Signing** | Sentence-level Merkle tree authentication | ✅ |
+| **Signing** | Invisible Unicode embeddings | ✅ |
+| **Verification** | Public verification pages and API | ✅ Unlimited |
+| **Distribution** | WordPress plugin, CLI, browser extension, Ghost integration | ✅ |
+| **Dashboard** | Analytics, API keys, playground, integrations | ✅ |
 | **Coalition** | Auto-join licensing coalition | ✅ |
-| **Coalition** | Revenue share | 65% publisher / 35% Encypher |
-
-*Soft cap at 1,000/month for abuse prevention. 99% of legitimate users never hit this.
+| **Coalition** | Revenue share | 60% publisher / 40% Encypher |
 
 #### Value Proposition
 "Sign up to 1,000 articles/month for free. Get paid when AI companies use your content for training. Zero risk, pure upside."
 
 ---
 
-### Professional ($99/month)
+### Enterprise Tier (Custom Pricing)
 
-**Target:** Regional newspapers, niche publications, medium-sized blogs (100K-1M monthly visitors)
+**Target:** Major digital publishers, global media companies (significant content volume)
 
-**Examples:** TechCrunch, Ars Technica, The Information, Stratechery
+**Examples:** New York Times, Wall Street Journal, Washington Post, BBC, Reuters, The Atlantic, Vox Media
 
-#### Features
-
-| Category | Feature | Included |
-|----------|---------|----------|
-| **Signing** | C2PA manifest signing | ✅ Unlimited |
-| **Signing** | Sentence-level tracking | ✅ 50,000 sentences/mo |
-| **Signing** | Invisible embeddings (Unicode VS) | ✅ |
-| **Signing** | Merkle tree encoding | ❌ |
-| **Streaming** | WebSocket signing | ✅ |
-| **Streaming** | SSE events | ✅ |
-| **Lookup** | Sentence lookup API | ✅ |
-| **API** | API keys | 10 |
-| **API** | Rate limit | 50 req/sec |
-| **Analytics** | Usage dashboard | ✅ 90-day retention |
-| **Support** | Email support (48hr SLA) | ✅ |
-| **WordPress** | Plugin Pro features | ✅ |
-| **WordPress** | Remove Encypher branding | ✅ |
-| **BYOK** | Bring Your Own Keys | ✅ |
-| **Coalition** | Revenue share | 70% publisher / 30% Encypher |
-
-**Annual Pricing:** $950/year (20% discount)
-
-#### Value Proposition
-"Track where every sentence goes. Know when your content appears in AI outputs. Better revenue share."
-
----
-
-### Business ($499/month)
-
-**Target:** Major digital publishers, large media companies (1M-10M monthly visitors)
-
-**Examples:** The Atlantic, Vox Media, Axios, The Verge, Politico, The Daily Beast
-
-#### Features
+#### Key Features (in addition to everything in Free)
 
 | Category | Feature | Included |
 |----------|---------|----------|
-| **Signing** | C2PA manifest signing | ✅ Unlimited |
-| **Signing** | Sentence-level tracking | ✅ 500,000 sentences/mo |
-| **Signing** | Invisible embeddings | ✅ |
-| **Signing** | Merkle tree encoding | ✅ |
-| **Attribution** | Source attribution API | ✅ |
-| **Attribution** | Plagiarism detection | ✅ |
-| **Batch** | Batch sign (100 docs) | ✅ |
-| **Batch** | Batch verify | ✅ |
-| **Streaming** | All streaming features | ✅ |
-| **API** | API keys | 50 |
-| **API** | Rate limit | 200 req/sec |
-| **Analytics** | Usage dashboard | ✅ 1-year retention |
-| **Team** | Team management (10 users) | ✅ |
+| **Signing** | Unlimited document signing | ✅ |
+| **Signing** | Streaming LLM signing (WebSocket/SSE) | ✅ |
+| **Signing** | Custom C2PA assertions and schema registry | ✅ |
+| **Signing** | Batch operations (100+ docs/request) | ✅ |
+| **Signing** | Document revocation (StatusList2021) | ✅ |
+| **Signing** | Robust fingerprinting (survives paraphrase/translation) | ✅ |
+| **Attribution** | Multi-source attribution with authority ranking | ✅ |
+| **Attribution** | Plagiarism detection with Merkle proof linkage | ✅ |
+| **Attribution** | Fuzzy fingerprint matching | ✅ |
+| **Team** | Team management with RBAC | ✅ |
 | **Team** | Audit logs | ✅ |
-| **Support** | Priority support (24hr SLA) | ✅ |
-| **WordPress** | Multi-site license (5 sites) | ✅ |
-| **BYOK** | Bring Your Own Keys | ✅ |
-| **Coalition** | Revenue share | 75% publisher / 25% Encypher |
-
-**Annual Pricing:** $4,790/year (20% discount)
-
-#### Value Proposition
-"Enterprise-grade content tracking. Detect when your content is plagiarized. Team collaboration. Best-in-class revenue share."
-
----
-
-### Enterprise (Custom Pricing)
-
-**Target:** Global media giants, wire services, broadcast networks (10M+ monthly visitors)
-
-**Examples:** New York Times, Wall Street Journal, Washington Post, BBC, Reuters, Associated Press, CNN, NBC News
-
-#### Features
-
-| Category | Feature | Included |
-|----------|---------|----------|
-| **Signing** | Everything in Business | ✅ |
-| **Signing** | Unlimited sentences | ✅ |
-| **C2PA Advanced** | Custom assertion schemas | ✅ |
-| **C2PA Advanced** | Assertion templates | ✅ |
-| **C2PA Advanced** | Provenance chain (edit history) | ✅ |
-| **API** | Unlimited API keys | ✅ |
-| **API** | Unlimited rate | ✅ |
-| **Team** | Unlimited team members | ✅ |
-| **Team** | SSO/SCIM | ✅ |
-| **Team** | Role-based permissions | ✅ |
-| **Support** | Dedicated TAM | ✅ |
-| **Support** | Slack channel | ✅ |
-| **Support** | Custom SLA | ✅ |
-| **Deployment** | On-premise option | ✅ |
-| **WordPress** | Unlimited sites | ✅ |
-| **WordPress** | White-label | ✅ |
+| **Team** | SSO (SAML, OAuth) | ✅ |
+| **Team** | Organization switcher | ✅ |
+| **Dashboard** | Webhooks for signing/verification/attribution events | ✅ |
+| **Dashboard** | C2PA assertion templates | ✅ |
+| **Support** | Dedicated SLA (99.9% uptime, 15-min incident response) | ✅ |
+| **Support** | Named account manager | ✅ |
+| **Add-ons** | All add-ons included (BYOK, white-label, custom signing identity, data export) | ✅ |
 | **Coalition** | Revenue share | 80% publisher / 20% Encypher |
 | **Coalition** | Custom terms available | ✅ |
-
-**Pricing:** Custom, starting at $2,000/month. Typically $20K-$100K/year depending on volume and terms.
 
 #### Value Proposition
 "Full platform access. Dedicated support. Best revenue share. Custom terms for strategic partners."
 
 ---
 
-### Strategic Partner Tier (Invite Only)
+### Founding Coalition (Invite Only)
 
-**Target:** Founding coalition members, first 10 major publishers to commit
-
-**Examples:** First major publisher in each category (news, business, tech, entertainment)
+**Target:** First 10 major publishers to commit during the founding period
 
 | Feature | Terms |
 |---------|-------|
-| Revenue share | 85% publisher / 15% Encypher |
-| Lock-in period | 3-year commitment |
-| Co-marketing | Joint press releases, case studies |
-| Advisory role | Input on product roadmap |
+| Implementation fee | Waived |
+| Revenue share | 80% publisher / 20% Encypher (same as Enterprise) |
+| Advisory role | Syracuse Symposium seat, input on product roadmap |
+| Priority positioning | Priority in all licensing negotiations |
 | Early access | Beta features before GA |
 
 **Rationale:** First movers who help establish the standard deserve the best terms. Their participation validates the coalition and attracts other publishers.
@@ -226,19 +159,18 @@ This document defines the unified pricing strategy across all Encypher propertie
 
 ### Revenue Share by Tier
 
-| Tier | Publisher Share | Encypher Share | Rationale |
-|------|-----------------|----------------|-----------|
-| Starter (Free) | 65% | 35% | We do all the work, they just sign |
-| Professional | 70% | 30% | Paying customers get better terms |
-| Business | 75% | 25% | Volume + commitment = better share |
-| Enterprise | 80% | 20% | Anchor tenants, corpus credibility |
-| Strategic Partner | 85% | 15% | Founding members, first movers |
+| Model | Publisher Share | Encypher Share | Rationale |
+|-------|-----------------|----------------|-----------|
+| Coalition (Encypher-negotiated deals) | 60% | 40% | Encypher sources and negotiates the deal |
+| Self-Service (publisher-sourced deals) | 80% | 20% | Publisher brings the relationship |
+| Enterprise (custom terms) | 80% | 20% | Anchor tenants, corpus credibility |
+| Founding Coalition | 80% | 20% | First movers, implementation fee waived |
 
 ### Comparison to Industry Standards
 
 | Business Model | Take Rate | Notes |
 |----------------|-----------|-------|
-| **Encypher (Free tier)** | 35% | Creating entirely new revenue |
+| **Encypher (Coalition)** | 40% | Creating entirely new revenue |
 | Getty Images | 80% | Creator gets only 20% |
 | Shutterstock | 70-85% | Similar B2B licensing |
 | App Store | 30% | Just distribution |
@@ -247,7 +179,7 @@ This document defines the unified pricing strategy across all Encypher propertie
 | Music Publishers | 50% | Rights management |
 | Literary Agents | 15% | Deal enablement |
 
-**Key insight:** At 35%, Encypher is more generous than most content licensing platforms, while providing infrastructure that enables revenue that didn't exist before.
+**Key insight:** At 40% (coalition) or 20% (self-service), Encypher is more generous than most content licensing platforms, while providing infrastructure that enables revenue that didn't exist before.
 
 ---
 
@@ -314,10 +246,10 @@ Encypher share (20%):   $1,460,000 / year
 
 ---
 
-### Example 3: The Atlantic (Business - 75/25)
+### Example 3: The Atlantic (Enterprise - 80/20)
 
 **Profile:**
-- Tier: Business ($499/mo)
+- Tier: Enterprise
 - Monthly visitors: 15M
 - Content volume: ~30 articles/day (11,000/year)
 - Content quality: High (5x multiplier)
@@ -330,21 +262,21 @@ Annual articles:        11,000
 Rate per article:       $0.025
 Gross AI revenue:       11,000 × $0.025 = $275,000
 
-Atlantic share (75%):   $206,250 / year
-Encypher share (25%):   $68,750 / year
+Atlantic share (80%):   $220,000 / year
+Encipher share (20%):   $55,000 / year
 
-Business SaaS fee:      $5,988 / year
+Enterprise SaaS fee:    ~$20,000 / year (Tier 3)
 
-NET TO ATLANTIC:        $200,262 / year (new revenue)
-NET TO ENCYPHER:        $74,738 / year
+NET TO ATLANTIC:        $200,000 / year (new revenue)
+NET TO ENCYPHER:        $75,000 / year
 ```
 
 ---
 
-### Example 4: Axios (Business - 75/25)
+### Example 4: Axios (Enterprise - 80/20)
 
 **Profile:**
-- Tier: Business ($499/mo)
+- Tier: Enterprise
 - Monthly visitors: 10M
 - Content volume: ~50 articles/day (18,250/year)
 - Content quality: High (5x multiplier)
@@ -357,21 +289,21 @@ Annual articles:        18,250
 Rate per article:       $0.025
 Gross AI revenue:       18,250 × $0.025 = $456,250
 
-Axios share (75%):      $342,188 / year
-Encypher share (25%):   $114,062 / year
+Axios share (80%):      $365,000 / year
+Encipher share (20%):   $91,250 / year
 
-Business SaaS fee:      $5,988 / year
+Enterprise SaaS fee:    ~$20,000 / year (Tier 3)
 
-NET TO AXIOS:           $336,200 / year (new revenue)
-NET TO ENCYPHER:        $120,050 / year
+NET TO AXIOS:           $345,000 / year (new revenue)
+NET TO ENCYPHER:        $111,250 / year
 ```
 
 ---
 
-### Example 5: Denver Post (Professional - 70/30)
+### Example 5: Denver Post (Free - Coalition 60/40)
 
 **Profile:**
-- Tier: Professional ($99/mo)
+- Tier: Free
 - Monthly visitors: 5M
 - Content volume: ~75 articles/day (27,375/year)
 - Content quality: Standard (1x)
@@ -384,21 +316,21 @@ Annual articles:        27,375
 Rate per article:       $0.005
 Gross AI revenue:       27,375 × $0.005 = $136,875
 
-Denver Post share (70%): $95,813 / year
-Encypher share (30%):    $41,062 / year
+Denver Post share (60%): $82,125 / year
+Encipher share (40%):    $54,750 / year
 
-Professional SaaS fee:   $1,188 / year
+SaaS fee:                $0
 
-NET TO DENVER POST:      $94,625 / year (new revenue)
-NET TO ENCYPHER:         $42,250 / year
+NET TO DENVER POST:      $82,125 / year (new revenue)
+NET TO ENCYPHER:         $54,750 / year
 ```
 
 ---
 
-### Example 6: Seattle Times (Professional - 70/30)
+### Example 6: Seattle Times (Free - Coalition 60/40)
 
 **Profile:**
-- Tier: Professional ($99/mo)
+- Tier: Free
 - Monthly visitors: 4M
 - Content volume: ~60 articles/day (21,900/year)
 - Content quality: Standard (1x)
@@ -411,21 +343,21 @@ Annual articles:        21,900
 Rate per article:       $0.005
 Gross AI revenue:       21,900 × $0.005 = $109,500
 
-Seattle Times share (70%): $76,650 / year
-Encypher share (30%):      $32,850 / year
+Seattle Times share (60%): $65,700 / year
+Encipher share (40%):      $43,800 / year
 
-Professional SaaS fee:     $1,188 / year
+SaaS fee:                  $0
 
-NET TO SEATTLE TIMES:      $75,462 / year (new revenue)
-NET TO ENCYPHER:           $34,038 / year
+NET TO SEATTLE TIMES:      $65,700 / year (new revenue)
+NET TO ENCYPHER:           $43,800 / year
 ```
 
 ---
 
-### Example 7: Stratechery (Free - 65/35)
+### Example 7: Stratechery (Free - Coalition 60/40)
 
 **Profile:**
-- Tier: Starter (Free)
+- Tier: Free
 - Subscribers: 50,000 paid
 - Content volume: ~3 articles/week (156/year)
 - Content quality: Niche premium (3x multiplier)
@@ -438,21 +370,21 @@ Annual articles:        156
 Rate per article:       $0.015
 Gross AI revenue:       156 × $0.015 = $2,340
 
-Stratechery share (65%): $1,521 / year
-Encypher share (35%):    $819 / year
+Stratechery share (60%): $1,404 / year
+Encipher share (40%):    $936 / year
 
 SaaS fee:                $0
 
-NET TO STRATECHERY:      $1,521 / year (free money)
-NET TO ENCYPHER:         $819 / year
+NET TO STRATECHERY:      $1,404 / year (free money)
+NET TO ENCYPHER:         $936 / year
 ```
 
 ---
 
-### Example 8: Local News Blog (Free - 65/35)
+### Example 8: Local News Blog (Free - Coalition 60/40)
 
 **Profile:**
-- Tier: Starter (Free)
+- Tier: Free
 - Monthly visitors: 50,000
 - Content volume: ~5 articles/week (260/year)
 - Content quality: Standard (1x)
@@ -465,13 +397,13 @@ Annual articles:        260
 Rate per article:       $0.005
 Gross AI revenue:       260 × $0.005 = $1,300
 
-Blog share (65%):       $845 / year
-Encypher share (35%):   $455 / year
+Blog share (60%):       $780 / year
+Encipher share (40%):   $520 / year
 
 SaaS fee:               $0
 
-NET TO BLOG:            $845 / year (free money)
-NET TO ENCYPHER:        $455 / year
+NET TO BLOG:            $780 / year (free money)
+NET TO ENCYPHER:        $520 / year
 ```
 
 ---
@@ -480,99 +412,41 @@ NET TO ENCYPHER:        $455 / year
 
 ### Publisher Economics
 
-| Publisher Type | Example | Tier | Gross AI Rev | Publisher Net | Encypher Net |
-|----------------|---------|------|--------------|---------------|--------------|
-| Global Giant | NYT | Enterprise | $9.1M | $7.25M | $1.88M |
-| Global Giant | WSJ | Enterprise | $7.3M | $5.84M | $1.46M |
-| Major Digital | Atlantic | Business | $275K | $200K | $75K |
-| Major Digital | Axios | Business | $456K | $336K | $120K |
-| Regional News | Denver Post | Professional | $137K | $95K | $42K |
-| Regional News | Seattle Times | Professional | $110K | $75K | $34K |
-| Indie Premium | Stratechery | Free | $2.3K | $1.5K | $0.8K |
-| Local Blog | Various | Free | $1.3K | $0.8K | $0.5K |
+| Publisher Type | Example | Tier | Rev Share | Gross AI Rev | Publisher Net | Encypher Net |
+|----------------|---------|------|-----------|--------------|---------------|--------------|
+| Global Giant | NYT | Enterprise | 80/20 | $9.1M | $7.25M | $1.88M |
+| Global Giant | WSJ | Enterprise | 80/20 | $7.3M | $5.84M | $1.46M |
+| Major Digital | Atlantic | Enterprise | 80/20 | $275K | $220K | $75K |
+| Major Digital | Axios | Enterprise | 80/20 | $456K | $365K | $111K |
+| Regional News | Denver Post | Free | 60/40 | $137K | $82K | $55K |
+| Regional News | Seattle Times | Free | 60/40 | $110K | $66K | $44K |
+| Indie Premium | Stratechery | Free | 60/40 | $2.3K | $1.4K | $0.9K |
+| Local Blog | Various | Free | 60/40 | $1.3K | $0.8K | $0.5K |
 
 ### Encypher Revenue Projections (Year 1)
 
 | Segment | Count | Avg Encypher Rev | Total Rev |
 |---------|-------|------------------|-----------|
-| Enterprise (NYT-tier) | 10 | $1,500,000 | $15,000,000 |
-| Enterprise (mid-tier) | 15 | $500,000 | $7,500,000 |
-| Business | 100 | $75,000 | $7,500,000 |
-| Professional | 500 | $30,000 | $15,000,000 |
-| Free (active) | 10,000 | $500 | $5,000,000 |
-| **Total Coalition Revenue** | | | **$50,000,000** |
+| Enterprise (Tier 1) | 10 | $1,500,000 | $15,000,000 |
+| Enterprise (Tier 2) | 15 | $500,000 | $7,500,000 |
+| Enterprise (Tier 3) | 50 | $100,000 | $5,000,000 |
+| Free (active, coalition) | 10,000 | $500 | $5,000,000 |
+| **Total Coalition Revenue** | | | **$32,500,000** |
 
 | SaaS Subscriptions | Count | ARPU | Total ARR |
 |--------------------|-------|------|-----------|
-| Enterprise | 25 | $50,000 | $1,250,000 |
-| Business | 100 | $5,000 | $500,000 |
-| Professional | 500 | $1,000 | $500,000 |
-| **Total SaaS ARR** | | | **$2,250,000** |
+| Enterprise | 75 | $25,000 | $1,875,000 |
+| **Total SaaS ARR** | | | **$1,875,000** |
 
-**Total Year 1 Revenue Target: $52,250,000**
+**Total Year 1 Revenue Target: $34,375,000**
 
-*Note: Coalition revenue depends on AI company licensing deals. SaaS revenue is more predictable.*
+*Note: Coalition revenue depends on AI company licensing deals. SaaS revenue is more predictable. Free tier has no SaaS fee — revenue comes entirely from coalition rev share.*
 
 ---
 
 ## Feature Availability Matrix
 
-### API Features by Tier
-
-| Feature | Starter | Pro | Business | Enterprise |
-|---------|---------|-----|----------|------------|
-| **CORE SIGNING** | | | | |
-| POST /sign (C2PA manifest) | ✅ | ✅ | ✅ | ✅ |
-| POST /verify | ✅ | ✅ | ✅ | ✅ |
-| Public verification pages | ✅ | ✅ | ✅ | ✅ |
-| **SENTENCE TRACKING** | | | | |
-| POST /lookup (sentence) | ❌ | ✅ | ✅ | ✅ |
-| Invisible embeddings (VS) | ❌ | ✅ | ✅ | ✅ |
-| use_sentence_tracking flag | ❌ | ✅ | ✅ | ✅ |
-| **MERKLE INFRASTRUCTURE** | | | | |
-| POST /merkle/encode | ❌ | ❌ | ✅ | ✅ |
-| POST /merkle/attribute | ❌ | ❌ | ✅ | ✅ |
-| POST /merkle/detect-plagiarism | ❌ | ❌ | ✅ | ✅ |
-| **STREAMING** | | | | |
-| WebSocket /sign/stream | ❌ | ✅ | ✅ | ✅ |
-| SSE /sign/stream/sessions/{session_id}/events | ❌ | ✅ | ✅ | ✅ |
-| Session management | ❌ | ✅ | ✅ | ✅ |
-| **BATCH OPERATIONS** | | | | |
-| POST /batch/sign (100 docs) | ❌ | ❌ | ✅ | ✅ |
-| POST /batch/verify | ❌ | ❌ | ✅ | ✅ |
-| **C2PA ADVANCED** | | | | |
-| Custom assertion schemas | ❌ | ❌ | ❌ | ✅ |
-| Assertion templates | ❌ | ❌ | ❌ | ✅ |
-| Provenance chain (edit history) | ❌ | ❌ | ❌ | ✅ |
-
-### Platform Features by Tier
-
-| Feature | Starter | Pro | Business | Enterprise |
-|---------|---------|-----|----------|------------|
-| **QUOTAS** | | | | |
-| C2PA signatures/month | 1,000 | Unlimited | Unlimited | Unlimited |
-| Tracked sentences/month | 0 | 50,000 | 500,000 | Unlimited |
-| API keys | 2 | 10 | 50 | Unlimited |
-| Rate limit (req/sec) | 10 | 50 | 200 | Unlimited |
-| Analytics retention | 7 days | 90 days | 1 year | Custom |
-| **TEAM** | | | | |
-| Team members | 1 | 1 | 10 | Unlimited |
-| Audit logs | ❌ | ❌ | ✅ | ✅ |
-| SSO/SCIM | ❌ | ❌ | ❌ | ✅ |
-| **SUPPORT** | | | | |
-| Community (GitHub/Discord) | ✅ | ✅ | ✅ | ✅ |
-| Email support | ❌ | ✅ (48hr) | ✅ (24hr) | ✅ |
-| Dedicated TAM | ❌ | ❌ | ❌ | ✅ |
-| Slack channel | ❌ | ❌ | ❌ | ✅ |
-| **WORDPRESS** | | | | |
-| Plugin access | ✅ | ✅ | ✅ | ✅ |
-| Encypher branding | Required | Optional | Optional | Optional |
-| Multi-site | 1 | 1 | 5 | Unlimited |
-| White-label | ❌ | ❌ | ❌ | ✅ |
-| **BYOK** | | | | |
-| Bring Your Own Keys | ❌ | ✅ | ✅ | ✅ |
-
-*Soft cap at 1,000/month for abuse prevention
+> For the complete feature-by-feature breakdown, see [`FEATURE_MATRIX.md`](../../FEATURE_MATRIX.md). This is the SSOT for what's included in each tier.
 
 ---
 
@@ -584,37 +458,24 @@ NET TO ENCYPHER:        $455 / year
 - C2PA signing on publish
 - Verification badge on posts
 - Basic analytics
-- **Required:** Encypher-branded verification button
+- Auto-joins licensing coalition (60/40 rev share)
 
 **Limits:**
-- Same as Starter tier (1,000 C2PA/month, no sentence tracking)
-- Auto-joins licensing coalition (65/35)
+- Same as Free tier (1,000 docs/month, $0.02/doc overage)
 
 **Purpose:**
 - Distribution channel (WordPress.org marketplace)
 - Corpus growth
-- Brand awareness (branded button)
+- Brand awareness
 - Upgrade funnel
 
-### Pro Plugin (Dashboard Integration)
+### Enterprise Plugin Features
 
-**Unlocked with Professional tier or higher:**
-- Remove Encypher branding
-- Sentence-level tracking
-- Bulk operations
-- Advanced analytics
-- Priority support
-
-### Multi-Site / Agency
-
-**Unlocked with Business tier:**
-- 5 sites included
-- Centralized management
-- Team access
-
-**Enterprise:**
+**Unlocked with Enterprise tier:**
+- White-label verification pages (via White-Label Verification add-on)
+- Custom signing identity
 - Unlimited sites
-- White-label option
+- Team access and RBAC
 - Custom integration support
 
 ---
@@ -691,9 +552,9 @@ AI licensing revenue flows back to publishers based on:
 | Feature | Priority | Effort | Required For |
 |---------|----------|--------|--------------|
 | Tier enforcement in API | P0 | 1 week | Monetization |
-| Audit logs | P1 | 1 week | Business tier |
-| Team management | P1 | 2-3 weeks | Business tier |
-| BYOK completion | P2 | 1-2 weeks | Professional tier |
+| Audit logs | P1 | 1 week | Enterprise tier |
+| Team management | P1 | 2-3 weeks | Enterprise tier |
+| BYOK completion | P2 | 1-2 weeks | Enterprise tier (add-on) |
 | SSO/SCIM | P3 | 3-4 weeks | Enterprise tier |
 | Coalition revenue tracking | P1 | 2 weeks | All tiers |
 | Publisher payout system | P1 | 3 weeks | All tiers |
@@ -732,7 +593,7 @@ The **dashboard is the source of truth** for pricing and the primary entry point
 ### Enterprise Sales Flow
 
 1. Publisher discovers Encypher (marketing, referral, outreach)
-2. Signs up for free Starter tier on dashboard
+2. Signs up for Free tier on dashboard
 3. Tests C2PA signing, sees coalition revenue potential
 4. Clicks "Contact Sales" for Enterprise features
 5. Sales negotiates custom contract (pricing, rev share, SLA)
@@ -745,10 +606,10 @@ The dashboard tiers align with GTM pricing:
 
 | Dashboard Tier | GTM Tier | Annual Value |
 |----------------|----------|--------------|
-| Starter (Free) | Long tail | $0 + 35% rev share |
-| Professional ($99/mo) | Tier 3 (<$3M) | ~$1,200/yr + 30% rev share |
-| Business ($499/mo) | Tier 2 ($3-5M) | ~$6,000/yr + 25% rev share |
-| Enterprise (Custom) | Tier 1 (>$20M) | $30K+/yr + 20-25% rev share |
+| Free | Long tail (self-serve) | $0 + 40% coalition rev share |
+| Enterprise (Tier 3) | <$3M licensing potential | $10K impl + custom annual + 20% rev share |
+| Enterprise (Tier 2) | $3-20M licensing potential | $20K impl + custom annual + 20% rev share |
+| Enterprise (Tier 1) | >$20M licensing potential | $30K impl + custom annual + 20% rev share |
 
 ---
 
@@ -810,7 +671,8 @@ Publishers who join the coalition during the **founding period** (prior to first
 
 After the founding period closes, new coalition members may receive different terms:
 
-- Standard tier rev shares may be adjusted (e.g., 60/65/70/75 instead of 65/70/75/80)
+- Coalition rev share may be adjusted (e.g., 55/45 instead of 60/40)
+- Self-service rev share may be adjusted (e.g., 75/25 instead of 80/20)
 - Founding members retain their original terms regardless of future changes
 - Any changes to standard terms will be announced with at least 90 days notice
 
@@ -833,9 +695,9 @@ Key differences from publisher tiers:
 
 ## Document Control
 
-**Version:** 2.2  
-**Last Updated:** December 3, 2025  
-**Next Review:** December 15, 2025  
+**Version:** 3.0  
+**Last Updated:** February 13, 2026  
+**Next Review:** March 15, 2026  
 **Approved By:** [Pending Executive Review]
 
 ### Change Log
@@ -846,3 +708,4 @@ Key differences from publisher tiers:
 | 2.0 | Nov 25, 2025 | Complete rewrite with coalition economics, publisher examples, feature matrix |
 | 2.1 | Nov 29, 2025 | Added GTM Strategy section: Dashboard as the Gateway. Aligned dashboard, marketing site, and internal docs. |
 | 2.2 | Dec 3, 2025 | Added Future Cohort Pricing Policy and OEM/Non-Publisher section. Clarified founding member grandfathering. |
+| 3.0 | Feb 13, 2026 | Consolidated to 2-tier model (Free + Enterprise). Removed stale Professional/Business tiers. Updated rev share to match pricing-config SSOT (60/40 coalition, 80/20 self-service). Replaced inline feature matrix with pointer to FEATURE_MATRIX.md. Updated all revenue projections. |

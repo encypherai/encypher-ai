@@ -42,7 +42,14 @@ const signInvisibleEl = document.getElementById('sign-invisible');
 const signDocTypeEl = document.getElementById('sign-doc-type');
 const signMerkleEl = document.getElementById('sign-merkle');
 const signAttributionEl = document.getElementById('sign-attribution');
-const proFeaturesEl = document.getElementById('pro-features');
+const enterpriseFeaturesEl = document.getElementById('enterprise-features');
+
+// DOM elements - Usage meter
+const usageMeterEl = document.getElementById('usage-meter');
+const usageTextEl = document.getElementById('usage-text');
+const usageFillEl = document.getElementById('usage-fill');
+
+const FREE_TIER_LIMIT = 1000;
 
 // DOM elements - Debug tab
 const debugTabBtn = document.querySelector('.popup__tab--debug');
@@ -99,7 +106,11 @@ function renderDetails(details) {
     item.className = 'popup__detail-item';
     
     const iconClass = detail.revoked ? 'revoked' : (detail.valid ? 'verified' : 'invalid');
-    const iconSymbol = detail.revoked ? '⊘' : (detail.valid ? '✓' : '✗');
+    const iconSymbol = detail.revoked
+      ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>'
+      : (detail.valid
+        ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>'
+        : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>');
     
     item.innerHTML = `
       <div class="popup__detail-icon popup__detail-icon--${iconClass}">${iconSymbol}</div>
@@ -262,37 +273,72 @@ function updateTierDisplay(info) {
   if (!tierBadgeEl) return;
   
   const tier = (info?.tier || 'free').toLowerCase();
-  const tierConfig = {
-    free: { icon: '🆓', name: 'Free Tier', class: 'free' },
-    starter: { icon: '🚀', name: 'Starter', class: 'free' },
-    professional: { icon: '⚡', name: 'Professional', class: 'professional' },
-    business: { icon: '🏢', name: 'Business', class: 'business' },
-    enterprise: { icon: '🏛️', name: 'Enterprise', class: 'enterprise' },
-    demo: { icon: '🧪', name: 'Demo', class: 'professional' }
-  };
+  const isEnterprise = ['enterprise', 'business'].includes(tier);
   
-  const config = tierConfig[tier] || tierConfig.free;
-  
-  tierBadgeEl.className = `popup__tier-badge popup__tier-badge--${config.class}`;
+  tierBadgeEl.className = `popup__tier-badge popup__tier-badge--${isEnterprise ? 'enterprise' : 'free'}`;
   tierBadgeEl.innerHTML = `
-    <span class="popup__tier-icon">${config.icon}</span>
-    <span class="popup__tier-name">${config.name}</span>
+    <span class="popup__tier-name">${isEnterprise ? 'Enterprise' : 'Free Tier'}</span>
   `;
   
-  // Enable pro features for professional+ tiers
-  const isPro = ['professional', 'business', 'enterprise', 'demo'].includes(tier);
-  
+  // Enable enterprise features
   if (signMerkleEl) {
-    signMerkleEl.disabled = !isPro;
+    signMerkleEl.disabled = !isEnterprise;
   }
   if (signAttributionEl) {
-    signAttributionEl.disabled = !isPro;
+    signAttributionEl.disabled = !isEnterprise;
   }
   
-  // Hide upgrade prompt for pro users
-  if (proFeaturesEl && isPro) {
-    proFeaturesEl.querySelector('.popup__upgrade-link')?.remove();
-    proFeaturesEl.querySelector('.popup__pro-badge').textContent = 'ENABLED';
+  // Hide upgrade prompt for enterprise users
+  if (enterpriseFeaturesEl && isEnterprise) {
+    enterpriseFeaturesEl.querySelector('.popup__enterprise-link')?.remove();
+    enterpriseFeaturesEl.querySelector('.popup__enterprise-badge').textContent = 'ENABLED';
+  }
+  
+  // Update usage meter
+  updateUsageMeter(info);
+}
+
+/**
+ * Update usage meter for free tier (1k/month limit)
+ */
+function updateUsageMeter(info) {
+  if (!usageMeterEl) return;
+  
+  const usage = info?.usage?.signings_this_month || 0;
+  const limit = info?.usage?.monthly_limit || FREE_TIER_LIMIT;
+  const tier = (info?.tier || 'free').toLowerCase();
+  const isEnterprise = ['enterprise', 'business'].includes(tier);
+  
+  // Hide meter for enterprise (unlimited)
+  if (isEnterprise) {
+    usageMeterEl.hidden = true;
+    return;
+  }
+  
+  usageMeterEl.hidden = false;
+  const pct = Math.min((usage / limit) * 100, 100);
+  const remaining = Math.max(limit - usage, 0);
+  
+  if (usageFillEl) {
+    usageFillEl.style.width = `${pct}%`;
+    usageFillEl.className = 'popup__usage-fill';
+    if (pct >= 90) {
+      usageFillEl.classList.add('popup__usage-fill--danger');
+    } else if (pct >= 75) {
+      usageFillEl.classList.add('popup__usage-fill--warning');
+    }
+  }
+  
+  if (usageTextEl) {
+    usageTextEl.textContent = `${usage.toLocaleString()} / ${limit.toLocaleString()} signings this month`;
+    usageTextEl.className = 'popup__usage-text';
+    if (pct >= 90) {
+      usageTextEl.classList.add('popup__usage-text--danger');
+      usageTextEl.textContent = `${remaining.toLocaleString()} signings remaining`;
+    } else if (pct >= 75) {
+      usageTextEl.classList.add('popup__usage-text--warning');
+      usageTextEl.textContent = `${remaining.toLocaleString()} signings remaining`;
+    }
   }
 }
 
@@ -359,7 +405,7 @@ async function signContent() {
     showSignState('error');
   } finally {
     signBtn.disabled = false;
-    signBtn.textContent = '✍ Sign Content';
+    signBtn.textContent = 'Sign Content';
   }
 }
 
@@ -369,9 +415,9 @@ async function signContent() {
 async function copySignedOutput() {
   try {
     await navigator.clipboard.writeText(signedOutputEl.value);
-    copySignedBtn.textContent = '✓ Copied!';
+    copySignedBtn.textContent = 'Copied!';
     setTimeout(() => {
-      copySignedBtn.textContent = '📋 Copy';
+      copySignedBtn.textContent = 'Copy';
     }, 2000);
   } catch (error) {
     console.error('Error copying:', error);
@@ -474,7 +520,7 @@ function renderDebugLogs(logs) {
   debugLogsEl.innerHTML = logs.map(log => {
     const time = new Date(log.timestamp).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
     const dataAttr = log.data ? ` data-json="${escapeAttr(JSON.stringify(log.data, null, 2))}"` : '';
-    const dataLink = log.data ? ' <span class="debug-log__data" onclick="toggleLogData(this)">+data</span>' : '';
+    const dataLink = log.data ? ' <span class="debug-log__data" data-action="toggle-log-data">+data</span>' : '';
     
     return `<div class="debug-log">
       <span class="debug-log__time">${time}</span>
@@ -506,8 +552,10 @@ function escapeAttr(text) {
   return text.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// TEAM_151: Make toggleLogData available globally for inline onclick
-window.toggleLogData = function(el) {
+// TEAM_151: Event delegation for debug log data toggle (CSP-safe, no inline handlers)
+debugLogsEl?.addEventListener('click', (e) => {
+  const el = e.target.closest('[data-action="toggle-log-data"]');
+  if (!el) return;
   const expanded = el.closest('.debug-log').nextElementSibling;
   if (expanded && expanded.classList.contains('debug-log__data-expanded')) {
     if (expanded.hidden) {
@@ -519,7 +567,7 @@ window.toggleLogData = function(el) {
       el.textContent = '+data';
     }
   }
-};
+});
 
 // Event listeners - Debug tab
 debugRefreshBtn?.addEventListener('click', loadDebugLogs);
@@ -539,7 +587,12 @@ debugFilters.forEach(btn => {
 });
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    loadTabState();
+    checkDevMode();
+  });
+} else {
   loadTabState();
   checkDevMode();
-});
+}

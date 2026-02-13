@@ -116,9 +116,9 @@ function BillingPageContent() {
     <DashboardLayout>
       <div className="space-y-8">
         <div>
-          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Billing & Subscription</h2>
-          <p className="text-muted-foreground">
-            Manage your plan, payment methods, and download invoices for your records.
+          <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Billing &amp; Subscription</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Manage your plan, payment methods, and download invoices.
           </p>
         </div>
 
@@ -561,8 +561,8 @@ export default function BillingPage() {
       <DashboardLayout>
         <div className="space-y-8">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Billing & Subscription</h2>
-            <p className="text-muted-foreground">Loading billing information...</p>
+            <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Billing &amp; Subscription</h1>
+            <p className="text-sm text-muted-foreground mt-1">Loading billing information...</p>
           </div>
           <Card className="border-columbia-blue">
             <CardHeader>

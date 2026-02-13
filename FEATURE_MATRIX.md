@@ -1,245 +1,226 @@
 # Encypher Feature Matrix by Tier
 
-**Last Updated**: November 28, 2025  
-**Version**: 1.0
+**Last Updated**: February 13, 2026
+**Version**: 2.0
 
 This document provides a comprehensive breakdown of all Encypher features organized by subscription tier.
 
+The pricing model has two core tiers (**Free** and **Enterprise**) plus optional **Add-Ons** and **Bundles** available to any tier.
+
 ---
 
-## 📊 Tier Overview
+## Tier Overview
 
 | Tier | Price | Target Audience | Key Value Proposition |
 |------|-------|-----------------|----------------------|
-| **Free** | $0/month | Developers, hobbyists | Basic content authentication |
-| **Professional** | $49/month | Small teams, startups | Advanced policies, team features |
-| **Business** | $199/month | Growing companies | Multi-org, webhooks, priority support |
-| **Enterprise** | Custom | Large organizations | Full platform, custom integrations |
+| **Free** | $0/month (1,000 docs/mo, $0.02/doc overage) | Individual bloggers, small-to-mid publishers, indie media, researchers, WordPress owners | Full C2PA signing, verification, coalition enrollment |
+| **Enterprise** | Custom (tiered by licensing potential) | Large publishers, media companies, enterprise content teams | Unlimited everything, all add-ons included, SLA, SSO, RBAC |
+
+### Enterprise Sub-Tiers (Implementation Fee)
+
+| Label | Licensing Potential | Implementation Fee |
+|-------|--------------------|--------------------|
+| Tier 1 Publisher | >$20M | $30K |
+| Tier 2 Publisher | $3-20M | $20K |
+| Tier 3 Publisher | <$3M | $10K |
+
+Founding Coalition members have the implementation fee waived.
 
 ---
 
-## 🔐 Authentication & Access
+## Content Signing
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Email/Password Login | ✅ | ✅ | ✅ | ✅ |
-| OAuth (Google) | ✅ | ✅ | ✅ | ✅ |
-| OAuth (GitHub) | ✅ | ✅ | ✅ | ✅ |
-| Password Reset Flow | ✅ | ✅ | ✅ | ✅ |
-| Session Management | ✅ | ✅ | ✅ | ✅ |
-| Two-Factor Authentication (2FA) | ❌ | ✅ | ✅ | ✅ |
-| SSO (SAML/OIDC) | ❌ | ❌ | ❌ | ✅ |
-| Custom Identity Provider | ❌ | ❌ | ❌ | ✅ |
-
----
-
-## 🔑 API Key Management
-
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Generate API Keys | ✅ (1) | ✅ (5) | ✅ (25) | ✅ (Unlimited) |
-| View/Revoke Keys | ✅ | ✅ | ✅ | ✅ |
-| Key Permissions (Scopes) | Basic | ✅ | ✅ | ✅ |
-| Key Rotation | ❌ | ✅ | ✅ | ✅ |
-| Key Expiration Settings | ❌ | ✅ | ✅ | ✅ |
-| Usage Tracking per Key | ❌ | ✅ | ✅ | ✅ |
-| Export Keys (CSV) | ❌ | ✅ | ✅ | ✅ |
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| C2PA 2.3-compliant document signing | ✅ | ✅ |
+| Sentence-level Merkle tree authentication | ✅ | ✅ (Unlimited) |
+| Invisible Unicode embeddings (survive copy-paste) | ✅ | ✅ |
+| Custom metadata (author, publisher, license, tags) | ✅ | ✅ |
+| Streaming LLM signing (WebSocket/SSE) | ❌ | ✅ |
+| OpenAI-compatible /chat/completions with auto-signing | ❌ | ✅ |
+| Custom C2PA assertions and schema registry | ❌ | ✅ |
+| C2PA provenance chain (full edit history) | ❌ | ✅ |
+| Batch operations (100+ documents/request) | ❌ | ✅ |
+| Document revocation (StatusList2021) | ❌ | ✅ |
+| Robust fingerprinting (survives paraphrase/translation) | ❌ | ✅ |
 
 ---
 
-## ✍️ Content Signing
+## Verification
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Ed25519 Signatures | ✅ | ✅ | ✅ | ✅ |
-| C2PA-Compliant Manifests | ✅ | ✅ | ✅ | ✅ |
-| Unicode Metadata Embedding | ✅ | ✅ | ✅ | ✅ |
-| Batch Signing | ❌ | ❌ | ✅ (100/batch) | ✅ (Unlimited) |
-| Streaming Support (WebSocket/SSE) | ❌ | ✅ | ✅ | ✅ |
-| Custom Metadata Fields | ❌ | ✅ | ✅ | ✅ |
-| Sentence-Level Merkle Roots | ❌ | ✅ (5K/mo) | ✅ (10K/mo) | ✅ (Unlimited) |
-| C2PA vs Merkle Encoding Choice | ❌ | ✅ | ✅ | ✅ |
-| Minimal Signed Embeddings | ❌ | ✅ | ✅ | ✅ |
-
----
-
-## ✔️ Verification
-
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Signature Verification | ✅ | ✅ | ✅ | ✅ |
-| Tampering Detection | ✅ | ✅ | ✅ | ✅ |
-| Metadata Extraction | ✅ | ✅ | ✅ | ✅ |
-| Batch Verification | ❌ | ❌ | ✅ | ✅ |
-| Public Verification Page | ❌ | ✅ | ✅ | ✅ |
-| Verification API | ✅ | ✅ | ✅ | ✅ |
-| Source Attribution | ❌ | ✅ (10K/mo) | ✅ (50K/mo) | ✅ (Unlimited) |
-| Plagiarism Detection | ❌ | ❌ | ✅ (5K/mo) | ✅ (Unlimited) |
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Signature verification | ✅ | ✅ |
+| Tampering detection | ✅ | ✅ |
+| Metadata extraction | ✅ | ✅ |
+| Public verification pages with shareable URLs | ✅ | ✅ |
+| Public verification API (no auth required) | ✅ | ✅ |
+| Multi-source attribution with authority ranking | ❌ | ✅ |
+| Fuzzy fingerprint matching | ❌ | ✅ |
+| Plagiarism detection with Merkle proof linkage | ❌ | ✅ |
 
 ---
 
-## 🤝 AI Licensing & Content Access
+## Dashboard Features
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| AI Company Licensing API (agreements, usage) | ❌ | ❌ | ❌ | ✅ |
-| Content access APIs for AI models | ❌ | ❌ | ❌ | ✅ |
-| Revenue distribution & payouts (coalition members) | ❌ | ❌ | ❌ | ✅ |
-| Licensing usage & attribution reports | ❌ | ❌ | ❌ | ✅ |
-
----
-
-## 📊 Dashboard Features
-
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Usage Overview | ✅ | ✅ | ✅ | ✅ |
-| API Call Statistics | ✅ | ✅ | ✅ | ✅ |
-| Documents Signed Counter | ✅ | ✅ | ✅ | ✅ |
-| Verifications Counter | ✅ | ✅ | ✅ | ✅ |
-| Success Rate Metrics | ✅ | ✅ | ✅ | ✅ |
-| Time Range Filtering | 7 days | 30 days | 90 days | Custom |
-| Export Analytics (CSV) | ❌ | ✅ | ✅ | ✅ |
-| Activity Feed | ❌ | ✅ | ✅ | ✅ |
-| Audit Logs | ❌ | ❌ | ✅ | ✅ |
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Overview (usage stats, API keys, quick start) | ✅ | ✅ |
+| API Keys management | ✅ | ✅ |
+| API Playground | ✅ | ✅ |
+| Analytics (stats, time series chart, activity feed) | ✅ | ✅ |
+| Analytics CSV export (summary + time series) | ✅ | ✅ |
+| Documentation hub | ✅ | ✅ |
+| Integrations (CMS webhooks) | ✅ | ✅ |
+| Settings (profile, password, email change) | ✅ | ✅ |
+| Billing | ✅ | ✅ |
+| Dark mode | ✅ | ✅ |
+| Command palette (Cmd+K) | ✅ | ✅ |
+| Onboarding flow | ✅ | ✅ |
+| **Webhooks** | ❌ | ✅ |
+| **Team management (invite, roles, org switcher)** | ❌ | ✅ |
+| **Audit logs** | ❌ | ✅ |
+| **C2PA assertion templates** | ❌ | ✅ |
 
 ---
 
-## 👥 Team & Organization
+## Distribution & Integrations
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Single User | ✅ | ✅ | ✅ | ✅ |
-| Team Members | ❌ | ✅ (5) | ✅ (25) | ✅ (Unlimited) |
-| Role-Based Access Control | ❌ | Basic | ✅ | ✅ |
-| Team Invitations | ❌ | ✅ | ✅ | ✅ |
-| Multiple Organizations | ❌ | ❌ | ✅ | ✅ |
-| Organization Switcher | ❌ | ❌ | ✅ | ✅ |
-| Custom Roles | ❌ | ❌ | ❌ | ✅ |
-| Directory Integration (LDAP/AD) | ❌ | ❌ | ❌ | ✅ |
-
----
-
-## 🔔 Notifications & Webhooks
-
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Email Notifications | ✅ | ✅ | ✅ | ✅ |
-| In-App Notifications | ✅ | ✅ | ✅ | ✅ |
-| Notification Center | ✅ | ✅ | ✅ | ✅ |
-| Webhooks | ❌ | ❌ | ✅ | ✅ |
-| Webhook Event Types | - | - | 5 | Unlimited |
-| SMS Notifications | ❌ | ❌ | ❌ | ✅ |
-| Slack Integration | ❌ | ❌ | ✅ | ✅ |
-| Custom Webhook Headers | ❌ | ❌ | ❌ | ✅ |
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| REST API with Python SDK | ✅ | ✅ |
+| WordPress plugin (auto-sign on publish) | ✅ | ✅ |
+| CLI tool for local signing | ✅ | ✅ |
+| GitHub Action for CI/CD | ✅ | ✅ |
+| Browser extension for verification | ✅ | ✅ |
+| Ghost CMS integration (webhook) | ✅ | ✅ |
+| Custom integrations | ❌ | ✅ |
 
 ---
 
-## 🎨 User Experience
+## AI Licensing & Coalition
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Responsive Design | ✅ | ✅ | ✅ | ✅ |
-| Mobile Navigation | ✅ | ✅ | ✅ | ✅ |
-| Dark Mode | ✅ | ✅ | ✅ | ✅ |
-| Command Palette (Cmd+K) | ✅ | ✅ | ✅ | ✅ |
-| Onboarding Flow | ✅ | ✅ | ✅ | ✅ |
-| Keyboard Shortcuts | ✅ | ✅ | ✅ | ✅ |
-| API Playground | ✅ | ✅ | ✅ | ✅ |
-| Email Change Verification | ✅ | ✅ | ✅ | ✅ |
-| Custom Branding | ❌ | ❌ | ❌ | ✅ |
-| White-Label Dashboard | ❌ | ❌ | ❌ | ✅ |
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Auto-enrolled in Encypher Coalition | ✅ | ✅ |
+| Content indexed for coalition licensing | ✅ | ✅ |
+| Basic attribution view | ✅ | ✅ |
+| Coalition dashboard with content stats | ✅ | ✅ |
+| AI Company Licensing API | ❌ | ✅ |
+| Content access APIs for AI models | ❌ | ✅ |
+| Revenue distribution and payouts | ❌ | ✅ |
+| Licensing usage and attribution reports | ❌ | ✅ |
 
 ---
 
-## 💳 Billing & Subscriptions
+## Authentication & Access
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Self-Service Billing | ✅ | ✅ | ✅ | ❌ |
-| Credit Card Payments | ✅ | ✅ | ✅ | ✅ |
-| Invoice Billing | ❌ | ❌ | ✅ | ✅ |
-| Annual Discount | - | 20% | 20% | Custom |
-| Usage-Based Billing | ❌ | ❌ | ✅ | ✅ |
-| Custom Contracts | ❌ | ❌ | ❌ | ✅ |
-| Volume Discounts | ❌ | ❌ | ❌ | ✅ |
-
----
-
-## 🛠️ CLI Tools
-
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Audit Log CLI | ✅ | ✅ | ✅ | ✅ |
-| CSV Report Generation | ✅ | ✅ | ✅ | ✅ |
-| Policy Validator CLI | ❌ | ✅ | ✅ | ✅ |
-| Custom Policy Schemas | ❌ | ✅ | ✅ | ✅ |
-| Trusted Signers Config | ❌ | ✅ | ✅ | ✅ |
-| CI/CD Integration | ❌ | ❌ | ✅ | ✅ |
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Email/password login | ✅ | ✅ |
+| OAuth (Google, GitHub) | ✅ | ✅ |
+| Password reset | ✅ | ✅ |
+| Session management | ✅ | ✅ |
+| SSO (SAML, OAuth) | ❌ | ✅ |
+| Team management with RBAC | ❌ | ✅ |
 
 ---
 
-## 🔌 Integrations
+## API Limits
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| REST API Access | ✅ | ✅ | ✅ | ✅ |
-| Python SDK | ✅ | ✅ | ✅ | ✅ |
-| WordPress Plugin | ❌ | ✅ | ✅ | ✅ |
-| Framework Wrappers | ❌ | ❌ | ❌ | ✅ |
-| Custom Integrations | ❌ | ❌ | ❌ | ✅ |
-| Dedicated Support | ❌ | ❌ | ❌ | ✅ |
+| Metric | Free | Enterprise |
+|--------|:----:|:----------:|
+| Documents signed/month | 1,000 ($0.02/doc overage) | Unlimited |
+| Verification requests | Unlimited | Unlimited |
+| Public API lookups | Unlimited | Unlimited |
 
 ---
 
-## 📈 API Rate Limits
+## Support
 
-| Metric | Free | Pro | Business | Enterprise |
-|--------|:----:|:---:|:--------:|:----------:|
-| API Calls/Month | 1,000 | 50,000 | 500,000 | Custom |
-| Documents Signed/Month | 100 | 10,000 | 100,000 | Custom |
-| Verifications/Month | 500 | 25,000 | 250,000 | Custom |
-| Requests/Second | 1 | 10 | 50 | Custom |
-| Batch Size | 1 | 100 | 1,000 | Custom |
-
----
-
-## 🆘 Support
-
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| Documentation | ✅ | ✅ | ✅ | ✅ |
-| Community Forum | ✅ | ✅ | ✅ | ✅ |
-| Email Support | ❌ | ✅ | ✅ | ✅ |
-| Priority Support | ❌ | ❌ | ✅ | ✅ |
-| Dedicated Account Manager | ❌ | ❌ | ❌ | ✅ |
-| SLA Guarantee | ❌ | ❌ | 99.9% | 99.99% |
-| Phone Support | ❌ | ❌ | ❌ | ✅ |
-| On-Site Training | ❌ | ❌ | ❌ | ✅ |
+| Feature | Free | Enterprise |
+|---------|:----:|:----------:|
+| Documentation | ✅ | ✅ |
+| Email support | ✅ | ✅ |
+| Priority support (4-hour SLA) | ❌ | ✅ |
+| Dedicated account manager | ❌ | ✅ |
+| SLA guarantee (99.9% uptime, 15-min incident response) | ❌ | ✅ |
 
 ---
 
-## 🔒 Security & Compliance
+## Add-Ons (Available to Any Tier)
 
-| Feature | Free | Pro | Business | Enterprise |
-|---------|:----:|:---:|:--------:|:----------:|
-| TLS Encryption | ✅ | ✅ | ✅ | ✅ |
-| Data Encryption at Rest | ✅ | ✅ | ✅ | ✅ |
-| SOC 2 Compliance | ❌ | ❌ | ✅ | ✅ |
-| GDPR Compliance | ✅ | ✅ | ✅ | ✅ |
-| HIPAA Compliance | ❌ | ❌ | ❌ | ✅ |
-| Custom Data Retention | ❌ | ❌ | ✅ | ✅ |
-| Audit Trail | ❌ | ❌ | ✅ | ✅ |
-| Penetration Testing Reports | ❌ | ❌ | ❌ | ✅ |
+Add-ons are purchased separately. Enterprise tier includes all add-ons at no additional charge.
+
+### Enforcement (Coming Soon)
+
+| Add-On | Price | Description |
+|--------|-------|-------------|
+| Attribution Analytics | TBD | Full dashboard: where your content appears in AI outputs, frequency, context |
+| Formal Notice Package | TBD | Cryptographically-backed formal notice to AI companies |
+| Evidence Package | TBD | Court-ready evidence bundle for infringement claims |
+
+### Infrastructure
+
+| Add-On | Price | Description |
+|--------|-------|-------------|
+| Custom Signing Identity | $499/mo | Sign as your brand instead of "Encypher Coalition Member" |
+| White-Label Verification | $299/mo | Verification pages on your domain with your branding (requires Custom Signing Identity) |
+| Custom Verification Domain | $29/mo | Point a custom domain to verification pages (no full white-label) |
+| BYOK (Bring Your Own Keys) | $499/mo | Use your organization's PKI infrastructure and signing certificates |
+
+### Operations
+
+| Add-On | Price | Description |
+|--------|-------|-------------|
+| Bulk Archive Backfill | $0.01/doc | One-time batch signing of existing content archives |
+| Data Export (Full) | $49/export | Full export of all attribution and analytics data as CSV/JSON |
+| Priority Support | $199/mo | 4-hour response SLA, dedicated onboarding, priority bug fixes |
+
+---
+
+## Bundles
+
+| Bundle | Price | Includes | Savings |
+|--------|-------|----------|---------|
+| Enforcement Bundle | TBD (Coming Soon) | Attribution Analytics, 2 Formal Notices/mo, 1 Evidence Package/mo | 57% |
+| Publisher Identity | $749/mo | Custom Signing Identity, White-Label Verification, Custom Verification Domain | 7% |
+| Full Stack | TBD (Coming Soon) | Enforcement Bundle + Publisher Identity | 51% |
+
+---
+
+## Revenue Share (Coalition Licensing)
+
+| Model | Publisher Share | Encypher Share |
+|-------|:--------------:|:--------------:|
+| Coalition (Encypher-negotiated deals) | 60% | 40% |
+| Self-Service (publisher-sourced deals) | 80% | 20% |
+
+---
+
+## Dashboard Feature Gating (Implementation)
+
+The dashboard uses `userTier` from the session JWT to gate features. The sidebar hides enterprise-only pages for free users.
+
+| Gating Mechanism | Location | Behavior |
+|-----------------|----------|----------|
+| Sidebar nav filtering | `DashboardLayout.tsx` | Enterprise nav group hidden for free users |
+| Page-level tier check | `audit-logs/page.tsx`, `team/page.tsx` | Shows upgrade prompt for non-enterprise users |
+| Playground endpoint gating | `playground/page.tsx` | `minTier` per endpoint (currently unused) |
+| Template selector | `TemplateSelector.tsx` | Shows "Enterprise tier required" on error |
+| Billing tier normalization | `billing/page.tsx` | Maps legacy tier names (`starter`, `basic`) to `free` |
+
+**Source of truth for pricing**: `packages/pricing-config/src/` (auto-generated to `apps/dashboard/src/lib/pricing-config/tiers.ts`)
 
 ---
 
 ## Legend
 
 - ✅ = Included
-- ❌ = Not Available
-- Number = Limit (e.g., "5" means up to 5)
-- "Custom" = Negotiable based on contract
+- ❌ = Not available at this tier (upgrade or add-on required)
+- "Unlimited" = No monthly cap
+- "TBD" = Pricing not yet finalized
+- "Coming Soon" = Feature announced but not yet available
 
 ---
 
@@ -248,7 +229,7 @@ This document provides a comprehensive breakdown of all Encypher features organi
 - [README.md](./README.md) - Repository overview
 - [MICROSERVICES_FEATURES.md](./MICROSERVICES_FEATURES.md) - Detailed microservice features
 - [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) - Full documentation index
-- [PRDs/dashboard_enhancements.md](./PRDs/dashboard_enhancements.md) - Dashboard feature PRD
+- [packages/pricing-config/](./packages/pricing-config/) - Pricing config source of truth
 
 ---
 

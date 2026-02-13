@@ -29,6 +29,19 @@ from ...core.config import settings
 router = APIRouter()
 
 
+def _resolve_identity(current_user: dict) -> str:
+    """Extract the best identifier for analytics queries.
+
+    Returns the organization_id if present (org-scoped metrics),
+    otherwise the raw user_id. The service layer's user_or_org_filter
+    checks both UsageMetric.user_id and UsageMetric.organization_id
+    columns, so the raw UUID will match whichever column was written.
+    """
+    user_id = current_user.get("id") or current_user.get("user_id")
+    org_id = current_user.get("organization_id")
+    return org_id or user_id
+
+
 async def get_current_user(authorization: str = Header(...)) -> dict:
     """Verify user token with auth service and return user dict from Standard Response Format."""
     try:
@@ -75,12 +88,11 @@ async def record_metric(
     - **status_code**: Optional HTTP status code
     """
     try:
-        user_id = current_user.get("id") or current_user.get("user_id")
-        org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+        identity = _resolve_identity(current_user)
 
         metric = AnalyticsService.record_metric(
             db=db,
-            user_id=org_id or user_id,
+            user_id=identity,
             metric_data=metric_data,
         )
         return metric
@@ -105,15 +117,11 @@ async def get_usage_stats(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
 
-    # Use organization_id if available, fall back to user_id
-    # For user-level API keys, organization_id is "user_{user_id}"
-    user_id = current_user.get("id") or current_user.get("user_id")
-    org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+    identity = _resolve_identity(current_user)
 
-    # Query by organization_id first (new metrics), then user_id (legacy)
     stats = AnalyticsService.get_usage_stats(
         db=db,
-        user_id=org_id or user_id,
+        user_id=identity,
         start_date=start_date,
         end_date=end_date,
     )
@@ -135,12 +143,11 @@ async def get_service_metrics(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
 
-    user_id = current_user.get("id") or current_user.get("user_id")
-    org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+    identity = _resolve_identity(current_user)
 
     metrics = AnalyticsService.get_service_metrics(
         db=db,
-        user_id=org_id or user_id,
+        user_id=identity,
         start_date=start_date,
         end_date=end_date,
     )
@@ -166,12 +173,11 @@ async def get_time_series(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
 
-    user_id = current_user.get("id") or current_user.get("user_id")
-    org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+    identity = _resolve_identity(current_user)
 
     time_series = AnalyticsService.get_time_series(
         db=db,
-        user_id=org_id or user_id,
+        user_id=identity,
         metric_type=metric_type,
         start_date=start_date,
         end_date=end_date,
@@ -197,12 +203,11 @@ async def get_activity_feed(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
 
-    user_id = current_user.get("id") or current_user.get("user_id")
-    org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+    identity = _resolve_identity(current_user)
 
     metrics = AnalyticsService.get_activity_feed(
         db=db,
-        user_id=org_id or user_id,
+        user_id=identity,
         start_date=start_date,
         end_date=end_date,
         limit=limit,
@@ -226,12 +231,11 @@ async def get_analytics_report(
     start_date = end_date - timedelta(days=days)
 
     # Get usage stats
-    user_id = current_user.get("id") or current_user.get("user_id")
-    org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+    identity = _resolve_identity(current_user)
 
     usage_stats = AnalyticsService.get_usage_stats(
         db=db,
-        user_id=org_id or user_id,
+        user_id=identity,
         start_date=start_date,
         end_date=end_date,
     )
@@ -239,7 +243,7 @@ async def get_analytics_report(
     # Get service metrics
     service_metrics = AnalyticsService.get_service_metrics(
         db=db,
-        user_id=org_id or user_id,
+        user_id=identity,
         start_date=start_date,
         end_date=end_date,
     )
@@ -247,7 +251,7 @@ async def get_analytics_report(
     # Get time series for API calls
     time_series = AnalyticsService.get_time_series(
         db=db,
-        user_id=org_id or user_id,
+        user_id=identity,
         metric_type="api_call",
         start_date=start_date,
         end_date=end_date,
@@ -458,8 +462,7 @@ async def get_discovery_stats(
     end_date = datetime.utcnow()
     start_date = end_date - timedelta(days=days)
     
-    user_id = current_user.get("id") or current_user.get("user_id")
-    org_id = current_user.get("organization_id") or (f"user_{user_id}" if user_id else None)
+    identity = _resolve_identity(current_user)
     
     # Query discovery metrics
     base_query = db.query(UsageMetric).filter(
@@ -475,7 +478,7 @@ async def get_discovery_stats(
     if not is_admin:
         # Show discoveries where this org's content was found
         base_query = base_query.filter(
-            UsageMetric.meta["organization_id"].astext == org_id
+            UsageMetric.meta["organization_id"].astext == identity
         )
     
     # Get total counts

@@ -34,6 +34,7 @@ from app.routers import (
     chat,
     coalition,
     documents,
+    integrations,
     keys,
     licensing,
     lookup,
@@ -699,6 +700,7 @@ app.include_router(status_router.router, prefix="/api/v1", tags=["Status & Revoc
 app.include_router(batch.router)
 app.include_router(tools.router, prefix="/api/v1", tags=["Public Tools"])
 app.include_router(organizations_proxy.router, prefix="/api/v1", tags=["Organizations Proxy"])
+app.include_router(integrations.router, prefix="/api/v1", tags=["Integrations"])
 
 # Include v1 API router (Merkle tree endpoints)
 app.include_router(api_v1_router, prefix="/api/v1")

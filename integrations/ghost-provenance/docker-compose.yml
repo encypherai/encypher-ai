@@ -1,0 +1,82 @@
+services:
+  # Ghost CMS
+  ghost:
+    image: ghost:5-alpine
+    ports:
+      - "2368:2368"
+    environment:
+      url: http://localhost:2368
+      database__client: mysql
+      database__connection__host: ghost-db
+      database__connection__user: ghost
+      database__connection__password: ghostpass
+      database__connection__database: ghost
+      NODE_ENV: development
+    volumes:
+      - ghost_content:/var/lib/ghost/content
+    depends_on:
+      ghost-db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # MySQL for Ghost
+  ghost-db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: ghost
+      MYSQL_USER: ghost
+      MYSQL_PASSWORD: ghostpass
+    volumes:
+      - ghost_db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Encypher Ghost Provenance Integration Service
+  # Enterprise API is already running on the host via start-dev.sh (Traefik on port 8000).
+  # Use host.docker.internal to reach it from inside Docker.
+  ghost-provenance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3100:3000"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      GHOST_URL: http://ghost:2368
+      GHOST_ADMIN_API_KEY: ${GHOST_ADMIN_API_KEY:-698f6f99fdb6c50001fbb359:03508c6aa106ebf1952171b8c6425d5ba2a083288f2d2f8317bcd838e9143592}
+      GHOST_API_VERSION: v5.0
+      ENCYPHER_API_BASE_URL: http://encypher-enterprise-api:8000/api/v1
+      ENCYPHER_API_KEY: ency_SBDdCn93La3Sa9HKHAmy7gRmJUg9tyy6NGq_7A3_ZT4
+      PORT: 3000
+      LOG_LEVEL: debug
+      AUTO_SIGN_ON_PUBLISH: "true"
+      AUTO_SIGN_ON_UPDATE: "true"
+      SIGNING_TIER: free
+      MANIFEST_MODE: micro_ecc_c2pa
+      SEGMENTATION_LEVEL: sentence
+      DB_PATH: /app/data/ghost-provenance.db
+      BADGE_ENABLED: "true"
+      VERIFY_BASE_URL: https://verify.encypherai.com
+    volumes:
+      - provenance_data:/app/data
+    networks:
+      - default
+      - encypher-network
+    depends_on:
+      - ghost
+    restart: unless-stopped
+
+networks:
+  encypher-network:
+    external: true
+
+volumes:
+  ghost_content:
+  ghost_db_data:
+  provenance_data:

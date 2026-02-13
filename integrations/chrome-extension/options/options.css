@@ -9,10 +9,10 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-family: Roboto, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
   font-size: 14px;
   line-height: 1.5;
-  color: #1F2937;
+  color: #1B2F50;
   background: #F9FAFB;
   min-height: 100vh;
 }
@@ -41,7 +41,7 @@ body {
 .options__header h1 {
   font-size: 24px;
   font-weight: 600;
-  color: #111827;
+  color: #1B2F50;
 }
 
 /* Content */
@@ -62,7 +62,7 @@ body {
 .options__section h2 {
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: #1B2F50;
   margin-bottom: 16px;
 }
 
@@ -73,7 +73,7 @@ body {
 }
 
 .options__description a {
-  color: #10B981;
+  color: #2A87C4;
   text-decoration: none;
 }
 
@@ -116,8 +116,8 @@ body {
 .options__field input:focus,
 .options__field select:focus {
   outline: none;
-  border-color: #10B981;
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+  border-color: #2A87C4;
+  box-shadow: 0 0 0 3px rgba(42, 135, 196, 0.1);
 }
 
 .options__input-group {
@@ -154,7 +154,7 @@ body {
   width: 18px;
   height: 18px;
   margin-top: 2px;
-  accent-color: #10B981;
+  accent-color: #2A87C4;
   cursor: pointer;
 }
 
@@ -166,7 +166,7 @@ body {
 .options__field--checkbox label strong {
   display: block;
   font-weight: 500;
-  color: #1F2937;
+  color: #1B2F50;
 }
 
 .options__field--checkbox label span {
@@ -188,12 +188,12 @@ body {
 }
 
 .options__btn--primary {
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
   color: white;
 }
 
 .options__btn--primary:hover {
-  background: linear-gradient(135deg, #059669 0%, #047857 100%);
+  background: linear-gradient(135deg, #1B2F50 0%, #2A87C4 100%);
 }
 
 .options__btn--secondary {

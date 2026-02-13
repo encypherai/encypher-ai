@@ -324,7 +324,7 @@
 ### 🎯 Core Features
 
 #### Subscription Management
-- ✅ **Multiple Plans** - Free, Professional, Enterprise
+- ✅ **Multiple Plans** - Free, Enterprise
 - ✅ **Billing Cycles** - Monthly, Yearly
 - ✅ **Plan Upgrades** - Tier changes
 - ✅ **Plan Downgrades** - With proration

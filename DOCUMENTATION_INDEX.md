@@ -1,6 +1,6 @@
 # 📚 Encypher Commercial - Documentation Index
 
-**Last Updated**: November 28, 2025  
+**Last Updated**: February 13, 2026  
 **Repository**: encypherai-commercial  
 **Documentation Status**: ✅ Complete & Current
 
@@ -10,8 +10,8 @@
 
 ### New to the Repository?
 1. **Start Here**: [README.md](./README.md) - Repository overview, product tiers, getting started
-2. **Audit Report**: [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) - Complete findings and recommendations
-3. **Completion Summary**: [AUDIT_COMPLETE.md](./AUDIT_COMPLETE.md) - Quick reference
+2. **Feature Matrix**: [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) - Complete feature list by tier
+3. **Pricing Strategy**: [docs/pricing/PRICING_STRATEGY.md](./docs/pricing/PRICING_STRATEGY.md) - Strategy, economics, GTM
 
 ### Looking for Something Specific?
 Use this index to jump directly to the documentation you need.
@@ -25,10 +25,8 @@ Use this index to jump directly to the documentation you need.
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [README.md](./README.md) | Repository overview, structure, getting started | Everyone |
-| [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) | **Master feature list by subscription tier** | Everyone |
+| [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) | **Master feature list by tier (Free + Enterprise + Add-ons)** | Everyone |
 | [MICROSERVICES_FEATURES.md](./MICROSERVICES_FEATURES.md) | Complete feature matrix for all 8 services | Everyone |
-| [DOCUMENTATION_AUDIT.md](./DOCUMENTATION_AUDIT.md) | Complete audit report with findings | Developers, Managers |
-| [AUDIT_COMPLETE.md](./AUDIT_COMPLETE.md) | Quick completion summary | Everyone |
 | [DOCUMENTATION_INDEX.md](./DOCUMENTATION_INDEX.md) | This file - navigation guide | Everyone |
 | [CHANGELOG.md](./CHANGELOG.md) | Version history and changes | Developers |
 | [LICENSE](./LICENSE) | Proprietary license information | Legal, Management |
@@ -48,7 +46,7 @@ Use this index to jump directly to the documentation you need.
 
 **Key Features**: Scan files, validate metadata, generate CSV reports, trusted signers  
 **Status**: ✅ Functional (⚠️ needs refactoring - see agents.md)  
-**Tier**: Free/Professional
+**Tier**: Free
 
 #### Policy Validator CLI
 | Document | Purpose |
@@ -59,7 +57,7 @@ Use this index to jump directly to the documentation you need.
 
 **Key Features**: Policy validation, JSON schemas, compliance checking  
 **Status**: ✅ Production Ready  
-**Tier**: Professional
+**Tier**: Free
 
 ---
 
@@ -138,7 +136,6 @@ Use this index to jump directly to the documentation you need.
 | [sdk/typescript/](./sdk/typescript/) | TypeScript SDK (auto-generated from OpenAPI) |
 | [sdk/go/](./sdk/go/) | Go SDK (auto-generated from OpenAPI) |
 | [sdk/rust/](./sdk/rust/) | Rust SDK (auto-generated from OpenAPI) |
-| [archive/enterprise_sdk_deprecated/DEPRECATED.md](./archive/enterprise_sdk_deprecated/DEPRECATED.md) | ⚠️ Deprecated hand-crafted SDK |
 
 **Key Features**: Auto-generated from API spec, always in sync, MIT licensed  
 **Status**: ✅ Generated (not yet published to registries)  
@@ -180,12 +177,12 @@ Use this index to jump directly to the documentation you need.
 **Port**: 8004
 
 #### Planned Services
-- **api-gateway** (Port 8000) - Central routing, rate limiting
 - **user-service** (Port 8002) - User profiles
-- **billing-service** (Port 8003) - Subscriptions
-- **encoding-service** (Port 8005) - C2PA encoding
-- **verification-service** (Port 8006) - Content verification
-- **analytics-service** (Port 8007) - Usage analytics
+- **key-service** (Port 8003) - API key management
+- **encoding-service** (Port 8004) - C2PA encoding
+- **verification-service** (Port 8005) - Content verification
+- **analytics-service** (Port 8006) - Usage analytics
+- **billing-service** (Port 8007) - Subscriptions
 - **notification-service** (Port 8008) - Notifications
 
 ---
@@ -334,7 +331,7 @@ Use this index to jump directly to the documentation you need.
 - [audit_log_cli/](./audit_log_cli/)
 - [policy_validator_cli/](./policy_validator_cli/)
 - [enterprise_api/](./enterprise_api/)
-- [enterprise_sdk/](./enterprise_sdk/)
+- [sdk/](./sdk/)
 - [shared_commercial_libs/](./shared_commercial_libs/)
 - [services/auth-service/](./services/auth-service/)
 - [services/key-service/](./services/key-service/)
@@ -356,7 +353,7 @@ Use this index to jump directly to the documentation you need.
 
 #### Content Signing
 - [enterprise_api/](./enterprise_api/) - C2PA signing
-- [enterprise_sdk/](./enterprise_sdk/) - SDK wrapper
+- **[Enterprise SDKs](./sdk/README.md)** - Auto-generated SDKs (Python/TypeScript/Go/Rust)
 - [integrations/wordpress-assurance-plugin/](./integrations/wordpress-assurance-plugin/) - WordPress
 
 #### Verification
@@ -376,7 +373,7 @@ Use this index to jump directly to the documentation you need.
 
 ### Excellent Documentation (9-10/10)
 - ✅ enterprise_api - 653-line README + agents.md
-- ✅ enterprise_sdk - 855-line comprehensive guide
+- ✅ sdk/ - Auto-generated SDKs (Python/TypeScript/Go/Rust)
 - ✅ packages/design-system - 395-line component guide
 - ✅ services/README.md - Complete architecture
 
@@ -518,7 +515,7 @@ All other components are production-ready.
 
 ---
 
-**Last Updated**: October 30, 2025  
+**Last Updated**: February 13, 2026  
 **Maintained By**: Development Team  
-**Next Review**: January 30, 2026 (or after major changes)
+**Next Review**: May 13, 2026 (or after major changes)
 \n### Observability Docs\n\n| Document | Purpose |\n|----------|---------|\n| [docs/observability/ALERTS.md](./docs/observability/ALERTS.md) | Alert thresholds, runbooks |\n

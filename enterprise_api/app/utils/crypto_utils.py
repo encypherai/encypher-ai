@@ -136,17 +136,31 @@ async def load_organization_public_key(organization_id: str, db: AsyncSession) -
         private_key = get_demo_private_key()
         return private_key.public_key()
 
-    # Look up organization's public key from database
-    result = await db.execute(text("SELECT public_key FROM organizations WHERE id = :org_id"), {"org_id": organization_id})
+    # Look up organization's public key from database.
+    # Fall back to deriving from private_key_encrypted when public_key is NULL
+    # (auto-provisioned orgs may not have public_key populated yet).
+    result = await db.execute(
+        text("SELECT public_key, private_key_encrypted FROM organizations WHERE id = :org_id"),
+        {"org_id": organization_id},
+    )
     row = result.fetchone()
 
-    if not row or not row[0]:
+    if not row:
         raise ValueError(f"No public key found for organization {organization_id}")
 
-    public_key_bytes = bytes(row[0])
+    if row[0]:
+        public_key_bytes = bytes(row[0])
+        return ed25519.Ed25519PublicKey.from_public_bytes(public_key_bytes)
 
-    # Load Ed25519 public key from raw bytes
-    return ed25519.Ed25519PublicKey.from_public_bytes(public_key_bytes)
+    # Fallback: derive public key from encrypted private key
+    if row[1]:
+        try:
+            private_key = decrypt_private_key(bytes(row[1]))
+            return private_key.public_key()
+        except ValueError:
+            logger.warning("Failed to derive public key from private_key_encrypted for org %s", organization_id)
+
+    raise ValueError(f"No public key found for organization {organization_id}")
 
 
 def generate_ed25519_keypair() -> tuple[ed25519.Ed25519PrivateKey, ed25519.Ed25519PublicKey]:

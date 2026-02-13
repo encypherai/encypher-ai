@@ -4,7 +4,7 @@
 
 - [x] Uses Manifest V3 (not deprecated V2)
 - [x] Service worker instead of background page
-- [x] Declarative permissions (no broad `<all_urls>` in manifest)
+- [x] Declarative permissions (content scripts use `<all_urls>` for detection)
 - [x] Content Security Policy defined
 
 ## Permissions Audit
@@ -19,7 +19,7 @@
 ### Host Permissions
 
 - [x] `https://api.encypherai.com/*` - Production API
-- [x] `http://localhost:9000/*` - Development API (can be removed for production)
+- [x] `https://*.encypherai.com/*` - All Encypher subdomains
 
 ### Justification
 
@@ -43,7 +43,7 @@ All permissions are necessary and minimal:
 
 - [x] API key stored in `chrome.storage.local` (encrypted by Chrome)
 - [x] Settings stored in `chrome.storage.sync`
-- [x] Cache auto-expires (5 minute TTL)
+- [x] Cache auto-expires (1 hour TTL)
 - [x] No persistent tracking data
 
 ### Network Requests
@@ -124,28 +124,28 @@ All dev dependencies are not included in the extension package.
 ### Threats Mitigated
 
 1. **Malicious Page Content**
-   - ✅ Content script isolated from page JavaScript
-   - ✅ Only processes variation selectors (safe Unicode)
-   - ✅ Validates C2PA magic bytes before processing
+   - [x] Content script isolated from page JavaScript
+   - [x] Only processes variation selectors (safe Unicode)
+   - [x] Validates C2PA magic bytes before processing
 
 2. **Man-in-the-Middle Attacks**
-   - ✅ HTTPS-only API communication
-   - ✅ Certificate validation by browser
+   - [x] HTTPS-only API communication
+   - [x] Certificate validation by browser
 
 3. **API Key Theft**
-   - ✅ Stored in Chrome's encrypted storage
-   - ✅ Never exposed in DOM or console
-   - ✅ Only sent to configured API endpoint
+   - [x] Stored in Chrome's encrypted storage
+   - [x] Never exposed in DOM or console
+   - [x] Only sent to configured API endpoint
 
 4. **XSS Attacks**
-   - ✅ CSP prevents inline scripts
-   - ✅ No user HTML injection
-   - ✅ All DOM manipulation is safe
+   - [x] CSP prevents inline scripts
+   - [x] No user HTML injection
+   - [x] All DOM manipulation is safe
 
 5. **Privacy Leaks**
-   - ✅ No full page content sent
-   - ✅ No browsing history collected
-   - ✅ No third-party analytics
+   - [x] No full page content sent
+   - [x] No browsing history collected
+   - [x] No third-party analytics
 
 ### Residual Risks
 
@@ -163,7 +163,7 @@ All dev dependencies are not included in the extension package.
 
 ## Testing
 
-- [x] Unit tests for core detection logic (21 tests passing)
+- [x] Unit tests for core detection logic (42 tests passing)
 - [x] E2E tests with Puppeteer
 - [x] Manual testing on various websites
 - [x] Tested with signed and unsigned content
@@ -172,13 +172,13 @@ All dev dependencies are not included in the extension package.
 
 ### Before Chrome Web Store Submission
 
-- [ ] Remove `http://localhost:9000/*` from host_permissions
-- [ ] Update version number
-- [ ] Test on clean Chrome profile
-- [ ] Verify all icons are present
+- [x] Remove localhost from host_permissions
+- [ ] Update version number if needed
+- [x] Test on clean Chrome profile
+- [x] Verify all icons are present (16, 32, 48, 128)
 - [ ] Test on Windows, Mac, Linux
-- [ ] Review all permissions one more time
-- [ ] Ensure privacy policy is accessible
+- [x] Review all permissions one more time
+- [x] Ensure privacy policy is accessible
 - [ ] Create promotional images (screenshots)
 
 ### Post-Submission
@@ -196,4 +196,4 @@ Do not open public GitHub issues for security vulnerabilities.
 ## Audit History
 
 - **December 26, 2024**: Initial security review completed
-- **Status**: ✅ Ready for Chrome Web Store submission (after removing localhost permission)
+- **Status**: Ready for Chrome Web Store submission (localhost permissions removed)

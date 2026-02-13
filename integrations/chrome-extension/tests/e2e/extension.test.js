@@ -117,9 +117,9 @@ describe('Chrome Extension E2E Tests', () => {
       const title = await popup.$eval('.popup__title', el => el.textContent);
       assert.strictEqual(title, 'Encypher Verifier');
       
-      // Check tabs exist
+      // Check tabs exist (Verify, Sign, and Debug — Debug is hidden by default)
       const tabs = await popup.$$('.popup__tab');
-      assert.strictEqual(tabs.length, 2, 'Should have 2 tabs (Verify and Sign)');
+      assert.strictEqual(tabs.length, 3, 'Should have 3 tabs (Verify, Sign, and Debug)');
       
       await popup.close();
     });
@@ -246,13 +246,14 @@ describe('Chrome Extension E2E Tests', () => {
     it('should show API key required message when no key is set', async () => {
       // First, clear the API key
       const options = await openOptions();
-      await options.click('#resetSettings');
       
-      // Handle confirmation dialog
-      page.on('dialog', async dialog => {
+      // Handle confirmation dialog before triggering it
+      options.on('dialog', async dialog => {
         await dialog.accept();
       });
       
+      await options.click('#resetSettings');
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await options.close();
       
       // Open popup and go to Sign tab

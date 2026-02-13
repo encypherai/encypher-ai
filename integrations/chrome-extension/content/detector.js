@@ -4,6 +4,12 @@
  * Scans the page for C2PA and Encypher text embeddings using Unicode variation selectors.
  * When found, injects verification badges and communicates with the service worker.
  * 
+ * Key design principles:
+ * - Only hit the verification API when a valid embedding (C2PA/Encypher magic bytes) is found
+ * - Deduplicate: never re-verify the same content (tracked by content hash)
+ * - MutationObserver scans only newly added DOM nodes, not the full page
+ * - Debounce mutations for infinite-scroll pages (LinkedIn, Twitter, etc.)
+ * 
  * Supports two marker types:
  * - C2PA Text Manifest: "C2PATXT\0" (standard C2PA format)
  * - Encypher Marker: "ENCYPHER" (Encypher-specific format)
@@ -38,6 +44,67 @@ const VS_RANGES = {
 // Zero-width no-break space (prefix marker)
 const ZWNBSP = 0xFEFF;
 
+// Local browser cache: stores verification results keyed by text hash.
+// Entries persist for CACHE_TTL_MS (1 hour) or until manual rescan / page reload.
+// This prevents re-hitting the API when a user scrolls up and down a page.
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+const _verificationCache = new Map(); // hash → { result, details, timestamp }
+
+// Track which DOM elements already have badges to avoid duplicate processing.
+// Uses Set (not WeakSet) so it can be cleared on RESCAN.
+const _processedElements = new Set();
+
+// Guard against extension context invalidation (e.g. after extension reload)
+let _extensionContextValid = true;
+
+/**
+ * Simple string hash for deduplication (not cryptographic)
+ */
+function _hashText(text) {
+  let hash = 0;
+  for (let i = 0; i < text.length; i++) {
+    const char = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit int
+  }
+  return hash.toString(36);
+}
+
+/**
+ * Safe wrapper around chrome.runtime.sendMessage.
+ * Catches "Extension context invalidated" errors and stops further messaging.
+ */
+function _safeSendMessage(message) {
+  if (!_extensionContextValid) return Promise.resolve(null);
+  try {
+    return chrome.runtime.sendMessage(message).catch(err => {
+      if (err?.message?.includes('Extension context invalidated')) {
+        _extensionContextValid = false;
+        _debugLog('WARN', 'detector', 'Extension context invalidated — stopping messaging');
+      }
+      return null;
+    });
+  } catch (err) {
+    if (err?.message?.includes('Extension context invalidated')) {
+      _extensionContextValid = false;
+    }
+    return Promise.resolve(null);
+  }
+}
+
+/**
+ * Get a cached verification result if it exists and hasn't expired.
+ */
+function _getCachedResult(textHash) {
+  const entry = _verificationCache.get(textHash);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL_MS) {
+    _verificationCache.delete(textHash);
+    return null;
+  }
+  return entry;
+}
+
 /**
  * Check if a character is a variation selector
  */
@@ -49,27 +116,24 @@ function isVariationSelector(codePoint) {
 }
 
 /**
- * Extract embedded bytes from variation selectors in text
+ * Extract embedded bytes from variation selectors in text.
+ * 
+ * Uses the c2pa_text standard encoding where each VS maps to one byte:
+ *   VS1 (FE00-FE0F) → bytes 0-15
+ *   VS2 (E0100-E01EF) → bytes 16-255
  */
 function extractEmbeddedBytes(text) {
   const bytes = [];
-  let highNibble = null;
   
   for (const char of text) {
     const codePoint = char.codePointAt(0);
     
     if (codePoint >= VS_RANGES.VS1_START && codePoint <= VS_RANGES.VS1_END) {
-      // 4-bit value from VS1 range
-      const nibble = codePoint - VS_RANGES.VS1_START;
-      if (highNibble === null) {
-        highNibble = nibble;
-      } else {
-        bytes.push((highNibble << 4) | nibble);
-        highNibble = null;
-      }
+      // Bytes 0-15 from VS1 range
+      bytes.push(codePoint - VS_RANGES.VS1_START);
     } else if (codePoint >= VS_RANGES.VS2_START && codePoint <= VS_RANGES.VS2_END) {
-      // 8-bit value from VS2 range
-      bytes.push(codePoint - VS_RANGES.VS2_START);
+      // Bytes 16-255 from VS2 range
+      bytes.push((codePoint - VS_RANGES.VS2_START) + 16);
     }
   }
   
@@ -109,7 +173,111 @@ function detectMarkerType(bytes) {
 }
 
 /**
- * Find all text nodes containing variation selectors
+ * Extract wrapper bytes from a ZWNBSP-prefixed contiguous VS sequence.
+ * C2PA wrappers are: ZWNBSP + contiguous variation selectors.
+ * Returns array of { bytes, startIdx, endIdx } for each wrapper found.
+ */
+function findWrappers(text) {
+  const wrappers = [];
+  let i = 0;
+  const chars = [...text]; // proper codepoint iteration
+  
+  while (i < chars.length) {
+    if (chars[i].codePointAt(0) === ZWNBSP) {
+      // Found ZWNBSP prefix, collect contiguous VS chars
+      const startIdx = i;
+      i++;
+      const vsBytes = [];
+      while (i < chars.length && isVariationSelector(chars[i].codePointAt(0))) {
+        const cp = chars[i].codePointAt(0);
+        if (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) {
+          vsBytes.push(cp - VS_RANGES.VS1_START);
+        } else if (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END) {
+          vsBytes.push((cp - VS_RANGES.VS2_START) + 16);
+        }
+        i++;
+      }
+      if (vsBytes.length >= C2PA_MAGIC.length) {
+        wrappers.push({
+          bytes: new Uint8Array(vsBytes),
+          startIdx,
+          endIdx: i
+        });
+      }
+    } else {
+      i++;
+    }
+  }
+  return wrappers;
+}
+
+/**
+ * Check if a text node contains any variation selectors or ZWNBSP (fast check)
+ */
+function _hasVariationSelectors(text) {
+  for (const char of text) {
+    const cp = char.codePointAt(0);
+    if (isVariationSelector(cp) || cp === ZWNBSP) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Detect micro-embeddings: contiguous runs of VS chars (possibly interleaved
+ * with visible base chars) that do NOT start with a ZWNBSP prefix and do NOT
+ * match any known magic bytes. These are lightweight UUID/fingerprint embeddings.
+ * Returns array of { byteCount, startIdx, endIdx } for each run found.
+ */
+function findMicroEmbeddings(text) {
+  const results = [];
+  const chars = [...text];
+  let i = 0;
+  
+  while (i < chars.length) {
+    const cp = chars[i].codePointAt(0);
+    // Skip ZWNBSP-prefixed sequences (handled by findWrappers)
+    if (cp === ZWNBSP) {
+      i++;
+      while (i < chars.length && isVariationSelector(chars[i].codePointAt(0))) i++;
+      continue;
+    }
+    
+    if (isVariationSelector(cp)) {
+      // Found a VS char not preceded by ZWNBSP — start of a micro-embedding
+      const startIdx = i;
+      let vsCount = 0;
+      while (i < chars.length) {
+        const c = chars[i].codePointAt(0);
+        if (isVariationSelector(c)) {
+          vsCount++;
+          i++;
+        } else if (c === ZWNBSP) {
+          break; // Don't merge into a wrapper sequence
+        } else {
+          // Visible char — peek ahead to see if more VS chars follow
+          if (i + 1 < chars.length && isVariationSelector(chars[i + 1].codePointAt(0))) {
+            i++; // skip the visible char, continue collecting
+          } else {
+            break;
+          }
+        }
+      }
+      // Minimum threshold: at least 4 VS chars to be considered a micro-embedding
+      // (avoids false positives from legitimate font variation selectors)
+      if (vsCount >= 4) {
+        results.push({ byteCount: vsCount, startIdx, endIdx: i });
+      }
+    } else {
+      i++;
+    }
+  }
+  return results;
+}
+
+/**
+ * Find all text nodes containing variation selectors within a root element
  */
 function findNodesWithEmbeddings(root = document.body) {
   const walker = document.createTreeWalker(
@@ -128,10 +296,8 @@ function findNodesWithEmbeddings(root = document.body) {
         
         // Check if text contains variation selectors
         const text = node.textContent || '';
-        for (const char of text) {
-          if (isVariationSelector(char.codePointAt(0))) {
-            return NodeFilter.FILTER_ACCEPT;
-          }
+        if (_hasVariationSelectors(text)) {
+          return NodeFilter.FILTER_ACCEPT;
         }
         return NodeFilter.FILTER_REJECT;
       }
@@ -190,11 +356,219 @@ const ENCYPHER_LOGO_SVG = `<svg viewBox="0 0 264.58334 264.58333" xmlns="http://
 </svg>`;
 
 /**
+ * Escape HTML to prevent XSS in badge detail panel
+ */
+function _escapeHtml(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+/**
+ * Close any open detail panels
+ */
+function _closeDetailPanels() {
+  document.querySelectorAll('.encypher-detail-panel').forEach(p => p.remove());
+}
+
+/**
+ * Show a rich detail panel anchored to a badge element
+ */
+function _showDetailPanel(badge, details) {
+  // Close any existing panels first
+  _closeDetailPanels();
+  
+  const panel = document.createElement('div');
+  panel.className = 'encypher-detail-panel';
+  
+  const status = details._status || 'unknown';
+  const statusLabels = {
+    verified: 'Verified',
+    invalid: 'Invalid Signature',
+    revoked: 'Revoked',
+    error: 'Error',
+    pending: 'Verifying...'
+  };
+  const statusColors = {
+    verified: '#00CED1',
+    invalid: '#EF4444',
+    revoked: '#A7AFBC',
+    error: '#6B7280',
+    pending: '#B7D5ED'
+  };
+  
+  const markerLabel = details.markerType === 'c2pa' ? 'C2PA Text Manifest' : 
+                      details.markerType === 'encypher' ? 'Encypher Format' :
+                      details.markerType === 'micro' ? 'Encypher Micro-Embedding' : 'Unknown';
+  
+  let rows = '';
+  
+  // Status row
+  rows += `<div class="encypher-detail-panel__row">
+    <span class="encypher-detail-panel__label">Status</span>
+    <span class="encypher-detail-panel__value" style="color:${statusColors[status] || '#6B7280'};font-weight:600">${_escapeHtml(statusLabels[status] || status)}</span>
+  </div>`;
+  
+  // Format
+  rows += `<div class="encypher-detail-panel__row">
+    <span class="encypher-detail-panel__label">Format</span>
+    <span class="encypher-detail-panel__value">${_escapeHtml(markerLabel)}</span>
+  </div>`;
+  
+  // Organization (prefer human-readable name; fall back to ID in mono)
+  const orgName = details.organizationName;
+  const orgId = details.organizationId;
+  const orgIsId = orgName && /^org_[a-f0-9]+$/i.test(orgName);
+  if (orgName && !orgIsId) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Organization</span>
+      <span class="encypher-detail-panel__value">${_escapeHtml(orgName)}</span>
+    </div>`;
+  } else if (orgId) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Organization</span>
+      <span class="encypher-detail-panel__value encypher-detail-panel__mono">${_escapeHtml(orgId)}</span>
+    </div>`;
+  }
+  
+  // Signer — only show if it's a human-readable name (not an ID like org_xxx or usr_xxx)
+  const signerDisplay = details.signer;
+  const signerIsId = signerDisplay && /^(org_|usr_|user_)[a-f0-9]+$/i.test(signerDisplay);
+  if (signerDisplay && !signerIsId) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Signed by</span>
+      <span class="encypher-detail-panel__value">${_escapeHtml(signerDisplay)}</span>
+    </div>`;
+  }
+  
+  // Timestamp
+  if (details.timestamp) {
+    const date = new Date(details.timestamp);
+    const formatted = isNaN(date.getTime()) ? details.timestamp : date.toLocaleString();
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Signed at</span>
+      <span class="encypher-detail-panel__value">${_escapeHtml(formatted)}</span>
+    </div>`;
+  }
+  
+  // Document ID
+  if (details.documentId) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Document</span>
+      <span class="encypher-detail-panel__value encypher-detail-panel__mono">${_escapeHtml(details.documentId)}</span>
+    </div>`;
+  }
+  
+  // Document title
+  if (details.title) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Title</span>
+      <span class="encypher-detail-panel__value">${_escapeHtml(details.title)}</span>
+    </div>`;
+  }
+  
+  // Document type
+  if (details.documentType) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Type</span>
+      <span class="encypher-detail-panel__value">${_escapeHtml(details.documentType)}</span>
+    </div>`;
+  }
+  
+  // C2PA validation
+  if (details.c2paValidated !== undefined) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">C2PA Validated</span>
+      <span class="encypher-detail-panel__value">${details.c2paValidated ? 'Yes' : 'No'}${details.c2paValidationType ? ` (${_escapeHtml(details.c2paValidationType)})` : ''}</span>
+    </div>`;
+  }
+  
+  // License
+  if (details.licenseType) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">License</span>
+      <span class="encypher-detail-panel__value">${_escapeHtml(details.licenseType)}</span>
+    </div>`;
+  }
+  
+  // Error
+  if (details.error) {
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Error</span>
+      <span class="encypher-detail-panel__value" style="color:#EF4444">${_escapeHtml(details.error)}</span>
+    </div>`;
+  }
+  
+  // Revoked at
+  if (details.revokedAt) {
+    const date = new Date(details.revokedAt);
+    const formatted = isNaN(date.getTime()) ? details.revokedAt : date.toLocaleString();
+    rows += `<div class="encypher-detail-panel__row">
+      <span class="encypher-detail-panel__label">Revoked at</span>
+      <span class="encypher-detail-panel__value" style="color:#8B5CF6">${_escapeHtml(formatted)}</span>
+    </div>`;
+  }
+  
+  panel.innerHTML = `
+    <div class="encypher-detail-panel__header">
+      <span class="encypher-detail-panel__logo">${ENCYPHER_LOGO_SVG}</span>
+      <span class="encypher-detail-panel__title">Encypher Verification</span>
+      <button class="encypher-detail-panel__close" aria-label="Close">&times;</button>
+    </div>
+    <div class="encypher-detail-panel__body">${rows}</div>
+    <div class="encypher-detail-panel__footer">
+      <a href="https://encypherai.com" target="_blank" rel="noopener">encypherai.com</a>
+    </div>
+  `;
+  
+  // Close button handler
+  panel.querySelector('.encypher-detail-panel__close').addEventListener('click', (e) => {
+    e.stopPropagation();
+    panel.remove();
+  });
+  
+  // Close on outside click
+  const closeOnOutsideClick = (e) => {
+    if (!panel.contains(e.target) && !badge.contains(e.target)) {
+      panel.remove();
+      document.removeEventListener('click', closeOnOutsideClick, true);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', closeOnOutsideClick, true), 0);
+  
+  // Position relative to badge
+  document.body.appendChild(panel);
+  const badgeRect = badge.getBoundingClientRect();
+  const panelRect = panel.getBoundingClientRect();
+  
+  let top = badgeRect.bottom + window.scrollY + 8;
+  let left = badgeRect.right + window.scrollX - panelRect.width;
+  
+  // Keep panel within viewport
+  if (left < 8) left = 8;
+  if (left + panelRect.width > window.innerWidth - 8) {
+    left = window.innerWidth - panelRect.width - 8;
+  }
+  if (top + panelRect.height > window.innerHeight + window.scrollY - 8) {
+    top = badgeRect.top + window.scrollY - panelRect.height - 8;
+  }
+  
+  panel.style.top = `${top}px`;
+  panel.style.left = `${left}px`;
+}
+
+/**
  * Create and inject a verification badge with Encypher logo
  */
 function injectBadge(element, status, details) {
-  // Check if badge already exists
-  if (element.querySelector('.encypher-badge')) return;
+  // Remove existing badge so status updates (pending → verified) work
+  const existingBadge = element.querySelector('.encypher-badge');
+  if (existingBadge) {
+    // If the new status is 'pending' and a non-pending badge already exists, keep it
+    if (status === 'pending' && !existingBadge.classList.contains('encypher-badge--pending')) {
+      return;
+    }
+    existingBadge.remove();
+  }
   
   const badge = document.createElement('div');
   badge.className = `encypher-badge encypher-badge--${status}`;
@@ -205,15 +579,20 @@ function injectBadge(element, status, details) {
   // Use Encypher logo for verified, status indicators for others
   const statusOverlay = {
     verified: '',
-    pending: '<span class="encypher-badge__status">⋯</span>',
-    invalid: '<span class="encypher-badge__status">✗</span>',
-    revoked: '<span class="encypher-badge__status">⊘</span>',
+    pending: '<span class="encypher-badge__status">&#x22EF;</span>',
+    invalid: '<span class="encypher-badge__status">&#x2717;</span>',
+    revoked: '<span class="encypher-badge__status">&#x2298;</span>',
     error: '<span class="encypher-badge__status">!</span>'
   };
   
   // Format marker type for display
   const markerLabel = details.markerType === 'c2pa' ? 'C2PA' : 
-                      details.markerType === 'encypher' ? 'Encypher' : '';
+                      details.markerType === 'encypher' ? 'Encypher' :
+                      details.markerType === 'micro' ? 'Micro-Embedding' : '';
+  
+  // Prefer organization name over ID for tooltip display (never show raw IDs)
+  const orgRaw = details.organizationName || '';
+  const orgDisplay = /^org_[a-f0-9]+$/i.test(orgRaw) ? '' : orgRaw;
   
   badge.innerHTML = `
     <span class="encypher-badge__icon">${ENCYPHER_LOGO_SVG}</span>
@@ -221,149 +600,303 @@ function injectBadge(element, status, details) {
     <span class="encypher-badge__tooltip">
       <strong>${status === 'verified' ? 'Verified by Encypher' : status.charAt(0).toUpperCase() + status.slice(1)}</strong>
       ${markerLabel ? `<br>Format: ${markerLabel}` : ''}
-      ${details.signer ? `<br>Signed by: ${details.signer}` : ''}
-      ${details.organizationId ? `<br>Org ID: ${details.organizationId}` : ''}
+      ${details.signer && !/^(org_|usr_|user_)[a-f0-9]+$/i.test(details.signer) ? `<br>Signed by: ${_escapeHtml(details.signer)}` : ''}
+      ${orgDisplay ? `<br>Org: ${_escapeHtml(orgDisplay)}` : ''}
       ${details.timestamp ? `<br>Date: ${new Date(details.timestamp).toLocaleDateString()}` : ''}
-      ${details.documentId ? `<br>Doc: ${details.documentId}` : ''}
-      ${details.error ? `<br>Error: ${details.error}` : ''}
+      ${details.error ? `<br>Error: ${_escapeHtml(details.error)}` : ''}
+      <br><em style="opacity:0.7">Click for details</em>
     </span>
   `;
   
-  // Click handler to show full details
+  // Store full details on the badge for the click handler
+  const fullDetails = { ...details, _status: status };
+  
+  // Click handler to show rich detail panel
   badge.addEventListener('click', (e) => {
     e.stopPropagation();
-    chrome.runtime.sendMessage({
-      type: 'SHOW_DETAILS',
-      details: details
-    });
+    e.preventDefault();
+    _showDetailPanel(badge, fullDetails);
   });
   
-  // Position the badge
-  const computedStyle = window.getComputedStyle(element);
-  if (computedStyle.position === 'static') {
-    element.style.position = 'relative';
-  }
+  // Keyboard accessibility
+  badge.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      _showDetailPanel(badge, fullDetails);
+    }
+  });
   
+  // Append badge inline at the end of the element (no absolute overlay)
   element.appendChild(badge);
   element.classList.add('encypher-verified-content');
 }
 
 /**
- * Scan the page for C2PA embeddings
+ * Detect embeddings in text nodes within a root element.
+ * Checks for:
+ *   1. C2PA wrappers (ZWNBSP + VS sequence with magic bytes)
+ *   2. Legacy Encypher format (scattered VS with magic bytes)
+ *   3. Micro-embeddings (contiguous VS runs without magic bytes — UUID/fingerprint)
+ * 
+ * Returns { uncached, cached } where cached detections already have results
+ * from the local browser cache and don't need an API call.
  */
-async function scanPage() {
-  _debugLog('INFO', 'detector', `Scanning page: ${window.location.href}`);
-  const nodes = findNodesWithEmbeddings();
-  const detections = [];
+function _detectEmbeddings(root = document.body) {
+  const nodes = findNodesWithEmbeddings(root);
+  const uncached = [];
+  const cached = [];
   
   for (const node of nodes) {
     const text = node.textContent || '';
-    const bytes = extractEmbeddedBytes(text);
+    const containingBlock = getContainingBlock(node);
     
-    const markerType = detectMarkerType(bytes);
-    if (markerType) {
-      _debugLog('INFO', 'detector', `Found ${markerType} embedding (${bytes.length} bytes)`, { visibleTextLen: extractVisibleText(text).length });
-      const containingBlock = getContainingBlock(node);
-      const visibleText = extractVisibleText(text);
-      
-      detections.push({
-        element: containingBlock,
-        node: node,
-        text: text,
-        visibleText: visibleText,
-        bytes: Array.from(bytes),
-        markerType: markerType
-      });
-      
-      // Show pending badge immediately with marker type
-      injectBadge(containingBlock, 'pending', { 
-        message: 'Verifying...',
-        markerType: markerType
-      });
+    // Skip if this element already has a badge (already processed)
+    if (_processedElements.has(containingBlock)) {
+      continue;
     }
-  }
-  
-  // Notify service worker about detections
-  _debugLog('INFO', 'detector', `Scan complete: ${detections.length} embeddings found`);
-  if (detections.length > 0) {
-    chrome.runtime.sendMessage({
-      type: 'EMBEDDINGS_DETECTED',
-      count: detections.length,
-      url: window.location.href
-    });
     
-    // Request verification for each detection
-    for (let i = 0; i < detections.length; i++) {
-      const detection = detections[i];
-      try {
-        const response = await chrome.runtime.sendMessage({
-          type: 'VERIFY_CONTENT',
-          index: i,
-          text: detection.text,
-          visibleText: detection.visibleText,
-          markerType: detection.markerType,
-          pageUrl: window.location.href,
-          pageTitle: document.title
+    // Compute a hash for deduplication and cache lookup
+    const textHash = _hashText(text);
+    
+    // Check local browser cache first (1-hour TTL)
+    const cachedEntry = _getCachedResult(textHash);
+    if (cachedEntry) {
+      cached.push({
+        element: containingBlock,
+        textHash,
+        cachedStatus: cachedEntry.status,
+        cachedDetails: cachedEntry.details
+      });
+      continue;
+    }
+    
+    let found = false;
+    
+    // 1. Find ZWNBSP-prefixed wrapper sequences (standard C2PA text wrapper format)
+    const wrappers = findWrappers(text);
+    for (const wrapper of wrappers) {
+      const markerType = detectMarkerType(wrapper.bytes);
+      if (markerType) {
+        const visibleText = extractVisibleText(text);
+        uncached.push({
+          element: containingBlock, node, text, textHash, visibleText,
+          bytes: Array.from(wrapper.bytes), markerType
         });
-        
-        if (response && response.success) {
-          injectBadge(detection.element, 'verified', {
-            signer: response.data?.signer_name || response.data?.signer_id,
-            timestamp: response.data?.signed_at,
-            documentId: response.data?.document_id
-          });
-        } else if (response && response.revoked) {
-          injectBadge(detection.element, 'revoked', {
-            error: 'This content has been revoked',
-            revokedAt: response.revoked_at
-          });
-        } else {
-          injectBadge(detection.element, 'invalid', {
-            error: response?.error || 'Verification failed'
-          });
-        }
-      } catch (error) {
-        injectBadge(detection.element, 'error', {
-          error: error.message || 'Verification error'
+        found = true;
+        break; // Only take the first valid wrapper per text node
+      }
+    }
+    
+    // 2. Fallback: non-wrapper VS embeddings (legacy Encypher format)
+    if (!found && wrappers.length === 0) {
+      const bytes = extractEmbeddedBytes(text);
+      const markerType = detectMarkerType(bytes);
+      if (markerType) {
+        const visibleText = extractVisibleText(text);
+        uncached.push({
+          element: containingBlock, node, text, textHash, visibleText,
+          bytes: Array.from(bytes), markerType
+        });
+        found = true;
+      }
+    }
+    
+    // 3. Micro-embeddings: contiguous VS runs without magic bytes (UUID/fingerprint)
+    if (!found) {
+      const micros = findMicroEmbeddings(text);
+      if (micros.length > 0) {
+        const visibleText = extractVisibleText(text);
+        // Extract the raw bytes for the largest micro-embedding
+        const largest = micros.reduce((a, b) => a.byteCount > b.byteCount ? a : b);
+        const bytes = extractEmbeddedBytes(text);
+        uncached.push({
+          element: containingBlock, node, text, textHash, visibleText,
+          bytes: Array.from(bytes),
+          markerType: 'micro',
+          microCount: micros.length,
+          microBytes: largest.byteCount
         });
       }
     }
+  }
+  
+  return { uncached, cached };
+}
+
+/**
+ * Build badge details from an API response for a detection.
+ */
+function _buildBadgeDetails(response, markerType) {
+  if (response && response.success) {
+    return {
+      status: 'verified',
+      details: {
+        signer: response.data?.signer_name || response.data?.organization_name || null,
+        organizationName: response.data?.organization_name,
+        organizationId: response.data?.organization_id,
+        timestamp: response.data?.signed_at,
+        documentId: response.data?.document_id,
+        title: response.data?.title,
+        documentType: response.data?.document_type,
+        c2paValidated: response.data?.c2pa_validated,
+        c2paValidationType: response.data?.c2pa_validation_type,
+        licenseType: response.data?.license_type,
+        markerType
+      }
+    };
+  } else if (response && response.revoked) {
+    return {
+      status: 'revoked',
+      details: {
+        error: 'This content has been revoked',
+        revokedAt: response.data?.revoked_at || response.revoked_at,
+        organizationName: response.data?.organization_name,
+        markerType
+      }
+    };
   } else {
-    // No embeddings found
+    return {
+      status: 'invalid',
+      details: {
+        error: response?.error || 'Verification failed',
+        markerType
+      }
+    };
+  }
+}
+
+/**
+ * Verify a list of detections against the API and inject badges.
+ * Uses _safeSendMessage to handle extension context invalidation.
+ * Stores results in the local browser cache (1-hour TTL).
+ */
+async function _verifyDetections(detections) {
+  if (detections.length === 0) return;
+  
+  // Notify service worker about the count
+  _safeSendMessage({
+    type: 'EMBEDDINGS_DETECTED',
+    count: detections.length,
+    url: window.location.href
+  });
+  
+  for (const detection of detections) {
+    // Mark as processed immediately to prevent duplicate work
+    _processedElements.add(detection.element);
+    
+    // Show pending badge
+    const markerLabel = detection.markerType === 'micro' ? 'micro-embedding' : detection.markerType;
+    _debugLog('INFO', 'detector', `Verifying ${markerLabel} (${detection.bytes.length} bytes)`);
+    injectBadge(detection.element, 'pending', { 
+      message: 'Verifying...',
+      markerType: detection.markerType
+    });
+    
+    try {
+      const response = await _safeSendMessage({
+        type: 'VERIFY_CONTENT',
+        text: detection.text,
+        visibleText: detection.visibleText,
+        markerType: detection.markerType,
+        pageUrl: window.location.href,
+        pageTitle: document.title
+      });
+      
+      if (!response) {
+        // Extension context invalidated or no response
+        injectBadge(detection.element, 'error', {
+          error: 'Extension disconnected',
+          markerType: detection.markerType
+        });
+        continue;
+      }
+      
+      const { status, details } = _buildBadgeDetails(response, detection.markerType);
+      
+      // Store in local browser cache
+      _verificationCache.set(detection.textHash, {
+        status,
+        details,
+        timestamp: Date.now()
+      });
+      
+      injectBadge(detection.element, status, details);
+    } catch (error) {
+      const details = {
+        error: error.message || 'Verification error',
+        markerType: detection.markerType
+      };
+      injectBadge(detection.element, 'error', details);
+    }
+  }
+}
+
+/**
+ * Scan the page (or a subtree) for C2PA embeddings and verify them.
+ * Uses local browser cache to avoid re-hitting the API for already-verified content.
+ * Only hits the API when valid magic bytes are found locally and no cache entry exists.
+ */
+async function scanPage(root = document.body) {
+  _debugLog('INFO', 'detector', `Scanning ${root === document.body ? 'page' : 'subtree'}: ${window.location.href}`);
+  
+  const { uncached, cached } = _detectEmbeddings(root);
+  
+  // Apply cached results immediately (no API call needed)
+  for (const entry of cached) {
+    _processedElements.add(entry.element);
+    injectBadge(entry.element, entry.cachedStatus, entry.cachedDetails);
+    _debugLog('DEBUG', 'detector', `Cache hit: ${entry.cachedStatus} (hash=${entry.textHash})`);
+  }
+  
+  const totalFound = uncached.length + cached.length;
+  _debugLog('INFO', 'detector', `Scan complete: ${totalFound} embeddings (${cached.length} cached, ${uncached.length} new)`);
+  
+  if (uncached.length > 0) {
+    await _verifyDetections(uncached);
+  } else if (totalFound === 0 && root === document.body && _verificationCache.size === 0) {
+    // Only send NO_EMBEDDINGS on initial full-page scan with zero results
     _debugLog('DEBUG', 'detector', 'No embeddings found on page');
-    chrome.runtime.sendMessage({
+    _safeSendMessage({
       type: 'NO_EMBEDDINGS',
       url: window.location.href
     });
   }
   
-  return detections.length;
+  return totalFound;
 }
 
 /**
- * Observe DOM changes for dynamically loaded content
+ * Observe DOM changes for dynamically loaded content (infinite scroll, lazy load).
+ * Only scans newly added subtrees, not the full page.
  */
 function observeDOM() {
+  let pendingNodes = [];
+  let debounceTimer = null;
+  
   const observer = new MutationObserver((mutations) => {
-    let shouldRescan = false;
-    
     for (const mutation of mutations) {
-      if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+      if (mutation.type === 'childList') {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            shouldRescan = true;
-            break;
+            pendingNodes.push(node);
           }
         }
       }
-      if (shouldRescan) break;
     }
     
-    if (shouldRescan) {
-      // Debounce rescans
-      clearTimeout(observeDOM.timeout);
-      observeDOM.timeout = setTimeout(() => {
-        scanPage();
+    if (pendingNodes.length > 0) {
+      // Debounce: wait for mutations to settle (handles rapid infinite-scroll loads)
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const nodesToScan = pendingNodes;
+        pendingNodes = [];
+        
+        // Scan only the newly added subtrees
+        for (const node of nodesToScan) {
+          if (node.isConnected) {
+            scanPage(node);
+          }
+        }
       }, 500);
     }
   });
@@ -374,20 +907,37 @@ function observeDOM() {
   });
 }
 
-// Initialize on page load
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+// Initialize after page load without blocking rendering.
+// requestIdleCallback defers scanning until the browser is idle.
+function _initDetector() {
+  const startScan = () => {
     scanPage();
     observeDOM();
-  });
+  };
+  // Use requestIdleCallback if available (defers to idle time, doesn't block paint)
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(startScan, { timeout: 2000 });
+  } else {
+    setTimeout(startScan, 100);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initDetector);
 } else {
-  scanPage();
-  observeDOM();
+  _initDetector();
 }
 
 // Listen for messages from popup or service worker
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'RESCAN') {
+    // Force rescan: clear all dedup state so everything is re-checked
+    _verificationCache.clear();
+    _processedElements.clear();
+    document.querySelectorAll('.encypher-badge').forEach(b => b.remove());
+    document.querySelectorAll('.encypher-verified-content').forEach(el => {
+      el.classList.remove('encypher-verified-content');
+    });
     scanPage().then(count => {
       sendResponse({ count });
     });
@@ -416,6 +966,7 @@ async function verifySelectedText(text) {
     if (response && response.success) {
       showVerificationNotification('verified', {
         signer: response.data?.signer_name || response.data?.signer_id,
+        organizationName: response.data?.organization_name,
         timestamp: response.data?.signed_at
       });
     } else if (response && response.revoked) {
@@ -443,10 +994,10 @@ function showVerificationNotification(status, details) {
   notification.setAttribute('role', 'alert');
   
   const icons = {
-    verified: '✓',
-    invalid: '✗',
-    revoked: '⊘',
-    error: '!'
+    verified: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    invalid: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+    revoked: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
+    error: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
   };
   
   const messages = {
@@ -460,8 +1011,9 @@ function showVerificationNotification(status, details) {
     <div class="encypher-notification__icon">${icons[status] || '?'}</div>
     <div class="encypher-notification__content">
       <strong>${messages[status]}</strong>
-      ${details.signer ? `<br>Signed by: ${details.signer}` : ''}
-      ${details.error ? `<br>${details.error}` : ''}
+      ${details.signer ? `<br>Signed by: ${_escapeHtml(details.signer)}` : ''}
+      ${details.organizationName ? `<br>Org: ${_escapeHtml(details.organizationName)}` : ''}
+      ${details.error ? `<br>${_escapeHtml(details.error)}` : ''}
     </div>
   `;
   

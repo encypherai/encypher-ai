@@ -76,7 +76,7 @@ export function TemplateSelector({
     return (
       <div className={`text-sm text-muted-foreground ${className}`}>
         <span className="text-amber-600">Templates unavailable</span>
-        <span className="ml-2 text-xs">(Business+ tier required)</span>
+        <span className="ml-2 text-xs">(Enterprise tier required)</span>
       </div>
     );
   }

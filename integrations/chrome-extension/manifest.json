@@ -12,7 +12,7 @@
   ],
   "host_permissions": [
     "https://api.encypherai.com/*",
-    "http://localhost:9000/*"
+    "https://*.encypherai.com/*"
   ],
   "options_page": "options/options.html",
   "action": {

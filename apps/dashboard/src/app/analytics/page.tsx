@@ -134,9 +134,9 @@ export default function AnalyticsPage() {
   return (
     <DashboardLayout>
       <div className="mb-8">
-        <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Usage & Analytics</h2>
-        <p className="text-muted-foreground">
-          Track your API usage, performance metrics, and activity history
+        <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Usage &amp; Analytics</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Track your API usage, performance metrics, and activity history.
         </p>
         <p className="text-xs text-muted-foreground mt-2">Reporting window: {periodLabel}</p>
       </div>
@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid md:grid-cols-5 gap-6 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         {isLoading ? (
           <>
             <StatCardSkeleton />
@@ -204,55 +204,80 @@ export default function AnalyticsPage() {
           </>
         ) : (
           <>
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground mb-1">Total API Calls</div>
-                <div className="text-3xl font-bold text-delft-blue dark:text-white">
-                  {formatNumber(stats?.total_api_calls || 0)}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Total API Calls</p>
+                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
+                    {formatNumber(stats?.total_api_calls || 0)}
+                  </p>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
-              </CardContent>
-            </Card>
+                <div className="w-9 h-9 bg-gradient-to-br from-blue-ncs to-columbia-blue rounded-lg flex items-center justify-center text-white">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
+            </div>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground mb-1">Documents Signed</div>
-                <div className="text-3xl font-bold text-delft-blue dark:text-white">
-                  {formatNumber(stats?.total_documents_signed || 0)}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Documents Signed</p>
+                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
+                    {formatNumber(stats?.total_documents_signed || 0)}
+                  </p>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
-              </CardContent>
-            </Card>
+                <div className="w-9 h-9 bg-gradient-to-br from-delft-blue to-blue-ncs rounded-lg flex items-center justify-center text-white">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
+            </div>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground mb-1">Verifications</div>
-                <div className="text-3xl font-bold text-delft-blue dark:text-white">
-                  {formatNumber(stats?.total_verifications || 0)}
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Verifications</p>
+                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
+                    {formatNumber(stats?.total_verifications || 0)}
+                  </p>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
-              </CardContent>
-            </Card>
+                <div className="w-9 h-9 bg-gradient-to-br from-columbia-blue to-blue-ncs rounded-lg flex items-center justify-center text-white">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
+            </div>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground mb-1">Success Rate</div>
-                <div className="text-3xl font-bold text-delft-blue dark:text-white">
-                  {stats?.success_rate?.toFixed(1) || '0'}%
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Success Rate</p>
+                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
+                    {stats?.success_rate?.toFixed(1) || '0'}%
+                  </p>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
-              </CardContent>
-            </Card>
+                <div className="w-9 h-9 bg-gradient-to-br from-[#00CED1] to-[#2A87C4] rounded-lg flex items-center justify-center text-white">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
+            </div>
 
-            <Card>
-              <CardContent className="pt-6">
-                <div className="text-sm text-muted-foreground mb-1">Avg Response</div>
-                <div className="text-3xl font-bold text-delft-blue dark:text-white">
-                  {stats?.avg_response_time_ms?.toFixed(0) || '0'}ms
+            <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-4 hover:shadow-md transition-shadow">
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Avg Response</p>
+                  <p className="text-2xl font-bold text-delft-blue dark:text-white">
+                    {stats?.avg_response_time_ms?.toFixed(0) || '0'}ms
+                  </p>
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Last {timeRange} days</div>
-              </CardContent>
-            </Card>
+                <div className="w-9 h-9 bg-gradient-to-br from-[#2A87C4] to-[#1B2F50] rounded-lg flex items-center justify-center text-white">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-2">Last {timeRange} days</p>
+            </div>
           </>
         )}
       </div>
@@ -272,19 +297,33 @@ export default function AnalyticsPage() {
                 No data available for this period
               </div>
             ) : (
-              <div className="h-64 flex items-end justify-between space-x-2">
-                {timeSeries.slice(-14).map((day, idx) => (
-                  <div key={idx} className="flex-1 flex flex-col items-center">
-                    <div
-                      className="w-full bg-columbia-blue rounded-t hover:bg-blue-ncs transition-colors cursor-pointer"
-                      style={{ height: `${(day.count / maxValue) * 100}%`, minHeight: day.count > 0 ? '4px' : '0' }}
-                      title={`${day.count} calls`}
-                    />
-                    <div className="text-xs text-muted-foreground mt-2">
-                      {new Date(day.timestamp).toLocaleDateString('en-US', { weekday: 'short' })}
-                    </div>
-                  </div>
-                ))}
+              <div className="h-64 flex">
+                {/* Y-axis labels */}
+                <div className="flex flex-col justify-between pr-3 text-[10px] text-muted-foreground" style={{ paddingBottom: '24px' }}>
+                  <span>{formatNumber(maxValue)}</span>
+                  <span>{formatNumber(Math.round(maxValue / 2))}</span>
+                  <span>0</span>
+                </div>
+                {/* Bars */}
+                <div className="flex-1 flex items-end gap-1 border-l border-b border-border pl-2 relative" style={{ paddingBottom: '24px' }}>
+                  {timeSeries.slice(-14).map((day, idx) => {
+                    const pct = day.count > 0 ? Math.max((day.count / maxValue) * 100, 3) : 0;
+                    return (
+                      <div key={idx} className="flex-1 relative group flex items-end justify-center" style={{ height: '100%' }}>
+                        <div
+                          className="w-full bg-gradient-to-t from-blue-ncs to-columbia-blue rounded-t-sm hover:from-delft-blue hover:to-blue-ncs transition-colors cursor-pointer"
+                          style={{ height: `${pct}%` }}
+                        />
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 bg-delft-blue text-white text-[10px] px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                          {formatNumber(day.count)}
+                        </div>
+                        <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-[10px] text-muted-foreground whitespace-nowrap">
+                          {new Date(day.timestamp).toLocaleDateString('en-US', { weekday: 'short' })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </CardContent>
@@ -378,97 +417,31 @@ export default function AnalyticsPage() {
         </div>
         <Card>
           <CardHeader>
-            <CardTitle>Operational Notes</CardTitle>
-            <CardDescription>Daily signals for your team</CardDescription>
+            <CardTitle>Quick Reference</CardTitle>
+            <CardDescription>Analytics tips</CardDescription>
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-blue-ncs" />
-                <span>Audit log exports are refreshed every 15 minutes for enterprise teams.</span>
+                <span>Use the time range selector to compare 7-day, 30-day, or 90-day windows.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
-                <span>Set webhook alerts when error rate exceeds 5% in a 30-minute window.</span>
+                <span>Export summary or time series data as CSV for your records.</span>
               </li>
               <li className="flex items-start gap-3">
                 <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
-                <span>Daily usage snapshots are available for compliance reporting.</span>
+                <span>Target response latency under 400ms for real-time signing workloads.</span>
               </li>
             </ul>
             <div className="mt-4 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
-              Need deeper detail? Visit the audit logs page for structured event history.
+              Need help? Visit the <a href="/docs" className="text-blue-ncs hover:underline">documentation</a> or <a href="/support" className="text-blue-ncs hover:underline">contact support</a>.
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Info Cards */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Getting Started</CardTitle>
-            <CardDescription>Tips to maximize your Encypher usage</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-columbia-blue rounded flex items-center justify-center text-white text-xs font-bold shrink-0">1</div>
-                <span>Generate an API key from the <a href="/api-keys" className="text-blue-ncs hover:underline">API Keys page</a></span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-columbia-blue rounded flex items-center justify-center text-white text-xs font-bold shrink-0">2</div>
-                <span>Install our SDK or WordPress plugin</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="w-6 h-6 bg-columbia-blue rounded flex items-center justify-center text-white text-xs font-bold shrink-0">3</div>
-                <span>Start signing and verifying your content</span>
-              </li>
-            </ul>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Need Help?</CardTitle>
-            <CardDescription>Resources and support</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <a 
-                href="https://api.encypherai.com/docs" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="w-8 h-8 bg-delft-blue rounded flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="font-medium text-sm">Documentation</div>
-                  <div className="text-xs text-muted-foreground">API reference and guides</div>
-                </div>
-              </a>
-              <a 
-                href="mailto:support@encypherai.com"
-                className="flex items-center gap-3 p-3 border border-border rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <div className="w-8 h-8 bg-blue-ncs rounded flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <div className="font-medium text-sm">Contact Support</div>
-                  <div className="text-xs text-muted-foreground">Get help from our team</div>
-                </div>
-              </a>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </DashboardLayout>
   );
 }

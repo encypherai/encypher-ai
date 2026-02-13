@@ -88,6 +88,7 @@ export function CommandPalette() {
     { id: 'home', title: 'Go to Dashboard', icon: <IconHome />, action: () => router.push('/'), keywords: ['home', 'overview'], category: 'navigation' },
     { id: 'api-keys', title: 'Go to API Keys', icon: <IconKey />, action: () => router.push('/api-keys'), keywords: ['keys', 'tokens'], category: 'navigation' },
     { id: 'analytics', title: 'Go to Analytics', icon: <IconChart />, action: () => router.push('/analytics'), keywords: ['stats', 'usage', 'metrics'], category: 'navigation' },
+    { id: 'integrations', title: 'Go to Integrations', icon: <IconSettings />, action: () => router.push('/integrations'), keywords: ['ghost', 'wordpress', 'cms', 'webhook'], category: 'navigation' },
     { id: 'team', title: 'Go to Team', icon: <IconUsers />, action: () => router.push('/team'), keywords: ['members', 'organization'], category: 'navigation' },
     { id: 'settings', title: 'Go to Settings', icon: <IconSettings />, action: () => router.push('/settings'), keywords: ['profile', 'account'], category: 'navigation' },
     { id: 'billing', title: 'Go to Billing', icon: <IconBilling />, action: () => router.push('/billing'), keywords: ['subscription', 'payment', 'plan'], category: 'navigation' },

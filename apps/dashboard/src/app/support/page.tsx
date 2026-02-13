@@ -1,9 +1,41 @@
 'use client';
 
 import { Button, Card, CardHeader, CardTitle, CardDescription, CardContent, Input } from '@encypher/design-system';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import { toast } from 'sonner';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
+
+function IconApi({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+    </svg>
+  );
+}
+
+function IconTerminal({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </svg>
+  );
+}
+
+function IconPackage({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4" />
+    </svg>
+  );
+}
+
+function IconStatus({ className = 'w-5 h-5' }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+    </svg>
+  );
+}
 
 export default function SupportPage() {
   const [subject, setSubject] = useState('');
@@ -49,19 +81,19 @@ export default function SupportPage() {
     },
   ];
 
-  const resources = [
-    { title: 'API Documentation', description: 'Interactive API reference with Swagger UI', icon: '📚', link: 'https://api.encypherai.com/docs' },
-    { title: 'Python SDK', description: 'Official Python client library', icon: '🐍', link: 'https://pypi.org/project/encypher/' },
-    { title: 'TypeScript SDK', description: 'Official TypeScript/Node.js client', icon: '📦', link: 'https://www.npmjs.com/package/@encypher/sdk' },
-    { title: 'Status Page', description: 'Check system status', icon: '🟢', link: 'https://verify.encypherai.com/status' },
+  const resources: { title: string; description: string; icon: ReactNode; iconBg: string; link: string }[] = [
+    { title: 'API Documentation', description: 'Interactive API reference with Swagger UI', icon: <IconApi className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#1B2F50] to-[#2A87C4]', link: 'https://api.encypherai.com/docs' },
+    { title: 'Python SDK', description: 'Official Python client library', icon: <IconTerminal className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#1B2F50]', link: 'https://pypi.org/project/encypher/' },
+    { title: 'TypeScript SDK', description: 'Official TypeScript/Node.js client', icon: <IconPackage className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#00CED1] to-[#2A87C4]', link: 'https://www.npmjs.com/package/@encypher/sdk' },
+    { title: 'Status Page', description: 'Check system uptime and health', icon: <IconStatus className="w-5 h-5" />, iconBg: 'bg-gradient-to-br from-[#2A87C4] to-[#00CED1]', link: 'https://verify.encypherai.com/status' },
   ];
 
   return (
     <DashboardLayout>
       <div className="max-w-7xl mx-auto">
         <div className="mb-8">
-          <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-2">Support & Help</h2>
-          <p className="text-muted-foreground">Get help with Encypher and find answers to common questions</p>
+          <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Support</h1>
+          <p className="text-sm text-muted-foreground mt-1">Get help with Encypher and find answers to common questions.</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6 mb-8">
@@ -107,7 +139,7 @@ export default function SupportPage() {
                     href={resource.link}
                     className="p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors"
                   >
-                    <div className="text-2xl mb-2">{resource.icon}</div>
+                    <div className={`w-9 h-9 ${resource.iconBg} rounded-lg flex items-center justify-center text-white mb-3`}>{resource.icon}</div>
                     <div className="font-medium text-sm mb-1">{resource.title}</div>
                     <div className="text-xs text-muted-foreground">{resource.description}</div>
                   </a>

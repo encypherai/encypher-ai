@@ -62,39 +62,18 @@ function hashContent(text) {
  * Update extension icon based on tab state
  */
 function updateIcon(tabId, state) {
-  const icons = {
-    none: {
-      16: 'icons/icon16-gray.png',
-      32: 'icons/icon32-gray.png',
-      48: 'icons/icon48-gray.png',
-      128: 'icons/icon128-gray.png'
-    },
-    found: {
-      16: 'icons/icon16.png',
-      32: 'icons/icon32.png',
-      48: 'icons/icon48.png',
-      128: 'icons/icon128.png'
-    },
-    verified: {
-      16: 'icons/icon16-green.png',
-      32: 'icons/icon32-green.png',
-      48: 'icons/icon48-green.png',
-      128: 'icons/icon128-green.png'
-    },
-    invalid: {
-      16: 'icons/icon16-red.png',
-      32: 'icons/icon32-red.png',
-      48: 'icons/icon48-red.png',
-      128: 'icons/icon128-red.png'
-    }
+  // Use base icons for all states (colored variants not yet created)
+  // State is communicated via badge text + badge color below
+  const baseIcons = {
+    16: 'icons/icon16.png',
+    32: 'icons/icon32.png',
+    48: 'icons/icon48.png',
+    128: 'icons/icon128.png'
   };
 
-  // Use default icons for now (colored variants can be added later)
-  const iconSet = icons[state] || icons.none;
-  
   chrome.action.setIcon({
     tabId: tabId,
-    path: icons.found // Use default colored icon
+    path: baseIcons
   }).catch(() => {
     // Tab may have been closed
   });
@@ -103,7 +82,7 @@ function updateIcon(tabId, state) {
   const badgeText = {
     none: '',
     found: '?',
-    verified: '✓',
+    verified: 'OK',
     invalid: '!'
   };
   
@@ -187,6 +166,7 @@ async function verifyContent(text, options = {}) {
     
     const result = {
       success: verdict.valid === true,
+      revoked: verdict.revoked || false,
       data: {
         valid: verdict.valid,
         tampered: verdict.tampered,
@@ -211,8 +191,8 @@ async function verifyContent(text, options = {}) {
         merkle_root: verdict.merkle_proof?.root_hash,
         merkle_verified: verdict.merkle_proof?.verified,
         // Status
-        revoked: false,
-        revoked_at: null
+        revoked: verdict.revoked || false,
+        revoked_at: verdict.revoked_at || null
       },
       correlation_id: data.correlation_id,
       error: data.error?.message
@@ -579,7 +559,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             pageTitle: message.pageTitle,
             signerId: result.data?.signer_id,
             signerName: result.data?.signer_name,
-            organizationId: result.data?.signer_id, // org ID is often the signer ID
+            organizationId: result.data?.organization_id,
             documentId: result.data?.document_id,
             verified: result.success,
             status: result.success ? 'verified' : (result.revoked ? 'revoked' : 'invalid'),
@@ -778,7 +758,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 notification.className = 'encypher-notification encypher-notification--success';
                 notification.setAttribute('role', 'alert');
                 notification.innerHTML = `
-                  <div class="encypher-notification__icon">✓</div>
+                  <div class="encypher-notification__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
                   <div class="encypher-notification__content">Signed text copied to clipboard!</div>
                 `;
                 document.body.appendChild(notification);
@@ -799,7 +779,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
               notification.className = 'encypher-notification encypher-notification--error';
               notification.setAttribute('role', 'alert');
               notification.innerHTML = `
-                <div class="encypher-notification__icon">✗</div>
+                <div class="encypher-notification__icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></div>
                 <div class="encypher-notification__content">${errorMsg}</div>
               `;
               document.body.appendChild(notification);

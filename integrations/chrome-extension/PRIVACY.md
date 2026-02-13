@@ -12,7 +12,7 @@ The Encypher C2PA Verifier is a browser extension that helps you verify the auth
 
 - **Extension Settings**: Your preferences (auto-verify, show badges, API base URL)
 - **API Key**: Stored locally in your browser's secure storage (never transmitted except to the API you configure)
-- **Verification Cache**: Temporary cache of verification results (cleared after 5 minutes)
+- **Verification Cache**: Temporary cache of verification results (cleared after 1 hour)
 
 ### Data Sent to Encypher API (Only When Verifying Content)
 
@@ -33,19 +33,19 @@ When you use the "Sign" feature with your API key:
 
 ## What We Don't Collect
 
-- ❌ Browsing history
-- ❌ Full page content
-- ❌ Personal information (name, email, etc.)
-- ❌ Location data
-- ❌ Device information
-- ❌ Cookies or tracking pixels
+- Browsing history
+- Full page content
+- Personal information (name, email, etc.)
+- Location data
+- Device information
+- Cookies or tracking pixels
 
 ## How We Use Data
 
 ### Verification
 
 - Verification requests are sent to the Encypher API to check if content signatures are valid
-- Results are cached locally for 5 minutes to avoid redundant requests
+- Results are cached locally for 1 hour to avoid redundant requests
 - No verification data is stored permanently on our servers
 
 ### Signing
@@ -60,7 +60,7 @@ When you use the "Sign" feature with your API key:
 
 - Extension settings
 - API key (encrypted by Chrome's storage API)
-- Temporary verification cache (auto-expires)
+- Temporary verification cache (1 hour TTL)
 
 ### Server Storage (Encypher API)
 

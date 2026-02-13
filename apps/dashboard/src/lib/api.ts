@@ -874,7 +874,7 @@ const apiClient = {
   // ============================================
 
   /**
-   * List available C2PA assertion templates (Business+ tier)
+   * List available C2PA assertion templates (Enterprise tier)
    */
   async getC2PATemplates(accessToken: string, options?: {
     page?: number;
@@ -893,7 +893,7 @@ const apiClient = {
   },
 
   /**
-   * Get a specific C2PA template by ID (Business+ tier)
+   * Get a specific C2PA template by ID (Enterprise tier)
    */
   async getC2PATemplate(accessToken: string, templateId: string): Promise<C2PATemplate> {
     return fetchWithAuth<C2PATemplate>(
@@ -1109,6 +1109,56 @@ const apiClient = {
     
     return this.upgradeSubscription(accessToken, tier, billingCycle);
   },
+  // ============================================
+  // Ghost Integration (enterprise-api)
+  // ============================================
+
+  async getGhostIntegration(accessToken: string): Promise<GhostIntegrationResponse | null> {
+    try {
+      return await fetchWithAuth<GhostIntegrationResponse>(
+        `${API_BASE_URL}/integrations/ghost`,
+        accessToken
+      );
+    } catch (error) {
+      if (error instanceof ApiError && error.statusCode === 404) {
+        return null;
+      }
+      throw error;
+    }
+  },
+
+  async createGhostIntegration(
+    accessToken: string,
+    payload: GhostIntegrationCreatePayload
+  ): Promise<GhostIntegrationResponse> {
+    return fetchWithAuth<GhostIntegrationResponse>(
+      `${API_BASE_URL}/integrations/ghost`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+  },
+
+  async deleteGhostIntegration(accessToken: string): Promise<void> {
+    await fetch(`${API_BASE_URL}/integrations/ghost`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    });
+  },
+
+  async regenerateGhostToken(accessToken: string): Promise<GhostTokenRegenerateResponse> {
+    return fetchWithAuth<GhostTokenRegenerateResponse>(
+      `${API_BASE_URL}/integrations/ghost/regenerate-token`,
+      accessToken,
+      { method: 'POST' }
+    );
+  },
+
   // Generic HTTP methods for flexibility
   async get<T = unknown>(url: string, accessToken?: string): Promise<{ data: T }> {
     const headers: Record<string, string> = {
@@ -1260,6 +1310,42 @@ const apiClient = {
   },
 };
 
+// Ghost Integration types (TEAM_187)
+interface GhostIntegrationCreatePayload {
+  ghost_url: string;
+  ghost_admin_api_key: string;
+  auto_sign_on_publish?: boolean;
+  auto_sign_on_update?: boolean;
+  manifest_mode?: string;
+  segmentation_level?: string;
+  badge_enabled?: boolean;
+}
+
+interface GhostIntegrationResponse {
+  id: string;
+  organization_id: string;
+  ghost_url: string;
+  ghost_admin_api_key_masked: string;
+  auto_sign_on_publish: boolean;
+  auto_sign_on_update: boolean;
+  manifest_mode: string;
+  segmentation_level: string;
+  badge_enabled: boolean;
+  is_active: boolean;
+  webhook_url: string;
+  webhook_token: string | null;
+  last_webhook_at: string | null;
+  last_sign_at: string | null;
+  sign_count: string;
+  created_at: string | null;
+  updated_at: string | null;
+}
+
+interface GhostTokenRegenerateResponse {
+  webhook_url: string;
+  webhook_token: string;
+}
+
 export default apiClient;
 export { ApiError };
 export type { 
@@ -1289,4 +1375,8 @@ export type {
   // TEAM_044: C2PA Templates
   C2PATemplate,
   C2PATemplateListResponse,
+  // TEAM_187: Ghost Integration
+  GhostIntegrationCreatePayload,
+  GhostIntegrationResponse,
+  GhostTokenRegenerateResponse,
 };

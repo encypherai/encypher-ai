@@ -147,9 +147,9 @@ export default function WebhooksPage() {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">Webhooks</h2>
-            <p className="text-muted-foreground">
-              Receive real-time notifications when events happen in your account
+            <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Webhooks</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Receive real-time notifications when events happen in your account.
             </p>
           </div>
           {!isCreating && (

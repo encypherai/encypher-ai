@@ -181,9 +181,9 @@ export default function TeamPage() {
   // Use active organization from context
   const orgId = activeOrganization?.id;
 
-  // Check if user has Business+ tier
-  const userTier = (session?.user as any)?.tier || 'starter';
-  const hasTeamFeature = ['business', 'enterprise'].includes(userTier);
+  // Check if user has Enterprise tier
+  const userTier = (session?.user as any)?.tier || 'free';
+  const hasTeamFeature = userTier === 'enterprise';
 
   const createOrgMutation = useMutation({
     mutationFn: async ({ name, email }: { name: string; email: string }) => {
@@ -376,7 +376,7 @@ export default function TeamPage() {
   const canInvite = seats ? (seats.unlimited || seats.available > 0) : false;
   const isLoadingTeam = membersQuery.isLoading || orgLoading;
 
-  // Show upgrade prompt for non-Business users
+  // Show upgrade prompt for non-Enterprise users
   if (!hasTeamFeature) {
     return (
       <DashboardLayout>
@@ -389,10 +389,10 @@ export default function TeamPage() {
           <h2 className="text-2xl font-bold text-foreground mb-2">Team Management</h2>
           <p className="text-muted-foreground text-center max-w-md mb-6">
             Invite team members, assign roles, and manage access to your organization's resources.
-            Team management is available on Business and Enterprise plans.
+            Team management is available on the Enterprise plan.
           </p>
           <Button variant="primary" onClick={() => window.location.href = '/billing'}>
-            Upgrade to Business
+            Upgrade to Enterprise
           </Button>
         </div>
       </DashboardLayout>
@@ -405,9 +405,9 @@ export default function TeamPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h2 className="text-3xl font-bold text-delft-blue dark:text-white mb-1">Team Management</h2>
-            <p className="text-muted-foreground">
-              Manage your organization's team members and roles
+            <h1 className="text-2xl font-bold text-delft-blue dark:text-white">Team Management</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Manage your organization's team members and roles.
             </p>
             {activeOrganization && (
               <p className="text-xs text-muted-foreground mt-2">

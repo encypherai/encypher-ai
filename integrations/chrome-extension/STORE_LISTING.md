@@ -16,12 +16,14 @@ Encypher C2PA Verifier helps you identify authentic, signed content on the web. 
 
 **Key Features:**
 
-✅ **Auto-Detection**: Automatically scans pages for C2PA and Encypher signed content
-✅ **Verification Badges**: Shows color-coded badges (green = verified, red = invalid, purple = revoked)
-✅ **Content Signing**: Sign your own content directly from the browser (requires API key)
-✅ **Context Menu**: Right-click any text and select "Verify with Encypher"
-✅ **Privacy-First**: Only sends signed content blocks for verification, never full pages
-✅ **Offline Detection**: Detects signed content locally before verifying
+- **Auto-Detection**: Automatically scans pages for C2PA and Encypher signed content
+- **Verification Badges**: Shows color-coded inline badges (blue = verified, red = invalid, gray = revoked)
+- **Content Signing**: Sign your own content directly from the browser (requires API key)
+- **Context Menu**: Right-click any text and select "Verify with Encypher"
+- **WYSIWYG Editor Support**: Floating sign buttons on TinyMCE, CKEditor, Quill, ProseMirror, and more
+- **Usage Tracking**: Free tier includes 1,000 signings/month with visual progress meter
+- **Privacy-First**: Only sends signed content blocks for verification, never full pages
+- **Offline Detection**: Detects signed content locally before verifying
 
 **How It Works:**
 
@@ -40,6 +42,7 @@ C2PA (Coalition for Content Provenance and Authenticity) is an open standard dev
 - No tracking or analytics
 - API key stored securely in your browser
 - Only signed content blocks are sent for verification
+- 1-hour local verification cache (no redundant API calls)
 - Open source: github.com/encypherai/encypherai-commercial
 
 **Support:**
@@ -64,24 +67,27 @@ https://encypherai.com/privacy
 
 ### Extension Icon (Required Sizes)
 
-- **16x16**: `icons/icon16.png` ✅
-- **32x32**: `icons/icon32.png` ✅
-- **48x48**: `icons/icon48.png` ✅
-- **128x128**: `icons/icon128.png` ✅
+- **16x16**: `icons/icon16.png` [ready]
+- **32x32**: `icons/icon32.png` [ready]
+- **48x48**: `icons/icon48.png` [ready]
+- **128x128**: `icons/icon128.png` [ready]
 
 ### Promotional Images (Required)
 
 #### Small Promo Tile (440x280)
 **Description**: Extension icon with "Encypher C2PA Verifier" text
-**Status**: ⚠️ Needs creation
+**File**: `store-assets/promo-small-440x280.png`
+**Status**: Ready
 
 #### Large Promo Tile (920x680)
 **Description**: Screenshot of extension in action with verification badges
-**Status**: ⚠️ Needs creation
+**File**: `store-assets/promo-large-920x680.png`
+**Status**: Ready
 
 #### Marquee Promo Tile (1400x560)
 **Description**: Hero image showing verification workflow
-**Status**: ⚠️ Needs creation
+**File**: `store-assets/promo-marquee-1400x560.png`
+**Status**: Ready
 
 ### Screenshots (Required: 1-5 screenshots, 1280x800 or 640x400)
 
@@ -105,7 +111,12 @@ https://encypherai.com/privacy
    - Show right-click menu with "Verify with Encypher"
    - Caption: "Verify any selected text with a right-click"
 
-**Status**: ⚠️ Screenshots need to be captured
+**Files**:
+- `store-assets/screenshot-1-verification-badges.png`
+- `store-assets/screenshot-2-popup-interface.png`
+- `store-assets/screenshot-3-options-page.png`
+
+**Status**: Ready (3 screenshots captured)
 
 ## Promotional Copy
 
@@ -128,8 +139,8 @@ https://encypherai.com/privacy
 
 ## Pricing
 
-**Free Tier**: Unlimited verification (no API key required)
-**Signing**: Requires Encypher API key (free tier available at dashboard.encypherai.com)
+**Free Tier**: Unlimited verification (no API key required). 1,000 content signings per month with API key.
+**Enterprise**: Unlimited verification and signing, Merkle tree verification, attribution tracking. Contact sales at encypherai.com/contact.
 
 ## Support & Links
 
@@ -155,8 +166,10 @@ https://encypherai.com/privacy
 - Manifest V3
 - Service worker architecture
 - Secure API key storage
-- 5-minute verification cache
-- E2E tested with Puppeteer
+- 1-hour local verification cache
+- 42 unit tests, E2E tested with Puppeteer
+- Brand-consistent SVG icons (no emojis)
+- Free/Enterprise tier support with usage tracking
 
 ## Submission Checklist
 
@@ -165,15 +178,15 @@ https://encypherai.com/privacy
 - [x] Extension package (.zip)
 - [x] Detailed description
 - [x] Privacy policy
-- [ ] Small promo tile (440x280)
-- [ ] Screenshots (1280x800, minimum 1)
+- [x] Small promo tile (440x280)
+- [x] Screenshots (1280x800, 3 captured)
 - [x] Category selection
 - [x] Support email
 
 ### Optional Items
 
-- [ ] Large promo tile (920x680)
-- [ ] Marquee promo tile (1400x560)
+- [x] Large promo tile (920x680)
+- [x] Marquee promo tile (1400x560)
 - [ ] Video demo (YouTube link)
 - [ ] Additional screenshots
 

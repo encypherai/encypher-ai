@@ -172,7 +172,7 @@ export default function DashboardPage() {
                 {greeting}, {userName}
               </h1>
               <p className="text-columbia-blue text-lg">
-                Your content authentication infrastructure is ready.
+                Your provenance infrastructure at a glance.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -274,7 +274,7 @@ export default function DashboardPage() {
                     Last 30 days
                   </p>
                 </div>
-                <div className="w-11 h-11 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center text-white">
+                <div className="w-11 h-11 bg-gradient-to-br from-[#00CED1] to-[#2A87C4] rounded-xl flex items-center justify-center text-white">
                   <IconCheck />
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function DashboardPage() {
               <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
                 <IconShield />
               </div>
-              <h3 className="font-bold text-lg">Getting Started</h3>
+              <h3 className="font-bold text-lg">Quick Start</h3>
             </div>
             <ul className="space-y-3 text-sm">
               <li className="flex items-center gap-3">
@@ -386,16 +386,16 @@ export default function DashboardPage() {
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                <span className="text-white/90">Install our SDK</span>
+                <span className="text-white/90">Install a client SDK</span>
               </li>
               <li className="flex items-center gap-3">
                 <span className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                <span className="text-white/90">Start signing content</span>
+                <span className="text-white/90">Sign and verify content</span>
               </li>
             </ul>
             <a href="https://api.encypherai.com/docs" target="_blank" rel="noopener noreferrer">
               <button className="w-full mt-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors text-sm">
-                View API Docs
+                View API Reference
               </button>
             </a>
           </div>
@@ -404,6 +404,19 @@ export default function DashboardPage() {
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5">
             <h3 className="font-bold text-delft-blue dark:text-white mb-4">Quick Links</h3>
             <div className="space-y-2">
+              <Link href="/integrations" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
+                <div className="w-9 h-9 bg-[#00CED1]/10 rounded-lg flex items-center justify-center text-[#00CED1]">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium text-delft-blue dark:text-white text-sm">Integrations</p>
+                  <p className="text-xs text-muted-foreground">Connect your CMS</p>
+                </div>
+                <IconArrowRight />
+              </Link>
+
               <Link href="/analytics" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
                 <div className="w-9 h-9 bg-blue-ncs/10 rounded-lg flex items-center justify-center text-blue-ncs">
                   <IconChart />
@@ -414,31 +427,17 @@ export default function DashboardPage() {
                 </div>
                 <IconArrowRight />
               </Link>
-              
-              <Link href="/settings" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
-                <div className="w-9 h-9 bg-delft-blue/10 dark:bg-slate-600 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium text-delft-blue dark:text-white text-sm">Settings</p>
-                  <p className="text-xs text-muted-foreground">Account preferences</p>
-                </div>
-                <IconArrowRight />
-              </Link>
 
-              <a href="https://api.encypherai.com/docs" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
-                <div className="w-9 h-9 bg-columbia-blue/30 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
+              <Link href="/docs" className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors group">
+                <div className="w-9 h-9 bg-delft-blue/10 dark:bg-slate-600 rounded-lg flex items-center justify-center text-delft-blue dark:text-white">
                   <IconBook />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium text-delft-blue dark:text-white text-sm">API Documentation</p>
-                  <p className="text-xs text-muted-foreground">Interactive API reference</p>
+                  <p className="font-medium text-delft-blue dark:text-white text-sm">Documentation</p>
+                  <p className="text-xs text-muted-foreground">Guides and SDK references</p>
                 </div>
                 <IconArrowRight />
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -454,7 +453,7 @@ export default function DashboardPage() {
               </div>
             </div>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Your content is authenticated using the C2PA text provenance standard, co-developed with Google, Adobe, and Microsoft.
+              Content signed through Encypher conforms to the C2PA text provenance standard, developed alongside the Coalition for Content Provenance and Authenticity.
             </p>
           </div>
         </div>
