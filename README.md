@@ -37,12 +37,12 @@ All commercial tools in this repository leverage the open-source core as a depen
 
 This monorepo is organized by product tier and functionality:
 
-### 🔧 Command-Line Tools (Free/Professional Tier)
+### 🔧 Command-Line Tools
 
-| Directory | Tool | License Tier | Description |
-|-----------|------|--------------|-------------|
-| [`audit_log_cli/`](./audit_log_cli/) | **Audit Log & Report Generator** | Free/Pro | Scan text assets, validate metadata, generate compliance reports (CSV) |
-| [`policy_validator_cli/`](./policy_validator_cli/) | **Policy Validation Tool** | Professional | Define and enforce custom metadata policies with JSON schemas |
+| Directory | Tool | Tier | Description |
+|-----------|------|------|-------------|
+| [`audit_log_cli/`](./audit_log_cli/) | **Audit Log & Report Generator** | Free | Scan text assets, validate metadata, generate compliance reports (CSV) |
+| [`policy_validator_cli/`](./policy_validator_cli/) | **Policy Validation Tool** | Free | Define and enforce custom metadata policies with JSON schemas |
 
 ### 🌐 Web Applications
 
@@ -113,7 +113,7 @@ cd services/user-service && uv run python -m app.main
 We maintain **two distinct architectures** for different use cases and customer tiers:
 
 #### 🔧 **Microservices** (Core Platform)
-**Purpose:** Foundation services for all tiers (Free, Professional, Enterprise)
+**Purpose:** Foundation services for all tiers (Free and Enterprise)
 
 **Features Included:**
 - ✅ **Basic Document Signing** - Ed25519 signatures with C2PA manifests
@@ -129,7 +129,6 @@ We maintain **two distinct architectures** for different use cases and customer 
 - Standard content authentication
 - High-volume basic signing operations
 - Multi-tenant SaaS platform
-- Free and Professional tier customers
 
 #### 🚀 **Enterprise API** (Advanced Features)
 **Purpose:** Premium enterprise-only capabilities
@@ -181,8 +180,8 @@ We maintain **two distinct architectures** for different use cases and customer 
 ```
 
 **Customers choose based on their tier:**
-- **Free/Pro:** Use microservices directly
-- **Enterprise:** Use Enterprise API (which can leverage microservices for auth/billing)
+- **Free:** Use microservices directly
+- **Enterprise:** Use Enterprise API (which leverages microservices for auth/billing)
 
 ---
 
@@ -212,43 +211,36 @@ We maintain **two distinct architectures** for different use cases and customer 
 
 ## 🏗️ Product Tiers & Licensing
 
-> **Architecture Note:** Free/Pro tiers use **Microservices**, Enterprise tier adds **Enterprise API**. [See Architecture Decision](#️-architecture-decision-microservices-vs-enterprise-api)
+> **SSOT:** Pricing is defined in [`packages/pricing-config/`](./packages/pricing-config/) and the feature matrix in [`FEATURE_MATRIX.md`](./FEATURE_MATRIX.md). All other docs should reference these, never define their own tier lists.
 
-### Free Tier
-**Uses:** Core Microservices
-- ✅ Audit Log CLI (basic reporting)
-- ✅ C2PA-compliant signing & verification (via Encoding/Verification Services)
-- ✅ Public verification pages
-- ✅ 1,000 API requests/month
-- ✅ Basic authentication & API keys
+Encypher has two core tiers plus optional add-ons and bundles.
 
-### Professional Tier
-**Uses:** Core Microservices + Advanced Features
-- ✅ All Free features
-- ✅ Policy Validator CLI
-- ✅ Sentence-level lookup
-- ✅ Invisible signed embeddings (Unicode variation selectors)
-- ✅ Custom metadata schemas
-- ✅ 10,000 API requests/month
-- ✅ Team management
-- ✅ Usage analytics dashboard
+### Free Tier ($0/month)
+**Target:** Individual bloggers, small-to-mid publishers, indie media, researchers, WordPress owners
 
-### Enterprise Tier
-**Uses:** Core Microservices + Enterprise API
-- ✅ All Professional features
-- ✅ **Enterprise API** (self-hosted or managed)
-  - 🔒 Merkle tree encoding
-  - 🔒 Invisible signed embeddings with public verification API
-  - 🔒 Source attribution & plagiarism detection
-  - 🔒 Batch operations with queuing
-  - 🔒 Advanced forensic analysis
-- ✅ Enterprise SDK (Python, CI/CD integration)
-- ✅ Compliance Dashboard
-- ✅ WordPress integration
-- ✅ Partner integration tools (web scraping, content monitoring)
-- ✅ Unlimited API requests
-- ✅ SLA guarantee (99.9%)
-- ✅ Dedicated support
+- ✅ C2PA 2.3-compliant document signing (1,000 docs/month, $0.02/doc overage)
+- ✅ Sentence-level Merkle tree authentication
+- ✅ Invisible Unicode embeddings (survive copy-paste)
+- ✅ Public verification pages and API (unlimited)
+- ✅ WordPress plugin, CLI tools, browser extension, Ghost integration
+- ✅ REST API with Python SDK
+- ✅ Dashboard: analytics, API keys, playground, integrations
+- ✅ Auto-enrolled in Encypher Coalition (60/40 rev share)
+
+### Enterprise Tier (Custom pricing)
+**Target:** Large publishers, media companies, enterprise content teams
+
+- ✅ Everything in Free, unlimited
+- ✅ Streaming LLM signing (WebSocket/SSE)
+- ✅ Custom C2PA assertions and schema registry
+- ✅ Batch operations, document revocation, robust fingerprinting
+- ✅ Multi-source attribution, plagiarism detection
+- ✅ Team management with RBAC, audit logs, webhooks
+- ✅ SSO (SAML, OAuth), organization switcher
+- ✅ All add-ons included (BYOK, white-label, custom signing identity)
+- ✅ Dedicated SLA (99.9% uptime), priority support, named account manager
+
+See [FEATURE_MATRIX.md](./FEATURE_MATRIX.md) for the complete feature-by-feature breakdown, add-ons, bundles, and dashboard gating details.
 
 ---
 
@@ -364,11 +356,24 @@ pnpm dev
 
 ## 📖 Documentation
 
+### Single Sources of Truth (SSOT)
+
+| Topic | SSOT Location | Description |
+|-------|--------------|-------------|
+| **Pricing tiers & limits** | [`packages/pricing-config/src/`](./packages/pricing-config/src/) | Code-level definitions of Free, Enterprise, Add-ons, Bundles |
+| **Feature matrix** | [`FEATURE_MATRIX.md`](./FEATURE_MATRIX.md) | Human-readable feature-by-feature breakdown by tier |
+| **Pricing strategy & GTM** | [`docs/pricing/PRICING_STRATEGY.md`](./docs/pricing/PRICING_STRATEGY.md) | Coalition economics, revenue projections, competitive positioning |
+| **Dashboard feature gating** | `apps/dashboard/src/` — `userTier` from session JWT | `enterpriseOnly` flag in nav, per-page tier checks |
+| **API error codes** | [`docs/api/ERROR_CODES.md`](./docs/api/ERROR_CODES.md) | Canonical error codes and descriptions |
+| **Microservices architecture** | [`services/README.md`](./services/README.md) | Service ports, dependencies, architecture |
+
+All other docs should **reference** these SSOTs, never duplicate or redefine tier lists, feature gates, or pricing.
+
 ### Core Documentation
 
 - **[Enterprise API Documentation](./enterprise_api/README.md)** - Complete API reference with endpoints, authentication, examples
 - **[Licensing API Documentation](./enterprise_api/docs/LICENSING_API.md)** - AI-company licensing, content access, and revenue distribution
-- **[Enterprise SDK Documentation](./enterprise_sdk/README.md)** - SDK usage, batch operations, CI/CD integration
+- **[Enterprise SDKs](./sdk/README.md)** - Auto-generated SDKs (Python/TypeScript/Go/Rust)
 - **[Compliance Dashboard Guide](./dashboard_app/README.md)** - Directory signing, verification workflows
 - **[Design System Guide](./packages/design-system/README.md)** - Component library, brand colors, usage examples
 
