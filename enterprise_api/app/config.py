@@ -66,6 +66,9 @@ class Settings(BaseSettings):
     marketing_domain: str = "encypher.ai"
     infrastructure_domain: str = "encypherai.com"
 
+    # Status list base URL (consolidated under verify subdomain)
+    status_list_base_url: str = "https://verify.encypherai.com/status/v1"
+
     # CORS - comma-separated list of allowed origins
     allowed_origins: str = "http://localhost:3000,http://localhost:3001"
 

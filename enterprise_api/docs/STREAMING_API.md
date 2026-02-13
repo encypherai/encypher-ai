@@ -473,7 +473,7 @@ All streaming events are logged with structured format:
 For issues or questions:
 - Email: api@encypherai.com
 - Documentation: https://docs.encypherai.com/streaming
-- Status: https://status.encypherai.com
+- Status: https://verify.encypherai.com/status
 
 ---
 

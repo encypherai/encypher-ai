@@ -22,6 +22,8 @@ from app.dependencies import get_current_organization
 from app.models.status_list import RevocationReason, StatusListEntry, StatusListMetadata
 from app.services.status_service import status_service
 
+from uuid import UUID
+
 router = APIRouter(prefix="/status", tags=["Status & Revocation"])
 logger = logging.getLogger(__name__)
 
@@ -196,7 +198,17 @@ async def get_document_status(
     if not entry:
         raise HTTPException(status_code=404, detail=f"Document {document_id} not found in status list")
 
-    status_list_url = status_service._build_status_list_url(organization_id, int(entry.list_index))
+    # Look up the metadata UUID for the opaque status list URL
+    from sqlalchemy import select as sa_select
+
+    meta_result = await db.execute(
+        sa_select(StatusListMetadata.id).where(
+            StatusListMetadata.organization_id == organization_id,
+            StatusListMetadata.list_index == entry.list_index,
+        )
+    )
+    meta_id = meta_result.scalar_one_or_none()
+    status_list_url = status_service._build_status_list_url(meta_id) if meta_id else None
 
     return DocumentStatusResponse(
         document_id=document_id,
@@ -218,17 +230,16 @@ async def get_document_status(
 
 
 @router.get(
-    "/list/{organization_id}/{list_index}",
+    "/lists/{list_id}",
     response_class=JSONResponse,
     include_in_schema=True,
 )
-async def get_status_list(
-    organization_id: str,
-    list_index: int,
+async def get_status_list_by_id(
+    list_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Get a status list credential (public, no auth required).
+    Get a status list credential by its opaque UUID (public, no auth required).
 
     This endpoint serves W3C StatusList2021 credentials for verification.
     Responses are designed to be cached by CDN with 5-minute TTL.
@@ -237,7 +248,48 @@ async def get_status_list(
     """
     from sqlalchemy import select
 
-    # Check if list exists
+    result = await db.execute(
+        select(StatusListMetadata).where(StatusListMetadata.id == list_id)
+    )
+    metadata = result.scalar_one_or_none()
+
+    if not metadata:
+        raise HTTPException(status_code=404, detail="Status list not found")
+
+    credential = await status_service.generate_status_list(
+        db=db,
+        organization_id=metadata.organization_id,
+        list_index=metadata.list_index,
+        list_id=metadata.id,
+    )
+    await db.commit()
+
+    return JSONResponse(
+        content=credential,
+        headers={
+            "Cache-Control": "public, max-age=300",
+            "Content-Type": "application/json",
+            "ETag": f'"{ metadata.cdn_etag}"' if metadata.cdn_etag else "",
+        },
+    )
+
+
+@router.get(
+    "/list/{organization_id}/{list_index}",
+    response_class=JSONResponse,
+    include_in_schema=False,
+)
+async def get_status_list_legacy(
+    organization_id: str,
+    list_index: int,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Legacy endpoint — kept for backward compatibility.
+    New clients should use /lists/{list_id} with the opaque UUID.
+    """
+    from sqlalchemy import select
+
     result = await db.execute(
         select(StatusListMetadata).where(
             StatusListMetadata.organization_id == organization_id,
@@ -249,21 +301,20 @@ async def get_status_list(
     if not metadata:
         raise HTTPException(status_code=404, detail=f"Status list {organization_id}/{list_index} not found")
 
-    # Generate the status list credential
     credential = await status_service.generate_status_list(
         db=db,
         organization_id=organization_id,
         list_index=list_index,
+        list_id=metadata.id,
     )
     await db.commit()
 
-    # Return with cache headers
     return JSONResponse(
         content=credential,
         headers={
-            "Cache-Control": "public, max-age=300",  # 5 minutes
+            "Cache-Control": "public, max-age=300",
             "Content-Type": "application/json",
-            "ETag": f'"{metadata.cdn_etag}"' if metadata.cdn_etag else "",
+            "ETag": f'"{ metadata.cdn_etag}"' if metadata.cdn_etag else "",
         },
     )
 

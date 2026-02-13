@@ -155,6 +155,7 @@ http:
 
     # Verify Portal (host-based)
     # Routes public verification URLs like https://verify.encypherai.com/{document_id}
+    # Also serves status lists at https://verify.encypherai.com/status/v1/{org_id}/list/{idx}
     verify-portal:
       rule: "Host(`verify.encypherai.com`)"
       service: verification-service

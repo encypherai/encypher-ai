@@ -52,7 +52,7 @@ Implement W3C-compatible Bitstring Status Lists to enable per-document revocatio
 ### 5.0 Revocation API
 - [x] 5.1 Create `/api/v1/status/documents/{id}/revoke` endpoint — ✅ routers/status.py
 - [x] 5.2 Create `/api/v1/status/documents/{id}/reinstate` endpoint — ✅ routers/status.py
-- [x] 5.3 Create `/api/v1/status/list/{org}/{index}` public endpoint — ✅ routers/status.py
+- [x] 5.3 Create `/api/v1/status/lists/{list_id}` public endpoint (opaque UUID) — ✅ routers/status.py
 - [x] 5.4 Add audit logging for revocation actions — ✅ via StatusListEntry fields
 
 ### 6.0 Documentation

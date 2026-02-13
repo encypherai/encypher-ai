@@ -218,7 +218,7 @@ Verification checks this status list to determine revocation state.
 - `POST /api/v1/status/documents/{document_id}/revoke`
 - `POST /api/v1/status/documents/{document_id}/reinstate`
 - `GET /api/v1/status/documents/{document_id}`
-- `GET /api/v1/status/list/{organization_id}/{list_index}`
+- `GET /api/v1/status/lists/{list_id}` (opaque UUID; replaces legacy `list/{org}/{index}`)
 - `GET /api/v1/status/stats`
 
 ---
@@ -617,4 +617,4 @@ Preview deliveries are synchronous and retried up to three times. Production del
 
 - **Documentation:** https://docs.encypherai.com
 - **Email:** support@encypherai.com
-- **Status:** https://status.encypherai.com
+- **Status:** https://verify.encypherai.com/status

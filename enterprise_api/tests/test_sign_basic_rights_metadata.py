@@ -82,7 +82,7 @@ async def test_sign_basic_embeds_rights_assertion() -> None:
 
     content_db = AsyncMock()
     core_db = AsyncMock()
-    allocate_mock = AsyncMock(return_value=(0, 2, "https://status.encypherai.com/v1/org_business/list/0"))
+    allocate_mock = AsyncMock(return_value=(0, 2, "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000b01"))
 
     with (
         patch(

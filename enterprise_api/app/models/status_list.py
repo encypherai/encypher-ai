@@ -158,9 +158,9 @@ class StatusListMetadata(Base):
     @property
     def status_list_url(self) -> str:
         """Generate the canonical URL for this status list."""
-        # TEAM_002: This should be configurable via settings
-        base_url = "https://status.encypherai.com/v1"
-        return f"{base_url}/{self.organization_id}/list/{self.list_index}"
+        from app.config import settings
+
+        return f"{settings.status_list_base_url}/lists/{self.id}"
 
     @property
     def capacity_remaining(self) -> int:

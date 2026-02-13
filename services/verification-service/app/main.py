@@ -101,6 +101,60 @@ async def verify_portal_demo_document_id(
     return await v1_endpoints.verify_by_document_id(document_id=document_id, db=db)
 
 
+@app.get("/status/v1/lists/{list_id}", include_in_schema=False)
+async def status_list_proxy(list_id: str):
+    """Proxy status list requests to enterprise-api (UUID-based)."""
+    import httpx
+    from fastapi.responses import JSONResponse
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{settings.ENTERPRISE_API_URL}/api/v1/status/lists/{list_id}",
+            )
+        return JSONResponse(
+            content=resp.json(),
+            status_code=resp.status_code,
+            headers={
+                "Cache-Control": "public, max-age=300",
+                "Content-Type": "application/json",
+            },
+        )
+    except Exception:
+        logger.error("Failed to proxy status list request", exc_info=True)
+        return JSONResponse(
+            content={"error": "Failed to fetch status list"},
+            status_code=502,
+        )
+
+
+@app.get("/status/v1/{organization_id}/list/{list_index}", include_in_schema=False)
+async def status_list_proxy_legacy(organization_id: str, list_index: int):
+    """Legacy proxy — kept for backward compatibility with old URLs."""
+    import httpx
+    from fastapi.responses import JSONResponse
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(
+                f"{settings.ENTERPRISE_API_URL}/api/v1/status/list/{organization_id}/{list_index}",
+            )
+        return JSONResponse(
+            content=resp.json(),
+            status_code=resp.status_code,
+            headers={
+                "Cache-Control": "public, max-age=300",
+                "Content-Type": "application/json",
+            },
+        )
+    except Exception:
+        logger.error("Failed to proxy legacy status list request", exc_info=True)
+        return JSONResponse(
+            content={"error": "Failed to fetch status list"},
+            status_code=502,
+        )
+
+
 if __name__ == "__main__":
     import uvicorn
 

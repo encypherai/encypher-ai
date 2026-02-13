@@ -43,8 +43,8 @@ class TestStatusServiceAllocation:
 
         assert list_index == 0
         assert bit_index == 0
-        assert "org_test" in url
-        assert "list/0" in url
+        assert url.startswith("https://verify.encypherai.com/status/v1/lists/")
+        assert len(url.split("/lists/")[1]) == 36  # UUID format
 
     @pytest.mark.asyncio
     async def test_allocate_status_index_uses_existing_list(self):
@@ -215,7 +215,7 @@ class TestStatusServiceBitstring:
         service = StatusService()
 
         # Pre-populate cache with empty bitstring
-        url = "https://status.encypherai.com/v1/org_test/list/0"
+        url = "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000001"
         service._list_cache[url] = (bytes(BYTES_PER_LIST), float("inf"))
 
         is_revoked, error = await service.check_revocation(
@@ -237,7 +237,7 @@ class TestStatusServiceBitstring:
         bit_position = 7 - (42 % 8)  # = 7 - 2 = 5
         bitstring[byte_index] |= 1 << bit_position
 
-        url = "https://status.encypherai.com/v1/org_test/list/0"
+        url = "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000001"
         service._list_cache[url] = (bytes(bitstring), float("inf"))
 
         is_revoked, error = await service.check_revocation(
@@ -254,7 +254,7 @@ class TestStatusServiceBitstring:
 
         with patch.object(service, "_get_status_list", new=AsyncMock(side_effect=ValueError("boom"))):
             is_revoked, error = await service.check_revocation(
-                status_list_url="https://status.encypherai.com/v1/org_test/list/0",
+                status_list_url="https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000001",
                 bit_index=42,
             )
 
@@ -350,7 +350,7 @@ class TestStatusServiceFetch:
             }
         }
 
-        url = "https://status.encypherai.com/v1/org_test/list/0"
+        url = "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000001"
 
         mock_response = MagicMock()
         mock_response.status_code = 200

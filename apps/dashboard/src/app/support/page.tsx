@@ -53,7 +53,7 @@ export default function SupportPage() {
     { title: 'API Documentation', description: 'Interactive API reference with Swagger UI', icon: '📚', link: 'https://api.encypherai.com/docs' },
     { title: 'Python SDK', description: 'Official Python client library', icon: '🐍', link: 'https://pypi.org/project/encypher/' },
     { title: 'TypeScript SDK', description: 'Official TypeScript/Node.js client', icon: '📦', link: 'https://www.npmjs.com/package/@encypher/sdk' },
-    { title: 'Status Page', description: 'Check system status', icon: '🟢', link: 'https://status.encypherai.com' },
+    { title: 'Status Page', description: 'Check system status', icon: '🟢', link: 'https://verify.encypherai.com/status' },
   ];
 
   return (

@@ -965,7 +965,7 @@ spec:
 ### User Communication
 - **Email:** Notify users 1 week before migration
 - **In-app Banner:** Show migration notice
-- **Status Page:** status.encypherai.com
+- **Status Page:** verify.encypherai.com/status
 - **Support:** support@encypherai.com
 
 ---

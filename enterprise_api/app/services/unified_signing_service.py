@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.schemas.api_response import (
     ErrorCode,
     build_error_response,
@@ -349,7 +350,7 @@ async def _execute_advanced_signing(
     return SignedDocumentResult(
         document_id=result.document_id,
         signed_text=result.embedded_content or document.text,
-        verification_url=f"https://verify.encypherai.com/{result.document_id}",
+        verification_url=f"https://verify.{settings.infrastructure_domain}/{result.document_id}",
         total_segments=len(result.embeddings),
         merkle_root=merkle_root,
         instance_id=instance_id,

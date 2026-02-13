@@ -8,7 +8,7 @@
 
 [![Status](https://img.shields.io/badge/status-production-brightgreen)](https://api.encypherai.com)
 [![API Version](https://img.shields.io/badge/version-v1-blue)](https://docs.encypherai.com)
-[![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen)](https://status.encypherai.com)
+[![Uptime](https://img.shields.io/badge/uptime-99.9%25-brightgreen)](https://verify.encypherai.com/status)
 [![License](https://img.shields.io/badge/license-proprietary-red)](../LICENSE)
 
 [Features](#-features) •
@@ -1459,7 +1459,7 @@ For detailed instructions on running local benchmarks and load tests, please ref
 ## 🤝 Support
 
 - **Email**: api@encypherai.com
-- **Status Page**: [status.encypherai.com](https://status.encypherai.com)
+- **Status Page**: [verify.encypherai.com/status](https://verify.encypherai.com/status)
 - **Dashboard**: [dashboard.encypherai.com](https://dashboard.encypherai.com)
 - **Community**: [community.encypherai.com](https://community.encypherai.com)
 
@@ -1494,6 +1494,6 @@ Built with:
 
 **Made with ❤️ by Encypher**
 
-[Website](https://encypherai.com) • [Dashboard](https://dashboard.encypherai.com) • [Docs](https://docs.encypherai.com) • [Status](https://status.encypherai.com)
+[Website](https://encypherai.com) • [Dashboard](https://dashboard.encypherai.com) • [Docs](https://docs.encypherai.com) • [Status](https://verify.encypherai.com/status)
 
 </div>

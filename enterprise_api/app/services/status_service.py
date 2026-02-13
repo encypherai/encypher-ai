@@ -19,7 +19,7 @@ from datetime import datetime, timezone
 from inspect import isawaitable
 from urllib.parse import urlparse
 from typing import Any, Dict, Optional, Tuple, cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 import httpx
 from sqlalchemy import func, select, update
@@ -62,7 +62,7 @@ class StatusService:
 
         # TEAM_056: Basic SSRF hardening - only allow fetching from these hosts.
         # TEAM_056: Intentionally strict; expand only with explicit security review.
-        self._allowed_status_list_hosts = {"status.encypherai.com"}
+        self._allowed_status_list_hosts = {"verify.encypherai.com"}
 
     # -------------------------------------------------------------------------
     # Status Allocation (used during signing)
@@ -119,7 +119,7 @@ class StatusService:
 
         await db.flush()
 
-        status_list_url = self._build_status_list_url(organization_id, list_index)
+        status_list_url = self._build_status_list_url(metadata_any.id)
 
         logger.debug(f"Allocated status index for doc {document_id}: list={list_index}, bit={bit_index}")
 
@@ -173,11 +173,9 @@ class StatusService:
 
         return metadata
 
-    def _build_status_list_url(self, organization_id: str, list_index: int) -> str:
-        """Build the canonical URL for a status list."""
-        # TEAM_002: Make base URL configurable
-        base_url = getattr(settings, "status_list_base_url", "https://status.encypherai.com/v1")
-        return f"{base_url}/{organization_id}/list/{list_index}"
+    def _build_status_list_url(self, list_id: UUID) -> str:
+        """Build the canonical URL for a status list using its opaque UUID."""
+        return f"{settings.status_list_base_url}/lists/{list_id}"
 
     # -------------------------------------------------------------------------
     # Revocation Status Checking (used during verification)
@@ -382,8 +380,15 @@ class StatusService:
         await db.flush()
 
         # Invalidate cache for this list
-        status_list_url = self._build_status_list_url(organization_id, int(entry_any.list_index))
-        self.invalidate_cache(status_list_url)
+        meta_result = await db.execute(
+            select(StatusListMetadata.id).where(
+                StatusListMetadata.organization_id == organization_id,
+                StatusListMetadata.list_index == entry.list_index,
+            )
+        )
+        meta_id = await _await_if_needed(meta_result.scalar_one_or_none())
+        if meta_id:
+            self.invalidate_cache(self._build_status_list_url(meta_id))
 
         logger.info(f"Revoked document {document_id} (org={organization_id}, reason={reason.value})")
 
@@ -445,8 +450,15 @@ class StatusService:
         await db.flush()
 
         # Invalidate cache for this list
-        status_list_url = self._build_status_list_url(organization_id, int(entry_any.list_index))
-        self.invalidate_cache(status_list_url)
+        meta_result = await db.execute(
+            select(StatusListMetadata.id).where(
+                StatusListMetadata.organization_id == organization_id,
+                StatusListMetadata.list_index == entry.list_index,
+            )
+        )
+        meta_id = await _await_if_needed(meta_result.scalar_one_or_none())
+        if meta_id:
+            self.invalidate_cache(self._build_status_list_url(meta_id))
 
         logger.info(f"Reinstated document {document_id} (org={organization_id})")
 
@@ -461,6 +473,7 @@ class StatusService:
         db: AsyncSession,
         organization_id: str,
         list_index: int,
+        list_id: Optional[UUID] = None,
     ) -> Dict:
         """
         Generate a W3C StatusList2021 credential for a status list.
@@ -502,7 +515,16 @@ class StatusService:
         encoded = base64.b64encode(compressed).decode("ascii")
 
         # Build credential
-        status_list_url = self._build_status_list_url(organization_id, list_index)
+        if list_id is None:
+            # Look up the metadata UUID if not provided
+            meta_result = await db.execute(
+                select(StatusListMetadata.id).where(
+                    StatusListMetadata.organization_id == organization_id,
+                    StatusListMetadata.list_index == list_index,
+                )
+            )
+            list_id = await _await_if_needed(meta_result.scalar_one())
+        status_list_url = self._build_status_list_url(list_id)
         issued = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
         credential = {

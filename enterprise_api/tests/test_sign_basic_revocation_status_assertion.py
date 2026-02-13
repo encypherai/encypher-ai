@@ -48,7 +48,7 @@ async def test_sign_basic_embeds_status_list_assertion() -> None:
     core_db.execute = AsyncMock()
     core_db.commit = AsyncMock()
 
-    allocate_mock = AsyncMock(return_value=(3, 12, "https://status.encypherai.com/v1/org_business/list/3"))
+    allocate_mock = AsyncMock(return_value=(3, 12, "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000b04"))
 
     with (
         patch(
@@ -72,7 +72,7 @@ async def test_sign_basic_embeds_status_list_assertion() -> None:
     assert called_assertions is not None
     assert any(
         assertion.get("label") == "org.encypher.status"
-        and assertion.get("data", {}).get("statusListCredential") == "https://status.encypherai.com/v1/org_business/list/3"
+        and assertion.get("data", {}).get("statusListCredential") == "https://verify.encypherai.com/status/v1/lists/00000000-0000-0000-0000-000000000b04"
         and str(assertion.get("data", {}).get("statusListIndex")) == "12"
         for assertion in called_assertions
     )
