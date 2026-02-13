@@ -686,7 +686,7 @@ Thumbnail image for content preview.
 For questions or issues:
 
 - **Documentation**: https://docs.encypherai.com
-- **API Status**: https://status.encypherai.com
+- **API Status**: https://verify.encypherai.com/status
 - **Support Email**: support@encypherai.com
 - **Enterprise Support**: enterprise@encypherai.com
 
