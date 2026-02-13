@@ -67,7 +67,7 @@ class DocumentEncodeRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "document_id": "doc_2024_article_001",
                 "text": "The quick brown fox jumps over the lazy dog. This is a test document for Merkle tree encoding.",
@@ -92,7 +92,7 @@ class MerkleRootResponse(BaseModel):
 
     class Config:
         from_attributes = True  # Pydantic v2
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "root_id": "550e8400-e29b-41d4-a716-446655440000",
                 "document_id": "doc_2024_article_001",
@@ -122,7 +122,7 @@ class DocumentEncodeResponse(BaseModel):
     )
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "message": "Document encoded successfully",
@@ -273,7 +273,7 @@ class ErrorResponse(BaseModel):
     details: Optional[Dict[str, Any]] = Field(None, description="Additional error details")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": False,
                 "error": "ValidationError",

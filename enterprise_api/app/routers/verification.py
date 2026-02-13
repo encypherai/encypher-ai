@@ -107,7 +107,90 @@ def _build_localization_events(
 @router.post(
     "/verify/advanced",
     summary="Advanced verification",
-    description="Verify signed content and optionally run attribution/plagiarism analysis.",
+    description="""
+Verify signed content and optionally run attribution, plagiarism detection, and fuzzy fingerprint search.
+
+Requires an authenticated API key with verify permission.
+
+---
+
+## Request Fields
+
+| Field | Type | Default | Values | Tier | Description |
+|-------|------|---------|--------|------|-------------|
+| `text` | string | *(required)* | any (min 1 char) | Free | The text to verify. Should contain invisible C2PA embeddings from a prior `/sign` call. |
+| `segmentation_level` | string | `"sentence"` | `document`, `sentence`, `paragraph`, `section` | Free | Granularity used for tamper detection. Should match the level used during signing. |
+| `search_scope` | string | `"organization"` | `organization`, `public`, `all` | `all` requires Enterprise | Scope for attribution / plagiarism lookups. `organization` = only your org's documents. `public` = publicly indexed docs. `all` = cross-organization (Enterprise only). |
+| `include_attribution` | bool | `false` | | Free | Run attribution analysis — find source documents that match segments of the submitted text. |
+| `detect_plagiarism` | bool | `false` | | Free | Run plagiarism detection — generate a full plagiarism report with match percentages per source. |
+| `include_heat_map` | bool | `false` | | Free | Include a segment-level heat map in the plagiarism report (only used when `detect_plagiarism` is `true`). |
+| `min_match_percentage` | float | `0.0` | 0.0 – 100.0 | Free | Minimum match percentage to include a source in the plagiarism report. |
+| `fuzzy_search` | object | *null* | see below | Enterprise | Optional fuzzy fingerprint search configuration. |
+
+### `fuzzy_search` Object (Enterprise)
+
+| Field | Type | Default | Values | Description |
+|-------|------|---------|--------|-------------|
+| `enabled` | bool | `false` | | Whether to run fuzzy fingerprint search. |
+| `algorithm` | string | `"simhash"` | `simhash` | Fingerprint algorithm. |
+| `levels` | string[] | `["sentence", "paragraph"]` | `sentence`, `paragraph`, `document` | Segmentation levels to search. |
+| `similarity_threshold` | float | `0.82` | 0.0 – 1.0 | Minimum similarity score for a match. |
+| `max_candidates` | int | `20` | 1 – 200 | Maximum number of candidate matches to return. |
+| `include_merkle_proof` | bool | `true` | | Whether to include Merkle proofs for matches. |
+| `fallback_when_no_binding` | bool | `true` | | Only run fuzzy search when no embeddings are found in the text. |
+
+---
+
+## Response
+
+The response always includes:
+
+- **`data`** — Verification verdict with `is_signed`, `reason_code`, `embeddings_found`, etc.
+- **`tamper_detection`** — Merkle root comparison at the requested segmentation level.
+- **`tamper_localization`** — Per-segment diff showing changed / inserted / deleted segments (when Merkle root exists).
+
+Conditionally included based on request flags:
+
+- **`attribution`** — List of source document matches with `document_id`, `organization_id`, `confidence`.
+- **`plagiarism`** — Full plagiarism report with `overall_match_percentage`, `source_documents`, optional `heat_map_data`.
+- **`fuzzy_search`** — Fuzzy fingerprint matches with similarity scores.
+
+---
+
+## Examples
+
+**Basic verification:**
+```json
+{
+    "text": "Signed content with invisible C2PA embeddings..."
+}
+```
+
+**Verification with attribution and plagiarism:**
+```json
+{
+    "text": "Content to check...",
+    "segmentation_level": "sentence",
+    "include_attribution": true,
+    "detect_plagiarism": true,
+    "include_heat_map": true,
+    "min_match_percentage": 10.0
+}
+```
+
+**Verification with fuzzy search (Enterprise):**
+```json
+{
+    "text": "Content that may have been modified...",
+    "fuzzy_search": {
+        "enabled": true,
+        "similarity_threshold": 0.75,
+        "max_candidates": 50,
+        "fallback_when_no_binding": false
+    }
+}
+```
+""",
 )
 async def verify_advanced(
     request: VerifyAdvancedRequest,

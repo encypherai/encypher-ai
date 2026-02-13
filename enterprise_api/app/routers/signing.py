@@ -40,29 +40,121 @@ router = APIRouter()
     description="""
 Sign content with C2PA manifest. Features are gated by tier.
 
-**Tier Feature Matrix:**
+---
+
+## Tier Feature Matrix
 
 | Feature | Free | Enterprise |
 |---------|------|------------|
 | Basic C2PA signing | ✅ | ✅ |
-| Sentence/paragraph/section segmentation | ✅ | ✅ |
+| Sentence / paragraph / section segmentation | ✅ | ✅ |
 | Advanced manifest modes | ✅ | ✅ |
 | Attribution indexing | ✅ | ✅ |
 | Custom assertions | ✅ | ✅ |
 | Rights metadata | ✅ | ✅ |
-| Batch signing (up to 10) | ✅ | ✅ |
+| Batch signing | up to 10 | up to 100 |
 | Word-level segmentation | ❌ | ✅ |
 | Dual binding | ❌ | ✅ |
 | Fingerprinting | ❌ | ✅ |
-| Batch size | 10 | 100 |
 
-**Single Document:**
+---
+
+## Request Body
+
+Provide **either** `text` (single document) **or** `documents` (batch), plus an `options` object.
+
+### Top-level fields
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `text` | string | one of `text` / `documents` | Content to sign (single document, max 1 MB). |
+| `document_id` | string | no | Custom document identifier (1-255 chars). Auto-generated if omitted. |
+| `document_title` | string | no | Human-readable title (max 500 chars). |
+| `document_url` | string | no | Canonical URL of the document (max 1000 chars). |
+| `metadata` | object | no | Arbitrary key-value metadata attached to the document. |
+| `documents` | array | one of `text` / `documents` | List of `{text, document_id?, document_title?, document_url?, metadata?}` objects for batch signing. |
+| `options` | object | no | Signing options (see below). All fields have sensible defaults. |
+
+---
+
+## Options Reference
+
+### Segmentation & Structure
+
+| Option | Type | Default | Values | Tier | Description |
+|--------|------|---------|--------|------|-------------|
+| `segmentation_level` | string | `"document"` | `document`, `sentence`, `paragraph`, `section`, `word` | `word` requires Enterprise | Granularity at which text is split and individually signed. Higher granularity enables per-segment tamper detection. |
+| `segmentation_levels` | string[] | *null* | subset of `sentence`, `paragraph`, `section` | Free | Build Merkle trees at multiple levels simultaneously for multi-resolution verification. |
+
+### Manifest & Embedding
+
+| Option | Type | Default | Values | Tier | Description |
+|--------|------|---------|--------|------|-------------|
+| `manifest_mode` | string | `"full"` | `full`, `lightweight_uuid`, `minimal_uuid`, `hybrid`, `zw_embedding`, `micro`, `micro_ecc`, `micro_c2pa`, `micro_ecc_c2pa` | Free | Controls how the C2PA manifest and per-segment markers are embedded. `full` = standard C2PA wrapper. `micro` variants = ultra-compact invisible markers (36-44 chars). `*_c2pa` variants add a full C2PA document manifest alongside micro markers. `*_ecc` variants add Reed-Solomon error correction. |
+| `embedding_strategy` | string | `"single_point"` | `single_point`, `distributed`, `distributed_redundant` | `distributed_redundant` requires Enterprise | How the invisible signature is placed within each segment. `single_point` = one location. `distributed` = spread across the segment. `distributed_redundant` = distributed with ECC for resilience. |
+| `distribution_target` | string | *null* | `whitespace`, `punctuation`, `all_chars` | Free | Which character positions are used when `embedding_strategy` is `distributed` or `distributed_redundant`. |
+
+### C2PA Provenance
+
+| Option | Type | Default | Values | Tier | Description |
+|--------|------|---------|--------|------|-------------|
+| `action` | string | `"c2pa.created"` | `c2pa.created`, `c2pa.edited` | Free | C2PA action type. Use `c2pa.created` for new content, `c2pa.edited` for modifications. |
+| `previous_instance_id` | string | *null* | any | Free | The `instance_id` from a previous signing response. Required when `action` is `c2pa.edited` to form a provenance chain. |
+| `document_type` | string | `"article"` | `article`, `legal_brief`, `contract`, `ai_output` | Free | Semantic document type included in the manifest. |
+| `claim_generator` | string | *null* | any | Free | Optional claim generator identifier for C2PA manifests (e.g. your application name). |
+| `digital_source_type` | string | *null* | IPTC URI | Free | IPTC digital source type URI, e.g. for AI-generated content. |
+
+### Advanced Features
+
+| Option | Type | Default | Tier | Description |
+|--------|------|---------|------|-------------|
+| `index_for_attribution` | bool | `false` | Free | Index content segments for later attribution and plagiarism detection via `/verify/advanced`. |
+| `add_dual_binding` | bool | `false` | Enterprise | Enable an additional integrity binding layer for enhanced tamper resistance. |
+| `include_fingerprint` | bool | `false` | Enterprise | Generate a robust content fingerprint that can survive minor text modifications. |
+| `disable_c2pa` | bool | `false` | Enterprise | Opt out of C2PA manifest embedding; only basic metadata is attached. |
+
+### Custom Assertions & Rights (Business+)
+
+| Option | Type | Default | Tier | Description |
+|--------|------|---------|------|-------------|
+| `custom_assertions` | array | *null* | Free | List of `{label, data}` objects to include as custom C2PA assertions. |
+| `template_id` | string | *null* | Free | ID of a pre-registered assertion template to apply. |
+| `validate_assertions` | bool | `true` | Free | Whether to validate custom assertions against registered JSON schemas. |
+| `rights` | object | *null* | Free | Rights metadata: `{copyright_holder, license_url, usage_terms, syndication_allowed, embargo_until, contact_email}`. |
+| `license` | object | *null* | Free | License info: `{type, url, contact_email}`. |
+| `actions` | array | *null* | Free | List of C2PA action assertion objects. |
+
+### Output Options
+
+| Option | Type | Default | Values | Description |
+|--------|------|---------|--------|-------------|
+| `embedding_options.format` | string | `"plain"` | `plain`, `html`, `markdown`, `json` | Output format for the signed text. |
+| `embedding_options.method` | string | `"invisible"` | `invisible`, `data-attribute`, `span`, `comment` | How the embedding is represented. `invisible` uses zero-width Unicode characters. |
+| `embedding_options.include_text` | bool | `true` | | Whether to include the embedded text in the response. |
+| `expires_at` | datetime | *null* | ISO 8601 | Optional expiration timestamp for the embeddings. |
+
+---
+
+## Examples
+
+**Single document (minimal):**
 ```json
 {
-    "text": "Content to sign...",
-    "document_title": "My Article",
+    "text": "The Senate passed a landmark bill today.",
+    "document_title": "Senate Bill"
+}
+```
+
+**Single document (with options):**
+```json
+{
+    "text": "The Senate passed a landmark bill today. The vote was 67-33.",
+    "document_title": "Senate Bill",
     "options": {
-        "segmentation_level": "sentence"
+        "segmentation_level": "sentence",
+        "manifest_mode": "micro_ecc_c2pa",
+        "index_for_attribution": true,
+        "action": "c2pa.created"
     }
 }
 ```
@@ -71,11 +163,23 @@ Sign content with C2PA manifest. Features are gated by tier.
 ```json
 {
     "documents": [
-        {"text": "First doc...", "document_title": "Doc 1"},
-        {"text": "Second doc...", "document_title": "Doc 2"}
+        {"text": "First article...", "document_title": "Article 1"},
+        {"text": "Second article...", "document_title": "Article 2"}
     ],
     "options": {
-        "segmentation_level": "sentence"
+        "segmentation_level": "sentence",
+        "embedding_strategy": "distributed"
+    }
+}
+```
+
+**Edit provenance chain:**
+```json
+{
+    "text": "Updated article content...",
+    "options": {
+        "action": "c2pa.edited",
+        "previous_instance_id": "urn:uuid:abc123..."
     }
 }
 ```

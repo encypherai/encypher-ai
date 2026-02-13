@@ -69,7 +69,7 @@ class AutoProvisionRequest(BaseModel):
         return v
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "email": "developer@example.com",
                 "organization_name": "Example Corp",
@@ -92,7 +92,7 @@ class APIKeyResponse(BaseModel):
     expires_at: Optional[datetime] = Field(None, description="Expiration timestamp (if applicable)")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "api_key": "ency_live_1234567890abcdef",
                 "key_id": "key_abc123",
@@ -119,7 +119,7 @@ class AutoProvisionResponse(BaseModel):
     next_steps: Dict[str, str] = Field(..., description="Next steps and documentation links")
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "success": True,
                 "message": "Organization and API key created successfully",

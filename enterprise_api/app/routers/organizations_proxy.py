@@ -20,14 +20,14 @@ router = APIRouter(prefix="/organizations", tags=["organizations-proxy"])
 _AUTH_BASE = settings.auth_service_url.rstrip("/")
 
 
-@router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+@router.api_route("/{path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], include_in_schema=False)
 async def proxy_organizations(path: str, request: Request) -> Response:
     """Forward any /organizations/* request to the auth service."""
     target_url = f"{_AUTH_BASE}/api/v1/organizations/{path}"
     return await _proxy(target_url, request)
 
 
-@router.api_route("", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
+@router.api_route("", methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], include_in_schema=False)
 async def proxy_organizations_root(request: Request) -> Response:
     """Forward GET /organizations (list orgs) to the auth service."""
     target_url = f"{_AUTH_BASE}/api/v1/organizations"

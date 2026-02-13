@@ -493,6 +493,7 @@ services:
       AUTH_SERVICE_URL: http://auth-service:8001
       KEY_SERVICE_URL: http://key-service:8003
       BILLING_SERVICE_URL: http://billing-service:8007
+      ENABLE_PUBLIC_API_DOCS: "true"
     depends_on:
       postgres:
         condition: service_healthy

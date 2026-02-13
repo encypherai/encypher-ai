@@ -3,7 +3,7 @@ from httpx import AsyncClient
 
 from app.config import settings
 from app.main import build_cors_settings
-from app.middleware.security_headers import build_security_headers
+from app.middleware.security_headers import DEFAULT_CSP, DOCS_CSP, build_security_headers
 
 
 @pytest.mark.asyncio
@@ -64,3 +64,37 @@ def test_cors_wildcard_disables_credentials(monkeypatch: pytest.MonkeyPatch) -> 
 
     assert cors_settings["allow_origins"] == ["*"]
     assert cors_settings["allow_credentials"] is False
+
+
+@pytest.mark.asyncio
+async def test_docs_route_gets_relaxed_csp(async_client: AsyncClient, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Docs page needs a relaxed CSP so Swagger UI CDN resources can load."""
+    monkeypatch.setattr(settings, "enable_public_api_docs", True)
+
+    response = await async_client.get("/docs")
+    assert response.status_code == 200
+    csp = response.headers["Content-Security-Policy"]
+
+    assert "unpkg.com" in csp
+    assert "'unsafe-inline'" in csp
+    assert "encypherai.com" in csp
+    assert "default-src 'none'" not in csp
+
+
+@pytest.mark.asyncio
+async def test_non_docs_route_keeps_strict_csp(async_client: AsyncClient) -> None:
+    """Non-docs routes must retain the strict default CSP."""
+    response = await async_client.get("/health")
+    assert response.status_code == 200
+    csp = response.headers["Content-Security-Policy"]
+
+    assert csp == DEFAULT_CSP
+
+
+def test_docs_csp_allows_swagger_ui_resources() -> None:
+    """DOCS_CSP must whitelist all resources needed by the Swagger UI docs page."""
+    assert "script-src" in DOCS_CSP
+    assert "https://unpkg.com" in DOCS_CSP
+    assert "'unsafe-inline'" in DOCS_CSP
+    assert "img-src" in DOCS_CSP
+    assert "https://encypherai.com" in DOCS_CSP
