@@ -4,43 +4,19 @@ export const PLAYGROUND_ENDPOINTS = [
     name: 'Sign Content',
     method: 'POST',
     path: '/sign',
-    description: 'Sign content with C2PA manifest. Features are tier-gated via options.',
+    description: 'Sign text with invisible C2PA provenance. We recommend sentence-level segmentation so each sentence gets its own signature — if someone edits one sentence, you can pinpoint exactly which one changed.',
     category: 'Signing',
     requiresAuth: true,
     authType: 'apikey',
     docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify(
       {
-        text: 'Hello, world.',
-        document_title: 'Example Document',
-        options: {
-          document_type: 'article',
-        },
-      },
-      null,
-      2
-    ),
-  },
-  {
-    id: 'sign-with-options',
-    name: 'Sign (With Options)',
-    method: 'POST',
-    path: '/sign',
-    description: 'Sign with advanced options (sentence segmentation, attribution, etc). Features gated by tier.',
-    category: 'Signing',
-    requiresAuth: true,
-    authType: 'apikey',
-    minTier: 'professional',
-    docsUrl: 'https://api.encypherai.com/docs',
-    sampleBody: JSON.stringify(
-      {
-        text: 'Hello, world.',
-        document_title: 'Example Document',
+        text: 'Scientists at CERN have detected high-energy particles originating from a distant galaxy. The discovery could reshape our understanding of cosmic ray propagation. Researchers plan to publish their findings in Nature next month.',
+        document_title: 'CERN Cosmic Ray Discovery',
         options: {
           document_type: 'article',
           segmentation_level: 'sentence',
-          index_for_attribution: true,
-          action: 'c2pa.created',
+          manifest_mode: 'micro_ecc_c2pa',
         },
       },
       null,
@@ -51,10 +27,11 @@ export const PLAYGROUND_ENDPOINTS = [
     id: 'verify',
     name: 'Verify Content',
     method: 'POST',
-    path: '/verify',
-    description: 'Verify signed content (public, rate limited).',
+    path: '/verify/advanced',
+    description: 'Verify signed content — checks who signed it, when, and whether it has been tampered with. Paste the signed text exactly as received (invisible signatures travel with the text).',
     category: 'Verification',
-    requiresAuth: false,
+    requiresAuth: true,
+    authType: 'apikey',
     docsUrl: 'https://api.encypherai.com/docs',
     sampleBody: JSON.stringify(
       {

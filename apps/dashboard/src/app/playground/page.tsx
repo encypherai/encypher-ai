@@ -51,6 +51,9 @@ type PlaygroundFormState = {
   document_type: string;
   template_id: string;
   sentence_text: string;
+  segmentation_level: string;
+  manifest_mode: string;
+  embedding_strategy: string;
 };
 
 // Tier hierarchy for comparison
@@ -69,24 +72,19 @@ const hasTierAccess = (userTier: Tier, requiredTier?: Tier): boolean => {
 // Field documentation for inline tooltips
 const fieldDocs: Record<string, Record<string, string>> = {
   sign: {
-    text: 'The content to sign. Can be plain text, markdown, or HTML.',
+    text: 'The content to sign. Each sentence gets its own invisible cryptographic signature.',
     document_title: 'A human-readable title for the document.',
-    document_type: 'Type of content: article, report, legal, social, etc.',
-    template_id: 'Optional: ID of a rights template to embed licensing terms.',
-  },
-  'sign-advanced': {
-    document_id: 'Unique identifier for this document (you provide this).',
-    text: 'The content to sign with advanced embedding controls.',
-    segmentation_level: 'How to segment: document, sentence, paragraph, section, word.',
-    action: 'C2PA action: c2pa.created (new) or c2pa.edited (modified).',
-    manifest_mode: 'Manifest detail: full, lightweight_uuid, or hybrid.',
-    embedding_strategy: 'Placement: single_point, distributed, or distributed_redundant.',
+    segmentation_level: 'How to split text for signing. Sentence = each sentence signed individually (recommended).',
+    manifest_mode: 'micro_ecc_c2pa = compact per-sentence markers + full C2PA manifest (recommended).',
+    document_type: 'Type of content: article, legal_brief, contract, ai_output.',
+    embedding_strategy: 'Where to place invisible signatures: single_point (default), distributed, distributed_redundant.',
+    template_id: 'Optional: ID of a rights template to embed licensing terms (Business+).',
   },
   verify: {
-    text: 'The signed content to verify. Paste the full text including invisible metadata.',
+    text: 'The signed content to verify. Paste the full text — invisible signatures travel with the text via copy-paste.',
   },
   'verify-advanced': {
-    text: 'Signed content to verify with attribution/plagiarism options (Enterprise).',
+    text: 'Signed content to verify. Invisible signatures are preserved through copy-paste.',
   },
   lookup: {
     sentence_text: 'A sentence to look up in the provenance database.',
@@ -110,9 +108,12 @@ const fieldDocs: Record<string, Record<string, string>> = {
 
 // Demo sample for instant success in sign flow
 const DEMO_SIGN_SAMPLE = {
-  text: 'Breaking: Scientists discover high-energy particles from distant galaxy.',
-  document_title: 'CERN Cosmic Rays',
+  text: 'Scientists at CERN have detected high-energy particles originating from a distant galaxy. The discovery could reshape our understanding of cosmic ray propagation. Researchers plan to publish their findings in Nature next month.',
+  document_title: 'CERN Cosmic Ray Discovery',
   document_type: 'article',
+  segmentation_level: 'sentence',
+  manifest_mode: 'micro_ecc_c2pa',
+  embedding_strategy: 'single_point',
 };
 
 const endpoints: ApiEndpoint[] = PLAYGROUND_ENDPOINTS as ApiEndpoint[];
@@ -183,6 +184,9 @@ export default function PlaygroundPage() {
     document_type: '',
     template_id: '',
     sentence_text: '',
+    segmentation_level: '',
+    manifest_mode: '',
+    embedding_strategy: '',
   });
 
   const supportsFormBuilder =
@@ -245,13 +249,27 @@ export default function PlaygroundPage() {
           embeddingsFound: verdict.embeddings_found || 1,
         };
       }
-      // Handle sign response
-      if (selectedEndpoint.id === 'sign' && data.success && data.signed_text) {
+      // Handle sign response — unified /sign returns data.document.signed_text
+      const signDoc = data?.data?.document;
+      if ((selectedEndpoint.id === 'sign' || selectedEndpoint.id === 'sign-with-options') && data.success && signDoc) {
+        return {
+          type: 'sign',
+          success: true,
+          documentId: signDoc.document_id,
+          totalSegments: signDoc.total_segments,
+          signedText: signDoc.signed_text,
+          verificationUrl: signDoc.verification_url,
+          merkleRoot: signDoc.merkle_root,
+          instanceId: signDoc.instance_id,
+        };
+      }
+      // Legacy sign response format (data.signed_text at top level)
+      if ((selectedEndpoint.id === 'sign') && data.success && data.signed_text) {
         return {
           type: 'sign',
           success: true,
           documentId: data.document_id,
-          totalSentences: data.total_sentences,
+          totalSegments: data.total_sentences || data.total_segments,
           signedText: data.signed_text,
         };
       }
@@ -287,6 +305,9 @@ export default function PlaygroundPage() {
           document_type: parsed?.document_type ?? '',
           template_id: parsed?.template_id ?? '',
           sentence_text: parsed?.sentence_text ?? '',
+          segmentation_level: parsed?.segmentation_level ?? '',
+          manifest_mode: parsed?.manifest_mode ?? '',
+          embedding_strategy: parsed?.embedding_strategy ?? '',
         };
         setFormValues(nextForm);
 
@@ -441,8 +462,19 @@ export default function PlaygroundPage() {
           text: DEMO_SIGN_SAMPLE.text,
           document_title: DEMO_SIGN_SAMPLE.document_title,
           document_type: DEMO_SIGN_SAMPLE.document_type,
+          segmentation_level: DEMO_SIGN_SAMPLE.segmentation_level,
+          manifest_mode: DEMO_SIGN_SAMPLE.manifest_mode,
+          embedding_strategy: DEMO_SIGN_SAMPLE.embedding_strategy,
         }));
-        setRequestBody(JSON.stringify(DEMO_SIGN_SAMPLE, null, 2));
+        setRequestBody(JSON.stringify({
+          text: DEMO_SIGN_SAMPLE.text,
+          document_title: DEMO_SIGN_SAMPLE.document_title,
+          options: {
+            document_type: DEMO_SIGN_SAMPLE.document_type,
+            segmentation_level: DEMO_SIGN_SAMPLE.segmentation_level,
+            manifest_mode: DEMO_SIGN_SAMPLE.manifest_mode,
+          },
+        }, null, 2));
         setTourStep(1);
         setQuickStartStep(1);
         toast.success('Great! Now let\'s sign some content with your API key.');
@@ -559,7 +591,13 @@ export default function PlaygroundPage() {
         const data = await res.json();
         setResponse(JSON.stringify(data, null, 2));
         // Store signed content for Quick Start flow
-        if (selectedEndpoint.id === 'sign' && data.success && data.signed_text) {
+        // Unified /sign returns data.document.signed_text
+        const signedDoc = data?.data?.document;
+        if (selectedEndpoint.id === 'sign' && data.success && signedDoc?.signed_text) {
+          setLastSignedContent(signedDoc.signed_text);
+          setQuickStartStep(1);
+        } else if (selectedEndpoint.id === 'sign' && data.success && data.signed_text) {
+          // Legacy format fallback
           setLastSignedContent(data.signed_text);
           setQuickStartStep(1);
         }
@@ -622,6 +660,58 @@ export default function PlaygroundPage() {
           </a>
         </div>
       </div>
+
+      {/* How It Works Guide */}
+      <Card className="mb-6 border-slate-200 dark:border-slate-700">
+        <details>
+          <summary className="cursor-pointer px-6 py-4 flex items-center gap-3 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+            <svg className="w-5 h-5 text-blue-ncs" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+            <span className="font-semibold text-delft-blue dark:text-white">How It Works — Quick Reference</span>
+            <span className="text-xs text-muted-foreground ml-auto">Click to expand</span>
+          </summary>
+          <CardContent className="pt-0 pb-5">
+            <div className="grid md:grid-cols-3 gap-4">
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-100 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold">1</div>
+                  <h4 className="font-semibold text-blue-900 dark:text-blue-200">Sign</h4>
+                </div>
+                <p className="text-xs text-blue-800 dark:text-blue-300 leading-relaxed">
+                  Send your text to <code className="bg-blue-100 dark:bg-blue-800 px-1 rounded">POST /sign</code>. 
+                  We embed invisible cryptographic signatures using Unicode variation selectors. 
+                  The signed text looks identical to the original.
+                </p>
+                <div className="mt-2 p-2 bg-white dark:bg-slate-800 rounded text-xs font-mono text-slate-600 dark:text-slate-300">
+                  <span className="text-blue-600">Recommended:</span> segmentation: sentence, mode: micro_ecc_c2pa
+                </div>
+              </div>
+              <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-100 dark:border-green-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-green-600 text-white flex items-center justify-center text-xs font-bold">2</div>
+                  <h4 className="font-semibold text-green-900 dark:text-green-200">Publish</h4>
+                </div>
+                <p className="text-xs text-green-800 dark:text-green-300 leading-relaxed">
+                  Use the <code className="bg-green-100 dark:bg-green-800 px-1 rounded">signed_text</code> from the response everywhere you publish. 
+                  The invisible signatures survive copy-paste and travel with the text across platforms.
+                </p>
+              </div>
+              <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-100 dark:border-purple-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-6 h-6 rounded-full bg-purple-600 text-white flex items-center justify-center text-xs font-bold">3</div>
+                  <h4 className="font-semibold text-purple-900 dark:text-purple-200">Verify</h4>
+                </div>
+                <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
+                  Send the signed text to <code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">POST /verify/advanced</code>. 
+                  Get back: who signed it, when, and whether it has been tampered with. 
+                  Sentence-level signing pinpoints exactly which sentence changed.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </details>
+      </Card>
 
       {/* Quick Start Banner */}
       {showQuickStart && (
@@ -1105,31 +1195,85 @@ export default function PlaygroundPage() {
                       {selectedEndpoint.id === 'sign' && (
                         <>
                           <div>
-                            <label className="block text-sm font-medium mb-1">Document Title (optional)</label>
-                            <Input
-                              value={formValues.document_title}
-                              onChange={(e) => setFormValues((prev) => ({ ...prev, document_title: e.target.value }))}
-                              placeholder="Example Document"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Document Type (optional)</label>
-                            <Input
-                              value={formValues.document_type}
-                              onChange={(e) => setFormValues((prev) => ({ ...prev, document_type: e.target.value }))}
-                              placeholder="article"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-sm font-medium mb-1">Text (required)</label>
+                            <label className="block text-sm font-medium mb-1">Text <span className="text-red-500">*</span></label>
                             <textarea
                               value={formValues.text}
                               onChange={(e) => setFormValues((prev) => ({ ...prev, text: e.target.value }))}
                               rows={6}
                               className="w-full px-3 py-2 border rounded-lg text-sm focus:outline-none focus:ring-2 resize-y dark:bg-slate-700 dark:text-slate-100 border-slate-200 dark:border-slate-600 focus:ring-blue-ncs"
-                              placeholder="Enter text to sign..."
+                              placeholder="Paste or type the content you want to sign..."
                               style={{ WebkitUserSelect: 'text', userSelect: 'text' }}
                             />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-1">Document Title</label>
+                            <Input
+                              value={formValues.document_title}
+                              onChange={(e) => setFormValues((prev) => ({ ...prev, document_title: e.target.value }))}
+                              placeholder="My Article"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Segmentation</label>
+                              <select
+                                value={formValues.segmentation_level}
+                                onChange={(e) => setFormValues((prev) => ({ ...prev, segmentation_level: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
+                              >
+                                <option value="">Default (document)</option>
+                                <option value="sentence">Sentence (recommended)</option>
+                                <option value="paragraph">Paragraph</option>
+                                <option value="section">Section</option>
+                                <option value="word">Word (Enterprise)</option>
+                              </select>
+                              <p className="text-xs text-muted-foreground mt-1">Sentence-level lets you pinpoint exactly which sentence was changed.</p>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Manifest Mode</label>
+                              <select
+                                value={formValues.manifest_mode}
+                                onChange={(e) => setFormValues((prev) => ({ ...prev, manifest_mode: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
+                              >
+                                <option value="">Default (full)</option>
+                                <option value="micro_ecc_c2pa">Micro ECC + C2PA (recommended)</option>
+                                <option value="full">Full C2PA</option>
+                                <option value="micro_ecc">Micro ECC (compact)</option>
+                                <option value="micro">Micro (ultra-compact)</option>
+                                <option value="lightweight_uuid">Lightweight UUID</option>
+                              </select>
+                              <p className="text-xs text-muted-foreground mt-1">micro_ecc_c2pa: compact per-sentence markers + full C2PA manifest.</p>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Document Type</label>
+                              <select
+                                value={formValues.document_type}
+                                onChange={(e) => setFormValues((prev) => ({ ...prev, document_type: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
+                              >
+                                <option value="">Default (article)</option>
+                                <option value="article">Article</option>
+                                <option value="legal_brief">Legal Brief</option>
+                                <option value="contract">Contract</option>
+                                <option value="ai_output">AI Output</option>
+                              </select>
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium mb-1">Embedding Strategy</label>
+                              <select
+                                value={formValues.embedding_strategy}
+                                onChange={(e) => setFormValues((prev) => ({ ...prev, embedding_strategy: e.target.value }))}
+                                className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 dark:bg-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-ncs"
+                              >
+                                <option value="">Default (single_point)</option>
+                                <option value="single_point">Single Point</option>
+                                <option value="distributed">Distributed</option>
+                                <option value="distributed_redundant">Distributed Redundant</option>
+                              </select>
+                            </div>
                           </div>
                         </>
                       )}
@@ -1214,6 +1358,9 @@ export default function PlaygroundPage() {
                                 document_type: parsed.document_type ?? prev.document_type,
                                 template_id: parsed.template_id ?? prev.template_id,
                                 sentence_text: parsed.sentence_text ?? prev.sentence_text,
+                                segmentation_level: parsed.segmentation_level ?? prev.segmentation_level,
+                                manifest_mode: parsed.manifest_mode ?? prev.manifest_mode,
+                                embedding_strategy: parsed.embedding_strategy ?? prev.embedding_strategy,
                               }));
                             }
                           }
@@ -1426,16 +1573,32 @@ export default function PlaygroundPage() {
                               <div className="mt-2 text-sm space-y-1">
                                 {responseSummary.documentId && (
                                   <p className="text-muted-foreground">
-                                    <span className="font-medium">Document ID:</span> {responseSummary.documentId}
+                                    <span className="font-medium">Document ID:</span>{' '}
+                                    <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">{responseSummary.documentId}</code>
                                   </p>
                                 )}
-                                {responseSummary.totalSentences && (
+                                {responseSummary.totalSegments && (
                                   <p className="text-muted-foreground">
-                                    <span className="font-medium">Sentences signed:</span> {responseSummary.totalSentences}
+                                    <span className="font-medium">Segments signed:</span> {responseSummary.totalSegments}
+                                  </p>
+                                )}
+                                {responseSummary.instanceId && (
+                                  <p className="text-muted-foreground">
+                                    <span className="font-medium">Instance ID:</span>{' '}
+                                    <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">{responseSummary.instanceId}</code>
+                                  </p>
+                                )}
+                                {responseSummary.merkleRoot && (
+                                  <p className="text-muted-foreground">
+                                    <span className="font-medium">Merkle root:</span>{' '}
+                                    <code className="text-xs bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded font-mono">{String(responseSummary.merkleRoot).substring(0, 16)}...</code>
                                   </p>
                                 )}
                               </div>
-                              {showQuickStart && (
+                              <p className="mt-3 text-xs text-green-700 dark:text-green-300">
+                                The signed text contains invisible Unicode signatures. Copy it and paste into Verify to confirm.
+                              </p>
+                              {showQuickStart && lastSignedContent && (
                                 <Button 
                                   variant="secondary" 
                                   size="sm" 

@@ -5,6 +5,9 @@
  *   document_type?: string,
  *   template_id?: string,
  *   sentence_text?: string,
+ *   segmentation_level?: string,
+ *   manifest_mode?: string,
+ *   embedding_strategy?: string,
  * }} PlaygroundFormValues
  */
 
@@ -58,14 +61,24 @@ export function buildRequestObject(endpointId, values) {
     if (!text) throw new Error('sign.text is required');
 
     const document_title = normalizeString(values.document_title);
-    const document_type = normalizeString(values.document_type);
     const template_id = normalizeString(values.template_id);
 
+    // Build options object
+    const options = {};
+    const document_type = normalizeString(values.document_type);
+    if (document_type) options.document_type = document_type;
+    const segmentation_level = normalizeString(values.segmentation_level);
+    if (segmentation_level) options.segmentation_level = segmentation_level;
+    const manifest_mode = normalizeString(values.manifest_mode);
+    if (manifest_mode) options.manifest_mode = manifest_mode;
+    const embedding_strategy = normalizeString(values.embedding_strategy);
+    if (embedding_strategy) options.embedding_strategy = embedding_strategy;
+
     return {
-      ...(document_title ? { document_title } : {}),
-      ...(document_type ? { document_type } : {}),
       text,
+      ...(document_title ? { document_title } : {}),
       ...(template_id ? { template_id } : {}),
+      ...(Object.keys(options).length > 0 ? { options } : {}),
     };
   }
 
@@ -116,11 +129,15 @@ export function parseRequestBodyJson(endpointId, json) {
   }
 
   if (endpointId === 'sign') {
+    const opts = (parsed.options && typeof parsed.options === 'object') ? parsed.options : {};
     return {
       text: typeof parsed.text === 'string' ? parsed.text : '',
       document_title: typeof parsed.document_title === 'string' ? parsed.document_title : '',
-      document_type: typeof parsed.document_type === 'string' ? parsed.document_type : '',
+      document_type: typeof opts.document_type === 'string' ? opts.document_type : (typeof parsed.document_type === 'string' ? parsed.document_type : ''),
       template_id: typeof parsed.template_id === 'string' ? parsed.template_id : '',
+      segmentation_level: typeof opts.segmentation_level === 'string' ? opts.segmentation_level : '',
+      manifest_mode: typeof opts.manifest_mode === 'string' ? opts.manifest_mode : '',
+      embedding_strategy: typeof opts.embedding_strategy === 'string' ? opts.embedding_strategy : '',
     };
   }
 
