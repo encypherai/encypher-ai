@@ -105,17 +105,9 @@ http:
 
     # ============================================
     # VERIFICATION -> Verification Service (8005)
-    # All /api/v1/verify endpoints handled by verification-service
+    # All /api/v1/verify/* endpoints handled by verification-service
+    # (including /verify/advanced which proxies to enterprise-api internally)
     # ============================================
-    verify-advanced-router:
-      rule: "PathPrefix(`/api/v1/verify/advanced`)"
-      service: enterprise-api
-      entryPoints:
-        - web
-      priority: 110
-      middlewares:
-        - cors-api
-
     verify-router:
       rule: "PathPrefix(`/api/v1/verify`)"
       service: verification-service

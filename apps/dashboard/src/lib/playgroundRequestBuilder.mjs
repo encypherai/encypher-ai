@@ -44,12 +44,6 @@ export function buildRequestObject(endpointId, values) {
     return { text };
   }
 
-  if (endpointId === 'verify-advanced') {
-    const text = preserveExactString(values.text);
-    if (!text) throw new Error('verify-advanced.text is required');
-    return { text };
-  }
-
   if (endpointId === 'lookup') {
     const sentence_text = normalizeString(values.sentence_text);
     if (!sentence_text) throw new Error('lookup.sentence_text is required');
@@ -111,12 +105,6 @@ export function parseRequestBodyJson(endpointId, json) {
   if (!parsed || typeof parsed !== 'object') return null;
 
   if (endpointId === 'verify') {
-    return {
-      text: typeof parsed.text === 'string' ? parsed.text : '',
-    };
-  }
-
-  if (endpointId === 'verify-advanced') {
     return {
       text: typeof parsed.text === 'string' ? parsed.text : '',
     };

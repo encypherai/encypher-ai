@@ -726,7 +726,7 @@ async def verify_text(
                         if zw_org_id:
                             signer_id = zw_org_id
                             is_valid = True
-                            resolved_mode = first_result.get("manifest_mode") or "zw_embedding"
+                            first_result.get("manifest_mode") or "zw_embedding"
 
                             # Extract C2PA manifest from first result (shared across segments)
                             if first_result.get("manifest_data"):
@@ -816,7 +816,7 @@ async def verify_text(
                         if vs256_org_id:
                             signer_id = vs256_org_id
                             is_valid = True
-                            resolved_mode = first_result.get("manifest_mode") or "micro"
+                            first_result.get("manifest_mode") or "micro"
 
                             # Extract C2PA manifest from first result (shared across segments)
                             if first_result.get("manifest_data") and not resolved_c2pa_manifest:
@@ -975,6 +975,54 @@ async def verify_text(
     )
 
     return VerifyResponse(success=True, data=verdict, error=None, correlation_id=correlation_id)
+
+
+@router.post(
+    "/advanced",
+    summary="Advanced verification (proxy)",
+    description=(
+        "Proxy to enterprise API for advanced verification features: "
+        "Merkle tamper localization, attribution, plagiarism detection, "
+        "and fuzzy fingerprint search. Requires API key authentication."
+    ),
+)
+async def verify_advanced_proxy(request: Request):
+    """Forward /verify/advanced requests to the enterprise API.
+
+    The enterprise API owns the Merkle tree, attribution, and plagiarism
+    logic.  This proxy keeps the verification-service as the single
+    entry-point for all ``/verify/*`` traffic so it can be scaled
+    independently via Traefik.
+    """
+    logger = structlog.get_logger(__name__)
+    body = await request.body()
+
+    # Forward all auth headers so the enterprise API can authenticate
+    forward_headers = {}
+    for key in ("authorization", "x-api-key", "content-type", "x-request-id"):
+        value = request.headers.get(key)
+        if value:
+            forward_headers[key] = value
+
+    enterprise_url = f"{settings.ENTERPRISE_API_URL}/api/v1/verify/advanced"
+    logger.info("verify_advanced_proxy", target=enterprise_url)
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            resp = await client.post(enterprise_url, content=body, headers=forward_headers)
+        return JSONResponse(status_code=resp.status_code, content=resp.json())
+    except httpx.RequestError as exc:
+        logger.error("verify_advanced_proxy_error", error=str(exc))
+        return JSONResponse(
+            status_code=502,
+            content={
+                "success": False,
+                "error": {
+                    "code": "PROXY_ERROR",
+                    "message": "Failed to reach enterprise API for advanced verification.",
+                },
+            },
+        )
 
 
 @router.get("/{document_id}")
@@ -1136,7 +1184,7 @@ async def verify_signature(
             verification_time_ms=result.verification_time_ms,
             created_at=result.created_at,
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Verification failed",
@@ -1178,7 +1226,7 @@ async def verify_document(
             verification_time_ms=result.verification_time_ms,
             created_at=result.created_at,
         )
-    except Exception as e:
+    except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Verification failed",

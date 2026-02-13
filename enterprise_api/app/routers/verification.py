@@ -21,7 +21,6 @@ from app.crud import merkle as merkle_crud
 from app.database import get_content_db, get_db
 from app.dependencies import get_current_organization_dep
 from app.models.merkle import MerkleRoot
-from app.models.request_models import VerifyRequest
 from app.schemas.fuzzy_fingerprint import FuzzySearchConfig
 from app.services import verification_logic
 from app.services.fuzzy_fingerprint_service import fuzzy_fingerprint_service
@@ -103,20 +102,6 @@ def _build_localization_events(
 
     return {"events": events, "counts": counts}
 
-
-@router.get("/verify/{document_id}", include_in_schema=False)
-async def verify_by_document_id_deprecated(document_id: str):
-    return JSONResponse(
-        status_code=410,
-        content={
-            "success": False,
-            "error": {
-                "code": "ENDPOINT_DEPRECATED",
-                "message": "This endpoint has been moved to the verification-service for independent scaling.",
-                "hint": f"Use GET https://api.encypherai.com/api/v1/verify/{document_id} instead.",
-            },
-        },
-    )
 
 
 @router.post(
@@ -370,17 +355,3 @@ async def verify_advanced(
     return JSONResponse(status_code=status.HTTP_200_OK, content=jsonable_encoder(response_payload))
 
 
-@router.post("/verify", include_in_schema=False)
-async def verify_content_deprecated(verify_request: VerifyRequest):
-    _ = verify_request
-    return JSONResponse(
-        status_code=410,
-        content={
-            "success": False,
-            "error": {
-                "code": "ENDPOINT_DEPRECATED",
-                "message": "This endpoint has been moved to the verification-service for independent scaling.",
-                "hint": "Use POST https://api.encypherai.com/api/v1/verify with the same request body.",
-            },
-        },
-    )

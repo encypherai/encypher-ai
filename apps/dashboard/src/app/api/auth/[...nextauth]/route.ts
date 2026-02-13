@@ -3,8 +3,9 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import GoogleProvider from 'next-auth/providers/google';
 import GitHubProvider from 'next-auth/providers/github';
 
+// Server-side API base: prefer Docker-internal URL over public URL for server-side fetches
 const API_BASE =
-  (process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
+  (process.env.API_BASE_INTERNAL || process.env.API_BASE || process.env.NEXT_PUBLIC_API_URL || 'https://api.encypherai.com/api/v1').replace(/\/$/, '');
 
 const handler = NextAuth({
   providers: [

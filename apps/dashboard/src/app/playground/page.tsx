@@ -83,9 +83,6 @@ const fieldDocs: Record<string, Record<string, string>> = {
   verify: {
     text: 'The signed content to verify. Paste the full text — invisible signatures travel with the text via copy-paste.',
   },
-  'verify-advanced': {
-    text: 'Signed content to verify. Invisible signatures are preserved through copy-paste.',
-  },
   lookup: {
     sentence_text: 'A sentence to look up in the provenance database.',
   },
@@ -192,7 +189,6 @@ export default function PlaygroundPage() {
   const supportsFormBuilder =
     selectedEndpoint.id === 'sign' ||
     selectedEndpoint.id === 'verify' ||
-    selectedEndpoint.id === 'verify-advanced' ||
     selectedEndpoint.id === 'lookup';
 
   // Filter endpoints by search term
@@ -235,7 +231,7 @@ export default function PlaygroundPage() {
     try {
       const data = JSON.parse(response);
       // Handle verification response
-      if ((selectedEndpoint.id === 'verify' || selectedEndpoint.id === 'verify-advanced') && data.data) {
+      if (selectedEndpoint.id === 'verify' && data.data) {
         const verdict = data.data;
         const isUntrustedSigner = verdict.reason_code === 'UNTRUSTED_SIGNER';
         return {
@@ -251,7 +247,7 @@ export default function PlaygroundPage() {
       }
       // Handle sign response — unified /sign returns data.document.signed_text
       const signDoc = data?.data?.document;
-      if ((selectedEndpoint.id === 'sign' || selectedEndpoint.id === 'sign-with-options') && data.success && signDoc) {
+      if (selectedEndpoint.id === 'sign' && data.success && signDoc) {
         return {
           type: 'sign',
           success: true,
@@ -378,7 +374,7 @@ export default function PlaygroundPage() {
   const formValidation = useMemo(() => {
     if (!supportsFormBuilder || requestEditorMode !== 'form') return { valid: true, error: null as string | null };
 
-    if (selectedEndpoint.id === 'verify' || selectedEndpoint.id === 'verify-advanced') {
+    if (selectedEndpoint.id === 'verify') {
       return formValues.text.trim()
         ? { valid: true, error: null }
         : { valid: false, error: 'Text is required for verification.' };
@@ -703,7 +699,7 @@ export default function PlaygroundPage() {
                   <h4 className="font-semibold text-purple-900 dark:text-purple-200">Verify</h4>
                 </div>
                 <p className="text-xs text-purple-800 dark:text-purple-300 leading-relaxed">
-                  Send the signed text to <code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">POST /verify/advanced</code>. 
+                  Send the signed text to <code className="bg-purple-100 dark:bg-purple-800 px-1 rounded">POST /verify</code>. 
                   Get back: who signed it, when, and whether it has been tampered with. 
                   Sentence-level signing pinpoints exactly which sentence changed.
                 </p>
