@@ -47,6 +47,13 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 // Tab state tracking
 const tabState = new Map();
 
+// Polling-oriented messages that are expected at high frequency from popup UI.
+// Logging these as MSG entries creates self-generated noise in the debug tab.
+const NOISY_DEBUG_MESSAGE_TYPES = new Set([
+  'GET_DEBUG_LOGS',
+  'GET_TAB_STATE',
+]);
+
 /**
  * Simple hash function for caching
  */
@@ -510,7 +517,9 @@ async function getAccountInfo(apiKey) {
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const tabId = sender.tab?.id;
-  debugLog.msg('sw', `Received: ${message.type}`, { tabId, from: sender.tab?.url?.substring(0, 80) });
+  if (!NOISY_DEBUG_MESSAGE_TYPES.has(message.type)) {
+    debugLog.msg('sw', `Received: ${message.type}`, { tabId, from: sender.tab?.url?.substring(0, 80) });
+  }
 
   switch (message.type) {
     case 'EMBEDDINGS_DETECTED':
@@ -576,10 +585,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
       return true; // async response
 
-    case 'GET_TAB_STATE':
+    case 'GET_TAB_STATE': {
       const state = tabState.get(message.tabId) || { count: 0 };
       sendResponse(state);
       break;
+    }
 
     case 'SHOW_DETAILS':
       // Could open a new tab or popup with full details

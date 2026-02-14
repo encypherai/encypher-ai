@@ -115,7 +115,7 @@ describe('Chrome Extension E2E Tests', () => {
       
       // Check popup header
       const title = await popup.$eval('.popup__title', el => el.textContent);
-      assert.strictEqual(title, 'Encypher Verifier');
+      assert.strictEqual(title, 'Verifier');
       
       // Check tabs exist (Verify, Sign, and Debug — Debug is hidden by default)
       const tabs = await popup.$$('.popup__tab');
@@ -175,7 +175,9 @@ describe('Chrome Extension E2E Tests', () => {
     it('should change API base URL', async () => {
       const options = await openOptions();
       
-      await options.select('#apiBaseUrl', 'http://localhost:9000');
+      await options.click('#apiBaseUrl', { clickCount: 3 });
+      await options.type('#apiBaseUrl', 'http://localhost:9000');
+      await options.$eval('#apiBaseUrl', (el) => el.blur());
       
       const selectedValue = await options.$eval('#apiBaseUrl', el => el.value);
       assert.strictEqual(selectedValue, 'http://localhost:9000');
@@ -189,7 +191,7 @@ describe('Chrome Extension E2E Tests', () => {
       const popup = await openPopup();
       
       // Initially on Verify tab
-      const verifyTab = await popup.$('.popup__tab[data-tab="verify"]');
+      assert.ok(await popup.$('.popup__tab[data-tab="verify"]'), 'Verify tab button should exist');
       let isActive = await popup.$eval('.popup__tab[data-tab="verify"]', 
         el => el.classList.contains('popup__tab--active'));
       assert.ok(isActive, 'Verify tab should be active initially');
@@ -262,7 +264,7 @@ describe('Chrome Extension E2E Tests', () => {
       await popup.waitForSelector('#sign-tab:not([hidden])');
       
       // Check for "API Key Required" message
-      const noKeyVisible = await popup.$eval('#sign-no-key', el => !el.hidden);
+      await popup.$eval('#sign-no-key', el => !el.hidden);
       // Note: This may be true or false depending on whether API key was saved earlier
       
       await popup.close();

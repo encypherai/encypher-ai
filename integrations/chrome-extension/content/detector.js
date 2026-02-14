@@ -916,6 +916,8 @@ function _getOnlineEditorRoots() {
 function observeDOM() {
   let pendingNodes = [];
   let debounceTimer = null;
+  let pendingInputRoots = [];
+  let inputDebounceTimer = null;
   
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
@@ -924,6 +926,13 @@ function observeDOM() {
           if (node.nodeType === Node.ELEMENT_NODE) {
             pendingNodes.push(node);
           }
+        }
+      } else if (mutation.type === 'characterData') {
+        // In-place edits in contenteditable/WYSIWYG often update text nodes
+        // without adding/removing elements.
+        const parent = mutation.target?.parentElement;
+        if (parent) {
+          pendingNodes.push(parent);
         }
       }
     }
@@ -947,8 +956,33 @@ function observeDOM() {
   
   observer.observe(document.body, {
     childList: true,
+    characterData: true,
     subtree: true
   });
+
+  // Input-driven edits (e.g. WYSIWYG typing) don't always produce childList
+  // mutations in a way that gives us useful roots. Listen for input events and
+  // rescan the active editable subtree.
+  document.addEventListener('input', (event) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return;
+
+    const editableRoot = target.closest(
+      '[contenteditable="true"], .ql-editor, .ck-editor__editable, .cke_editable, .mce-content-body, .kix-appview-editor, .kix-page-content-wrapper, [data-content-type="RichText"], .WACViewPanel_EditingElement'
+    ) || target;
+
+    pendingInputRoots.push(editableRoot);
+    clearTimeout(inputDebounceTimer);
+    inputDebounceTimer = setTimeout(() => {
+      const roots = pendingInputRoots;
+      pendingInputRoots = [];
+      for (const root of roots) {
+        if (root?.isConnected) {
+          scanPage(root);
+        }
+      }
+    }, 450);
+  }, true);
 }
 
 // Initialize after page load without blocking rendering.

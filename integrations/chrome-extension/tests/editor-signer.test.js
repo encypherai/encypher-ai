@@ -647,7 +647,6 @@ describe('findEmbeddingRun', () => {
   it('should find embedding run when cursor is inside', () => {
     // "AB" + ZWNBSP + VS + VS + "CD"
     const text = 'AB' + String.fromCodePoint(0xFEFF, 0xFE00, 0xFE01) + 'CD';
-    const chars = [...text];
     // Cursor at position 3 (inside the embedding run: after ZWNBSP, before first VS)
     const run = findEmbeddingRun(text, 3);
     assert.ok(run);

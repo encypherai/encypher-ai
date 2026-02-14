@@ -21,14 +21,12 @@ const AZURE_BLUE = '#2A87C4';
 const LIGHT_SKY = '#B7D5ED';
 const CYBER_TEAL = '#00CED1';
 const NEUTRAL_GRAY = '#A7AFBC';
-const WHITE = '#FFFFFF';
 
 // Load real brand assets from marketing-site/public
 const MARKETING_PUBLIC = path.join(__dirname, '..', '..', '..', 'apps', 'marketing-site', 'public');
 
 const LOGO_COLOR_PNG_B64 = fs.readFileSync(path.join(MARKETING_PUBLIC, 'assets', 'logo.png')).toString('base64');
 const LOGO_WHITE_PNG_B64 = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_full_logo_white.png')).toString('base64');
-const CHECK_COLOR_SVG = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_check_color.svg'), 'utf-8');
 const CHECK_WHITE_SVG = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_check_white.svg'), 'utf-8');
 
 const LOGO_COLOR_PNG_URI = `data:image/png;base64,${LOGO_COLOR_PNG_B64}`;
@@ -46,7 +44,6 @@ function cleanSvg(raw) {
     .replace(/<sodipodi:namedview[\s\S]*?\/>\s*/g, '');
 }
 
-const CHECK_COLOR_INLINE = cleanSvg(CHECK_COLOR_SVG);
 const CHECK_WHITE_INLINE = cleanSvg(CHECK_WHITE_SVG);
 
 // Shared CSS

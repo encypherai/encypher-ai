@@ -2,7 +2,7 @@
  * Unit tests for C2PA content detection
  */
 
-import { describe, it, beforeEach } from 'node:test';
+import { describe, it } from 'node:test';
 import assert from 'node:assert';
 
 // Mock the detector functions for testing

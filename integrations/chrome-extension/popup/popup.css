@@ -32,8 +32,8 @@ body {
 
 .popup__logo-icon {
   flex-shrink: 0;
-  filter: brightness(0) invert(1);
-  border-radius: 4px;
+  height: 24px;
+  width: auto;
 }
 
 .popup__logo {
@@ -317,7 +317,7 @@ body {
   padding: 6px 12px;
   border: none;
   background: transparent;
-  color: #6B7280;
+  color: rgba(255, 255, 255, 0.82);
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
@@ -326,16 +326,18 @@ body {
 }
 
 .popup__tab:hover {
-  background: #F3F4F6;
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
 }
 
 .popup__tab--active {
-  background: #2A87C4;
-  color: white;
+  background: #FFFFFF;
+  color: #1B2F50;
 }
 
 .popup__tab--active:hover {
-  background: #1B2F50;
+  background: #FFFFFF;
+  color: #1B2F50;
 }
 
 .popup__tab-content {

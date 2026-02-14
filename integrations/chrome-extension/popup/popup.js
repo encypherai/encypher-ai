@@ -70,7 +70,6 @@ let debugAutoRefreshInterval = null;
 
 // Tab elements
 const tabs = document.querySelectorAll('.popup__tab');
-let currentTab = 'verify';
 
 /**
  * Show a specific state and hide others
@@ -177,7 +176,7 @@ async function rescanPage() {
     }
 
     // Send rescan message to content script
-    const response = await chrome.tabs.sendMessage(tab.id, { type: 'RESCAN' });
+    await chrome.tabs.sendMessage(tab.id, { type: 'RESCAN' });
     
     // Wait a moment for verification to complete
     setTimeout(loadTabState, 1000);
@@ -192,8 +191,6 @@ async function rescanPage() {
  * Switch between tabs
  */
 function switchTab(tabName) {
-  currentTab = tabName;
-  
   // Update tab buttons
   tabs.forEach(tab => {
     tab.classList.toggle('popup__tab--active', tab.dataset.tab === tabName);

@@ -236,8 +236,6 @@ function hashText(text) {
  */
 function detectEditorType(element) {
   // Check for specific editor frameworks
-  const classList = element.classList;
-  const id = element.id || '';
   const parent = element.parentElement;
 
   // Google Docs
@@ -365,13 +363,14 @@ function getEditorText(element, editorType) {
       }
       return element.innerText || element.textContent || '';
     
-    case 'quill':
+    case 'quill': {
       // Quill stores instance on parent
       const quillContainer = element.closest('.ql-container');
       if (quillContainer?.__quill) {
         return quillContainer.__quill.getText();
       }
       return element.innerText || element.textContent || '';
+    }
     
     default:
       return element.innerText || element.textContent || '';
@@ -425,7 +424,7 @@ function setEditorText(element, editorType, text) {
       element.innerText = text;
       break;
     
-    case 'quill':
+    case 'quill': {
       const quillContainer = element.closest('.ql-container');
       if (quillContainer?.__quill) {
         quillContainer.__quill.setText(text);
@@ -433,6 +432,7 @@ function setEditorText(element, editorType, text) {
       }
       element.innerText = text;
       break;
+    }
     
     default:
       element.innerText = text;
@@ -461,17 +461,6 @@ function createSignButton(editorId) {
   `;
   
   return button;
-}
-
-/**
- * Create signing status indicator
- */
-function createStatusIndicator() {
-  const indicator = document.createElement('div');
-  indicator.className = 'encypher-sign-status';
-  indicator.setAttribute('role', 'status');
-  indicator.setAttribute('aria-live', 'polite');
-  return indicator;
 }
 
 /**
@@ -1076,7 +1065,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     editorButtonsEnabled = changes.showEditorButtons.newValue;
     if (!editorButtonsEnabled) {
       // Remove all sign buttons
-      for (const [id, info] of activeEditors) {
+      for (const [, info] of activeEditors) {
         info.button?.remove();
       }
       activeEditors.clear();
