@@ -5,6 +5,7 @@ summaries.  Detects domain mismatches (content found outside the signer's
 known domain) and flags them for alerting.
 """
 
+import fnmatch
 import logging
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -12,10 +13,37 @@ from typing import Any, Dict, List, Optional
 from sqlalchemy import and_, distinct, func
 from sqlalchemy.orm import Session
 
-from ..db.models import ContentDiscovery, DiscoveryDomainSummary
+from ..db.models import ContentDiscovery, DiscoveryDomainSummary, OwnedDomain
 from ..models.schemas import DiscoveryEvent
 
 logger = logging.getLogger(__name__)
+
+
+def domain_matches_pattern(domain: str, pattern: str) -> bool:
+    """Check if a domain matches a pattern (exact or wildcard).
+
+    Supported patterns:
+        - ``example.com``        — exact match
+        - ``*.example.com``      — matches any subdomain (blog.example.com)
+        - ``**.example.com``     — same as ``*.example.com``
+
+    Matching is case-insensitive.
+    """
+    domain = domain.lower().strip()
+    pattern = pattern.lower().strip()
+
+    if not pattern or not domain:
+        return False
+
+    # Exact match
+    if domain == pattern:
+        return True
+
+    # Wildcard match using fnmatch
+    if "*" in pattern:
+        return fnmatch.fnmatch(domain, pattern)
+
+    return False
 
 
 class DiscoveryService:
@@ -54,19 +82,17 @@ class DiscoveryService:
             date=now.strftime("%Y-%m-%d"),
         )
 
-        # Domain-mismatch detection.
-        # If the extension provides the original signing domain, compare
-        # directly.  Otherwise fall back to the domain-summary heuristic
-        # (first domain seen for an org is assumed to be owned).
+        # Domain-mismatch detection.  Priority order:
+        # 1. Org's configured owned_domains allowlist (deterministic)
+        # 2. originalDomain from the event (direct comparison)
+        # 3. Domain-summary heuristic (first domain seen = owned)
         if event.organizationId and event.signerId:
-            if event.originalDomain:
-                is_external = event.pageDomain != event.originalDomain
-            else:
-                is_external = DiscoveryService._check_domain_mismatch(
-                    db,
-                    organization_id=event.organizationId,
-                    page_domain=event.pageDomain,
-                )
+            is_external = DiscoveryService._is_external_domain(
+                db,
+                organization_id=event.organizationId,
+                page_domain=event.pageDomain,
+                original_domain=event.originalDomain,
+            )
             discovery.is_external_domain = 1 if is_external else 0
 
         db.add(discovery)
@@ -107,18 +133,43 @@ class DiscoveryService:
         return count
 
     @staticmethod
-    def _check_domain_mismatch(
+    def _is_external_domain(
+        db: Session,
+        organization_id: str,
+        page_domain: str,
+        original_domain: Optional[str] = None,
+    ) -> bool:
+        """Determine if page_domain is external to the org.
+
+        Priority:
+        1. Org's configured owned_domains allowlist (deterministic, with wildcards)
+        2. originalDomain from the discovery event (direct comparison)
+        3. Domain-summary heuristic (first domain seen = owned)
+        """
+        # 1. Check configured owned domains allowlist
+        owned_domains = DiscoveryService.get_owned_domains(db, organization_id)
+        if owned_domains:
+            for od in owned_domains:
+                if domain_matches_pattern(page_domain, od.domain_pattern):
+                    return False
+            return True  # No pattern matched → external
+
+        # 2. Check originalDomain from the event
+        if original_domain:
+            return page_domain != original_domain
+
+        # 3. Fall back to domain-summary heuristic
+        return DiscoveryService._check_domain_mismatch_heuristic(
+            db, organization_id, page_domain
+        )
+
+    @staticmethod
+    def _check_domain_mismatch_heuristic(
         db: Session,
         organization_id: str,
         page_domain: str,
     ) -> bool:
-        """Return True if page_domain is NOT a known owned domain for the org.
-
-        An owned domain is one that was first seen with is_owned_domain=1
-        in the summary table.  If no summary exists yet for this org, the
-        first domain seen is assumed to be owned.
-        """
-        # Check if any owned domains exist for this org
+        """Heuristic fallback: first domain seen for an org is assumed owned."""
         owned = (
             db.query(DiscoveryDomainSummary)
             .filter(
@@ -129,11 +180,8 @@ class DiscoveryService:
         )
 
         if owned is None:
-            # No owned domains yet — this is the first discovery for this org.
-            # Assume the first domain is the org's own domain.
             return False
 
-        # Check if this specific domain is owned
         this_domain = (
             db.query(DiscoveryDomainSummary)
             .filter(
@@ -145,6 +193,108 @@ class DiscoveryService:
         )
 
         return this_domain is None
+
+    # ── Owned Domain CRUD ──
+
+    @staticmethod
+    def get_owned_domains(
+        db: Session,
+        organization_id: str,
+        active_only: bool = True,
+    ) -> List[OwnedDomain]:
+        """Get all owned domain patterns for an organization."""
+        query = db.query(OwnedDomain).filter(
+            OwnedDomain.organization_id == organization_id,
+        )
+        if active_only:
+            query = query.filter(OwnedDomain.is_active == 1)
+        return query.order_by(OwnedDomain.created_at.asc()).all()
+
+    @staticmethod
+    def add_owned_domain(
+        db: Session,
+        organization_id: str,
+        domain_pattern: str,
+        label: Optional[str] = None,
+    ) -> OwnedDomain:
+        """Add a domain pattern to an org's allowlist.
+
+        Raises ValueError if the pattern already exists for this org.
+        """
+        existing = (
+            db.query(OwnedDomain)
+            .filter(
+                OwnedDomain.organization_id == organization_id,
+                OwnedDomain.domain_pattern == domain_pattern.lower().strip(),
+            )
+            .first()
+        )
+        if existing:
+            raise ValueError(f"Domain pattern '{domain_pattern}' already exists for this organization")
+
+        owned = OwnedDomain(
+            organization_id=organization_id,
+            domain_pattern=domain_pattern.lower().strip(),
+            label=label,
+        )
+        db.add(owned)
+        db.commit()
+        db.refresh(owned)
+        return owned
+
+    @staticmethod
+    def update_owned_domain(
+        db: Session,
+        domain_id: str,
+        organization_id: str,
+        domain_pattern: Optional[str] = None,
+        label: Optional[str] = None,
+        is_active: Optional[bool] = None,
+    ) -> Optional[OwnedDomain]:
+        """Update an owned domain entry. Returns None if not found."""
+        owned = (
+            db.query(OwnedDomain)
+            .filter(
+                OwnedDomain.id == domain_id,
+                OwnedDomain.organization_id == organization_id,
+            )
+            .first()
+        )
+        if not owned:
+            return None
+
+        if domain_pattern is not None:
+            owned.domain_pattern = domain_pattern.lower().strip()
+        if label is not None:
+            owned.label = label
+        if is_active is not None:
+            owned.is_active = 1 if is_active else 0
+        owned.updated_at = datetime.now(timezone.utc)
+
+        db.commit()
+        db.refresh(owned)
+        return owned
+
+    @staticmethod
+    def delete_owned_domain(
+        db: Session,
+        domain_id: str,
+        organization_id: str,
+    ) -> bool:
+        """Delete an owned domain entry. Returns True if deleted."""
+        owned = (
+            db.query(OwnedDomain)
+            .filter(
+                OwnedDomain.id == domain_id,
+                OwnedDomain.organization_id == organization_id,
+            )
+            .first()
+        )
+        if not owned:
+            return False
+        db.delete(owned)
+        db.commit()
+        return True
 
     @staticmethod
     def _upsert_domain_summary(

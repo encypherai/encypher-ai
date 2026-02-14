@@ -17,13 +17,20 @@ Enhance the existing content discovery analytics infrastructure to provide organ
 ### Server-Side (Analytics Service)
 - **New DB models**: `ContentDiscovery` (raw discovery events) and `DiscoveryDomainSummary` (aggregated per org+domain) with proper indexes for org-scoped queries
 - **Alembic migration**: `002_content_discoveries.py` creates both tables with composite indexes
-- **DiscoveryService**: Full business logic with domain-mismatch detection (first domain = owned, subsequent new domains = external), domain summary upserts, alert tracking
-- **`original_domain` field**: Stores the domain where content was originally signed/published. When provided, enables direct domain comparison instead of heuristic-based detection
+- **DiscoveryService**: Full business logic with 3-tier domain-mismatch detection, domain summary upserts, alert tracking
+- **`original_domain` field**: Stores the domain where content was originally signed/published
+- **`OwnedDomain` model + migration 003**: Org-configurable domain allowlist with wildcard support (`*.example.com`)
+- **`domain_matches_pattern()`**: Wildcard domain matching using `fnmatch` (case-insensitive, supports `*.example.com`)
+- **Domain-mismatch priority**: 1) Org's owned_domains allowlist → 2) originalDomain from event → 3) first-domain-seen heuristic
 - **New API endpoints**:
   - `GET /discovery/domains` — org-scoped domain summaries (where is my content?)
   - `GET /discovery/alerts` — unacknowledged external domain alerts
   - `POST /discovery/alerts/{id}/ack` — acknowledge an alert
   - `GET /discovery/events` — paginated discovery event list with external-only filter
+  - `GET /discovery/owned-domains` — list org's configured owned domains
+  - `POST /discovery/owned-domains` — add a domain pattern (exact or wildcard)
+  - `PATCH /discovery/owned-domains/{id}` — update pattern, label, or active status
+  - `DELETE /discovery/owned-domains/{id}` — remove a domain pattern
 - **Updated `POST /discovery`** — now writes to dedicated `content_discoveries` table alongside legacy `UsageMetric` for backward compatibility
 
 ### Chrome Extension
@@ -36,9 +43,10 @@ Enhance the existing content discovery analytics infrastructure to provide organ
 - **Root conftest.py**: Added `ANALYTICS_APP_PATH` and `analytics-service` handling in `pytest_collectstart` so analytics-service tests resolve `app` correctly
 
 ## Test Results
-- **Discovery service tests**: 27/27 pass (test_discovery_service.py) — includes 4 new original_domain tests
+- **Discovery service tests**: 62/62 pass (test_discovery_service.py) — includes wildcard matching, CRUD, mismatch detection
 - **Existing schema tests**: 12/12 pass (test_discovery_endpoint.py)
 - **Chrome extension tests**: 42/42 pass (detector.test.js + editor-signer.test.js)
+- **Total**: 116 tests, all passing
 
 ## Files Changed
 - `services/analytics-service/app/db/models.py` — Added ContentDiscovery + DiscoveryDomainSummary models
@@ -46,7 +54,8 @@ Enhance the existing content discovery analytics infrastructure to provide organ
 - `services/analytics-service/app/services/discovery_service.py` — NEW service with domain-mismatch detection
 - `services/analytics-service/app/models/schemas.py` — Added DomainSummaryItem, DomainAlertItem, ContentDiscoveryItem, etc.
 - `services/analytics-service/app/api/v1/endpoints.py` — Updated POST /discovery, added 4 new endpoints
-- `services/analytics-service/tests/test_discovery_service.py` — NEW 27 tests (incl. original_domain)
+- `services/analytics-service/tests/test_discovery_service.py` — 62 tests (discovery, CRUD, wildcards, mismatch)
+- `services/analytics-service/alembic/versions/003_owned_domains.py` — NEW migration for owned_domains table
 - `services/analytics-service/conftest.py` — NEW root conftest for path resolution
 - `integrations/chrome-extension/background/service-worker.js` — Made discovery non-optional
 - `integrations/chrome-extension/PRIVACY.md` — Added discovery tracking disclosure
@@ -55,19 +64,15 @@ Enhance the existing content discovery analytics infrastructure to provide organ
 
 ## Suggested Git Commit Message
 ```
-feat(analytics): content discovery tracking with domain-mismatch alerts
+feat(analytics): owned domain allowlist with wildcard matching
 
-- Add dedicated content_discoveries + discovery_domain_summaries tables
-- Add original_domain column for storing signer's publishing domain
-- Implement DiscoveryService with domain-mismatch detection logic
-- Support direct domain comparison when originalDomain is provided
-- Add GET /discovery/domains, /alerts, /events endpoints for org dashboard
-- Add POST /discovery/alerts/{id}/ack for alert acknowledgment
-- Update POST /discovery to write to dedicated table (+ legacy compat)
-- Make discovery analytics non-optional in Chrome extension
-- Send originalDomain from verify response in extension analytics
-- Fix screenshot-1 Chrome bar icon (checkmark instead of full logo)
-- Update privacy policy with full discovery tracking disclosure
-- Add 27 new discovery service tests (all pass)
-- Fix root conftest.py to support analytics-service app resolution
+- Add OwnedDomain model + migration 003 for org domain allowlist
+- Implement domain_matches_pattern() with fnmatch wildcard support
+- Add CRUD endpoints: GET/POST/PATCH/DELETE /discovery/owned-domains
+- Update domain-mismatch detection priority:
+  1) Org's owned_domains allowlist (deterministic, wildcards)
+  2) originalDomain from discovery event (direct comparison)
+  3) First-domain-seen heuristic (fallback)
+- Add 35 new tests: wildcard matching, CRUD, mismatch detection
+- Total: 62 discovery service + 12 schema + 42 extension = 116 tests
 ```

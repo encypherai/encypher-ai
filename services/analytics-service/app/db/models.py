@@ -172,3 +172,40 @@ class DiscoveryDomainSummary(Base):
             f"<DiscoveryDomainSummary(org={self.organization_id}, "
             f"domain={self.page_domain}, count={self.discovery_count})>"
         )
+
+
+class OwnedDomain(Base):
+    """Organization-configured domain allowlist for discovery tracking.
+
+    Orgs can register domains they own so that domain-mismatch detection
+    is deterministic rather than heuristic-based.  Supports wildcard
+    patterns (e.g. ``*.example.com``) to match all subdomains.
+
+    When an org has at least one OwnedDomain row, the mismatch check
+    uses this list exclusively.  Otherwise it falls back to the
+    originalDomain field or the first-domain-seen heuristic.
+    """
+
+    __tablename__ = "owned_domains"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+
+    organization_id = Column(String(255), nullable=False, index=True)
+
+    # Domain pattern — exact domain or wildcard (e.g. "*.example.com")
+    domain_pattern = Column(String(255), nullable=False)
+
+    # Human-readable label (e.g. "Main website", "CDN")
+    label = Column(String(255), nullable=True)
+
+    # Whether this entry is currently active
+    is_active = Column(Integer, nullable=False, default=1)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self):
+        return (
+            f"<OwnedDomain(org={self.organization_id}, "
+            f"pattern={self.domain_pattern})>"
+        )

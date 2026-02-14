@@ -30,6 +30,16 @@ Enhance the existing content discovery analytics to give organizations real-time
 - [x] 2.2 Ensure `pageUrl` is always included (already done in detector.js) -- node --test
 - [x] 2.3 Extension tests pass (42/42) -- node --test
 
+### 4.0 Owned Domain Allowlist (API-configurable source domains)
+- [x] 4.1 Add `OwnedDomain` DB model with wildcard pattern support -- pytest
+- [x] 4.2 Add Alembic migration `003_owned_domains.py` -- pytest
+- [x] 4.3 Add Pydantic schemas for CRUD (OwnedDomainCreate/Update/Item/ListResponse) -- pytest
+- [x] 4.4 Add CRUD endpoints: GET/POST/PATCH/DELETE `/discovery/owned-domains` -- pytest
+- [x] 4.5 Implement `domain_matches_pattern()` with wildcard support (fnmatch) -- pytest (13 tests)
+- [x] 4.6 Update `_is_external_domain()` priority: allowlist → originalDomain → heuristic -- pytest (10 tests)
+- [x] 4.7 Owned domain CRUD tests (13 tests) -- pytest
+- [x] 4.8 All tests pass: 62 discovery service + 12 schema = 74 total -- pytest
+
 ### 3.0 Documentation
 - [x] 3.1 Update Chrome extension PRIVACY.md with discovery tracking disclosure
 - [x] 3.2 Update summary section in PRIVACY.md
@@ -44,7 +54,9 @@ Enhance the existing content discovery analytics to give organizations real-time
 
 ## Completion Notes
 - All server-side and extension-side changes implemented and tested
-- 23 new discovery service tests + 12 existing schema tests + 42 extension tests all pass
+- 62 discovery service tests + 12 schema tests + 42 extension tests = 116 total, all pass
 - Privacy policy updated with full disclosure of discovery tracking
 - Discovery reporting is non-optional (cannot be disabled by users)
 - Reporter identity fully anonymized via ephemeral session IDs
+- Orgs can configure owned domains via API with wildcard support (*.example.com)
+- Domain-mismatch detection priority: allowlist → originalDomain → heuristic

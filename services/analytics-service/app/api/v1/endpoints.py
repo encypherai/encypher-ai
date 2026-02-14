@@ -28,6 +28,10 @@ from ...models.schemas import (
     DomainAlertsResponse,
     ContentDiscoveryItem,
     ContentDiscoveryListResponse,
+    OwnedDomainCreate,
+    OwnedDomainUpdate,
+    OwnedDomainItem,
+    OwnedDomainListResponse,
 )
 from ...services.analytics_service import AnalyticsService
 from ...services.discovery_service import DiscoveryService
@@ -702,6 +706,144 @@ async def get_discovery_events(
         limit=limit,
         offset=offset,
     )
+
+
+# ============================================
+# Owned Domain Management Endpoints
+# ============================================
+
+
+@router.get("/discovery/owned-domains", response_model=OwnedDomainListResponse)
+async def list_owned_domains(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """List all owned domain patterns for the current organization."""
+    org_id = current_user.get("organization_id")
+    if not org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization ID required",
+        )
+
+    domains = DiscoveryService.get_owned_domains(db, org_id, active_only=False)
+    items = [
+        OwnedDomainItem(
+            id=d.id,
+            organization_id=d.organization_id,
+            domain_pattern=d.domain_pattern,
+            label=d.label,
+            is_active=bool(d.is_active),
+            created_at=d.created_at,
+            updated_at=d.updated_at,
+        )
+        for d in domains
+    ]
+    return OwnedDomainListResponse(success=True, data=items, total=len(items))
+
+
+@router.post("/discovery/owned-domains", response_model=OwnedDomainItem, status_code=status.HTTP_201_CREATED)
+async def add_owned_domain(
+    body: OwnedDomainCreate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Add a domain pattern to the organization's allowlist.
+
+    Supports exact domains (``example.com``) and wildcard patterns
+    (``*.example.com``) for subdomain matching.
+    """
+    org_id = current_user.get("organization_id")
+    if not org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization ID required",
+        )
+
+    try:
+        owned = DiscoveryService.add_owned_domain(
+            db,
+            organization_id=org_id,
+            domain_pattern=body.domain_pattern,
+            label=body.label,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=str(exc),
+        )
+
+    return OwnedDomainItem(
+        id=owned.id,
+        organization_id=owned.organization_id,
+        domain_pattern=owned.domain_pattern,
+        label=owned.label,
+        is_active=bool(owned.is_active),
+        created_at=owned.created_at,
+        updated_at=owned.updated_at,
+    )
+
+
+@router.patch("/discovery/owned-domains/{domain_id}", response_model=OwnedDomainItem)
+async def update_owned_domain(
+    domain_id: str,
+    body: OwnedDomainUpdate,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Update an owned domain entry (pattern, label, or active status)."""
+    org_id = current_user.get("organization_id")
+    if not org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization ID required",
+        )
+
+    owned = DiscoveryService.update_owned_domain(
+        db,
+        domain_id=domain_id,
+        organization_id=org_id,
+        domain_pattern=body.domain_pattern,
+        label=body.label,
+        is_active=body.is_active,
+    )
+    if not owned:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Owned domain not found",
+        )
+
+    return OwnedDomainItem(
+        id=owned.id,
+        organization_id=owned.organization_id,
+        domain_pattern=owned.domain_pattern,
+        label=owned.label,
+        is_active=bool(owned.is_active),
+        created_at=owned.created_at,
+        updated_at=owned.updated_at,
+    )
+
+
+@router.delete("/discovery/owned-domains/{domain_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_owned_domain(
+    domain_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Remove a domain pattern from the organization's allowlist."""
+    org_id = current_user.get("organization_id")
+    if not org_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization ID required",
+        )
+
+    deleted = DiscoveryService.delete_owned_domain(db, domain_id=domain_id, organization_id=org_id)
+    if not deleted:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Owned domain not found",
+        )
 
 
 # ============================================

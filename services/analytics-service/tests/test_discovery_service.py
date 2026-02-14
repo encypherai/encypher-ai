@@ -11,9 +11,9 @@ from unittest.mock import MagicMock, patch
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.db.models import Base, ContentDiscovery, DiscoveryDomainSummary
+from app.db.models import Base, ContentDiscovery, DiscoveryDomainSummary, OwnedDomain
 from app.models.schemas import DiscoveryEvent
-from app.services.discovery_service import DiscoveryService
+from app.services.discovery_service import DiscoveryService, domain_matches_pattern
 
 
 @pytest.fixture
@@ -449,3 +449,302 @@ class TestQueryMethods:
             db_session, "org_456", limit=2, offset=4
         )
         assert len(page3) == 1
+
+
+class TestDomainMatchesPattern:
+    """Tests for the domain_matches_pattern utility function."""
+
+    def test_exact_match(self):
+        assert domain_matches_pattern("example.com", "example.com") is True
+
+    def test_exact_match_case_insensitive(self):
+        assert domain_matches_pattern("Example.COM", "example.com") is True
+
+    def test_exact_no_match(self):
+        assert domain_matches_pattern("other.com", "example.com") is False
+
+    def test_wildcard_subdomain(self):
+        assert domain_matches_pattern("blog.example.com", "*.example.com") is True
+
+    def test_wildcard_deep_subdomain(self):
+        """fnmatch * matches any chars including dots — multi-level subdomains match."""
+        assert domain_matches_pattern("a.b.example.com", "*.example.com") is True
+
+    def test_wildcard_root_no_match(self):
+        """*.example.com should NOT match example.com itself."""
+        assert domain_matches_pattern("example.com", "*.example.com") is False
+
+    def test_wildcard_different_domain(self):
+        assert domain_matches_pattern("blog.other.com", "*.example.com") is False
+
+    def test_wildcard_case_insensitive(self):
+        assert domain_matches_pattern("Blog.Example.COM", "*.example.com") is True
+
+    def test_empty_domain(self):
+        assert domain_matches_pattern("", "example.com") is False
+
+    def test_empty_pattern(self):
+        assert domain_matches_pattern("example.com", "") is False
+
+    def test_both_empty(self):
+        assert domain_matches_pattern("", "") is False
+
+    def test_whitespace_handling(self):
+        assert domain_matches_pattern("  example.com  ", "example.com") is True
+
+    def test_double_star_wildcard(self):
+        """**.example.com should work like *.example.com for single level."""
+        assert domain_matches_pattern("blog.example.com", "**.example.com") is True
+
+
+class TestOwnedDomainCRUD:
+    """Tests for owned domain CRUD operations."""
+
+    def test_add_owned_domain(self, db_session):
+        owned = DiscoveryService.add_owned_domain(
+            db_session, organization_id="org_1", domain_pattern="example.com", label="Main site"
+        )
+        assert owned.organization_id == "org_1"
+        assert owned.domain_pattern == "example.com"
+        assert owned.label == "Main site"
+        assert owned.is_active == 1
+
+    def test_add_wildcard_domain(self, db_session):
+        owned = DiscoveryService.add_owned_domain(
+            db_session, organization_id="org_1", domain_pattern="*.example.com", label="Subdomains"
+        )
+        assert owned.domain_pattern == "*.example.com"
+
+    def test_add_duplicate_raises(self, db_session):
+        DiscoveryService.add_owned_domain(db_session, "org_1", "example.com")
+        with pytest.raises(ValueError, match="already exists"):
+            DiscoveryService.add_owned_domain(db_session, "org_1", "example.com")
+
+    def test_add_normalizes_case(self, db_session):
+        owned = DiscoveryService.add_owned_domain(db_session, "org_1", "Example.COM")
+        assert owned.domain_pattern == "example.com"
+
+    def test_get_owned_domains(self, db_session):
+        DiscoveryService.add_owned_domain(db_session, "org_1", "a.com")
+        DiscoveryService.add_owned_domain(db_session, "org_1", "b.com")
+        DiscoveryService.add_owned_domain(db_session, "org_2", "c.com")
+
+        result = DiscoveryService.get_owned_domains(db_session, "org_1")
+        assert len(result) == 2
+        patterns = [d.domain_pattern for d in result]
+        assert "a.com" in patterns
+        assert "b.com" in patterns
+
+    def test_get_owned_domains_active_only(self, db_session):
+        d1 = DiscoveryService.add_owned_domain(db_session, "org_1", "active.com")
+        d2 = DiscoveryService.add_owned_domain(db_session, "org_1", "inactive.com")
+        DiscoveryService.update_owned_domain(db_session, d2.id, "org_1", is_active=False)
+
+        active = DiscoveryService.get_owned_domains(db_session, "org_1", active_only=True)
+        assert len(active) == 1
+        assert active[0].domain_pattern == "active.com"
+
+        all_domains = DiscoveryService.get_owned_domains(db_session, "org_1", active_only=False)
+        assert len(all_domains) == 2
+
+    def test_update_owned_domain(self, db_session):
+        owned = DiscoveryService.add_owned_domain(db_session, "org_1", "old.com")
+        updated = DiscoveryService.update_owned_domain(
+            db_session, owned.id, "org_1", domain_pattern="new.com", label="Updated"
+        )
+        assert updated.domain_pattern == "new.com"
+        assert updated.label == "Updated"
+
+    def test_update_nonexistent_returns_none(self, db_session):
+        result = DiscoveryService.update_owned_domain(db_session, "fake_id", "org_1", label="x")
+        assert result is None
+
+    def test_update_wrong_org_returns_none(self, db_session):
+        owned = DiscoveryService.add_owned_domain(db_session, "org_1", "example.com")
+        result = DiscoveryService.update_owned_domain(db_session, owned.id, "org_2", label="x")
+        assert result is None
+
+    def test_deactivate_owned_domain(self, db_session):
+        owned = DiscoveryService.add_owned_domain(db_session, "org_1", "example.com")
+        updated = DiscoveryService.update_owned_domain(db_session, owned.id, "org_1", is_active=False)
+        assert updated.is_active == 0
+
+    def test_delete_owned_domain(self, db_session):
+        owned = DiscoveryService.add_owned_domain(db_session, "org_1", "example.com")
+        assert DiscoveryService.delete_owned_domain(db_session, owned.id, "org_1") is True
+        assert DiscoveryService.get_owned_domains(db_session, "org_1") == []
+
+    def test_delete_nonexistent_returns_false(self, db_session):
+        assert DiscoveryService.delete_owned_domain(db_session, "fake_id", "org_1") is False
+
+    def test_delete_wrong_org_returns_false(self, db_session):
+        owned = DiscoveryService.add_owned_domain(db_session, "org_1", "example.com")
+        assert DiscoveryService.delete_owned_domain(db_session, owned.id, "org_2") is False
+
+
+class TestOwnedDomainMismatchDetection:
+    """Tests for domain-mismatch detection using the owned_domains allowlist."""
+
+    def test_allowlist_exact_match_not_external(self, db_session):
+        """Page domain matching an owned domain should NOT be external."""
+        DiscoveryService.add_owned_domain(db_session, "org_1", "publisher.com")
+
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://publisher.com/article",
+            pageDomain="publisher.com",
+            signerId="signer_1",
+            organizationId="org_1",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 0
+
+    def test_allowlist_wildcard_match_not_external(self, db_session):
+        """Subdomain matching a wildcard pattern should NOT be external."""
+        DiscoveryService.add_owned_domain(db_session, "org_1", "publisher.com")
+        DiscoveryService.add_owned_domain(db_session, "org_1", "*.publisher.com")
+
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://blog.publisher.com/post",
+            pageDomain="blog.publisher.com",
+            signerId="signer_1",
+            organizationId="org_1",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 0
+
+    def test_allowlist_no_match_is_external(self, db_session):
+        """Page domain NOT in allowlist should be external."""
+        DiscoveryService.add_owned_domain(db_session, "org_1", "publisher.com")
+        DiscoveryService.add_owned_domain(db_session, "org_1", "*.publisher.com")
+
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://copier.com/stolen",
+            pageDomain="copier.com",
+            signerId="signer_1",
+            organizationId="org_1",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 1
+
+    def test_allowlist_takes_priority_over_original_domain(self, db_session):
+        """Allowlist should override originalDomain when configured."""
+        DiscoveryService.add_owned_domain(db_session, "org_1", "publisher.com")
+        DiscoveryService.add_owned_domain(db_session, "org_1", "cdn.publisher.com")
+
+        # originalDomain says "publisher.com" but page is on cdn.publisher.com
+        # Without allowlist this would be external; with allowlist it's owned
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://cdn.publisher.com/article",
+            pageDomain="cdn.publisher.com",
+            signerId="signer_1",
+            organizationId="org_1",
+            originalDomain="publisher.com",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 0
+
+    def test_allowlist_takes_priority_over_heuristic(self, db_session):
+        """Allowlist should override the first-domain-seen heuristic."""
+        DiscoveryService.add_owned_domain(db_session, "org_1", "publisher.com")
+
+        # First discovery on a different domain — heuristic would say "not external"
+        # but allowlist says it IS external
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://copier.com/stolen",
+            pageDomain="copier.com",
+            signerId="signer_1",
+            organizationId="org_1",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 1
+
+    def test_inactive_domain_not_checked(self, db_session):
+        """Deactivated owned domains should not be used for matching."""
+        owned = DiscoveryService.add_owned_domain(db_session, "org_1", "publisher.com")
+        DiscoveryService.update_owned_domain(db_session, owned.id, "org_1", is_active=False)
+
+        # With no active owned domains, falls back to heuristic (first = owned)
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://publisher.com/article",
+            pageDomain="publisher.com",
+            signerId="signer_1",
+            organizationId="org_1",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        # First domain via heuristic → not external
+        assert result.is_external_domain == 0
+
+    def test_multiple_owned_domains(self, db_session):
+        """Org with multiple owned domains — all should be recognized."""
+        DiscoveryService.add_owned_domain(db_session, "org_1", "publisher.com")
+        DiscoveryService.add_owned_domain(db_session, "org_1", "publisher-cdn.net")
+        DiscoveryService.add_owned_domain(db_session, "org_1", "*.publisher.com")
+
+        for domain, expected_external in [
+            ("publisher.com", 0),
+            ("publisher-cdn.net", 0),
+            ("blog.publisher.com", 0),
+            ("evil-copier.com", 1),
+        ]:
+            event = DiscoveryEvent(
+                timestamp=datetime.now(timezone.utc),
+                pageUrl=f"https://{domain}/page",
+                pageDomain=domain,
+                signerId="signer_1",
+                organizationId="org_1",
+                verified=True,
+            )
+            result = DiscoveryService.record_discovery(db_session, event)
+            assert result.is_external_domain == expected_external, f"Failed for {domain}"
+
+    def test_no_allowlist_falls_back_to_original_domain(self, db_session):
+        """Without owned domains configured, should use originalDomain."""
+        event = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://copier.com/stolen",
+            pageDomain="copier.com",
+            signerId="signer_1",
+            organizationId="org_no_allowlist",
+            originalDomain="publisher.com",
+            verified=True,
+        )
+        result = DiscoveryService.record_discovery(db_session, event)
+        assert result.is_external_domain == 1
+
+    def test_no_allowlist_no_original_falls_back_to_heuristic(self, db_session):
+        """Without owned domains or originalDomain, should use heuristic."""
+        # First discovery → heuristic says "owned"
+        event1 = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://first-domain.com/page",
+            pageDomain="first-domain.com",
+            signerId="signer_1",
+            organizationId="org_heuristic",
+            verified=True,
+        )
+        result1 = DiscoveryService.record_discovery(db_session, event1)
+        assert result1.is_external_domain == 0
+
+        # Second domain → heuristic says "external"
+        event2 = DiscoveryEvent(
+            timestamp=datetime.now(timezone.utc),
+            pageUrl="https://second-domain.com/page",
+            pageDomain="second-domain.com",
+            signerId="signer_1",
+            organizationId="org_heuristic",
+            verified=True,
+        )
+        result2 = DiscoveryService.record_discovery(db_session, event2)
+        assert result2.is_external_domain == 1

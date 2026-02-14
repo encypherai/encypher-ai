@@ -221,3 +221,41 @@ class ContentDiscoveryListResponse(BaseModel):
     total: int
     limit: int
     offset: int
+
+
+# ── Owned Domain Schemas ──
+
+
+class OwnedDomainCreate(BaseModel):
+    """Request to add a domain to an org's allowlist"""
+
+    domain_pattern: str = Field(..., max_length=255, description="Exact domain or wildcard pattern (e.g. '*.example.com')")
+    label: Optional[str] = Field(default=None, max_length=255, description="Human-readable label")
+
+
+class OwnedDomainUpdate(BaseModel):
+    """Request to update an owned domain entry"""
+
+    domain_pattern: Optional[str] = Field(default=None, max_length=255)
+    label: Optional[str] = Field(default=None, max_length=255)
+    is_active: Optional[bool] = None
+
+
+class OwnedDomainItem(BaseModel):
+    """A single owned domain entry"""
+
+    id: str
+    organization_id: str
+    domain_pattern: str
+    label: Optional[str] = None
+    is_active: bool
+    created_at: datetime
+    updated_at: datetime
+
+
+class OwnedDomainListResponse(BaseModel):
+    """Response for owned domain list queries"""
+
+    success: bool
+    data: List[OwnedDomainItem]
+    total: int
