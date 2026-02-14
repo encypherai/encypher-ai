@@ -189,3 +189,62 @@ feat(integrations): add Microsoft Office add-in for Word/Excel/PowerPoint
 - add tests for provenance utils, host capabilities, and API URL policy (13/13 passing)
 - add README with sideloading and AppSource checklist
 ```
+
+---
+
+## Outlook Email Add-in + Embedding Survivability (Implemented)
+
+### Scope
+- Built a native Outlook Mailbox add-in scaffold and implemented empirical survivability tests for `micro_ecc_c2pa` vs `zw_embedding` under email-like processor transforms.
+
+### What was implemented
+- **Outlook add-in scaffold** under `integrations/outlook-email-addin/`:
+  - `manifest.xml` (Mailbox host, compose/read command surfaces)
+  - task pane UI (`taskpane/taskpane.html`, `taskpane/taskpane.css`)
+  - app orchestration (`src/app.js`)
+  - mailbox body adapter (`src/outlook-adapter.js`)
+  - API client with strict host validation (`src/api-client.js`)
+  - roaming settings + provenance persistence (`src/storage.js`)
+  - embedding/provenance utilities (`src/provenance-utils.js`)
+- **Email survivability harness** (`src/survivability-harness.js`):
+  - transform scenarios: identity, unicode NFC, strip supplementary VS, strip all VS, strip format controls
+  - viability thresholds: VS run >= 44 (micro_ecc marker), zero-width run >= 128
+- **Outlook harness tests**:
+  - `tests/provenance-utils.test.js`
+  - `tests/api-client.test.js`
+  - `tests/survivability-harness.test.js`
+- **Enterprise API survivability tests**:
+  - `enterprise_api/tests/test_email_embedding_survivability.py`
+  - uses real `vs256_rs_crypto` and `zw_crypto` sign/verify utilities
+- **Documentation**:
+  - `integrations/outlook-email-addin/README.md`
+  - `docs/architecture/EMAIL_EMBEDDING_SURVIVABILITY_MATRIX.md`
+  - `PRDs/CURRENT/PRD_Outlook_Email_Addin_and_Embedding_Survivability.md`
+
+### Validation
+- `npm test` in `integrations/outlook-email-addin`: **14/14 passing**
+- `uv run pytest enterprise_api/tests/test_email_embedding_survivability.py -q`: **5/5 passing**
+
+### Survivability findings (simulated processors)
+- `micro_ecc_c2pa` survives identity/NFC and format-control stripping, but fails when variation selectors are stripped.
+- `zw_embedding` survives identity/NFC and variation-selector stripping, but fails when aggressive format-control stripping is applied.
+- Conclusion: no single invisible method is universal across all email processors.
+
+### Default strategy recommendation
+- Default to **`micro_ecc_c2pa`** for compactness + RS error correction.
+- Add dynamic fallback to **`zw_embedding`** for known VS-stripping domains/processors.
+- Keep verification fallback attempting both marker families.
+
+### Suggested Git Commit Message (Outlook + Survivability)
+```
+feat(integrations): add Outlook email add-in and embedding survivability harness
+
+- create Outlook Mailbox add-in scaffold with compose/read task pane support
+- implement email body sign/verify flow with Encypher API integration
+- add roaming-settings persistence for API settings and provenance chain
+- enforce https + *.encypherai.com API host validation
+- add JS survivability harness comparing micro_ecc_c2pa vs zero-width embeddings
+- add Python enterprise tests for email transform survivability with real crypto utilities
+- add survivability matrix documentation and Outlook sideloading README
+- test status: outlook npm tests 14/14, enterprise pytest 5/5
+```

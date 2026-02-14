@@ -1,0 +1,9 @@
+{
+  "name": "@encypher/outlook-email-addin",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Encypher Outlook Add-in for email sign/verify and provenance",
+  "scripts": {
+    "test": "node --test tests/*.test.js"
+  }
+}
