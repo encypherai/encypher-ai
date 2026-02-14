@@ -20,61 +20,91 @@ branch_labels = None
 depends_on = None
 
 
+def _has_table(table_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    return inspector.has_table(table_name)
+
+
+def _has_index(table_name: str, index_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    indexes = inspector.get_indexes(table_name)
+    return any(idx.get("name") == index_name for idx in indexes)
+
+
+def _has_column(table_name: str, column_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = inspector.get_columns(table_name)
+    return any(col.get("name") == column_name for col in columns)
+
+
 def upgrade() -> None:
     # Create status_list_entries table
-    op.create_table(
-        "status_list_entries",
-        sa.Column("organization_id", sa.String(64), nullable=False),
-        sa.Column("list_index", sa.Integer(), nullable=False),
-        sa.Column("bit_index", sa.Integer(), nullable=False),
-        sa.Column("document_id", sa.String(64), nullable=False),
-        sa.Column("revoked", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("revoked_at", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column("revoked_reason", sa.String(50), nullable=True),
-        sa.Column("revoked_reason_detail", sa.Text(), nullable=True),
-        sa.Column("revoked_by", sa.String(64), nullable=True),
-        sa.Column("reinstated_at", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column("reinstated_by", sa.String(64), nullable=True),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("organization_id", "list_index", "bit_index"),
-    )
+    if not _has_table("status_list_entries"):
+        op.create_table(
+            "status_list_entries",
+            sa.Column("organization_id", sa.String(64), nullable=False),
+            sa.Column("list_index", sa.Integer(), nullable=False),
+            sa.Column("bit_index", sa.Integer(), nullable=False),
+            sa.Column("document_id", sa.String(64), nullable=False),
+            sa.Column("revoked", sa.Boolean(), nullable=False, server_default="false"),
+            sa.Column("revoked_at", sa.TIMESTAMP(timezone=True), nullable=True),
+            sa.Column("revoked_reason", sa.String(50), nullable=True),
+            sa.Column("revoked_reason_detail", sa.Text(), nullable=True),
+            sa.Column("revoked_by", sa.String(64), nullable=True),
+            sa.Column("reinstated_at", sa.TIMESTAMP(timezone=True), nullable=True),
+            sa.Column("reinstated_by", sa.String(64), nullable=True),
+            sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
+            sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
+            sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], ondelete="CASCADE"),
+            sa.PrimaryKeyConstraint("organization_id", "list_index", "bit_index"),
+        )
 
     # Create indexes for status_list_entries
-    op.create_index("idx_status_entry_document", "status_list_entries", ["document_id"])
-    op.create_index("idx_status_entry_org_revoked", "status_list_entries", ["organization_id", "revoked"])
-    op.create_index("idx_status_entry_list", "status_list_entries", ["organization_id", "list_index"])
+    if not _has_index("status_list_entries", "idx_status_entry_document"):
+        op.create_index("idx_status_entry_document", "status_list_entries", ["document_id"])
+    if not _has_index("status_list_entries", "idx_status_entry_org_revoked"):
+        op.create_index("idx_status_entry_org_revoked", "status_list_entries", ["organization_id", "revoked"])
+    if not _has_index("status_list_entries", "idx_status_entry_list"):
+        op.create_index("idx_status_entry_list", "status_list_entries", ["organization_id", "list_index"])
 
     # Create status_list_metadata table
-    op.create_table(
-        "status_list_metadata",
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
-        sa.Column("organization_id", sa.String(64), nullable=False),
-        sa.Column("list_index", sa.Integer(), nullable=False),
-        sa.Column("next_bit_index", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("is_full", sa.Boolean(), nullable=False, server_default="false"),
-        sa.Column("current_version", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("last_generated_at", sa.TIMESTAMP(timezone=True), nullable=True),
-        sa.Column("generation_duration_ms", sa.Integer(), nullable=True),
-        sa.Column("cdn_url", sa.String(500), nullable=True),
-        sa.Column("cdn_etag", sa.String(64), nullable=True),
-        sa.Column("total_documents", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("revoked_count", sa.Integer(), nullable=False, server_default="0"),
-        sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
-        sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], ondelete="CASCADE"),
-        sa.PrimaryKeyConstraint("id"),
-    )
+    if not _has_table("status_list_metadata"):
+        op.create_table(
+            "status_list_metadata",
+            sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
+            sa.Column("organization_id", sa.String(64), nullable=False),
+            sa.Column("list_index", sa.Integer(), nullable=False),
+            sa.Column("next_bit_index", sa.Integer(), nullable=False, server_default="0"),
+            sa.Column("is_full", sa.Boolean(), nullable=False, server_default="false"),
+            sa.Column("current_version", sa.Integer(), nullable=False, server_default="0"),
+            sa.Column("last_generated_at", sa.TIMESTAMP(timezone=True), nullable=True),
+            sa.Column("generation_duration_ms", sa.Integer(), nullable=True),
+            sa.Column("cdn_url", sa.String(500), nullable=True),
+            sa.Column("cdn_etag", sa.String(64), nullable=True),
+            sa.Column("total_documents", sa.Integer(), nullable=False, server_default="0"),
+            sa.Column("revoked_count", sa.Integer(), nullable=False, server_default="0"),
+            sa.Column("created_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
+            sa.Column("updated_at", sa.TIMESTAMP(timezone=True), nullable=False, server_default=sa.text("now()")),
+            sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"], ondelete="CASCADE"),
+            sa.PrimaryKeyConstraint("id"),
+        )
 
     # Create indexes for status_list_metadata
-    op.create_index("idx_status_meta_org_list", "status_list_metadata", ["organization_id", "list_index"], unique=True)
-    op.create_index("idx_status_meta_stale", "status_list_metadata", ["organization_id", "last_generated_at"])
+    if not _has_index("status_list_metadata", "idx_status_meta_org_list"):
+        op.create_index("idx_status_meta_org_list", "status_list_metadata", ["organization_id", "list_index"], unique=True)
+    if not _has_index("status_list_metadata", "idx_status_meta_stale"):
+        op.create_index("idx_status_meta_stale", "status_list_metadata", ["organization_id", "last_generated_at"])
 
     # Add status_list columns to content_references for linking
-    op.add_column("content_references", sa.Column("status_list_index", sa.Integer(), nullable=True))
-    op.add_column("content_references", sa.Column("status_bit_index", sa.Integer(), nullable=True))
-    op.add_column("content_references", sa.Column("status_list_url", sa.String(500), nullable=True))
+    if not _has_column("content_references", "status_list_index"):
+        op.add_column("content_references", sa.Column("status_list_index", sa.Integer(), nullable=True))
+    if not _has_column("content_references", "status_bit_index"):
+        op.add_column("content_references", sa.Column("status_bit_index", sa.Integer(), nullable=True))
+    if not _has_column("content_references", "status_list_url"):
+        op.add_column("content_references", sa.Column("status_list_url", sa.String(500), nullable=True))
 
 
 def downgrade() -> None:
