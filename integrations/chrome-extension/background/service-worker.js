@@ -17,9 +17,11 @@ let API_CONFIG = {
   timeout: 10000
 };
 
-// Analytics configuration
-let ANALYTICS_CONFIG = {
-  enabled: true,
+// Analytics configuration — discovery tracking is always on.
+// This reports WHERE embeddings are found (URL + domain) so content owners
+// can see where their signed content appears.  Reporter identity is fully
+// anonymized (ephemeral session ID, no PII, no browsing history).
+const ANALYTICS_CONFIG = {
   batchSize: 10,
   flushIntervalMs: 30000 // 30 seconds
 };
@@ -339,7 +341,6 @@ async function signContent(text, title, options = {}) {
  * This "phones home" to report where embeddings are found and who owns them
  */
 function trackEmbeddingDiscovery(discoveryData) {
-  if (!ANALYTICS_CONFIG.enabled) return;
   
   const event = {
     timestamp: new Date().toISOString(),
@@ -352,6 +353,7 @@ function trackEmbeddingDiscovery(discoveryData) {
     signerName: discoveryData.signerName,
     organizationId: discoveryData.organizationId,
     documentId: discoveryData.documentId,
+    originalDomain: discoveryData.originalDomain || null,
     // Verification result
     verified: discoveryData.verified,
     verificationStatus: discoveryData.status,
@@ -452,7 +454,7 @@ function getAnalyticsSummary() {
   return {
     queuedEvents: analyticsQueue.length,
     sessionId: getOrCreateSessionId(),
-    enabled: ANALYTICS_CONFIG.enabled
+    enabled: true  // Discovery tracking is always on (non-optional)
   };
 }
 
@@ -561,6 +563,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             signerName: result.data?.signer_name,
             organizationId: result.data?.organization_id,
             documentId: result.data?.document_id,
+            originalDomain: result.data?.original_domain || result.data?.signing_domain,
             verified: result.success,
             status: result.success ? 'verified' : (result.revoked ? 'revoked' : 'invalid'),
             markerType: message.markerType
@@ -637,18 +640,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'SETTINGS_RESET':
       API_CONFIG.baseUrl = 'https://api.encypherai.com';
-      ANALYTICS_CONFIG.enabled = true;
       verificationCache.clear();
       analyticsQueue.length = 0;
       sendResponse({ received: true });
       break;
 
     case 'SET_ANALYTICS_ENABLED':
-      ANALYTICS_CONFIG.enabled = message.enabled;
-      if (!message.enabled) {
-        analyticsQueue.length = 0; // Clear queue when disabled
-      }
-      sendResponse({ received: true, enabled: ANALYTICS_CONFIG.enabled });
+      // Discovery tracking is non-optional — always enabled.
+      // This handler is kept for backward compatibility but is a no-op.
+      sendResponse({ received: true, enabled: true });
       break;
 
     case 'GET_ANALYTICS_SUMMARY':

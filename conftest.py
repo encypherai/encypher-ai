@@ -13,6 +13,7 @@ from typing import Any, cast
 ROOT = Path(__file__).resolve().parent
 ENTERPRISE_APP_PATH = ROOT / "enterprise_api" / "app"
 DASHBOARD_APP_PATH = ROOT / "dashboard_app" / "backend" / "app"
+ANALYTICS_APP_PATH = ROOT / "services" / "analytics-service" / "app"
 
 
 def _ensure_workspace_paths() -> None:
@@ -77,6 +78,8 @@ def pytest_collectstart(collector) -> None:
     path_str = str(path)
     if "dashboard_app" in path_str:
         _set_app_module(DASHBOARD_APP_PATH)
+    elif "analytics-service" in path_str:
+        _set_app_module(ANALYTICS_APP_PATH)
     elif "enterprise_api" in path_str:
         _set_app_module(ENTERPRISE_APP_PATH)
 

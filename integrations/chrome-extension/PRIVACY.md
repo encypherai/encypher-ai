@@ -1,6 +1,6 @@
 # Privacy Policy - Encypher C2PA Verifier
 
-**Last Updated:** December 26, 2024
+**Last Updated:** February 13, 2026
 
 ## Overview
 
@@ -22,6 +22,25 @@ When you verify content (either automatically or manually), we send:
 - **No Full Page Content**: We never send the entire webpage
 - **No Browsing History**: We don't track which pages you visit
 - **No Personal Information**: We don't collect names, emails, or other personal data
+
+### Content Discovery Tracking (Always Active)
+
+When the extension verifies signed content on a page, we report a **discovery event** to the Encypher analytics service. This is a core product feature that cannot be disabled. It allows content owners (organizations that signed the content) to see where their content appears across the web.
+
+Each discovery event includes:
+
+- **Page URL and domain**: Where the signed content was found
+- **Page title**: The title of the page containing the content
+- **Signer information**: The organization that originally signed the content (extracted from the signature, not from you)
+- **Verification result**: Whether the content was verified, invalid, or revoked
+- **Anonymized session ID**: A random, ephemeral identifier that resets each browser session. This is NOT tied to your identity, account, or browsing history.
+
+What discovery tracking does NOT collect:
+
+- Your name, email, or any personal information
+- Your browsing history or pages without signed content
+- Your IP address is not stored (used only for rate limiting)
+- Any information that could identify you as an individual
 
 ### Data Sent When Signing Content
 
@@ -100,7 +119,7 @@ We do not share data with any other third-party services, analytics providers, o
 
 - **HTTPS Only**: All API communication uses encrypted HTTPS
 - **Secure Storage**: API keys stored using Chrome's secure storage API
-- **No Tracking**: No analytics, cookies, or tracking scripts
+- **Discovery Tracking Only**: We only track where signed content is found (not your browsing history). No cookies or tracking scripts.
 - **Minimal Permissions**: Extension requests only necessary permissions
 
 ### API Key Security
@@ -135,8 +154,10 @@ This extension is open source. You can review the code to verify our privacy cla
 
 ## Summary
 
-**What we collect:** Only the signed content blocks you choose to verify, and text you explicitly sign.
+**What we collect:** Signed content blocks you verify, text you sign, and anonymous discovery events (page URL + signer info) when signed content is found.
 
-**What we don't collect:** Browsing history, full page content, personal information, or tracking data.
+**What we don't collect:** Browsing history, full page content, personal information, or any data that identifies you.
 
-**Your control:** You can delete your API key, clear cache, and uninstall at any time to remove all local data.
+**Why discovery tracking:** It lets content owners know where their signed content appears across the web, helping detect unauthorized copying.
+
+**Your control:** You can delete your API key, clear cache, and uninstall at any time to remove all local data. Discovery events are fully anonymized and cannot be traced back to you.

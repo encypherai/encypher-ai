@@ -80,3 +80,95 @@ class AggregatedMetric(Base):
 
     def __repr__(self):
         return f"<AggregatedMetric(id={self.id}, metric_type={self.metric_type}, period={self.aggregation_period})>"
+
+
+class ContentDiscovery(Base):
+    """Records where signed/embedded content is discovered across the web.
+
+    Each row represents a single verification event reported by a Chrome
+    extension user.  The *reporter* is fully anonymized (ephemeral session
+    ID only).  The *signer* (organization that signed the content) is
+    identified so they can be notified when their content appears on new
+    domains.
+    """
+
+    __tablename__ = "content_discoveries"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+
+    # Where the content was found
+    page_url = Column(String(2048), nullable=False)
+    page_domain = Column(String(255), nullable=False, index=True)
+    page_title = Column(String(512), nullable=True)
+
+    # Who signed the content (the content owner)
+    signer_id = Column(String(255), nullable=True, index=True)
+    signer_name = Column(String(255), nullable=True)
+    organization_id = Column(String(255), nullable=True, index=True)
+    document_id = Column(String(255), nullable=True, index=True)
+
+    # The domain where the content was originally signed/published
+    original_domain = Column(String(255), nullable=True, index=True)
+
+    # Verification outcome
+    verified = Column(Integer, nullable=False, default=0)  # 1=verified, 0=invalid
+    verification_status = Column(String(50), nullable=True)  # verified, invalid, revoked
+    marker_type = Column(String(50), nullable=True)  # c2pa, encypher, micro
+
+    # Domain-mismatch flag: True when page_domain != signer's known domain
+    is_external_domain = Column(Integer, nullable=False, default=0)
+
+    # Anonymized reporter context (no PII)
+    session_id = Column(String(100), nullable=True)
+    extension_version = Column(String(50), nullable=True)
+    source = Column(String(50), nullable=False, default="chrome_extension")
+
+    # Timestamps
+    discovered_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False, index=True)
+    date = Column(String, nullable=False, index=True)  # YYYY-MM-DD for aggregation
+
+    def __repr__(self):
+        return (
+            f"<ContentDiscovery(id={self.id}, domain={self.page_domain}, "
+            f"signer={self.signer_id}, external={self.is_external_domain})>"
+        )
+
+
+class DiscoveryDomainSummary(Base):
+    """Aggregated view of unique domains where an org's content was found.
+
+    Updated on each new discovery.  Enables fast "where is my content?"
+    queries without scanning the full content_discoveries table.
+    """
+
+    __tablename__ = "discovery_domain_summaries"
+
+    id = Column(String, primary_key=True, default=generate_uuid)
+
+    # The org whose content was found
+    organization_id = Column(String(255), nullable=False, index=True)
+
+    # The domain where content was found
+    page_domain = Column(String(255), nullable=False)
+
+    # Counts
+    discovery_count = Column(Integer, nullable=False, default=1)
+    verified_count = Column(Integer, nullable=False, default=0)
+    invalid_count = Column(Integer, nullable=False, default=0)
+
+    # Whether this domain belongs to the org (False = external / copy-paste)
+    is_owned_domain = Column(Integer, nullable=False, default=0)
+
+    # Alert tracking
+    alert_sent = Column(Integer, nullable=False, default=0)
+    alert_sent_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Timestamps
+    first_seen_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    last_seen_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    def __repr__(self):
+        return (
+            f"<DiscoveryDomainSummary(org={self.organization_id}, "
+            f"domain={self.page_domain}, count={self.discovery_count})>"
+        )

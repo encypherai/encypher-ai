@@ -114,6 +114,7 @@ class DiscoveryEvent(BaseModel):
     signerName: Optional[str] = Field(default=None, max_length=255)
     organizationId: Optional[str] = Field(default=None, max_length=255)
     documentId: Optional[str] = Field(default=None, max_length=255)
+    originalDomain: Optional[str] = Field(default=None, max_length=255)
     # Verification result
     verified: bool = False
     verificationStatus: Optional[str] = Field(default=None, max_length=50)
@@ -148,8 +149,75 @@ class DiscoveryStats(BaseModel):
     verified_count: int
     invalid_count: int
     unique_domains: int
-    unique_signers: int
+    unique_signers: int = 0
+    external_domain_count: int = 0
     top_domains: List[Dict[str, Any]]
-    top_signers: List[Dict[str, Any]]
+    top_signers: List[Dict[str, Any]] = []
     period_start: datetime
     period_end: datetime
+
+
+class DomainSummaryItem(BaseModel):
+    """A single domain where an org's content was discovered"""
+
+    id: str
+    page_domain: str
+    discovery_count: int
+    verified_count: int
+    invalid_count: int
+    is_owned_domain: bool
+    first_seen_at: datetime
+    last_seen_at: datetime
+
+
+class DomainSummaryResponse(BaseModel):
+    """Response for domain summary queries"""
+
+    success: bool
+    data: List[DomainSummaryItem]
+    total: int
+
+
+class DomainAlertItem(BaseModel):
+    """An external domain alert that hasn't been acknowledged"""
+
+    id: str
+    page_domain: str
+    discovery_count: int
+    first_seen_at: datetime
+    last_seen_at: datetime
+
+
+class DomainAlertsResponse(BaseModel):
+    """Response for domain alert queries"""
+
+    success: bool
+    data: List[DomainAlertItem]
+    total: int
+
+
+class ContentDiscoveryItem(BaseModel):
+    """A single content discovery event"""
+
+    id: str
+    page_url: str
+    page_domain: str
+    page_title: Optional[str] = None
+    signer_name: Optional[str] = None
+    document_id: Optional[str] = None
+    original_domain: Optional[str] = None
+    verified: bool
+    verification_status: Optional[str] = None
+    marker_type: Optional[str] = None
+    is_external_domain: bool
+    discovered_at: datetime
+
+
+class ContentDiscoveryListResponse(BaseModel):
+    """Response for content discovery list queries"""
+
+    success: bool
+    data: List[ContentDiscoveryItem]
+    total: int
+    limit: int
+    offset: int

@@ -22,8 +22,15 @@ from ...models.schemas import (
     DiscoveryBatchRequest,
     DiscoveryResponse,
     DiscoveryStats,
+    DomainSummaryItem,
+    DomainSummaryResponse,
+    DomainAlertItem,
+    DomainAlertsResponse,
+    ContentDiscoveryItem,
+    ContentDiscoveryListResponse,
 )
 from ...services.analytics_service import AnalyticsService
+from ...services.discovery_service import DiscoveryService
 from ...core.config import settings
 
 router = APIRouter()
@@ -396,40 +403,49 @@ async def record_discovery_events(
             pass  # Continue without org association
     
     try:
-        events_recorded = 0
+        # Record into dedicated content_discoveries table
+        events_recorded = DiscoveryService.record_batch(
+            db=db,
+            events=batch.events,
+            source=batch.source,
+            extension_version=batch.version,
+        )
+
+        # Also record into legacy UsageMetric for backward compatibility
         for event in batch.events:
-            # Record each discovery as a metric
-            AnalyticsService.record_metric(
-                db=db,
-                user_id=organization_id or "anonymous",
-                metric_data=MetricCreate(
-                    metric_type="embedding_discovery",
-                    service_name="chrome_extension",
-                    endpoint=event.pageDomain,
-                    count=event.embeddingCount,
-                    value=1 if event.verified else 0,
-                    response_time_ms=None,
-                    status_code=200 if event.verified else 400,
-                    metadata={
-                        "page_url": event.pageUrl,
-                        "page_domain": event.pageDomain,
-                        "page_title": event.pageTitle,
-                        "signer_id": event.signerId,
-                        "signer_name": event.signerName,
-                        "organization_id": event.organizationId,
-                        "document_id": event.documentId,
-                        "verified": event.verified,
-                        "verification_status": event.verificationStatus,
-                        "marker_type": event.markerType,
-                        "extension_version": event.extensionVersion or batch.version,
-                        "session_id": event.sessionId,
-                        "source": batch.source,
-                        "client_ip": ip,
-                    },
-                ),
-                organization_id=organization_id,
-            )
-            events_recorded += 1
+            try:
+                AnalyticsService.record_metric(
+                    db=db,
+                    user_id=organization_id or "anonymous",
+                    metric_data=MetricCreate(
+                        metric_type="embedding_discovery",
+                        service_name="chrome_extension",
+                        endpoint=event.pageDomain,
+                        count=event.embeddingCount,
+                        value=1 if event.verified else 0,
+                        response_time_ms=None,
+                        status_code=200 if event.verified else 400,
+                        metadata={
+                            "page_url": event.pageUrl,
+                            "page_domain": event.pageDomain,
+                            "page_title": event.pageTitle,
+                            "signer_id": event.signerId,
+                            "signer_name": event.signerName,
+                            "organization_id": event.organizationId,
+                            "document_id": event.documentId,
+                            "verified": event.verified,
+                            "verification_status": event.verificationStatus,
+                            "marker_type": event.markerType,
+                            "extension_version": event.extensionVersion or batch.version,
+                            "session_id": event.sessionId,
+                            "source": batch.source,
+                            "client_ip": ip,
+                        },
+                    ),
+                    organization_id=organization_id,
+                )
+            except Exception:
+                pass  # Legacy metric recording is best-effort
         
         return DiscoveryResponse(
             success=True,
@@ -539,6 +555,152 @@ async def get_discovery_stats(
         top_signers=top_signers,
         period_start=start_date,
         period_end=end_date,
+    )
+
+
+@router.get("/discovery/domains", response_model=DomainSummaryResponse)
+async def get_discovery_domains(
+    external_only: bool = Query(default=False, description="Only show external (non-owned) domains"),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get domain summaries showing where the organization's content was discovered.
+
+    Each item represents a unique domain where signed content was found,
+    with counts and ownership status.
+    """
+    identity = _resolve_identity(current_user)
+
+    summaries = DiscoveryService.get_domain_summaries(
+        db=db,
+        organization_id=identity,
+        external_only=external_only,
+    )
+
+    items = [
+        DomainSummaryItem(
+            id=s.id,
+            page_domain=s.page_domain,
+            discovery_count=s.discovery_count,
+            verified_count=s.verified_count,
+            invalid_count=s.invalid_count,
+            is_owned_domain=bool(s.is_owned_domain),
+            first_seen_at=s.first_seen_at,
+            last_seen_at=s.last_seen_at,
+        )
+        for s in summaries
+    ]
+
+    return DomainSummaryResponse(success=True, data=items, total=len(items))
+
+
+@router.get("/discovery/alerts", response_model=DomainAlertsResponse)
+async def get_discovery_alerts(
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get unacknowledged alerts for external domains where the org's content
+    was found.  These represent potential copy-paste or syndication events.
+    """
+    identity = _resolve_identity(current_user)
+
+    alerts = DiscoveryService.get_new_domain_alerts(
+        db=db,
+        organization_id=identity,
+    )
+
+    items = [
+        DomainAlertItem(
+            id=a.id,
+            page_domain=a.page_domain,
+            discovery_count=a.discovery_count,
+            first_seen_at=a.first_seen_at,
+            last_seen_at=a.last_seen_at,
+        )
+        for a in alerts
+    ]
+
+    return DomainAlertsResponse(success=True, data=items, total=len(items))
+
+
+@router.post("/discovery/alerts/{alert_id}/ack", response_model=DiscoveryResponse)
+async def acknowledge_discovery_alert(
+    alert_id: str,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """Acknowledge a domain discovery alert so it no longer appears in the alerts list."""
+    DiscoveryService.mark_alert_sent(db=db, summary_id=alert_id)
+    return DiscoveryResponse(
+        success=True,
+        data={"message": "Alert acknowledged"},
+        error=None,
+    )
+
+
+@router.get("/discovery/events", response_model=ContentDiscoveryListResponse)
+async def get_discovery_events(
+    days: int = Query(default=30, ge=1, le=365),
+    external_only: bool = Query(default=False),
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Get paginated content discovery events for the authenticated organization.
+    """
+    end_date = datetime.utcnow()
+    start_date = end_date - timedelta(days=days)
+    identity = _resolve_identity(current_user)
+
+    discoveries = DiscoveryService.get_discoveries_for_org(
+        db=db,
+        organization_id=identity,
+        start_date=start_date,
+        end_date=end_date,
+        external_only=external_only,
+        limit=limit,
+        offset=offset,
+    )
+
+    items = [
+        ContentDiscoveryItem(
+            id=d.id,
+            page_url=d.page_url,
+            page_domain=d.page_domain,
+            page_title=d.page_title,
+            signer_name=d.signer_name,
+            document_id=d.document_id,
+            original_domain=d.original_domain,
+            verified=bool(d.verified),
+            verification_status=d.verification_status,
+            marker_type=d.marker_type,
+            is_external_domain=bool(d.is_external_domain),
+            discovered_at=d.discovered_at,
+        )
+        for d in discoveries
+    ]
+
+    # Get total count for pagination
+    from ...db.models import ContentDiscovery as CDModel
+    total_query = db.query(func.count(CDModel.id)).filter(
+        CDModel.organization_id == identity,
+        CDModel.discovered_at >= start_date,
+        CDModel.discovered_at <= end_date,
+    )
+    if external_only:
+        total_query = total_query.filter(CDModel.is_external_domain == 1)
+    total = total_query.scalar() or 0
+
+    return ContentDiscoveryListResponse(
+        success=True,
+        data=items,
+        total=total,
+        limit=limit,
+        offset=offset,
     )
 
 

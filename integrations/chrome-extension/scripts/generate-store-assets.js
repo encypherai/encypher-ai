@@ -23,17 +23,31 @@ const CYBER_TEAL = '#00CED1';
 const NEUTRAL_GRAY = '#A7AFBC';
 const WHITE = '#FFFFFF';
 
-// Encypher logo mark SVG (check-in-circle, brand version)
-const LOGO_MARK_SVG = `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="5" fill="none"/>
-  <path d="M30 52l14 14 26-32" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-</svg>`;
+// Load real brand assets from marketing-site/public
+const MARKETING_PUBLIC = path.join(__dirname, '..', '..', '..', 'apps', 'marketing-site', 'public');
 
-const LOGO_MARK_FILLED = `<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <circle cx="50" cy="50" r="48" fill="currentColor" opacity="0.12"/>
-  <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="4" fill="none"/>
-  <path d="M30 52l14 14 26-32" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-</svg>`;
+const LOGO_COLOR_PNG_B64 = fs.readFileSync(path.join(MARKETING_PUBLIC, 'assets', 'logo.png')).toString('base64');
+const LOGO_WHITE_PNG_B64 = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_full_logo_white.png')).toString('base64');
+const CHECK_COLOR_SVG = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_check_color.svg'), 'utf-8');
+const CHECK_WHITE_SVG = fs.readFileSync(path.join(MARKETING_PUBLIC, 'encypher_check_white.svg'), 'utf-8');
+
+const LOGO_COLOR_PNG_URI = `data:image/png;base64,${LOGO_COLOR_PNG_B64}`;
+const LOGO_WHITE_PNG_URI = `data:image/png;base64,${LOGO_WHITE_PNG_B64}`;
+
+// Clean SVGs for inline embedding (strip XML declaration and Inkscape metadata)
+function cleanSvg(raw) {
+  return raw
+    .replace(/<\?xml[^?]*\?>\s*/g, '')
+    .replace(/<!--[\s\S]*?-->\s*/g, '')
+    .replace(/\s*xmlns:inkscape="[^"]*"/g, '')
+    .replace(/\s*xmlns:sodipodi="[^"]*"/g, '')
+    .replace(/\s*inkscape:[a-z-]+="[^"]*"/g, '')
+    .replace(/\s*sodipodi:[a-z-]+="[^"]*"/g, '')
+    .replace(/<sodipodi:namedview[\s\S]*?\/>\s*/g, '');
+}
+
+const CHECK_COLOR_INLINE = cleanSvg(CHECK_COLOR_SVG);
+const CHECK_WHITE_INLINE = cleanSvg(CHECK_WHITE_SVG);
 
 // Shared CSS
 const BASE_CSS = `
@@ -248,7 +262,7 @@ h1 {
     encyphertimes.com/ai-content-authenticity
   </div>
   <div class="ext-icon">
-    ${LOGO_MARK_SVG.replace('currentColor', 'white')}
+    <span style="display:inline-flex;align-items:center;height:18px;width:18px;">${CHECK_WHITE_INLINE.replace(/<svg/, '<svg style="height:18px;width:18px;"')}</span>
     <span class="ext-badge">OK</span>
   </div>
 </div>
@@ -302,7 +316,8 @@ body {
   align-items: center;
   gap: 10px;
 }
-.popup-logo { width: 28px; height: 28px; color: white; }
+.popup-logo { height: 22px; color: white; }
+.popup-logo img { height: 22px; width: auto; }
 .popup-title {
   color: white;
   font-size: 15px;
@@ -427,8 +442,7 @@ body {
 <div>
 <div class="popup-frame">
   <div class="popup-header">
-    <div class="popup-logo">${LOGO_MARK_SVG.replace(/currentColor/g, 'white')}</div>
-    <div class="popup-title">Encypher C2PA Verifier</div>
+    <div class="popup-logo"><img src="${LOGO_WHITE_PNG_URI}" style="height:22px;width:auto;" /></div>
   </div>
   <div class="popup-tabs">
     <div class="popup-tab active">Verify</div>
@@ -613,8 +627,7 @@ body {
 <div>
 <div class="options-frame">
   <div class="options-header">
-    <div class="options-logo">${LOGO_MARK_SVG}</div>
-    <div class="options-title">Encypher Settings</div>
+    <div class="options-logo"><img src="${LOGO_COLOR_PNG_URI}" style="height:26px;width:auto;" /></div>
   </div>
   <div class="options-section">
     <h2>API Key</h2>
@@ -710,8 +723,8 @@ body::before {
 }
 </style></head><body>
 <div class="content">
-  <div class="logo-icon">${LOGO_MARK_SVG.replace(/currentColor/g, 'white')}</div>
-  <div class="title">Encypher C2PA Verifier</div>
+  <div class="logo-icon"><img src="${LOGO_WHITE_PNG_URI}" style="height:48px;width:auto;" /></div>
+  <div class="title">C2PA Verifier</div>
   <div class="subtitle">Verify and sign content authenticity on any webpage</div>
   <div class="badge-row">
     <span class="feature-badge">C2PA Standard</span>
@@ -837,7 +850,7 @@ body::before {
 </style></head><body>
 <div class="layout">
   <div class="left">
-    <div class="logo-icon">${LOGO_MARK_SVG.replace(/currentColor/g, 'white')}</div>
+    <div class="logo-icon"><img src="${LOGO_WHITE_PNG_URI}" style="height:48px;width:auto;" /></div>
     <div class="title">Trust, Verified.</div>
     <div class="subtitle">See instant verification badges on signed content. Combat misinformation with cryptographic proof of authorship.</div>
     <div class="features">
@@ -985,8 +998,7 @@ body::before {
 <div class="layout">
   <div class="left">
     <div class="logo-row">
-      <div class="logo-icon">${LOGO_MARK_SVG.replace(/currentColor/g, 'white')}</div>
-      <div class="logo-text">ENCYPHER</div>
+      <img src="${LOGO_WHITE_PNG_URI}" style="height:32px;width:auto;" />
     </div>
     <div class="title">Verify Content.<br><span>Build Trust.</span></div>
     <div class="subtitle">The Chrome extension that detects and verifies C2PA-signed content on any webpage. See who authored it, when, and whether it's been tampered with.</div>
