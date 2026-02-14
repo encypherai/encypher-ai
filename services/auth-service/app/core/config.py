@@ -95,6 +95,26 @@ class Settings(BaseSettings):
     AUTH_MAX_REQUEST_BODY_BYTES: int = 65536
 
     # ===========================================
+    # SERVICE-SPECIFIC: Bot/Abuse Protection (Turnstile)
+    # ===========================================
+    TURNSTILE_ENABLED: bool = False
+    TURNSTILE_SECRET_KEY: str = ""
+    TURNSTILE_VERIFY_URL: str = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+    TURNSTILE_REQUIRE_SIGNUP: bool = True
+    TURNSTILE_REQUIRE_LOGIN: bool = True
+
+    # ===========================================
+    # SERVICE-SPECIFIC: MFA / Passkeys
+    # ===========================================
+    MFA_ISSUER: str = "Encypher"
+    MFA_BACKUP_CODES_COUNT: int = 8
+    MFA_CHALLENGE_EXPIRE_MINUTES: int = 10
+    PASSKEY_ENABLED: bool = True
+    PASSKEY_RP_ID: str = "localhost"
+    PASSKEY_RP_NAME: str = "Encypher"
+    PASSKEY_EXPECTED_ORIGIN: str = "http://localhost:3001"
+
+    # ===========================================
     # INTERNAL SERVICE URLS (for service-to-service)
     # ===========================================
     COALITION_SERVICE_URL: str = "http://localhost:8009"

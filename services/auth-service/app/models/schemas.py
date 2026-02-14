@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from app.core.config import settings
 
@@ -90,6 +90,15 @@ class UserCreate(UserBase):
     """Schema for user creation"""
 
     password: str = Field(..., min_length=8, max_length=settings.AUTH_MAX_PASSWORD_LENGTH)
+    turnstile_token: Optional[str] = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_turnstile_alias(cls, data):
+        if isinstance(data, dict) and "turnstile_token" not in data and "turnstileToken" in data:
+            data = dict(data)
+            data["turnstile_token"] = data.get("turnstileToken")
+        return data
 
 
 class UserLogin(BaseModel):
@@ -97,6 +106,19 @@ class UserLogin(BaseModel):
 
     email: EmailStr
     password: str = Field(..., max_length=settings.AUTH_MAX_PASSWORD_LENGTH)
+    turnstile_token: Optional[str] = Field(default=None)
+    mfa_code: Optional[str] = Field(default=None)
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_turnstile_alias(cls, data):
+        if isinstance(data, dict) and "turnstile_token" not in data and "turnstileToken" in data:
+            data = dict(data)
+            data["turnstile_token"] = data.get("turnstileToken")
+        if isinstance(data, dict) and "mfa_code" not in data and "mfaCode" in data:
+            data = dict(data)
+            data["mfa_code"] = data.get("mfaCode")
+        return data
 
     @field_validator("email", mode="before")
     @classmethod
@@ -404,3 +426,36 @@ class SetupStatusResponse(BaseModel):
     setup_completed_at: Optional[datetime] = None
     account_type: Optional[str] = None
     display_name: Optional[str] = None
+
+
+# ============================================
+# TEAM_191: Phase 2/3 MFA + Passkey Schemas
+# ============================================
+
+
+class TotpSetupConfirmRequest(BaseModel):
+    code: str = Field(..., min_length=6, max_length=10)
+
+
+class TotpDisableRequest(BaseModel):
+    code: str = Field(..., min_length=6, max_length=64)
+
+
+class MfaLoginCompleteRequest(BaseModel):
+    mfa_token: str
+    mfa_code: str = Field(..., min_length=6, max_length=64)
+
+
+class PasskeyRegistrationCompleteRequest(BaseModel):
+    credential: dict
+    name: Optional[str] = Field(default=None, max_length=100)
+
+
+class PasskeyAuthenticationStartRequest(BaseModel):
+    email: EmailStr
+
+
+class PasskeyAuthenticationCompleteRequest(BaseModel):
+    email: EmailStr
+    credential: dict
+

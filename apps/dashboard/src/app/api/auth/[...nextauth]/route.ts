@@ -14,7 +14,10 @@ const handler = NextAuth({
       name: 'Credentials',
       credentials: {
         email: { label: "Email", type: "email", placeholder: "you@example.com" },
-        password: { label: "Password", type: "password" }
+        password: { label: "Password", type: "password" },
+        mfaCode: { label: "MFA Code", type: "text" },
+        mfaToken: { label: "MFA Token", type: "text" },
+        turnstileToken: { label: "Turnstile Token", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
@@ -63,6 +66,31 @@ const handler = NextAuth({
         }
 
         try {
+          if (credentials.mfaToken && credentials.mfaCode) {
+            const mfaRes = await fetch(`${API_BASE}/auth/login/mfa/complete`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                mfa_token: credentials.mfaToken,
+                mfa_code: credentials.mfaCode,
+              }),
+            });
+            const mfaData = await mfaRes.json();
+            if (!mfaRes.ok || !mfaData.success) {
+              throw new Error(mfaData.detail || 'Invalid multi-factor authentication code');
+            }
+
+            const user = mfaData.data.user;
+            return {
+              id: String(user.id),
+              email: user.email,
+              name: user.name,
+              accessToken: mfaData.data.access_token,
+              role: user.role ?? user.account_type ?? user.permission ?? 'member',
+              tier: user.tier ?? user.subscription_tier ?? user.plan ?? 'free',
+            } as any;
+          }
+
           console.log('[NextAuth] Attempting login to:', `${API_BASE}/auth/login`);
           // Call API Gateway auth login (SRF)
           const res = await fetch(`${API_BASE}/auth/login`, {
@@ -71,6 +99,8 @@ const handler = NextAuth({
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
+              mfa_code: credentials.mfaCode || undefined,
+              turnstile_token: credentials.turnstileToken || undefined,
             }),
           });
 
@@ -91,6 +121,10 @@ const handler = NextAuth({
           if (!res.ok) {
             console.log('[NextAuth] Login failed - server error:', res.status);
             throw new Error(data.error?.message || data.detail || 'Login failed. Please try again.');
+          }
+
+          if (data.success && data.data?.mfa_required && data.data?.mfa_token) {
+            throw new Error(`MFA_REQUIRED:${data.data.mfa_token}`);
           }
 
           if (data.success && data.data?.user && data.data?.access_token) {

@@ -72,6 +72,158 @@ export default function SettingsPage() {
     jobTitle: '',
     notifications: defaultNotifications,
   });
+  // Email change state
+  const [showEmailChange, setShowEmailChange] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailChangePassword, setEmailChangePassword] = useState('');
+  const [pendingEmailChange, setPendingEmailChange] = useState<string | null>(null);
+  const [domainName, setDomainName] = useState('');
+  const [domainEmail, setDomainEmail] = useState('');
+  const [publisherDisplayName, setPublisherDisplayName] = useState('');
+  const [anonymousPublisher, setAnonymousPublisher] = useState(false);
+  const [totpCode, setTotpCode] = useState('');
+  const [totpDisableCode, setTotpDisableCode] = useState('');
+  const [totpSetupSecret, setTotpSetupSecret] = useState<string | null>(null);
+  const [totpSetupUri, setTotpSetupUri] = useState<string | null>(null);
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [passkeyName, setPasskeyName] = useState('Primary device');
+
+  const mfaStatusQuery = useQuery({
+    queryKey: ['mfa-status'],
+    queryFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.getMfaStatus(accessToken);
+    },
+    enabled: Boolean(accessToken && activeTab === 'security'),
+    refetchOnWindowFocus: false,
+  });
+
+  const beginTotpMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.beginTotpSetup(accessToken);
+    },
+    onSuccess: (result) => {
+      setTotpSetupSecret(result.secret);
+      setTotpSetupUri(result.provisioning_uri);
+      setBackupCodes(result.backup_codes || []);
+      toast.success('Authenticator setup initialized. Save your backup codes now.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to start TOTP setup.');
+    },
+  });
+
+  const confirmTotpMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      return apiClient.confirmTotpSetup(accessToken, totpCode);
+    },
+    onSuccess: () => {
+      setTotpCode('');
+      setTotpSetupSecret(null);
+      setTotpSetupUri(null);
+      setBackupCodes([]);
+      mfaStatusQuery.refetch();
+      toast.success('Two-factor authentication enabled.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Invalid authentication code.');
+    },
+  });
+
+  const disableTotpMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      await apiClient.disableTotp(accessToken, totpDisableCode);
+    },
+    onSuccess: () => {
+      setTotpDisableCode('');
+      mfaStatusQuery.refetch();
+      toast.success('Two-factor authentication disabled.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to disable two-factor authentication.');
+    },
+  });
+
+  const deletePasskeyMutation = useMutation({
+    mutationFn: async (credentialId: string) => {
+      if (!accessToken) throw new Error('You must be signed in.');
+      await apiClient.deletePasskey(accessToken, credentialId);
+    },
+    onSuccess: () => {
+      mfaStatusQuery.refetch();
+      toast.success('Passkey deleted.');
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to delete passkey.');
+    },
+  });
+
+  const toBase64Url = (buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach((b) => {
+      binary += String.fromCharCode(b);
+    });
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  };
+
+  const fromBase64Url = (value: string): Uint8Array => {
+    const padded = `${value}${'='.repeat((4 - (value.length % 4)) % 4)}`;
+    const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(base64);
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  };
+
+  const handleRegisterPasskey = async () => {
+    if (!accessToken) {
+      toast.error('You must be signed in.');
+      return;
+    }
+    if (typeof window === 'undefined' || !window.PublicKeyCredential) {
+      toast.error('Passkeys are not supported in this browser.');
+      return;
+    }
+
+    try {
+      const options = await apiClient.startPasskeyRegistration(accessToken);
+      const parsed = JSON.parse(options.options_json);
+      const publicKey: PublicKeyCredentialCreationOptions = {
+        ...parsed,
+        challenge: fromBase64Url(parsed.challenge),
+        user: {
+          ...parsed.user,
+          id: fromBase64Url(parsed.user.id),
+        },
+        excludeCredentials: (parsed.excludeCredentials || []).map((cred: any) => ({
+          ...cred,
+          id: fromBase64Url(cred.id),
+        })),
+      };
+
+      const credential = (await navigator.credentials.create({ publicKey })) as PublicKeyCredential | null;
+      if (!credential) throw new Error('Passkey registration was cancelled.');
+
+      const response = credential.response as AuthenticatorAttestationResponse;
+      const payload = {
+        id: credential.id,
+        rawId: toBase64Url(credential.rawId),
+        type: credential.type,
+        response: {
+          clientDataJSON: toBase64Url(response.clientDataJSON),
+          attestationObject: toBase64Url(response.attestationObject),
+        },
+      };
+
+      await apiClient.completePasskeyRegistration(accessToken, payload, passkeyName);
+      mfaStatusQuery.refetch();
+      toast.success('Passkey registered.');
+    } catch (err: any) {
+      toast.error(err?.message || 'Passkey registration failed.');
+    }
+  };
 
   const updatePublisherSettingsMutation = useMutation({
     mutationFn: async () => {
@@ -95,16 +247,6 @@ export default function SettingsPage() {
       toast.error(err?.message || 'Failed to update publisher settings.');
     },
   });
-
-  // Email change state
-  const [showEmailChange, setShowEmailChange] = useState(false);
-  const [newEmail, setNewEmail] = useState('');
-  const [emailChangePassword, setEmailChangePassword] = useState('');
-  const [pendingEmailChange, setPendingEmailChange] = useState<string | null>(null);
-  const [domainName, setDomainName] = useState('');
-  const [domainEmail, setDomainEmail] = useState('');
-  const [publisherDisplayName, setPublisherDisplayName] = useState('');
-  const [anonymousPublisher, setAnonymousPublisher] = useState(false);
 
   const profileQuery = useQuery({
     queryKey: ['profile'],
@@ -503,23 +645,156 @@ export default function SettingsPage() {
             )}
 
             {activeTab === 'security' && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Change password</CardTitle>
-                  <CardDescription>Update your password</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    Password changes are managed via the Encypher API. Use the “Forgot password” link on the login
-                    screen to reset your credentials securely.
-                  </p>
-                  <div className="mt-4">
-                    <Link href="/forgot-password">
-                      <Button variant="primary">Reset password</Button>
-                    </Link>
-                  </div>
-                </CardContent>
-              </Card>
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Change password</CardTitle>
+                    <CardDescription>Reset your password if you suspect your credentials were exposed.</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground">
+                      Password changes are managed via the Encypher API. Use the “Forgot password” flow for secure
+                      reset links.
+                    </p>
+                    <div className="mt-4">
+                      <Link href="/forgot-password">
+                        <Button variant="primary">Reset password</Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Two-factor authentication (TOTP)</CardTitle>
+                    <CardDescription>
+                      Protect your account with an authenticator app and one-time backup codes.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="text-sm text-muted-foreground">
+                      Status: {mfaStatusQuery.data?.totp_enabled ? 'Enabled' : 'Not enabled'}
+                      {mfaStatusQuery.data?.totp_enabled && (
+                        <span className="ml-2">• Backup codes remaining: {mfaStatusQuery.data.backup_codes_remaining}</span>
+                      )}
+                    </div>
+
+                    {!mfaStatusQuery.data?.totp_enabled && !totpSetupSecret && (
+                      <Button variant="primary" onClick={() => beginTotpMutation.mutate()} disabled={beginTotpMutation.isPending}>
+                        {beginTotpMutation.isPending ? 'Preparing…' : 'Set up authenticator app'}
+                      </Button>
+                    )}
+
+                    {!mfaStatusQuery.data?.totp_enabled && totpSetupSecret && (
+                      <div className="space-y-3 border border-border rounded-lg p-4">
+                        <div className="text-sm">
+                          <div className="font-medium">Manual setup code</div>
+                          <div className="font-mono text-xs mt-1">{totpSetupSecret}</div>
+                        </div>
+                        {totpSetupUri && (
+                          <div className="text-xs text-muted-foreground break-all">
+                            otpauth URI: {totpSetupUri}
+                          </div>
+                        )}
+
+                        {backupCodes.length > 0 && (
+                          <div>
+                            <div className="text-sm font-medium mb-2">Backup codes (save these now)</div>
+                            <div className="grid grid-cols-2 gap-2">
+                              {backupCodes.map((code) => (
+                                <div key={code} className="font-mono text-xs rounded bg-muted px-2 py-1">
+                                  {code}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium mb-2">Authenticator code</label>
+                            <Input
+                              value={totpCode}
+                              onChange={(e) => setTotpCode(e.target.value)}
+                              placeholder="Enter 6-digit code"
+                            />
+                          </div>
+                          <Button
+                            variant="primary"
+                            onClick={() => confirmTotpMutation.mutate()}
+                            disabled={confirmTotpMutation.isPending || !totpCode.trim()}
+                          >
+                            {confirmTotpMutation.isPending ? 'Verifying…' : 'Enable 2FA'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {mfaStatusQuery.data?.totp_enabled && (
+                      <div className="space-y-3 border border-border rounded-lg p-4">
+                        <label className="block text-sm font-medium">Disable 2FA with code</label>
+                        <div className="flex gap-2 items-end">
+                          <div className="flex-1">
+                            <Input
+                              value={totpDisableCode}
+                              onChange={(e) => setTotpDisableCode(e.target.value)}
+                              placeholder="Authenticator code or backup code"
+                            />
+                          </div>
+                          <Button
+                            variant="outline"
+                            onClick={() => disableTotpMutation.mutate()}
+                            disabled={disableTotpMutation.isPending || !totpDisableCode.trim()}
+                          >
+                            {disableTotpMutation.isPending ? 'Disabling…' : 'Disable 2FA'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Passkeys</CardTitle>
+                    <CardDescription>
+                      Register hardware or platform passkeys for phishing-resistant sign-in.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex gap-2 items-end">
+                      <div className="flex-1">
+                        <label className="block text-sm font-medium mb-2">Passkey label</label>
+                        <Input value={passkeyName} onChange={(e) => setPasskeyName(e.target.value)} placeholder="e.g. MacBook Touch ID" />
+                      </div>
+                      <Button variant="primary" onClick={handleRegisterPasskey}>Register passkey</Button>
+                    </div>
+
+                    {(mfaStatusQuery.data?.passkeys || []).length === 0 ? (
+                      <div className="text-sm text-muted-foreground">No passkeys registered yet.</div>
+                    ) : (
+                      <div className="space-y-2">
+                        {(mfaStatusQuery.data?.passkeys || []).map((item) => (
+                          <div key={item.credential_id} className="flex items-center justify-between border border-border rounded-lg px-3 py-2">
+                            <div>
+                              <div className="font-medium text-sm">{item.name || 'Passkey'}</div>
+                              <div className="text-xs text-muted-foreground font-mono">{item.credential_id}</div>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => deletePasskeyMutation.mutate(item.credential_id)}
+                              disabled={deletePasskeyMutation.isPending}
+                            >
+                              Remove
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
             )}
 
             {activeTab === 'notifications' && (

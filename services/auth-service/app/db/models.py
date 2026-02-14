@@ -82,6 +82,17 @@ class User(Base):
     # TEAM_191: Mandatory setup wizard — NULL until wizard is done; dashboard blocks if NULL
     setup_completed_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Phase 2: TOTP 2FA
+    totp_enabled = Column(Boolean, default=False, nullable=False)
+    totp_secret_encrypted = Column(Text, nullable=True)
+    totp_enabled_at = Column(DateTime(timezone=True), nullable=True)
+    totp_backup_code_hashes = Column(JSON, nullable=False, default=list)
+
+    # Phase 3: Passkeys/WebAuthn
+    passkey_credentials = Column(JSON, nullable=False, default=list)
+    passkey_challenge = Column(Text, nullable=True)
+    passkey_challenge_expires_at = Column(DateTime(timezone=True), nullable=True)
+
     # Team management
     default_organization_id = Column(String(64), nullable=True)
 

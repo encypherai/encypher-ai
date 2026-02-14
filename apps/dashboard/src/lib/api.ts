@@ -327,6 +327,34 @@ interface PublisherSettings {
   anonymous_publisher: boolean;
 }
 
+interface MfaStatusResponse {
+  totp_enabled: boolean;
+  backup_codes_remaining: number;
+  passkeys_count: number;
+  passkeys: Array<{
+    credential_id: string;
+    name: string;
+    sign_count?: number;
+    created_at?: string;
+  }>;
+}
+
+interface TotpSetupResponse {
+  secret: string;
+  provisioning_uri: string;
+  backup_codes: string[];
+}
+
+interface MfaLoginChallenge {
+  mfa_required: boolean;
+  mfa_token: string;
+  available_methods: string[];
+}
+
+interface PasskeyOptionsResponse {
+  options_json: string;
+}
+
 class ApiError extends Error {
   constructor(
     message: string,
@@ -1437,6 +1465,114 @@ const apiClient = {
     );
     return response.data;
   },
+
+  async getMfaStatus(accessToken: string): Promise<MfaStatusResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: MfaStatusResponse }>(
+      `${AUTH_SERVICE_URL}/auth/mfa/status`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  async beginTotpSetup(accessToken: string): Promise<TotpSetupResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: TotpSetupResponse }>(
+      `${AUTH_SERVICE_URL}/auth/mfa/totp/setup`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response.data;
+  },
+
+  async confirmTotpSetup(accessToken: string, code: string): Promise<{ enabled: boolean; recovery_codes_remaining: number }> {
+    const response = await fetchWithAuth<{ success: boolean; data: { enabled: boolean; recovery_codes_remaining: number } }>(
+      `${AUTH_SERVICE_URL}/auth/mfa/totp/confirm`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      }
+    );
+    return response.data;
+  },
+
+  async disableTotp(accessToken: string, code: string): Promise<void> {
+    await fetchWithAuth(
+      `${AUTH_SERVICE_URL}/auth/mfa/totp/disable`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      }
+    );
+  },
+
+  async completeMfaLogin(mfaToken: string, mfaCode: string): Promise<unknown> {
+    const response = await fetch(`${AUTH_SERVICE_URL}/auth/login/mfa/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mfa_token: mfaToken, mfa_code: mfaCode }),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new ApiError(payload.detail || payload.error?.message || 'MFA login failed', response.status);
+    }
+    return payload.data;
+  },
+
+  async startPasskeyRegistration(accessToken: string): Promise<PasskeyOptionsResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: PasskeyOptionsResponse }>(
+      `${AUTH_SERVICE_URL}/auth/passkeys/register/options`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response.data;
+  },
+
+  async completePasskeyRegistration(accessToken: string, credential: Record<string, unknown>, name?: string): Promise<unknown> {
+    const response = await fetchWithAuth<{ success: boolean; data: unknown }>(
+      `${AUTH_SERVICE_URL}/auth/passkeys/register/complete`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ credential, name }),
+      }
+    );
+    return response.data;
+  },
+
+  async startPasskeyAuthentication(email: string): Promise<PasskeyOptionsResponse> {
+    const response = await fetch(`${AUTH_SERVICE_URL}/auth/passkeys/authenticate/options`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new ApiError(payload.detail || payload.error?.message || 'Passkey start failed', response.status);
+    }
+    return payload.data;
+  },
+
+  async completePasskeyAuthentication(email: string, credential: Record<string, unknown>): Promise<unknown> {
+    const response = await fetch(`${AUTH_SERVICE_URL}/auth/passkeys/authenticate/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, credential }),
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.success) {
+      throw new ApiError(payload.detail || payload.error?.message || 'Passkey login failed', response.status);
+    }
+    return payload.data;
+  },
+
+  async deletePasskey(accessToken: string, credentialId: string): Promise<void> {
+    await fetchWithAuth(
+      `${AUTH_SERVICE_URL}/auth/passkeys/${encodeURIComponent(credentialId)}`,
+      accessToken,
+      { method: 'DELETE' }
+    );
+  },
 };
 
 // Ghost Integration types (TEAM_187)
@@ -1511,6 +1647,10 @@ export type {
   AccountType,
   SetupStatusResponse,
   PublisherSettings,
+  MfaStatusResponse,
+  TotpSetupResponse,
+  MfaLoginChallenge,
+  PasskeyOptionsResponse,
   // TEAM_187: Ghost Integration
   GhostIntegrationCreatePayload,
   GhostIntegrationResponse,

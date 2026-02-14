@@ -169,3 +169,87 @@ Validation:
 - uv run pytest enterprise_api/tests/test_publisher_attribution.py tests/test_org_context_composition.py -q
 - npx tsc --noEmit (apps/dashboard)
 ```
+
+---
+
+## Session 4: Phase 2 + 3 Completion (TOTP + Passkeys)
+
+### Backend (auth-service)
+1. Added auth-factor service `app/services/auth_factors_service.py`:
+   - TOTP provisioning + verification + backup code consumption
+   - Passkey registration/authentication challenge + verification flow
+   - Passkey list/delete lifecycle helpers
+2. Added MFA/Passkey config in `app/core/config.py`:
+   - `MFA_ISSUER`, `MFA_BACKUP_CODES_COUNT`, `MFA_CHALLENGE_EXPIRE_MINUTES`
+   - `PASSKEY_ENABLED`, `PASSKEY_RP_ID`, `PASSKEY_RP_NAME`, `PASSKEY_EXPECTED_ORIGIN`
+3. Added User columns in `app/db/models.py`:
+   - `totp_enabled`, `totp_secret_encrypted`, `totp_enabled_at`, `totp_backup_code_hashes`
+   - `passkey_credentials`, `passkey_challenge`, `passkey_challenge_expires_at`
+4. Added migration `013_mfa_and_passkeys.py` for new user security columns.
+5. Extended auth schemas in `app/models/schemas.py`:
+   - login payload accepts `mfa_code`/`mfaCode`
+   - TOTP + passkey request schemas
+   - MFA challenge completion schema
+6. Updated auth login behavior in `app/api/v1/endpoints.py`:
+   - TOTP-enabled users receive `mfa_required` + short-lived `mfa_token` unless code provided
+   - New endpoint: `POST /auth/login/mfa/complete`
+   - New status/setup endpoints for TOTP and passkeys
+   - New passkey auth endpoints for passwordless flow
+7. Updated `AuthService.authenticate_user` to avoid marking `last_login_at` before MFA succeeds; moved to `mark_login_success(...)` after all factors pass.
+
+### Frontend (dashboard)
+1. Extended API client (`src/lib/api.ts`) with MFA/passkey methods:
+   - `getMfaStatus`, `beginTotpSetup`, `confirmTotpSetup`, `disableTotp`
+   - `completeMfaLogin`, `startPasskeyRegistration`, `completePasskeyRegistration`
+   - `startPasskeyAuthentication`, `completePasskeyAuthentication`, `deletePasskey`
+2. Updated NextAuth credentials flow (`src/app/api/auth/[...nextauth]/route.ts`):
+   - handles MFA_REQUIRED challenge path
+   - supports completing MFA challenge token flow
+   - forwards optional MFA + Turnstile fields on login
+3. Updated login page (`src/app/login/page.tsx`):
+   - passkey sign-in button + browser credential assertion flow
+   - MFA challenge UX (`mfa_token` + code submit)
+4. Updated settings security tab (`src/app/settings/page.tsx`):
+   - TOTP enrollment/confirmation/disable controls
+   - backup-code display at setup time
+   - passkey registration and removal UI
+
+### Verification (Session 4)
+- `uv run pytest tests/test_mfa_login_flow.py tests/test_auth_factors_service.py tests/test_signup_input_validation.py tests/test_turnstile_security.py -q` ✅
+- `uv run ruff check app tests` (services/auth-service) ✅
+- `npx tsc --noEmit` (apps/dashboard) ✅
+- Puppeteer manual verification:
+  - login shows passkey sign-in CTA
+  - settings security tab renders TOTP/passkey controls
+  - screenshot: `settings-security-phase2-phase3` ✅
+
+### Known Existing Failures (Not Introduced Here)
+Running full `uv run pytest -q` in `services/auth-service` still reports unrelated pre-existing failures:
+- `tests/test_internal_org_context.py` (mock fixture mismatch)
+- `tests/test_organization_invitation_emails.py` (`UserTier.BUSINESS` legacy reference)
+
+### Suggested Git Commit Message (Session 4)
+```
+feat(TEAM_191): complete Phase 2/3 onboarding security with TOTP MFA and passkeys
+
+Auth-service:
+- add AuthFactorsService for TOTP + backup code + passkey orchestration
+- add MFA/passkey config flags and defaults
+- add user security columns and migration 013_mfa_and_passkeys
+- add MFA-aware login challenge flow and /auth/login/mfa/complete
+- add TOTP setup/confirm/disable endpoints
+- add passkey register/authenticate/delete endpoints
+- ensure last_login_at updates only after all auth factors pass
+
+Dashboard:
+- add MFA/passkey API client methods
+- extend NextAuth credentials flow for MFA challenge completion
+- add passkey sign-in on login page
+- add security settings UI for TOTP and passkey management
+
+Validation:
+- uv run pytest tests/test_mfa_login_flow.py tests/test_auth_factors_service.py tests/test_signup_input_validation.py tests/test_turnstile_security.py -q
+- uv run ruff check app tests (auth-service)
+- npx tsc --noEmit (apps/dashboard)
+- Puppeteer manual verification screenshot: settings-security-phase2-phase3
+```

@@ -188,11 +188,13 @@ class AuthService:
         if not user.is_active:
             return None
 
-        # Update last login
+        return user
+
+    @staticmethod
+    def mark_login_success(db: Session, user: User) -> None:
+        """Persist successful login timestamp once all auth factors have passed."""
         user.last_login_at = datetime.utcnow()
         db.commit()
-
-        return user
 
     @staticmethod
     def create_tokens(user: User) -> Tuple[str, str]:

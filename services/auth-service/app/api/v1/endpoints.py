@@ -2,6 +2,8 @@
 API endpoints for Auth Service v1
 """
 
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, status, Header, Query
 import httpx
 from sqlalchemy.orm import Session
@@ -39,11 +41,21 @@ from ...models.schemas import (
     # TEAM_191: Setup Wizard
     SetupWizardRequest,
     SetupStatusResponse,
+    TotpSetupConfirmRequest,
+    TotpDisableRequest,
+    MfaLoginCompleteRequest,
+    PasskeyRegistrationCompleteRequest,
+    PasskeyAuthenticationStartRequest,
+    PasskeyAuthenticationCompleteRequest,
 )
 from ...services.auth_service import AuthService
 from ...services.api_access_service import ApiAccessService
 from ...services.admin_service import AdminService
 from ...services.onboarding_service import OnboardingService
+from ...services.auth_factors_service import AuthFactorsService
+from ...services.turnstile_service import verify_turnstile_token
+from ...core.config import settings
+from ...core.security import create_typed_token, verify_token as verify_jwt_token
 from ...db.models import Organization
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
@@ -74,10 +86,43 @@ def require_super_admin(db: Session, user_id: str) -> None:
         )
 
 
+def _extract_bearer_token(authorization: str) -> str:
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+        return token
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from exc
+
+
+async def _enforce_turnstile_if_required(*, route: str, token: Optional[str], remote_ip: Optional[str]) -> None:
+    if not settings.TURNSTILE_ENABLED:
+        return
+
+    required = (route == "signup" and settings.TURNSTILE_REQUIRE_SIGNUP) or (
+        route == "login" and settings.TURNSTILE_REQUIRE_LOGIN
+    )
+    if not required:
+        return
+
+    is_valid = await verify_turnstile_token(token, remote_ip=remote_ip)
+    if not is_valid:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Turnstile validation failed",
+        )
+
+
 # Standard Response Format used; returning UserResponse inside data
 @router.post("/signup", status_code=status.HTTP_201_CREATED)
 async def signup(
     user_data: UserCreate,
+    x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
     _: None = Depends(rate_limiter("auth_signup", limit=5, window_sec=60)),
 ):
@@ -89,6 +134,12 @@ async def signup(
     - **password**: User's password (min 8 characters)
     - **name**: User's full name (optional)
     """
+    await _enforce_turnstile_if_required(
+        route="signup",
+        token=user_data.turnstile_token,
+        remote_ip=x_forwarded_for,
+    )
+
     try:
         user, is_new = AuthService.create_user(db, user_data)
 
@@ -152,6 +203,12 @@ async def login(
     - **email**: User's email address
     - **password**: User's password
     """
+    await _enforce_turnstile_if_required(
+        route="login",
+        token=credentials.turnstile_token,
+        remote_ip=x_forwarded_for,
+    )
+
     user = AuthService.authenticate_user(db, credentials)
 
     if not user:
@@ -168,6 +225,36 @@ async def login(
             detail="Email not verified. Please check your inbox for the verification email.",
         )
 
+    mfa_method = None
+    if user.totp_enabled:
+        factor_service = AuthFactorsService(db)
+        if not credentials.mfa_code:
+            mfa_token = create_typed_token(
+                {
+                    "sub": user.id,
+                    "email": user.email,
+                },
+                token_type="mfa_challenge",
+                expires_delta=timedelta(minutes=settings.MFA_CHALLENGE_EXPIRE_MINUTES),
+            )
+            return {
+                "success": True,
+                "data": {
+                    "mfa_required": True,
+                    "mfa_token": mfa_token,
+                    "available_methods": ["totp", "backup_code"],
+                },
+                "error": None,
+            }
+
+        mfa_method = factor_service.verify_totp_or_backup(user, credentials.mfa_code)
+        if not mfa_method:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid multi-factor authentication code",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
     # Create tokens
     access_token, refresh_token = AuthService.create_tokens(user)
 
@@ -179,6 +266,219 @@ async def login(
         user_agent=user_agent,
         ip_address=x_forwarded_for,
     )
+    AuthService.mark_login_success(db, user)
+
+    return {
+        "success": True,
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "mfa_method": mfa_method,
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
+    }
+
+
+@router.get("/mfa/status", response_model=None)
+async def get_mfa_status(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = db.query(User).filter(User.id == payload["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    return {
+        "success": True,
+        "data": {
+            "totp_enabled": bool(user.totp_enabled),
+            "backup_codes_remaining": len(user.totp_backup_code_hashes or []),
+            "passkeys_count": len(user.passkey_credentials or []),
+            "passkeys": user.passkey_credentials or [],
+        },
+        "error": None,
+    }
+
+
+@router.post("/mfa/totp/setup", response_model=None)
+async def setup_totp(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    setup = AuthFactorsService(db).begin_totp_setup(payload["sub"])
+    return {"success": True, "data": setup, "error": None}
+
+
+@router.post("/mfa/totp/confirm", response_model=None)
+async def confirm_totp(
+    request: TotpSetupConfirmRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    try:
+        result = AuthFactorsService(db).confirm_totp_setup(payload["sub"], request.code)
+        return {"success": True, "data": result, "error": None}
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/login/mfa/complete", response_model=None)
+async def complete_mfa_login(
+    request: MfaLoginCompleteRequest,
+    user_agent: Optional[str] = Header(None),
+    x_forwarded_for: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    payload = verify_jwt_token(request.mfa_token, token_type="mfa_challenge")
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired MFA challenge")
+
+    user = db.query(User).filter(User.id == payload["sub"]).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if not user.totp_enabled:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="MFA is not enabled for user")
+
+    method = AuthFactorsService(db).verify_totp_or_backup(user, request.mfa_code)
+    if not method:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid multi-factor authentication code")
+
+    access_token, refresh_token = AuthService.create_tokens(user)
+    AuthService.store_refresh_token(
+        db,
+        user.id,
+        refresh_token,
+        user_agent=user_agent,
+        ip_address=x_forwarded_for,
+    )
+    AuthService.mark_login_success(db, user)
+
+    return {
+        "success": True,
+        "data": {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "mfa_method": method,
+            "user": UserResponse.model_validate(user).model_dump(),
+        },
+        "error": None,
+    }
+
+
+@router.post("/mfa/totp/disable", response_model=None)
+async def disable_totp(
+    request: TotpDisableRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    try:
+        AuthFactorsService(db).disable_totp(payload["sub"], request.code)
+        return {"success": True, "data": {"totp_enabled": False}, "error": None}
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/passkeys/register/options", response_model=None)
+async def start_passkey_registration(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    if not settings.PASSKEY_ENABLED:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Passkeys disabled")
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    result = AuthFactorsService(db).begin_passkey_registration(payload["sub"])
+    return {"success": True, "data": result, "error": None}
+
+
+@router.post("/passkeys/register/complete", response_model=None)
+async def complete_passkey_registration(
+    request: PasskeyRegistrationCompleteRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    if not settings.PASSKEY_ENABLED:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Passkeys disabled")
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    try:
+        result = AuthFactorsService(db).complete_passkey_registration(payload["sub"], request.credential, request.name)
+        return {"success": True, "data": result, "error": None}
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/passkeys/authenticate/options", response_model=None)
+async def start_passkey_authentication(
+    request: PasskeyAuthenticationStartRequest,
+    db: Session = Depends(get_db),
+):
+    if not settings.PASSKEY_ENABLED:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Passkeys disabled")
+    try:
+        result = AuthFactorsService(db).begin_passkey_authentication(request.email)
+        return {"success": True, "data": result, "error": None}
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+
+@router.post("/passkeys/authenticate/complete", response_model=None)
+async def complete_passkey_authentication(
+    request: PasskeyAuthenticationCompleteRequest,
+    user_agent: Optional[str] = Header(None),
+    x_forwarded_for: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+):
+    if not settings.PASSKEY_ENABLED:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Passkeys disabled")
+
+    try:
+        user = AuthFactorsService(db).complete_passkey_authentication(request.email, request.credential)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
+
+    access_token, refresh_token = AuthService.create_tokens(user)
+    AuthService.store_refresh_token(
+        db,
+        user.id,
+        refresh_token,
+        user_agent=user_agent,
+        ip_address=x_forwarded_for,
+    )
+    AuthService.mark_login_success(db, user)
 
     return {
         "success": True,
@@ -190,6 +490,23 @@ async def login(
         },
         "error": None,
     }
+
+
+@router.delete("/passkeys/{credential_id}", response_model=None)
+async def delete_passkey(
+    credential_id: str,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    token = _extract_bearer_token(authorization)
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+    try:
+        AuthFactorsService(db).delete_passkey(payload["sub"], credential_id)
+        return {"success": True, "data": {"deleted": True}, "error": None}
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
 
 
 # ==========================================

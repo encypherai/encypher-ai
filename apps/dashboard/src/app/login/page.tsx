@@ -4,6 +4,7 @@ import { Input } from '@encypher/design-system';
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import Image from 'next/image';
+import apiClient from '../../lib/api';
 
 // Note: API_BASE not used directly in login - auth goes through NextAuth
 import Link from 'next/link';
@@ -16,8 +17,96 @@ const LOGO_WHITE = '/assets/encypher_full_logo_white.svg';
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaCode, setMfaCode] = useState('');
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [passkeyLoading, setPasskeyLoading] = useState(false);
+
+  const base64UrlToBuffer = (value: string): Uint8Array => {
+    const padded = `${value}${'='.repeat((4 - (value.length % 4)) % 4)}`;
+    const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
+    const binary = atob(base64);
+    return Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  };
+
+  const bufferToBase64Url = (buffer: ArrayBuffer): string => {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach((b) => {
+      binary += String.fromCharCode(b);
+    });
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+  };
+
+  const buildPasskeyAssertionPayload = (credential: PublicKeyCredential): Record<string, unknown> => {
+    const response = credential.response as AuthenticatorAssertionResponse;
+    return {
+      id: credential.id,
+      rawId: bufferToBase64Url(credential.rawId),
+      type: credential.type,
+      response: {
+        authenticatorData: bufferToBase64Url(response.authenticatorData),
+        clientDataJSON: bufferToBase64Url(response.clientDataJSON),
+        signature: bufferToBase64Url(response.signature),
+        userHandle: response.userHandle ? bufferToBase64Url(response.userHandle) : null,
+      },
+    };
+  };
+
+  const handlePasskeyLogin = async () => {
+    if (!email) {
+      setError('Enter your email to continue with passkey sign in.');
+      return;
+    }
+
+    if (typeof window === 'undefined' || !window.PublicKeyCredential) {
+      setError('Passkeys are not supported in this browser.');
+      return;
+    }
+
+    setError('');
+    setPasskeyLoading(true);
+    try {
+      const optionsData = await apiClient.startPasskeyAuthentication(email);
+      const options = JSON.parse(optionsData.options_json);
+      const publicKey: PublicKeyCredentialRequestOptions = {
+        ...options,
+        challenge: base64UrlToBuffer(options.challenge),
+        allowCredentials: (options.allowCredentials || []).map((cred: any) => ({
+          ...cred,
+          id: base64UrlToBuffer(cred.id),
+        })),
+      };
+
+      const credential = (await navigator.credentials.get({ publicKey })) as PublicKeyCredential | null;
+      if (!credential) {
+        throw new Error('Passkey sign-in was cancelled.');
+      }
+
+      const authData = await apiClient.completePasskeyAuthentication(email, buildPasskeyAssertionPayload(credential));
+      const accessToken = (authData as any)?.access_token as string | undefined;
+      if (!accessToken) {
+        throw new Error('Passkey authentication did not return a session token.');
+      }
+
+      const result = await signIn('credentials', {
+        email,
+        password: `__TOKEN__${accessToken}`,
+        redirect: false,
+        callbackUrl: '/',
+      });
+
+      if (result?.error) {
+        throw new Error(result.error);
+      }
+      window.location.href = '/';
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Passkey login failed.');
+    } finally {
+      setPasskeyLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,11 +117,19 @@ export default function LoginPage() {
       const result = await signIn('credentials', {
         email,
         password,
+        mfaToken: mfaToken || undefined,
+        mfaCode: mfaCode || undefined,
         redirect: false,
         callbackUrl: '/',
       });
 
       if (result?.error) {
+        if (result.error.startsWith('MFA_REQUIRED:')) {
+          setMfaToken(result.error.replace('MFA_REQUIRED:', ''));
+          setError('Enter your authentication code to finish signing in.');
+          setLoading(false);
+          return;
+        }
         // NextAuth passes the error message from authorize() in result.error
         setError(result.error === 'CredentialsSignin' ? 'Invalid email or password' : result.error);
         setLoading(false);
@@ -110,6 +207,15 @@ export default function LoginPage() {
               </button>
             </div>
 
+            <button
+              type="button"
+              disabled={loading || passkeyLoading}
+              onClick={handlePasskeyLogin}
+              className="w-full py-3 px-4 rounded-lg font-semibold transition focus:outline-none focus:ring-2 focus:ring-ring bg-background text-foreground border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+            >
+              {passkeyLoading ? 'Waiting for passkey…' : 'Sign in with passkey'}
+            </button>
+
             <div className="flex items-center gap-2 my-2">
               <div className="flex-1 h-px bg-border" />
               <span className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">or sign in with</span>
@@ -135,6 +241,21 @@ export default function LoginPage() {
                 <Input id="password" type="password" placeholder="Your password" value={password} onChange={(e) => setPassword(e.target.value)} required disabled={loading} />
               </div>
 
+              {mfaToken && (
+                <div>
+                  <label htmlFor="mfa-code" className="block text-sm font-medium text-foreground mb-2">Authentication code</label>
+                  <Input
+                    id="mfa-code"
+                    type="text"
+                    placeholder="6-digit code or backup code"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                    required
+                    disabled={loading}
+                  />
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={loading}
@@ -149,7 +270,7 @@ export default function LoginPage() {
                     <span>Signing in...</span>
                   </>
                 ) : (
-                  'Sign in'
+                  mfaToken ? 'Verify and sign in' : 'Sign in'
                 )}
               </button>
             </form>

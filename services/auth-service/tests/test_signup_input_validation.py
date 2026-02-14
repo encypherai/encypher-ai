@@ -48,3 +48,15 @@ def test_user_login_canonicalizes_email() -> None:
     login = UserLogin(email="First.Last+tag@Gmail.com", password="SecurePass123!")
 
     assert login.email == "firstlast@gmail.com"
+
+
+def test_user_login_maps_turnstile_alias() -> None:
+    login = UserLogin(email="user@example.com", password="SecurePass123!", turnstileToken="token")
+
+    assert login.turnstile_token == "token"
+
+
+def test_user_login_maps_mfa_alias() -> None:
+    login = UserLogin(email="user@example.com", password="SecurePass123!", mfaCode="123456")
+
+    assert login.mfa_code == "123456"
