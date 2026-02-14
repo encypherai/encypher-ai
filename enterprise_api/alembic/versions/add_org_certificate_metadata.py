@@ -25,20 +25,29 @@ certificate_status_enum = sa.Enum(
 )
 
 
+def _has_column(table_name: str, column_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = inspector.get_columns(table_name)
+    return any(col.get("name") == column_name for col in columns)
+
+
 def upgrade() -> None:
-    op.add_column(
-        "organizations",
-        sa.Column(
-            "certificate_status",
-            certificate_status_enum,
-            nullable=False,
-            server_default="active",
-        ),
-    )
-    op.add_column(
-        "organizations",
-        sa.Column("certificate_rotated_at", sa.TIMESTAMP(timezone=True), nullable=True),
-    )
+    if not _has_column("organizations", "certificate_status"):
+        op.add_column(
+            "organizations",
+            sa.Column(
+                "certificate_status",
+                certificate_status_enum,
+                nullable=False,
+                server_default="active",
+            ),
+        )
+    if not _has_column("organizations", "certificate_rotated_at"):
+        op.add_column(
+            "organizations",
+            sa.Column("certificate_rotated_at", sa.TIMESTAMP(timezone=True), nullable=True),
+        )
     op.alter_column("organizations", "certificate_status", server_default=None)
 
 
