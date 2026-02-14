@@ -22,28 +22,49 @@ branch_labels = None
 depends_on = None
 
 
+def _has_column(table_name: str, column_name: str) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    columns = inspector.get_columns(table_name)
+    return any(col["name"] == column_name for col in columns)
+
+
 def upgrade() -> None:
     # Add new columns to organizations table
 
     # New feature flags
-    op.add_column("organizations", sa.Column("sentence_tracking_enabled", sa.Boolean(), nullable=False, server_default="false"))
-    op.add_column("organizations", sa.Column("streaming_enabled", sa.Boolean(), nullable=False, server_default="false"))
-    op.add_column("organizations", sa.Column("byok_enabled", sa.Boolean(), nullable=False, server_default="false"))
-    op.add_column("organizations", sa.Column("team_management_enabled", sa.Boolean(), nullable=False, server_default="false"))
-    op.add_column("organizations", sa.Column("audit_logs_enabled", sa.Boolean(), nullable=False, server_default="false"))
-    op.add_column("organizations", sa.Column("sso_enabled", sa.Boolean(), nullable=False, server_default="false"))
-    op.add_column("organizations", sa.Column("custom_assertions_enabled", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "sentence_tracking_enabled"):
+        op.add_column("organizations", sa.Column("sentence_tracking_enabled", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "streaming_enabled"):
+        op.add_column("organizations", sa.Column("streaming_enabled", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "byok_enabled"):
+        op.add_column("organizations", sa.Column("byok_enabled", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "team_management_enabled"):
+        op.add_column("organizations", sa.Column("team_management_enabled", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "audit_logs_enabled"):
+        op.add_column("organizations", sa.Column("audit_logs_enabled", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "sso_enabled"):
+        op.add_column("organizations", sa.Column("sso_enabled", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "custom_assertions_enabled"):
+        op.add_column("organizations", sa.Column("custom_assertions_enabled", sa.Boolean(), nullable=False, server_default="false"))
 
     # Coalition settings
-    op.add_column("organizations", sa.Column("coalition_member", sa.Boolean(), nullable=False, server_default="true"))
-    op.add_column("organizations", sa.Column("coalition_rev_share_publisher", sa.Integer(), nullable=False, server_default="65"))
-    op.add_column("organizations", sa.Column("coalition_rev_share_encypher", sa.Integer(), nullable=False, server_default="35"))
-    op.add_column("organizations", sa.Column("coalition_opted_out", sa.Boolean(), nullable=False, server_default="false"))
-    op.add_column("organizations", sa.Column("coalition_opted_out_at", sa.TIMESTAMP(timezone=True), nullable=True))
+    if not _has_column("organizations", "coalition_member"):
+        op.add_column("organizations", sa.Column("coalition_member", sa.Boolean(), nullable=False, server_default="true"))
+    if not _has_column("organizations", "coalition_rev_share_publisher"):
+        op.add_column("organizations", sa.Column("coalition_rev_share_publisher", sa.Integer(), nullable=False, server_default="65"))
+    if not _has_column("organizations", "coalition_rev_share_encypher"):
+        op.add_column("organizations", sa.Column("coalition_rev_share_encypher", sa.Integer(), nullable=False, server_default="35"))
+    if not _has_column("organizations", "coalition_opted_out"):
+        op.add_column("organizations", sa.Column("coalition_opted_out", sa.Boolean(), nullable=False, server_default="false"))
+    if not _has_column("organizations", "coalition_opted_out_at"):
+        op.add_column("organizations", sa.Column("coalition_opted_out_at", sa.TIMESTAMP(timezone=True), nullable=True))
 
     # Additional usage tracking
-    op.add_column("organizations", sa.Column("sentences_tracked_this_month", sa.Integer(), nullable=False, server_default="0"))
-    op.add_column("organizations", sa.Column("batch_operations_this_month", sa.Integer(), nullable=False, server_default="0"))
+    if not _has_column("organizations", "sentences_tracked_this_month"):
+        op.add_column("organizations", sa.Column("sentences_tracked_this_month", sa.Integer(), nullable=False, server_default="0"))
+    if not _has_column("organizations", "batch_operations_this_month"):
+        op.add_column("organizations", sa.Column("batch_operations_this_month", sa.Integer(), nullable=False, server_default="0"))
 
     # Update tier enum to include new values
     # Note: PostgreSQL requires special handling for enum updates
