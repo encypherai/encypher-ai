@@ -92,3 +92,24 @@ async def test_byok_public_keys_revoke_business_success(
     payload = response.json()
     assert payload["success"] is True
     assert payload["data"]["key_id"] == "pk_123"
+
+
+@pytest.mark.asyncio
+async def test_byok_trusted_cas_returns_policy_metadata(
+    async_client: AsyncClient,
+    enterprise_auth_headers: dict,
+) -> None:
+    response = await async_client.get("/api/v1/byok/trusted-cas", headers=enterprise_auth_headers)
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["success"] is True
+    assert "trusted_cas" in payload
+    assert "required_signer_eku_oids" in payload
+    assert isinstance(payload["required_signer_eku_oids"], list)
+    assert payload["required_signer_eku_oids"]
+    assert "revocation_denylist" in payload
+    assert "tsa_trust_list" in payload
+    assert "default_signing_mode" in payload
+    assert payload["default_signing_mode"] in {"organization", "managed", "byok", "managed_tenant_cert"}
+    assert "managed_signer_id" in payload

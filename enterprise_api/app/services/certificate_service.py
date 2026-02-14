@@ -15,11 +15,12 @@ from typing import Dict, Optional, Union
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PublicKey
 from cryptography.hazmat.primitives.asymmetric import ec, rsa
-from cryptography.hazmat.primitives.serialization import load_pem_public_key
+from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
 from cryptography.hazmat.backends import default_backend
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import settings
 from app.models.organization import Organization, OrganizationCertificateStatus
 from app.models.public_key import PublicKey
 from app.utils.crypto_utils import decrypt_private_key, extract_public_key_from_certificate
@@ -140,6 +141,47 @@ class CertificateResolver:
                     cert_chain_pem=cert_chain_pem,
                     is_byok=False,
                 )
+
+            managed_signer_id = settings.managed_signer_id
+            managed_signer_certificate_pem = settings.managed_signer_certificate_pem
+            managed_signer_private_key_pem = settings.managed_signer_private_key_pem
+            managed_signer_chain_pem = settings.managed_signer_certificate_chain_pem
+
+            if managed_signer_id and (managed_signer_certificate_pem or managed_signer_private_key_pem):
+                managed_public_key: Optional[SupportedPublicKey] = None
+                certificate_pem = managed_signer_certificate_pem or ""
+
+                if managed_signer_certificate_pem:
+                    try:
+                        managed_public_key = extract_public_key_from_certificate(managed_signer_certificate_pem)
+                    except Exception as exc:
+                        logger.warning("Failed to parse managed signer certificate: %s", exc)
+
+                if managed_public_key is None and managed_signer_private_key_pem:
+                    try:
+                        key = load_pem_private_key(
+                            managed_signer_private_key_pem.encode("utf-8"),
+                            password=None,
+                            backend=default_backend(),
+                        )
+                        pub = key.public_key()
+                        if isinstance(pub, (Ed25519PublicKey, ec.EllipticCurvePublicKey, rsa.RSAPublicKey)):
+                            managed_public_key = pub
+                    except Exception as exc:
+                        logger.warning("Failed to parse managed signer private key: %s", exc)
+
+                if managed_public_key is not None:
+                    refreshed[managed_signer_id] = ResolvedCertificate(
+                        signer_id=managed_signer_id,
+                        organization_name="Encypher Managed Signer",
+                        certificate_pem=certificate_pem,
+                        public_key=managed_public_key,
+                        status=OrganizationCertificateStatus.ACTIVE,
+                        certificate_rotated_at=None,
+                        certificate_expiry=None,
+                        cert_chain_pem=managed_signer_chain_pem,
+                        is_byok=False,
+                    )
 
             # Also load auto-provisioned keys (orgs with public_key or
             # private_key_encrypted but no certificate_pem).

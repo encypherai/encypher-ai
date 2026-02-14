@@ -9,7 +9,7 @@ from typing import Optional, cast
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import ed25519
+from cryptography.hazmat.primitives.asymmetric import ec, ed25519, rsa
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from encypher.core.signing import SigningKey
 from sqlalchemy import text
@@ -24,6 +24,26 @@ _DEMO_PRIVATE_KEY: Optional[ed25519.Ed25519PrivateKey] = None
 
 _ENCRYPTED_KEY_PREFIX = b"EPK1"
 _ENCRYPTED_KEY_NONCE_LEN = 12
+
+
+def load_managed_signing_private_key() -> SigningKey:
+    """Load managed signer private key from settings.
+
+    Supports Ed25519, EC, and RSA PEM PKCS8/PKCS1 encoded private keys.
+    """
+    pem = settings.managed_signer_private_key_pem
+    if not pem:
+        raise ValueError("managed_signer_private_key_pem is not configured")
+
+    try:
+        key = serialization.load_pem_private_key(pem.encode("utf-8"), password=None, backend=default_backend())
+    except Exception as exc:  # pragma: no cover - defensive
+        raise ValueError(f"Failed to load managed signer private key: {exc}") from exc
+
+    if not isinstance(key, (ed25519.Ed25519PrivateKey, ec.EllipticCurvePrivateKey, rsa.RSAPrivateKey)):
+        raise ValueError("Managed signer private key must be Ed25519, EC, or RSA")
+
+    return key
 
 
 async def load_organization_private_key(organization_id: str, db: AsyncSession) -> SigningKey:

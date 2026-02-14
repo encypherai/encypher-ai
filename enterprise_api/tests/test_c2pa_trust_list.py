@@ -6,17 +6,25 @@ import pytest
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.x509.oid import NameOID
+from cryptography.x509.oid import NameOID, ObjectIdentifier
 
 from app.utils import c2pa_trust_list as trust_list
 from app.utils.c2pa_trust_list import (
     compute_trust_list_sha256,
     get_trust_list_metadata,
+    get_tsa_trust_list_metadata,
     refresh_trust_list,
+    refresh_tsa_trust_list,
+    set_revocation_denylist,
+    set_tsa_trust_anchors_pem,
     set_trust_anchors_pem,
+    tsa_trust_list_needs_refresh,
     trust_list_needs_refresh,
     validate_certificate_chain,
 )
+
+
+C2PA_CLAIM_SIGNING_EKU_OID = "1.3.6.1.4.1.62558.2.1"
 
 
 def _new_key() -> rsa.RSAPrivateKey:
@@ -82,12 +90,13 @@ def _make_leaf(
     issuer_cert: x509.Certificate,
     expires_in_days: int = 365,
     signer_key: rsa.RSAPrivateKey | None = None,
+    eku_oids: list[str] | None = None,
 ) -> tuple[rsa.RSAPrivateKey, x509.Certificate]:
     key = signer_key or _new_key()
     subject = _name(cn)
     now = datetime.now(timezone.utc)
 
-    cert = (
+    cert_builder = (
         x509.CertificateBuilder()
         .subject_name(subject)
         .issuer_name(issuer_cert.subject)
@@ -96,8 +105,14 @@ def _make_leaf(
         .not_valid_before(now - timedelta(days=1))
         .not_valid_after(now + timedelta(days=expires_in_days))
         .add_extension(x509.BasicConstraints(ca=False, path_length=None), critical=True)
-        .sign(private_key=issuer_key, algorithm=hashes.SHA256())
     )
+
+    if eku_oids is None:
+        eku_oids = [C2PA_CLAIM_SIGNING_EKU_OID]
+    eku = x509.ExtendedKeyUsage([ObjectIdentifier(oid) for oid in eku_oids])
+    cert_builder = cert_builder.add_extension(eku, critical=False)
+
+    cert = cert_builder.sign(private_key=issuer_key, algorithm=hashes.SHA256())
     return key, cert
 
 
@@ -143,6 +158,123 @@ def test_validate_certificate_chain_signature_mismatch_fails() -> None:
     ok, err, _parsed = validate_certificate_chain(_pem(leaf), _pem(intermediate))
     assert ok is False
     assert err
+
+
+def test_validate_certificate_chain_missing_required_eku_fails() -> None:
+    root_key, root = _make_root_ca(cn="C2PA Test Root")
+    _ = set_trust_anchors_pem(_pem(root))
+
+    int_key, intermediate = _make_intermediate_ca(
+        cn="C2PA Test Intermediate",
+        issuer_key=root_key,
+        issuer_cert=root,
+        ca=True,
+    )
+    _leaf_key, leaf = _make_leaf(
+        cn="C2PA Test Leaf",
+        issuer_key=int_key,
+        issuer_cert=intermediate,
+        eku_oids=["1.3.6.1.5.5.7.3.3"],
+    )
+
+    ok, err, _parsed = validate_certificate_chain(_pem(leaf), _pem(intermediate))
+    assert ok is False
+    assert err == "Certificate missing required EKU"
+
+
+def test_validate_certificate_chain_revoked_serial_fails() -> None:
+    root_key, root = _make_root_ca(cn="C2PA Test Root")
+    _ = set_trust_anchors_pem(_pem(root))
+
+    int_key, intermediate = _make_intermediate_ca(
+        cn="C2PA Test Intermediate",
+        issuer_key=root_key,
+        issuer_cert=root,
+        ca=True,
+    )
+    _leaf_key, leaf = _make_leaf(
+        cn="C2PA Test Leaf",
+        issuer_key=int_key,
+        issuer_cert=intermediate,
+    )
+
+    set_revocation_denylist(serial_numbers={format(leaf.serial_number, "x")}, fingerprints=set())
+    ok, err, _parsed = validate_certificate_chain(_pem(leaf), _pem(intermediate))
+
+    assert ok is False
+    assert err == "Certificate revoked by internal denylist"
+
+
+def test_validate_certificate_chain_revoked_fingerprint_fails() -> None:
+    root_key, root = _make_root_ca(cn="C2PA Test Root")
+    _ = set_trust_anchors_pem(_pem(root))
+
+    int_key, intermediate = _make_intermediate_ca(
+        cn="C2PA Test Intermediate",
+        issuer_key=root_key,
+        issuer_cert=root,
+        ca=True,
+    )
+    _leaf_key, leaf = _make_leaf(
+        cn="C2PA Test Leaf",
+        issuer_key=int_key,
+        issuer_cert=intermediate,
+    )
+    revoked_fp = leaf.fingerprint(hashes.SHA256()).hex()
+
+    set_revocation_denylist(serial_numbers=set(), fingerprints={revoked_fp})
+    ok, err, _parsed = validate_certificate_chain(_pem(leaf), _pem(intermediate))
+
+    assert ok is False
+    assert err == "Certificate revoked by internal denylist"
+
+
+@pytest.mark.asyncio
+async def test_refresh_tsa_trust_list_enforces_sha256_pinning(monkeypatch: pytest.MonkeyPatch) -> None:
+    _root_key, root = _make_root_ca(cn="C2PA Test TSA Root")
+    pem_data = _pem(root)
+    fingerprint = compute_trust_list_sha256(pem_data)
+
+    async def _fetch(url: str) -> str:
+        return pem_data
+
+    monkeypatch.setattr(trust_list, "fetch_trust_list", _fetch)
+
+    count = await refresh_tsa_trust_list(url="https://example.com/tsa.pem", expected_sha256=fingerprint)
+    metadata = get_tsa_trust_list_metadata()
+
+    assert metadata["fingerprint"] == fingerprint
+    assert metadata["source"] == "https://example.com/tsa.pem"
+    assert metadata["count"] == str(count)
+
+    with pytest.raises(ValueError):
+        await refresh_tsa_trust_list(url="https://example.com/tsa.pem", expected_sha256="deadbeef")
+
+
+def test_tsa_trust_list_needs_refresh_based_on_age(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(trust_list, "_tsa_trust_list_loaded_at", None)
+    assert tsa_trust_list_needs_refresh(24) is True
+
+    now = datetime.now(timezone.utc)
+    monkeypatch.setattr(trust_list, "_tsa_trust_list_loaded_at", now - timedelta(hours=25))
+    assert tsa_trust_list_needs_refresh(24) is True
+
+    monkeypatch.setattr(trust_list, "_tsa_trust_list_loaded_at", now - timedelta(hours=1))
+    assert tsa_trust_list_needs_refresh(24) is False
+
+
+def test_set_tsa_trust_anchors_tracks_metadata() -> None:
+    _root_key, root = _make_root_ca(cn="C2PA Test TSA Root")
+    pem_data = _pem(root)
+    fingerprint = compute_trust_list_sha256(pem_data)
+
+    count = set_tsa_trust_anchors_pem(pem_data, source="tsa-unit-test", expected_sha256=fingerprint)
+    metadata = get_tsa_trust_list_metadata()
+
+    assert metadata["fingerprint"] == fingerprint
+    assert metadata["source"] == "tsa-unit-test"
+    assert metadata["count"] == str(count)
+    assert metadata["loaded_at"]
 
 
 def test_compute_trust_list_sha256_returns_hex() -> None:

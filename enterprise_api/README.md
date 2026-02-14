@@ -273,6 +273,16 @@ Look up content across multiple sources with chronological ordering.
 | `/api/v1/webhooks/{webhook_id}/deliveries` | GET | ✅ | Enterprise | List webhook deliveries |
 | `/api/v1/webhooks/{webhook_id}/test` | POST | ✅ | Enterprise | Send a test delivery |
 
+#### BYOK Trust Policy Metadata (`GET /api/v1/byok/trusted-cas`)
+
+In addition to trusted CA subjects, this endpoint returns active trust-policy metadata:
+
+- `required_signer_eku_oids`: required signer EKU OIDs enforced during certificate upload validation.
+- `revocation_denylist`: internal denylist counters (`serial_count`, `fingerprint_count`).
+- `tsa_trust_list`: TSA trust-list URL/fingerprint/load metadata used for timestamp trust handling.
+
+`POST /api/v1/byok/certificates` enforces certificate chaining, signer EKU policy, and internal revocation denylist checks.
+
 ### Coalition Endpoints
 
 | Endpoint | Method | Auth | Tier | Description |
@@ -1357,7 +1367,73 @@ C2PA_TRUST_LIST_SHA256=<sha256_hex>
 
 # Refresh interval (hours) for reloading the trust list
 C2PA_TRUST_LIST_REFRESH_HOURS=24
+
+# Optional override for the TSA trust list URL
+C2PA_TSA_TRUST_LIST_URL=https://raw.githubusercontent.com/c2pa-org/conformance-public/main/trust-list/C2PA-TSA-TRUST-LIST.pem
+
+# Optional SHA-256 pin (hex) for TSA trust list
+C2PA_TSA_TRUST_LIST_SHA256=<sha256_hex>
+
+# Refresh interval (hours) for TSA trust list
+C2PA_TSA_TRUST_LIST_REFRESH_HOURS=24
+
+# Required signer EKU OIDs (comma-separated)
+C2PA_REQUIRED_SIGNER_EKU_OIDS=1.3.6.1.4.1.62558.2.1
+
+# Internal revocation denylist (comma-separated hex values)
+C2PA_REVOKED_CERTIFICATE_SERIALS=
+C2PA_REVOKED_CERTIFICATE_FINGERPRINTS=
+
+# Signing mode defaults
+# organization: per-org key/cert path (legacy/default compatibility)
+# managed: Encypher-managed signer identity for default signing
+# byok: org-managed keys/certs
+# managed_tenant_cert: Encypher-managed issuance for tenant-specific certs (reseller flow)
+DEFAULT_SIGNING_MODE=organization
+
+# Encypher managed signer material (used when DEFAULT_SIGNING_MODE=managed or org signing_mode=managed)
+MANAGED_SIGNER_ID=encypher_managed
+MANAGED_SIGNER_PRIVATE_KEY_PEM="-----BEGIN PRIVATE KEY-----..."
+MANAGED_SIGNER_CERTIFICATE_PEM="-----BEGIN CERTIFICATE-----..."
+MANAGED_SIGNER_CERTIFICATE_CHAIN_PEM="-----BEGIN CERTIFICATE-----..."
 ```
+
+#### Signing Modes (Managed + BYOK + Reseller)
+
+The Enterprise API supports an SSOT signing-mode model:
+
+- `managed`: Sign with Encypher-managed signer key/cert material.
+- `organization`: Legacy org key/cert path.
+- `byok`: Customer-managed key/certificate path.
+- `managed_tenant_cert`: Encypher-managed tenant-specific certificate workflow.
+
+`GET /api/v1/byok/trusted-cas` now returns signing metadata:
+
+- `default_signing_mode`
+- `managed_signer_id`
+
+This keeps BYOK endpoints backward compatible while exposing effective runtime defaults.
+
+#### C2PA Conformance and Trust-List Readiness
+
+The controls above harden validator behavior and BYOK policy enforcement. They do **not** by themselves place Encypher on the C2PA Trust List.
+
+- **Generator Product path (typical)**: complete C2PA Conformance Program requirements and obtain certificates from a C2PA trust-list CA.
+- **Trust anchor/CA path**: requires CA-level policy/governance and C2PA program approval for CA inclusion.
+
+Treat this repository's trust-policy implementation as technical readiness, not final program approval.
+
+#### Optional Reseller Workflow (SSL.com Tenant Certificates)
+
+For customers that require tenant-specific certificate identity, use an opt-in reseller workflow:
+
+1. Keep base platform traffic on `managed` signer mode for cost control and fast onboarding.
+2. Provision tenant certs with SSL.com via API for selected tenants only.
+3. Upload tenant certificate chain through `POST /api/v1/byok/certificates`.
+4. Set tenant/org signing policy to `managed_tenant_cert` (or `byok` where customer-owned key custody is required).
+5. Continue enforcing C2PA trust list + EKU + denylist checks on all uploaded certs.
+
+This model avoids mandatory per-tenant cert spend while supporting premium tenant identity requirements.
 
 ---
 

@@ -133,6 +133,25 @@ GET /api/v1/byok/trusted-cas
 
 Returns the list of C2PA-trusted Certificate Authorities.
 
+The response also includes active trust-policy metadata:
+
+- `required_signer_eku_oids`: signer EKU OIDs required during certificate upload validation.
+- `revocation_denylist`: internal denylist counters (`serial_count`, `fingerprint_count`).
+- `tsa_trust_list`: TSA trust-list URL and load metadata (`url`, `fingerprint`, `loaded_at`, `source`, `count`).
+- `default_signing_mode`: effective default runtime signing mode (`organization`, `managed`, `byok`, `managed_tenant_cert`).
+- `managed_signer_id`: signer identifier used when managed signing mode is active.
+
+These metadata fields do not change existing BYOK endpoint contracts; they only expose additional operational context.
+
+### Signing Modes
+
+Encypher supports four signing modes:
+
+- `managed`: Encypher-managed signer key/certificate identity.
+- `organization`: organization key/certificate path (legacy default compatibility).
+- `byok`: customer-provided key/certificate path.
+- `managed_tenant_cert`: Encypher-managed issuance for tenant-specific certificate identity.
+
 ### Upload Certificate
 
 ```
@@ -195,6 +214,16 @@ The WordPress Provenance Plugin can use BYOK certificates:
 2. The plugin will automatically use your organization's certificate for signing
 3. Verification will show your organization identity
 
+## Optional SSL.com Reseller Tenant-Certificate Workflow
+
+Use this only for customers that require tenant-specific cert identity.
+
+1. Keep most tenants on `managed` mode (single Encypher-managed signer) for cost control.
+2. Issue tenant certs via SSL.com API for selected premium/regulatory tenants.
+3. Upload issued cert chain via `POST /api/v1/byok/certificates`.
+4. Configure tenant policy to `managed_tenant_cert` (or `byok` if customer controls private key custody).
+5. Continue using trust-list validation + required EKU + internal revocation denylist checks.
+
 ## Troubleshooting
 
 ### "Certificate validation failed"
@@ -202,6 +231,8 @@ The WordPress Provenance Plugin can use BYOK certificates:
 - Ensure your certificate chains to a C2PA-trusted root CA
 - Include all intermediate certificates in `chain_pem`
 - Check certificate hasn't expired
+- Ensure the certificate includes the required signer EKU (`1.3.6.1.4.1.62558.2.1` by default)
+- Ensure the certificate serial/fingerprint is not on the configured internal revocation denylist
 
 ### "BYOK requires Business tier"
 

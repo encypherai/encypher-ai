@@ -14,7 +14,10 @@ from app.dependencies import get_current_organization
 from app.schemas.admin import PublicKeyListResponse, PublicKeyRegisterRequest, PublicKeyRegisterResponse
 from app.services.admin_service import PublicKeyService
 from app.utils.c2pa_trust_list import (
+    C2PA_TSA_TRUST_LIST_URL,
     C2PA_TRUST_LIST_URL,
+    get_revocation_denylist_metadata,
+    get_tsa_trust_list_metadata,
     get_trust_anchor_subjects,
     get_trust_list_metadata,
     validate_certificate_chain,
@@ -185,6 +188,11 @@ class TrustListResponse(BaseModel):
     trust_list_loaded_at: Optional[str] = None
     trust_list_source: Optional[str] = None
     trust_list_count: Optional[str] = None
+    required_signer_eku_oids: list[str] = Field(default_factory=list)
+    revocation_denylist: dict[str, str] = Field(default_factory=dict)
+    tsa_trust_list: dict[str, Optional[str]] = Field(default_factory=dict)
+    default_signing_mode: str = "organization"
+    managed_signer_id: str = "encypher_managed"
 
 
 @router.get(
@@ -202,6 +210,8 @@ async def list_trusted_cas() -> TrustListResponse:
     """
     subjects = get_trust_anchor_subjects()
     metadata = get_trust_list_metadata()
+    tsa_metadata = get_tsa_trust_list_metadata()
+    tsa_trust_list_url = settings.c2pa_tsa_trust_list_url or C2PA_TSA_TRUST_LIST_URL
     trust_list_url = settings.c2pa_trust_list_url or C2PA_TRUST_LIST_URL
     return TrustListResponse(
         success=True,
@@ -211,6 +221,17 @@ async def list_trusted_cas() -> TrustListResponse:
         trust_list_loaded_at=metadata.get("loaded_at"),
         trust_list_source=metadata.get("source"),
         trust_list_count=metadata.get("count"),
+        required_signer_eku_oids=settings.c2pa_required_signer_eku_oids_list,
+        revocation_denylist=get_revocation_denylist_metadata(),
+        tsa_trust_list={
+            "url": tsa_trust_list_url,
+            "fingerprint": tsa_metadata.get("fingerprint"),
+            "loaded_at": tsa_metadata.get("loaded_at"),
+            "source": tsa_metadata.get("source"),
+            "count": tsa_metadata.get("count"),
+        },
+        default_signing_mode=settings.default_signing_mode_normalized,
+        managed_signer_id=settings.managed_signer_id,
     )
 
 
@@ -247,6 +268,7 @@ async def upload_certificate(
     is_valid, error_msg, parsed_cert = validate_certificate_chain(
         cert_pem=request.certificate_pem,
         chain_pem=request.chain_pem,
+        required_eku_oids=settings.c2pa_required_signer_eku_oids_list,
     )
 
     if not is_valid:

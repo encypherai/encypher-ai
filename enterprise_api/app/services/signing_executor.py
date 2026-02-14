@@ -28,9 +28,10 @@ from app.models.request_models import SignRequest
 from app.models.response_models import SignResponse
 from app.services.organization_bootstrap import ensure_organization_exists
 from app.services.provisioning_service import ProvisioningService
+from app.services.signing_mode import SIGNING_MODE_MANAGED, resolve_signing_mode
 from app.services.status_service import status_service
 from app.utils.coalition_client import CoalitionClient
-from app.utils.crypto_utils import get_demo_private_key, load_organization_private_key
+from app.utils.crypto_utils import get_demo_private_key, load_managed_signing_private_key, load_organization_private_key
 from app.utils.sentence_parser import compute_sentence_hash, compute_text_hash, parse_sentences
 
 logger = logging.getLogger(__name__)
@@ -74,10 +75,11 @@ async def execute_signing(
 
     is_demo_org = organization.get("is_demo", False)
     org_id = organization["organization_id"]
+    signing_mode = resolve_signing_mode(organization)
 
     await ensure_organization_exists(db, organization)
 
-    if not is_demo_org and not org_id.startswith("user_"):
+    if signing_mode != SIGNING_MODE_MANAGED and not is_demo_org and not org_id.startswith("user_"):
         await ProvisioningService._ensure_organization_certificate(
             db=db,
             organization_id=org_id,
@@ -89,7 +91,11 @@ async def execute_signing(
     # For demo orgs (including user-level keys), use demo key but keep actual org_id as signer
     # This allows verification to look up the org and find they use the demo key
     try:
-        if is_demo_org:
+        if signing_mode == SIGNING_MODE_MANAGED:
+            private_key = load_managed_signing_private_key()
+            signer_id = settings.managed_signer_id
+            logger.info("Using managed signer key for org %s as signer %s", org_id, signer_id)
+        elif is_demo_org:
             private_key = get_demo_private_key()
             # Use actual org ID as signer - verification will look up and find demo key association
             signer_id = org_id
