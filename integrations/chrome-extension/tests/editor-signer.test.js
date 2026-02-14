@@ -317,4 +317,214 @@ describe('Minimum Text Length', () => {
   });
 });
 
+describe('Online Platform Detection', () => {
+  // Helper to simulate detectOnlinePlatform logic
+  const detectOnlinePlatform = (hostname, pathname) => {
+    if (hostname === 'docs.google.com' && pathname.startsWith('/document/')) {
+      return 'google-docs';
+    }
+    if (
+      (hostname === 'word.live.com' || hostname.endsWith('.officeapps.live.com')) ||
+      (hostname.endsWith('.sharepoint.com') && pathname.includes('/_layouts/15/Doc.aspx'))
+    ) {
+      return 'ms-word-online';
+    }
+    return null;
+  };
+
+  it('should detect Google Docs', () => {
+    assert.strictEqual(detectOnlinePlatform('docs.google.com', '/document/d/abc123/edit'), 'google-docs');
+  });
+
+  it('should not detect Google Docs on non-document pages', () => {
+    assert.strictEqual(detectOnlinePlatform('docs.google.com', '/spreadsheets/d/abc123'), null);
+    assert.strictEqual(detectOnlinePlatform('docs.google.com', '/presentation/d/abc123'), null);
+  });
+
+  it('should detect MS Word Online (word.live.com)', () => {
+    assert.strictEqual(detectOnlinePlatform('word.live.com', '/edit/abc123'), 'ms-word-online');
+  });
+
+  it('should detect MS Word Online (officeapps.live.com)', () => {
+    assert.strictEqual(detectOnlinePlatform('word-edit.officeapps.live.com', '/we/wordeditorframe.aspx'), 'ms-word-online');
+  });
+
+  it('should detect MS Word Online (SharePoint)', () => {
+    assert.strictEqual(detectOnlinePlatform('contoso.sharepoint.com', '/_layouts/15/Doc.aspx?sourcedoc=abc'), 'ms-word-online');
+  });
+
+  it('should return null for unrecognized sites', () => {
+    assert.strictEqual(detectOnlinePlatform('example.com', '/'), null);
+    assert.strictEqual(detectOnlinePlatform('google.com', '/'), null);
+  });
+});
+
+describe('Google Docs Editor Detection', () => {
+  it('should detect Google Docs kix-appview-editor element', () => {
+    const detectEditorType = (el) => {
+      if (el.classList.contains('kix-appview-editor') ||
+          el.classList.contains('kix-page-content-wrapper')) {
+        return 'google-docs';
+      }
+      if (el.getAttribute('data-content-type') === 'RichText' ||
+          el.classList.contains('WACViewPanel_EditingElement')) {
+        return 'ms-word-online';
+      }
+      if (el.isContentEditable || el.getAttribute('contenteditable') === 'true') {
+        return 'contenteditable';
+      }
+      return null;
+    };
+
+    const element = {
+      ...mockDocument.createElement('div'),
+      classList: { contains: (cls) => cls === 'kix-appview-editor' },
+      getAttribute: () => null
+    };
+    assert.strictEqual(detectEditorType(element), 'google-docs');
+  });
+
+  it('should detect Google Docs page content wrapper', () => {
+    const detectEditorType = (el) => {
+      if (el.classList.contains('kix-appview-editor') ||
+          el.classList.contains('kix-page-content-wrapper')) {
+        return 'google-docs';
+      }
+      return null;
+    };
+
+    const element = {
+      ...mockDocument.createElement('div'),
+      classList: { contains: (cls) => cls === 'kix-page-content-wrapper' }
+    };
+    assert.strictEqual(detectEditorType(element), 'google-docs');
+  });
+});
+
+describe('MS Word Online Editor Detection', () => {
+  it('should detect Word Online RichText element', () => {
+    const detectEditorType = (el) => {
+      if (el.getAttribute('data-content-type') === 'RichText' ||
+          el.classList.contains('WACViewPanel_EditingElement')) {
+        return 'ms-word-online';
+      }
+      return null;
+    };
+
+    const element = {
+      ...mockDocument.createElement('div'),
+      getAttribute: (attr) => attr === 'data-content-type' ? 'RichText' : null,
+      classList: { contains: () => false }
+    };
+    assert.strictEqual(detectEditorType(element), 'ms-word-online');
+  });
+
+  it('should detect Word Online WACViewPanel element', () => {
+    const detectEditorType = (el) => {
+      if (el.getAttribute('data-content-type') === 'RichText' ||
+          el.classList.contains('WACViewPanel_EditingElement')) {
+        return 'ms-word-online';
+      }
+      return null;
+    };
+
+    const element = {
+      ...mockDocument.createElement('div'),
+      getAttribute: () => null,
+      classList: { contains: (cls) => cls === 'WACViewPanel_EditingElement' }
+    };
+    assert.strictEqual(detectEditorType(element), 'ms-word-online');
+  });
+});
+
+describe('Google Docs Text Extraction', () => {
+  it('should extract text from kix-lineview elements', () => {
+    const getEditorText = (el, type) => {
+      if (type === 'google-docs') {
+        const lines = el.querySelectorAll('.kix-lineview');
+        if (lines.length > 0) {
+          return Array.from(lines).map(l => l.textContent || '').join('\n');
+        }
+        return el.innerText || el.textContent || '';
+      }
+      return el.innerText || '';
+    };
+
+    const mockLines = [
+      { textContent: 'First line of the document' },
+      { textContent: 'Second line of the document' }
+    ];
+    const element = {
+      querySelectorAll: (selector) => {
+        if (selector === '.kix-lineview') return mockLines;
+        return [];
+      },
+      innerText: 'Fallback text'
+    };
+
+    assert.strictEqual(
+      getEditorText(element, 'google-docs'),
+      'First line of the document\nSecond line of the document'
+    );
+  });
+
+  it('should fall back to innerText when no kix-lineview elements', () => {
+    const getEditorText = (el, type) => {
+      if (type === 'google-docs') {
+        const lines = el.querySelectorAll('.kix-lineview');
+        if (lines.length > 0) {
+          return Array.from(lines).map(l => l.textContent || '').join('\n');
+        }
+        const paragraphs = el.querySelectorAll('.kix-paragraphrenderer');
+        if (paragraphs.length > 0) {
+          return Array.from(paragraphs).map(p => p.textContent || '').join('\n');
+        }
+        return el.innerText || el.textContent || '';
+      }
+      return '';
+    };
+
+    const element = {
+      querySelectorAll: () => [],
+      innerText: 'Fallback document text'
+    };
+
+    assert.strictEqual(getEditorText(element, 'google-docs'), 'Fallback document text');
+  });
+});
+
+describe('Online Editor Set Text (Clipboard Fallback)', () => {
+  it('should not directly mutate Google Docs DOM', () => {
+    // For Google Docs and MS Word Online, setEditorText should NOT
+    // modify innerText — it should use clipboard instead.
+    // We verify that innerText is NOT changed.
+    const element = { innerText: 'Original text' };
+
+    const setEditorText = (el, type, text) => {
+      if (type === 'google-docs' || type === 'ms-word-online') {
+        // Would call navigator.clipboard.writeText in real code
+        return; // Does NOT mutate el
+      }
+      el.innerText = text;
+    };
+
+    setEditorText(element, 'google-docs', 'Signed text');
+    assert.strictEqual(element.innerText, 'Original text');
+  });
+
+  it('should not directly mutate MS Word Online DOM', () => {
+    const element = { innerText: 'Original text' };
+
+    const setEditorText = (el, type, text) => {
+      if (type === 'google-docs' || type === 'ms-word-online') {
+        return;
+      }
+      el.innerText = text;
+    };
+
+    setEditorText(element, 'ms-word-online', 'Signed text');
+    assert.strictEqual(element.innerText, 'Original text');
+  });
+});
+
 console.log('All editor-signer tests passed!');

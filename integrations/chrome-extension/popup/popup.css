@@ -32,22 +32,21 @@ body {
 
 .popup__logo-icon {
   flex-shrink: 0;
+  filter: brightness(0) invert(1);
+  border-radius: 4px;
 }
 
 .popup__logo {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.popup__logo img {
-  border-radius: 4px;
+  gap: 10px;
 }
 
 .popup__title {
-  font-weight: 600;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 16px;
   color: #FFFFFF;
+  letter-spacing: 0.3px;
 }
 
 /* Content */

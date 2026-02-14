@@ -30,6 +30,64 @@ const signedContentHashes = new Set();
 // Track active editors
 const activeEditors = new Map();
 
+// Whether editor sign buttons are enabled (loaded from settings)
+let editorButtonsEnabled = true;
+
+/**
+ * Detect which online editor platform we're on (if any)
+ */
+function detectOnlinePlatform() {
+  const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
+
+  // Google Docs
+  if (hostname === 'docs.google.com' && pathname.startsWith('/document/')) {
+    return 'google-docs';
+  }
+
+  // Microsoft Word Online
+  if (
+    (hostname === 'word.live.com' || hostname.endsWith('.officeapps.live.com')) ||
+    (hostname.endsWith('.sharepoint.com') && pathname.includes('/_layouts/15/Doc.aspx'))
+  ) {
+    return 'ms-word-online';
+  }
+
+  return null;
+}
+
+/**
+ * Get the main editable region for an online platform.
+ * Returns { element, type } or null.
+ */
+function getOnlineEditorElement(platform) {
+  switch (platform) {
+    case 'google-docs': {
+      // Google Docs renders via canvas but exposes an accessibility layer
+      // with contenteditable .kix-appview-editor or the iframe body.
+      const kixEditor = document.querySelector('.kix-appview-editor');
+      if (kixEditor) return { element: kixEditor, type: 'google-docs' };
+      // Fallback: the page content wrapper
+      const pageContent = document.querySelector('.kix-page-content-wrapper');
+      if (pageContent) return { element: pageContent, type: 'google-docs' };
+      return null;
+    }
+    case 'ms-word-online': {
+      // Word Online uses a contenteditable div inside WACViewPanel
+      const canvas = document.querySelector('[data-content-type="RichText"][contenteditable="true"]');
+      if (canvas) return { element: canvas, type: 'ms-word-online' };
+      // Fallback: the main editing surface
+      const surface = document.querySelector('.WACViewPanel_EditingElement');
+      if (surface) return { element: surface, type: 'ms-word-online' };
+      const ce = document.querySelector('#WACViewPanel [contenteditable="true"]');
+      if (ce) return { element: ce, type: 'ms-word-online' };
+      return null;
+    }
+    default:
+      return null;
+  }
+}
+
 /**
  * Simple hash for content tracking
  */
@@ -51,6 +109,18 @@ function detectEditorType(element) {
   const classList = element.classList;
   const id = element.id || '';
   const parent = element.parentElement;
+
+  // Google Docs
+  if (element.classList.contains('kix-appview-editor') ||
+      element.classList.contains('kix-page-content-wrapper')) {
+    return 'google-docs';
+  }
+
+  // Microsoft Word Online
+  if (element.getAttribute('data-content-type') === 'RichText' ||
+      element.classList.contains('WACViewPanel_EditingElement')) {
+    return 'ms-word-online';
+  }
   
   // TinyMCE
   if (element.classList.contains('mce-content-body') || 
@@ -130,6 +200,24 @@ function getEditorText(element, editorType) {
     case 'textarea':
     case 'input':
       return element.value || '';
+
+    case 'google-docs': {
+      // Google Docs: extract text from the accessibility layer.
+      // The .kix-lineview spans contain the visible text.
+      const lines = element.querySelectorAll('.kix-lineview');
+      if (lines.length > 0) {
+        return Array.from(lines).map(l => l.textContent || '').join('\n');
+      }
+      // Fallback: all paragraph content wrappers
+      const paragraphs = element.querySelectorAll('.kix-paragraphrenderer');
+      if (paragraphs.length > 0) {
+        return Array.from(paragraphs).map(p => p.textContent || '').join('\n');
+      }
+      return element.innerText || element.textContent || '';
+    }
+
+    case 'ms-word-online':
+      return element.innerText || element.textContent || '';
     
     case 'tinymce':
       // Try to get TinyMCE instance
@@ -161,7 +249,9 @@ function getEditorText(element, editorType) {
 }
 
 /**
- * Set text content in editor element
+ * Set text content in editor element.
+ * For Google Docs and MS Word Online, we copy to clipboard instead of
+ * modifying the DOM directly (their internal models would desync).
  */
 function setEditorText(element, editorType, text) {
   switch (editorType) {
@@ -171,6 +261,17 @@ function setEditorText(element, editorType, text) {
       element.dispatchEvent(new Event('input', { bubbles: true }));
       element.dispatchEvent(new Event('change', { bubbles: true }));
       break;
+
+    case 'google-docs':
+    case 'ms-word-online':
+      // Cannot safely mutate the DOM of these editors.
+      // Copy signed text to clipboard so the user can paste it.
+      navigator.clipboard.writeText(text).then(() => {
+        showNotification('info', 'Signed text copied to clipboard. Paste (Ctrl+V) to replace content.');
+      }).catch(() => {
+        showNotification('error', 'Could not copy to clipboard.');
+      });
+      return;
     
     case 'tinymce':
       if (typeof tinymce !== 'undefined') {
@@ -452,24 +553,41 @@ function attachSignButton(editor) {
     showSigningUI(editor, editorType, button);
   });
   
-  // Reposition on scroll/resize
-  const repositionHandler = () => positionButton(button, editor);
-  window.addEventListener('scroll', repositionHandler, { passive: true });
-  window.addEventListener('resize', repositionHandler, { passive: true });
-  
-  // Show/hide based on focus
-  editor.addEventListener('focus', () => {
+  // Online editors (Google Docs, MS Word Online): always-visible fixed button
+  const isOnlineEditor = editorType === 'google-docs' || editorType === 'ms-word-online';
+
+  if (isOnlineEditor) {
+    button.style.position = 'fixed';
+    button.style.bottom = '24px';
+    button.style.right = '24px';
+    button.style.top = 'auto';
+    button.style.left = 'auto';
     button.classList.add('encypher-sign-btn--visible');
-  });
-  
-  editor.addEventListener('blur', () => {
-    // Delay to allow button click
-    setTimeout(() => {
-      if (!document.querySelector('.encypher-sign-ui')) {
-        button.classList.remove('encypher-sign-btn--visible');
-      }
-    }, 200);
-  });
+  } else {
+    // Reposition on scroll/resize
+    const repositionHandler = () => positionButton(button, editor);
+    window.addEventListener('scroll', repositionHandler, { passive: true });
+    window.addEventListener('resize', repositionHandler, { passive: true });
+
+    // Show/hide based on focus
+    editor.addEventListener('focus', () => {
+      button.classList.add('encypher-sign-btn--visible');
+    });
+
+    editor.addEventListener('blur', () => {
+      // Delay to allow button click
+      setTimeout(() => {
+        if (!document.querySelector('.encypher-sign-ui')) {
+          button.classList.remove('encypher-sign-btn--visible');
+        }
+      }, 200);
+    });
+
+    // Initially visible if focused
+    if (document.activeElement === editor) {
+      button.classList.add('encypher-sign-btn--visible');
+    }
+  }
   
   // Check if content is already signed
   const text = getEditorText(editor, editorType);
@@ -477,17 +595,26 @@ function attachSignButton(editor) {
     button.classList.add('encypher-sign-btn--signed');
     button.querySelector('.encypher-sign-btn__text').innerHTML = 'Signed <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px"><polyline points="20 6 9 17 4 12"/></svg>';
   }
-  
-  // Initially visible if focused
-  if (document.activeElement === editor) {
-    button.classList.add('encypher-sign-btn--visible');
-  }
 }
 
 /**
  * Scan page for editors
  */
 function scanForEditors() {
+  if (!editorButtonsEnabled) return;
+
+  // Check for online editor platforms first
+  const platform = detectOnlinePlatform();
+  if (platform) {
+    const editorInfo = getOnlineEditorElement(platform);
+    if (editorInfo) {
+      attachSignButton(editorInfo.element);
+    }
+    // On Google Docs / Word Online, don't scan for generic editors
+    // to avoid attaching buttons to unrelated contenteditable regions
+    return;
+  }
+
   // Contenteditable elements
   const editables = document.querySelectorAll('[contenteditable="true"]');
   editables.forEach(attachSignButton);
@@ -599,21 +726,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Initialize
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
+// Load settings and initialize
+async function _initEditorSigner() {
+  try {
+    const settings = await chrome.storage.sync.get({ showEditorButtons: true });
+    editorButtonsEnabled = settings.showEditorButtons;
+  } catch (e) {
+    // Default to enabled if storage fails
+  }
+  if (editorButtonsEnabled) {
     scanForEditors();
     observeForEditors();
-  });
+  }
+}
+
+// Listen for settings changes
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'sync' && changes.showEditorButtons) {
+    editorButtonsEnabled = changes.showEditorButtons.newValue;
+    if (!editorButtonsEnabled) {
+      // Remove all sign buttons
+      for (const [id, info] of activeEditors) {
+        info.button?.remove();
+      }
+      activeEditors.clear();
+    } else {
+      scanForEditors();
+      observeForEditors();
+    }
+  }
+});
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', _initEditorSigner);
 } else {
-  scanForEditors();
-  observeForEditors();
+  _initEditorSigner();
 }
 
 // Export for testing
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     detectEditorType,
+    detectOnlinePlatform,
+    getOnlineEditorElement,
     getEditorText,
     setEditorText,
     hashText

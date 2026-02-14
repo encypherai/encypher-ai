@@ -8,7 +8,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
   color: white;
   border: none;
   border-radius: 6px;
@@ -19,7 +19,7 @@
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease, background 0.2s ease;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px rgba(42, 135, 196, 0.3);
   z-index: 10001;
 }
 
@@ -29,9 +29,9 @@
 }
 
 .encypher-sign-btn:hover {
-  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+  background: linear-gradient(135deg, #1B2F50 0%, #2A87C4 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 4px 12px rgba(42, 135, 196, 0.4);
 }
 
 .encypher-sign-btn:active {
@@ -39,7 +39,7 @@
 }
 
 .encypher-sign-btn:focus {
-  outline: 2px solid #818CF8;
+  outline: 2px solid #2A87C4;
   outline-offset: 2px;
 }
 
@@ -92,7 +92,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
   color: white;
 }
 
@@ -186,14 +186,14 @@
 
 .encypher-sign-ui__options input[type="text"]:focus {
   outline: none;
-  border-color: #6366F1;
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  border-color: #2A87C4;
+  box-shadow: 0 0 0 3px rgba(42, 135, 196, 0.1);
 }
 
 .encypher-sign-ui__options input[type="checkbox"] {
   width: 16px;
   height: 16px;
-  accent-color: #6366F1;
+  accent-color: #2A87C4;
 }
 
 .encypher-sign-ui__footer {
@@ -216,12 +216,12 @@
 }
 
 .encypher-sign-ui__btn--primary {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
   color: white;
 }
 
 .encypher-sign-ui__btn--primary:hover:not(:disabled) {
-  background: linear-gradient(135deg, #4F46E5 0%, #4338CA 100%);
+  background: linear-gradient(135deg, #1B2F50 0%, #2A87C4 100%);
 }
 
 .encypher-sign-ui__btn--primary:disabled {
@@ -301,7 +301,7 @@
 }
 
 .encypher-notification--info {
-  background: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  background: linear-gradient(135deg, #2A87C4 0%, #1B2F50 100%);
 }
 
 .encypher-notification__icon {
@@ -332,8 +332,8 @@
 }
 
 .encypher-sign-status--signing {
-  background: #EEF2FF;
-  color: #6366F1;
+  background: #E8F4FD;
+  color: #2A87C4;
 }
 
 .encypher-sign-status--signed {

@@ -839,7 +839,18 @@ async function _verifyDetections(detections) {
 async function scanPage(root = document.body) {
   _debugLog('INFO', 'detector', `Scanning ${root === document.body ? 'page' : 'subtree'}: ${window.location.href}`);
   
-  const { uncached, cached } = _detectEmbeddings(root);
+  let { uncached, cached } = _detectEmbeddings(root);
+  
+  // On Google Docs / MS Word Online, also scan platform-specific content layers
+  // that may not be reachable from a normal body TreeWalker.
+  if (root === document.body) {
+    const extraRoots = _getOnlineEditorRoots();
+    for (const extraRoot of extraRoots) {
+      const extra = _detectEmbeddings(extraRoot);
+      uncached = uncached.concat(extra.uncached);
+      cached = cached.concat(extra.cached);
+    }
+  }
   
   // Apply cached results immediately (no API call needed)
   for (const entry of cached) {
@@ -863,6 +874,39 @@ async function scanPage(root = document.body) {
   }
   
   return totalFound;
+}
+
+/**
+ * Return additional DOM roots to scan for online editor platforms.
+ * Google Docs renders text in an accessibility layer that may be in a
+ * separate subtree from the main body content.
+ */
+function _getOnlineEditorRoots() {
+  const roots = [];
+  const hostname = window.location.hostname;
+  const pathname = window.location.pathname;
+
+  // Google Docs: accessibility / screen-reader text layer
+  if (hostname === 'docs.google.com' && pathname.startsWith('/document/')) {
+    // The .kix-appview-editor contains the accessibility text spans
+    const kixEditor = document.querySelector('.kix-appview-editor');
+    if (kixEditor) roots.push(kixEditor);
+    // Also try individual page content wrappers
+    document.querySelectorAll('.kix-page-content-wrapper').forEach(el => {
+      if (!kixEditor || !kixEditor.contains(el)) roots.push(el);
+    });
+  }
+
+  // MS Word Online: contenteditable surface
+  if (hostname === 'word.live.com' || hostname.endsWith('.officeapps.live.com') ||
+      (hostname.endsWith('.sharepoint.com') && pathname.includes('/_layouts/15/Doc.aspx'))) {
+    const surface = document.querySelector('[data-content-type="RichText"][contenteditable="true"]') ||
+                    document.querySelector('.WACViewPanel_EditingElement') ||
+                    document.querySelector('#WACViewPanel [contenteditable="true"]');
+    if (surface) roots.push(surface);
+  }
+
+  return roots;
 }
 
 /**
