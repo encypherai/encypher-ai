@@ -24,6 +24,60 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer(auto_error=False)
 
 
+async def _get_org_context_from_jwt_access_token(token: str) -> Optional[Dict]:
+    """Resolve organization context from an auth-service JWT access token.
+
+    Dashboard requests use auth-service JWTs (not API keys). For org-scoped
+    enterprise API endpoints, derive org context from the user's default org.
+    """
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{settings.auth_service_url}/api/v1/auth/verify",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=5.0,
+            )
+    except httpx.RequestError:
+        logger.warning("Auth service unavailable while resolving JWT org context")
+        return None
+
+    if response.status_code != status.HTTP_200_OK:
+        return None
+
+    payload = response.json()
+    user = payload.get("data") if isinstance(payload, dict) and payload.get("success") else None
+    if not isinstance(user, dict):
+        return None
+
+    org_id = user.get("default_organization_id")
+    if not org_id:
+        return None
+
+    org_data = await auth_service_client.get_organization_context(str(org_id))
+    if not org_data:
+        return None
+
+    return _normalize_org_context(
+        {
+            "organization_id": org_id,
+            "organization_name": org_data.get("name"),
+            "tier": org_data.get("tier", "free"),
+            "features": org_data.get("features", {}),
+            # JWT auth does not include API key scopes; use baseline app permissions.
+            "permissions": ["sign", "verify", "lookup", "read"],
+            "monthly_api_limit": org_data.get("monthly_api_limit"),
+            "monthly_api_usage": org_data.get("monthly_api_usage"),
+            "coalition_member": org_data.get("coalition_member", True),
+            "coalition_rev_share": org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
+            "certificate_pem": org_data.get("certificate_pem"),
+            "user_id": user.get("id"),
+            "account_type": org_data.get("account_type"),
+            "display_name": org_data.get("display_name"),
+            "anonymous_publisher": org_data.get("anonymous_publisher", False),
+        }
+    )
+
+
 async def get_current_organization_dep(
     request: Request,
     background_tasks: BackgroundTasks,
@@ -205,6 +259,10 @@ async def get_current_organization(
     if org_context is None:
         # 1. Try Key Service first (production path)
         org_context = await key_service_client.validate_key(api_key)
+
+    if org_context is None:
+        # 1b. Fallback for dashboard bearer JWTs (non-API-key auth)
+        org_context = await _get_org_context_from_jwt_access_token(api_key)
 
     if org_context:
         # Normalize the response to ensure consistent structure
