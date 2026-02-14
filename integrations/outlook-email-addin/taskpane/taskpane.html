@@ -12,21 +12,42 @@
       <header class="header">
         <div class="mark">E</div>
         <div>
-          <h1>Encypher Email Provenance</h1>
-          <p id="modeLabel">Loading Outlook mode...</p>
+          <h1>Encypher C2PA Email Provenance</h1>
+          <p class="subhead">Co-Chair, C2PA Text Provenance Task Force (Section A.7)</p>
         </div>
       </header>
 
+      <section class="panel hero">
+        <p class="pill">Standard published Jan 8, 2026</p>
+        <h2>Text on the open web has no proof of origin.</h2>
+        <p class="hero-copy">
+          Encypher embeds cryptographic proof directly into email text, designed to survive
+          copy-paste, downstream distribution, and scraping workflows.
+        </p>
+        <p id="modeLabel" class="mode-label">Loading Outlook mode...</p>
+      </section>
+
       <section class="panel">
-        <h2>Actions</h2>
+        <h2>Trust & Standards Context</h2>
+        <ul class="trust-list">
+          <li>Built for C2PA text provenance interoperability</li>
+          <li>Collaborative infrastructure with ecosystem partners</li>
+          <li>Supports formal notice and verifiable proof-of-origin workflows</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Email Actions</h2>
+        <p class="muted">Run directly on the current Outlook message body.</p>
         <div class="grid">
-          <button id="signBtn" class="btn primary">Sign Email Body</button>
-          <button id="verifyBtn" class="btn">Verify Email Body</button>
+          <button id="signBtn" class="btn primary">Sign with Proof of Origin</button>
+          <button id="verifyBtn" class="btn">Verify Provenance</button>
         </div>
       </section>
 
       <section class="panel">
         <h2>Settings</h2>
+        <p class="muted">Your API key remains in Outlook roaming settings for this account.</p>
         <label for="apiKeyInput">API Key</label>
         <input id="apiKeyInput" type="password" placeholder="encypher_..." />
 
@@ -40,7 +61,7 @@
       </section>
 
       <section class="panel">
-        <h2>Provenance</h2>
+        <h2>Provenance Chain</h2>
         <p id="provenanceSummary">No provenance yet.</p>
       </section>
 

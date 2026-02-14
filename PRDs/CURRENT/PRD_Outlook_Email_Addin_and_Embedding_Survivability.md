@@ -44,6 +44,10 @@ Build a native Outlook add-in integration (Office Mailbox host) for compose/read
 - Added JS survivability harness and tests (`tests/survivability-harness.test.js`) simulating multiple email processor transformations.
 - Added Python enterprise-level survivability tests (`enterprise_api/tests/test_email_embedding_survivability.py`) using real crypto utilities.
 - Added survivability matrix documentation and strategy guidance in `docs/architecture/EMAIL_EMBEDDING_SURVIVABILITY_MATRIX.md`.
+- Updated Outlook add-in manifest/UI copy and visual language to align with `docs/company_internal_strategy/Encypher_Marketing_Guidelines.md`.
+- Applied official Encypher palette and Roboto-first typography in task pane CSS.
+- Added standards-authority and proof-of-origin messaging in task pane hero and trust context sections.
+- Performed browser UI verification via Puppeteer screenshot and DOM checks for brand tokens/copy.
 - Test results:
   - `npm test` in `integrations/outlook-email-addin`: 14/14 passing
   - `uv run pytest enterprise_api/tests/test_email_embedding_survivability.py -q`: 5/5 passing

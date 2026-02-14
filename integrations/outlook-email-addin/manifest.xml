@@ -8,8 +8,8 @@
   <Version>1.0.0.0</Version>
   <ProviderName>Encypher AI</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Encypher Email Provenance"/>
-  <Description DefaultValue="Sign and verify Outlook email content with Encypher provenance."/>
+  <DisplayName DefaultValue="Encypher C2PA Email Provenance"/>
+  <Description DefaultValue="Embed and verify cryptographic proof of origin for Outlook email content using C2PA-aligned provenance infrastructure."/>
   <IconUrl DefaultValue="https://dashboard.encypherai.com/favicon.ico"/>
   <HighResolutionIconUrl DefaultValue="https://dashboard.encypherai.com/favicon.ico"/>
   <SupportUrl DefaultValue="https://docs.encypherai.com"/>
@@ -125,10 +125,10 @@
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="GroupLabel" DefaultValue="Encypher"/>
-          <bt:String id="OpenTaskPaneLabel" DefaultValue="Open Encypher"/>
+          <bt:String id="OpenTaskPaneLabel" DefaultValue="Open C2PA Provenance"/>
         </bt:ShortStrings>
         <bt:LongStrings>
-          <bt:String id="OpenTaskPaneTooltip" DefaultValue="Open Encypher email sign and verify tools."/>
+          <bt:String id="OpenTaskPaneTooltip" DefaultValue="Open Encypher tools for cryptographic proof-of-origin signing and verification."/>
         </bt:LongStrings>
       </Resources>
     </VersionOverrides>

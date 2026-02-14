@@ -1,6 +1,9 @@
 # Encypher Outlook Email Add-in
 
-Outlook Mailbox add-in scaffold for signing and verifying email body content with Encypher provenance.
+Outlook Mailbox add-in for signing and verifying email body content with **cryptographic proof of origin** aligned to C2PA text provenance standards.
+
+Brand messaging and visual treatment are aligned with internal standards in:
+- `docs/company_internal_strategy/Encypher_Marketing_Guidelines.md`
 
 ## What this add-in supports
 
@@ -9,6 +12,17 @@ Outlook Mailbox add-in scaffold for signing and verifying email body content wit
 - Verify current email body text via `POST /api/v1/verify`
 - Provenance chain persistence in `Office.context.roamingSettings`
 - API base URL enforcement (`https://*.encypherai.com`)
+- C2PA-aligned trust messaging and proof-of-origin workflow language in UI
+
+## Brand & Design Conformance
+
+- Palette uses Encypher official colors (Deep Navy `#1B2F50`, Azure `#2A87C4`, Light Sky Blue `#B7D5ED`, Cyber Teal `#00CED1`, Neutral Gray `#A7AFBC`, White `#FFFFFF`).
+- Typography defaults to Roboto-first stack, with monospace for technical outputs.
+- Messaging avoids adversarial framing and emphasizes collaborative standards infrastructure.
+- UX language highlights:
+  - "proof of origin"
+  - "C2PA text provenance"
+  - "collaborative infrastructure"
 
 ## Structure
 
@@ -58,3 +72,9 @@ npm test
 - Start with `micro_ecc_c2pa` for compact payload + RS recovery in moderate corruption paths.
 - Add fallback routing to `zw_embedding` for environments known to strip supplementary variation selectors.
 - Capture processor-specific telemetry before hard-coding one universal default.
+
+## Positioning Notes (for product/marketing consistency)
+
+- Lead with standards authority and interoperability, not vendor lock-in.
+- Emphasize cryptographic certainty over probabilistic detection.
+- Frame verification as infrastructure for licensing/governance workflows.

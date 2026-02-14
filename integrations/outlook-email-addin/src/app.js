@@ -18,10 +18,10 @@
 
   function assertSettings(settings) {
     if (!settings.apiKey) {
-      throw new Error('Missing API key. Save it in Settings.');
+      throw new Error('Missing API key. Save your Encypher API key in Settings to sign with proof of origin.');
     }
     if (!settings.apiBaseUrl) {
-      throw new Error('Missing API base URL. Save it in Settings.');
+      throw new Error('Missing API base URL. Save the Encypher API base URL in Settings.');
     }
   }
 
@@ -38,7 +38,8 @@
     const hash = global.EmailProvenanceUtils.hashText(visible);
     const entries = global.EmailStorage.getProvenanceEntries(hash);
 
-    byId('provenanceSummary').textContent = 'Visible hash: ' + hash + ' | Entries: ' + entries.length;
+    byId('provenanceSummary').textContent =
+      'Visible content hash: ' + hash + ' | Provenance entries: ' + entries.length;
   }
 
   async function signBody() {
@@ -81,13 +82,14 @@
       signedLength: signResult.signedText.length,
       previousEmbeddingsCount: previousEmbeddings.length,
       verificationUrl: signResult.verificationUrl,
+      message: 'Email body signed with cryptographic proof of origin.',
     };
   }
 
   async function verifyBody() {
     const settings = global.EmailStorage.getUserSettings();
     if (!settings.apiBaseUrl) {
-      throw new Error('Missing API base URL. Save it in Settings.');
+      throw new Error('Missing API base URL. Save the Encypher API base URL in Settings.');
     }
 
     const plainBody = await global.OutlookAdapter.getBody({ html: false });
@@ -109,6 +111,7 @@
       signerName: verifyResult.signer_name || verifyResult.organization_name || '',
       reasonCode: verifyResult.reason_code || '',
       timestamp: verifyResult.timestamp || '',
+      message: 'Verification completed against Encypher provenance infrastructure.',
       raw: verifyResult,
     };
   }
