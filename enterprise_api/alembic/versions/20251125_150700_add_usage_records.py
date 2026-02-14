@@ -41,6 +41,13 @@ def _has_unique_constraint(table_name: str, constraint_name: str) -> bool:
     return any(constraint.get("name") == constraint_name for constraint in constraints)
 
 
+def _has_columns(table_name: str, column_names: set[str]) -> bool:
+    bind = op.get_bind()
+    inspector = sa.inspect(bind)
+    existing_columns = {column.get("name") for column in inspector.get_columns(table_name)}
+    return column_names.issubset(existing_columns)
+
+
 def upgrade() -> None:
     if not _has_table("usage_records"):
         op.create_table(
@@ -71,19 +78,19 @@ def upgrade() -> None:
         )
 
     # Unique constraint on org + metric + period
-    if not _has_unique_constraint("usage_records", "uq_usage_records_org_metric_period"):
+    if _has_columns("usage_records", {"organization_id", "metric", "period_start", "period_end"}) and not _has_unique_constraint("usage_records", "uq_usage_records_org_metric_period"):
         op.create_unique_constraint("uq_usage_records_org_metric_period", "usage_records", ["organization_id", "metric", "period_start", "period_end"])
 
     # Indexes
-    if not _has_index("usage_records", "ix_usage_records_org_id"):
+    if _has_columns("usage_records", {"organization_id"}) and not _has_index("usage_records", "ix_usage_records_org_id"):
         op.create_index("ix_usage_records_org_id", "usage_records", ["organization_id"])
-    if not _has_index("usage_records", "ix_usage_records_metric"):
+    if _has_columns("usage_records", {"metric"}) and not _has_index("usage_records", "ix_usage_records_metric"):
         op.create_index("ix_usage_records_metric", "usage_records", ["metric"])
-    if not _has_index("usage_records", "ix_usage_records_period"):
+    if _has_columns("usage_records", {"period_start", "period_end"}) and not _has_index("usage_records", "ix_usage_records_period"):
         op.create_index("ix_usage_records_period", "usage_records", ["period_start", "period_end"])
-    if not _has_index("usage_records", "ix_usage_records_org_metric"):
+    if _has_columns("usage_records", {"organization_id", "metric"}) and not _has_index("usage_records", "ix_usage_records_org_metric"):
         op.create_index("ix_usage_records_org_metric", "usage_records", ["organization_id", "metric"])
-    if not _has_index("usage_records", "ix_usage_records_billed"):
+    if _has_columns("usage_records", {"billed"}) and not _has_index("usage_records", "ix_usage_records_billed"):
         op.create_index("ix_usage_records_billed", "usage_records", ["billed"])
 
 

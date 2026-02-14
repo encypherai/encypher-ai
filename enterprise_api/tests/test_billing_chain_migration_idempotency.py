@@ -45,6 +45,7 @@ class _Inspector:
         self._tables = tables
         self._indexes = indexes
         self._unique_constraints = unique_constraints
+        self._columns: dict[str, set[str]] = {}
 
     def has_table(self, table_name: str) -> bool:
         return table_name in self._tables
@@ -54,6 +55,9 @@ class _Inspector:
 
     def get_unique_constraints(self, table_name: str) -> list[dict[str, str]]:
         return [{"name": name} for name in sorted(self._unique_constraints.get(table_name, set()))]
+
+    def get_columns(self, table_name: str) -> list[dict[str, str]]:
+        return [{"name": col} for col in sorted(self._columns.get(table_name, set()))]
 
 
 def test_subscription_upgrade_skips_existing_artifacts(monkeypatch: pytest.MonkeyPatch, subscription_migration_module: ModuleType) -> None:
@@ -120,3 +124,37 @@ def test_usage_upgrade_skips_existing_artifacts(monkeypatch: pytest.MonkeyPatch,
     assert create_table_calls == []
     assert create_index_calls == []
     assert create_unique_calls == []
+
+
+def test_usage_upgrade_skips_constraint_and_indexes_for_legacy_schema(
+    monkeypatch: pytest.MonkeyPatch,
+    usage_migration_module: ModuleType,
+) -> None:
+    monkeypatch.setattr(usage_migration_module.op, "get_bind", lambda: object())
+    monkeypatch.setattr(
+        usage_migration_module.sa,
+        "inspect",
+        lambda _bind: _Inspector(
+            tables={"usage_records"},
+            indexes={"usage_records": set()},
+            unique_constraints={"usage_records": set()},
+        ),
+    )
+
+    # Mirror production legacy usage schema where metric/billed/period columns do not exist.
+    monkeypatch.setattr(
+        usage_migration_module,
+        "_has_columns",
+        lambda _table, cols: cols.issubset({"id", "organization_id", "created_at"}),
+    )
+
+    create_unique_calls: list[str] = []
+    create_index_calls: list[str] = []
+
+    monkeypatch.setattr(usage_migration_module.op, "create_unique_constraint", lambda name, table, cols, **kwargs: create_unique_calls.append(name))
+    monkeypatch.setattr(usage_migration_module.op, "create_index", lambda name, table, cols, **kwargs: create_index_calls.append(name))
+
+    usage_migration_module.upgrade()
+
+    assert create_unique_calls == []
+    assert create_index_calls == ["ix_usage_records_org_id"]
