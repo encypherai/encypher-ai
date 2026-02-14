@@ -71,6 +71,11 @@ class Settings(BaseSettings):
     batch_worker_limit: int = 8
     batch_max_items: int = 100
 
+    # Request logging controls (to avoid platform log-rate limits)
+    request_logging_enabled: Optional[bool] = None
+    log_health_checks: bool = False
+    slow_request_threshold_ms: int = 2000
+
     # Domains
     marketing_domain: str = "encypher.ai"
     infrastructure_domain: str = "encypherai.com"
@@ -170,6 +175,17 @@ class Settings(BaseSettings):
     def is_production(self) -> bool:
         """Check if running in production mode."""
         return self.environment == "production"
+
+    @property
+    def request_logging_enabled_effective(self) -> bool:
+        """Return effective request logging policy.
+
+        Defaults to enabled in development and disabled elsewhere to reduce
+        noisy per-request logs in preview/production deployments.
+        """
+        if self.request_logging_enabled is not None:
+            return self.request_logging_enabled
+        return self.is_development
 
     @property
     def demo_key_allowlist_set(self) -> set[str]:

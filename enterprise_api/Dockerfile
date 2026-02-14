@@ -47,4 +47,6 @@ EXPOSE 8000
 ENTRYPOINT ["/bin/sh", "scripts/docker-entrypoint.sh"]
 # Default CMD - Railway will override via startCommand if needed
 # Note: Railway provides PORT env var dynamically
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Access logs are disabled by default to keep log volume under platform limits.
+# Set UVICORN_ACCESS_LOG=true to re-enable uvicorn access logs.
+CMD ["sh", "-c", "if [ \"${UVICORN_ACCESS_LOG:-false}\" = \"true\" ]; then ACCESS_LOG_ARG=--access-log; else ACCESS_LOG_ARG=--no-access-log; fi; uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} ${ACCESS_LOG_ARG}"]

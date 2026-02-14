@@ -53,6 +53,7 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.services.session_service import session_service
 from app.services.metrics_service import init_metrics_service, shutdown_metrics_service, get_metrics_service
 from app.utils.db_startup import ensure_database_ready
+from app.utils.request_logging import should_log_request
 from app.dependencies import require_super_admin_dep
 
 # Configure logging
@@ -364,22 +365,55 @@ app.add_middleware(MetricsMiddleware)
 # Request logging middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
-    """Log all requests and add processing time header."""
+    """Log request summaries with production-safe suppression defaults."""
     start_time = time.time()
 
-    # Log request
-    client_host = request.client.host if request.client else "unknown"
-    logger.info(f"{request.method} {request.url.path} - Client: {client_host}")
-
     # Process request
-    response = await call_next(request)
+    try:
+        response = await call_next(request)
+    except Exception:
+        process_time_ms = int((time.time() - start_time) * 1000)
+        if should_log_request(
+            path=request.url.path,
+            status_code=500,
+            process_time_ms=process_time_ms,
+            request_logging_enabled=settings.request_logging_enabled_effective,
+            log_health_checks=settings.log_health_checks,
+            slow_request_threshold_ms=settings.slow_request_threshold_ms,
+        ):
+            client_host = request.client.host if request.client else "unknown"
+            logger.error(
+                "%s %s - Status: 500 - Time: %.4fs - Client: %s",
+                request.method,
+                request.url.path,
+                process_time_ms / 1000,
+                client_host,
+            )
+        raise
 
     # Calculate processing time
     process_time = time.time() - start_time
+    process_time_ms = int(process_time * 1000)
     response.headers["X-Process-Time"] = str(process_time)
 
-    # Log response
-    logger.info(f"{request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.4f}s")
+    if should_log_request(
+        path=request.url.path,
+        status_code=response.status_code,
+        process_time_ms=process_time_ms,
+        request_logging_enabled=settings.request_logging_enabled_effective,
+        log_health_checks=settings.log_health_checks,
+        slow_request_threshold_ms=settings.slow_request_threshold_ms,
+    ):
+        client_host = request.client.host if request.client else "unknown"
+        log_method = logger.warning if response.status_code >= 500 else logger.info
+        log_method(
+            "%s %s - Status: %s - Time: %.4fs - Client: %s",
+            request.method,
+            request.url.path,
+            response.status_code,
+            process_time,
+            client_host,
+        )
 
     return response
 
