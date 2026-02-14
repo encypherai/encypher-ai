@@ -33,6 +33,136 @@ const activeEditors = new Map();
 // Whether editor sign buttons are enabled (loaded from settings)
 let editorButtonsEnabled = true;
 
+// ── Embedding byte detection (mirrors detector.js constants) ──
+const VS_RANGES = {
+  VS1_START: 0xFE00, VS1_END: 0xFE0F,
+  VS2_START: 0xE0100, VS2_END: 0xE01EF,
+};
+const ZWNBSP = 0xFEFF;
+
+function _isVS(cp) {
+  return (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) ||
+         (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END);
+}
+
+function _isEmbeddingChar(cp) {
+  return _isVS(cp) || cp === ZWNBSP;
+}
+
+/**
+ * Find the full embedding run surrounding a cursor position in a string.
+ * Returns { start, end } indices of the contiguous embedding byte run,
+ * or null if the cursor is not adjacent to embedding bytes.
+ */
+function findEmbeddingRun(text, cursorPos) {
+  const chars = [...text];
+  if (cursorPos < 0 || cursorPos > chars.length) return null;
+
+  // Check the character before and at the cursor
+  let inRun = false;
+  if (cursorPos > 0 && _isEmbeddingChar(chars[cursorPos - 1].codePointAt(0))) {
+    inRun = true;
+  }
+  if (cursorPos < chars.length && _isEmbeddingChar(chars[cursorPos].codePointAt(0))) {
+    inRun = true;
+  }
+  if (!inRun) return null;
+
+  // Expand left
+  let start = Math.min(cursorPos, chars.length - 1);
+  if (start >= chars.length) start = chars.length - 1;
+  while (start > 0 && _isEmbeddingChar(chars[start - 1].codePointAt(0))) {
+    start--;
+  }
+
+  // Expand right
+  let end = cursorPos;
+  while (end < chars.length && _isEmbeddingChar(chars[end].codePointAt(0))) {
+    end++;
+  }
+
+  if (end <= start) return null;
+  return { start, end };
+}
+
+/**
+ * Extract the raw embedding bytes from a substring of embedding characters.
+ */
+function extractRunBytes(text) {
+  const bytes = [];
+  for (const char of text) {
+    const cp = char.codePointAt(0);
+    if (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) {
+      bytes.push(cp - VS_RANGES.VS1_START);
+    } else if (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END) {
+      bytes.push((cp - VS_RANGES.VS2_START) + 16);
+    }
+    // ZWNBSP is a prefix marker, not a data byte — skip
+  }
+  return bytes;
+}
+
+// ── Provenance chain storage ──
+const PROVENANCE_KEY = 'encypher_provenance';
+const PROVENANCE_MAX_ENTRIES = 50;
+
+/**
+ * Store an embedding's bytes as provenance before it is deleted or replaced.
+ * Keyed by a hash of the visible text that contained the embedding.
+ */
+async function storeProvenance(visibleTextHash, embeddingBytes, metadata = {}) {
+  try {
+    const result = await chrome.storage.local.get({ [PROVENANCE_KEY]: {} });
+    const store = result[PROVENANCE_KEY] || {};
+
+    if (!store[visibleTextHash]) {
+      store[visibleTextHash] = [];
+    }
+
+    store[visibleTextHash].push({
+      bytes: Array.from(embeddingBytes),
+      timestamp: Date.now(),
+      url: window.location.href,
+      ...metadata
+    });
+
+    // Cap per-key entries
+    if (store[visibleTextHash].length > 10) {
+      store[visibleTextHash] = store[visibleTextHash].slice(-10);
+    }
+
+    // Cap total keys
+    const keys = Object.keys(store);
+    if (keys.length > PROVENANCE_MAX_ENTRIES) {
+      // Remove oldest entries
+      const sorted = keys.sort((a, b) => {
+        const aTime = store[a][store[a].length - 1]?.timestamp || 0;
+        const bTime = store[b][store[b].length - 1]?.timestamp || 0;
+        return aTime - bTime;
+      });
+      for (let i = 0; i < keys.length - PROVENANCE_MAX_ENTRIES; i++) {
+        delete store[sorted[i]];
+      }
+    }
+
+    await chrome.storage.local.set({ [PROVENANCE_KEY]: store });
+  } catch (e) {
+    // Storage errors are non-fatal
+  }
+}
+
+/**
+ * Retrieve provenance chain for content identified by its visible text hash.
+ */
+async function getProvenance(visibleTextHash) {
+  try {
+    const result = await chrome.storage.local.get({ [PROVENANCE_KEY]: {} });
+    return (result[PROVENANCE_KEY] || {})[visibleTextHash] || [];
+  } catch (e) {
+    return [];
+  }
+}
+
 /**
  * Detect which online editor platform we're on (if any)
  */
@@ -685,26 +815,115 @@ function observeForEditors() {
 }
 
 /**
- * Handle context menu signing
+ * Get the visible text (stripping embedding chars) from a string.
  */
-async function handleContextMenuSign(text) {
+function _stripEmbeddingChars(text) {
+  let result = '';
+  for (const char of text) {
+    const cp = char.codePointAt(0);
+    if (!_isEmbeddingChar(cp)) {
+      result += char;
+    }
+  }
+  return result;
+}
+
+/**
+ * Try to replace the current selection in-place within an editable element.
+ * Returns true if replacement succeeded, false if not in an editable context.
+ */
+function replaceSelectionInPlace(signedText) {
+  const sel = window.getSelection();
+  if (!sel || sel.rangeCount === 0) return false;
+
+  const range = sel.getRangeAt(0);
+  const container = range.commonAncestorContainer;
+  const editableEl = container.nodeType === Node.ELEMENT_NODE
+    ? container
+    : container.parentElement;
+
+  if (!editableEl) return false;
+
+  // Check if we're inside a textarea/input
+  const active = document.activeElement;
+  if (active && (active.tagName === 'TEXTAREA' || active.tagName === 'INPUT')) {
+    const start = active.selectionStart;
+    const end = active.selectionEnd;
+    if (start !== undefined && end !== undefined) {
+      active.value = active.value.slice(0, start) + signedText + active.value.slice(end);
+      active.selectionStart = active.selectionEnd = start + signedText.length;
+      active.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    }
+  }
+
+  // Check if we're inside a contenteditable element
+  if (editableEl.isContentEditable || editableEl.closest('[contenteditable="true"]')) {
+    range.deleteContents();
+    const textNode = document.createTextNode(signedText);
+    range.insertNode(textNode);
+    // Move cursor to end of inserted text
+    sel.removeAllRanges();
+    const newRange = document.createRange();
+    newRange.setStartAfter(textNode);
+    newRange.collapse(true);
+    sel.addRange(newRange);
+    // Trigger input event
+    const editRoot = editableEl.closest('[contenteditable="true"]') || editableEl;
+    editRoot.dispatchEvent(new Event('input', { bubbles: true }));
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Handle signing of selected text.
+ * Replaces selection in-place when in an editable context, otherwise copies to clipboard.
+ */
+async function handleSignSelection(text) {
   if (!text || text.trim().length < EDITOR_CONFIG.minTextLength) {
     showNotification('error', 'Selected text is too short to sign');
     return;
   }
-  
+
+  const cleanText = text.trim();
+  const visibleText = _stripEmbeddingChars(cleanText);
+  const visibleHash = hashText(visibleText);
+
   showNotification('info', 'Signing selected text...');
-  
+
+  // Check for provenance (previous embeddings on this content)
+  const provenance = await getProvenance(visibleHash);
+
   try {
     const response = await chrome.runtime.sendMessage({
       type: 'SIGN_CONTENT',
-      text: text.trim()
+      text: cleanText,
+      options: provenance.length > 0 ? { previousEmbeddings: provenance } : {}
     });
-    
+
     if (response && response.success) {
-      // Copy signed text to clipboard
-      await navigator.clipboard.writeText(response.signedText);
-      showNotification('success', 'Signed text copied to clipboard!');
+      // Store old embedding bytes as provenance before replacing
+      const oldBytes = extractRunBytes(cleanText);
+      if (oldBytes.length > 0) {
+        await storeProvenance(visibleHash, oldBytes, { action: 'resign' });
+      }
+
+      // Try in-place replacement first
+      const replaced = replaceSelectionInPlace(response.signedText);
+      if (replaced) {
+        signedContentHashes.add(hashText(response.signedText));
+        showNotification('success', 'Content signed and replaced!');
+      } else {
+        // Fallback: copy to clipboard
+        try {
+          await navigator.clipboard.writeText(response.signedText);
+          showNotification('success', 'Signed text copied to clipboard!');
+        } catch (e) {
+          showNotification('error', 'Could not copy to clipboard');
+        }
+      }
     } else {
       showNotification('error', response?.error || 'Signing failed');
     }
@@ -713,10 +932,118 @@ async function handleContextMenuSign(text) {
   }
 }
 
+// ── Smart Backspace ──
+
+/**
+ * Handle keydown events in editable elements to detect backspace/delete
+ * into embedding byte runs. When detected, auto-delete the entire run
+ * and store the bytes as provenance.
+ */
+function handleSmartBackspace(e) {
+  if (e.key !== 'Backspace' && e.key !== 'Delete') return;
+
+  const target = e.target;
+  let text, cursorPos;
+
+  // Textarea / input
+  if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+    text = target.value;
+    cursorPos = target.selectionStart;
+    if (target.selectionStart !== target.selectionEnd) return; // has selection, let default handle it
+  } else if (target.isContentEditable || target.closest?.('[contenteditable="true"]')) {
+    // Contenteditable: get text from the focused text node
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return;
+    const node = sel.focusNode;
+    if (!node || node.nodeType !== Node.TEXT_NODE) return;
+    text = node.textContent || '';
+    cursorPos = sel.focusOffset;
+  } else {
+    return;
+  }
+
+  // Adjust cursor for Delete key (acts like backspace at cursorPos+1)
+  const effectivePos = e.key === 'Delete' ? cursorPos + 1 : cursorPos;
+
+  const run = findEmbeddingRun(text, effectivePos);
+  if (!run) return;
+
+  // Found an embedding run — prevent default and delete the whole run
+  e.preventDefault();
+
+  // Extract bytes for provenance before deleting
+  const chars = [...text];
+  const runText = chars.slice(run.start, run.end).join('');
+  const runBytes = extractRunBytes(runText);
+  const visibleText = _stripEmbeddingChars(text);
+  const visibleHash = hashText(visibleText);
+
+  // Store provenance asynchronously
+  if (runBytes.length > 0) {
+    storeProvenance(visibleHash, runBytes, { action: 'backspace' });
+  }
+
+  // Delete the run
+  if (target.tagName === 'TEXTAREA' || target.tagName === 'INPUT') {
+    // Convert char indices to string indices for textarea
+    const prefix = chars.slice(0, run.start).join('');
+    const suffix = chars.slice(run.end).join('');
+    target.value = prefix + suffix;
+    target.selectionStart = target.selectionEnd = prefix.length;
+    target.dispatchEvent(new Event('input', { bubbles: true }));
+  } else {
+    // Contenteditable: replace the text node content
+    const sel = window.getSelection();
+    const node = sel.focusNode;
+    const prefix = chars.slice(0, run.start).join('');
+    const suffix = chars.slice(run.end).join('');
+    node.textContent = prefix + suffix;
+    // Restore cursor position
+    const newRange = document.createRange();
+    const newPos = Math.min(prefix.length, node.textContent.length);
+    newRange.setStart(node, newPos);
+    newRange.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(newRange);
+    // Trigger input
+    const editRoot = target.closest?.('[contenteditable="true"]') || target;
+    editRoot.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  showNotification('info', 'Embedding removed');
+}
+
+/**
+ * Attach smart backspace listeners to the document.
+ * Uses capture phase to intercept before editor frameworks.
+ */
+function initSmartBackspace() {
+  document.addEventListener('keydown', handleSmartBackspace, true);
+}
+
+// ── Keyboard shortcut: Ctrl+Shift+E to sign selection ──
+
+function handleSignShortcut(e) {
+  if (e.ctrlKey && e.shiftKey && e.key === 'E') {
+    e.preventDefault();
+    const sel = window.getSelection();
+    const text = sel?.toString();
+    if (text && text.trim().length >= EDITOR_CONFIG.minTextLength) {
+      handleSignSelection(text);
+    } else {
+      showNotification('error', 'Select text first (minimum 10 characters)');
+    }
+  }
+}
+
+function initSignShortcut() {
+  document.addEventListener('keydown', handleSignShortcut);
+}
+
 // Listen for messages from service worker
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'SIGN_SELECTION') {
-    handleContextMenuSign(message.text);
+    handleSignSelection(message.text);
     sendResponse({ received: true });
   }
   
@@ -738,6 +1065,9 @@ async function _initEditorSigner() {
     scanForEditors();
     observeForEditors();
   }
+  // Always init smart backspace and sign shortcut (independent of editor buttons)
+  initSmartBackspace();
+  initSignShortcut();
 }
 
 // Listen for settings changes
@@ -771,6 +1101,13 @@ if (typeof module !== 'undefined' && module.exports) {
     getOnlineEditorElement,
     getEditorText,
     setEditorText,
-    hashText
+    hashText,
+    findEmbeddingRun,
+    extractRunBytes,
+    _isVS,
+    _isEmbeddingChar,
+    _stripEmbeddingChars,
+    VS_RANGES,
+    ZWNBSP
   };
 }

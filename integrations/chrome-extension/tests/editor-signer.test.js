@@ -527,4 +527,294 @@ describe('Online Editor Set Text (Clipboard Fallback)', () => {
   });
 });
 
+// ── Embedding byte detection tests ──
+
+describe('Variation Selector Detection (_isVS)', () => {
+  // Mirror the logic from editor-signer.js
+  const VS_RANGES = {
+    VS1_START: 0xFE00, VS1_END: 0xFE0F,
+    VS2_START: 0xE0100, VS2_END: 0xE01EF,
+  };
+  const ZWNBSP = 0xFEFF;
+
+  const _isVS = (cp) =>
+    (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) ||
+    (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END);
+
+  const _isEmbeddingChar = (cp) => _isVS(cp) || cp === ZWNBSP;
+
+  it('should detect VS1 range', () => {
+    assert.strictEqual(_isVS(0xFE00), true);
+    assert.strictEqual(_isVS(0xFE0F), true);
+    assert.strictEqual(_isVS(0xFE05), true);
+  });
+
+  it('should detect VS2 range', () => {
+    assert.strictEqual(_isVS(0xE0100), true);
+    assert.strictEqual(_isVS(0xE01EF), true);
+    assert.strictEqual(_isVS(0xE0150), true);
+  });
+
+  it('should reject non-VS codepoints', () => {
+    assert.strictEqual(_isVS(0x41), false); // 'A'
+    assert.strictEqual(_isVS(0x20), false); // space
+    assert.strictEqual(_isVS(0xFEFF), false); // ZWNBSP is not a VS
+  });
+
+  it('should detect ZWNBSP as embedding char', () => {
+    assert.strictEqual(_isEmbeddingChar(0xFEFF), true);
+  });
+
+  it('should detect VS as embedding char', () => {
+    assert.strictEqual(_isEmbeddingChar(0xFE00), true);
+    assert.strictEqual(_isEmbeddingChar(0xE0100), true);
+  });
+
+  it('should reject normal chars as embedding char', () => {
+    assert.strictEqual(_isEmbeddingChar(0x41), false);
+    assert.strictEqual(_isEmbeddingChar(0x20), false);
+  });
+});
+
+describe('extractRunBytes', () => {
+  const VS_RANGES = {
+    VS1_START: 0xFE00, VS1_END: 0xFE0F,
+    VS2_START: 0xE0100, VS2_END: 0xE01EF,
+  };
+
+  const extractRunBytes = (text) => {
+    const bytes = [];
+    for (const char of text) {
+      const cp = char.codePointAt(0);
+      if (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) {
+        bytes.push(cp - VS_RANGES.VS1_START);
+      } else if (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END) {
+        bytes.push((cp - VS_RANGES.VS2_START) + 16);
+      }
+    }
+    return bytes;
+  };
+
+  it('should extract bytes from VS1 chars', () => {
+    const text = String.fromCodePoint(0xFE00, 0xFE05, 0xFE0F);
+    assert.deepStrictEqual(extractRunBytes(text), [0, 5, 15]);
+  });
+
+  it('should extract bytes from VS2 chars', () => {
+    const text = String.fromCodePoint(0xE0100, 0xE0110);
+    assert.deepStrictEqual(extractRunBytes(text), [16, 32]);
+  });
+
+  it('should skip ZWNBSP (not a data byte)', () => {
+    const text = String.fromCodePoint(0xFEFF, 0xFE00, 0xFE01);
+    assert.deepStrictEqual(extractRunBytes(text), [0, 1]);
+  });
+
+  it('should return empty for plain text', () => {
+    assert.deepStrictEqual(extractRunBytes('Hello'), []);
+  });
+});
+
+describe('findEmbeddingRun', () => {
+  const VS_RANGES = {
+    VS1_START: 0xFE00, VS1_END: 0xFE0F,
+    VS2_START: 0xE0100, VS2_END: 0xE01EF,
+  };
+  const ZWNBSP = 0xFEFF;
+
+  const _isVS = (cp) =>
+    (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) ||
+    (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END);
+
+  const _isEmbeddingChar = (cp) => _isVS(cp) || cp === ZWNBSP;
+
+  const findEmbeddingRun = (text, cursorPos) => {
+    const chars = [...text];
+    if (cursorPos < 0 || cursorPos > chars.length) return null;
+    let inRun = false;
+    if (cursorPos > 0 && _isEmbeddingChar(chars[cursorPos - 1].codePointAt(0))) inRun = true;
+    if (cursorPos < chars.length && _isEmbeddingChar(chars[cursorPos].codePointAt(0))) inRun = true;
+    if (!inRun) return null;
+    let start = Math.min(cursorPos, chars.length - 1);
+    if (start >= chars.length) start = chars.length - 1;
+    while (start > 0 && _isEmbeddingChar(chars[start - 1].codePointAt(0))) start--;
+    let end = cursorPos;
+    while (end < chars.length && _isEmbeddingChar(chars[end].codePointAt(0))) end++;
+    if (end <= start) return null;
+    return { start, end };
+  };
+
+  it('should find embedding run when cursor is inside', () => {
+    // "AB" + ZWNBSP + VS + VS + "CD"
+    const text = 'AB' + String.fromCodePoint(0xFEFF, 0xFE00, 0xFE01) + 'CD';
+    const chars = [...text];
+    // Cursor at position 3 (inside the embedding run: after ZWNBSP, before first VS)
+    const run = findEmbeddingRun(text, 3);
+    assert.ok(run);
+    assert.strictEqual(run.start, 2); // starts at ZWNBSP
+    assert.strictEqual(run.end, 5);   // ends after last VS
+  });
+
+  it('should find embedding run when cursor is at left edge (backspace)', () => {
+    // "AB" + ZWNBSP + VS + VS + "CD"
+    const text = 'AB' + String.fromCodePoint(0xFEFF, 0xFE00, 0xFE01) + 'CD';
+    // Cursor at position 5 (right after last VS, before 'C') — backspace would hit VS
+    const run = findEmbeddingRun(text, 5);
+    assert.ok(run);
+    assert.strictEqual(run.start, 2);
+    assert.strictEqual(run.end, 5);
+  });
+
+  it('should return null when cursor is not near embeddings', () => {
+    const text = 'Hello World';
+    assert.strictEqual(findEmbeddingRun(text, 5), null);
+  });
+
+  it('should return null for empty text', () => {
+    assert.strictEqual(findEmbeddingRun('', 0), null);
+  });
+
+  it('should handle cursor at start of text with embedding', () => {
+    const text = String.fromCodePoint(0xFEFF, 0xFE00) + 'Hello';
+    const run = findEmbeddingRun(text, 0);
+    assert.ok(run);
+    assert.strictEqual(run.start, 0);
+    assert.strictEqual(run.end, 2);
+  });
+
+  it('should handle cursor at end of text with embedding', () => {
+    const text = 'Hello' + String.fromCodePoint(0xFEFF, 0xFE00);
+    const chars = [...text];
+    const run = findEmbeddingRun(text, chars.length);
+    assert.ok(run);
+    assert.strictEqual(run.start, 5);
+    assert.strictEqual(run.end, 7);
+  });
+});
+
+describe('_stripEmbeddingChars', () => {
+  const VS_RANGES = {
+    VS1_START: 0xFE00, VS1_END: 0xFE0F,
+    VS2_START: 0xE0100, VS2_END: 0xE01EF,
+  };
+  const ZWNBSP = 0xFEFF;
+
+  const _isVS = (cp) =>
+    (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) ||
+    (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END);
+
+  const _isEmbeddingChar = (cp) => _isVS(cp) || cp === ZWNBSP;
+
+  const _stripEmbeddingChars = (text) => {
+    let result = '';
+    for (const char of text) {
+      const cp = char.codePointAt(0);
+      if (!_isEmbeddingChar(cp)) result += char;
+    }
+    return result;
+  };
+
+  it('should strip VS and ZWNBSP from text', () => {
+    const text = 'He' + String.fromCodePoint(0xFEFF, 0xFE00, 0xFE01) + 'llo';
+    assert.strictEqual(_stripEmbeddingChars(text), 'Hello');
+  });
+
+  it('should return plain text unchanged', () => {
+    assert.strictEqual(_stripEmbeddingChars('Hello World'), 'Hello World');
+  });
+
+  it('should return empty for all-embedding text', () => {
+    const text = String.fromCodePoint(0xFEFF, 0xFE00, 0xFE0F);
+    assert.strictEqual(_stripEmbeddingChars(text), '');
+  });
+});
+
+describe('Provenance Storage Schema', () => {
+  it('should define correct provenance entry structure', () => {
+    // Verify the provenance entry shape matches what storeProvenance creates
+    const entry = {
+      bytes: [0x43, 0x32, 0x50, 0x41],
+      timestamp: Date.now(),
+      url: 'https://example.com/doc',
+      action: 'backspace'
+    };
+
+    assert.ok(Array.isArray(entry.bytes));
+    assert.strictEqual(typeof entry.timestamp, 'number');
+    assert.strictEqual(typeof entry.url, 'string');
+    assert.strictEqual(typeof entry.action, 'string');
+  });
+
+  it('should cap provenance entries per key', () => {
+    // Simulate the capping logic
+    const MAX_PER_KEY = 10;
+    let entries = [];
+    for (let i = 0; i < 15; i++) {
+      entries.push({ bytes: [i], timestamp: Date.now() + i });
+    }
+    if (entries.length > MAX_PER_KEY) {
+      entries = entries.slice(-MAX_PER_KEY);
+    }
+    assert.strictEqual(entries.length, 10);
+    assert.strictEqual(entries[0].bytes[0], 5); // oldest kept
+  });
+});
+
+describe('Selection Signing Flow', () => {
+  it('should strip embedding chars before hashing for provenance lookup', () => {
+    const VS_RANGES = { VS1_START: 0xFE00, VS1_END: 0xFE0F, VS2_START: 0xE0100, VS2_END: 0xE01EF };
+    const ZWNBSP = 0xFEFF;
+    const _isVS = (cp) => (cp >= VS_RANGES.VS1_START && cp <= VS_RANGES.VS1_END) || (cp >= VS_RANGES.VS2_START && cp <= VS_RANGES.VS2_END);
+    const _isEmbeddingChar = (cp) => _isVS(cp) || cp === ZWNBSP;
+    const _strip = (text) => { let r = ''; for (const c of text) { if (!_isEmbeddingChar(c.codePointAt(0))) r += c; } return r; };
+
+    const hashText = (text) => {
+      let hash = 0;
+      for (let i = 0; i < text.length; i++) {
+        const char = text.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return hash.toString(16);
+    };
+
+    const plainText = 'Hello World';
+    const embeddedText = 'He' + String.fromCodePoint(0xFEFF, 0xFE00) + 'llo World';
+
+    // Both should produce the same visible hash
+    assert.strictEqual(hashText(_strip(plainText)), hashText(_strip(embeddedText)));
+  });
+
+  it('should detect editable context for in-place replacement', () => {
+    // Simulate the check: is the selection inside an editable element?
+    const isEditable = (el) => {
+      if (!el) return false;
+      if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') return true;
+      if (el.isContentEditable) return true;
+      if (el.closest?.('[contenteditable="true"]')) return true;
+      return false;
+    };
+
+    // Editable
+    assert.strictEqual(isEditable({ tagName: 'TEXTAREA' }), true);
+    assert.strictEqual(isEditable({ tagName: 'INPUT' }), true);
+    assert.strictEqual(isEditable({ tagName: 'DIV', isContentEditable: true, closest: () => null }), true);
+
+    // Not editable
+    assert.strictEqual(isEditable({ tagName: 'P', isContentEditable: false, closest: () => null }), false);
+    assert.strictEqual(isEditable(null), false);
+  });
+});
+
+describe('Keyboard Shortcut', () => {
+  it('should match Ctrl+Shift+E', () => {
+    const isSignShortcut = (e) => e.ctrlKey && e.shiftKey && e.key === 'E';
+
+    assert.strictEqual(isSignShortcut({ ctrlKey: true, shiftKey: true, key: 'E' }), true);
+    assert.strictEqual(isSignShortcut({ ctrlKey: true, shiftKey: false, key: 'E' }), false);
+    assert.strictEqual(isSignShortcut({ ctrlKey: false, shiftKey: true, key: 'E' }), false);
+    assert.strictEqual(isSignShortcut({ ctrlKey: true, shiftKey: true, key: 'A' }), false);
+  });
+});
+
 console.log('All editor-signer tests passed!');

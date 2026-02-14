@@ -256,6 +256,9 @@ async function signContent(text, title, options = {}) {
     if (options.useAttribution) {
       requestBody.options.index_for_attribution = true;
     }
+    if (options.previousEmbeddings && options.previousEmbeddings.length > 0) {
+      requestBody.options.previous_embeddings = options.previousEmbeddings;
+    }
 
     // Always use unified /sign endpoint - features gated by tier server-side
     const signUrl = `${API_CONFIG.baseUrl}${API_CONFIG.signEndpoint}`;
