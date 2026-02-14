@@ -67,13 +67,20 @@ class User(Base):
     last_login_at = Column(DateTime(timezone=True), nullable=True)
 
     # TEAM_006: API Access Gating
-    # Users must be approved before they can generate API keys
-    api_access_status = Column(String(32), default=ApiAccessStatus.NOT_REQUESTED.value, nullable=False)
+    # TEAM_191: Auto-approve on signup — users get instant API access
+    api_access_status = Column(String(32), default=ApiAccessStatus.APPROVED.value, nullable=False)
     api_access_requested_at = Column(DateTime(timezone=True), nullable=True)
     api_access_decided_at = Column(DateTime(timezone=True), nullable=True)
     api_access_decided_by = Column(String(64), nullable=True)  # Admin user_id who approved/denied
     api_access_use_case = Column(Text, nullable=True)  # User's stated use case for API access
     api_access_denial_reason = Column(Text, nullable=True)  # Reason if denied
+
+    # TEAM_191: Server-side onboarding checklist
+    onboarding_checklist = Column(JSON, nullable=False, default=dict)
+    onboarding_completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # TEAM_191: Mandatory setup wizard — NULL until wizard is done; dashboard blocks if NULL
+    setup_completed_at = Column(DateTime(timezone=True), nullable=True)
 
     # Team management
     default_organization_id = Column(String(64), nullable=True)
@@ -161,6 +168,11 @@ class Organization(Base):
     name = Column(String(255), nullable=False)
     slug = Column(String(100), unique=True, nullable=True)
     email = Column(String(255), unique=True, nullable=False)
+
+    # TEAM_191: Publisher identity — individual creator vs organization
+    account_type = Column(String(32), nullable=True)  # "individual" or "organization"; NULL = not yet set
+    display_name = Column(String(255), nullable=True)  # Human-readable publisher name for signed content
+    anonymous_publisher = Column(Boolean, default=False, nullable=False)  # If true, show org ID instead of name on verification
 
     # Subscription & Tier
     tier = Column(String(32), nullable=False, default="free")

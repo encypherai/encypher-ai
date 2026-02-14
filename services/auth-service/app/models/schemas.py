@@ -335,3 +335,72 @@ class RoleUpdateResponse(BaseModel):
 
     success: bool = True
     data: dict = Field(default_factory=dict)
+
+
+# ============================================
+# TEAM_191: Onboarding Checklist Schemas
+# ============================================
+
+
+class OnboardingStepStatus(BaseModel):
+    """Status of a single onboarding step"""
+
+    step_id: str
+    title: str
+    description: str
+    completed: bool = False
+    completed_at: Optional[datetime] = None
+    action_url: Optional[str] = None
+
+
+class OnboardingStatusResponse(BaseModel):
+    """Full onboarding checklist status for a user"""
+
+    steps: List[OnboardingStepStatus]
+    completed_count: int
+    total_count: int
+    all_completed: bool
+    dismissed: bool = False
+    completed_at: Optional[datetime] = None
+
+
+class OnboardingCompleteStepRequest(BaseModel):
+    """Request to mark an onboarding step as complete"""
+
+    step_id: str = Field(..., description="ID of the onboarding step to mark complete")
+
+
+# ============================================
+# TEAM_191: Setup Wizard Schemas
+# ============================================
+
+
+class AccountType(str, Enum):
+    """Whether the account is an individual creator or an organization"""
+
+    INDIVIDUAL = "individual"
+    ORGANIZATION = "organization"
+
+
+class SetupWizardRequest(BaseModel):
+    """Request to complete the mandatory setup wizard"""
+
+    account_type: AccountType = Field(..., description="Whether this is an individual creator or an organization")
+    display_name: str = Field(..., min_length=1, max_length=255, description="Publisher name shown on signed content")
+
+    @field_validator("display_name")
+    @classmethod
+    def validate_display_name(cls, v: str) -> str:
+        cleaned = v.strip()
+        if len(cleaned) < 1:
+            raise ValueError("Display name cannot be empty")
+        return cleaned
+
+
+class SetupStatusResponse(BaseModel):
+    """Response with current setup wizard status"""
+
+    setup_completed: bool
+    setup_completed_at: Optional[datetime] = None
+    account_type: Optional[str] = None
+    display_name: Optional[str] = None

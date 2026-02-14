@@ -96,6 +96,10 @@ class AuthService:
                 org = AuthService._create_personal_organization(db, db_user)
                 db_user.default_organization_id = org.id
 
+            # TEAM_191: Initialize onboarding checklist for new user
+            from .onboarding_service import OnboardingService
+            OnboardingService(db).initialize_for_new_user(db_user.id)
+
             db.commit()
             db.refresh(db_user)
             return db_user, True
@@ -400,6 +404,10 @@ class AuthService:
             # Free tier uses Encypher's signing keys; paid tiers can BYOK
             org = AuthService._create_personal_organization(db, user)
             user.default_organization_id = org.id
+
+        # TEAM_191: Initialize onboarding checklist for new OAuth user
+        from .onboarding_service import OnboardingService
+        OnboardingService(db).initialize_for_new_user(user.id)
 
         db.commit()
         db.refresh(user)

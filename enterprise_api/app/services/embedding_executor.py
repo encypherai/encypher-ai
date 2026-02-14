@@ -464,7 +464,7 @@ async def encode_document_with_embeddings(
             distribution_target=request.distribution_target,
             add_dual_binding=request.add_dual_binding,
             disable_c2pa=request.disable_c2pa,
-            organization_name=organization.get("organization_name"),
+            organization_name=organization.get("publisher_identity_base") or organization.get("organization_name"),
         )
 
         # Step 4: Convert embeddings to response format

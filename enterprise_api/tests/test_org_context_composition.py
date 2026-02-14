@@ -47,6 +47,9 @@ async def test_get_current_organization_composes_org_context_via_auth_service(mo
                 "coalition_member": True,
                 "coalition_rev_share": 70,
                 "certificate_pem": None,
+                "account_type": "organization",
+                "display_name": "The Acme Times",
+                "anonymous_publisher": False,
             },
         }
 
@@ -70,3 +73,8 @@ async def test_get_current_organization_composes_org_context_via_auth_service(mo
     assert result["can_lookup"] is True
     assert result["monthly_api_limit"] == 100000
     assert result["monthly_api_usage"] == 5
+    assert result["account_type"] == "organization"
+    assert result["display_name"] == "The Acme Times"
+    assert result["anonymous_publisher"] is False
+    assert result["publisher_identity_base"] == "The Acme Times"
+    assert result["publisher_attribution"] == "The Acme Times · Powered by Encypher"

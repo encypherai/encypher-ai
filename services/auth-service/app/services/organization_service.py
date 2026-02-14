@@ -152,6 +152,7 @@ class OrganizationService:
                     "byok": False,
                     "sso": False,
                     "custom_assertions": False,
+                    "whitelabel": False,
                 },
             },
             "enterprise": {
@@ -169,6 +170,7 @@ class OrganizationService:
                     "sso": True,
                     "fuzzy_fingerprint": True,
                     "custom_assertions": True,
+                    "whitelabel": True,
                 },
             },
             "strategic_partner": {
@@ -186,6 +188,7 @@ class OrganizationService:
                     "sso": True,
                     "fuzzy_fingerprint": True,
                     "custom_assertions": True,
+                    "whitelabel": True,
                 },
             },
         }

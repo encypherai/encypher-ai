@@ -100,6 +100,9 @@ interface OrganizationInfo {
   name: string;
   slug: string | null;
   email: string;
+  account_type?: AccountType | null;
+  display_name?: string | null;
+  anonymous_publisher?: boolean;
   tier: string;
   max_seats: number;
   subscription_status: string;
@@ -287,6 +290,41 @@ interface PendingAccessRequest {
   name: string | null;
   use_case: string;
   requested_at: string;
+}
+
+// TEAM_191: Onboarding Checklist types
+interface OnboardingStep {
+  step_id: string;
+  title: string;
+  description: string;
+  completed: boolean;
+  completed_at: string | null;
+  action_url: string | null;
+}
+
+interface OnboardingStatusResponse {
+  steps: OnboardingStep[];
+  completed_count: number;
+  total_count: number;
+  all_completed: boolean;
+  dismissed: boolean;
+  completed_at: string | null;
+}
+
+// TEAM_191: Setup Wizard types
+type AccountType = 'individual' | 'organization';
+
+interface SetupStatusResponse {
+  setup_completed: boolean;
+  setup_completed_at: string | null;
+  account_type: AccountType | null;
+  display_name: string | null;
+}
+
+interface PublisherSettings {
+  display_name: string | null;
+  account_type: AccountType | null;
+  anonymous_publisher: boolean;
 }
 
 class ApiError extends Error {
@@ -1308,6 +1346,97 @@ const apiClient = {
     
     return response;
   },
+
+  // ============================================
+  // Onboarding Checklist (auth-service) - TEAM_191
+  // ============================================
+
+  /**
+   * Get the current onboarding checklist status
+   */
+  async getOnboardingStatus(accessToken: string): Promise<OnboardingStatusResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: OnboardingStatusResponse }>(
+      `${AUTH_SERVICE_URL}/auth/onboarding-status`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  /**
+   * Mark an onboarding step as complete
+   */
+  async completeOnboardingStep(accessToken: string, stepId: string): Promise<OnboardingStatusResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: OnboardingStatusResponse }>(
+      `${AUTH_SERVICE_URL}/auth/onboarding/complete-step`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify({ step_id: stepId }),
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Dismiss the onboarding checklist permanently
+   */
+  async dismissOnboarding(accessToken: string): Promise<OnboardingStatusResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: OnboardingStatusResponse }>(
+      `${AUTH_SERVICE_URL}/auth/onboarding/dismiss`,
+      accessToken,
+      { method: 'POST' }
+    );
+    return response.data;
+  },
+
+  // ============================================
+  // Setup Wizard (auth-service) - TEAM_191
+  // ============================================
+
+  /**
+   * Check if the user has completed the mandatory setup wizard
+   */
+  async getSetupStatus(accessToken: string): Promise<SetupStatusResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: SetupStatusResponse }>(
+      `${AUTH_SERVICE_URL}/auth/setup-status`,
+      accessToken
+    );
+    return response.data;
+  },
+
+  /**
+   * Complete the mandatory setup wizard with publisher identity
+   */
+  async completeSetup(accessToken: string, data: { account_type: AccountType; display_name: string }): Promise<SetupStatusResponse> {
+    const response = await fetchWithAuth<{ success: boolean; data: SetupStatusResponse }>(
+      `${AUTH_SERVICE_URL}/auth/setup/complete`,
+      accessToken,
+      {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.data;
+  },
+
+  /**
+   * Update publisher identity settings (display name, anonymous toggle)
+   */
+  async updatePublisherSettings(
+    accessToken: string,
+    orgId: string,
+    data: { display_name?: string; anonymous_publisher?: boolean }
+  ): Promise<PublisherSettings> {
+    const response = await fetchWithAuth<{ success: boolean; data: PublisherSettings }>(
+      `${AUTH_SERVICE_URL}/organizations/${orgId}/publisher-settings`,
+      accessToken,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(data),
+      }
+    );
+    return response.data;
+  },
 };
 
 // Ghost Integration types (TEAM_187)
@@ -1375,6 +1504,13 @@ export type {
   // TEAM_044: C2PA Templates
   C2PATemplate,
   C2PATemplateListResponse,
+  // TEAM_191: Onboarding Checklist
+  OnboardingStep,
+  OnboardingStatusResponse,
+  // TEAM_191: Setup Wizard
+  AccountType,
+  SetupStatusResponse,
+  PublisherSettings,
   // TEAM_187: Ghost Integration
   GhostIntegrationCreatePayload,
   GhostIntegrationResponse,

@@ -8,6 +8,9 @@ interface Organization {
   name: string;
   slug: string | null;
   email: string;
+  account_type?: 'individual' | 'organization' | null;
+  display_name?: string | null;
+  anonymous_publisher?: boolean;
   tier: string;
   max_seats: number;
   subscription_status: string;

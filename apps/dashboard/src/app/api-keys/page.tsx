@@ -16,7 +16,6 @@ import { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import apiClient from '../../lib/api';
 import { DashboardLayout } from '../../components/layout/DashboardLayout';
-import { ApiAccessGate } from '../../components/ApiAccessGate';
 import { exportApiKeys } from '../../lib/exportCsv';
 import { useOrganization } from '../../contexts/OrganizationContext';
 
@@ -377,8 +376,7 @@ export default function ApiKeysPage() {
 
   return (
     <DashboardLayout>
-      {/* TEAM_006: Gate API key generation behind approval workflow */}
-      <ApiAccessGate>
+      {/* TEAM_191: API access is now auto-approved on signup */}
         <div className="flex flex-col gap-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <div>
@@ -467,7 +465,6 @@ export default function ApiKeysPage() {
           onSubmit={handleCreateKey}
           isLoading={createKeyMutation.isPending}
         />
-      </ApiAccessGate>
     </DashboardLayout>
   );
 }

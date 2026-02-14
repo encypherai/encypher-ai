@@ -81,7 +81,7 @@ async def execute_signing(
         await ProvisioningService._ensure_organization_certificate(
             db=db,
             organization_id=org_id,
-            organization_name=organization.get("organization_name") or org_id,
+            organization_name=organization.get("publisher_identity_base") or organization.get("organization_name") or org_id,
             authorization=None,
         )
 
@@ -431,6 +431,7 @@ async def execute_signing(
         signed_text=signed_text,
         total_sentences=len(sentences),
         verification_url=verification_url,
+        publisher_attribution=organization.get("publisher_attribution"),
     )
 
 

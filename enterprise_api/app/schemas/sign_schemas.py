@@ -652,6 +652,7 @@ class SignedDocumentResult(BaseModel):
     merkle_root: Optional[str] = Field(None, description="Merkle tree root hash (if segmentation enabled)")
     instance_id: Optional[str] = Field(None, description="C2PA manifest instance ID for provenance chain")
     metadata: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+    publisher_attribution: Optional[str] = Field(None, description="Publisher identity shown on verification (e.g. 'Sarah Chen · Powered by Encypher')")
 
 
 class SignResponseData(BaseModel):
@@ -692,3 +693,4 @@ class LegacySignResponse(BaseModel):
     signed_text: str = Field(..., description="Text with embedded C2PA manifest")
     total_sentences: int = Field(..., description="Number of sentences signed")
     verification_url: str = Field(..., description="URL for public verification")
+    publisher_attribution: Optional[str] = Field(None, description="Publisher identity shown on verification")

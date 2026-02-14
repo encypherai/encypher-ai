@@ -11,6 +11,7 @@ import { MobileNav } from '../MobileNav';
 import { NotificationCenter } from '../NotificationCenter';
 import { ThemeToggleButton } from '../../contexts/ThemeContext';
 import apiClient from '../../lib/api';
+import { SetupWizard } from '../onboarding/SetupWizard';
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -209,6 +210,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   const isAdmin = isSuperAdmin === true;
 
+  // TEAM_191: Check if mandatory setup wizard is complete
+  const { data: setupStatus, isLoading: setupLoading } = useQuery({
+    queryKey: ['setup-status'],
+    queryFn: async () => {
+      if (!accessToken) return null;
+      return apiClient.getSetupStatus(accessToken);
+    },
+    enabled: Boolean(accessToken),
+    staleTime: 60_000,
+    retry: 1,
+  });
+
+  const showSetupWizard = !setupLoading && setupStatus && !setupStatus.setup_completed;
+
   // Filter groups: hide enterprise group for free users, remove empty groups
   const visibleGroups = navGroups
     .map(group => ({
@@ -231,6 +246,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen flex bg-slate-50 dark:bg-slate-900">
+      {/* TEAM_191: Mandatory setup wizard overlay */}
+      {showSetupWizard && <SetupWizard />}
+
       {/* ── Desktop Sidebar ── */}
       <aside
         className={`hidden lg:flex flex-col fixed inset-y-0 left-0 z-40 bg-[#1B2F50] transition-all duration-200 ${

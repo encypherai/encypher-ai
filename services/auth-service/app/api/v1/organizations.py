@@ -259,6 +259,9 @@ class OrganizationResponse(BaseModel):
     name: str
     slug: Optional[str]
     email: str
+    account_type: Optional[str] = None
+    display_name: Optional[str] = None
+    anonymous_publisher: bool = False
     tier: str
     trial_tier: Optional[str] = None
     trial_months: Optional[int] = None
@@ -502,6 +505,10 @@ async def get_organization_context_internal(
             "coalition_member": org.coalition_member,
             "coalition_rev_share": org.coalition_rev_share,
             "certificate_pem": org.certificate_pem,
+            # TEAM_191: Publisher identity for attribution
+            "account_type": org.account_type,
+            "display_name": org.display_name,
+            "anonymous_publisher": org.anonymous_publisher,
         },
     )
 
@@ -1188,5 +1195,74 @@ async def create_audit_log(
     return {
         "success": True,
         "data": AuditLogResponse.model_validate(created_log).model_dump() if created_log else None,
+        "error": None,
+    }
+
+
+# ============================================
+# TEAM_191: PUBLISHER SETTINGS
+# ============================================
+
+
+class PublisherSettingsUpdate(BaseModel):
+    """Request to update publisher identity settings"""
+    display_name: Optional[str] = Field(None, min_length=1, max_length=255)
+    anonymous_publisher: Optional[bool] = None
+
+
+@router.patch("/{org_id}/publisher-settings")
+async def update_publisher_settings(
+    org_id: str,
+    payload: PublisherSettingsUpdate,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Update publisher identity settings for an organization.
+    Allows toggling anonymous mode and updating display name.
+    """
+    user_id = await get_current_user_id(request, db)
+    org_service = OrganizationService(db)
+
+    if not org_service._has_permission(org_id, user_id, {"owner", "admin"}):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only owners and admins can update publisher settings")
+
+    org = org_service.get_organization(org_id)
+    if not org:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Organization not found")
+
+    changes = {}
+    if payload.display_name is not None:
+        cleaned_display_name = payload.display_name.strip()
+        if not cleaned_display_name:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Display name cannot be empty")
+
+        org.display_name = cleaned_display_name
+        if not org.name:
+            org.name = org.display_name
+        changes["display_name"] = org.display_name
+
+    if payload.anonymous_publisher is not None:
+        org.anonymous_publisher = payload.anonymous_publisher
+        changes["anonymous_publisher"] = org.anonymous_publisher
+
+    if changes:
+        org_service._log_action(
+            org_id=org_id,
+            user_id=user_id,
+            action="publisher_settings.updated",
+            resource_type="organization",
+            resource_id=org_id,
+            details=changes,
+        )
+        db.commit()
+
+    return {
+        "success": True,
+        "data": {
+            "display_name": org.display_name,
+            "account_type": org.account_type,
+            "anonymous_publisher": org.anonymous_publisher,
+        },
         "error": None,
     }

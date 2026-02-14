@@ -6,7 +6,7 @@ import { useRequireAuth } from '@/hooks/useRequireAuth';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { OnboardingModal, useIsNewUser } from '../components/onboarding/OnboardingModal';
+import { OnboardingChecklist } from '../components/onboarding/OnboardingChecklist';
 import apiClient from '../lib/api';
 import { useOrganization } from '../contexts/OrganizationContext';
 
@@ -96,7 +96,6 @@ function ApiKeysSkeleton() {
 
 export default function DashboardPage() {
   const { session, status, accessToken, isLoading } = useRequireAuth();
-  const isNewUser = useIsNewUser();
   const { activeOrganization } = useOrganization();
   const orgId = activeOrganization?.id;
 
@@ -154,9 +153,6 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      {/* Onboarding Modal for new users */}
-      <OnboardingModal isNewUser={isNewUser} />
-
       {/* Welcome Hero Section */}
       <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-delft-blue via-delft-blue to-blue-ncs p-8 mb-8">
         {/* Background Pattern */}
@@ -371,34 +367,8 @@ export default function DashboardPage() {
 
         {/* Quick Actions Sidebar */}
         <div className="space-y-4">
-          {/* Getting Started Card */}
-          <div className="bg-gradient-to-br from-delft-blue to-blue-ncs rounded-xl p-6 text-white">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                <IconShield />
-              </div>
-              <h3 className="font-bold text-lg">Quick Start</h3>
-            </div>
-            <ul className="space-y-3 text-sm">
-              <li className="flex items-center gap-3">
-                <span className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">1</span>
-                <span className="text-white/90">Generate an API key</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">2</span>
-                <span className="text-white/90">Install a client SDK</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <span className="w-6 h-6 bg-white/20 rounded-full flex items-center justify-center text-xs font-bold">3</span>
-                <span className="text-white/90">Sign and verify content</span>
-              </li>
-            </ul>
-            <a href="https://api.encypherai.com/docs" target="_blank" rel="noopener noreferrer">
-              <button className="w-full mt-5 py-2.5 bg-white text-delft-blue font-medium rounded-lg hover:bg-columbia-blue transition-colors text-sm">
-                View API Reference
-              </button>
-            </a>
-          </div>
+          {/* TEAM_191: Server-backed onboarding checklist */}
+          <OnboardingChecklist />
 
           {/* Quick Links */}
           <div className="bg-white dark:bg-slate-800 rounded-xl border border-border p-5">

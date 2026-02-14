@@ -62,7 +62,7 @@ export default function SettingsPage() {
   const { data: session, status } = useSession();
   const accessToken = (session?.user as any)?.accessToken as string | undefined;
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications' | 'organization'>('profile');
-  const { activeOrganization, isLoading: orgLoading } = useOrganization();
+  const { activeOrganization, isLoading: orgLoading, refetch: refetchOrganizations } = useOrganization();
   const orgId = activeOrganization?.id;
   const [profile, setProfile] = useState<Profile>({
     name: '',
@@ -73,6 +73,29 @@ export default function SettingsPage() {
     notifications: defaultNotifications,
   });
 
+  const updatePublisherSettingsMutation = useMutation({
+    mutationFn: async () => {
+      if (!accessToken || !orgId) throw new Error('You must be signed in.');
+
+      const trimmedName = publisherDisplayName.trim();
+      if (!trimmedName) {
+        throw new Error('Display name cannot be empty.');
+      }
+
+      return apiClient.updatePublisherSettings(accessToken, orgId, {
+        display_name: trimmedName,
+        anonymous_publisher: anonymousPublisher,
+      });
+    },
+    onSuccess: async () => {
+      toast.success('Publisher settings updated.');
+      await refetchOrganizations();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to update publisher settings.');
+    },
+  });
+
   // Email change state
   const [showEmailChange, setShowEmailChange] = useState(false);
   const [newEmail, setNewEmail] = useState('');
@@ -80,6 +103,8 @@ export default function SettingsPage() {
   const [pendingEmailChange, setPendingEmailChange] = useState<string | null>(null);
   const [domainName, setDomainName] = useState('');
   const [domainEmail, setDomainEmail] = useState('');
+  const [publisherDisplayName, setPublisherDisplayName] = useState('');
+  const [anonymousPublisher, setAnonymousPublisher] = useState(false);
 
   const profileQuery = useQuery({
     queryKey: ['profile'],
@@ -108,6 +133,11 @@ export default function SettingsPage() {
       setProfile(profileQuery.data);
     }
   }, [profileQuery.data]);
+
+  useEffect(() => {
+    setPublisherDisplayName(activeOrganization?.display_name ?? activeOrganization?.name ?? '');
+    setAnonymousPublisher(Boolean(activeOrganization?.anonymous_publisher));
+  }, [activeOrganization]);
 
   const updateProfileMutation = useMutation({
     mutationFn: async (changes: Profile) => {
@@ -279,6 +309,11 @@ export default function SettingsPage() {
       return;
     }
     createDomainClaimMutation.mutate();
+  };
+
+  const handlePublisherSettingsSave = (e: React.FormEvent) => {
+    e.preventDefault();
+    updatePublisherSettingsMutation.mutate();
   };
 
   return (
@@ -554,6 +589,49 @@ export default function SettingsPage() {
                     <div className="text-muted-foreground">Select an organization to manage domain claims.</div>
                   ) : (
                     <>
+                      <div className="rounded-lg border border-border p-4 space-y-4">
+                        <div>
+                          <h4 className="text-sm font-semibold">Publisher identity in verification</h4>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Control how your publisher name appears to readers when signed content is verified.
+                          </p>
+                        </div>
+
+                        <form className="space-y-4" onSubmit={handlePublisherSettingsSave}>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">Display name</label>
+                            <Input
+                              value={publisherDisplayName}
+                              onChange={(e) => setPublisherDisplayName(e.target.value)}
+                              placeholder="e.g. Sarah Chen or The Verge"
+                            />
+                          </div>
+
+                          <label className="flex items-start gap-3 text-sm">
+                            <input
+                              type="checkbox"
+                              className="mt-0.5"
+                              checked={anonymousPublisher}
+                              onChange={(e) => setAnonymousPublisher(e.target.checked)}
+                            />
+                            <span>
+                              <span className="font-medium">Don&apos;t show my name/org on verification</span>
+                              <span className="block text-xs text-muted-foreground mt-1">
+                                Show only organization ID instead (e.g. {orgId}).
+                              </span>
+                            </span>
+                          </label>
+
+                          <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                            Preview: {anonymousPublisher ? orgId : (publisherDisplayName.trim() || activeOrganization?.name)}
+                          </div>
+
+                          <Button type="submit" variant="primary" disabled={updatePublisherSettingsMutation.isPending}>
+                            {updatePublisherSettingsMutation.isPending ? 'Saving…' : 'Save publisher settings'}
+                          </Button>
+                        </form>
+                      </div>
+
                       <form className="space-y-4" onSubmit={handleCreateDomainClaim}>
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>

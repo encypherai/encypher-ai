@@ -244,6 +244,7 @@ async def _execute_basic_signing(
         merkle_root=None,
         instance_id=None,
         metadata=document.metadata,
+        publisher_attribution=result.publisher_attribution,
     )
 
 
@@ -355,4 +356,5 @@ async def _execute_advanced_signing(
         merkle_root=merkle_root,
         instance_id=instance_id,
         metadata=result.metadata,
+        publisher_attribution=organization.get("publisher_attribution"),
     )

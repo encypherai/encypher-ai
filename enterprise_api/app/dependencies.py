@@ -196,6 +196,10 @@ async def get_current_organization(
                     "coalition_rev_share": org_data.get("coalition_rev_share", DEFAULT_COALITION_PUBLISHER_PERCENT),
                     "certificate_pem": org_data.get("certificate_pem"),
                     "user_id": key_context.get("user_id"),
+                    # TEAM_191: Publisher identity for attribution
+                    "account_type": org_data.get("account_type"),
+                    "display_name": org_data.get("display_name"),
+                    "anonymous_publisher": org_data.get("anonymous_publisher", False),
                 }
 
     if org_context is None:
@@ -276,7 +280,19 @@ def _normalize_org_context(org_context: Dict) -> Dict:
         "max_team_members": features.get("max_team_members", 1),
         # NMA (News Media Alliance) membership - extends starter tier with sentence-level embeddings
         "nma_member": org_context.get("nma_member", False),
+        # TEAM_191: Publisher identity for attribution
+        "account_type": org_context.get("account_type"),
+        "display_name": org_context.get("display_name"),
+        "anonymous_publisher": org_context.get("anonymous_publisher", False),
     }
+    # TEAM_191: Build publisher identity + attribution strings
+    from app.utils.publisher_attribution import (
+        build_publisher_attribution_from_org_context,
+        build_publisher_identity_base_from_org_context,
+    )
+
+    result["publisher_identity_base"] = build_publisher_identity_base_from_org_context(result)
+    result["publisher_attribution"] = build_publisher_attribution_from_org_context(result)
     return result
 
 

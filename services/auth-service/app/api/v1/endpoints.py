@@ -33,10 +33,18 @@ from ...models.schemas import (
     # TEAM_164: Admin API Access Status Management
     ApiAccessStatusSetRequest,
     ApiAccessStatusSetResponse,
+    # TEAM_191: Onboarding Checklist
+    OnboardingStatusResponse,
+    OnboardingCompleteStepRequest,
+    # TEAM_191: Setup Wizard
+    SetupWizardRequest,
+    SetupStatusResponse,
 )
 from ...services.auth_service import AuthService
 from ...services.api_access_service import ApiAccessService
 from ...services.admin_service import AdminService
+from ...services.onboarding_service import OnboardingService
+from ...db.models import Organization
 from ...deps.rate_limit import rate_limiter
 from ...db.models import User
 from pydantic import BaseModel, EmailStr
@@ -1490,6 +1498,279 @@ async def list_super_admins(
                 for u in super_admins
             ],
             "total": len(super_admins),
+        },
+        "error": None,
+    }
+
+
+# ============================================
+# TEAM_191: ONBOARDING CHECKLIST ENDPOINTS
+# ============================================
+
+
+@router.get("/onboarding-status", response_model=None)
+async def get_onboarding_status(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Get the current onboarding checklist status for the authenticated user.
+    """
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+
+    try:
+        service = OnboardingService(db)
+        result = service.get_onboarding_status(user_id)
+        return {
+            "success": True,
+            "data": result.model_dump(),
+            "error": None,
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post("/onboarding/complete-step", response_model=None)
+async def complete_onboarding_step(
+    request: OnboardingCompleteStepRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Mark an onboarding step as complete for the authenticated user.
+    """
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+
+    try:
+        service = OnboardingService(db)
+        result = service.complete_step(user_id, request.step_id)
+        return {
+            "success": True,
+            "data": result.model_dump(),
+            "error": None,
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+@router.post("/onboarding/dismiss", response_model=None)
+async def dismiss_onboarding(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Dismiss the onboarding checklist for the authenticated user.
+    The checklist will no longer be shown.
+    """
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+
+    try:
+        service = OnboardingService(db)
+        result = service.dismiss_checklist(user_id)
+        return {
+            "success": True,
+            "data": result.model_dump(),
+            "error": None,
+        }
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
+        )
+
+
+# ============================================
+# TEAM_191: MANDATORY SETUP WIZARD ENDPOINTS
+# ============================================
+
+
+@router.get("/setup-status", response_model=None)
+async def get_setup_status(
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Check if the authenticated user has completed the mandatory setup wizard.
+    Dashboard should call this on load and block UI if setup_completed is false.
+    """
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Look up org for account_type / display_name
+    org = None
+    if user.default_organization_id:
+        org = db.query(Organization).filter(Organization.id == user.default_organization_id).first()
+
+    return {
+        "success": True,
+        "data": {
+            "setup_completed": user.setup_completed_at is not None,
+            "setup_completed_at": user.setup_completed_at.isoformat() if user.setup_completed_at else None,
+            "account_type": org.account_type if org else None,
+            "display_name": org.display_name if org else None,
+        },
+        "error": None,
+    }
+
+
+@router.post("/setup/complete", response_model=None)
+async def complete_setup(
+    request: SetupWizardRequest,
+    authorization: str = Header(...),
+    db: Session = Depends(get_db),
+):
+    """
+    Complete the mandatory setup wizard.
+    Sets the organization's account_type, display_name, and name,
+    then marks the user's setup as complete.
+    """
+    try:
+        scheme, token = authorization.split()
+        if scheme.lower() != "bearer":
+            raise ValueError()
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    payload = AuthService.verify_access_token(token)
+    if not payload:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user_id = payload["sub"]
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if not user.default_organization_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User has no organization",
+        )
+
+    org = db.query(Organization).filter(Organization.id == user.default_organization_id).first()
+    if not org:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Organization not found",
+        )
+
+    from datetime import datetime as dt
+    from datetime import timezone as tz
+
+    # Update organization identity
+    org.account_type = request.account_type.value
+    org.display_name = request.display_name
+    # Also set the org name if it's still blank (personal orgs start with name="")
+    if not org.name:
+        org.name = request.display_name
+
+    # Mark user setup as complete
+    user.setup_completed_at = dt.now(tz.utc)
+
+    # Mark the onboarding step
+    service = OnboardingService(db)
+    service.complete_step(user_id, "publisher_identity_set")
+
+    db.commit()
+
+    return {
+        "success": True,
+        "data": {
+            "setup_completed": True,
+            "setup_completed_at": user.setup_completed_at.isoformat(),
+            "account_type": org.account_type,
+            "display_name": org.display_name,
         },
         "error": None,
     }
