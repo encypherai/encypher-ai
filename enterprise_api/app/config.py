@@ -24,6 +24,8 @@ class Settings(BaseSettings):
     content_database_url: Optional[str] = None
     # Legacy single database URL (for backward compatibility)
     database_url: Optional[str] = None
+    # Startup migration strategy for enterprise_api (SSOT default: alembic)
+    db_migration_strategy: str = "alembic"
 
     # Redis (for session management)
     redis_url: str = "redis://localhost:6379/0"
@@ -40,6 +42,13 @@ class Settings(BaseSettings):
     ssl_com_account_key: Optional[str] = None
     ssl_com_api_url: str = "https://api.ssl.com/v1"
     ssl_com_product_id: Optional[str] = None
+
+    # Signing mode + managed signer material
+    default_signing_mode: str = "organization"
+    managed_signer_id: str = "encypher_managed"
+    managed_signer_private_key_pem: Optional[str] = None
+    managed_signer_certificate_pem: Optional[str] = None
+    managed_signer_certificate_chain_pem: Optional[str] = None
 
     provisioning_token: Optional[str] = None
 
@@ -78,10 +87,20 @@ class Settings(BaseSettings):
     # Trusted proxy IPs (comma-separated list)
     trusted_proxy_ips: str = ""
 
-    # C2PA trust list pinning/refresh
+    # C2PA signer trust list pinning/refresh
     c2pa_trust_list_url: Optional[str] = None
     c2pa_trust_list_sha256: Optional[str] = None
     c2pa_trust_list_refresh_hours: int = 24
+
+    # C2PA TSA trust list pinning/refresh
+    c2pa_tsa_trust_list_url: Optional[str] = None
+    c2pa_tsa_trust_list_sha256: Optional[str] = None
+    c2pa_tsa_trust_list_refresh_hours: int = 24
+
+    # C2PA trust policy controls
+    c2pa_required_signer_eku_oids: str = "1.3.6.1.4.1.62558.2.1"
+    c2pa_revoked_certificate_serials: str = ""
+    c2pa_revoked_certificate_fingerprints: str = ""
 
     # Embedding signature secret for public verification (HMAC)
     embedding_signature_secret: Optional[str] = None
@@ -220,6 +239,39 @@ class Settings(BaseSettings):
                 continue
             values.add(candidate)
         return values
+
+    @staticmethod
+    def _csv_tokens(value: str) -> list[str]:
+        return [token.strip() for token in value.split(",") if token.strip()]
+
+    @staticmethod
+    def _normalize_hex_token(token: str) -> str:
+        normalized = token.lower()
+        if normalized.startswith("0x"):
+            normalized = normalized[2:]
+        return normalized
+
+    @property
+    def c2pa_required_signer_eku_oids_list(self) -> list[str]:
+        """Return required signer EKU OIDs for C2PA certificate validation."""
+        tokens = self._csv_tokens(self.c2pa_required_signer_eku_oids)
+        return tokens or ["1.3.6.1.4.1.62558.2.1"]
+
+    @property
+    def c2pa_revoked_certificate_serials_set(self) -> set[str]:
+        """Return denylisted certificate serial numbers for internal revocation policy."""
+        return {self._normalize_hex_token(token) for token in self._csv_tokens(self.c2pa_revoked_certificate_serials)}
+
+    @property
+    def c2pa_revoked_certificate_fingerprints_set(self) -> set[str]:
+        """Return denylisted certificate fingerprints for internal revocation policy."""
+        return {self._normalize_hex_token(token) for token in self._csv_tokens(self.c2pa_revoked_certificate_fingerprints)}
+
+    @property
+    def default_signing_mode_normalized(self) -> str:
+        """Return normalized default signing mode."""
+        mode = (self.default_signing_mode or "organization").strip().lower().replace("-", "_")
+        return mode or "organization"
 
 
 @lru_cache()

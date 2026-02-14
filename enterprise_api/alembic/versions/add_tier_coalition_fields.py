@@ -1,7 +1,7 @@
 """Add tier and coalition fields to organizations
 
 Revision ID: add_tier_coalition
-Revises: add_licensing_agreement_management
+Revises: add_licensing_mgmt
 Create Date: 2025-11-25
 
 This migration adds:
@@ -17,7 +17,7 @@ from alembic import op
 
 # revision identifiers
 revision = "add_tier_coalition"
-down_revision = "add_licensing_agreement_management"
+down_revision = "add_licensing_mgmt"
 branch_labels = None
 depends_on = None
 

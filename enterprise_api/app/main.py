@@ -117,8 +117,14 @@ async def lifespan(app: FastAPI):
     else:
         logger.info("SSL.com API: Not configured (optional for staging)")
 
-    # Ensure database is ready and run migrations
-    ensure_database_ready(database_url=db_url, service_name="enterprise-api", run_migrations=True, exit_on_failure=True)
+    # Ensure database is ready and run migrations (SSOT strategy from config)
+    ensure_database_ready(
+        database_url=db_url,
+        service_name="enterprise-api",
+        run_migrations=True,
+        migration_strategy=settings.db_migration_strategy,
+        exit_on_failure=True,
+    )
 
     # Initialize Redis connection for session management
     try:
@@ -136,13 +142,25 @@ async def lifespan(app: FastAPI):
     # Load C2PA trust list for BYOK certificate validation
     try:
         from app.utils.c2pa_trust_list import (
+            C2PA_TSA_TRUST_LIST_URL,
             C2PA_TRUST_LIST_URL,
+            get_tsa_trust_list_metadata,
             get_trust_list_metadata,
+            refresh_tsa_trust_list,
             refresh_trust_list,
+            set_revocation_denylist,
+            tsa_trust_list_needs_refresh,
             trust_list_needs_refresh,
         )
 
         trust_list_url = settings.c2pa_trust_list_url or C2PA_TRUST_LIST_URL
+        tsa_trust_list_url = settings.c2pa_tsa_trust_list_url or C2PA_TSA_TRUST_LIST_URL
+
+        set_revocation_denylist(
+            serial_numbers=settings.c2pa_revoked_certificate_serials_set,
+            fingerprints=settings.c2pa_revoked_certificate_fingerprints_set,
+        )
+
         if trust_list_needs_refresh(settings.c2pa_trust_list_refresh_hours):
             count = await refresh_trust_list(
                 url=trust_list_url,
@@ -157,6 +175,22 @@ async def lifespan(app: FastAPI):
             "C2PA trust list loaded: %s trust anchors (fingerprint=%s)",
             count,
             metadata.get("fingerprint"),
+        )
+
+        if tsa_trust_list_needs_refresh(settings.c2pa_tsa_trust_list_refresh_hours):
+            tsa_count = await refresh_tsa_trust_list(
+                url=tsa_trust_list_url,
+                expected_sha256=settings.c2pa_tsa_trust_list_sha256,
+            )
+        else:
+            tsa_metadata = get_tsa_trust_list_metadata()
+            tsa_count = int(tsa_metadata.get("count") or 0)
+
+        tsa_metadata = get_tsa_trust_list_metadata()
+        logger.info(
+            "C2PA TSA trust list loaded: %s trust anchors (fingerprint=%s)",
+            tsa_count,
+            tsa_metadata.get("fingerprint"),
         )
     except Exception as e:
         if settings.is_production:

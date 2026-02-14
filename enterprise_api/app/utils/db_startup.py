@@ -1,13 +1,12 @@
-"""
-Database startup utilities for Enterprise API.
+"""Database startup utilities for Enterprise API.
 
-Handles connection validation and SQL migration execution on service startup.
-Unlike microservices that use Alembic, Enterprise API uses raw SQL migrations
-for more control over the two-database architecture.
+SSOT: startup migration checks are Alembic-driven by default. A temporary
+legacy SQL migration path is retained behind an explicit strategy switch.
 """
 
 import logging
 import os
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -178,6 +177,41 @@ def run_sql_migrations(database_url: str, migrations_dir: str, service_name: str
         engine.dispose()
 
 
+def run_alembic_migrations(service_name: str = "enterprise-api", alembic_ini_path: Optional[str] = None) -> bool:
+    """Run Alembic migrations to head(s)."""
+    project_root = Path(__file__).resolve().parents[2]
+    alembic_ini = Path(alembic_ini_path) if alembic_ini_path else project_root / "alembic.ini"
+
+    if not alembic_ini.exists():
+        raise DatabaseStartupError(f"[{service_name}] Alembic config not found: {alembic_ini}")
+
+    cmd = ["alembic", "-c", str(alembic_ini), "upgrade", "heads"]
+    logger.info("[%s] Running Alembic migrations: %s", service_name, " ".join(cmd))
+
+    try:
+        completed = subprocess.run(
+            cmd,
+            cwd=str(project_root),
+            check=False,
+            capture_output=True,
+            text=True,
+            env=os.environ.copy(),
+        )
+    except Exception as e:  # pragma: no cover - defensive runtime guard
+        raise DatabaseStartupError(f"[{service_name}] Failed to execute Alembic: {e}")
+
+    if completed.returncode != 0:
+        raise DatabaseStartupError(
+            f"[{service_name}] Alembic migration failed (exit={completed.returncode}): "
+            f"{(completed.stderr or completed.stdout).strip()}"
+        )
+
+    if completed.stdout.strip():
+        logger.info("[%s] Alembic output: %s", service_name, completed.stdout.strip())
+    logger.info("[%s] ✓ Alembic migrations completed", service_name)
+    return True
+
+
 def ensure_database_ready(
     database_url: Optional[str] = None,
     service_name: str = "enterprise-api",
@@ -185,21 +219,23 @@ def ensure_database_ready(
     max_retries: int = 5,
     retry_delay: float = 2.0,
     run_migrations: bool = True,
+    migration_strategy: str = "alembic",
     exit_on_failure: bool = True,
 ) -> bool:
     """
     Ensure the database is ready for the service to start.
 
     This is the main entry point that should be called on service startup.
-    It validates the connection and optionally runs SQL migrations.
+    It validates the connection and optionally runs migrations.
 
     Args:
         database_url: PostgreSQL connection URL (defaults to CORE_DATABASE_URL or DATABASE_URL env var)
         service_name: Name of the service (for logging)
-        migrations_dir: Path to SQL migrations directory (defaults to ./migrations)
+        migrations_dir: Path to SQL migrations directory (legacy sql_legacy strategy)
         max_retries: Maximum number of connection attempts
         retry_delay: Seconds to wait between retries
-        run_migrations: If True, run SQL migrations
+        run_migrations: If True, run migrations
+        migration_strategy: Migration executor strategy (alembic | sql_legacy)
         exit_on_failure: If True, call sys.exit(1) on failure
 
     Returns:
@@ -228,7 +264,15 @@ def ensure_database_ready(
 
         # Step 2: Run migrations if requested
         if run_migrations:
-            run_sql_migrations(database_url=db_url, migrations_dir=migrations_dir, service_name=service_name)
+            strategy = (migration_strategy or "alembic").strip().lower()
+            if strategy == "alembic":
+                run_alembic_migrations(service_name=service_name)
+            elif strategy == "sql_legacy":
+                run_sql_migrations(database_url=db_url, migrations_dir=migrations_dir, service_name=service_name)
+            else:
+                raise DatabaseStartupError(
+                    f"[{service_name}] Unsupported migration strategy: {migration_strategy}"
+                )
 
         logger.info(f"[{service_name}] ✓ Database is ready")
         return True

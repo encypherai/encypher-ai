@@ -5,12 +5,10 @@ echo "=========================================="
 echo "Enterprise API Docker Entrypoint"
 echo "=========================================="
 
-# Run database initialization if INIT_DB is set
+# DB migration SSOT is enforced in app startup via ensure_database_ready
+# (migration strategy defaults to Alembic). Keep INIT_DB for compatibility.
 if [ "${INIT_DB:-true}" = "true" ]; then
-    echo "Running database initialization..."
-    python scripts/init_and_seed.py || {
-        echo "Warning: Database initialization failed, but continuing..."
-    }
+    echo "Database migration check will run on API startup (strategy: ${DB_MIGRATION_STRATEGY:-alembic})."
 fi
 
 # Start the application
