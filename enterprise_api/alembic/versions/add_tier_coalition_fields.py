@@ -29,6 +29,15 @@ def _has_column(table_name: str, column_name: str) -> bool:
     return any(col["name"] == column_name for col in columns)
 
 
+def _has_pg_type(type_name: str) -> bool:
+    bind = op.get_bind()
+    result = bind.execute(
+        sa.text("SELECT 1 FROM pg_type WHERE typname = :type_name LIMIT 1"),
+        {"type_name": type_name},
+    )
+    return result.scalar() is not None
+
+
 def upgrade() -> None:
     # Add new columns to organizations table
 
@@ -66,15 +75,16 @@ def upgrade() -> None:
     if not _has_column("organizations", "batch_operations_this_month"):
         op.add_column("organizations", sa.Column("batch_operations_this_month", sa.Integer(), nullable=False, server_default="0"))
 
-    # Update tier enum to include new values
-    # Note: PostgreSQL requires special handling for enum updates
-    # First, add the new enum values
-    op.execute("ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'starter'")
-    op.execute("ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'business'")
-    op.execute("ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'strategic_partner'")
+    # Update legacy tier enum only when that PG type exists.
+    # Some environments use VARCHAR for organizations.tier, so ALTER TYPE
+    # would fail with UndefinedObject unless we guard it.
+    if _has_pg_type("organizationtier"):
+        op.execute("ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'starter'")
+        op.execute("ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'business'")
+        op.execute("ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'strategic_partner'")
 
-    # Migrate existing 'free' tier to 'starter'
-    op.execute("UPDATE organizations SET tier = 'starter' WHERE tier = 'free'")
+        # Migrate existing 'free' tier to 'starter' for legacy enum-based schema.
+        op.execute("UPDATE organizations SET tier = 'starter' WHERE tier = 'free'")
 
 
 def downgrade() -> None:

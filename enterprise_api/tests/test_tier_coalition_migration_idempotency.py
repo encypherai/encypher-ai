@@ -32,6 +32,24 @@ class _Inspector:
         return [{"name": col} for col in sorted(self._columns)]
 
 
+class _Result:
+    def __init__(self, value: int | None) -> None:
+        self._value = value
+
+    def scalar(self) -> int | None:
+        return self._value
+
+
+class _Bind:
+    def __init__(self, has_organization_tier_type: bool) -> None:
+        self._has_organization_tier_type = has_organization_tier_type
+
+    def execute(self, statement, params=None) -> _Result:  # noqa: ANN001
+        if params and params.get("type_name") == "organizationtier":
+            return _Result(1 if self._has_organization_tier_type else None)
+        return _Result(None)
+
+
 def test_upgrade_skips_existing_columns(monkeypatch: pytest.MonkeyPatch, migration_module: ModuleType) -> None:
     existing_columns = {
         "sentence_tracking_enabled",
@@ -50,7 +68,7 @@ def test_upgrade_skips_existing_columns(monkeypatch: pytest.MonkeyPatch, migrati
         "batch_operations_this_month",
     }
 
-    monkeypatch.setattr(migration_module.op, "get_bind", lambda: object())
+    monkeypatch.setattr(migration_module.op, "get_bind", lambda: _Bind(False))
     monkeypatch.setattr(
         migration_module.sa,
         "inspect",
@@ -74,11 +92,11 @@ def test_upgrade_skips_existing_columns(monkeypatch: pytest.MonkeyPatch, migrati
     migration_module.upgrade()
 
     assert add_column_calls == []
-    assert len(execute_calls) == 4
+    assert execute_calls == []
 
 
 def test_upgrade_adds_missing_columns(monkeypatch: pytest.MonkeyPatch, migration_module: ModuleType) -> None:
-    monkeypatch.setattr(migration_module.op, "get_bind", lambda: object())
+    monkeypatch.setattr(migration_module.op, "get_bind", lambda: _Bind(False))
     monkeypatch.setattr(
         migration_module.sa,
         "inspect",
@@ -117,4 +135,48 @@ def test_upgrade_adds_missing_columns(monkeypatch: pytest.MonkeyPatch, migration
         "sentences_tracked_this_month",
         "batch_operations_this_month",
     }
-    assert len(execute_calls) == 4
+    assert execute_calls == []
+
+
+def test_upgrade_mutates_legacy_enum_when_present(monkeypatch: pytest.MonkeyPatch, migration_module: ModuleType) -> None:
+    existing_columns = {
+        "sentence_tracking_enabled",
+        "streaming_enabled",
+        "byok_enabled",
+        "team_management_enabled",
+        "audit_logs_enabled",
+        "sso_enabled",
+        "custom_assertions_enabled",
+        "coalition_member",
+        "coalition_rev_share_publisher",
+        "coalition_rev_share_encypher",
+        "coalition_opted_out",
+        "coalition_opted_out_at",
+        "sentences_tracked_this_month",
+        "batch_operations_this_month",
+    }
+
+    monkeypatch.setattr(migration_module.op, "get_bind", lambda: _Bind(True))
+    monkeypatch.setattr(
+        migration_module.sa,
+        "inspect",
+        lambda _bind: _Inspector(existing_columns),
+    )
+
+    monkeypatch.setattr(migration_module.op, "add_column", lambda *args, **kwargs: None)
+
+    execute_calls: list[str] = []
+    monkeypatch.setattr(
+        migration_module.op,
+        "execute",
+        lambda sql: execute_calls.append(str(sql)),
+    )
+
+    migration_module.upgrade()
+
+    assert execute_calls == [
+        "ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'starter'",
+        "ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'business'",
+        "ALTER TYPE organizationtier ADD VALUE IF NOT EXISTS 'strategic_partner'",
+        "UPDATE organizations SET tier = 'starter' WHERE tier = 'free'",
+    ]
