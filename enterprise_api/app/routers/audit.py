@@ -213,7 +213,7 @@ async def get_audit_logs(
 
 @router.get("/audit-logs/export")
 async def export_audit_logs(
-    format: str = Query("json", regex="^(json|csv)$"),
+    format: str = Query("json", pattern="^(json|csv)$"),
     start_date: Optional[str] = Query(None),
     end_date: Optional[str] = Query(None),
     organization: dict = Depends(check_audit_logs_enabled),

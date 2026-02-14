@@ -58,3 +58,14 @@ def test_all_down_revisions_point_to_existing_revisions() -> None:
                 missing_refs.append(f"{migration_name} -> {ref}")
 
     assert not missing_refs, "Missing Alembic down_revision targets: " + ", ".join(sorted(missing_refs))
+
+
+def test_legacy_revision_003_bridge_exists() -> None:
+    revisions: set[str] = set()
+
+    for migration_file in sorted(VERSIONS_DIR.glob("*.py")):
+        revision, _ = _extract_revision_metadata(migration_file)
+        if revision:
+            revisions.add(revision)
+
+    assert "003" in revisions, "Expected legacy Alembic bridge revision '003' to exist"

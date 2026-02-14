@@ -1,7 +1,7 @@
 """make merkle_root_id nullable for free tier
 
 Revision ID: free_tier_nullable
-Revises:
+Revises: 003
 Create Date: 2025-11-02 00:40:00
 
 """
@@ -12,7 +12,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision = "free_tier_nullable"
-down_revision = None  # Update this if there are previous migrations
+down_revision = "003"
 branch_labels = None
 depends_on = None
 
