@@ -63,3 +63,5 @@ Implement a new Microsoft Office integration under `integrations/microsoft-offic
   - official Encypher palette + Roboto typography applied
   - manifest display metadata and command labels updated to C2PA provenance language
   - Puppeteer UI verification completed (screenshot + DOM token checks)
+- Release-flow preflight executed locally (tests + manifest parse + package dry-run) and documented in:
+  - `docs/architecture/INTEGRATIONS_RELEASE_RUNBOOK.md`

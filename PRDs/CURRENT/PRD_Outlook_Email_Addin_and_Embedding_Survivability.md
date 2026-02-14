@@ -52,3 +52,5 @@ Build a native Outlook add-in integration (Office Mailbox host) for compose/read
   - `npm test` in `integrations/outlook-email-addin`: 14/14 passing
   - `uv run pytest enterprise_api/tests/test_email_embedding_survivability.py -q`: 5/5 passing
 - Recommendation: default to `micro_ecc_c2pa` with fallback to `zw_embedding` for known VS-stripping processors.
+- Release-flow preflight executed locally (tests + manifest parse + package dry-run) and documented in:
+  - `docs/architecture/INTEGRATIONS_RELEASE_RUNBOOK.md`

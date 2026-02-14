@@ -311,3 +311,86 @@ feat(integrations): align microsoft office and google docs plugins with Encypher
 - update README and PRD completion notes for branding/design conformance
 - verify both plugin UIs via Puppeteer and keep plugin test suites green (13/13, 6/6)
 ```
+
+---
+
+## Release Flow Execution Pass (Local-First)
+
+### Completed now
+- Re-ran automated suites:
+  - `integrations/outlook-email-addin`: `npm test` -> **14/14 pass**
+  - `integrations/microsoft-office-addin`: `npm test` -> **13/13 pass**
+  - `integrations/google-docs-addon`: `npm test` -> **6/6 pass**
+  - `enterprise_api/tests/test_email_embedding_survivability.py`: **5/5 pass**
+- Performed syntax validation for release manifests/config:
+  - Outlook `manifest.xml` parse: pass
+  - Microsoft Office `manifest.xml` parse: pass
+  - Google Docs `appsscript.json` parse: pass
+- Performed package readiness dry-runs:
+  - `npm pack --dry-run` pass for all three integration packages
+- Added consolidated release runbook:
+  - `docs/architecture/INTEGRATIONS_RELEASE_RUNBOOK.md`
+- Synced naming consistency in Google Docs setup instructions:
+  - updated clasp create title to `Encypher C2PA Provenance Docs Add-on`
+
+### Remaining external blockers
+- Microsoft 365 tenant admin deployment (internal org rollout)
+- Google Workspace domain deployment + OAuth consent configuration
+- AppSource and Google Marketplace submission/review workflows
+- Final legal/privacy/support URL validation in marketplace consoles
+
+### Suggested Git Commit Message (Release Flow Pass)
+```
+chore(integrations): execute local release preflight for outlook, office, and google docs plugins
+
+- rerun plugin test suites and email survivability integration tests (14/14, 13/13, 6/6, 5/5)
+- validate plugin manifest/config syntax for xml/json release artifacts
+- run npm pack --dry-run across all plugin packages for packaging sanity
+- add consolidated integrations release runbook with completed checks and external blockers
+- align google docs clasp setup title with C2PA branding
+```
+
+---
+
+## Portable Integrations Installer (Implemented)
+
+### Scope
+- Added a portable CLI helper to run consistent local preflight checks and deployment planning across machines.
+
+### Files
+- `scripts/integrations_installer.py`
+- `enterprise_api/tests/test_integrations_installer.py`
+- `docs/architecture/INTEGRATIONS_RELEASE_RUNBOOK.md`
+
+### What was implemented
+- Target selection with product flags:
+  - `--outlook`, `--office`, `--google-docs`
+  - default target behavior is `--all` when no specific targets are provided
+- Modes:
+  - `--mode local-test` for test/validation/package preflight
+  - `--mode deploy-plan` for manual deployment checklist output
+- Portability features:
+  - `--repo-root` override for non-root execution contexts
+  - optional markdown report generation via `--report-file`
+  - no OS-specific path assumptions; explicit cwd per command in output
+- Local-test preflight includes:
+  - manifest/config syntax validation (XML/JSON)
+  - npm tests and package dry-runs for selected integrations
+  - survivability pytest run when Outlook target is selected
+
+### Validation
+- Added and passed unit tests: `enterprise_api/tests/test_integrations_installer.py` (**6/6 pass**)
+- Verified runtime invocation:
+  - `uv run python scripts/integrations_installer.py --mode local-test --outlook --google-docs`
+  - `uv run python scripts/integrations_installer.py --mode deploy-plan --all`
+
+### Suggested Git Commit Message (Installer)
+```
+feat(scripts): add portable integrations installer for local preflight and deploy planning
+
+- add scripts/integrations_installer.py with target selection defaults (all products)
+- support local-test and deploy-plan modes for outlook, office, and google docs
+- add manifest/config syntax checks, test/package command planning, and optional report output
+- add unit tests for target resolution and plan generation (6/6 passing)
+- document installer usage in integrations release runbook
+```

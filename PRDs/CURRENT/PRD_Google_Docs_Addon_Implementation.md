@@ -63,3 +63,5 @@ Implement a new Google Docs Add-on under `integrations/google-docs-addon` using 
   - official Encypher palette + Roboto typography applied
   - add-on manifest display name and universal action labels updated to C2PA provenance language
   - Puppeteer UI verification completed (screenshot + DOM token checks)
+- Release-flow preflight executed locally (tests + manifest parse + package dry-run) and documented in:
+  - `docs/architecture/INTEGRATIONS_RELEASE_RUNBOOK.md`

@@ -73,7 +73,7 @@ clasp login
 From the `integrations/google-docs-addon` directory:
 
 ```bash
-clasp create --type docs --title "Encypher Provenance Docs Add-on"
+clasp create --type docs --title "Encypher C2PA Provenance Docs Add-on"
 ```
 
 This creates `.clasp.json`. Or copy `.clasp.json.example` and set your `scriptId`.
