@@ -1,6 +1,9 @@
 # Encypher Microsoft Office Add-in
 
-Native Microsoft Office integration for **Word, Excel, and PowerPoint** using Office.js task pane architecture.
+Native Microsoft Office integration for **Word, Excel, and PowerPoint** using Office.js task pane architecture, with C2PA-aligned cryptographic proof-of-origin workflows.
+
+Brand messaging and visual treatment are aligned with:
+- `docs/company_internal_strategy/Encypher_Marketing_Guidelines.md`
 
 ## Current Host Coverage
 
@@ -18,6 +21,13 @@ Native Microsoft Office integration for **Word, Excel, and PowerPoint** using Of
 - Re-sign support with `previous_embeddings`
 - Host capability matrix with safe fallbacks for unsupported actions
 - API base URL validation (`https://*.encypherai.com`)
+
+## Brand & Design Conformance
+
+- Uses Encypher official palette: Deep Navy `#1B2F50`, Azure Blue `#2A87C4`, Light Sky Blue `#B7D5ED`, Cyber Teal `#00CED1`, Neutral Gray `#A7AFBC`, White `#FFFFFF`.
+- Typography is Roboto-first, with Roboto Mono style for technical/result displays.
+- UI copy emphasizes standards authority, proof of origin, and collaborative infrastructure positioning.
+- Manifest display metadata and ribbon labels use C2PA/provenance-aligned product language.
 
 ## Project Layout
 

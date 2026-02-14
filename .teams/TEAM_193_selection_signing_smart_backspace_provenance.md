@@ -270,3 +270,44 @@ feat(outlook-addin): align UI and manifest with Encypher brand standards
 - update README and PRD notes for brand-guideline conformance
 - verify UI via Puppeteer screenshot and style/content checks
 ```
+
+---
+
+## Cross-Plugin Branding Pass (Microsoft Office + Google Docs)
+
+### Scope
+- Applied the same brand/design conformance check completed for Outlook to:
+  - `integrations/microsoft-office-addin/`
+  - `integrations/google-docs-addon/`
+
+### What was updated
+- **Microsoft Office Add-in**
+  - Task pane UI copy and hierarchy updated for standards authority + proof-of-origin messaging.
+  - Official Encypher color tokens and Roboto-first typography applied.
+  - Manifest display metadata and ribbon labels updated to C2PA provenance language.
+  - Runtime result/settings text in `src/app.js` aligned to proof-of-origin messaging.
+- **Google Docs Add-on**
+  - Sidebar hero/trust sections added with standards authority + proof-of-origin messaging.
+  - Official Encypher color tokens and Roboto-first typography applied.
+  - `appsscript.json` add-on name and universal action labels updated to C2PA provenance language.
+  - Add-on menu/homepage card/sidebar titles in `Code.gs` aligned with new naming.
+
+### Validation
+- `npm test` in `integrations/microsoft-office-addin`: **13/13 passing**
+- `npm test` in `integrations/google-docs-addon`: **6/6 passing**
+- Puppeteer verification completed for both task pane/sidebar UIs:
+  - screenshot + DOM checks for headline/subhead/hero copy
+  - CSS token checks for `--deep-navy: #1b2f50`, `--azure-blue: #2a87c4`
+  - font stack check for Roboto-first typography
+
+### Suggested Git Commit Message (Cross-Plugin Branding)
+```
+feat(integrations): align microsoft office and google docs plugins with Encypher brand standards
+
+- update microsoft office task pane copy, styles, and manifest metadata for C2PA proof-of-origin positioning
+- update google docs sidebar, menu/homepage labels, and manifest metadata for C2PA provenance language
+- apply official Encypher palette and Roboto typography across both plugin UIs
+- refine runtime UX copy for provenance summaries and proof-of-origin action labels
+- update README and PRD completion notes for branding/design conformance
+- verify both plugin UIs via Puppeteer and keep plugin test suites green (13/13, 6/6)
+```

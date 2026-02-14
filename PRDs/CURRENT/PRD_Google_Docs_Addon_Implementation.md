@@ -58,3 +58,8 @@ Implement a new Google Docs Add-on under `integrations/google-docs-addon` using 
 - Added API base URL allowlist validation (`https://*.encypherai.com`) for add-on security.
 - Added local Node tests for provenance utilities (6/6 passing via `npm test`).
 - Added deployment and Marketplace checklist documentation in add-on README.
+- Branding/design conformance pass completed:
+  - sidebar copy aligned to standards authority, proof-of-origin, and collaborative infrastructure messaging
+  - official Encypher palette + Roboto typography applied
+  - add-on manifest display name and universal action labels updated to C2PA provenance language
+  - Puppeteer UI verification completed (screenshot + DOM token checks)

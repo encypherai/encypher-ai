@@ -12,21 +12,41 @@
       <header class="app-header">
         <div class="badge">E</div>
         <div>
-          <h1>Encypher Provenance</h1>
-          <p id="hostLabel">Loading host...</p>
+          <h1>Encypher C2PA Provenance</h1>
+          <p class="subhead">Co-Chair, C2PA Text Provenance Task Force (Section A.7)</p>
         </div>
       </header>
 
+      <section class="panel hero">
+        <p class="pill">Standard published Jan 8, 2026</p>
+        <h2>Unmarked text has no proof of origin.</h2>
+        <p class="hero-copy">
+          Encypher embeds cryptographic proof directly in text, built to survive copy-paste,
+          downstream distribution, and scraping workflows.
+        </p>
+        <p id="hostLabel" class="mode-label">Loading host...</p>
+      </section>
+
       <section class="panel">
-        <h2>Capabilities</h2>
+        <h2>Trust & Standards Context</h2>
+        <ul class="trust-list">
+          <li>C2PA-aligned provenance infrastructure across Office hosts</li>
+          <li>Collaborative standards approach with ecosystem partners</li>
+          <li>Supports formal notice and verifiable proof-of-origin workflows</li>
+        </ul>
+      </section>
+
+      <section class="panel">
+        <h2>Host Capabilities</h2>
         <p id="capabilitiesText">Loading capabilities...</p>
       </section>
 
       <section class="panel">
-        <h2>Actions</h2>
+        <h2>Content Actions</h2>
+        <p class="muted">Run provenance actions directly in your active Office document context.</p>
         <div class="button-grid">
-          <button id="signSelectionBtn" class="btn btn-primary">Sign Selection</button>
-          <button id="verifySelectionBtn" class="btn">Verify Selection</button>
+          <button id="signSelectionBtn" class="btn btn-primary">Sign with Proof of Origin</button>
+          <button id="verifySelectionBtn" class="btn">Verify Provenance</button>
           <button id="signDocumentBtn" class="btn btn-primary">Sign Full Document</button>
           <button id="verifyDocumentBtn" class="btn">Verify Full Document</button>
         </div>
@@ -34,6 +54,7 @@
 
       <section class="panel">
         <h2>Settings</h2>
+        <p class="muted">Your API key remains in Office roaming settings for this account.</p>
         <label for="apiKeyInput">API Key</label>
         <input id="apiKeyInput" type="password" placeholder="encypher_..." />
 
@@ -47,7 +68,7 @@
       </section>
 
       <section class="panel">
-        <h2>Provenance</h2>
+        <h2>Provenance Chain</h2>
         <p id="provenanceSummary">No provenance data loaded.</p>
       </section>
 

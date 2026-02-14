@@ -14,7 +14,7 @@
   ],
   "addOns": {
     "common": {
-      "name": "Encypher Provenance",
+      "name": "Encypher C2PA Provenance",
       "logoUrl": "https://dashboard.encypherai.com/favicon.ico",
       "layoutProperties": {
         "primaryColor": "#1B2F50",
@@ -26,7 +26,7 @@
       },
       "universalActions": [
         {
-          "label": "Open Encypher Sidebar",
+          "label": "Open C2PA Provenance",
           "runFunction": "openSidebarFromUniversalAction"
         }
       ]

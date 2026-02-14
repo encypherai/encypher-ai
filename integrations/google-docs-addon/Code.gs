@@ -5,7 +5,7 @@ function onInstall(e) {
 function onOpen() {
   DocumentApp.getUi()
     .createAddonMenu()
-    .addItem('Open Sidebar', 'openSidebar')
+    .addItem('Open C2PA Sidebar', 'openSidebar')
     .addSeparator()
     .addItem('Sign Selection', 'signCurrentSelection')
     .addItem('Sign Full Document', 'signFullDocument')
@@ -18,16 +18,16 @@ function onOpen() {
 function onDocsHomepage() {
   var action = CardService.newAction().setFunctionName('openSidebarFromCard');
   var openButton = CardService.newTextButton()
-    .setText('Open Encypher Sidebar')
+    .setText('Open C2PA Provenance Sidebar')
     .setTextButtonStyle(CardService.TextButtonStyle.FILLED)
     .setOnClickAction(action);
 
   var section = CardService.newCardSection()
-    .addWidget(CardService.newTextParagraph().setText('Sign and verify selected or full Google Docs content with Encypher provenance.'))
+    .addWidget(CardService.newTextParagraph().setText('Embed and verify cryptographic proof of origin in Google Docs with Encypher C2PA provenance workflows.'))
     .addWidget(openButton);
 
   return CardService.newCardBuilder()
-    .setHeader(CardService.newCardHeader().setTitle('Encypher Provenance'))
+    .setHeader(CardService.newCardHeader().setTitle('Encypher C2PA Provenance'))
     .addSection(section)
     .build();
 }
@@ -51,7 +51,7 @@ function openSidebarFromUniversalAction() {
 function openSidebar() {
   var template = HtmlService.createTemplateFromFile('Sidebar');
   var html = template.evaluate()
-    .setTitle('Encypher Provenance')
+    .setTitle('Encypher C2PA Provenance')
     .setWidth(360);
   DocumentApp.getUi().showSidebar(html);
 }

@@ -1,6 +1,9 @@
 # Encypher Google Docs Add-on
 
-Google Workspace Add-on for Google Docs with native sign/verify workflows and provenance-chain support.
+Google Workspace Add-on for Google Docs with native sign/verify workflows, C2PA-aligned proof-of-origin messaging, and provenance-chain support.
+
+Brand messaging and visual treatment are aligned with:
+- `docs/company_internal_strategy/Encypher_Marketing_Guidelines.md`
 
 ## Features
 
@@ -10,6 +13,13 @@ Google Workspace Add-on for Google Docs with native sign/verify workflows and pr
 - Persist provenance embeddings per document hash
 - Re-sign with `previous_embeddings` chain support
 - Secure per-user API settings (API key + API base URL)
+
+## Brand & Design Conformance
+
+- Uses Encypher official palette: Deep Navy `#1B2F50`, Azure Blue `#2A87C4`, Light Sky Blue `#B7D5ED`, Cyber Teal `#00CED1`, Neutral Gray `#A7AFBC`, White `#FFFFFF`.
+- Typography is Roboto-first, with Roboto Mono style for technical/result displays.
+- Sidebar copy emphasizes standards authority, proof of origin, and collaborative infrastructure positioning.
+- Add-on manifest name and universal action labels use C2PA/provenance-aligned product language.
 
 ## Project Structure
 
@@ -85,7 +95,7 @@ clasp open
 - In Apps Script editor: **Deploy > Test deployments**
 - Choose **Editor add-on**
 - Open a Google Doc and run:
-  - **Extensions > Encypher Provenance > Open Sidebar**
+  - **Extensions > Encypher C2PA Provenance > Open C2PA Sidebar**
 - Configure API key in the sidebar settings
 
 ## Marketplace Submission Checklist

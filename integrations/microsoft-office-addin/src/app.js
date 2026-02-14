@@ -18,10 +18,10 @@
 
   function assertSettings(settings) {
     if (!settings.apiKey) {
-      throw new Error('Missing API key. Add it in Settings.');
+      throw new Error('Missing API key. Add your Encypher API key in Settings to sign with proof of origin.');
     }
     if (!settings.apiBaseUrl) {
-      throw new Error('Missing API base URL. Add it in Settings.');
+      throw new Error('Missing API base URL. Add the Encypher API base URL in Settings.');
     }
   }
 
@@ -31,7 +31,7 @@
     const entries = global.EncypherStorage.getProvenanceEntries(hash);
 
     byId('provenanceSummary').textContent =
-      'Visible hash: ' + hash + ' | Entries: ' + entries.length;
+      'Visible content hash: ' + hash + ' | Provenance entries: ' + entries.length;
 
     return { hash, entries };
   }
@@ -95,13 +95,14 @@
       signedLength: signResult.signedText.length,
       previousEmbeddingsCount: previousEmbeddings.length,
       verificationUrl: signResult.verificationUrl,
+      message: 'Content signed with cryptographic proof of origin.',
     };
   }
 
   async function runVerify(mode) {
     const settings = global.EncypherStorage.getUserSettings();
     if (!settings.apiBaseUrl) {
-      throw new Error('Missing API base URL. Add it in Settings.');
+      throw new Error('Missing API base URL. Add the Encypher API base URL in Settings.');
     }
 
     const host = global.EncypherHostAdapter.getHostName();
@@ -138,6 +139,7 @@
       signerName: verification.signer_name || verification.organization_name || '',
       reasonCode: verification.reason_code || '',
       timestamp: verification.timestamp || '',
+      message: 'Verification completed against Encypher provenance infrastructure.',
       raw: verification,
     };
   }
