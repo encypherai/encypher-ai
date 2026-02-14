@@ -58,3 +58,28 @@ def test_ensure_database_ready_rejects_unknown_strategy(monkeypatch):
             migration_strategy="something_else",
             exit_on_failure=False,
         )
+
+
+def test_run_alembic_migrations_injects_database_url_into_subprocess_env(monkeypatch):
+    captured: dict = {}
+
+    class Completed:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    def fake_run(cmd, cwd, check, capture_output, text, env):
+        captured["cmd"] = cmd
+        captured["cwd"] = cwd
+        captured["env"] = env
+        return Completed()
+
+    monkeypatch.setattr(db_startup.subprocess, "run", fake_run)
+
+    db_startup.run_alembic_migrations(
+        service_name="enterprise-api-tests",
+        database_url="postgresql+asyncpg://user:pass@127.0.0.1:5432/db",
+    )
+
+    assert captured["cmd"][-2:] == ["upgrade", "heads"]
+    assert captured["env"]["DATABASE_URL"] == "postgresql+asyncpg://user:pass@127.0.0.1:5432/db"

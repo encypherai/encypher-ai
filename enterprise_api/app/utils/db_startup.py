@@ -177,7 +177,11 @@ def run_sql_migrations(database_url: str, migrations_dir: str, service_name: str
         engine.dispose()
 
 
-def run_alembic_migrations(service_name: str = "enterprise-api", alembic_ini_path: Optional[str] = None) -> bool:
+def run_alembic_migrations(
+    service_name: str = "enterprise-api",
+    alembic_ini_path: Optional[str] = None,
+    database_url: Optional[str] = None,
+) -> bool:
     """Run Alembic migrations to head(s)."""
     project_root = Path(__file__).resolve().parents[2]
     alembic_ini = Path(alembic_ini_path) if alembic_ini_path else project_root / "alembic.ini"
@@ -188,6 +192,11 @@ def run_alembic_migrations(service_name: str = "enterprise-api", alembic_ini_pat
     cmd = ["alembic", "-c", str(alembic_ini), "upgrade", "heads"]
     logger.info("[%s] Running Alembic migrations: %s", service_name, " ".join(cmd))
 
+    env = os.environ.copy()
+    if database_url:
+        env["DATABASE_URL"] = database_url
+        env["CORE_DATABASE_URL"] = database_url
+
     try:
         completed = subprocess.run(
             cmd,
@@ -195,7 +204,7 @@ def run_alembic_migrations(service_name: str = "enterprise-api", alembic_ini_pat
             check=False,
             capture_output=True,
             text=True,
-            env=os.environ.copy(),
+            env=env,
         )
     except Exception as e:  # pragma: no cover - defensive runtime guard
         raise DatabaseStartupError(f"[{service_name}] Failed to execute Alembic: {e}")
@@ -266,7 +275,7 @@ def ensure_database_ready(
         if run_migrations:
             strategy = (migration_strategy or "alembic").strip().lower()
             if strategy == "alembic":
-                run_alembic_migrations(service_name=service_name)
+                run_alembic_migrations(service_name=service_name, database_url=db_url)
             elif strategy == "sql_legacy":
                 run_sql_migrations(database_url=db_url, migrations_dir=migrations_dir, service_name=service_name)
             else:
